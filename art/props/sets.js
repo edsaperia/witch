@@ -33,11 +33,13 @@ export const SET_PROP_GENOMES = {
     radius: [2.8, 3.5], count: [7, 11], member: [["stone", 3], ["post", 2], ["stump", 2]], height: [1.1, 2], width: [.5, .8], // m
     gap: [0, 1], lean: [0, .22], fallen: [0, 2], centre: [["fire", 2], ["stone", 2], ["stump", 1], ["altar", 1]], embers: [0, 1], // a way in (a chance); a fire pit's embers glow (a chance)
     colour: { stone: [.61, .14, .62], dark: [.65, .16, .38], wood: [.07, .38, .32], moss: [.24, .45, .38], spread: .06 },
+    rock: [["grey", 1]], // its stone: grey, or (only when a recipe asks) the hot south's "sandstone" (last, so the other draws stay as they were)
   },
   heap: {
     of: [["stones", 3], ["logs", 2], ["brush", 1], ["rubble", 2]], width: [6.2, 7.8], height: [1.8, 3], depth: [.55, .8], // what; m across; how deep into the picture, times across
     pieces: [36, 60], moss: [.1, .5], spill: [5, 11], top: [["none", 2], ["post", 1], ["slab", 1]],
     colour: { stone: [.61, .14, .6], dark: [.65, .16, .36], wood: [.07, .38, .34], moss: [.24, .45, .38], cloth: [[.0, .5, .6, 1], [.6, .3, .6, 1], [.13, .4, .75, 1]], spread: .06 },
+    rock: [["grey", 1]], // (and, a recipe asking, "laterite": the plains' red earth)
   },
 };
 export const SET_PROP_KINDS = Object.keys(SET_PROP_GENOMES);
@@ -183,6 +185,12 @@ function gsHeap(m, v) {
   const r = v.r, Wh = v.width * GS_U / 2, Hh = v.height * GS_U, Dh = Wh * v.depth;
   const at = (u, w) => { const x = u * Wh, z = w * Dh, k = 1 - (u * u + w * w); return [x, Math.max(0, Hh * Math.sqrt(Math.max(0, k))), z]; }; // a point on its dome
   const mossy = q => q[1] > Hh * (1 - v.moss) ? M.MOSS : undefined;
+  if (v.of === "termite") { // a cluster of termite mounds (a recipe asks for it): tall fluted cones of baked red earth, the tallest in the middle
+    const k = 3 + Math.floor(r() * 3);
+    for (let i = 0; i < k; i++) { const a = i / k * Math.PI * 2 + r(), d = i ? (.35 + r() * .4) * Wh : 0, p = [Math.cos(a) * d, 0, Math.sin(a) * d * v.depth], h = Hh * (i ? .35 + r() * .45 : 1.35), w = (.16 + r() * .08) * GS_U * 2 * (i ? 1 : 1.3);
+      m.chain([[...p, w], [p[0] + (r() - .5) * .05, h * .45, p[2], w * .72], [p[0] + (r() - .5) * .08, h * .8, p[2], w * .42], [p[0], h, p[2], w * .14]], M.STONE, { group: 2 + i, paint: q => cellHash(q, 9, i) < .22 ? M.STONED : undefined }); }
+    return;
+  }
   const n = v.of === "brush" ? Math.round(v.pieces * 1.6) : v.pieces;
   for (let i = 0; i < n; i++) {
     const t = i / n, ring = Math.sqrt(1 - t) * .95, a = r() * Math.PI * 2, base = at(Math.cos(a) * ring, Math.sin(a) * ring), g = 2 + (i % 24);
@@ -206,7 +214,7 @@ function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x 
 function gsColours(kind, v, def, st) {
   const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
   const wood = gsTone(C.wood ?? [.07, .38, .32], r, k), dark = wood.map(c => Math.round(c * .45)), light = wood.map(c => Math.min(255, Math.round(c * 1.35 + 12)));
-  const stone = gsTone(C.stone ?? [.6, .08, .55], r, k), stoneD = C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
+  const sandstone = v.rock === "sandstone", laterite = v.rock === "laterite", stone = gsTone(sandstone ? [.08, .38, .7] : laterite ? [.05, .5, .58] : v.stoneHsv ?? C.stone ?? [.6, .08, .55], r, k), stoneD = sandstone ? gsTone([.05, .45, .42], r, k) : laterite ? gsTone([.03, .55, .36], r, k) : C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
   return {
     [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: g && kind === "ring" ? g[M.BODY] : hsv2rgb(leaf + .02, .5, .34), [M.LINE]: [24, 22, 30],
     [M.WOOD]: wood, [M.TRUNK]: kind === "punt" || kind === "jetty" ? dark.map(c => Math.round(c * 1.5)) : wood, [M.BARKD]: dark, [M.BARKL]: light,
@@ -222,6 +230,7 @@ const GS_WATER = new Set([M.WATER, M.BODY2, M.ACCENT, M.WEB]);
 // One generated set piece: { sp, colours, origin, metres, variant }, as art/setpieces.js setPiece3d gives (o: { seed, ...numbers to fix }; size: times the witch's scale).
 export function genSetPiece(kind, o = {}, def = null, st = {}, size = 1, ppm = 16) {
   const v = setPropVariant(kind, o.seed ?? 0, o), m = new Model({ blend: .035 });
+  if (Array.isArray(o.stone)) v.stoneHsv = o.stone; // (an area's own stone, [h, s, v]: the badlands' red rock)
   m.clipY = 0; // a sunk punt's keel, a buried stone: cut away under the ground
   GS_BUILD[kind](m, v);
   m.ell([0, .004, 0], [.01, .004, .01], M.STONE, { group: 0, extra: true });

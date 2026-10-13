@@ -377,6 +377,12 @@
    "slam",
    "bigslam",
    "quake"
+  ],
+  "lion": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
   ]
  },
  "kite": {
@@ -389,6 +395,7 @@
  "temperament": {
   "curious": [
    "tiger",
+   "lion",
    "squirrel",
    "fox",
    "otter",
@@ -403,6 +410,7 @@
    "boar"
   ],
   "skittish": [
+   "cheetah",
    "hare",
    "stag",
    "elk",
@@ -446,9 +454,11 @@
    "elk",
    "stag",
    "tiger",
-   "elephant"
+   "elephant",
+   "lion"
   ],
   "nimble": [
+   "cheetah",
    "hare",
    "stoat",
    "otter",

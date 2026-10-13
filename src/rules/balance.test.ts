@@ -67,8 +67,9 @@ describe("the balance simulator (rules/balance.ts, tools/balance/sim.mjs)", () =
     // it gets there, so it shows as a bigger siege somewhere in the first twenty waves, not always by its whole value)
     expect(legends.waves.slice(0, 20).some((w, i) => w.largest > plain.waves[i].largest)).toBe(true);
     // A legend alone topples its soundsystem in about 5.6 minutes: over a few maps, the run is shorter
-    // (one map can tie: seed 1000's did at 14 x 168 m areas, while 1001 to 1005 lost 2 to 7 waves).
-    const total = (areaLegends: boolean) => [1000, 1001, 1002].reduce((n, seed) => n + simulate(generateMap(seed, half), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
+    // (one map can tie, or even last a wave longer: with home's forest mammals, 2026-10-12, seed 1000 did and 1001 and 1004 tied,
+    // while 1002, 1003 and 1005 lost a wave each; so six maps).
+    const total = (areaLegends: boolean) => [1000, 1001, 1002, 1003, 1004, 1005].reduce((n, seed) => n + simulate(generateMap(seed, half), { interval: 60, maxWaves: 40, areaLegends }).survived, 0);
     expect(total(true)).toBeLessThan(total(false));
   }, 120000);
 

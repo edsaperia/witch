@@ -5,7 +5,7 @@ import raw from "../../config/character.json";
 
 describe("creature character (config/character.json)", () => {
   it("every species named has a known quirk and sane numbers", () => {
-    const known = ["sniff", "perk", "stomp", "thump", "scratch", "shake", "tailflick", "tailslap", "stretch", "howl", "rise"];
+    const known = ["sniff", "perk", "stomp", "thump", "scratch", "shake", "tailflick", "tailslap", "stretch", "howl", "rise", "sentinel"];
     for (const id of Object.keys(raw.species)) {
       const c = characterOf(id);
       expect(known).toContain(c.quirk);
