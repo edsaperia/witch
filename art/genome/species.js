@@ -145,10 +145,10 @@ export const GENOMES = [
       { body: { len: .46, chest: .42, tuck: .46, hr: .31 }, head: { snout: .58 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "puff" }, coat: { saddle: true } },
       { body: { len: .58, legW: .9 } },
       { body: { len: .6 }, features: [{ kind: "ruff", size: .2, count: 14 }] },
-      { body: { len: .64, legW: 1.05, neckAng: .55 }, head: { mask: true }, features: [
-        { kind: "ruff", size: .28, count: 18 },
-        { kind: "tails", count: 3, length: 1.15, spread: .32, tip: "MAGIC2", replace: true, width: 1.3 },
-        { kind: "mane", from: .3, to: .95, height: .12, count: 11, lean: .35, mat: "MAGIC" },
+      // the elder of the white foxes (docs/ART-GUIDE.md 0c): the long winter's own, its coat gone deep and shaggy, one vast brush
+      // swept low behind it, its muzzle grizzled with frost, offerings of stone beads round its legs
+      { body: { len: .64, legW: 1.1, neckAng: .55, hgt: .72 }, head: { frost: true }, parts: { tail: "plume" }, coat: { beads: true }, features: [
+        { kind: "ruff", size: .42, count: 26, mat: "BELLY" },
       ] },
     ] },
   // the crags' ibex (an area recipe's, the north-east's island of mountains and glaciers): a stocky wild goat, dark-legged and
@@ -159,9 +159,11 @@ export const GENOMES = [
       { body: { len: .48, hr: .29 }, parts: { ears: { kind: "small", size: 1.2 }, horns: false } },
       { head: { horn: { length: 2, r: .4, curl: .4, twist: 0, ridges: 1, segs: 12, out: .22, ease: 1.1, mat: "BODY3" } } },
       { body: { bw: .36 }, head: { horn: { length: 3.4, r: .42, curl: .62, twist: 0, ridges: 1, segs: 22, out: .22, ease: 1.2, tighten: .1, mat: "BODY3" } } },
-      { body: { bw: .4, legW: 1.1 }, head: { horn: { length: 5.4, r: .56, curl: .7, twist: 0, ridges: 1, segs: 32, out: .25, ease: 1.2, tighten: .12, mat: "BODY3", tip: "MAGIC2" } }, features: [
-        { kind: "mane", from: .2, to: .9, height: .16, count: 12, lean: .3, mat: "MAGIC" },
-        { kind: "ruff", size: .18, count: 12, mat: "BODY" },
+      // the elder of the ibex (docs/ART-GUIDE.md 0c): the peaks' oldest, its horns grown vast and knobbled with the years, a long
+      // shaggy beard, lichen on its flanks like the rock it lies on, frost in its muzzle, offerings of stone beads round its legs
+      { body: { bw: .4, legW: 1.15 }, head: { frost: true, horn: { length: 6.4, r: .66, curl: .74, twist: 0, ridges: 1, segs: 38, out: .26, ease: 1.2, tighten: .12, mat: "BODY3" } }, coat: { beads: true }, features: [
+        { kind: "ruff", size: .32, count: 20, mat: "BODY" },
+        { kind: "moss", count: 7, size: .085 },
       ] },
     ] },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
