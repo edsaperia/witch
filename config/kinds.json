@@ -163,7 +163,7 @@
       "dir": "S",
       "biome": "temperate"
     },
-    "glowworm": {
+    "cat": {
       "phase": 2,
       "bearing": 205,
       "dir": "SSW",
@@ -207,12 +207,11 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-03": {
+    "redpanda": {
       "phase": 3,
       "bearing": 63,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-04": {
       "phase": 3,
@@ -245,26 +244,23 @@
       "dir": "SSW",
       "biome": "hot"
     },
-    "unknown-09": {
+    "crocodile": {
       "phase": 3,
       "bearing": 218,
       "dir": "SW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
-    "unknown-10": {
+    "dragonfly": {
       "phase": 3,
       "bearing": 243,
       "dir": "WSW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
-    "unknown-11": {
+    "tiger": {
       "phase": 3,
       "bearing": 269,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "unknown-12": {
       "phase": 3,
@@ -273,12 +269,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-13": {
+    "roe": {
       "phase": 3,
       "bearing": 321,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unknown-14": {
       "phase": 3,
@@ -301,19 +296,17 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-17": {
+    "frostwyrm": {
       "phase": 4,
       "bearing": 45,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
-    "unknown-18": {
+    "griffin": {
       "phase": 4,
       "bearing": 65,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-19": {
       "phase": 4,
@@ -343,12 +336,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-23": {
+    "rhino": {
       "phase": 4,
       "bearing": 165,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "cheetah": {
       "phase": 4,
@@ -363,12 +355,11 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-26": {
+    "crab": {
       "phase": 4,
       "bearing": 225,
       "dir": "SW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "unknown-27": {
       "phase": 4,
@@ -377,26 +368,23 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-28": {
+    "elephant": {
       "phase": 4,
       "bearing": 265,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
-    "unknown-29": {
+    "jaguar": {
       "phase": 4,
       "bearing": 285,
       "dir": "WNW",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
-    "unknown-30": {
+    "raccoon": {
       "phase": 4,
       "bearing": 305,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unicorn": {
       "phase": 4,
@@ -404,12 +392,11 @@
       "dir": "NW",
       "biome": "cold rainforest"
     },
-    "unknown-32": {
+    "polarbear": {
       "phase": 4,
       "bearing": 345,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     }
   }
 }
