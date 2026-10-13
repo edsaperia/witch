@@ -777,37 +777,18 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
-  if (q.onBack && !FORM?.rig) { // floating on its back (not in the live rig's pieces, which stand), a stone on its belly and its paws round a glowing pearl (the otter's legend)
-    rollOver(m);
-    let top = -Infinity; for (const P of m.parts) if (!P.extra) top = Math.max(top, (P.c ? P.c[1] + Math.max(...(P.r || P.h || [0])) : Math.max(P.a[1] + P.r1, P.b[1] + P.r2)));
-    m.ell([len * .1, top - .02, 0], [.17, .09, .15], M.STONE, { group: 79, extra: true, rough: .015 });
-    m.ell([len * .45, top + .06, 0], [.08, .08, .08], M.MAGIC2, { group: 79, extra: true });
-    for (let i = 0; i < 22; i++) { const a = i / 22 * Math.PI * 2; m.ell([Math.cos(a) * len * 1.7, .03, Math.sin(a) * bw * 3], [.06, .015, .04], i % 2 ? M.MAGIC : M.MAGIC2, { group: 79, extra: true }); } // the ripples round it
+  if (q.pearl && m.anchors.neck) { // the otter legend's treasures, worn (Ed, 2026-10-13: creatures never go in the water, so it stands): a smooth stone and a glowing pearl on a cord at its throat
+    const was = m.part, N = m.anchors.neck, R = N.r * .38; m.part = "head";
+    let p = v3.add(N.c, [0, -N.r * .5, 0]); for (let k = 0; k < 90 && m.field(p) < 0; k++) p = v3.add(p, [0, -.01, 0]); // the underside of its neck
+    m.seg(p, v3.add(p, [0, -R * 1.1, 0]), R * .08, R * .08, M.WOOD, { group: 79, extra: true });
+    m.ell(v3.add(p, [-R * .55, -R * 1.55, 0]), [R * .85, R * .6, R * .7], M.STONE, { group: 79, extra: true, rough: .01 });
+    m.ell(v3.add(p, [R * .65, -R * 1.45, 0]), [R * .55, R * .55, R * .55], M.MAGIC2, { group: 79, extra: true });
+    m.part = was;
   }
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
   if (formMotes() && sz("motes")) glowMotes(sp, S.id.length * 7919, sz("motes"));
   return sp;
-}
-
-// Rolled half over about its long axis (onto its back), then set down again with its lowest point on the ground; each paint reads
-// its part where it was before the roll, and the anchors roll with it. Its head doesn't roll: it sits where the rolled head would, upright,
-// facing forward and up as an otter floats (else its face, eyes and expressions all point at the ground under it).
-function rollOver(m) {
-  const R = p => [p[0], -p[1], -p[2]], body = P => P.part !== "head";
-  for (const P of m.parts) { if (!body(P)) continue; if (P.c) P.c = R(P.c); if (P.a) { P.a = R(P.a); P.b = R(P.b); } if (P.axes) P.axes = P.axes.map(R); if (P.paint) { const f = P.paint; P.paint = p => f(R(p)); } }
-  for (const F of m.flats) { if (!body(F)) continue; F.c = R(F.c); F.u = R(F.u); F.v = R(F.v); }
-  let low = Infinity; for (const P of m.parts) if (body(P)) low = Math.min(low, P.c ? P.c[1] - Math.max(...(P.r || P.h || [0])) : Math.min(P.a[1] - P.r1, P.b[1] - P.r2));
-  const up = .04 - low, U = p => [p[0], p[1] + up, p[2]], A = m.anchors, RU = p => U(R(p));
-  for (const P of m.parts) { if (!body(P)) continue; if (P.c) P.c = U(P.c); if (P.a) { P.a = U(P.a); P.b = U(P.b); } if (P.paint) { const f = P.paint; P.paint = p => f([p[0], p[1] - up, p[2]]); } }
-  for (const F of m.flats) if (body(F)) F.c = U(F.c);
-  const at = A.head?.c || A.neck?.c || [0, 0, 0], d = v3.sub(RU(at), at), T = p => v3.add(p, d); // the head: upright, where the rolled one would lie (out in front of its chest)
-  for (const P of m.parts) { if (body(P)) continue; if (P.c) P.c = T(P.c); if (P.a) { P.a = T(P.a); P.b = T(P.b); } if (P.paint) { const f = P.paint; P.paint = p => f(v3.sub(p, d)); } }
-  for (const F of m.flats) if (!body(F)) F.c = T(F.c);
-  if (A.neck?.c) A.neck = { ...A.neck, c: RU(A.neck.c), ...(A.neck.top ? { top: RU(A.neck.top) } : {}), ...(A.neck.dir ? { dir: R(A.neck.dir) } : {}) };
-  if (A.head?.c) A.head = { ...A.head, c: T(A.head.c), ...(A.head.top ? { top: T(A.head.top) } : {}) };
-  if (A.eyes?.pts) A.eyes = { ...A.eyes, pts: A.eyes.pts.map(T) };
-  A.feet = (A.feet || []).map(f => ({ ...f, c: RU(f.c) }));
 }
 
 // Trees growing on a legend's back (its legend feature "moss"; and the sleeping legends' sapling, art/legends.js): a little
