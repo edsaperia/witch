@@ -12,6 +12,7 @@ export const TREE_VARIANTS = {
   mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
   snowy: { snow: .85 }, //                  snow lying on its crown
   burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
+  drowned: { dark: true, hang: .6, thick: 1.2 }, // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
 };
 /** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
 export const withVariant = o => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
