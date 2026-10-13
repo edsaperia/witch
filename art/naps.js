@@ -35,6 +35,7 @@ export const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  tiger: { kind: "curl", sink: .04, droop: 1, curl: 2.4, tailDown: .25 }, // sprawled on its side, its tail laid round
   heron: { kind: "tuck", ground: .56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] },
   // coil
   snake: { kind: "coil", ground: 0, droop: .6, curl: 5.5, drop: [40, 50] },

@@ -263,12 +263,11 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-11": {
+    "tiger": {
       "phase": 3,
       "bearing": 269,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "unknown-12": {
       "phase": 3,

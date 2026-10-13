@@ -12,6 +12,7 @@
     "bear": {"posture": {"head": [0.04, -0.04], "body": 0}, "quirk": "scratch", "every": [6, 11], "for": 1.6},
     "squirrel": {"posture": {"head": [0, 0.04], "body": 0}, "quirk": "tailflick", "every": [2, 4], "for": 0.7},
     "otter": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "shake", "every": [5, 9], "for": 0.8},
+    "tiger": {"posture": {"head": [0.02, -0.02], "body": -0.02}, "quirk": "tailflick", "every": [4, 8], "for": 0.9},
     "lynx": {"posture": {"head": [0.04, -0.02], "body": -0.03}, "quirk": "tailflick", "every": [3, 6], "for": 0.6},
     "elk": {"posture": {"head": [0.03, 0.02], "body": 0}, "quirk": "stomp", "every": [6, 11], "for": 1.2},
     "beaver": {"posture": {"head": [0.02, -0.02], "body": -0.01}, "quirk": "tailslap", "every": [5, 9], "for": 0.7},

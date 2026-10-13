@@ -65,6 +65,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "holly-thicket": look("slate", "darkLeaves", "moss", 0.55),
   "honeysuckle-tangle": look("limestone", "flowers", "lichen", 0.5),
   "fen": look("granite", "reeds", "moss", 0.65, true),
+  "bamboo-jungle": look("limestone", "leaves", "moss", 0.6), // old shrine stone, bamboo litter over it
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
 };
 /** Any area not hand-tuned: weathered granite, leaf litter, moss. */

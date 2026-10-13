@@ -21,7 +21,7 @@ export type NightKind = "pine" | "wood" | "oaks" | "wet" | "stream" | "ravine" |
 export const AREA_NIGHTS: Record<string, NightKind> = {
   norway: "pine", "old-pinewood": "pine", "holly-thicket": "pine",
   "fern-forest": "wood", "tangly-forest": "wood", "wispy-forest": "wood", "hazel-forest": "wood", "twiggy-forest": "wood",
-  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood",
+  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood", "bamboo-jungle": "wood",
   "old-oaks": "oaks", ancient: "oaks",
   "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet",
   stream: "stream", ravine: "ravine",
