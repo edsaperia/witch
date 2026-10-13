@@ -2,6 +2,11 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "sandGrain", "pr": 99999, "group": "Beach pixels", "label": "Sand grain", "note": "How far each of the sand's chunky pixels is lightened or darkened at random (0: flat sand).",
+      "control": { "type": "slider", "min": 0, "max": 0.4, "step": 0.02 },
+      "default": 0.14, "apply": { "knob": "beach.grain" }
+    },
+    {
       "id": "lightKnee", "pr": 763, "group": "Soundsystem light", "label": "Light knee", "note": "How bright the light on a pixel gets before it's eased off (every light summed: the party's, campfires, her glow, the moon). Lower: bright spots tamer.",
       "control": { "type": "slider", "min": 0.4, "max": 2, "step": 0.05 },
       "default": 0.9, "apply": { "knob": "lights.knee" }
