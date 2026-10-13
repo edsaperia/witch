@@ -1,10 +1,17 @@
 // The decisions as data (config/decisions.json) and their knobs (the tuning paths, the URL's d_<id>): what the game needs as it
 // starts, apart from the panel itself (ui/decide.ts), so the panel can load only when it's opened (?decide, F2).
 import DECISIONS from "../../config/decisions.json";
+// (one fragment a pull request's group, config/decisions/<pr>-<group>.json, collected newest PR first, the file's own array after
+// them: Ed, 2026-10-13, so builders adding sliders don't collide; node tools/data.mjs decisions adopt moves a pasted entry out)
+const FRAGMENTS = import.meta.glob<{ pr?: number; group?: string; decisions: Decision[] }>("../../config/decisions/*.json", { eager: true, import: "default" });
 
 export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
 export interface Decision { id: string; /** the pull request that added it */ pr?: number; /** that PR's short name (the pause page's heading: "#pr group") */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
-export const DECISION_LIST = (DECISIONS as unknown as { decisions: Decision[] }).decisions;
+/** Every decision: the fragments' (newest pull request first, each in its file's order) and then the file's own. */
+export const DECISION_LIST: Decision[] = [
+  ...Object.keys(FRAGMENTS).sort((a, b) => Number(b.split("/").pop()!.split("-")[0]) - Number(a.split("/").pop()!.split("-")[0]) || a.localeCompare(b)).flatMap(f => FRAGMENTS[f].decisions.map(d => ({ pr: FRAGMENTS[f].pr, group: FRAGMENTS[f].group, ...d }))),
+  ...(DECISIONS as unknown as { decisions: Decision[] }).decisions,
+];
 /** Where an issue is opened. */
 export const ISSUES = "https://github.com/edsaperia/witch/issues/new";
 /** The URL param a knob's choice is kept in. */

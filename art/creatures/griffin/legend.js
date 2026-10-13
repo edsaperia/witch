@@ -1,0 +1,1 @@
+export const LEGEND_GRIFFIN = { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }; // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen

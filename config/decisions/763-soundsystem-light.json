@@ -1,0 +1,74 @@
+{
+  "pr": 763,
+  "group": "Soundsystem light",
+  "decisions": [
+    {
+      "id": "lightKnee",
+      "pr": 763,
+      "group": "Soundsystem light",
+      "label": "Light knee",
+      "note": "How bright the light on a pixel gets before it's eased off (every light summed: the party's, campfires, her glow, the moon). Lower: bright spots tamer.",
+      "control": {
+        "type": "slider",
+        "min": 0.4,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.9,
+      "apply": {
+        "knob": "lights.knee"
+      }
+    },
+    {
+      "id": "lightCeiling",
+      "pr": 763,
+      "group": "Soundsystem light",
+      "label": "Light ceiling",
+      "note": "The most light a pixel ever gets, eased toward from the knee (at or under the knee: no easing, the old blow-out).",
+      "control": {
+        "type": "slider",
+        "min": 0.4,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1.1,
+      "apply": {
+        "knob": "lights.ceiling"
+      }
+    },
+    {
+      "id": "partyLight",
+      "pr": 763,
+      "group": "Soundsystem light",
+      "label": "Soundsystem light",
+      "note": "A partying soundsystem's own light, pulsing with the beat.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 1.6,
+      "apply": {
+        "knob": "party.lightStrength"
+      }
+    },
+    {
+      "id": "bloomThreshold",
+      "pr": 763,
+      "group": "Soundsystem light",
+      "label": "Bloom threshold",
+      "note": "How bright a pixel must be to bloom (everywhere: neons, sigils, lit ground). Higher: less haze over bright ground.",
+      "control": {
+        "type": "slider",
+        "min": 0.3,
+        "max": 1.2,
+        "step": 0.05
+      },
+      "default": 0.55,
+      "apply": {
+        "knob": "bloom.threshold"
+      }
+    }
+  ]
+}

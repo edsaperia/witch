@@ -1,0 +1,1 @@
+export const LEGEND_DRAGONFLY = { ground: .38, droop: 0, drop: [0, 10, 11, 12, 13, 14, 15], cloak: { c: [-.2, .42, 0], r: [.65, .22, .4] }, over: { moss: .4, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }; // the mangrove pools' dragonfly: settled on the mud, wings laid flat, reeds and roots over it

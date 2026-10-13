@@ -1,0 +1,1 @@
+export const LEGEND_BAT = { ground: .3, droop: 0, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] }, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } };

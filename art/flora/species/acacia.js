@@ -1,0 +1,3 @@
+export const PLANT_ACACIA = { name: "umbrella thorn", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "umbrella", clumps: "layers" }, // the savanna's flat-topped acacia: a bare forked trunk, a thin wide tabletop of leaf
+  params: { w: 260, wPad: 40, h: 150, trunk: { w: 7, len: .62, taper: .65, bend: 1.5, lean: .45 }, levels: [{ n: [3, 4], at: [.55, 1], len: [.4, .55], angle: [.85, 1.25], up: .12, bend: 1.4, w: .5 }], crown: { blobs: [10, 13], r: [22, 30], flat: .22, lift: 4, stamp: "leaf", stampSize: 3, back: .3 } },
+  low: { sprigs: .1 }, colour: { hue: .07, sat: .8, val: .9, trunk: [.07, .3, .32] } };

@@ -1,0 +1,1 @@
+export const LEGEND_SNOWLEOPARD = { sink: .38, droop: 1, drop: [], over: { moss: .05, lichen: .25, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }; // the icefall's snow leopard: curled on a ledge, its tail over its face

@@ -1,0 +1,1 @@
+export const LEGEND_FROSTWYRM = { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }; // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age

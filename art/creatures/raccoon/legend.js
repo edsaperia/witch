@@ -1,0 +1,1 @@
+export const LEGEND_RACCOON = { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }; // the mossy creek's raccoon (an area recipe's): curled under moss and ferns

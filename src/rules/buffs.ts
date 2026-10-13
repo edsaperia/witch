@@ -5,6 +5,7 @@
 // orbit...) that rules/invites.ts and rules/dash.ts compose. Buffs stack: scales multiply, adds and
 // mods add, each total held inside the file's limits. No drawing here.
 import raw from "../../config/legend-buffs.json";
+import { sectionOf } from "./creatureConfig";
 import { LEGEND, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
 
@@ -47,7 +48,9 @@ export interface BuffHow {
 
 export interface BuffTable { how: BuffHow; limits: Record<string, [number, number]>; species: Record<string, BuffDef> }
 
-export const LEGEND_BUFFS = raw as unknown as BuffTable;
+const R = raw as unknown as BuffTable;
+// (each species' buff from its folder, over anything the file still holds: rules/creatureConfig.ts)
+export const LEGEND_BUFFS: BuffTable = { ...R, species: { ...R.species, ...(sectionOf("buff") as Record<string, BuffDef>) } };
 
 export interface ActiveBuff { id: number; species: string; def: BuffDef; /** Its own strength, times legends.buffPower: 1, or legends.questRoll for a done quest's. */ roll?: number }
 export interface BuffEvent { kind: "gained" | "lost"; id: number; species: string; label: string }
