@@ -57,7 +57,7 @@ export const GENOMES = [
     // flames off their tips and a dark shaggy mane along its spine and belly
     levels: [
       { body: { len: .6, chest: .3, tuck: .34, back: "arch" }, coat: { ridge: false, bands: { n: 2, mat: "BELLY" } } },
-      null,
+      { body: { len: 0.648, legW: 0.738, neckW: 0.495, chest: 0.43, tuck: 0.54, profile: { shoulder: { w: .9, d: .9 }, ribcage: { w: .92 }, waist: { w: .8, d: .85 }, loin: { w: .88, d: .92 }, hip: { w: .92 } } } },
       { body: { humpK: 2.4, neckAng: -.42, front: 1.25, legW: 1.0, hgt: 1.05 }, head: { tuskSize: 1.15, tuskCurl: .75, horn: { length: .75, r: .3, curl: .12, twist: .5, ridges: 2, segs: 6, out: .3, mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [{ kind: "mane", from: .45, to: .98, height: .14, count: 10, lean: .45 }] },
       { body: { humpK: 2.8, neckAng: -.45, front: 1.36, legW: 1.45, chest: .3 }, head: { tuskSize: 1.7, tuskCurl: 1.25, eyeGlow: true, horn: { length: 5.2, r: .46, curl: .9, twist: 2.5, ridges: 3, segs: 24, out: .3, tip: "MAGIC2", mat2: "NOSE" } }, parts: { horns: "twist" }, coat: { ridge: false }, features: [ // (Ed, 2026-10-05: head down to charge, a battering ram; its eye glints under the hump, flames rise over it)
         { kind: "mane", from: .15, to: 1, height: .3, count: 18, lean: .55 },
@@ -86,7 +86,12 @@ export const GENOMES = [
   { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .75, val: .75, belly: "white" }, body: { hgt: .55, len: .45, chest: .35, tuck: .4, neck: .2, neckAng: .9, neckW: .35, hr: .3, legW: .8, haunch: 1.3, back: "arch" }, head: { snout: .55, snoutD: .65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "squirrel", tail: true, eye: "EYE" } },
   { id: "toad", name: "Toad", template: "squat", builder: "toad", palette: { hue: .2, sat: .5, val: .55 }, legend: ["sac"] }, // (its legend: its throat sac swollen into a great glowing balloon, docs/ART-GUIDE.md §0c)
   { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { stance: "flat", hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] , levels: [{ body: { hgt: .44, len: .66, chest: .38, tuck: .34, neck: .26, legW: 1.35 }, head: { snout: .38, snoutD: .65 }, parts: { ears: { kind: "round", size: .6 }, tail: "thin" } }, { body: { hgt: .48, len: 1.25, chest: .28, tuck: .22, neck: .4, legW: 1.0 }, head: { snout: .6 } }, null, { body: { onBack: true } }] },
-  { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: 1.08, len: .5, chest: .56, tuck: .62, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: .95 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] , levels: [null, null, null, { head: { plume: true } }] },
+  { id: "lynx", name: "Lynx", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .45, val: .75 }, body: { hgt: 1.08, len: .5, chest: .56, tuck: .62, neck: .25, neckAng: .8, neckW: .4, hr: .27, legW: .95 }, head: { snout: .5, snoutD: .75, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.5 }, tail: "bob", feet: "paw" }, coat: { belly: true, spots: true }, legend: ["mane"] , levels: [
+      null,
+      { body: { len: 0.45, legW: 0.779, neckW: 0.36, chest: 0.61, tuck: 0.66, profile: { shoulder: { w: .9, d: .9 }, ribcage: { w: .92 }, waist: { w: .8, d: .85 }, loin: { w: .88, d: .92 }, hip: { w: .92 } } } },
+      { body: { chest: 0.53, profile: { shoulder: { w: 1.2, d: 1.12 }, ribcage: { w: 1.08 }, waist: { w: .8, d: .88 }, loin: { w: .88, d: .95 }, hip: { w: .95 } } } },
+      { head: { plume: true } },
+    ] },
   { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" , profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.1 }, waist: { w: .78, d: .86 }, loin: { w: .85, d: .94 }, hip: { w: .95 } } , spine: { shoulder: .05, ribcage: .03 } }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] , levels: [null, null, null, { head: { antlerK: 1.75, pools: true } }] },
   { id: "raven", name: "Raven", template: "avian", builder: "raven", palette: { hue: .68, sat: .35, val: .3 }, legend: ["hoard"] },
   { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["sonar"] , texture: { kind: "fur", size: 3 } },
@@ -182,7 +187,12 @@ export const GENOMES = [
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
     // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
     // a necklace of bronze offerings with a stone at its throat
-    levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
+    levels: [
+      null,
+      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.27, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: .84, d: .84 }, ribcage: { w: .88 }, waist: { w: .78, d: .82 }, loin: { w: .86, d: .9 }, hip: { w: .88 } } } },
+      { body: { chest: 0.33, tuck: 0.4, profile: { shoulder: { w: 1.22, d: 1.18 }, ribcage: { w: 1.12 }, waist: { w: .9, d: .92 }, loin: { w: .95 }, hip: { w: 1.02 } } } },
+      { body: { bw: .44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: .96, d: .96 }, loin: { w: 1.0 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] },
+    ] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["stilts"], texture: { kind: "feathers" } },
   // the snowfield's arctic fox (an area recipe's, the north's cold island): a small, round, white fox, short-muzzled and
@@ -283,14 +293,14 @@ export const GENOMES = [
     ] },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
-  { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
+  { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 }, levels: [null, { body: { len: 0.521, legW: 0.396, neckW: 0.221, hr: 0.184, chest: 0.52, tuck: 0.56, profile: { shoulder: { w: .86, d: .86 }, ribcage: { w: .9 }, waist: { w: .74, d: .8 }, loin: { w: .85, d: .9 }, hip: { w: .9 } } } }, { body: { chest: 0.39, tuck: 0.48, profile: { shoulder: { w: 1.22, d: 1.16 }, ribcage: { w: 1.08 }, waist: { w: .78, d: .88 }, loin: { w: .88 }, hip: { w: .98 } } } }, null] },
   // the scrub wash's armadillo (Ed, 2026-10-12, unknown-06, the badlands): its own builder, a low domed shell banded across its middle,
   // a long tapering snout, upright ears, a ringed tail; its legend (Ed: "rolls into a glowing ball, with glowing seams between its
   // bands, rolling when it moves") curled into that ball (armadillo3d's level 3)
   { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], elder: { kind: "armadillo" }, texture: { kind: "plates" } },
   // the cold rainforest's raccoon (Ed, 2026-10-12, unknown-30): grey and hunched, a black bandit mask between white brows and muzzle,
   // dark legs and hands, a thick ringed tail (not Delta's red panda: grey, not russet); its legend to come (Ed's elder brief, docs/ART-GUIDE.md 0c)
-  { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 } },
+  { id: "raccoon", name: "Raccoon", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] }, body: { hgt: .62, len: .6, chest: .36, tuck: .4, neck: .2, neckAng: .45, neckW: .45, hr: .28, legW: .95, back: "arch" }, head: { snout: .7, snoutD: .55, snoutTaper: .5, face: "raccoon", whiskers: true }, parts: { ears: { kind: "round", size: .95 }, tail: "ringed", feet: "paw" }, coat: { legMat: "BODY3", shaggy: true }, legend: [], elder: { kind: "raccoon", eye: "EYE" }, texture: { kind: "fur", size: 3, lumps: 0 }, levels: [null, { body: { len: 0.504, legW: 0.684, neckW: 0.383, hr: 0.258, chest: 0.44, tuck: 0.46, profile: { shoulder: { w: .86, d: .86 }, ribcage: { w: .9 }, waist: { w: .76, d: .8 }, loin: { w: .85, d: .9 }, hip: { w: .9 } } } }, { body: { chest: 0.31, tuck: 0.38, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: .82, d: .9 }, loin: { w: .9 }, hip: { w: 1.0 } } } }, null] },
   // the erg's fennec fox (a journey kind: unknown-07's, the hot south): a small pale sand fox that's mostly ears, a black-tipped brush; its
   // legend the dunes' own: ears like sails, a white mask, turquoise beads, heat-shimmer rising off its back
   { id: "fennec", name: "Fennec fox", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .93, belly: "white", ear: [.97, .32, .9], magic: .12 }, body: { hgt: .62, len: .55, chest: .4, tuck: .48, neck: .28, neckAng: .78, neckW: .3, hr: .28, legW: .7 , profile: { shoulder: { w: 1.1, d: 1.04 }, waist: { w: .78, d: .88 }, loin: { w: .85, d: .95 }, hip: { w: .92 } } }, head: { snout: .8, snoutD: .42, snoutTaper: .5, eyeK: 1.35 }, parts: { ears: { kind: "sail", size: 2 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["tails"],
@@ -317,11 +327,15 @@ export const GENOMES = [
   { id: "cat", name: "Wildcat", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .1, val: .52, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .38, snoutD: .7, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45 }, parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 13, w: .3 }, socks: .2 }, legend: [],
     // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
     // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
-    levels: [null, null, null,
+    levels: [
+      null,
+      { body: { len: 0.612, legW: 0.476, neckW: 0.324, chest: 0.45, tuck: 0.52, profile: { shoulder: { w: .9, d: .9 }, ribcage: { w: .92 }, waist: { w: .8, d: .85 }, loin: { w: .88, d: .92 }, hip: { w: .92 } } } },
+      { body: { chest: 0.37, profile: { shoulder: { w: 1.2, d: 1.12 }, ribcage: { w: 1.08 }, waist: { w: .8, d: .88 }, loin: { w: .88, d: .95 }, hip: { w: .95 } } } },
       { body: { hgt: .8, len: .72, chest: .44 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: ["crown",
         { kind: "ruff", size: .32, count: 18, mat: "BELLY" },
         { kind: "claws", size: .16 },
-      ] }] },
+      ] },
+    ] },
   // the savanna's lion (a journey kind: unknown-08's, the hot south): a big tawny cat, a spotted cub, a lean young with a fuzz of mane,
   // the adult's dark mane; its legend the sun's: a mane of flame-locks, its eyes lit, sun-fire rising off it
   { id: "lion", name: "Lion", template: "quadruped", builder: "quad", palette: { hue: .075, sat: .58, val: .66, belly: "white", magic: .09 }, body: { hgt: 1.4, len: .78, chest: .6, tuck: .7, neck: .3, neckAng: .55, neckW: .44, hr: .25, legW: 1.05, bw: .27 , profile: { shoulder: { w: 1.2, d: 1.06 }, ribcage: { w: 1.08 }, waist: { w: .78, d: .88 }, loin: { w: .85, d: .94 }, hip: { w: .95 } } , spine: { ribcage: -.04, waist: -.05, loin: -.04, hip: -.015 } }, head: { snout: .85, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"],
@@ -342,8 +356,8 @@ export const GENOMES = [
   { id: "cheetah", name: "Cheetah", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .6, val: .84, belly: "white", magic: .13 }, body: { hgt: 1.4, len: .66, chest: .47, tuck: .86, neck: .36, neckAng: .5, neckW: .24, hr: .17, legW: .58, bw: .17, back: "arch", archK: 1.8, profile: { shoulder: { w: 1.25, d: 1.08 }, ribcage: { w: 1.1 }, waist: { w: .68, d: .8 }, loin: { w: .78, d: .9 }, hip: { w: .95 } } , spine: { ribcage: -.04, waist: -.05, loin: -.045, hip: -.015 } }, head: { snout: .4, snoutD: .75, snoutTaper: .85, whiskers: true, tears: true }, parts: { ears: { kind: "round", size: .5 }, tail: "ringed", feet: "paw" }, coat: { belly: true, spots: "solid" }, legend: ["mane"], texture: { kind: "fur", size: 3, lumps: .0015 },
     levels: [
       { body: { len: .5, chest: .42, tuck: .5, hr: .25, legW: .9, bw: .22, archK: .6 }, head: { snout: .35 }, parts: { ears: { kind: "round", size: .7 } }, features: [{ kind: "mane", from: .15, to: 1, height: .1, count: 14, lean: .7, mat: "BELLY" }] },
-      { body: { len: .64, chest: .46, tuck: .8, legW: .6, archK: 1.4 }, features: [{ kind: "mane", from: .6, to: 1, height: .05, count: 6, lean: .8, mat: "BELLY" }] },
-      null,
+      { body: { archK: 1.4, len: 0.594, legW: 0.476, neckW: 0.216, chest: 0.52, tuck: 0.9, profile: { shoulder: { w: 1.05, d: .95 }, ribcage: { w: .98 }, waist: { w: .66, d: .8 }, loin: { w: .74, d: .88 }, hip: { w: .9 } } }, features: [{ kind: "mane", from: .6, to: 1, height: .05, count: 6, lean: .8, mat: "BELLY" }] },
+      { body: { chest: 0.44, profile: { shoulder: { w: 1.3, d: 1.12 }, ribcage: { w: 1.14 }, waist: { w: .68, d: .8 }, loin: { w: .78, d: .9 }, hip: { w: .95 } } } },
       { body: { len: .72, legW: .62, tuck: .9, hgt: 1.5, archK: 2.2 }, head: { snout: .45, eyeGlow: true, tears: "glow" }, features: [
         { kind: "mane", from: .2, to: .95, height: .05, count: 14, lean: .9, mat: "BODY" },
         { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
@@ -382,11 +396,15 @@ export const GENOMES = [
     // its legend, the elder of the red pandas (docs/ART-GUIDE.md 0c): an old mountain sage, big and round, its whiskers and
     // muzzle gone white, a long pale ruff like a beard, its ringed tail heavier, the long claws of a life in the trees, and
     // prayer beads wound round its legs
-    levels: [null, null, null,
+    levels: [
+      null,
+      { body: { len: 0.48, legW: 0.612, neckW: 0.357, hr: 0.294, chest: 0.38, tuck: 0.42, profile: { shoulder: { w: .86, d: .86 }, ribcage: { w: .9 }, waist: { w: .76, d: .8 }, loin: { w: .85, d: .9 }, hip: { w: .9 } } } },
+      { body: { chest: 0.25, tuck: 0.34, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: .82, d: .9 }, loin: { w: .9 }, hip: { w: 1.0 } } } },
       { body: { hgt: .72, len: .66, chest: .32 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
         { kind: "ruff", size: .24, count: 16, mat: "BELLY" },
         { kind: "claws", size: .14 },
-      ] }] },
+      ] },
+    ] },
   // the unicorn (Ed, 2026-10-13: magical creatures for the outer islands; unknown-31, the cold rainforest): a wild white horse of the
   // misty old forest, one spiral horn from its brow, a nub on the foal growing longer by level; its legend's horn is light
   { id: "unicorn", name: "Unicorn", template: "quadruped", builder: "quad", palette: { hue: .6, sat: .05, val: .95, magic: .13 }, body: { hgt: 1.35, len: .7, chest: .52, tuck: .6, neck: .8, neckAng: 1.15, neckW: .32, hr: .24, legW: .66 }, head: { snout: 1.1, snoutD: .65, snoutTaper: .75, eyeK: 1.3 }, parts: { ears: { kind: "point", size: .8 }, tail: "brush", feet: "hoof", horns: "single" }, coat: { socks: .25, legMat: "BELLY", maneHair: { mat: "BODY3" } }, sizes: { horns: [.4, .7, 1, 1.7] }, legend: [],
