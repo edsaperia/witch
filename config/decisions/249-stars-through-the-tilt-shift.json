@@ -1,0 +1,40 @@
+{
+  "pr": 249,
+  "group": "Stars through the tilt-shift",
+  "decisions": [
+    {
+      "id": "skyBlur",
+      "pr": 249,
+      "group": "Stars through the tilt-shift",
+      "label": "Stars through the blur",
+      "note": "How much of the tilt-shift blur the night sky takes: 0 leaves the stars sharp, 1 blurs them like the ground.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.3,
+      "apply": {
+        "knob": "tiltShift.skyBlur"
+      }
+    },
+    {
+      "id": "tiltTreetop",
+      "pr": 249,
+      "group": "Stars through the tilt-shift",
+      "label": "Tilt-shift from the treetops",
+      "note": "The blur toward the top and bottom of the screen over the treetops (the ground's is 1.5).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 8,
+        "step": 0.5
+      },
+      "default": 3,
+      "apply": {
+        "knob": "tiltShift.treetop.strength"
+      }
+    }
+  ]
+}

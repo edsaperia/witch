@@ -1,3 +1,4 @@
+import { AREA_FOLDER_FLORA } from "../areas/index.js";
 // Area flora (stage 8 of issue #79): which trees each area type grows and in what colours. Each wooded area lists 3 to 6 species
 // with their shares (the first is its main kind, as its `big` names it in art/areas.js), and a palette: its leaves' hue (the area's
 // own `leaf`), and how saturated and how bright its leaves are (sat, val: times the species' own). A species may carry options as
@@ -7,36 +8,7 @@
 // The fantasy species (glowcap, crystal-leaf tree, vinewood) are here only where the place suits magic, and only as a minority.
 
 export const AREA_FLORA = {
-  moor: { species: [["hawthorn", .5], ["rowan", .35], ["birch", .15]], palette: { sat: .85, val: .9 } },
-  "stone-shrine": { species: [["yew", .6], ["holly", .25], ["hawthorn", .15]], palette: { sat: .9, val: .9 } },
-  "log-pile": { species: [["elder", .4], ["aspen", .35], ["birch", .25]], palette: { sat: .9, val: .95 } },
-  ravine: { species: [["rowan", .4], ["pine", .35], ["birch", .25]], palette: { sat: .9, val: .95 } },
-  "fern-forest": { species: [["larch", .45], ["fir", .25], ["aspen", .15], ["birch", .15]], palette: { sat: 1, val: 1.05 } },
-  "muddy-forest": { species: [["sycamore", .4], ["alder", .25], ["elm", .2], ["crabApple", .15]], palette: { sat: .85, val: .85 } },
-  "tangly-forest": { species: [["hawthorn", .45], ["elder", .25], ["crabApple", .2], ["hazel", .1]], palette: { sat: 1.05, val: .9 } },
-  "wispy-forest": { species: [["lime", .4], ["birch", .25], ["aspen", .2], ["whitebeam", .15]], palette: { sat: .85, val: 1.12 } },
-  "hazel-forest": { species: [["hazel", .45], ["oak", .2], ["elder", .2], ["glowcap", .15]], palette: { sat: 1.05, val: 1 } },
-  garden: { species: [["willow", .4], ["cherry", .3], ["crabApple", .15], ["vinewood", .15]], palette: { sat: 1.15, val: 1.05 } },
-  "twiggy-forest": { species: [["ash", .5], ["elm", .25], ["aspen", .25]], palette: { sat: .9, val: 1.05 } },
-  ancient: { species: [["yew", .45], ["oak", .3], ["cedar", .25]], palette: { sat: .95, val: .82 } },
-  norway: { species: [["fir", .5], ["birch", .2], ["cedar", .15], ["larch", .15]], palette: { sat: .85, val: .8 } },
-  "alder-forest": { species: [["alder", .55, { dark: true }], ["elm", .25], ["willow", .2]], palette: { sat: .95, val: .9 } },
-  meadow: { species: [["chestnut", .3], ["oak", .2], ["hawthorn", .25], ["cherry", .15], ["crabApple", .1]], palette: { sat: 1.1, val: 1.12 } },
-  "old-oaks": { species: [["oak", .5], ["holly", .2], ["elm", .15], ["whitebeam", .15]], palette: { sat: 1, val: .95 } },
-  "berry-thicket": { species: [["pine", .4], ["rowan", .25], ["elder", .2], ["crabApple", .15]], palette: { sat: 1.05, val: .95 } },
-  wetland: { species: [["willow", .45], ["alder", .3], ["aspen", .25]], palette: { sat: .9, val: 1.05 } },
-  stream: { species: [["alder", .45], ["willow", .3], ["weepingBirch", .25]], palette: { sat: 1, val: 1 } },
-  "rocky-slope": { species: [["rowan", .4], ["pine", .3], ["whitebeam", .3]], palette: { sat: .8, val: 1 } },
-  bog: { species: [["birch", .5, { dark: true }], ["pine", .3], ["aspen", .2]], palette: { sat: .75, val: .85 } },
-  deadwood: { species: [["broad", .5, { bare: true }], ["elm", .25, { bare: true }], ["aspen", .25, { bare: true }]], palette: { sat: .7, val: .8 } },
-  "cave-mouth": { species: [["broad", .45, { bare: true }], ["yew", .3], ["crystal", .25]], palette: { sat: .8, val: .85 } },
-  grassland: { species: [["flat", .3], ["hawthorn", .25], ["crabApple", .2], ["weepingBirch", .15], ["whitebeam", .1]], palette: { sat: 1, val: 1.1 } },
-  "beaver-pond": { species: [["weepingBirch", .4], ["alder", .3], ["aspen", .3]], palette: { sat: .95, val: 1.05 } },
-  heath: { species: [["birch", .4], ["pine", .25], ["hawthorn", .2], ["rowan", .15]], palette: { sat: .9, val: .95 } },
-  "old-pinewood": { species: [["pine", .55], ["rowan", .25], ["larch", .2]], palette: { sat: .9, val: .92 } },
-  "bluebell-glade": { species: [["beech", .5], ["holly", .2], ["cherry", .15], ["whitebeam", .15]], palette: { sat: 1.1, val: 1.1 } },
-  "holly-thicket": { species: [["holly", .45], ["yew", .3], ["vinewood", .25]], palette: { sat: .9, val: .8 } },
-  "honeysuckle-tangle": { species: [["hazel", .4], ["rowan", .25], ["elder", .2], ["crabApple", .15]], palette: { sat: 1.05, val: 1.02 } },
+  ...AREA_FOLDER_FLORA,
 };
 
 // An area's ten (or n) tree slots as species, by their shares: each species gets its share of the slots (at least one, largest

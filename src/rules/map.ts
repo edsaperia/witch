@@ -76,6 +76,11 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
  *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
 export const HOME_LOOK = AREA_TYPES.length;
+/** The seed a look's art is drawn from (render/artBuild.ts typeSprites: its trees' variants): the look itself, but home's pinned
+ *  (Foxtrot, 2026-10-13: HOME_LOOK is the array's end, so every new area type moved it and redrew home, and the bench's pixel
+ *  check went red on every animal PR). 60 is what it was with the 60 area types of 2026-10-13, so nothing changed then. */
+export const HOME_SEED = 60;
+export const lookSeed = (look: number): number => (look === HOME_LOOK ? HOME_SEED : look);
 /** The area types a map without a roster deals (the classic map): the kinds introduced before phase 3. The journey's new kinds (phase
  *  3 on, area recipes added at the end of AREA_TYPES) come only through their islands' rosters, so adding one leaves every
  *  classic map as it was. */

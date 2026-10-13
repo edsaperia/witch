@@ -1,5 +1,9 @@
+import { AREA_FOLDER_RECIPES } from "./areas/index.js";
 // Area recipes (#119): an area type as data alone, one object each, so a new area type is a recipe and some tuning, no code.
 // art/areas.js folds every recipe into the registries the game and the art read, as if it had been written there:
+//   slot                its place among the recipes (0 the first), fixed for good: the map's area type ids are positional (the 30
+//                       table areas, then the recipes in slot order), so a slot never moves and a new recipe takes the next one
+//                       (node tools/data.mjs areas check fails on a slot missing or taken twice)
 //   the area itself     id, name, creature (a species id), by, leaf (its plants' hue), floor ([kind, hue, sat, val]; the kind
 //                       picks its ground genome, art/ground.js, and its tuft mix, art/tufts.js), text ({ floor, wall, small, big,
 //                       set }: Ed's columns), wall, small, big (props, as art/areas.js P() and tree() write them), set (a set piece)
@@ -12,43 +16,13 @@
 //   settings            { treeDensity, groundCover } (config/area-types.json's numbers, which win when it names the area)
 //   ground              its own ground genome over its floor kind's (art/ground.js)
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
-import { FEN } from "./recipes/fen.js";
-import { HERONRY } from "./recipes/heronry.js";
-import { ROOKERY } from "./recipes/rookery.js";
-import { DRAGON_SCRUB } from "./recipes/dragonscrub.js";
-import { WARREN } from "./recipes/warren.js";
-import { SCRUB_WASH } from "./recipes/scrubwash.js";
-import { MOSSY_CREEK } from "./recipes/mossycreek.js";
-import { ERG } from "./recipes/erg.js";
-import { MANGROVE_POOLS } from "./recipes/mangrovepools.js";
-import { MUDFLAT } from "./recipes/mudflat.js";
-import { CACTUS_FLATS } from "./recipes/cactusflats.js";
-import { RED_CANYON } from "./recipes/redcanyon.js";
-import { MISTWOOD } from "./recipes/mistwood.js";
-import { SAVANNA } from "./recipes/savanna.js";
-import { BAMBOO_JUNGLE } from "./recipes/bambooJungle.js";
-import { TEMPLE_JUNGLE } from "./recipes/templeJungle.js";
-import { RIVER_JUNGLE } from "./recipes/riverJungle.js";
-import { PLAINS } from "./recipes/plains.js";
-import { BUSHVELD } from "./recipes/bushveld.js";
-import { PACKICE } from "./recipes/packice.js";
-import { DELL } from "./recipes/dell.js";
-import { FROSTCAVE } from "./recipes/frostcave.js";
-import { EYRIE } from "./recipes/eyrie.js";
-import { MANGROVE } from "./recipes/mangrove.js";
-import { TERRACES } from "./recipes/terraces.js";
-import { SNOWFIELD } from "./recipes/snowfield.js";
-import { CRAGS } from "./recipes/crags.js";
-import { ICEFALL } from "./recipes/icefall.js";
-import { MOONPOOL } from "./recipes/moonpool.js";
-import { TROLLWOOD } from "./recipes/trollwood.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES];
-import { CINDER_SLOPES } from "./recipes/cinder-slopes.js";
+export const AREA_RECIPES = [...AREA_FOLDER_RECIPES];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
   const out = [];
   for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R[k] == null) out.push(k);
+  if (!Number.isInteger(R.slot) || R.slot < 0) out.push("slot");
   if (R.floor && (!Array.isArray(R.floor) || R.floor.length !== 4)) out.push("floor");
   if (!R.set && !R.setPiece) out.push("set or setPiece");
   if (!(R.big?.length)) out.push("big");
