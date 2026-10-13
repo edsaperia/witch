@@ -8,7 +8,7 @@ export const FROSTCAVE = {
   steep: true, pathKinds: ["animal"],
   setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
   layout: {
-    pattern: "groves", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
+    pattern: "lone", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .3, lean: { dir: .8, amount: .35 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .05, rocks: .55, freak: .15, lake: .25, modern: 0 },
     feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering.",
