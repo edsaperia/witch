@@ -1,9 +1,8 @@
 {
-  "kind": "unknown-20",
+  "kind": "stegosaurus",
   "slot": 51,
   "phase": 4,
   "bearing": 105,
   "dir": "ESE",
-  "biome": "rocky",
-  "placeholder": true
+  "biome": "volcanic"
 }

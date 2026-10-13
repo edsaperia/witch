@@ -1,7 +1,7 @@
 // Drawing the sprite sets with art/generator.js and packing them into atlas pixels. No Three.js
 // and no page needed, so it runs in a Web Worker (with OffscreenCanvas) as well as on the page.
 import * as Art from "../../art/generator.js";
-import { LOOKS } from "../rules/map";
+import { LOOKS, lookSeed } from "../rules/map";
 import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
@@ -79,7 +79,7 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // Anything drawn as a tree (big objects, small trees, a tree set piece) is split into crown and
   // trunk, so its crown hides in ground mode; everything else is drawn whole.
   const tree = (o: TreeOpts, k: number): Piece => {
-    const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + t * 101 + k * 7 + 1), K);
+    const { parts, colours } = areaTree(def, o, st, rng(seed * 13 + lookSeed(t) * 101 + k * 7 + 1), K);
     return { bot: add(bk(parts.bot, colours)), top: add(bk(parts.top, colours)) };
   };
   // Trees: the area's own UK species (a main and a minor one) across four height classes, from
