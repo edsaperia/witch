@@ -39,6 +39,7 @@ export const LEGEND_POSES = {
   fox: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .35, lichen: .14, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 5 } },
   badger: { sink: .5, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 1, grass: 6, mushrooms: 0, roots: 1, stones: 3 } },
   boar: { sink: .45, droop: .8, drop: [78], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
+  unicorn: { sink: .42, droop: .9, drop: [], over: { moss: .45, lichen: .1, ferns: 3, grass: 3, mushrooms: 1, roots: 2, stones: 3, flowers: 4 } }, // the moonpool glade's unicorn: lying by the pool under moss and white flowers, its horn along the ground
   stag: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .55, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 5, stones: 2, beard: 6 } },
   hare: { sink: .45, droop: 1, drop: [99, 162], lay: [5, 25], // (its elder's moon set and its ear rings off while it sleeps, its long ears laid back)
     over: { moss: .3, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 1, stones: 1, flowers: 6 } },
@@ -68,6 +69,7 @@ export const LEGEND_POSES = {
   frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age
   cheetah: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .06, lichen: .12, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 3 } }, // the plains' cheetah (an area recipe's): stretched long in the short grass, its spots gone to lichen
   lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
+  komodo: { sink: .5, droop: 1, drop: [60, 61, 62], over: { moss: .15, lichen: .2, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 6 } }, // the dragon scrub's Komodo dragon (an area recipe's): sunk in dust among the rocks, dry grass over it, its tongue in
   fennec: { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },

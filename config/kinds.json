@@ -211,12 +211,11 @@
       "dir": "ENE",
       "biome": "mountains and glaciers"
     },
-    "unknown-04": {
+    "komodo": {
       "phase": 3,
       "bearing": 89,
       "dir": "E",
-      "biome": "rocky",
-      "placeholder": true
+      "biome": "rocky"
     },
     "meerkat": {
       "phase": 3,
@@ -381,12 +380,11 @@
       "dir": "NW",
       "biome": "cold rainforest"
     },
-    "unknown-31": {
+    "unicorn": {
       "phase": 4,
       "bearing": 325,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "polarbear": {
       "phase": 4,

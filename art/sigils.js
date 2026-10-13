@@ -142,12 +142,17 @@ export const SIGILS = {
   // the lion: a great round mane of rays round a broad face, a wide nose and muzzle
   lion: [C(.5, .5, .36), ...rays(.5, .5, .36, .44, [-90, -60, -30, 0, 30, 60, 90, 120, 150, 180, 210, 240]), ...pair(D(.41, .45)), L([.44, .58], [.5, .63], [.56, .58]), L([.5, .63], [.5, .7])],
   // the fennec: ears bigger than its face, flaring out wide, a small pointed face under them
+  // the moonpool glade's unicorn, in profile: a long horse's head on an arched neck, one long horn, an ear, a flowing mane
+  unicorn: [L([.3, .9], [.34, .6], [.44, .42], [.56, .35], [.7, .44], [.8, .58], [.76, .64], [.62, .58], [.54, .62], [.52, .9]), L([.6, .36], [.82, .1]), L([.52, .37], [.49, .24], [.58, .34]), D(.63, .46), L([.42, .44], [.32, .5], [.4, .54], [.3, .62], [.36, .68])],
   fennec: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)],
   // the rhino front on: a broad heavy face, small ears up at its corners, the great horn rising from its nose up past its brow
   rhino: [...pair(L([.5, .93], [.35, .9], [.27, .7], [.25, .48], [.31, .36]), L([.31, .36], [.2, .19], [.38, .3]), D(.3, .57), D(.45, .87)), L([.43, .8], [.5, .14], [.57, .8])],
   // the polar bear side on (unlike the brown bear's round face front on): a long neck, a small round ear, a long Roman-nosed head
   polarbear: [L([.08, .92], [.12, .64], [.28, .36]), A(.34, .27, .075, 165, 345), L([.41, .22], [.6, .25], [.9, .44]), D(.91, .47), L([.88, .51], [.64, .6], [.5, .7], [.52, .92]), D(.55, .33)],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
+  // the dragon scrub's Komodo dragon: a big lizard from above, its forked tongue out, a blunt wedge of a head, four splayed legs,
+  // a long heavy tail sweeping off to one side, a row of dots down its back
+  komodo: [L([.46, .1], [.5, .15], [.54, .1]), L([.5, .15], [.5, .18]), L([.42, .33], [.44, .21], [.5, .18], [.56, .21], [.58, .33]), E(.5, .47, .12, .155), ...pair(L([.4, .39], [.25, .34], [.21, .26]), L([.4, .56], [.25, .61], [.2, .69])), L([.5, .62], [.52, .75], [.61, .84], [.77, .85]), D(.5, .4), D(.5, .47), D(.5, .54)],
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
   // its chest, its tail curling out at its foot
@@ -276,6 +281,8 @@ export const LEGEND_DETAIL = {
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
   lion: [...pair(L([.3, .38], [.38, .34])), ...pair(L([.36, .66], [.24, .68]))],
+  unicorn: [...rays(.82, .1, .03, .07, [-150, -90, -30, 30, 90])],
+  komodo: [...pair(L([.21, .26], [.17, .23]), L([.2, .69], [.16, .72]), D(.46, .25)), L([.46, .36], [.5, .32], [.54, .36]), L([.46, .6], [.5, .56], [.54, .6])],
   fennec: [...pair(L([.36, .36], [.22, .22])), ...pair(bow([.32, .66], [.44, .72], .25))],
   dragonfly: [...pair(L([.47, .46], [.3, .52], [.16, .6], [.2, .64], [.47, .5]))],
   crab: [L([.74, .28], [.76, .24]), L([.8, .26], [.82, .22]), D(.42, .6), D(.5, .64), D(.58, .6)],
@@ -401,7 +408,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", rattlesnake: "lemon", scorpion: "mint", fennec: "orange", penguin: "blue", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+export const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", rattlesnake: "lemon", scorpion: "mint", fennec: "orange", komodo: "orange", unicorn: "violet", penguin: "blue", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;

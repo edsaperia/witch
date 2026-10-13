@@ -24,11 +24,12 @@ import { render, v3 } from "./model3d.js";
 // parts). cloak: wings wrapped round it ({ c: centre, r: radii } in model units, as legends.js).
 export const NAP_POSES = {
   // lie
-  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, roe: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
-  bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 }, ibex: { kind: "lie", sink: .06, droop: .6 },
+  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, unicorn: { kind: "lie", sink: .06, droop: .5 }, roe: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
+  bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
   armadillo: { kind: "lie", sink: .02, droop: .4, curl: .3 },
   raccoon: { kind: "curl", sink: .03, droop: 1, curl: 3.2, tailDown: .25 },
+  komodo: { kind: "lie", sink: .03, droop: 1, curl: .35 },
   meerkat: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 },
   rhino: { kind: "lie", sink: .05, droop: .7 },
   polarbear: { kind: "lie", sink: .05, droop: 1 },
