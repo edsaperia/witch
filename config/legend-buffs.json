@@ -104,6 +104,7 @@
     "tiger":      { "name": "Pounce",         "kind": "move", "scale": { "dash.distance": 1.4, "groundAcceleration": 1.4 }, "label": "Tiger's Pounce: a longer blink, and quicker off the mark" },
     "elephant":   { "name": "Trumpet",        "kind": "shot", "scale": { "invites.radius": 1.6, "invites.range": 1.2 }, "label": "Elephant's Trumpet: bigger 💌s that carry further" },
     "jaguar":     { "name": "Night eyes",     "kind": "shot", "scale": { "invites.range": 1.3, "invites.speed": 1.15 }, "label": "Jaguar's Night eyes: 💌s fly further and a little faster" },
+    "ibex":       { "name": "Sure-footed",    "kind": "move", "scale": { "groundAcceleration": 1.4, "riseTime": 0.75 }, "label": "Ibex's Sure-footed: quicker starts on foot, and a quicker climb to the treetops" },
     "lynx":       { "name": "Poise",          "kind": "move", "scale": { "groundAcceleration": 2, "treetop.turnRate": 1.4 }, "label": "Lynx's Poise: sharper turns, quicker starts" },
     "ram":        { "name": "Steady",         "kind": "move", "mods": { "steady": 1 },              "label": "Ram's Steady: no slowing while you fire" },
     "raven":      { "name": "Wings",          "kind": "move", "scale": { "treetopSpeed": 1.2 },     "label": "Raven's Wings: faster in the treetops" },

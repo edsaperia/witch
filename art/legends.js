@@ -48,6 +48,7 @@ export const LEGEND_POSES = {
   otter: { sink: .5, droop: 1, drop: [90, 91, 92], over: { moss: .5, lichen: .08, ferns: 2, grass: 5, mushrooms: 1, roots: 2, stones: 5 } },
   beaver: { sink: .5, droop: 1, drop: [89], over: { moss: .45, lichen: .04, ferns: 1, grass: 4, mushrooms: 2, roots: 4, stones: 0 } },
   ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
+  ibex: { sink: .42, droop: .9, drop: [], over: { moss: .15, lichen: .3, ferns: 0, grass: 1, mushrooms: 0, roots: 1, stones: 6 } }, // the crags' ibex: lain down on a ledge, lichened like the rock
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
   arcticfox: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 5 } }, // the snowfield's arctic fox: curled in a drift
