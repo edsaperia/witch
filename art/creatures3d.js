@@ -532,6 +532,42 @@ export function owl3d(S, level, frame, st, facing = "towards") {
 }
 
 // ================= the other body plans, in 3D =================
+// The penguin (unknown-14's icy shore, Ed 2026-10-12: more animals for later islands; art builder 2's): upright, a black back and a
+// white front, flippers held out at its sides, a small head and a long beak, short orange feet; it waddles, rocking from foot to foot
+// (its two frames). A downy grey chick, a brown-grey young, a black-and-white adult with an orange patch at its neck, and the legend
+// crowned. (Its belly-slide is a movement, the game's to draw from this sprite laid down.)
+export function penguin3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, baby = level === 0, has = f => legend && !S.levelFeatures?.[3] && S.legend.includes(f), m = new Model(), q = { ...(S.levelQ?.[level] || {}) };
+  const rock = frame ? .12 : -.12, hr = S.sizes.head[level], hy = S.sizes.headY[level], down = !!q.down, young = !!q.young;
+  // feet: short and flat, orange (a chick's grey), one ahead of the other as it rocks
+  for (const side of [-1, 1]) { const f = side * rock * .5; m.ell([.1 + f, .03, side * .13], [.12, .03, .07], down ? M.BODY3 : M.FLOWER, { group: 2 }); m.anchors.feet.push({ c: [.1 + f, .03, side * .13], r: .07, group: 2 }); }
+  // the tail: a short stiff wedge at the back
+  m.ell([-.26, .14, 0], [.14, .04, .08], M.BODY, { dir: [-1, -.4, 0], group: 3 });
+  // body: a tall egg leaning a little forward, rocking side to side; its front white (a chick all grey down)
+  const tilt = [.12, 1, rock];
+  m.ell([0, .6, 0], [.58, .33, .3], down ? M.BELLY : young ? M.BODYL : M.BODY, { dir: tilt, up: [1, 0, 0], rough: down ? .035 : undefined, paint: p => down ? (spotty(p, 14, .45) ? M.BODYL : undefined) : p[0] > .1 - p[1] * .05 && p[1] < hy - hr * .6 ? (q.elder && spotty(p, 22, .12) ? M.STONE : M.BELLY) : q.elder ? (p[1] > .95 && spotty(p, 16, .5) ? M.WEB : spotty(p, 11, .3) ? M.STONED : spotty(p, 19, .1) ? M.MOSS : undefined) : undefined });
+  // flippers: flat, held out a little from its sides, their undersides pale (an adult's)
+  for (const side of [-1, 1]) m.ell([-.02, .6 + (q.oars ? .06 : 0), side * .32], [q.oars ? .56 : .4, .08, .035], down ? M.BELLY : young ? M.BODYL : M.BODY, { dir: q.oars ? [.05, -.75, side * (frame ? 1 : .8)] : [.2, -1, side * (frame ? .65 : .45)], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: !down && !young ? p => p[0] > .02 ? M.BELLY : undefined : undefined });
+  // head: small and round on a short neck, black (a young's grey-brown, a chick's down with a dark cap)
+  m.ell([.04, hy, 0], [hr, hr * .92, hr * .9], down ? M.BELLY : young ? M.BODYL : M.BODY, { rough: down ? .02 : undefined, paint: down ? p => p[1] > hy - hr * .1 ? M.BODY : undefined : young ? p => p[0] > .04 + hr * .3 && p[1] < hy ? M.BELLY : undefined : q.elder ? p => p[1] > hy + hr * .5 && spotty(p, 14, .5) ? M.WEB : spotty(p, 11, .3) ? M.STONED : undefined : undefined });
+  // the adult's orange patch at either side of its neck, fading down onto its breast
+  if (!down && !young) for (const side of [-1, 1]) m.ell([.1, hy - hr * .7, side * hr * .62], [hr * .55, hr * .3, hr * .16], M.FLOWER, { group: 1, dir: [.35, -1, side * .45] });
+  if (q.gorget) m.ell([.31, 1.0, 0], [.24, .045, .13], M.FLOWER, { group: 1, dir: [.12, -1, 0], up: [1, 0, 0] }); // the legend's gorget, blazing down its breast
+  // beak: long and pointed, dark with an orange stripe along it (an adult's)
+  const bc = Model.surface([.04, hy, 0], [hr, hr * .92, hr * .9], v3.norm([1, -.15, 0]));
+  m.ell(v3.add(bc, [hr * .4 * (q.beak ?? 1), -hr * .05, 0]), [hr * .55 * (q.beak ?? 1), hr * .13, hr * .12], M.BODY3, { dir: [1, -.18, 0], group: 1, paint: !down && !young ? p => p[1] < bc[1] - hr * .06 ? M.FLOWER : undefined : undefined });
+  if (q.elder) {
+    for (let k = 0; k < 3; k++) m.seg([.31, .74 - k * .14, .02 + k * .06], [.34, .52 - k * .14, .16 + k * .06], .02, .012, M.STONED, { group: 1, extra: true }); // old scars across its breast
+    for (let k = 0; k < 11; k++) { const a = Math.PI * (-.5 + k / 10), p = [.08 + Math.cos(a) * .3, hy - hr * .95 - Math.cos(a) * .05, Math.sin(a) * .27]; if (p[0] < -.05) continue; m.ell(p, k % 2 ? [.06, .05, .05] : [.07, .03, .07], k % 2 ? M.STONE : M.WEB, { group: 1, extra: true, dir: [0, 1, 0], up: [1, 0, 0] }); } // a necklace of offerings: pebbles and shells from the rookery
+  }
+  if (q.chick) { const c = [.34, .16, 0]; m.ell(c, [.17, .16, .15], M.BODYL, { group: 7, rough: .035, dir: [0, 1, 0], up: [1, 0, 0], paint: p => spotty(p, 30, .35) ? M.BELLY : undefined }); m.ell([c[0] + .03, c[1] + .2, 0], [.1, .095, .095], M.BELLY, { group: 7, paint: p => p[1] > c[1] + .21 || p[0] < c[0] - .02 ? M.BODY : undefined }); m.ell([c[0] + .14, c[1] + .19, 0], [.045, .014, .014], M.BODY3, { dir: [1, -.2, 0], group: 7 }); eyesOn(m, [c[0] + .03, c[1] + .2, 0], [.1, .095, .095], [[.6, .35, .55], [.6, .35, -.55]], .018, M.EYE, 7); } // its downy chick standing on its feet before it
+  eyesOn(m, [.04, hy, 0], [hr, hr * .92, hr * .9], [[.55, .3, .6], [.55, .3, -.6]], hr * .12, M.EYE);
+  if (has("crown")) crown3d(m, [.02, hy + hr * .95, 0], hr * .75);
+  m.anchors.neck = { c: [.02, hy - hr * .8, 0], r: hr * .8, dir: [0, 1, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
+
 const eyesOn = (m, c, r, dirs, size, mat, group = 1) => {
   for (const d of dirs) m.ell(Model.surface(c, r, v3.norm(d)), [size, size * 1.2, size], mat, { group });
   m.anchors.head ||= { c, r }; m.anchors.eyes ||= { pts: dirs.map(d => Model.surface(c, r, v3.norm(d))), size };

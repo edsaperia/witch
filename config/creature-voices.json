@@ -39,6 +39,7 @@
     "snake": {"family": "snake"},
     "toad": {"family": "amphibian"},
     "salamander": {"family": "amphibian", "pitch": 1.6, "am": [48, 0.7]},
+    "penguin": {"family": "bird", "pitch": 0.8, "pure": false, "wave": "sawtooth", "trill": [6, 0.3], "glide": 0.6, "vowel": 0.6, "volume": 0.9},
     "heron": {"family": "bird", "pitch": 0.5, "pure": false, "wave": "sawtooth", "trill": [0, 0], "glide": 0.8, "vowel": 1, "volume": 0.9},
     "newt": {"family": "amphibian", "pitch": 1.9, "am": [56, 0.6]},
     "fennec": {"family": "canid", "pitch": 2.1, "glide": 0.9},

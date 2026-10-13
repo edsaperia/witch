@@ -282,12 +282,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-14": {
+    "penguin": {
       "phase": 3,
       "bearing": 346,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
     "unknown-15": {
       "phase": 4,
