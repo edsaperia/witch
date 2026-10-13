@@ -153,6 +153,12 @@ export const GENOMES = [
     // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
     // necklace of offerings, the hump a hill
     levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
+  // the pack ice's polar bear (an area recipe's, phase 4): a long-necked white bear, its coat shaggy
+  { id: "polarbear", name: "Polar bear", template: "quadruped", builder: "quad", palette: { hue: .14, sat: .05, val: .9 }, body: { hgt: 1.25, len: .9, chest: .38, tuck: .42, neck: .34, neckAng: .02, neckW: .55, hr: .3, legW: 1.8, bw: .36 }, head: { snout: .85, snoutD: .6, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "small", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: [],
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
+    // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
+    // a necklace of bronze offerings with a stone at its throat
+    levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;

@@ -3914,6 +3914,12 @@ const GENOMES = [
     // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
     // necklace of offerings, the hump a hill
     levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
+  // the pack ice's polar bear (an area recipe's, phase 4): a long-necked white bear, its coat shaggy
+  { id: "polarbear", name: "Polar bear", template: "quadruped", builder: "quad", palette: { hue: .14, sat: .05, val: .9 }, body: { hgt: 1.25, len: .9, chest: .38, tuck: .42, neck: .34, neckAng: .02, neckW: .55, hr: .3, legW: 1.8, bw: .36 }, head: { snout: .85, snoutD: .6, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "small", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: [],
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
+    // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
+    // a necklace of bronze offerings with a stone at its throat
+    levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
@@ -4432,6 +4438,7 @@ const NAP_POSES = {
   raccoon: { kind: "curl", sink: .03, droop: 1, curl: 3.2, tailDown: .25 },
   meerkat: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 },
   rhino: { kind: "lie", sink: .05, droop: .7 },
+  polarbear: { kind: "lie", sink: .05, droop: 1 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
   // curl
@@ -7615,6 +7622,8 @@ const SIGILS = {
   fennec: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)],
   // the rhino front on: a broad heavy face, small ears up at its corners, the great horn rising from its nose up past its brow
   rhino: [...pair(L([.5, .93], [.35, .9], [.27, .7], [.25, .48], [.31, .36]), L([.31, .36], [.2, .19], [.38, .3]), D(.3, .57), D(.45, .87)), L([.43, .8], [.5, .14], [.57, .8])],
+  // the polar bear side on (unlike the brown bear's round face front on): a long neck, a small round ear, a long Roman-nosed head
+  polarbear: [L([.08, .92], [.12, .64], [.28, .36]), A(.34, .27, .075, 165, 345), L([.41, .22], [.6, .25], [.9, .44]), D(.91, .47), L([.88, .51], [.64, .6], [.5, .7], [.52, .92]), D(.55, .33)],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
@@ -7738,6 +7747,7 @@ const LEGEND_DETAIL = {
   dragonfly: [...pair(L([.47, .46], [.3, .52], [.16, .6], [.2, .64], [.47, .5]))],
   crab: [L([.74, .28], [.76, .24]), L([.8, .26], [.82, .22]), D(.42, .6), D(.5, .64), D(.58, .6)],
   rhino: [...pair(L([.27, .72], [.33, .77]), L([.26, .26], [.31, .29]), bow([.33, .5], [.39, .45], .3))],
+  polarbear: [L([.84, .55], [.68, .58]), L([.2, .62], [.12, .67]), L([.22, .76], [.14, .81]), L([.38, .76], [.43, .82])],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
   meerkat: [...pair(L([.39, .2], [.37, .14])), L([.5, .48], [.5, .74]), ...pair(L([.42, .86], [.37, .92]))],
   armadillo: [L([.32, .4], [.32, .64]), L([.64, .4], [.64, .64]), D(.82, .58), L([.24, .5], [.24, .64])],
@@ -7857,7 +7867,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -9120,6 +9130,28 @@ const BUSHVELD = {
 };
 
 
+// ---- inlined from art/recipes/packice.js ----
+// The pack ice (a journey kind: unknown-32's, phase 4, the cold north-north-west; Ed approved the mock, 2026-10-12): the polar bear's. Broken sea ice and drifted snow with dark leads of open
+// water between the floes; stunted, wind-bent firs and birch hug the shore. Unlike the arctic fox's snowfield (inland,
+// soft and white), this is the frozen sea: ice slabs, black water, pressure ridges.
+const PACKICE = {
+  id: "packice", name: "Pack ice", creature: "polarbear", by: "recipe", leaf: .45, floor: ["ice", .6, .38, .86],
+  text: { floor: "sea ice and drifted snow", wall: "dark leads of open water", small: "snow drifts and ice blocks", big: "stunted wind-bent firs and birch along the shore", set: "a pressure ridge of broken ice" },
+  wall: [["water", { w: 2.2, dark: true }]], small: [["rock", { small: true, ice: true }], ["grass", { h: .8 }]],
+  big: [["tree", { type: "fir", scale: .65, gnarl: .7 }], ["tree", { type: "birch", minor: true, scale: .6, gnarl: .6 }]],
+  ponds: true, pathKinds: ["track"],
+  setPiece: ["heap", "a pressure ridge of broken ice", 1, { seed: 7, of: "stones", moss: 0, top: "slab", stone: [.55, .18, .9] }],
+  layout: {
+    pattern: "edgeOnly", density: .2, clump: .7, glades: { count: 2, size: [24, 32] },
+    heightMix: { sapling: .45, mature: .5, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
+    terrain: ["pools"], decor: { rate: .15, ruins: .05, rocks: .3, freak: .1, lake: .5, modern: .05 },
+    feel: "White floes and slabs of sea ice split by black leads of open water, a pressure ridge heaved up in the middle, a few wind-bent firs and birch crouched along the shore; bitter, bright and silent.",
+  },
+  flora: { species: [["fir", .6], ["birch", .25], ["pine", .15]], palette: { sat: .6, val: .8 } },
+  settings: { treeDensity: .2, groundCover: { density: .4, kinds: ["blades"] } },
+};
+
+
 // ---- inlined from art/recipes/dell.js ----
 // The mossy dell (Ed, 2026-10-12: "Why don't we make a few more animals": a roe deer, its area for the later islands), the third
 // area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and oak,
@@ -9227,7 +9259,7 @@ const TERRACES = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD];
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -12745,6 +12777,7 @@ const LEGEND_POSES = {
   redpanda: { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }, // the misty terraces' red panda: curled on a mossy ledge, tail over its nose
   crocodile: { sink: .55, droop: 1, drop: [120, 121, 140, 141, 142, 143, 144, 145, 146, 147], over: { moss: .35, lichen: .06, ferns: 0, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }, // the mangrove's crocodile (an area recipe's): sunk in the mud like a log, its ridge of stones standing out of it, roots over it
   rhino: { sink: .45, droop: .8, drop: [], over: { moss: .45, lichen: .05, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 4 } }, // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the earth
+  polarbear: { sink: .5, droop: .9, drop: [], over: { moss: .25, lichen: .02, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 5 } }, // the pack ice's polar bear (an area recipe's): sunk in the ice like a drift of old snow, its long coat laid back over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   griffin: { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen
   frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age

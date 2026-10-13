@@ -396,12 +396,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-32": {
+    "polarbear": {
       "phase": 4,
       "bearing": 345,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     }
   }
 }
