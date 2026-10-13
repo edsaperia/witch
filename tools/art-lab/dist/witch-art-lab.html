@@ -9314,7 +9314,7 @@ const ROOKERY = {
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
-    pattern: "stands", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
+    pattern: "rings", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
     heightMix: { sapling: .5, mature: .5, tall: 0, giant: 0 }, undergrowth: .4, lean: { dir: .8, amount: .6 },
     terrain: ["rocky"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "A cold bright shore: snow drifted over black shingle and sea rocks, tussock grass in the lee of the boulders, a few stunted pines and birches crouched flat by the wind; loud, busy and huddled.",
@@ -9380,7 +9380,7 @@ const MOSSY_CREEK = {
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
-    pattern: "stands", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
+    pattern: "rows", along: "stream", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
     heightMix: { sapling: .1, mature: .35, tall: .4, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .1, lake: .3, modern: 0 },
     feel: "A cold green gloom under towering mossy spruces and cedars, a creek chattering over stones, ferns waist-deep; dripping, soft and old.",
@@ -9531,7 +9531,7 @@ const BAMBOO_JUNGLE = {
   pathKinds: ["footpath"],
   setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
   layout: {
-    pattern: "groves", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
+    pattern: "thicket", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
     heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["paths", "hollows"], decor: { rate: .2, ruins: .5, rocks: .25, freak: .15, lake: 0, modern: .1 },
     feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
@@ -9677,9 +9677,9 @@ const DELL = {
 // an ice cave, stunted wind-killed pines and crystal-leaf trees, the frost wyrm its creature.
 const FROSTCAVE = {
   id: "frostcave", name: "Frost cave", creature: "frostwyrm", by: "recipe", leaf: .45, floor: ["ice", .6, .45, .85],
-  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
+  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted frost-pale whitebeams, firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
   wall: [["waterfall", {}], ["rockwall", {}]], small: [["stones", {}], ["mound", { small: true }]],
-  big: [["tree", { type: "fir", scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
+  big: [["tree", { type: "whitebeam", scale: .55 }], ["tree", { type: "fir", minor: true, scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
   steep: true, pathKinds: ["animal"],
   setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
   layout: {
@@ -9688,7 +9688,7 @@ const FROSTCAVE = {
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .05, rocks: .55, freak: .15, lake: .25, modern: 0 },
     feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering.",
   },
-  flora: { species: [["fir", .6], ["crystal", .25], ["birch", .15]], palette: { sat: .6, val: .85 } },
+  flora: { species: [["whitebeam", .45], ["fir", .3], ["crystal", .25]], palette: { sat: .6, val: .85 } },
   settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["blades"] } },
 };
 
