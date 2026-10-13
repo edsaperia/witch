@@ -402,6 +402,19 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const pad = extra.slice(more.length);
     if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
   }
+  // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
+  // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
+  if (rosterIsland && others.length) {
+    const own = others.map(([x, y]) => { const s = siteXZ(x, y); return { x: s[0], z: s[1], t: types.get(cellKey(x, y))! }; });
+    for (const k of [...types.keys()]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (playable(cx, cy) || (cx === centreCell[0] && cy === centreCell[1])) continue;
+      const s = siteXZ(cx, cy);
+      let best = own[0], bd = Infinity;
+      for (const o of own) { const d = (o.x - s[0]) ** 2 + (o.z - s[1]) ** 2; if (d < bd) { bd = d; best = o; } }
+      types.set(k, best.t);
+    }
+  }
 
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
   // moves a point at most d * stretch / A in partition units.
