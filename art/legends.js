@@ -27,7 +27,7 @@ export const LEGEND_FRAMES = { asleep: 2 };
 // glowing legend eyes are in (1 unless given).
 // Batch 1 (the bug hunter's first slice): bat, marten, elk, stoat, owl, snail. Batch 2: wolf, fox,
 // badger, boar, stag, hare, bear. Batch 3: lynx, otter, beaver, ram, squirrel, dormouse, salamander.
-// Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, glow-worm, spider, stag beetle.
+// Batch 4: toad, raven, mole, hedgehog, woodlouse. Batch 5: snake, moth, spider, stag beetle.
 export const LEGEND_POSES = {
   bat: { ground: .3, droop: 0, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] }, over: { moss: .3, lichen: .14, ferns: 1, grass: 2, mushrooms: 2, roots: 2, stones: 4 } },
   marten: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .45, lichen: .05, ferns: 3, grass: 3, mushrooms: 3, roots: 3, stones: 1, sapling: "pine" } },
@@ -49,12 +49,15 @@ export const LEGEND_POSES = {
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
   armadillo: { ground: .2, droop: .4, drop: [], over: { moss: .1, lichen: .25, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 4 } }, // the scrub wash's armadillo (an area recipe's): its shell sunk in cracked clay like a boulder
+  raccoon: { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }, // the mossy creek's raccoon (an area recipe's): curled under moss and ferns
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   elephant: { sink: .4, droop: .8, drop: [], over: { moss: .6, lichen: .08, ferns: 4, grass: 4, mushrooms: 2, roots: 4, stones: 3 } }, // the temple jungle's elephant: a matriarch knelt among the temple stones, mossed like one of them, her bells green with age
   jaguar: { sink: .45, droop: 1, drop: [], over: { moss: .55, lichen: .05, ferns: 4, grass: 2, mushrooms: 3, roots: 4, stones: 1 } }, // the river jungle's black jaguar: stretched along a root by the water, mossed over, its beads green with age
   tiger: { sink: .45, droop: 1, drop: [], over: { moss: .35, lichen: .06, ferns: 3, grass: 3, mushrooms: 1, roots: 3, stones: 2 } }, // the bamboo jungle's tiger (an area recipe's): stretched out under ferns and roots, its garland gone to dry stalks and its stripes to bark and shadow
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
+  griffin: { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen
+  frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age
   cheetah: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .06, lichen: .12, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 3 } }, // the plains' cheetah (an area recipe's): stretched long in the short grass, its spots gone to lichen
   lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
   fennec: { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it
@@ -66,7 +69,7 @@ export const LEGEND_POSES = {
   woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
   snake: { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45, lichen: .06, ferns: 2, grass: 6, mushrooms: 2, roots: 2, stones: 1 } },
   moth: { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .35, lichen: .16, ferns: 0, grass: 4, mushrooms: 1, roots: 1, stones: 2, flowers: 4 } },
-  glowworm: { ground: .14, droop: 0, drop: [], over: { moss: .45, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 1, stones: 0, flowers: 5 } },
+  cat: { sink: .45, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .1, ferns: 0, grass: 5, mushrooms: 0, roots: 1, stones: 3, flowers: 5 } },
   spider: { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .4, lichen: .1, ferns: 3, grass: 2, mushrooms: 3, roots: 2, stones: 1 } },
   beetle: { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .45, lichen: .08, ferns: 1, grass: 2, mushrooms: 4, brackets: 3, roots: 2, stones: 0 } },
 };

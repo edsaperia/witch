@@ -174,8 +174,8 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(shoot([], wall(), 1).A.hits.get(1)).toBeUndefined();
     expect(shoot(["elk"], [critter(2, 5, 0, { boss: true, level: 3 }), critter(1, 10, 0)], 1).A.hits.get(1)).toBeUndefined();
   });
-  it("Lanterns (glow-worm): a glowing trail that lands on an animal walking into it", () => {
-    const M = mods("glowworm"), A = counting(), s = newInvites(), c = critter(1, 6, 20), lit = new Set<Lantern>();
+  it("Paw prints (wildcat): a trail that lands on an animal walking into it", () => {
+    const M = mods("cat"), A = counting(), s = newInvites(), c = critter(1, 6, 20), lit = new Set<Lantern>();
     for (let i = 0, time = 0; i < 0.5 / STEP; i++, time += STEP) {
       s.events = [];
       if (time > 0.3) Object.assign(c, { x: 6, z: 0.2 }); // (it steps onto the path after the letters have passed)

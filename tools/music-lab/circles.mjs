@@ -14,7 +14,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url)), root = resolve(here, "../..");
-const ALL = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "moth", "glowworm", "spider", "beetle"];
+const ALL = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "moth", "cat", "spider", "beetle"];
 const species = process.argv[2] ? process.argv[2].split(",") : ALL;
 const require = createRequire(import.meta.url);
 let playwright;

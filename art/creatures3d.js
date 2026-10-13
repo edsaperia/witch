@@ -266,6 +266,20 @@ function evolve3d(m, feats, c) {
     if (f.kind === "wings") { // leathery wings off its shoulders (Ed, 2026-10-11: the east's Cinder Wyrm), bat-built: bones, a membrane between
       m.part = "body";
       const S = (f.size ?? .9) * c.len * (f.nub ? .32 : 1), b = c.backAt(f.at ?? .66), mem = M[f.mat || "BODY2"], bone = M[f.bone || "BODY3"], lift = c.frame ? -.08 : .06;
+      if (f.feathered) { // a griffin's: an eagle's wings, a fan of long flight feathers off the wrist, pale-tipped, the coverts over their roots
+        const tipMat = M[f.mat2 || "BELLY"], k = f.nub ? .45 : 1, n = f.nub ? 4 : 8;
+        for (const side of [-1, 1]) {
+          const g = 180 + (side > 0 ? 1 : 0), sh = [b[0], b[1] - .02, side * c.bw * .45], wr = v3.add(sh, [.05 * S * k, (.42 + lift) * S * k, side * .3 * S * k]), hand = v3.add(wr, [.1 * S * k, .3 * S * k, side * .12 * S * k]);
+          m.chain([[...sh, S * .08 * k], [...wr, S * .06 * k], [...hand, S * .035 * k]], mem, { group: g, extra: true }); // its arm: shoulder, wrist, hand (the leading edge)
+          for (let i = 0; i < n; i++) { // the flight feathers: the primaries off the hand reaching furthest, the secondaries off the arm shorter, all swept back
+            const t = i / (n - 1), root = t < .5 ? v3.lerp(hand, wr, t * 2) : v3.lerp(wr, sh, (t - .5) * 2), len = S * k * (.95 - .5 * t), dir = v3.norm([-.55 - .4 * t, .35 - .55 * t, side * (.15 - .1 * t)]);
+            const tip = v3.add(root, v3.mul(dir, len)), mid = v3.lerp(root, tip, .5), w = S * k * (.06 - .015 * t);
+            m.chain([[...root, w * .8], [...mid, w], [...tip, w * .3]], mem, { group: g + 2, extra: true, paint: p => v3.dot(v3.sub(p, root), dir) > len * .62 ? tipMat : undefined });
+          }
+          m.ell(v3.lerp(sh, hand, .45), [S * .3 * k, S * .14 * k, S * .07 * k], mem, { group: g + 4, extra: true, dir: v3.norm(v3.sub(hand, sh)) }); // the coverts over the feathers' roots
+        }
+        continue;
+      }
       for (const side of [-1, 1]) {
         const sh = [b[0], b[1] - .02, side * c.bw * .45], wr = v3.add(sh, [-.12 * S, (.5 + lift) * S, side * .32 * S]);
         const tips = f.nub ? [v3.add(sh, [-.55 * S, .55 * S, side * .3 * S]), v3.add(sh, [-.65 * S, .2 * S, side * .25 * S])]
@@ -295,7 +309,7 @@ function evolve3d(m, feats, c) {
 // ================= four-legged animals =================
 export function quad3d(S, level, frame, st, facing = "towards") {
   // its evolution at this level (genome levels: its own proportions and parts, not a rescale; q.features: legend features it grows early)
-  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
+  const q = { legW: 1, earS: 1, hgt: 1, bw: .3, ...S.q, ...(S.levelQ?.[level] || {}) }, legend = level === 3, juv = level === 1, baby = level === 0, has = f => (legend && !S.levelFeatures?.[3] && S.legend.includes(f)) || (q.features || []).includes(f) || !!S.levelNamed?.[level]?.includes(f); // (an evolved legend, its genome levels[3], replaces its old legend feature)
   const feats = S.levelFeatures?.[level];
   const sz = k => S.sizes[k][level]; // its template's size curves (art/genome/templates.js): baby, young, adult, legend
   const m = new Model();
@@ -309,19 +323,23 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // rosettes (a jaguar's): broken rings over its back and flanks, none on its belly; on a black coat only a shade darker (faint in the light);
   // ripple: each ring shifted along the body by the frame, so they ripple like light on water as it moves
   const rosetteAt = p => { const R = q.rosettes, k = R.k ?? 8, u = p[0] * k, v = p[1] * k, w = p[2] * k * .6, i = Math.floor(u), j = Math.floor(v), l = Math.floor(w); if (p[1] < chest + .06 || hash2(i, j + l * 31, 11) > (R.density ?? .7)) return false; const cx = i + .3 + hash2(i, j, 12) * .4 + (R.ripple ? Math.sin(v * 1.7 + frame * 2.2) * R.ripple : 0), cy = j + .3 + hash2(j, i, 13) * .4, d = Math.hypot(u - cx, v - cy), a = Math.atan2(v - cy, u - cx); return d > .2 && d < .36 && Math.sin(a * 3 + i) > -.55; };
-  // scars (an elder's): a few long pale weals raked across its flanks and shoulder, seeded by its kind
-  const scarAt = p => { const n = q.scars; for (let k = 0; k < n; k++) { const h = (k + 1) * 7.31 + S.id.length, x0 = (hash2(k, 3, h) - .5) * len * 1.4, y0 = chest + (top - chest) * (.35 + hash2(k, 4, h) * .5), a = -.9 + hash2(k, 5, h) * .5, d = Math.abs((p[0] - x0) * Math.sin(a) - (p[1] - y0) * Math.cos(a)), along = (p[0] - x0) * Math.cos(a) + (p[1] - y0) * Math.sin(a); if (d < .014 && Math.abs(along) < .22 && p[2] > 0) return true; } return false; };
+  // an elder's marks (docs/ART-GUIDE.md 0c): old scars across its hide, a hoard frozen into it, an old gold harness
+  const SCARS = [[.4, .75, .3, -.6, .9], [-.2, .7, .35, .5, .85], [.15, .6, -.32, -.4, .9], [-.5, .65, -.3, .7, .7], [.65, .7, .25, .2, 1], [0, .55, .3, -.9, .4]];
+  const scarAt = p => { for (let i = 0; i < (q.scars || 0); i++) { const [x, y, z, a, b] = SCARS[i % SCARS.length], c = [x * len, y * top + (1 - y) * chest, z], d = v3.norm([Math.cos(a), Math.sin(a) * b, 0]), w = v3.sub(p, c), along = v3.dot(w, d), across = Math.abs(v3.dot(w, v3.norm([-d[1], d[0], 0]))); if (Math.abs(along) < .16 && across < .014 && p[2] * Math.sign(z || 1) > -bw * .2) return M.BELLY; } return undefined; };
   // stripes (a tiger's): dark bands across its body from the spine down, wavering, narrowing toward the belly, none on it
   const stripeAt = p => { const T = q.stripes, n = T.n ?? 10, w = T.w ?? .3, low = (p[1] - chest) / Math.max(.01, top + hump - chest); if (low < .05) return false; const u = (p[0] + len * 1.2) / (len * 2.4) * n + Math.sin(p[1] * 9 + p[2] * 5 + p[0] * 3) * (T.wave ?? .2) + Math.abs(p[2]) * 1.1, f = u - Math.floor(u); return f < w * Math.min(1, .35 + low); };
   const paintBody = p => {
+    const sc = scarAt(p); if (sc) return sc;
+    if (q.hoard && p[1] < (chest + top) / 2 && spotty(p, 34, .14)) return M.FLOWER; // its hoard frozen into its underside: coins and cups in the ice of its belly
+    if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
-    if (q.scars && scarAt(p)) return M.BELLY;
     if (q.stripes && stripeAt(p)) return M[q.stripes.mat || "BODY3"];
     if (q.rosettes && rosetteAt(p)) return M[q.rosettes.mat || "BODY3"];
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots === "solid") { const k = 24, f = p.map(c => c * k - Math.floor(c * k) - .5); if (f[0] * f[0] + f[1] * f[1] + f[2] * f[2] < .16 && spotty(p, k, .6)) return M.NOSE; } // a cheetah's: small round solid dots all over
     if (q.spots && q.spots !== "solid" && p[1] > chest + .1 && spotty(p, 10, .22)) return q.spotMat === "belly" || (q.spots === "young" && juv) ? M.BELLY : q.spots === "young" ? undefined : M.BODY3;
-    if (q.ridge && p[1] > top - .08 + hump * .5) return M.BODY3;
+    if (q.ridge && p[1] > top - .08 + hump * .5) return M[q.ridgeMat || "BODY3"]; // (ridgeMat: its crest's own material, the frost wyrm's ice-pale BELLY)
+    if (q.tabby && p[1] > chest + .04) { const t = (p[0] + Math.sin(p[1] * 17 + p[2] * 9) * .035) / (len * 2 / q.tabby.n) + 64; if (t - Math.floor(t) < (q.tabby.w ?? .32)) return M[q.tabby.mat || "BODY3"]; } // a tabby's stripes, thin, across its body, a little wavy
     if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
     return undefined;
   };
@@ -329,7 +347,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
-  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M.BODY3, { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
+  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: shoulder/hip, knee, ankle, foot; near legs lighter, far legs in shade ----
   const sw = [.32, -.32][frame];
@@ -361,6 +379,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const headPaint = p => {
     if (q.face === "badger") return Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) + (p[0] - H[0]) * .1 || p[1] < H[1] - hr * .1 ? (q.blazeGlow && Math.abs(p[2]) < hr * .22 * (q.blaze ?? 1) && p[1] > H[1] - hr * .1 ? M.RUNE : M.BELLY) : M.BODY3; // blaze: the stripe's width; blazeGlow: it glows in moonlight
     if (q.face === "dark") return M.BODY2;
+    if (q.face === "raccoon") { const band = H[1] + hr * .12; if (p[0] > H[0] - hr * .35 && Math.abs(p[1] - band) < hr * .27) return M.BODY3; if (p[0] > H[0] - hr * .1 && p[1] >= band + hr * .27 && p[1] < band + hr * .5) return M.BELLY; if (p[0] > H[0] + hr * .2 && p[1] < band - hr * .27) return M.BELLY; return undefined; } // the bandit mask: black across its eyes, white brows over it and a white muzzle under
     if (q.face === "meerkat" && p[0] > H[0] - hr * .05 && Math.abs(p[1] - (H[1] + hr * .27)) < hr * .3 && Math.abs(Math.abs(p[2]) - hr * .5) < hr * .38) return M.BODY3; // dark patches round its eyes
     if (q.frost && p[0] > H[0] + hr * .7 && spotty(p, 26, .45)) return M.WEB; // frost on its muzzle
     if (q.scars && Math.abs((p[0] - H[0] - hr * .3) * .8 + (p[1] - H[1] - hr * .1)) < hr * .035 && Math.abs(p[0] - H[0] - hr * .3) < hr * .45 && p[2] > 0) return M.BELLY; // a scar across its brow and eye
@@ -372,19 +391,22 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
   const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
-  m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
-  if (q.jaw) m.ell([sn[0] - L * .05, sn[1] - Dm * .55, 0], [L * .55 + hr * .18, Dm * .55 * q.jaw, Dm * .85 * Math.min(1.3, q.jaw)], M.BODY, { dir: [1, -.15, 0], paint: headPaint }); // a heavy lower jaw (a jaguar legend's crushing bite)
-  const tip = [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0];
-  if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
-  else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
-    const T = q.trunk, Lt = (T.len ?? 1) * hr * 2.4, r0 = (T.r ?? .34) * hr, pts = [], n = 12;
-    let p = [sn[0] + L * .2, sn[1] - Dm * .2, 0], ang = -.45;
-    // raise (a legend's: 0 hanging to 1 held high in a trumpet): up from its brow, its tip flared and curled back over
-    const up = T.raise ?? 0;
-    if (up) ang = -.45 + (.35 + .45) * up;
-    for (let i = 0; i <= n; i++) { const t = i / n, hang = -.45 - Math.min(t, .7) * 1.6 + Math.max(0, t - .7) * (T.curl ?? .5) * 5, high = .35 + t * 1.25 + Math.max(0, t - .72) * (T.curl ?? .5) * 4.5; pts.push([...p, r0 * (1 - t * .62) * (up && t > .9 ? 1.5 : 1)]); ang = hang + (high - hang) * up; p = [p[0] + Math.cos(ang) * Lt / n, p[1] + Math.sin(ang) * Lt / n, 0]; }
-    m.chain(pts, M.BODY, { group: 1, paint: q => Math.sin(q[1] * 70 + q[0] * 20) > .75 ? M.BODY2 : undefined });
-    m.ell(pts[n].slice(0, 3), [r0 * .4, r0 * .4, r0 * .4], M.NOSE, { group: 1 });
+  if (q.beak) m.chain([[H[0] + hr * .7, H[1] - hr * .05, 0, hr * .34], [H[0] + hr * 1.2 * q.beak, H[1] - hr * .12, 0, hr * .22], [H[0] + hr * 1.5 * q.beak, H[1] - hr * .38, 0, hr * .1], [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0, hr * .03]], M.ACCENT, { group: 1 }); // a griffin's hooked beak (beak: its length), in its accent
+  const tip = q.beak ? [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0] : [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0]; // (its snout's tip, or its beak's)
+  if (!q.beak) {
+    m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
+    if (q.jaw) m.ell([sn[0] - L * .05, sn[1] - Dm * .55, 0], [L * .55 + hr * .18, Dm * .55 * q.jaw, Dm * .85 * Math.min(1.3, q.jaw)], M.BODY, { dir: [1, -.15, 0], paint: headPaint }); // a heavy lower jaw (a jaguar legend's crushing bite)
+    if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
+    else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
+      const T = q.trunk, Lt = (T.len ?? 1) * hr * 2.4, r0 = (T.r ?? .34) * hr, pts = [], n = 12;
+      let p = [sn[0] + L * .2, sn[1] - Dm * .2, 0], ang = -.45;
+      // raise (a legend's: 0 hanging to 1 held high in a trumpet): up from its brow, its tip flared and curled back over
+      const up = T.raise ?? 0;
+      if (up) ang = -.45 + (.35 + .45) * up;
+      for (let i = 0; i <= n; i++) { const t = i / n, hang = -.45 - Math.min(t, .7) * 1.6 + Math.max(0, t - .7) * (T.curl ?? .5) * 5, high = .35 + t * 1.25 + Math.max(0, t - .72) * (T.curl ?? .5) * 4.5; pts.push([...p, r0 * (1 - t * .62) * (up && t > .9 ? 1.5 : 1)]); ang = hang + (high - hang) * up; p = [p[0] + Math.cos(ang) * Lt / n, p[1] + Math.sin(ang) * Lt / n, 0]; }
+      m.chain(pts, M.BODY, { group: 1, paint: q => Math.sin(q[1] * 70 + q[0] * 20) > .75 ? M.BODY2 : undefined });
+      m.ell(pts[n].slice(0, 3), [r0 * .4, r0 * .4, r0 * .4], M.NOSE, { group: 1 });
+    }
   }
   // eyes: both show; legends' glow
   for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), (legend && !q.tusks) || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 1 }); } // (eyeGlow: an evolved level's eye catching the light, the legend boar's under its hump)
@@ -409,8 +431,9 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.part = "head";
   // ---- horns, antlers, tusks ----
   const hornTips = [];
-  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * (.05 + (q.horn?.back ?? 0)), H[1] + hr * (.6 + (q.horn?.up ?? 0)), side * hr * (.45 + (q.horn?.wide ?? 0))], side, /* back, up, wide: its base moved, in head radii (clear of the brows) */ { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
+  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * (.05 + (q.horn?.back ?? 0)), H[1] + hr * (.6 + (q.horn?.up ?? 0)), side * hr * (.45 + (q.horn?.wide ?? 0))], side, /* back, up, wide: its base moved, in head radii (clear of the brows) */ { ...q.horn, length: (q.horn?.length ?? 2) * hr * (q.hornBroken && side < 0 ? .45 : 1), r: (q.horn?.r ?? .3) * hr }));
   else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
+  if (has("crown")) crown3d(m, [H[0] - hr * .05, H[1] + hr * .9, 0], hr * .5); // (a wildcat elder's: her crown, as the toad's and the mole's)
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
   const tuskTips = [];
   if (q.tusks) for (const side of [-1, 1]) {
@@ -523,6 +546,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "ringed") m.chain([[...tb, .085], [X(1.2), top - .3, 0, .075], [X(1.5), top - .62 + tw, 0, .068], [X(1.85), .24 + tw, 0, .06], [X(2.1), .36 + tw, 0, .05]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) && p[1] > .3 + tw ? M.BELLY : p[0] < X(1.45) && Math.sin(p[0] * 26) > .25 ? M.BODY3 : undefined }); // a cheetah's: long and heavy (its rudder), low, curling up at its end, black rings and a white tip
   else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)
+  else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 
@@ -999,16 +1023,6 @@ export function moth3d(S, level, frame, st, facing = "towards") {
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .5, facing);
-}
-
-export function glowworm3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .05 : 0;
-  for (let i = 0; i < 9; i++) { const t = i / 8, x = -.6 + t * 1.15; m.ell([x, .12 + Math.sin(t * Math.PI) * (.06 + ph), 0], [.08, .1 - t * .02, .12 - t * .03], i < 2 ? M.MAGIC2 : i % 2 ? M.BODY2 : M.BODY, { group: 1 }); }
-  if (has("lantern")) m.ell([-.75, .3, 0], [.22, .22, .22], M.MAGIC2, { group: 3, paint: p => p[1] < .2 ? M.MAGIC : undefined });
-  for (let i = 0; i < 6; i++) m.seg([-.2 + i * .12, .05, .08], [-.2 + i * .12 + (i % 2 ? .02 : -.02) * (frame ? -1 : 1), 0, .12], .015, .01, M.BODY3, { group: 7 });
-  m.ell([.6, .14, 0], [.06, .06, .08], M.BODY3, { group: 1 });
-  eyesOn(m, [.6, .14, 0], [.06, .06, .08], [[.6, .3, .7], [.6, .3, -.7]], .015, legend ? M.MAGIC2 : M.EYE);
-  return finish(m, S, level, st, .4, facing);
 }
 
 export function spider3d(S, level, frame, st, facing = "towards") {
