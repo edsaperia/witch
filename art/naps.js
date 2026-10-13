@@ -42,6 +42,7 @@ export const NAP_POSES = {
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
   elephant: { kind: "lie", sink: .05, droop: .6 }, // knelt down, her trunk on the ground
+  jaguar: { kind: "curl", sink: .04, droop: 1, curl: 2.4, tailDown: .25 }, // stretched on its side, its tail laid round
   tiger: { kind: "curl", sink: .04, droop: 1, curl: 2.4, tailDown: .25 }, // sprawled on its side, its tail laid round
   griffin: { kind: "curl", sink: .04, droop: 1, curl: 2.8, tailDown: .25 }, // curled like a cat, its head under a wing
   frostwyrm: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .25 }, // coiled round on itself, its tail over its snout

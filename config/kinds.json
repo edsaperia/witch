@@ -374,12 +374,11 @@
       "dir": "W",
       "biome": "jungle"
     },
-    "unknown-29": {
+    "jaguar": {
       "phase": 4,
       "bearing": 285,
       "dir": "WNW",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "raccoon": {
       "phase": 4,

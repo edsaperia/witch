@@ -14,6 +14,7 @@
     "squirrel": {"posture": {"head": [0, 0.04], "body": 0}, "quirk": "tailflick", "every": [2, 4], "for": 0.7},
     "otter": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "shake", "every": [5, 9], "for": 0.8},
     "elephant": {"posture": {"head": [0.02, -0.03], "body": 0}, "quirk": "stomp", "every": [6, 12], "for": 1.4},
+    "jaguar": {"posture": {"head": [0.02, -0.03], "body": -0.02}, "quirk": "tailflick", "every": [5, 9], "for": 0.9},
     "tiger": {"posture": {"head": [0.02, -0.02], "body": -0.02}, "quirk": "tailflick", "every": [4, 8], "for": 0.9},
     "lynx": {"posture": {"head": [0.04, -0.02], "body": -0.03}, "quirk": "tailflick", "every": [3, 6], "for": 0.6},
     "cat": {"posture": {"head": [0.03, 0.0], "body": -0.01}, "quirk": "tailflick", "every": [3, 7], "for": 0.8},
