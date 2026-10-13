@@ -66,7 +66,7 @@ export interface HatLetters {
   sling: { x: number; z: number; catch: number; fire: number; hold: number; radius: number; max: number }[];
 }
 
-/** A lantern on the ground (Glow-worm): any animal it touches before it goes out is a hit. */
+/** A paw print on the ground (Wildcat): any animal it touches before it goes out is a hit. */
 export interface Lantern { x: number; z: number; until: number; n: number; /** The animals it has landed on (once each). */ hit?: number[] }
 
 /** What a 💌 did this frame: thrown or fizzled (its number n); landed on a creature (id; spent: always false
@@ -102,7 +102,7 @@ export interface Invites {
   cacheAt: number;
   /** When each orbiting letter's slot fills again (Dormouse). */
   orbitAt: number[];
-  /** Glow-worm lanterns lying. */
+  /** Paw prints lying. */
   lanterns: Lantern[];
   /** When the Sentry hat may throw its next 💌. */
   sentryAt?: number;

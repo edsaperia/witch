@@ -474,7 +474,7 @@ The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight
 
 ### `scenery`
 
-The scenery budget (Ed, 2026-10-03: gameplay always drawn, scenery as much as we can). Creatures, sigils, soundsystems, the dancefloor, the party border, campfires and stones are always drawn. Scenery (trees, bushes, wall objects, set pieces, string lights) is drawn out to a radius round the witch, at most the haze's far edge, fading out over its last fade metres so nothing pops. With adaptive on, the radius follows the frame rate: if it stays under fps minus hysteresis for sustain seconds the radius shrinks by shrink metres a second, never below minRadius; if it stays at fps or more, it grows back by grow metres a second. ?scenery=<metres> fixes the radius (for testing).
+The scenery budget (Ed, 2026-10-03: gameplay always drawn, scenery as much as we can). Creatures, sigils, soundsystems, the dancefloor, the party border, campfires and stones are always drawn. Scenery (trees, bushes, wall objects, set pieces, string lights) is drawn out to a radius round the witch, at most the haze's far edge, fading out over its last fade metres so nothing pops. With adaptive on, the radius follows the frame rate: if it stays under fps minus hysteresis for sustain seconds the radius shrinks by shrink metres a second, never below minRadius; if it stays at fps or more, it grows back by grow metres a second. ?scenery=<metres> fixes the radius (for testing). canopyReach: in the treetops, tree crowns alone (no trunk, shadow or undergrowth) are drawn out to this many metres (at most haze.far) where the budget has pulled the rest in closer, so the canopy stays whole to the horizon on a slow machine (Ed's playtest, 2026-10-13: "outside of a circle around the witch, the canopy is not drawn"); 0 off.
 
 | knob | type | range |
 |---|---|---|
@@ -486,6 +486,7 @@ The scenery budget (Ed, 2026-10-03: gameplay always drawn, scenery as much as we
 | `scenery.shrink` | number | 0 to … |
 | `scenery.grow` | number | 0 to … |
 | `scenery.fade` | number | 0 to … |
+| `scenery.canopyReach` | number | 0 to … |
 
 ## Witch
 
