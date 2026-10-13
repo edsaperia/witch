@@ -146,3 +146,17 @@ export function relicLights(v: View, time: number): ForestLight[] {
   return out;
 }
 const relicRgb = new Map<string, THREE.Vector3>();
+
+/** A legend that carries a lit lantern (its genome's `lantern` feature: the heron's elder, Ed 2026-10-13): a small warm light
+ *  where it stands, awake only (asleep, the lantern's out, as every sleeping legend is unlit), flickering like the party's. */
+const LANTERN_RGB = new THREE.Vector3(255 / 255, 186 / 255, 96 / 255);
+export function lanternLights(v: View, time: number): ForestLight[] {
+  const out: ForestLight[] = [];
+  for (const c of v.game.creatures) {
+    if (c.level < 3 || c.asleep || c.legendState === "asleep" || c.legendState === "restless") continue;
+    if (!(Art.SPECIES_BY_ID[c.species]?.legend ?? []).includes("lantern") || !inView(v, c.x, c.z, 4, 6, 4)) continue;
+    const flick = 0.85 + 0.1 * Math.sin(time * 11 + c.x) + 0.05 * Math.sin(time * 23 + c.z);
+    out.push({ x: c.x, y: 2.2, z: c.z, reach: 4.5, rgb: LANTERN_RGB.clone(), strength: 1.4 * flick });
+  }
+  return out;
+}
