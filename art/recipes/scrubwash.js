@@ -7,12 +7,13 @@ export const SCRUB_WASH = {
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
   big: [["tree", { type: "hawthorn", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
+  pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "scatter", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
     heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
-    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .6, freak: .1, lake: 0, modern: .1 },
+    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },
-  flora: { species: [["hawthorn", .6], ["juniper", .4]], palette: { sat: .55, val: .75 } },
+  flora: { species: [["hawthorn", .55], ["juniper", .3], ["pine", .15]], palette: { sat: .6, val: .75 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
