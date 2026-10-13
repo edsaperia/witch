@@ -52,6 +52,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "wetland": look("granite", "reeds", "moss", 0.66, true),
   "stream": look("limestone", "pebbles", "moss", 0.5, true),
   "rocky-slope": look("slate", "pebbles", "lichen", 0.4),
+  "crags": look("slate", "pebbles", "lichen", 0.4),
   "bog": look("granite", "reeds", "moss", 0.75, true, 0.35),
   "deadwood": look("buffSandstone", "darkLeaves", "lichen", 0.45, false, 0.6),
   "cave-mouth": look("slate", "pebbles", "moss", 0.55),
@@ -65,9 +66,9 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "holly-thicket": look("slate", "darkLeaves", "moss", 0.55),
   "honeysuckle-tangle": look("limestone", "flowers", "lichen", 0.5),
   "fen": look("granite", "reeds", "moss", 0.65, true),
-  "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "snowfield": look("granite", "needles", "lichen", 0.4),
-  "crags": look("slate", "pebbles", "lichen", 0.4),
+  "heronry": look("granite", "reeds", "lichen", 0.55, true),
+  "plains": look("redSandstone", "grass", "lichen", 0.35), // red earth and short grass
   "savanna": look("redSandstone", "grass", "lichen", 0.45), // sun-baked sandstone, the long grass over it
   "erg": look("buffSandstone", "pebbles", "lichen", 0.3), // sand-scoured sandstone, drifted over
 };
