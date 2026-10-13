@@ -193,12 +193,11 @@
       "dir": "NNW",
       "biome": "temperate"
     },
-    "unknown-01": {
+    "arcticfox": {
       "phase": 3,
       "bearing": 12,
       "dir": "NNE",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
     "unknown-02": {
       "phase": 3,

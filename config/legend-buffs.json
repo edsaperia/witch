@@ -100,6 +100,7 @@
     "stoat":      { "name": "Frenzy",         "kind": "move", "mods": { "frenzy": 1 },              "label": "Stoat's Frenzy: winning an animal over gives back a blink" },
     "beaver":     { "name": "Decoy",          "kind": "move", "mods": { "decoy": 1 },               "label": "Beaver's Decoy: blinking leaves a waiting 💌 where you were" },
     "marten":     { "name": "Scamper",        "kind": "move", "scale": { "groundSpeed": 1.2 },      "label": "Marten's Scamper: faster on the ground" },
+    "arcticfox":  { "name": "Snow pounce",    "kind": "move", "scale": { "dash.distance": 1.2, "groundAcceleration": 1.6 }, "label": "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot" },
     "tiger":      { "name": "Pounce",         "kind": "move", "scale": { "dash.distance": 1.4, "groundAcceleration": 1.4 }, "label": "Tiger's Pounce: a longer blink, and quicker off the mark" },
     "elephant":   { "name": "Trumpet",        "kind": "shot", "scale": { "invites.radius": 1.6, "invites.range": 1.2 }, "label": "Elephant's Trumpet: bigger 💌s that carry further" },
     "jaguar":     { "name": "Night eyes",     "kind": "shot", "scale": { "invites.range": 1.3, "invites.speed": 1.15 }, "label": "Jaguar's Night eyes: 💌s fly further and a little faster" },
