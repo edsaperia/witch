@@ -3894,6 +3894,23 @@ const GENOMES = [
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
+  // the scrub wash's armadillo (Ed, 2026-10-12, unknown-06, the badlands): its own builder, a low domed shell banded across its middle,
+  // a long tapering snout, upright ears, a ringed tail; its legend (Ed: "rolls into a glowing ball, with glowing seams between its
+  // bands, rolling when it moves") curled into that ball (armadillo3d's level 3)
+  { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: .06, sat: .22, val: .58 }, legend: ["ball"], texture: { kind: "plates" } },
+  // the erg's fennec fox (a journey kind: unknown-07's, the hot south): a small pale sand fox that's mostly ears, a black-tipped brush; its
+  // legend the dunes' own: ears like sails, a white mask, turquoise beads, heat-shimmer rising off its back
+  { id: "fennec", name: "Fennec fox", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .93, belly: "white", ear: [.97, .32, .9], magic: .12 }, body: { hgt: .62, len: .55, chest: .4, tuck: .48, neck: .28, neckAng: .78, neckW: .3, hr: .28, legW: .7 }, head: { snout: .8, snoutD: .42, snoutTaper: .5, eyeK: 1.35 }, parts: { ears: { kind: "sail", size: 2 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["tails"],
+    levels: [
+      { body: { len: .44, chest: .36, tuck: .42, hr: .32 }, head: { snout: .6, eyeK: 1.5 }, parts: { ears: { kind: "sail", size: 2.3 }, tail: "puff" } },
+      { body: { len: .62, chest: .44, tuck: .52, legW: .65, neckW: .27 }, head: { snout: .9 } },
+      { body: { len: .6, legW: .72 }, head: { snout: .88 }, parts: { ears: { kind: "sail", size: 2.1 } }, features: [{ kind: "ruff", size: .1, count: 10, mat: "BELLY" }] },
+      { body: { len: .66, legW: .8, neckAng: .7 }, head: { snout: .9, mask: true, eyeGlow: true }, parts: { ears: { kind: "sail", size: 2.6 } }, coat: { beads: true }, features: [
+        { kind: "ruff", size: .18, count: 14, mat: "BELLY" },
+        { kind: "mane", from: .25, to: .9, height: .07, count: 14, lean: .85, mat: "BELLY" },
+        { kind: "wisps", at: "mane", size: .2, count: 6, from: .15, to: .85, mat: "MAGIC2", lift: .2 },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
@@ -3919,7 +3936,7 @@ const TEMPLATES = {
   quadruped: {
     name: "Four-legged", builders: ["quad"],
     sockets: {
-      ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
+      ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none"],
       tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
@@ -3950,7 +3967,7 @@ const TEMPLATES = {
   flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
   serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
   insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 const TEMPLATE_IDS = Object.keys(TEMPLATES);
 
@@ -4191,6 +4208,8 @@ function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
+  if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
+  if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -4295,7 +4314,8 @@ const NAP_POSES = {
   elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
-  meerkat: { kind: "lie", sink: .02, droop: 1, curl: .6 },
+  armadillo: { kind: "lie", sink: .02, droop: .4, curl: .3 },
+  meerkat: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   // curl
   fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
@@ -4304,6 +4324,7 @@ const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  fennec: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, // curled in its brush, ears laid back
   heron: { kind: "tuck", ground: .56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] },
   // coil
   snake: { kind: "coil", ground: 0, droop: .6, curl: 5.5, drop: [40, 50] },
@@ -4761,9 +4782,9 @@ function quad3d(S, level, frame, st, facing = "towards") {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
-    const long = E === "long", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : 1);
-    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * .3]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
-    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
+    const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
+    const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
+    m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
     if (E === "tuft") m.seg(v3.add(base, [0, eh * 1.4, side * .02]), v3.add(base, [0, eh * 1.85, side * .04]), hr * .05, hr * .02, M.BODY3, { group: 1 });
   }
   // ---- tail ----
@@ -5160,6 +5181,45 @@ function sentinel3d(S, level, frame, st, facing = "towards") {
   return finish(m, S2, level, st, (S.q?.hgt ?? .8) * 1.25, facing);
 }
 
+// The armadillo's legend (Ed, 2026-10-12: "rolls into a glowing ball, with glowing seams between its bands, rolling when it moves"):
+// curled up into a ball of banded shell, the seams between its bands glowing, its ears and the tip of its snout and tail showing
+// where they tuck in; frame 1 a turn on (the bands rolled round a step), so its walk cycle rolls it.
+function armadilloBall(S, frame, st, facing) {
+  const m = new Model(), R = .46, c = [0, R, 0], n = 9, step = Math.PI * 2 / n, roll = frame ? step / 2 : 0;
+  m.ell(c, [R, R, R * .92], M.BODY, { paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]) + roll, k = ((a / step) % 1 + 1) % 1; return k < .1 ? M.MAGIC : Math.floor(a / step) % 2 ? M.BODY2 : spotty(p, 24, .25) ? M.BODY3 : undefined; } }); // signature: the ball of banded shell, glowing at every seam
+  for (const side of [-1, 1]) m.ell([R * .55, R * 1.62, side * R * .3], [.1, .035, .03], M.SKIN, { dir: [.3, 1, side * .4], group: 1 }); // its ears, poking out
+  m.ell([R * .95, R * .55, 0], [.05, .03, .03], M.NOSE, { group: 1 }); // the tip of its snout, tucked in
+  for (const side of [-1, 1]) m.ell(Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32])), [.025, .025, .025], M.MAGIC2, { group: 1 }); // its glowing eyes, peeping out
+  m.ell([0, .02, 0], [R * .8, .02, R * .6], M.MAGIC, { group: 2, extra: true }); // the glow it rolls on
+  m.anchors.head = { c: [R * .7, R * 1.2, 0], r: [.14, .12, .12], top: [R * .6, R * 1.7, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32]))), size: .025 };
+  m.anchors.neck = { c: [R * .7, R, 0], r: .12, dir: [1, .2, 0] };
+  return finish(m, S, 3, st, .55, facing);
+}
+
+// The badlands' armadillo (Ed, 2026-10-12): a low domed shell, its middle in bands, shields of scales before and behind; a small
+// head with a long tapering snout and upright ears, short clawed legs, a ringed tail.
+function armadillo3d(S, level, frame, st, facing = "towards") {
+  if (level === 3) return armadilloBall(S, frame, st, facing);
+  const legend = false, m = new Model(), bob = frame ? .012 : 0;
+  for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
+  const c = [0, .3 + bob, 0], r = [.5, .27, .32], band = p => Math.floor((p[0] + .26) * 15);
+  m.ell(c, r, M.BODY, { paint: p => p[0] > -.26 && p[0] < .2 ? (band(p) % 2 ? M.BODY2 : M.BODY) : spotty(p, 26, .3) ? M.BODY3 : spotty(p, 22, .2) ? M.BODY2 : undefined }); // signature: the shell, banded across its middle
+  m.ell([0, .17 + bob, 0], [.46, .08, .3], M.SKIN, { group: 1 }); // its soft underside showing under the shell's rim
+  const hc = [.6, .22 + bob, 0], hr = [.14, .12, .12];
+  m.ell(hc, hr, M.BODY, { paint: p => p[1] > hc[1] + .04 ? M.BODY2 : undefined });
+  m.seg(v3.add(hc, [.08, -.02, 0]), v3.add(hc, [.3, -.08, 0]), .055, .022, M.SKIN, { group: 1 }); // the long tapering snout
+  m.ell(v3.add(hc, [.31, -.08, 0]), [.025, .025, .028], M.NOSE, { group: 1 });
+  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.03, .15, side * .07]), [.1, .035, .03], M.SKIN, { dir: [-.2, 1, side * .35], group: 1 }); // upright ears
+  eyesOn(m, hc, hr, [[.55, .3, .6], [.55, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
+  m.chain([[-.46, .24 + bob, 0, .08], [-.66, .12, 0, .05], [-.86, .05, 0, .02]], M.BODY, { paint: p => Math.floor(p[0] * 30) % 2 ? M.BODY2 : undefined, group: 3 }); // the ringed tail
+  m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + .16, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(hc, hr, v3.norm([.55, .3, side * .6]))), size: .025 };
+  m.anchors.neck = { c: [.44, .22 + bob, 0], r: .12, dir: [1, -.1, 0] };
+  if (legend) crystals3d(m, [[[-.2, .54, .1], .35], [[0, .57, -.1], .5], [[.18, .53, .1], .4], [[-.05, .56, .18], .3]]);
+  return finish(m, S, level, st, .5, facing);
+}
+
 function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
@@ -5354,7 +5414,7 @@ function spider3d(S, level, frame, st, facing = "towards") {
 
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
-const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
+const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, glowworm: glowworm3d, spider: spider3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
 // Idle poses (a genome's `idle`; Ed, 2026-10-12): drawn as a baked frame while it stands still now and then (render/view/creatures.ts),
 // the four-legged rig standing aside. The meerkat sat up as a sentinel.
@@ -5402,7 +5462,7 @@ function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
   const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
-  const magic = hsv2rgb(st.magicHue + s.hue * .3, .6, 1), magic2 = hsv2rgb(st.magicHue + s.hue * .3, .18, 1);
+  const mh = s.magic ?? st.magicHue + s.hue * .3, magic = hsv2rgb(mh, .6, 1), magic2 = hsv2rgb(mh, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
     [M.BODY]: body, [M.BODY2]: hsv2rgb(s.hue + .02 - hs * .04, Math.min(1, s.sat * sat * 1.2 + .05 + hs * .1), s.val * v * .66), [M.BODY3]: hsv2rgb(s.hue + .03 - hs * .07, Math.min(1, s.sat * sat * 1.3 + .1 + hs * .15), s.val * v * .4),
@@ -5410,7 +5470,7 @@ function baseColours(s, st) {
     [M.BELLY]: belly, [M.ACCENT]: pale ? [236, 226, 200] : hsv2rgb(s.hue + .05, s.sat * .6, Math.min(1, s.val * v * .5 + .25)),
     [M.MAGIC]: magic, [M.MAGIC2]: magic2, [M.LEAF]: hsv2rgb(.3, .55, .55), [M.LEAF2]: hsv2rgb(.25, .5, .75), [M.LEAF3]: hsv2rgb(.33, .6, .35), [M.TRUNK]: hsv2rgb(.07, .45, .32),
     [M.BROW]: body[0] * .3 + body[1] * .55 + body[2] * .15 < 95 ? [226, 218, 204] : [30, 20, 28], // its brows: ink on a light coat, pale on a dark one
-    [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
+    [M.EYE]: [24, 18, 30], [M.PUPIL]: [70, 40, 90], [M.GLINT]: [255, 255, 245], [M.NOSE]: [38, 28, 36], [M.EAR]: s.ear ? hsv2rgb(...s.ear) : hsv2rgb(s.hue + .97, Math.min(1, s.sat * .6 + .2), Math.min(1, s.val * v * .55 + .2)),
     [M.IRIS]: s.plan === "owl" ? [255, 176, 40] : hsv2rgb(.12, .7, .85), [M.SKIN]: [238, 158, 192],
     // the evolution kit's area flourishes (creatures3d.js evolve3d): standing stones, their moonlit runes, moss and heather
     [M.GLOW]: [255, 178, 70], [M.WEB]: [236, 234, 226], [M.STONE]: [150, 148, 142], [M.STONED]: [84, 82, 84], [M.RUNE]: [170, 212, 255], [M.MOSS]: [98, 130, 60], [M.FLOWER]: s.flower || [176, 92, 168], [M.WOOD]: [178, 122, 58], // (WOOD: bronze, a ram legend's horns)
@@ -6206,11 +6266,13 @@ const SET_PROP_GENOMES = {
     radius: [2.8, 3.5], count: [7, 11], member: [["stone", 3], ["post", 2], ["stump", 2]], height: [1.1, 2], width: [.5, .8], // m
     gap: [0, 1], lean: [0, .22], fallen: [0, 2], centre: [["fire", 2], ["stone", 2], ["stump", 1], ["altar", 1]], embers: [0, 1], // a way in (a chance); a fire pit's embers glow (a chance)
     colour: { stone: [.61, .14, .62], dark: [.65, .16, .38], wood: [.07, .38, .32], moss: [.24, .45, .38], spread: .06 },
+    rock: [["grey", 1]], // its stone: grey, or (only when a recipe asks) the hot south's "sandstone" (last, so the other draws stay as they were)
   },
   heap: {
     of: [["stones", 3], ["logs", 2], ["brush", 1], ["rubble", 2]], width: [6.2, 7.8], height: [1.8, 3], depth: [.55, .8], // what; m across; how deep into the picture, times across
     pieces: [36, 60], moss: [.1, .5], spill: [5, 11], top: [["none", 2], ["post", 1], ["slab", 1]],
     colour: { stone: [.61, .14, .6], dark: [.65, .16, .36], wood: [.07, .38, .34], moss: [.24, .45, .38], cloth: [[.0, .5, .6, 1], [.6, .3, .6, 1], [.13, .4, .75, 1]], spread: .06 },
+    rock: [["grey", 1]],
   },
 };
 const SET_PROP_KINDS = Object.keys(SET_PROP_GENOMES);
@@ -6379,7 +6441,7 @@ function gsTone(c, r, k) { if (Array.isArray(c[0])) c = pickByWeight(r, c.map(x 
 function gsColours(kind, v, def, st) {
   const C = SET_PROP_GENOMES[kind].colour, r = rng((v.seed * 7919 + 29) >>> 0), k = C.spread, leaf = def?.leaf ?? .26, g = def?.floor ? groundColours(def, { sat: 1, trunkHue: .07, ...st }) : null;
   const wood = gsTone(C.wood ?? [.07, .38, .32], r, k), dark = wood.map(c => Math.round(c * .45)), light = wood.map(c => Math.min(255, Math.round(c * 1.35 + 12)));
-  const stone = gsTone(v.stoneHsv ?? C.stone ?? [.6, .08, .55], r, k), stoneD = C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
+  const sandstone = v.rock === "sandstone", stone = gsTone(sandstone ? [.08, .38, .7] : v.stoneHsv ?? C.stone ?? [.6, .08, .55], r, k), stoneD = sandstone ? gsTone([.05, .45, .42], r, k) : C.dark ? gsTone(C.dark, r, k) : stone.map(c => Math.round(c * .55));
   return {
     [M.LEAF]: hsv2rgb(leaf, .5, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .45, .62), [M.LEAF3]: g && kind === "ring" ? g[M.BODY] : hsv2rgb(leaf + .02, .5, .34), [M.LINE]: [24, 22, 30],
     [M.WOOD]: wood, [M.TRUNK]: kind === "punt" || kind === "jetty" ? dark.map(c => Math.round(c * 1.5)) : wood, [M.BARKD]: dark, [M.BARKL]: light,
@@ -6971,11 +7033,15 @@ const SIGILS = {
   salamander: [E(.5, .14, .1, .08), E(.5, .42, .1, .2), bow([.5, .62], [.76, .9], .4), ...pair(L([.42, .32], [.24, .26], [.18, .18]), L([.24, .26], [.14, .3]), L([.42, .52], [.24, .6], [.2, .7]), L([.24, .6], [.13, .6]), D(.46, .12))],
   // side on: a long low body, a wavy crest running along its back and tail, small bent legs
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
+  // the fennec: ears bigger than its face, flaring out wide, a small pointed face under them
+  fennec: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
   // its chest, its tail curling out at its foot
   meerkat: [E(.5, .23, .11, .13), ...pair(C(.45, .21, .035)), D(.5, .33), E(.5, .62, .15, .25), ...pair(L([.41, .5], [.46, .55])), L([.6, .84], [.76, .9], [.86, .8])],
+  // the armadillo side on: the dome of its shell banded across, a long tapering snout, an upright ear, a thin tail
+  armadillo: [A(.48, .64, .3, 180, 360), L([.18, .64], [.78, .64]), L([.4, .35], [.4, .64]), L([.48, .34], [.48, .64]), L([.56, .35], [.56, .64]), L([.76, .56], [.94, .7]), L([.74, .46], [.77, .34]), L([.19, .6], [.06, .72]), L([.3, .64], [.3, .74]), L([.66, .64], [.66, .74])],
   // a segmented grub arching round to its glowing lantern tail, rays shining out
   glowworm: [A(.4, .58, .26, 180, 340), ...[200, 235, 270, 305].map(a => L(at(.4, .58, .2, a), at(.4, .58, .32, a))), D(.14, .58), C(.69, .55, .1), ...rays(.69, .55, .15, .24, [-90, -30, 30, 90, 150])],
   // seen from above: a round body and a small head, eight bent legs
@@ -7078,8 +7144,10 @@ const LEGEND_DETAIL = {
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
+  fennec: [...pair(L([.36, .36], [.22, .22])), ...pair(bow([.32, .66], [.44, .72], .25))],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
   meerkat: [...pair(L([.39, .2], [.37, .14])), L([.5, .48], [.5, .74]), ...pair(L([.42, .86], [.37, .92]))],
+  armadillo: [L([.32, .4], [.32, .64]), L([.64, .4], [.64, .64]), D(.82, .58), L([.24, .5], [.24, .64])],
   glowworm: [...rays(.69, .55, .15, .2, [-60, 0, 60, 120]), L([.14, .58], [.08, .5]), D(.69, .55)],
   spider: [...pair(D(.47, .37)), L([.5, .54], [.5, .7]), L([.44, .6], [.56, .6])],
   dormouse: [C(.32, .3, .035), L([.3, .44], [.18, .42]), L([.3, .47], [.19, .5]), ...rays(.52, .58, .23, .28, [120, 160, 200])],
@@ -7195,7 +7263,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint" };
+const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", armadillo: "lemon", worldTree: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -8280,7 +8348,48 @@ const WARREN = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, WARREN];
+// ---- inlined from art/recipes/scrubwash.js ----
+// The scrub wash (Ed, 2026-10-12: more animals for the later islands; unknown-06, the badlands, bearing 141): an area type as a
+// recipe (art/recipes.js says what each field is). Cracked dry clay along a sandy wash, thorny scrub and stunted thorn trees,
+// sun-split stones; the armadillo its creature.
+const SCRUB_WASH = {
+  id: "scrub-wash", name: "Scrub wash", creature: "armadillo", by: "recipe", leaf: .24, floor: ["mud", .08, .32, .52],
+  text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+  wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
+  big: [["tree", { type: "hawthorn", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
+  setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
+  layout: {
+    pattern: "scatter", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
+    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .6, freak: .1, lake: 0, modern: .1 },
+    feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
+  },
+  flora: { species: [["hawthorn", .6], ["juniper", .4]], palette: { sat: .55, val: .75 } },
+  settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
+};
+
+
+// ---- inlined from art/recipes/erg.js ----
+// The erg (a journey kind: unknown-07's, the hot south; Ed approved the mock, 2026-10-12): golden dunes and an oasis of date palms, the fennec fox its creature.
+const ERG = {
+  id: "erg", name: "Erg", creature: "fennec", by: "recipe", leaf: .2, floor: ["sand", .11, .42, .64],
+  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps", set: "a ring of wind-worn stones round an old hearth" },
+  wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["bush", { small: true }]],
+  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "datePalm", minor: true, scale: .7 }]],
+  ponds: true, pathKinds: ["track"],
+  setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
+  layout: {
+    pattern: "groves", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
+    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
+    terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .4, rocks: .4, freak: 0, lake: .3, modern: 0 },
+    feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
+  },
+  flora: { species: [["datePalm", 1]], palette: { sat: .8, val: .95 } },
+  settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SCRUB_WASH];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -11786,9 +11895,11 @@ const LEGEND_POSES = {
   ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
-  meerkat: { sink: .55, droop: 1, drop: [], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
+  armadillo: { ground: .2, droop: .4, drop: [], over: { moss: .1, lichen: .25, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 4 } }, // the scrub wash's armadillo (an area recipe's): its shell sunk in cracked clay like a boulder
+  meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
+  fennec: { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
