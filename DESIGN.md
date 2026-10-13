@@ -165,7 +165,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 
 ### Area types from recipes (#119)
 
-Area types after the first 30 are written as **recipes**: one object of data each (`art/recipes/`), with no code (see the glossary in CLAUDE.md). The first, the proof that the tools are enough:
+Area types after the first 30 are written as **recipes**: one object of data each (`art/areas/<id>/recipe.js`), with no code (see the glossary in CLAUDE.md). The first, the proof that the tools are enough:
 
 | Area | Floor | Wall | Small | Big | Set piece | Creature | By |
 |---|---|---|---|---|---|---|---|

@@ -1,0 +1,26 @@
+// arcticfox: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
+// its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
+export const CREATURE_ARCTICFOX = {
+  movement: {
+    speed: 17,
+    accel: 85,
+    fight: [
+      { kind: "arrive", w: 1 },
+      { kind: "slot", w: 1.2 },
+      { kind: "strafe", w: 0.3, swap: 1.4 },
+      { kind: "separation", w: 0.6, radius: 7 }
+    ],
+    tactics: [{ kind: "flank", w: 1 }, { kind: "surround", w: 2 }],
+    move: { kind: "leap", cooldown: 3.5, from: 6, to: 18, time: 0.5, height: 3, strike: true }
+  },
+  radius: 0.6,
+  temperament: "curious",
+  voice: { family: "canid", pitch: 1.75, glide: 0.6 },
+  buff: {
+    name: "Snow pounce",
+    kind: "move",
+    scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
+    label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
+  },
+  character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 }
+};

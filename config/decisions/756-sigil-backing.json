@@ -1,0 +1,57 @@
+{
+  "pr": 756,
+  "group": "Sigil backing",
+  "decisions": [
+    {
+      "id": "sigilBackingDark",
+      "pr": 756,
+      "group": "Sigil backing",
+      "label": "Backing darkness",
+      "note": "How dark the patch under every sigil on the ground is (0: none, and no opaque sigil either: as #752).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.85,
+      "apply": {
+        "knob": "leash.sigilBacking.dark"
+      }
+    },
+    {
+      "id": "sigilBackingSize",
+      "pr": 756,
+      "group": "Sigil backing",
+      "label": "Backing size (times the sigil)",
+      "note": "How wide the dark patch is, times the sigil's own width.",
+      "control": {
+        "type": "slider",
+        "min": 0.8,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 1.1,
+      "apply": {
+        "knob": "leash.sigilBacking.size"
+      }
+    },
+    {
+      "id": "sigilBackingInk",
+      "pr": 756,
+      "group": "Sigil backing",
+      "label": "Sigil opacity",
+      "note": "How solid the sigil is painted over its patch, times how much it shows (a fresh rune, the ghost fainter).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.1
+      },
+      "default": 1.5,
+      "apply": {
+        "knob": "leash.sigilBacking.ink"
+      }
+    }
+  ]
+}

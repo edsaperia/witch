@@ -20,7 +20,7 @@ export const HAT_SPELLS: SpellInfo<HatSpellId>[] = [
   { id: "healing", name: "Healing ring", how: "placed", line: "Put it down: standing near it, she heals a hit every few seconds.", built: true },
   { id: "harvest", name: "Harvest", how: "onPlace", line: "Put it down: a ring of six berries grows round it.", built: true }, // (Ed, 2026-10-11)
   { id: "dowsing", name: "Dowsing", how: "onPlace", line: "Put it down: a pointer leads to the nearest relic for a minute.", built: true },
-  { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws 💌s at wild creatures within 30 m.", built: true }, // (Ed, 2026-10-11: "larger ranges")
+  { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws 💌s at wild creatures within 33 m.", built: true }, // (Ed, 2026-10-11: "larger ranges")
   { id: "bramble", name: "Bramble", how: "placed", line: "Put it down: wild creatures within 30 m of it are slowed.", built: true }, // (Ed, 2026-10-11: "Bramble should have 30m range")
   { id: "slingshot", name: "Slingshot", how: "placed", line: "Put it down: 💌s that pass within 10 m circle it, then fly at a creature up to 40 m off.", built: true },
   { id: "gathering", name: "Gathering", how: "placed", line: "Put it down, then pick it up: every sigil of hers within 100 m comes back to her stack.", built: true }, // (Ed, 2026-10-11: "all sigils in range")

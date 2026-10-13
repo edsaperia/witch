@@ -4,6 +4,7 @@
 // plays the notes. The same seed and section always give the same notes.
 import { hash2 } from "./random";
 import voices from "../../config/creature-voices.json";
+import { sectionOf } from "./creatureConfig";
 import type { CuratedStep, FamilyDef, SetDef } from "./musicSet";
 
 /** A synth patch: how one part sounds. Every field but kind and gain is optional. */
@@ -497,7 +498,8 @@ export interface ScoreContext {
   formStart?: number;
 }
 
-const VOICE_FAMILIES = (voices as unknown as { species: Record<string, { family?: string }> }).species;
+// (each species' voice from its folder, art/creatures/<id>/creature.js, over anything the file still holds: rules/creatureConfig.ts)
+const VOICE_FAMILIES: Record<string, { family?: string }> = { ...(voices as unknown as { species: Record<string, { family?: string }> }).species, ...(sectionOf("voice") as Record<string, { family?: string }>) };
 /** A name's hash (a species' own pick of patterns and its melody's seed). */
 const nameHash = (name: string) => { let h = 0; for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0; return h; };
 

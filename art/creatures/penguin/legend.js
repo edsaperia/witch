@@ -1,0 +1,1 @@
+export const LEGEND_PENGUIN = { ground: .5, droop: .5, drop: [], over: { moss: .1, lichen: .3, ferns: 0, grass: 2, mushrooms: 0, roots: 0, stones: 7, nest: true } }; // the rookery's penguin (an area recipe's): the elder god hunched down over its chick on its nest of pebbles, its head sunk in its shoulders, lichened like a sea rock
