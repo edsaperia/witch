@@ -105,11 +105,14 @@ Ed's brief, after the new-animals round and Golf's legend audit (`docs/art-revie
 5. **Shared look or not.** "Each its own." There is no common legend uniform.
 6. **Readability.** "You should be able to tell them apart, but they're mostly there to be mysterious than to be read quickly in a combat situation."
 
+And (Ed, the same day): "Legends are legendary; stories are told of them; when you go into their circle the world stops moving and you know you're in the presence of something very old and very powerful. Also sometimes they wear party hats."
+
 So a legend is the elder of its kind:
 - **It starts from the animal's own nature**, exaggerating its defining trait ("emphasise the thing that makes that creature unusual", Ed, 2026-10-12).
 - **It shows age and power:** great size, weathering, scars, and the wear of epochs.
 - **It carries ancient wisdom and magic,** shown through what that animal would plausibly be revered for.
 - **It may wear things:** jewellery, armour, offerings or decorations, as an object of worship might.
+- **A little playfulness is allowed:** sometimes a legend wears a party hat.
 - **Avoid generic features.** Crystals, flame crests, spirit wings, rings of eyes, ribbons and trees on the back are generic decoration (see the audit). They don't come from the animal.
 
 ## 1. Review an area as a set
