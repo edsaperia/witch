@@ -51,6 +51,8 @@ export interface AreaLayout {
   pattern: string; along?: number | string; density: number; clump: number; undergrowth: number; lean?: { dir: number; amount: number };
   /** Shares of its trees by height class. */
   heightMix?: { sapling: number; mature: number; tall: number; giant: number } | null;
+  /** In an open area (its big objects mostly props), its trees' share of them all (0-1): the props keep their own weights. */
+  treeShare?: number;
   /** Its ground's features: stream, pools, rocky, mounds, paths, hollows, ridges. */
   terrain?: string[];
   /** How many decorations it has (rate, 0-1) and of which families. */
