@@ -1240,7 +1240,7 @@ Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters 
 
 ### `borders`
 
-A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks); twinkle (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.
+on: off by default (Ed, 2026-10-13: the glowing dotted edges gone; the pause page's "Area edges" brings them back to compare). A sparkling line round the partified region's outside edge, in each area's sigil colour: width (px), brightness, sparkle (0-1, how much it twinkles and runs), step (metres between its sparks); twinkle (0 a gentle breathing, 1 star-like: brief flashes and dips, now and then a spark out for a moment); each spark flickers between its own area's colour and the one across the edge (Ed, v183), swapRate times a second on its own phase, and swapBeat of them snap on the beat instead. ?border=<twinkle>,<swapRate>,<swapBeat> tries values.
 
 | knob | type | range |
 |---|---|---|

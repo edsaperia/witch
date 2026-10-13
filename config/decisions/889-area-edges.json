@@ -7,11 +7,11 @@
       "pr": 889,
       "group": "Area edges",
       "label": "Area edges",
-      "note": "The glowing dotted line of sparks round the edge of the party's areas (Ed, 2026-10-13: an experiment). Off, it isn't drawn or worked out at all.",
+      "note": "The glowing dotted line of sparks round the edge of the party's areas: off by default (Ed, 2026-10-13); on to compare. Off, it isn't drawn or worked out at all.",
       "control": {
         "type": "toggle"
       },
-      "default": true,
+      "default": false,
       "apply": {
         "knob": "borders.on"
       }
