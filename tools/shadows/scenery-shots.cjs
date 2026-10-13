@@ -47,13 +47,13 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
         const r = near[0];
         if (r) { const dx = f.x - r.x, dz = f.z - r.z, k = Math.hypot(dx, dz); s.push({ name: "campfire-" + (r.family ?? r.id ?? "setpiece"), x: r.x, z: r.z, r: 0, at: { x: f.x + (dx / k) * 3, z: f.z + (dz / k) * 3 }, fireOnly: true }); break; }
       }
-      // none with scenery by it: the nearest lit one and its trees, their shadows coloured too (tintTrees as tint) for the shot
+      // none with scenery by it: the nearest lit one and its trees, their shadows coloured too (one shadows.tint for every shadow)
       if (!s.some(q => q.fireOnly) && fires.length) { const f = fires[0]; s.push({ name: "campfire-trees", x: f.x, z: f.z, r: 0, at: { x: f.x + 2, z: f.z + 3 }, fireOnly: true, trees: true }); }
       return s;
     });
     for (const s of out.subjects.filter(q => !only || q.name.startsWith(only))) {
       for (const on of ["coloured", "untapered", "black", false, "debug"]) {
-        await page.evaluate(([s, on]) => { const g = window.witch.game; const T = g.tuning.shadows.trunks; if (!window.__reach) window.__reach = T.glowReach; T.glowReach = s.fireOnly ? 0 : window.__reach; T.scenery = !!on; T.mode = on === "debug" ? "debug" : "soft"; Object.assign(T, on === "black" ? { tint: 0, tintTrees: 0, glowLight: 0 } : { tint: 0.6, tintTrees: s.trees ? 0.6 : 0, glowLight: 0.7 }); if (!window.__taper) window.__taper = T.sceneryTaper; T.sceneryTaper = on === "untapered" ? 0 : window.__taper; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
+        await page.evaluate(([s, on]) => { const g = window.witch.game; const T = g.tuning.shadows.trunks; if (!window.__reach) window.__reach = T.glowReach; T.glowReach = s.fireOnly ? 0 : window.__reach; T.scenery = !!on; T.mode = on === "debug" ? "debug" : "soft"; g.tuning.shadows.tint = on === "black" ? 0 : 0.6; T.glowLight = on === "black" ? 0 : 0.7; if (!window.__taper) window.__taper = T.sceneryTaper; T.sceneryTaper = on === "untapered" ? 0 : window.__taper; g.witch = { ...g.witch, x: s.x + 80, z: s.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, [s, on]);
         await step(20);
         await page.evaluate(s => { const g = window.witch.game; const W = g.witches[0]; W.health = JSON.parse(window.__hp); W.ko = null; g.witch = { ...g.witch, x: s.at ? s.at.x : s.x + s.r + 5, z: s.at ? s.at.z : s.z + 1, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: undefined }; }, s);
         await step(90);

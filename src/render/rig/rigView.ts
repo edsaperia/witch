@@ -24,7 +24,7 @@ const RIG_LEVELS = ["baby", "young", "adult", "legend"];
 /** A meta with its head piece in an expression (made once per meta and face, so a frame allocates nothing). */
 const faceMetas = new WeakMap<RigMeta, Partial<Record<RigFace, RigMeta>>>();
 export function withFace(meta: RigMeta, face: RigFace | undefined): RigMeta {
-  const head = face && face !== "neutral" ? meta.faces?.[face] : undefined;
+  const head = face && face !== "neutral" ? meta.faces?.[face] ?? (face === "bite" ? meta.faces?.angry : face === "yawn" ? meta.faces?.happy : undefined) : undefined; // (no open jaw baked: the face it opens from)
   if (!head) return meta;
   let by = faceMetas.get(meta); if (!by) faceMetas.set(meta, (by = {}));
   return (by[face!] ??= { ...meta, head });
