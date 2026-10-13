@@ -1,7 +1,7 @@
 // The conga, drawn (the win's finale, Ed 2026-10-11: when an island is won every party animal forms a giant conga line round
 // the dancefloor; the line itself, who follows whom and where each walks, is the rules'). Here only how each animal moves in it:
 // a step on the beat for its body (quadrupeds trot three and kick, birds hop with both feet, bats and moths bob in the air,
-// the squat ones shuffle and squash, insects skitter in double time, snakes and glow-worms sway), a lean forward onto the back
+// the squat ones shuffle and squash, insects skitter in double time, snakes sway), a lean forward onto the back
 // of the one ahead ("hands on the back"), easing off as it kicks, and a ripple down the line so the step travels along it. A
 // function of the beat alone: no state, nothing allocated (it fills `out`).
 import { GENOMES } from "../../art/genome/species.js";
