@@ -60,6 +60,8 @@
     "heron":      { "name": "Stride",         "kind": "move", "scale": { "groundSpeed": 1.1, "dash.distance": 1.25 }, "label": "Heron's Stride: a little quicker on foot, and a longer blink" },
     "newt":       { "name": "Wriggle",        "kind": "shot", "scale": { "invites.speed": 1.2, "invites.range": 1.2 }, "label": "Newt's Wriggle: 💌s fly a little faster and further" },
     "fennec":     { "name": "Ears",           "kind": "shot", "scale": { "invites.range": 1.35 }, "label": "Fennec's Ears: 💌s reach further" },
+    "lion":       { "name": "Pride",          "kind": "shot", "scale": { "invites.speed": 1.15, "invites.range": 1.15 }, "label": "Lion's Pride: 💌s fly a little faster and further" },
+    "cheetah":    { "name": "Sprint",         "kind": "move", "scale": { "groundSpeed": 1.15 }, "label": "Cheetah's Sprint: quicker on foot" },
     "salamander": { "name": "Quick fire",     "kind": "shot", "scale": { "invites.cooldown": 0.6 }, "label": "Salamander's Quick fire: less wait between bursts" },
     "snake":      { "name": "Strike",         "kind": "shot", "scale": { "invites.speed": 1.4 },    "label": "Snake's Strike: 💌s fly faster" },
     "spider":     { "name": "Long thread",    "kind": "shot", "scale": { "invites.range": 1.5 },    "label": "Spider's Long thread: 💌s fly further" },
