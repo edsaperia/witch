@@ -127,7 +127,7 @@ export function groundColours(def, st) {
   const flower = { basalt: hsv2rgb(.13, .7, 1), flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
   const colours = {
     [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02 + .05 * sh, Math.min(1, sat * st.sat * (1.1 + .15 * sh)), val * (.78 - .06 * sh)), [M.BELLY]: hsv2rgb(hue - .02 - .04 * sh, sat * st.sat * (.9 - .2 * sh), Math.min(1, val * (1.15 + .1 * sh))),
-    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : kind === "basalt" ? hsv2rgb(.01, .75, .32) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower, [M.GLOW]: hsv2rgb(.05, .9, .95),
+    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : kind === "basalt" ? hsv2rgb(.01, .75, .32) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower, ...(kind === "basalt" ? { [M.GLOW]: hsv2rgb(.05, .9, .95) } : {}),
     [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
     [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
     [M.STONE]: hsv2rgb(.58, .06, .54), /* cool grey, never brighter than the witch in her own light (art director, round 1) */ [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
