@@ -14,8 +14,9 @@
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
 import { FEN } from "./recipes/fen.js";
 import { HERONRY } from "./recipes/heronry.js";
+import { ERG } from "./recipes/erg.js";
 import { MISTWOOD } from "./recipes/mistwood.js";
-export const AREA_RECIPES = [FEN, HERONRY, MISTWOOD];
+export const AREA_RECIPES = [FEN, HERONRY, ERG, MISTWOOD];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
