@@ -488,7 +488,17 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
-  else if (kind === "plume") m.chain([[...tb, .12], [X(1.1) - .35, top + .02 + tw, 0, .22], [X(1.1) - .85, top - .12 + tw, 0, .27], [X(1.1) - 1.35, top - .34 + tw, 0, .22], [X(1.1) - 1.6, top - .5, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.1) - 1.38 ? M.BELLY : undefined }); // an elder's vast brush, swept low and back, its tip snow-white
+  else if (kind === "plume") { // an elder's vast brush, swept low and back, its tip snow-white, its fur in tufts along it
+    const pts = [[...tb, .12], [X(1.1) - .35, top + .02 + tw, 0, .22], [X(1.1) - .85, top - .12 + tw, 0, .27], [X(1.1) - 1.35, top - .34 + tw, 0, .22], [X(1.1) - 1.6, top - .5, 0, .1]];
+    m.chain(pts, M.BODY, { ...o, paint: p => p[0] < X(1.1) - 1.38 ? M.BELLY : undefined });
+    for (let k = 0; k < 26; k++) { // tufts: short locks standing out of its surface, swept back, more at the tip
+      const u = .12 + .86 * (k / 25), seg = Math.min(pts.length - 2, Math.floor(u * (pts.length - 1))), f = u * (pts.length - 1) - seg, a = pts[seg], b = pts[seg + 1];
+      const c = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f], r = a[3] + (b[3] - a[3]) * f, th = k * 2.4;
+      const out = [Math.cos(th) * .25, Math.sin(th) * .8 + .2, Math.cos(th * 1.3) * .8], n = Math.hypot(...out), d = out.map(v => v / n);
+      const base = v3.add(c, v3.mul(d, r * .8)), tip = v3.add(base, v3.add(v3.mul(d, r * .55), [-r * .5, 0, 0]));
+      m.seg(base, tip, r * .32, r * .06, u > .85 ? M.BELLY : k % 3 ? M.BODY : M.BODY2, { group: 3 });
+    }
+  }
   else if (kind === "dormouse") m.chain([[...tb, .1], [X(1.3), top - .2 + tw, 0, .12], [X(1.7), top - .42, 0, .13], [X(2.05), top - .3 + tw, 0, .12], [X(2.2), top - .08, 0, .08]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) ? M.BODY2 : undefined }); // long, low and furry, curling up at its tip (the silhouette check: it read as a squirrel's)
   else if (kind === "squirrel" || kind === "star") m.chain([[...tb, .12], [X(1.3), top + .05 + tw, 0, .25], [X(1.3), top + .6 + tw, 0, .3], [X(1.0), top + .95 + tw, 0, .27], [X(.65), top + .9 + tw, 0, .16]], kind === "star" ? M.MAGIC : M.BODY, { ...o, extra: true, paint: kind === "star" ? p => spotty(p, 14, .12) ? M.GLINT : undefined : undefined });
   else if (kind === "otter") m.chain([[...tb, .22], [X(1.3), top - .4 + tw, 0, .17], [X(1.65), .12, 0, .1], [X(1.95), .07 + tw, 0, .04]], M.BODY, o); // a thick tapering rudder (its signature)
