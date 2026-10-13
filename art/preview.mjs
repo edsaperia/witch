@@ -297,7 +297,7 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     for (const id of ids) rows.push([label(id.padEnd(10)), ...scales.flatMap(c => { const s2 = { ...st, creatureScale: c }; return [label(c === 1 ? " today" : ` +${Math.round(c * 100 - 100)}%`), ...[0, 1, 2].map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)), wit]; })]);
   } else if (what === "lineup") { // per species (or all): baby, young, adult and legend standing side by side, then the witch for scale; PER=n species to a row
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [], L = window.LEVELS || [0, 1, 2, 3]; // LEVELS=2,3: those levels only
-    if (window.NO_PROFILE) for (const s of G.SPECIES) { if (s.q) delete s.q.profile; for (const l of Object.values(s.levelQ || {})) if (l) delete l.profile; } // PROFILE=0: every body as the loaves build it
+    if (window.NO_PROFILE) for (const s of G.SPECIES) { if (s.q) { delete s.q.profile; delete s.q.spine; } for (const l of Object.values(s.levelQ || {})) if (l) { delete l.profile; delete l.spine; } } // PROFILE=0: every body as the loaves build it, no spine
     for (const id of ids) items.push(...L.map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
     for (let i = 0; i < ids.length; i += per) {
       rows.push([...items.slice(i * L.length, (i + per) * L.length), wit]);

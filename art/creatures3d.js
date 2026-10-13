@@ -67,6 +67,14 @@ export function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f
 // sprite; form.motes says whether the glowing motes still float round it.
 let FORM = null;
 export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
+// A genome's spine (quad3d) as a height along the body, x in body lengths from the hip station (-.5) to the shoulder's (.48): a
+// number for the whole back, or heights at the profile's stations, straight lines between, fading to nothing past the ends.
+function spineOf(s) {
+  if (s == null) return null;
+  const at = [-.5, -.25, 0, .25, .48], h = typeof s === "number" ? [s, s, s, s, s] : ["hip", "loin", "waist", "ribcage", "shoulder"].map(k => s[k] ?? 0);
+  if (!h.some(v => v)) return null;
+  return x => { if (x <= at[0] - .35 || x >= at[4] + .35) return 0; if (x <= at[0]) return h[0] * (1 - (at[0] - x) / .35); if (x >= at[4]) return h[4] * (1 - (x - at[4]) / .35); for (let i = 0; i < 4; i++) if (x <= at[i + 1]) return h[i] + (h[i + 1] - h[i]) * (x - at[i]) / (at[i + 1] - at[i]); return 0; };
+}
 // Another view for the tools (a sheet from above: art/preview.mjs TOP=1): { yaw, pitch } for model3d's render, at the scale the
 // usual view would give, so the two line up. Never in the game.
 let VIEW = null;
@@ -458,7 +466,20 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the withers, over the shoulders
   if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74 * wAt("hip")], M.BODY, { paint: paintBody }); // the pelvis
   if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
-  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
+  // ---- its spine (Ed, 2026-10-13: "giving animals the possibility of having a distinct spine along its back, which can be anything
+  // from a tall crest to a recessed depression"): q.spine, a height in model units at each of the profile's stations (or one number
+  // for the whole back): + a crest standing up along the back line (a boar's bristles, a stag's shoulder line), 0 flat (as built),
+  // - a groove sunk into it (a big cat's or a lean dog's spine lying in the dip between its back muscles), interpolated between the
+  // stations and fading out at the neck and the rump. The back line is the body's own (the loaves, the withers and the croup) at each
+  // place, so a crest rides over the withers and a groove runs down into the loin. The ridge's spikes stand on the crest. ----
+  const spineAt = spineOf(q.spine), backTop = x => { let y = -Infinity; for (const P of m.parts) { if (P.type !== "ell" || P.cut || P.extra || P.part !== "body") continue; const u = (x - P.c[0]) / P.r[0]; if (Math.abs(u) >= 1) continue; y = Math.max(y, P.c[1] + P.r[1] * Math.sqrt(1 - u * u)); } return y; };
+  if (spineAt) for (let i = 0; i <= 12; i++) {
+    const x = (-.85 + i * 1.7 / 12) * len, s = spineAt(x / len), y = backTop(x); if (!s || y === -Infinity) continue;
+    const dx = len * 1.7 / 12 * .75;
+    if (s > 0) m.ell([x, y + s * .3, 0], [dx, s * .8, bw * .11 + s * .15], M.BODY, { paint: paintBody }); // a crest: a fin of flesh and hair standing along the back line
+    else m.ell([x, y + s * .15, 0], [dx, -s * .85, bw * .16 - s * .3], M.BODY, { paint: paintBody, cut: true }); // a groove: a valley cut down into the back between its muscles, its walls the body's own
+  }
+  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5 + Math.max(0, spineAt?.(x / len) ?? 0), 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
   // Fore: shoulder, elbow (behind), wrist (ahead), paw; hind: hip, stifle (ahead), hock (behind), paw; the stance by how the species
