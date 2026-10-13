@@ -21,12 +21,12 @@ export type NightKind = "pine" | "wood" | "oaks" | "wet" | "stream" | "ravine" |
 export const AREA_NIGHTS: Record<string, NightKind> = {
   norway: "pine", "old-pinewood": "pine", "holly-thicket": "pine",
   "fern-forest": "wood", "tangly-forest": "wood", "wispy-forest": "wood", "hazel-forest": "wood", "twiggy-forest": "wood",
-  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood",
+  "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood", "misty-terraces": "pine", "mossy-dell": "wood", "bamboo-jungle": "wood",
   "old-oaks": "oaks", ancient: "oaks",
-  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "mossy-creek": "stream",
+  "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "temple-jungle": "wet", "river-jungle": "stream", mangrove: "wet", "mangrove-pools": "wet", mudflat: "wet", "mossy-creek": "stream",
   stream: "stream", ravine: "ravine", crags: "ravine",
   meadow: "meadow", garden: "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
-  "rocky-slope": "open", erg: "open", snowfield: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", "scrub-wash": "open",
+  "rocky-slope": "open", packice: "open", bushveld: "open", erg: "open", snowfield: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", eyrie: "stones", "scrub-wash": "open",
   home: "home",
 };
 /** An area type's night (by its id; a wet area unlisted is a wet night, the rest woods). */
