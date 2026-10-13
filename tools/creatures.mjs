@@ -26,6 +26,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { entriesOf, exportedText, sameText, withImport } from "./lib/entries.mjs";
+import { ident, recordsIn } from "./lib/genomeRecords.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), ".."), DIR = join(ROOT, "art/creatures"), SPECIES = join(ROOT, "art/genome/species.js"), INDEX = join(DIR, "index.js");
 const cmd = process.argv[2] ?? "list";
@@ -33,7 +34,6 @@ const cmd = process.argv[2] ?? "list";
 /** The folders' ids, sorted. */
 const ids = () => (existsSync(DIR) ? readdirSync(DIR, { withFileTypes: true }).filter(d => d.isDirectory() && existsSync(join(DIR, d.name, "genome.js"))).map(d => d.name).sort() : []);
 /** The record's export name: GENOME_<ID> ("red-panda" -> GENOME_RED_PANDA). */
-const ident = id => "GENOME_" + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 
 /** The per-creature files besides the genome: [file, export prefix, the registry it came from and assembles into]. */
 const PARTS = [
@@ -169,32 +169,6 @@ export const CREATURE_CONFIGS = { ${list.filter(id => has(id, "creature.js")).ma
 
 /** Records still written in species.js's GENOMES array: [{ id, text }] with the text as a module would export it, and the
  *  file's text with the array emptied. */
-function recordsIn(text) {
-  const open = text.indexOf("export const GENOMES = ["), close = text.indexOf("\n];", open);
-  if (open < 0 || close < 0) return { records: [], rest: text };
-  const body = text.slice(text.indexOf("\n", open) + 1, close + 1), lines = body.split("\n"), records = [];
-  let cur = null, pending = [];
-  const flush = () => { if (cur) { records.push(cur); cur = null; } };
-  for (const line of lines) {
-    if (/^  \{ id: "/.test(line)) { flush(); cur = { lines: [...pending, line] }; pending = []; }
-    else if (/^  \/\//.test(line) && !cur?.open) { pending.push(line); } // (a comment at the record's own indent before the next record)
-    else if (cur) cur.lines.push(line);
-    else pending.push(line);
-    if (cur) { const depth = cur.lines.filter(l => !/^\s*\/\//.test(l)).join("\n"); const opens = (depth.match(/[{[]/g) || []).length, closes = (depth.match(/[}\]]/g) || []).length; cur.open = opens > closes; if (!cur.open) { flush(); } }
-  }
-  flush();
-  for (const r of records) {
-    while (r.lines.length && !r.lines[r.lines.length - 1].trim()) r.lines.pop();
-    const id = /^  \{ id: "([^"]+)"/.exec(r.lines.find(l => /^  \{ id: "/.test(l)))[1];
-    const out = r.lines.map(l => l.replace(/^  /, "")); // (the record's own indent off: it stands at the module's top level)
-    const last = out.length - 1, m = /^(.*?)(\s*\/\/.*)?$/.exec(out[last]); // (the record's trailing comma off, before any comment after it)
-    out[last] = m[1].replace(/,\s*$/, "") + ";" + (m[2] ?? "");
-    const at = out.findIndex(l => /^\{ id: "/.test(l)); out[at] = `export const ${ident(id)} = ` + out[at];
-    r.id = id; r.text = out.join("\n") + "\n";
-  }
-  const rest = text.slice(0, text.indexOf("\n", open) + 1) + text.slice(close + 1);
-  return { records, rest };
-}
 
 if (cmd === "list") {
   const all = await Promise.all(ids().map(async id => ({ id, g: (await import(pathToFileURL(join(DIR, id, "genome.js")).href))[ident(id)], files: readdirSync(join(DIR, id)).join(" ") })));
