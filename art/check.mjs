@@ -738,11 +738,17 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
     res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
   });
-  task("layouts", async () => { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns (no pattern for more than 8 areas)
+  task("layouts", async () => { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns; no pattern for more than
+    // a quarter of the areas (8 at the least: the cap of 8 couldn't hold 61 areas over 8 patterns, 2026-10-13); and every area's layout its own:
+    // its pattern, density and clump (to a tenth), glade count, tallest height class and terrain together unlike any other's (Ed's intent,
+    // each area different: the pattern is one axis of it)
     const bad = AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
     const uses = {}; for (const A of AREAS) if (A.layout) uses[A.layout.pattern] = (uses[A.layout.pattern] || 0) + 1;
-    const varied = Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= 8;
-    res.push({ what: "layouts: every area has a sound layout (pattern, density, glades, heightMix iff wooded, terrain, decor weights, feel), 6+ patterns in use, none in more than 8 areas", good: !bad.length && varied, info: bad.slice(0, 4).join("; ") || Object.entries(uses).map(([k, n]) => k + " " + n).join(", ") });
+    const cap = Math.max(8, Math.ceil(AREAS.length / 4)), varied = Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= cap;
+    const sig = L => [L.pattern, Math.round(L.density * 10) / 10, Math.round(L.clump * 10) / 10, L.glades?.count ?? 0, L.heightMix ? Object.entries(L.heightMix).sort((a, b) => b[1] - a[1])[0][0] : "-", (L.terrain ?? []).join("+")].join("|");
+    const bySig = {}; for (const A of AREAS) if (A.layout) (bySig[sig(A.layout)] ??= []).push(A.id);
+    const alike = Object.values(bySig).filter(ids => ids.length > 1).map(ids => ids.join(" = "));
+    res.push({ what: `layouts: every area has a sound layout (pattern, density, glades, heightMix iff wooded, terrain, decor weights, feel), 6+ patterns in use, none in more than a quarter of the ${AREAS.length} areas (${cap}), and no two areas' layouts alike (pattern, density, clump, glades, tallest class, terrain)`, good: !bad.length && varied && !alike.length, info: bad.slice(0, 4).join("; ") || (alike.length ? "alike: " + alike.slice(0, 4).join("; ") + "; " : "") + Object.entries(uses).map(([k, n]) => k + " " + n).join(", ") });
   });
   task("set-pieces", async () => { // set pieces: every area has one; the new ones (built in 3D) stand on the ground and are landmark-sized, 6 to 12 m across or tall
     const bad = [], sizes = [];

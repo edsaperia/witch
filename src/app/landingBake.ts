@@ -5,7 +5,7 @@
 // the art cache (render/artCache.ts), under the keys the game's own art asks for (render/assets.ts); the game, loaded with that
 // seed (&seed=), finds them kept. What isn't done by the time she lands the game draws as before.
 import type { ArtJob, ArtResult } from "../render/artBuild";
-import { artCacheKey, cacheGet, cachePut, hashText } from "../render/artCache";
+import { artCacheKey, hashText } from "../render/artCache";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
 import { loadSave } from "./chartSave";
@@ -43,13 +43,12 @@ export function bakeLanding(island: string, world: number | undefined, seed = ni
   const params = linkFor(island, world, seed), tuning = tuningFromLink(params).tuning, w = world ?? loadSave().world;
   const style = gameStyle(styleFromLink(params, tuning), tuning), styleHash = hashText(JSON.stringify(style)), K = 2 / tuning.pixelSize;
   const jobs: ArtJob[] = landingTypes(island, w).map(t => ({ kind: "type", id: t, style, seed, K }));
-  const writes: Promise<void>[] = [];
   let stopped = false;
   const workers: Worker[] = [];
   const state = {
     seed, made: 0, kept: 0,
     stop() { stopped = true; for (const wk of workers) wk.terminate(); workers.length = 0; },
-    async settle(ms = 400) { await Promise.race([Promise.all(writes), new Promise(r => setTimeout(r, ms))]); },
+    async settle() { /* (each set is written by its worker before it's reported made: nothing to wait for) */ },
   };
   if (typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return state;
   // (as many workers as the game's art: one per core but the page's own, up to six)
@@ -59,12 +58,10 @@ export function bakeLanding(island: string, world: number | undefined, seed = ni
       const job = jobs.shift();
       if (!job) { wk.terminate(); return; }
       const key = artCacheKey(job, styleHash)!;
-      if (await cacheGet(key)) { state.kept++; continue; }
-      if (stopped) return;
-      const r = await new Promise<{ result?: ArtResult } | null>(res => { wk.onmessage = e => res(e.data); wk.onerror = () => res(null); wk.postMessage(job); });
+      // (the worker keeps the cache: a set kept before comes back `cached` at once, a new one is written before it's sent)
+      const r = await new Promise<{ result?: ArtResult; cached?: boolean } | null>(res => { wk.onmessage = e => res(e.data); wk.onerror = () => res(null); wk.postMessage({ ...job, cacheKey: key }); });
       if (!r?.result) { wk.terminate(); return; } // (no worker drawing here: the game draws it)
-      writes.push(cachePut(key, r.result));
-      state.made++;
+      if (r.cached) state.kept++; else state.made++;
     }
   };
   try {

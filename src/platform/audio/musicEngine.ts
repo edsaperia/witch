@@ -15,7 +15,7 @@ import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
 import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
-import { fxOn, VoiceFx } from "./voiceFx";
+import { fxOn, VoiceFx, prepareWhisperEnvelopes } from "./voiceFx";
 import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 /** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
@@ -170,6 +170,9 @@ export class MusicEngine {
     for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
     this.setStyle(style);
     if (Object.values(style.patches).some(p => p.kind === "fof") && style.form?.sung && style.patches[style.form.sung.patch]?.kind === "fof") void fofReady(ctx); // (the FOF voice loading ahead of its first note, when it sings)
+    // (the sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
+    // from here on (VoiceFx.warm, in step): the stall hunt, 2026-10-13: that first note was a 190 ms frame)
+    { const sung = style.form?.sung, p = sung && style.patches[sung.patch]; if (sung && p) this.channel(sung.part, p); }
   }
 
   /** A new or edited style: takes effect from the next block. */
@@ -198,7 +201,7 @@ export class MusicEngine {
   setRecordings(recs: Record<string, AudioBuffer>): void { for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b); }
   /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
   private whisperRec: AudioBuffer | null = null;
-  setWhisper(rec: AudioBuffer): void { this.whisperRec = rec; for (const ch of this.channels.values()) ch.fx?.whisper(rec); }
+  setWhisper(rec: AudioBuffer): void { void prepareWhisperEnvelopes(this.ctx, rec).then(() => { this.whisperRec = rec; for (const ch of this.channels.values()) ch.fx?.whisper(rec); }); } // (its envelopes made ahead, a band a task)
 
   /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
   private setMix(): void {
@@ -218,6 +221,7 @@ export class MusicEngine {
   private leadNow = 0;
 
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
+    for (const ch of this.channels.values()) if (ch.fx?.warm()) break; // (one piece of the effects' work put off, a frame)
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     const want = Math.max(0, Math.min(MusicEngine.maxLead, this.lead)); this.leadNow += Math.max(-.002, Math.min(.002, want - this.leadNow)); const L = this.leadNow;
     if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
@@ -708,23 +712,34 @@ export class MusicEngine {
     o.start(t); o.stop(t + decay);
   }
 
+  /** The impulses made, by their length: the shed's short reverb (level 3) and the full one swap without being made again. */
+  private impulses = new Map<number, AudioBuffer>();
   private impulse(seconds: number): AudioBuffer {
+    const had = this.impulses.get(seconds); if (had) return had;
     // decorrelated noise in each ear, after a short pre-delay, decaying, and darkening as it goes
     // (a one-pole low-pass closing over the tail, as air and walls soak up the highs)
+    // (The envelope and the low-pass's coefficient come from a table of ENV steps over the tail, not a Math.pow a sample: the
+    // 2.4 s impulse and the circle's 3.8 s one were 135 ms on the page's thread at the first speaker, and again when the sound
+    // shed to level 3 (the stall hunt, 2026-10-13).)
     const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
+    const ENV = 4096, env = new Float32Array(ENV + 1), coef = new Float32Array(ENV + 1);
+    for (let j = 0; j <= ENV; j++) { const k = j / ENV, a = 0.85 - 0.75 * k; coef[j] = a; env[j] = Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a)); }
+    const perSample = ENV / Math.max(1, n - pre);
     let r = 777;
     for (let ch = 0; ch < 2; ch++) {
       const d = b.getChannelData(ch);
       let y = 0;
       for (let i = pre; i < n; i++) {
         r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
-        const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+        const j = Math.min(ENV, Math.floor((i - pre) * perSample)), a = coef[j];
         y += a * ((r / 4294967296) * 2 - 1 - y);
-        d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+        d[i] = y * env[j];
       }
     }
+    this.impulses.set(seconds, b);
     return b;
   }
+
 }
 
 /** An AudioParam worked out once a 128-sample block rather than every sample (about 3 ms: nothing heard in a filter's sweep,
