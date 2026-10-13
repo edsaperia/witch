@@ -619,6 +619,62 @@ export function toad3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .55, facing);
 }
 
+// The frost troll (Ed, 2026-10-13: "a face turned towards us, a big nose, a beard, long arms with knuckles down, and a hunched
+// upright back ... cute with big eyes"): upright on short legs, hunched, its face turned to us, long arms down to its knuckles.
+// Its genome levels shape it: body.hr (its head), body.bw (its shoulders' width), body.hunch; head.nose (its rosy bulb), head.beard
+// (length, 0 none), head.eyeK (its eyes), head.lids (an old troll's heavy lids), head.tooth (a kid's tooth over its lip);
+// coat.moss (moss tufts on its shoulders), coat.stone (0 to 1: how far up it has turned to stone, an elder's), coat.beads.
+export function troll3d(S, level, frame, st, facing = "towards") {
+  const m = new Model(), q = { ...S.q, ...(S.levelQ?.[level] || {}) }, sw = frame ? 1 : -1;
+  const F = [.8, 0, .6], R = [-.6, 0, .8]; // its front, turned to the camera, and its side
+  const P = (f, u, s) => [F[0] * f + R[0] * s, u, F[2] * f + R[2] * s], D = (f, u, s) => v3.norm(P(f, u, s)), at = (c, f, u, s) => v3.add(c, P(f, u, s));
+  const hr = q.hr ?? .24, bw = q.bw ?? .42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0;
+  const fr = p => p[0] * F[0] + p[2] * F[2]; // how far forward a point is
+  const stoned = (p, base) => stoneTo && p[1] < stoneTo + .05 * Math.sin(p[0] * 29 + p[2] * 23) + .03 * Math.sin(p[0] * 61 - p[2] * 47) ? (spotty(p, 22, .12) ? M.STONED : M.STONE) : base;
+  const fur = (p, base) => stoned(p, spotty(p, 16, .1) ? M.BODY2 : base);
+  // short legs and big flat feet, a step a frame
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 6 : 2, d = sw * side * .05, foot = P(.06 + d, .045, side * .2);
+    m.chain([[...P(0, .3, side * .16), .11], [...P(.03 + d * .5, .18, side * .18), .095], [...P(.03 + d, .07, side * .2), .09]], M.BODY, { group: g, paint: p => fur(p, M.BODY) });
+    m.ell(foot, [.15, .055, .1], M.BODY2, { dir: F, group: g, paint: p => stoned(p, M.BODY2) });
+    m.anchors.feet.push({ c: foot, r: .1, group: g });
+  }
+  // a pear of a body, pale-bellied, hunched over: its shoulders and back rising behind its head
+  const belly = P(.02, .42, 0), up = D(.3 * hunch, 1, 0);
+  m.ell(belly, [.27, .28, .32], M.BODY, { dir: F, paint: p => fr(v3.sub(p, belly)) > .13 && p[1] < .5 ? stoned(p, M.BODY3) : fur(p, M.BODY) }); // (its tummy darker, so the white beard shows against it)
+  m.ell(P(-.03, .72, 0), [.25, .23, bw * .88], M.BODY, { dir: F, up, paint: p => fur(p, M.BODY) });
+  m.ell(P(-.14, .84 + .04 * hunch, 0), [.2, .16, bw * .62], M.BODY2, { dir: F, up, paint: p => fur(p, M.BODY2) });
+  // the head, low and forward, turned to us
+  const hc = P(.16, .98 + hr * .2, 0), Hr = [hr, hr * 1.02, hr * 1.06];
+  m.ell(hc, Hr, M.BODY, { dir: F, paint: p => fr(v3.sub(p, hc)) > hr * .45 && p[1] < hc[1] + hr * .35 ? M.BELLY : undefined }); // a pale face
+  for (let i = 0; i < 5; i++) { const s = (i / 4 - .5) * hr * 1.1, top = at(hc, -hr * .1, hr * .9, s); m.chain([[...top, hr * .18], [...at(top, -hr * .4, hr * (.18 + .08 * (i % 2)), s * .3), hr * .09]], M.BODY2, { group: 1, extra: true }); } // a shock of hair
+  for (const side of [-1, 1]) m.chain([[...at(hc, -hr * .1, hr * .2, side * hr * .9), hr * .22], [...at(hc, -hr * .2, hr * .42, side * hr * 1.55), hr * .1], [...at(hc, -hr * .25, hr * .5, side * hr * 1.8), hr * .02]], M.BODY, { group: 1 }); // pointed ears out to the side
+  // big round eyes, a glint in each; an old troll's heavy lids
+  const eyeDirs = [-1, 1].map(side => D(1, .38, side * .45)), es = hr * .22 * eyeK;
+  eyesOn(m, hc, Hr, eyeDirs, es, M.EYE);
+  for (const d of eyeDirs) { const e = Model.surface(hc, Hr, d); m.ell(v3.add(e, v3.add(v3.mul(d, es * .5), [0, es * .45, 0])), [es * .38, es * .38, es * .38], M.GLINT, { group: 1 });
+    if (q.lids) m.ell(v3.add(e, v3.add(v3.mul(d, es * .2), [0, es * 1.0, 0])), [es * 1.1, es * .38, es * 1.1], M.BODY2, { group: 1 }); }
+  // a big rosy bulb of a nose, and a beard hanging in locks (white; a kid's a tooth over its lip instead)
+  const tip = at(hc, hr * 1.02, -hr * .2, 0);
+  m.ell(tip, [hr * .34 * nose, hr * .3 * nose, hr * .34 * nose], M.EAR, { group: 1 });
+  if (q.tooth) m.ell(at(hc, hr * .9, -hr * .62, hr * .12), [hr * .07, hr * .11, hr * .07], M.BELLY, { group: 1 });
+  if (beard) for (let i = 0; i < 7; i++) { const s = (i / 6 - .5) * hr * 1.4, root = at(hc, hr * .85, -hr * .5, s), bl = hr * 1.5 * beard * (1 - Math.abs(i / 6 - .5) * .7), w = Math.sin(i * 2.3) * hr * .1;
+    m.chain([[...root, hr * .24], [...at(root, hr * .3, -bl * .55, s * .15 + w), hr * .2], [...at(root, hr * .22, -bl, s * .1 - w), hr * .07]], M.BELLY, { group: 5 + (i % 2) * 3 }); } // (its own groups: not melted into its chest)
+  // long arms hanging to its knuckles on the ground, a swing a frame
+  for (const side of [-1, 1]) {
+    const g = side > 0 ? 7 : 2, d = -sw * side * .05, sh = P(.02, .78, side * bw * .85), el = P(.1 + d * .5, .45, side * (bw + .05)), wr = P(.2 + d, .15, side * (bw + .03));
+    m.chain([[...sh, .1], [...el, .075], [...wr, .09]], M.BODY, { group: g, paint: p => fur(p, M.BODY) });
+    m.ell(P(.23 + d, .09, side * (bw + .03)), [.12, .09, .1], M.BODY2, { dir: F, group: g, paint: p => stoned(p, M.BODY2) });
+    for (let k = 0; k < 3; k++) m.ell(P(.33 + d, .06, side * (bw + .03) + (k - 1) * .055), [.045, .045, .04], M.BODY2, { group: g, paint: p => stoned(p, M.BODY2) }); // knuckles
+  }
+  // moss on its shoulders, and an elder's beads
+  for (let i = 0; i < (q.moss || 0); i++) { const a = (i / Math.max(1, q.moss - 1) - .5) * 2.4, c = P(-.1 + .05 * Math.cos(i * 1.7), .9 + .06 * Math.cos(a * 1.3), Math.sin(a) * bw * .85); m.ell(c, [.07, .045, .07], M.MOSS, { group: 3, extra: true }); }
+  if (q.beads) for (let i = 0; i < 9; i++) { const a = (i / 8 - .5) * 2.6; m.ell(P(.16 + Math.cos(a) * .14, .74 - Math.cos(a) * .05, Math.sin(a) * .26), [.04, .04, .04], i === 4 ? M.ACCENT : i % 2 ? M.STONE : M.BELLY, { group: 1 }); }
+  m.anchors.head = { c: hc, r: Hr, top: at(hc, 0, hr, 0) };
+  m.anchors.neck = { c: P(.1, .76, 0), r: .3, dir: D(.6, 1, 0) };
+  return finish(m, S, level, st, 1, facing);
+}
+
 export function raven3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, has = f => legend && S.legend.includes(f), m = new Model(), bob = frame ? .02 : 0;
   for (const side of [-1, 1]) { const f = (frame ? -1 : 1) * side * .07; m.seg([0, .3, side * .08], [.03 + f, .03, side * .08], .03, .025, M.NOSE, { group: side > 0 ? 7 : 2 }); m.ell([.08 + f, .02, side * .08], [.08, .015, .04], M.NOSE, { group: 2 }); m.anchors.feet.push({ c: [.07 + f, .03, side * .08], r: .06, group: side > 0 ? 7 : 2 }); } // (each frame a step: one foot ahead, the other behind, in turn)

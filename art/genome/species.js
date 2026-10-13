@@ -245,16 +245,9 @@ export const GENOMES = [
     ] },
   // the trollwood's frost troll (a journey kind: unknown-15's, the cold north, phase 4; Ed: magical creatures for the outer
   // islands): a hulking, shaggy, mossy-stone troll, more cute than scary, knuckling along on great arms, big round eyes and a
-  // bulb of a nose; a pebble of a troll kid, a shaggy young, a hulking adult, and its elder half turned to stone
-  { id: "frosttroll", name: "Frost troll", template: "quadruped", builder: "quad", palette: { hue: .55, sat: .12, val: .58, belly: "white" }, body: { hgt: 1.15, len: .62, chest: .5, tuck: .52, neck: .2, neckAng: .3, neckW: .62, hr: .4, legW: 1.9, back: "hump", front: 1.6, humpK: 3.6, bw: .38 }, head: { snout: .3, snoutD: .9, snoutTaper: .95, muzzle: true, eyeK: 1.5 }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { belly: true, shaggy: true }, texture: { kind: "fur", size: 2 },
-    levels: [
-      { body: { len: .4, chest: .46, tuck: .48, hr: .5, front: 1.1, humpK: 1.6, legW: 1.4 }, head: { eyeK: 1.8 }, coat: { shaggy: false } },
-      { body: { len: .56, front: 1.4, humpK: 2.6 }, features: [{ kind: "moss", count: 5, size: .07 }] },
-      { features: [{ kind: "moss", count: 9, size: .1 }, { kind: "ruff", size: .25, count: 16, mat: "BODY2" }] },
-      // the elder of the trolls (docs/ART-GUIDE.md 0c): so old it is half turned to stone, its legs and haunches gone to grey rock,
-      // mossed and lichened like a hillside
-      { body: { front: 1.5, humpK: 3, legW: 1.9, neckAng: .7, hr: .5 }, palette: { val: .5, sat: .08 }, head: { eyeK: 1.5 }, coat: { legMat: "STONE" }, features: [{ kind: "moss", count: 12, size: .12 }] },
-    ] },
+  // bulb of a nose, a white beard, long arms down to its knuckles; a troll kid all eyes, a shaggy young, an adult, and its elder half turned to stone
+  { id: "frosttroll", name: "Frost troll", template: "squat", builder: "troll", palette: { hue: .55, sat: .12, val: .58, belly: "white", ear: [.98, .42, .9] }, body: { hr: .24, bw: .42, hunch: 1 }, head: { nose: 1, beard: 1, eyeK: 1 }, texture: { kind: "fur", size: 2 },
+    levels: [{ body: { hr: .3, bw: .34, hunch: .5 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: .26, bw: .38, hunch: .8 }, head: { beard: .45, eyeK: 1.15 }, coat: { moss: 3 } }, { head: { beard: 1 }, coat: { moss: 6 } }, { body: { hr: .25, bw: .46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: .9, lids: true }, coat: { moss: 9, stone: .48, beads: true } }] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
