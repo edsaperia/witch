@@ -413,21 +413,41 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
   if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
-  // ---- legs: shoulder/hip, knee, ankle, foot; near legs lighter, far legs in shade ----
-  const sw = [.32, -.32][frame];
+  // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
+  // Fore: shoulder, elbow (behind), wrist (ahead), paw; hind: hip, stifle (ahead), hock (behind), paw; the stance by how the species
+  // stands (q.stance, else by its feet: paw "digit", hoof "hoof"): "digit" up on its toes, elbow and hock bent (a dog's, a cat's);
+  // "hoof" a long slim upright cannon and a sharp hock (a deer's, a boar's); "flat" a flat sole along the ground (a bear's, a
+  // badger's); "sprawl" the elbows and stifles out to the side (a newt's). Near legs lighter, far legs in shade. In the walk the whole
+  // leg swings from its shoulder or hip, and the leg swinging forward lifts and flexes (its paw trailing), the planted one stays extended.
+  const sw = [.32, -.32][frame], stance = q.stance || (q.paw === "hoof" ? "hoof" : "digit"), hoof = stance === "hoof", flat = stance === "flat", sprawl = stance === "sprawl";
   m.rig = { legs: [], len, bw, top, chest, tuck }; // the live rig's joints (art/genome/parts.js), in model units
   const leg = (fore, side) => {
     m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
-    const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15;
-    const lift = (fore ? side : -side) * (frame ? 1 : -1) > 0 ? .06 : 0;  // the leg swinging forward is lifted
-    const knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
-    const hipTop = [x, topY + .12, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
-    const pts = fore ? [[...hipTop, lw * 1.5], [...knee, lw * 1.05], [...foot, lw * .9]] : [[...hipTop, lw * 2 * (q.haunch || 1)], [...v3.add(knee, [-.12, .06, 0]), lw * 1.2], [...v3.add(foot, [-.06 * (q.hindFoot || 1), .12, 0]), lw * .9], [...foot, lw * .9]];
-    m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.stripes ? p => p[1] > .1 && p[1] < topY && ((p[1] * (q.stripes.legN ?? 6) + p[0] * .8 + side * .3) % 1 + 1) % 1 < (q.stripes.w ?? .3) * .75 ? M[q.stripes.mat || "BODY3"] : undefined : q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
-    const fl = (q.paw === "hoof" ? .07 : .09) * (q.legW ** .5) * (!fore ? (q.hindFoot || 1) : 1);
-    m.ell(v3.add(foot, [fl * .5, -.01, 0]), [fl, lw * .9, lw * 1.1], q.paw === "hoof" ? M.NOSE : mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 });
-    m.anchors.feet.push({ c: v3.add(foot, [fl * .5, -.01, 0]), r: Math.max(fl, lw * 1.1), group: side > 0 ? 6 + (fore ? 1 : 0) : 2, fit: q.paw === "hoof" ? "hoof" : "paw" });
-    m.rig.legs.push({ name: m.part, fore, side, hip: hipTop, knee: fore ? knee : v3.add(knee, [-.12, .06, 0]), foot, r: [pts[0][3], pts[1][3], lw * .9], fl, mat, hoof: q.paw === "hoof" });
+    const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15, Y = topY + .12;
+    const swing = (fore ? side : -side) * (frame ? 1 : -1) > 0, lift = swing ? .06 : 0, flex = swing ? 1 : 0; // the leg swinging forward is lifted and flexed
+    const hf = !fore ? (q.hindFoot || 1) : 1, out = sprawl ? side * .14 : 0, g = { group: side > 0 ? 6 + (fore ? 1 : 0) : 2 };
+    const hipTop = [x, Y, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
+    // the joints at rest, [dx from the hip, height as a share of the hip's, dz out], hip to paw
+    const J = fore
+      ? hoof ? [[-.04, .6, 0], [.02, .33, 0], [.03, .1, 0], [.05, .03, 0]] : flat ? [[-.07, .5, 0], [-.01, .17, 0], [.1, .04, 0]] : sprawl ? [[.0, .62, out], [.05, .2, out * 1.2], [.07, .04, out * 1.2]] : [[-.06, .55, 0], [.03, .22, 0], [.05, .05, 0]]
+      : hoof ? [[.12, .62, 0], [-.1, .35, 0], [-.04, .1, 0], [-.02, .03, 0]] : flat ? [[.14, .55, 0], [-.1, .2, 0], [.08 * hf, .04, 0]] : sprawl ? [[.02, .62, out], [-.06, .25, out * 1.2], [.02, .04, out * 1.2]] : [[.14, .6, 0], [-.08 - .04 * (hf - 1), .3, 0], [.02, .05, 0]];
+    const pts = [hipTop], last = J.length - 1;
+    for (let k = 0; k <= last; k++) { const [dx, hy, dz] = J[k], y = Y * hy + (k === last ? lift : lift * .6 * (k / last)), drop = Y - y, trail = flex * (k >= last - 1 ? -.05 : k ? -.02 : 0); pts.push([x + dx + Math.sin(a) * Math.min(drop, .75) * .7 + trail, y, z + dz]); }
+    // thick at the hip and thigh, slimming to the paw; a hoofed leg's cannon slim as a deer's; a hind thigh fuller (haunch)
+    const R = fore ? (hoof ? [1.45, 1.0, .62, .55, .55] : flat ? [1.5, 1.05, .85, .75] : sprawl ? [1.3, .95, .75, .7] : [1.5, 1.05, .8, .75]) : (hoof ? [2 * (q.haunch || 1), 1.25, .7, .5, .5] : flat ? [2 * (q.haunch || 1), 1.25, .9, .75] : sprawl ? [1.7 * (q.haunch || 1), 1.0, .75, .7] : [2 * (q.haunch || 1), 1.3, .85, .75]);
+    const chainPts = pts.map((p, k) => [...p, lw * R[k]]);
+    m.chain(chainPts, mat, { ...g, paint: q.stripes ? p => p[1] > .1 && p[1] < topY && ((p[1] * (q.stripes.legN ?? 6) + p[0] * .8 + side * .3) % 1 + 1) % 1 < (q.stripes.w ?? .3) * .75 ? M[q.stripes.mat || "BODY3"] : undefined : q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
+    // the foot: a hoof (a dark wedge, flat-fronted), a paw (a pad, its toes in front from adult up) or a flat sole (long, its toes at the end)
+    const foot = pts[pts.length - 1], fl = (hoof ? .07 : .09) * (q.legW ** .5) * hf, fw = lw * 1.1;
+    if (hoof) m.box(v3.add(foot, [fl * .35, fl * .5 - .01, 0]), [fl * .62, fl * .5, fw * .85], M.NOSE, { ...g, round: fl * .22, dir: [1, -.15, 0] });
+    else {
+      m.ell(v3.add(foot, [fl * (flat ? .6 : .5), -.01, 0]), [fl * (flat ? 1.3 : 1), lw * .85, fw], mat, g);
+      if (level >= 2) for (const dz of [-.6, 0, .6]) m.ell(v3.add(foot, [fl * (flat ? 1.65 : 1.3), -.02, dz * fw * .75]), [fl * .32, lw * .5, fw * .3], mat, g); // toes
+    }
+    const fc = v3.add(foot, [fl * .5, -.01, 0]);
+    m.anchors.feet.push({ c: fc, r: Math.max(fl, fw), group: g.group, fit: hoof ? "hoof" : "paw" });
+    // the live rig: hip, knee (the elbow or stifle), foot, and the hock or wrist between (a later rig can bend it); r: hip, knee, foot
+    m.rig.legs.push({ name: m.part, fore, side, hip: hipTop, knee: pts[1], hock: pts[2], foot, r: [chainPts[0][3], chainPts[1][3], chainPts[chainPts.length - 1][3]], fl, mat, hoof });
     m.part = "body";
   };
   for (const side of [-1, 1]) { leg(true, side); leg(false, side); }
