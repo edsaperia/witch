@@ -287,8 +287,8 @@ function unclipped(gen) {
 export const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
-  const bare = unclipped(genomeTree(id, g));
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
+  const raw = genomeTree(id, g), bare = unclipped(raw);
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, raw, /* raw: as drawn on its canvas alone, cut or not (areas.js speciesStature: the order an area deals its kinds into its height classes, kept as it was) */ name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
