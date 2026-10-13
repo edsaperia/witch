@@ -134,7 +134,7 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
     const per = m => [...m].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, +(v / 1000 / frames).toFixed(3)]);
     fs.writeFileSync(path.join(out, "late-profile.json"), JSON.stringify({ msPerFrame: +(total / 1000 / frames).toFixed(2), byFunction: per(self), byFile: per(files) }, null, 1));
   }
-  await page.screenshot({ path: path.join(out, "late.png") });
+  await page.screenshot({ path: path.join(out, "late.png"), timeout: 300000 }); // (a treetop frame on the cloud's software renderer can take longer than Playwright's 30 s)
   if (cdp) {
     // What's still alive, by where it was made: each sampled node's self size, by function and file, and by file alone.
     const { profile } = await cdp.send("HeapProfiler.getSamplingProfile"), byFn = new Map(), byFile = new Map();
