@@ -1,0 +1,1 @@
+export const LEGEND_STEGOSAURUS = { sink: .5, droop: 1, drop: [], over: { moss: .35, lichen: .1, ferns: 2, grass: 3, mushrooms: 1, roots: 2, stones: 4 } }; // the cinder slopes' stegosaurus (an area recipe's): sunk in ash, its plates standing up out of it like a ridge of old stones
