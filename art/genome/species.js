@@ -142,6 +142,11 @@ export const GENOMES = [
         { kind: "ruff", size: .16, count: 12, mat: "BELLY" },
         { kind: "moss", count: 9, size: .1 },
       ] }] },
+  // the mangrove swamp's crocodile (an area recipe's, phase 3): long and low, a flat wide jaw lined with teeth, a heavy tail along the ground
+  { id: "crocodile", name: "Crocodile", template: "quadruped", builder: "quad", palette: { hue: .2, sat: .35, val: .32 }, body: { hgt: .7, len: 2.1, chest: .05, tuck: .05, neck: .12, neckAng: -.04, neckW: .75, hr: .32, legW: 1.6, bw: .55 }, head: { snout: 4.4, snoutD: .9, snoutTaper: .9, flatJaw: true, eyeK: 1.15 }, parts: { ears: { kind: "none" }, tail: "croc", feet: "paw" }, coat: {}, legend: [], texture: { kind: "scales", size: 5, contrast: .35 },
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
+    // of standing stones down its back and tail root, its eyes glowing just above the water line
+    levels: [null, null, null, { body: { len: 2.3, bw: .62, hr: .38 }, head: { snout: 5, snoutD: 1.05, jawW: .78 }, features: [{ kind: "stones", from: .05, to: .95, count: 8, height: 1.05 }, { kind: "eyeglint", size: .05 }, { kind: "scars", count: 4, len: .55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: .04, ry: .32, rz: .82, rings: [.3, .5] }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
