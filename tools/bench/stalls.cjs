@@ -57,7 +57,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   // Off the decks and to the spot, in the treetops, at the zoom.
   await page.keyboard.press("Space"); await wait(800);
   await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
-  for (let i = 0; i < 20 && (await page.evaluate(() => window.witch.game.witch.mode)) !== "treetop"; i++) { await page.keyboard.press("Space"); await wait(600); }
+  // Up into the treetops: Space only while she's on the ground (pressed again mid-rise it brings her back down), then wait.
+  for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; if (mode === "ground") await page.keyboard.press("Space"); await wait(500); }
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: g.map.typeOf ? a.type : a.type, zoom: g.camera.zoomStep, wave: g.party.wave, t: Math.round(g.clock.time) }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);

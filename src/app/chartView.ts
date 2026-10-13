@@ -157,10 +157,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const isl = islands.find(i => i.id === o.id);
     if (!isl || o.world !== worldNow()) return;
     if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
-    // (the miniature, 64 px on the map table's top: an island's real coast, but not its ground: its heightfield, shallows and
-    // lakes were 20 to 70 ms of meshes each on the page's thread, 64 islands over the first minute of every night, at the decks
-    // (the stall hunt, 2026-10-13); at that size the coast alone draws the same)
-    isl.outline = o; chart.reshape(o.id, mini ? { ...o, ground: undefined } : o);
+    isl.outline = o; chart.reshape(o.id, o);
   };
   const drain = () => { const t0 = performance.now(); while (pending.length && performance.now() - t0 < 10) apply(pending.shift()!); if (pending.length) setTimeout(drain, 0); }; // (in slices: frames come between)
   const make = (): Worker | null => {
@@ -199,7 +196,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
-    outlines();
+    // (not the miniature, 64 px on the map table's top: its islands stay their round coasts. Each real outline is 20 to 70 ms
+    // of meshes on the page's thread (its heightfield, shallows and lakes; the coast alone extruded is no cheaper), 64 of them
+    // over the first minute of every night, at the decks, and on while she flies within 90 m of the deck: the stall hunt,
+    // 2026-10-13. DECISION FOR ED: the real shapes on the table would need their meshes built in the worker.)
+    if (!mini) outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
     $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
     $("world").textContent = `World seed: ${w}${opts.world != null && opts.world !== save.world ? " (from the link)" : ""}`;
