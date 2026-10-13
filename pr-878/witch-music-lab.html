@@ -6928,14 +6928,15 @@ label.check input { accent-color: var(--accent); }
   }
   function snake3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, baby = level === 0, young = level === 1, has = (f) => legend && S.legend.includes(f), m = new Model(), ph = frame ? 0.7 : 0, pts = [];
+    const girth = [0.9, 0.82, 1, 1][level], rise = [1, 0.85, 1.15, 1.15][level];
     for (let i = 0; i <= 12; i++) {
       const t = i / 12;
-      pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), 0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]);
+      pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), (0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]);
     }
-    pts.push([0.38, 0.25, pts[12][2], 0.07], [0.42, 0.45, pts[12][2] * 0.8, 0.065]);
+    pts.push([0.38, 0.07 + 0.18 * rise, pts[12][2], 0.07 * girth], [0.42, 0.07 + 0.38 * rise, pts[12][2] * 0.8, 0.065 * girth]);
     const spots = baby ? 0 : young ? 0.15 : 0.3, bands = level >= 2;
     m.chain(pts, M.BODY, { paint: (p) => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
-    const hc = [0.5, 0.5, pts[13][2] * 0.8], hr = baby ? 0.13 : young ? 0.105 : 0.09;
+    const hc = [0.5, 0.07 + 0.43 * rise, pts[13][2] * 0.8], hr = baby ? 0.13 : young ? 0.105 : 0.09;
     m.rig = { spine: pts.map((p) => p.slice()), head: hc, hr };
     m.part = "head";
     m.ell(hc, [hr * 1.5, hr * 0.75, hr], M.BODY, { dir: [1, -0.15, 0], group: 1 });
@@ -9739,7 +9740,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.15, rocks: 0.7, freak: 0.1, lake: 0, modern: 0.05 },
       feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
     },
-    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.55, val: 0.8 } },
+    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.5, kinds: ["fern", "moss", "blades"] } }
   };
 
@@ -15462,8 +15463,17 @@ registerProcessor("witch-fof", WitchFof);
   var VOICE_FX = ["chorus", "saturation", "air", "delay", "hall", "shimmer", "duck", "swells", "freeze", "whisper", "octave"];
   var NO_FX = { chorus: 0, saturation: 0, air: 0, delay: 0, hall: 0, shimmer: 0, duck: 0, swells: 0, freeze: 0, whisper: 0, octave: 0 };
   var fxOn = (s) => !!s && VOICE_FX.some((k) => (s[k] ?? 0) > 0);
+  var IMPULSES = /* @__PURE__ */ new WeakMap();
+  var ENV = 4096;
   function impulse(ctx2, seconds, dark, seed2) {
+    let made = IMPULSES.get(ctx2);
+    if (!made) IMPULSES.set(ctx2, made = /* @__PURE__ */ new Map());
+    const key = `${seconds}|${dark}|${seed2}`, had = made.get(key);
+    if (had) return had;
     const n = Math.max(1, Math.floor(seconds * ctx2.sampleRate)), b = ctx2.createBuffer(2, n, ctx2.sampleRate);
+    const env = new Float32Array(ENV + 1);
+    for (let j = 0; j <= ENV; j++) env[j] = Math.pow(1 - j / ENV, 2.2);
+    const ramp = Math.max(1, Math.floor(n * 0.01)), perSample = ENV / n;
     for (let ch = 0; ch < 2; ch++) {
       const d = b.getChannelData(ch);
       let r = seed2 + ch * 7919 >>> 0 || 1, lp = 0;
@@ -15471,10 +15481,10 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < n; i++) {
         r = Math.imul(r, 1664525) + 1013904223 >>> 0;
         lp += k * (r / 4294967296 * 2 - 1 - lp);
-        const t = i / n;
-        d[i] = lp * Math.pow(1 - t, 2.2) * (t < 0.01 ? t / 0.01 : 1);
+        d[i] = lp * env[Math.floor(i * perSample)] * (i < ramp ? i / ramp : 1);
       }
     }
+    made.set(key, b);
     return b;
   }
   function loopBuffer(ctx2, period, shape) {
@@ -15485,9 +15495,31 @@ registerProcessor("witch-fof", WitchFof);
   var BANDS = Array.from({ length: 14 }, (_, b) => 220 * Math.pow(7500 / 220, b / 13));
   var BAND_Q = 5;
   var ENVELOPES = /* @__PURE__ */ new WeakMap();
+  var PREPARING = /* @__PURE__ */ new WeakMap();
+  function prepareWhisperEnvelopes(ctx2, rec) {
+    const have = ENVELOPES.get(rec);
+    if (have) return Promise.resolve(have);
+    const under = PREPARING.get(rec);
+    if (under) return under;
+    const p = (async () => {
+      const parts = whisperEnvelopeParts(ctx2, rec);
+      for (let b = 0; b < BANDS.length; b++) {
+        await new Promise((r) => setTimeout(r, 0));
+        parts.band(b);
+      }
+      return parts.done();
+    })();
+    PREPARING.set(rec, p);
+    return p;
+  }
   function whisperEnvelopes(ctx2, rec) {
     const have = ENVELOPES.get(rec);
     if (have) return have;
+    const parts = whisperEnvelopeParts(ctx2, rec);
+    for (let b = 0; b < BANDS.length; b++) parts.band(b);
+    return parts.done();
+  }
+  function whisperEnvelopeParts(ctx2, rec) {
     const sr = rec.sampleRate, n = rec.length, mono = new Float32Array(n);
     for (let ch = 0; ch < rec.numberOfChannels; ch++) {
       const d = rec.getChannelData(ch);
@@ -15495,7 +15527,8 @@ registerProcessor("witch-fof", WitchFof);
     }
     const OUT = 3e3, step2 = sr / OUT, m = Math.max(1, Math.floor(n / step2)), out = ctx2.createBuffer(BANDS.length, m, OUT);
     const lp = 1 - Math.exp(-2 * Math.PI * 35 / sr);
-    BANDS.forEach((f, b) => {
+    const band2 = (b) => {
+      const f = BANDS[b];
       const w = 2 * Math.PI * f / sr, al = Math.sin(w) / (2 * BAND_Q), a0 = 1 + al;
       const b0 = al / a0, b2 = -al / a0, a1 = -2 * Math.cos(w) / a0, a2 = (1 - al) / a0;
       let x1 = 0, x2 = 0, y1 = 0, y2 = 0, e = 0, k = 0;
@@ -15509,9 +15542,11 @@ registerProcessor("witch-fof", WitchFof);
         e += lp * (Math.abs(y) - e);
         if (i >= k * step2 && k < m) d[k++] = 6 * e;
       }
-    });
-    ENVELOPES.set(rec, out);
-    return out;
+    };
+    return { band: band2, done: () => {
+      ENVELOPES.set(rec, out);
+      return out;
+    } };
   }
   var VoiceFx = class {
     constructor(ctx2, settings2 = {}, bpm = () => 120, duckInto) {
@@ -15551,6 +15586,18 @@ registerProcessor("witch-fof", WitchFof);
     chorus;
     delay;
     hall;
+    /** Work put off to the frames after (warm): a convolver taking its impulse is about 30 ms of the page's thread, so the hall's
+     *  and the shimmer's come one a frame, the reverb silent till then (a tail a frame or two late: nothing heard). */
+    pending = [];
+    later(work) {
+      this.pending.push(work);
+    }
+    /** One piece of the work put off, if any is left: true while some is. */
+    warm() {
+      const w = this.pending.shift();
+      if (w) w();
+      return this.pending.length > 0;
+    }
     shimmer;
     freeze;
     whisperRig;
@@ -15610,7 +15657,9 @@ registerProcessor("witch-fof", WitchFof);
     /** A dark hall (the swells go into it too). */
     buildHall() {
       const c = this.ctx, conv = c.createConvolver(), send = c.createGain();
-      conv.buffer = impulse(c, 5.5, 0.8, 4441);
+      this.later(() => {
+        conv.buffer = impulse(c, 5.5, 0.8, 4441);
+      });
       send.gain.value = 0;
       this.air.connect(send).connect(conv).connect(this.wet);
       this.wetIn.connect(conv);
@@ -15619,7 +15668,9 @@ registerProcessor("witch-fof", WitchFof);
     /** Shimmer: a reverb whose tail goes back through an octave-up shifter into itself (the swells go into it too). */
     buildShimmer() {
       const c = this.ctx, conv = c.createConvolver(), send = c.createGain(), fb = c.createGain(), out = c.createGain();
-      conv.buffer = impulse(c, 3.5, 0.3, 9001);
+      this.later(() => {
+        conv.buffer = impulse(c, 3.5, 0.3, 9001);
+      });
       send.gain.value = 0;
       fb.gain.value = 0;
       out.gain.value = 0.7;
@@ -15891,6 +15942,10 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
       this.setStyle(style2);
       if (Object.values(style2.patches).some((p) => p.kind === "fof") && style2.form?.sung && style2.patches[style2.form.sung.patch]?.kind === "fof") void fofReady(ctx2);
+      {
+        const sung = style2.form?.sung, p = sung && style2.patches[sung.patch];
+        if (sung && p) this.channel(sung.part, p);
+      }
     }
     ctx;
     style;
@@ -16011,9 +16066,12 @@ registerProcessor("witch-fof", WitchFof);
     /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
     whisperRec = null;
     setWhisper(rec) {
-      this.whisperRec = rec;
-      for (const ch of this.channels.values()) ch.fx?.whisper(rec);
+      void prepareWhisperEnvelopes(this.ctx, rec).then(() => {
+        this.whisperRec = rec;
+        for (const ch of this.channels.values()) ch.fx?.whisper(rec);
+      });
     }
+    // (its envelopes made ahead, a band a task)
     /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
     setMix() {
       const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
@@ -16034,6 +16092,7 @@ registerProcessor("witch-fof", WitchFof);
     lead = 0;
     leadNow = 0;
     update(cue2, gameTime, clock2, playing2, ahead = 0.6, rate = 1, pitch = 1) {
+      for (const ch of this.channels.values()) if (ch.fx?.warm()) break;
       const now = this.ctx.currentTime, stepNow = beatAt(clock2, gameTime) * 4;
       const want = Math.max(0, Math.min(_MusicEngine.maxLead, this.lead));
       this.leadNow += Math.max(-2e-3, Math.min(2e-3, want - this.leadNow));
@@ -16727,19 +16786,31 @@ registerProcessor("witch-fof", WitchFof);
       o.start(t);
       o.stop(t + decay);
     }
+    /** The impulses made, by their length: the shed's short reverb (level 3) and the full one swap without being made again. */
+    impulses = /* @__PURE__ */ new Map();
     impulse(seconds) {
+      const had = this.impulses.get(seconds);
+      if (had) return had;
       const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
+      const ENV2 = 4096, env = new Float32Array(ENV2 + 1), coef = new Float32Array(ENV2 + 1);
+      for (let j = 0; j <= ENV2; j++) {
+        const k = j / ENV2, a = 0.85 - 0.75 * k;
+        coef[j] = a;
+        env[j] = Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+      }
+      const perSample = ENV2 / Math.max(1, n - pre);
       let r = 777;
       for (let ch = 0; ch < 2; ch++) {
         const d = b.getChannelData(ch);
         let y = 0;
         for (let i = pre; i < n; i++) {
           r = Math.imul(r, 1664525) + 1013904223 >>> 0;
-          const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+          const j = Math.min(ENV2, Math.floor((i - pre) * perSample)), a = coef[j];
           y += a * (r / 4294967296 * 2 - 1 - y);
-          d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+          d[i] = y * env[j];
         }
       }
+      this.impulses.set(seconds, b);
       return b;
     }
   };
