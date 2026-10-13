@@ -6,7 +6,6 @@ import { setupArena } from "../rules/arena";
 import { endParty } from "../rules/partyOver";
 import { newCamera } from "../rules/camera";
 import { setupQuestDemo } from "../rules/quest";
-import { befriendArea } from "../rules/sigilButton";
 import { witchHeight } from "../rules/witch";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
@@ -31,9 +30,6 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   // no waves; J sets it up again.
   // ?partyover=1 (a debug flag): the party's over from the start, the afterparty (rules/partyOver.ts).
   if (params.get("partyover") === "1") endParty(game);
-  // ?zoo (rules/zoo.ts; Ed, 2026-10-13: "no timer etc", "Default state: calm"): no waves, and every block's creatures calm (a
-  // friendly area's, as a legend's quest done makes them: wild, to be invited, but leaving her and her party be).
-  if (game.map.zoo) for (const [cx, cy] of game.map.cells) { const k = `${cx},${cy}`; game.friendly.add(k); befriendArea(game, k); }
   const arenaParam = params.get("arena");
   if (arenaParam) {
     setupArena(game, arenaParam);
@@ -52,6 +48,6 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   let waveChoice = tuning.leyLines.pulseSpeed;
   const pulseParam = params.get("pulse") ?? (params.get("wave") === "off" ? "off" : null);
   if (pulseParam !== null) waveChoice = pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
-  if (arenaParam || game.map.zoo) waveChoice = 0;
+  if (arenaParam || game.map.zoo) waveChoice = 0; // (the zoo: no waves, Ed 2026-10-13 "no timer etc"; rules/zoo.ts)
   return { WAVE_CHOICES, setPulseSpeed, waveChoice };
 }
