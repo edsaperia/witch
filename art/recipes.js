@@ -24,7 +24,8 @@ import { FROSTCAVE } from "./recipes/frostcave.js";
 import { SNOWFIELD } from "./recipes/snowfield.js";
 import { CRAGS } from "./recipes/crags.js";
 import { ICEFALL } from "./recipes/icefall.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, SNOWFIELD, CRAGS, ICEFALL];
+import { TROLLWOOD } from "./recipes/trollwood.js";
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, SNOWFIELD, CRAGS, ICEFALL, TROLLWOOD];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
