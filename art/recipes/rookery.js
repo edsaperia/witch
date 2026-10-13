@@ -11,7 +11,7 @@ export const ROOKERY = {
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
-    pattern: "stands", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
+    pattern: "rings", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
     heightMix: { sapling: .5, mature: .5, tall: 0, giant: 0 }, undergrowth: .4, lean: { dir: .8, amount: .6 },
     terrain: ["rocky"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "A cold bright shore: snow drifted over black shingle and sea rocks, tussock grass in the lee of the boulders, a few stunted pines and birches crouched flat by the wind; loud, busy and huddled.",

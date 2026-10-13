@@ -9438,7 +9438,7 @@ const ROOKERY = {
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
-    pattern: "stands", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
+    pattern: "rings", density: .2, clump: .7, glades: { count: 3, size: [18, 26] },
     heightMix: { sapling: .5, mature: .5, tall: 0, giant: 0 }, undergrowth: .4, lean: { dir: .8, amount: .6 },
     terrain: ["rocky"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "A cold bright shore: snow drifted over black shingle and sea rocks, tussock grass in the lee of the boulders, a few stunted pines and birches crouched flat by the wind; loud, busy and huddled.",
@@ -9526,7 +9526,7 @@ const MOSSY_CREEK = {
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
-    pattern: "stands", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
+    pattern: "rows", along: "stream", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
     heightMix: { sapling: .1, mature: .35, tall: .4, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .1, lake: .3, modern: 0 },
     feel: "A cold green gloom under towering mossy spruces and cedars, a creek chattering over stones, ferns waist-deep; dripping, soft and old.",
@@ -9546,7 +9546,7 @@ const ERG = {
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
   layout: {
-    pattern: "groves", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
+    pattern: "rings", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
     heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
     terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
@@ -9568,7 +9568,7 @@ const MANGROVE_POOLS = {
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["jetty", "a sagging boardwalk out over the pools", 1, { end: "lantern", rail: "one", missing: 2 }],
   layout: {
-    pattern: "stands", density: .5, clump: .7, glades: { count: 2, size: [14, 22] },
+    pattern: "edgeOnly", density: .5, clump: .7, glades: { count: 2, size: [14, 22] },
     heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
@@ -9590,7 +9590,7 @@ const MUDFLAT = {
   wet: true, pathKinds: ["boardwalk"],
   setPiece: ["punt", "an old canoe stranded on the mud, crab pots in it", 1, { state: "broken", cargo: "trap", pole: 1 }],
   layout: {
-    pattern: "edgeOnly", density: .35, clump: .6, glades: { count: 2, size: [18, 26] },
+    pattern: "edgeOnly", treeShare: .9, density: .35, clump: .6, glades: { count: 2, size: [18, 26] },
     heightMix: { sapling: .35, mature: .5, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: .15 },
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
@@ -9677,7 +9677,7 @@ const BAMBOO_JUNGLE = {
   pathKinds: ["footpath"],
   setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
   layout: {
-    pattern: "groves", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
+    pattern: "thicket", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
     heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["paths", "hollows"], decor: { rate: .2, ruins: .5, rocks: .25, freak: .15, lake: 0, modern: .1 },
     feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
@@ -9699,7 +9699,7 @@ const TEMPLE_JUNGLE = {
   ponds: true, wet: true, pathKinds: ["footpath"],
   setPiece: ["heap", "a tumbled heap of temple stones under the figs", 1.2, { of: "rubble", top: "post", moss: .4, rock: "sandstone" }],
   layout: {
-    pattern: "stands", density: .45, clump: .6, glades: { count: 2, size: [16, 24] },
+    pattern: "lone", density: .45, clump: .6, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
     feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
@@ -9780,18 +9780,18 @@ const BUSHVELD = {
 // soft and white), this is the frozen sea: ice slabs, black water, pressure ridges.
 const PACKICE = {
   id: "packice", name: "Pack ice", creature: "polarbear", by: "recipe", leaf: .45, floor: ["ice", .6, .38, .86],
-  text: { floor: "sea ice and drifted snow", wall: "dark leads of open water", small: "snow drifts and ice blocks", big: "stunted wind-bent firs and birch along the shore", set: "a pressure ridge of broken ice" },
+  text: { floor: "sea ice and drifted snow", wall: "dark leads of open water", small: "snow drifts and ice blocks", big: "stunted wind-bent larches, firs and birch along the shore", set: "a pressure ridge of broken ice" },
   wall: [["water", { w: 2.2, dark: true }]], small: [["rock", { small: true, ice: true }], ["grass", { h: .8 }]],
-  big: [["tree", { type: "fir", scale: .65, gnarl: .7 }], ["tree", { type: "birch", minor: true, scale: .6, gnarl: .6 }]],
+  big: [["tree", { type: "larch", scale: .65, gnarl: .7 }], ["tree", { type: "fir", minor: true, scale: .6, gnarl: .7 }], ["tree", { type: "birch", minor: true, scale: .6, gnarl: .6 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["heap", "a pressure ridge of broken ice", 1, { seed: 7, of: "stones", moss: 0, top: "slab", stone: [.55, .18, .9] }],
   layout: {
     pattern: "edgeOnly", density: .2, clump: .7, glades: { count: 2, size: [24, 32] },
     heightMix: { sapling: .45, mature: .5, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
     terrain: ["pools"], decor: { rate: .15, ruins: .05, rocks: .3, freak: .1, lake: .5, modern: .05 },
-    feel: "White floes and slabs of sea ice split by black leads of open water, a pressure ridge heaved up in the middle, a few wind-bent firs and birch crouched along the shore; bitter, bright and silent.",
+    feel: "White floes and slabs of sea ice split by black leads of open water, a pressure ridge heaved up in the middle, a few wind-bent larches, firs and birch crouched along the shore; bitter, bright and silent.",
   },
-  flora: { species: [["fir", .6], ["birch", .25], ["pine", .15]], palette: { sat: .6, val: .8 } },
+  flora: { species: [["larch", .5], ["fir", .25], ["birch", .25]], palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .2, groundCover: { density: .4, kinds: ["blades"] } },
 };
 
@@ -9823,18 +9823,18 @@ const DELL = {
 // an ice cave, stunted wind-killed pines and crystal-leaf trees, the frost wyrm its creature.
 const FROSTCAVE = {
   id: "frostcave", name: "Frost cave", creature: "frostwyrm", by: "recipe", leaf: .45, floor: ["ice", .6, .45, .85],
-  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
+  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted frost-pale whitebeams, firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
   wall: [["waterfall", {}], ["rockwall", {}]], small: [["stones", {}], ["mound", { small: true }]],
-  big: [["tree", { type: "fir", scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
+  big: [["tree", { type: "whitebeam", scale: .55 }], ["tree", { type: "fir", minor: true, scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
   steep: true, pathKinds: ["animal"],
   setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
   layout: {
-    pattern: "groves", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
+    pattern: "lone", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .3, lean: { dir: .8, amount: .35 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .05, rocks: .55, freak: .15, lake: .25, modern: 0 },
     feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering.",
   },
-  flora: { species: [["fir", .6], ["crystal", .25], ["birch", .15]], palette: { sat: .6, val: .85 } },
+  flora: { species: [["whitebeam", .45], ["fir", .3], ["crystal", .25]], palette: { sat: .6, val: .85 } },
   settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["blades"] } },
 };
 
@@ -9887,18 +9887,18 @@ const MANGROVE = {
 // creature.
 const TERRACES = {
   id: "misty-terraces", name: "Misty terraces", creature: "redpanda", by: "recipe", leaf: .3, floor: ["moss", .25, .4, .4],
-  text: { floor: "moss on stepped ledges", small: "ferns and rocks", big: "fir, rowan and birch", set: "a cairn of flat stones on a ledge" },
+  text: { floor: "moss on stepped ledges", small: "ferns and rocks", big: "wild cherry, fir, rowan and birch", set: "a cairn of flat stones on a ledge" },
   small: [["fern", {}], ["grass", { h: 1 }]],
-  big: [["tree", { type: "fir", scale: 1.05 }], ["tree", { type: "rowan", minor: true, scale: .9 }]],
+  big: [["tree", { type: "cherry", scale: 1.05 }], ["tree", { type: "fir", minor: true, scale: 1 }], ["tree", { type: "rowan", minor: true, scale: .9 }]],
   steep: true, pathKinds: ["animal"],
   setPiece: ["heap", "a cairn of flat stones on a ledge", 1],
   layout: {
-    pattern: "stands", density: .5, clump: .7, glades: { count: 2, size: [12, 18] },
+    pattern: "rows", along: "paths", density: .5, clump: .7, glades: { count: 2, size: [12, 18] },
     heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .05 },
     terrain: ["hollows"], decor: { rate: .25, ruins: .25, rocks: .45, freak: .1, lake: .15, modern: .05 },
     feel: "Stepped mossy ledges under fir, rowan and birch, mist lying in the hollows; high, cool and green, a red panda curled on a bough.",
   },
-  flora: { species: [["fir", .45], ["rowan", .3], ["birch", .25]], palette: { sat: .9, val: .9 } },
+  flora: { species: [["cherry", .4], ["fir", .25], ["rowan", .2], ["birch", .15]], palette: { sat: .9, val: .9 } },
   settings: { treeDensity: .55, groundCover: { density: .75, kinds: ["moss", "blades"] } },
 };
 
