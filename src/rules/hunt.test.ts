@@ -7,6 +7,7 @@ import { cellKey } from "./party";
 import { befriend } from "./creatureStates";
 import { holdsArea, wildLeft } from "./clear";
 import type { Creature } from "./creatures";
+import { calmRingAt } from "./slowTime";
 
 const still: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs * 60); i++) { stepGame(g, still, 1 / 60); each?.(); } };
@@ -100,11 +101,11 @@ describe("the hunt (Ed, 2026-10-07: 'fight with me until either I die or they ar
       const key = [...counts].sort((a, b) => b[1] - a[1])[0]?.[0];
       if (!key) continue;
       const natives = () => g.creatures.filter(o => cellKey(o.cell) === key && holdsArea(o) && o.level > 0 && o.level < 3);
-      // She stands at the spot of the area furthest from them, 25 m in from its edge (held there, so no blow knocks her out of it).
+      // She stands at the spot of the area furthest from them (not in its legend's circle, where time runs slow: rules/slowTime.ts), 25 m in from its edge (held there, so no blow knocks her out of it).
       const list = natives(), mx = list.reduce((a, c) => a + c.x, 0) / list.length, mz = list.reduce((a, c) => a + c.z, 0) / list.length;
       const inside = (x: number, z: number) => { for (let a = 0; a < 12; a++) { const t = (a * Math.PI) / 6; if (cellKey(g.map.cellSafe(x + Math.cos(t) * 25, z + Math.sin(t) * 25).cell) !== key) return false; } return cellKey(g.map.cellSafe(x, z).cell) === key; };
       let at = { x: mx, z: mz, d: -1 };
-      for (let x = mx - 400; x <= mx + 400; x += 8) for (let z = mz - 400; z <= mz + 400; z += 8) { const d = Math.hypot(x - mx, z - mz); if (d > at.d && inside(x, z)) at = { x, z, d }; }
+      for (let x = mx - 400; x <= mx + 400; x += 8) for (let z = mz - 400; z <= mz + 400; z += 8) { const d = Math.hypot(x - mx, z - mz); if (d > at.d && inside(x, z) && !calmRingAt(g, x, z)) at = { x, z, d }; }
       expect(at.d, `${species}: a spot in ${key}`).toBeGreaterThan(60);
       g.witch = { ...g.witch, seated: false, x: at.x, z: at.z, vx: 0, vz: 0, mode: "ground", lift: 0 };
       const reached = new Set<number>(), far = new Set(natives().filter(c => Math.hypot(c.x - at.x, c.z - at.z) > 60).map(c => c.id));
