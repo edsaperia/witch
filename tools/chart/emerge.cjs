@@ -34,10 +34,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const { id, rose } = await page.evaluate(() => window.__came[1]);
   console.log(`${id}'s island came at ${rose} s on the chart's clock`);
   if (!(rose >= 0)) { console.error("its rise wasn't found (rose undefined)"); process.exit(1); }
+  // the camera brought over it and closer (a chart opened on home looks at home: the island may be off the screen's top)
+  await page.evaluate(id => { const c = window.chart.chart, i = c.isles.get(id); c.focus.set(i.x, 0, i.z); c.aim.copy(c.focus); c.dist = c.distTo = c.distTo * 0.45; window.__at = window.__at; }, id);
+  await wait(800);
   const frames = [];
   for (let at = 0; at <= SECONDS * 1000 + 1; at += EVERY) {
     await page.evaluate(({ rose, at }) => { window.__at = rose + at / 1000; }, { rose, at });
-    await wait(120);
+    await wait(at === 0 ? 600 : 250);
     const spot = await page.evaluate(id => window.chart.chart.screenOf(id), id);
     if (at === 0) console.log(`on screen at ${Math.round(spot.x)}, ${Math.round(spot.y)}`);
     frames.push({ at, png: await page.screenshot({ clip: { x: Math.max(0, Math.round(spot.x - CROP / 2)), y: Math.max(0, Math.round(spot.y - CROP / 2)), width: CROP, height: CROP } }) });
