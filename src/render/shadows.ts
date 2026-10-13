@@ -5,6 +5,9 @@
 // moonlight would throw it. The crown is a camera-facing sprite high up while its shadow lies
 // flat, so the two slide past each other as the camera moves: parallax for nothing.
 // Small things get a small blob right under them.
+// Coloured (Ed, 2026-10-13: "colour all the shadows"): at its darkest each goes from black toward the complement of the light
+// falling where it lies (lighting.ts nightLight: the moon, her glow, the fires and party lights), by uShadowTint, as the trunks' and
+// scenery's do (render/trunkShadows.ts): a campfire's orange throws blue-violet, the cool moonlight a warm shade.
 import * as THREE from "three";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -25,9 +28,11 @@ void main() {
 
 /** ?debug=shadows: every shadow drawn as a flat magenta tint, so where it lies against what casts it shows plainly. */
 export const SHADOW_DEBUG = { value: 0 };
+/** How far a shadow takes the complement of its light's colour (0: black; the tuning's shadows.tint, set each frame). */
+export const SHADOW_TINT = { value: 0 };
 
 const FRAG = /* glsl */ `
-uniform float uStrength, uShadowDebug;
+uniform float uStrength, uShadowDebug, uShadowTint;
 varying vec2 vLocal;
 varying vec3 vWorld;
 varying float vScenery;
@@ -38,7 +43,14 @@ void main() {
   float a = uStrength * (1.0 - r * r) * (vScenery > 0.5 ? sceneryFade(vWorld) : 1.0); // fading with its scenery
   if (uShadowDebug > 0.5) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; }
   float h = smoothstep(uHazeRange.x, uHazeRange.y, length(vWorld.xz - uHazeCentre));
-  gl_FragColor = vec4(mix(vec3(1.0 - a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
+  vec3 shade = vec3(0.0); // (its colour at its darkest: black, or toward the complement of the light here)
+  if (uShadowTint > 0.0) {
+    vec3 lc = nightLight(vec3(0.0, 1.0, 0.0), vWorld);
+    float mx = max(max(lc.r, lc.g), lc.b), mn = min(min(lc.r, lc.g), lc.b);
+    vec3 comp = vec3(mx + mn) - lc;
+    shade = comp / max(1e-3, max(max(comp.r, comp.g), comp.b)) * 0.45 * uShadowTint;
+  }
+  gl_FragColor = vec4(mix(mix(vec3(1.0), shade, a * (1.0 - r)), vec3(1.0), h * h), 1.0); // multiplied over the ground
 }`;
 
 /** scenery: a tree's or bush's, fading out with it at the scenery budget's edge. */
@@ -55,7 +67,7 @@ export class ShadowBatch {
     this.geo.index = quad.index;
     this.geo.setAttribute("position", quad.getAttribute("position"));
     this.attr = this.grow(1024);
-    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uShadowDebug: SHADOW_DEBUG }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
+    const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrength: { value: strength }, uShadowDebug: SHADOW_DEBUG, uShadowTint: SHADOW_TINT }, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4,
       transparent: true, blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor });
     this.mesh = new THREE.Mesh(this.geo, mat);
     this.mesh.frustumCulled = false;

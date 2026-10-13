@@ -1,15 +1,16 @@
 // node tools/islands/sheet.mjs <out.png> [--amp 0.3] [--harmonics 4] [--detail 0.35]: every kind's island (home's too, by the map's own coast) as a
 // dream bubble draws it (art/islands.js islandPixels, 30 px at the game's 3-px grid, on the bubble's pale face) and as the sea
 // chart's path, from its coastline (rules/islandShape.ts islandCoast) with the islands' coast knobs (islands.coast) (or those given), its phase
-// from config/kinds.json where the rosters have it (else 0).
+// from the kinds table (art/areas/<id>/kind.json and config/kinds/) where the rosters have it (else 0).
 import fs from "fs";
 import { createRequire } from "module";
 import { openRules, arg } from "../balance/lib.mjs";
+import { kindsTable } from "../lib/kinds.mjs";
 const require = createRequire(import.meta.url), out = process.argv[2] || "previews/islands.png";
 const { islandPixels, islandPath } = await import("../../art/islands.js"), { SIGIL_IDS, islandSigil, sigilColour } = await import("../../art/sigils.js");
 const R = await openRules(), { islandCoast } = await R.load("/src/rules/islandShape.ts"), { TUNING } = await R.load("/src/rules/tuning.ts");
 const knobs = { ...TUNING.islands.coast, ...(arg("amp") ? { amp: +arg("amp") } : {}), ...(arg("harmonics") ? { harmonics: +arg("harmonics") } : {}), ...(arg("detail") ? { detail: +arg("detail") } : {}) };
-let kinds = {}; try { const k = JSON.parse(fs.readFileSync("config/kinds.json", "utf8")); kinds = k.kinds || k; } catch { /* the rosters not in yet */ }
+const kinds = kindsTable(); // (art/areas/<id>/kind.json and config/kinds/, by slot)
 const cells = ["home", ...SIGIL_IDS].map(kind => {
   const phase = kinds[kind]?.phase ?? 0, c = islandCoast({ kind, phase }, kind === "home" ? TUNING.map.coast : knobs), p = islandPixels(kind, c.radii);
   return { kind, phase, areas: c.areas, sigil: islandSigil(kind), colour: sigilColour(islandSigil(kind)), rgba: Array.from(p.rgba), path: islandPath(c.radii) };

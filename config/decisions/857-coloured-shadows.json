@@ -1,0 +1,37 @@
+{
+  "pr": 857,
+  "group": "Coloured shadows",
+  "decisions": [
+    {
+      "id": "shadowTint",
+      "pr": 857,
+      "group": "Coloured shadows",
+      "label": "Shadow colour",
+      "note": "How far every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch and small things) takes the complement of the light it lies in (0: black; a campfire's orange throws blue-violet, moonlight a warm shade).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.6,
+      "apply": {
+        "knob": "shadows.tint"
+      }
+    },
+    {
+      "id": "shadowCast",
+      "pr": 857,
+      "group": "Coloured shadows",
+      "label": "Shadows darken what stands in them",
+      "note": "Creatures, the witch, bushes, props and scenery standing in a trunk's, a palm's or scenery's shadow are darkened and tinted by it where it falls on them (off: only the ground and grass).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "shadows.cast"
+      }
+    }
+  ]
+}

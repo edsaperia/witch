@@ -11,3 +11,6 @@ bench-out/
 node_modules
 # The tools' pictures and sounds land here; they go in PR comments, never in commits (Ed's overnight programme, 2026-10-07).
 previews/
+# The two self-contained lab pages, built by npm run build (tools/labs/publish.mjs) into dist/ and published with the game; never committed (Ed, 2026-10-13: every rebuild conflicted).
+tools/art-lab/dist/
+tools/music-lab/dist/

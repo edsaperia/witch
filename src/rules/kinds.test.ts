@@ -1,10 +1,10 @@
-// The kind table (config/kinds.json; Ed, 2026-10-11, docs/backlog/journey.md "Rosters"): every kind of today's area types,
-// each with the phase it's introduced in and its island's bearing on the sea chart.
+// The kind table (src/rules/kinds.ts, one line a file: art/areas/<id>/kind.json and config/kinds/; Ed, 2026-10-11,
+// docs/backlog/journey.md "Rosters"): every kind of today's area types, each with the phase it's introduced in and its island's
+// bearing on the sea chart.
 import { describe, expect, it } from "vitest";
-import KINDS from "../../config/kinds.json";
+import { KINDS_TABLE as kinds } from "./kinds";
 import { AREA_TYPES, CLASSIC_TYPES } from "./map";
 
-const kinds = (KINDS as { kinds: Record<string, { phase: number; bearing: number; dir: string; placeholder?: boolean }> }).kinds;
 const real = Object.fromEntries(Object.entries(kinds).filter(([, k]) => !k.placeholder));
 
 describe("the kind table", () => {
