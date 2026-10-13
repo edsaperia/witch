@@ -15,6 +15,6 @@ export const TROLLWOOD = {
     terrain: ["stream", "mounds"], decor: { rate: .25, ruins: .15, rocks: .7, freak: .1, lake: 0, modern: .05 },
     feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls.",
   },
-  flora: { species: [["weepingBirch", .5], ["pine", .3], ["birch", .2]], palette: { sat: .55, val: .8 } },
+  flora: { species: [["weepingBirch", .5], ["pine", .3], ["birch", .2]], palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .55, groundCover: { density: .5, kinds: ["fern", "moss", "blades"] } },
 };
