@@ -813,7 +813,7 @@ const PLANT_ALDER = { name: "alder", form: "tree", generator: "blob", grow: "nar
 
 // ---- inlined from art/flora/species/ash.js ----
 const PLANT_ASH = { name: "ash", form: "tree", generator: "broadleaf", grow: "narrow", style: { gnarl: { mul: .6 } }, crown: { envelope: "sphere", clumps: [7, 10] },
-  params: { trunk: .4, tw: 9, limbs: 3, spreadA: .45, limb: .26, depth: 3, splay: .6, clumpR: [7, 10], flat: .8, extra: .35, ragged: 1.8, tall: 160, wide: .8, darkBack: .1, tex: { grain: 1.2, holes: .3, flecks: .26 } },
+  params: { trunk: .4, tw: 9, limbs: 3, spreadA: .7, limb: .26, depth: 3, splay: .6, clumpR: [7, 10], flat: .7, extra: .35, ragged: 1.8, tall: 160, wide: 1.2, darkBack: .1, tex: { grain: 1.2, holes: .3, flecks: .26 } },
   low: { ivy: .6, sprigs: .3, boughs: .2 }, colour: { hue: -.04, sat: .85, val: 1.12 } };
 
 
@@ -902,7 +902,7 @@ const PLANT_CYCAD = { name: "cycad", form: "palm", generator: "blob", grow: "nor
 // ---- inlined from art/flora/species/datePalm.js ----
 // ---- journey species (Ed, 2026-10-11: south and west biomes) ----
 const PLANT_DATEPALM = { name: "date palm", form: "palm", generator: "blob", grow: "narrow", crown: { envelope: "umbrella", clumps: "fronds" },
-  params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: .9, taper: .75, bend: 1.6, lean: .7, scars: 2, roots: .4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.3, fruit: { n: [6, 9], r: 2.2 } } } },
+  params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: .9, taper: .75, bend: 1.6, lean: .7, scars: 2, roots: .4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.6, fruit: { n: [6, 9], r: 2.2 } } } },
   low: { sprigs: .2 }, colour: { hue: -.02, sat: .9, val: .95, trunk: [.08, .25, .5] } };
 
 
@@ -1305,7 +1305,8 @@ function stampBlobs(sp, r, st, s, list, C) {
 }
 
 function blobTree(r, st, s, P) {
-  const k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  // (st.treePad: room past the tree's own frame, left and right, and above, for a crown that grows out of it: trees.js unclipped)
+  const [PX, PY] = st.treePad || [0, 0], k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
   const T = P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
   const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * (T.lean ?? .3) * st.gnarl + (st.treeLean || 0);
   const tips = [], ends = [], trunks0 = [];
@@ -1349,8 +1350,8 @@ function blobTree(r, st, s, P) {
     const p = lerp2(tr.pts[i], tr.pts[i + 1], u + r() * T.bands * .4), wl = 2 + Math.floor(r() * 4) * s;
     if (r() < .7) for (let dy = 0; dy < Math.max(2, Math.round(s * 1.2)); dy++) for (let dx = -wl; dx <= wl; dx++) if (sp.get(p[0] + dx, p[1] + dy) === tmat) sp.recolour(p[0] + dx, p[1] + dy, bandM);
   }
-  if (T.upper) for (let y = 0; y < H * T.upper; y++) for (let x = 0; x < W; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
-  if (T.scars) for (let y = 0; y < H; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < W; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
+  if (T.upper) for (let y = 0; y < PY + H * T.upper; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
+  if (T.scars) for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
   const C = P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
   if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
   if (C.fronds) return frondCrown(sp, r, st, s, k, ends[0], C, gy);
@@ -1396,7 +1397,7 @@ function blobTree(r, st, s, P) {
   }
   // the crown line: the underside of the lowest blobs, or the trunk's fork, whichever is lower
   const under = Math.max(...list.filter(b => !b.back || list.length < 3).map(b => b.c[1] + b.ry * .4));
-  if (C.crownLine) return trim(sp, bx, H * C.crownLine); // a crown to the ground (a fir's skirts): the line at a share of the height, so its lowest skirts carry the life below
+  if (C.crownLine) return trim(sp, bx, PY + H * C.crownLine); // a crown to the ground (a fir's skirts): the line at a share of the height, so its lowest skirts carry the life below
   return trim(sp, bx, Math.min(gy - 6 * s, Math.max(under, Math.min(...ends.map(e => e[1])))));
 }
 
@@ -1560,9 +1561,9 @@ function leafTexture(sp, c, rx, ry, r, { grain = 2, holes = 0, flecks = .16, dot
 // `spreadA`, forking `depth` times; clumps of `clumpR` [rx range] and `flat` (ry / rx) at the tips,
 // then a leaf texture. trunks: several stems; lean; dome: an extra crown of clumps over the top.
 function broadleaf(r, st, s, P) {
-  const k = spread(st) * (P.wide || 1), W = Math.round(240 * s * k + 70 * s), H = Math.round((P.tall || 140) * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  const [PX, PY] = st.treePad || [0, 0], k = spread(st) * (P.wide || 1), W = Math.round(240 * s * k + 70 * s), H = Math.round((P.tall || 140) * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY; // (st.treePad: unclipped)
   const n = st.treeTrunks || P.trunks || 1, tw = (P.tw || 12) * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * .4 * st.gnarl + (st.treeLean || 0) + (P.lean || 0);
-  const tips = []; let crownY = H;
+  const tips = []; let crownY = gy;
   const grow = (p, ang, len, w, d) => {
     const b = bough(sp, p, ang, len, w, w * .65, st, r, { group: 12, mat: P.limbMat || M.TRUNK, bend: P.bend ?? 1 });
     if (d === 0) { tips.push(b.end); return; }
@@ -1707,11 +1708,25 @@ function genomeTree(id, g) {
   if (!g.style && TREE_GENERATORS[id] === gen) return gen;
   return (r, st, s) => gen(r, genomeStyle(st, g.style), s, P);
 }
+// A generator's tree whole (Ed, 2026-10-13: "The tops of some treetops are cut off"): a tree draws on a canvas its genome sizes,
+// and a crown that grows past it (a tall variant, a leaning or gnarled one, big blobs high up) was cut off flat at its edge.
+// Drawn as before, its random draws kept; only if it touches its canvas's top or sides is it drawn again with room round it
+// (st.treePad), from the same draws, so a tree that fitted stays exactly as it was. (Its textures' noise is by the pixel, so
+// the one redrawn differs in its grain, not its shape.)
+const clippedAt = sp => { let top = 0, side = 0; for (let x = 0; x < sp.w; x++) if (sp.m[x]) top++; for (let y = 0; y < sp.h; y++) { if (sp.m[y * sp.w]) side++; if (sp.m[y * sp.w + sp.w - 1]) side++; } return top || side ? { top, side } : null; };
+function unclipped(gen) {
+  return (r, st, s) => {
+    const drawn = [], t = gen(() => { const v = r(); drawn.push(v); return v; }, st, s);
+    if (st.treePad || !clippedAt(t.sp)) return t;
+    let i = 0;
+    return gen(() => (i < drawn.length ? drawn[i++] : r()), { ...st, treePad: [Math.ceil(t.sp.w / 2), t.sp.h] }, s);
+  };
+}
 const TREE_SPECIES = {};
 for (const [id, g] of Object.entries(PLANT_GENOMES)) {
   if (g.species === false) continue; // only a TREE_TYPES kind (the tree fern), never an area's species
-  const bare = genomeTree(id, g);
-  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
+  const raw = genomeTree(id, g), bare = unclipped(raw);
+  TREE_SPECIES[id] = { fn: (r, st, s) => lowLife(bare(r, st, s), r, st, s, g.low || {}), bare, raw, /* raw: as drawn on its canvas alone, cut or not (areas.js speciesStature: the order an area deals its kinds into its height classes, kept as it was) */ name: g.name, grow: g.grow, blob: true, ...g.colour }; // blob: drawn in leaf stamps, every species now (broadleaf's clumps too), so the pixel-art ramp applies // every species' trees carry their life below the crown; bare draws without it
 }
 // The species a flora preview names (the game's ?flora=, the lab): "new" the genome generator's species, "fantasy" its fantasy
 // ones, "all" every species, or a comma list of ids; unknown ids are left out.
@@ -1724,7 +1739,7 @@ function floraPick(q) {
   return q.split(",").map(x => x.trim()).filter(x => TREE_SPECIES[x]);
 }
 // the original six kinds by their old names (the style's tree-type knobs, the lab): grown from their genomes by the blob generator now
-const broadTree = TREE_SPECIES.broad.bare, firTree = TREE_SPECIES.fir.bare, willowTree = TREE_SPECIES.willow.bare, birchTree = TREE_SPECIES.birch.bare, flatTree = TREE_SPECIES.flat.bare, palmTree = genomeTree("palm", PLANT_GENOMES.palm);
+const broadTree = TREE_SPECIES.broad.bare, firTree = TREE_SPECIES.fir.bare, willowTree = TREE_SPECIES.willow.bare, birchTree = TREE_SPECIES.birch.bare, flatTree = TREE_SPECIES.flat.bare, palmTree = unclipped(genomeTree("palm", PLANT_GENOMES.palm));
 const SPECIES_BY_FN = new Map(Object.entries(TREE_SPECIES).flatMap(([id, S]) => [[S.fn, { id, ...S }], [S.bare, { id, ...S }]]));
 const treeSpecies = type => TREE_SPECIES[type] || TREE_SPECIES.broad;
 // What a species' canopy looks like from the treetops, as numbers: its crown (the top half of a mature
@@ -4006,7 +4021,7 @@ const GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", 
 
 
 // ---- inlined from art/creatures/bear/genome.js ----
-const GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: .3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
+const GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: .3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: .2 }, { kind: "moss", amount: .5 }, { kind: "scars", count: 4 }, { kind: "claws", size: .26 }] }] };
 
 
 // ---- inlined from art/creatures/beaver/genome.js ----
@@ -4283,7 +4298,7 @@ const GENOME_KOMODO = { id: "komodo", name: "Komodo dragon", template: "quadrupe
     { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
     { body: { bw: .32, hr: .2 }, head: { snout: .85, snoutD: .65 }, coat: { spots: true, spotMat: "belly" } }, // a slim speckled young, its head still short
     { head: { snout: 1.4, snoutD: .95 }, body: { hr: .26, neckW: .4, profile: { shoulder: { w: 1.15, d: .85 }, ribcage: { w: 1.1, d: .95 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
-    { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }] },
+    { head: { tongue: 1.6, snout: 1.4, snoutD: .95 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }, { kind: "dewlap", size: 1.4 }, { kind: "crown", count: 9, size: 1.6, mat: "BELLY", spread: 1 }] }, // the elder: the adult's long heavy head and dewlap, crowned with spines
   ] };
 
 
@@ -4375,7 +4390,7 @@ const GENOME_POLARBEAR = { id: "polarbear", name: "Polar bear", template: "quadr
       { body: { len: .8, neck: .42, neckAng: -.06, hr: .33, withers: .07, chest: .44, tuck: .46 } },
       { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.25, neck: .48, neckAng: -.14, withers: .1, front: 1.1, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: .9, d: .95 }, ribcage: { w: .9 }, waist: { w: .74, d: .8 }, loin: { w: .82, d: .88 }, hip: { w: .86 } } } },
       { body: { chest: 0.33, tuck: 0.4, hr: .25, neck: .6, neckAng: -.22, withers: .15, front: 1.18, brisket: .06, profile: { shoulder: { w: 1.26, d: 1.26 }, ribcage: { w: 1.14, d: 1.06 }, waist: { w: .86, d: .85 }, loin: { w: .92, d: .94 }, hip: { w: 1.0, d: .98 } } } },
-      { body: { bw: .44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: .96, d: .96 }, loin: { w: 1.0 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] },
+      { body: { bw: .44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: .96, d: .96 }, loin: { w: 1.0 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "ruff", size: .28, count: 16 }, { kind: "worn", ear: "near" }, { kind: "scars", count: 5 }, { kind: "crown", count: 9, size: 1.6, mat: "WEB", spread: 1 }] },
     ] };
 
 
@@ -4428,6 +4443,7 @@ const GENOME_REDPANDA = { id: "redpanda", name: "Red panda", template: "quadrupe
       { body: { hgt: .72, len: .66, chest: .32 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
       { kind: "ruff", size: .24, count: 16, mat: "BELLY" },
       { kind: "claws", size: .14 },
+      { kind: "grizzle", amount: .55 }, { kind: "wreath", count: 14 },
     ] },
     ] };
 
@@ -4528,8 +4544,8 @@ const GENOME_STEGOSAURUS = { id: "stegosaurus", name: "Stegosaurus", template: "
 
 
 // ---- inlined from art/creatures/stoat/genome.js ----
-const GENOME_STOAT = { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .48, len: 1.05, chest: .3, tuck: .33, neck: .85, neckAng: .55, neckW: .2, hr: .25, legW: .8, back: "arch", brisket: 0, profile: { shoulder: { w: .9, d: .8 }, ribcage: { d: .9 } } }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"],
-  levels: [null, { body: { len: .7, neck: .34, hr: .31, hgt: .48, legW: .9, tailL: .7 }, head: { snout: .48 } }, { body: { len: 1.15, hgt: .44, neck: .92 } }, null] };
+const GENOME_STOAT = { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .25, val: .92 }, body: { hgt: .48, len: 1.05, chest: .3, tuck: .33, neck: .85, neckAng: .55, neckW: .2, hr: .25, legW: .8, back: "arch", brisket: 0, profile: { shoulder: { w: .9, d: .8 }, ribcage: { d: .9 } } }, head: { snout: .6, snoutD: .6, whiskers: true }, parts: { ears: { kind: "round", size: .6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, 
+  levels: [null, { body: { len: .7, neck: .34, hr: .31, hgt: .48, legW: .9, tailL: .7 }, head: { snout: .48 } }, { body: { len: 1.15, hgt: .44, neck: .92 } }, { body: { hgt: .56, len: 1.2, neck: .92 }, features: [{ kind: "darken", mat: "BODY3" }, { kind: "grizzle", amount: .7 }, { kind: "worn", ear: "near" }, { kind: "garland", count: 14 }, { kind: "earrings", which: "both" }] }] }; // the legend, the elder of its kind (ART-GUIDE 0c): the old ermine of the alder wood, its coat gone dark brown with age and grizzled, a bitten ear, a garland and rings in its ears
 
 
 // ---- inlined from art/creatures/tiger/genome.js ----
@@ -7634,7 +7650,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "plates", "offerings", "howl", "furrow", "sail", "patagium", "dewlap", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath", "backPlates"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "plates", "offerings", "howl", "furrow", "sail", "patagium", "dewlap", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath", "backPlates", "crown", "darken"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -8473,6 +8489,20 @@ function evolve3d(m, feats, c) {
     if (f.kind === "bands" && m.rig?.legs) { // bands round its legs (anklets, or an old harness's cuffs), on the cannon above each foot
       const mat = M[f.mat || "WOOD"], k = f.at ?? .3;
       for (const L of m.rig.legs) { if (L.fore ? f.fore === false : f.hind === false) continue; m.part = L.name; const a = L.hock ?? L.knee, b = L.foot, p = v3.lerp(b, a, k), d = v3.norm(v3.sub(a, b)), r = L.r[2] * (f.width ?? 1.4), h = L.r[2] * (f.height ?? .6); m.seg(v3.add(p, v3.mul(d, -h)), v3.add(p, v3.mul(d, h)), r, r, mat, { group: 180 + (L.side > 0 ? 0 : 1), extra: true }); }
+    }
+    if (f.kind === "darken") { // an old coat gone darker with the years (the stoat's elder, an old brown ermine): its coat's own colour drawn in a deeper shade of it
+      const to = M[f.mat || "BODY2"];
+      for (const q of m.parts) if (q.mat === M.BODY) q.mat = to;
+      for (const F of m.flats) if (F.mat === M.BODY) F.mat = to;
+    }
+    if (f.kind === "crown") { // a crown of spikes round the top of its head, leaning out (the polar bear's of ice, the komodo's of spines): count, size, mat
+      m.part = "head";
+      const H = c.H, hr = c.hr, n = f.count ?? 7, L = hr * (f.size ?? .9), mat = M[f.mat || "CRYSTAL"], spread = f.spread ?? .9; // spread: how far round the crown runs (1 a full ring)
+      for (let i = 0; i < n; i++) {
+        const a = (n > 1 ? i / (n - 1) - .5 : 0) * Math.PI * 2 * spread * .5, out = v3.norm([Math.cos(a) * .35 - .1, 1, Math.sin(a) * .9]), base = v3.add(H, v3.mul(out, hr * .78));
+        const len = L * (1 - Math.abs(a) / Math.PI * .6) * (i % 2 ? .75 : 1); // taller in the middle, every other one shorter
+        m.seg(base, v3.add(base, v3.mul(v3.norm(v3.add(out, [0, .6, 0])), len)), hr * .13, hr * .02, mat, { group: 186, extra: true });
+      }
     }
     if (f.kind === "wreath" && m.anchors.neck) { // the elder kit's wreath: flowers and leaves wound round its neck, sagging at the front (an offering)
       m.part = "head";
@@ -13348,7 +13378,7 @@ const DROWNED_WOOD = {
   slot: 31, id: "drowned-wood", name: "Drowned wood", creature: "hydra", by: "recipe", leaf: .28, floor: ["mud", .3, .25, .17],
   text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
   wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: .9 }]],
-  big: [["tree", { type: "larch", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+  big: [["tree", { type: "larch", variant: "drowned", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
   layout: {
@@ -13726,6 +13756,7 @@ const TREE_VARIANTS = {
   mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
   snowy: { snow: .85 }, //                  snow lying on its crown
   burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
+  drowned: { dark: true, hang: .6, thick: 1.2 }, // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
 };
 /** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
 const withVariant = o => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
@@ -14177,7 +14208,7 @@ const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixe
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 // How tall a species grows as a mature tree (px at the style's tree size), measured once per species and tree size.
 const statureCache = new Map();
-function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, treeSpecies(type).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
+function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, (treeSpecies(type).raw ?? treeSpecies(type).bare)(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
 function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
