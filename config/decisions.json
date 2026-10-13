@@ -112,6 +112,11 @@
       "default": 0.6, "apply": { "knob": "shadows.tint" }
     },
     {
+      "id": "shadowCast", "pr": 857, "group": "Scenery shadows", "label": "Shadows darken what stands in them", "note": "Creatures, the witch, bushes, props and scenery standing in a trunk's, a palm's or scenery's shadow are darkened and tinted by it where it falls on them (off: only the ground and grass).",
+      "control": { "type": "toggle" },
+      "default": true, "apply": { "knob": "shadows.cast" }
+    },
+    {
       "id": "shadowGlowLight", "pr": 759, "group": "Scenery shadows", "label": "Glowing casters' shadows", "note": "How light the shadows of things lit with their own colour are (runestones, soundsystems), in a soft shade of that colour (0: as dark as any).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
       "default": 0.7, "apply": { "knob": "shadows.trunks.glowLight" }

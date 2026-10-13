@@ -66,6 +66,7 @@ import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
 import { SHADOW_DEBUG, SHADOW_TINT, ShadowBatch, type ShadowInstance } from "./shadows";
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
+import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
@@ -199,6 +200,9 @@ export class View {
   sceneryFixed: number | null = null;
   private lastReal = 0;
   readonly post: Post;
+  /** The cast shadows from above, for what stands in them (render/castShadows.ts). */
+  private castMap = new CastShadowMap();
+  private castOn = false;
   private dancefloor: Dancefloor;
   propBatch: SpriteBatch;
   private partyView: PartyView;
@@ -931,6 +935,7 @@ export class View {
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;
       for (const b of this.trunkShadowBatches.values()) b.visible = on;
+      this.castOn = on && TS.mode !== "debug" && (t.shadows.cast ?? true);
       if (this.beachView.palmShadows) this.beachView.palmShadows.visible = on;
       if (on) {
         const base = t.lights.campfire.strength, fires = this.forestLights.filter(l => l.rgb === this.fire).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, MAX_FIRES);
@@ -967,6 +972,7 @@ export class View {
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
+    this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.post.render(this.scene, this.camera);
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
