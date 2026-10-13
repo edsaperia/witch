@@ -32,6 +32,8 @@
     "woodlouse": {"sprite": "puff", "every": [4, 8], "for": 1.0},
     "snail": {"sprite": "puff", "every": [6, 12], "for": 2.0},
     "moth": {"sprite": "shiver", "every": [2, 5], "for": 0.6},
+    "dragonfly": {"sprite": "shiver", "every": [1.5, 4], "for": 0.5},
+    "crab": {"sprite": "shiver", "every": [3, 6], "for": 0.6},
     "glowworm": {"sprite": "puff", "every": [3, 6], "for": 1.6},
     "hedgehog": {"sprite": "puff", "every": [4, 8], "for": 0.9},
     "toad": {"sprite": "hop", "every": [5, 10], "for": 0.7},

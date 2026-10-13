@@ -31,6 +31,8 @@
     "stoat": {"family": "small", "pitch": 1.1, "trill": [24, 80]},
     "marten": {"family": "small", "pitch": 0.9, "trill": [20, 60]},
     "beetle": {"family": "bug", "pitch": 0.7, "am": [60, 0.9], "volume": 1.5},
+    "dragonfly": {"family": "bug", "pitch": 1.6, "am": [180, 0.6], "noise": 0.2, "volume": 1.1},
+    "crab": {"family": "bug", "pitch": 0.6, "am": [28, 0.9], "noise": 0.45, "volume": 1.3},
     "moth": {"family": "bug", "pitch": 1.2, "am": [120, 0.7], "noise": 0.3, "volume": 1.2},
     "woodlouse": {"family": "bug", "pitch": 1.1, "dur": 0.4, "extra": 1, "volume": 1.3},
     "spider": {"family": "bug", "pitch": 0.9, "am": [45, 0.7], "noise": 0.25, "volume": 1.2},
