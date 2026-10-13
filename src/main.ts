@@ -489,4 +489,4 @@ requestAnimationFrame(frame);
 
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
-installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop });
+installHooks({ game, view, tuning, hud, sound, meter, shake, frameStats, loadTimes, loop });

@@ -1,5 +1,6 @@
 // window.witch: the game's hooks for the smoke test, the tools (tools/smoke, tools/feel, tools/sfx, tools/bench) and for poking
 // at in the console.
+import type { FrameStats } from "../platform/frameStats";
 import { Vector3 } from "three";
 import { setupArena } from "../rules/arena";
 import { cellKey } from "../rules/party";
@@ -22,15 +23,17 @@ import type { ScreenShake } from "./shake";
 
 export interface HookDeps {
   game: Game; view: View; tuning: Tuning; hud: Hud; sound: Sound; meter: OutputMeter; shake: ScreenShake;
+  /** The frames' own stats (the overlay's fps, cpu and gpu lines), for the probes. */
+  frameStats: FrameStats;
   loadTimes: Record<string, number>;
   /** The loop's own state, read and set through these. */
   loop: { manual: boolean; readonly bot: Bot | null; readonly botTag: BotTag | null; readonly ready: boolean };
 }
 
-export function installHooks({ game, view, tuning, hud, sound, meter, shake, loadTimes, loop }: HookDeps): void {
+export function installHooks({ game, view, tuning, hud, sound, meter, shake, frameStats, loadTimes, loop }: HookDeps): void {
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
-  (window as unknown as { witch: unknown }).witch = { game, view, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
+  (window as unknown as { witch: unknown }).witch = { game, view, tuning, frameStats, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
