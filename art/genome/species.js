@@ -165,3 +165,24 @@ export const GENOMES = [
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
+
+// MOCK (Ed's elder brief, docs/ART-GUIDE.md 0c, 2026-10-13): each species' legend as the elder of its kind, beside its legend of
+// today on the mock sheets (docs/art-review/mocks/elder-legends-*.png). Not in the bestiary (GENOMES): critter finds them by id
+// ("<species>Elder") through SPECIES_BY_ID only. `elder` names what the builders draw at level 3 (art/elders.js): its kind and the
+// parts of the ordinary legend it replaces (tail, ears, eye).
+const elderOf = (id, elder, patch = {}) => { const g = GENOMES.find(r => r.id === id); return { ...g, ...patch, id: id + "Elder", name: g.name + " (elder)", legend: [], elder: { kind: id, ...elder } }; };
+const levelsWith = (id, l3) => { const g = GENOMES.find(r => r.id === id); return [...g.levels.slice(0, 3), l3]; };
+export const ELDER_GENOMES = [
+  elderOf("raccoon", { eye: "EYE" }, { palette: { hue: .62, sat: .07, val: .55, flower: [196, 58, 44] } }),
+  elderOf("hedgehog", {}, { palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] } }),
+  elderOf("squirrel", { tail: true, eye: "EYE" }),
+  elderOf("dormouse", { tail: true, eye: "EYE" }),
+  elderOf("snail", {}, { palette: { hue: .64, sat: .55, val: .55 }, levels: levelsWith("snail", { body: { shell: { turns: 4.2, r: .4, cone: .75, ridge: true, stars: true, runes: true, chipped: true }, stalks: 2.3, mantle: true, sheen: true, eyeGlow: true } }) }),
+  elderOf("mole", {}, { palette: { hue: .7, sat: .15, val: .32, flower: [70, 190, 150] } }),
+  elderOf("badger", { eye: "EYE" }, { levels: levelsWith("badger", { body: { len: .95, bw: .5, chest: .14, tuck: .16, legW: 1.8, neckAng: .25, hr: .3 }, head: { blaze: 1.6 }, features: [{ kind: "mane", from: .05, to: .9, height: .08, count: 20, lean: 1 }, { kind: "claws", size: .24 }] }) }),
+  elderOf("stoat", { eye: "EYE" }, { palette: { hue: .1, sat: .25, val: .92, flower: [128, 26, 50] } }),
+  elderOf("marten", { eye: "EYE" }),
+  elderOf("hare", { ears: true, eye: "EYE" }),
+  elderOf("meerkat", { eye: "GLOW" }, { palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] } }),
+  elderOf("armadillo", {}),
+];

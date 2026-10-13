@@ -2,7 +2,7 @@
 // call that draws one. Each is built in 3D (creatures3d.js, model3d.js) and seen in
 // three-quarter view from above; it faces right and the game mirrors it.
 import { M, hsv2rgb, rng } from "./core.js";
-import { GENOMES, speciesOf } from "./genome/index.js";
+import { GENOMES, ELDER_GENOMES, speciesOf } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
@@ -23,7 +23,7 @@ export const buildCreature = (S, level, frame, st, facing = "towards") => S.q ? 
 // speciesOf turns one into the object the builders draw from (plan, hue/sat/val, belly, legend,
 // and for the four-legged q, their proportions, and sizes, their template's size curves).
 export const SPECIES = GENOMES.map(speciesOf);
-export const SPECIES_BY_ID = Object.fromEntries(SPECIES.map(s => [s.id, s]));
+export const SPECIES_BY_ID = Object.fromEntries([...SPECIES, ...ELDER_GENOMES.map(speciesOf)].map(s => [s.id, s])); // (MOCK: the elder legends, by id only)
 export const FEATURE_NAMES = { wings: "spirit wings", mane: "a glowing mane", tails: "many tails", crystals: "crystals", tusksBig: "great tusks", antlersGlow: "glowing antlers", jackalope: "antlers", eyesRing: "a ring of eyes", moss: "a little forest on its back", starTail: "a starry tail", crown: "a crown", ribbons: "light ribbons", wingsBig: "huge glowing wings", horn: "a glowing horn", glowShell: "a glowing shell", hornsGlow: "glowing golden horns", flames: "a crest of flame", lantern: "a great lantern", sunBall: "a ball of sunlight" };
 
 // Party gear's colourways (gear in critter).
