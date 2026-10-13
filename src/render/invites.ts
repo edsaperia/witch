@@ -259,7 +259,7 @@ export class InviteView {
       showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
-    // Lanterns (Glow-worm): little glowing hearts where the letters flew, fading out.
+    // Paw prints (Wildcat): little glowing hearts where the letters flew, fading out.
     while (this.lanterns.length < I.lanterns.length) {
       const d = document.createElement("div");
       Object.assign(d.style, { position: "absolute", width: `${k * 2}px`, height: `${k * 2}px`, marginLeft: `${-k}px`, marginTop: `${-k}px`, background: "#f3cf9a", boxShadow: "0 0 6px 2px rgba(217,120,158,.7)" });
