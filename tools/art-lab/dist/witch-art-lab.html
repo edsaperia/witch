@@ -3892,6 +3892,17 @@ const GENOMES = [
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .4, len: .95, chest: .16, tuck: .16, neck: .1, neckAng: -.05, neckW: .6, hr: .29, legW: 1.45, bw: .36 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
+  // the mossy dell's roe deer (an area recipe's): a small, slight deer, all ears and eyes, a white rump and a black nose; the buck's
+  // short three-tined antlers (its own antler curve, a third of the stag's), the fawn dappled
+  { id: "roe", name: "Roe deer", template: "quadruped", builder: "quad", palette: { hue: .055, sat: .62, val: .66, belly: "white" }, body: { hgt: 1.0, len: .52, chest: .36, tuck: .54, neck: .42, neckAng: .9, neckW: .28, hr: .23, legW: .55 }, head: { snout: .8, snoutD: .55, snoutTaper: .6, eyeK: 1.35 }, parts: { ears: { kind: "big", size: 1.15 }, tail: "bob", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, sizes: { antlers: [0, .3, .42, .95] }, legend: [],
+    // its legend, the elder of the roe (docs/ART-GUIDE.md 0c): an ancient buck grown tall and grey-muzzled, its antlers the old
+    // bucks' "perruque", heavy, many-tined and furred with moss, a pale winter ruff at its throat, moss on its flanks from lying
+    // out for ages in the dell, and bead offerings bound round its legs
+    levels: [null, null, null,
+      { body: { hgt: 1.15, neck: .5, chest: .4 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
+        { kind: "ruff", size: .16, count: 12, mat: "BELLY" },
+        { kind: "moss", count: 9, size: .1 },
+      ] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
@@ -4384,7 +4395,7 @@ function genomeHash(g) {
 // parts). cloak: wings wrapped round it ({ c: centre, r: radii } in model units, as legends.js).
 const NAP_POSES = {
   // lie
-  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
+  elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, roe: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
   armadillo: { kind: "lie", sink: .02, droop: .4, curl: .3 },
@@ -7423,6 +7434,8 @@ const SIGILS = {
   // seen from above: a round head, a plump body, four legs with splayed toes and a tail curling round
   salamander: [E(.5, .14, .1, .08), E(.5, .42, .1, .2), bow([.5, .62], [.76, .9], .4), ...pair(L([.42, .32], [.24, .26], [.18, .18]), L([.24, .26], [.14, .3]), L([.42, .52], [.24, .6], [.2, .7]), L([.24, .6], [.13, .6]), D(.46, .12))],
   // side on: a long low body, a wavy crest running along its back and tail, small bent legs
+  // the mossy dell's roe deer, face on: a narrow face to a black nose, big round ears out to the sides, short three-tined antlers
+  roe: [...pair(L([.42, .42], [.42, .66], [.5, .86]), E(.27, .42, .11, .055), L([.44, .4], [.42, .22], [.38, .1]), L([.425, .28], [.33, .24]), L([.42, .22], [.47, .12]), D(.44, .55)), L([.42, .42], [.58, .42]), D(.5, .82)],
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
   // the griffin: an eagle's head side on, its hooked beak and feathered ear tuft, a wing raised behind it
   griffin: [C(.42, .42, .16), L([.56, .38], [.72, .44], [.66, .56], [.56, .5]), D(.46, .4), L([.34, .3], [.3, .16]), L([.3, .56], [.22, .9]), ...[0, 1, 2].map(i => L([.3 + i * .05, .62], [.62 + i * .08, .96 - i * .1]))],
@@ -7545,6 +7558,7 @@ const LEGEND_DETAIL = {
   moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
+  roe: [...pair(L([.41, .74], [.36, .9]), L([.3, .4], [.36, .44]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
@@ -7670,7 +7684,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red" };
+const SIGIL_NEON = { fennec: "orange", roe: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -8862,6 +8876,28 @@ const PLAINS = {
 };
 
 
+// ---- inlined from art/recipes/dell.js ----
+// The mossy dell (Ed, 2026-10-12: "Why don't we make a few more animals": a roe deer, its area for the later islands), the third
+// area type written as a recipe (art/recipes.js says what each field is): a damp, mossy hollow under rowan, birch and oak,
+// ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (config/kinds.json).
+const DELL = {
+  id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
+  text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
+  small: [["fern", {}], ["grass", { h: 1.1 }]],
+  big: [["tree", { type: "rowan", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
+  pathKinds: ["animal", "roots"],
+  setPiece: ["ring", "an old ring in a glade, where the roe gather at dusk", 1],
+  layout: {
+    pattern: "groves", density: .55, clump: .7, glades: { count: 3, size: [12, 20] },
+    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    terrain: ["hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .15, lake: .15, modern: .1 },
+    feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks.",
+  },
+  flora: { species: [["rowan", .4], ["birch", .35], ["oak", .25]], palette: { sat: .95, val: .95 } },
+  settings: { treeDensity: .6, groundCover: { density: .85, kinds: ["moss", "blades"] } },
+};
+
+
 // ---- inlined from art/recipes/frostcave.js ----
 // The frost cave (a journey kind: unknown-17's, mountains and glaciers; Ed approved the mock, 2026-10-13): blue glacier ice, frozen falls and the mouth of
 // an ice cave, stunted wind-killed pines and crystal-leaf trees, the frost wyrm its creature.
@@ -8904,7 +8940,7 @@ const EYRIE = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE];
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -12415,6 +12451,7 @@ const LEGEND_POSES = {
   raccoon: { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }, // the mossy creek's raccoon (an area recipe's): curled under moss and ferns
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  roe: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }, // the mossy dell's roe: curled in the moss, ferns over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   griffin: { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen
   frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age

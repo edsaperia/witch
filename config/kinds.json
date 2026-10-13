@@ -273,12 +273,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-13": {
+    "roe": {
       "phase": 3,
       "bearing": 321,
       "dir": "NW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "unknown-14": {
       "phase": 3,

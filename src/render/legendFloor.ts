@@ -64,6 +64,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "bluebell-glade": look("limestone", "bluebells", "moss", 0.5),
   "holly-thicket": look("slate", "darkLeaves", "moss", 0.55),
   "honeysuckle-tangle": look("limestone", "flowers", "lichen", 0.5),
+  "mossy-dell": look("granite", "leaves", "moss", 0.7, false, 0.6),
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "eyrie": look("buffSandstone", "pebbles", "lichen", 0.45), // wind-scoured stone, feathers in the cracks
