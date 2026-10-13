@@ -310,7 +310,6 @@
   "bat",
   "raven",
   "moth",
-  "glowworm",
   "spider",
   "toad",
   "salamander",
@@ -377,6 +376,12 @@
    "swipe",
    "bigswipe",
    "legendCharge"
+  ],
+  "frostwyrm": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendNova"
   ]
  },
  "kite": {
@@ -418,7 +423,7 @@
    "stoat",
    "snake",
    "spider",
-   "glowworm",
+   "cat",
    "woodlouse",
    "beetle",
    "snail",
@@ -448,7 +453,9 @@
    "elk",
    "stag",
    "tiger",
-   "lion"
+   "lion",
+   "frostwyrm",
+   "griffin"
   ],
   "nimble": [
    "cheetah",

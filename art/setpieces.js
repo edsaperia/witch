@@ -1,7 +1,7 @@
 // Set pieces for the areas that had none (Ed: "I really want each forest to feel quite different
 // and unique ... Make set pieces for the other areas too"). Each is its area's landmark, built in
 // 3D (model3d.js) at the witch's own scale and about 6 to 12 m across or tall, turned towards the
-// viewer. Most are unlit; a few have one magical touch (fairy-stone runes, will-o'-wisps, glowworms,
+// viewer. Most are unlit; a few have one magical touch (fairy-stone runes, will-o'-wisps, fireflies,
 // a charcoal mound's embers). The flowering areas (meadow, heath, berry thicket) have none.
 import { M, Sprite, hsv2rgb, cropKeepBottom } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
@@ -200,7 +200,7 @@ const spSETS = {
     m.seg([1.5, .18, .8], [1.5, .18, .2], .18, .18, M.TRUNK, { group: 5, paint: p => p[2] > .78 || p[2] < .22 ? M.BARKL : spBark(p) }); m.seg([1.5, .3, .5], [1.6, .75, .5], .025, .025, M.WOOD, { group: 6 }); m.box([1.5, .36, .5], [.1, .06, .015], M.FRAME, { group: 6 }); // an axe in a log
     for (let i = 0; i < 6; i++) { const row = i < 3 ? 0 : 1, k = i % 3; m.seg([-1.7 + k * .3 + row * .15, .15 + row * .26, -.7], [-1.7 + k * .3 + row * .15, .15 + row * .26, .2], .14, .14, M.TRUNK, { group: 7 + (i % 2), paint: p => p[2] > .16 || p[2] < -.66 ? M.BARKL : undefined }); }
   },
-  // bluebell glade: a great beech with a rope swing, glowworms in the dark under it
+  // bluebell glade: a great beech with a rope swing, fireflies in the dark under it
   "swing-beech"(m) {
     spLimb(m, [[0, 0, -.3, .45], [0, 1.6, -.3, .36], [-.1, 2.8, -.4, .26]], 1);
     spLimb(m, [[0, 2.2, -.3, .2], [1.0, 2.6, -.2, .14], [1.9, 2.75, -.1, .08]], 2); spLimb(m, [[-.05, 2.5, -.35, .18], [-1.2, 3.0, -.4, .1]], 3);
@@ -208,7 +208,7 @@ const spSETS = {
     for (const [c, r] of [[[0, 3.4, -.6], [1.4, .8, 1.0]], [[1.4, 3.1, -.4], [.9, .55, .7]], [[-1.3, 3.2, -.6], [.9, .6, .7]]]) spCrown(m, c, r, 5);
     for (const z of [-.12, .12]) m.seg([1.3, 2.65, z], [1.3, .55, z], .012, .012, M.STRAW, { group: 6 });
     m.box([1.3, .53, 0], [.08, .025, .18], M.WOOD, { round: .01, group: 6 }); // the swing's seat
-    for (let i = 0; i < 9; i++) m.ell([(spHash(i, 1) - .5) * 3, .05 + spHash(i, 2) * .5, (spHash(i, 3) - .3) * 1.6], [.022, .022, .022], M.MAGIC, { group: 20 + i, extra: true }); // glowworms
+    for (let i = 0; i < 9; i++) m.ell([(spHash(i, 1) - .5) * 3, .05 + spHash(i, 2) * .5, (spHash(i, 3) - .3) * 1.6], [.022, .022, .022], M.MAGIC, { group: 20 + i, extra: true }); // fireflies
   },
   // honeysuckle tangle: a bower, an arched trellis tunnel smothered in honeysuckle, a bench inside
   "bower"(m) {
