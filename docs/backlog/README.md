@@ -10,3 +10,4 @@
 - [music.md](music.md): a witchier sound, open samples, a better vocalise, and a palette of genres for the records.
 - [platform.md](platform.md): Steam and consoles, the Godot port, online co-op, and the cleanup before it.
 - [creatures.md](creatures.md): one body-graph creature generator to replace the quadruped builder and the one-off builders.
+- [look.md](look.md): the look of the world: softer planting across area borders, and trying the world without the glowing area edges.
