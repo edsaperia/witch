@@ -6,12 +6,12 @@
 // itself: no moss, no mound, its own colours, nothing sunk. By species (NAP_POSES):
 //   lie:   the hoofed and the heavy (elk, stag, boar, bear, badger, ram, beaver, hare, otter, newt...):
 //          belly down, head laid forward on the ground;
-//   curl:  the foxes, cats and the like (fox, wolf, lynx, marten, stoat, squirrel, dormouse): the body
+//   curl:  the foxes, cats and the like (fox, wolf, lynx, cat, marten, stoat, squirrel, dormouse): the body
 //          bent round into a C seen from above, head and tail meeting at the near side;
 //   tuck:  birds (owl, raven, heron): settled on their feet, head sunk into the shoulders
 //          (the heron folds its neck back, its builder's fold);
 //   coil:  the snake, round on itself;
-//   flat:  bugs and the low (beetle, woodlouse, spider, moth, glow-worm, snail, toad, mole, hedgehog):
+//   flat:  bugs and the low (beetle, woodlouse, spider, moth, snail, toad, mole, hedgehog):
 //          pressed to the ground, legs hidden; the bat and the moth wrap their wings round themselves.
 // napForm(S) is a form for withForm (creatures3d.js): critter(..., { nap: true }) draws a creature with it.
 import { M } from "./core.js";
@@ -50,7 +50,7 @@ export const NAP_POSES = {
   beetle: { kind: "flat", ground: .32, droop: .4 }, woodlouse: { kind: "flat", ground: .14, drop: [9] }, spider: { kind: "flat", ground: .26, droop: .5, drop: [95, 96, 97, 98, 99] },
   moth: { kind: "flat", ground: .12, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .3, 0], r: [.55, .24, .4] } },
   bat: { kind: "flat", ground: .2, drop: [0, 10, 11], cloak: { c: [-.05, .38, 0], r: [.42, .46, .38] } },
-  glowworm: { kind: "flat", ground: .05, curl: 1.2 }, snail: { kind: "flat", ground: .04, droop: 1, drop: [5] },
+  cat: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, snail: { kind: "flat", ground: .04, droop: 1, drop: [5] },
   toad: { kind: "flat", ground: .2, droop: .5 }, mole: { kind: "flat", ground: .22, droop: .4 }, hedgehog: { kind: "flat", ground: .1, droop: .6, curl: 1 },
 };
 const DEFAULT = { kind: "lie", sink: .05, droop: 1 };
