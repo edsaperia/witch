@@ -310,7 +310,6 @@
   "bat",
   "raven",
   "moth",
-  "glowworm",
   "spider",
   "toad",
   "salamander",
@@ -366,11 +365,35 @@
    "bigswipe",
    "quake"
   ],
+  "tiger": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
+  ],
+  "jaguar": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendCharge"
+  ],
+  "elephant": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
+  ],
   "lion": [
    null,
    "swipe",
    "bigswipe",
    "legendCharge"
+  ],
+  "frostwyrm": [
+   null,
+   "swipe",
+   "bigswipe",
+   "legendNova"
   ]
  },
  "kite": {
@@ -382,9 +405,11 @@
  },
  "temperament": {
   "curious": [
+   "tiger",
    "lion",
    "squirrel",
    "fox",
+   "arcticfox",
    "otter",
    "hedgehog",
    "dormouse",
@@ -394,11 +419,15 @@
    "mole",
    "raven",
    "wolf",
-   "boar"
+   "boar",
+   "redpanda"
   ],
   "skittish": [
    "cheetah",
+   "unicorn",
+   "snowleopard",
    "hare",
+   "roe",
    "stag",
    "elk",
    "owl",
@@ -411,11 +440,12 @@
    "stoat",
    "snake",
    "spider",
-   "glowworm",
+   "cat",
    "woodlouse",
    "beetle",
    "snail",
-   "ram"
+   "ram",
+   "ibex"
   ]
  },
  "traits": {
@@ -440,7 +470,11 @@
    "bear",
    "elk",
    "stag",
-   "lion"
+   "tiger",
+   "elephant",
+   "lion",
+   "frostwyrm",
+   "griffin"
   ],
   "nimble": [
    "cheetah",

@@ -81,15 +81,17 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
   // twice that (the fractal borders' finest wiggles: a finger of beach just offshore, a crack of sea) taken as what's round them.
   if (smooth > 0) {
     const tmp = new Uint8Array(N), R = smooth;
+    // (a max pass: 1 within R of a 1; a min pass: 0 within R of a 0, the grid's outside counting as 0. Each line swept twice, the
+    // distance to the last such sample and to the next, in place of a window at every sample: the same picture, a fifth of the work)
+    const near = new Uint8Array(Math.max(cols, rows));
     const pass = (src: Uint8Array, dst: Uint8Array, max: boolean, horizontal: boolean) => {
-      for (let j = 0; j < rows; j++) for (let i = 0; i < cols; i++) {
-        let v = max ? 0 : 1;
-        for (let o = -R; o <= R; o++) {
-          const ii = horizontal ? i + o : i, jj = horizontal ? j : j + o;
-          const w = ii < 0 || jj < 0 || ii >= cols || jj >= rows ? 0 : src[jj * cols + ii];
-          if (max ? w > v : w < v) v = w;
-        }
-        dst[j * cols + i] = v;
+      const n = horizontal ? cols : rows, lines = horizontal ? rows : cols, stride = horizontal ? 1 : cols, hit = max ? 1 : 0;
+      for (let l = 0; l < lines; l++) {
+        const base = horizontal ? l * cols : l;
+        let last = max ? -Infinity : -1;
+        for (let i = 0; i < n; i++) { if (src[base + i * stride] === hit) last = i; near[i] = i - last <= R ? 1 : 0; }
+        let next = max ? Infinity : n;
+        for (let i = n - 1; i >= 0; i--) { if (src[base + i * stride] === hit) next = i; dst[base + i * stride] = near[i] || next - i <= R ? (max ? 1 : 0) : (max ? 0 : 1); }
       }
     };
     const op = (max: boolean) => { pass(land, tmp, max, true); pass(tmp, land, max, false); };

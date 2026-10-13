@@ -59,6 +59,8 @@ export const SIGILS = {
   wolf: [...pair(L([.4, .3], [.22, .07], [.17, .44], [.32, .7], [.5, .92])), L([.4, .3], [.6, .3]), ...pair(L([.31, .46], [.42, .5])), D(.5, .82)],
   // big triangle ears, a cheek ruff flaring wide, a narrow pointed snout
   fox: [...pair(L([.4, .3], [.15, .07], [.13, .44], [.05, .54], [.3, .62], [.5, .88]), L([.2, .2], [.26, .32])), L([.4, .3], [.6, .3]), ...pair(D(.37, .5)), D(.5, .8)],
+  // the snowfield's arctic fox: the fox's face, rounder, its short ears rounded against the cold, a fluff of cheek ruff
+  arcticfox: [...pair(L([.4, .34], [.3, .17], [.19, .19], [.15, .44], [.07, .54], [.3, .62], [.5, .86]), L([.16, .5], [.1, .62])), L([.4, .34], [.6, .34]), ...pair(D(.37, .5)), D(.5, .78)],
   // the striped face: a round head, two stripes running from the snout over the eyes, little round ears
   badger: [E(.5, .54, .34, .38), ...pair(bow([.45, .88], [.38, .17], .1), A(.2, .26, .07, 110, 330)), ...pair(D(.32, .52)), D(.5, .82)],
   // tusks curling up beside a round snout with nostrils, pointed ears, a bristly crest
@@ -97,9 +99,17 @@ export const SIGILS = {
   snail: [spiral(.44, .5, .03, .28, 2.1, -90), L([.08, .82], [.82, .82], [.9, .74]), L([.82, .8], [.78, .52]), L([.86, .76], [.92, .5]), D(.78, .52), D(.92, .5)],
   // great horns curling round beside a long face
   ram: [...pair(L([.4, .34], [.41, .74], [.5, .86]), spiral(.24, .38, .05, .19, 1.15, 330), D(.44, .52)), L([.4, .34], [.6, .34])],
+  // the crags' ibex: a long goat's face, great horns sweeping up and back in knobbled arcs, a beard
+  ibex: [...pair(L([.44, .34], [.39, .2], [.3, .09], [.17, .05]), L([.4, .19], [.35, .21]), L([.33, .11], [.29, .14]), L([.44, .34], [.37, .44], [.43, .72], [.5, .78]), D(.41, .5)), L([.44, .34], [.56, .34]), L([.5, .8], [.5, .95])],
+  // the icefall's snow leopard: a broad cat's face, small round ears, whisker pads, a rosette on the brow
+  snowleopard: [...pair(L([.4, .3], [.28, .2], [.18, .26], [.16, .5], [.28, .72], [.5, .82]), L([.3, .62], [.1, .6]), D(.37, .47)), L([.4, .3], [.6, .3]), A(.5, .18, .06, -90, 270), D(.5, .64)],
   // a segmented oval shell seen from above, its feelers and little legs
   woodlouse: [E(.5, .55, .24, .36), ...[.36, .48, .6, .72].map(y => L([.5 - Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y], [.5 + Math.sqrt(1 - ((y - .55) / .36) ** 2) * .24, y])), ...pair(L([.43, .2], [.24, .06]), L([.27, .44], [.14, .42]), L([.26, .58], [.12, .6]), L([.29, .72], [.16, .78]))],
   // coiled round in a ring, its head raised in the middle, a forked tongue
+  // the rattlesnake: a coil, its head raised over it, the rattle held up in three buttons behind
+  rattlesnake: [spiral(.46, .62, .14, .32, 1.1, 0), L([.6, .56], [.64, .36]), E(.66, .28, .07, .045), D(.68, .27), L([.3, .7], [.22, .58]), E(.2, .52, .035, .03), E(.18, .45, .03, .025), E(.17, .39, .025, .02)],
+  // the scorpion from above: pincers ahead, a plated body, legs either side, the tail curled up over its back to the sting
+  scorpion: [E(.5, .6, .1, .16), L([.5, .48], [.5, .76]), ...pair(L([.44, .46], [.3, .36], [.3, .24]), L([.3, .24], [.26, .16]), L([.3, .24], [.36, .18]), L([.42, .56], [.24, .54]), L([.42, .64], [.24, .7]), L([.43, .72], [.27, .82])), L([.5, .76], [.5, .9], [.62, .92], [.66, .8], [.6, .72]), L([.6, .72], [.56, .68])],
   snake: [spiral(.5, .54, .16, .4, 1.3, 0), C(.5, .48, .1), D(.47, .46), L([.5, .58], [.5, .66]), ...pair(L([.5, .66], [.45, .7]))],
   // wings spread, the forewings broad and the hindwings rounded, a furry body and feathery antennae
   moth: [E(.5, .54, .05, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .82], [.4, .84], [.46, .66]), bow([.47, .31], [.34, .07], .3), C(.21, .32, .05))],
@@ -108,24 +118,59 @@ export const SIGILS = {
   // seen from above: a round head, a plump body, four legs with splayed toes and a tail curling round
   salamander: [E(.5, .14, .1, .08), E(.5, .42, .1, .2), bow([.5, .62], [.76, .9], .4), ...pair(L([.42, .32], [.24, .26], [.18, .18]), L([.24, .26], [.14, .3]), L([.42, .52], [.24, .6], [.2, .7]), L([.24, .6], [.13, .6]), D(.46, .12))],
   // side on: a long low body, a wavy crest running along its back and tail, small bent legs
+  // the mossy dell's roe deer, face on: a narrow face to a black nose, big round ears out to the sides, short three-tined antlers
+  roe: [...pair(L([.42, .42], [.42, .66], [.5, .86]), E(.27, .42, .11, .055), L([.44, .4], [.42, .22], [.38, .1]), L([.425, .28], [.33, .24]), L([.42, .22], [.47, .12]), D(.44, .55)), L([.42, .42], [.58, .42]), D(.5, .82)],
+  // the misty terraces' red panda, face on: a round face, big round rimmed ears, white cheeks, a dark nose, tear-marks under its eyes
+  redpanda: [C(.5, .55, .26), ...pair(C(.3, .3, .1), C(.3, .3, .05), D(.41, .5), L([.41, .56], [.39, .66]), bow([.3, .62], [.4, .74], .3)), D(.5, .66), L([.5, .68], [.5, .74])],
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
+  // the tiger: a broad round face, round ears, the mark on its brow, stripes on its cheeks, a wide muzzle
+  tiger: [C(.5, .55, .34), ...pair(A(.24, .26, .09, 120, 330), D(.38, .5), L([.17, .55], [.29, .58]), L([.17, .65], [.29, .66])), L([.43, .31], [.57, .31]), L([.44, .39], [.56, .39]), L([.5, .25], [.5, .43]), E(.5, .72, .12, .08), D(.5, .68)],
+  // the black jaguar: a broad round head, round ears, a heavy jaw, rosettes on its brow and cheeks
+  jaguar: [C(.5, .53, .32), ...pair(A(.25, .27, .08, 120, 330), D(.39, .49), C(.3, .64, .045)), C(.5, .35, .05), E(.5, .74, .15, .09), D(.5, .66)],
+  // the elephant face on: a domed head between two great fan ears, its eyes, tusks curving down and out, its trunk hanging and curling
+  elephant: [E(.5, .38, .15, .17), ...pair(E(.27, .42, .2, .26, 60, 300), D(.44, .38), bow([.43, .53], [.37, .66], .3)), L([.5, .55], [.5, .78], [.53, .88], [.6, .9], [.63, .85])],
+  // the dragonfly from above: a big-eyed head, a thorax, a long thin tail, two pairs of long wings out straight
+  dragonfly: [C(.5, .2, .055), ...pair(D(.47, .18)), E(.5, .33, .04, .065), L([.5, .4], [.5, .95]), ...pair(L([.47, .3], [.3, .22], [.08, .21], [.06, .27], [.3, .32], [.47, .35]), L([.47, .38], [.3, .39], [.1, .45], [.12, .51], [.3, .46], [.47, .42]))],
+  // the fiddler crab front on: a broad shell, eyes up on stalks, legs out to each side, one small claw and one great one
+  crab: [E(.5, .6, .26, .15), ...pair(L([.45, .47], [.43, .33]), D(.43, .31), L([.27, .63], [.14, .55], [.06, .66]), L([.28, .7], [.16, .71], [.1, .83])), L([.33, .52], [.25, .42], [.3, .35]), L([.67, .52], [.74, .42]), E(.8, .32, .12, .09), L([.75, .25], [.88, .13]), L([.82, .37], [.95, .27])],
+  // the crocodile's head from above: eyes bulging up at the back, a long tapering jaw, teeth poking out of its sides, nostrils at the tip
+  crocodile: [...pair(L([.5, .17], [.36, .17], [.27, .26], [.3, .37], [.42, .45], [.42, .8], [.39, .87], [.44, .93], [.5, .93]), A(.32, .2, .065, 180, 360), D(.32, .21), L([.42, .56], [.37, .59]), L([.42, .7], [.37, .73]), D(.465, .87))],
+  // the griffin: an eagle's head side on, its hooked beak and feathered ear tuft, a wing raised behind it
+  griffin: [C(.42, .42, .16), L([.56, .38], [.72, .44], [.66, .56], [.56, .5]), D(.46, .4), L([.34, .3], [.3, .16]), L([.3, .56], [.22, .9]), ...[0, 1, 2].map(i => L([.3 + i * .05, .62], [.62 + i * .08, .96 - i * .1]))],
+  // the frost wyrm: a long crocodile snout between great swept-back horns, an icicle beard under its jaw
+  frostwyrm: [...pair(bow([.434, .369], [.188, .156], .3)), E(.5, .451, .115, .115), ...pair(L([.426, .5], [.467, .795])), ...pair(D(.459, .443)), ...pair(L([.451, .828], [.434, .885])), L([.5, .828], [.5, .894])],
   // the cheetah: a small round head, small round ears, and its black tear lines running from its eyes to its mouth
   cheetah: [C(.5, .55, .3), ...pair(C(.29, .3, .07)), ...pair(D(.4, .5)), ...pair(L([.4, .56], [.38, .76])), L([.44, .74], [.5, .78], [.56, .74])],
   // the lion: a great round mane of rays round a broad face, a wide nose and muzzle
-  lion: [C(.5, .5, .38), ...rays(.5, .5, .38, .47, [-90, -60, -30, 0, 30, 60, 90, 120, 150, 180, 210, 240]), ...pair(D(.41, .45)), L([.44, .58], [.5, .63], [.56, .58]), L([.5, .63], [.5, .7])],
+  lion: [C(.5, .5, .36), ...rays(.5, .5, .36, .44, [-90, -60, -30, 0, 30, 60, 90, 120, 150, 180, 210, 240]), ...pair(D(.41, .45)), L([.44, .58], [.5, .63], [.56, .58]), L([.5, .63], [.5, .7])],
   // the fennec: ears bigger than its face, flaring out wide, a small pointed face under them
+  // the moonpool glade's unicorn, in profile: a long horse's head on an arched neck, one long horn, an ear, a flowing mane
+  unicorn: [L([.3, .9], [.34, .6], [.44, .42], [.56, .35], [.7, .44], [.8, .58], [.76, .64], [.62, .58], [.54, .62], [.52, .9]), L([.6, .36], [.82, .1]), L([.52, .37], [.49, .24], [.58, .34]), D(.63, .46), L([.42, .44], [.32, .5], [.4, .54], [.3, .62], [.36, .68])],
   fennec: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)],
+  // the rhino front on: a broad heavy face, small ears up at its corners, the great horn rising from its nose up past its brow
+  rhino: [...pair(L([.5, .93], [.35, .9], [.27, .7], [.25, .48], [.31, .36]), L([.31, .36], [.2, .19], [.38, .3]), D(.3, .57), D(.45, .87)), L([.43, .8], [.5, .14], [.57, .8])],
+  // the polar bear side on (unlike the brown bear's round face front on): a long neck, a small round ear, a long Roman-nosed head
+  polarbear: [L([.08, .92], [.12, .64], [.28, .36]), A(.34, .27, .075, 165, 345), L([.41, .22], [.6, .25], [.9, .44]), D(.91, .47), L([.88, .51], [.64, .6], [.5, .7], [.52, .92]), D(.55, .33)],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
+  // the dragon scrub's Komodo dragon: a big lizard from above, its forked tongue out, a blunt wedge of a head, four splayed legs,
+  // a long heavy tail sweeping off to one side, a row of dots down its back
+  komodo: [L([.46, .1], [.5, .15], [.54, .1]), L([.5, .15], [.5, .18]), L([.42, .33], [.44, .21], [.5, .18], [.56, .21], [.58, .33]), E(.5, .47, .12, .155), ...pair(L([.4, .39], [.25, .34], [.21, .26]), L([.4, .56], [.25, .61], [.2, .69])), L([.5, .62], [.52, .75], [.61, .84], [.77, .85]), D(.5, .4), D(.5, .47), D(.5, .54)],
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
   // its chest, its tail curling out at its foot
+  // the penguin front-on: a round head, its beak pointing down, a tall body round a white shirt-front, flippers held out,
+  // its two flat feet
+  penguin: [C(.5, .17, .1), ...pair(D(.46, .15)), L([.47, .21], [.5, .28], [.53, .21]), E(.5, .56, .17, .27), E(.5, .62, .09, .18), ...pair(L([.34, .42], [.22, .64])), ...pair(L([.45, .84], [.38, .92]))],
   meerkat: [E(.5, .23, .11, .13), ...pair(C(.45, .21, .035)), D(.5, .33), E(.5, .62, .15, .25), ...pair(L([.41, .5], [.46, .55])), L([.6, .84], [.76, .9], [.86, .8])],
   // the flying squirrel: spread in its glide, seen from above: its membrane a kite scalloped between wrists and ankles, a round head with big eyes, its flat tail
   flyingsquirrel: [C(.5, .2, .1), D(.46, .19), D(.54, .19), ...pair(bow([.43, .12], [.38, .05], .3)), L([.44, .3], [.18, .32], [.27, .5], [.17, .68], [.42, .64]), L([.56, .3], [.82, .32], [.73, .5], [.83, .68], [.58, .64]), L([.5, .62], [.5, .94]), ...pair(L([.45, .74], [.5, .8]), L([.44, .84], [.5, .9]))],
   // the armadillo side on: the dome of its shell banded across, a long tapering snout, an upright ear, a thin tail
   armadillo: [A(.48, .64, .3, 180, 360), L([.18, .64], [.78, .64]), L([.4, .35], [.4, .64]), L([.48, .34], [.48, .64]), L([.56, .35], [.56, .64]), L([.76, .56], [.94, .7]), L([.74, .46], [.77, .34]), L([.19, .6], [.06, .72]), L([.3, .64], [.3, .74]), L([.66, .64], [.66, .74])],
+  // the raccoon front-on: a round head, round ears, its bandit mask sweeping across both eyes, a dark nose
+  raccoon: [E(.5, .54, .34, .3), ...pair(A(.24, .3, .08, 110, 330), L([.18, .54], [.4, .46], [.47, .56]), D(.36, .51)), D(.5, .74)],
   // a segmented grub arching round to its glowing lantern tail, rays shining out
-  glowworm: [A(.4, .58, .26, 180, 340), ...[200, 235, 270, 305].map(a => L(at(.4, .58, .2, a), at(.4, .58, .32, a))), D(.14, .58), C(.69, .55, .1), ...rays(.69, .55, .15, .24, [-90, -30, 30, 90, 150])],
+  // the wildcat: a round face under two pointed ears, slit eyes, whiskers, tabby bars on its brow
+  cat: [A(.5, .58, .28, -40, 220), ...pair(L(at(.5, .58, .28, 220), [.24, .16], [.42, .33]), L([.36, .55], [.44, .53]), L([.34, .7], [.12, .66]), L([.34, .74], [.14, .79]), L([.44, .37], [.45, .45])), L([.42, .33], [.58, .33]), L([.5, .37], [.5, .47]), D(.5, .66)],
   // seen from above: a round body and a small head, eight bent legs
   spider: [C(.5, .62, .15), C(.5, .38, .08), ...pair(L([.44, .36], [.26, .24], [.2, .06]), L([.43, .42], [.2, .38], [.08, .26]), L([.4, .55], [.18, .58], [.07, .72]), L([.42, .68], [.24, .8], [.2, .94]))],
   // curled up asleep in a ball: its tail wrapped round, a round ear and a closed eye
@@ -201,6 +246,7 @@ export const legendTier = px => px >= LEGEND_FULL_PX ? 2 : px >= LEGEND_DETAIL_P
 export const LEGEND_DETAIL = {
   wolf: [...pair(L([.25, .17], [.3, .35]), L([.17, .46], [.08, .53], [.19, .57], [.12, .66], [.27, .69]), L([.28, .41], [.4, .44])), L([.5, .56], [.5, .72])],
   fox: [...pair(bow([.28, .6], [.44, .74], .25), D(.42, .76)), L([.5, .34], [.5, .46])],
+  arcticfox: [...pair(L([.24, .26], [.28, .36]), L([.14, .56], [.06, .6]), L([.18, .64], [.1, .7])), L([.5, .4], [.5, .5])],
   badger: [...pair(L([.37, .8], [.2, .84]), bow([.18, .7], [.34, .88], .2)), L([.5, .16], [.5, .26])],
   boar: [...pair(L([.29, .37], [.41, .35]), L([.2, .5], [.08, .5]), L([.22, .58], [.1, .64]))],
   stag: [...pair(L([.41, .72], [.34, .95]), L([.33, .24], [.27, .32]))],
@@ -220,20 +266,40 @@ export const LEGEND_DETAIL = {
   stoat: [L([.77, .3], [.88, .3]), L([.76, .34], [.86, .39]), L([.3, .8], [.27, .9]), L([.44, .86], [.44, .95])],
   snail: [...rays(.44, .5, .21, .29, [195, 245, 295]), D(.14, .9), D(.28, .91), D(.42, .9)],
   ram: [...pair(...rays(.24, .38, .12, .2, [75, 135, 195, 255]), D(.46, .78)), L([.4, .34], [.45, .41], [.5, .35], [.55, .41], [.6, .34])],
+  ibex: [...pair(L([.36, .15], [.32, .18]), L([.25, .07], [.21, .1]), L([.42, .6], [.36, .62])), L([.46, .86], [.5, .9], [.54, .86])],
+  snowleopard: [...pair(L([.12, .62], [.04, .6]), L([.14, .68], [.06, .72]), D(.3, .36)), D(.5, .4), L([.5, .7], [.5, .76])],
   woodlouse: [...pair(L([.24, .06], [.16, .1]), L([.43, .9], [.39, .97]), D(.43, .27))],
+  rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
+  scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
   snake: [D(.53, .46), ...[.5, .62, .74, .86].map(t => D(...at(.5, .54, .07 + .24 * t, t * 468)))],
   moth: [...pair(C(.34, .7, .045), L([.45, .4], [.14, .24]))],
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
+  roe: [...pair(L([.41, .74], [.36, .9]), L([.3, .4], [.36, .44]))],
+  redpanda: [...pair(L([.27, .78], [.2, .9]), L([.33, .82], [.3, .94])), L([.5, .82], [.5, .9])],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
+  crocodile: [...pair(D(.42, .3), D(.36, .3), L([.465, .5], [.465, .76])), D(.5, .28)],
+  tiger: [...pair(L([.2, .44], [.3, .47]), L([.45, .79], [.44, .86]))],
+  jaguar: [...pair(C(.37, .36, .03), L([.17, .56], [.26, .58]), D(.42, .8)), L([.44, .84], [.56, .84])],
+  elephant: [...pair(A(.24, .42, .1, 110, 250), L([.43, .26], [.47, .24])), L([.46, .63], [.54, .63]), L([.46, .7], [.54, .7]), L([.47, .77], [.55, .78])],
+  griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
+  frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
   lion: [...pair(L([.3, .38], [.38, .34])), ...pair(L([.36, .66], [.24, .68]))],
+  unicorn: [...rays(.82, .1, .03, .07, [-150, -90, -30, 30, 90])],
+  komodo: [...pair(L([.21, .26], [.17, .23]), L([.2, .69], [.16, .72]), D(.46, .25)), L([.46, .36], [.5, .32], [.54, .36]), L([.46, .6], [.5, .56], [.54, .6])],
   fennec: [...pair(L([.36, .36], [.22, .22])), ...pair(bow([.32, .66], [.44, .72], .25))],
+  dragonfly: [...pair(L([.47, .46], [.3, .52], [.16, .6], [.2, .64], [.47, .5]))],
+  crab: [L([.74, .28], [.76, .24]), L([.8, .26], [.82, .22]), D(.42, .6), D(.5, .64), D(.58, .6)],
+  rhino: [...pair(L([.27, .72], [.33, .77]), L([.26, .26], [.31, .29]), bow([.33, .5], [.39, .45], .3))],
+  polarbear: [L([.84, .55], [.68, .58]), L([.2, .62], [.12, .67]), L([.22, .76], [.14, .81]), L([.38, .76], [.43, .82])],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
+  penguin: [...pair(D(.41, .35)), D(.5, .37), C(.8, .86, .05)], // the elder: a collar of offerings, its chick at its feet
   meerkat: [...pair(L([.39, .2], [.37, .14])), L([.5, .48], [.5, .74]), ...pair(L([.42, .86], [.37, .92]))],
   flyingsquirrel: [D(.32, .44), D(.66, .52), D(.4, .58), D(.6, .4), D(.28, .6)],
   armadillo: [L([.32, .4], [.32, .64]), L([.64, .4], [.64, .64]), D(.82, .58), L([.24, .5], [.24, .64])],
-  glowworm: [...rays(.69, .55, .15, .2, [-60, 0, 60, 120]), L([.14, .58], [.08, .5]), D(.69, .55)],
+  raccoon: [...pair(L([.3, .36], [.44, .4]), D(.36, .9), D(.42, .93))],
+  cat: [L([.42, .31], [.42, .21], [.46, .26], [.5, .18], [.54, .26], [.58, .21], [.58, .31])],
   spider: [...pair(D(.47, .37)), L([.5, .54], [.5, .7]), L([.44, .6], [.56, .6])],
   dormouse: [C(.32, .3, .035), L([.3, .44], [.18, .42]), L([.3, .47], [.19, .5]), ...rays(.52, .58, .23, .28, [120, 160, 200])],
   beetle: [...pair(L([.41, .46], [.41, .84]), D(.45, .31))],
@@ -348,7 +414,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { fennec: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", flyingsquirrel: "violet" };
+export const SIGIL_NEON = { arcticfox: "cyan", ibex: "orange", snowleopard: "violet", rattlesnake: "lemon", scorpion: "mint", fennec: "orange", komodo: "orange", unicorn: "violet", penguin: "blue", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint", flyingsquirrel: "violet" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;

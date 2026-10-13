@@ -103,15 +103,21 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
   type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
   const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
-  const firstBig = layout.big.length;
+  const firstBig = layout.big.length, share = Math.min(0.95, LOOKS[t].layout.treeShare ?? 0);
   bigs.forEach(a => {
     if (def.big[a.from][0] === "tree" && variants.length) return;
     layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
-    layout.bigWeight.push(variants.length ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
+    layout.bigWeight.push(variants.length && !share ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
   });
+  // An open area with a few trees among its props (its layout's treeShare; Ed, 2026-10-13: "trees into areas with no trees"): the
+  // trees' weights scaled so they're that share of all its big objects, the props keeping their own.
+  if (share && variants.length && layout.big.length > firstBig) {
+    const w = layout.bigWeight, trees = w.slice(0, firstBig).reduce((t, v) => t + v, 0), props = w.slice(firstBig).reduce((t, v) => t + v, 0), k = trees > 0 ? (share / (1 - share)) * props / trees : 0;
+    for (let i = 0; i < firstBig; i++) w[i] *= k;
+  }
   // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
   // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
   // every variant of each.
