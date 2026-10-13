@@ -131,7 +131,7 @@ const ELDERS = {
   // chest and paws; heavy lids; hazelnuts in green husks standing up on its head; a grey muzzle
   dormouse(m, S, c) {
     const { H, hr, len, chest, bw, tb } = c, f = c.frame ? .02 : 0;
-    m.part = "tail";
+    m.part = "body"; // (on the torso piece: wrapped round it, it moves with its body on the live rig, not swinging out on turns like a tail)
     m.chain([[...tb, .1], [-len * 1.15, chest + .02, bw * .7, .13], [-len * .55, .13, bw * 1.3, .15], [len * .2, .13 + f, bw * 1.4, .16], [len * .9, .14, bw * 1.15, .16], [len * 1.35, .2, bw * .3, .15], [len * 1.4, .32, -bw * .35, .13], [len * 1.2, .45, -bw * .45, .11], [len * 1.08, .5, -bw * .15, .08]], M.BODY, { group: 3, extra: true, paint: p => p[0] > len * 1.15 && p[1] > .38 ? M.BELLY : p[1] < .1 ? M.BODY2 : spotty(p, 30, .18) ? M.BODYL : undefined });
     m.part = "head";
     grizzle(m, p => p[0] > H[0] + hr * .3 ? .6 : p[0] > H[0] - hr * .5 ? .2 : 0);
@@ -170,9 +170,11 @@ const ELDERS = {
       m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, mask, { group: 5 + (side > 0 ? 0 : 20), extra: true });
       for (const k of side > 0 ? [.3, .42] : [.36]) ring(m, v3.add(v3.add(base, v3.mul(dirE, eh * 2 * k)), v3.mul(across, ew * .82)), dirE, hr * .14, hr * .035, M.WOOD, ex(162)); // rings through its ear's rim
     }
-    const u = v3.norm(v3.cross([0, 1, 0], CAM)), w = v3.cross(CAM, u), R = hr * 1.7, mc = v3.add(H, [-hr * 1.6, hr * 2.1, -hr * 1.2]);
-    const craters = [[-.3, .2, .16], [.25, -.35, .12], [-.1, -.45, .09], [.1, .4, .1]];
-    m.flat(mc, u, w, R, R, (s, t) => { const r = Math.hypot(s, t); if (r > 1) return null; if (Math.hypot(s + .42, t - .2) > .86) return M.GLOW; return craters.some(([a, b, k]) => Math.hypot(s - a, t - b) < k) ? M.STONE : M.WEB; }, { group: 99, extra: true, bend: 0 }); // the moon: a crescent lit gold, the rest of it pale
+    // the moon: a ball (so it reads as a disc from every heading the live rig bakes), its lit side a gold crescent toward the front-top,
+    // the rest pale with grey craters
+    const R = hr * 1.5, mc = v3.add(H, [-hr * 1.6, hr * 2.1, -hr * 1.2]), lit = v3.norm([.75, .3, .25]); // (lit from the front-right: a gold gibbous moon, a pale crescent of shadow)
+    const craters = [[-.3, .2, -.6], [.25, -.35, .5], [-.1, -.45, .4], [.1, .4, -.3], [.6, .1, -.4], [-.5, -.2, .2]].map(v3.norm);
+    m.ell(mc, [R, R, R], M.WEB, ex(99, { paint: p => { const d = v3.norm(v3.sub(p, mc)); if (v3.dot(d, lit) > -.25) return craters.some(k => v3.dot(d, k) > .95) ? M.STONE : M.GLOW; return craters.some(k => v3.dot(d, k) > .93) ? M.STONE : undefined; } }));
   },
   // the elder badger: grizzled and scarred, notched ears, its face stripes running on down its back as chalk hill-figure lines, faintly
   // lit by the moon, a spiral cut on its haunch, and a bronze torc at its neck
