@@ -169,6 +169,7 @@ function gearUp(m) {
 //   headcloth: { size, mat }: a jewelled cloth over its brow hanging between its eyes, bronze-edged, three beads along its hem.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
+//   dewlap: { size, mat }: a heavy fold of loose skin hanging under its throat (a big monitor lizard's).
 //   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
 //     STONE by default) hanging at its throat: something worshipped once.
 //   The elder kit (Ed, 2026-10-13: a legend shows age, wear, and jewellery, armour and offerings; docs/ART-GUIDE.md 0c), for any legend:
@@ -204,6 +205,12 @@ function evolve3d(m, feats, c) {
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, p = v3.add(N, v3.add(v3.mul(u, Math.cos(a) * R), v3.mul(w, Math.sin(a) * R))); m.ell(p, [s, s, s], M[f.mat || "WOOD"], { group: 160, extra: true }); }
       const low = v3.add(N, v3.mul(u, -R)), dn = v3.add(low, [0, -s * 2.2, 0]); // its lowest point, under the throat
       m.seg(low, dn, s * .25, s * .25, M[f.mat || "WOOD"], { group: 160, extra: true }); m.ell(v3.add(dn, [0, -s * 1.1, 0]), [s * 1.5, s * 2, s * 1.1], M[f.pendant || "STONE"], { group: 161, extra: true });
+    }
+    if (f.kind === "dewlap" && m.anchors.neck) { // a heavy fold of loose skin hanging under its throat (a big monitor's), size times the neck's girth
+      m.part = "head";
+      const { c: N, r: R } = m.anchors.neck, s = f.size ?? 1, at = [N[0] + R * .25, N[1] - R * (.75 + .25 * s), 0];
+      m.ell(at, [R * .85 * s, R * .7 * s, R * .55], M[f.mat || "BODY"], { group: 162, extra: true });
+      m.ell(v3.add(at, [R * .35 * s, -R * .25 * s, 0]), [R * .5 * s, R * .45 * s, R * .45], M[f.mat || "BODY"], { group: 162, extra: true });
     }
     if (f.kind === "mane") {
       m.part = "body";
@@ -748,7 +755,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- tail ----
   const tb = [-len * 1.05, top - .1 + arch * .5, 0], tw = frame ? .04 : -.02;
   m.part = "tail"; m.rig.head = { nb, H, hr }; m.rig.tail = tb;
-  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw);
+  if (!elder?.tail && !has("tails") && !feats?.some(f => f.kind === "tails" && f.replace)) tail3d(m, has("starTail") ? "star" : q.tail, tb, len, top, tw, q.tailK ?? 1, q.tailW ?? 1);
   m.part = "head";
   // ---- horns, antlers, tusks ----
   const hornTips = [];
@@ -894,7 +901,18 @@ export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist =
   return p;
 }
 
-function tail3d(m, kind, tb, len, top, tw) {
+// The model's chain, seg and ell with every point moved k times as far from the tail's root and every girth w times as thick.
+function grownTail(m, tb, k, w) {
+  const at = p => [tb[0] + (p[0] - tb[0]) * k, tb[1] + (p[1] - tb[1]) * k, tb[2] + (p[2] - tb[2]) * k];
+  const g = Object.create(m);
+  g.chain = (pts, mat, o) => m.chain(pts.map(p => [...at(p), p[3] * w]), mat, o);
+  g.seg = (a, b, ra, rb, mat, o) => m.seg(at(a), at(b), ra * w, rb * w, mat, o);
+  g.ell = (c, r, mat, o) => m.ell(at(c), [r[0] * k, r[1] * w, r[2] * w], mat, o);
+  return g;
+}
+// k, w: its tail's length and girth by level (body.tailK, body.tailW: a young one's shorter, an old one's bushier), scaled from its root.
+function tail3d(m0, kind, tb, len, top, tw, k = 1, w = 1) {
+  const m = k === 1 && w === 1 ? m0 : grownTail(m0, tb, k, w);
   const o = { group: 3 }, X = k => -len * k;
   if (kind === "brush") m.chain([[...tb, .1], [X(1.3), top - .25 + tw, 0, .15], [X(1.4), top - .55, 0, .14], [X(1.35), .38 + tw, 0, .09]], M.BODY, { ...o, paint: p => p[1] < .32 ? M.BODY3 : undefined });
   else if (kind === "panda") m.chain([[...tb, .11], [X(1.05) - .35, top - .1 + tw, 0, .17], [X(1.05) - .75, top - .3 + tw, 0, .18], [X(1.05) - 1.05, top - .5 + tw, 0, .13]], M.BODY, { ...o, paint: p => Math.floor((X(1.05) - p[0]) * 6.5) % 2 ? M.BODY3 : undefined }); // a red panda's: thick, its rings dark
