@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { recordsIn } from "../tools/lib/genomeRecords.mjs";
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CREATURES, CREATURE_IDS } from "./rules/creatureConfig";
@@ -44,5 +45,37 @@ describe("the split registries (tools/data.mjs)", () => {
   it("areas: a folder an area with its kind line, the recipes and the original areas' flora in them, the kinds' slots whole", () => {
     const out = execFileSync("node", ["tools/data.mjs", "areas", "check"], { encoding: "utf8" });
     expect(out).toMatch(/^ok: areas/);
+  });
+});
+
+// A merge rehearsal for the adopt's scanner (Foxtrot, 2026-10-13, #846: the index's spread line, `...CREATURE_GENOMES,`, was carried
+// into the stegosaurus's new genome.js): a record pasted back after the spread comes out as its own module, the spread and the
+// blank lines nobody's, the comment of its own above it kept, and the file keeps the spread.
+describe("the adopt's record scanner (tools/lib/genomeRecords.mjs)", () => {
+  const file = `import { CREATURE_GENOMES } from "../creatures/index.js";
+export const GENOMES = [
+  ...CREATURE_GENOMES,
+
+  // the stegosaurus: plates along its back
+  { id: "stegosaurus", name: "Stegosaurus", template: "quadruped", builder: "quad",
+    levels: [null, null] },
+  { id: "wyvern", name: "Wyvern", template: "flyer", builder: "bat" }, // (a second one, on one line)
+];
+export const GENOME_BY_ID = {};
+`;
+  const { records, rest } = recordsIn(file) as { records: { id: string; text: string }[]; rest: string };
+  it("finds the pasted records and no more, each its own module without the spread", () => {
+    expect(records.map(r => r.id)).toEqual(["stegosaurus", "wyvern"]);
+    for (const r of records) { expect(r.text).not.toContain("..."); expect(r.text.trimEnd()).not.toMatch(/^\s*$/m); }
+    expect(records[0].text).toBe(`// the stegosaurus: plates along its back
+export const GENOME_STEGOSAURUS = { id: "stegosaurus", name: "Stegosaurus", template: "quadruped", builder: "quad",
+  levels: [null, null] };
+`);
+    expect(records[1].text).toBe(`export const GENOME_WYVERN = { id: "wyvern", name: "Wyvern", template: "flyer", builder: "bat" }; // (a second one, on one line)\n`);
+  });
+  it("leaves the file's array empty (the adopt puts the index's spread back) and what follows it as it was", () => {
+    expect(rest).toContain("export const GENOMES = [\n];");
+    expect(rest).not.toContain("stegosaurus");
+    expect(rest).toContain("export const GENOME_BY_ID = {};");
   });
 });
