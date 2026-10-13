@@ -45,7 +45,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await wait(SECONDS * 1000);
   const { profile } = await cdp.send("Profiler.stop");
   const loaf = await page.evaluate(() => window.__loaf), reshapes = await page.evaluate(() => window.__reshapes);
-  await page.screenshot({ path: path.join(out, MINI ? "decks.png" : "chart.png") }); // (the end: every island in, for a before/after of the picture: tools/chart/diff.cjs)
+  // The end picture, for a before/after (tools/chart/diff.cjs): every island in (waited for, up to WAIT_ALL s more), then the
+  // chart's clock held at one moment (the moon's place, the ring's pulse and the sigils' glow all move with it), a few frames to settle.
+  let all = true, programs = 0;
+  if (!MINI) {
+    all = await page.waitForFunction(() => window.chart.islands().every(i => i.outline), null, { timeout: Number(process.env.WAIT_ALL ?? 120) * 1000 }).then(() => true, () => false);
+    await page.evaluate(() => { const v = window.chart.view, f = v.update.bind(v); v.update = () => f(1 / 60, 500); });
+    await wait(1500);
+    programs = await page.evaluate(() => window.chart.chart.renderer.info.programs.length);
+  }
+  await page.screenshot({ path: path.join(out, MINI ? "decks.png" : "chart.png") });
   const heap = await page.evaluate(() => Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1e6));
   const nodes = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();
   for (const n of profile.nodes) for (const c of n.children ?? []) parent.set(c, n.id);
@@ -59,9 +68,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     for (const s of WATCH) if (stack.has(s)) incl.set(s, (incl.get(s) ?? 0) + dt);
   }
   const ms = reshapes.map(r => r.ms).sort((a, b) => a - b), sum = ms.reduce((a, b) => a + b, 0);
-  const report = { seconds: SECONDS, world: WORLD, mini: MINI, totalMs: Math.round(total), heapMb: heap, errors: errors.slice(0, 6), reshapes: { n: ms.length, totalMs: Math.round(sum), median: ms[ms.length >> 1] ?? 0, worst: ms[ms.length - 1] ?? 0, list: reshapes }, loaf: loaf.slice(0, 40), incl: Object.fromEntries([...incl].map(([k, v]) => [k, Math.round(v)])), selfTop: [...self].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, v]) => [k, Math.round(v)]) };
+  const report = { seconds: SECONDS, world: WORLD, mini: MINI, totalMs: Math.round(total), heapMb: heap, allIn: all, programs, errors: errors.slice(0, 6), reshapes: { n: ms.length, totalMs: Math.round(sum), median: ms[ms.length >> 1] ?? 0, worst: ms[ms.length - 1] ?? 0, list: reshapes }, loaf: loaf.slice(0, 40), incl: Object.fromEntries([...incl].map(([k, v]) => [k, Math.round(v)])), selfTop: [...self].sort((a, b) => b[1] - a[1]).slice(0, 30).map(([k, v]) => [k, Math.round(v)]) };
   fs.writeFileSync(path.join(out, "chart-profile.json"), JSON.stringify(report, null, 1));
-  console.log(`profile ${report.totalMs} ms; heap ${heap} MB; reshapes ${report.reshapes.n}: ${report.reshapes.totalMs} ms in all, median ${report.reshapes.median} ms, worst ${report.reshapes.worst} ms`);
+  console.log(`profile ${report.totalMs} ms; heap ${heap} MB; reshapes ${report.reshapes.n}: ${report.reshapes.totalMs} ms in all, median ${report.reshapes.median} ms, worst ${report.reshapes.worst} ms${MINI ? "" : `; every island in: ${all}; GL programs: ${programs}`}`);
   console.log("inclusive ms:", report.incl);
   console.log("self time, top 20:"); for (const [k, v] of report.selfTop.slice(0, 20)) console.log(`  ${String(v).padStart(6)} ms  ${k}`);
   console.log(`long animation frames: ${loaf.length}, over 100 ms: ${loaf.filter(l => l.ms >= 100).length}`); for (const l of loaf.slice(0, 10)) console.log(`  ${l.ms} ms: ${l.scripts.join(" | ")}`);
