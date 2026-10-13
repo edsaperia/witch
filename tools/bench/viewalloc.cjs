@@ -24,8 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, g = window.witch.game;
       let guard = 0;
       while (g.party.wave < W && !g.partyOver && guard++ < W * 400) { window.witch.frame({ ...C, nextWave: true }, 1 / 60, false); for (let i = 0; i < 120; i++) window.witch.frame(C, 1 / 60, false); }
-      for (let i = 0; i < 60; i++) window.witch.frame({ ...C, moveZ: 1 }, 1 / 60, false); // (off her decks first: seated, she can't rise)
-      if ((mode === "treetop") !== (g.witch.mode === "treetop")) { window.witch.frame({ ...C, toggleMode: true }, 1 / 60, false); for (let i = 0; i < 30; i++) window.witch.frame(C, 1 / 60, false); }
+      if ((mode === "treetop") !== (g.witch.mode === "treetop")) window.witch.frame({ ...C, toggleMode: true }, 1 / 60, false);
       return { wave: g.party.wave, creatures: g.creatures.filter(c => !c.gone).length, mode: g.witch.mode };
     }, [+wave, MODE]);
     console.log("at", JSON.stringify(at));
