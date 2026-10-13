@@ -8544,9 +8544,9 @@ const PLAINS = {
 // plains, it is close and thorny: you come on a rhino before you see it.
 const BUSHVELD = {
   id: "bushveld", name: "Bushveld", creature: "rhino", by: "recipe", leaf: .22, floor: ["sand", .05, .5, .45],
-  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "thorn trees in clumps, a few flat-topped acacias", set: "a ring of old boma posts round a cold hearth" },
+  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "thorn trees in clumps, a few umbrella acacias", set: "a ring of old boma posts round a cold hearth" },
   wall: [["bush", {}]], small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-  big: [["tree", { type: "hawthorn", scale: 1.3 }], ["tree", { type: "flat", minor: true, scale: 1.2 }]],
+  big: [["tree", { type: "hawthorn", scale: 1.3 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
@@ -8555,7 +8555,7 @@ const BUSHVELD = {
     terrain: ["rises", "hollows"], decor: { rate: .2, ruins: .15, rocks: .45, freak: .1, lake: .2, modern: .1 },
     feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight.",
   },
-  flora: { species: [["hawthorn", .55], ["flat", .3], ["elder", .15]], palette: { sat: .75, val: .85 } },
+  flora: { species: [["hawthorn", .55], ["acacia", .3], ["elder", .15]], palette: { sat: .75, val: .85 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "grass"] } },
 };
 
@@ -12069,7 +12069,7 @@ const LEGEND_POSES = {
   armadillo: { ground: .2, droop: .4, drop: [], over: { moss: .1, lichen: .25, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 4 } }, // the scrub wash's armadillo (an area recipe's): its shell sunk in cracked clay like a boulder
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
-  rhino: { sink: .45, droop: .8, drop: [], over: { moss: .35, lichen: .05, ferns: 0, grass: 6, mushrooms: 0, roots: 1, stones: 4 } }, // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the dry grass
+  rhino: { sink: .45, droop: .8, drop: [], over: { moss: .45, lichen: .05, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 4 } }, // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the earth
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   cheetah: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .06, lichen: .12, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 3 } }, // the plains' cheetah (an area recipe's): stretched long in the short grass, its spots gone to lichen
   lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
