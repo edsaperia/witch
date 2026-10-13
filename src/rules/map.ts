@@ -58,6 +58,8 @@ export interface AreaLayout {
   terrain?: string[];
   /** How many decorations it has (rate, 0-1) and of which families. */
   decor?: { rate: number; ruins: number; rocks: number; freak: number; lake: number; modern: number };
+  /** Its feel in a line (art/areas.js): the zoo's nameplates show it (render/zooPlates.ts). */
+  feel?: string;
 }
 
 interface ArtArea { id: string; name: string; creature: string; text: AreaType["text"]; floor: [string, number, number, number]; wall?: unknown[]; set?: unknown; layout?: AreaLayout; ponds?: boolean; wet?: boolean; steep?: boolean; sharesCreature?: boolean; settings?: { treeDensity?: number; groundCover?: { density: number; kinds: string[] } } }
