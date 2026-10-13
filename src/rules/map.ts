@@ -20,7 +20,7 @@ import { makeLand, type LandMap } from "./land";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { KINDS, dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -70,6 +70,10 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
 /** Home's look (Ed, 2026-10-05: "its own custom floor; a pleasant green meadow with flowers"; party
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
  *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
+/** The area types a map deals at random (before an island's roster puts its own kinds in): those of kinds from the journey's
+ *  first three phases (config/kinds.json, 0 to 2). A later kind's area (phase 3 on: the crocodile's mangrove swamp) is only
+ *  where an island's roster puts it, so adding one leaves every other map as it was. */
+export const DEALT_TYPES: readonly number[] = AREA_TYPES.flatMap((a, i) => ((KINDS[a.creature]?.phase ?? 0) <= 2 ? [i] : []));
 export const HOME_LOOK = AREA_TYPES.length;
 const H_ = HOME_AREA as unknown as ArtArea;
 /** How the ground looks, by an area sample's `look`: the area types, then home's meadow. */
@@ -237,7 +241,7 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 }
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
-  const A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
+  const A = tuning.areaSize * tuning.areaScale;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
   // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
@@ -332,11 +336,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (t !== undefined) near.add(t);
     }
     for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
-    const free = [...Array(typeCount).keys()].filter(t => !near.has(t));
-    const pool = free.length ? free : [...Array(typeCount).keys()];
+    const free = DEALT_TYPES.filter(t => !near.has(t));
+    const pool = free.length ? free : DEALT_TYPES;
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount);
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? DEALT_TYPES[Math.floor(hash2(cx, cy, shapeSeed + 17) * DEALT_TYPES.length)];
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();

@@ -12,11 +12,11 @@ describe("the kind table", () => {
     const species = AREA_TYPES.map(a => a.creature).sort();
     expect(Object.keys(real).sort()).toEqual(species);
   });
-  it("introduces 10 at home, 10 in phase 1, 12 in phase 2, then the placeholders' 14 in phase 3 and 18 in phase 4: 64, each with a bearing 0 to 360", () => {
+  it("introduces 10 at home, 10 in phase 1, 12 in phase 2, then 14 in phase 3 and 18 in phase 4 (placeholders until designed): 64, each with a bearing 0 to 360", () => {
     const by = [0, 1, 2, 3, 4, 5].map(p => Object.values(kinds).filter(k => k.phase === p).length);
     expect(by).toEqual([10, 10, 12, 14, 18, 0]);
     expect(Object.keys(kinds).length).toBe(64);
-    for (const [id, k] of Object.entries(kinds)) expect(!!k.placeholder, id).toBe(k.phase >= 3); // (every kind from phase 3 on is a placeholder, for now)
+    for (const [id, k] of Object.entries(kinds)) if (k.placeholder) expect(k.phase, id).toBeGreaterThanOrEqual(3); // (a placeholder only from phase 3 on: phases 0 to 2 are all designed; later ones as they're drawn)
     for (const k of Object.values(kinds)) { expect(k.bearing).toBeGreaterThanOrEqual(0); expect(k.bearing).toBeLessThan(360); }
   });
 });

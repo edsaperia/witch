@@ -249,12 +249,11 @@
       "biome": "hot",
       "placeholder": true
     },
-    "unknown-09": {
+    "crocodile": {
       "phase": 3,
       "bearing": 218,
       "dir": "SW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "unknown-10": {
       "phase": 3,

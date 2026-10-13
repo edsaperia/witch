@@ -19,6 +19,7 @@
     "ram": {"posture": {"head": [0.04, -0.04], "body": 0}, "quirk": "stomp", "every": [4, 8], "for": 1.0},
     "marten": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "sniff", "every": [3, 6], "for": 1.0},
     "salamander": {"posture": {"head": [0.03, -0.02], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.2},
+    "crocodile": {"posture": {"head": [0.02, -0.03], "body": -0.01}, "quirk": "tailflick", "every": [6, 11], "for": 1.0},
     "newt": {"posture": {"head": [0.03, 0.01], "body": -0.01}, "quirk": "tailflick", "every": [4, 8], "for": 1.0},
     "dormouse": {"posture": {"head": [0, 0.03], "body": 0}, "quirk": "sniff", "every": [2, 5], "for": 0.8},
     "snake": {"posture": {"head": [0, 0.02], "body": 0}, "quirk": "rise", "every": [5, 9], "for": 1.4},

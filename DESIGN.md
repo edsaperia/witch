@@ -171,6 +171,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 |---|---|---|---|---|---|---|---|
 | Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
 | Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
+| Mangrove swamp | tidal mud and brackish pools | brown channels | reeds and mangrove seedlings | mangroves on stilt roots, a few date palms | a dugout sunk among the roots | Crocodile (phase 3) | recipe |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
 
