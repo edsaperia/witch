@@ -172,8 +172,9 @@ export class PauseSliders {
   private values = new Map<string, string | number | boolean>();
   private readonly status = h("div", { class: "status" });
   private readonly stamp = h("pre", { class: "stamp" });
+  private readonly paints: (() => void)[] = [];
 
-  constructor(private host: DecideHost, list: readonly Decision[] = DECISION_LIST) {
+  constructor(private host: DecideHost, private readonly list: readonly Decision[] = DECISION_LIST) {
     const style = document.createElement("style"); style.textContent = PAUSE_CSS; document.head.append(style);
     this.el.id = "pause-sliders";
     const params = new URLSearchParams(location.search);
@@ -193,7 +194,15 @@ export class PauseSliders {
   }
 
   /** Slid in (frozen) or out. */
-  show(on: boolean): void { this.el.classList.toggle("open", on); if (on) this.status.textContent = ""; }
+  show(on: boolean): void {
+    this.el.classList.toggle("open", on);
+    if (!on) return;
+    this.status.textContent = "";
+    // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)
+    const params = new URLSearchParams(location.search);
+    for (const d of this.list) this.values.set(d.id, currentValue(d, this.host.tuning, params));
+    for (const p of this.paints) p();
+  }
   /** The freeze's stamp (version, seed, time, where she is), at the panel's foot. */
   setStamp(text: string): void { if (this.stamp.textContent !== text) this.stamp.textContent = text; }
   /** Every value as plain text (Copy values). */
@@ -232,7 +241,7 @@ export class PauseSliders {
       for (const o of opts) ctl.append(button(o.label, () => set(d.control.type === "toggle" ? o.value === "true" : o.value), { class: "opt", data: { v: o.value } }));
     }
     const box = h("div", { class: "s", data: { id: d.id }, title: d.note }, label, ctl, key);
-    paint();
+    paint(); this.paints.push(paint);
     return box;
   }
 }

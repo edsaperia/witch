@@ -3,7 +3,10 @@
 // tools/voice/fof/build.mjs into fofModule.ts), run by our own AudioWorklet (no Faust runtime shipped): a pool of voices in
 // one worklet, each three detuned singers spread across the stereo field, notes started and stopped on the audio clock. Its
 // noise is the compiled code's own, so a render is the same every time.
-import { FOF_META, FOF_WASM } from "./fofModule";
+// (the compiled module, 46 kB of base64, is loaded only when a FOF voice is first wanted: a dynamic import, so the game's
+// first load doesn't carry it; the formant voice sings until it's in, as it did while the module compiled)
+type FofMeta = typeof import("./fofModule").FOF_META;
+let meta: FofMeta | null = null;
 
 /** The worklet's processor: `voices` voices of the compiled module in one memory; events (a note on, its vowel, off; a
  *  setting for all) applied at the block they fall in (128 samples, under 3 ms). */
@@ -72,7 +75,9 @@ export function fofReady(ctx: BaseAudioContext): Promise<boolean> {
     p = (async () => {
       try {
         if (!ctx.audioWorklet) return false;
-        compiled ??= WebAssembly.compile(Uint8Array.from(atob(FOF_WASM), c => c.charCodeAt(0)));
+        const m = await import("./fofModule");
+        meta = m.FOF_META;
+        compiled ??= WebAssembly.compile(Uint8Array.from(atob(m.FOF_WASM), c => c.charCodeAt(0)));
         compiledModule = await compiled;
         const url = URL.createObjectURL(new Blob([PROCESSOR], { type: "application/javascript" }));
         await ctx.audioWorklet.addModule(url);
@@ -106,7 +111,7 @@ export class FofVoices {
   constructor(ctx: BaseAudioContext, dest: AudioNode, voices = 6, settings: FofSettings = {}) {
     this.node = new AudioWorkletNode(ctx, "witch-fof", {
       numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2],
-      processorOptions: { module: compiledModule!, size: FOF_META.size, params: FOF_META.params, voices },
+      processorOptions: { module: compiledModule!, size: meta!.size, params: meta!.params, voices },
     });
     // (the compiled voice sings quietly: three singers each at 0.45 of a FOF's own level; brought up to the formant voice's)
     const level = ctx.createGain(); level.gain.value = 12;

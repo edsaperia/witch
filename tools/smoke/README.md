@@ -48,10 +48,18 @@ npm run build && node tools/smoke/dream-way.cjs [out dir] [seed]
 
 ## `dreams.cjs`
 
-The sleeping legends' dream bubbles: the built game at 1280×720 on a seed; the witch set down on the ground beside the nearest dreaming legend, a still of its bubble.
+The sleeping legends' dream bubbles: the built game at 1280×720 on a seed; the witch set down on the ground beside the nearest dreaming legend, a crop of its bubble showing each symbol, and one as a nightmare.
 
 ```
 npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
+```
+
+## `flask-stack.cjs`
+
+The flask in her sigil stack: the built game at 1280×720 on a seed; three creatures leashed to her and the first relic carried, on the ground at home; a crop of her stack before, after one cycle and after another.
+
+```
+npm run build && node tools/smoke/flask-stack.cjs [out dir] [seed]
 ```
 
 ## `hud.cjs`
@@ -60,6 +68,14 @@ The HUD's top and edges: the built game at 1600×900 on a seed, out of the boot 
 
 ```
 npm run build && node tools/smoke/hud.cjs [out dir] [seed]
+```
+
+## `knockdown-bpm.cjs`
+
+The party's tempo on screen.
+
+```
+npm run build && node tools/smoke/knockdown-bpm.cjs [out dir] [seed]
 ```
 
 ## `legend-attack.cjs`
@@ -134,9 +150,17 @@ The start of play: the built game at 1280×720 on a seed, frames stepped by hand
 npm run build && node tools/smoke/partyspell.cjs [out dir] [seed]
 ```
 
+## `places.cjs`
+
+Screenshots of named places, for before/after sheets of scenery fixes: the built game at 1280x720 on a seed, waves off, the witch on the ground at each place in turn, the art let in and the game paused for the shot.
+
+```
+npm run build && node tools/smoke/places.cjs <out dir> <seed> <place> [place...]
+```
+
 ## `quick.cjs`
 
-The quick smoke test, run in CI on every push and pull request: serves the built game, loads it in headless Chromium at a laptop size with ?quick=1, starts, flies about 5 s on the ground, rises, flies about 5 s in the treetops and descends.
+The quick smoke test, run in CI on every push and pull request: serves the built game, loads it in headless Chromium at 960×540 with ?quick=1, starts, hops off the treehouse deck, flies about 2.5 s on the ground, rises, flies about 2.5 s in the treetops…
 
 ## `room-walk.cjs`
 
@@ -162,6 +186,14 @@ The start screen: the built game at a laptop's and Ed's window sizes, the creato
 npm run build && node tools/smoke/start-screen.cjs [out dir]
 ```
 
+## `swoop.cjs`
+
+A wild flyer's swoop: the built game at 1280×720, her in the debug arena against one wild SPECIES at level 2, frames stepped by hand a fixed 1/30 s through a bout, a crop every EVERY frames saved, then made into <out dir>/<species>.gif.
+
+```
+npm run build && node tools/smoke/swoop.cjs <out dir> [species] [seed]
+```
+
 ## `trail.cjs`
 
 Her flight trail: the built game at 1280×720 on a seed, frames stepped by hand a fixed 1/30 s.
@@ -176,6 +208,14 @@ Leashed and happy creatures' sigils from the treetops: the built game at 1280×7
 
 ```
 npm run build && node tools/smoke/treetop-sigils.cjs [out dir] [seed]
+```
+
+## `wild-left.cjs`
+
+What's left to clear an area.
+
+```
+npm run build && node tools/smoke/wild-left.cjs [out dir] [seed]
 ```
 
 ## `witch-pool.cjs`

@@ -15,9 +15,24 @@
 import { FEN } from "./recipes/fen.js";
 import { HERONRY } from "./recipes/heronry.js";
 import { WARREN } from "./recipes/warren.js";
+import { SCRUB_WASH } from "./recipes/scrubwash.js";
+import { MOSSY_CREEK } from "./recipes/mossycreek.js";
 import { ERG } from "./recipes/erg.js";
+import { MANGROVE_POOLS } from "./recipes/mangrovepools.js";
+import { MUDFLAT } from "./recipes/mudflat.js";
 import { SAVANNA } from "./recipes/savanna.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA];
+import { BAMBOO_JUNGLE } from "./recipes/bambooJungle.js";
+import { TEMPLE_JUNGLE } from "./recipes/templeJungle.js";
+import { RIVER_JUNGLE } from "./recipes/riverJungle.js";
+import { PLAINS } from "./recipes/plains.js";
+import { BUSHVELD } from "./recipes/bushveld.js";
+import { PACKICE } from "./recipes/packice.js";
+import { DELL } from "./recipes/dell.js";
+import { FROSTCAVE } from "./recipes/frostcave.js";
+import { EYRIE } from "./recipes/eyrie.js";
+import { MANGROVE } from "./recipes/mangrove.js";
+import { TERRACES } from "./recipes/terraces.js";
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
