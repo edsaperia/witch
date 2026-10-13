@@ -190,7 +190,9 @@ export class View {
   private buffHud = new BuffHud(document.body);
   shadow: THREE.Mesh;
   mpp: number; // metres per art pixel
-  lastBuild = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 };
+  /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
+  canopyNow = 0;
+  lastBuild: { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number } = { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 };
   /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
   budget: SceneryBudget;
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
@@ -798,6 +800,10 @@ export class View {
     }
     if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
+    // In the air, the crowns' reach (render/view/scenery.ts), eased in and out over half a second or so (no far crowns popping as she lands).
+    const canopyTo = g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
+    this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
+    LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
     const up = placeCamera(this, time, pose);
 
     this.swapHomeArt();
