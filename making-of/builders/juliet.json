@@ -14,7 +14,8 @@
     870,
     872,
     875,
-    884
+    884,
+    892
   ],
   "built": [
     "One file a thing (#837, #844, #847, #848, #851, #852): a creature is a folder with its genome, sigil, legend, nap and config; a tree species a file with its baseline; an area a folder with its recipe, its kind line and its trees; the decisions a fragment a pull request; the lab pages built, not committed. Each registry's index is generated, each has a check in `npm test`, and an `adopt` that moves a record a merge pastes back into the old array out to its own file.",
