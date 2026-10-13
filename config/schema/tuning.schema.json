@@ -12,7 +12,8 @@
           "type": "string",
           "enum": [
             "circle",
-            "square"
+            "square",
+            "zoo"
           ]
         },
         "radius": {
