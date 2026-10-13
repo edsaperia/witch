@@ -5,7 +5,7 @@ export const DELL = {
   id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
   text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
   small: [["fern", {}], ["grass", { h: 1.1 }]],
-  big: [["tree", { type: "rowan", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
+  big: [["tree", { type: "rowan", variant: "mossy", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
   pathKinds: ["animal", "roots"],
   setPiece: ["ring", "an old ring in a glade, where the roe gather at dusk", 1],
   layout: {

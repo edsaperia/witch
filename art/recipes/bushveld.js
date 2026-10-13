@@ -5,7 +5,7 @@ export const BUSHVELD = {
   id: "bushveld", name: "Bushveld", creature: "rhino", by: "recipe", leaf: .22, floor: ["sand", .05, .5, .45],
   text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, thorny hawthorn", set: "a ring of old boma posts round a cold hearth" },
   wall: [["bush", {}]], small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-  big: [["tree", { type: "flat", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+  big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
