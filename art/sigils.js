@@ -20,14 +20,31 @@
 // The leash stack: a chain of springs that sways and trails behind her as she flies.
 import { hash2 } from "./core.js";
 import { SPECIES } from "./creatures.js";
+import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
 
 export const SIGIL_STROKE = .07;  // stroke width, in the unit box
 export const SIGIL_DOT = .048;    // end-dot radius
 export const SIGIL_DRAW_TIME = .6; // seconds for the draw-on
 
 // ---- building blocks ----
-import { L, A, D, C, E, at, stave, FOOT, mirror, pair, bow, wave, spiral, rays } from "./sigils/strokes.js";
-import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
+const L = (...pts) => ({ l: pts }), A = (cx, cy, r, from, to) => ({ a: [cx, cy, r, from, to] }), D = (x, y) => ({ d: [x, y] });
+const stave = (top, bottom = .86) => L([.5, bottom], [.5, top]); // written upwards
+const FOOT = A(.5, .76, .13, 25, 155);                            // the crescent under every stave
+const mirror = s => s.l ? { l: s.l.map(([x, y]) => [1 - x, y]) } : s.a ? { a: [1 - s.a[0], s.a[1], s.a[2], 180 - s.a[3], 180 - s.a[4]] } : { d: [1 - s.d[0], s.d[1]] };
+const pair = (...ss) => ss.flatMap(s => [s, mirror(s)]); // a left stroke and its mirror
+// an arc through two points, bulging by k (sagitta / chord; positive bulges to the left of p0 -> p1)
+function bow(p0, p1, k) {
+  const dx = p1[0] - p0[0], dy = p1[1] - p0[1], c = Math.hypot(dx, dy), h = k * c, r = (c * c / 4 + h * h) / (2 * Math.abs(h));
+  const mx = (p0[0] + p1[0]) / 2, my = (p0[1] + p1[1]) / 2, nx = dy / c, ny = -dx / c, off = (r - Math.abs(h)) * Math.sign(h);
+  const cx = mx - nx * off, cy = my - ny * off, a0 = Math.atan2(p0[1] - cy, p0[0] - cx) * 180 / Math.PI;
+  let a1 = Math.atan2(p1[1] - cy, p1[0] - cx) * 180 / Math.PI;
+  // go the short way round when the bulge is small, the long way when it is more than half a circle
+  let sweep = a1 - a0; while (sweep > 180) sweep -= 360; while (sweep < -180) sweep += 360;
+  return A(cx, cy, r, a0, a0 + sweep);
+}
+const wave = (x0, y0, y1, amp, turns, n = 24) => L(...Array.from({ length: n + 1 }, (_, i) => [x0 + amp * Math.sin(i / n * turns * 2 * Math.PI), y0 + (y1 - y0) * i / n]));
+const spiral = (cx, cy, r0, r1, turns, start = 0, n = 40) => L(...Array.from({ length: n + 1 }, (_, i) => { const t = i / n, a = (start + t * turns * 360) * Math.PI / 180, r = r0 + (r1 - r0) * t; return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }));
+const rays = (cx, cy, r0, r1, angles) => angles.map(a => { const c = Math.cos(a * Math.PI / 180), s = Math.sin(a * Math.PI / 180); return L([cx + r0 * c, cy + r0 * s], [cx + r1 * c, cy + r1 * s]); });
 
 // ---- the sigils ----
 // (Ed, 2026-10-06: "The animal sigils are too abstract", with a reference set: monoline icons, one thick round-capped stroke, no
@@ -35,6 +52,9 @@ import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
 // animals whose head isn't their identity drawn whole, top-down and symmetrical (a spider, a beetle, a moth, a woodlouse); long
 // bodies curled round into a ring (the snake, the stoat, the newt, the dormouse). One family: the same stroke, smooth curves,
 // a few strokes each.) Each comment says what makes it the animal.
+const C = (cx, cy, r) => A(cx, cy, r, -90, 270); // a circle, drawn from the top
+const E = (cx, cy, rx, ry, a0 = -90, a1 = 270, n = 36) => L(...Array.from({ length: n + 1 }, (_, i) => { const a = (a0 + (a1 - a0) * i / n) * Math.PI / 180; return [cx + rx * Math.cos(a), cy + ry * Math.sin(a)]; }));
+const at = (cx, cy, r, deg) => [cx + r * Math.cos(deg * Math.PI / 180), cy + r * Math.sin(deg * Math.PI / 180)];
 export const SIGILS = {
   ...CREATURE_SIGILS,
 };
@@ -106,6 +126,7 @@ export const legendTier = px => px >= LEGEND_FULL_PX ? 2 : px >= LEGEND_DETAIL_P
 export const LEGEND_DETAIL = {
   wolf: [...pair(L([.25, .17], [.3, .35]), L([.17, .46], [.08, .53], [.19, .57], [.12, .66], [.27, .69]), L([.28, .41], [.4, .44])), L([.5, .56], [.5, .72])],
   fox: [...pair(bow([.28, .6], [.44, .74], .25), D(.42, .76)), L([.5, .34], [.5, .46])],
+  arcticfox: [...pair(L([.24, .26], [.28, .36]), L([.14, .56], [.06, .6]), L([.18, .64], [.1, .7])), L([.5, .4], [.5, .5])],
   badger: [...pair(L([.37, .8], [.2, .84]), bow([.18, .7], [.34, .88], .2)), L([.5, .16], [.5, .26])],
   boar: [...pair(L([.29, .37], [.41, .35]), L([.2, .5], [.08, .5]), L([.22, .58], [.1, .64]))],
   stag: [...pair(L([.41, .72], [.34, .95]), L([.33, .24], [.27, .32]))],
@@ -125,6 +146,8 @@ export const LEGEND_DETAIL = {
   stoat: [L([.77, .3], [.88, .3]), L([.76, .34], [.86, .39]), L([.3, .8], [.27, .9]), L([.44, .86], [.44, .95])],
   snail: [...rays(.44, .5, .21, .29, [195, 245, 295]), D(.14, .9), D(.28, .91), D(.42, .9)],
   ram: [...pair(...rays(.24, .38, .12, .2, [75, 135, 195, 255]), D(.46, .78)), L([.4, .34], [.45, .41], [.5, .35], [.55, .41], [.6, .34])],
+  ibex: [...pair(L([.36, .15], [.32, .18]), L([.25, .07], [.21, .1]), L([.42, .6], [.36, .62])), L([.46, .86], [.5, .9], [.54, .86])],
+  snowleopard: [...pair(L([.12, .62], [.04, .6]), L([.14, .68], [.06, .72]), D(.3, .36)), D(.5, .4), L([.5, .7], [.5, .76])],
   woodlouse: [...pair(L([.24, .06], [.16, .1]), L([.43, .9], [.39, .97]), D(.43, .27))],
   rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
   scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
@@ -153,6 +176,7 @@ export const LEGEND_DETAIL = {
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
   penguin: [...pair(D(.41, .35)), D(.5, .37), C(.8, .86, .05)], // the elder: a collar of offerings, its chick at its feet
   meerkat: [...pair(L([.39, .2], [.37, .14])), L([.5, .48], [.5, .74]), ...pair(L([.42, .86], [.37, .92]))],
+  flyingsquirrel: [D(.32, .44), D(.66, .52), D(.4, .58), D(.6, .4), D(.28, .6)],
   armadillo: [L([.32, .4], [.32, .64]), L([.64, .4], [.64, .64]), D(.82, .58), L([.24, .5], [.24, .64])],
   raccoon: [...pair(L([.3, .36], [.44, .4]), D(.36, .9), D(.42, .93))],
   cat: [L([.42, .31], [.42, .21], [.46, .26], [.5, .18], [.54, .26], [.58, .21], [.58, .31])],

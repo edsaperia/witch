@@ -1,3 +1,4 @@
+import { CREATURE_GENOMES } from "../creatures/index.js";
 // Witch creature genomes (#79, stage 1): every species as data, not code. A record names its
 // template (the body plan: which skeleton and which sockets it has), its builder (the 3D model
 // code that draws that template, art/creatures3d.js), its palette, its proportions and its parts;
@@ -12,12 +13,6 @@
 //   parts: the sockets' choices: ears { kind, size }, tail, feet, horns, antlers, tusks.
 //   coat: markings: belly, saddle, spots, spotMat, socks, shaggy, wool, ridge, rump, legMat.
 //   legend: what the legendary form grows (FEATURE_NAMES in creatures.js).
-// Since 2026-10-13 (Ed: builders collided on this one file) every record lives in its own folder, art/creatures/<id>/genome.js
-// (`export const GENOME_<ID> = { ... }`), and art/creatures/index.js (written by `node tools/creatures.mjs index`, the species
-// sorted by id) assembles them: a new creature is a new folder and a run of the tool. This file keeps the record format's
-// notes above and the GENOMES name every reader imports. A record pasted into the array below (an old-style merge) is moved
-// out by `node tools/creatures.mjs adopt`; CI's src/creatures.test.ts fails while one is here.
-import { CREATURE_GENOMES } from "../creatures/index.js";
 export const GENOMES = [
   ...CREATURE_GENOMES,
 ];
