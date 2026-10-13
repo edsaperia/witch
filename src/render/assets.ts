@@ -324,6 +324,13 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, ...(dressed ? { dressed: { seed: dressed.id, colour: dressed.colour } } : {}) });
     return a;
   }
+  /** A creature's idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel; each level in 2 frames, a look round), or
+   *  undefined (and asked for). Baked as a nap is (its ground line and middle). */
+  idleArt(species: string): CreatureArt | undefined {
+    const k = `idle-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, idle: true });
+    return a;
+  }
   /** A creature's enraged look (a wave woke its area: red eyes), or undefined (and asked for). */
   wokenArt(species: string): CreatureArt | undefined {
     const k = `woken-${species}`, a = this.creatures.get(k);
