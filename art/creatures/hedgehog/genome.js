@@ -1,1 +1,2 @@
-export const GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" } };
+export const GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" },
+  levels: [{ body: { spines: .2, soft: 1, head: 1.5, round: 1.2, legs: 1.9 } }, { body: { spines: .45, spineFrom: 0, head: 1.1, round: .3 } }, null, null] }; // (a hoglet up on its legs, soft pale spines; a young spined only over its back)
