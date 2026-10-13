@@ -84,6 +84,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "eyrie": look("buffSandstone", "pebbles", "lichen", 0.45), // wind-scoured stone, feathers in the cracks
   "frostcave": look("slate", "pebbles", "lichen", 0.4, true), // blue-grey slate under the ice
   "bushveld": look("redSandstone", "grass", "lichen", 0.4), // baked red stone, dry grass and thorns blown over it
+  "drowned-wood": look("slate", "reeds", "moss", 0.6, true, 0.6), // black wet stone, reeds and moss in still dark water
   "packice": look("slate", "pebbles", "lichen", 0.25, true), // dark slate, rimed and puddled with meltwater
   "plains": look("redSandstone", "grass", "lichen", 0.35), // red earth and short grass
   "savanna": look("redSandstone", "grass", "lichen", 0.45), // sun-baked sandstone, the long grass over it
