@@ -20,7 +20,7 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 
 | knob | type | range |
 |---|---|---|
-| `map.shape` | string | "circle" / "square" |
+| `map.shape` | string | "circle" / "square" / "zoo" |
 | `map.radius` | number | 0 to … |
 | `map.islandAreas` | number | 0 to … |
 | `map.island` | string |  |

@@ -8,6 +8,7 @@ import { clamp, hash2, rng, vnoise } from "./random";
 import { AREA_TYPES, type ForestMap } from "./map";
 import { floorClearing } from "./speakers";
 import { beachOf } from "./mapShape";
+import { zooPathLines } from "./zoo";
 
 export type PathKind = "path" | "road" | "rail" | "stream";
 export const PATH_KINDS: PathKind[] = ["path", "road", "rail", "stream"];
@@ -62,82 +63,86 @@ export class PathNetwork {
   constructor(readonly map: ForestMap) {
     // Railways and roads run off the map's whole extent, so they leave it rather than stop at its edge.
     const t = map.tuning.paths, b = map.extent, r = rng(map.seed * 7 + 4242);
-    const W = b.maxX - b.minX, H = b.maxZ - b.minZ;
-    const edgePoint = (side: number, u: number): [number, number] =>
-      side === 0 ? [b.minX + u * W, b.minZ] : side === 1 ? [b.maxX, b.minZ + u * H] : side === 2 ? [b.minX + u * W, b.maxZ] : [b.minX, b.minZ + u * H];
-    // A long line from one edge to another: control points every `spacing` metres, nudged
-    // sideways by up to `wander`, so it bends in wide, gentle curves.
-    const crossing = (from: [number, number], to: [number, number], spacing: number, wander: number): [number, number][] => {
-      const dx = to[0] - from[0], dz = to[1] - from[1], len = Math.hypot(dx, dz), n = Math.max(2, Math.round(len / spacing));
-      const ctrl: [number, number][] = [from];
-      let off = 0;
-      for (let i = 1; i < n; i++) {
-        off = clamp(off + (r() - 0.5) * wander, -wander, wander);
-        const k = i / n;
-        ctrl.push([clamp(from[0] + dx * k - (dz / len) * off, b.minX, b.maxX), clamp(from[1] + dz * k + (dx / len) * off, b.minZ, b.maxZ)]);
+    // The zoo (rules/zoo.ts): a straight path along every border between its blocks, nothing else.
+    if (map.zoo) for (const pts of zooPathLines(map.zoo, map.areaSize)) this.lines.push({ kind: "path", pts, half: map.zoo.pathHalf });
+    else {
+      const W = b.maxX - b.minX, H = b.maxZ - b.minZ;
+      const edgePoint = (side: number, u: number): [number, number] =>
+        side === 0 ? [b.minX + u * W, b.minZ] : side === 1 ? [b.maxX, b.minZ + u * H] : side === 2 ? [b.minX + u * W, b.maxZ] : [b.minX, b.minZ + u * H];
+      // A long line from one edge to another: control points every `spacing` metres, nudged
+      // sideways by up to `wander`, so it bends in wide, gentle curves.
+      const crossing = (from: [number, number], to: [number, number], spacing: number, wander: number): [number, number][] => {
+        const dx = to[0] - from[0], dz = to[1] - from[1], len = Math.hypot(dx, dz), n = Math.max(2, Math.round(len / spacing));
+        const ctrl: [number, number][] = [from];
+        let off = 0;
+        for (let i = 1; i < n; i++) {
+          off = clamp(off + (r() - 0.5) * wander, -wander, wander);
+          const k = i / n;
+          ctrl.push([clamp(from[0] + dx * k - (dz / len) * off, b.minX, b.maxX), clamp(from[1] + dz * k + (dx / len) * off, b.minZ, b.maxZ)]);
+        }
+        ctrl.push(to);
+        return spline(ctrl, 3);
+      };
+      // Railways: two to four lines, edge to edge, in wide curves; one with a branch line.
+      const rails = t.rails[0] + Math.floor(r() * (t.rails[1] - t.rails[0] + 1));
+      for (let i = 0; i < rails; i++) {
+        const s = Math.floor(r() * 4), e = (s + 2 + (r() < 0.3 ? (r() < 0.5 ? 1 : -1) : 0) + 4) % 4;
+        const pts = crossing(edgePoint(s, 0.15 + r() * 0.7), edgePoint(e, 0.15 + r() * 0.7), 320, 140);
+        this.lines.push({ kind: "rail", pts, half: t.railHalf });
+        if (i === 0 && pts.length > 20) {
+          const k = Math.floor(pts.length * (0.3 + r() * 0.4)), at = pts[k], side = Math.floor(r() * 4);
+          const branch = crossing(at, edgePoint(side, 0.2 + r() * 0.6), 300, 120);
+          this.lines.push({ kind: "rail", pts: branch, half: t.railHalf });
+          const nx = pts[k + 1][0] - at[0], nz = pts[k + 1][1] - at[1], n = Math.hypot(nx, nz) || 1;
+          const b = branch[Math.min(branch.length - 1, 6)], cross = nx * (b[1] - at[1]) - nz * (b[0] - at[0]);
+          this.junctions.push({ x: at[0], z: at[1], dx: nx / n, dz: nz / n, side: cross >= 0 ? 1 : -1, line: this.lines.length - 2 });
+        }
       }
-      ctrl.push(to);
-      return spline(ctrl, 3);
-    };
-    // Railways: two to four lines, edge to edge, in wide curves; one with a branch line.
-    const rails = t.rails[0] + Math.floor(r() * (t.rails[1] - t.rails[0] + 1));
-    for (let i = 0; i < rails; i++) {
-      const s = Math.floor(r() * 4), e = (s + 2 + (r() < 0.3 ? (r() < 0.5 ? 1 : -1) : 0) + 4) % 4;
-      const pts = crossing(edgePoint(s, 0.15 + r() * 0.7), edgePoint(e, 0.15 + r() * 0.7), 320, 140);
-      this.lines.push({ kind: "rail", pts, half: t.railHalf });
-      if (i === 0 && pts.length > 20) {
-        const k = Math.floor(pts.length * (0.3 + r() * 0.4)), at = pts[k], side = Math.floor(r() * 4);
-        const branch = crossing(at, edgePoint(side, 0.2 + r() * 0.6), 300, 120);
-        this.lines.push({ kind: "rail", pts: branch, half: t.railHalf });
-        const nx = pts[k + 1][0] - at[0], nz = pts[k + 1][1] - at[1], n = Math.hypot(nx, nz) || 1;
-        const b = branch[Math.min(branch.length - 1, 6)], cross = nx * (b[1] - at[1]) - nz * (b[0] - at[0]);
-        this.junctions.push({ x: at[0], z: at[1], dx: nx / n, dz: nz / n, side: cross >= 0 ? 1 : -1, line: this.lines.length - 2 });
+      // Old roads: fewer, broad, sweeping; they may cross a railway (a level crossing).
+      const roads = t.roads[0] + Math.floor(r() * (t.roads[1] - t.roads[0] + 1));
+      for (let i = 0; i < roads; i++) {
+        const s = Math.floor(r() * 4), e = (s + 2) % 4;
+        this.lines.push({ kind: "road", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 240, 110), half: t.roadHalf });
       }
-    }
-    // Old roads: fewer, broad, sweeping; they may cross a railway (a level crossing).
-    const roads = t.roads[0] + Math.floor(r() * (t.roads[1] - t.roads[0] + 1));
-    for (let i = 0; i < roads; i++) {
-      const s = Math.floor(r() * 4), e = (s + 2) % 4;
-      this.lines.push({ kind: "road", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 240, 110), half: t.roadHalf });
-    }
-    // Streams: one or two winding the length of the map, more wildly than the railways, and short
-    // ones joining wet areas that touch (a stream, a bog, a wetland, a beaver pond).
-    const streams = t.streams[0] + Math.floor(r() * (t.streams[1] - t.streams[0] + 1));
-    for (let i = 0; i < streams; i++) {
-      const s = Math.floor(r() * 4), e = (s + 2) % 4;
-      this.lines.push({ kind: "stream", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 90, 70), half: t.streamHalf });
-    }
-    const wet = (cx: number, cy: number) => AREA_TYPES[map.typeOf(cx, cy)].wet; // (the area's flag: art/areas.js)
-    for (const [k, nbrs] of map.neighbours) {
-      const [ax, ay] = k.split(",").map(Number);
-      if (!wet(ax, ay)) continue;
-      for (const nk of nbrs) {
-        const [bx, by] = nk.split(",").map(Number);
-        if (k > nk || !wet(bx, by)) continue;
-        const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
-        if (a) this.lines.push({ kind: "stream", pts: this.meander(a, c, r), half: t.streamHalf });
+      // Streams: one or two winding the length of the map, more wildly than the railways, and short
+      // ones joining wet areas that touch (a stream, a bog, a wetland, a beaver pond).
+      const streams = t.streams[0] + Math.floor(r() * (t.streams[1] - t.streams[0] + 1));
+      for (let i = 0; i < streams; i++) {
+        const s = Math.floor(r() * 4), e = (s + 2) % 4;
+        this.lines.push({ kind: "stream", pts: crossing(edgePoint(s, 0.1 + r() * 0.8), edgePoint(e, 0.1 + r() * 0.8), 90, 70), half: t.streamHalf });
       }
-    }
-    // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
-    // in some areas, out to nothing in particular (a ruin, later).
-    const seen = new Set<string>();
-    for (const [k, nbrs] of map.neighbours) {
-      const [ax, ay] = k.split(",").map(Number);
-      for (const nk of nbrs) {
-        const pair = k < nk ? `${k}|${nk}` : `${nk}|${k}`;
-        if (seen.has(pair)) continue;
-        seen.add(pair);
-        const [bx, by] = nk.split(",").map(Number);
-        if (!map.playable(bx, by) && !map.inBuffer(bx, by)) continue; // (where she can fly)
-        if (map.shape === "circle" && !map.playable(ax, ay) && !map.inBuffer(ax, ay)) continue;
-        if (hash2(ax * 31 + bx, ay * 31 + by, map.seed + 811) > t.linkChance) continue;
-        const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
-        if (a) this.lines.push({ kind: "path", pts: this.meander(a, c, r), half: t.pathHalf });
+      const wet = (cx: number, cy: number) => AREA_TYPES[map.typeOf(cx, cy)].wet; // (the area's flag: art/areas.js)
+      for (const [k, nbrs] of map.neighbours) {
+        const [ax, ay] = k.split(",").map(Number);
+        if (!wet(ax, ay)) continue;
+        for (const nk of nbrs) {
+          const [bx, by] = nk.split(",").map(Number);
+          if (k > nk || !wet(bx, by)) continue;
+          const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
+          if (a) this.lines.push({ kind: "stream", pts: this.meander(a, c, r), half: t.streamHalf });
+        }
       }
-      if (hash2(ax, ay, map.seed + 813) < t.deadEndChance) {
-        const s = map.siteOf(ax, ay), a = r() * Math.PI * 2, d = 30 + r() * 40, k = this.clearOf(ax, ay);
-        const from = { x: s.x + Math.cos(a) * k, z: s.z + Math.sin(a) * k };
-        this.lines.push({ kind: "path", pts: this.meander(from, { x: from.x + Math.cos(a) * d, z: from.z + Math.sin(a) * d }, r), half: t.pathHalf, deadEnd: true });
+      // Paths: between neighbouring areas' centres (some pairs), meandering; and a dead end or two
+      // in some areas, out to nothing in particular (a ruin, later).
+      const seen = new Set<string>();
+      for (const [k, nbrs] of map.neighbours) {
+        const [ax, ay] = k.split(",").map(Number);
+        for (const nk of nbrs) {
+          const pair = k < nk ? `${k}|${nk}` : `${nk}|${k}`;
+          if (seen.has(pair)) continue;
+          seen.add(pair);
+          const [bx, by] = nk.split(",").map(Number);
+          if (!map.playable(bx, by) && !map.inBuffer(bx, by)) continue; // (where she can fly)
+          if (map.shape === "circle" && !map.playable(ax, ay) && !map.inBuffer(ax, ay)) continue;
+          if (hash2(ax * 31 + bx, ay * 31 + by, map.seed + 811) > t.linkChance) continue;
+          const [a, c] = this.trim(map.siteOf(ax, ay), map.siteOf(bx, by), this.clearOf(ax, ay), this.clearOf(bx, by));
+          if (a) this.lines.push({ kind: "path", pts: this.meander(a, c, r), half: t.pathHalf });
+        }
+        if (hash2(ax, ay, map.seed + 813) < t.deadEndChance) {
+          const s = map.siteOf(ax, ay), a = r() * Math.PI * 2, d = 30 + r() * 40, k = this.clearOf(ax, ay);
+          const from = { x: s.x + Math.cos(a) * k, z: s.z + Math.sin(a) * k };
+          this.lines.push({ kind: "path", pts: this.meander(from, { x: from.x + Math.cos(a) * d, z: from.z + Math.sin(a) * d }, r), half: t.pathHalf, deadEnd: true });
+        }
       }
     }
     this.clipToBeach();
