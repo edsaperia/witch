@@ -519,7 +519,8 @@ const report = await b.page.evaluate(async () => {
     const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
     let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = Math.hypot(...vec(stats2[ids[i]]).map((v, k) => v - vec(stats2[ids[j]])[k])); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
     if (closest[0] < 1.5) bad.push(`${closest[1]} and ${closest[2]} look alike from above (${closest[0].toFixed(2)})`);
-    const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], byPattern = {}, uses = {};
+    // (an open area carrying a few trees among its props, layout.treeShare, has no main kind shaping its look: not counted)
+    const main = A => A.layout?.treeShare ? undefined : (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], byPattern = {}, uses = {};
     for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = A.layout.pattern + ":" + o.type; if (byPattern[key]) bad.push(`${A.id} and ${byPattern[key]} (both ${A.layout.pattern}) share ${o.type}`); byPattern[key] = A.id; uses[o.type] = (uses[o.type] || 0) + 1; if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species"); }
     for (const [k, n] of Object.entries(uses)) if (n > 2) bad.push(`${k} is the main kind of ${n} areas`);
     res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); neighbours by layout pattern never share a main species, none is the main kind of 3+ areas, plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main kinds over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
