@@ -322,6 +322,11 @@ export class View {
     const t = game.tuning;
     this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
+    // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
+    // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
+    // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
+    // tiles wouldn't have come back either).
+    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); location.reload(); });
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched

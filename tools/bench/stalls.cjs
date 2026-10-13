@@ -32,6 +32,33 @@ const SEED = env("SEED", "2267"), X = Number(env("X", 2673)), Z = Number(env("Z"
 const SECONDS = Number(env("SECONDS", 60)), WARM = Number(env("WARM", 8)), RUN_MS = Number(env("RUN_MS", 50));
 const [W, H] = env("SIZE", "640x360").split("x").map(Number), NODRAW = env("NODRAW", "1") !== "0";
 const HEAP = env("HEAP", "0") !== "0", HEAP_LIVE = env("HEAP", "0") === "live", HEAP_EVERY = Number(env("HEAP_EVERY", 4096));
+const SNAP = env("SNAP", "0") !== "0"; // (a heap snapshot at the start and the end: <out>/start.heapsnapshot, end.heapsnapshot; tools/bench/heapdiff.cjs says what grew)
+/** A heap snapshot written to `file` (its chunks as the profiler sends them). */
+async function snapshot(cdp, file) {
+  const chunks = [], on = e => chunks.push(e.chunk);
+  cdp.on("HeapProfiler.addHeapSnapshotChunk", on);
+  await cdp.send("HeapProfiler.collectGarbage");
+  await cdp.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false, captureNumericValue: false });
+  cdp.off("HeapProfiler.addHeapSnapshotChunk", on);
+  fs.writeFileSync(file, chunks.join(""));
+}
+const COUNT = env("COUNT", "0") !== "0"; // (count the live objects by kind at the start and the end, and collect the garbage at the end: what the heap's growth is made of)
+const KINDS = ["Object", "Array", "Function", "Map", "Set", "Float32Array", "Float64Array", "Int32Array", "Uint16Array", "Uint8Array", "Uint8ClampedArray", "ArrayBuffer", "ImageData", "Promise", "String"];
+/** How many objects of each kind are alive now (Runtime.queryObjects on the kind's prototype), after a full collection. */
+async function countKinds(cdp) {
+  await cdp.send("HeapProfiler.collectGarbage");
+  const out = {};
+  for (const k of KINDS) {
+    const { result: proto } = await cdp.send("Runtime.evaluate", { expression: `${k}.prototype` });
+    const { objects } = await cdp.send("Runtime.queryObjects", { prototypeObjectId: proto.objectId });
+    const { result: n } = await cdp.send("Runtime.callFunctionOn", { objectId: objects.objectId, functionDeclaration: "function () { return this.length; }", returnByValue: true });
+    out[k] = n.value;
+    await cdp.send("Runtime.releaseObject", { objectId: objects.objectId }); await cdp.send("Runtime.releaseObject", { objectId: proto.objectId });
+  }
+  const { usedSize } = await cdp.send("Runtime.getHeapUsage");
+  out.heapMb = Math.round(usedSize / 1e6);
+  return out;
+}
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".woff2": "font/woff2", ".webp": "image/webp", ".ogg": "audio/ogg", ".wasm": "application/wasm" };
 
 function serve() {
@@ -77,12 +104,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 500 }); await cdp.send("Profiler.start");
   if (HEAP) { await cdp.send("HeapProfiler.enable"); await cdp.send("HeapProfiler.startSampling", { samplingInterval: HEAP_EVERY, includeObjectsCollectedByMajorGC: !HEAP_LIVE, includeObjectsCollectedByMinorGC: !HEAP_LIVE }); }
   await page.evaluate(() => { window.__heap = []; const t0 = performance.now(); window.__heapTimer = setInterval(() => window.__heap.push([Math.round(performance.now() - t0) / 1000, Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1e5) / 10]), 250); });
+  if (SNAP) { await cdp.send("HeapProfiler.enable"); await snapshot(cdp, path.join(out, "start.heapsnapshot")); lap("snapshot at the start"); }
+  const counts0 = COUNT ? await countKinds(cdp) : null;
   const heap0 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0), tg0 = await page.evaluate(() => window.witch.game.clock.time);
   lap(`profiling ${SECONDS} s`);
   await wait(SECONDS * 1000);
   const { profile } = await cdp.send("Profiler.stop");
   const heapProfile = HEAP ? (await cdp.send("HeapProfiler.stopSampling")).profile : null;
   const tg1 = await page.evaluate(() => window.witch.game.clock.time), heap1 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0);
+  const counts1 = COUNT ? await countKinds(cdp) : null; // (after a full collection: what grew is kept, not garbage)
+  if (SNAP) { await snapshot(cdp, path.join(out, "end.heapsnapshot")); lap("snapshot at the end"); }
   const gaps = await page.evaluate(() => { const g = window.__gaps.slice(1); window.__gaps = []; return g; });
   const heapCurve = await page.evaluate(() => { clearInterval(window.__heapTimer); return window.__heap; });
   const heapFloors = []; for (let w = 0; w * 5 < SECONDS; w++) { const inWin = heapCurve.filter(([t]) => t >= w * 5 && t < (w + 1) * 5).map(([, mb]) => mb); if (inWin.length) heapFloors.push(Math.min(...inWin)); }
@@ -120,7 +151,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const frames = { n: gaps.length, over20: gaps.filter(g => g >= 20).length, over50: gaps.filter(g => g >= 50).length, over100: gaps.filter(g => g >= 100).length, p50: pct(0.5), p99: pct(0.99), worst: Math.round(sorted[sorted.length - 1] ?? 0) };
   const report = {
     spot: where, seconds: SECONDS, gameSeconds: Math.round((tg1 - tg0) * 10) / 10, totalMs: Math.round(total / 1000), idleMs: Math.round(idle), gcMs: Math.round(gc), programMs: Math.round(program), frames,
-    heapMb: [Math.round(heap0 / 1e6), Math.round(heap1 / 1e6)], heapFloors, heapCurve, overlay, errors: errors.slice(0, 10), stalls: stalls.slice(0, 30), loaf: loaf.slice(0, 40),
+    heapMb: [Math.round(heap0 / 1e6), Math.round(heap1 / 1e6)], heapFloors, heapCurve, counts: counts0 && counts1 ? { before: counts0, after: counts1 } : undefined, overlay, errors: errors.slice(0, 10), stalls: stalls.slice(0, 30), loaf: loaf.slice(0, 40),
     systems: Object.fromEntries([...incl].map(([k, v]) => [k, Math.round(v)])), selfTop: top.map(([k, v]) => [k, Math.round(v)]),
     chainsTop: [...chains].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, Math.round(v)]),
     runs: runs.sort((a, b) => b.ms - a.ms).slice(0, 25).map(r => ({ ms: Math.round(r.ms), made: [...r.top].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} ${Math.round(v)}`) })),
@@ -144,6 +175,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   fs.writeFileSync(path.join(out, "stalls.json"), JSON.stringify(report, null, 1));
   console.log(`profile ${report.totalMs} ms: idle ${report.idleMs}, program ${report.programMs}, gc ${report.gcMs}; heap ${report.heapMb.join(" -> ")} MB`);
   console.log(`heap floors (MB, the least seen each 5 s): ${heapFloors.join(" ")}`);
+  if (counts0 && counts1) { console.log(`live objects after a full collection, start -> end (heap ${counts0.heapMb} -> ${counts1.heapMb} MB):`); for (const k of Object.keys(counts1)) if (k !== "heapMb") console.log(`  ${k.padEnd(18)} ${String(counts0[k]).padStart(9)} -> ${String(counts1[k]).padStart(9)}  (${counts1[k] - counts0[k] >= 0 ? "+" : ""}${counts1[k] - counts0[k]})`); }
   console.log(`frames: ${frames.n}, over 20 ms ${frames.over20} (${Math.round((100 * frames.over20) / Math.max(1, frames.n))}%), over 50 ms ${frames.over50}, over 100 ms ${frames.over100}; p50 ${frames.p50} ms, p99 ${frames.p99} ms, worst ${frames.worst} ms`);
   console.log("by subsystem (inclusive ms):", report.systems);
   console.log("self time, top 25:"); for (const [k, v] of top.slice(0, 25)) console.log(`  ${String(v).padStart(6)} ms  ${k}`);
