@@ -46,9 +46,17 @@ function setTint(t: Tuning): void {
  *  drawn by the creature generator as part of its face (art/genome/expressions.js; the view picks the
  *  bake, the live rig the head piece). Dazed while dazed or stunned; StateMarks adds the daze stars
  *  (the stun's are leash.ts's). */
-export type Expression = "neutral" | "angry" | "happy" | "dazed";
+export type Expression = "neutral" | "angry" | "happy" | "dazed" | "bite" | "yawn";
+/** The open jaw (Ed, 2026-10-13: bites, roars and yawns; art/genome/expressions.js JAW_FACES): bite for the last BITE_LEAD
+ *  seconds of an attack's wind-up and through its lunge, and for ROAR seconds after a legend wakes (or turns); yawn while a
+ *  napper stretches awake (its wakeUntil). The snouted four-legged animals open their jaws; the others just make the face. */
+export const BITE_LEAD = 0.35, ROAR = 1.2;
 export function expression(c: Creature, time: number): Expression {
   if (isDazed(c, time) || (c.stunUntil ?? -Infinity) > time) return "dazed";
+  if (c.wakeUntil !== undefined && time < c.wakeUntil) return "yawn";
+  const f = c.fight;
+  if (f && ((f.lunge && f.lunge.left > 0.05) || (f.windupUntil > time && f.windupUntil - time < BITE_LEAD))) return "bite";
+  if (c.boss && c.legendState && c.legendState !== "asleep" && c.stateAt !== undefined && time >= c.stateAt && time - c.stateAt < ROAR) return "bite";
   const l = lookOf(c);
   return l === "enraged" ? "angry" : l === "happy" || l === "leashed" ? "happy" : "neutral";
 }

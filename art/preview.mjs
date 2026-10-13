@@ -15,6 +15,7 @@
 //   node art/preview.mjs sizes all|<species> art/previews/sizes.png [scale]   (each species' baby, young and adult beside the witch standing, at today's size and bigger: SCALES=1,1.2,1.35,1.5, st.creatureScale)
 //   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row; IDLE=1 its idle pose too; TOP=1 each row again from straight above; LEVELS=2,3 those levels only; PROFILE=0 the bodies with no profile; SPINE=0 no spine)
 //   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
+//   node art/preview.mjs jaws wolf,lion,bear,boar,stag,crocodile art/previews/jaws.png [scale]   (each species with its jaw shut, half-open and wide, then roaring (angry) and yawning (eyes shut); JAWS=0,.5,1 the openings; LEVELS=...)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
 //   node art/preview.mjs silhouettes young|adult art/previews/silhouettes.png [scale]   (every species' shape at game size, 24 px, as the silhouette check sees it, then its sprite; the closest pairs listed in the log)
@@ -82,6 +83,8 @@ if (process.env.VARIANT) await b.page.addInitScript(n => { window.VARIANT = n; }
 if (process.env.GENOME) await b.page.addInitScript(g => { window.GENOME = g; }, JSON.parse(process.env.GENOME));
 if (process.env.SCALES) await b.page.addInitScript(l => { window.SCALES = l; }, process.env.SCALES.split(",").map(Number));
 if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
+if (process.env.HEADS) await b.page.addInitScript(() => { window.HEADS = 1; });
+if (process.env.JAWS) await b.page.addInitScript(l => { window.JAWS = l; }, process.env.JAWS.split(",").map(Number));
 if (process.env.POSES) await b.page.addInitScript(l => { window.POSES = l; }, process.env.POSES.split(","));
 if (process.env.STUDIO) await b.page.addInitScript(() => { window.STUDIO = true; });
 if (process.env.ANCHORS) await b.page.addInitScript(() => { window.ANCHORS = true; });
@@ -334,6 +337,16 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   } else if (what === "faces") { // per species: its four expressions (neutral, angry, happy, dazed) at adult, young and baby, then angry with the woken look's red eyes (enraged)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(",");
     for (const id of ids) for (const facing of window.FACINGS || ["towards"]) rows.push([...(window.LEVELS || [2, 1, 0]).flatMap(l => G.EXPRESSIONS.map(face => G.bake(G.critter(id, l, 0, st, facing, { face }), G.speciesColours(id, st), st, st.cOutline))), G.bake(G.critter(id, 1, 0, st, facing, { face: "angry", woken: true }), G.speciesColours(id, st, { woken: true }), st, st.cOutline)]);
+  } else if (what === "jaws") { // per species (JAWS=0,.5,1 the openings): its jaw shut, half-open and wide (creatures3d.js quad3d, gear.jaw), then a roar (angry, wide) and a yawn (eyes shut, wide), at its adult (or LEVELS)
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), J = window.JAWS || [0, .5, 1];
+    // HEADS=1: each cropped to its head (round the pixels that change between shut and wide, lined up on their feet: the jaw dropping can make one taller), for a zoomed sheet
+    const crop = (bk, [x0, y0, x1, y1]) => { const cut = C => { const c = document.createElement("canvas"); c.width = x1 - x0; c.height = y1 - y0; c.getContext("2d").drawImage(C, -x0, -y0); return c; }; return { A: cut(bk.A), N: cut(bk.N), w: x1 - x0, h: y1 - y0 }; };
+    for (const id of ids) for (const l of window.LEVELS || [2]) {
+      const gears = [...J.map(jaw => ({ jaw })), { jaw: 1, face: "angry" }, { jaw: .8, face: "asleep" }], sps = gears.map(gear => G.critter(id, l, 0, st, "towards", gear));
+      let box = null;
+      if (window.HEADS) { const b = sps[J.length - 1], mouth = new Set([G.M.MOUTH, G.M.WEB]); let x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1; for (let y = 0; y < b.h * .75; y++) for (let x = Math.floor(b.w * .45); x < b.w; x++) if (mouth.has(b.m[y * b.w + x])) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } const w = Math.round(Math.max(x1 - x0, y1 - y0) * 1.9 + 16), cx = (x0 + x1) / 2, cy = (y0 + y1) / 2; if (x1 >= 0) box = [Math.round(cx - w * .6), Math.round(cy - w * .55), 0, 0]; if (box) { box[2] = box[0] + w; box[3] = box[1] + w; } }
+      const B = sps[J.length - 1]; rows.push(sps.map(sp => { const bk = G.bake(sp, G.speciesColours(id, st), st, st.cOutline); return box ? crop(bk, [box[0], box[1] - (B.h - sp.h), box[2], box[3] - (B.h - sp.h)]) : bk; }));
+    }
   } else if (what === "textures") { // per species: its legend, adult, young and baby untextured (texture 0), then a row textured (genome/texture.js)
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), off = { ...st, texture: 0 }, on = { ...st, texture: 1 };
     for (const id of ids) for (const s2 of [off, on]) rows.push((window.LEVELS || [3, 2, 1, 0]).map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)));

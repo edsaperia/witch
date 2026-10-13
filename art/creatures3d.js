@@ -2,7 +2,7 @@
 // Units: the shoulder is about 1 high; x forward, y up, z towards the near side.
 import { M, rng, uni, hash2 } from "./core.js";
 import { Model, render, v3, spotty, masks } from "./model3d.js";
-import { faceUp } from "./genome/expressions.js";
+import { faceUp, JAW_FACES } from "./genome/expressions.js";
 import { textureLumps } from "./genome/texture.js";
 import { elderQuad, grizzle, notch, surfaceFrom, ring, fitRing, frontPts, closed, charm, crown, drawOn, meerkatDress, sentinelHeap } from "./elders.js";
 
@@ -666,22 +666,31 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
   const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
+  // its jaw open (Ed, 2026-10-13: bites, roars and yawns; gear.jaw 0 shut to 1 wide): turned about a hinge at the back of the cheek
+  // by up to q.gape radians, a third of it lifting the muzzle (so the mouth shows from the camera's height above) and the rest dropping
+  // the lower jaw; teeth by q.bite: "fangs" (a meat eater's canines, small teeth between), "flat" (a grazer's), "croc" (rows of cones)
+  const jawK0 = q.beak ? 0 : (q.jaw ?? 1) * (baby ? .7 : 1), open = jawK0 ? Math.max(0, Math.min(1, GEAR?.jaw ?? JAW_FACES[GEAR?.face]?.jaw ?? 0)) : 0, bite = q.bite || (q.flatJaw ? "croc" : hoof ? "flat" : "fangs");
+  const gapeAll = open * (q.gape ?? (bite === "flat" ? .55 : bite === "croc" ? .65 : 1)), lift = gapeAll * .35, gape = gapeAll - lift;
+  const mouthY = sn[1] - Dm * (.45 + .12 * jawK0), hinge = [H[0] + hr * .25, mouthY + Dm * .08, 0];
+  const rotAbout = a => { const c = Math.cos(a), s = Math.sin(a); return [p => [hinge[0] + (p[0] - hinge[0]) * c - (p[1] - hinge[1]) * s, hinge[1] + (p[0] - hinge[0]) * s + (p[1] - hinge[1]) * c, p[2]], d => [d[0] * c - d[1] * s, d[0] * s + d[1] * c, d[2]]]; };
+  const [lifted, liftD] = rotAbout(lift), [turn, turnD] = rotAbout(-gape), snU = lifted(sn), jawG = open > .05 ? 63 : 1; // (snU: the muzzle, lifted; jawG: open, the lower jaw a hard edge apart from the muzzle, not blended into it)
+  const [unlift] = rotAbout(-lift), [unturn] = rotAbout(gape), roof = p => open > .05 && Math.abs(p[2]) < Dm * .6 && unlift(p)[1] < mouthY + Dm * .1 && p[0] > hinge[0]; // (open: the muzzle's underside is the mouth's dark roof)
   if (q.beak) m.chain([[H[0] + hr * .7, H[1] - hr * .05, 0, hr * .34], [H[0] + hr * 1.2 * q.beak, H[1] - hr * .12, 0, hr * .22], [H[0] + hr * 1.5 * q.beak, H[1] - hr * .38, 0, hr * .1], [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0, hr * .03]], M.ACCENT, { group: 1 }); // a griffin's hooked beak (beak: its length), in its accent
-  const tip = q.beak ? [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0] : [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0]; // (its snout's tip, or its beak's)
+  const tip = q.beak ? [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0] : lifted([sn[0] + L * .62 + hr * .1, sn[1] - .02, 0]); // (its snout's tip, or its beak's)
   if (q.flatJaw && !q.beak) { // a crocodile's: long, flat and wide, lying low, a row of teeth along its edge
-    m.ell(sn, [L * .62 + hr * .2, Dm * .55, hr * (q.jawW ?? .5)], M.BODY, { dir: [1, -.08, 0], paint: p => p[1] < sn[1] - Dm * .25 ? M.BELLY : headPaint(p) });
-    if (!baby) for (let i = 0; i < 6; i++) for (const side of [-1, 1]) m.ell([sn[0] - L * .4 + i * L * .17, sn[1] - Dm * .3, side * hr * ((q.jawW ?? .5) - .06)], [hr * .035, hr * .06, hr * .03], M.ACCENT, { group: 1 });
+    m.ell(snU, [L * .62 + hr * .2, Dm * .55, hr * (q.jawW ?? .5)], M.BODY, { dir: liftD([1, -.08, 0]), paint: p => roof(p) ? M.MOUTH : p[1] < snU[1] - Dm * .25 ? M.BELLY : headPaint(p) });
+    if (!baby) for (let i = 0; i < 6; i++) for (const side of [-1, 1]) m.ell(lifted([sn[0] - L * .4 + i * L * .17, sn[1] - Dm * .3, side * hr * ((q.jawW ?? .5) - .06)]), [hr * .035, hr * .06, hr * .03], M.ACCENT, { group: 1 });
     for (const side of [-1, 1]) { // its nostrils on a knob at its snout's tip, up above the water line with its eyes (its legend's glowing)
       const n = [tip[0] - hr * .2, tip[1] + Dm * .4, side * hr * .09];
       m.ell(n, [hr * .13, hr * .1, hr * .1], M.BODY, {}); m.ell(v3.add(n, [0, hr * .08, 0]), [hr * .06, hr * .04, hr * .05], legend ? M.MAGIC2 : M.NOSE, { group: 1 });
     }
   } else if (!q.beak) {
-    m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
-    if (q.jaw) m.ell([sn[0] - L * .05, sn[1] - Dm * .55, 0], [L * .55 + hr * .18, Dm * .55 * q.jaw, Dm * .85 * Math.min(1.3, q.jaw)], M.BODY, { dir: [1, -.15, 0], paint: headPaint }); // a heavy lower jaw (a jaguar legend's crushing bite)
+    m.ell(snU, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: liftD([1, -.25, 0]), paint: p => (roof(p) ? M.MOUTH : undefined) ?? tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < snU[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
+    if (q.jaw) m.ell(turn([sn[0] - L * .05, sn[1] - Dm * .55, 0]), [L * .55 + hr * .18, Dm * .55 * q.jaw, Dm * .85 * Math.min(1.3, q.jaw)], M.BODY, { group: jawG, dir: turnD([1, -.15, 0]), paint: headPaint }); // a heavy lower jaw (a jaguar legend's crushing bite)
     if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
     else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
       const T = q.trunk, Lt = (T.len ?? 1) * hr * 2.4, r0 = (T.r ?? .34) * hr, pts = [], n = 12;
-      let p = [sn[0] + L * .2, sn[1] - Dm * .2, 0], ang = -.45;
+      let p = [snU[0] + L * .2, snU[1] - Dm * .2, 0], ang = -.45;
       // raise (a legend's: 0 hanging to 1 held high in a trumpet): up from its brow, its tip flared and curled back over
       const up = T.raise ?? 0;
       if (up) ang = -.45 + (.35 + .45) * up;
@@ -700,9 +709,30 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (browK) m.ell([H[0] + hr * .42, H[1] + hr * .46, 0], [hr * .4, hr * .2 * browK, hr * .78], M.BODY, { group: 1, dir: [1, .35, 0], paint: headPaint });
   if (jowlK) for (const side of [-1, 1]) m.ell([H[0] + hr * .3, H[1] - hr * .3, side * hr * .66], [hr * .5, hr * .36 * jowlK, hr * .3 * jowlK], M.BODY, { group: 1, paint: headPaint });
   if (jawK) {
-    const jc = [sn[0] - L * .08, sn[1] - Dm * .5 * jawK, 0], mouthY = sn[1] - Dm * (.45 + .12 * jawK);
-    m.ell(jc, [L * .5 + hr * .12, Dm * .42 * jawK, Dm * .78], M.BODY, { group: 1, dir: [1, -.22, 0], paint: p => p[1] > mouthY - .012 && p[1] < mouthY + .012 && p[0] > sn[0] - L * .05 && p[0] < sn[0] + L * .62 ? M.LINE : ((q.muzzle || q.belly) ? M.BELLY : headPaint(p)) }); // (its mouth: a dark line where the jaw meets the muzzle)
-    if (q.whiskers && !baby) for (const side of [-1, 1]) for (let w = 0; w < 3; w++) { const b = [sn[0] + L * .35, sn[1] - Dm * .15 + (w - 1) * Dm * .18, side * Dm * .75], d = v3.norm([.35, (w - 1) * .25 - .1, side]); m.seg(b, v3.add(b, v3.mul(d, hr * (.55 + .12 * (w % 2)))), hr * .018, hr * .006, M.BELLY, { group: 30 + w + (side > 0 ? 0 : 3), extra: true }); }
+    const jc = [sn[0] - L * .08, sn[1] - Dm * .5 * jawK, 0];
+    const lip0 = Math.max(hinge[0] + hr * .1, sn[0] - L * .2), lip1 = sn[0] + L * .5 + hr * .05; // the gape, from the corner of the mouth to the front
+    m.ell(turn(jc), [L * .5 + hr * .12, Dm * .42 * jawK * (1 - open * .2), Dm * .78 * (1 - open * .15)], M.BODY, { group: jawG, dir: turnD([1, -.22, 0]), paint: p => gape && Math.abs(p[2]) < Dm * .6 && unturn(p)[1] > jc[1] + Dm * .15 * jawK ? M.MOUTH : !gape && p[1] > mouthY - .012 && p[1] < mouthY + .012 && p[0] > sn[0] - L * .05 && p[0] < sn[0] + L * .62 ? M.LINE : ((q.muzzle || q.belly) ? M.BELLY : headPaint(p)) }); // (shut: its mouth a dark line where the jaw meets the muzzle)
+    if (gape) {
+      // the lips, found on the model as built: down from inside the muzzle to its underside, and up from inside the turned jaw to its top
+      const exit = (p, d, most) => { let t = 0; while (t < most && m.field(v3.add(p, v3.mul(d, t))) < 0) t += Dm * .02; return v3.add(p, v3.mul(d, t)); }; // (no further than most: where the jaws still meet, not out through the far side)
+      const upLip = (x, z) => exit(lifted([x, sn[1] - Dm * .2, z]), liftD([0, -1, 0]), Dm * 1.1), loLip = (x, z) => exit(turn([x, jc[1], z]), turnD([0, 1, 0]), Dm * .5 * jawK);
+      const N = 6, lipAt = t => lip0 + (lip1 - lip0) * t, tg = [];
+      for (let i = 0; i <= N; i++) { // the throat at the back, between the muzzle's underside and the jaw's top (warm, not black); in front of it open air, the background showing between the jaws
+        const t = i / N, x = lipAt(t), up = upLip(x, 0), lo = loLip(x, 0), h = Math.max(hr * .03, (up[1] - lo[1]) * .5 + Dm * .05);
+        if (t <= .2) m.ell(v3.lerp(up, lo, .5), [(lip1 - lip0) / N * .9, h, Dm * .45], M.MOUTH, { group: jawG });
+        if (i % 3 === 0 && i < N) tg.push([...v3.add(lo, v3.mul(turnD([0, 1, 0]), hr * .04)), hr * (.16 - i * .006)]);
+      }
+      m.chain(tg, M.SKIN, { group: jawG }); // a tongue lying on the jaw's floor
+      if (!baby) { // its teeth, each side, from the upper lip down and from the jaw's lip up
+        const tooth = (x, len, w, down, side) => { const z = side * Dm * .55, a = down ? upLip(x, z) : loLip(x, z), d = down ? liftD([0, -1, 0]) : turnD([0, 1, 0]); m.seg(v3.sub(a, v3.mul(d, w)), v3.add(a, v3.mul(d, len)), w, w * (bite === "flat" ? .9 : .25), M.WEB, { group: down ? 1 : jawG }); }; // (ivory, whatever its horns)
+        for (const side of [-1, 1]) {
+          if (bite === "fangs") { tooth(lip1 - L * .05, hr * .55, hr * .12, true, side); tooth(lip1 - L * .18, hr * .4, hr * .1, false, side); for (let i = 1; i <= 2; i++) { tooth(lip1 - L * (.12 + i * .16), hr * .14, hr * .06, true, side); tooth(lip1 - L * (.26 + i * .16), hr * .12, hr * .06, false, side); } }
+          else if (bite === "flat") for (let i = 0; i < 4; i++) { const x = lip0 + (lip1 - lip0) * (.25 + i * .2); tooth(x, hr * .12, hr * .08, true, side); tooth(x, hr * .12, hr * .08, false, side); }
+          else for (let i = 0; i < 7; i++) { const x = lip0 + (lip1 - lip0) * (.08 + i * .14); tooth(x, hr * .24, hr * .07, true, side); tooth(x + (lip1 - lip0) * .07, hr * .22, hr * .07, false, side); }
+        }
+      }
+    }
+    if (q.whiskers && !baby) for (const side of [-1, 1]) for (let w = 0; w < 3; w++) { const b = lifted([sn[0] + L * .35, sn[1] - Dm * .15 + (w - 1) * Dm * .18, side * Dm * .75]), d = v3.norm([.35, (w - 1) * .25 - .1, side]); m.seg(b, v3.add(b, v3.mul(d, hr * (.55 + .12 * (w % 2)))), hr * .018, hr * .006, M.BELLY, { group: 30 + w + (side > 0 ? 0 : 3), extra: true }); }
   }
   m.anchors.head = { c: H, r: [hr * 1.05, hr * .92, hr * .88], top: [H[0] - hr * .1, H[1] + hr * .82, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };

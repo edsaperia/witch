@@ -13,6 +13,10 @@ import { M, unitVec } from "../core.js";
 import { v3 } from "../model3d.js";
 
 export const EXPRESSIONS = ["neutral", "angry", "happy", "dazed", "asleep"];
+// The open-jaw faces (Ed, 2026-10-13: bites, roars and yawns): an expression's face with the jaw open (gear.jaw, creatures3d.js
+// quad3d, the snouted four-legged animals; elsewhere just the face): bite, a bite or lunge and a legend's roar (angry, wide); yawn,
+// waking from a nap (eyes shut, most of the way open).
+export const JAW_FACES = { bite: { jaw: 1, face: "angry" }, yawn: { jaw: .8, face: "asleep" } };
 // brow: a thick straight bar; a feather tuft, thin at the middle and flaring out; a wide arched
 // ridge (a snake's or a beetle's brow scales). happy: smiling arcs ("arc") or squeezed shut ("squint").
 // dazed: crossed out ("x") or one eye big and one small ("wobble").
@@ -32,6 +36,7 @@ function faceSurface(m, p, dir, keep) {
 // eyes (render calls back with its scale), so a beetle's face reads as well as an elk's.
 export function faceUp(m, face, style = FACE_DEFAULT) {
   const A = m.anchors, head = A.head, eyes = A.eyes;
+  face = JAW_FACES[face]?.face ?? face;
   if (!face || face === "neutral" || !head || !eyes || eyes.pts.length < 1) return;
   m.atScale = P => faceDraw(m, face, { ...FACE_DEFAULT, ...style }, 1 / P);
 }
