@@ -149,9 +149,14 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
     if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c) || unseen(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe; her Stealth broom hides her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    // (With the wild watch on, a wild one takes her up only in its own area: she can walk out before they make up their minds, and
-    // none reaches across its edge for her; Ed, 2026-10-07: "time to run away". DECISION FOR ED: before, within its attack range.)
-    if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || (!w.t.wildWatch?.on && !pastEdge(w, c, v.x, v.z))))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    // Across its edge (Ed, 2026-10-13: "Animals should chase outside, and relatively far. The idea is to stop people just sitting
+    // near the edge of a territory and sniping/kiting. However if you leave the area before the warning ends then they don't
+    // attack"): a besieger within its attack range, as ever; else only within its chase band (combat.leaveArea past its edge), and,
+    // with the wild watch on, only when she's provoked it (a 💌 of hers landed on it within wildWatch.provoked seconds): one whose
+    // warning she walked out of in time lets her go. (One already after her keeps her out to the band: valid.)
+    const W = w.t.wildWatch, provoked = c.affectionAt !== undefined && w.time - c.affectionAt < (W?.provoked ?? 0);
+    const across = (c.siege && d < attackRange) || (!pastEdge(w, c, v.x, v.z) && (provoked || (!W?.on && d < attackRange)));
+    if ((w.inArea(c, v.x, v.z) || across) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
