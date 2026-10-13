@@ -138,17 +138,17 @@ export const GENOMES = [
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the snowfield's arctic fox (an area recipe's, the north's cold island): a small, round, white fox, short-muzzled and
-  // short-eared against the cold, a huge thick brush; a grey-brown kit, a white young, a ruffed adult, and the legend an aurora
-  // fox, three great tails streaming light at their tips, frost crystals along its back
+  // short-eared against the cold, a huge thick brush; a grey-brown kit, a white young, a ruffed adult, and the elder an old white
+  // fox of the long winter, shaggy, frost-muzzled, one vast tufted brush swept low, stone beads round its legs
   { id: "arcticfox", name: "Arctic fox", template: "quadruped", builder: "quad", palette: { hue: .59, sat: .16, val: .96, belly: "white" }, body: { hgt: .68, len: .56, chest: .46, tuck: .54, neck: .24, neckAng: .62, neckW: .4, hr: .27, legW: 1 }, head: { snout: .78, snoutD: .58, snoutTaper: .7 }, parts: { ears: { kind: "point", size: .8 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["crystals"], texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: .46, chest: .42, tuck: .46, hr: .31 }, head: { snout: .58 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "puff" }, coat: { saddle: true } },
       { body: { len: .58, legW: .9 } },
       { body: { len: .6 }, features: [{ kind: "ruff", size: .2, count: 14 }] },
-      { body: { len: .64, legW: 1.05, neckAng: .55 }, head: { mask: true }, features: [
-        { kind: "ruff", size: .28, count: 18 },
-        { kind: "tails", count: 3, length: 1.15, spread: .32, tip: "MAGIC2", replace: true, width: 1.3 },
-        { kind: "mane", from: .3, to: .95, height: .12, count: 11, lean: .35, mat: "MAGIC" },
+      // the elder of the white foxes (docs/ART-GUIDE.md 0c): the long winter's own, its coat gone deep and shaggy, one vast brush
+      // swept low behind it, its muzzle grizzled with frost, offerings of stone beads round its legs
+      { body: { len: .64, legW: 1.1, neckAng: .55, hgt: .72 }, head: { frost: true }, parts: { tail: "plume" }, coat: { beads: true }, features: [
+        { kind: "ruff", size: .42, count: 26, mat: "BELLY" },
       ] },
     ] },
   // the crags' ibex (an area recipe's, the north-east's island of mountains and glaciers): a stocky wild goat, dark-legged and
