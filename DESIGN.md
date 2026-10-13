@@ -172,7 +172,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 | Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
 | Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
 | Warren | red sand and pebbles | low rock ledges | dry tussocks | twisted junipers among red rock hoodoos | a heap of red stones over the warren | Meerkat | recipe (badlands, phase 3) |
-| Bushveld | red earth and trampled dry grass | walls of thorn scrub | thorn bushes and dry grass clumps | thorn trees in clumps, a few flat-topped acacias | a ring of old boma posts round a cold hearth | Rhino | recipe (hot, phase 4) |
+| Bushveld | red earth and trampled dry grass | walls of thorn scrub | thorn bushes and dry grass clumps | flat-topped thorn trees in clumps, umbrella acacias | a ring of old boma posts round a cold hearth | Rhino | recipe (hot, phase 4) |
 | Scrub wash | cracked dry clay | the wash's sandy banks | thorny scrub | stunted thorn trees, junipers and sun-split boulders | a ring of sun-split stones round a dry hollow | Armadillo | recipe (badlands, phase 3) |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
