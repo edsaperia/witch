@@ -23,7 +23,6 @@ import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 import { OUTLINE_STEP } from "./chartWarm";
-import { cacheGet, cacheKey, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -148,18 +147,19 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     requestAnimationFrame(() => resize());
   };
 
-  // The real outlines (seconds each for the big islands, about a minute for them all): those this browser has kept (app/
-  // chartCache.ts: made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, in short slices so the page
-  // never stalls; the rest made in a worker, the chosen island and those nearest it first, each swapped in as it comes.
-  let worker: Worker | null = null, asked = 0;
-  const pending: OutlineDone[] = [];
+  // The real islands (seconds each for the big ones to make, about a minute for them all; their meshes made with them,
+  // render/chart/islandMesh.ts, so the page only wraps what comes): the worker sends those this browser keeps (app/chartCache.ts:
+  // made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, the chosen island and those nearest it
+  // first, then makes the rest, each rising out of the sea as it comes (nothing stands in for one till then: Ed, 2026-10-13). The
+  // map table's miniature asks only for what's kept (nothing is ever made while she's at the deck) and asks again every few
+  // seconds while any is missing, as the night's warm fills the cache.
+  let worker: Worker | null = null, poll: ReturnType<typeof setInterval> | null = null;
   const apply = (o: OutlineDone) => {
     const isl = islands.find(i => i.id === o.id);
     if (!isl || o.world !== worldNow()) return;
     if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
     isl.outline = o; chart.reshape(o.id, o);
   };
-  const drain = () => { const t0 = performance.now(); while (pending.length && performance.now() - t0 < 10) apply(pending.shift()!); if (pending.length) setTimeout(drain, 0); }; // (in slices: frames come between)
   const make = (): Worker | null => {
     if (!worker) {
       try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return null; }
@@ -168,22 +168,18 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     return worker;
   };
   /** An island's fine grid for the close zoom: kept, or made (the worker given the world first if it's new). */
-  async function detail(id: string): Promise<void> {
-    const w = worldNow(), found = [...save.found], o = await cacheGet<OutlineDone>(cacheKey(id, w, found, OUTLINE_STEP, OUTLINE_DETAIL));
-    if (o) { apply(o); return; }
+  function detail(id: string): void {
     const fresh = !worker, wk = make();
-    if (fresh) wk?.postMessage({ world: w, found, ids: [], step: OUTLINE_STEP } satisfies OutlineAsk);
+    if (fresh) wk?.postMessage({ world: worldNow(), found: [...save.found], ids: [], step: OUTLINE_STEP } satisfies OutlineAsk);
     wk?.postMessage({ detail: id } satisfies OutlineAsk);
   }
-  async function outlines(): Promise<void> {
-    const n = ++asked, w = worldNow(), found = [...save.found];
+  function outlines(): void {
+    const w = worldNow(), found = [...save.found];
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
-    const ids = [...islands].sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
-    const kept = await Promise.all(ids.map(id => cacheGet<OutlineDone>(cacheKey(id, w, found, OUTLINE_STEP, OUTLINE_ACROSS))));
-    if (n !== asked) return; // (built again meanwhile: a newer ask has it)
-    const missing = ids.filter((_, i) => !kept[i]);
-    const had = !!pending.length; pending.push(...kept.filter((o): o is OutlineDone => !!o)); if (!had) drain();
-    if (missing.length) make()?.postMessage({ world: w, found, ids: missing, step: OUTLINE_STEP } satisfies OutlineAsk);
+    const ids = [...islands].filter(i => !i.outline).sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
+    if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
+    make()?.postMessage({ world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk);
+    if (mini && !poll) poll = setInterval(outlines, 4000);
   }
 
   /** Every island, always: home and each found with its sigil, sailable; the rest bare land, the placeholders dimmest. */
@@ -196,11 +192,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
-    // (not the miniature, 64 px on the map table's top: its islands stay their round coasts. Each real outline is 20 to 70 ms
-    // of meshes on the page's thread (its heightfield, shallows and lakes; the coast alone extruded is no cheaper), 64 of them
-    // over the first minute of every night, at the decks, and on while she flies within 90 m of the deck: the stall hunt,
-    // 2026-10-13. DECISION FOR ED: the real shapes on the table would need their meshes built in the worker.)
-    if (!mini) outlines();
+    outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
     $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
     $("world").textContent = `World seed: ${w}${opts.world != null && opts.world !== save.world ? " (from the link)" : ""}`;
@@ -213,7 +205,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     bakeFor(id);
     if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
-    if (id && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) void detail(id);
+    if (id && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) detail(id);
     const isl = islands.find(i => i.id === id), card = $("card"), sail = $<HTMLAnchorElement>("sail");
     if (!isl || mini) { card.hidden = true; return; }
     card.hidden = false;
@@ -324,6 +316,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     dispose() {
       disposed = true;
       removeEventListener("keydown", onKey);
+      if (poll) { clearInterval(poll); poll = null; }
       worker?.terminate(); worker = null;
       chart.dispose();
       root.remove();
