@@ -67,21 +67,65 @@ const VARIANTS = [
   await wait(WARM * 1000);
   // The measure: the view's render wrapped to note each frame's draw time, scene pass, calls and triangles; a frame loop of the
   // probe's own for the gaps.
+  await page.evaluate(objects => { window.__objects = objects; }, env("OBJECTS", "0") !== "0");
   await page.evaluate(() => {
     const v = window.witch.view, f = v.render.bind(v);
-    window.__m = { draw: [], scene: [], calls: [], tris: [], gaps: [] };
+    window.__m = { draw: [], scene: [], calls: [], tris: [], gaps: [], passes: {} };
     v.render = (time, draw) => { f(time, draw); const m = window.__m; m.draw.push(v.ms.draw); m.scene.push(v.post.sceneMs); m.calls.push(v.renderer.info.render.calls); m.tris.push(v.renderer.info.render.triangles); };
     let last = performance.now(); const tick = t => { window.__m.gaps.push(t - last); last = t; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
+    // Each render call (the cast-shadow map, the scene, the effects layer, each post pass) timed on the GPU by itself, where the
+    // browser can: the frame's own query (platform/frameStats.ts) given up for these, one a call, read back as they come.
+    const r = v.renderer, gl = r.getContext(), ext = gl.getExtension("EXT_disjoint_timer_query_webgl2");
+    if (!ext) return;
+    window.witch.frameStats.ext = null;
+    const orig = r.render.bind(r), pending = [];
+    const label = (scene, cam) => {
+      const rt = r.getRenderTarget(), size = rt ? `${rt.width}x${rt.height}` : "canvas";
+      if (scene === v.scene) return cam.isOrthographicCamera ? `cast-shadow map ${size}` : `scene ${size}`;
+      if (v.post && scene === v.post.fxScene) return `effects layer ${size}`;
+      const u = scene.children[0]?.material?.uniforms ?? {};
+      const kind = u.uThreshold ? "bloom bright" : u.uStep ? "blur" : u.uBloom ? "composite" : u.uDir ? "tilt-shift" : "other";
+      return `${kind} ${size}`;
+    };
+    // OBJECTS=1: each draw call by itself instead (the object's name, its material and its instances), within the scene pass.
+    if (window.__objects) {
+      const direct = r.renderBufferDirect.bind(r);
+      r.renderBufferDirect = (camera, scene, geometry, material, object, group) => {
+        const q = gl.createQuery();
+        gl.beginQuery(ext.TIME_ELAPSED_EXT, q); direct(camera, scene, geometry, material, object, group); gl.endQuery(ext.TIME_ELAPSED_EXT);
+        const key = `${camera.isOrthographicCamera ? "[cast] " : ""}${object.name || object.type}${object.isInstancedMesh ? ` x${object.count}` : geometry.isInstancedBufferGeometry ? ` i${geometry.instanceCount ?? "?"}` : ""} ${material.name || material.type} ${geometry.index ? geometry.index.count / 3 : geometry.attributes.position.count / 3}tri`;
+        pending.push({ q, key, calls: 1 });
+        while (pending.length && gl.getQueryParameter(pending[0].q, gl.QUERY_RESULT_AVAILABLE)) {
+          const e = pending.shift(), ns = gl.getQueryParameter(e.q, gl.QUERY_RESULT); gl.deleteQuery(e.q);
+          if (gl.getParameter(ext.GPU_DISJOINT_EXT)) continue;
+          const P = (window.__m.passes[e.key] ??= { ms: [], calls: [] }); P.ms.push(ns / 1e6); P.calls.push(e.calls);
+        }
+      };
+      return;
+    }
+    r.render = (scene, cam) => {
+      const key = label(scene, cam), c0 = r.info.render.calls, q = gl.createQuery();
+      gl.beginQuery(ext.TIME_ELAPSED_EXT, q); orig(scene, cam); gl.endQuery(ext.TIME_ELAPSED_EXT);
+      pending.push({ q, key, calls: r.info.render.calls - c0 });
+      while (pending.length && gl.getQueryParameter(pending[0].q, gl.QUERY_RESULT_AVAILABLE)) {
+        const e = pending.shift(), ns = gl.getQueryParameter(e.q, gl.QUERY_RESULT); gl.deleteQuery(e.q);
+        if (gl.getParameter(ext.GPU_DISJOINT_EXT)) continue;
+        const P = (window.__m.passes[e.key] ??= { ms: [], calls: [] }); P.ms.push(ns / 1e6); P.calls.push(e.calls);
+      }
+    };
   });
   const rows = [];
   for (const V of VARIANTS) {
     if (ONLY && !ONLY.includes(V.id)) continue;
     const t1 = Date.now();
-    await page.evaluate(set => { const t = window.witch.tuning; window.__saved = JSON.stringify({ shadows: t.shadows, bloom: t.bloom, tiltShift: t.tiltShift, groundCover: t.groundCover }); new Function("t", set)(t); const m = window.__m; m.draw.length = m.scene.length = m.calls.length = m.tris.length = m.gaps.length = 0; }, V.set);
+    await page.evaluate(set => { const t = window.witch.tuning; window.__m.passes = {}; window.__saved = JSON.stringify({ shadows: t.shadows, bloom: t.bloom, tiltShift: t.tiltShift, groundCover: t.groundCover }); new Function("t", set)(t); const m = window.__m; m.draw.length = m.scene.length = m.calls.length = m.tris.length = m.gaps.length = 0; }, V.set);
     await wait(1500); // (the change settling: a pass dropped, a batch hidden)
     await page.evaluate(() => { const m = window.__m; m.draw.length = m.scene.length = m.calls.length = m.tris.length = m.gaps.length = 0; });
     await page.waitForFunction(n => window.__m.draw.length >= n, FRAMES, { timeout: 600000 });
     const m = await page.evaluate(() => { const m = window.__m, r = window.witch.frameStats.recent(); return { ...m, gpu: r.gpu.slice(-m.draw.length) }; });
+    const passes = Object.entries(m.passes).map(([k, P]) => ({ key: k, n: P.ms.length / Math.max(1, m.draw.length), ms: pct(P.ms, 0.5), calls: pct(P.calls, 0.5), total: P.ms.reduce((a, b) => a + b, 0) / Math.max(1, m.draw.length) })).sort((a, b) => b.total - a.total);
+    if (passes.length) { console.log(`  ${V.id}, the GPU by ${env("OBJECTS", "0") !== "0" ? "draw call" : "render call"} (ms a frame: total, each; calls; ${passes.reduce((a, p) => a + p.total, 0).toFixed(1)} ms in all):`); for (const p of passes.slice(0, 30)) console.log(`    ${p.total.toFixed(1).padStart(8)}  ${p.ms.toFixed(1).padStart(7)} x${p.n.toFixed(1)}  ${String(p.calls).padStart(4)}  ${p.key}`); }
+    if (!m.gpu.length && passes.length) m.gpu = Array.from({ length: m.draw.length }, (_, i) => Object.values(m.passes).reduce((a, P) => a + (P.ms[i] ?? 0), 0));
     await page.evaluate(() => { const t = window.witch.tuning, s = JSON.parse(window.__saved); Object.assign(t.shadows, s.shadows); Object.assign(t.bloom, s.bloom); Object.assign(t.tiltShift, s.tiltShift); Object.assign(t.groundCover, s.groundCover); });
     const row = { id: V.id, what: V.what, frames: m.draw.length, gap50: pct(m.gaps, 0.5), gap95: pct(m.gaps, 0.95), draw50: pct(m.draw, 0.5), draw95: pct(m.draw, 0.95), scene50: pct(m.scene, 0.5), gpu50: pct(m.gpu, 0.5), gpu95: pct(m.gpu, 0.95), calls: pct(m.calls, 0.5), tris: pct(m.tris, 0.5), secs: (Date.now() - t1) / 1000 };
     rows.push(row);
