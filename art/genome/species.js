@@ -239,6 +239,14 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .2, count: 6, from: .15, to: .85, mat: "MAGIC2", lift: .2 },
       ] },
     ] },
+  // the badlands' rattlesnake (Ed, 2026-10-13, unknown-21): a sandy sidewinder with dark diamonds, a wedge head and a rattle that grows a
+  // button a level; its legend the elder of its kind: great stacked coils, a colossal raised rattle whose shake ripples through the sand, great horns over its eyes, scarred
+  { id: "rattlesnake", name: "Rattlesnake", template: "serpent", builder: "rattlesnake", idle: "rattle", palette: { hue: .08, sat: .38, val: .68 }, legend: ["rattleBig", "ripple", "horns"], texture: { kind: "scales", size: 2 },
+    levels: [{ body: { thick: .8, rattle: 1 } }, { body: { thick: 1, rattle: 3 } }, { body: { thick: 1.2, rattle: 6 } }, { body: { thick: 1.3, rattle: 7, coil: 1 } }] },
+  // the badlands' scorpion (Ed, 2026-10-13, unknown-22): a red-brown canyon scorpion, pincers ahead and its sting arched over its back; its
+  // legend the elder of its kind: a colossal curled tail, its young riding on its scarred back, glowing blue-green along its plates under the moon
+  { id: "scorpion", name: "Scorpion", template: "insectoid", builder: "scorpion", palette: { hue: .06, sat: .5, val: .48, magic: .47 }, legend: ["fluoresce", "brood"], texture: { kind: "plates", size: 2 },
+    levels: [{ body: { tail: .85, pincer: .85 } }, { body: { tail: 1, pincer: 1 } }, { body: { tail: 1.1, pincer: 1.3 } }, { body: { tail: 1.9, pincer: 1.4 } }] },
   // the meadow's wildcat (Ed, 2026-10-12: the glowworm replaced by a cat hunting in the long grass): a stocky striped tabby, a broad
   // round head, a thick blunt tail; its legend crowned
   { id: "cat", name: "Wildcat", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .1, val: .52, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .38, snoutD: .7, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45 }, parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 13, w: .3 }, socks: .2 }, legend: [],

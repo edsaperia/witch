@@ -73,6 +73,8 @@
     "frostwyrm":  { "name": "Glide",          "kind": "move", "scale": { "dash.distance": 1.3 }, "label": "Wyrm's Glide: a longer blink, as over ice" },
     "griffin":    { "name": "Talon",          "kind": "shot", "scale": { "invites.speed": 1.25 }, "label": "Griffin's Talon: 💌s fly a quarter faster" },
     "salamander": { "name": "Quick fire",     "kind": "shot", "scale": { "invites.cooldown": 0.6 }, "label": "Salamander's Quick fire: less wait between bursts" },
+    "rattlesnake": { "name": "Warning",       "kind": "shot", "scale": { "invites.speed": 1.15, "invites.radius": 1.3 }, "label": "Rattlesnake's Warning: 💌s fly a little faster and land wider" },
+    "scorpion":   { "name": "Sting",          "kind": "shot", "mods": { "pierce": 1 }, "scale": { "invites.cooldown": 0.85 }, "label": "Scorpion's Sting: 💌s pass through to the next, with a little less wait" },
     "snake":      { "name": "Strike",         "kind": "shot", "scale": { "invites.speed": 1.4 },    "label": "Snake's Strike: 💌s fly faster" },
     "spider":     { "name": "Long thread",    "kind": "shot", "scale": { "invites.range": 1.5 },    "label": "Spider's Long thread: 💌s fly further" },
     "badger":     { "name": "Big heart",      "kind": "shot", "scale": { "invites.radius": 2.2 },   "label": "Badger's Big heart: bigger 💌s, easier to land" },
