@@ -159,7 +159,7 @@ export const PLANT_GENOMES = {
   ocotillo: { name: "ocotillo", form: "shrub", generator: "blob", grow: "narrow", crown: { envelope: "column", clumps: "whip stems, red flower tips" },
     params: { w: 120, h: 190, narrow: 1, trunk: { w: 6, len: .95, taper: .35, bend: .8, stems: 9, fan: 1.3, roots: 0 }, levels: [],
       crown: { blobs: [4, 5], r: [3, 4], flat: 1, stamp: "round", stampSize: 1, back: 0, dots: { mat: "FLOWER", share: .6, size: 2 } } },
-    low: { sprigs: .6 }, colour: { hue: .02, sat: .6, val: .7, trunk: [.08, .3, .4], dot: [222, 64, 40] } },
+    low: { sprigs: .2 }, colour: { hue: .02, sat: .6, val: .7, trunk: [.08, .3, .4], dot: [222, 64, 40] } },
   ironwood: { name: "desert ironwood", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "sphere", clumps: "grey-green blobs, lavender flowers" },
     params: { w: 180, h: 110, trunk: { w: 10, len: .35, taper: .65, bend: 2, lean: .7 }, levels: [{ n: [3, 4], at: [.6, 1], len: [.5, .7], angle: [.7, 1.1], up: .1, bend: 1.8, shape: "even" }, { n: [2, 2], at: [.5, 1], len: [.4, .55], angle: [.4, .7], bend: 1.6 }],
       crown: { blobs: [5, 7], r: [12, 16], flat: .55, stamp: "leaf", stampSize: 2, back: .25, holes: .1, dots: { mat: "FLOWER", share: .03, size: 2 } } },
