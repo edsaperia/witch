@@ -343,6 +343,7 @@ const perfHud = params.get("perf") === "1" ? new PerfHud(game, view, frameStats)
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
 const stallLog = new StallLog();
 playtest.stalls = () => stallLog.stalls;
+playtest.viewState = () => { const w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
 // should be heard goes in the playtest log (L) with where she was and the nearest stall. ?micCheck=1 (debug only) also

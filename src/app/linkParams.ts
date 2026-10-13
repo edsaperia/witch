@@ -56,6 +56,12 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.get("shadows") === "off") tuning.shadows.on = false;
   if (params.get("canopy") === "off") tuning.canopyShadow.on = false;
   if (params.get("mist") === "off") tuning.mist.on = false;
+  // The circle round her (Ed, 2026-10-13: switches to find which effect draws it): ?occ=off the see-through fade of tall things
+  // in front of her; ?hole=off no cut-away in the canopy (crowns everywhere), ?hole=all every crown cut away;
+  // ?seedepth=off the see-through pass writing no depth (render/sprites.ts, as before #896).
+  if (params.get("occ") === "off") tuning.occlusion = { ...TUNING.occlusion, on: false };
+  const hole = params.get("hole");
+  if (hole === "off" || hole === "all") tuning.canopyCutout = { ...TUNING.canopyCutout, screenFraction: hole === "off" ? 0 : 8 };
   const tilt = params.get("tilt");
   if (tilt === "off") tuning.tiltShift.on = false;
   // ?tilt=<strength>,<band>: the treetops' tilt-shift, to try values live (e.g. ?tilt=6,0.28).

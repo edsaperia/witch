@@ -532,7 +532,14 @@ export class SpriteBatch {
       // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
       const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
       fade.frustumCulled = false; fade.renderOrder = 11;
-      this.meshes.push(fade);
+      // Its depth, once every colour is down (Ed, 2026-10-13, "Clear example of the circle bug"): the see-through pass writes
+      // none, so the smooth effects layer (mist, dapple: post.ts, laid by the scene's depth) lay over its pixels as if they weren't
+      // there, and everything the fade so much as touched round her came out milkier than the same trees just beyond: a ring. The
+      // same pixels' depth, written last (no colour), hides that layer behind them as behind anything solid.
+      const depth = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, colorWrite: false, depthWrite: true }));
+      depth.frustumCulled = false; depth.renderOrder = 19.9;
+      if (typeof location !== "undefined" && new URLSearchParams(location.search).get("seedepth") === "off") (depth.material as THREE.ShaderMaterial).depthWrite = false; // (?seedepth=off: as before, to compare) // (after the see-through pass and the effects over it; before the HUD's numbers)
+      this.meshes.push(fade, depth);
     }
     if (opts.silhouette) {
       // Where she is hidden (behind something already drawn), a flat tint, so she's never lost.
