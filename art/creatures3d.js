@@ -226,7 +226,7 @@ function evolve3d(m, feats, c) {
     }
     if (f.kind === "howl") { // its howl made visible: rings of sound rolling up from its jaws, widening as they rise
       m.part = "head";
-      const d = v3.norm(f.dir ?? [.55, 1, 0]), u = v3.norm(v3.cross(d, [0, 0, 1])), w = [0, 0, 1];
+      const d = v3.norm(f.dir ?? [.45, 1, 0]), u = v3.norm(v3.cross(d, [0, 0, 1])), w = [0, 0, 1];
       for (let k = 0; k < (f.count ?? 3); k++) {
         const R = (f.size ?? .13) * (1 + k * .75), cen = v3.add(c.sn, v3.mul(d, .2 + k * .3 + (c.frame ? .06 : 0)));
         for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; m.ell(v3.add(cen, v3.add(v3.mul(u, Math.cos(a) * R), v3.mul(w, Math.sin(a) * R))), [R * .13, R * .13, R * .13], k % 2 ? M.MAGIC2 : M.MAGIC, { group: 77, extra: true }); }
@@ -428,7 +428,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
-  if (q.onBack) { // floating on its back, a stone on its belly and its paws round a glowing pearl (the otter's legend)
+  if (q.onBack && !FORM?.rig) { // floating on its back (not in the live rig's pieces, which stand), a stone on its belly and its paws round a glowing pearl (the otter's legend)
     rollOver(m);
     let top = -Infinity; for (const P of m.parts) if (!P.extra) top = Math.max(top, (P.c ? P.c[1] + Math.max(...(P.r || P.h || [0])) : Math.max(P.a[1] + P.r1, P.b[1] + P.r2)));
     m.ell([len * .1, top - .02, 0], [.17, .09, .15], M.STONE, { group: 79, extra: true, rough: .015 });

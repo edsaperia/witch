@@ -25,7 +25,7 @@ export const GENOMES = [
         { kind: "mane", from: .55, to: 1, height: .3, count: 16, lean: .5, mat: "BODY" },
         { kind: "ruff", size: .2, count: 16, mat: "WEB" },
         { kind: "scars", count: 3, from: .35 },
-        { kind: "howl", count: 3, size: .14 },
+        { kind: "howl", count: 3, size: .1 },
       ] },
     ] },
   { id: "fox", name: "Fox", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .8, val: .9, belly: "white" }, body: { hgt: .8, len: .62, chest: .4, tuck: .5, neck: .3, neckAng: .7, neckW: .32, hr: .24, legW: .9 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .6 }, parts: { ears: { kind: "point", size: 1.35 }, tail: "bushy", feet: "paw" }, coat: { belly: true, socks: .3 }, legend: ["tails"],
