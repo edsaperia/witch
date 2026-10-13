@@ -1,0 +1,62 @@
+{
+ "_": "The zoo (?zoo; Ed, 2026-10-13: \"a flat grid of city blocks with paths between, each block the terrain of the area, with a lit runestone at the centre. One row for each biome, and then creatures ordered by size left to right\"): rules/zoo.ts. rows: top (north) to bottom, cold to hot; each a name, the biomes (config/kinds.json) whose placeholder kinds follow as empty '?' blocks, and its areas left to right: by the swarm class (population.swarm.classes: light, medium, strong; Ed: \"use the parameter that sets how big the swarms are\") and within a class by the adult's drawn size (tools/zoo/order.mjs prints it). A new area type goes in a row (src/rules/zoo.test.ts fails until it does). group: the creatures each block starts with. pathHalf: half a path's width (m).",
+ "group": { "babies": 1, "young": 2, "adults": 1 },
+ "pathHalf": 4,
+ "rows": [
+  {
+   "name": "Cold",
+   "biomes": ["cold"],
+   "areas": ["rookery", "snowfield", "packice"]
+  },
+  {
+   "name": "Mountains & glaciers",
+   "biomes": ["mountains and glaciers"],
+   "areas": ["misty-terraces", "frostcave", "eyrie"]
+  },
+  {
+   "name": "Cold rainforest",
+   "biomes": ["cold rainforest"],
+   "areas": ["mossy-creek", "mossy-dell", "moonpool-glade"]
+  },
+  {
+   "name": "Temperate woodland",
+   "biomes": [],
+   "areas": ["honeysuckle-tangle", "hazel-forest", "alder-forest", "twiggy-forest", "bluebell-glade", "old-oaks", "garden", "wispy-forest", "ancient"]
+  },
+  {
+   "name": "Temperate deep woods",
+   "biomes": [],
+   "areas": ["muddy-forest", "fern-forest", "holly-thicket", "norway", "old-pinewood", "deadwood", "tangly-forest", "berry-thicket"]
+  },
+  {
+   "name": "Temperate wetland",
+   "biomes": [],
+   "areas": ["fen", "wetland", "stream", "heronry", "beaver-pond", "bog"]
+  },
+  {
+   "name": "Temperate open & rocky",
+   "biomes": [],
+   "areas": ["heath", "moor", "cave-mouth", "ravine", "log-pile", "meadow", "stone-shrine", "rocky-slope", "grassland"]
+  },
+  {
+   "name": "Badlands & rocky",
+   "biomes": ["badlands", "rocky"],
+   "areas": ["red-canyon", "cactus-flats", "scrub-wash", "warren", "dragon-scrub"]
+  },
+  {
+   "name": "Hot",
+   "biomes": ["hot"],
+   "areas": ["erg", "plains", "bushveld", "savanna"]
+  },
+  {
+   "name": "Jungle",
+   "biomes": ["jungle"],
+   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle"]
+  },
+  {
+   "name": "Mangrove swamp",
+   "biomes": ["mangrove swamp"],
+   "areas": ["mudflat", "mangrove-pools", "mangrove"]
+  }
+ ]
+}
