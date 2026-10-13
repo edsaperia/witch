@@ -10,3 +10,8 @@ Each animal sheet shows baby, young, adult and legend, with the witch for scale.
   - It goes on the phase-3 island to the east-north-east (replacing unknown-03).
 - **Wildcat** (`cat.png`): a grey-brown tabby with thin wavy stripes (a new coat marking), an upright ringed tail, big ears, whiskers and white socks; its legend wears a crown and ribbons of light.
   - It replaces the glowworm and lives in the **meadow** (`cat-meadow.png`; that sheet still shows the hare, today's meadow creature).
+- **Unicorn** (`unicorn.png`): a wild white horse of the misty old forest with a dark mane (a new mane part) and one spiral horn from its brow (a new single horn).
+  - The horn grows by level: a nub on the foal, short on the young, long on the adult.
+  - The legend's horn becomes light, big and glowing, with ribbons of light trailing from it, for its purity and healing.
+  - Its area is the **moonpool glade** (`unicorn-moonpool-glade.png`): silver birches and old yews round a still pool, white flowers and ferns, and a ring of standing stones (to be whitened in the build).
+  - It goes on unknown-31 (phase 4, bearing 325).
