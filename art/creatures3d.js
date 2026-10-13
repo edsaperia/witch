@@ -622,17 +622,21 @@ export function hedgehog3d(S, level, frame, st, facing = "towards") {
 
 export function toad3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), hop = frame ? .05 : 0;
+  // growing up (the menagerie review 2d): a toadlet fresh from the water, narrow, smooth, all head and eyes, the last of its
+  // tadpole's tail behind; a young toad still slim and only lightly warted; then the adult's squat, wide, warty build (and its legend's)
+  const g = Math.min(level, 2), W = [.54, .7, 1][g], E = [1.75, 1.35, 1][g], warts = [.06, .12, .22][g], legK = [1.15, 1.05, 1][g];
   for (const side of [-1, 1]) { // folded hind legs, thin front legs
-    m.ell([-.24, .15, side * .44], [.28, .13, .13], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, .15) ? M.BODY3 : undefined });
-    m.ell([.06, .04, side * .52], [.2, .04, .09], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
-    m.seg([.35, .2 + hop, side * .24], [.42, .03, side * .3], .05, .04, side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 7 : 2 });
-    m.anchors.feet.push({ c: [.45, .03, side * .3], r: .06, group: side > 0 ? 7 : 2 }, { c: [.14, .04, side * .52], r: .08, group: side > 0 ? 6 : 2 });
+    m.ell([-.24, .15, side * .44 * W], [.28 * legK, .13, .13], side > 0 ? M.BODY : M.BODY2, { dir: [1, .3, 0], group: side > 0 ? 6 : 2, paint: p => spotty(p, 14, [.04, .09, .15][g]) ? M.BODY3 : undefined });
+    m.ell([.06, .04, side * .52 * W], [.2 * legK, .04, .09], side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 6 : 2 });
+    m.seg([.35, .2 + hop, side * .24 * W], [.42, .03, side * .3 * W], .05, .04, side > 0 ? M.BODY : M.BODY2, { group: side > 0 ? 7 : 2 });
+    m.anchors.feet.push({ c: [.45, .03, side * .3 * W], r: .06, group: side > 0 ? 7 : 2 }, { c: [.14, .04, side * .52 * W], r: .08, group: side > 0 ? 6 : 2 });
   }
-  const c = [0, .26 + hop, 0], r = [.5, .23, .46]; // signature: squat and wide, eye domes standing proud
-  m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, .22) ? M.BODY3 : undefined });
-  for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .2]; m.ell(e, [.12, .12, .12], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.12, .12, .12], v3.norm([.6, .5, side * .5])), [.06, .06, .06], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.13, .13, .13], v3.norm([.65, .45, side * .5])), [.035, .018, .035], M.EYE, { group: 1 }); }
+  const c = [0, .26 + hop, 0], r = [.5 * [.76, .82, 1][g], .23 * [1.26, 1.18, 1][g], .46 * W]; // signature: squat and wide, eye domes standing proud
+  m.ell(c, r, M.BODY, { paint: p => p[1] < c[1] - .12 ? M.BELLY : p[0] > .38 && Math.abs(p[1] - (c[1] - .02)) < .018 ? M.LINE : spotty(p, 14, warts) ? M.BODY3 : undefined });
+  if (g === 0) m.seg([-.34, .24 + hop, 0], [-.72, .19 + hop, 0], .08, .015, M.BODY2, { group: 3 }); // the toadlet's tail stub
+  for (const side of [-1, 1]) { const e = [.3, .55 + hop, side * .2 * Math.max(W, .8)]; m.ell(e, [.12 * E, .12 * E, .12 * E], M.BODY, { group: 1 }); m.ell(Model.surface(e, [.12 * E, .12 * E, .12 * E], v3.norm([.6, .5, side * .5])), [.06 * E, .06 * E, .06 * E], legend ? M.MAGIC2 : M.IRIS, { group: 1 }); m.ell(Model.surface(e, [.13 * E, .13 * E, .13 * E], v3.norm([.65, .45, side * .5])), [.035 * E, .018 * E, .035 * E], M.EYE, { group: 1 }); }
   m.anchors.head = { c: [.22, .45 + hop, 0], r: [.3, .2, .3], top: [.18, .62 + hop, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([.3, .55 + hop, side * .2], [.12, .12, .12], v3.norm([.6, .5, side * .5]))), size: .05 };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([.3, .55 + hop, side * .2 * Math.max(W, .8)], [.12 * E, .12 * E, .12 * E], v3.norm([.6, .5, side * .5]))), size: .05 * E };
   m.anchors.neck = { c: [.32, .3 + hop, 0], r: .25, dir: [1, .3, 0] };
   if (legend) crown3d(m, [.15, .66 + hop, 0], .16);
   return finish(m, S, level, st, .55, facing);
@@ -753,19 +757,23 @@ export function bat3d(S, level, frame, st, facing = "towards") {
 
 export function mole3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), f = frame ? .03 : 0;
-  m.seg([-.58, .16, 0], [-.7, .1, 0], .04, .02, M.SKIN, { group: 3 });
-  for (const side of [-1, 1]) { const d = (frame ? 1 : -1) * side * .06; m.ell([-.3 + d, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [-.3 + d, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); } // (its back feet stepping, against its hands)
-  m.ell([0, .26, 0], [.6, .25, .33], M.BODY, { paint: p => p[1] > .4 ? M.BODY2 : undefined }); // signature: a long low barrel with huge spade hands
-  m.ell([.64, .22, 0], [.26, .07, .07], M.SKIN, { dir: [1, -.15, 0], group: 1 });
-  m.ell([.89, .18, 0], [.04, .05, .06], M.NOSE, { group: 1 });
+  // growing up (the menagerie review 2d): a pup still pink and bare, round as a bean, its snout short and its hands small; a
+  // young mole in its first velvet, longer, the spade hands coming in; then the adult's long barrel and huge hands (and its legend's)
+  const g = Math.min(level, 2), L = [.56, .82, 1][g], Hk = [.5, .78, 1][g], Sn = [.55, .8, 1][g], R = [.6 * L, .25 * [1.08, 1.02, 1][g], .33 * [1.02, 1, 1][g]];
+  const coat = g === 0 ? M.SKIN : M.BODY, back = g === 0 ? M.SKIN : M.BODY2;
+  m.seg([-R[0] + .02, .16, 0], [-R[0] - .1, .1, 0], .04, .02, M.SKIN, { group: 3 });
+  for (const side of [-1, 1]) { const d = (frame ? 1 : -1) * side * .06, x = -.3 * L + d; m.ell([x, .05, side * .2], [.07, .04, .05], M.SKIN, { group: side > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x, .05, side * .2], r: .07, group: side > 0 ? 6 : 2 }); } // (its back feet stepping, against its hands)
+  m.ell([0, .26, 0], R, coat, { paint: p => p[1] > .4 ? back : g === 1 && p[1] < .14 ? M.SKIN : undefined }); // signature: a long low barrel with huge spade hands
+  const nx = R[0] + .04; m.ell([nx, .22, 0], [.26 * Sn, .07, .07], M.SKIN, { dir: [1, -.15, 0], group: 1 });
+  m.ell([nx + .25 * Sn, .18, 0], [.04, .05, .06], M.NOSE, { group: 1 });
   for (const side of [-1, 1]) { // spade hands, turned out, clawed
-    const h = [.38 + (frame ? -1 : 1) * side * .06, .12 - (side > 0 ? f : 0), side * .42]; // (its spade hands paddling, one ahead, then the other)
-    m.ell(h, [.19, .05, .17], M.SKIN, { group: side > 0 ? 7 : 2, axes: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] });
-    for (let k = 0; k < 4; k++) m.ell(v3.add(h, [.2, -.01, side * (k - 1.5) * .07]), [.07, .02, .02], M.ACCENT, { group: side > 0 ? 7 : 2 });
+    const h = [.38 * L + (frame ? -1 : 1) * side * .06, .12 - (side > 0 ? f : 0), side * (.42 - (1 - Hk) * .18)]; // (its spade hands paddling, one ahead, then the other)
+    m.ell(h, [.19 * Hk, .05, .17 * Hk], M.SKIN, { group: side > 0 ? 7 : 2, axes: [[1, 0, 0], [0, 1, 0], [0, 0, 1]] });
+    for (let k = 0; k < 4; k++) m.ell(v3.add(h, [.2 * Hk, -.01, side * (k - 1.5) * .07 * Hk]), [.07 * Hk, .02, .02], M.ACCENT, { group: side > 0 ? 7 : 2 });
   }
-  for (const side of [-1, 1]) m.ell(Model.surface([0, .26, 0], [.6, .25, .33], v3.norm([.85, .3, side * .35])), [.015, .015, .015], legend ? M.MAGIC2 : M.EYE, { group: 1 });
-  m.anchors.head = { c: [.32, .34, 0], r: [.25, .22, .25], top: [.3, .58, 0] };
-  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([0, .26, 0], [.6, .25, .33], v3.norm([.85, .3, side * .35]))), size: .03 };
+  for (const side of [-1, 1]) m.ell(Model.surface([0, .26, 0], R, v3.norm([.85, .3, side * .35])), [.015, .015, .015], legend ? M.MAGIC2 : M.EYE, { group: 1 });
+  m.anchors.head = { c: [.32 * L, .34, 0], r: [.25, .22, .25], top: [.3 * L, .58, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface([0, .26, 0], R, v3.norm([.85, .3, side * .35]))), size: .03 };
   m.anchors.neck = { c: [.36, .3, 0], r: .27, dir: [1, .1, 0] };
   if (legend) crown3d(m, [.15, .62, 0], .15);
   return finish(m, S, level, st, .55, facing);
