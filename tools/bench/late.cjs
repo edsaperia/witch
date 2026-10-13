@@ -4,7 +4,9 @@
 // rules only, stepped 0.1 s a call without drawing), puts her where Ed was (over the treetops at x, z), and times frames at
 // a fixed 1/60 s: hovering, then flying. Per frame: the rules' step and the view's work (view.ms by part), the draw calls and
 // what's drawn (view.stats), and the JS heap. Writes <out>/late.json and <out>/late.png. Report only: changes nothing.
-//   npm run build && node tools/bench/late.cjs [out dir]   SEED=871136 WAVE=28 AT=1059,1499 FRAMES=600 SIZE=1280x720
+//   npm run build && node tools/bench/late.cjs [out dir]   SEED=871136 WAVE=28 AT=300,200 FRAMES=600 SIZE=1280x720
+//   AT: metres east and south of the dancefloor's middle (an island's map lies far from the origin: its home is wherever
+//   the archipelago put it, so a spot given in map metres, as Ed's 1059,1499 on the old radius map was, lands in the sea).
 //   HEAP=1: the sampling heap profiler from the page's load, so <out>/late-heap.json says where what's still alive at the end
 //   was made (by function and file, the biggest first).
 //   GLSTATS=1: every WebGL call counted (and the bytes of every buffer and texture upload, and the time in each kind of
@@ -21,7 +23,7 @@ try { playwright = require("playwright"); } catch { playwright = require("/opt/n
 const root = path.resolve(__dirname, "../../dist");
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../bench-out"));
 const seed = process.env.SEED || "871136", wave = Number(process.env.WAVE || 28), frames = Number(process.env.FRAMES || 600);
-const [ax, az] = (process.env.AT || "1059,1499").split(",").map(Number), [vw, vh] = (process.env.SIZE || "1280x720").split("x").map(Number);
+const [ax, az] = (process.env.AT || "300,200").split(",").map(Number), [vw, vh] = (process.env.SIZE || "1280x720").split("x").map(Number);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
 
 function serve() {
@@ -95,9 +97,12 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
   // Where Ed was, over the treetops, the art and ground round her given time to come in.
   await page.evaluate(async ({ ax, az }) => {
     const w = window.witch, g = w.game, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-    g.witch.x = ax; g.witch.z = az;
+    const d = g.map.dancefloor;
+    g.witch.x = d.x + ax; g.witch.z = d.z + az;
     w.frame({ ...idle, toggleMode: true }, 1 / 60, true);
     for (let i = 0; i < 240; i++) { w.frame(idle, 1 / 60, true); if (i % 20 === 19) await new Promise(r => setTimeout(r, 50)); }
+    if (g.witch.mode !== "treetop") throw new Error(`late.cjs: she isn't over the treetops at (${Math.round(g.witch.x)}, ${Math.round(g.witch.z)}): mode ${g.witch.mode}`);
+    return { x: Math.round(g.witch.x), z: Math.round(g.witch.z) };
   }, { ax, az });
   const prof = process.env.PROFILE === "1" ? await page.context().newCDPSession(page) : null;
   if (prof) { await prof.send("Profiler.enable"); await prof.send("Profiler.setSamplingInterval", { interval: 200 }); await prof.send("Profiler.start"); }
@@ -129,7 +134,7 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
     const per = m => [...m].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, +(v / 1000 / frames).toFixed(3)]);
     fs.writeFileSync(path.join(out, "late-profile.json"), JSON.stringify({ msPerFrame: +(total / 1000 / frames).toFixed(2), byFunction: per(self), byFile: per(files) }, null, 1));
   }
-  await page.screenshot({ path: path.join(out, "late.png") });
+  await page.screenshot({ path: path.join(out, "late.png"), timeout: 300000 }); // (a treetop frame on the cloud's software renderer can take longer than Playwright's 30 s)
   if (cdp) {
     // What's still alive, by where it was made: each sampled node's self size, by function and file, and by file alone.
     const { profile } = await cdp.send("HeapProfiler.getSamplingProfile"), byFn = new Map(), byFile = new Map();

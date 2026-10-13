@@ -64,10 +64,21 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "bluebell-glade": look("limestone", "bluebells", "moss", 0.5),
   "holly-thicket": look("slate", "darkLeaves", "moss", 0.55),
   "honeysuckle-tangle": look("limestone", "flowers", "lichen", 0.5),
+  "mossy-dell": look("granite", "leaves", "moss", 0.7, false, 0.6),
+  "misty-terraces": look("granite", "needles", "moss", 0.6, false, 0.5),
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "snowfield": look("granite", "needles", "lichen", 0.4),
+  "bamboo-jungle": look("limestone", "leaves", "moss", 0.6), // old shrine stone, bamboo litter over it
+  "river-jungle": look("granite", "darkLeaves", "moss", 0.75, true), // dark wet stone by the river, moss over it
+  "temple-jungle": look("redSandstone", "darkLeaves", "moss", 0.7), // temple flagstones, red earth and roots over them
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
+  "mangrove-pools": look("granite", "reeds", "moss", 0.6, true), // dark wet stone among the roots,
+  "mudflat": look("granite", "pebbles", "lichen", 0.5, true), // mud-washed stone, barnacled,
+  "mangrove": look("buffSandstone", "reeds", "moss", 0.6, true, 0.6),
+  "eyrie": look("buffSandstone", "pebbles", "lichen", 0.45), // wind-scoured stone, feathers in the cracks
   "frostcave": look("slate", "pebbles", "lichen", 0.4, true), // blue-grey slate under the ice
+  "bushveld": look("redSandstone", "grass", "lichen", 0.4), // baked red stone, dry grass and thorns blown over it
+  "packice": look("slate", "pebbles", "lichen", 0.25, true), // dark slate, rimed and puddled with meltwater
   "plains": look("redSandstone", "grass", "lichen", 0.35), // red earth and short grass
   "savanna": look("redSandstone", "grass", "lichen", 0.45), // sun-baked sandstone, the long grass over it
   "erg": look("buffSandstone", "pebbles", "lichen", 0.3), // sand-scoured sandstone, drifted over

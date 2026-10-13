@@ -91,8 +91,9 @@ const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__
 window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
 if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
-// The debug knobs: the fight's scale and speed, the treetop speed (app/knobs.ts).
-const knobs = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
+// The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
+// for the pause page's sliders and the decisions panel (by the link's param).
+const knobLive = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -122,7 +123,7 @@ let castQueued = false;
 const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 // The clock, its pops and the debug overlay (app/hud.ts).
-const hud = new Hud(game, knobs);
+const hud = new Hud(game);
 hud.setDebug(params.has("debug"));
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
@@ -290,7 +291,7 @@ freeze.onToggle = on => {
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
-    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} });
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: knobLive });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
   });
 };
@@ -318,7 +319,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: knobLive }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });

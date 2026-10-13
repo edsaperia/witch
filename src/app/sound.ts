@@ -8,6 +8,7 @@ import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
 import { AudioWatchdog } from "../platform/audio/watchdog";
 import { ShedValve } from "../platform/audio/shed";
+import { bufferHint, learnBuffer, learntBuffer, nextBuffer } from "../platform/audio/buffer";
 import { musicMix, partyOverEase } from "../rules/music";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -45,12 +46,13 @@ export class Sound {
     if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
-  /** The context, with the tuning's latencyHint (music.latency; ?latency= for one load): a bigger output buffer gives the
+  /** The context, with the tuning's output buffer (music.buffer, seconds; else its latencyHint category, music.latency; ?latency= a
+   *  category or seconds for one load; a browser that under-ran asks for more: platform/audio/buffer.ts): a bigger buffer gives the
    *  audio thread more room before it under-runs (heard as the sound cutting out), at the cost of later sound effects. */
   private context(): AudioContext {
-    let hint: AudioContextLatencyCategory = this.tuning.music.latency ?? "interactive";
-    try { const q = new URLSearchParams(location.search).get("latency"); if (q === "interactive" || q === "balanced" || q === "playback") hint = q; } catch { /* no page */ }
-    return new AudioContext({ latencyHint: hint });
+    let q: string | null = null;
+    try { q = new URLSearchParams(location.search).get("latency"); } catch { /* no page */ }
+    return new AudioContext({ latencyHint: bufferHint(this.tuning.music.buffer, this.tuning.music.latency, q, learntBuffer()) });
   }
 
   /** A first press (the creator's): the context, resumed, and the sound effects. */
@@ -102,7 +104,12 @@ export class Sound {
 
   /** Once a second, from the output meter's ClockWatch: sheds a step if the audio thread is falling behind (the reason, if
    *  it did, for the playtest log). */
-  shedCheck(t: number, underruns: number | null, drift: number): string | null { return this.valve.feed(t, underruns, drift, this.music?.stats.resyncs ?? 0); }
+  shedCheck(t: number, underruns: number | null, drift: number): string | null {
+    // under-running anyway: next load asks for a bigger buffer (platform/audio/buffer.ts), once a load
+    if (!this.bumped && this.audio) { const next = nextBuffer(underruns, this.audio.baseLatency ?? 0, learntBuffer()); if (next !== null) { learnBuffer(next); this.bumped = true; return `${underruns} under-runs: next load asks for a ${Math.round(next * 1000)} ms buffer`; } }
+    return this.valve.feed(t, underruns, drift, this.music?.stats.resyncs ?? 0);
+  }
+  private bumped = false;
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
@@ -111,6 +118,7 @@ export class Sound {
     const night = nightStyle(this.style, game.musicSet);
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
     if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
+    if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)
     if (this.sfx) this.sfx.shed = this.valve.level;
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
