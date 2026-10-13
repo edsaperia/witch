@@ -219,6 +219,7 @@ const spSETS = {
     for (const [c, r] of [[[-.6, 1.6, 0], [.6, .3, .75]], [[.5, 1.65, 0], [.65, .3, .75]], [[-.95, .9, -.55], [.25, .65, .25]], [[.95, .8, -.6], [.25, .55, .25]], [[-.9, .7, .62], [.22, .5, .2]], [[.2, 1.3, -.65], [.5, .4, .2]]]) m.ell(c, r, M.LEAF, { group: 4, rough: .04, paint: bloom });
     m.box([0, .4, -.35], [.6, .04, .15], M.WOOD, { round: .02, group: 5 }); for (const x of [-.5, .5]) m.seg([x, 0, -.35], [x, .38, -.35], .03, .03, M.WOOD, { group: 5 }); // a bench
   },
+
 };
 // The area each new set piece belongs to, its name, and how big it is drawn (a factor on the witch's scale); a generated kind
 // (art/props/sets.js) may add a fourth item, its seed and any numbers to fix.
