@@ -9,5 +9,5 @@ export const GENOME_KOMODO = { id: "komodo", name: "Komodo dragon", template: "q
     { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
     { body: { bw: .32, hr: .2 }, head: { snout: .85, snoutD: .65 }, coat: { spots: true, spotMat: "belly" } }, // a slim speckled young, its head still short
     { head: { snout: 1.4, snoutD: .95 }, body: { hr: .26, neckW: .4, profile: { shoulder: { w: 1.15, d: .85 }, ribcage: { w: 1.1, d: .95 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
-    { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }] },
+    { head: { tongue: 1.6, snout: 1.4, snoutD: .95 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }, { kind: "dewlap", size: 1.4 }, { kind: "crown", count: 9, size: 1.6, mat: "BELLY", spread: 1 }] }, // the elder: the adult's long heavy head and dewlap, crowned with spines
   ] };
