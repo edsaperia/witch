@@ -65,6 +65,9 @@ export const LIGHT_UNIFORMS = {
   // The scenery budget (view.ts): scenery fades out between radius - fade and radius metres
   // from the haze centre (the witch). x: radius, y: fade.
   uScenery: { value: new THREE.Vector2(1e6, 1) },
+  // The canopy's reach (view.ts): in the treetops, tree crowns are drawn out to this many metres even where the scenery budget has
+  // pulled in closer (Ed's playtest, 2026-10-13: "outside of a circle around the witch, the canopy is not drawn"); 0 off.
+  uCanopyReach: { value: 0 },
   /** The party's over (render/partyOver.ts): home x, z, the switch-off front's distance from it (0: playing) and its width. */
   uPartyOver: { value: new THREE.Vector4(0, 0, 0, 30) },
 };
@@ -114,10 +117,16 @@ float partyOff(vec3 P) { if (uPartyOver.z <= 0.0) return 0.0; return smoothstep(
 uniform vec4 uDisco, uDiscoParams;
 uniform vec3 uDiscoColour;
 uniform vec2 uScenery;
+uniform float uCanopyReach;
 
 // How much of a piece of scenery at P is drawn (1 well inside the scenery radius, 0 beyond it).
 float sceneryFade(vec3 P) {
   return 1.0 - smoothstep(uScenery.x - uScenery.y, uScenery.x, length(P.xz - uHazeCentre));
+}
+// The same for a tree's crown: out to the canopy's reach in the treetops, where that's further than the scenery budget's radius.
+float canopyFade(vec3 P) {
+  float r = max(uScenery.x, uCanopyReach);
+  return 1.0 - smoothstep(r - uScenery.y, r, length(P.xz - uHazeCentre));
 }
 
 // Fade toward the twilight haze with distance.
