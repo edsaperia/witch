@@ -5,7 +5,7 @@
 //                       set }: Ed's columns), wall, small, big (props, as art/areas.js P() and tree() write them), set (a set piece)
 //   flags               sharesCreature (its creature may be another area's: Ed's rule is a creature of its own for every
 //                       area, so a recipe says so if it breaks it), ponds (more moonlit ponds), wet (its paths run as streams and boardwalks), steep (a flight of stairs may
-//                       stand at its clearing's edge), pathKinds (path kinds it suits besides those whose moods name it)
+//                       stand at its clearing's edge), pathKinds (path kinds it suits besides those whose moods name it
 //   layout              how its trees and undergrowth stand (art/areas.js AREA_LAYOUTS: pattern, density, clump, glades, ...)
 //   flora               its tree species and palette (art/flora/areas.js AREA_FLORA)
 //   setPiece            [kind, text, size] for art/setpieces.js NEW_SET_PIECES, when it has no `set` of its own
@@ -14,12 +14,16 @@
 // The creature a recipe names must be a species the game has (art/genome/species.js and the configs keyed by species).
 import { FEN } from "./recipes/fen.js";
 import { HERONRY } from "./recipes/heronry.js";
+import { ROOKERY } from "./recipes/rookery.js";
+import { DRAGON_SCRUB } from "./recipes/dragonscrub.js";
 import { WARREN } from "./recipes/warren.js";
 import { SCRUB_WASH } from "./recipes/scrubwash.js";
 import { MOSSY_CREEK } from "./recipes/mossycreek.js";
 import { ERG } from "./recipes/erg.js";
 import { MANGROVE_POOLS } from "./recipes/mangrovepools.js";
 import { MUDFLAT } from "./recipes/mudflat.js";
+import { CACTUS_FLATS } from "./recipes/cactusflats.js";
+import { RED_CANYON } from "./recipes/redcanyon.js";
 import { SAVANNA } from "./recipes/savanna.js";
 import { BAMBOO_JUNGLE } from "./recipes/bambooJungle.js";
 import { TEMPLE_JUNGLE } from "./recipes/templeJungle.js";
@@ -32,7 +36,8 @@ import { FROSTCAVE } from "./recipes/frostcave.js";
 import { EYRIE } from "./recipes/eyrie.js";
 import { MANGROVE } from "./recipes/mangrove.js";
 import { TERRACES } from "./recipes/terraces.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE];
+import { MOONPOOL } from "./recipes/moonpool.js";
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
