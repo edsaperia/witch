@@ -371,6 +371,12 @@
    "bigswipe",
    "legendCharge"
   ],
+  "elephant": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
+  ],
   "lion": [
    null,
    "swipe",
@@ -455,6 +461,7 @@
    "elk",
    "stag",
    "tiger",
+   "elephant",
    "lion",
    "frostwyrm",
    "griffin"

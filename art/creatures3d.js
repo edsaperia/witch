@@ -149,8 +149,11 @@ function gearUp(m) {
 //   tails: { count, length, spread, tip, replace }: brush tails rooted along its rump, sweeping up and back together like flames, of
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
-//   garland: { count, size, mat, alt, every, drop }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
-//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop.
+//   garland: { count, size, mat, alt, every, drop, out }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
+//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop, out times the neck's girth.
+//   bells: { count, from, to, size, mat, bell }: a saddle-cloth over its back from `from` to `to` along it (mat, FLOWER), its hem in
+//     bronze (bell, WOOD), count temple bells hanging down each side from it.
+//   headcloth: { size, mat }: a jewelled cloth over its brow hanging between its eyes, bronze-edged, three beads along its hem.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
@@ -237,6 +240,18 @@ function evolve3d(m, feats, c) {
       m.part = "head";
       const N = m.anchors.neck, n = f.count ?? 16, sz = f.size ?? .07, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(v3.add(N.c, v3.mul(out, N.r * (f.out ?? 1.3))), v3.mul(d, -N.r * (f.drop ?? .3) * Math.max(0, -Math.cos(a)))); m.ell(b, [sz, sz, sz], M[i % (f.every ?? 3) === 0 && f.alt ? f.alt : f.mat || "FLOWER"], { group: 78, extra: true }); }
+    }
+    if (f.kind === "bells") { // a saddle-cloth over its back, its hem trimmed in bronze, temple bells hanging from it: an elder hung with offerings
+      m.part = "body";
+      const n = f.count ?? 4, cloth = M[f.mat || "FLOWER"], bell = M[f.bell || "WOOD"], sz = f.size ?? .07, W = c.bw * (c.front ?? 1), mid = c.backAt(((f.from ?? .25) + (f.to ?? .8)) / 2), half = c.len * ((f.to ?? .8) - (f.from ?? .25)) * .85, hem = (c.top - c.chest) * .55;
+      m.ell([mid[0], mid[1] - hem * .75, 0], [half * 1.1, hem * 1.05, W * 1.1], cloth, { group: 79, extra: true, paint: p => p[1] < mid[1] - hem * 1.55 ? bell : undefined });
+      for (let i = 0; i < n; i++) { const x = mid[0] - half * .8 + half * 1.6 * (n > 1 ? i / (n - 1) : .5); for (const side of [-1, 1]) { const e = [x, mid[1] - hem * 1.7, side * W * 1.02]; m.seg(e, v3.add(e, [0, -sz * .8, 0]), .012, .012, bell, { group: 79, extra: true }); m.ell(v3.add(e, [0, -sz * 1.6, 0]), [sz * .75, sz, sz * .75], bell, { group: 79, extra: true, paint: p => p[1] < e[1] - sz * 2.3 ? M.NOSE : undefined }); } }
+    }
+    if (f.kind === "headcloth") { // a jewelled cloth over its brow, hanging down between its eyes, bells along its hem
+      m.part = "head";
+      const { H, hr } = c, cl = [H[0] + hr * .82, H[1] + hr * .1, 0], dim = [hr * .14, hr * (f.size ?? .6), hr * .5];
+      m.ell(cl, dim, M[f.mat || "FLOWER"], { group: 80, extra: true, dir: [1, -.35, 0], paint: p => Math.abs(p[2]) > dim[2] * .78 || p[1] < cl[1] - dim[1] * .75 ? M.WOOD : undefined });
+      for (let i = 0; i < 3; i++) m.ell([cl[0] + hr * .12, cl[1] - dim[1] * .95, (i - 1) * hr * .25], [hr * .06, hr * .07, hr * .06], M.WOOD, { group: 80, extra: true });
     }
     if (f.kind === "ruff" && m.anchors.neck) { // locks of fur round its neck and cheeks, swept back
       m.part = "head";
@@ -412,7 +427,17 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     }
   } else if (!q.beak) {
     m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
-    m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
+    if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
+    else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
+      const T = q.trunk, Lt = (T.len ?? 1) * hr * 2.4, r0 = (T.r ?? .34) * hr, pts = [], n = 12;
+      let p = [sn[0] + L * .2, sn[1] - Dm * .2, 0], ang = -.45;
+      // raise (a legend's: 0 hanging to 1 held high in a trumpet): up from its brow, its tip flared and curled back over
+      const up = T.raise ?? 0;
+      if (up) ang = -.45 + (.35 + .45) * up;
+      for (let i = 0; i <= n; i++) { const t = i / n, hang = -.45 - Math.min(t, .7) * 1.6 + Math.max(0, t - .7) * (T.curl ?? .5) * 5, high = .35 + t * 1.25 + Math.max(0, t - .72) * (T.curl ?? .5) * 4.5; pts.push([...p, r0 * (1 - t * .62) * (up && t > .9 ? 1.5 : 1)]); ang = hang + (high - hang) * up; p = [p[0] + Math.cos(ang) * Lt / n, p[1] + Math.sin(ang) * Lt / n, 0]; }
+      m.chain(pts, M.BODY, { group: 1, paint: q => Math.sin(q[1] * 70 + q[0] * 20) > .75 ? M.BODY2 : undefined });
+      m.ell(pts[n].slice(0, 3), [r0 * .4, r0 * .4, r0 * .4], M.NOSE, { group: 1 });
+    }
   }
   // eyes: both show; legends' glow
   for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), elder ? M[elder.eye || "MAGIC2"] : (legend && !q.tusks) || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 1 }); } // (eyeGlow: an evolved level's eye catching the light, the legend boar's under its hump)
@@ -423,6 +448,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none" || elder?.ears) continue;
+    if (E === "fan") { const c = [H[0] - hr * .55, H[1] - hr * .12, side * hr * .82], d = [hr * .46 * k, hr * .62 * k, hr * .07]; m.ell(c, d, M.BODY2, { group: 5 + (side > 0 ? 0 : 20), dir: [1, .25, 0], paint: p => Math.hypot((p[0] - c[0]) / d[0], (p[1] - c[1]) / d[1]) > .8 ? M.BODY3 : undefined }); continue; } // an elephant's: a great flat fan against the side of its head, its edge ragged and darker
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: elder ? 9 : 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
     const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
@@ -447,7 +473,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
     const pts = [], n = 9, R = .13 * k;
     for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
-    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+    m.chain(pts, M.ACCENT, { group: 8, paint: q.tuskBands ? p => { const t = Math.hypot(...v3.sub(p, b)) / (R * 2.4); return t > .15 && Math.floor(t * q.tuskBands * 2) % 2 && (t * q.tuskBands * 2) % 1 < .35 ? M.WOOD : undefined; } : undefined }); tuskTips.push(pts[n].slice(0, 3)); // tuskBands: bronze rings round tusks worn with age
   }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
@@ -464,7 +490,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
         m.ell(p.slice(0, 3), [p[3] * .3, p[3] * 1.3, p[3] * 1.3], M.WOOD, { group: 9, dir: v3.norm(v3.sub(z.slice(0, 3), a.slice(0, 3))) }); }
     }
   }
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame, front });
   if (elder) { elderQuad(m, S, { H, hr, sn, L, Dm, nb, tb, backAt, len, top, chest, tuck, bw, frame }); m.part = "body"; }
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }

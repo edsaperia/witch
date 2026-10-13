@@ -3950,6 +3950,21 @@ const GENOMES = [
         { kind: "claws", size: .13, mat: "BODY3" },
       ] },
     ] },
+  // the jungle's elephant (the journey's west, unknown-28's island): the biggest creature in the game, grey and wrinkled, a trunk, fan
+  // ears and tusks. Its evolution: a round calf with a short trunk and huge ears, a young with its first tusks, a great tusker, and the
+  // legend: the elder of the elephants, an ancient matriarch, her vast trunk raised in a trumpet, her tusks long and worn, banded
+  // in bronze, hung with temple bells from a red saddle-cloth, a jewelled cloth on her brow and a garland of flowers
+  { id: "elephant", name: "Elephant", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .22, val: .5, flower: [168, 32, 44] }, body: { hgt: 1.9, len: .95, chest: .58, tuck: .62, neck: .2, neckAng: .15, neckW: .75, hr: .5, legW: 2.1, bw: .3, back: "arch", front: 1.05 }, head: { snout: .3, snoutD: .95, trunk: { len: 1, curl: .5 }, eyeK: .65 }, parts: { ears: { kind: "fan", size: 1 }, tail: "thin", feet: "paw", tusks: true }, texture: { kind: "smooth" }, legend: ["moss"],
+    levels: [
+      { body: { len: .72, hr: .56, legW: 2.3, chest: .5, tuck: .54 }, head: { trunk: { len: .6, curl: .3 } }, parts: { ears: { kind: "fan", size: 1.15 } } },
+      { head: { tuskSize: .6, tuskCurl: .45, trunk: { len: .9, curl: .45 } } },
+      { body: { hgt: 2.0 }, head: { tuskSize: 1.5, tuskCurl: .55 } },
+      { body: { hgt: 2.05, legW: 2.4, bw: .33 }, head: { tuskSize: 3.2, tuskCurl: .6, tuskBands: 3, trunk: { len: 2, curl: .9, raise: 1, r: .4 } }, coat: { scars: 3 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind, an ancient matriarch)
+        { kind: "bells", count: 4, from: .25, to: .8, size: .1 },
+        { kind: "headcloth", size: .7 },
+        { kind: "garland", count: 16, size: .09, mat: "FLOWER", alt: "WOOD", every: 3, drop: .5, out: 1.25 },
+      ] },
+    ] },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
   // every level flies (Ed: the baby a small dragonfly); its legend the elder of its kind, a coal-forest giant: all eye, vast tattered wings, scarred
   { id: "dragonfly", name: "Dragonfly", template: "flyer", builder: "dragonfly", palette: { hue: .5, sat: .62, val: .62 }, legend: ["eyesHuge", "ancient"], texture: { kind: "plates", size: 2 },
@@ -4081,7 +4096,7 @@ const TEMPLATES = {
   quadruped: {
     name: "Four-legged", builders: ["quad"],
     sockets: {
-      ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none"],
+      ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none", "ear.fan"],
       tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.panda", "tail.croc", "tail.tiger"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
@@ -4382,7 +4397,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland"];
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth"];
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -4476,6 +4491,7 @@ const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  elephant: { kind: "lie", sink: .05, droop: .6 }, // knelt down, her trunk on the ground
   tiger: { kind: "curl", sink: .04, droop: 1, curl: 2.4, tailDown: .25 }, // sprawled on its side, its tail laid round
   griffin: { kind: "curl", sink: .04, droop: 1, curl: 2.8, tailDown: .25 }, // curled like a cat, its head under a wing
   frostwyrm: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .25 }, // coiled round on itself, its tail over its snout
@@ -4964,8 +4980,11 @@ function gearUp(m) {
 //   tails: { count, length, spread, tip, replace }: brush tails rooted along its rump, sweeping up and back together like flames, of
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
-//   garland: { count, size, mat, alt, every, drop }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
-//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop.
+//   garland: { count, size, mat, alt, every, drop, out }: a garland of flowers or beads round its neck (an elder's offerings), mat (FLOWER:
+//     its palette's flower colour) with every `every`th bead alt, hanging lower at the front by drop, out times the neck's girth.
+//   bells: { count, from, to, size, mat, bell }: a saddle-cloth over its back from `from` to `to` along it (mat, FLOWER), its hem in
+//     bronze (bell, WOOD), count temple bells hanging down each side from it.
+//   headcloth: { size, mat }: a jewelled cloth over its brow hanging between its eyes, bronze-edged, three beads along its hem.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
@@ -5052,6 +5071,18 @@ function evolve3d(m, feats, c) {
       m.part = "head";
       const N = m.anchors.neck, n = f.count ?? 16, sz = f.size ?? .07, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(v3.add(N.c, v3.mul(out, N.r * (f.out ?? 1.3))), v3.mul(d, -N.r * (f.drop ?? .3) * Math.max(0, -Math.cos(a)))); m.ell(b, [sz, sz, sz], M[i % (f.every ?? 3) === 0 && f.alt ? f.alt : f.mat || "FLOWER"], { group: 78, extra: true }); }
+    }
+    if (f.kind === "bells") { // a saddle-cloth over its back, its hem trimmed in bronze, temple bells hanging from it: an elder hung with offerings
+      m.part = "body";
+      const n = f.count ?? 4, cloth = M[f.mat || "FLOWER"], bell = M[f.bell || "WOOD"], sz = f.size ?? .07, W = c.bw * (c.front ?? 1), mid = c.backAt(((f.from ?? .25) + (f.to ?? .8)) / 2), half = c.len * ((f.to ?? .8) - (f.from ?? .25)) * .85, hem = (c.top - c.chest) * .55;
+      m.ell([mid[0], mid[1] - hem * .75, 0], [half * 1.1, hem * 1.05, W * 1.1], cloth, { group: 79, extra: true, paint: p => p[1] < mid[1] - hem * 1.55 ? bell : undefined });
+      for (let i = 0; i < n; i++) { const x = mid[0] - half * .8 + half * 1.6 * (n > 1 ? i / (n - 1) : .5); for (const side of [-1, 1]) { const e = [x, mid[1] - hem * 1.7, side * W * 1.02]; m.seg(e, v3.add(e, [0, -sz * .8, 0]), .012, .012, bell, { group: 79, extra: true }); m.ell(v3.add(e, [0, -sz * 1.6, 0]), [sz * .75, sz, sz * .75], bell, { group: 79, extra: true, paint: p => p[1] < e[1] - sz * 2.3 ? M.NOSE : undefined }); } }
+    }
+    if (f.kind === "headcloth") { // a jewelled cloth over its brow, hanging down between its eyes, bells along its hem
+      m.part = "head";
+      const { H, hr } = c, cl = [H[0] + hr * .82, H[1] + hr * .1, 0], dim = [hr * .14, hr * (f.size ?? .6), hr * .5];
+      m.ell(cl, dim, M[f.mat || "FLOWER"], { group: 80, extra: true, dir: [1, -.35, 0], paint: p => Math.abs(p[2]) > dim[2] * .78 || p[1] < cl[1] - dim[1] * .75 ? M.WOOD : undefined });
+      for (let i = 0; i < 3; i++) m.ell([cl[0] + hr * .12, cl[1] - dim[1] * .95, (i - 1) * hr * .25], [hr * .06, hr * .07, hr * .06], M.WOOD, { group: 80, extra: true });
     }
     if (f.kind === "ruff" && m.anchors.neck) { // locks of fur round its neck and cheeks, swept back
       m.part = "head";
@@ -5227,7 +5258,17 @@ function quad3d(S, level, frame, st, facing = "towards") {
     }
   } else if (!q.beak) {
     m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
-    m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
+    if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
+    else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
+      const T = q.trunk, Lt = (T.len ?? 1) * hr * 2.4, r0 = (T.r ?? .34) * hr, pts = [], n = 12;
+      let p = [sn[0] + L * .2, sn[1] - Dm * .2, 0], ang = -.45;
+      // raise (a legend's: 0 hanging to 1 held high in a trumpet): up from its brow, its tip flared and curled back over
+      const up = T.raise ?? 0;
+      if (up) ang = -.45 + (.35 + .45) * up;
+      for (let i = 0; i <= n; i++) { const t = i / n, hang = -.45 - Math.min(t, .7) * 1.6 + Math.max(0, t - .7) * (T.curl ?? .5) * 5, high = .35 + t * 1.25 + Math.max(0, t - .72) * (T.curl ?? .5) * 4.5; pts.push([...p, r0 * (1 - t * .62) * (up && t > .9 ? 1.5 : 1)]); ang = hang + (high - hang) * up; p = [p[0] + Math.cos(ang) * Lt / n, p[1] + Math.sin(ang) * Lt / n, 0]; }
+      m.chain(pts, M.BODY, { group: 1, paint: q => Math.sin(q[1] * 70 + q[0] * 20) > .75 ? M.BODY2 : undefined });
+      m.ell(pts[n].slice(0, 3), [r0 * .4, r0 * .4, r0 * .4], M.NOSE, { group: 1 });
+    }
   }
   // eyes: both show; legends' glow
   for (const side of [-1, 1]) { const e = Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62])); m.ell(e, [hr * .13, hr * .16, hr * .13].map(v => v * (q.eyeK || 1) * sz("eye")), elder ? M[elder.eye || "MAGIC2"] : (legend && !q.tusks) || q.eyeGlow ? M.MAGIC2 : M.EYE, { group: 1 }); } // (eyeGlow: an evolved level's eye catching the light, the legend boar's under its hump)
@@ -5238,6 +5279,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none" || elder?.ears) continue;
+    if (E === "fan") { const c = [H[0] - hr * .55, H[1] - hr * .12, side * hr * .82], d = [hr * .46 * k, hr * .62 * k, hr * .07]; m.ell(c, d, M.BODY2, { group: 5 + (side > 0 ? 0 : 20), dir: [1, .25, 0], paint: p => Math.hypot((p[0] - c[0]) / d[0], (p[1] - c[1]) / d[1]) > .8 ? M.BODY3 : undefined }); continue; } // an elephant's: a great flat fan against the side of its head, its edge ragged and darker
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: elder ? 9 : 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
     const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
@@ -5262,7 +5304,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
     // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
     const pts = [], n = 9, R = .13 * k;
     for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
-    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+    m.chain(pts, M.ACCENT, { group: 8, paint: q.tuskBands ? p => { const t = Math.hypot(...v3.sub(p, b)) / (R * 2.4); return t > .15 && Math.floor(t * q.tuskBands * 2) % 2 && (t * q.tuskBands * 2) % 1 < .35 ? M.WOOD : undefined; } : undefined }); tuskTips.push(pts[n].slice(0, 3)); // tuskBands: bronze rings round tusks worn with age
   }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
@@ -5279,7 +5321,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
         m.ell(p.slice(0, 3), [p[3] * .3, p[3] * 1.3, p[3] * 1.3], M.WOOD, { group: 9, dir: v3.norm(v3.sub(z.slice(0, 3), a.slice(0, 3))) }); }
     }
   }
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame, front });
   if (elder) { elderQuad(m, S, { H, hr, sn, L, Dm, nb, tb, backAt, len, top, chest, tuck, bw, frame }); m.part = "body"; }
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
@@ -7648,6 +7690,8 @@ const SIGILS = {
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
   // the tiger: a broad round face, round ears, the mark on its brow, stripes on its cheeks, a wide muzzle
   tiger: [C(.5, .55, .34), ...pair(A(.24, .26, .09, 120, 330), D(.38, .5), L([.17, .55], [.29, .58]), L([.17, .65], [.29, .66])), L([.43, .31], [.57, .31]), L([.44, .39], [.56, .39]), L([.5, .25], [.5, .43]), E(.5, .72, .12, .08), D(.5, .68)],
+  // the elephant face on: a domed head between two great fan ears, its eyes, tusks curving down and out, its trunk hanging and curling
+  elephant: [E(.5, .38, .15, .17), ...pair(E(.27, .42, .2, .26, 60, 300), D(.44, .38), bow([.43, .53], [.37, .66], .3)), L([.5, .55], [.5, .78], [.53, .88], [.6, .9], [.63, .85])],
   // the dragonfly from above: a big-eyed head, a thorax, a long thin tail, two pairs of long wings out straight
   dragonfly: [C(.5, .2, .055), ...pair(D(.47, .18)), E(.5, .33, .04, .065), L([.5, .4], [.5, .95]), ...pair(L([.47, .3], [.3, .22], [.08, .21], [.06, .27], [.3, .32], [.47, .35]), L([.47, .38], [.3, .39], [.1, .45], [.12, .51], [.3, .46], [.47, .42]))],
   // the fiddler crab front on: a broad shell, eyes up on stalks, legs out to each side, one small claw and one great one
@@ -7784,6 +7828,7 @@ const LEGEND_DETAIL = {
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   crocodile: [...pair(D(.42, .3), D(.36, .3), L([.465, .5], [.465, .76])), D(.5, .28)],
   tiger: [...pair(L([.2, .44], [.3, .47]), L([.45, .79], [.44, .86]))],
+  elephant: [...pair(A(.24, .42, .1, 110, 250), L([.43, .26], [.47, .24])), L([.46, .63], [.54, .63]), L([.46, .7], [.54, .7]), L([.47, .77], [.55, .78])],
   griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
@@ -7912,7 +7957,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -9154,6 +9199,28 @@ const BAMBOO_JUNGLE = {
 };
 
 
+// ---- inlined from art/recipes/templeJungle.js ----
+// The temple jungle (the journey's west: unknown-28's island, the jungle biome): an area type as a recipe (art/recipes.js says what
+// each field is). Strangler figs and kapoks over red earth and old stones, a mud wallow, a tumbled heap of temple stones in the clearing, the elephant
+// its creature.
+const TEMPLE_JUNGLE = {
+  id: "temple-jungle", name: "Temple jungle", creature: "elephant", by: "recipe", leaf: .28, floor: ["earth", .05, .5, .32],
+  text: { floor: "red earth and roots", wall: "tumbled temple walls", small: "ferns and fallen stones", big: "strangler figs and kapok", set: "a tumbled heap of temple stones" },
+  wall: [["stones", {}], ["fern", {}]], small: [["fern", {}], ["stones", {}]],
+  big: [["tree", { type: "strangler", scale: 1.3 }], ["tree", { type: "kapok", minor: true, scale: 1.3 }]],
+  ponds: true, wet: true, pathKinds: ["footpath"],
+  setPiece: ["heap", "a tumbled heap of temple stones under the figs", 1.2, { of: "rubble", top: "post", moss: .4, rock: "sandstone" }],
+  layout: {
+    pattern: "stands", density: .45, clump: .6, glades: { count: 2, size: [16, 24] },
+    heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
+    feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
+  },
+  flora: { species: [["strangler", .45], ["kapok", .3], ["datePalm", .15], ["bamboo", .1]], palette: { sat: .95, val: .9 } },
+  settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "fern"] } },
+};
+
+
 // ---- inlined from art/recipes/plains.js ----
 // The plains (a journey kind: unknown-24's, the hot south): open short grass running to the horizon, the odd whistling thorn and
 // termite mounds to look out from, the cheetah its creature (the lion's savanna is the taller grass under acacias and baobabs).
@@ -9326,7 +9393,7 @@ const TERRACES = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE];
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE, TEMPLE_JUNGLE];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -12840,6 +12907,7 @@ const LEGEND_POSES = {
   raccoon: { sink: .5, droop: 1, drop: [], over: { moss: .6, lichen: .1, ferns: 3, grass: 2, mushrooms: 2, roots: 2, stones: 2 } }, // the mossy creek's raccoon (an area recipe's): curled under moss and ferns
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
+  elephant: { sink: .4, droop: .8, drop: [], over: { moss: .6, lichen: .08, ferns: 4, grass: 4, mushrooms: 2, roots: 4, stones: 3 } }, // the temple jungle's elephant: a matriarch knelt among the temple stones, mossed like one of them, her bells green with age
   tiger: { sink: .45, droop: 1, drop: [], over: { moss: .35, lichen: .06, ferns: 3, grass: 3, mushrooms: 1, roots: 3, stones: 2 } }, // the bamboo jungle's tiger (an area recipe's): stretched out under ferns and roots, its garland gone to dry stalks and its stripes to bark and shadow
   roe: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }, // the mossy dell's roe: curled in the moss, ferns over it
   redpanda: { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }, // the misty terraces' red panda: curled on a mossy ledge, tail over its nose

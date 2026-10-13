@@ -368,12 +368,11 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-28": {
+    "elephant": {
       "phase": 4,
       "bearing": 265,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "unknown-29": {
       "phase": 4,
