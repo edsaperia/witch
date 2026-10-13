@@ -1,0 +1,1 @@
+export const LEGEND_FENNEC = { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }; // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it

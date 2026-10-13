@@ -1,12 +1,29 @@
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { CREATURES, CREATURE_IDS } from "./rules/creatureConfig";
+import { validate, type Schema } from "./rules/schema";
+import { AREA_TYPES } from "./rules/map";
 
-// The creatures' data (art/creatures/<id>/genome.js, assembled by art/creatures/index.js; tools/creatures.mjs): the index
-// current, no record left in art/genome/species.js's array (an old-style merge), every folder's record its own id, and no
-// genome problems (art/genome/index.js genomeProblems).
+// The creatures' data (art/creatures/<id>/: genome.js, sigil.js, legend.js, nap.js, creature.js, assembled by
+// art/creatures/index.js; tools/creatures.mjs): the index current, no entry left in the old registries or the config files (an
+// old-style merge), every folder's exports its own id's, no genome problems, and each creature.js against its schema
+// (config/schema/creature.schema.json: its sections and their shapes; the sections' insides are checked as the config files'
+// assembled tables, configs.test.ts).
 describe("the creatures' folders (art/creatures/)", () => {
   it("assemble cleanly: the index current, every record in its folder, no genome problems", () => {
     const out = execFileSync("node", ["tools/creatures.mjs", "check"], { encoding: "utf8" });
     expect(out).toMatch(/^ok: \d+ species/);
+  });
+  it("each creature.js holds only known sections, of the right shapes (config/schema/creature.schema.json)", () => {
+    const schema = JSON.parse(readFileSync("config/schema/creature.schema.json", "utf8")) as Schema;
+    for (const id of CREATURE_IDS) expect(validate(CREATURES[id], schema, `art/creatures/${id}/creature.js`), id).toEqual([]);
+  });
+  it("every creature in the game has its folder, with its movement, voice and buff", () => {
+    for (const t of AREA_TYPES) {
+      const c = CREATURES[t.creature];
+      expect(c, `${t.creature} (${t.id}'s creature) has no art/creatures/${t.creature}/creature.js`).toBeTruthy();
+      for (const k of ["movement", "voice", "buff"] as const) expect(c[k], `${t.creature}'s ${k}`).toBeTruthy();
+    }
   });
 });

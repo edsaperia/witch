@@ -1,0 +1,1 @@
+export const LEGEND_RATTLESNAKE = { ground: .06, droop: 1, drop: [0], over: { moss: .08, lichen: .14, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }; // the cactus flats' rattlesnake: coiled half under the sand, its rattle laid over its coils, pebbles drifted over it

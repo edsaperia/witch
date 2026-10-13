@@ -14,8 +14,8 @@ const SETS = String(arg("set", "")).split(";").filter(Boolean).map(kv => { const
 const { load, close } = await openRules();
 const { TUNING, withTuning } = await load("/src/rules/tuning.ts");
 const { newGame, stepGame, STEP } = await load("/src/rules/game.ts");
-const MOVE = (await import("node:fs")).readFileSync("config/movement.json", "utf8");
-const PROFILES = JSON.parse(MOVE).profiles;
+const { MOVEMENT } = await load("/src/rules/movement.ts"); // (the profiles as the game assembles them: each species' from art/creatures/<id>/creature.js)
+const PROFILES = MOVEMENT.profiles;
 const SPECIES = Object.entries(PROFILES).filter(([, p]) => p.move && (p.move.kind === "charge" || p.move.kind === "leap")).map(([s, p]) => [s, p.move.kind]);
 const over = () => { const o = {}; for (const [path, v] of SETS) { let a = o, src = TUNING; for (const k of path.slice(0, -1)) { src = src[k]; a = a[k] ??= { ...src }; } a[path[path.length - 1]] = v; } return o; };
 const T = withTuning({ ...over(), legendCircle: { ...TUNING.legendCircle, slow: { ...TUNING.legendCircle?.slow, on: false } } });
