@@ -19,7 +19,8 @@ import { SCRUB_WASH } from "./recipes/scrubwash.js";
 import { MOSSY_CREEK } from "./recipes/mossycreek.js";
 import { ERG } from "./recipes/erg.js";
 import { SAVANNA } from "./recipes/savanna.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SCRUB_WASH, SAVANNA, MOSSY_CREEK];
+import { PLAINS } from "./recipes/plains.js";
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {
