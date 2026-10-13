@@ -38,17 +38,17 @@ Every legend already gets glowing eyes (`MAGIC2`), glow motes and its legend sca
 | salamander | `flames`: same flame crest as the mane | partly (fire myth, not its warning spots or regrowth) | mane/flames |
 | newt | `crystals` along its back | no (crest, breeding colours, regrowth) | crystals |
 | heron | `wings` listed, but `heron3d` draws no legend feature: only scale and glowing eyes | no (stillness, stilts, dagger bill, the strike) | none drawn (glow only) |
-| meerkat | walking: `flames` crest (quad); sitting up (`sentinel3d`): searchlight beams from its eyes | partly (beams yes; the crest is generic) | mane/flames |
+| meerkat | walking: glowing eyes only (its flame crest dropped, 2026-10-13); sitting up (`sentinel3d`): searchlight beams from its eyes | yes (the lookout) | — |
 | glow-worm | `lantern`: a great glowing ball at its tail end | yes | — |
 | spider | `eyesRing`: ring of glowing eyes on its head | partly (many eyes is real, but shared) | eyesRing |
 | dormouse | `starTail` | no (sleep, curled ball, hazelnuts) | starTail |
 | stag beetle | `horn`: jaws 1.3× and glowing + `crystals` on its back | partly (jaws yes; crystals no) | crystals |
 
-**Flagged: 30 of 33** (only fox, ram and glow-worm are clean). 14 "no", 11 "partly", 5 "yes but repeats".
+**Flagged: 29 of 33** (fox, ram, glow-worm and the meerkat are clean). 14 "no", 10 "partly", 5 "yes but repeats".
 
 ### Repeated generic features
 
-- **mane / flames** (flame flats along the back): wolf, boar, lynx, stoat, marten, salamander, meerkat (7)
+- **mane / flames** (flame flats along the back): wolf, boar, lynx, stoat, marten, salamander (6)
 - **crystals**: hedgehog, newt, stag beetle, woodlouse (moonstones) (4)
 - **moss / trees on back**: bear, beaver, elk, snail (shell trees), badger (moss + stones) (5)
 - **wings / wingsBig** (spirit wings bolted on, or just bigger wings): raven, snake, heron (listed), owl (cloak), bat, moth (6)
