@@ -23,7 +23,6 @@
     "invites.range": [5, 75],
     "invites.radius": [0.2, 2],
     "dash.distance": [2, 25],
-    "dash.cooldown": [0.3, 3],
     "dash.gone": [0, 0.8],
     "dash.cooldown": [0.2, 5],
     "groundSpeed": [1, 35],
