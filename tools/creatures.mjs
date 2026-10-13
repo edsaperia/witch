@@ -73,6 +73,24 @@ function entriesOf(text, name) {
 const HELPER_NAMES = ["L", "A", "D", "C", "E", "at", "stave", "FOOT", "mirror", "pair", "bow", "wave", "spiral", "rays"];
 const helpersUsed = text => { const t = text.replace(/\.\.\./g, " "); return HELPER_NAMES.filter(h => new RegExp(`(^|[^\\w$.])${h}(?=[^\\w$]|$)`).test(t)); }; // (a spread's dots are not a property access)
 
+/** art/sigils.js without its own copies of the building blocks (art/sigils/strokes.js has them since 2026-10-13; a merge brings
+ *  the old lines back, and the Art Lab's one-scope build then sees each twice): their top-level definitions out, the import in. */
+function withoutHelpers(text) {
+  if (!existsSync(join(ROOT, "art/sigils/strokes.js"))) return text;
+  const lines = text.split("\n"), out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const m = /^(?:const|function) ([A-Za-z_$][\w$]*)\b/.exec(lines[i]);
+    if (m && HELPER_NAMES.includes(m[1]) && !lines[i].startsWith("export ")) {
+      if (lines[i].startsWith("function ")) { while (i < lines.length && lines[i] !== "}") i++; } // (to its closing brace at the margin)
+      continue;
+    }
+    out.push(lines[i]);
+  }
+  return withImport(out.join("\n"), HELPER_NAMES, "./sigils/strokes.js");
+}
+/** The helper names art/sigils.js still defines itself. */
+const ownHelpers = text => [...text.matchAll(/^(?:const|function) ([A-Za-z_$][\w$]*)\b/gm)].map(m => m[1]).filter(n => HELPER_NAMES.includes(n));
+
 /** A per-creature part file's text. */
 function partText(part, id, e) {
   const name = partName(part, id), lines = [];
@@ -244,6 +262,7 @@ if (cmd === "list") {
     let neons = null;
     if (part.object === "SIGILS") { const n = entriesOf(text, "SIGIL_NEON"); neons = n; for (const e of entries) { const ne = n.entries.find(x => x.key === e.key); if (ne) e.neon = JSON.parse(ne.text.replace(/'/g, '"')); } }
     const mine = entries.filter(e => known.has(e.key));
+    if (part.object === "SIGILS" && ownHelpers(text).length) { text = withoutHelpers(text); writeFileSync(file, text); console.log(`${part.registry}: its own building blocks out (art/sigils/strokes.js has them)`); if (!mine.length) continue; const again = entriesOf(text, part.object); entries.length = 0; entries.push(...again.entries); Object.assign(neons ?? {}, {}); }
     for (const e of mine) {
       const out = join(DIR, e.key, part.file);
       mkdirSync(join(DIR, e.key), { recursive: true });
@@ -282,6 +301,7 @@ if (cmd === "list") {
   if (!existsSync(INDEX) || readFileSync(INDEX, "utf8") !== indexText(list)) problems.push("art/creatures/index.js is stale: run node tools/creatures.mjs index");
   const { genomeProblems } = await import(pathToFileURL(join(ROOT, "art/genome/index.js")).href);
   const known = new Set(list);
+  { const own = ownHelpers(readFileSync(join(ROOT, "art/sigils.js"), "utf8")); if (own.length) problems.push(`art/sigils.js defines ${own.join(", ")} itself (art/sigils/strokes.js has them: run node tools/creatures.mjs adopt)`); }
   for (const part of PARTS) { try { const { entries } = entriesOf(readFileSync(join(ROOT, part.registry), "utf8"), part.object); for (const e of entries) if (known.has(e.key)) problems.push(`${part.registry} still holds ${part.object}.${e.key}: run node tools/creatures.mjs adopt`); } catch (err) { problems.push(`${part.registry}: ${err.message}`); } }
   for (const id of list) for (const part of PARTS) if (has(id, part.file)) {
     const m = await import(pathToFileURL(join(DIR, id, part.file)).href), v = m[partName(part, id)];
