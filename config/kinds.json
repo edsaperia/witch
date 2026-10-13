@@ -207,12 +207,11 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-03": {
+    "redpanda": {
       "phase": 3,
       "bearing": 63,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-04": {
       "phase": 3,

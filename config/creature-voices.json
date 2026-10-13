@@ -45,6 +45,7 @@
     "toad": {"family": "amphibian"},
     "salamander": {"family": "amphibian", "pitch": 1.6, "am": [48, 0.7]},
     "heron": {"family": "bird", "pitch": 0.5, "pure": false, "wave": "sawtooth", "trill": [0, 0], "glide": 0.8, "vowel": 1, "volume": 0.9},
+    "redpanda": {"family": "small", "pitch": 1.5, "glide": 0.5, "dur": 0.6},
     "newt": {"family": "amphibian", "pitch": 1.9, "am": [56, 0.6]},
     "fennec": {"family": "canid", "pitch": 2.1, "glide": 0.9},
     "lion": {"family": "big", "pitch": 0.55, "glide": 0.6},
