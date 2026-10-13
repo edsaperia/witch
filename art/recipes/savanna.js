@@ -3,7 +3,7 @@
 export const SAVANNA = {
   id: "savanna", name: "Savanna", creature: "lion", by: "recipe", leaf: .15, floor: ["tallgrass", .11, .55, .58],
   text: { floor: "tall gold grass", wall: "thorn scrub", small: "grass tussocks and thorn scrub", big: "flat-topped acacias, a few baobabs", set: "a kopje of sun-warmed boulders" },
-  wall: [["bush", {}]], small: [["grass", { h: 1.4 }], ["bush", { small: true }]],
+  wall: [["shrub", { spiky: true }]], small: [["grass", { h: 1.4 }], ["shrub", { spiky: true }]],
   big: [["tree", { type: "acacia", scale: 1.1 }], ["tree", { type: "baobab", minor: true, scale: 1.2 }]],
   pathKinds: ["track"],
   setPiece: ["heap", "a kopje of sun-warmed boulders", 1.3, { of: "stones", top: "none", moss: -1, rock: "sandstone" }],
