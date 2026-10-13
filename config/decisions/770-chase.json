@@ -1,0 +1,40 @@
+{
+  "pr": 770,
+  "group": "Chase",
+  "decisions": [
+    {
+      "id": "chaseBand",
+      "pr": 770,
+      "group": "Chase",
+      "label": "Chase past the edge",
+      "note": "How far past their area's edge wild animals follow her once they're after her (her 💌 provoked them, or the warning ran out with her inside). Ed: chase outside, relatively far.",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 120,
+        "step": 5
+      },
+      "default": 30,
+      "apply": {
+        "knob": "combat.leaveArea"
+      }
+    },
+    {
+      "id": "provoked",
+      "pr": 770,
+      "group": "Chase",
+      "label": "Provoked for",
+      "note": "Seconds a 💌 landing on a wild animal provokes it to come out after her across its edge (sniping from just outside). 0: never.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 15,
+        "step": 1
+      },
+      "default": 6,
+      "apply": {
+        "knob": "wildWatch.provoked"
+      }
+    }
+  ]
+}

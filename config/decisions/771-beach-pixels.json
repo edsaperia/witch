@@ -1,0 +1,23 @@
+{
+  "pr": 771,
+  "group": "Beach pixels",
+  "decisions": [
+    {
+      "id": "sandGrain",
+      "pr": 771,
+      "group": "Beach pixels",
+      "label": "Sand grain",
+      "note": "How far each of the sand's chunky pixels is lightened or darkened at random (0: flat sand).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.4,
+        "step": 0.02
+      },
+      "default": 0.14,
+      "apply": {
+        "knob": "beach.grain"
+      }
+    }
+  ]
+}
