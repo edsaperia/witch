@@ -499,14 +499,15 @@ export class View {
     performance.mark("witch:prep-idle");
     this.render(0, false);
     refresh(this, true);
-    // There are only 30 area types and 30 creatures: draw them all in the background now, so
-    // the forest ahead is ready however fast she flies; the area types nearest her first.
+    // Every area type the map has, drawn in the background now so the forest ahead is ready however fast she flies; the
+    // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
+    // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for above), not its type's trees.
     const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
     for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
       const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
-    for (let t = 0; t < AREA_TYPES.length; t++) if (!near.has(t)) near.set(t, Infinity);
     this.prepared = true;
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).

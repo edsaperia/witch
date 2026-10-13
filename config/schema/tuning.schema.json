@@ -281,6 +281,10 @@
         "on": {
           "type": "boolean"
         },
+        "grain": {
+          "type": "number",
+          "minimum": 0
+        },
         "width": {
           "type": "number",
           "minimum": 0
@@ -677,6 +681,7 @@
       },
       "required": [
         "on",
+        "grain",
         "width",
         "shore",
         "vary",
@@ -4203,6 +4208,10 @@
         "inviteWakes": {
           "type": "boolean"
         },
+        "provoked": {
+          "type": "number",
+          "minimum": 0
+        },
         "time": {
           "type": "number",
           "minimum": 0
@@ -4231,6 +4240,7 @@
       "required": [
         "on",
         "inviteWakes",
+        "provoked",
         "time",
         "forget",
         "hangBack",
