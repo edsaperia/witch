@@ -147,8 +147,65 @@ export const GENOMES = [
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
     // of standing stones down its back and tail root, its eyes glowing just above the water line
     levels: [null, null, null, { body: { len: 2.3, bw: .62, hr: .38 }, head: { snout: 5, snoutD: 1.05, jawW: .78 }, features: [{ kind: "stones", from: .05, to: .95, count: 8, height: 1.05 }, { kind: "eyeglint", size: .05 }, { kind: "scars", count: 4, len: .55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: .04, ry: .32, rz: .82, rings: [.3, .5] }] }] },
+  // the bushveld's rhino (an area recipe's, phase 4): a grey hulk, a great horn on its nose and a smaller one behind it, its hide in folds
+  { id: "rhino", name: "Rhino", template: "quadruped", builder: "quad", palette: { hue: .58, sat: .05, val: .46 }, body: { hgt: 1.15, len: .98, chest: .42, tuck: .44, neck: .24, neckAng: -.18, neckW: .75, hr: .36, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: .48 }, head: { snout: 1.35, snoutD: .78, snoutTaper: .7, noseHorn: 1 }, parts: { ears: { kind: "small", size: 1 }, tail: "thin", feet: "hoof" }, coat: { folds: [-.55, .35] }, legend: [], texture: { kind: "scales", size: 9, contrast: .18 },
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: one giant horn; the legend
+    // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
+    // necklace of offerings, the hump a hill
+    levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
+  // the pack ice's polar bear (an area recipe's, phase 4): a long-necked white bear, its coat shaggy
+  { id: "polarbear", name: "Polar bear", template: "quadruped", builder: "quad", palette: { hue: .14, sat: .05, val: .9 }, body: { hgt: 1.25, len: .9, chest: .38, tuck: .42, neck: .34, neckAng: .02, neckW: .55, hr: .3, legW: 1.8, bw: .36 }, head: { snout: .85, snoutD: .6, snoutTaper: .75, muzzle: true }, parts: { ears: { kind: "small", size: .8 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: [],
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
+    // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
+    // a necklace of bronze offerings with a stone at its throat
+    levels: [null, null, null, { body: { bw: .44 }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: .42, count: 40, lean: .25, mat: "BELLY" }, { kind: "ruff", size: .28, count: 16 }, { kind: "beads", count: 11, size: .055, mat: "WOOD", pendant: "STONE" }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the jungle's tiger (the journey's west, unknown-11's island): a big striped cat, low and long, heavy in the shoulder. Its evolution:
+  // a round, big-pawed cub with soft broad stripes, a lanky young, a heavy-shouldered adult with a ruff of cheek fur, and the legend:
+  // the elder of the tigers, huge and grizzled, its stripes worn thin with age, old scars raked across its flanks and brow, a white
+  // ruff, and a garland of red flowers and bronze beads round its neck, the jungle's offerings
+  { id: "tiger", name: "Tiger", template: "quadruped", builder: "quad", palette: { hue: .065, sat: .85, val: .9, belly: "white", flower: [214, 48, 58] }, body: { hgt: 1.1, len: .86, chest: .5, tuck: .56, neck: .28, neckAng: .5, neckW: .52, hr: .3, legW: 1.3, bw: .32 }, head: { snout: .55, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true, muzzle: true }, parts: { ears: { kind: "round", size: .75 }, tail: "tiger", feet: "paw" }, coat: { belly: true, stripes: { n: 11, w: .3 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .34, legW: 1.55 }, coat: { stripes: { n: 7, w: .28, legN: 4 } }, parts: { ears: { kind: "round", size: 1.05 } } },
+      { body: { len: .84, legW: 1.15, chest: .54 } },
+      { body: { front: 1.12, legW: 1.45, bw: .35, hgt: 1.15 }, features: [{ kind: "ruff", size: .15, count: 12 }] },
+      { body: { front: 1.22, legW: 1.6, bw: .37, len: .95, hgt: 1.25 }, head: { muzzle: true }, coat: { stripes: { n: 9, w: .2, wave: .35 }, scars: 4 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind)
+        { kind: "ruff", size: .3, count: 18, mat: "BELLY" },
+        { kind: "garland", count: 18, size: .1, mat: "FLOWER", alt: "WOOD", every: 4, drop: .6, out: 1.45 },
+        { kind: "claws", size: .13, mat: "BODY3" },
+      ] },
+    ] },
+  // the jungle's elephant (the journey's west, unknown-28's island): the biggest creature in the game, grey and wrinkled, a trunk, fan
+  // ears and tusks. Its evolution: a round calf with a short trunk and huge ears, a young with its first tusks, a great tusker, and the
+  // legend: the elder of the elephants, an ancient matriarch, her vast trunk raised in a trumpet, her tusks long and worn, banded
+  // in bronze, hung with temple bells from a red saddle-cloth, a jewelled cloth on her brow and a garland of flowers
+  { id: "elephant", name: "Elephant", template: "quadruped", builder: "quad", palette: { hue: .62, sat: .22, val: .5, flower: [168, 32, 44] }, body: { hgt: 1.9, len: .95, chest: .58, tuck: .62, neck: .2, neckAng: .15, neckW: .75, hr: .5, legW: 2.1, bw: .3, back: "arch", front: 1.05 }, head: { snout: .3, snoutD: .95, trunk: { len: 1, curl: .5 }, eyeK: .65 }, parts: { ears: { kind: "fan", size: 1 }, tail: "thin", feet: "paw", tusks: true }, texture: { kind: "smooth" }, legend: ["moss"],
+    levels: [
+      { body: { len: .72, hr: .56, legW: 2.3, chest: .5, tuck: .54 }, head: { trunk: { len: .6, curl: .3 } }, parts: { ears: { kind: "fan", size: 1.15 } } },
+      { head: { tuskSize: .6, tuskCurl: .45, trunk: { len: .9, curl: .45 } } },
+      { body: { hgt: 2.0 }, head: { tuskSize: 1.5, tuskCurl: .55 } },
+      { body: { hgt: 2.05, legW: 2.4, bw: .33 }, head: { tuskSize: 3.2, tuskCurl: .6, tuskBands: 3, trunk: { len: 2, curl: .9, raise: 1, r: .4 } }, coat: { scars: 3 }, features: [ // (Ed, 2026-10-13, ART-GUIDE 0c: the elder of its kind, an ancient matriarch)
+        { kind: "bells", count: 4, from: .25, to: .8, size: .1 },
+        { kind: "headcloth", size: .7 },
+        { kind: "garland", count: 16, size: .09, mat: "FLOWER", alt: "WOOD", every: 3, drop: .5, out: 1.25 },
+      ] },
+    ] },
+  // the jungle river's black jaguar (the journey's west, unknown-29's island): a melanistic jaguar, stocky and short-legged with a big
+  // head, black with rosettes a shade darker that show only in the light, gold-green eyes. Its evolution: a round, big-headed cub
+  // whose rosettes still show, a lithe young, a heavy-jawed adult, and the legend: a huge head and a crushing jaw, its hidden rosettes
+  // surfacing black on black in the moonlight, rippling like light on water as it moves; the elder of its kind, its muzzle grey, old
+  // scars on its flanks and brow, a collar of jade and bronze beads
+  { id: "jaguar", name: "Black jaguar", template: "quadruped", builder: "quad", palette: { hue: .7, sat: .16, val: .3, flower: [60, 176, 132] }, body: { hgt: .95, len: .84, chest: .46, tuck: .52, neck: .26, neckAng: .5, neckW: .48, hr: .29, legW: 1.25, bw: .3 }, head: { snout: .5, snoutD: .8, snoutTaper: .82, cheeks: true, whiskers: true, eyeK: 1.1 }, parts: { ears: { kind: "round", size: .7 }, tail: "jaguar", feet: "paw" }, coat: { rosettes: { k: 8, density: .75 } }, legend: ["mane"],
+    levels: [
+      { body: { len: .6, hr: .33, legW: 1.45 }, coat: { rosettes: { k: 6, density: .8 } }, parts: { ears: { kind: "round", size: .95 } } },
+      { body: { len: .86, legW: 1.1, chest: .5 } },
+      { body: { front: 1.08, legW: 1.4, bw: .33, hgt: .95, hr: .4, len: .74, chest: .42 }, head: { snoutD: .88 } }, // (a big head on a short, deep body: tells apart from the tiger at game size),
+      { body: { front: 1.15, legW: 1.55, bw: .34, len: .9, hgt: 1.08, hr: .4 }, head: { snoutD: 1.15, snoutTaper: .95, jaw: 1.5, muzzle: true }, coat: { rosettes: { k: 8, density: .85, mat: "BODYL", ripple: .18 }, scars: 3 }, features: [
+        { kind: "garland", count: 14, size: .11, mat: "FLOWER", alt: "WOOD", every: 4, drop: .3, out: 1.7 },
+        { kind: "claws", size: .14, mat: "BODY3" },
+      ] }, // (Ed, 2026-10-13: its huge head and crushing jaw; the hidden rosettes, black on black, surfacing in the moonlight and rippling like light on water)
+    ] },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
   // every level flies (Ed: the baby a small dragonfly); its legend the elder of its kind, a coal-forest giant: all eye, vast tattered wings, scarred
   { id: "dragonfly", name: "Dragonfly", template: "flyer", builder: "dragonfly", palette: { hue: .5, sat: .62, val: .62 }, legend: ["eyesHuge", "ancient"], texture: { kind: "plates", size: 2 },

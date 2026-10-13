@@ -256,12 +256,11 @@
       "dir": "WSW",
       "biome": "mangrove swamp"
     },
-    "unknown-11": {
+    "tiger": {
       "phase": 3,
       "bearing": 269,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "unknown-12": {
       "phase": 3,
@@ -337,12 +336,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-23": {
+    "rhino": {
       "phase": 4,
       "bearing": 165,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "cheetah": {
       "phase": 4,
@@ -370,19 +368,17 @@
       "biome": "mangrove swamp",
       "placeholder": true
     },
-    "unknown-28": {
+    "elephant": {
       "phase": 4,
       "bearing": 265,
       "dir": "W",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
-    "unknown-29": {
+    "jaguar": {
       "phase": 4,
       "bearing": 285,
       "dir": "WNW",
-      "biome": "jungle",
-      "placeholder": true
+      "biome": "jungle"
     },
     "raccoon": {
       "phase": 4,
@@ -397,12 +393,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-32": {
+    "polarbear": {
       "phase": 4,
       "bearing": 345,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     }
   }
 }
