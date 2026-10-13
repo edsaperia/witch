@@ -235,7 +235,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "woken"; id: string; species: string; style: Style }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
-  | { kind: "nap"; id: string; species: string; style: Style; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
+  | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
@@ -570,7 +570,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "nap") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
-    const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
+    const gear = (job.idle ? { idle: true } : { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true }) as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
       const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
