@@ -18,6 +18,7 @@ export function speciesOf(g) {
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
+  if (g.hydra) S.hydra = g.hydra; // the hydra builder's own options (its heads by level, a crest)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};

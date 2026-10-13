@@ -939,35 +939,50 @@ export function snake3d(S, level, frame, st, facing = "towards") {
 
 // The hydra (Ed's magical outer islands, phase 4: unknown-25's): a many-headed swamp serpent. A thick body coiled low in the
 // black water, its heads by level (a hatchling's one, then 3, 5, the legend's 7), each on its own long neck fanned out and up,
-// swaying in turn. Its legend (Ed's brief, ART-GUIDE §0c: the elder of its kind; "emphasise the thing that makes that creature
-// unusual"): the most heads, and two necks cut short long ago each sprouting two new heads (heads that regrow), bronze offering
-// rings round its necks, old scars. S.hydra: { heads: [per level] }.
+// swaying in turn, every head a serpent's in three-quarter view: a long snout, a jaw line (some open, fangs showing), a glinting
+// eye. Its legend (Ed's brief, ART-GUIDE §0c: the elder of its kind; "emphasise the thing that makes that creature unusual"):
+// the most heads, and two necks cut short long ago, in front, each sprouting two new heads (heads that regrow), bronze offering
+// rings high on its necks, old scars. S.hydra: { heads: [per level], crest: true (a draconic crest of spines and frills) }.
 export function hydra3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], pts = [];
+  const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
   m.chain(pts, M.BODY, { paint: p => p[1] < .06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, .28) ? M.BODY3 : undefined });
-  const root = pts[10].slice(0, 3), hr = .062, neckPaint = c => p => p[0] > c + .01 && spotty(p, 30, .15) ? M.BODY3 : undefined;
-  const neck = (from, to, r0, r1, group, hrK) => { // a neck from `from` up to a head at `to`, its head
-    const d = v3.sub(to, from), mid = v3.add(from, [d[0] * .35 + .09, d[1] * .4, d[2] * .5]), mid2 = v3.add(from, [d[0] * .7 - .04, d[1] * .8, d[2] * .85]); // an S-bend
-    m.chain([[...from, r0], [...mid, r0 * .8 + r1 * .2], [...mid2, r0 * .3 + r1 * .7], [...to, r1]], M.BODY, { group, extra: true, paint: neckPaint(from[0]) });
-    const h = hr * hrK, hc = v3.add(to, [h * 1.1, .01, 0]), R = [h * 1.9, h * .7, h * .85];
-    m.ell(hc, R, M.BODY, { dir: [1, -.2, 0], group: 1, paint: p => p[1] < hc[1] - h * .25 ? M.BELLY : undefined });
-    eyesOn(m, hc, R, [[.2, .6, .7], [.2, .6, -.7]], h * .14, legend ? M.MAGIC2 : M.EYE);
-    return { hc, mid };
+  const root = pts[10].slice(0, 3), hr = .058;
+  // a serpent's head at `at` pointing along `dir` (mostly forward and towards us, a little down): skull, long snout, lower jaw
+  // (open by `open`, its mouth dark, two fangs), a glinting eye each side, a crest of spines and side frills if draconic
+  const head = (at, dir, h, open, group) => {
+    const d = v3.norm(dir), side = v3.norm(v3.cross(d, [0, 1, 0])), up = v3.norm(v3.cross(side, d));
+    m.ell(at, [h * 1.05, h * .72, h * .8], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, at), up) > h * .45 ? M.BODY3 : undefined }); // its brow darker
+    const sn = v3.add(at, v3.add(v3.mul(d, h * 1.5), v3.mul(up, -h * .15)));
+    m.ell(sn, [h * 1.3, h * .36, h * .5], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, sn), up) < -h * .15 ? M.BELLY : undefined });
+    const jd = v3.norm(v3.add(d, v3.mul(up, -open * .9))), jc = v3.add(at, v3.add(v3.mul(jd, h * 1.2), v3.mul(up, -h * .42)));
+    m.ell(jc, [h * 1.1, h * .22, h * .48], M.BELLY, { dir: jd, group });
+    if (open > .1) { m.ell(v3.lerp(sn, jc, .5), [h * .75, h * .2, h * .38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
+      for (const s2 of [-1, 1]) { const f = v3.add(sn, v3.add(v3.mul(d, h * .7), v3.mul(side, s2 * h * .3))); m.seg(f, v3.add(f, v3.mul(up, -h * .35)), h * .07, h * .02, M.ACCENT, { group }); } }
+    for (const s2 of [-1, 1]) { const e = v3.add(at, v3.add(v3.add(v3.mul(d, h * .35), v3.mul(up, h * .48)), v3.mul(side, s2 * h * .55)));
+      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+    m.anchors.head ||= { c: at, r: [h, h * .8, h * .8] };
+    if (crest) { for (let k = 0; k < 4; k++) { const b = v3.add(at, v3.add(v3.mul(d, -h * (.1 + k * .3)), v3.mul(up, h * .7))); m.chain([[...b, h * .16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * .15)), v3.mul(d, -h * .6))), h * .02]], M.BODY3, { group, extra: true }); }
+      for (const s2 of [-1, 1]) m.flat(v3.add(at, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * .45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -.6))), up, h * .85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group }); }
+  };
+  const neck = (from, to, r0, r1, group, hK, open, ring) => { // an S-bent neck from `from` up to its head at `to`
+    const dv = v3.sub(to, from), mid = v3.add(from, [dv[0] * .35 + .07, dv[1] * .45, dv[2] * .5]), mid2 = v3.add(from, [dv[0] * .75 - .03, dv[1] * .85, dv[2] * .85]);
+    m.chain([[...from, r0], [...mid, r0 * .75 + r1 * .25], [...mid2, r0 * .3 + r1 * .7], [...to, r1]], M.BODY, { group, extra: true, paint: p => p[1] < v3.lerp(from, to, .5)[1] - .02 && spotty(p, 30, .15) ? M.BODY3 : undefined });
+    if (ring) for (const t of [.7, .85]) m.ell(v3.lerp(mid2, to, t - .6), [r1 * .45, r1 * 1.7, r1 * 1.7], M.WOOD, { dir: v3.norm(v3.sub(to, mid)), group: 60 }); // a bronze offering ring high on the neck
+    head(v3.add(to, [hr * hK * .6, .01, hr * hK * .25]), [1, -.25, .45 * Math.sign(to[2] - from[2] + .001) * .6 + .25], hr * hK, open, 1);
   };
   let main = null;
   for (let k = 0; k < heads; k++) {
     const u = heads > 1 ? k / (heads - 1) - .5 : 0, sway = Math.sin(k * 1.7 + ph * 2.5) * .035, len = (.5 + .12 * Math.cos(u * 2.4)) * (legend ? 1.1 : 1);
-    const tip = [root[0] + .12 + sway - Math.abs(u) * .18, root[1] + len * (1 - Math.abs(u) * .5) + .06 * Math.sin(k * 2.3), root[2] + u * len * 1.6];
-    const { hc, mid } = neck(root, tip, .034, .02, 20 + k, 1);
-    if (Math.abs(u) < .01 || (!main && k === Math.floor(heads / 2))) main = hc;
-    if (legend && k % 2 === 0) m.ell(mid, [.012, .036, .036], M.WOOD, { dir: v3.norm(v3.sub(tip, root)), group: 60 }); // a bronze offering ring round the neck
+    const tip = [root[0] + .14 + sway - Math.abs(u) * .22 + (k % 2) * .08, root[1] + len * (1 - Math.abs(u) * .4) + .09 * Math.sin(k * 2.3), root[2] + u * len * 2.1 - (legend ? .12 : 0)];
+    neck(root, tip, .034, .022, 20 + k, legend ? 1.25 : 1.1, k % 3 === 1 ? .55 : 0, legend);
+    if (!main || Math.abs(u) < .01) main = tip;
   }
-  if (legend) for (const side of [-1, 1]) { // two necks cut short long ago, each sprouting two new heads
-    const stump = [root[0] + .03, root[1] + .16, root[2] + side * .3];
-    m.chain([[...root, .034], [...stump, .03]], M.BODY, { group: 40 + (side > 0 ? 1 : 0), extra: true });
-    m.ell(stump, [.032, .012, .032], M.BELLY, { group: 40 + (side > 0 ? 1 : 0) }); // the old cut, healed pale
-    for (const k of [-1, 1]) neck(stump, [stump[0] + .08, stump[1] + .12, stump[2] + k * .06 + side * .03], .022, .016, 42 + (side > 0 ? 2 : 0) + (k > 0 ? 1 : 0), .55);
+  if (legend) for (const [dz, dy] of [[.62, .02], [.42, .12]]) { // two necks cut short long ago, in front, each sprouting two new heads
+    const stump = [root[0] + .22, root[1] + dy + .1, root[2] + dz];
+    m.chain([[...root, .034], [...v3.lerp(root, stump, .5), .032], [...stump, .03]], M.BODY, { group: 40, extra: true });
+    m.ell(stump, [.034, .014, .034], M.WEB, { group: 40 }); // the old cut, healed pale
+    for (const k of [-1, 1]) neck(v3.add(stump, [0, .01, k * .015]), [stump[0] + .1, stump[1] + .14, stump[2] + k * .08 + .04], .018, .013, 42, .6, k > 0 ? .5 : 0, false);
   }
   m.rig = { spine: pts.map(p => p.slice()), head: main, hr };
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
