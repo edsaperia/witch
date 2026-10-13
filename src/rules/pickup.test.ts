@@ -1,5 +1,5 @@
 // Leashing a happy creature by picking up its sigil rune (Ed, 2026-10-06; states.leash "pickup"): its 💌 ring full, it's
-// happy and its sigil lies as a rune leash.restAbove metres south of it (Ed, 2026-10-11), moving with it; on the ground within leash.runeRadius, E picks it up
+// happy and its sigil lies as a rune south of it, its top just below its feet (rules/runeOffset.ts), moving with it; on the ground within leash.runeRadius, E picks it up
 // and it's leashed at the bottom of her stack. 💌s no longer fill a second meter. Her hat comes first, then a placed
 // sigil of hers, then the nearest rune. Only happy legends (and legends) have none; pickupDelay holds it back.
 import { afterEach, describe, expect, it } from "vitest";
@@ -7,6 +7,7 @@ import { TUNING } from "./tuning";
 import { affectionOf, newGame, stepGame, type Game } from "./game";
 import { hasRune, runeNear, stateOf, STATES } from "./creatureStates";
 import type { Creature } from "./creatures";
+import { runeOffset } from "./runeOffset";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const saved = { leash: STATES.leash, delay: STATES.pickupDelay };
@@ -18,12 +19,12 @@ function game(): Game {
   g.party.spellAt = undefined;
   return g;
 }
-const S = TUNING.leash.restAbove ?? 0; // (a happy one's rune lies this far south of it, +z)
+const S = (c: Pick<Creature, "species" | "level">) => runeOffset(c, TUNING); // (a happy one's rune lies this far south of it, +z, by its size)
 const at = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; };
 /** A wild creature brought so its rune lies at (x, z) (it stands S north of it), made happy by filling its 💌 meter. */
 function happyAt(g: Game, x: number, z: number, skip: number[] = []): Creature {
   const c = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild" && !skip.includes(k.id) && Math.hypot(k.x - x, k.z - z) > 200)!;
-  z -= S;
+  z -= S(c);
   Object.assign(c, { x, z, tx: x, tz: z, wanderTo: undefined, fleeUntil: undefined });
   const A = affectionOf(g);
   for (let i = 0; i < 40 && stateOf(c) === "wild"; i++) A.hit(c, TUNING.invites.amount, g.clock.time);
@@ -45,7 +46,7 @@ describe("leashing a happy creature by its sigil rune", () => {
     press(g);
     expect(c.leashed).toBeFalsy();
     // Beside it (it may have wandered a step: still within reach).
-    at(g, c.x + 0.5, c.z + S); // (on its rune)
+    at(g, c.x + 0.5, c.z + S(c)); // (on its rune)
     const ev = press(g);
     expect(c.leashed).toBe(true);
     expect(stateOf(c)).toBe("leashed");
@@ -65,7 +66,7 @@ describe("leashing a happy creature by its sigil rune", () => {
     // (south of her: it walks round her, and the follower just leashed, to bring its rune to her feet)
     const P = TUNING.leash.runePull, o = happyAt(g, g.witch.x, g.witch.z + P.radius - 1);
     for (let i = 0; i < 6 * 60; i++) stepGame(g, C, 1 / 60);
-    const d = Math.hypot(o.x - g.witch.x, o.z + S - g.witch.z); // (its rune comes to her)
+    const d = Math.hypot(o.x - g.witch.x, o.z + S(o) - g.witch.z); // (its rune comes to her)
     expect(d).toBeLessThan(P.stop + 0.5);
     expect(d).toBeGreaterThan(P.stop - 0.5);
     press(g);
@@ -80,11 +81,11 @@ describe("leashing a happy creature by its sigil rune", () => {
       const x = g.witch.x, z = g.witch.z;
       // a follower of hers, standing where the creature would walk: between it and the spot north of her that puts its rune at her feet
       const f = g.creatures.find(k => !k.boss && k.level < 3 && stateOf(k) === "wild" && Math.hypot(k.x - x, k.z - z) > 200)!;
-      Object.assign(f, { leashed: true, state: "leashed", x: x + ux * 1.5, z: z - S / 2 + uz * 1.5, tx: x + ux * 1.5, tz: z - S / 2 + uz * 1.5 });
+      Object.assign(f, { leashed: true, state: "leashed", x: x + ux * 1.5, z: z - S(f) / 2 + uz * 1.5, tx: x + ux * 1.5, tz: z - S(f) / 2 + uz * 1.5 });
       W.leash.stack.push(f.id);
       const o = happyAt(g, x + ux * (P.radius - 1), z + uz * (P.radius - 1), [f.id]);
       for (let i = 0; i < 12 * 60; i++) { at(g, x, z); stepGame(g, C, 1 / 60); }
-      const d = Math.hypot(o.x - x, o.z + S - z);
+      const d = Math.hypot(o.x - x, o.z + S(o) - z);
       expect(d, `from ${ux},${uz}`).toBeLessThan(P.stop + 0.5);
     }
   }, 120000);
@@ -146,10 +147,10 @@ describe("leashing a happy creature by its sigil rune", () => {
     const c = happyAt(g, g.witch.x + 0.6, g.witch.z);
     expect(hasRune(c)).toBe(true); // (it has one: the view shows it popping out)
     expect(hasRune(c, g.clock.time)).toBe(false);
-    at(g, c.x, c.z + S); press(g);
+    at(g, c.x, c.z + S(c)); press(g);
     expect(c.leashed).toBeFalsy();
     for (let i = 0; i < 60; i++) stepGame(g, C, 1 / 60);
-    at(g, c.x, c.z + S); press(g);
+    at(g, c.x, c.z + S(c)); press(g);
     expect(c.leashed).toBe(true);
   }, 60000);
 });

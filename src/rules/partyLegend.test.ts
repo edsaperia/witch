@@ -1,5 +1,5 @@
 // The party-legend Easter egg (Ed, 2026-10-06; rules/partyLegend.ts): only a happy legend takes 💌s, 100 of them, draining
-// slowly; full, it's a party legend (its buff kept, fighting no one, its rune south of it, leash.restAbove away); picked up, it never comes to
+// slowly; full, it's a party legend (its buff kept, fighting no one, its rune south of it, by its size); picked up, it never comes to
 // her and she can't go a step past legends.partyReach of it, on the ground, over the treetops or by a blink; put down,
 // it's let go where it stands and she's free; knocked out, it's let go too.
 import { describe, expect, it } from "vitest";
@@ -8,6 +8,7 @@ import { affectionOf, hitWitch, newGame, stepGame, type Game } from "./game";
 import { hasRune, stateOf } from "./creatureStates";
 import { targetable } from "./combat";
 import type { Creature } from "./creatures";
+import { runeOffset } from "./runeOffset";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const E = TUNING.legends;
@@ -31,7 +32,7 @@ function leashed(): { g: Game; L: Creature } {
   const { g, L } = game();
   L.legendState = "happy"; L.buffed = true;
   fill(g, L, E.partyHits);
-  g.witch = { ...g.witch, x: L.x + 1, z: L.z + (TUNING.leash.restAbove ?? 0) }; // (on its rune, south of it)
+  g.witch = { ...g.witch, x: L.x + 1, z: L.z + runeOffset(L, TUNING) }; // (on its rune, south of it)
   press(g);
   expect(L.leashed).toBe(true);
   return { g, L };
