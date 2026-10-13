@@ -1,15 +1,22 @@
 // A Web Worker that draws sprite sets off the page's thread, so flying into a new kind of forest
-// never stutters. It answers each job with the packed atlas pixels.
+// never stutters. It answers each job with the packed atlas pixels, and keeps the art cache itself (render/artCache.ts,
+// IndexedDB, when the job carries its cache key): a set drawn before comes back from the cache (`cached`), a new one is written
+// before it's sent on, so the page never clones a set's megabytes (the coordinator's stall hunt, 2026-10-13: each set arriving
+// was a 30 to 70 ms write on the page's thread, and the garbage collector's 30 to 50 ms after it).
 import { runJob, transferables, type ArtJob } from "./artBuild";
+import { cacheGet, cachePut, type CacheHint } from "./artCache";
 
 const mk = (w: number, h: number) => new OffscreenCanvas(w, h);
+const post = (m: unknown, t: Transferable[] = []) => (self as unknown as Worker).postMessage(m, t);
 
-self.onmessage = (e: MessageEvent<ArtJob>) => {
-  const job = e.data;
+self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
+  const job = e.data, key = job.cacheKey ?? null;
   try {
+    if (key) { const hit = await cacheGet(key); if (hit?.px) { post({ job, result: hit, ms: 0, cached: true }, transferables(hit)); return; } }
     const t0 = performance.now(), result = runJob(job, mk), ms = performance.now() - t0;
-    (self as unknown as Worker).postMessage({ job, result, ms }, transferables(result));
+    if (key) await cachePut(key, result); // (copied as it's put, before its buffers are sent on)
+    post({ job, result, ms }, transferables(result));
   } catch (err) {
-    (self as unknown as Worker).postMessage({ job, error: String(err) });
+    post({ job, error: String(err) });
   }
 };
