@@ -1,29 +1,36 @@
 {
   "builder": "Alpha",
   "phase": "The journey's new animals (2026-10-12/13)",
-  "slice": "The arctic fox and its snowfield (#775), the ibex and its crags (#782): the first two placeholder kinds of the cold north and the mountains made real, and the snow leopard's mock",
+  "slice": "The cold north's and the mountains' first animals: the arctic fox and its snowfield (#775), the ibex and its crags (#782), the snow leopard and its icefall (#828), and the frost troll and its trollwood (#831), each from a placeholder kind to a creature with its own area, legend and gift",
   "prs": [
     775,
-    782
+    782,
+    828,
+    831
   ],
   "built": [
-    "The arctic fox (#775): a round white fox with a huge brush, its kit grey-brown and puff-tailed, its legend an aurora fox with three great tails glowing at their tips; it pounces like a fox mousing in the snow, and its legend's gift is Pounce. Its area, the snowfield: deep snow under groves of snow-laden firs and dwarf birch, a ring of old stones half buried in a drift",
-    "The ibex (#782): a stocky wild goat whose horns grow from nothing on the kid to great knobbled scimitars, its legend a glacier ibex with ice-tipped horns; it backs off and charges like the ram, and its gift is Sure-footed. Its area, the crags: lichened rock and glacier ice, rock spires, wind-bent larch, and (Ed: \"even crags should have shrubs and maybe olive trees\") broom, juniper and heather among the stones and a new tree, the wild olive",
-    "The set-piece generator takes an area's own colours over its genome's (`colour`: stone, dark, wood, moss, lichen), so the crags' rubble heap is cold grey; a heap with no moss has none at all"
+    "The arctic fox (#775): a round white fox with a huge brush, its kit grey-brown and puff-tailed, its legend the oldest of the white foxes, shaggy and frost-muzzled, one vast tufted brush (a new tail kind, `plume`) and stone beads round its legs; it pounces like a fox mousing in the snow, and its legend's gift is Snow pounce. Its area, the snowfield: deep snow under groves of snow-laden firs and dwarf birch, a ring of old stones half buried in a drift",
+    "The ibex (#782): a stocky wild goat whose horns grow from nothing on the kid to great knobbled scimitars, its legend the peaks' oldest, its horns grown vast and knobbled, bearded and lichened, stone beads round its legs; it backs off and charges like the ram, and its gift is Sure-footed. Its area, the crags: lichened rock and glacier ice, rock spires, wind-bent larch, and (Ed: \"even crags should have shrubs and maybe olive trees\") broom, juniper and heather among the stones and a new tree, the wild olive",
+    "The set-piece generator takes an area's own colours over its genome's (`colour`: stone, dark, wood, moss, lichen), so the crags' rubble heap is cold grey; a heap with no moss has none at all",
+    "The snow leopard (#828): a long, low, pale smoky cat whose ringed tail is as long as its body (a new tail kind, `banner`), its elder's tail grown so long it wears it round its shoulders and chest like a stole (`scarf`); it leaps on you from further off than the lynx, and its gift is Ghost of the peaks. Its area, the icefall: glacier ice and old snow, cairns and leaning standing stones, stunted pines, rowan and dwarf birch in the lee of the rocks",
+    "The frost troll (#831): the quad builder drew it as a mossy bear, so it has its own upright builder, `troll3d`: hunched, its face turned to us, big round eyes, a rosy bulb of a nose, a white beard and long arms down to its knuckles; the kid all eyes with a tooth over its lip, the elder half turned to stone from its feet up (`coat.stone`), heavy-lidded and beaded. Slow and heavy like the bear; its gift is Long stride. Its area, the trollwood: weeping birch hung with frost and dark pines, an iced stream and snow-capped boulders that might be sleeping trolls",
+    "The elders, after the art guide's rule (a legend is the oldest of its kind, not a glowing monster): the fox's, the ibex's and the snow leopard's legends redrawn with age, weather and offerings instead of glow, crests and crystals"
   ],
   "learned": [
     "The preview sheets are lit by a warm studio light, so a white coat or a blue-grey stone reads yellow or olive there; judge colours against a neighbour on the same sheet, or with NIGHT=1 as the game lights them",
     "Every new area type used to reshuffle every seed's classic map and break the tests pinned to a seed; the journey's kinds now come only by their islands' rosters, so a new one changes no old map",
-    "With many builders adding animals at once, the same few lines (the area recipe list, the sigil neons, the movement bodies) collide on every merge: put new entries away from the others' where the file allows"
+    "With many builders adding animals at once, the same few lines (the area recipe list, the sigil neons, the movement bodies) collide on every merge: put new entries away from the others' where the file allows",
+    "A builder made for four legs can't be bent into a biped: no setting of the quad's hump, front and neck stood the troll up. A small builder of its own (about sixty lines) did it at once",
+    "When four PRs are stacked, every base merge has to be resolved four times, and a line the merge tool takes from both sides (a key twice in an object, an import below the list that uses it) can pass the tests and still break typecheck or the Art Lab's bundle: typecheck and load the lab after every merge, not just the tests"
   ],
   "previews": [
     {
       "src": "media/builders/alpha-arcticfox.webp",
-      "caption": "The arctic fox's mock: kit, young, adult and the aurora-fox legend, the snowfield's floor, trees and set piece"
+      "caption": "The arctic fox's first mock: kit, young, adult and the aurora-fox legend (since redrawn as the elder), the snowfield's floor, trees and set piece"
     },
     {
       "src": "media/builders/alpha-ibex.webp",
-      "caption": "The ibex from hornless kid to glacier legend"
+      "caption": "The ibex from hornless kid to its first, glacier legend (since redrawn as the elder)"
     },
     {
       "src": "media/builders/alpha-crags.webp",
@@ -32,6 +39,18 @@
     {
       "src": "media/builders/alpha-olive.webp",
       "caption": "The new wild olive beside the crab apple and the larch"
+    },
+    {
+      "src": "media/builders/alpha-snowleopard-elder.webp",
+      "caption": "The snow leopard from cub to elder: above, the first elder with its tail as a scarf; below, Ed's pick, the tail worn round its shoulders like a stole"
+    },
+    {
+      "src": "media/builders/alpha-frosttroll.webp",
+      "caption": "The frost troll from kid to elder on its own upright builder: big eyes, a rosy nose, a white beard and long arms on its knuckles"
+    },
+    {
+      "src": "media/builders/alpha-frosttroll-elder.webp",
+      "caption": "The troll's elder asleep (two breaths), a mossed hill with its nose and beard showing, and awake, stone creeping up its legs"
     }
   ]
 }
