@@ -147,6 +147,12 @@ export const GENOMES = [
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
     // of standing stones down its back and tail root, its eyes glowing just above the water line
     levels: [null, null, null, { body: { len: 2.3, bw: .62, hr: .38 }, head: { snout: 5, snoutD: 1.05, jawW: .78 }, features: [{ kind: "stones", from: .05, to: .95, count: 8, height: 1.05 }, { kind: "eyeglint", size: .05 }, { kind: "scars", count: 4, len: .55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: .04, ry: .32, rz: .82, rings: [.3, .5] }] }] },
+  // the bushveld's rhino (an area recipe's, phase 4): a grey hulk, a great horn on its nose and a smaller one behind it, its hide in folds
+  { id: "rhino", name: "Rhino", template: "quadruped", builder: "quad", palette: { hue: .58, sat: .05, val: .46 }, body: { hgt: 1.15, len: .98, chest: .42, tuck: .44, neck: .24, neckAng: -.18, neckW: .75, hr: .36, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: .48 }, head: { snout: 1.35, snoutD: .78, snoutTaper: .7, noseHorn: 1 }, parts: { ears: { kind: "small", size: 1 }, tail: "thin", feet: "hoof" }, coat: { folds: [-.55, .35] }, legend: [], texture: { kind: "scales", size: 9, contrast: .18 },
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: one giant horn; the legend
+    // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
+    // necklace of offerings, the hump a hill
+    levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;

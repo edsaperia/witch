@@ -337,12 +337,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-23": {
+    "rhino": {
       "phase": 4,
       "bearing": 165,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "cheetah": {
       "phase": 4,
