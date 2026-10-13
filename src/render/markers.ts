@@ -178,11 +178,11 @@ export class MarkerFx {
     this.beams.instanceMatrix.needsUpdate = true;
     this.beamAttr.needsUpdate = true;
     (this.beams.material as THREE.ShaderMaterial).uniforms.uShown.value = shown;
-    const m = Math.min(this.maxMotes, motes.length);
+    const m = Math.min(this.maxMotes, motes.length), P = this.mPos, C = this.mCol;
     for (let i = 0; i < m; i++) {
-      const p = motes[i];
-      this.mPos.set([p.x, p.y, p.z], i * 3);
-      this.mCol.set([p.colour.x, p.colour.y, p.colour.z, p.alpha], i * 4);
+      const p = motes[i], c = p.colour, j3 = i * 3, j4 = i * 4; // (written straight in: a list a mote a frame before)
+      P[j3] = p.x; P[j3 + 1] = p.y; P[j3 + 2] = p.z;
+      C[j4] = c.x; C[j4 + 1] = c.y; C[j4 + 2] = c.z; C[j4 + 3] = p.alpha;
     }
     const g = this.motes.geometry;
     g.setDrawRange(0, m);

@@ -7,6 +7,14 @@ export type { Baked, Frame, FrameGround };
 export { groundOf };
 export interface Atlas { albedo: THREE.DataTexture; normal: THREE.DataTexture; frames: Frame[]; /** each frame's ground (witches' atlases), or null */ grounds?: (FrameGround | null)[] }
 
+/** Whether the atlases keep their pixels on the page after the GPU has them (`?pixels=keep`: the full smoke test reads them for its
+ *  floating check). Otherwise each page's albedo and normal pixels are let go once uploaded: the churn hunt at Ed's spot
+ *  (2026-10-13) found 360 MB of them held, growing 70 MB a minute as art was baked ahead, and that growth of memory outside
+ *  the JavaScript heap is what made the browser stop for its big collections (100 ms and more), not the frames' own garbage. */
+let keepPixels = false;
+export function keepAtlasPixels(keep: boolean): void { keepPixels = keep; }
+const freePixels = (t: THREE.Texture): void => { if (!keepPixels) (t.image as { data: Uint8Array | null }).data = null; t.onUpdate = null; }; // (once: three.js calls it after each upload)
+
 function texture(data: Uint8Array, w: number, h: number): THREE.DataTexture {
   const t = new THREE.DataTexture(data, w, h, THREE.RGBAFormat, THREE.UnsignedByteType);
   t.magFilter = THREE.NearestFilter;
@@ -15,6 +23,7 @@ function texture(data: Uint8Array, w: number, h: number): THREE.DataTexture {
   t.flipY = false;
   t.colorSpace = THREE.NoColorSpace;
   t.needsUpdate = true;
+  t.onUpdate = freePixels;
   return t;
 }
 

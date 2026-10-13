@@ -117,6 +117,11 @@ export interface ViewStats { berries: number; forestMs: number; forestMissing: n
 export const HAT_BESIDE = 0.9;
 export const HAT_INK = new THREE.Vector3(232 / 255, 180 / 255, 106 / 255); // (the HUD's one accent)
 
+/** The deck's one warm lantern (over the map table): its colour, made once. */
+const DECK_LANTERN_RGB = new THREE.Vector3(1, 0.72, 0.42);
+let DROPPED = 0;
+const addDropped = (b: { dropped: number }): void => { DROPPED += b.dropped; };
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -317,6 +322,11 @@ export class View {
     const t = game.tuning;
     this.budget = newBudget(t);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
+    // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
+    // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
+    // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
+    // tiles wouldn't have come back either).
+    canvas.addEventListener("webglcontextrestored", () => { console.warn("view: the GL context was lost and restored: reloading"); location.reload(); });
     this.renderer.setPixelRatio(1);
     this.renderer.info.autoReset = false; // count every pass of a frame, reset in render()
     this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // colours are the art's own sRGB values, untouched
@@ -888,7 +898,7 @@ export class View {
       this.mapTable.update(tp && deck ? { x: tp.x, y: tp.y + groundHeight(deck.x, deck.z) + 0.02, z: tp.z } : null, deck ? Math.hypot(w.x - deck.x, w.z - deck.z) : Infinity, canopyShown(w) < 0.05, ht);
     }
     const thLights: ForestLight[] = deck // (the deck: one warm lantern over it, at the map table)
-      ? [{ x: deck.x, y: groundHeight(deck.x, deck.z) + deck.h + 3, z: deck.z, reach: t.treehouse.lightReach, rgb: new THREE.Vector3(1, 0.72, 0.42), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3)) }]
+      ? [{ x: deck.x, y: groundHeight(deck.x, deck.z) + deck.h + 3, z: deck.z, reach: t.treehouse.lightReach, rgb: DECK_LANTERN_RGB, strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3)) }]
       : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
         ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),
       }));
@@ -977,8 +987,9 @@ export class View {
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
-    let dropped = 0;
-    for (const b of [...this.typeBatches.values(), ...this.creatureBatches.values(), this.propBatch, this.soundBatch, ...(this.speakerBatch ? [this.speakerBatch] : [])]) dropped += b.dropped;
+    DROPPED = this.propBatch.dropped + this.soundBatch.dropped + (this.speakerBatch?.dropped ?? 0);
+    this.typeBatches.forEach(addDropped); this.creatureBatches.forEach(addDropped); // (no list of every batch a frame)
+    const dropped = DROPPED;
     if (dropped && !this.stats.dropped) console.warn(`view: ${dropped} sprite instances set but not drawn`);
     this.stats.dropped = dropped;
     this.stats.drawCalls = this.renderer.info.render.calls;

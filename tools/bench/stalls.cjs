@@ -12,7 +12,13 @@
 // NODRAW=1 (the default) makes the renderer's draw a no-op, so the loop runs at the display's 60 Hz as on Ed's machine and a
 // wall second is a game second (the draw's own JavaScript, a few ms a frame on his machine, is measured by hitch.cjs instead);
 // NODRAW=0 draws, at a frame a second in the cloud.
-//   node tools/bench/stalls.cjs [out dir]   DIST=dist-prof SEED=2267 X=2673 Z=2484 ZOOM=3 SECONDS=60 SIZE=640x360 WARM=8 RUN_MS=50 NODRAW=1
+// HEAP=1 also records Chromium's sampling heap profiler over the same run (every allocation by function, sampled every
+// HEAP_EVERY bytes) and reports the top allocators: KB a frame (over the game seconds at 60 Hz) and their share, with url:line,
+// self (the function that made the object) and by named chain (<out>/stalls.heapprofile): the churn behind the collector's time.
+// HEAP=live counts only what is still alive at the end (the allocations the collector couldn't free): the heap's growth, by
+// function. Either way the heap is sampled every quarter second (heapCurve: seconds, MB) and its floors (the least seen in each
+// 5 s: what's live, under the garbage) reported first to last.
+//   node tools/bench/stalls.cjs [out dir]   DIST=dist-prof SEED=2267 X=2673 Z=2484 ZOOM=3 SECONDS=60 SIZE=640x360 WARM=8 RUN_MS=50 NODRAW=1 HEAP=0 HEAP_EVERY=4096
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -25,6 +31,34 @@ const out = path.resolve(process.argv[2] || path.join(__dirname, "../../bench-ou
 const SEED = env("SEED", "2267"), X = Number(env("X", 2673)), Z = Number(env("Z", 2484)), ZOOM = Number(env("ZOOM", 3));
 const SECONDS = Number(env("SECONDS", 60)), WARM = Number(env("WARM", 8)), RUN_MS = Number(env("RUN_MS", 50));
 const [W, H] = env("SIZE", "640x360").split("x").map(Number), NODRAW = env("NODRAW", "1") !== "0";
+const HEAP = env("HEAP", "0") !== "0", HEAP_LIVE = env("HEAP", "0") === "live", HEAP_EVERY = Number(env("HEAP_EVERY", 4096));
+const SNAP = env("SNAP", "0") !== "0"; // (a heap snapshot at the start and the end: <out>/start.heapsnapshot, end.heapsnapshot; tools/bench/heapdiff.cjs says what grew)
+/** A heap snapshot written to `file` (its chunks as the profiler sends them). */
+async function snapshot(cdp, file) {
+  const chunks = [], on = e => chunks.push(e.chunk);
+  cdp.on("HeapProfiler.addHeapSnapshotChunk", on);
+  await cdp.send("HeapProfiler.collectGarbage");
+  await cdp.send("HeapProfiler.takeHeapSnapshot", { reportProgress: false, captureNumericValue: false });
+  cdp.off("HeapProfiler.addHeapSnapshotChunk", on);
+  fs.writeFileSync(file, chunks.join(""));
+}
+const COUNT = env("COUNT", "0") !== "0"; // (count the live objects by kind at the start and the end, and collect the garbage at the end: what the heap's growth is made of)
+const KINDS = ["Object", "Array", "Function", "Map", "Set", "Float32Array", "Float64Array", "Int32Array", "Uint16Array", "Uint8Array", "Uint8ClampedArray", "ArrayBuffer", "ImageData", "Promise", "String"];
+/** How many objects of each kind are alive now (Runtime.queryObjects on the kind's prototype), after a full collection. */
+async function countKinds(cdp) {
+  await cdp.send("HeapProfiler.collectGarbage");
+  const out = {};
+  for (const k of KINDS) {
+    const { result: proto } = await cdp.send("Runtime.evaluate", { expression: `${k}.prototype` });
+    const { objects } = await cdp.send("Runtime.queryObjects", { prototypeObjectId: proto.objectId });
+    const { result: n } = await cdp.send("Runtime.callFunctionOn", { objectId: objects.objectId, functionDeclaration: "function () { return this.length; }", returnByValue: true });
+    out[k] = n.value;
+    await cdp.send("Runtime.releaseObject", { objectId: objects.objectId }); await cdp.send("Runtime.releaseObject", { objectId: proto.objectId });
+  }
+  const { usedSize } = await cdp.send("Runtime.getHeapUsage");
+  out.heapMb = Math.round(usedSize / 1e6);
+  return out;
+}
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".woff2": "font/woff2", ".webp": "image/webp", ".ogg": "audio/ogg", ".wasm": "application/wasm" };
 
 function serve() {
@@ -48,7 +82,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto`);
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
   lap("ready");
-  if (NODRAW) await page.evaluate(() => { const r = window.witch.view.renderer; r.render = () => {}; });
+  // (NODRAW: the draw a no-op, but any texture not yet on the GPU is still uploaded, as the first draw that used it would: the
+  // atlases let their pixels go once uploaded (render/atlas.ts), and the upload is the page's own work too)
+  if (NODRAW) await page.evaluate(() => { const r = window.witch.view.renderer; r.render = scene => { scene.traverse(o => { const u = o.material && o.material.uniforms; if (!u) return; for (const k in u) { const v = u[k].value; if (v && v.isTexture && v.image && v.image.data && v.version > 0 && !v.__up) { v.__up = v.version; r.initTexture(v); } } }); }; });
   // The long animation frames (Chrome 123+): their length and the scripts that took the most.
   await page.evaluate(() => {
     window.__loaf = [];
@@ -63,17 +99,30 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);
   stalls.length = 0;
-  await page.evaluate(() => { window.__loaf.length = 0; });
+  // The frames themselves: the gap between one animation frame and the next, from a requestAnimationFrame loop of the
+  // probe's own beside the game's (over 20 ms a dropped frame at 60 Hz, over 50 and 100 ms a hitch).
+  await page.evaluate(() => { window.__loaf.length = 0; window.__gaps = []; let last = performance.now(); const tick = t => { window.__gaps.push(t - last); last = t; requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 500 }); await cdp.send("Profiler.start");
+  if (HEAP) { await cdp.send("HeapProfiler.enable"); await cdp.send("HeapProfiler.startSampling", { samplingInterval: HEAP_EVERY, includeObjectsCollectedByMajorGC: !HEAP_LIVE, includeObjectsCollectedByMinorGC: !HEAP_LIVE }); }
+  await page.evaluate(() => { window.__heap = []; const t0 = performance.now(); window.__heapTimer = setInterval(() => window.__heap.push([Math.round(performance.now() - t0) / 1000, Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1e5) / 10]), 250); });
+  if (SNAP) { await cdp.send("HeapProfiler.enable"); await snapshot(cdp, path.join(out, "start.heapsnapshot")); lap("snapshot at the start"); }
+  const counts0 = COUNT ? await countKinds(cdp) : null;
   const heap0 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0), tg0 = await page.evaluate(() => window.witch.game.clock.time);
   lap(`profiling ${SECONDS} s`);
   await wait(SECONDS * 1000);
   const { profile } = await cdp.send("Profiler.stop");
+  const heapProfile = HEAP ? (await cdp.send("HeapProfiler.stopSampling")).profile : null;
   const tg1 = await page.evaluate(() => window.witch.game.clock.time), heap1 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0);
+  const counts1 = COUNT ? await countKinds(cdp) : null; // (after a full collection: what grew is kept, not garbage)
+  if (SNAP) { await snapshot(cdp, path.join(out, "end.heapsnapshot")); lap("snapshot at the end"); }
+  const gaps = await page.evaluate(() => { const g = window.__gaps.slice(1); window.__gaps = []; return g; });
+  const heapCurve = await page.evaluate(() => { clearInterval(window.__heapTimer); return window.__heap; });
+  const heapFloors = []; for (let w = 0; w * 5 < SECONDS; w++) { const inWin = heapCurve.filter(([t]) => t >= w * 5 && t < (w + 1) * 5).map(([, mb]) => mb); if (inWin.length) heapFloors.push(Math.min(...inWin)); }
   const loaf = await page.evaluate(() => window.__loaf), overlay = await page.evaluate(() => { const g = window.witch.game, v = window.witch.view; return { creatures: g.creatures.length, stats: v.stats ? { trees: v.stats.trees, bushes: v.stats.bushes, draws: v.stats.draws ?? v.stats.calls } : null }; });
   lap(`done: ${(tg1 - tg0).toFixed(1)} s of game time; ${stalls.length} stalls logged by the game; ${loaf.length} long animation frames`);
   fs.writeFileSync(path.join(out, "stalls.cpuprofile"), JSON.stringify(profile));
+  if (heapProfile) fs.writeFileSync(path.join(out, "stalls.heapprofile"), JSON.stringify(heapProfile));
   // The profile, read: self time a function, inclusive time a subsystem, runs of JavaScript.
   const nodes = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();
   for (const n of profile.nodes) for (const c of n.children ?? []) parent.set(c, n.id);
@@ -100,20 +149,46 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   }
   if (run && run.ms >= RUN_MS) runs.push(run);
   const top = [...self].sort((a, b) => b[1] - a[1]).slice(0, 40);
+  const sorted = gaps.slice().sort((a, b) => a - b), pct = q => Math.round(sorted[Math.min(sorted.length - 1, Math.floor(q * sorted.length))] ?? 0);
+  const frames = { n: gaps.length, over20: gaps.filter(g => g >= 20).length, over50: gaps.filter(g => g >= 50).length, over100: gaps.filter(g => g >= 100).length, p50: pct(0.5), p99: pct(0.99), worst: Math.round(sorted[sorted.length - 1] ?? 0) };
   const report = {
-    spot: where, seconds: SECONDS, gameSeconds: Math.round((tg1 - tg0) * 10) / 10, totalMs: Math.round(total / 1000), idleMs: Math.round(idle), gcMs: Math.round(gc), programMs: Math.round(program),
-    heapMb: [Math.round(heap0 / 1e6), Math.round(heap1 / 1e6)], overlay, errors: errors.slice(0, 10), stalls: stalls.slice(0, 30), loaf: loaf.slice(0, 40),
+    spot: where, seconds: SECONDS, gameSeconds: Math.round((tg1 - tg0) * 10) / 10, totalMs: Math.round(total / 1000), idleMs: Math.round(idle), gcMs: Math.round(gc), programMs: Math.round(program), frames,
+    heapMb: [Math.round(heap0 / 1e6), Math.round(heap1 / 1e6)], heapFloors, heapCurve, counts: counts0 && counts1 ? { before: counts0, after: counts1 } : undefined, overlay, errors: errors.slice(0, 10), stalls: stalls.slice(0, 30), loaf: loaf.slice(0, 40),
     systems: Object.fromEntries([...incl].map(([k, v]) => [k, Math.round(v)])), selfTop: top.map(([k, v]) => [k, Math.round(v)]),
     chainsTop: [...chains].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, Math.round(v)]),
     runs: runs.sort((a, b) => b.ms - a.ms).slice(0, 25).map(r => ({ ms: Math.round(r.ms), made: [...r.top].sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => `${k} ${Math.round(v)}`) })),
   };
+  // The allocations (HEAP=1): self bytes by function, and by named chain, over the game's frames.
+  if (heapProfile) {
+    const frames = Math.max(1, (tg1 - tg0) * 60), bySelf = new Map(), byChain = new Map(); let bytes = 0;
+    const walk = (n, chain) => {
+      const f = n.callFrame, name = f.functionName || "(anonymous)", k = `${name} ${(f.url || "").split("/").pop()}:${f.lineNumber + 1}`;
+      const named = name !== "(root)" && !name.startsWith("(anonymous") ? [...chain, name].slice(-CHAIN) : chain;
+      bySelf.set(k, (bySelf.get(k) ?? 0) + n.selfSize); bytes += n.selfSize;
+      if (n.selfSize) { const c = named.join(">") || k; byChain.set(c, (byChain.get(c) ?? 0) + n.selfSize); }
+      for (const ch of n.children ?? []) walk(ch, named);
+    };
+    walk(heapProfile.head, []);
+    const kbf = v => Math.round((v / frames / 1024) * 100) / 100;
+    report.alloc = { kbPerFrame: kbf(bytes), frames: Math.round(frames), every: HEAP_EVERY,
+      selfTop: [...bySelf].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, kbf(v), Math.round((1000 * v) / bytes) / 10]),
+      chainsTop: [...byChain].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, kbf(v), Math.round((1000 * v) / bytes) / 10]) };
+  }
   fs.writeFileSync(path.join(out, "stalls.json"), JSON.stringify(report, null, 1));
   console.log(`profile ${report.totalMs} ms: idle ${report.idleMs}, program ${report.programMs}, gc ${report.gcMs}; heap ${report.heapMb.join(" -> ")} MB`);
+  console.log(`heap floors (MB, the least seen each 5 s): ${heapFloors.join(" ")}`);
+  if (counts0 && counts1) { console.log(`live objects after a full collection, start -> end (heap ${counts0.heapMb} -> ${counts1.heapMb} MB):`); for (const k of Object.keys(counts1)) if (k !== "heapMb") console.log(`  ${k.padEnd(18)} ${String(counts0[k]).padStart(9)} -> ${String(counts1[k]).padStart(9)}  (${counts1[k] - counts0[k] >= 0 ? "+" : ""}${counts1[k] - counts0[k]})`); }
+  console.log(`frames: ${frames.n}, over 20 ms ${frames.over20} (${Math.round((100 * frames.over20) / Math.max(1, frames.n))}%), over 50 ms ${frames.over50}, over 100 ms ${frames.over100}; p50 ${frames.p50} ms, p99 ${frames.p99} ms, worst ${frames.worst} ms`);
   console.log("by subsystem (inclusive ms):", report.systems);
   console.log("self time, top 25:"); for (const [k, v] of top.slice(0, 25)) console.log(`  ${String(v).padStart(6)} ms  ${k}`);
   console.log("call chains, top 25 (ms):"); for (const [k, v] of report.chainsTop.slice(0, 25)) console.log(`  ${String(v).padStart(6)} ms  ${k}`);
   console.log(`runs of JavaScript over ${RUN_MS} ms: ${runs.length}`); for (const r of report.runs.slice(0, 12)) console.log(`  ${String(r.ms).padStart(5)} ms  ${r.made.join("; ")}`);
   console.log(`long animation frames: ${loaf.length}`); for (const l of loaf.slice(0, 12)) console.log(`  ${l.ms} ms: ${l.scripts.join(" | ")}`);
   console.log("the game's stall log:"); for (const s of stalls.slice(0, 12)) console.log("  " + s.slice(0, 200));
+  if (report.alloc) {
+    console.log(`${HEAP_LIVE ? "kept (still alive at the end)" : "allocated"}: ${report.alloc.kbPerFrame} KB a frame over ${report.alloc.frames} frames (sampled every ${HEAP_EVERY} bytes)`);
+    console.log("allocators, self, top 30 (KB a frame, share):"); for (const [k, v, p] of report.alloc.selfTop.slice(0, 30)) console.log(`  ${String(v).padStart(8)}  ${String(p).padStart(5)}%  ${k}`);
+    console.log("allocators by chain, top 25:"); for (const [k, v, p] of report.alloc.chainsTop.slice(0, 25)) console.log(`  ${String(v).padStart(8)}  ${String(p).padStart(5)}%  ${k}`);
+  }
   await browser.close(); server.close();
 })().catch(e => { console.error(e); process.exit(1); });

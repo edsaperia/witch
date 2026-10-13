@@ -1,0 +1,20 @@
+{
+  "builder": "Juliet",
+  "phase": "Housekeeping and performance, 2026-10-13",
+  "slice": "The creature, flora, area and decisions registries split one file a thing so builders stop colliding; the art check sharded and in CI; the treetop stalls and the garbage behind them",
+  "prs": [837, 844, 847, 848, 851, 852, 860, 869, 870, 872, 875],
+  "built": [
+    "One file a thing (#837, #844, #847, #848, #851, #852): a creature is a folder with its genome, sigil, legend, nap and config; a tree species a file with its baseline; an area a folder with its recipe, its kind line and its trees; the decisions a fragment a pull request; the lab pages built, not committed. Each registry's index is generated, each has a check in `npm test`, and an `adopt` that moves a record a merge pastes back into the old array out to its own file.",
+    "The art check (#869, #872): the sprite checks dealt over a pool of pages and the lab pages opened in parallel, 2 hours to 37 minutes with the same output; then in CI, only the creatures and areas a pull request touches, the whole on pushes to the prototype.",
+    "The treetop stalls (#875): a probe that runs the game's own loop at a spot under the sampling profiler and says where the JavaScript's time went. It found the art cache written on the page's thread (the workers keep it now), the reverb impulses a `Math.pow` a sample, and the map table's miniature building every island's meshes on the page.",
+    "The churn behind the collections: the frame's garbage cut by a quarter (the wave pointer's ring worked out once, the creatures', berries', party pieces' and motes' records pooled, the light budget without a record a light), and the real cause found with heap snapshots: the atlases' pixels kept on the page after the GPU had them, 360 MB growing 70 MB a minute, which the browser answered with full, synchronous collections. They're let go once uploaded now."
+  ],
+  "learned": [
+    "The page's memory counter isn't the JavaScript heap. Counting live objects after a forced collection showed the heap proper at 32 MB while the counter said 400; the rest was typed-array pixels outside it, and V8 collects the whole heap, synchronously, each time that outside memory grows past its limit. A sampling allocation profile can't see that growth at all; a snapshot diff by kind can.",
+    "Allocation profiles charge a function for the numbers it passes: a double handed to a call that isn't inlined is boxed, so a hot `inView(x, z, w, h)` reads as allocating 60 bytes a call. Once the lists and records are pooled, what's left is mostly that, and not worth chasing.",
+    "Clearing a Map each frame makes a new table each frame; writing over its entries doesn't. And three.js's `addUpdateRange` makes a record a call, hundreds a frame over the batches: it only reads start and count, so one record a buffer, pushed again, does.",
+    "A benchmark that compares pictures must compare the same art: a branch behind the base by a creature-body change fails the bench for the wrong reason. Merge the base first.",
+    "A registry split by a tool that scans text must treat a quoted key as a key: skipping quoted strings lost 18 entries whose keys had hyphens."
+  ],
+  "previews": []
+}

@@ -39,25 +39,26 @@ export const focusOf = (v: View): { x: number; z: number } => (v.fly ? { x: v.fl
 
 /** The ground rectangle the cameras can see, out to `far` metres from the witch, plus `margin`. */
 export function viewRect(v: View, far: number, margin: number) {
-  const w = focusOf(v), pts: [number, number][] = [];
-  for (const cam of [v.camera, v.cullCam]) {
-    const o = cam.position, reach = far + Math.hypot(o.x - w.x, o.z - w.z) + margin;
-    for (const nx of [-1, 1]) for (const ny of [-1, 1]) {
+  const w = focusOf(v), A = v.game.tuning.ground.hills.on ? v.game.tuning.ground.hills.amplitude : 0;
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity; // (the corners' least and most, no list a frame)
+  for (let ci = 0; ci < 2; ci++) {
+    const cam = ci === 0 ? v.camera : v.cullCam, o = cam.position, reach = far + Math.hypot(o.x - w.x, o.z - w.z) + margin;
+    for (let nx = -1; nx <= 1; nx += 2) for (let ny = -1; ny <= 1; ny += 2) {
       const d = v.v3.set(nx, ny, 1).unproject(cam).sub(o).normalize();
-      const A = v.game.tuning.ground.hills.on ? v.game.tuning.ground.hills.amplitude : 0;
-      for (const h of [-A, 25 + A]) { // (the ground in a valley is seen further off; a hilltop's trees nearer)
+      for (let hi = 0; hi < 2; hi++) { // (the ground in a valley is seen further off; a hilltop's trees nearer)
+        const h = hi === 0 ? -A : 25 + A;
         let t = d.y < -1e-3 ? (h - o.y) / d.y : Infinity;
         // With the bend, the ground drops away under the top of the view: it sees on past where
         // the flat ground would meet it, out to the reach.
         if (!(t > 0) || (ny > 0 && (HEIGHT_UNIFORMS.uBend.value.x > 0 || v.bendTo > 0))) t = Infinity;
         t = Math.min(t, reach);
-        pts.push([o.x + d.x * t, o.z + d.z * t]);
+        const px = o.x + d.x * t, pz = o.z + d.z * t;
+        if (px < minX) minX = px; if (px > maxX) maxX = px; if (pz < minZ) minZ = pz; if (pz > maxZ) maxZ = pz;
       }
     }
-    pts.push([o.x, o.z]);
+    if (o.x < minX) minX = o.x; if (o.x > maxX) maxX = o.x; if (o.z < minZ) minZ = o.z; if (o.z > maxZ) maxZ = o.z;
   }
-  const xs = pts.map(p => p[0]), zs = pts.map(p => p[1]);
-  return { minX: Math.min(...xs) - margin, maxX: Math.max(...xs) + margin, minZ: Math.min(...zs) - margin, maxZ: Math.max(...zs) + margin };
+  return { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin };
 }
 
 /** Whether a sprite standing at (x, z), w wide and h tall, may be on screen now or soon. Nothing

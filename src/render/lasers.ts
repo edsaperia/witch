@@ -21,10 +21,13 @@ void main() { float a = vCol.a * floor(pow(1.0 - vU, 0.6) * 5.0 + 0.5) / 5.0; gl
 
 // Cyan at the core, through blue, violet and magenta to green: the party palette for beams.
 const RAMP = [[0.3, 0.95, 1], [0.35, 0.55, 1], [0.7, 0.4, 1], [1, 0.3, 0.85], [0.45, 1, 0.55]];
-const ramp = (h: number): number[] => {
+const RGB = [0, 0, 0]; // (the ramp's colour, into one list)
+const ramp = (h: number, out = RGB): number[] => {
   const x = (((h % 1) + 1) % 1) * RAMP.length, i = Math.floor(x), f = x - i, a = RAMP[i % RAMP.length], b = RAMP[(i + 1) % RAMP.length];
-  return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  out[0] = a[0] + (b[0] - a[0]) * f; out[1] = a[1] + (b[1] - a[1]) * f; out[2] = a[2] + (b[2] - a[2]) * f;
+  return out;
 };
+const CENTRE0 = { x: 0, z: 0 }, ATTRS = ["position", "aCol", "aU"];
 
 /** A dancefloor ring speaker, for its single laser: its top, its state, and whether it has booted. */
 export interface RingSpeaker { x: number; y: number; z: number; state: "playing" | "damaged" | "destroyed"; powered: boolean }
@@ -42,31 +45,35 @@ export class Lasers {
     scene.add(this.mesh);
   }
 
-  update(time: number, _wx: number, _wz: number, ring: RingSpeaker[] = [], centre = { x: 0, z: 0 }): void {
+  update(time: number, _wx: number, _wz: number, ring: RingSpeaker[] = [], centre = CENTRE0): void {
     const t = this.game.tuning, L = t.lasers;
-    const verts: number[] = [], cols: number[] = [], us: number[] = [];
     // The dancefloor's ring (Ed, 2026-10-04): one laser from the top of each speaker, mostly
     // upwards, sweeping slowly on the beat, neighbours out of phase, so the ring wears a crown of
     // moving beams in the party neons. Damaged ones flicker; destroyed ones (and ones not yet booted) have none.
-    const S = t.speakerLasers, bt = beatTime(this.game.beat, time), beats = (bt * t.beat.bpm) / 60;
-    if (L.on && S.on) ring.forEach((sp, i) => {
-      if (!sp || !sp.powered || sp.state === "destroyed") return;
-      if (sp.state === "damaged" && Math.sin(time * 23 + i * 5.1) + Math.sin(time * 37 + i) < 0.4) return;
+    const S = t.speakerLasers, bt = beatTime(this.game.beat, time), beats = (bt * t.beat.bpm) / 60, on = L.on && S.on;
+    // (written straight into the buffers, room for one a speaker: three lists and a colour a laser a frame before)
+    if (on && ring.length * 6 > this.pos.length) { this.pos = new Float32Array(ring.length * 6 * 2); this.col = new Float32Array(ring.length * 8 * 2); this.u = new Float32Array(ring.length * 2 * 2);
+      this.geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
+      this.geo.setAttribute("aCol", new THREE.BufferAttribute(this.col, 4).setUsage(THREE.DynamicDrawUsage));
+      this.geo.setAttribute("aU", new THREE.BufferAttribute(this.u, 1).setUsage(THREE.DynamicDrawUsage)); }
+    const P = this.pos, C = this.col, Uv = this.u;
+    let n = 0;
+    if (on) for (let i = 0; i < ring.length; i++) {
+      const sp = ring[i];
+      if (!sp || !sp.powered || sp.state === "destroyed") continue;
+      if (sp.state === "damaged" && Math.sin(time * 23 + i * 5.1) + Math.sin(time * 37 + i) < 0.4) continue;
       const out = Math.atan2(sp.z - centre.z, sp.x - centre.x), ph = (beats / S.sweepBeats) * Math.PI * 2 + (i % 2) * Math.PI + i * 0.4;
       const tilt = ((S.tilt * (0.55 + 0.45 * Math.sin(ph))) * Math.PI) / 180, swing = ((S.sweep * Math.cos(ph * 0.5 + i)) * Math.PI) / 180;
       const az = out + swing, dx = Math.sin(tilt) * Math.cos(az), dz = Math.sin(tilt) * Math.sin(az), dy = Math.cos(tilt);
       const c = ramp(i / ring.length + time * 0.03), alpha = S.opacity * (0.75 + 0.25 * Math.cos(beats * Math.PI * 2));
-      verts.push(sp.x, sp.y, sp.z, sp.x + dx * S.length, sp.y + dy * S.length, sp.z + dz * S.length);
-      cols.push(...c, alpha, ...c, alpha);
-      us.push(0, 1);
-    });
-    if (verts.length > this.pos.length) { this.pos = new Float32Array(verts.length * 2); this.col = new Float32Array(cols.length * 2); this.u = new Float32Array(us.length * 2);
-      this.geo.setAttribute("position", new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
-      this.geo.setAttribute("aCol", new THREE.BufferAttribute(this.col, 4).setUsage(THREE.DynamicDrawUsage));
-      this.geo.setAttribute("aU", new THREE.BufferAttribute(this.u, 1).setUsage(THREE.DynamicDrawUsage)); }
+      const v6 = n * 6, c8 = n * 8, u2 = n * 2;
+      P[v6] = sp.x; P[v6 + 1] = sp.y; P[v6 + 2] = sp.z; P[v6 + 3] = sp.x + dx * S.length; P[v6 + 4] = sp.y + dy * S.length; P[v6 + 5] = sp.z + dz * S.length;
+      C[c8] = c[0]; C[c8 + 1] = c[1]; C[c8 + 2] = c[2]; C[c8 + 3] = alpha; C[c8 + 4] = c[0]; C[c8 + 5] = c[1]; C[c8 + 6] = c[2]; C[c8 + 7] = alpha;
+      Uv[u2] = 0; Uv[u2 + 1] = 1;
+      n++;
+    }
     if (!this.geo.getAttribute("position")) return;
-    this.pos.set(verts); this.col.set(cols); this.u.set(us);
-    for (const k of ["position", "aCol", "aU"]) this.geo.getAttribute(k).needsUpdate = true;
-    this.geo.setDrawRange(0, verts.length / 3);
+    for (let k = 0; k < ATTRS.length; k++) this.geo.getAttribute(ATTRS[k]).needsUpdate = true;
+    this.geo.setDrawRange(0, n * 2);
   }
 }

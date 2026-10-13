@@ -123,11 +123,13 @@ export function coastView(c: CameraState): { coast: number; gaze: number } {
  *  the way round). */
 export function gazeAt(BC: NonNullable<NonNullable<Tuning["beach"]>["camera"]>, b: number): { angle: number; distance: number; look: number; side: number; bend: number } {
   const T = BC.bearings, n = T.angle.length, u = ((((b / (2 * Math.PI)) * n) % n) + n) % n, i = Math.floor(u), f = u - i;
-  const at = (xs: number[]) => {
-    const p0 = xs[(i + n - 1) % n], p1 = xs[i], p2 = xs[(i + 1) % n], p3 = xs[(i + 2) % n];
-    return p1 + 0.5 * f * (p2 - p0 + f * (2 * p0 - 5 * p1 + 4 * p2 - p3 + f * (3 * (p1 - p2) + p3 - p0)));
-  };
-  return { angle: at(T.angle), distance: at(T.distance), look: at(T.look), side: T.side ? at(T.side) : 0, bend: T.bend ? at(T.bend) : 1 };
+  return { angle: splineAt(T.angle, i, n, f), distance: splineAt(T.distance, i, n, f), look: splineAt(T.look, i, n, f), side: T.side ? splineAt(T.side, i, n, f) : 0, bend: T.bend ? splineAt(T.bend, i, n, f) : 1 };
+}
+
+/** The closed Catmull-Rom spline through `xs` (n of them, round and round) at `f` of the way from the i-th to the next. */
+function splineAt(xs: number[], i: number, n: number, f: number): number {
+  const p0 = xs[(i + n - 1) % n], p1 = xs[i], p2 = xs[(i + 1) % n], p3 = xs[(i + 2) % n];
+  return p1 + 0.5 * f * (p2 - p0 + f * (2 * p0 - 5 * p1 + 4 * p2 - p3 + f * (3 * (p1 - p2) + p3 - p0)));
 }
 
 /** Where the camera is for the witch's lift (0 ground, 1 treetop) and the zoom. */

@@ -10,6 +10,7 @@ import { ENRAGED_TINT, dances, expression, lookOf } from "../looks";
 /** The party's dances (dealt by id): a bounce, a sway, a hop every other beat, a quick bob. */
 const DANCE_STYLES = ["bounce", "sway", "hop", "bob"] as const;
 import type { RigGear } from "../rig/rigBuild";
+import type { RigLook } from "../rig/rigView";
 import type { ShadowInstance } from "../shadows";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { beatTime } from "../../rules/beat";
@@ -54,46 +55,81 @@ function strideFrame(v: View, c: { id: number; x: number; z: number }, time: num
 
 const WOKEN_GEAR: RigGear = { woken: true };
 
+// The frame's lists and records, kept and refilled (the churn hunt, 2026-10-13: four maps, every list, a record a creature and a
+// record a berry were made each frame, and the scenery's whole shadow list copied to add the creatures' to it).
+const NONE: SpriteInstance[] = []; // (a batch with nothing in it this frame: one shared empty list)
+const PER = new Map<string, SpriteInstance[]>(), ARTS = new Map<string, CreatureArt>(), LEGEND_KEYS = new Map<string, string>();
+const RING_OF = new Map<number, ReturnType<typeof legendRings>[number]>();
+const SHADOWS: ShadowInstance[] = [], SHADOW_POOL: ShadowInstance[] = [], INST_POOL: SpriteInstance[] = [], BERRY_ITEMS: SpriteInstance[] = [], BERRY_POOL: SpriteInstance[] = [];
+const emptyList = (l: SpriteInstance[]): void => { l.length = 0; };
+let LAST_VIEW: View | null = null; // (the maps are the view's: another view starts them afresh; within one they're only ever written over, never cleared, as clearing a Map makes a new table each frame)
+/** A sprite instance from a pool, every field written (so one from a past frame carries nothing over). */
+function inst(pool: SpriteInstance[], i: number, x: number, y: number, z: number, frame: SpriteInstance["frame"], flip: boolean, fresh: boolean | undefined, glow: number | undefined, scale: number | undefined, sx: number | undefined, sy: number | undefined): SpriteInstance {
+  let o = pool[i];
+  if (!o) pool[i] = o = { x, y, z, frame, flip, fresh, glow, scale, sx, sy };
+  else { o.x = x; o.y = y; o.z = z; o.frame = frame; o.flip = flip; o.fresh = fresh; o.glow = glow; o.scale = scale; o.sx = sx; o.sy = sy; }
+  return o;
+}
+/** A batch's key, "<a>-<b>", made once (a string a creature a frame before). */
+const KEYS = new Map<string, Map<string | number, string>>();
+function keyOf(a: string, b: string | number): string {
+  let m = KEYS.get(a);
+  if (!m) KEYS.set(a, (m = new Map()));
+  let k = m.get(b);
+  if (k === undefined) m.set(b, (k = `${a}-${b}`));
+  return k;
+}
+const FACE_KEY: Record<string, string> = {};
+/** The rig's look record, one for every creature in turn (the rig reads it as it adds the creature and keeps nothing of it). */
+const LOOK: RigLook = { y: 0, tap: 0, scale: 1, glow: 0, fresh: false, h: 0, face: "neutral", sleep: 0, droop: 0, twitch: 0, sx: 1, sy: 1, dx: 0, dz: 0, crouch: 0, lunging: false, gear: undefined, posture: undefined, quirk: undefined, quirkK: -1, lookAt: undefined } as RigLook;
+
 export function drawBerries(v: View, time: number): void {
-  const g = v.game, B = g.berries, w = g.witch, R = g.tuning.haze.far, f = v.berryBatch.atlas.frames[0], items: SpriteInstance[] = [];
+  const g = v.game, B = g.berries, w = g.witch, R = g.tuning.haze.far, f = v.berryBatch.atlas.frames[0], items = BERRY_ITEMS;
+  let n = 0;
   for (const e of B.events) {
     if (e.kind === "regrew") v.regrewAt.set(e.id, time);
     if (e.kind === "evolved") v.evolvedAt.set(e.id, time);
     if (e.kind === "ate") v.nibbles.push({ x: e.x, z: e.z, at: time });
   }
-  for (const [id, at] of v.regrewAt) if (time - at > 0.6) v.regrewAt.delete(id);
+  if (v.regrewAt.size) for (const [id, at] of v.regrewAt) if (time - at > 0.6) v.regrewAt.delete(id);
   // The nibble (Ed, v233): a quick sparkle where a berry was eaten, white bits bursting out and fading.
-  v.nibbles = v.nibbles.filter(n => time - n.at < 0.45);
-  for (const n of v.nibbles) {
-    const k = (time - n.at) / 0.45;
+  if (v.nibbles.length) v.nibbles = v.nibbles.filter(n => time - n.at < 0.45);
+  for (const nb of v.nibbles) {
+    const k = (time - nb.at) / 0.45;
     for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 + n.x, r = 0.25 + k * 0.9;
-      items.push({ x: n.x + Math.cos(a) * r, y: 0.75 + Math.sin(a) * r * 0.7 + k * 0.4, z: n.z + 0.3, frame: f, flip: false, scale: 0.45 * (1 - k), glow: 1 });
+      const a = (i / 6) * Math.PI * 2 + nb.x, r = 0.25 + k * 0.9;
+      items[n] = inst(BERRY_POOL, n, nb.x + Math.cos(a) * r, 0.75 + Math.sin(a) * r * 0.7 + k * 0.4, nb.z + 0.3, f, false, undefined, 1, 0.45 * (1 - k), undefined, undefined); n++;
     }
   }
-  for (const [id, at] of v.evolvedAt) if (time - at > 1.2) v.evolvedAt.delete(id);
+  if (v.evolvedAt.size) for (const [id, at] of v.evolvedAt) if (time - at > 1.2) v.evolvedAt.delete(id);
   const V = v.lastView, VH = V ? V.half + 4 : Infinity; // (the scenery's square first: much cheaper than inView)
-  for (const b of B.berries) {
+  const bs = B.berries;
+  for (let i = 0; i < bs.length; i++) { // (by index: no iterator a frame)
+    const b = bs[i];
     if (b.gone) continue; // (a Harvest berry eaten)
     const p = B.bushes[b.bush];
     if (Math.abs(p.x - w.x) > R || Math.abs(p.z - w.z) > R || (V && (Math.abs(p.x - V.x) > VH || Math.abs(p.z - V.z) > VH)) || !inView(v, p.x, p.z, 0.5, 1.2, 2)) continue;
     const at = v.regrewAt.get(b.id), grow = at === undefined ? 1 : Math.min(1, (time - at) / 0.5);
     if (grow <= 0.05) continue;
-    items.push({ x: p.x, y: 0.75, z: p.z + 0.25, frame: f, flip: false, scale: grow });
+    items[n] = inst(BERRY_POOL, n, p.x, 0.75, p.z + 0.25, f, false, undefined, undefined, grow, undefined, undefined); n++;
   }
+  items.length = n;
   v.berryBatch.set(items);
-  v.stats.berries = items.length;
+  v.stats.berries = n;
 }
 
 export function drawCreatures(v: View, time = 0): void {
   const g = v.game, R = g.tuning.haze.far + 20;
-  const per = new Map<string, SpriteInstance[]>(), arts = new Map<string, CreatureArt>(), creatureShadows: ShadowInstance[] = [], legendKeys = new Map<string, string>();
+  const per = PER, arts = ARTS, legendKeys = LEGEND_KEYS; // (kept and refilled)
+  if (v !== LAST_VIEW) { LAST_VIEW = v; per.clear(); arts.clear(); legendKeys.clear(); RING_OF.clear(); }
+  per.forEach(emptyList);
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
-  let n = 0;
+  let n = 0, ni = 0, ns = 0; // (drawn; instances and shadows taken from the pools)
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   const WW = g.tuning.wildWatch?.on ? g.tuning.wildWatch : null; // (the wild watch's rising aggro)
-  const ringOf = new Map(legendRings(g).map(r => [r.id, r])); // (each legend's circle: its outline shows only with her in it)
+  const ringOf = RING_OF, rings = legendRings(g); // (each legend's circle: its outline shows only with her in it)
+  for (let i = 0; i < rings.length; i++) ringOf.set(rings[i].id, rings[i]);
   // How far towards the camera a sprite's rows below its ground line land, a metre of rows (as soundsystemGen.ts stands them, #564).
   const U = SPRITE_UNIFORMS.uUp.value, F = v.camera.getWorldDirection(FWD), toward = U.dot(CAM_UP.set(0, 1, 0).applyQuaternion(v.camera.quaternion)) / Math.max(0.2, -F.y);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
@@ -139,9 +175,9 @@ export function drawCreatures(v: View, time = 0): void {
     const napped = asleepArt ?? idlePose;
     // Gliding (Profile.glide: the flying squirrel's roam and its pounce, Ed 2026-10-12): in the air, spread out, its membrane taut; the rig leaves it to the baked frames.
     const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
-    const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? `glide-${c.species}` : idlePose && !asleepArt ? `idle-${c.species}` : napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
+    const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? keyOf("glide", c.species) : idlePose && !asleepArt ? keyOf("idle", c.species) : napped ? (party ? keyOf(look === "happy" ? "nap-happy" : "nap-party", c.id) : keyOf("nap", c.species)) : party ? keyOf(look === "happy" ? "happy" : "party", c.id) : slept ? keyOf("sleep", c.species) : sleeping ? keyOf("sunk", c.species) : woken ? keyOf("woken", c.species) : faced ? keyOf((FACE_KEY[face] ??= `face-${face}`), c.species) : c.species;
     if (!art) continue;
-    const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? `legend-${key}` : key; // (a wild legend in a batch of its own: its rim and its light in steps)
+    const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? keyOf("legend", key) : key; // (a wild legend in a batch of its own: its rim and its light in steps)
     if (lk !== key) legendKeys.set(lk, c.species);
     arts.set(lk, art);
     const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
@@ -197,7 +233,7 @@ export function drawCreatures(v: View, time = 0): void {
     // When it ends (it attacks, is invited, gives up, she leaves), the red eases out from where it was (v.aggroLast).
     if (glow <= 0 && WW) {
       const e = c.watchUntil !== undefined && g.clock.time < c.watchUntil ? g.wildEntry.get(cellKey(c.cell)) : undefined;
-      if (e) { const a = aggroAmount(1 - (c.watchUntil! - g.clock.time) / Math.max(1e-6, WW.time), e.danger, WW.tint); v.aggroLast.set(c.id, { a, at: time }); glow = aggroGlow(a); }
+      if (e) { const a = aggroAmount(1 - (c.watchUntil! - g.clock.time) / Math.max(1e-6, WW.time), e.danger, WW.tint); const r = v.aggroLast.get(c.id); if (r) { r.a = a; r.at = time; } else v.aggroLast.set(c.id, { a, at: time }); glow = aggroGlow(a); }
       else { const l = v.aggroLast.get(c.id); if (l) { const a = aggroFadeOut(l.a, time - l.at, WW.fade); if (a > 0.005) glow = aggroGlow(a); else v.aggroLast.delete(c.id); } }
     }
     const feel = attackFeel(c, time, g.tuning.attackFx, FEEL);
@@ -205,7 +241,7 @@ export function drawCreatures(v: View, time = 0): void {
     let hop = c.leap ? Math.sin(Math.min(1, Math.max(0, (time - c.leap.at) / Math.max(0.01, c.leap.lands - c.leap.at))) * Math.PI) * c.leap.height : 0;
     hop += feel.hop; // (a tumble's arc: render/attackFeel.ts)
     hop += flightHeight(c, time); // (a wild flyer swooping: up out of reach over its shadow, rules/movement.ts stepSwoop)
-    for (const W of g.witches) if (W.spells.cyc) hop += cycloneLift(W.spells, c.id, g.clock.time, g.tuning); // (whirled up by her Cyclone hat: rules/hatSpells.ts)
+    for (let wi = 0; wi < g.witches.length; wi++) { const W = g.witches[wi]; if (W.spells.cyc) hop += cycloneLift(W.spells, c.id, g.clock.time, g.tuning); } // (whirled up by her Cyclone hat: rules/hatSpells.ts)
     // Just joined the party: two little hops of joy, the second smaller (straight up, nothing like a pounce).
     const joined = v.leashView.joined.get(c.id);
     if (joined !== undefined && time - joined < 0.7) { const k = (time - joined) / 0.7; hop += Math.abs(Math.sin(k * Math.PI * 2)) * 0.45 * (1 - k * 0.6); }
@@ -232,12 +268,17 @@ export function drawCreatures(v: View, time = 0): void {
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
-    if (!(v.rig && !form && !idlePose && !glided && (rigged = v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined })))) // the rig draws it, if it can
-    { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
+    if (v.rig && !form && !idlePose && !glided) { // the rig draws it, if it can (its look record filled in place: one for every creature)
+      const L = LOOK;
+      L.y = dance + hop + (st ? rigSunk : sunk); L.tap = tap; L.scale = scale; L.glow = glow; L.fresh = fresh; L.h = frame.h - (frame.pad ?? 0); L.face = lying > 0.5 ? "asleep" : face; L.sleep = lying; L.droop = droop; L.twitch = toss;
+      L.sx = feel.sx * csx; L.sy = feel.sy * breathY * csy; L.dx = cx; L.dz = cz; L.crouch = feel.crouch; L.lunging = feel.lunging; L.gear = party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined; L.posture = ch.rig; L.quirk = ch.quirk; L.quirkK = quirkK; L.lookAt = watching ? g.witch : undefined;
+      rigged = v.rig.add(c, L);
+    }
+    if (!rigged) { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const turned = flip !== SQ.turned, k = -mid * v.mpp * scale * (turned ? -1 : 1) + SQ.x * fh;
       const near = below * toward - (form || napped ? U.z * padM : 0), nx = form || napped ? -U.x * padM : 0;
-      l.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, y: dance + hop + sunk + SQ.hop * fh, z: c.z + cz + RT.z * k + near, frame, flip: turned, fresh, glow, scale, sx: feel.sx * SQ.sx * csx, sy: feel.sy * breathY * SQ.sy * csy });
+      l.push(inst(INST_POOL, ni++, c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id) + RT.x * k + nx, dance + hop + sunk + SQ.hop * fh, c.z + cz + RT.z * k + near, frame, turned, fresh, glow, scale, feel.sx * SQ.sx * csx, feel.sy * breathY * SQ.sy * csy));
     }
     v.leashView.tops.set(c.id, (frame.h - (frame.pad ?? 0)) * v.mpp * scale + dance + hop + sunk); // its health bar goes over it
     v.leashView.halfW.set(c.id, frame.w * v.mpp * scale * 0.5);
@@ -245,23 +286,36 @@ export function drawCreatures(v: View, time = 0): void {
     // headPoint), mirrored with it, along the camera's right from where it's drawn; bubbles stand over it.
     const hd = frame.head ? ((frame.head[0] - frame.w / 2) * (flip ? -1 : 1) - mid * (flip ? -1 : 1)) * v.mpp * scale : 0;
     const rh = rigged ? v.rig!.heads.get(c.id) : undefined; // (drawn by the rig: its head piece, turned to its real heading)
-    v.leashView.heads.set(c.id, rh ? { x: rh.x, z: rh.z } : { x: c.x + cx + sway + RT.x * hd, z: c.z + cz + RT.z * hd });
+    let hp = v.leashView.heads.get(c.id); if (!hp) v.leashView.heads.set(c.id, (hp = { x: 0, z: 0 })); // (its record kept, read each frame)
+    if (rh) { hp.x = rh.x; hp.z = rh.z; } else { hp.x = c.x + cx + sway + RT.x * hd; hp.z = c.z + cz + RT.z * hd; }
     // Its shadow under it as drawn (its sway and a nightmare's tossing too), as big as it's drawn (a legend's size, an evolving
     // pop); off the ground (a hop, a leap, a tumble) still on the ground under it, smaller the higher it goes.
     const air = Math.max(0, dance + hop), sk = scale / (1 + air * 0.35);
-    creatureShadows.push({ x: c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id), z: c.z + cz, w: frame.w * v.mpp * 0.7 * sk, d: frame.w * v.mpp * 0.25 * sk });
+    { let s = SHADOW_POOL[ns]; if (!s) SHADOW_POOL[ns] = s = { x: 0, z: 0, w: 0, d: 0 }; ns++; s.x = c.x + cx + sway + fit * 0.35 * Math.sin(time * 11 + c.id); s.z = c.z + cz; s.w = frame.w * v.mpp * 0.7 * sk; s.d = frame.w * v.mpp * 0.25 * sk; }
     n++;
   }
   v.rig?.end();
-  for (const [s, b] of v.creatureBatches) if (!per.has(s)) b.set([]);
-  for (const [s, list] of per) {
-    const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
-    const b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+  v.creatureBatches.forEach(clearUnused);
+  per.forEach((list, s) => {
+    if (!list.length) return;
+    let b = v.creatureBatches.get(s);
+    if (!b) {
+      const k = legendKeys.has(s) ? s.slice(7) : s; // (a legend's batch: as its own key's, plus its look)
+      b = v.batchFor(v.creatureBatches, s, () => { const a = arts.get(s); return a && new SpriteBatch(a.atlas, v.mpp, { solid: true, rim: true, find: !k.startsWith("party-") && !k.startsWith("happy-") && !k.startsWith("woken-") && !k.startsWith("sleep-") && !k.startsWith("nap-"), tint: k.startsWith("woken-") ? ENRAGED_TINT : undefined, ...(legendKeys.has(s) ? legendLook(legendKeys.get(s)!, v.game.tuning, v.style) : {}) }); }); // (enraged ones glow red-eyed already) creatures stay solid round her (Ed, v149); wild ones findable in the dark (Ed, v244)
+    }
     b?.set(list);
-  }
+  });
   v.stats.creatures = n;
-  if (v.game.tuning.shadows.on) v.shadows.set(v.shadowList.concat(creatureShadows, v.witchShadows));
+  if (v.game.tuning.shadows.on) { // (the scenery's shadows, the creatures', then hers: one list refilled, not the scenery's copied each frame)
+    const all = SHADOWS, sl = v.shadowList, ws = v.witchShadows; all.length = 0;
+    for (let i = 0; i < sl.length; i++) all.push(sl[i]);
+    for (let i = 0; i < ns; i++) all.push(SHADOW_POOL[i]);
+    for (let i = 0; i < ws.length; i++) all.push(ws[i]);
+    v.shadows.set(all);
+  }
 }
+/** A batch with no creature in it this frame shows nothing. */
+const clearUnused = (b: SpriteBatch, s: string): void => { const l = PER.get(s); if (!l || !l.length) b.set(NONE); };
 
 /** A wild legend's batch (Ed's round 14 playtest: "Legends in the circle are not very distinct"; "the same pixel density and palette
  *  discipline as the rest of the scene"): its sleeping outline in its sigil's neon (a little toward white, so a deep colour still shows
