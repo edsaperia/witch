@@ -150,6 +150,14 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .2, count: 6, from: .15, to: .85, mat: "MAGIC2", lift: .2 },
       ] },
     ] },
+  // the badlands' rattlesnake (Ed, 2026-10-13, unknown-21): a sandy sidewinder with dark diamonds, a wedge head and a rattle that grows a
+  // button a level; its legend great stacked coils and a colossal raised rattle whose shake ripples out through the sand
+  { id: "rattlesnake", name: "Rattlesnake", template: "serpent", builder: "rattlesnake", palette: { hue: .08, sat: .38, val: .68 }, legend: ["rattleBig", "ripple"], texture: { kind: "scales", size: 2 },
+    levels: [{ body: { thick: .8, rattle: 1 } }, { body: { thick: 1, rattle: 3 } }, { body: { thick: 1.2, rattle: 6 } }, { body: { thick: 1.3, rattle: 7, coil: 1 } }] },
+  // the badlands' scorpion (Ed, 2026-10-13, unknown-22): a red-brown canyon scorpion, pincers ahead and its sting arched over its back; its
+  // legend a colossal curled tail and the scorpion's own trick, glowing blue-green along its plates under the moon
+  { id: "scorpion", name: "Scorpion", template: "insectoid", builder: "scorpion", palette: { hue: .06, sat: .5, val: .48, magic: .47 }, legend: ["fluoresce"], texture: { kind: "plates", size: 2 },
+    levels: [{ body: { tail: .85, pincer: .85 } }, { body: { tail: 1, pincer: 1 } }, { body: { tail: 1.1, pincer: 1.3 } }, { body: { tail: 1.9, pincer: 1.4 } }] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
