@@ -16,7 +16,9 @@ describe("the kind table", () => {
     const by = [0, 1, 2, 3, 4, 5].map(p => Object.values(kinds).filter(k => k.phase === p).length);
     expect(by).toEqual([10, 10, 12, 14, 18, 0]);
     expect(Object.keys(kinds).length).toBe(64);
-    for (const [id, k] of Object.entries(kinds)) expect(!!k.placeholder, id).toBe(k.phase >= 3); // (every kind from phase 3 on is a placeholder, for now)
+    const species = new Set(AREA_TYPES.map(a => a.creature));
+    for (const [id, k] of Object.entries(kinds)) expect(!!k.placeholder, id).toBe(!species.has(id)); // (a placeholder until an area type's creature takes its place: Ed, 2026-10-12, the later islands' animals)
+    for (const [id, k] of Object.entries(kinds)) if (k.phase < 3) expect(!!k.placeholder, id).toBe(false); // (phases 0 to 2 are all designed)
     for (const k of Object.values(kinds)) { expect(k.bearing).toBeGreaterThanOrEqual(0); expect(k.bearing).toBeLessThan(360); }
   });
 });

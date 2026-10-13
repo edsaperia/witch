@@ -221,12 +221,11 @@
       "biome": "rocky",
       "placeholder": true
     },
-    "unknown-05": {
+    "meerkat": {
       "phase": 3,
       "bearing": 115,
       "dir": "ESE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "unknown-06": {
       "phase": 3,
