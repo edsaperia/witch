@@ -8,11 +8,11 @@ export const PLAINS = {
   pathKinds: ["track"],
   setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 3, rock: "laterite" }],
   layout: {
-    pattern: "scatter", density: .14, clump: .25, glades: { count: 1, size: [40, 60] },
+    pattern: "lone", density: .14, clump: .25, glades: { count: 1, size: [40, 60] },
     heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
-    terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .5, freak: .1, lake: .2, modern: 0 },
+    terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .6, freak: .15, lake: .25, modern: 0 },
     feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast.",
   },
-  flora: { species: [["acacia", 1]], palette: { sat: .85, val: 1 } },
+  flora: { species: [["acacia", .7], ["baobab", .15], ["datePalm", .15]], palette: { sat: .85, val: 1 } },
   settings: { treeDensity: .14, groundCover: { density: .7, kinds: ["blades"] } },
 };
