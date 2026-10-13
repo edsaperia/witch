@@ -7,12 +7,13 @@ export const WARREN = {
   wall: [["rockwall", {}]], small: [["grass", { h: 1.1, leafHue: .12, leafSat: .35 }]],
   big: [["tree", { type: "juniper", scale: 1.15, lean: .2 }], ["spire", { sparse: .25, rock: [.04, .55, .62], dry: true }], ["spire", { twin: true, sparse: .2, rock: [.05, .5, .66], dry: true }], ["boulder", { sparse: .25 }], ["snag", { sparse: .12, bleached: true }]],
   setPiece: ["heap", "a heap of red stones over the warren", 1, { of: "stones", moss: 0, top: "slab", stone: [.04, .5, .6] }],
+  pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "scatter", density: .25, clump: .5, glades: { count: 2, size: [14, 22] },
     heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
-  flora: { species: [["juniper", 1]], palette: { sat: .5, val: .8 } },
+  flora: { species: [["juniper", .6], ["hawthorn", .25], ["pine", .15]], palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .25, groundCover: { density: .4, kinds: ["pebbles", "blades"] } },
 };
