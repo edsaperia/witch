@@ -31,6 +31,7 @@ const GR_STAMPS = {
   clover: () => [[0, -1, 2], [-1, 0, 1], [1, 0, 1], [0, 0, 1], [0, 1, 0]],
   ripple: r => { const L = 6 + Math.floor(r() * 5), ph = r() * 6; return Array.from({ length: L }, (_, i) => { const y = Math.round(Math.sin(i * .5 + ph) * .7); return [[i, y, 2], [i, y + 1, 0]]; }).flat(); }, // a wind ripple in sand: a lit crest over its shadowed lee
   sprig: () => [[0, 0, 0], [0, -1, 0], [-1, -1, 1], [1, -2, 1], [0, -2, 2], [0, -3, 2]],
+  crack: r => { const L = 7 + Math.floor(r() * 8), out = []; let x = 0, y = 0; for (let i = 0; i < L; i++) { out.push([x, y, i % 4 === 2 ? 2 : 1], [x, y + 1, 0]); if (r() < .55) x += r() < .5 ? 1 : -1; else y += 1; if (r() < .25) x += 1; } return out; }, // a lava crack: a glowing seam (mid), hotter flecks (light), its lower lip in shade (dark)
 };
 // Each floor kind's genome. mats: material names; "FLOWER" takes the area's flower colour.
 const grG = (base, details, more = {}) => ({ base: { scale: [7, 5], cuts: [.38, .64], ...base }, details, patches: [], puddles: null, ...more });
@@ -61,6 +62,7 @@ export const GROUND_GENOMES = {
   // the north's floors (Ed, 2026-10-11; no area uses them yet): snow with needles and grass poking through, lichen heath, glacier ice
   snow: grG({ scale: [12, 6], cuts: [.3, .62] }, [grD("needle", 14, ["BODY2", "ACCENT", "ACCENT"]), grD("blade", 12, GR_GRASS), grD("pebble", 5, GR_STONES)], { patches: [{ mat: "STONE", n: 2, r: [2, 4] }] }),
   lichen: grG({ scale: [6, 5] }, [grD("moss", 40, ["BODY2", "BODY", "BELLY"]), grD("sprig", 22, ["LEAF3", "LEAF", "FLOWER"]), grD("pebble", 10, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 5] }, { mat: "MOSS", n: 2, r: [3, 6] }] }),
+  basalt: grG({ scale: [8, 5], cuts: [.42, .7] }, [grD("crack", 9, ["ACCENT", "GLOW", "FLOWER"]), grD("slab", 10, GR_STONES), grD("pebble", 30, GR_STONES), grD("sprig", 6, GR_GRASS)], { patches: [{ mat: "STONED", n: 3, r: [4, 8] }] }), // a volcano's flanks: black basalt and ash, lava glowing in its cracks, a few hardy sprigs
   ice: grG({ scale: [14, 5], cuts: [.34, .7] }, [grD("slab", 7, ["BODY2", "BODY", "BELLY"]), grD("pebble", 16, GR_STONES)], { patches: [{ mat: "STONE", n: 3, r: [3, 6] }], puddles: { n: 2, r: [3, 6] } }),
 };
 
@@ -122,10 +124,10 @@ export function groundTile(def, st, variant = 0, W = 64, H = 48) {
 export function groundColours(def, st) {
   const [kind, hue, sat, val] = def.floor, sty = st.artStyle === "bold" || st.artStyle === "ref";
   const ref = st.artStyle === "ref", sh = sty ? (ref ? .5 : 1) : 0;
-  const flower = { flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
+  const flower = { basalt: hsv2rgb(.13, .7, 1), flowers: hsv2rgb(.13, .6, .95), bluebells: [90, 110, 230], heather: [180, 90, 170], clover: [240, 235, 240], leaves: hsv2rgb(hue + .02, .65, .6) }[kind] || hsv2rgb(hue, .3, .6);
   const colours = {
     [M.BODY]: hsv2rgb(hue, sat * st.sat, val), [M.BODY2]: hsv2rgb(hue + .02 + .05 * sh, Math.min(1, sat * st.sat * (1.1 + .15 * sh)), val * (.78 - .06 * sh)), [M.BELLY]: hsv2rgb(hue - .02 - .04 * sh, sat * st.sat * (.9 - .2 * sh), Math.min(1, val * (1.15 + .1 * sh))),
-    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower,
+    [M.ACCENT]: kind === "needles" ? hsv2rgb(.07, .5, .5) : kind === "basalt" ? hsv2rgb(.01, .75, .32) : hsv2rgb(.1, .08, .62), [M.FLOWER]: flower, ...(kind === "basalt" ? { [M.GLOW]: hsv2rgb(.05, .9, .95) } : {}),
     [M.LEAF]: hsv2rgb(def.leaf, .55 * st.sat, .45), [M.LEAF2]: hsv2rgb(def.leaf - .03 - .05 * sh, .5 * st.sat * (1 - .2 * sh), .62 + .06 * sh), [M.LEAF3]: hsv2rgb(def.leaf + .03 + .05 * sh, .6 * st.sat, .3),
     [M.MOSS]: hsv2rgb(def.leaf + .02, .5 * st.sat, .36), [M.TRUNK]: hsv2rgb(st.trunkHue, .4, .3), [M.BARKL]: hsv2rgb(st.trunkHue - .01, .35, .48),
     [M.STONE]: hsv2rgb(.58, .06, .54), /* cool grey, never brighter than the witch in her own light (art director, round 1) */ [M.STONED]: hsv2rgb(.62 + .02 * sh, .1, .38), [M.WATER]: hsv2rgb(.58, .35, Math.max(.16, val * .55)), [M.WEB]: hsv2rgb(.56, .12, .78),
