@@ -411,7 +411,7 @@ export class View {
     // foot on its spot. It fades like other tall things when she's behind it.
     {
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
-      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
+      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true }).name("treehouse");
       this.scene.add(...this.treehouseBatch.meshes);
       // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       if (deckOn) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); }
@@ -419,7 +419,7 @@ export class View {
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t, game.map);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true }).name("markers");
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
@@ -429,7 +429,7 @@ export class View {
     this.scene.add(this.trail.mesh);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
-    this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
+    this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
@@ -462,7 +462,7 @@ export class View {
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
-    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true }).name("soundsystems");
     this.scene.add(...this.soundBatch.meshes);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
@@ -556,6 +556,7 @@ export class View {
       b = atlas();
       if (b) {
         map.set(key, b); this.scene.add(...b.meshes);
+        b.name(`${map === this.typeBatches ? "type" : map === this.creatureBatches ? "creature" : "decor"} ${String(key)}`); // (the probes' draw-call names: tools/bench/gpu.cjs)
         // A set drawn after the start (flying toward an area whose art was still being drawn)
         // fades in rather than popping in.
         if (this.prepared) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
