@@ -122,6 +122,17 @@ const spSETS = {
     for (let i = 0; i < 7; i++) { const x = -2 + i * .7, z = (i % 2 ? .55 : -.5) + (spHash(i, 2) - .5) * .2; for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; m.ell([x + Math.cos(a) * .18, .14, z + Math.sin(a) * .18], [.2, .04, .07], M.LEAF2, { group: 30, dir: [Math.cos(a), .5, Math.sin(a)] }); } }
     for (let i = 0; i < 5; i++) { const x = -1.2 + i * .65, z = .5; m.seg([x, 0, z], [x, .14, z], .02, .02, M.BELLY, { group: 40 }); m.ell([x, .16, z], [.07, .035, .07], M.ACCENT, { group: 40, paint: p => spHash(Math.floor(p[0] * 60), Math.floor(p[2] * 60)) < .2 ? M.BELLY : undefined }); }
   },
+  // cinder slopes: a small cinder cone, black scoria, its crater rim glowing, lava trickling down its near side, boulders round it
+  "cinder-cone"(m) {
+    const scoria = p => { const n = spHash(Math.floor(p[0] * 10) + Math.floor(p[2] * 10) * 7, Math.floor(p[1] * 10)); return n < .2 ? M.NOSE : n > .88 ? M.BARK2 : undefined; };
+    const R = y => 2.4 * (1 - Math.max(0, y - .2) / 1.75 * .72);
+    for (let i = 0; i < 7; i++) { const t = i / 7, y = .2 + t * 1.75; m.ell([0, y, 0], [R(y), .38, R(y) * .85], M.BARKD, { group: 1, rough: .05, paint: scoria }); }
+    m.ell([0, 2.05, 0], [.78, .1, .64], M.GLOW, { group: 2, paint: p => { const d = Math.hypot(p[0], p[2] / .82); return d < .42 ? M.NOSE : d < .52 ? M.BODY2 : d > .72 ? M.ACCENT : undefined; } }); // the crater: a glowing rim round its dark throat
+    const flow = [2.0, 1.7, 1.4, 1.1, .8, .5, .22].map((y, i) => [Math.sin(i * 1.3) * .18 + .1, y + .08, R(y) * .85 + .02, .07 + i * .012]);
+    m.chain(flow, M.GLOW, { group: 3, extra: true, paint: p => { const n = spHash(Math.floor(p[0] * 24), Math.floor(p[1] * 24 + p[2] * 11)); return n < .2 ? M.BODY2 : n > .85 ? M.ACCENT : undefined; } }); // the lava trickling down its near side
+    m.ell([.15, .05, 2.35], [.55, .05, .3], M.ACCENT, { group: 3, extra: true, paint: p => Math.hypot(p[0] - .15, (p[2] - 2.35) * 1.7) < .3 ? M.GLOW : Math.hypot(p[0] - .15, (p[2] - 2.35) * 1.7) > .48 ? M.NOSE : undefined }); // pooling and crusting at its foot
+    for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 + .4, d = 2.6 + spHash(i, 4) * .6, c = [Math.cos(a) * d, .14, Math.sin(a) * d * .8], r = [.3 + spHash(i) * .2, .22, .26]; m.ell(c, r, M.BARKD, { group: 5 + i, rough: .025, paint: scoria }); }
+  },
   // Norway: a little log cabin with a turf roof, abandoned
   "turf-hut"(m) {
     m.box([0, .55, 0], [1.0, .55, .7], M.WOOD, { round: .04, group: 1, paint: p => (p[1] * 7) % 1 < .18 ? M.BARKD : p[2] > .66 && Math.abs(p[0] + .2) < .2 && p[1] < .85 ? M.NOSE : p[2] > .66 && Math.abs(p[0] - .5) < .14 && Math.abs(p[1] - .7) < .12 ? M.SHADES : undefined }); // log walls, a door, a dark window

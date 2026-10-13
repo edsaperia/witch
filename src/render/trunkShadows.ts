@@ -13,6 +13,7 @@
 import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { CAST_LAYER } from "./castShadows";
 import type { Atlas } from "./atlas";
 import type { Frame } from "./artBuild";
 
@@ -159,6 +160,7 @@ export class TrunkShadowBatch {
         ...(cover ? { transparent: false, depthTest: false, stencilWrite: true, stencilRef: 2, stencilFuncMask: 2, stencilWriteMask: 0, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : { transparent: true }) });
       const m = new THREE.Mesh(this.geo, mat);
       m.frustumCulled = false; m.renderOrder = cover ? 0.3 : 1;
+      if (!cover) m.layers.enable(CAST_LAYER); // (drawn again from above into the cast-shadow map: render/castShadows.ts)
       this.meshes.push(m);
     }
   }

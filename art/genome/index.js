@@ -20,6 +20,7 @@ export function speciesOf(g) {
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
+  if (g.hydra) S.hydra = g.hydra; // the hydra builder's own options (its heads by level, a crest)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -45,7 +46,7 @@ export function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-export const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "plates", "offerings", "howl", "furrow", "sail", "patagium", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
+export const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "plates", "offerings", "howl", "furrow", "sail", "patagium", "dewlap", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath", "backPlates"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};

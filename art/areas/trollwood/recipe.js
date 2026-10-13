@@ -6,7 +6,7 @@ export const TROLLWOOD = {
   slot: 29, id: "trollwood", name: "Trollwood", creature: "frosttroll", by: "recipe", leaf: .32, floor: ["snow", .6, .08, .78], snow: .9,
   text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
   wall: [["stones", {}]], small: [["fern", {}], ["stones", {}]],
-  big: [["tree", { type: "weepingBirch", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
+  big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
   pathKinds: ["footpath"],
   setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: .3, top: "slab" }],
   layout: {

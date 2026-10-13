@@ -70,6 +70,7 @@ const TF_MIX = {
   stone: [["moss", .45], ["pebbles", .3], ["fern", .2], ["mushrooms", .05]],
   heather: [["heather", .6], ["grass", .25], ["moss", .1], ["flowers", .05]],
   bluebells: [["flowers", .35], ["grass", .3], ["fern", .2], ["litter", .15]],
+  basalt: [["pebbles", .5], ["fern", .25], ["grass", .15], ["mushrooms", .1]], // cinders, ferns and tough grass in the cracks
   sand: [["pebbles", .35], ["longgrass", .3], ["grass", .2], ["litter", .15]], // marram and dry grass in clumps, stones, wind-blown litter
   clover: [["clover", .45], ["grass", .35], ["flowers", .15], ["longgrass", .05]],
 };
@@ -80,7 +81,7 @@ export function tuftSprites(id, st = {}) {
   const flower = { heather: hsv2rgb(.85, .5, .7), bluebells: hsv2rgb(.68, .55, .8) }[A.floor[0]] || hsv2rgb([.95, .13, .55, .0, .8][Math.floor(leaf * 100) % 5], .55, .9);
   const colours = { [M.LEAF]: hsv2rgb(leaf, .42, .4), [M.LEAF2]: hsv2rgb(leaf - .03, .38, .52), [M.LEAF3]: hsv2rgb(leaf + .03, .5, .26), /* (the night palette: darker, quieter greens) */ [M.FLOWER]: flower, [M.TRUNK]: hsv2rgb(.07, .45, .36), [M.BARKL]: hsv2rgb(.08, .4, .55),
     [M.STONE]: hsv2rgb(.08, .4, .55), [M.STONED]: hsv2rgb(.62, .08, .4), [M.BELLY]: [226, 216, 196] };
-  if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth" || A.floor[0] === "sand") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
+  if (A.floor[0] === "slate" || A.floor[0] === "scree" || A.floor[0] === "stony" || A.floor[0] === "pebbles" || A.floor[0] === "stone" || A.floor[0] === "earth" || A.floor[0] === "sand" || A.floor[0] === "basalt") colours[M.STONE] = hsv2rgb(.1, .06, .58); // stones are grey; elsewhere STONE is a mushroom's cap
   const sty = st.artStyle === "bold" || st.artStyle === "ref";
   if (sty) { // the pixel-art ramp, as the trees': the shadow deeper and towards blue-violet, the light paler and towards cream ("ref" keeps one tone family)
     const ref = st.artStyle === "ref"; colours[M.LEAF3] = hsv2rgb(leaf + (ref ? .035 : .07), .72, .26); colours[M.LEAF2] = hsv2rgb(leaf - (ref ? .045 : .08), ref ? .3 : .36, .82);

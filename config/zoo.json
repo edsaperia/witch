@@ -40,7 +40,7 @@
   },
   {
    "name": "Badlands & rocky",
-   "biomes": ["badlands", "rocky"],
+   "biomes": ["badlands", "rocky", "volcanic"],
    "areas": ["red-canyon", "cactus-flats", "scrub-wash", "warren", "dragon-scrub"]
   },
   {

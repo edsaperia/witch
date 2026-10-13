@@ -64,8 +64,9 @@ import { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
-import { SHADOW_DEBUG, ShadowBatch, type ShadowInstance } from "./shadows";
+import { SHADOW_DEBUG, SHADOW_TINT, ShadowBatch, type ShadowInstance } from "./shadows";
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
+import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
@@ -199,6 +200,9 @@ export class View {
   sceneryFixed: number | null = null;
   private lastReal = 0;
   readonly post: Post;
+  /** The cast shadows from above, for what stands in them (render/castShadows.ts). */
+  private castMap = new CastShadowMap();
+  private castOn = false;
   private dancefloor: Dancefloor;
   propBatch: SpriteBatch;
   private partyView: PartyView;
@@ -927,16 +931,18 @@ export class View {
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
     if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    SHADOW_TINT.value = t.shadows.tint ?? 0; // (every shadow's colour: render/shadows.ts, trunkShadows.ts)
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;
       for (const b of this.trunkShadowBatches.values()) b.visible = on;
+      this.castOn = on && TS.mode !== "debug" && (t.shadows.cast ?? true);
       if (this.beachView.palmShadows) this.beachView.palmShadows.visible = on;
       if (on) {
         const base = t.lights.campfire.strength, fires = this.forestLights.filter(l => l.rgb === this.fire).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, MAX_FIRES);
         fires.forEach((l, i) => { U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); U.uFireFade.value[i] = Math.min(1, l.strength / (base * 0.8)); });
         U.uFireCount.value = fires.length; U.uTrunkHard.value = TS.mode === "debug" ? 2 : TS.mode === "hard" ? 1 : 0; U.uTrunkStrength.value = TS.strength * (1 - lift); U.uTrunkLong.value = TS.long;
         U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across; U.uTrunkCore.value = TS.core; U.uTrunkFoot.value = TS.foot ?? 0; U.uTrunkTaper.value = TS.taper ?? 0; U.uTrunkNear.value = TS.near ?? 0; U.uTrunkCover.value = TS.cover ?? 0;
-        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = TS.tint ?? 0; U.uTintTrees.value = TS.tintTrees ?? 0; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0; U.uSceneryTaper.value = TS.sceneryTaper ?? 0;
+        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = U.uTintTrees.value = SHADOW_TINT.value; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0; U.uSceneryTaper.value = TS.sceneryTaper ?? 0;
       }
     }
     this.time("grass+lights");
@@ -966,6 +972,7 @@ export class View {
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
+    this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.post.render(this.scene, this.camera);
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
