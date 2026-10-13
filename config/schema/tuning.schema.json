@@ -10017,6 +10017,10 @@
         "cast": {
           "type": "boolean"
         },
+        "castRes": {
+          "type": "number",
+          "minimum": 0
+        },
         "trunks": {
           "type": "object",
           "properties": {
@@ -10110,6 +10114,7 @@
         "trees",
         "tint",
         "cast",
+        "castRes",
         "trunks"
       ],
       "additionalProperties": false

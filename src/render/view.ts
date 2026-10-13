@@ -206,7 +206,7 @@ export class View {
   private lastReal = 0;
   readonly post: Post;
   /** The cast shadows from above, for what stands in them (render/castShadows.ts). */
-  private castMap = new CastShadowMap();
+  private castMap: CastShadowMap;
   private castOn = false;
   private dancefloor: Dancefloor;
   propBatch: SpriteBatch;
@@ -321,6 +321,7 @@ export class View {
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
     const t = game.tuning;
     this.budget = newBudget(t);
+    this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
     // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
