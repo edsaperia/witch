@@ -425,6 +425,7 @@
   "skittish": [
    "cheetah",
    "unicorn",
+   "snowleopard",
    "hare",
    "roe",
    "stag",
@@ -443,7 +444,8 @@
    "woodlouse",
    "beetle",
    "snail",
-   "ram"
+   "ram",
+   "ibex"
   ]
  },
  "traits": {
