@@ -791,6 +791,45 @@ export function sentinel3d(S, level, frame, st, facing = "towards") {
   return finish(m, S2, level, st, (S.q?.hgt ?? .8) * 1.25, facing);
 }
 
+// The armadillo's legend (Ed, 2026-10-12: "rolls into a glowing ball, with glowing seams between its bands, rolling when it moves"):
+// curled up into a ball of banded shell, the seams between its bands glowing, its ears and the tip of its snout and tail showing
+// where they tuck in; frame 1 a turn on (the bands rolled round a step), so its walk cycle rolls it.
+function armadilloBall(S, frame, st, facing) {
+  const m = new Model(), R = .46, c = [0, R, 0], n = 9, step = Math.PI * 2 / n, roll = frame ? step / 2 : 0;
+  m.ell(c, [R, R, R * .92], M.BODY, { paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]) + roll, k = ((a / step) % 1 + 1) % 1; return k < .1 ? M.MAGIC : Math.floor(a / step) % 2 ? M.BODY2 : spotty(p, 24, .25) ? M.BODY3 : undefined; } }); // signature: the ball of banded shell, glowing at every seam
+  for (const side of [-1, 1]) m.ell([R * .55, R * 1.62, side * R * .3], [.1, .035, .03], M.SKIN, { dir: [.3, 1, side * .4], group: 1 }); // its ears, poking out
+  m.ell([R * .95, R * .55, 0], [.05, .03, .03], M.NOSE, { group: 1 }); // the tip of its snout, tucked in
+  for (const side of [-1, 1]) m.ell(Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32])), [.025, .025, .025], M.MAGIC2, { group: 1 }); // its glowing eyes, peeping out
+  m.ell([0, .02, 0], [R * .8, .02, R * .6], M.MAGIC, { group: 2, extra: true }); // the glow it rolls on
+  m.anchors.head = { c: [R * .7, R * 1.2, 0], r: [.14, .12, .12], top: [R * .6, R * 1.7, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32]))), size: .025 };
+  m.anchors.neck = { c: [R * .7, R, 0], r: .12, dir: [1, .2, 0] };
+  return finish(m, S, 3, st, .55, facing);
+}
+
+// The badlands' armadillo (Ed, 2026-10-12): a low domed shell, its middle in bands, shields of scales before and behind; a small
+// head with a long tapering snout and upright ears, short clawed legs, a ringed tail.
+export function armadillo3d(S, level, frame, st, facing = "towards") {
+  if (level === 3) return armadilloBall(S, frame, st, facing);
+  const legend = false, m = new Model(), bob = frame ? .012 : 0;
+  for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
+  const c = [0, .3 + bob, 0], r = [.5, .27, .32], band = p => Math.floor((p[0] + .26) * 15);
+  m.ell(c, r, M.BODY, { paint: p => p[0] > -.26 && p[0] < .2 ? (band(p) % 2 ? M.BODY2 : M.BODY) : spotty(p, 26, .3) ? M.BODY3 : spotty(p, 22, .2) ? M.BODY2 : undefined }); // signature: the shell, banded across its middle
+  m.ell([0, .17 + bob, 0], [.46, .08, .3], M.SKIN, { group: 1 }); // its soft underside showing under the shell's rim
+  const hc = [.6, .22 + bob, 0], hr = [.14, .12, .12];
+  m.ell(hc, hr, M.BODY, { paint: p => p[1] > hc[1] + .04 ? M.BODY2 : undefined });
+  m.seg(v3.add(hc, [.08, -.02, 0]), v3.add(hc, [.3, -.08, 0]), .055, .022, M.SKIN, { group: 1 }); // the long tapering snout
+  m.ell(v3.add(hc, [.31, -.08, 0]), [.025, .025, .028], M.NOSE, { group: 1 });
+  for (const side of [-1, 1]) m.ell(v3.add(hc, [-.03, .15, side * .07]), [.1, .035, .03], M.SKIN, { dir: [-.2, 1, side * .35], group: 1 }); // upright ears
+  eyesOn(m, hc, hr, [[.55, .3, .6], [.55, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
+  m.chain([[-.46, .24 + bob, 0, .08], [-.66, .12, 0, .05], [-.86, .05, 0, .02]], M.BODY, { paint: p => Math.floor(p[0] * 30) % 2 ? M.BODY2 : undefined, group: 3 }); // the ringed tail
+  m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + .16, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(hc, hr, v3.norm([.55, .3, side * .6]))), size: .025 };
+  m.anchors.neck = { c: [.44, .22 + bob, 0], r: .12, dir: [1, -.1, 0] };
+  if (legend) crystals3d(m, [[[-.2, .54, .1], .35], [[0, .57, -.1], .5], [[.18, .53, .1], .4], [[-.05, .56, .18], .3]]);
+  return finish(m, S, level, st, .5, facing);
+}
+
 export function beetle3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) { // six jointed legs, alternating
