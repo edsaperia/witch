@@ -157,7 +157,7 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 
 ### `areaEdgeBlend`
 
-Ragged area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), by a smooth noise scale metres across plus a per-plant stray (stray, share of width), so neighbouring areas' plants mix in a band along the border. Only the look: creatures, partifying and the party border keep the exact borders.
+Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. Only the look: creatures, partifying and the party border keep the exact borders.
 
 | knob | type | range |
 |---|---|---|
