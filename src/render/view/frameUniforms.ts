@@ -5,6 +5,8 @@ import type { View } from "../view";
 import { AREA_TYPES } from "../../rules/map";
 import { coastView } from "../../rules/camera";
 import { canopyShown, witchHeight } from "../../rules/witch";
+
+const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
@@ -19,7 +21,14 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uFacing.value.crossVectors(SPRITE_UNIFORMS.uRight.value, SPRITE_UNIFORMS.uUp.value).normalize();
   // The canopy is always drawn; round the witch a hole is cut, sized to the view, which shrinks
   // to nothing as she rises (and opens as she descends).
-  const lifted = canopyShown(g.witch), cut = t.canopyCutout;
+  // In step with the camera, not her (Ed's playtest, 2026-10-13: "the canopy hider activates as soon as the transition happens,
+  // when it should happen smoothly during the transition"): by the camera's eased lift, which trails hers, the hole held shut
+  // over the first canopyCutout.hold of its way down (and shut again by the same share from the top on the way up), opening
+  // from nothing over the rest; its soft edge growing with it (`open`), so the first frames of a descent don't send a wide ring
+  // of crowns, a hair short of whole, into the see-through pass at once.
+  const cut = t.canopyCutout, hold = Math.min(0.9, Math.max(0, cut.hold ?? 0)), camLift = Number.isFinite(g.camera.lift) ? g.camera.lift : g.witch.lift;
+  const open = smoothstep01(Math.min(1, Math.max(0, (1 - camLift - hold) / (1 - hold))));
+  const lifted = cut.hold === undefined ? canopyShown(g.witch) : 1 - open, edgeGrow = cut.hold === undefined ? 1 : smoothstep01(Math.min(1, open / 0.35));
   v.camera.updateMatrixWorld();
   const ws = placed(v.v3.set(g.witch.x, witchHeight(g.witch, t) * 0.5 + v.rideOff, g.witch.z)).project(v.camera);
   // (The edge stays its full softness as the hole closes: shrunk with it, a small hole's edge was crisp, Ed v289.)
@@ -33,7 +42,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     hx += v.holeLead.x; hy += v.holeLead.y;
   }
   v.holeAt = time;
-  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * v.width * (1 - lifted), Math.max(1, cut.edge * v.width));
+  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
   SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
