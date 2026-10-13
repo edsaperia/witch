@@ -3960,6 +3960,20 @@ const GENOMES = [
         { kind: "claws", size: .24 },
       ] },
     ] },
+  // the eyrie's griffin (a journey kind: unknown-18's, mountains and glaciers): an eagle's white head, hooked gold beak and
+  // feathered ear tufts on a lion's tawny body, eagle's wings and talons on its forelegs, a lion's tufted tail; its legend the thing
+  // that makes it a griffin: wings vast as a sail, a crest of long white feathers, gold talons
+  { id: "griffin", name: "Griffin", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .5, val: .72, belly: "white", accent: [.12, .75, .95], magic: .12, flower: [226, 176, 64] }, body: { hgt: 1.5, len: .72, chest: .55, tuck: .66, neck: .32, neckAng: .75, neckW: .4, hr: .25, legW: 1.05, bw: .28 }, head: { beak: 1, eyeK: .9, mask: true }, parts: { ears: { kind: "tuft", size: .9 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"], texture: { kind: "feathers" },
+    levels: [
+      { body: { len: .5, hr: .32, legW: 1.2 }, head: { beak: .7 }, features: [{ kind: "wings", feathered: true, nub: true, size: .8, mat: "BELLY", mat2: "BODY" }] },
+      { body: { len: .7 }, features: [{ kind: "wings", feathered: true, size: .8, mat: "BODY", mat2: "BELLY" }, { kind: "ruff", size: .1, count: 10, mat: "BELLY" }] },
+      { features: [{ kind: "wings", feathered: true, size: 1, mat: "BODY", mat2: "BELLY" }, { kind: "ruff", size: .16, count: 14, mat: "BELLY" }, { kind: "claws", size: .16, mat: "ACCENT" }] },
+      { body: { hgt: 1.6, len: .78, front: 1.12, legW: 1.15 }, head: { beak: 1.2 }, coat: { scars: 4, harness: true }, features: [
+        { kind: "wings", feathered: true, size: 1.25, mat: "BODY", mat2: "BELLY" },
+        { kind: "ruff", size: .3, count: 20, mat: "BELLY" },
+        { kind: "claws", size: .26, mat: "FLOWER" },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
@@ -4375,6 +4389,7 @@ const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  griffin: { kind: "curl", sink: .04, droop: 1, curl: 2.8, tailDown: .25 }, // curled like a cat, its head under a wing
   frostwyrm: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .25 }, // coiled round on itself, its tail over its snout
   cheetah: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, // curled round, its long tail over its nose
   lion: { kind: "curl", sink: .04, droop: 1, curl: 2.6, tailDown: .25 }, // sprawled on its side, its tail curled round
@@ -7127,6 +7142,8 @@ const SIGILS = {
   salamander: [E(.5, .14, .1, .08), E(.5, .42, .1, .2), bow([.5, .62], [.76, .9], .4), ...pair(L([.42, .32], [.24, .26], [.18, .18]), L([.24, .26], [.14, .3]), L([.42, .52], [.24, .6], [.2, .7]), L([.24, .6], [.13, .6]), D(.46, .12))],
   // side on: a long low body, a wavy crest running along its back and tail, small bent legs
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
+  // the griffin: an eagle's head side on, its hooked beak and feathered ear tuft, a wing raised behind it
+  griffin: [C(.42, .42, .16), L([.56, .38], [.72, .44], [.66, .56], [.56, .5]), D(.46, .4), L([.34, .3], [.3, .16]), L([.3, .56], [.22, .9]), ...[0, 1, 2].map(i => L([.3 + i * .05, .62], [.62 + i * .08, .96 - i * .1]))],
   // the frost wyrm: a long crocodile snout between great swept-back horns, an icicle beard under its jaw
   frostwyrm: [...pair(bow([.434, .369], [.188, .156], .3)), E(.5, .451, .115, .115), ...pair(L([.426, .5], [.467, .795])), ...pair(D(.459, .443)), ...pair(L([.451, .828], [.434, .885])), L([.5, .828], [.5, .894])],
   // the cheetah: a small round head, small round ears, and its black tear lines running from its eyes to its mouth
@@ -7246,6 +7263,7 @@ const LEGEND_DETAIL = {
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
+  griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
   lion: [...pair(L([.3, .38], [.38, .34])), ...pair(L([.36, .66], [.24, .68]))],
@@ -7369,7 +7387,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan" };
+const SIGIL_NEON = { fennec: "orange", lion: "lemon", cheetah: "magenta", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -8582,7 +8600,28 @@ const FROSTCAVE = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE];
+// ---- inlined from art/recipes/eyrie.js ----
+// The eyrie (a journey kind: unknown-18's, mountains and glaciers; Ed approved the mock, 2026-10-13): bare high peaks of warm scree, cedars and pines bent
+// flat by the wind, and a griffin's great nest, the griffin its creature.
+const EYRIE = {
+  id: "eyrie", name: "Eyrie", creature: "griffin", by: "recipe", leaf: .3, floor: ["scree", .09, .2, .55],
+  text: { floor: "warm scree and thin grass", wall: "rock ledges", small: "stones, feathers and thin grass", big: "cedars and pines bent flat by the wind", set: "a griffin's great nest of branches" },
+  wall: [["rockwall", {}]], small: [["grass", { h: .7 }], ["stones", {}]],
+  big: [["tree", { type: "cedar", scale: .85 }], ["tree", { type: "pine", minor: true, scale: .7 }]],
+  steep: true, pathKinds: ["animal", "dirt"],
+  setPiece: ["heap", "a griffin's great nest of branches", 1.4, { of: "brush", top: "none", height: 2, width: 5.4 }],
+  layout: {
+    pattern: "stands", density: .22, clump: .35, glades: { count: 1, size: [24, 34] },
+    heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .4, lean: { dir: 1.6, amount: .7 },
+    terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: .1, modern: 0 },
+    feel: "High bare peaks in hard light and wind, cedars and pines all leaning one way, feathers caught in the scree; a great nest on the highest ledge.",
+  },
+  flora: { species: [["cedar", .6], ["pine", .3], ["larch", .1]], palette: { sat: .75, val: .9 } },
+  settings: { treeDensity: .22, groundCover: { density: .4, kinds: ["blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -12093,6 +12132,7 @@ const LEGEND_POSES = {
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
+  griffin: { sink: .4, droop: 1, drop: [], over: { moss: .08, lichen: .2, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the eyrie's griffin (an area recipe's): folded down on its ledge, wings laid flat, feathers gone grey with lichen
   frostwyrm: { sink: .4, droop: 1, drop: [], over: { moss: .04, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }, // the frost cave's wyrm (an area recipe's): coiled down into the ice, rimed and stone-grey with age
   cheetah: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .06, lichen: .12, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 3 } }, // the plains' cheetah (an area recipe's): stretched long in the short grass, its spots gone to lichen
   lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
