@@ -7,6 +7,10 @@
 // run away"): the watch is long enough to leave in (wildWatch.time), and leaving (or rising) before it's up calls it off:
 // they settle back down and don't chase, and the next visit starts it over. Its rising aggro (aggroOf, for the view's red
 // and the music's sting) is the area's, scaled by its danger: what its watchers are worth in a fight (wildWatch.dangerF).
+// The chase (Ed, 2026-10-13: "Animals should chase outside, and relatively far ... stop people just sitting near the edge of a
+// territory and sniping/kiting. However if you leave the area before the warning ends then they don't attack"): walked out of in
+// time, none comes after her (rules/combat/targeting.ts acquire); once they've attacked they follow her out to combat.leaveArea
+// past their edge; and a 💌 of hers provokes a wild one for wildWatch.provoked seconds, so it comes out after her across its edge.
 import { cellKey } from "./party";
 import { LEGEND, type Creature } from "./creatures";
 import type { Game } from "./game";

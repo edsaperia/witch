@@ -112,10 +112,10 @@ describe("the Cyclone hat (Ed, 2026-10-12: 'pushes creatures around in a circle,
   it("sweeps wild creatures near it round it, up off the ground, then flings them out and they land stunned; hers stay put", () => {
     const g = game(wearingHat("cyclone")), W = g.witches[0], p = spot(g), Y = TUNING.spells.cyclone!;
     at(g, p.x, p.z);
-    const c = WILD_STATE(g, p.x + 6, p.z), hers = mine(g, WILD_STATE(g, p.x - 6, p.z)), r0 = 6, hp = c.hp;
+    const c = WILD_STATE(g, p.x + 6, p.z), hers = mine(g, WILD_STATE(g, p.x - 6, p.z)), hp = c.hp;
     putDown(g);
     away(g);
-    const d = W.hat.down!, hx = hers.x, hz = hers.z;
+    const d = W.hat.down!, hx = hers.x, hz = hers.z, r0 = W.spells.cyc!.held.find(h => h.id === c.id)!.r; // (where the whirlwind caught it: a skittish baby edges off her as she puts it down)
     let turned = 0, last = Math.atan2(c.z - d.z, c.x - d.x), high = 0;
     for (let i = 0; i < Math.round(Y.time * 60) - 2; i++) {
       stepGame(g, C, 1 / 60);
