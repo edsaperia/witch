@@ -142,7 +142,8 @@ export function stampBlobs(sp, r, st, s, list, C) {
 }
 
 export function blobTree(r, st, s, P) {
-  const k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W, H), bx = W / 2, gy = H;
+  // (st.treePad: room past the tree's own frame, left and right, and above, for a crown that grows out of it: trees.js unclipped)
+  const [PX, PY] = st.treePad || [0, 0], k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
   const T = P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
   const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * (T.lean ?? .3) * st.gnarl + (st.treeLean || 0);
   const tips = [], ends = [], trunks0 = [];
@@ -186,8 +187,8 @@ export function blobTree(r, st, s, P) {
     const p = lerp2(tr.pts[i], tr.pts[i + 1], u + r() * T.bands * .4), wl = 2 + Math.floor(r() * 4) * s;
     if (r() < .7) for (let dy = 0; dy < Math.max(2, Math.round(s * 1.2)); dy++) for (let dx = -wl; dx <= wl; dx++) if (sp.get(p[0] + dx, p[1] + dy) === tmat) sp.recolour(p[0] + dx, p[1] + dy, bandM);
   }
-  if (T.upper) for (let y = 0; y < H * T.upper; y++) for (let x = 0; x < W; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
-  if (T.scars) for (let y = 0; y < H; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < W; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
+  if (T.upper) for (let y = 0; y < PY + H * T.upper; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
+  if (T.scars) for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
   const C = P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
   if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
   if (C.fronds) return frondCrown(sp, r, st, s, k, ends[0], C, gy);
@@ -233,7 +234,7 @@ export function blobTree(r, st, s, P) {
   }
   // the crown line: the underside of the lowest blobs, or the trunk's fork, whichever is lower
   const under = Math.max(...list.filter(b => !b.back || list.length < 3).map(b => b.c[1] + b.ry * .4));
-  if (C.crownLine) return trim(sp, bx, H * C.crownLine); // a crown to the ground (a fir's skirts): the line at a share of the height, so its lowest skirts carry the life below
+  if (C.crownLine) return trim(sp, bx, PY + H * C.crownLine); // a crown to the ground (a fir's skirts): the line at a share of the height, so its lowest skirts carry the life below
   return trim(sp, bx, Math.min(gy - 6 * s, Math.max(under, Math.min(...ends.map(e => e[1])))));
 }
 
