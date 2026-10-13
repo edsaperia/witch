@@ -111,7 +111,7 @@ export const PLANT_GENOMES = {
   juniper: { name: "juniper", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "lumpy tufts on twisted limbs" },
     params: { w: 170, wPad: 40, h: 110, trunk: { w: 9, len: .62, taper: .55, bend: 1.8, lean: .3, stems: 2, fan: .7 }, levels: [{ n: [3, 4], at: [.45, .95], len: [.32, .48], angle: [.8, 1.25], up: .15, tips: true }],
       crown: { blobs: [7, 10], r: [11, 15], flat: .55, stamp: "needle", stampSize: 2, back: .35, backDark: .45 } },
-    low: { moss: 0 }, colour: { hue: .1, sat: .55, val: .75, trunk: [.08, .12, .62] } },
+    low: { moss: .15, boughs: .25, skirt: .5 }, colour: { hue: .1, sat: .55, val: .75, trunk: [.08, .12, .62] } },
   cedar: { name: "cedar", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "tiers", clumps: "flat plates in tiers" },
     params: { w: 200, h: 150, trunk: { w: 12, len: .82, taper: .4, bend: .7 }, levels: [{ n: [5, 6], at: [.3, .95], len: [.3, .45], angle: [1.25, 1.45], up: -.05, shape: "cone", tips: true }],
       crown: { blobs: [7, 9], r: [16, 22], flat: .28, stamp: "needle", stampSize: 3, back: .2, lift: 1, tones: [.05, .5] } },
@@ -128,6 +128,12 @@ export const PLANT_GENOMES = {
   datePalm: { name: "date palm", form: "palm", generator: "blob", grow: "narrow", crown: { envelope: "umbrella", clumps: "fronds" },
     params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: .9, taper: .75, bend: 1.6, lean: .7, scars: 2, roots: .4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.3, fruit: { n: [6, 9], r: 2.2 } } } },
     low: { sprigs: .2 }, colour: { hue: -.02, sat: .9, val: .95, trunk: [.08, .25, .5] } },
+  acacia: { name: "umbrella thorn", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "umbrella", clumps: "layers" }, // the savanna's flat-topped acacia: a bare forked trunk, a thin wide tabletop of leaf
+    params: { w: 260, wPad: 40, h: 150, trunk: { w: 7, len: .62, taper: .65, bend: 1.5, lean: .45 }, levels: [{ n: [3, 4], at: [.55, 1], len: [.4, .55], angle: [.85, 1.25], up: .12, bend: 1.4, w: .5 }], crown: { blobs: [10, 13], r: [22, 30], flat: .22, lift: 4, stamp: "leaf", stampSize: 3, back: .3 } },
+    low: { sprigs: .1 }, colour: { hue: .07, sat: .8, val: .9, trunk: [.07, .3, .32] } },
+  baobab: { name: "baobab", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "dome", clumps: "layers" }, // a bottle of a trunk, stubby root-like branches, a few small tufts of leaf
+    params: { w: 210, wPad: 30, h: 150, trunk: { w: 34, len: .74, taper: .9, bend: .3, lean: .05, roots: .6 }, levels: [{ n: [5, 7], at: [.88, 1], len: [.26, .38], angle: [.6, 1.3], up: .3, bend: .8, w: .5 }], crown: { blobs: [5, 7], r: [11, 15], flat: .5, lift: 2, stamp: "leaf", stampSize: 2, back: .3 } },
+    low: {}, colour: { hue: .08, sat: .75, val: .9, trunk: [.06, .14, .58] } },
   mangrove: { name: "mangrove", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "dome", clumps: [14, 20] },
     params: { w: 250, h: 165, trunk: { w: 11, len: .5, taper: .6, bend: 1.2, lean: .2, roots: 0, stilts: { n: [8, 11], at: [.15, .5], reach: [16, 40], w: .42 } }, levels: [{ n: [4, 6], at: [.55, 1], len: [.3, .45], angle: [.9, 1.4], up: .05, bend: 1.2, w: .55 }],
       crown: { blobs: [8, 11], r: [17, 25], flat: .6, stamp: "leaf", stampSize: 3, back: .3, lift: 2 } },

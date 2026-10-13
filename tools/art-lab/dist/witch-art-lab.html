@@ -909,7 +909,7 @@ const PLANT_GENOMES = {
   juniper: { name: "juniper", form: "tree", generator: "blob", grow: "small", crown: { envelope: "sphere", clumps: "lumpy tufts on twisted limbs" },
     params: { w: 170, wPad: 40, h: 110, trunk: { w: 9, len: .62, taper: .55, bend: 1.8, lean: .3, stems: 2, fan: .7 }, levels: [{ n: [3, 4], at: [.45, .95], len: [.32, .48], angle: [.8, 1.25], up: .15, tips: true }],
       crown: { blobs: [7, 10], r: [11, 15], flat: .55, stamp: "needle", stampSize: 2, back: .35, backDark: .45 } },
-    low: { moss: 0 }, colour: { hue: .1, sat: .55, val: .75, trunk: [.08, .12, .62] } },
+    low: { moss: .15, boughs: .25, skirt: .5 }, colour: { hue: .1, sat: .55, val: .75, trunk: [.08, .12, .62] } },
   cedar: { name: "cedar", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "tiers", clumps: "flat plates in tiers" },
     params: { w: 200, h: 150, trunk: { w: 12, len: .82, taper: .4, bend: .7 }, levels: [{ n: [5, 6], at: [.3, .95], len: [.3, .45], angle: [1.25, 1.45], up: -.05, shape: "cone", tips: true }],
       crown: { blobs: [7, 9], r: [16, 22], flat: .28, stamp: "needle", stampSize: 3, back: .2, lift: 1, tones: [.05, .5] } },
@@ -926,6 +926,12 @@ const PLANT_GENOMES = {
   datePalm: { name: "date palm", form: "palm", generator: "blob", grow: "narrow", crown: { envelope: "umbrella", clumps: "fronds" },
     params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: .9, taper: .75, bend: 1.6, lean: .7, scars: 2, roots: .4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.3, fruit: { n: [6, 9], r: 2.2 } } } },
     low: { sprigs: .2 }, colour: { hue: -.02, sat: .9, val: .95, trunk: [.08, .25, .5] } },
+  acacia: { name: "umbrella thorn", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "umbrella", clumps: "layers" }, // the savanna's flat-topped acacia: a bare forked trunk, a thin wide tabletop of leaf
+    params: { w: 260, wPad: 40, h: 150, trunk: { w: 7, len: .62, taper: .65, bend: 1.5, lean: .45 }, levels: [{ n: [3, 4], at: [.55, 1], len: [.4, .55], angle: [.85, 1.25], up: .12, bend: 1.4, w: .5 }], crown: { blobs: [10, 13], r: [22, 30], flat: .22, lift: 4, stamp: "leaf", stampSize: 3, back: .3 } },
+    low: { sprigs: .1 }, colour: { hue: .07, sat: .8, val: .9, trunk: [.07, .3, .32] } },
+  baobab: { name: "baobab", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "dome", clumps: "layers" }, // a bottle of a trunk, stubby root-like branches, a few small tufts of leaf
+    params: { w: 210, wPad: 30, h: 150, trunk: { w: 34, len: .74, taper: .9, bend: .3, lean: .05, roots: .6 }, levels: [{ n: [5, 7], at: [.88, 1], len: [.26, .38], angle: [.6, 1.3], up: .3, bend: .8, w: .5 }], crown: { blobs: [5, 7], r: [11, 15], flat: .5, lift: 2, stamp: "leaf", stampSize: 2, back: .3 } },
+    low: {}, colour: { hue: .08, sat: .75, val: .9, trunk: [.06, .14, .58] } },
   mangrove: { name: "mangrove", form: "tree", generator: "blob", grow: "wide", crown: { envelope: "dome", clumps: [14, 20] },
     params: { w: 250, h: 165, trunk: { w: 11, len: .5, taper: .6, bend: 1.2, lean: .2, roots: 0, stilts: { n: [8, 11], at: [.15, .5], reach: [16, 40], w: .42 } }, levels: [{ n: [4, 6], at: [.55, 1], len: [.3, .45], angle: [.9, 1.4], up: .05, bend: 1.2, w: .55 }],
       crown: { blobs: [8, 11], r: [17, 25], flat: .6, stamp: "leaf", stampSize: 3, back: .3, lift: 2 } },
@@ -3911,6 +3917,19 @@ const GENOMES = [
         { kind: "wisps", at: "mane", size: .2, count: 6, from: .15, to: .85, mat: "MAGIC2", lift: .2 },
       ] },
     ] },
+  // the savanna's lion (a journey kind: unknown-08's, the hot south): a big tawny cat, a spotted cub, a lean young with a fuzz of mane,
+  // the adult's dark mane; its legend the sun's: a mane of flame-locks, its eyes lit, sun-fire rising off it
+  { id: "lion", name: "Lion", template: "quadruped", builder: "quad", palette: { hue: .075, sat: .58, val: .66, belly: "white", magic: .09 }, body: { hgt: 1.4, len: .78, chest: .6, tuck: .7, neck: .3, neckAng: .55, neckW: .44, hr: .25, legW: 1.05, bw: .27 }, head: { snout: .85, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"],
+    levels: [
+      { body: { len: .5, chest: .4, tuck: .45, hr: .3, legW: 1.3 }, head: { snout: .45 }, parts: { ears: { kind: "round", size: 1 } }, coat: { spots: true } },
+      { body: { len: .74, chest: .52, tuck: .6, legW: 1, neckW: .4 }, head: { snout: .65 }, features: [{ kind: "ruff", size: .1, count: 10, mat: "BODY2" }] },
+      { body: { front: 1.1, legW: 1.2, bw: .32, hgt: 1.35 }, head: { snout: .65 }, features: [{ kind: "ruff", size: .3, count: 22, mat: "BODY3" }, { kind: "mane", from: .7, to: 1, height: .2, count: 8, lean: .55, mat: "BODY3" }] },
+      { body: { front: 1.2, humpK: .6, legW: 1.35, bw: .34, len: .74 }, head: { snout: .7, eyeGlow: true }, features: [
+        { kind: "ruff", size: .42, count: 28, mat: "BODY3" },
+        { kind: "mane", from: .6, to: 1, height: .14, count: 10, lean: .7, mat: "BODY3" },
+        { kind: "wisps", at: "mane", size: .28, count: 8, from: .5, to: 1, mat: "MAGIC2", lift: .3 },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "dormouse", tail: true, eye: "EYE" } },
@@ -3938,7 +3957,7 @@ const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.ringed"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -4327,6 +4346,7 @@ const NAP_POSES = {
   // tuck
   owl: { kind: "tuck", ground: .14, tuck: .35, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101] },
   raven: { kind: "tuck", ground: .26, tuck: .45, drop: [40, 50, 95, 96, 97, 98, 99, 100] },
+  lion: { kind: "curl", sink: .04, droop: 1, curl: 2.6, tailDown: .25 }, // sprawled on its side, its tail curled round
   fennec: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 }, // curled in its brush, ears laid back
   heron: { kind: "tuck", ground: .56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] },
   // coil
@@ -5126,6 +5146,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)
   else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
@@ -7317,6 +7338,8 @@ const SIGILS = {
   salamander: [E(.5, .14, .1, .08), E(.5, .42, .1, .2), bow([.5, .62], [.76, .9], .4), ...pair(L([.42, .32], [.24, .26], [.18, .18]), L([.24, .26], [.14, .3]), L([.42, .52], [.24, .6], [.2, .7]), L([.24, .6], [.13, .6]), D(.46, .12))],
   // side on: a long low body, a wavy crest running along its back and tail, small bent legs
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
+  // the lion: a great round mane of rays round a broad face, a wide nose and muzzle
+  lion: [C(.5, .5, .38), ...rays(.5, .5, .38, .47, [-90, -60, -30, 0, 30, 60, 90, 120, 150, 180, 210, 240]), ...pair(D(.41, .45)), L([.44, .58], [.5, .63], [.56, .58]), L([.5, .63], [.5, .7])],
   // the fennec: ears bigger than its face, flaring out wide, a small pointed face under them
   fennec: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
@@ -7430,6 +7453,7 @@ const LEGEND_DETAIL = {
   marten: [...pair(A(.24, .24, .045, 110, 340), L([.42, .7], [.28, .72]))],
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
+  lion: [...pair(L([.3, .38], [.38, .34])), ...pair(L([.36, .66], [.24, .68]))],
   fennec: [...pair(L([.36, .36], [.22, .22])), ...pair(bow([.32, .66], [.44, .72], .25))],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
   meerkat: [...pair(L([.39, .2], [.37, .14])), L([.5, .48], [.5, .74]), ...pair(L([.42, .86], [.37, .92]))],
@@ -7550,7 +7574,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { raccoon: "cyan", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", armadillo: "lemon", worldTree: "mint" };
+const SIGIL_NEON = { raccoon: "cyan", fennec: "orange", lion: "lemon", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", armadillo: "lemon", worldTree: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -8368,7 +8392,7 @@ const NEW_SET_PIECES = {
   "grassland": ["barrow", "a barrow with a stone doorway", 1],
   "heath": ["cairn", "a tall cairn with an old beacon basket", 1.4],
   "old-pinewood": ["stump-throne", "a woodcutter's stump throne", 1.1],
-  "bluebell-glade": ["swing-beech", "a great beech with a rope swing, glowworms beneath", 1],
+  "bluebell-glade": ["swing-beech", "a great beech with a rope swing", 1],
   "honeysuckle-tangle": ["bower", "a honeysuckle bower with a bench", 1.2],
 };
 const SET_PIECE_KINDS = Object.keys(spSETS);
@@ -8624,13 +8648,14 @@ const WARREN = {
   wall: [["rockwall", {}]], small: [["grass", { h: 1.1, leafHue: .12, leafSat: .35 }]],
   big: [["tree", { type: "juniper", scale: 1.15, lean: .2 }], ["spire", { sparse: .25, rock: [.04, .55, .62], dry: true }], ["spire", { twin: true, sparse: .2, rock: [.05, .5, .66], dry: true }], ["boulder", { sparse: .25 }], ["snag", { sparse: .12, bleached: true }]],
   setPiece: ["heap", "a heap of red stones over the warren", 1, { of: "stones", moss: 0, top: "slab", stone: [.04, .5, .6] }],
+  pathKinds: ["animal", "dirt"],
   layout: {
-    pattern: "scatter", density: .25, clump: .5, glades: { count: 2, size: [14, 22] },
+    pattern: "groves", density: .25, clump: .5, glades: { count: 2, size: [14, 22] },
     heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
-  flora: { species: [["juniper", 1]], palette: { sat: .5, val: .8 } },
+  flora: { species: [["juniper", .6], ["hawthorn", .25], ["pine", .15]], palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .25, groundCover: { density: .4, kinds: ["pebbles", "blades"] } },
 };
 
@@ -8645,13 +8670,14 @@ const SCRUB_WASH = {
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
   big: [["tree", { type: "hawthorn", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
+  pathKinds: ["animal", "dirt"],
   layout: {
-    pattern: "scatter", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
+    pattern: "edgeOnly", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
     heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
-    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .6, freak: .1, lake: 0, modern: .1 },
+    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },
-  flora: { species: [["hawthorn", .6], ["juniper", .4]], palette: { sat: .55, val: .75 } },
+  flora: { species: [["hawthorn", .55], ["juniper", .3], ["pine", .15]], palette: { sat: .6, val: .75 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
 
@@ -8662,9 +8688,9 @@ const SCRUB_WASH = {
 // a mossy logjam where the creek pools and the raccoons wash their food; the raccoon its creature.
 const MOSSY_CREEK = {
   id: "mossy-creek", name: "Mossy creek", creature: "raccoon", by: "recipe", leaf: .33, floor: ["moss", .3, .5, .3],
-  text: { floor: "deep moss and wet stones", wall: "the creek", small: "sword ferns", big: "tall mossy spruces and cedars", set: "a mossy logjam where the creek pools" },
+  text: { floor: "deep moss and wet stones", wall: "the creek", small: "sword ferns", big: "tall mossy cedars and spruces", set: "a mossy logjam where the creek pools" },
   wall: [["water", { w: 1.6 }], ["fern", {}]], small: [["fern", {}]],
-  big: [["tree", { type: "fir", scale: 1.4 }], ["tree", { type: "cedar", scale: 1.2 }], ["tree", { type: "alder", minor: true, scale: .9 }], ["log", { moss: true, sparse: .12 }]],
+  big: [["tree", { type: "cedar", scale: 1.3 }], ["tree", { type: "fir", scale: 1.4 }], ["tree", { type: "alder", minor: true, scale: .9 }], ["log", { moss: true, sparse: .12 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
@@ -8673,7 +8699,7 @@ const MOSSY_CREEK = {
     terrain: ["stream", "pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .1, lake: .3, modern: 0 },
     feel: "A cold green gloom under towering mossy spruces and cedars, a creek chattering over stones, ferns waist-deep; dripping, soft and old.",
   },
-  flora: { species: [["fir", .45], ["cedar", .35], ["alder", .2]], palette: { sat: .85, val: .8 } },
+  flora: { species: [["cedar", .45], ["fir", .35], ["alder", .2]], palette: { sat: .85, val: .8 } },
   settings: { treeDensity: .7, groundCover: { density: .9, kinds: ["moss", "blades"] } },
 };
 
@@ -8682,23 +8708,44 @@ const MOSSY_CREEK = {
 // The erg (a journey kind: unknown-07's, the hot south; Ed approved the mock, 2026-10-12): golden dunes and an oasis of date palms, the fennec fox its creature.
 const ERG = {
   id: "erg", name: "Erg", creature: "fennec", by: "recipe", leaf: .2, floor: ["sand", .11, .42, .64],
-  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps", set: "a ring of wind-worn stones round an old hearth" },
-  wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["bush", { small: true }]],
-  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "datePalm", minor: true, scale: .7 }]],
+  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
+  wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["shrub", { spiky: true }]],
+  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: .8 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
   layout: {
     pattern: "groves", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
     heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
-    terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .4, rocks: .4, freak: 0, lake: .3, modern: 0 },
+    terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
-  flora: { species: [["datePalm", 1]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["datePalm", .65], ["acacia", .25], ["baobab", .1]], palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["blades"] } },
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SCRUB_WASH, MOSSY_CREEK];
+// ---- inlined from art/recipes/savanna.js ----
+// The savanna (a journey kind: unknown-08's, the hot south; Ed approved the mock, 2026-10-12): tall gold grass under flat-topped acacias and the odd baobab, a kopje of
+// sun-warmed boulders, the lion its creature.
+const SAVANNA = {
+  id: "savanna", name: "Savanna", creature: "lion", by: "recipe", leaf: .15, floor: ["tallgrass", .11, .55, .58],
+  text: { floor: "tall gold grass", wall: "thorn scrub", small: "grass tussocks and thorn scrub", big: "flat-topped acacias, a few baobabs", set: "a kopje of sun-warmed boulders" },
+  wall: [["shrub", { spiky: true }]], small: [["grass", { h: 1.4 }], ["shrub", { spiky: true }]],
+  big: [["tree", { type: "acacia", scale: 1.1 }], ["tree", { type: "baobab", minor: true, scale: 1.2 }]],
+  pathKinds: ["track"],
+  setPiece: ["heap", "a kopje of sun-warmed boulders", 1.3, { of: "stones", top: "none", moss: -1, rock: "sandstone" }],
+  layout: {
+    pattern: "scatter", density: .2, clump: .3, glades: { count: 2, size: [24, 36] },
+    heightMix: { sapling: .15, mature: .55, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    terrain: ["mounds", "rocky"], decor: { rate: .2, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
+    feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud.",
+  },
+  flora: { species: [["acacia", .7], ["baobab", .2], ["datePalm", .1]], palette: { sat: .8, val: .95 } },
+  settings: { treeDensity: .25, groundCover: { density: .9, kinds: ["blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SCRUB_WASH, SAVANNA, MOSSY_CREEK];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -8719,33 +8766,33 @@ const P = (kind, o = {}) => [kind, o];
 
 // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
 const AREAS = [
-  { id: "moor", name: "Moor", creature: "badger", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
+  { id: "moor", name: "Moor", creature: "woodlouse", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
     wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 })] },
-  { id: "fern-forest", name: "Fern forest", creature: "boar", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+  { id: "fern-forest", name: "Fern forest", creature: "mole", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
     small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
     small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
-  { id: "stone-shrine", name: "Stone shrine", creature: "fox", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
+  { id: "stone-shrine", name: "Stone shrine", creature: "owl", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
     wall: [P("henge")], small: [P("stones")], big: [P("standingstone", { big: true }), P("boulder", { sparse: .15 }), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true })], set: P("shrine") }, // (its tree-equivalents great standing stones: Ed, 2026-10-06)
   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
     small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
-  { id: "wispy-forest", name: "Wispy forest", creature: "woodlouse", by: "Ed", leaf: .2, floor: ["leaves", .09, .55, .45], text: { floor: "dry leaves", small: "tall thin wispy trees", big: "thick trees with several trunks" },
+  { id: "wispy-forest", name: "Wispy forest", creature: "badger", by: "Ed", leaf: .2, floor: ["leaves", .09, .55, .45], text: { floor: "dry leaves", small: "tall thin wispy trees", big: "thick trees with several trunks" },
     small: [tree("birch", { scale: .75 })], big: [tree("lime", { trunks: 3, thick: 1.4 }), tree("birch", { minor: true })] },
   { id: "hazel-forest", name: "Hazel forest", creature: "hedgehog", by: "Ed", leaf: .26, floor: ["grass", .24, .45, .45], text: { floor: "short grass", small: "brown lumps", big: "crooked trees with many branches" },
     small: [P("mound", { brown: true })], big: [tree("hazel", { gnarl: 1, scale: .95 }), tree("oak", { minor: true, scale: .9 })] },
-  { id: "garden", name: "Garden", creature: "squirrel", by: "Ed", leaf: .3, floor: ["lawn", .27, .5, .5], text: { floor: "uniform grass", wall: "ornate stone wall", small: "manicured flower beds", big: "willows", set: "a stone pavilion" },
+  { id: "garden", name: "Garden", creature: "wolf", by: "Ed", leaf: .3, floor: ["lawn", .27, .5, .5], text: { floor: "uniform grass", wall: "ornate stone wall", small: "manicured flower beds", big: "willows", set: "a stone pavilion" },
     wall: [P("wall")], small: [P("flowerbed")], big: [tree("willow")], set: P("pavilion") },
-  { id: "twiggy-forest", name: "Twiggy forest", creature: "wolf", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
+  { id: "twiggy-forest", name: "Twiggy forest", creature: "squirrel", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
     small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
-  { id: "norway", name: "Norway", creature: "stoat", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
+  { id: "norway", name: "Norway", creature: "snake", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
     small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })] },
-  { id: "alder-forest", name: "Alder forest", creature: "snake", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
+  { id: "alder-forest", name: "Alder forest", creature: "stoat", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
     small: [P("stump", { grass: true })], big: [tree("alder", { lean: .3, scale: 1.2, dark: true })] },
-  { id: "meadow", name: "Meadow", creature: "hare", by: "draft", leaf: .25, floor: ["flowers", .25, .5, .5], text: { floor: "grass and wildflowers", small: "scattered hawthorn", big: "lone oaks" },
+  { id: "meadow", name: "Meadow", creature: "glowworm", by: "draft", leaf: .25, floor: ["flowers", .25, .5, .5], text: { floor: "grass and wildflowers", small: "scattered hawthorn", big: "lone oaks" },
     small: [P("shrub", { flower: [250, 245, 235] })], big: [tree("chestnut", { scale: 1.1 }), tree("hawthorn", { minor: true, scale: .8 })] },
-  { id: "old-oaks", name: "Old oaks", creature: "owl", by: "draft", leaf: .22, floor: ["leaves", .07, .5, .35], text: { floor: "leaf litter", small: "acorns, fallen branches", big: "ancient gnarled oaks with hollow trunks", set: "a great hollow oak" },
+  { id: "old-oaks", name: "Old oaks", creature: "fox", by: "draft", leaf: .22, floor: ["leaves", .07, .5, .35], text: { floor: "leaf litter", small: "acorns, fallen branches", big: "ancient gnarled oaks with hollow trunks", set: "a great hollow oak" },
     small: [P("cones", { acorn: true }), P("log", { branch: true })], big: [tree("oak", { gnarl: .9, hollow: true }), tree("holly", { minor: true, scale: .8 })], set: tree("broad", { scale: 1.6, gnarl: 1, hollow: true }) },
   { id: "berry-thicket", name: "Berry thicket", creature: "bear", by: "draft", leaf: .32, floor: ["needles", .08, .45, .3], text: { floor: "pine needles", wall: "bramble thickets", small: "berry bushes", big: "tall pines" },
     wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { scale: 1.2 }), tree("rowan", { minor: true })] },
@@ -8761,7 +8808,7 @@ const AREAS = [
     small: [P("log", { branch: true })], big: [tree("broad", { bare: true, gnarl: 1 })] },
   { id: "cave-mouth", name: "Cave mouth", creature: "bat", by: "draft", leaf: .2, floor: ["stone", .08, .15, .35], text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
     wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
-  { id: "grassland", name: "Grassland", creature: "mole", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "molehills", big: "lone birches" },
+  { id: "grassland", name: "Grassland", creature: "boar", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "rooted-up turf", big: "lone birches" },
     small: [P("mound", { brown: true, small: true })], big: [tree("flat", { scale: 1.1 }), tree("weepingBirch", { minor: true })] },
   { id: "beaver-pond", name: "Beaver pond", creature: "beaver", by: "draft", leaf: .17, floor: ["leaves", .13, .6, .5], text: { floor: "birch leaves", wall: "a pond", small: "stumps", big: "birch and aspen", set: "a beaver dam" },
     wall: [P("water", { w: 2 })], small: [P("stump", { gnawed: true })], big: [tree("weepingBirch"), tree("alder", { minor: true, scale: .8 })], set: P("dam") },
@@ -8773,7 +8820,7 @@ const AREAS = [
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
   { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .6, .1, .42], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 })], set: P("waterfall") },
-  { id: "bluebell-glade", name: "Bluebell glade", creature: "glowworm", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
+  { id: "bluebell-glade", name: "Bluebell glade", creature: "hare", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
   { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
     wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("holly", { scale: .9 }), tree("yew", { minor: true, scale: .7 })], set: tree("broad", { bare: true, webs: true }) },
@@ -8880,7 +8927,7 @@ const AREA_LAYOUTS = {
   "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .5, .3, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
     "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
   "grassland": LAY("lone", .1, .5, [0], [.3, .5, .2, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
-    "Short turf to the horizon, molehills, birches alone or in twos and threes."),
+    "Short turf to the horizon, rooted up in mounds, birches alone or in twos and threes."),
   "beaver-pond": LAY("edgeOnly", .55, .4, [1, [14, 20]], [.4, .45, .15, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
     "A pond in the middle, young birch and aspen round it, gnawed stumps where the big ones were felled."),
   "log-pile": LAY("groves", .5, .7, [2, [6, 10]], null, .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, 0, .4, 0, .3]],
@@ -12210,6 +12257,7 @@ const LEGEND_POSES = {
   meerkat: { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }, // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
+  lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
   fennec: { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
