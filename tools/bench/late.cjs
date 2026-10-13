@@ -95,8 +95,13 @@ const sum = (o, k) => o.reduce((a, x) => a + (x[k] ?? 0), 0);
   // Where Ed was, over the treetops, the art and ground round her given time to come in.
   await page.evaluate(async ({ ax, az }) => {
     const w = window.witch, g = w.game, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+    // (off her decks first: she starts the night seated behind them, held there until her first move, and seated she can't
+    // rise, so the toggle below left her on the ground and the probe timed the ground view; a second of walking steps her off)
+    for (let i = 0; i < 60; i++) w.frame({ ...idle, moveZ: 1 }, 1 / 60, true);
     g.witch.x = ax; g.witch.z = az;
     w.frame({ ...idle, toggleMode: true }, 1 / 60, true);
+    for (let i = 0; i < 30; i++) w.frame(idle, 1 / 60, true);
+    if (g.witch.mode !== "treetop") throw new Error("late.cjs: she didn't rise to the treetops (mode " + g.witch.mode + ")");
     for (let i = 0; i < 240; i++) { w.frame(idle, 1 / 60, true); if (i % 20 === 19) await new Promise(r => setTimeout(r, 50)); }
   }, { ax, az });
   const prof = process.env.PROFILE === "1" ? await page.context().newCDPSession(page) : null;
