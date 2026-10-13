@@ -260,7 +260,7 @@ export const NEW_SET_PIECES = {
   "grassland": ["barrow", "a barrow with a stone doorway", 1],
   "heath": ["cairn", "a tall cairn with an old beacon basket", 1.4],
   "old-pinewood": ["stump-throne", "a woodcutter's stump throne", 1.1],
-  "bluebell-glade": ["swing-beech", "a great beech with a rope swing, glowworms beneath", 1],
+  "bluebell-glade": ["swing-beech", "a great beech with a rope swing", 1],
   "honeysuckle-tangle": ["bower", "a honeysuckle bower with a bench", 1.2],
 };
 export const SET_PIECE_KINDS = Object.keys(spSETS);
