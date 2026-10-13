@@ -6,6 +6,6 @@ Ed picked trees for all twelve open areas (mocks in `docs/art-review/mocks/trees
 - `stone-shrine-ingame.png`: old yews round the stones; from above, dark yew crowns among them.
 - `ravine-ingame.png`: Scots pines and rowans leaning out among the rock spires.
 
-## Tree mains (each kind the main tree of at most two areas)
+## Tree mains (every area its own main tree)
 
-`tree-mains-before-after.png`: the five areas whose main tree changed (ravine, stream, mudflat, moonpool glade, scrub wash), before (prototype) and after, as their listed trees. Only the order of each area's flora changed (its main kind first), not the shares, so the mix of trees in play is as it was.
+`tree-mains-before-after.png`: every species two or more areas grow as their main tree, its tall and mature trees in each of those areas, before (prototype) and after. One area of each row keeps the plain species; the others grow a variant of it (art/flora/variants.js: wind-bent, stunted, snowy, mossy, ancient, coppiced, pollard, burnt), so no two areas share a main tree.
