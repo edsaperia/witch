@@ -8476,6 +8476,10 @@
         "lead": {
           "type": "number",
           "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -8486,7 +8490,8 @@
         "outer",
         "ragged",
         "spread",
-        "lead"
+        "lead",
+        "hold"
       ],
       "additionalProperties": false
     },
