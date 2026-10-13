@@ -18,7 +18,7 @@ Its ages:
 - **Baby:** a downy grey chick with a dark cap.
 - **Young:** grey-brown, with a white front.
 - **Adult:** black and white, with an orange beak stripe and orange patches at its neck.
-- **Legend:** crowned.
+- **Legend** (revised after Ed's note: exaggerate what makes it unusual, not a generic crown): a towering emperor, its flippers flung wide like oars, a blazing orange gorget down its breast, a longer beak, and its downy chick standing on its feet before it, as emperors carry theirs.
 
 **Size against the witch:**
 - The chick is about a third of her height.
