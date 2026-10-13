@@ -321,19 +321,17 @@
       "biome": "rocky",
       "placeholder": true
     },
-    "unknown-21": {
+    "rattlesnake": {
       "phase": 4,
       "bearing": 125,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
-    "unknown-22": {
+    "scorpion": {
       "phase": 4,
       "bearing": 145,
       "dir": "SE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "rhino": {
       "phase": 4,
