@@ -606,7 +606,8 @@ export class SpriteBatch {
     dP.flush(this.pos); dS.flush(this.size); dU.flush(this.uvs); dF.flush(this.flags); dG.flush(this.glow);
     this.count = items.length;
     this.geo.instanceCount = items.length;
-    for (const m of this.meshes) m.visible = items.length > 0;
+    const ms = this.meshes, on = items.length > 0;
+    for (let i = 0; i < ms.length; i++) ms[i].visible = on; // (by index: an iterator a batch a frame otherwise, this function being too big to optimise)
   }
 
   /** Instances set but not drawn: three.js draws at most the count it last saw the buffers hold.

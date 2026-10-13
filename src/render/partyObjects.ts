@@ -81,6 +81,16 @@ export class PartyObjectsView {
   private nl = 0;
   /** Each lit piece's colour (by its ref), as the mood warms it: made once a mood. */
   private readonly rgbs = new Map<string, { m: Mood | null; v: THREE.Vector3 }>();
+  /** Each lit piece's light (rules/partyDressing.ts lightOf, which makes a record a call), by its ref: made once, again if the
+   *  lanterns' reach (the one knob it reads) changes. */
+  private readonly lightDefs = new Map<string, { reach: number; L: { rgb: number[]; radius: number; height: number } }>();
+  private lightOf(ref: string, t: Game["tuning"]): { rgb: number[]; radius: number; height: number } {
+    const reach = t.partyObjects.lanternReach, e = this.lightDefs.get(ref);
+    if (e && e.reach === reach) return e.L;
+    const L = lightOf(ref, t)!;
+    this.lightDefs.set(ref, { reach, L });
+    return L;
+  }
   private readonly fwd = new THREE.Vector3();
   private readonly upV = new THREE.Vector3();
 
@@ -183,9 +193,9 @@ export class PartyObjectsView {
           const c = d.clusters[ci], lay = art.layouts[c.id];
           if (!lay) continue;
           const ps = c.mirror ? lay.mirror : lay.plain;
-          for (let pi = 0; pi < ps.length; pi++) { const p = ps[pi]; if (lit < maxLit && refOf(p.ref).lit) { lit++; this.light(c.x + p.dx, c.z + p.dz, p.ref, lightOf(p.ref, t)!, age); } }
+          for (let pi = 0; pi < ps.length; pi++) { const p = ps[pi]; if (lit < maxLit && refOf(p.ref).lit) { lit++; this.light(c.x + p.dx, c.z + p.dz, p.ref, this.lightOf(p.ref, t), age); } }
         }
-        for (let li = 0; li < d.lights.length; li++) { const p = d.lights[li]; this.light(p.x, p.z, p.ref, lightOf(p.ref, t)!, age); }
+        for (let li = 0; li < d.lights.length; li++) { const p = d.lights[li]; this.light(p.x, p.z, p.ref, this.lightOf(p.ref, t), age); }
         continue;
       }
       let refs = this.neonRefs.get(key);
@@ -200,11 +210,11 @@ export class PartyObjectsView {
           const ref = (cr[pi] ??= d.neons?.length && p.ref.includes("@") ? p.ref.replace(/@[a-z]+/, "@" + d.neons[(ci * 7 + pi * 3) % d.neons.length]) : p.ref);
           this.put(ref, c.x + p.dx, c.z + p.dz, p.left, ci * 16 + pi);
           // The clusters' campfires and lanterns light up too, while the area has lights to spare.
-          if (lit < maxLit && refOf(ref).lit) { lit++; this.light(c.x + p.dx, c.z + p.dz, ref, lightOf(ref, t)!, age); }
+          if (lit < maxLit && refOf(ref).lit) { lit++; this.light(c.x + p.dx, c.z + p.dz, ref, this.lightOf(ref, t), age); }
         }
       }
       for (let i = 0; i < d.loose.length; i++) { const p = d.loose[i]; this.put(p.ref, p.x, p.z, p.flip, 200 + i); }
-      for (let li = 0; li < d.lights.length; li++) { const p = d.lights[li]; this.light(p.x, p.z, p.ref, lightOf(p.ref, t)!, age); }
+      for (let li = 0; li < d.lights.length; li++) { const p = d.lights[li]; this.light(p.x, p.z, p.ref, this.lightOf(p.ref, t), age); }
       // Hanging things, and the caught balloon: from a branch point in the nearest tree's crown, their
       // hang (or tie) anchor at that height, a little out from the trunk towards us; none if no tree is near.
       let trees = this.trees.get(key);

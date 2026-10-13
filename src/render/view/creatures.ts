@@ -62,6 +62,7 @@ const PER = new Map<string, SpriteInstance[]>(), ARTS = new Map<string, Creature
 const RING_OF = new Map<number, ReturnType<typeof legendRings>[number]>();
 const SHADOWS: ShadowInstance[] = [], SHADOW_POOL: ShadowInstance[] = [], INST_POOL: SpriteInstance[] = [], BERRY_ITEMS: SpriteInstance[] = [], BERRY_POOL: SpriteInstance[] = [];
 const emptyList = (l: SpriteInstance[]): void => { l.length = 0; };
+let LAST_VIEW: View | null = null; // (the maps are the view's: another view starts them afresh; within one they're only ever written over, never cleared, as clearing a Map makes a new table each frame)
 /** A sprite instance from a pool, every field written (so one from a past frame carries nothing over). */
 function inst(pool: SpriteInstance[], i: number, x: number, y: number, z: number, frame: SpriteInstance["frame"], flip: boolean, fresh: boolean | undefined, glow: number | undefined, scale: number | undefined, sx: number | undefined, sy: number | undefined): SpriteInstance {
   let o = pool[i];
@@ -120,14 +121,15 @@ export function drawBerries(v: View, time: number): void {
 export function drawCreatures(v: View, time = 0): void {
   const g = v.game, R = g.tuning.haze.far + 20;
   const per = PER, arts = ARTS, legendKeys = LEGEND_KEYS; // (kept and refilled)
-  per.forEach(emptyList); arts.clear(); legendKeys.clear();
+  if (v !== LAST_VIEW) { LAST_VIEW = v; per.clear(); arts.clear(); legendKeys.clear(); RING_OF.clear(); }
+  per.forEach(emptyList);
   const beat = 60 / g.tuning.beat.bpm, bt = beatTime(g.beat, time); // beat-time, on the beat clock
   let n = 0, ni = 0, ns = 0; // (drawn; instances and shadows taken from the pools)
   v.rig?.begin(time, g.tuning.rig, g.witch.mode !== "rising" && g.witch.mode !== "treetop");
   if (v.rig && !v.rig.legendLook) v.rig.legendLook = sp => legendLook(sp, g.tuning, v.style);
   const WW = g.tuning.wildWatch?.on ? g.tuning.wildWatch : null; // (the wild watch's rising aggro)
   const ringOf = RING_OF, rings = legendRings(g); // (each legend's circle: its outline shows only with her in it)
-  ringOf.clear(); for (let i = 0; i < rings.length; i++) ringOf.set(rings[i].id, rings[i]);
+  for (let i = 0; i < rings.length; i++) ringOf.set(rings[i].id, rings[i]);
   // How far towards the camera a sprite's rows below its ground line land, a metre of rows (as soundsystemGen.ts stands them, #564).
   const U = SPRITE_UNIFORMS.uUp.value, F = v.camera.getWorldDirection(FWD), toward = U.dot(CAM_UP.set(0, 1, 0).applyQuaternion(v.camera.quaternion)) / Math.max(0.2, -F.y);
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
