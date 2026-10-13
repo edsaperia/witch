@@ -4,7 +4,7 @@ A living style guide for everything the generators make: creatures, plants, witc
 
 Ed's direction (2026-10-05): everything will eventually come from generators, aiming at 100+ area types, so "we should make good and flexible tools now, and learn as much as we can about what looks good." There is no hurry; the best artwork wins. The roadmap is #119.
 
-Sources: #97 (art iterations; `docs/art-iterations/README.md` on its branch), #112 (art pass batch 1: iteration 1 and 2 notes), and later reviews as they come.
+Sources: #97 (art iterations; `tools/art-iterations/README.md`), #112 (art pass batch 1: iteration 1 and 2 notes), and later reviews as they come.
 
 ## 0. Pixel-art style (Ed, 2026-10-05: "everything should look a bit more pixel-art stylised")
 
@@ -117,7 +117,7 @@ So a legend is the elder of its kind:
 
 ## 1. Review an area as a set
 
-- **Judge an area as one picture.** Look at its creature at every level, its trees and props, its sleeping legend and the witch together. Use the set sheet (`tools/art-iterations/sheets.mjs`) and both in-game views (ground and treetops). A creature that looks good alone can still clash with its trees, and a tree can read well in isolation but turn neon in a clump.
+- **Judge an area as one picture.** Look at its creature at every level, its trees and props, its sleeping legend and the witch together. Use the area sheet (`node art/preview.mjs areas <area,...> <png>`) and both in-game views (ground and treetops). A creature that looks good alone can still clash with its trees, and a tree can read well in isolation but turn neon in a clump.
 - **Compare against the "before", not absolutely.** The preview sheets use a warm studio light that pushes everything yellow (#97). In-game shots are at night, so they are honest about mood but too dark to judge colour at ground level. Judge colour and shape on the sheets, and judge mood and density in the game.
 - **Go back to Ed's brief.** It's in `art/areas.js` `text`: floor, wall, small, big, set piece. Every area should make its brief obvious from one crop. If you can't name the area from the set sheet, it fails.
 
@@ -161,7 +161,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 
 ## 4. Silhouette rules
 
-- **Every species passes the silhouette check** (`art/genome/silhouette.js`, 0.15). Aim for 0.2 or more against its own template's species. New species are screened with `tools/art-iterations/silhouettes.mjs`.
+- **Every species passes the silhouette check** (`art/genome/silhouette.js`, 0.15). Aim for 0.2 or more against its own template's species. New species are screened with `node art/preview.mjs silhouettes young|adult <png>` (and `node art/check.mjs` fails any pair under 0.15).
 - **Proportion changes by level should read as growth, not scaling.**
   - Babies: a big head, big eyes and short legs (the size curves).
   - Adults: heavier, with bigger horns and antlers.

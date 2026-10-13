@@ -24,7 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     // A lobbing legend (not a beam or a charger), nearest home.
     const info = await page.evaluate(([D]) => {
-      const g = window.witch.game, H = g.map.dancefloor, beam = ["owl", "salamander", "spider", "raven", "bat", "glowworm", "moth", "snake", "toad", "woodlouse"], charge = ["boar", "elk", "stag", "ram", "hedgehog", "woodlouse"];
+      const g = window.witch.game, H = g.map.dancefloor, beam = ["owl", "salamander", "spider", "raven", "bat", "moth", "snake", "toad", "woodlouse"], charge = ["boar", "elk", "stag", "ram", "hedgehog", "woodlouse"];
       const L = g.creatures.filter(c => c.boss && !c.gone && !beam.includes(c.species) && !charge.includes(c.species)).sort((a, b) => Math.hypot(a.x - H.x, a.z - H.z) - Math.hypot(b.x - H.x, b.z - H.z))[0];
       g.witch = { ...g.witch, x: L.x - 40, z: L.z + D, seated: false, mode: "treetop", lift: 1, vx: 0, vz: 0 };
       g.clock.paused = false;
