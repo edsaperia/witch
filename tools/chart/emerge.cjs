@@ -1,7 +1,8 @@
 // A frame strip of an island rising out of the sea as its land arrives on the chart (the map coastlines job, 2026-10-13; Ed:
 // "have them appear to emerge from under the sea"): opens chart.html on a build (DIST, default dist/) in a fresh browser (nothing
-// kept, so every island is made and comes in turn), waits for the first island after home to arrive, then shoots the chart every
-// EVERY ms for SECONDS seconds, and lays the frames side by side (cropped round the island) into one PNG, plus a webp of it.
+// kept, so every island is made and comes in turn), waits for the first island after home to arrive, then shoots it every
+// EVERY ms of its rise for SECONDS seconds (the chart's clock driven by hand), and lays the frames side by side (cropped round
+// the island) into one PNG, plus a webp of it.
 //   node tools/chart/emerge.cjs [out dir]   DIST=dist WORLD=0 SIZE=960x600 EVERY=120 SECONDS=1.2 CROP=260
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -28,13 +29,16 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.evaluate(() => { const c = window.chart.chart, f = c.reshape.bind(c); window.__came = []; c.reshape = (id, o) => { f(id, o); window.__came.push({ id, at: performance.now() }); }; });
   await page.waitForFunction(() => window.__came.length >= 2, null, { timeout: 600000 });
   const id = await page.evaluate(() => window.__came[1].id);
+  // The chart's clock driven by hand from the moment its land came (a real-time strip can't be shot here: a screenshot takes
+  // longer than the rise under the software renderer): each frame's moment set, two frames drawn, then its picture.
+  const rose = await page.evaluate(id => window.chart.chart.isles.get(id).rose, id);
+  await page.evaluate(() => { const v = window.chart.view, f = v.update.bind(v); window.__at = 0; v.update = () => f(1 / 60, window.__at); });
   const frames = [];
-  const t0 = Date.now();
-  while (Date.now() - t0 < SECONDS * 1000) {
-    const at = Date.now() - t0;
+  for (let at = 0; at <= SECONDS * 1000 + 1; at += EVERY) {
+    await page.evaluate(({ rose, at }) => { window.__at = rose + at / 1000; }, { rose, at });
+    await wait(120);
     const spot = await page.evaluate(id => window.chart.chart.screenOf(id), id);
     frames.push({ at, png: await page.screenshot({ clip: { x: Math.max(0, Math.round(spot.x - CROP / 2)), y: Math.max(0, Math.round(spot.y - CROP / 2)), width: CROP, height: CROP } }) });
-    const left = EVERY - (Date.now() - t0 - at); if (left > 0) await wait(left);
   }
   // the strip: the frames side by side, each labelled by its time
   const strip = await page.evaluate(async ({ shots, crop }) => {

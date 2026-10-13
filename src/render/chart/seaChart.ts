@@ -352,6 +352,13 @@ function islandLoops(d: ChartIsland): { loops: Loop[]; k: number; cx: number; cz
   const far = Math.max(...raw.map(p => p.length())), k = want / far;
   return { loops: [{ pts: raw.map(p => p.multiplyScalar(k)), sea: true }], k: 0, cx: 0, cz: 0, reach: want };
 }
+/** An island's samples' colours for its state (`dim`): each byte to a float, times dim (a function of its own: the first island in
+ *  is home, the biggest, and a loop that long cold in the builder was most of its wrap). */
+function tinted(rgb: ArrayLike<number>, dim: number): Float32Array {
+  const n = rgb.length, out = new Float32Array(n);
+  for (let i = 0; i < n; i++) out[i] = (rgb[i] / 255) * dim;
+  return out;
+}
 const tmp = new THREE.Vector3();
 const col = (c: readonly number[], k = 1) => new THREE.Color((c[0] / 255) * k, (c[1] / 255) * k, (c[2] / 255) * k);
 
@@ -458,8 +465,7 @@ export class SeaChart {
     if (!G || !(k > 0)) return { d, group: g, x, z, top: 1, reach };
     // Its real ground: a heightfield, each sample its height and colour, lit by the moon; its meshes made with it off the page
     // (render/chart/islandMesh.ts, in app/chartOutlines.worker.ts; here only wrapped), the colours its own by how it stands.
-    const { cols, rows, step } = G, n = cols * rows, M = d.outline!.mesh ?? buildIslandMesh(G, k), colour = new Float32Array(n * 3);
-    for (let i = 0; i < n * 3; i++) colour[i] = (G.rgb[i] / 255) * dim;
+    const { cols, rows, step } = G, M = d.outline!.mesh ?? buildIslandMesh(G, k), colour = tinted(G.rgb, dim);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute("position", new THREE.BufferAttribute(M.pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(colour, 3)); geo.setAttribute("normal", new THREE.BufferAttribute(M.normal, 3)); geo.setIndex(new THREE.BufferAttribute(M.idx, 1));
     // its own heights as a tile, for its shadows close in (SHADOW_TILE): each sample's height over the water, a byte of its highest
@@ -558,7 +564,8 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.hDirty = false;
     let top = 1;
     for (const { hb, body } of this.hBodies) {
-      body.updateWorldMatrix(true, false); hb.matrix.copy(body.matrixWorld); hb.matrixWorld.copy(body.matrixWorld);
+      // (its land where it stands, not where it is on its way up out of the sea, or bobbing as the chosen one: its group's own height taken off)
+      body.updateWorldMatrix(true, false); hb.matrix.copy(body.matrixWorld); hb.matrix.elements[13] -= body.parent?.position.y ?? 0; hb.matrixWorld.copy(hb.matrix);
       const g = (body as THREE.Mesh).geometry; if (!g.boundingBox) g.computeBoundingBox(); top = Math.max(top, g.boundingBox!.max.y);
     }
     this.moonU.uHMax.value = top * 1.05;
@@ -756,7 +763,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       // Its land just come (Ed, 2026-10-13: each island "emerges from under the sea"): the whole island, shallows and all, rises from
       // under the water plane over RISE seconds, easing out, the sea hiding what's still below; its shadows drawn once it's up.
       let lift = 0;
-      if (i.rose !== undefined) { const u = Math.min(1, (time - i.rose) / RISE), e = 1 - (1 - u) ** 3; lift = -(i.top + 0.6) * (1 - e); if (u >= 1) { i.rose = undefined; this.markHeights(); } }
+      if (i.rose !== undefined) { const u = Math.min(1, (time - i.rose) / RISE), e = 1 - (1 - u) ** 3; lift = -(i.top + 0.6) * (1 - e); if (u >= 1) i.rose = undefined; }
       i.group.position.y = lift + (chosen ? Math.sin(time * 2) * 0.12 : 0);
     }
     const sel = this.selected ? this.isles.get(this.selected) : null;
