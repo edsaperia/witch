@@ -38,6 +38,10 @@ Suggested:
 - **Nursing hat:** heals her creatures near it.
 - **Beacon hat:** leashed creatures gather at it.
 
+## Other powers
+
+- **Welcome mend** (Ed, 2026-10-13): each time she successfully invites a creature, she heals to full hp. Slot (hat, broom or quest buff) to decide.
+
 ## Brooms
 
 Ed's:

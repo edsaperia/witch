@@ -38,6 +38,7 @@ import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
+import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -512,16 +513,16 @@ export class LeashView {
       if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
 
-    // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune restAbove metres
-    // south of it (Ed, 2026-10-11: as far as a parked one rests north of its placed sigil), moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
+    // Happy creatures' runes (Ed, 2026-10-06; states.leash "pickup"): each carries its sigil as a dim rune south of it, its top just
+    // below its feet whatever its size (Ed, 2026-10-13: rules/runeOffset.ts; as far as a parked one rests north of its placed sigil), moving with it; it pops out with its hearts (up off it and down, growing, written in) and settles. Ready to pick up
     // (pickupDelay after), a little brighter. Only near her (RUNE_VIEW m), with the placed sigils' instances.
     for (const c of g.creatures) {
       if (Math.abs(c.x - w.x) > RUNE_VIEW || Math.abs(c.z - w.z) > RUNE_VIEW || !hasRune(c)) continue;
       const since = time - (c.happyAt ?? -Infinity), k = Math.min(1, Math.max(0, since / 0.45)), ready = hasRune(c, time);
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
-      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + (t.leash.restAbove ?? 0);
-      this.groundSigil(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
-      if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, (3 + c.level * 0.8) * 0.85 * grow, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
+      const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = sigilSize(c.level, RUNE_SCALE) * grow;
+      this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
     }
 
@@ -554,7 +555,7 @@ export class LeashView {
     if (w.mode === "ground" && bottomRelic && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => (r.state === "lying" || r.state === "dropped") && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) {
       const col = (this.slotOf("relic", 0), this.colours.get("relic")!); // (a flask's at the bottom: its ghost, Ed 2026-10-08: "it's what you put down when you press e")
       this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
-    } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, t.leash.restAbove ?? 0) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
+    } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const sg = this.sigilOf(c);
       this.groundSigil(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);

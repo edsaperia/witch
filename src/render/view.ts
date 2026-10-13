@@ -102,7 +102,10 @@ ${HEIGHT_VERT_GLSL}
 void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(position, 1.0)).xyz)); }`;
 
 /** A point light: where, how far it reaches, its colour and strength. */
-export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number }
+export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
+  /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
+   *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
+  shadow?: { x: number; y: number; z: number; k: number } }
 
 /** A frame's CPU budget (ms) for the view, drawing included, of which the work done ahead (the
  *  forest, the hills, ground tiles, art) gets whatever the frame's own work and its drawing (as
@@ -281,6 +284,8 @@ export class View {
   sources: LightSource[] = [];
   /** Lights in the forest besides the witch's glow, from the light sources (set by the view). */
   forestLights: ForestLight[] = [];
+  /** The lights the trunks' shadows are thrown from this frame (render/trunkShadows.ts uFires), the list kept. */
+  private shadowLights: { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; k: number }[] = [];
   /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
   readonly combatLight = new CombatLight();
   shadows: ShadowBatch;
@@ -948,11 +953,18 @@ export class View {
       this.castOn = on && TS.mode !== "debug" && (t.shadows.cast ?? true);
       if (this.beachView.palmShadows) this.beachView.palmShadows.visible = on;
       if (on) {
-        const base = t.lights.campfire.strength, fires = this.forestLights.filter(l => l.rgb === this.fire).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, MAX_FIRES);
-        fires.forEach((l, i) => { U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); U.uFireFade.value[i] = Math.min(1, l.strength / (base * 0.8)); });
+        // (the lit campfires, and the soundsystems' and runestones' lights: those tagged with a shadow, Ed 2026-10-13)
+        const base = t.lights.campfire.strength, fires = this.shadowLights;
+        fires.length = 0;
+        for (const l of this.forestLights) if (l.rgb === this.fire) fires.push({ x: l.x, y: l.y, z: l.z, reach: l.reach, rgb: l.rgb, k: Math.min(1, l.strength / (base * 0.8)) });
+        // (their shadows reach past their glow, to the trees round their clearings: shadows.trunks.lightReach)
+        const LR = TS.lightReach ?? 0;
+        if (LR > 0) for (const L of [party.lights, markerLights]) for (const l of L) if (l.shadow && l.shadow.k > 0) fires.push({ x: l.shadow.x, y: l.shadow.y, z: l.shadow.z, reach: Math.max(l.reach, LR), rgb: l.rgb, k: l.shadow.k * (1 - offAt(l.x, l.z)) });
+        fires.sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)); if (fires.length > MAX_FIRES) fires.length = MAX_FIRES;
+        fires.forEach((l, i) => { U.uFires.value[i].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); U.uFireFade.value[i] = l.k; U.uFireRgb.value[i].copy(l.rgb); });
         U.uFireCount.value = fires.length; U.uTrunkHard.value = TS.mode === "debug" ? 2 : TS.mode === "hard" ? 1 : 0; U.uTrunkStrength.value = TS.strength * (1 - lift); U.uTrunkLong.value = TS.long;
         U.uGlowReach.value = TS.glowReach; U.uGlowLift.value = TS.glowHeight; U.uTrunkAcross.value = TS.across; U.uTrunkCore.value = TS.core; U.uTrunkFoot.value = TS.foot ?? 0; U.uTrunkTaper.value = TS.taper ?? 0; U.uTrunkNear.value = TS.near ?? 0; U.uTrunkCover.value = TS.cover ?? 0;
-        U.uFireRgb.value.copy(this.fire); U.uTintScenery.value = U.uTintTrees.value = SHADOW_TINT.value; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0; U.uSceneryTaper.value = TS.sceneryTaper ?? 0;
+        U.uTintScenery.value = U.uTintTrees.value = SHADOW_TINT.value; U.uCasterLight.value = TS.glowLight ?? 0; U.uSceneryFoot.value = TS.sceneryFoot ?? 0; U.uSceneryTaper.value = TS.sceneryTaper ?? 0;
       }
     }
     this.time("grass+lights");

@@ -4,6 +4,7 @@
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { atMapTable, deckOf } from "./treehouse";
+import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
@@ -78,7 +79,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, t.leash.restAbove ?? 0), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
@@ -141,11 +142,12 @@ export function befriendArea(g: Game, key: string): void {
 }
 
 /** The nearest happy creature with its rune within leash.runePull.radius of her walks toward her, till its rune is leash.runePull.stop
- *  from her. It heads for the spot that puts its rune at her feet (restAbove north of her), from any side (Ed, 2026-10-12: "Pull from
+ *  from her. It heads for the spot that puts its rune at her feet (its rune's offset north of her: rules/runeOffset.ts), from any side (Ed, 2026-10-12: "Pull from
  *  any side"): where the straight way there passes her or one of her followers, it goes round them, on its own side. */
 export function pullRune(g: Game, t: Tuning, fixed: number): void {
-  const P = t.leash.runePull, w = g.witch, south = t.leash.restAbove ?? 0, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, south);
+  const P = t.leash.runePull, w = g.witch, c = runeNear(g.creatures, w.x, w.z, P.radius, g.clock.time, undefined, k => runeOffset(k, t));
   if (!c || c.fight?.target) return;
+  const south = runeOffset(c, t);
   const gx = w.x, gz = w.z - south, d = Math.hypot(gx - c.x, gz - c.z); // (it walks so its rune, south of it, comes to her)
   if (d <= P.stop) return;
   const [tx, tz] = roundAbout(g, c, gx, gz, d), ex = tx - c.x, ez = tz - c.z, e = Math.hypot(ex, ez) || 1;

@@ -17,12 +17,16 @@ import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import type { LandMap } from "../rules/land";
 import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
+import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/islandMesh";
+import { K, SIGIL_TIERS } from "../render/chart/chartScale";
+import { islandSigil } from "../../art/sigils.js";
+import { sigilDetail } from "../../art/sigilDetail.js";
 
 /** The page's asks: the islands to make (`ids` in order), or one to make next. */
 /** The islands for a world (the closest first), the kinds she's found (home's size), the grid; `warm`: make and keep them only
  *  (app/chartWarm.ts, in the night), answering { warmed } as each is kept and { warmDone } at the end. Or: this one next; this
  *  one's fine grid next. */
-export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean } | { first: string } | { detail: string };
+export type OutlineAsk = { world: number; found: string[]; ids: string[]; step: number; warm?: boolean; /** only what's kept already: nothing made (the map table's miniature, Ed, 2026-10-13: never built while she's near the deck) */ cacheOnly?: boolean } | { first: string } | { detail: string };
 /** A warm job's progress: an island kept (made, or already kept), then the end (how many made, how many already kept). */
 export type WarmNote = { warmed: string; made: boolean } | { warmDone: true; made: number; kept: number };
 /** An island's ground on a grid (metres from home's middle): its first sample, the step, samples across and down; each sample's
@@ -31,9 +35,9 @@ export interface IslandGround { x0: number; z0: number; step: number; cols: numb
 
 /** Each island as it's made: its coast's loops (x, z in metres from its home's middle; `sea` a coast, else a lake's shore), their
  *  box, and its ground. */
-export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
+export interface OutlineDone { id: string; world: number; loops: { pts: Float32Array; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; far: number; ground: IslandGround; /** its meshes, made here with its ground (render/chart/islandMesh.ts) */ mesh: IslandMesh; /** its sigil's ink at each tier (SIGIL_TIERS, px across, a byte a pixel, row 0 at the top as art/sigilDetail.js draws it): drawn here, not on the page as the island arrives (home's 48 px was 80 ms there) */ sigils: { px: number; ink: Uint8Array }[]; /** the fine grid, for the chart's close zoom (asked for by `detail`) */ detail?: boolean }
 
-let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number; warm?: boolean } | null = null, busy = false;
+let queue: string[] = [], detail: string | null = null, job: { world: number; found: string[]; step: number; warm?: boolean; cacheOnly?: boolean } | null = null, busy = false;
 let warmMade = 0, warmKept = 0;
 void cachePrune(CACHE_PREFIX);
 const post = (m: OutlineDone, t: Transferable[]) => (self as unknown as { postMessage(m: unknown, t: Transferable[]): void }).postMessage(m, t);
@@ -246,8 +250,26 @@ function outlineOf(id: string, world: number, src: Source, across: number): Outl
     for (let i = 0; i < pts.length; i += 2) { pts[i] = l.pts[i] - centre.x; pts[i + 1] = l.pts[i + 1] - centre.z; if (l.sea) far = Math.max(far, Math.hypot(pts[i], pts[i + 1])); }
     return { pts, sea: l.sea };
   });
-  const b = land.box;
-  return { id, world, loops, box: { minX: b.minX - centre.x, maxX: b.maxX - centre.x, minZ: b.minZ - centre.z, maxZ: b.maxZ - centre.z }, far, ground: ground(src, across), detail: across > ACROSS };
+  const b = land.box, g = ground(src, across), sigil = islandSigil(id) as string;
+  const sigils = SIGIL_TIERS.map((t, tier) => ({ px: t.px, ink: Uint8Array.from(sigilDetail(sigil, t.px, { tier }) as ArrayLike<number>, v => (v ? 1 : 0)) }));
+  return { id, world, loops, box: { minX: b.minX - centre.x, maxX: b.maxX - centre.x, minZ: b.minZ - centre.z, maxZ: b.maxZ - centre.z }, far, ground: g, mesh: buildIslandMesh(g, K), sigils, detail: across > ACROSS };
+}
+
+/** An island sent to the page, its buffers handed over (not copied). */
+const send = (o: OutlineDone) => post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer, ...meshBuffers(o.mesh), ...(o.sigils ?? []).map(s => s.ink.buffer)]);
+
+/** What's kept of the queue, sent first (an island kept comes in a few ms; one to make in a second or two, and would hold the
+ *  kept ones behind it); the rest left in the queue to make, unless the ask was for what's kept alone. */
+async function serveKept(): Promise<void> {
+  const j = job; if (!j) return;
+  const ids = [...queue], left: string[] = [];
+  for (const id of ids) {
+    if (job !== j) return; // (a new ask: it serves its own)
+    const o = await cacheGet<OutlineDone>(cacheKey(id, j.world, j.found, j.step, ACROSS));
+    if (o && o.mesh && o.sigils) send(o); else left.push(id);
+  }
+  queue = queue.filter(id => left.includes(id)); // (a `first` meanwhile keeps its place)
+  if (j.cacheOnly) queue = [];
 }
 
 async function next(): Promise<void> {
@@ -261,9 +283,10 @@ async function next(): Promise<void> {
   const j = job, across = close ? DETAIL_ACROSS : ACROSS, key = cacheKey(id, j.world, j.found, j.step, across);
   try {
     let o = await cacheGet<OutlineDone>(key), made = false;
-    if (!o) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
+    if (o && !(o.mesh && o.sigils)) o = null; // (kept before the meshes and the sigil's ink came with the ground: made again)
+    if (!o && !j.cacheOnly) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
     if (j.warm && !close) { if (made) warmMade++; else warmKept++; note({ warmed: id, made }); }
-    else if (o) post(o, [...o.loops.map(l => l.pts.buffer), o.ground.h.buffer, o.ground.rgb.buffer, o.ground.water.buffer, o.ground.level.buffer, o.ground.looks.buffer]);
+    else if (o) send(o);
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }
   setTimeout(next, 0); // (between islands, so a `first` can come in)
 }
@@ -273,6 +296,6 @@ self.onmessage = (e: MessageEvent<OutlineAsk>) => {
   const m = e.data;
   if ("detail" in m) { detail = m.detail; if (!busy && job) { busy = true; setTimeout(next, 0); } return; }
   if ("first" in m) { const i = queue.indexOf(m.first); if (i > 0) { queue.splice(i, 1); queue.unshift(m.first); } return; }
-  job = { world: m.world, found: m.found, step: m.step, warm: m.warm }; queue = [...m.ids];
-  if (!busy) { busy = true; setTimeout(next, 0); }
+  job = { world: m.world, found: m.found, step: m.step, warm: m.warm, cacheOnly: m.cacheOnly }; queue = [...m.ids];
+  if (!busy) { busy = true; void (m.warm ? Promise.resolve() : serveKept()).then(() => setTimeout(next, 0)); }
 };
