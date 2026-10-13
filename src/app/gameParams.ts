@@ -48,6 +48,6 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   let waveChoice = tuning.leyLines.pulseSpeed;
   const pulseParam = params.get("pulse") ?? (params.get("wave") === "off" ? "off" : null);
   if (pulseParam !== null) waveChoice = pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
-  if (arenaParam) waveChoice = 0;
+  if (arenaParam || game.map.zoo) waveChoice = 0; // (the zoo: no waves, Ed 2026-10-13 "no timer etc"; rules/zoo.ts)
   return { WAVE_CHOICES, setPulseSpeed, waveChoice };
 }

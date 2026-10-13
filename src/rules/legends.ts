@@ -83,6 +83,9 @@ export function placeRelics(map: ForestMap, forest: { treesNear(x: number, z: nu
     for (const k of order) if (kinds.length < count && !seen.has(k.look)) { seen.add(k.look); kinds.push(k.kind); }
     if (kinds.length === before) break;
   }
+  // The zoo (rules/zoo.ts; Ed, 2026-10-13: "There's a flask at each junction"): a relic's flask at every crossing of its paths,
+  // put down already (dropped: its sigil alone, no bottle), there for the picking up and taking to any sleeping legend.
+  if (map.zoo) return map.zoo.junctions.map((j, i) => { const c = map.cellSafe(j.x, j.z).cell; return { id: i, kind: all[i % all.length].kind, x: j.x, z: j.z, cell: [c[0], c[1]], state: "dropped", sx: j.x, sz: j.z }; });
   const put = (kind: string, x: number, z: number) => { const c = map.cellSafe(x, z).cell; out.push({ id: out.length, kind, x, z, cell: [c[0], c[1]], state: "lying", sx: x, sz: Math.min(b.maxZ - 1, z + R.sigilOffset) }); };
 
   // Home's: round from a seeded bearing, out along each ray to where the home area ends, then back
