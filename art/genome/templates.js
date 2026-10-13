@@ -16,7 +16,7 @@ export const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.sail", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.monitor"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.meerkat", "tail.tuft", "tail.ringed", "tail.monitor"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -46,6 +46,6 @@ export const TEMPLATES = {
   flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
   serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent or worm", builders: ["snake", "glowworm"], sockets: { head: ["head.snake", "head.worm"], tailTip: ["tail.lantern"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
   insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
-  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
+  squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
 export const TEMPLATE_IDS = Object.keys(TEMPLATES);
