@@ -67,6 +67,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
   "mangrove": look("buffSandstone", "reeds", "moss", 0.6, true, 0.6),
+  "savanna": look("redSandstone", "grass", "lichen", 0.45), // sun-baked sandstone, the long grass over it
   "erg": look("buffSandstone", "pebbles", "lichen", 0.3), // sand-scoured sandstone, drifted over
 };
 /** Any area not hand-tuned: weathered granite, leaf litter, moss. */
