@@ -67,12 +67,14 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
   ponds: !!a.ponds, wet: !!a.wet, steep: !!a.steep, sharesCreature: !!a.sharesCreature,
 }));
-/** The area types a map deals at random (outside an island's roster): the temperate kinds' (config/kinds.json's biome), by index. */
-export const TEMPERATE_TYPES: readonly number[] = AREA_TYPES.flatMap((a, i) => ((KINDS[a.creature]?.biome ?? "temperate") === "temperate" ? [i] : []));
 /** Home's look (Ed, 2026-10-05: "its own custom floor; a pleasant green meadow with flowers"; party
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
  *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
 export const HOME_LOOK = AREA_TYPES.length;
+/** The area types a map without a roster deals (the classic map): the kinds introduced before phase 3. The journey's new kinds (phase
+ *  3 on, area recipes added at the end of AREA_TYPES) come only through their islands' rosters, so adding one leaves every
+ *  classic map as it was. */
+export const CLASSIC_TYPES: readonly number[] = AREA_TYPES.map((a, i) => ((KINDS[a.creature]?.phase ?? 0) < 3 ? i : -1)).filter(i => i >= 0);
 const H_ = HOME_AREA as unknown as ArtArea;
 /** How the ground looks, by an area sample's `look`: the area types, then home's meadow. */
 export const LOOKS: readonly AreaType[] = [...AREA_TYPES, {
@@ -323,9 +325,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
-  // Area types: random, never the same as a touching area nor any area within two cells; only the temperate ones (the north's and
-  // the other biomes' areas, config/kinds.json, come only by an island's roster, so a new one changes no map but its island's).
-  const types = new Map<string, number>(), wild = TEMPERATE_TYPES;
+  // Area types: random, never the same as a touching area nor any area within two cells.
+  const types = new Map<string, number>();
   const r = rng(shapeSeed * 5 + 1);
   for (let cy = lo; cy < hi; cy++) for (let cx = lo; cx < hi; cx++) {
     const near = new Set<number>(), homeKey = cellKey(centreCell[0], centreCell[1]);
@@ -335,11 +336,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (t !== undefined) near.add(t);
     }
     for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
-    const free = wild.filter(t => !near.has(t));
-    const pool = free.length ? free : wild;
+    const free = CLASSIC_TYPES.filter(t => !near.has(t));
+    const pool = free.length ? free : CLASSIC_TYPES;
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? wild[Math.floor(hash2(cx, cy, shapeSeed + 17) * wild.length)];
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? CLASSIC_TYPES[Math.floor(hash2(cx, cy, shapeSeed + 17) * CLASSIC_TYPES.length)];
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();
@@ -400,6 +401,19 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (past one area each, islandAreas's padding: the kinds again, dealt as any roster's)
     const pad = extra.slice(more.length);
     if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
+  }
+  // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
+  // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
+  if (rosterIsland && others.length) {
+    const own = others.map(([x, y]) => { const s = siteXZ(x, y); return { x: s[0], z: s[1], t: types.get(cellKey(x, y))! }; });
+    for (const k of [...types.keys()]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (playable(cx, cy) || (cx === centreCell[0] && cy === centreCell[1])) continue;
+      const s = siteXZ(cx, cy);
+      let best = own[0], bd = Infinity;
+      for (const o of own) { const d = (o.x - s[0]) ** 2 + (o.z - s[1]) ** 2; if (d < bd) { bd = d; best = o; } }
+      types.set(k, best.t);
+    }
   }
 
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
