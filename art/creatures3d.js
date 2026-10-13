@@ -288,6 +288,27 @@ function evolve3d(m, feats, c) {
       for (let i = 0; i < 5; i++) m.ell([x0 + .08 + i * .13, .04 + i * .015, ((i % 2) - .5) * .22], [.17, .07, .2 - i * .02], i % 2 ? M.TRUNK : M.BODY3, { group: 78, extra: true, rough: .02 });
       for (let i = 0; i < 8; i++) m.ell([x0 + .12 + i * .09, .22 + Math.abs(Math.sin(i * 1.9)) * .2 + i * .04 + (c.frame ? .05 : 0), ((i % 3) - 1) * .2], [.045, .04, .045], i % 2 ? M.TRUNK : M.BODY3, { group: 78, extra: true });
     }
+    if (f.kind === "plates") { // an elder's armour: its hide's bony plates grown into weathered stone, standing proud down its back and over its flanks
+      m.part = "body";
+      const n = f.count ?? 11, mat = M[f.mat || "STONE"], dark = M[f.dark || "STONED"], sz = f.size ?? .17;
+      for (let i = 0; i < n; i++) for (const side of [-1, 0, 1]) {
+        const t = (f.from ?? .14) + ((f.to ?? .9) - (f.from ?? .14)) * (i + .5) / n, b = c.backAt(t), k = sz * (side ? .75 : 1) * (.75 + .4 * Math.abs(Math.sin(i * 2.1 + side * 1.7)));
+        m.ell([b[0], b[1] + k * .3 - Math.abs(side) * .07, b[2] + side * c.bw * .55], [k, k * .7, k * .85], (i + side) % 3 ? mat : dark, { group: 72, extra: true, rough: .02, paint: p => spotty(p, 18, .12) ? M.MOSS : undefined });
+      }
+    }
+    if (f.kind === "scars") { // old pale scars raked across its near flank, the wear of epochs
+      m.part = "body";
+      for (let i = 0; i < (f.count ?? 4); i++) { const b = c.backAt((f.from ?? .3) + i * .13), z = c.bw * .9, x = b[0] + .04 * i; m.seg([x, b[1] - .1, z], [x + .2, b[1] - .36, z * .96], .022, .012, M[f.mat || "WEB"], { group: 73, extra: true }); }
+    }
+    if (f.kind === "offerings") { // offerings hung on it by those who revere it: a string of bones, fangs and pebbles slung over its shoulders
+      m.part = "body";
+      const n = f.count ?? 9, a = c.backAt(f.at ?? .97), z = c.bw * .95;
+      for (let i = 0; i < n; i++) {
+        const t = i / (n - 1), b = [a[0] - .2 + t * .34, a[1] - .04 - Math.sin(t * Math.PI * .9) * .38, z * (1 - .1 * Math.sin(t * Math.PI))];
+        if (i % 3 === 1) m.seg(b, v3.add(b, [-.01, -.16, 0]), .035, .01, M.WEB, { group: 75, extra: true }); // a fang
+        else m.ell(b, [.05, .045, .045], i % 3 ? M.WEB : M.STONE, { group: 75, extra: true }); // a bone bead, a pebble
+      }
+    }
     if (f.kind === "ruff" && m.anchors.neck) { // locks of fur round its neck and cheeks, swept back
       m.part = "head";
       const N = m.anchors.neck, n = f.count ?? 12, sz = f.size ?? .14, mat = M[f.mat || "BELLY"], d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
@@ -710,6 +731,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "marten") m.chain([[...tb, .12], [X(1.15) - .3, top - .02 + tw, 0, .2], [X(1.15) - .75, top - .05 + tw, 0, .22], [X(1.15) - 1.15, top + .1 + tw, 0, .17], [X(1.15) - 1.35, top + .3, 0, .08]], M.BODY, { ...o, paint: p => p[0] < X(1.15) - 1.0 ? M.BODY3 : undefined }); // a long, thick brush held out level, curling up at its dark end
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
+  else if (kind === "monitor") m.chain([[tb[0] + .1, tb[1] * .6, 0, .2], [X(1.3), .2 + tw * .5, .08, .14], [X(1.65), .1, .3, .09], [X(1.9), .06 + tw * .4, .6, .05], [X(2.0), .05, .85, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.4) && Math.sin(p[0] * 9) > .55 ? M.BODY2 : undefined }); // a monitor lizard's: thick at its root, long, dragged low and curling round toward us, faintly ringed
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
   else if (kind === "jaguar") m.chain([[...tb, .07], [X(1.3), top - .3 + tw, 0, .065], [X(1.6), top - .62, 0, .055], [X(1.78), .4 + tw, 0, .05], [X(1.9), .48 + tw, 0, .045]], M.BODY, o); // long and even, its end lifting
   else if (kind === "tiger") m.chain([[...tb, .09], [X(1.3), top - .25 + tw, 0, .08], [X(1.55), top - .6, 0, .07], [X(1.7), .45 + tw, 0, .065], [X(1.82), .5 + tw, 0, .06]], M.BODY, { ...o, paint: p => p[0] < X(1.75) || Math.sin((p[0] + p[1]) * 26) > .45 ? M.BODY3 : undefined }); // long and thick, ringed, its tip black and lifting
