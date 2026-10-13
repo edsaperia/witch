@@ -1,5 +1,6 @@
 // The species, assembled from art/creatures/<id>/genome.js, sorted by id. Written by `node tools/creatures.mjs index`:
 // never edit by hand (add a folder and run the tool; CI's src/creatures.test.ts fails if this is stale).
+import { GENOME_ARCTICFOX } from "./arcticfox/genome.js";
 import { GENOME_ARMADILLO } from "./armadillo/genome.js";
 import { GENOME_BADGER } from "./badger/genome.js";
 import { GENOME_BAT } from "./bat/genome.js";
@@ -16,12 +17,14 @@ import { GENOME_DRAGONFLY } from "./dragonfly/genome.js";
 import { GENOME_ELEPHANT } from "./elephant/genome.js";
 import { GENOME_ELK } from "./elk/genome.js";
 import { GENOME_FENNEC } from "./fennec/genome.js";
+import { GENOME_FLYINGSQUIRREL } from "./flyingsquirrel/genome.js";
 import { GENOME_FOX } from "./fox/genome.js";
 import { GENOME_FROSTWYRM } from "./frostwyrm/genome.js";
 import { GENOME_GRIFFIN } from "./griffin/genome.js";
 import { GENOME_HARE } from "./hare/genome.js";
 import { GENOME_HEDGEHOG } from "./hedgehog/genome.js";
 import { GENOME_HERON } from "./heron/genome.js";
+import { GENOME_IBEX } from "./ibex/genome.js";
 import { GENOME_JAGUAR } from "./jaguar/genome.js";
 import { GENOME_KOMODO } from "./komodo/genome.js";
 import { GENOME_LION } from "./lion/genome.js";
@@ -46,6 +49,7 @@ import { GENOME_SALAMANDER } from "./salamander/genome.js";
 import { GENOME_SCORPION } from "./scorpion/genome.js";
 import { GENOME_SNAIL } from "./snail/genome.js";
 import { GENOME_SNAKE } from "./snake/genome.js";
+import { GENOME_SNOWLEOPARD } from "./snowleopard/genome.js";
 import { GENOME_SPIDER } from "./spider/genome.js";
 import { GENOME_SQUIRREL } from "./squirrel/genome.js";
 import { GENOME_STAG } from "./stag/genome.js";
@@ -55,4 +59,4 @@ import { GENOME_TOAD } from "./toad/genome.js";
 import { GENOME_UNICORN } from "./unicorn/genome.js";
 import { GENOME_WOLF } from "./wolf/genome.js";
 import { GENOME_WOODLOUSE } from "./woodlouse/genome.js";
-export const CREATURE_GENOMES = [GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FOX, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+export const CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];

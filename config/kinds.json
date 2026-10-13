@@ -193,19 +193,17 @@
       "dir": "NNW",
       "biome": "temperate"
     },
-    "unknown-01": {
+    "arcticfox": {
       "phase": 3,
       "bearing": 12,
       "dir": "NNE",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
-    "unknown-02": {
+    "ibex": {
       "phase": 3,
       "bearing": 38,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "redpanda": {
       "phase": 3,
@@ -261,12 +259,11 @@
       "dir": "W",
       "biome": "jungle"
     },
-    "unknown-12": {
+    "flyingsquirrel": {
       "phase": 3,
       "bearing": 295,
       "dir": "WNW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "roe": {
       "phase": 3,
@@ -287,12 +284,11 @@
       "biome": "cold",
       "placeholder": true
     },
-    "unknown-16": {
+    "snowleopard": {
       "phase": 4,
       "bearing": 25,
       "dir": "NNE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "frostwyrm": {
       "phase": 4,

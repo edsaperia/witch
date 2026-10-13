@@ -52,6 +52,8 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "wetland": look("granite", "reeds", "moss", 0.66, true),
   "stream": look("limestone", "pebbles", "moss", 0.5, true),
   "rocky-slope": look("slate", "pebbles", "lichen", 0.4),
+  "icefall": look("granite", "pebbles", "lichen", 0.35),
+  "crags": look("slate", "pebbles", "lichen", 0.4),
   "bog": look("granite", "reeds", "moss", 0.75, true, 0.35),
   "deadwood": look("buffSandstone", "darkLeaves", "lichen", 0.45, false, 0.6),
   "cave-mouth": look("slate", "pebbles", "moss", 0.55),
@@ -68,6 +70,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "misty-terraces": look("granite", "needles", "moss", 0.6, false, 0.5),
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "moonpool-glade": look("granite", "reeds", "moss", 0.6, true),
+  "snowfield": look("granite", "needles", "lichen", 0.4),
   "bamboo-jungle": look("limestone", "leaves", "moss", 0.6), // old shrine stone, bamboo litter over it
   "river-jungle": look("granite", "darkLeaves", "moss", 0.75, true), // dark wet stone by the river, moss over it
   "temple-jungle": look("redSandstone", "darkLeaves", "moss", 0.7), // temple flagstones, red earth and roots over them
