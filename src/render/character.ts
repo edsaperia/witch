@@ -4,7 +4,7 @@
 import raw from "../../config/character.json";
 import { hash2 } from "../rules/random";
 
-export type Quirk = "sniff" | "perk" | "stomp" | "thump" | "scratch" | "shake" | "tailflick" | "tailslap" | "stretch" | "howl" | "rise";
+export type Quirk = "sniff" | "perk" | "stomp" | "thump" | "scratch" | "shake" | "tailflick" | "tailslap" | "stretch" | "howl" | "rise" | "sentinel";
 /** A quirk a baked frame can show (it can't move a part, only the whole sprite): a hop, a puff (swelling as it breathes in),
  *  a look (turning to glance behind) or a shiver. */
 export type SpriteQuirk = "hop" | "puff" | "look" | "shiver";
@@ -12,7 +12,7 @@ export interface Character { posture: { head: [number, number]; body: number }; 
 interface Raw { default: Character; bounce: { height: number; every: [number, number]; for: number }; species: Record<string, Partial<Character>> }
 const R = raw as unknown as Raw;
 // a rig quirk's nearest on a baked frame (a species without a rig sets its own `sprite`)
-const SPRITE_OF: Record<Quirk, SpriteQuirk> = { sniff: "puff", perk: "puff", howl: "puff", rise: "puff", stretch: "puff", stomp: "hop", thump: "hop", scratch: "shiver", shake: "shiver", tailflick: "look", tailslap: "hop" };
+const SPRITE_OF: Record<Quirk, SpriteQuirk> = { sniff: "puff", perk: "puff", howl: "puff", rise: "puff", stretch: "puff", stomp: "hop", thump: "hop", scratch: "shiver", shake: "shiver", tailflick: "look", tailslap: "hop", sentinel: "puff" };
 const cache = new Map<string, Character>();
 
 /** A species' character: its own entry over the default. */
