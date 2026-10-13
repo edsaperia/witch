@@ -26,7 +26,7 @@ export const AREA_NIGHTS: Record<string, NightKind> = {
   "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "temple-jungle": "wet", "river-jungle": "stream", mangrove: "wet", "mangrove-pools": "wet", mudflat: "wet", "mossy-creek": "stream",
   stream: "stream", ravine: "ravine",
   meadow: "meadow", garden: "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
-  "rocky-slope": "open", packice: "open", bushveld: "open", erg: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", eyrie: "stones", "scrub-wash": "open",
+  "rocky-slope": "open", packice: "open", bushveld: "open", erg: "open", "cactus-flats": "open", "red-canyon": "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", eyrie: "stones", "scrub-wash": "open",
   home: "home",
 };
 /** An area type's night (by its id; a wet area unlisted is a wet night, the rest woods). */
