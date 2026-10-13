@@ -407,10 +407,20 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.folds && p[1] < top - .02 && Math.abs(p[2]) > bw * .45 && q.folds.some(f => Math.abs(p[0] - f * len - (p[1] - chest) * .25) < .016 * (q.foldW ?? 1))) return M.BODY3; // a rhino's armour: deep folds of hide down its flanks (folds: where, -1 rump to 1 chest)
     return undefined;
   };
-  // ---- torso: a deep chest, a tucked waist, a rump ----
+  // how it stands (its legs, below): on its toes, on hooves, flat-footed or sprawling; the torso's frame follows it
+  const stance = q.stance || (q.paw === "hoof" ? "hoof" : "digit"), hoof = stance === "hoof", flat = stance === "flat", sprawl = stance === "sprawl";
+  // ---- torso: a deep chest, a tucked waist, a rump; and over them the frame a back hangs on (the menagerie review, 2026-10-13):
+  // withers (the shoulder mass, the back's high point), a pelvis (the croup, a deer's raised rump), a loin dipping between, and a
+  // brisket (the chest's keel in front of the forelegs). Each a knob (q.withers, q.croup, q.loin, q.brisket, model units) with a
+  // default by how it stands: a hoofed one's withers and croup stand up and its brisket is deep, a flat-footed one's shoulders are
+  // rounder, a sprawler has none. ----
+  const withers = q.withers ?? (sprawl ? 0 : hoof ? .07 : flat ? .04 : .05), croup = q.croup ?? (sprawl ? 0 : hoof ? .05 : .02), loin = q.loin ?? (sprawl ? 0 : .015), brisket = q.brisket ?? (hoof ? .08 : flat ? .04 : .03);
   m.ell([len * .48, (top + chest) / 2 + hump * .5, 0], [len * .62, (top - chest) / 2 * front + hump * .5, bw * front], M.BODY, { paint: paintBody });
   m.ell([-len * .5, (top + tuck) / 2 + arch * .6, 0], [len * .58, (top - tuck) / 2 + arch * .6, bw * .93], M.BODY, { paint: paintBody });
-  m.ell([0, (top + (chest + tuck) / 2) / 2 + .02, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
+  m.ell([0, (top + (chest + tuck) / 2) / 2 + .02 - loin, 0], [len * .6, (top - (chest + tuck) / 2) / 2, bw * .9], M.BODY, { paint: paintBody });
+  if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front], M.BODY, { paint: paintBody }); // the withers, over the shoulders
+  if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74], M.BODY, { paint: paintBody }); // the pelvis
+  if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
   if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
@@ -419,7 +429,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // "hoof" a long slim upright cannon and a sharp hock (a deer's, a boar's); "flat" a flat sole along the ground (a bear's, a
   // badger's); "sprawl" the elbows and stifles out to the side (a newt's). Near legs lighter, far legs in shade. In the walk the whole
   // leg swings from its shoulder or hip, and the leg swinging forward lifts and flexes (its paw trailing), the planted one stays extended.
-  const sw = [.32, -.32][frame], stance = q.stance || (q.paw === "hoof" ? "hoof" : "digit"), hoof = stance === "hoof", flat = stance === "flat", sprawl = stance === "sprawl";
+  const sw = [.32, -.32][frame];
   m.rig = { legs: [], len, bw, top, chest, tuck }; // the live rig's joints (art/genome/parts.js), in model units
   const leg = (fore, side) => {
     m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
@@ -454,7 +464,12 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- neck and head, turned towards us ----
   m.part = "head"; // the neck, head, ears, eyes, horns, antlers and tusks: one piece, hung from the neck's base
   const nb = [len * .82, top - .12, 0], H = [nb[0] + Math.cos(q.neckAng) * q.neck * .9, nb[1] + Math.sin(q.neckAng) * q.neck * .9 + sz("headLift"), 0];
-  m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined });
+  const neckPaint = p => q.belly && p[1] < (nb[1] + H[1]) / 2 - .05 ? M.BELLY : q.face === "dark" ? M.BODY2 : undefined;
+  m.seg(nb, H, q.neckW * .55 * sz("neckBase"), q.neckW * .42 * sz("neckTop"), M.BODY, { paint: neckPaint });
+  // the nape: a crest along the top of the neck, from the withers to the back of the skull, so the head hangs from the neck rather
+  // than being pierced by it; and the throat under it (q.nape, q.throat: their fullness, 1 as built; 0 none)
+  if (q.neck > .12 && (q.nape ?? 1)) { const nd = v3.norm(v3.sub(H, nb)), up = v3.norm([-nd[1], nd[0], 0]), k = q.neckW * .3 * (q.nape ?? 1) * sz("neckTop"); m.seg(v3.add(nb, v3.add(v3.mul(up, k * .9), [-.04, .04, 0])), v3.add(H, v3.add(v3.mul(up, hr * .35), [-hr * .45, 0, 0])), k * 1.15, k * .85, M.BODY, { paint: p => q.face === "dark" ? M.BODY2 : undefined }); }
+  if (q.neck > .12 && (q.throat ?? 1)) { const nd = v3.norm(v3.sub(H, nb)), dn = v3.norm([nd[1], -nd[0], 0]), k = q.neckW * .26 * (q.throat ?? 1) * sz("neckBase"); m.seg(v3.add(nb, v3.add(v3.mul(dn, k * .7), [.02, -.02, 0])), v3.add(H, v3.add(v3.mul(dn, hr * .35), [hr * .2, -hr * .2, 0])), k * 1.1, k * .7, M.BODY, { paint: neckPaint }); }
   const tearAt = p => { // a cheetah's black tear lines, eye to mouth (lit on its legend)
     if (!q.tears) return undefined;
     const z = Math.sign(p[2]) || 1, E = [H[0] + hr * .78, H[1] + hr * .28, z * hr * .5], F = [H[0] + hr * 1.2, H[1] - hr * .62, z * hr * .28], d = v3.sub(F, E), t = Math.max(0, Math.min(1, v3.dot(v3.sub(p, E), d) / v3.dot(d, d))), w = v3.sub(p, v3.add(E, v3.mul(d, t)));
@@ -506,7 +521,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
   // ears
   for (const side of [-1, 1]) {
-    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
+    const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 / (baby ? sz("head") : 1) : 1); // (long ears don't grow with a baby's big head: a leveret's are short for its head, and its young must stand clear above it)
     if (E === "none" || elder?.ears) continue;
     if (E === "fan") { const c = [H[0] - hr * .55, H[1] - hr * .12, side * hr * .82], d = [hr * .46 * k, hr * .62 * k, hr * .07]; m.ell(c, d, M.BODY2, { group: 5 + (side > 0 ? 0 : 20), dir: [1, .25, 0], paint: p => Math.hypot((p[0] - c[0]) / d[0], (p[1] - c[1]) / d[1]) > .8 ? M.BODY3 : undefined }); continue; } // an elephant's: a great flat fan against the side of its head, its edge ragged and darker
     if (E === "round") { m.ell(base, [hr * .22, hr * .25 * k, hr * .1], M.BODY, { group: elder ? 9 : 1, paint: p => p[0] > base[0] + hr * .02 ? M.EAR : undefined }); continue; }
