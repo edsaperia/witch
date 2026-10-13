@@ -13,9 +13,11 @@ describe("the zoo (?zoo)", () => {
   const plan = zooPlan();
 
   it("has every area type in one row, each row by its swarm class (light, medium, strong), the undesigned kinds as '?' blocks", () => {
-    const listed = ZOO.rows.flatMap(r => r.areas);
+    const listed = ZOO.rows.flatMap(r => r.areas), ids = AREA_TYPES.map(a => a.id);
     expect(new Set(listed).size).toBe(listed.length); // (none twice)
-    expect([...listed].sort()).toEqual(AREA_TYPES.map(a => a.id).sort()); // (a new area type goes in a row: config/zoo.json)
+    expect(listed.filter(a => !ids.includes(a))).toEqual([]); // (none that isn't an area type)
+    // (every area type a block, once: those config/zoo.json doesn't name yet at the end of their biome's row)
+    expect(plan.blocks.filter(b => b.area).map(b => b.area).sort()).toEqual([...ids].sort());
     const classes = (TUNING_JSON as { population: { swarm: { classes: Record<string, { species: string[] }> } } }).population.swarm.classes;
     const rank = (sp: string) => (classes.light.species.includes(sp) ? 0 : classes.strong.species.includes(sp) ? 2 : 1);
     for (const r of ZOO.rows) {

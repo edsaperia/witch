@@ -7,6 +7,7 @@ import { openBrowser, ROOT } from "../../art/headless.mjs";
 
 const CFG = `${ROOT}/config/zoo.json`, zoo = JSON.parse(fs.readFileSync(CFG, "utf8"));
 const classes = JSON.parse(fs.readFileSync(`${ROOT}/config/tuning.json`, "utf8")).population.swarm.classes;
+const kinds = JSON.parse(fs.readFileSync(`${ROOT}/config/kinds.json`, "utf8")).kinds;
 const rank = sp => (classes.light.species.includes(sp) ? 0 : classes.strong.species.includes(sp) ? 2 : 1);
 const b = await openBrowser();
 await b.page.goto(b.base + "/art/headless-blank.html");
@@ -16,6 +17,9 @@ const sizes = await b.page.evaluate(async () => {
   return out;
 });
 let differs = 0;
+// (an area type no row names yet: into the first row whose biomes include its creature's, as rules/zoo.ts deals it)
+const named = new Set(zoo.rows.flatMap(r => r.areas));
+for (const [id, { creature }] of Object.entries(sizes)) if (!named.has(id)) { const row = zoo.rows.find(r => r.biomes.includes(kinds[creature]?.biome)); if (row) { row.areas = [...row.areas, id]; differs++; } }
 for (const row of zoo.rows) {
   const want = [...row.areas].sort((p, q) => rank(sizes[p].creature) - rank(sizes[q].creature) || sizes[p].size - sizes[q].size);
   const same = want.every((a, i) => a === row.areas[i]);

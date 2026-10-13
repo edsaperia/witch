@@ -241,6 +241,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "woken"; id: string; species: string; style: Style }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
+  | { kind: "glide"; id: string; species: string; style: Style }
   | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
@@ -583,6 +584,15 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
       ground.push(sp.origin ? sp.origin[1] : sp.h); centre.push(sp.origin ? sp.origin[0] - sp.w / 2 : 0);
     }
     return { px: packPixels(sprites, 2048), ground, centre };
+  }
+  // a glider in the air (Profile.glide, the flying squirrel): each level's 2 frames spread out, its membrane taut (art/creatures.js gear.glide)
+  if (job.kind === "glide") {
+    const sprites: Baked[] = [], gear = { glide: true } as unknown as null;
+    for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
+      const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
+      const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
+    }
+    return { px: packPixels(sprites, 2048) };
   }
   if (job.kind === "woken") return { px: packPixels(creatureSprites(job.style, job.species, mk, { woken: true, face: "angry" }), 2048) };
   if (job.kind === "face") return { px: packPixels(creatureSprites(job.style, job.species, mk, { face: job.face }), 2048) };
