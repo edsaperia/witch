@@ -31,5 +31,10 @@
     "A registry split by a tool that scans text must treat a quoted key as a key: skipping quoted strings lost 18 entries whose keys had hyphens.",
     "A rise that never ran: the page wrote an island's outline on the shared record before it asked the chart to reshape, so the chart's 'first coming' test on that record was always false. Test what the thing itself has (its land mesh), not what the caller may already have written."
   ],
-  "previews": []
+  "previews": [
+    {
+      "src": "media/builders/juliet-emerge.webp",
+      "caption": "The marten's island rising out of the sea on the chart over 1.2 s as its coastline arrives from the worker"
+    }
+  ]
 }
