@@ -260,7 +260,7 @@ function evolve3d(m, feats, c) {
       const H = f.height ?? .45, x0 = -c.len * 2.1, x1 = c.len * .75, tailY = .32, top = c.top;
       const base = x => x > -c.len * .9 ? c.backAt(Math.max(0, Math.min(1, (x + c.len * .9) / (c.len * 1.65))))[1] - .02 : tailY + (top - tailY) * Math.max(0, (x - x0) / (-c.len * .9 - x0)) ** 1.4;
       const y0 = tailY - .05, y1 = top + H + .05, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, hx = (x1 - x0) / 2, hy = (y1 - y0) / 2;
-      m.flat([cx, cy, 0], [1, 0, 0], [0, 1, 0], hx, hy, (a, b) => { const x = cx + a * hx, y = cy + b * hy, bs = base(x), ends = Math.min(1, (x - x0) / .25, (x1 - x) / .35), h = H * Math.max(0, ends) * (.75 + .25 * Math.sin(x * 9)) * (.6 + .4 * Math.min(1, (x - x0) / c.len));
+      m.flat([cx, cy, 0], [1, 0, 0], [0, 1, 0], hx, hy, (a, b) => { const x = cx + a * hx, y = cy + b * hy, bs = base(x), torn = Math.sin(x * 23) > .86 ? .65 : 1, ends = Math.min(1, (x - x0) / .25, (x1 - x) / .35), h = H * Math.max(0, ends) * (.75 + .25 * Math.sin(x * 9)) * (.6 + .4 * Math.min(1, (x - x0) / c.len)) * torn; // (torn here and there by ages)
         if (y < bs - .03 || y > bs + h) return null; if (y > bs + h - .045) return M[f.rim || "MAGIC"]; return Math.abs(Math.sin(x * 34)) < .12 ? M.BODY3 : M[f.mat || "BODY2"]; }, { group: 165, extra: true, bend: .05 });
     }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
@@ -598,14 +598,14 @@ export function raven3d(S, level, frame, st, facing = "towards") {
   m.ell([0, .52 + bob, 0], [.42, .26, .24], M.BODY, { dir: [1, .45, 0] });
   if (!has("wings")) for (const side of [-1, 1]) m.ell([-.1, .55 + bob, side * .2], [.45, .17, .05], M.BODY2, { dir: [-1, -.25, 0], group: side > 0 ? 4 : 2 });
   const hc = [.36, .84 + bob, 0], hr = young ? .19 : .16;
-  m.ell(hc, [hr * 1.1, hr, hr * .95], M.BODY, { paint: p => p[1] > hc[1] + hr * .55 ? M.BELLY : undefined });
+  m.ell(hc, [hr * 1.1, hr, hr * .95], M.BODY, { paint: p => p[1] > hc[1] + hr * .55 || (has("hoard") && spotty(p, 60, .3)) ? M.BELLY : undefined }); // (an elder's head grizzled grey)
   m.ell(v3.add(hc, [hr * 1.5, -hr * .25, 0]), [hr * 1.0, hr * .38, hr * .3], M.NOSE, { dir: [1, -.2, 0], group: 1 });
   eyesOn(m, hc, [hr * 1.1, hr, hr * .95], [[.55, .35, .65], [.55, .35, -.65]], hr * .16, legend ? M.MAGIC2 : M.EYE);
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-.05, .65 + bob, side * .18], side, 1.1, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("eyesRing")) for (let i = 0; i < 6; i++) { const a = Math.PI * (.2 + i / 5 * .6); m.ell([Math.cos(a) * .25 - .1, .95 + Math.sin(a) * .45, (i - 2.5) * .12], [.06, .06, .06], M.MAGIC2, { group: 95 + i, extra: true }); }
   if (has("hoard")) { // its hoard (the legend audit's ★, Ed 2026-10-13: "emphasise the thing that makes that creature unusual"): shining trinkets caught in its ruff and circling it, coins, rings and keys
     const X = [1, 0, .15], Y = [0, 1, 0], flat = (c, r, mask, g) => m.flat(c, X, Y, r, r, mask, { group: g, extra: true, bend: 0 });
-    const coin = (s2, t) => { const d = Math.hypot(s2, t); return d > 1 ? null : d > .78 ? M.ACCENT : Math.abs(s2) < .12 && Math.abs(t) < .45 ? M.ACCENT : M.GLINT; };
+    const coin = (s2, t) => { const d = Math.hypot(s2, t); if (d <= 1 && Math.abs(Math.sin(s2 * 11 + t * 7)) > .93) return M.MOSS; return d > 1 ? null : d > .78 ? M.ACCENT : Math.abs(s2) < .12 && Math.abs(t) < .45 ? M.ACCENT : M.GLINT; };
     const ring = (s2, t) => { const d = Math.hypot(s2, t); return d > 1 || d < .55 ? null : t > .55 && Math.abs(s2) < .35 ? M.MAGIC2 : M.GLINT; }; // a gem set in its top
     const key = (s2, t) => { const bow = Math.hypot(s2 + .62, t - .05); if (bow < .36) return bow < .17 ? null : M.GLINT; if (s2 > -.3 && s2 < .9 && Math.abs(t) < .1) return M.GLINT; if (s2 > .55 && s2 < .9 && t < 0 && t > -.42 && Math.floor((s2 - .55) * 9) % 2 === 0) return M.GLINT; return null; };
     [[.27, .7, .14], [.2, .62, -.16], [.33, .64, .02], [.16, .74, .2]].forEach(([x, y, z], i) => flat([x, y + bob, z + .12], .065, i % 2 ? ring : coin, 110 + i)); // caught in its ruff
@@ -634,6 +634,7 @@ function heronModel(S, level, frame) {
   const F = HERON_GAIT.frames, hip = .52 * lk + .25, by = hip + .18, f0 = frame;
   // legs: hip, knee (bending back), foot; long thin toes splayed forward
   const legs0 = m.parts.length, pose = stilts ? [{ foot: [-.02, hip * .62, -.07], knee: [.14, hip * .8, -.07] }, { foot: [.02, .03, .07], knee: [-.04, hip * .5, .07] }] : heronLegs(f0 / F, hip); // (stilts: the far leg tucked up, the near one planted)
+  if (stilts) for (const y of [.18, .24]) m.ell([.02 - .04 * y, hip * y * 1.6, .07], [.03, .012, .03], M.GLINT, { group: 91, extra: true }); // (two gold rings offered round its standing leg)
   if (stilts) m.flat([.05, .012, .1], [1, 0, 0], [0, 0, 1], .62, .42, (a, b) => { const d = Math.hypot(a, b); if (d > 1) return null; if (d > .9) return M.BELLY; // its pool: the moon in it, rings, and its reflection hanging down from its foot
     if (Math.abs(a + .05) < .025 && b > -.1 && b < .45) return M.ACCENT; if (Math.hypot((a + .02) / .32, (b - .62) / .16) < 1) return M.BODY2; if (Math.abs(d - .5 - (frame % 2) * .08) < .03) return M.GLINT; return M.NOSE; }, { group: 90, extra: true, bend: 0 });
   for (const side of [-1, 1]) {
@@ -655,7 +656,7 @@ function heronModel(S, level, frame) {
   // head, a black plume off its back, a dagger beak
   const hr = .075;
   m.ell(hc, [hr * 1.15, hr * .9, hr * .85], M.BELLY, { paint: p => p[1] > hc[1] + hr * .3 && p[0] < hc[0] + hr * .3 ? M.BODY3 : undefined });
-  const ck = q.crest ?? 1; if (ck) m.chain([[hc[0] - hr * .6, hc[1] + hr * .4, 0, .016], [hc[0] - hr * 2.2 * ck, hc[1] + hr * .7, 0, .01], [hc[0] - hr * 3.6 * ck, hc[1] + hr * .2, 0, .004]], M.BODY3, { group: 5, extra: true });
+  const ck = q.crest ?? (stilts ? 1.9 : 1); // (an elder's plume trailing long) if (ck) m.chain([[hc[0] - hr * .6, hc[1] + hr * .4, 0, .016], [hc[0] - hr * 2.2 * ck, hc[1] + hr * .7, 0, .01], [hc[0] - hr * 3.6 * ck, hc[1] + hr * .2, 0, .004]], M.BODY3, { group: 5, extra: true });
   m.seg(v3.add(hc, [hr * .8, -hr * .15, 0]), v3.add(hc, [hr * (.8 + 3.6 * bk), -hr * (.6 + 1.6 * fd), 0]), hr * .3, hr * .05, M.ACCENT, { group: 1 });
   eyesOn(m, hc, [hr * 1.15, hr * .9, hr * .85], [[.5, .3, .7], [.5, .3, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
   m.anchors.neck = { c: v3.lerp(n0, n1, .5), r: .06, dir: v3.norm(v3.sub(n1, n0)) };
@@ -775,7 +776,7 @@ export function beetle3d(S, level, frame, st, facing = "towards") {
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
   }
-  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
+  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
   m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1 });
   const hc = [.56, .3, 0];
   m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
@@ -890,7 +891,7 @@ export function woodlouse3d(S, level, frame, st, facing = "towards") {
   for (let i = 0; i < n; i++) {
     const t = (i + .5) / n, x = .5 - t * 1.05, prof = Math.sqrt(Math.max(.05, 1 - Math.pow((x - .02) / .6, 2))), w = 1.05 / n;
     const sh = q.shields ? 1.18 : 1, hk = q.house ? 1.75 : 1, c = [x, .19 + (q.shields ? .02 : 0), 0], r = [w * .62 * sh, .2 * prof * sh * hk, .31 * prof * sh];
-    m.ell(c, r, shell, { group: 1, dir: [1, q.shields ? -.15 : 0, 0], paint: p => q.house && Math.abs(((Math.atan2(p[1] - c[1], p[2]) * 5 + (i % 2) * .5) % 1 + 1) % 1 - .5) < .08 ? M.BODY3 : q.flecks && p[0] < x - w * .3 && spotty(p, 40, .35) ? M.BELLY : undefined }); // (a house: its dome rolled up high, its plates laid in courses like roof tiles)
+    m.ell(c, r, shell, { group: 1, dir: [1, q.shields ? -.15 : 0, 0], paint: p => q.house && p[1] > c[1] + r[1] * .6 && spotty(p, 30, .35) ? M.MOSS : q.house && Math.abs(((Math.atan2(p[1] - c[1], p[2]) * 5 + (i % 2) * .5) % 1 + 1) % 1 - .5) < .08 ? M.BODY3 : q.flecks && p[0] < x - w * .3 && spotty(p, 40, .35) ? M.BELLY : undefined }); // (a house: its dome rolled up high, its plates laid in courses like roof tiles)
     if (q.rim) m.ell(v3.add(c, [-w * .45, .01, 0]), [w * .16, r[1] * 1.04 + .01, r[2] * 1.04 + .01], q.flecks ? rimMat : rimMat, { group: 2, paint: p => q.flecks && spotty(p, 50, .4) ? M.BELLY : undefined });
     if (q.shields) for (const side of [-1, 1]) m.seg(v3.add(c, [0, -.02, side * r[2] * .9]), v3.add(c, [-w * .3, -.08, side * (r[2] + .17)]), .04, .004, M.BODY3, { group: 3, extra: true }); // spiked edges
     if (q.crystals && i % 2 === 1) { const b = v3.add(c, [0, r[1] * .8, 0]), tip = v3.add(b, [-.04, .26 + (i % 4 ? .06 : 0), (i % 4 - 1.5) * .04]); m.seg(b, tip, .055, .006, M.RUNE, { group: 80 + i, extra: true }); m.seg(v3.add(b, [.02, 0, .05]), v3.add(b, [.06, .14, .1]), .03, .004, M.MAGIC2, { group: 80 + i, extra: true }); } // a moonstone, pointed, with a smaller one beside it
@@ -913,7 +914,7 @@ export function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, young = false, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), .03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]); }
   pts.push([.38, .25, pts[12][2], .07], [.42, .45, pts[12][2] * .8, .065]);
-  m.chain(pts, M.BODY, { paint: p => p[1] < .05 && p[0] < .35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined });
+  m.chain(pts, M.BODY, { paint: p => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, .3) ? M.BODY3 : undefined });
   const hc = [.5, .5, pts[13][2] * .8], hr = young ? .11 : .09;
   m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
   m.part = "head";
@@ -941,7 +942,7 @@ export function moth3d(S, level, frame, st, facing = "towards") {
     const lift = up ? .5 : -.1, fore = v3.norm([.35, lift, side]), hind = v3.norm([-.3, lift * .6, side]);
     m.flat(v3.add([0, y, side * .05], v3.mul(fore, .38 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), .4 * span, .24 * span, masks.spotted(wm, M.BELLY, M.BODY3), { group: 10 + (side > 0 ? 1 : 0) });
     if (has("eyespots")) { // (the legend audit's ★, Ed 2026-10-13: its wings' eye spots opened into two staring glowing eyes) its hind wings grown broad, each a great eye
-      const eye = (a, b) => { if (Math.hypot(a, b) > 1) return null; const e = Math.hypot((a - .05) / .62, b / .78); if (e < .2) return Math.hypot(a + .02, b - .12) < .07 ? M.GLINT : M.NOSE; if (e < .32) return M.MAGIC2; if (e < .55) return M.MAGIC; if (e < .72) return M.NOSE; if (e < .8) return M.BELLY; return M.BODY2; };
+      const eye = (a, b) => { if (Math.hypot(a, b) > 1 - .14 * Math.max(0, Math.sin(Math.atan2(b, a) * 7))) return null; /* (tattered by ages) */ const e = Math.hypot((a - .05) / .62, b / .78); if (e < .2) return Math.hypot(a + .02, b - .12) < .07 ? M.GLINT : M.NOSE; if (e < .32) return M.MAGIC2; if (e < .55) return M.MAGIC; if (e < .72) return M.NOSE; if (e < .8) return M.BELLY; return M.BODY2; };
       m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .36)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .38, .3, eye, { group: 12 + (side > 0 ? 1 : 0), extra: true });
     } else m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .26 * span)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .27 * span, .17 * span, masks.spotted(has("wingsBig") ? M.MAGIC2 : M.BODY2, M.BODY2, M.BODY2), { group: 12 + (side > 0 ? 1 : 0) });
     m.chain([[.12, y + .08, side * .03, .015], [.2, y + .25, side * .1, .025], [.24, y + .32, side * .14, .012]], M.BODY2, { group: 11 });
@@ -983,7 +984,7 @@ export function spider3d(S, level, frame, st, facing = "towards") {
     m.flat([-.25, .95, -.5], [1, 0, 0], [0, 1, 0], .95, .95, (a, b) => {
       const r = Math.hypot(a, b); if (r > 1) return null; const th = Math.atan2(b, a), k = th / (Math.PI * 2 / n), sp = Math.abs(k - Math.round(k)) * r * Math.PI * 2 / n;
       const ringD = Math.min(...rings.map(R => Math.abs(r * Math.cos(Math.PI / n) / Math.max(.3, Math.cos(sp / Math.max(.05, r))) - R)));
-      const thread = sp < .018 || ringD < .016;
+      const broken = r > .62 && (Math.round(k) % 5 === 2 || (ringD < .016 && Math.abs(Math.sin(th * 5)) > .9)), thread = !broken && (sp < .018 || ringD < .016); // (ages old: some spokes and threads broken)
       if (thread) return (sp < .03 && ringD < .03) ? M.GLINT : M.BELLY; // a dew drop where a ring crosses a spoke
       if (r < .58) return (Math.floor(k + 10) + (r < .4 ? 1 : 0)) % 2 ? M.MAGIC : M.MAGIC2; // the rose: lit panes
       return null; }, { group: 140, extra: true, bend: 0 });
