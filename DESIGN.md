@@ -144,7 +144,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Ancient | mossy roots over rocks | | sorrel | giant gnarly slanted trees | | Stag | Ed |
 | Norway | pine needles and slate | | rocks | straight pines | | Stoat | Ed |
 | Alder forest | tall and short grass | | tree stumps with tall grass around | tall slanted trees with thin leaves at different heights | | Snake | Ed |
-| Meadow | grass and wildflowers | | scattered hawthorn | lone oaks | | Hare | draft |
+| Meadow | grass and wildflowers | | scattered hawthorn | lone oaks | | Wildcat | draft |
 | Old oaks | leaf litter | | acorns, fallen branches | ancient gnarled oaks with hollow trunks | a great hollow oak | Owl | draft |
 | Berry thicket | pine needles | bramble thickets | berry bushes | tall pines | | Bear | draft |
 | Wetland | wet mud | puddles, reeds | reeds and rushes | willows | | Toad | draft |
@@ -159,7 +159,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 | Heath | heather | | gorse | wind-bent birches | | Moth | draft |
 | Old pinewood | pine needles | | pine cones | tall old pines with knotholes | | Pine marten | draft |
 | Ravine | wet moss and rock | rock walls | ferns | mossy boulders | a waterfall | Salamander | draft |
-| Bluebell glade | bluebells | | ferns | beeches | | Glow-worm | draft |
+| Bluebell glade | bluebells | | ferns | beeches | | Hare | draft |
 | Holly thicket | dead leaves | holly hedges | cobwebs | hollies | a web-hung dead tree | Spider | draft |
 | Honeysuckle tangle | grass and clover | bramble | honeysuckle | hazel coppice | | Dormouse | draft |
 
@@ -264,7 +264,7 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | toad | leaps in arcs, landing near its target | none | slam on landing: a small pulse (ring where it lands) | — |
 | beetle | plods straight in, slow to turn | none | melee shove with knockback | armoured |
 
-**All 30 species (Ed's species pass, 2026-10-05: "Yes, give all 19 a profile").** Every species now has a profile, the other 19 with new signature moves where they called for one (a ram's run-up, the stags' paired charge, a badger digging in, a beaver's block, a lynx's pounce, a fox's flank, a snake's strike, a moth's pull to light, rolling hedgehogs and woodlice, a snail's slime, a glow-worm's flash). Speeds are a fight's (times tuning `fight.speed`); every one closes from afar at its sprint (`combat.pursuitRun`, 20 m/s, unless it has its own). Each new move has a debug arena preset (`?arena=` swipe, wide, pair, ram, dig, block, flank, pounce, weave, packflank, otter, squirrel, dart, roll, slime, woodlouse, strike, moth, flash).
+**All 30 species (Ed's species pass, 2026-10-05: "Yes, give all 19 a profile").** Every species now has a profile, the other 19 with new signature moves where they called for one (a ram's run-up, the stags' paired charge, a badger digging in, a beaver's block, a lynx's pounce, a fox's flank, a snake's strike, a moth's pull to light, rolling hedgehogs and woodlice, a snail's slime). Speeds are a fight's (times tuning `fight.speed`); every one closes from afar at its sprint (`combat.pursuitRun`, 20 m/s, unless it has its own). Each new move has a debug arena preset (`?arena=` swipe, wide, pair, ram, dig, block, flank, pounce, weave, packflank, otter, squirrel, dart, roll, slime, woodlouse, strike, moth, flash).
 
 **Walking away is no escape** (Ed, 2026-10-06, playtest: "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"): a charge runs at least `fight.charge.chase` (1.6) times her ground speed, and on until it has caught up with her walking straight down its lane; a leap comes down where she'll be when it lands (`fight.leap.lead`). The counters are skill (Ed, 2026-10-06: "We want to reward skilful use of blink and accurate invitation aiming"): step out of the lane at the tell (its windup), blink sideways or straight through it as it comes, or rise to the treetops. A charge commits to its line: its braking arc past her no longer hurts, and one that struck nothing stands winded for `fight.charge.miss` (1.2 s, stars round its head), an opening for her 💌s. (`tools/balance/charges.mjs` tries each escape against every charger and leaper.)
 
@@ -298,15 +298,15 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | snail (new) | 6 (sprint 8) | 10 | arrive, separation | — | slime trail: a patch every 0.4 s, drying after 7 s, slowing her to half | armoured |
 | woodlouse (new) | 9 (sprint 12) | 25 | keep range, separation | — | rolls curled up (charge), taking ×0.3 | armoured |
 | snake (new) | 14 | 80 | keep range, strafe, separation | — | ambush strike: still till she's within 16 m, then springs and strikes at once | — |
-| moth (new) | 15 | 90 | orbit, wander, light, dodge, separation | swarm | drawn to light: glow-worms and soundsystems within 40 m | flier, swarm |
-| glowworm (new) | 9 (sprint 10) | 30 | keep range, separation | — | flash: within 9 m, a burst of light slowing the other side 1.5 s (her to 0.6) | — |
+| moth (new) | 15 | 90 | orbit, wander, light, dodge, separation | swarm | drawn to light: soundsystems within 40 m | flier, swarm |
+| cat (new, 2026-10-13: the meadow's wildcat in place of the glow-worm) | 15 | 70 | arrive, strafe, separation | — | leap: from 5 to 18 m, a pounce that strikes | — |
 | heron (recipe) | 13 | 35 | arrive, separation | — | charge: a short stab (5 to 20 m off, 28 m/s, 0.9 s windup) | — |
 | newt (recipe) | 11 | 30 | keep range, separation | — | — | — |
 | meerkat (recipe) | 18 | 165 | arrive, slot, strafe, dodge, separation | hit and run | — | — |
 
 (The heron and the newt, the recipe areas' creatures: as built, 2026-10-06; not yet ruled.)
 
-New pieces for them: a **flank** tactic (slots at the target's back, the way it's heading, striking only from behind); a **light** behaviour (drawn to the nearest glow-worm or soundsystem); the charge's **backup**, **pair** and **curl**; the leap's **strike** (a pounce lands a blow on its target, not a slam round it); the ambush's **strike**; and four new moves, **dig**, **block**, **trail** and **flash**. Slime and the flash slow the witch too (her speed times the move's `slow`, a moment). The bear gets its own attacks (`swipe`, `bigswipe`); otters, squirrels and dormice join the nimble. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
+New pieces for them: a **flank** tactic (slots at the target's back, the way it's heading, striking only from behind); a **light** behaviour (drawn to the nearest soundsystem); the charge's **backup**, **pair** and **curl**; the leap's **strike** (a pounce lands a blow on its target, not a slam round it); the ambush's **strike**; and four new moves, **dig**, **block**, **trail** and **flash**. Slime and the flash slow the witch too (her speed times the move's `slow`, a moment). The bear gets its own attacks (`swipe`, `bigswipe`); otters, squirrels and dormice join the nimble. Babies never fight. Party animals use the same profiles against wild ones, inside their leash. Everything is deterministic (seeded, fixed steps).
 
 **Charges and leaps go further** (Ed, round 13, 2026-10-06: "Charging and jumping creatures should charge or jump much further. At the moment it feels like they always stop short. They should be damaging whenever they're touched while in attack mode. Charging creatures should have much more momentum, travelling in wide arcs."). Every species' charge is scaled by the tuning's `fight.charge`: its run lasts twice as long and overshoots her twice as far (`reach` 2), it turns at 0.4 of its rate as it brakes (wider arcs: a boar's about 30 m across, an elk's about 70) and brakes at half the force (more momentum); and it hurts every foe it touches on the way, once each (`contact`), her grace after a hit (#197) making one charge one hit. Every leap (`fight.leap`) comes from 1.5 times as far off, a pounce (the lynx's) landing 5 m past her, hurting whoever it touches in the air; a slam (the toad's) still lands on her. **Harder** (balance, DECISION FOR ED): circling a crowd of 6 adult chargers she takes about 12 to 19 hits a minute instead of 0.3 to 6, a pack of lynxes about 31 instead of 0.7; all of it on the decisions panel (?decide) to tune live.
 
@@ -458,7 +458,7 @@ This replaces the legend rules of 2026-10-04 (every area's legend asleep until i
   - **Pattern:** Fan (beetle), Rear guard (woodlouse), Howl's ring every 5th burst (wolf), Echo (owl), Wind-up's charged volley (bear), Flutter's extra volley (moth).
   - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Wriggle's speed and range (newt), Lookout's range (meerkat), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander).
   - **On landing:** Pierce (stag), Skimming stone's ricochet (otter), Spawn's split into 3 (toad), Slip past the enraged (elk).
-  - **Lying about:** Lanterns' trail (glow-worm), Cache (squirrel), Lullaby orbit (dormouse).
+  - **Lying about:** Paw prints' trail (wildcat), Cache (squirrel), Lullaby orbit (dormouse).
 - **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole); Stride, quicker on foot and a longer blink (heron).
 - **Firing slows her** to `invites.fireSlow` (0.8) of her ground speed, so Steady has something to take away (the builder's call; easy to set to 1).
 - **Removed:** the posse, berry, evolve, wave-countdown, forecast, glow, spell and talk-time buffs.

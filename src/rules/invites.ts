@@ -42,7 +42,7 @@ export interface Letter {
   slip: boolean;
   /** A boomerang (Snail): 0 going out, 1 coming back. */
   back?: 0 | 1;
-  /** Lanterns (Glow-worm): when it drops the next. */
+  /** Paw prints (Wildcat): when it drops the next. */
   trailAt?: number;
   /** The animals it has landed on (it passes them by). */
   hit: number[];
@@ -306,7 +306,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
     L.x += L.vx * dt; L.z += L.vz * dt; L.flown += step;
     // Out of a sleeping legend's circle (Ed, 2026-10-06: "Your invitations disappear if they go outside the circle from inside"): gone in a sparkle.
     if (leaves?.(px, pz, L.x, L.z)) { s.events.push({ kind: "vanished", x: L.x, z: L.z, at: time, n: L.n }); return false; }
-    // Lanterns (Glow-worm): one dropped every every seconds where it flies.
+    // Paw prints (Wildcat): one dropped every every seconds where it flies.
     if (L.trailAt !== undefined && time >= L.trailAt) { s.lanterns.push({ x: L.x, z: L.z, until: time + H.trail.life, n: L.n }); L.trailAt = time + H.trail.every; }
     // The first creature its path this step passes within reach of: a hit, a block, or nothing (it passes through).
     let first: Creature | null = null, ft = Infinity;

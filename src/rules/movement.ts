@@ -99,7 +99,7 @@ export interface SteerContext {
   side: string;
   /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
   heading?: { x: number; z: number } | null;
-  /** Lights near it (glow-worms, soundsystems): moths are drawn to them. */
+  /** Lights near it (soundsystems): moths are drawn to them. */
   lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;

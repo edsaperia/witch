@@ -37,6 +37,7 @@ export function speciesOf(g) {
     const L = Object.entries(g.levels).filter(([, l]) => l);
     S.levelQ = Object.fromEntries(L.map(([lv, l]) => [lv, levelQ(l)]));
     S.levelFeatures = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "object")]));
+    S.levelNamed = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "string")])); // (a level's named old-style features: a wildcat elder's crown)
   }
   return S;
 }
