@@ -138,8 +138,8 @@ export const GENOMES = [
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
   // the snowfield's arctic fox (an area recipe's, the north's cold island): a small, round, white fox, short-muzzled and
-  // short-eared against the cold, a huge thick brush; a grey-brown kit, a white young, a ruffed adult, and the legend an aurora
-  // fox, three great tails streaming light at their tips, frost crystals along its back
+  // short-eared against the cold, a huge thick brush; a grey-brown kit, a white young, a ruffed adult, and the elder an old white
+  // fox of the long winter, shaggy, frost-muzzled, one vast tufted brush swept low, stone beads round its legs
   { id: "arcticfox", name: "Arctic fox", template: "quadruped", builder: "quad", palette: { hue: .59, sat: .16, val: .96, belly: "white" }, body: { hgt: .68, len: .56, chest: .46, tuck: .54, neck: .24, neckAng: .62, neckW: .4, hr: .27, legW: 1 }, head: { snout: .78, snoutD: .58, snoutTaper: .7 }, parts: { ears: { kind: "point", size: .8 }, tail: "bushy", feet: "paw" }, coat: { belly: true }, legend: ["crystals"], texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: .46, chest: .42, tuck: .46, hr: .31 }, head: { snout: .58 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "puff" }, coat: { saddle: true } },
@@ -153,7 +153,7 @@ export const GENOMES = [
     ] },
   // the crags' ibex (an area recipe's, the north-east's island of mountains and glaciers): a stocky wild goat, dark-legged and
   // bearded, its horns sweeping back in long knobbled scimitars; a hornless kid, a young with short horns, an adult with great
-  // ridged horns, and the legend a glacier ibex, its horns ice-blue and huge, ice crystals on its back
+  // ridged horns, and the elder the peaks' oldest, horns vast and knobbled, bearded, lichened, stone beads
   { id: "ibex", name: "Ibex", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .32, val: .58, belly: "white" }, body: { hgt: .92, len: .6, chest: .5, tuck: .5, neck: .26, neckAng: .78, neckW: .48, hr: .25, legW: .8 }, head: { snout: .8, snoutD: .7, snoutTaper: .75, face: "dark" }, parts: { ears: { kind: "small", size: .8 }, tail: "stub", feet: "hoof", horns: "twist" }, coat: { belly: true, legMat: "BODY3" }, legend: ["crystals"], texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: .48, hr: .29 }, parts: { ears: { kind: "small", size: 1.2 }, horns: false } },
@@ -231,7 +231,7 @@ export const GENOMES = [
     ] },
   // the icefall's snow leopard (an area recipe's, the north-north-east's island of high glaciers): a long, low, pale smoky cat with
   // rosettes, small round ears, a broad face and a very long thick tail; a fluffy cub, a lean young, a heavy adult, and the
-  // legend a glacier cat, its great tail glowing to the tip, frost along its back
+  // elder the high ice's ghost, its long ringed tail worn round its shoulders like a stole, frost-muzzled, stone beads
   { id: "snowleopard", name: "Snow leopard", template: "quadruped", builder: "quad", palette: { hue: .12, sat: .1, val: .82, belly: "white" }, body: { hgt: .86, len: .66, chest: .52, tuck: .56, neck: .26, neckAng: .55, neckW: .44, hr: .27, legW: 1.05 }, head: { snout: .48, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "banner", feet: "paw" }, coat: { belly: true, spots: true }, texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: .5, chest: .5, hr: .31 }, parts: { ears: { kind: "round", size: .95 }, tail: "bushy" } },
