@@ -11,5 +11,6 @@ export const GENOME_REDPANDA = { id: "redpanda", name: "Red panda", template: "q
       { body: { hgt: .72, len: .66, chest: .32 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
       { kind: "ruff", size: .24, count: 16, mat: "BELLY" },
       { kind: "claws", size: .14 },
+      { kind: "grizzle", amount: .55 }, { kind: "wreath", count: 14 },
     ] },
     ] };
