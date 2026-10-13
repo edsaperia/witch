@@ -1,0 +1,3 @@
+export const PLANT_WEEPINGBIRCH = { name: "weeping birch", form: "tree", generator: "blob", grow: "narrow", crown: { envelope: "weeping", clumps: [9, 13] },
+  params: { w: 120, wPad: 30, h: 160, narrow: 1, trunk: { w: 5, len: .9, taper: .4, bend: .5, lean: .25, mat: "BARK2", limbMat: "BARKD", bands: .12, roots: .5 }, levels: [{ n: [5, 7], at: [.4, .95], len: [.16, .26], angle: [.9, 1.4], up: -.1, w: .4, tips: true }], crown: { blobs: [4, 6], r: [10, 14], flat: .5, stamp: "leaf", stampSize: 2, back: .3, curtains: { len: [18, 40], share: .6, gap: 4 } } },
+  low: { sprigs: .3 }, colour: { hue: -.04, val: 1.12 } };

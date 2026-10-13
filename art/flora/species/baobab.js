@@ -1,0 +1,3 @@
+export const PLANT_BAOBAB = { name: "baobab", form: "tree", generator: "blob", grow: "normal", crown: { envelope: "dome", clumps: "layers" }, // a bottle of a trunk, stubby root-like branches, a few small tufts of leaf
+  params: { w: 210, wPad: 30, h: 150, trunk: { w: 34, len: .74, taper: .9, bend: .3, lean: .05, roots: .6 }, levels: [{ n: [5, 7], at: [.88, 1], len: [.26, .38], angle: [.6, 1.3], up: .3, bend: .8, w: .5 }], crown: { blobs: [5, 7], r: [11, 15], flat: .5, lift: 2, stamp: "leaf", stampSize: 2, back: .3 } },
+  low: { sprigs: .4, moss: .3 }, colour: { hue: .08, sat: .75, val: .9, trunk: [.06, .14, .58] } };

@@ -98,7 +98,7 @@ for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => 
 // The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
 for (const R of AREA_RECIPES) {
   const bad = recipeProblems(R); if (bad.length) throw new Error(`area recipe ${R.id}: missing ${bad.join(", ")}`);
-  const { layout, flora, setPiece, ...area } = R;
+  const { layout, flora, setPiece, slot, ...area } = R; void slot; // (slot: its place among the recipes, art/areas/index.js)
   AREAS.push(area); RECIPE_LAYOUTS[R.id] = layout;
   if (flora) AREA_FLORA[R.id] = flora;
   if (setPiece && !R.set) NEW_SET_PIECES[R.id] = setPiece;
