@@ -10010,6 +10010,10 @@
         "trees": {
           "type": "boolean"
         },
+        "tint": {
+          "type": "number",
+          "minimum": 0
+        },
         "trunks": {
           "type": "object",
           "properties": {
@@ -10063,14 +10067,6 @@
               "type": "number",
               "minimum": 0
             },
-            "tint": {
-              "type": "number",
-              "minimum": 0
-            },
-            "tintTrees": {
-              "type": "number",
-              "minimum": 0
-            },
             "glowLight": {
               "type": "number",
               "minimum": 0
@@ -10098,8 +10094,6 @@
             "cover",
             "scenery",
             "sceneryMin",
-            "tint",
-            "tintTrees",
             "glowLight",
             "sceneryFoot",
             "sceneryTaper"
@@ -10111,6 +10105,7 @@
         "on",
         "strength",
         "trees",
+        "tint",
         "trunks"
       ],
       "additionalProperties": false

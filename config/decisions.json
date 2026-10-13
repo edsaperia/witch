@@ -107,14 +107,9 @@
       "default": 1.2, "apply": { "knob": "shadows.trunks.sceneryMin" }
     },
     {
-      "id": "shadowTint", "pr": 759, "group": "Scenery shadows", "label": "Shadow colour (scenery)", "note": "How far scenery's shadows take the complement of the light throwing them (0: black; a campfire's orange throws blue-violet).",
+      "id": "shadowTint", "pr": 759, "group": "Scenery shadows", "label": "Shadow colour", "note": "How far every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch and small things) takes the complement of the light it lies in (0: black; a campfire's orange throws blue-violet, moonlight a warm shade).",
       "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
-      "default": 0.6, "apply": { "knob": "shadows.trunks.tint" }
-    },
-    {
-      "id": "shadowTintTrees", "pr": 759, "group": "Scenery shadows", "label": "Shadow colour (trees)", "note": "The same for the trees' and palms' shadows (0: black, as before), to compare.",
-      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
-      "default": 0, "apply": { "knob": "shadows.trunks.tintTrees" }
+      "default": 0.6, "apply": { "knob": "shadows.tint" }
     },
     {
       "id": "shadowGlowLight", "pr": 759, "group": "Scenery shadows", "label": "Glowing casters' shadows", "note": "How light the shadows of things lit with their own colour are (runestones, soundsystems), in a soft shade of that colour (0: as dark as any).",
