@@ -387,6 +387,32 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     for (const [i, t, h] of [[0, .22, .95], [1, .5, 1.35], [2, .78, .8]]) backTree3d(m, backAt(t + uni(r, -.04, .04)), h * len * uni(r, .9, 1.1), seed + i * 977, kind, 86);
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
+  // the raccoon's legend options (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; three to choose from):
+  // the bandit: its mask a lantern-bright band, brows of light, its hands aglow and shining handprints left behind it
+  if (has("bandit")) {
+    m.ell(v3.add(H, [hr * .3, hr * .26, 0]), [hr * .95, hr * .24, hr * 1.0], M.MAGIC2, { group: 70, extra: true }); // (wrapping round its head over its eyes)
+    for (const side of [-1, 1]) m.ell(v3.add(H, [hr * .4, hr * .75, side * hr * .55]), [hr * .45, hr * .1, hr * .16], M.MAGIC, { dir: [1, .7, 0], group: 70, extra: true });
+    for (const f of m.anchors.feet) m.ell(v3.add(f.c, [.04, .04, 0]), [f.r * 1.5, f.r * .9, f.r * 1.2], M.MAGIC2, { group: f.group, extra: true });
+    for (let k = 0; k < 5; k++) m.ell([-len * .4 - k * .42, .006, (k % 2 ? 1 : -1) * bw * .7], [.1, .006, .075], M.MAGIC, { group: 71, extra: true });
+  }
+  // the washer: a glowing pool before it, a moon-bright pebble held over it, water spiralling up round its hands
+  if (has("washer")) {
+    const P = [len * 1.05 + .55, .008, 0], peb = [len * .95 + .35, .32, 0];
+    m.ell(P, [.6, .008, .42], M.MAGIC, { group: 71, extra: true });
+    m.ell(peb, [.09, .08, .08], M.MAGIC2, { group: 72, extra: true });
+    for (let k = 0; k < 9; k++) { const a = k * .9, r = .1 + k * .022; m.ell(v3.add(peb, [Math.cos(a) * r, -.25 + k * .055, Math.sin(a) * r]), [.03, .03, .03], k % 2 ? M.MAGIC : M.MAGIC2, { group: 72, extra: true }); }
+  }
+  // the hoarder: a tilted ring of glinting trinkets turning round it: keys, caps, spoons, rings, a watch, shells
+  if (has("hoard")) {
+    const c = [0, top + .35, 0], R = len * 1.6, turn = frame ? .2 : 0;
+    for (let k = 0; k < 9; k++) {
+      const a = k / 9 * Math.PI * 2 + turn, p = [Math.cos(a) * R, c[1] + Math.sin(a) * R * .35, Math.sin(a) * R * .7], o = { group: 73 + k % 3, extra: true }, kind = k % 4;
+      if (kind === 0) { m.seg(p, v3.add(p, [.28, .05, 0]), .04, .035, M.GLINT, o); m.ell(v3.add(p, [-.07, 0, 0]), [.09, .09, .035], M.GLINT, o); } // a key
+      else if (kind === 1) m.ell(p, [.12, .035, .12], M.MAGIC2, { ...o, dir: [.3, 1, .2] }); // a bottle cap, a coin
+      else if (kind === 2) { m.seg(p, v3.add(p, [.24, -.07, 0]), .025, .025, M.GLINT, o); m.ell(v3.add(p, [.28, -.08, 0]), [.08, .05, .05], M.GLINT, o); } // a spoon
+      else m.ell(p, [.1, .085, .085], M.MAGIC, o); // a ring, a shell
+    }
+  }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
@@ -740,10 +766,27 @@ export function meerkat3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, 1.0, facing);
 }
 
+// The armadillo's legend (Ed, 2026-10-12: "rolls into a glowing ball, with glowing seams between its bands, rolling when it moves"):
+// curled up into a ball of banded shell, the seams between its bands glowing, its ears and the tip of its snout and tail showing
+// where they tuck in; frame 1 a turn on (the bands rolled round a step), so its walk cycle rolls it.
+function armadilloBall(S, frame, st, facing) {
+  const m = new Model(), R = .46, c = [0, R, 0], n = 9, step = Math.PI * 2 / n, roll = frame ? step / 2 : 0;
+  m.ell(c, [R, R, R * .92], M.BODY, { paint: p => { const a = Math.atan2(p[1] - c[1], p[0] - c[0]) + roll, k = ((a / step) % 1 + 1) % 1; return k < .1 ? M.MAGIC : Math.floor(a / step) % 2 ? M.BODY2 : spotty(p, 24, .25) ? M.BODY3 : undefined; } }); // signature: the ball of banded shell, glowing at every seam
+  for (const side of [-1, 1]) m.ell([R * .55, R * 1.62, side * R * .3], [.1, .035, .03], M.SKIN, { dir: [.3, 1, side * .4], group: 1 }); // its ears, poking out
+  m.ell([R * .95, R * .55, 0], [.05, .03, .03], M.NOSE, { group: 1 }); // the tip of its snout, tucked in
+  for (const side of [-1, 1]) m.ell(Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32])), [.025, .025, .025], M.MAGIC2, { group: 1 }); // its glowing eyes, peeping out
+  m.ell([0, .02, 0], [R * .8, .02, R * .6], M.MAGIC, { group: 2, extra: true }); // the glow it rolls on
+  m.anchors.head = { c: [R * .7, R * 1.2, 0], r: [.14, .12, .12], top: [R * .6, R * 1.7, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(c, [R, R, R * .92], v3.norm([.8, .55, side * .32]))), size: .025 };
+  m.anchors.neck = { c: [R * .7, R, 0], r: .12, dir: [1, .2, 0] };
+  return finish(m, S, 3, st, .55, facing);
+}
+
 // The badlands' armadillo (Ed, 2026-10-12): a low domed shell, its middle in bands, shields of scales before and behind; a small
 // head with a long tapering snout and upright ears, short clawed legs, a ringed tail.
 export function armadillo3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, m = new Model(), bob = frame ? .012 : 0;
+  if (level === 3) return armadilloBall(S, frame, st, facing);
+  const legend = false, m = new Model(), bob = frame ? .012 : 0;
   for (const [x, z] of [[.26, .2], [.26, -.2], [-.28, .21], [-.28, -.21]]) { const d = (frame ? -1 : 1) * Math.sign(x * z) * .06; m.seg([x, .14, z], [x + d, .03, z], .06, .05, M.SKIN, { group: z > 0 ? 6 : 2 }); for (let k = -1; k <= 1; k++) m.ell([x + d + .06, .02, z + k * .025], [.035, .012, .01], M.ACCENT, { group: z > 0 ? 6 : 2 }); m.anchors.feet.push({ c: [x + .03 + d, .03, z], r: .065, group: z > 0 ? 6 : 2 }); }
   const c = [0, .3 + bob, 0], r = [.5, .27, .32], band = p => Math.floor((p[0] + .26) * 15);
   m.ell(c, r, M.BODY, { paint: p => p[0] > -.26 && p[0] < .2 ? (band(p) % 2 ? M.BODY2 : M.BODY) : spotty(p, 26, .3) ? M.BODY3 : spotty(p, 22, .2) ? M.BODY2 : undefined }); // signature: the shell, banded across its middle
