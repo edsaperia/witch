@@ -880,7 +880,8 @@ export function moth3d(S, level, frame, st, facing = "towards") {
 // with four long glassy wings, veined, a dark mark near each tip; a long thin segmented tail, a stout thorax, a head that is nearly
 // all eye. Its levels (the genome's levelQ): the baby a wingless nymph down on six legs with wing buds and a hinged mask under its
 // jaw (a nymph lives in the water; DECISION FOR ED), the young freshly out, its wings short and its colours dull, the adult bright
-// and metallic, the legend's wings long and glowing, a trail of light off its tail. Two frames: wings raised, wings lowered.
+// and metallic, the legend its own traits outsized (Ed: a legend exaggerates what defines its animal): eyes wrapping its whole
+// head (feature eyesHuge), a third pair of wings (wingsMore), a longer tail. Two frames: wings raised, wings lowered.
 const dfWing = (mat, vein, stig) => (s, t) => {
   const u = (s + 1) / 2, half = .9 * Math.pow(Math.sin(Math.PI * Math.min(1, .06 + u * .97)), .55) * (1 - .2 * u);
   if (Math.abs(t) > half) return null;
@@ -904,22 +905,21 @@ export function dragonfly3d(S, level, frame, st, facing = "towards") {
     m.anchors.neck = { c: [.1, y + .05, 0], r: .09, dir: [1, 0, 0] };
     return finish(m, S, level, st, .35, facing);
   }
-  const up = frame === 0, y = .55, span = (q.wing ?? 1) * (has("wingsBig") ? 1.35 : 1), tl = q.tail ?? 1;
-  const glass = has("wingsBig") ? M.MAGIC2 : M.BELLY, vein = has("wingsBig") ? M.MAGIC : M.BODY3, stig = has("wingsBig") ? M.MAGIC : M.BODY3;
+  const up = frame === 0, y = .55, span = q.wing ?? 1, tl = q.tail ?? 1;
+  const glass = M.BELLY, vein = M.BODY3, stig = M.BODY3, pairs = has("wingsMore") ? [[0, .05, .62], [1, -.06, .58], [2, -.16, .5]] : [[0, .05, .62], [1, -.06, .58]];
   shadow(m, -.15, .2 * span);
-  for (const side of [-1, 1]) for (const [k, dx, len] of [[0, .05, .62], [1, -.06, .58]]) { // fore and hind wings, straight out, flicking up and down
+  for (const side of [-1, 1]) for (const [k, dx, len] of pairs) { // fore and hind wings, straight out, flicking up and down
     const lift = (up ? .45 : -.25) * (k ? .8 : 1), root = [dx, y + .07, side * .05], dir = v3.norm([k ? -.18 : .12, lift, side]);
     const across = v3.norm(v3.cross(dir, [0, 1, 0]));
     m.flat(v3.add(root, v3.mul(dir, len * span * .5)), dir, across, len * span * .5, (k ? .16 : .13) * span, dfWing(glass, vein, stig), { group: 10 + k * 2 + (side > 0 ? 1 : 0), extra: true });
   }
   // the tail: ten segments, long and thin, banded, curving a little down
   for (let i = 0; i < 10; i++) { const t = i / 9, x = -.12 - t * .78 * tl, yy = y - .02 - t * t * .1; m.ell([x, yy, 0], [.05 * tl, .036 - t * .008, .036 - t * .008], i % 3 === 2 ? M.BODY3 : i % 2 ? M.BODY2 : M.BODY, { group: 3 }); }
-  if (has("trail")) for (let i = 0; i < 4; i++) m.ell([-1.02 - i * .1, y - .13 - i * .015, 0], [.025 - i * .004, .025 - i * .004, .025 - i * .004], i % 2 ? M.MAGIC : M.MAGIC2, { group: 90 + i, extra: true });
   m.ell([0, y, 0], [.13, .1, .09], M.BODY, { group: 1, paint: p => p[1] > y + .05 ? M.BODY2 : undefined }); // the thorax
   for (const side of [-1, 1]) for (let i = 0; i < 3; i++) m.seg([.03 - i * .04, y - .07, side * .04], [.08 - i * .07, y - .13, side * .09], .01, .006, M.BODY3, { group: side > 0 ? 7 : 2 }); // its legs, held under it
-  const hc = [.16, y + .02, 0], hr = [.08, .085, .11];
+  const ek = has("eyesHuge") ? 1.6 : 1, hc = [.16, y + .02, 0], hr = [.08 * ek, .085 * ek, .11 * ek];
   m.ell(hc, hr, M.BODY2, { group: 1 });
-  for (const side of [-1, 1]) m.ell(Model.surface(hc, hr, v3.norm([.3, .4, side])), [.07, .075, .06], legend ? M.MAGIC2 : M.EYE, { group: 8 + (side > 0 ? 1 : 0), paint: p => p[1] > hc[1] + .07 ? M.BELLY : undefined }); // the great eyes
+  for (const side of [-1, 1]) m.ell(Model.surface(hc, hr, v3.norm([.3, .4, side])), [.07 * ek, .075 * ek, .06 * ek], legend ? M.MAGIC2 : M.EYE, { group: 8 + (side > 0 ? 1 : 0), paint: p => p[1] > hc[1] + .07 * ek ? M.BELLY : undefined }); // the great eyes
   m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + .1, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(hc, hr, v3.norm([.3, .4, side]))), size: .06 };
   m.anchors.neck = { c: [.09, y, 0], r: .08, dir: [1, 0, 0] };
@@ -929,8 +929,9 @@ export function dragonfly3d(S, level, frame, st, facing = "towards") {
 // The crab (Ed, 2026-10-12: the mangrove swamp's mudflats and roots, unknown-26; "sideways scuttling movement"): a broad carapace
 // carried sideways, so it scuttles the way it faces: its length across the screen, its claws and stalked eyes towards the camera,
 // four walking legs out to each side, stepping in two alternating sets. Its levels (levelQ): the baby small, round and pale, its claws
-// alike; the young a darker shell and one claw growing; the adult a fiddler's great claw, barnacles on its shell; the legend a giant
-// with a mangrove growing from its back (feature tree) and its great claw glowing (feature clawGlow).
+// alike; the young a darker shell and one claw growing; the adult a fiddler's great claw, barnacles on its shell; the legend its own
+// traits outsized (Ed: a legend exaggerates what defines its animal): a great claw bigger than its body (levelQ claw) and a
+// shell spiked round its rim and crusted with barnacles (feature spikes).
 export function crab3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
   const cw = q.shell ?? 1, big = q.claw ?? 1, y = .3 * cw;
@@ -942,7 +943,7 @@ export function crab3d(S, level, frame, st, facing = "towards") {
   m.ell(shell, sr, M.BODY, { paint: p => (q.barnacles && spotty(p, 18, .12)) ? M.BELLY : p[1] > y + sr[1] * .55 ? M.BODYL : undefined }); // the carapace, its top lit
   m.ell([0, y - sr[1] * .4, sr[2] * .3], [sr[0] * .85, sr[1] * .55, sr[2] * .8], M.BELLY, { group: 1 }); // its pale underside in front
   for (const side of [-1, 1]) { // the claws, at the front (towards the camera), the right one the great claw on a fiddler
-    const k = side > 0 ? big : 1, cm = has("clawGlow") && side > 0 ? M.MAGIC : side > 0 && big > 1.2 ? M.ACCENT : M.BODY2;
+    const k = side > 0 ? big : 1, cm = side > 0 && big > 1.2 ? M.ACCENT : M.BODY2;
     const el = [side * .22 * cw, y - .02, sr[2] * .9], hand = [side * (.24 + .06 * k) * cw, y + (.06 + .05 * k) * cw, (sr[2] + .1 + .06 * k) * cw];
     m.seg([side * .16 * cw, y - .04, sr[2] * .6], el, .04 * cw, .035 * cw, M.BODY2, { group: side > 0 ? 6 : 5 });
     m.ell(hand, [.1 * k * cw, .07 * k * cw, .08 * k * cw], cm, { group: side > 0 ? 6 : 5, dir: [side * .4, .3, 1] });
@@ -952,7 +953,7 @@ export function crab3d(S, level, frame, st, facing = "towards") {
   m.anchors.head = { c: [0, y + sr[1] * .7, sr[2] * .7], r: [.12, .1, .1], top: [0, y + sr[1] + .12, 0] };
   m.anchors.eyes = { pts: [-1, 1].map(side => [side * .09 * cw, y + sr[1] * .6 + .14 * cw, sr[2] * .7 + .04 * cw]), size: .04 * cw };
   m.anchors.neck = { c: [0, y + sr[1] * .2, sr[2] * .6], r: .14 * cw, dir: [0, 0, 1] };
-  if (has("tree")) backTree3d(m, [-.05, y + sr[1] * .8, -.08], .62, 7, "mangrove");
+  if (has("spikes")) for (let i = 0; i < 9; i++) { const a = Math.PI * (.08 + i / 8 * .84), b = [Math.cos(a) * sr[0] * .95, y + sr[1] * .35, Math.sin(a) * sr[2] * .95 * (i % 2 ? 1 : -1)]; m.seg(b, v3.add(b, [Math.cos(a) * .12 * cw, .1 * cw, 0]), .035 * cw, .006, M.BODY3, { group: 4 }); } // spikes round its rim
   return finish(m, S, level, st, .45, facing);
 }
 
