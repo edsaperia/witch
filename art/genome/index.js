@@ -15,6 +15,8 @@ export const GENOME_BY_ID = Object.fromEntries(GENOMES.map(g => [g.id, g]));
 export function speciesOf(g) {
   const S = { id: g.id, name: g.name, plan: g.builder, hue: g.palette.hue, sat: g.palette.sat, val: g.palette.val, legend: g.legend || [] };
   if (g.palette.belly) S.belly = g.palette.belly;
+  if (g.elder) S.elder = g.elder; // its legend as the elder of its kind (art/elders.js): { kind, tail, ears, eye }
+  if (g.palette.accent) S.accent = g.palette.accent; // its horns', hooves', beak's and claws' own colour [h, s, v]
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
@@ -37,6 +39,7 @@ export function speciesOf(g) {
     const L = Object.entries(g.levels).filter(([, l]) => l);
     S.levelQ = Object.fromEntries(L.map(([lv, l]) => [lv, levelQ(l)]));
     S.levelFeatures = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "object")]));
+    S.levelNamed = Object.fromEntries(L.map(([lv, l]) => [lv, (l.features || []).filter(f => typeof f === "string")])); // (a level's named old-style features: a wildcat elder's crown)
   }
   return S;
 }
