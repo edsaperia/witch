@@ -32,7 +32,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 500 });
   if (MINI) {
-    await page.goto(`http://127.0.0.1:${port}/?seed=123&creator=0&spell=auto&world=${WORLD}`);
+    await page.goto(`http://127.0.0.1:${port}/?seed=123&creator=0&spell=auto&world=${WORLD}&warmChart=1`); // (warmChart=1: the night's warm runs under automation too, so the table's miniature fills as it would for Ed)
     await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
   } else {
     await page.goto(`http://127.0.0.1:${port}/chart.html?world=${WORLD}`);
@@ -45,6 +45,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await wait(SECONDS * 1000);
   const { profile } = await cdp.send("Profiler.stop");
   const loaf = await page.evaluate(() => window.__loaf), reshapes = await page.evaluate(() => window.__reshapes);
+  await page.screenshot({ path: path.join(out, MINI ? "decks.png" : "chart.png") }); // (the end: every island in, for a before/after of the picture: tools/chart/diff.cjs)
   const heap = await page.evaluate(() => Math.round((performance.memory?.usedJSHeapSize ?? 0) / 1e6));
   const nodes = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();
   for (const n of profile.nodes) for (const c of n.children ?? []) parent.set(c, n.id);
