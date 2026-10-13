@@ -432,6 +432,11 @@ function evolve3d(m, feats, c) {
       const mat = M[f.mat || "WOOD"], k = f.at ?? .3;
       for (const L of m.rig.legs) { if (L.fore ? f.fore === false : f.hind === false) continue; m.part = L.name; const a = L.hock ?? L.knee, b = L.foot, p = v3.lerp(b, a, k), d = v3.norm(v3.sub(a, b)), r = L.r[2] * (f.width ?? 1.4), h = L.r[2] * (f.height ?? .6); m.seg(v3.add(p, v3.mul(d, -h)), v3.add(p, v3.mul(d, h)), r, r, mat, { group: 180 + (L.side > 0 ? 0 : 1), extra: true }); }
     }
+    if (f.kind === "darken") { // an old coat gone darker with the years (the stoat's elder, an old brown ermine): its coat's own colour drawn in a deeper shade of it
+      const to = M[f.mat || "BODY2"];
+      for (const q of m.parts) if (q.mat === M.BODY) q.mat = to;
+      for (const F of m.flats) if (F.mat === M.BODY) F.mat = to;
+    }
     if (f.kind === "crown") { // a crown of spikes round the top of its head, leaning out (the polar bear's of ice, the komodo's of spines): count, size, mat
       m.part = "head";
       const H = c.H, hr = c.hr, n = f.count ?? 7, L = hr * (f.size ?? .9), mat = M[f.mat || "CRYSTAL"], spread = f.spread ?? .9; // spread: how far round the crown runs (1 a full ring)

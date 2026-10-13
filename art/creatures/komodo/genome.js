@@ -9,5 +9,5 @@ export const GENOME_KOMODO = { id: "komodo", name: "Komodo dragon", template: "q
     { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
     { coat: { spots: true, spotMat: "belly" } },
     null,
-    { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }, { kind: "crown", count: 9, size: 1.6, mat: "BELLY", spread: 1 }] },
+    { body: { neck: .5, neckAng: .4, neckW: .34 }, head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: .16 }, { kind: "crown", count: 9, size: 1.6, mat: "BELLY", spread: 1 }] },
   ] };
