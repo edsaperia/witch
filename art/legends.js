@@ -58,6 +58,8 @@ export const LEGEND_POSES = {
   mole: { ground: .2, droop: .4, drop: [], over: { moss: .4, lichen: .04, ferns: 0, grass: 7, mushrooms: 1, roots: 2, stones: 1, flowers: 0 } },
   hedgehog: { ground: .18, droop: .5, drop: [], over: { moss: .45, lichen: .05, ferns: 1, grass: 4, mushrooms: 3, roots: 1, stones: 1 } },
   woodlouse: { ground: .09, droop: 0, drop: [9], over: { moss: .5, lichen: .1, ferns: 1, grass: 2, mushrooms: 4, roots: 2, stones: 0 } },
+  rattlesnake: { ground: .06, droop: 1, drop: [0], over: { moss: .08, lichen: .14, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the cactus flats' rattlesnake: coiled half under the sand, its rattle laid over its coils, pebbles drifted over it
+  scorpion: { ground: .12, droop: .4, drop: [30, 31, 32, 33, 34, 35, 36], over: { moss: .05, lichen: .16, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 5 } }, // the red canyon's scorpion: dug into the scree, its tail laid along its back
   snake: { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45, lichen: .06, ferns: 2, grass: 6, mushrooms: 2, roots: 2, stones: 1 } },
   moth: { ground: .4, droop: 0, drop: [0, 10, 11, 12, 13], cloak: { c: [-.1, .42, 0], r: [.6, .3, .45] }, over: { moss: .35, lichen: .16, ferns: 0, grass: 4, mushrooms: 1, roots: 1, stones: 2, flowers: 4 } },
   glowworm: { ground: .14, droop: 0, drop: [], over: { moss: .45, lichen: .06, ferns: 2, grass: 3, mushrooms: 3, roots: 1, stones: 0, flowers: 5 } },

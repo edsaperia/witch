@@ -895,9 +895,12 @@ export function snake3d(S, level, frame, st, facing = "towards") {
 // the thing that makes that creature unusual"): great coils stacked under its raised head (levelQ coil) and a colossal rattle held
 // high, its shake rippling out through the sand in rings (feature ripple); the elder of its kind (Ed, docs/ART-GUIDE.md §0c): the
 // sidewinder's horns over its eyes grown great (feature horns), its scales scarred by epochs.
+/** Its warning (the genome's idle "rattle", IDLE_BUILDERS in art/creatures.js): still, its rattle raised and shaking between the frames. */
+export const rattle3d = (S, level, frame, st, facing) => { RATTLING = true; try { return rattlesnake3d(S, level, frame, st, facing); } finally { RATTLING = false; } };
+let RATTLING = false;
 export function rattlesnake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
-  const ph = frame ? Math.PI : 0, th = q.thick ?? 1, coil = q.coil ?? 0, nR = q.rattle ?? 3, pts = [];
+  const ph = frame && !RATTLING ? Math.PI : 0, th = q.thick ?? 1, coil = q.coil ?? 0, nR = q.rattle ?? 3, pts = [];
   const r0 = .055 * th, diamonds = p => { const u = Math.abs(((p[0] * 7 + p[2] * 7) % 1 + 1) % 1 - .5) + Math.abs(((p[0] * 7 - p[2] * 7) % 1 + 1) % 1 - .5); return p[1] > .05 * th && u < .32 ? M.BODY3 : undefined; };
   if (coil) { // the legend's coils: three turns stacked, rising, under its raised neck
     for (let i = 0; i <= 30; i++) { const t = i / 30, a = t * Math.PI * 2 * 2.6, R = (.55 - t * .25) * coil; pts.push([Math.cos(a) * R - .1, r0 + t * .32 * coil, Math.sin(a) * R * .8, r0 * (1.15 - t * .2)]); }
@@ -909,10 +912,10 @@ export function rattlesnake3d(S, level, frame, st, facing = "towards") {
   const scarred = p => has("horns") && Math.abs(Math.sin(p[0] * 23 + p[2] * 31)) < .05 ? M.BELLY : undefined;
   m.chain(pts, M.BODY, { paint: p => p[1] < r0 * .5 ? M.BELLY : scarred(p) ?? diamonds(p) });
   // the rattle: the tail's end lifted, a stack of buttons pointing up and back, shaken (tilted the other way) between frames
-  const tail = pts[0], up = [-.45 + (frame ? .08 : -.08), 1, frame ? .25 : -.25], rk = has("rattleBig") ? 1.9 : 1;
+  const sh = RATTLING ? (frame ? 1 : -1) : 0, tail = pts[0], up = [-.45 + sh * .08, 1, sh * .25], rk = has("rattleBig") ? 1.9 : 1;
   let b = v3.add(tail.slice(0, 3), [-.02, .02, 0]);
   for (let i = 0; i < nR; i++) { const w = r0 * .9 * rk * (1 - i * .04); m.ell(b, [w * .9, w * .55, w * .8], i % 2 ? M.BELLY : M.ACCENT, { dir: up, group: 12, paint: p => p[1] > b[1] + w * .3 ? M.BODYL : undefined }); b = v3.add(b, v3.mul(v3.norm(up), w * 1.05)); }
-  if (has("ripple") && frame) for (const R of [.5, .8, 1.1]) m.ell([tail[0] - .05, .004, tail[2]], [R * rk * .6, .004, R * rk * .45], M.LINE, { group: 0, paint: p => Math.hypot((p[0] - tail[0] + .05) / (R * rk * .6), (p[2] - tail[2]) / (R * rk * .45)) > .9 ? M.LINE : null }); // its shake through the sand
+  if (has("ripple") && RATTLING && frame) for (const R of [.5, .8, 1.1]) m.ell([tail[0] - .05, .004, tail[2]], [R * rk * .6, .004, R * rk * .45], M.LINE, { group: 0, paint: p => Math.hypot((p[0] - tail[0] + .05) / (R * rk * .6), (p[2] - tail[2]) / (R * rk * .45)) > .9 ? M.LINE : null }); // its shake through the sand
   // the head: a broad flat wedge, heat pits, eyes under a brow, a forked tongue out on one frame
   const hr = .085 * th, hc = v3.add(neckTop, [hr * 1.1, hr * .2, 0]);
   m.ell(hc, [hr * 1.5, hr * .65, hr * 1.1], M.BODY, { dir: [1, -.2, 0], group: 1, paint: p => p[1] > hc[1] + hr * .3 ? M.BODY2 : undefined });
@@ -953,7 +956,7 @@ export function scorpion3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) {
     const sh = [.24, y + .03, side * .07], el = [.36, y + .08, side * .2 * pk], hand = [.5 + .06 * pk, y + .06, side * .2 * pk];
     m.chain([[...sh, .025], [...el, .03 * pk], [...hand, .035 * pk]], M.BODY2, { group: side > 0 ? 6 : 5 });
-    m.ell(hand, [.08 * pk, .045 * pk, .055 * pk], M.BODY, { group: side > 0 ? 6 : 5, dir: [1, 0, -side * .3], paint: glowEdge ? p => (p[1] > hand[1] + .03 * pk ? M.MAGIC : undefined) : undefined });
+    m.ell(hand, [.08 * pk, .045 * pk, .055 * pk], M.BODY, { group: side > 0 ? 6 : 5, dir: [1, 0, -side * .3] }); // (Ed: its glow at the seams only)
     for (const dz of [.02, -.02]) m.chain([[...v3.add(hand, [.06 * pk, 0, side * dz * pk]), .025 * pk], [...v3.add(hand, [.15 * pk, 0, side * (dz * 2.2 - .02) * pk]), .004]], M.BODY3, { group: side > 0 ? 6 : 5 });
   }
   const hc = [.24, y + .06, 0];
