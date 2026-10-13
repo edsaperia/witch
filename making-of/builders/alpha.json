@@ -1,0 +1,37 @@
+{
+  "builder": "Alpha",
+  "phase": "The journey's new animals (2026-10-12/13)",
+  "slice": "The arctic fox and its snowfield (#775), the ibex and its crags (#782): the first two placeholder kinds of the cold north and the mountains made real, and the snow leopard's mock",
+  "prs": [
+    775,
+    782
+  ],
+  "built": [
+    "The arctic fox (#775): a round white fox with a huge brush, its kit grey-brown and puff-tailed, its legend an aurora fox with three great tails glowing at their tips; it pounces like a fox mousing in the snow, and its legend's gift is Pounce. Its area, the snowfield: deep snow under groves of snow-laden firs and dwarf birch, a ring of old stones half buried in a drift",
+    "The ibex (#782): a stocky wild goat whose horns grow from nothing on the kid to great knobbled scimitars, its legend a glacier ibex with ice-tipped horns; it backs off and charges like the ram, and its gift is Sure-footed. Its area, the crags: lichened rock and glacier ice, rock spires, wind-bent larch, and (Ed: \"even crags should have shrubs and maybe olive trees\") broom, juniper and heather among the stones and a new tree, the wild olive",
+    "The set-piece generator takes an area's own colours over its genome's (`colour`: stone, dark, wood, moss, lichen), so the crags' rubble heap is cold grey; a heap with no moss has none at all"
+  ],
+  "learned": [
+    "The preview sheets are lit by a warm studio light, so a white coat or a blue-grey stone reads yellow or olive there; judge colours against a neighbour on the same sheet, or with NIGHT=1 as the game lights them",
+    "Every new area type used to reshuffle every seed's classic map and break the tests pinned to a seed; the journey's kinds now come only by their islands' rosters, so a new one changes no old map",
+    "With many builders adding animals at once, the same few lines (the area recipe list, the sigil neons, the movement bodies) collide on every merge: put new entries away from the others' where the file allows"
+  ],
+  "previews": [
+    {
+      "src": "media/builders/alpha-arcticfox.webp",
+      "caption": "The arctic fox's mock: kit, young, adult and the aurora-fox legend, the snowfield's floor, trees and set piece"
+    },
+    {
+      "src": "media/builders/alpha-ibex.webp",
+      "caption": "The ibex from hornless kid to glacier legend"
+    },
+    {
+      "src": "media/builders/alpha-crags.webp",
+      "caption": "The crags with Ed's scrub and wild olives among the rock spires"
+    },
+    {
+      "src": "media/builders/alpha-olive.webp",
+      "caption": "The new wild olive beside the crab apple and the larch"
+    }
+  ]
+}

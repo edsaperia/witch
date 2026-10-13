@@ -281,6 +281,10 @@
         "on": {
           "type": "boolean"
         },
+        "grain": {
+          "type": "number",
+          "minimum": 0
+        },
         "width": {
           "type": "number",
           "minimum": 0
@@ -677,6 +681,7 @@
       },
       "required": [
         "on",
+        "grain",
         "width",
         "shore",
         "vary",
@@ -2000,6 +2005,10 @@
         "fade": {
           "type": "number",
           "minimum": 0
+        },
+        "canopyReach": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2010,7 +2019,8 @@
         "minRadius",
         "shrink",
         "grow",
-        "fade"
+        "fade",
+        "canopyReach"
       ],
       "additionalProperties": false
     },
@@ -4203,6 +4213,10 @@
         "inviteWakes": {
           "type": "boolean"
         },
+        "provoked": {
+          "type": "number",
+          "minimum": 0
+        },
         "time": {
           "type": "number",
           "minimum": 0
@@ -4231,6 +4245,7 @@
       "required": [
         "on",
         "inviteWakes",
+        "provoked",
         "time",
         "forget",
         "hangBack",
@@ -6965,6 +6980,10 @@
             "playback"
           ]
         },
+        "buffer": {
+          "type": "number",
+          "minimum": 0
+        },
         "dropLayers": {
           "type": "number",
           "minimum": 0
@@ -7096,6 +7115,7 @@
         "on",
         "volume",
         "latency",
+        "buffer",
         "dropLayers",
         "nearDist",
         "farDist",
@@ -8461,6 +8481,10 @@
         "lead": {
           "type": "number",
           "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -8471,7 +8495,8 @@
         "outer",
         "ragged",
         "spread",
-        "lead"
+        "lead",
+        "hold"
       ],
       "additionalProperties": false
     },

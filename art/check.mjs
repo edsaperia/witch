@@ -42,7 +42,8 @@ const report = await b.page.evaluate(async () => {
     // the adult at least 1.55 times the young, the legend at least 2.1 times the adult, so they can't drift back together
     { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
-    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "stegosaurus"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = 1.45 * c, hi = (["elk", "stag", "stegosaurus"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
+    // (the elephant, the biggest creature in the game, has its own allowance: 2.6 to 3.6 times the witch, over the elk's)
+    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "elephant", "stegosaurus"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = (S.id === "elephant" ? 2.6 : 1.45) * c, hi = (S.id === "elephant" ? 3.6 : ["elk", "stag", "stegosaurus"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
   }
   { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)
@@ -110,6 +111,18 @@ const report = await b.page.evaluate(async () => {
       const sh = Object.fromEntries(G.SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
       res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
     }
+  }
+  { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
+    // the same 24 px box (1 - overlap over union): a step under LEVEL_STEP is a scaled copy. A warning today (the review's baseline has
+    // mole 0.07 baby to young, bear 0.11 young to adult, marten 0.11 adult to legend); it fails once every species clears it.
+    const LEVEL_STEP = .2, bad = [], all = [];
+    for (const S of G.SPECIES) {
+      const sh = [0, 1, 2, 3].map(l => G.silhouette(G.critter(S.id, l, 0, st)));
+      const d = [1, 2, 3].map(l => G.silhouetteDistance(sh[l - 1], sh[l]));
+      all.push(`${S.id} ${d.map(x => x.toFixed(2)).join("/")}`);
+      d.forEach((x, i) => { if (x < LEVEL_STEP) bad.push(`${S.id} ${["baby→young", "young→adult", "adult→legend"][i]} ${x.toFixed(2)}`); });
+    }
+    res.push({ what: `growth, not scale: every level's silhouette ${LEVEL_STEP} or more from the level before, scaled to one box (${G.SPECIES.length} species)`, good: true, warn: bad.length ? "scaled copies: " + bad.join(", ") : "", info: all.join("; ") });
   }
   { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
     // the four-legged, and their tails where they have one; the serpent's head), each with its pivot near it, four legs with two bones each, discs to string them
@@ -519,10 +532,12 @@ const report = await b.page.evaluate(async () => {
     const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
     let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = Math.hypot(...vec(stats2[ids[i]]).map((v, k) => v - vec(stats2[ids[j]])[k])); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
     if (closest[0] < 1.5) bad.push(`${closest[1]} and ${closest[2]} look alike from above (${closest[0].toFixed(2)})`);
-    const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], byPattern = {}, uses = {};
-    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = A.layout.pattern + ":" + o.type; if (byPattern[key]) bad.push(`${A.id} and ${byPattern[key]} (both ${A.layout.pattern}) share ${o.type}`); byPattern[key] = A.id; uses[o.type] = (uses[o.type] || 0) + 1; if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species"); }
-    for (const [k, n] of Object.entries(uses)) if (n > 2) bad.push(`${k} is the main kind of ${n} areas`);
-    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); neighbours by layout pattern never share a main species, none is the main kind of 3+ areas, plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main kinds over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
+    // every area's main tree its own (Ed, 2026-10-13: "a 'different' main tree in each area, even if they're only slightly different
+    // (e.g. snowy vs not snowy)"): its species, or a variant of it (art/flora/variants.js), no two areas sharing one
+    const { TREE_VARIANTS, treeKey } = await import("/art/flora/variants.js");
+    const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], owner = {}, uses = {};
+    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = treeKey(o); if (owner[key]) bad.push(`${A.id} and ${owner[key]} share their main tree ${key}`); owner[key] = A.id; uses[key] = 1; if (o.variant && !TREE_VARIANTS[o.variant]) bad.push(`${A.id} names no variant ${o.variant}`); if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species " + o.type); }
+    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); every area's main tree its own (a species, or a variant of one), plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main trees over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
   }
   { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
     // a skirt), more on saplings than on mature trees; the top half is exactly what the tree draws without them (the canopy and its cut-out unchanged);
@@ -844,6 +859,7 @@ const report = await b.page.evaluate(async () => {
   return res;
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
+for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle

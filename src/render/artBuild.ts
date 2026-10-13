@@ -103,15 +103,21 @@ export function typeSprites(st: Style, seed: number, t: number, K: number, mk: M
   // one, each a share of that entry's weight (a.share). Walked by piece, not by entry, so each entry is its own art.
   type Asset = { sp: Baked; sway?: unknown; sparse?: number; from: number; share?: number };
   const bigs = assets.big as Asset[], smalls = assets.small as Asset[];
-  const firstBig = layout.big.length;
+  const firstBig = layout.big.length, share = Math.min(0.95, LOOKS[t].layout.treeShare ?? 0);
   bigs.forEach(a => {
     if (def.big[a.from][0] === "tree" && variants.length) return;
     layout.big.push({ bot: add(withSway(a.sp, a.sway)), top: null });
     // Tall pieces in the open areas (snags, cairns, standing stones, pillars, spires: #33) stand
     // sparsely: their art's own sparse share as their weight among the area's big objects (about
     // a fifth of them all), the mounds, boulders and logs at 1.
-    layout.bigWeight.push(variants.length ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
+    layout.bigWeight.push(variants.length && !share ? 0.1 * (a.share ?? 1) : a.sparse ?? a.share ?? 1);
   });
+  // An open area with a few trees among its props (its layout's treeShare; Ed, 2026-10-13: "trees into areas with no trees"): the
+  // trees' weights scaled so they're that share of all its big objects, the props keeping their own.
+  if (share && variants.length && layout.big.length > firstBig) {
+    const w = layout.bigWeight, trees = w.slice(0, firstBig).reduce((t, v) => t + v, 0), props = w.slice(firstBig).reduce((t, v) => t + v, 0), k = trees > 0 ? (share / (1 - share)) * props / trees : 0;
+    for (let i = 0; i < firstBig; i++) w[i] *= k;
+  }
   // An area with no trees (Ed, 2026-10-06: "Legend with no tall trees around it"): its legends' groves grow its two tallest big
   // objects (the stone shrine's great stones, the ravine's spires, the moor's standing stones and cairns), so every circle has a tall ring;
   // every variant of each.
@@ -236,7 +242,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
   | { kind: "sleep"; id: string; species: string; style: Style }
   | { kind: "glide"; id: string; species: string; style: Style }
-  | { kind: "nap"; id: string; species: string; style: Style; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
+  | { kind: "nap"; id: string; species: string; style: Style; /** its idle pose instead (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel), each level in its 2 frames */ idle?: boolean; /** a party animal's (or a happy one's) own gear, by its seed and collar colour (null: none), worn asleep */ dressed?: { seed: number; colour: number[] | null } }
   | { kind: "face"; id: string; species: string; face: string; style: Style }
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
@@ -571,7 +577,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "nap") {
     const sprites: Baked[] = [], ground: number[] = [], centre: number[] = [];
     // (dressed: in its party gear, Ed 2026-10-06: sleepers keep their party gear on)
-    const gear = { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true } as unknown as null;
+    const gear = (job.idle ? { idle: true } : { ...(job.dressed ? partyGearOf(job.dressed.seed, job.dressed.colour) : {}), nap: true }) as unknown as null;
     for (let level = 0; level < 4; level++) for (let f = 0; f < 2; f++) {
       const sp = Art.critter(job.species, level, f, job.style, "towards", gear) as { origin?: number[]; h: number; w: number; m: ArrayLike<number> };
       const b = Art.bake(sp, Art.speciesColours(job.species, job.style, gear), job.style, job.style.cOutline, mk) as Baked; b.head = headPoint(sp.m, b.w, b.h); sprites.push(b);
