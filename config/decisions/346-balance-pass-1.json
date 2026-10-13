@@ -1,0 +1,24 @@
+{
+  "pr": 346,
+  "group": "Balance pass 1",
+  "decisions": [
+    {
+      "id": "questCap",
+      "pr": 346,
+      "group": "Balance pass 1",
+      "label": "Farthest dream (areas)",
+      "note": "A sleeping legend dreams of any other kind on the map, near or far, but none whose nearest area lies more than this many areas away (6 cuts about the farthest tenth on the ~96-area map, as 5 did on the old ~196; 0: no cap).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 10,
+        "step": 0.5
+      },
+      "default": 6,
+      "apply": {
+        "knob": "legends.questCap",
+        "reload": true
+      }
+    }
+  ]
+}
