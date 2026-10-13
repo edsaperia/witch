@@ -172,6 +172,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 | Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
 | Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
 | Warren | red sand and pebbles | low rock ledges | dry tussocks | twisted junipers among red rock hoodoos | a heap of red stones over the warren | Meerkat | recipe (badlands, phase 3) |
+| Scrub wash | cracked dry clay | the wash's sandy banks | thorny scrub | stunted thorn trees, junipers and sun-split boulders | a ring of sun-split stones round a dry hollow | Armadillo | recipe (badlands, phase 3) |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
 
@@ -303,6 +304,7 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | heron (recipe) | 13 | 35 | arrive, separation | — | charge: a short stab (5 to 20 m off, 28 m/s, 0.9 s windup) | — |
 | newt (recipe) | 11 | 30 | keep range, separation | — | — | — |
 | meerkat (recipe) | 18 | 165 | arrive, slot, strafe, dodge, separation | hit and run | — | — |
+| armadillo (recipe) | 10 | 28 | arrive, separation | — | charge: rolls at her (6 to 28 m off, 24 m/s, 0.7 s windup) | — |
 
 (The heron and the newt, the recipe areas' creatures: as built, 2026-10-06; not yet ruled.)
 
@@ -459,7 +461,7 @@ This replaces the legend rules of 2026-10-04 (every area's legend asleep until i
   - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Wriggle's speed and range (newt), Lookout's range (meerkat), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander).
   - **On landing:** Pierce (stag), Skimming stone's ricochet (otter), Spawn's split into 3 (toad), Slip past the enraged (elk).
   - **Lying about:** Lanterns' trail (glow-worm), Cache (squirrel), Lullaby orbit (dormouse).
-- **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole); Stride, quicker on foot and a longer blink (heron).
+- **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Roll, a little longer blink and untouchable a little longer (armadillo); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole); Stride, quicker on foot and a longer blink (heron).
 - **Firing slows her** to `invites.fireSlow` (0.8) of her ground speed, so Steady has something to take away (the builder's call; easy to set to 1).
 - **Removed:** the posse, berry, evolve, wave-countdown, forecast, glow, spell and talk-time buffs.
 - **Debug:** `?buffs=fox,toad,stag` puts those buffs on from the start (`?buffs=all` all of them).
