@@ -1,0 +1,82 @@
+{
+  "pr": 227,
+  "group": "Decisions panel",
+  "decisions": [
+    {
+      "id": "style",
+      "pr": 227,
+      "group": "Decisions panel",
+      "label": "Pixel style",
+      "note": "How every sprite is baked: bold (3 hue-shifted tones, a selective outline) or ref (one tone family, a near-black outline).",
+      "control": {
+        "type": "choice",
+        "options": [
+          {
+            "value": "bold",
+            "label": "Bold"
+          },
+          {
+            "value": "ref",
+            "label": "Ref"
+          }
+        ]
+      },
+      "default": "bold",
+      "apply": {
+        "param": "style",
+        "reload": true
+      }
+    },
+    {
+      "id": "growth",
+      "pr": 227,
+      "group": "Decisions panel",
+      "label": "Wild growth a wave",
+      "note": "Creatures each wild area gains every wave (0.5: one every other wave).",
+      "control": {
+        "type": "slider",
+        "min": 0.25,
+        "max": 1,
+        "step": 0.25
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "population.growth.perWave"
+      }
+    },
+    {
+      "id": "grace",
+      "pr": 227,
+      "group": "Decisions panel",
+      "label": "Grace after a hit (s)",
+      "note": "Seconds after the witch is hit in which no other blow lands, so a pack striking together costs one hit.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "witchHealth.grace"
+      }
+    },
+    {
+      "id": "legendFlash",
+      "pr": 227,
+      "group": "Decisions panel",
+      "label": "Legend hit flash",
+      "note": "How big and long a legend's blow flashes (0: like anyone's, 0.5: twice, 1: three times).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "attackFx.legendFlash"
+      }
+    }
+  ]
+}

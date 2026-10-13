@@ -1,0 +1,1 @@
+export const LEGEND_REDPANDA = { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }; // the misty terraces' red panda: curled on a mossy ledge, tail over its nose

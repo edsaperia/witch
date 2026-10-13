@@ -1,0 +1,1 @@
+export const LEGEND_CHEETAH = { sink: .42, droop: 1, drop: [70, 71], over: { moss: .06, lichen: .12, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 3 } }; // the plains' cheetah (an area recipe's): stretched long in the short grass, its spots gone to lichen

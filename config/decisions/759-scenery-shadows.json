@@ -1,0 +1,122 @@
+{
+  "pr": 759,
+  "group": "Scenery shadows",
+  "decisions": [
+    {
+      "id": "sceneryShadows",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Scenery casts shadows",
+      "note": "Temples, castles, ruins, set pieces, relics, runestones and soundsystems cast shadows from her glow and the campfires, as the tree trunks do.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "shadows.trunks.scenery"
+      }
+    },
+    {
+      "id": "sceneryShadowMin",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Shortest that casts (m)",
+      "note": "Scenery shorter than this casts no shadow.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 6,
+        "step": 0.1
+      },
+      "default": 1.2,
+      "apply": {
+        "knob": "shadows.trunks.sceneryMin"
+      }
+    },
+    {
+      "id": "shadowTint",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Shadow colour (scenery)",
+      "note": "How far scenery's shadows take the complement of the light throwing them (0: black; a campfire's orange throws blue-violet).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.6,
+      "apply": {
+        "knob": "shadows.trunks.tint"
+      }
+    },
+    {
+      "id": "shadowTintTrees",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Shadow colour (trees)",
+      "note": "The same for the trees' and palms' shadows (0: black, as before), to compare.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "shadows.trunks.tintTrees"
+      }
+    },
+    {
+      "id": "shadowGlowLight",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Glowing casters' shadows",
+      "note": "How light the shadows of things lit with their own colour are (runestones, soundsystems), in a soft shade of that colour (0: as dark as any).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.7,
+      "apply": {
+        "knob": "shadows.trunks.glowLight"
+      }
+    },
+    {
+      "id": "sceneryShadowFoot",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Fade at the base (m)",
+      "note": "Scenery's shadows (runestones, soundsystems, ruins...) fade in from nothing at their base, over this far past their own edge (0: no fade).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 8,
+        "step": 0.25
+      },
+      "default": 2,
+      "apply": {
+        "knob": "shadows.trunks.sceneryFoot"
+      }
+    },
+    {
+      "id": "sceneryShadowTaper",
+      "pr": 759,
+      "group": "Scenery shadows",
+      "label": "Taper (times its width)",
+      "note": "Scenery's shadows are pinched at their base and open out over this share of the piece's width past its edge, so wide ruins and soundsystems open out over more ground than narrow runestones (0: no taper).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "shadows.trunks.sceneryTaper"
+      }
+    }
+  ]
+}
