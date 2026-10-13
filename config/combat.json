@@ -365,6 +365,12 @@
    "bigswipe",
    "quake"
   ],
+  "frosttroll": [
+   null,
+   "slam",
+   "bigslam",
+   "quake"
+  ],
   "tiger": [
    null,
    "swipe",
@@ -415,6 +421,7 @@
    "dormouse",
    "badger",
    "bear",
+   "frosttroll",
    "beaver",
    "mole",
    "raven",
@@ -468,6 +475,7 @@
   "heavy": [
    "boar",
    "bear",
+   "frosttroll",
    "elk",
    "stag",
    "tiger",

@@ -285,6 +285,11 @@ export const GENOMES = [
         { kind: "ruff", size: .3, count: 20, mat: "BELLY" },
       ] },
     ] },
+  // the trollwood's frost troll (a journey kind: unknown-15's, the cold north, phase 4; Ed: magical creatures for the outer
+  // islands): a hulking, shaggy, mossy-stone troll, more cute than scary, knuckling along on great arms, big round eyes and a
+  // bulb of a nose, a white beard, long arms down to its knuckles; a troll kid all eyes, a shaggy young, an adult, and its elder half turned to stone
+  { id: "frosttroll", name: "Frost troll", template: "squat", builder: "troll", palette: { hue: .55, sat: .12, val: .58, belly: "white", ear: [.98, .42, .9] }, body: { hr: .24, bw: .42, hunch: 1 }, head: { nose: 1, beard: 1, eyeK: 1 }, texture: { kind: "fur", size: 2 },
+    levels: [{ body: { hr: .3, bw: .34, hunch: .5 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: .26, bw: .38, hunch: .8 }, head: { beard: .45, eyeK: 1.15 }, coat: { moss: 3 } }, { head: { beard: 1 }, coat: { moss: 6 } }, { body: { hr: .25, bw: .46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: .9, lids: true }, coat: { moss: 9, stone: .48, beads: true } }] },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
