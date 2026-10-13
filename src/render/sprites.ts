@@ -331,7 +331,7 @@ void shade() {
   // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
   // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
   // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
-  float edgeK = uIsScenery > 0.5 ? sceneryFade(vWorld) * uAppear : 1.0;
+  float edgeK = uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0; // (a crown: out to the canopy's reach)
   bool part = shown * trunkA * edgeK < 0.996;
   bool see = occl > 0.001 || (part && (uHasFade > 0.5 || vOverHer > 0.5));
   if (uFadePass > 0.5 ? !see : see) discard;
@@ -459,7 +459,7 @@ void main() {
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
-    float k = sceneryFade(vWorld) * uAppear; // and a set just drawn fades in
+    float k = (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
