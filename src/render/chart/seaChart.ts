@@ -447,7 +447,7 @@ export class SeaChart {
   /** An island's real outline has come: its land rebuilt in that shape (her voyages redrawn to its new shore). */
   reshape(id: string, outline: ChartOutline): void {
     const old = this.isles.get(id); if (!old) return;
-    const fresh = !old.d.outline; // (its land's first coming: it rises out of the sea; a finer grid later swaps in where it stands)
+    const fresh = !old.pick; // (its land's first coming: it rises out of the sea; a finer grid later swaps in where it stands. By the isle, not its record: the page writes the outline on the record before it calls)
     this.unheight(old.group); this.scene.remove(old.group);
     const isle = this.island({ ...old.d, outline });
     if (fresh) isle.rose = this.now;
