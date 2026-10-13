@@ -20,6 +20,31 @@ import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
 
 export const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
+const RING_R = 13; // the ring's radius (art pixels)
+
+let RING: number[] | null = null;
+/** The ring's pixels (x, y, turn: 0 at 12 o'clock, clockwise), in row order, worked out once (a hypot and an atan2 a pixel a frame
+ *  before, and a colour list a pixel: the churn hunt, 2026-10-13). */
+function ringPixels(): number[] {
+  if (RING) return RING;
+  const out: number[] = [];
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const px = x + 0.5 - N / 2, py = y + 0.5 - N / 2, r = Math.hypot(px, py);
+    if (Math.abs(r - RING_R) > 0.7) continue; // a thin stroke (calm by line, not by dimming)
+    out.push(x, y, ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1); // 0 at 12 o'clock, clockwise
+  }
+  return (RING = out);
+}
+
+/** The arrowhead (arrowPixels' pixels, in the same order) drawn straight onto a cue, no list a frame. */
+function drawArrow(c: PixelCue, a: number, n: number, from: number, tip: number, halfWidth: number, rgb: number[], alpha: number): void {
+  const cc = n / 2, ux = Math.cos(a), uy = Math.sin(a), vx = -uy, vy = ux;
+  for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) {
+    const px = x + 0.5 - cc, py = y + 0.5 - cc, along = px * ux + py * uy, side = px * vx + py * vy;
+    if (along < from || along > tip) continue;
+    if (Math.abs(side) <= halfWidth * (tip - along) / (tip - from) + 0.25) c.dot(x, y, rgb, alpha);
+  }
+}
 
 /** A cue for (x, z), seen from the witch at (wx, wz): where on the screen's edge it goes, pointing
  *  the way, and how much it shows there (0 when the target is on screen); and where the target's
@@ -244,19 +269,16 @@ export class StoneIndicator {
     // in the area's colour, calmed toward the night (art review round 1: the UI's yellow and magenta shouted over the art)
     const neon = calm([at.colour.x * 255, at.colour.y * 255, at.colour.z * 255]), bright = neon.map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4));
     // The ring: dim all round, bright neon clockwise from 12 o'clock as far as the countdown has run.
-    const R = 13;
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-      const px = x + 0.5 - N / 2, py = y + 0.5 - N / 2, r = Math.hypot(px, py);
-      if (Math.abs(r - R) > 0.7) continue; // a thin stroke (calm by line, not by dimming)
-      const turn = ((Math.atan2(px, -py) / (Math.PI * 2)) + 1) % 1; // 0 at 12 o'clock, clockwise
-      if (turn <= fill || flash > 0) c.dot(x, y, bright, 1);
-      else c.dot(x, y, neon.map(v => v * 0.55), 0.9); // the rest of the ring: dimmer, but still there on dark grass
+    const R = RING_R, ring = ringPixels(), dim = neon.map(v => v * 0.55); // the rest of the ring: dimmer, but still there on dark grass
+    for (let k = 0; k < ring.length; k += 3) {
+      if (ring[k + 2] <= fill || flash > 0) c.dot(ring[k], ring[k + 1], bright, 1);
+      else c.dot(ring[k], ring[k + 1], dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
     if (at.notes || at.glyph) {
       const ink = at.glyphColour ? calm([at.glyphColour.x * 255, at.glyphColour.y * 255, at.glyphColour.z * 255]).map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)) : bright;
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
-      G.forEach((row, y) => [...row].forEach((on, x) => { if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); }));
+      for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }
     } else {
       let g = this.glyphs.get(at.species);
       if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
@@ -264,7 +286,7 @@ export class StoneIndicator {
       for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
     }
     // The arrowhead outside the ring, toward the stone (fading as it comes over the stone).
-    for (const [x, y] of arrowPixels(e.angle, N, R + 2, R + 7, 3.5)) c.dot(x, y, bright, e.show);
+    drawArrow(c, e.angle, N, R + 2, R + 7, 3.5, bright, e.show);
     c.flush();
     // The distance on the far side of the ring from the arrow (or under the ring, over the stone).
     const showLabel = !!label || dist > 20;

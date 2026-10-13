@@ -41,6 +41,7 @@ import { playerPick as makePlayerPick } from "./app/playerPick";
 import { wavePick as makeWavePick } from "./app/wavePick";
 import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
+import { keepAtlasPixels } from "./render/atlas";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
@@ -85,6 +86,7 @@ performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
 void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
 const ATTACK_DEBUG = params.get("debug") === "attack";
+if (params.get("pixels") === "keep") keepAtlasPixels(true); // (the atlases keep their pixels on the page: the smoke test's floating check reads them)
 let attackTick = -1;
 const input = new Input();
 input.aimFrom = (x, y) => view.aimAt(x, y);

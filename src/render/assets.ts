@@ -7,8 +7,9 @@ import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
 import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
-import { artCacheKey, cacheGet, cachePut, hashText } from "./artCache";
+import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
+import { trunkCut } from "./trunkCut";
 
 export interface TypeArt {
   atlas: Atlas; layout: TypeLayout;
@@ -148,12 +149,11 @@ export class AssetLibrary {
       return;
     }
     this.inFlight.add(k);
-    const ck = this.cacheKey(job), draw = () => { if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job); this.dispatch(); }; // (promoted: asked again urgently while its cache lookup was pending, so not yet in the queue to move)
-    if (!ck) { draw(); return; }
-    cacheGet(ck).then(hit => {
-      if (hit && hit.px) this.receive({ job, result: hit, ms: 0, cached: true });
-      else draw();
-    }, draw);
+    // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
+    // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
+    (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
+    if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job);
+    this.dispatch();
   }
   private dispatch(): void {
     if (!this.useWorkers) return;
@@ -171,7 +171,6 @@ export class AssetLibrary {
       this.queue.unshift(r.job);
       return;
     }
-    if (!r.cached) { const ck = this.cacheKey(r.job); if (ck) cachePut(ck, r.result); }
     const atlas = atlasFromPixels(r.result.px);
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "witch") {
@@ -218,13 +217,11 @@ export class AssetLibrary {
       const px = r.result.px, cut = new Map<number, number>(), share = this.crownShare;
       for (const p of r.result.layout!.big) {
         if (p.top === null) continue;
-        const f = px.frames[p.top], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
-        let total = 0;
-        for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) { rows[y]++; total++; }
-        if (!total) continue;
-        let row = 0, seen = 0;
-        for (let y = 0; y < f.h; y++) { seen += rows[y]; if (seen >= total * share) { row = y; break; } }
-        cut.set(p.bot, (row + 1) / f.h);
+        const counts = (k: number) => { const f = px.frames[k], x0 = Math.round(f.uv[0] * px.width), y0 = Math.round(f.uv[1] * px.height), rows = new Array<number>(f.h).fill(0);
+          for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) if (px.albedo[((y0 + y) * px.width + x0 + x) * 4 + 3] > 0) rows[y]++;
+          return rows; };
+        const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
+        if (c !== undefined) cut.set(p.bot, c);
       }
       this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
@@ -436,6 +433,7 @@ export class AssetLibrary {
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
       const job = this.queue.shift()!;
       const t1 = performance.now(), result = runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; });
+      { const ck = this.cacheKey(job); if (ck) void cachePut(ck, result); } // (drawn on the page: kept from here)
       this.receive({ job, result, ms: performance.now() - t1 });
       made++;
     }

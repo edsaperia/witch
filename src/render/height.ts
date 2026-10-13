@@ -517,8 +517,10 @@ export class HeightField {
     const k = edgeFade(x, z, this.ci * RES, this.cj * RES);
     if (k <= 0) return 0;
     const fx = x / RES, fz = z / RES, i = Math.floor(fx), j = Math.floor(fz), tx = fx - i, tz = fz - j;
-    const at = (a: number, b: number) => this.data[((b % N) + N) % N * N + ((a % N) + N) % N];
-    const top = at(i, j) + (at(i + 1, j) - at(i, j)) * tx, bot = at(i, j + 1) + (at(i + 1, j + 1) - at(i, j + 1)) * tx;
+    // (the four corners by index, no closure a call: it's asked thousands of times a frame)
+    const D = this.data, i0 = ((i % N) + N) % N, i1 = (((i + 1) % N) + N) % N, j0 = (((j % N) + N) % N) * N, j1 = ((((j + 1) % N) + N) % N) * N;
+    const a00 = D[j0 + i0], a10 = D[j0 + i1], a01 = D[j1 + i0], a11 = D[j1 + i1];
+    const top = a00 + (a10 - a00) * tx, bot = a01 + (a11 - a01) * tx;
     return (top + (bot - top) * tz) * k;
   }
 }

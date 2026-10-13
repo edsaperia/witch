@@ -58,16 +58,17 @@ const PALETTES: Record<string, Palette> = {
   "mountains and glaciers": { low: hsv(0.33, 0.22, 0.44), up: hsv(0.55, 0.12, 0.5), rock: hsv(0.6, 0.1, 0.42), peak: hsv(0.55, 0.06, 0.92), sand: hsv(0.1, 0.1, 0.6), forest: hsv(0.4, 0.4, 0.28) },
   "mangrove swamp": { low: hsv(0.24, 0.42, 0.38), up: hsv(0.2, 0.36, 0.36), rock: hsv(0.12, 0.26, 0.34), peak: hsv(0.15, 0.2, 0.46), sand: hsv(0.12, 0.3, 0.5), forest: hsv(0.3, 0.6, 0.22) },
   "cold rainforest": { low: hsv(0.4, 0.42, 0.36), up: hsv(0.42, 0.32, 0.38), rock: hsv(0.55, 0.12, 0.38), peak: hsv(0.55, 0.06, 0.7), sand: hsv(0.1, 0.14, 0.56), forest: hsv(0.42, 0.6, 0.2) },
+  volcanic: { low: hsv(0.05, 0.2, 0.26), up: hsv(0.03, 0.18, 0.2), rock: hsv(0.62, 0.08, 0.16), peak: hsv(0.04, 0.75, 0.62), sand: hsv(0.08, 0.12, 0.34), forest: hsv(0.3, 0.45, 0.24) }, // (an island tagged volcanic, the stegosaurus's: black basalt and ash, a glowing peak; Ed, 2026-10-13)
   badlands: { low: hsv(0.07, 0.4, 0.56), up: hsv(0.04, 0.45, 0.48), rock: hsv(0.02, 0.4, 0.38), peak: hsv(0.06, 0.25, 0.6), sand: hsv(0.1, 0.3, 0.68), forest: hsv(0.18, 0.4, 0.34) },
 };
 /** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
  *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
  *  water: north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. The diagonals have their own (Ed, via
- *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a hot spring in the cold rainforest (NW), a rust pool in
+ *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a tar pit in the cold rainforest (NW; a hot spring till Ed, 2026-10-13: it looked like somewhere you could walk), a rust pool in
  *  the badlands (SE), a lily pond in the mangrove swamp (SW). Temperate keeps water. Looks only. */
-export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "spring" | "rust" | "lily";
+export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "tar" | "rust" | "lily";
 /** The looks by number, as the chart's lake shader knows them (seaChart.ts LAKE_FRAG's uLook). */
-export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "spring", "rust", "lily"];
+export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "tar", "rust", "lily"];
 /** The compass's biomes, N first and on clockwise every 45° (config/kinds.json's by direction). An island's biome blends the two
  *  its bearing lies between, by how near it is to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have
  *  both"): its land's colours mixed by that share, and each of its lakes one of the two looks, by those odds, seeded. */
@@ -77,7 +78,7 @@ export function blendAt(bearing: number): Blend {
   const d = (((bearing % 360) + 360) % 360) / 45, i = Math.floor(d) % 8, t = d - Math.floor(d);
   return t <= 0.5 ? { a: COMPASS[i], b: COMPASS[(i + 1) % 8], w: 1 - t } : { a: COMPASS[(i + 1) % 8], b: COMPASS[i], w: t };
 }
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "tar", badlands: "rust", "mangrove swamp": "lily" };
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly. */
 const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
@@ -86,7 +87,7 @@ const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
   sinkhole: { rgb: hsv(0.34, 0.75, 0.3), width: 50, k: 0.95 }, // rainforest canopy right up to the pit's rim
   tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
-  spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
+  tar: { rgb: hsv(0.07, 0.35, 0.13), width: 24, k: 0.85 }, // a black, sticky shore
   rust: { rgb: hsv(0.1, 0.05, 0.95), width: 80, k: 0.95 }, // pale grey-white crusted ground round it
   lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
 };
@@ -213,9 +214,10 @@ export function make(id: string, world: number, found: string[], step: number, a
   // lakes by that bearing's biomes from the tuning's lakes.biomeFrom phase on (Ed, 2026-10-12: "biome lakes can start appearing one
   // phase earlier": so a temperate island that far out has the compass's lakes too), before it plain water
   const at = id === "home" ? null : islandAt(id, world), bearing = at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
-  const blend: Blend = biome === "temperate" ? { a: "temperate", b: "temperate", w: 1 } : blendAt(bearing), seed = island.seed | 0;
+  const own = biome !== "temperate" && !COMPASS.includes(biome) && !!PALETTES[biome]; // (a tag that is a palette of its own, not a compass point: the island in it alone, its lakes its look)
+  const blend: Blend = biome === "temperate" ? { a: "temperate", b: "temperate", w: 1 } : own ? { a: biome, b: biome, w: 1 } : blendAt(bearing), seed = island.seed | 0;
   // (Ed: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain")
-  const LK = lakeKnobs(TUNING), lakeBlend = id !== "home" && island.phase >= LK.biomeFrom ? blendAt(bearing) : null;
+  const LK = lakeKnobs(TUNING), lakeBlend = id !== "home" && island.phase >= LK.biomeFrom ? (own ? blend : blendAt(bearing)) : null;
   const lakeShare = !lakeBlend ? 0 : island.phase === LK.biomeFrom ? LK.biomeFirstShare : 1;
   let src: Source;
   if (id !== "home" && isPlaceholder(id)) { // uncharted: its land alone, the hills as drawn, no forest known

@@ -25,9 +25,14 @@ export async function openBrowser() {
   const base = `http://127.0.0.1:${server.address().port}`;
   const { chromium } = loadPlaywright();
   const browser = await chromium.launch();
-  const page = await browser.newPage();
   const errors = [];
-  page.on("pageerror", e => errors.push(String(e)));
-  page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-  return { page, base, errors, async close() { await browser.close(); server.close(); } };
+  const newPage = async () => { // (another page on the same browser: its own renderer process, its errors in the same list)
+    const page = await browser.newPage();
+    page.ownErrors = []; // (this page's alone; `errors` has every page's)
+    page.on("pageerror", e => { errors.push(String(e)); page.ownErrors.push(String(e)); });
+    page.on("console", m => { if (m.type() === "error") { errors.push(m.text()); page.ownErrors.push(m.text()); } });
+    return page;
+  };
+  const page = await newPage();
+  return { page, base, errors, newPage, async close() { await browser.close(); server.close(); } };
 }

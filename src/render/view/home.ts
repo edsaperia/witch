@@ -21,12 +21,23 @@ import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
 import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
+import type { RingSpeaker } from "../lasers";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
 const SPENT = new THREE.Vector3(0.7, 0.7, 0.8);
 
 /** A 💌's sparkle as it vanishes at a slowed circle's edge: pink-white. */
 const SPARKLE_RGB = new THREE.Vector3(1, 0.75, 0.9);
+
+/** The markers' motes: one list, its records pooled (a record a mote a frame before, dozens a stone). */
+const MOTES: Mote[] = [], MOTE_POOL: Mote[] = [];
+let moteN = 0;
+function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: number): void {
+  let m = MOTE_POOL[moteN];
+  if (!m) MOTE_POOL[moteN] = m = { x, y, z, colour, alpha };
+  else { m.x = x; m.y = y; m.z = z; m.colour = colour; m.alpha = alpha; }
+  MOTES.push(m); moteN++;
+}
 
 /** The spawn markers (rune stones where soundsystems will come): their sprites, beacons and
  *  motes; returns the lights of the nearest. */
@@ -35,7 +46,8 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
-  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes: Mote[] = [], lasers: Laser[] = [];
+  const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes = MOTES, lasers: Laser[] = [];
+  motes.length = 0; moteN = 0;
   const scale = R.scale / v.markerArt.scale; // (baked at its size: 1)
   const casts = !!t.shadows.trunks?.scenery, cast: TrunkShadow[] = [];
   const col = (cell: readonly [number, number]) => { const c = v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(cell[0], cell[1])].creature); return c ? [c.x, c.y, c.z] : [0.8, 0.7, 1]; };
@@ -85,7 +97,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
       for (let i = 0; i < n; i++) {
         const s = (m.cell[0] * 31 + m.cell[1] * 17 + i * 7.3) % 1 || 0.37 * (i + 1) % 1, rise = ((time * (0.25 + 0.15 * ((i * 0.618) % 1)) + i / n) % 1);
         const a = i * 2.399 + m.cell[0];
-        motes.push({ x: m.x + Math.cos(a) * (0.6 + rise * 1.4), y: 0.6 + rise * 7, z: m.z + Math.sin(a) * (0.6 + rise * 1.4), colour: col, alpha: (1 - rise) * (0.5 + 0.5 * beat) * (0.6 + s * 0.4) });
+        mote(m.x + Math.cos(a) * (0.6 + rise * 1.4), 0.6 + rise * 7, m.z + Math.sin(a) * (0.6 + rise * 1.4), col, (1 - rise) * (0.5 + 0.5 * beat) * (0.6 + s * 0.4));
       }
     }
   }
@@ -108,12 +120,13 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting
   // out and fading over SPARKLE seconds of real time.
   const now = LIGHT_UNIFORMS.uRealTime.value, SPARKLE = 0.45;
-  v.edgeSparkles = v.edgeSparkles.filter(s => now - s.at < SPARKLE);
+  if (v.edgeSparkles.length) v.edgeSparkles = v.edgeSparkles.filter(s => now - s.at < SPARKLE);
   for (const s of v.edgeSparkles) {
     const k = (now - s.at) / SPARKLE;
-    for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; motes.push({ x: s.x + Math.cos(a) * r, y: 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, z: s.z + Math.sin(a) * r, colour: SPARKLE_RGB, alpha: (1 - k) * (i % 2 ? 1 : 0.6) }); }
+    for (let i = 0; i < 8; i++) { const a = i * 0.785 + s.at * 3, r = 0.2 + k * 1.1; mote(s.x + Math.cos(a) * r, 1 + Math.sin(a * 2) * 0.4 * k + k * 0.6, s.z + Math.sin(a) * r, SPARKLE_RGB, (1 - k) * (i % 2 ? 1 : 0.6)); }
   }
-  v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes.concat(v.fireSparks), lasers);
+  for (let i = 0; i < v.fireSparks.length; i++) motes.push(v.fireSparks[i]); // (after the markers' own, as the joined list was)
+  v.markerFx.update(beacons, R.beamHeight, canopyShown(w), motes, lasers);
   const up = canopyShown(w);
   // Wave numbers over the stones (Ed, 2026-10-04, a design aid): above the stone on the ground,
   // above the canopy from the treetops; the reached areas' dimmed.
@@ -167,6 +180,19 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
 const TURN = 0.4;
 /** How much the stone stretches up (and thins) as it charges: as tall as the speaker it becomes already, so a little. */
 const STRETCH = { up: 0.15, thin: 0.1 };
+/** A speaker's facing by its ring place, its frames' keys by angle, state and frame, the boot's light colour, and where one stands:
+ *  each made once (a record a speaker a frame before: the churn hunt, 2026-10-13). */
+const FACES = new Map<unknown, { angle: number; flip: boolean }>();
+const faceOf = (ring: unknown): { angle: number; flip: boolean } => { let f = FACES.get(ring); if (!f) FACES.set(ring, (f = Art.dancefloorSpeakerFacing(ring as number) as { angle: number; flip: boolean })); return f; };
+const FRAME_KEYS = new Map<number, Map<string, string[]>>();
+const frameKey = (angle: number, state: string, frame: number): string => {
+  let byState = FRAME_KEYS.get(angle); if (!byState) FRAME_KEYS.set(angle, (byState = new Map()));
+  let ks = byState.get(state); if (!ks) byState.set(state, (ks = []));
+  return (ks[frame] ??= `${angle}:${state}:${frame}`);
+};
+const BOOT_RGB = new THREE.Vector3(0.3, 0.9, 1);
+const STAND = { x: 0, z: 0 };
+const SPEAKER_LIST: SpriteInstance[] = [];
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
   if (!A) return lights;
@@ -180,22 +206,28 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
   const mpp = v.mpp, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const pitch = (angle * Math.PI) / 180, upOnScreen = U.dot(v.v3.set(0, Math.cos(pitch), -Math.sin(pitch)));
   const beat = (beatTime(g.beat, time) * g.tuning.beat.bpm) / 60, ph = beat - Math.floor(beat);
-  const list: SpriteInstance[] = [], glows = v.leashView.ringGlows;
-  glows.length = 0;
+  const list = SPEAKER_LIST, glows = v.leashView.ringGlows;
+  list.length = 0; glows.length = 0;
   // Where a sprite stands so its ground point (o, art pixels in its frame; mirrored with it) lands on the spot: the part drawn below
-  // the ground point lies on the ground nearer the camera.
+  // the ground point lies on the ground nearer the camera. (Into STAND: read before the next is asked.)
   const standAt = (sp: { x: number; z: number }, f: { w: number; h: number; pad?: number }, o: { x: number; y: number }, flip: boolean) => {
     const dx = ((flip ? f.w - o.x : o.x) - f.w / 2) * mpp, below = Math.max(0, f.h - (f.pad ?? 0) - o.y) * mpp;
-    return { x: sp.x - R.x * dx, z: sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch)) };
+    STAND.x = sp.x - R.x * dx; STAND.z = sp.z - R.z * dx + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
+    return STAND;
   };
-  g.map.dancefloor.speakers.forEach((sp, i) => {
-    const face = Art.dancefloorSpeakerFacing(sp.ring) as { angle: number; flip: boolean }, state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
+  const top = (i: number, x: number, y: number, z: number, state: RingSpeaker["state"], powered: boolean) => { // (its record kept: the lasers read it this frame)
+    const T = v.speakerTops[i];
+    if (T) { T.x = x; T.y = y; T.z = z; T.state = state; T.powered = powered; } else v.speakerTops[i] = { x, y, z, state, powered };
+  };
+  const speakers = g.map.dancefloor.speakers;
+  for (let i = 0; i < speakers.length; i++) {
+    const sp = speakers[i], face = faceOf(sp.ring), state = g.speakers[i] ?? "playing", k = speakerBoot(g, i, time), powered = k >= TURN;
     const sk = ringStoneKey(i, face.angle), si = A.stones?.[sk];
     if (!powered && si !== undefined) { // still its runestone (charging once the pulse has reached it), turned as its speaker is
       const f = A.atlas.frames[si], o = A.stoneOrigin![sk], c = k / TURN, d = (f.pad ?? 0) * mpp, p = standAt(sp, f, o, face.flip);
-      v.speakerTops[i] = { x: sp.x, y: o.y * mpp * (1 + STRETCH.up * c), z: sp.z, state, powered: false };
-      if (!inView(v, p.x, p.z, f.w * mpp, f.h * mpp, 6)) return;
-      if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 1.5 * c });
+      top(i, sp.x, o.y * mpp * (1 + STRETCH.up * c), sp.z, state, false);
+      if (!inView(v, p.x, p.z, f.w * mpp, f.h * mpp, 6)) continue;
+      if (c > 0) lights.push({ x: sp.x, y: 1.5, z: sp.z, reach: 8, rgb: BOOT_RGB, strength: 1.5 * c });
       list.push({ x: p.x - U.x * d, y: -U.y * d, z: p.z - U.z * d, frame: f, flip: face.flip, sx: 1 - STRETCH.thin * c, sy: 1 + STRETCH.up * c, glow: c, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp) });
       // its dots' glow (Ed, 2026-10-09: "They should glow"): each dot's middle in the world, stretched with the stone, for the
       // soft halos LeashView draws (drawRingGlows), brighter as it charges
@@ -203,23 +235,23 @@ export function drawSpeakers(v: View, time: number, angle: number): ForestLight[
         const a = ((face.flip ? f.w - q.x : q.x) - f.w / 2) * mpp * (1 - STRETCH.thin * c), b = (f.h - q.y) * mpp * (1 + STRETCH.up * c);
         glows.push({ x: p.x - U.x * d + R.x * a + U.x * b, y: -U.y * d + R.y * a + U.y * b, z: p.z - U.z * d + R.z * a + U.z * b, k: 1 + c });
       }
-      return;
+      continue;
     }
     const u = si === undefined ? 1 : Math.min(1, (k - TURN) / (1 - TURN)), rise = u >= 1 ? 1 : 1 - Math.pow(1 - u, 3) * Math.cos(u * 4.2); // springs up, past full, settles
     if (powered && v.speakerFlare[i] === undefined) v.speakerFlare[i] = time;
     if (!powered) v.speakerFlare[i] = undefined;
     const flare = powered ? Math.max(0, 1 - (time - (v.speakerFlare[i] ?? time)) / 0.8) : 0;
-    if (flare > 0) lights.push({ x: sp.x, y: 3, z: sp.z, reach: 14, rgb: new THREE.Vector3(0.3, 0.9, 1), strength: 3 * flare });
+    if (flare > 0) lights.push({ x: sp.x, y: 3, z: sp.z, reach: 14, rgb: BOOT_RGB, strength: 3 * flare });
     // Playing: rest, then the cones thump out and settle, once a beat; damaged: a slow stutter; off: still.
     const frame = !powered ? 0 : state === "playing" ? (ph < 0.12 ? 2 : ph < 0.3 ? 1 : 0) : state === "damaged" ? Math.floor(time * 2.5 + i) % 2 : 0;
-    const fi = A.frames[`${face.angle}:${state}:${frame}`];
-    if (fi === undefined) return;
+    const fi = A.frames[frameKey(face.angle, state, frame)];
+    if (fi === undefined) continue;
     const f = A.atlas.frames[fi], o = A.origin[face.angle];
-    v.speakerTops[i] = { x: sp.x, y: o.y * mpp * 0.96, z: sp.z, state, powered }; // its laser's source (lasers.ts)
+    top(i, sp.x, o.y * mpp * 0.96, sp.z, state, powered); // its laser's source (lasers.ts)
     const d = (f.pad ?? 0) * mpp, { x, z } = standAt(sp, f, o, face.flip);
-    if (!inView(v, x, z, f.w * mpp, f.h * mpp, 6)) return;
-    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp), ...(u < 1 ? { sy: Math.max(0.2, rise), sx: 1 + 0.15 * (1 - u), glow: 1 - u } : {}) });
-  });
+    if (!inView(v, x, z, f.w * mpp, f.h * mpp, 6)) continue;
+    list.push({ x: x - U.x * d, y: -U.y * d, z: z - U.z * d, frame: f, flip: face.flip, fresh: mark(v, "speaker", sp.x, sp.z, f.h * mpp), sy: u < 1 ? Math.max(0.2, rise) : undefined, sx: u < 1 ? 1 + 0.15 * (1 - u) : undefined, glow: u < 1 ? 1 - u : undefined });
+  }
   v.speakerBatch.set(list);
   return lights;
 }

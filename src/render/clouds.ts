@@ -20,6 +20,7 @@ import { SPRITE_UNIFORMS } from "./sprites";
 export interface CloudTuning { count: number; altitude: number; speed: number; opacity: number; partyGlow: number }
 export interface LightningTuning { every: number; flashes: number; ground: number }
 
+const CLOUD_V3 = new THREE.Vector3(); // (the update's working point)
 const CELL = 260; // metres: at most one cloud a cell
 const PUFFS = 7;
 const MAX = 120; // puffs drawn at most
@@ -164,7 +165,8 @@ export class Clouds {
     const dx = time * this.T.speed * 0.8, dz = time * this.T.speed * 0.35;
     const F = HEIGHT_UNIFORMS.uBendFwd.value, cx = B.y + F.x * 450, cz = B.z + F.y * 450, R = 520;
     const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, E = this.seed.array as Float32Array, U = this.under.array as Float32Array;
-    const v = new THREE.Vector3(), list: Cloud[] = [];
+    const v = CLOUD_V3, list = this.visible; // (one vector and one list for every frame)
+    list.length = 0;
     let n = 0;
     for (let j = Math.floor((cz - dz - R) / CELL); j <= Math.floor((cz - dz + R) / CELL); j++)
       for (let i = Math.floor((cx - dx - R) / CELL); i <= Math.floor((cx - dx + R) / CELL); i++) {
@@ -181,14 +183,14 @@ export class Clouds {
         for (let k = 0; k < PUFFS && n < MAX; k++) {
           const a = hash2(c.id, k, 11), b = hash2(c.id, k, 12), across = k / (PUFFS - 1);
           const w = c.r * (0.7 + 0.6 * b), h = w * 0.55;
-          P.set([c.x + (across - 0.5) * c.r * 2.2 + (a - 0.5) * 18, c.y + groundHeight(c.x, c.z) + (b - 0.5) * 10 - Math.abs(across - 0.5) * 14, c.z + (a - 0.5) * 30], n * 3);
-          S.set([w, h], n * 2);
-          E.set([hash2(c.id, k, 13), c.id, across, c.x], n * 4);
-          U.set([c.x, c.z], n * 2);
+          const p3 = n * 3, p2 = n * 2, p4 = n * 4; // (written straight in: four lists a puff a frame before)
+          P[p3] = c.x + (across - 0.5) * c.r * 2.2 + (a - 0.5) * 18; P[p3 + 1] = c.y + groundHeight(c.x, c.z) + (b - 0.5) * 10 - Math.abs(across - 0.5) * 14; P[p3 + 2] = c.z + (a - 0.5) * 30;
+          S[p2] = w; S[p2 + 1] = h;
+          E[p4] = hash2(c.id, k, 13); E[p4 + 1] = c.id; E[p4 + 2] = across; E[p4 + 3] = c.x;
+          U[p2] = c.x; U[p2 + 1] = c.z;
           n++;
         }
       }
-    this.visible = list;
     this.count = n;
     this.geo.instanceCount = n;
     for (const a of [this.pos, this.size, this.seed, this.under]) { a.needsUpdate = true; a.clearUpdateRanges(); a.addUpdateRange(0, n * a.itemSize); }

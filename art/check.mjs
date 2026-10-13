@@ -7,34 +7,88 @@
 //    type's assets, and checks each is non-empty, stands on its bottom row, and that legends
 //    are the tallest.
 import { execFileSync } from "node:child_process";
+import { cpus } from "node:os";
 import { openBrowser, ROOT } from "./headless.mjs";
 
 let failed = 0;
 const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) failed++; };
+// node art/check.mjs [--pages N] [--tasks a,b] [--only id,id] [--no-lab] [--list] [--times]: N pages draw the sprite checks' tasks at once (as many
+// as the machine has cores, less one, by default; PAGES=N too); --tasks runs only those (--list names them); --only keeps every check
+// that walks the species or the areas to those ids (a builder's own creature and area), --no-lab skips the two lab pages (minutes each);
+// --times prints what each task and pass took.
+const argv = process.argv.slice(2), opt = name => { const i = argv.indexOf("--" + name); return i < 0 ? null : argv[i + 1] ?? ""; }, flag = name => argv.includes("--" + name);
+const PAGES = Math.max(1, Number(opt("pages") || process.env.PAGES) || Math.max(1, cpus().length - 1));
+const ONLY = opt("only")?.split(",").map(s => s.trim()).filter(Boolean) ?? null, TASKS = opt("tasks")?.split(",").map(s => s.trim()).filter(Boolean) ?? null;
+const T0 = performance.now(), laps = [];
+let lapAt = T0;
+const lap = name => { const now = performance.now(); laps.push([name, now - lapAt]); lapAt = now; };
+const secs = ms => `${(ms / 1000).toFixed(1)} s`;
+/** The sprite checks dealt out over PAGES pages: each page takes the next task not yet taken, so the long ones overlap the short;
+ *  the report comes back in the tasks' order whatever page drew which. */
+/** Units of work dealt out over the page pool (b.page and up to PAGES - 1 more, each a renderer process): each page takes the next
+ *  unit not yet taken, so long units overlap short ones; the results come back in the units' order, each with [ms, page]. */
+let POOL = null;
+async function pool(b, n) {
+  POOL ??= [b.page];
+  while (POOL.length < Math.min(PAGES, n)) { const p = await b.newPage(); await p.goto(b.base + "/art/headless-blank.html"); POOL.push(p); }
+  return POOL.slice(0, Math.max(1, Math.min(PAGES, n)));
+}
+async function dealOut(b, units, run) {
+  const pages = await pool(b, units.length), queue = units.map((u, i) => i), out = new Array(units.length);
+  await Promise.all(pages.map(async (page, k) => {
+    for (;;) { const i = queue.shift(); if (i === undefined) return; const t0 = performance.now(); out[i] = { result: await run(page, units[i]), ms: performance.now() - t0, page: k }; }
+  }));
+  return out;
+}
+async function runSpriteChecks(b, fn) {
+  const t0 = performance.now();
+  const { names } = await b.page.evaluate(fn, { names: [], only: ONLY }); // (registers the tasks, runs none)
+  if (flag("list")) { console.log(names.join("\n")); process.exit(0); }
+  const queue = (TASKS ?? names).filter(n => { const known = names.includes(n); if (!known) ok(false, `no sprite check named ${n}`); return known; });
+  const done = await dealOut(b, queue, (page, name) => page.evaluate(fn, { names: [name], only: ONLY }));
+  const results = {}, timings = [], pages = await pool(b, queue.length);
+  done.forEach((d, i) => { results[queue[i]] = d.result.res; for (const [n, ms, count] of d.result.timings) timings.push([n, ms, count, d.page]); });
+  const order = TASKS ?? names, report = order.flatMap(n => results[n] ?? []);
+  if (flag("times")) { console.log(`sprite checks: ${secs(performance.now() - t0)} over ${pages.length} page(s)`); for (const [n, ms, count, k] of [...timings].sort((a, b) => b[1] - a[1])) console.log(`  ${n.padEnd(22)} ${secs(ms).padStart(9)}  ${String(count).padStart(5)} checks  page ${k}`); }
+  lap("sprite checks");
+  return report;
+}
 
 execFileSync("node", ["tools/art-lab/build.mjs"], { cwd: ROOT, stdio: "inherit" });
 const b = await openBrowser();
+lap("build and open");
 const ignore = e => /ERR_CERT_AUTHORITY_INVALID|fonts\.g/.test(e); // web fonts, blocked in some sandboxes
-for (const page of ["/tools/art-lab/witch-art-lab.html", "/tools/art-lab/dist/witch-art-lab.html"]) {
-  b.errors.length = 0;
-  await b.page.goto(b.base + page, { waitUntil: "domcontentloaded", timeout: 90000 });
+// The two lab pages (the source and the built one) each draw the whole bestiary and the scene on load, minutes of their own main
+// thread, so each gets a page of its own and runs while the sprite checks run on the pool; their lines print first, as before.
+async function labCheck(path) {
+  const page = await b.newPage(), lines = [];
+  await page.goto(b.base + path, { waitUntil: "domcontentloaded", timeout: 90000 });
   // the bestiary draws a little after the page; wait for every card (or give up after 90 s)
-  await b.page.waitForFunction(async () => { const n = document.querySelectorAll("#bestiary canvas").length; return n > 0 && n === (await import("/art/generator.js")).SPECIES.length; }, null, { timeout: 90000, polling: 500 }).catch(() => {});
-  const cards = await b.page.evaluate(() => document.querySelectorAll("#bestiary canvas").length);
-  const species = await b.page.evaluate(async () => (await import("/art/generator.js")).SPECIES.length);
-  const lit = await b.page.evaluate(() => { const c = document.getElementById("scene"), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 30) n++; return n / (d.length / 4); });
-  const errs = b.errors.filter(e => !ignore(e));
-  ok(!errs.length, `${page}: no script errors${errs.length ? " — " + errs.join("; ") : ""}`);
-  ok(cards === species, `${page}: ${cards} of ${species} bestiary cards`);
-  ok(lit > .5, `${page}: scene drawn (${Math.round(lit * 100)}% of pixels lit)`);
+  await page.waitForFunction(async () => { const n = document.querySelectorAll("#bestiary canvas").length; return n > 0 && n === (await import("/art/generator.js")).SPECIES.length; }, null, { timeout: 90000, polling: 500 }).catch(() => {});
+  const cards = await page.evaluate(() => document.querySelectorAll("#bestiary canvas").length);
+  const species = await page.evaluate(async () => (await import("/art/generator.js")).SPECIES.length);
+  const lit = await page.evaluate(() => { const c = document.getElementById("scene"), d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] > 30) n++; return n / (d.length / 4); });
+  const errs = page.ownErrors.filter(e => !ignore(e));
+  lines.push([!errs.length, `${path}: no script errors${errs.length ? " — " + errs.join("; ") : ""}`]);
+  lines.push([cards === species, `${path}: ${cards} of ${species} bestiary cards`]);
+  lines.push([lit > .5, `${path}: scene drawn (${Math.round(lit * 100)}% of pixels lit)`]);
+  await page.close();
+  return lines;
 }
+const LABS = flag("no-lab") ? [] : ["/tools/art-lab/witch-art-lab.html", "/tools/art-lab/dist/witch-art-lab.html"].map(labCheck); // (--no-lab: a builder's quick --only run)
 await b.page.goto(b.base + "/art/headless-blank.html");
-const report = await b.page.evaluate(async () => {
-  const G = await import("/art/generator.js"), st = G.defaultStyle(), res = [];
+// The sprite checks run in the browser as named tasks, dealt out over PAGES pages at once (each a renderer process of its own,
+// so the cloud's cores all draw; node tools: art/check.mjs --pages N, --tasks a,b, --only fox,fen, --list, --times): every task
+// draws from G alone, so any page can take any task, and the report is put back in the tasks' order, so the output reads the same.
+const SPRITE_CHECKS = async ({ names, only }) => {
+  const G = await import("/art/generator.js"), st = G.defaultStyle(), res = [], tasks = [], task = (name, fn) => tasks.push({ name, fn });
+  // --only: a builder's own species and areas (their ids), every check that walks the species or the areas kept to them
+  const SPECIES = only ? G.SPECIES.filter(S => only.includes(S.id)) : G.SPECIES, AREAS = only ? G.AREAS.filter(A => only.includes(A.id) || only.includes(A.creature)) : G.AREAS;
   // (standing: something on its bottom row; or, a witch's sprite with her shadow lifted out of it (art/witch.js liftShadow: the box kept,
   // the game stands her by her `ground` anchor and lays her shadow there), that anchor in the sprite's lower part, its bottom row her ground's)
   const stats = sp => { let n = 0, bottom = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) n++; for (let x = 0; x < sp.w; x++) if (sp.m[(sp.h - 1) * sp.w + x]) bottom++; const g = sp.anchors?.ground; if (!bottom && g && g[1] >= sp.h * 0.5 && g[1] <= sp.h + 1 && g[0] >= 0 && g[0] <= sp.w) bottom = 1; return { n, bottom, w: sp.w, h: sp.h }; };
-  for (const S of G.SPECIES) {
+  const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
+  task("species-sprites", async () => { for (const S of SPECIES) {
     const hs = [];
     for (const level of [0, 1, 2, 3]) for (const frame of [0, 1]) { const s = stats(G.critter(S.id, level, frame, st)); hs[level] = s.h; res.push({ what: `${S.id} level ${level} frame ${frame}`, good: s.n > 20 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
     { const a = stats(G.critter(S.id, 2, 0, st, "away")); res.push({ what: `${S.id} adult turned away`, good: a.n > 20 && a.bottom > 0, info: `${a.w}x${a.h}` }); }
@@ -43,15 +97,17 @@ const report = await b.page.evaluate(async () => {
     { const bh = [0, 1, 2, 3].map(l => G.critter(S.id, l, 0, st).bodyH), r = [bh[1] / bh[0], bh[2] / bh[1], bh[3] / bh[2]];
       res.push({ what: `${S.id}: baby < young < adult < legend, in clear steps (young 1.3+ times the baby, adult 1.55+ times the young, legend 2.1+ times the adult)`, good: hs[3] > hs[2] && hs[2] > hs[1] && hs[1] > hs[0] && r[0] >= 1.3 && r[1] >= 1.55 && r[2] >= 2.1, info: bh.join(" < ") + " (" + r.map(x => x.toFixed(2)).join(", ") + ")" }); }
     // (the elephant, the biggest creature in the game, has its own allowance: 2.6 to 3.6 times the witch, over the elk's)
-    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "elephant"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = (S.id === "elephant" ? 2.6 : 1.45) * c, hi = (S.id === "elephant" ? 3.6 : ["elk", "stag"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
-  }
-  { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
+    if (["wolf", "boar", "stag", "bear", "elk", "lynx", "elephant", "stegosaurus"].includes(S.id)) { const w = G.witchSprite(st).bodyH, k = G.critter(S.id, 2, 0, st).bodyH / w, c = st.creatureScale || 1, lo = (S.id === "elephant" ? 2.6 : 1.45) * c, hi = (S.id === "elephant" ? 3.6 : ["elk", "stag", "stegosaurus"].includes(S.id) ? 2.5 : 2.1) * c; res.push({ what: `${S.id}: an adult clearly bigger than the witch (${lo.toFixed(2)} to ${hi.toFixed(2)} times, body without antlers; the elk and stag stand taller; 1.45 to 2.1 before creatureScale ${c})`, good: k >= lo && k <= hi, info: k.toFixed(2) }); }
+  } });
+  task("genomes-masks", async () => { // creature genomes (#79 stage 1): every species a record on a known template, its parts allowed by its sockets, none clashing,
     // its hash its own; the builders' species are the records' (speciesOf)
-    const probs = G.GENOMES.flatMap(g => G.genomeProblems(g)), hashes = new Set(G.GENOMES.map(g => G.genomeHash(g)));
-    res.push({ what: `genomes: every one of the ${G.SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: G.GENOMES.length === G.SPECIES.length && G.SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && hashes.size === G.GENOMES.length, info: probs.join("; ") || `${G.GENOMES.length} records` });
+    // (--only: the selected species' records, each hash its own among all of them; the count of records against species only on a full run)
+    const recs = only ? G.GENOMES.filter(g => SPECIES.some(s => s.id === g.id)) : G.GENOMES, probs = recs.flatMap(g => G.genomeProblems(g)), hashOf = new Map(G.GENOMES.map(g => [g.id, G.genomeHash(g)]));
+    const shared = recs.filter(g => G.GENOMES.some(h => h.id !== g.id && hashOf.get(h.id) === hashOf.get(g.id))).map(g => g.id + " shares its hash");
+    res.push({ what: `genomes: every one of the ${SPECIES.length} species a record on one of the ${G.TEMPLATE_IDS.length} templates, its parts in its sockets, no clashes, every hash different`, good: (only || G.GENOMES.length === SPECIES.length) && SPECIES.every(s => G.GENOME_BY_ID[s.id]) && !probs.length && !shared.length, info: [...probs, ...shared].join("; ") || `${recs.length} records` });
     // masks and palettes (stage 2): a sprite's material mask painted with its palette row is its bake, pixel for pixel, in every outline mode
     const bad = [];
-    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }, { woken: true, face: "angry" }, { face: "happy" }, { face: "dazed" }]) {
+    for (const S of SPECIES) for (const level of [0, 1, 2, 3]) for (const facing of ["towards", "away"]) for (const gear of [null, { woken: true }, { woken: true, face: "angry" }, { face: "happy" }, { face: "dazed" }]) {
       const sp = G.critter(S.id, level, 0, st, facing, gear), col = G.speciesColours(S.id, st, gear);
       for (const mode of level === 1 && !gear && facing === "towards" ? [st.cOutline, "none", "dark", "tint"] : [st.cOutline]) {
         const want = G.bake(sp, col, st, mode).A.getContext("2d").getImageData(0, 0, sp.w, sp.h).data, got = G.paintPixels(G.bakeMask(sp, mode), G.paletteRow(col, mode));
@@ -62,14 +118,14 @@ const report = await b.page.evaluate(async () => {
     res.push({ what: "palettes: every creature's material mask painted with its palette row is its bake exactly (all levels, both facings, woken, every expression, every outline mode)", good: !bad.length, info: bad.slice(0, 5).join(", ") || "identical" });
     // variants: every curated variant colours every species (no magenta, no missing material), each different from its own
     const vb = [];
-    for (const S of G.SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
+    for (const S of SPECIES) { const own = JSON.stringify(G.speciesColours(S.id, st)); for (const v of Object.keys(G.PALETTE_VARIANTS)) { const c = G.variantColours(S.id, st, v), row = G.paletteRow(c), m = G.bakeMask(G.critter(S.id, 1, 0, st), st.cOutline); if (JSON.stringify(c) === own) vb.push(`${S.id} ${v} same`); for (let i = 0; i < m.mat.length; i++) if (m.kind[i] === 1 && row[m.mat[i] * 4] === 255 && row[m.mat[i] * 4 + 1] === 0 && row[m.mat[i] * 4 + 2] === 255) { vb.push(`${S.id} ${v} magenta`); break; } } }
     res.push({ what: `palette variants: all ${Object.keys(G.PALETTE_VARIANTS).length} curated coats colour every species, no material uncoloured, each its own`, good: !vb.length, info: vb.slice(0, 5).join(", ") || "ok" });
-  }
-  { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy, dazed and asleep
+  });
+  task("expressions", async () => { // expressions (Ed, 2026-10-05: "the eyebrows should be with the creature generator"): every species at every level, angry, happy, dazed and asleep
     // drawn as part of its face: each different from its neutral face, its brows showing (and standing out from its coat), no bigger than
     // neutral by more than 2 px, nothing NaN; and the away view drawn
     const bad = [], lum = c => c[0] * .3 + c[1] * .55 + c[2] * .15;
-    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) {
+    for (const S of SPECIES) for (const level of [0, 1, 2, 3]) {
       const plain = G.critter(S.id, level, 0, st), col = G.speciesColours(S.id, st);
       if (Math.abs(lum(col[G.M.BROW]) - lum(col[G.M.BODY])) < 60) bad.push(`${S.id} brows don't stand out`);
       for (const face of G.EXPRESSIONS.filter(f => f !== "neutral")) for (const facing of ["towards", "away"]) {
@@ -86,13 +142,13 @@ const report = await b.page.evaluate(async () => {
       }
     }
     res.push({ what: `expressions: every species at every level angry, happy, dazed and asleep as part of its face (different from neutral, its brows showing and standing out from its coat, no bigger than 3 px or 1%, nothing NaN; from behind, its plain face)`, good: !bad.length, info: bad.slice(0, 8).join(", ") || "ok" });
-  }
-  { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
+  });
+  task("texture", async () => { // surface texture (Ed, 2026-10-05, #119): every species at every level in its fur, feathers, scales, plates, shell or bristles: textured
     // (its coat broken into tones along its stamps), its detail (tone edges a coat pixel) growing with age (a baby's softest), the same size
     // as untextured within 1% (2 px), every material coloured, nothing NaN; with texture 0, as before (tools/genome/compare.mjs TEXTURE=0)
     const bad = [], off = { ...st, texture: 0 }, coat = new Set([G.M.BODYL, G.M.BODY, G.M.BODY2, G.M.BODY3, G.M.BELLY, G.M.ACCENT]);
     const detail = sp => { let e = 0, n = 0; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const v = sp.m[y * sp.w + x]; if (!coat.has(v)) continue; n++; const r = sp.get(x + 1, y), b = sp.get(x, y + 1); if (coat.has(r) && r !== v) e++; if (coat.has(b) && b !== v) e++; } return n ? e / n : 0; };
-    for (const S of G.SPECIES) {
+    for (const S of SPECIES) {
       const col = G.speciesColours(S.id, st), dv = [0, 1, 2, 3].map(level => {
         const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, Math.ceil(Math.max(b.w, b.h) * .01)); // (1% of its bigger side: the lumps pull a legend's farthest points, its nose and tail, in by a few pixels)
         if (Math.abs(a.w - b.w) > tol || Math.abs(a.h - b.h) > tol) bad.push(`${id} ${a.w}x${a.h} vs ${b.w}x${b.h}`);
@@ -104,30 +160,30 @@ const report = await b.page.evaluate(async () => {
       if (dv[0][0] - dv[0][1] > (dv[2][0] - dv[2][1]) * 1.15) bad.push(`${S.id} baby's texture busier than its adult's (+${(dv[0][0] - dv[0][1]).toFixed(2)} vs +${(dv[2][0] - dv[2][1]).toFixed(2)})`);
     }
     res.push({ what: "surface texture: every species at every level in its own surface (fur, feathers, scales, plates, shell, bristles), no poorer than untextured, a baby's softest, the same size within 1%, every material coloured", good: !bad.length, info: [...new Set(bad)].slice(0, 8).join(", ") || "ok" });
-  }
-  { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
+  });
+  task("silhouettes", async () => { // silhouettes (#79 stage 3): at game size (each young and adult shrunk to 24 px), no two species' shapes alike: they differ by 0.15 or more
     // (1 - their overlap over their union, whichever way each faces)
     for (const level of [1, 2]) {
-      const sh = Object.fromEntries(G.SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
+      const sh = Object.fromEntries(SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
       res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
     }
-  }
-  { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
+  });
+  task("growth", async () => { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
     // the same 24 px box (1 - overlap over union): a step under LEVEL_STEP is a scaled copy. A warning today (the review's baseline has
     // mole 0.07 baby to young, bear 0.11 young to adult, marten 0.11 adult to legend); it fails once every species clears it.
     const LEVEL_STEP = .2, bad = [], all = [];
-    for (const S of G.SPECIES) {
+    for (const S of SPECIES) {
       const sh = [0, 1, 2, 3].map(l => G.silhouette(G.critter(S.id, l, 0, st)));
       const d = [1, 2, 3].map(l => G.silhouetteDistance(sh[l - 1], sh[l]));
       all.push(`${S.id} ${d.map(x => x.toFixed(2)).join("/")}`);
       d.forEach((x, i) => { if (x < LEVEL_STEP) bad.push(`${S.id} ${["baby→young", "young→adult", "adult→legend"][i]} ${x.toFixed(2)}`); });
     }
-    res.push({ what: `growth, not scale: every level's silhouette ${LEVEL_STEP} or more from the level before, scaled to one box (${G.SPECIES.length} species)`, good: true, warn: bad.length ? "scaled copies: " + bad.join(", ") : "", info: all.join("; ") });
-  }
-  { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
+    res.push({ what: `growth, not scale: every level's silhouette ${LEVEL_STEP} or more from the level before, scaled to one box (${SPECIES.length} species)`, good: true, warn: bad.length ? "scaled copies: " + bad.join(", ") : "", info: all.join("; ") });
+  });
+  task("rig-parts", async () => { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
     // the four-legged, and their tails where they have one; the serpent's head), each with its pivot near it, four legs with two bones each, discs to string them
     const bad = [];
-    for (const S of G.SPECIES.filter(S => S.q || S.plan === "snake")) for (const level of [0, 1, 2, 3]) {
+    for (const S of SPECIES.filter(S => S.q || S.plan === "snake")) for (const level of [0, 1, 2, 3]) {
       const P = G.rigParts(S.id, level, st), need = P.template === "quadruped" ? ["torso", "head"] : ["head"];
       for (const k of need) (P.pieces[k] || []).forEach((p, i) => { if (!p) bad.push(`${S.id} ${level} ${k} ${i} missing`); else if (p.px < -p.sp.w || p.py < -p.sp.h || p.px > 2 * p.sp.w || p.py > 4 * p.sp.h + 8) bad.push(`${S.id} ${level} ${k} ${i} pivot off`); }); // near it: the torso's is the ground under it, below its leg-less sprite
       if (need.some(k => (P.pieces[k] || []).length !== 5)) bad.push(`${S.id} ${level} not five headings`);
@@ -137,12 +193,12 @@ const report = await b.page.evaluate(async () => {
       for (const face of ["angry", "happy", "dazed", ...(level === 3 ? ["asleep"] : [])]) { const f = P.faces?.[face]; if (!f || f.length !== 5 || f.some(p => !p)) bad.push(`${S.id} ${level} no ${face} head`); else if (P.pieces.head[2] && f[2].sp.m.join() === P.pieces.head[2].sp.m.join()) bad.push(`${S.id} ${level} ${face} head as neutral`); } // its head in each expression
     }
     res.push({ what: "rig parts: every four-legged species and the snake, at every level, baked as torso and head pieces (the snake its head) at the five headings with their pivots near them, four two-bone legs, discs to string bones and bodies, and the head in every expression, in party gear and woken", good: !bad.length, info: bad.slice(0, 6).join(", ") || "ok" });
-  }
-  { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
+  });
+  task("sleeping-legends", async () => { // sleeping legends (Ed, 2026-10-04: just the sleeping form for now): asleep in 2 breathing frames, both facings, each drawn, standing on its bottom
     // row, its origin on the sprite and every material coloured; sunk (its ground line above its feet), no taller than the legend awake, nothing glowing,
     // eyes shut, its two breaths different
     const glows = sp => { let n = 0; for (const m of sp.m) if (G.EMISSIVE.has(m)) n++; return n; };
-    for (const id of G.LEGEND_IDS) for (const facing of ["towards", "away"]) {
+    for (const id of G.LEGEND_IDS.filter(id => SPECIES.some(S => S.id === id))) for (const facing of ["towards", "away"]) { // (--only: the selected species' legends)
       const fs = [0, 1].map(frame => G.legendForm(id, st, { frame, facing })), bad = [], aw = G.critter(id, 3, 0, st, facing);
       fs.forEach(({ sp, colours }, i) => { const s = stats(sp), o = sp.origin, nan = sp.n.some(Number.isNaN), miss = [...new Set(sp.m)].filter(m => m && m !== G.M.LINE && !colours[m]);
         if (!(s.n > 200 && s.bottom > 0 && o && o[0] >= 0 && o[0] <= sp.w && o[1] >= 0 && o[1] <= sp.h + 1 && !nan && !miss.length)) bad.push(`asleep${i} ${s.w}x${s.h}${nan ? " NaN" : ""}${miss.length ? " uncoloured " + miss : ""}${o ? "" : " no origin"}`);
@@ -151,11 +207,11 @@ const report = await b.page.evaluate(async () => {
       if (fs[0].sp.m.length === fs[1].sp.m.length && fs[0].sp.m.every((m, i) => m === fs[1].sp.m[i])) bad.push("no breath");
       res.push({ what: `sleeping legend ${id} ${facing}: asleep x2 (sunk, no taller than awake, no glow, eyes shut, breathing; drawn, standing, origin on the sprite, coloured)`, good: !bad.length, info: bad.join(", ") || `asleep ${fs[0].sp.w}x${fs[0].sp.h}, awake ${aw.w}x${aw.h}` });
     }
-  }
-  { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2
+  });
+  task("naps", async () => { // every creature asleep (art/naps.js; Ed, 2026-10-06: "we will need sleeping artwork for all the creatures"): every species at every level in 2
     // breathing frames, each drawn and standing on its bottom row, its ground origin on the sprite, no taller than it stands awake, no pupils
     // (eyes shut), every material coloured, its two breaths different
-    for (const S of G.SPECIES) {
+    for (const S of SPECIES) {
       const bad = [];
       for (let level = 0; level < 4; level++) {
         const aw = G.critter(S.id, level, 0, st), fs = [0, 1].map(f => G.critter(S.id, level, f, st, "towards", { nap: true })), colours = G.speciesColours(S.id, st);
@@ -167,11 +223,11 @@ const report = await b.page.evaluate(async () => {
       }
       res.push({ what: `${S.id} asleep (${G.napPose(S.id).kind}): baby to legend x2 breaths (drawn, standing, origin on the sprite, no taller than awake, eyes shut, coloured)`, good: !bad.length, info: bad.slice(0, 4).join(", ") || "ok" });
     }
-  }
-  for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); }
-  for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); }
-  for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
-  { // the witch heading straight up the screen (away, seen from behind) and straight down it (towards, at us): hover x3, lean, fast x3 and brake x2 each,
+  });
+  task("tree-types", async () => { for (const [key, f] of G.TREE_TYPES) for (let v = 0; v < 3; v++) { const r = G.rng(v + 1), t = f(r, st, st.treeSize * G.uni(r, .9, 1.1)), s = stats(t.sp); res.push({ what: `tree ${key} ${v}`, good: s.n > 200 && s.bottom > 0 && t.crownY > 0 && t.crownY < s.h, info: `${s.w}x${s.h}` }); } });
+  task("bushes", async () => { for (let v = 0; v < 8; v++) { const s = stats(G.bush(G.rng(v), st).sp); res.push({ what: `bush ${v}`, good: s.n > 20, info: `${s.w}x${s.h}` }); } });
+  task("witch-flight", async () => { for (const facing of ["towards", "away"]) for (const frame of [0, 1, 2]) { const s = stats(G.witchSprite(st, { frame, facing })); res.push({ what: `witch ${facing} frame ${frame}`, good: s.n > 200 && s.bottom > 0, info: `${s.w}x${s.h}` }); } });
+  task("witch-headings", async () => { // the witch heading straight up the screen (away, seen from behind) and straight down it (towards, at us): hover x3, lean, fast x3 and brake x2 each,
     // at her ordinary scale (the same pixels per unit as her side view), standing on the bottom row, nothing NaN, her hand and hat tip anchors inside the sprite;
     // heading towards shows her face (eyes), heading away doesn't
     const bad = [], side = G.witchSprite(st, { pose: "fast" }).scale, eyes = {};
@@ -183,16 +239,16 @@ const report = await b.page.evaluate(async () => {
     }
     if (!(eyes.towards > 0 && eyes.away === 0)) bad.push(`eyes towards ${eyes.towards}, away ${eyes.away}`);
     res.push({ what: "witch heading away and towards (straight up and down the screen): hover x3, lean, fast x3, brake x2 each, at her ordinary scale, standing, hand and hat-tip anchors inside; her face only heading towards", good: !bad.length, info: bad.join(", ") || `eyes towards ${eyes.towards}` });
-  }
-  { // the witch's rise and descend: two frames each, both facings; drawn at her ordinary scale (bounds within reason), standing on the bottom row, nothing NaN
+  });
+  task("witch-rise", async () => { // the witch's rise and descend: two frames each, both facings; drawn at her ordinary scale (bounds within reason), standing on the bottom row, nothing NaN
     const base = stats(G.witchSprite(st)), bad = [];
     for (const [pose, n] of [["rise", 2], ["descend", 2], ["fast", 3], ["brake", 2]]) for (const facing of ["towards", "away"]) for (let frame = 0; frame < n; frame++) {
       const sp = G.witchSprite(st, { pose, frame, facing }), s2 = stats(sp), nan = [...sp.n].some(v => Number.isNaN(v));
       if (!(s2.n > 200 && s2.bottom > 0 && !nan && s2.h > base.h * .7 && s2.h < base.h * 1.6 && s2.w < base.w * (pose === "fast" ? 2.4 : 1.8))) bad.push(`${pose} ${facing} ${frame} ${s2.w}x${s2.h}${nan ? " NaN" : ""}`);
     }
     res.push({ what: "witch rise, descend and brake (two frames) and fast (three): towards and away, at her ordinary scale, standing, no NaN", good: !bad.length, info: bad.join(", ") || `hover ${base.w}x${base.h}` });
-  }
-  { // the witch on foot: every pose's frames, both facings, at her ordinary scale, standing, no NaN; a hand and a hat tip inside the sprite;
+  });
+  task("witch-poses", async () => { // the witch on foot: every pose's frames, both facings, at her ordinary scale, standing, no NaN; a hand and a hat tip inside the sprite;
     // reaching up for the stack her hand is above her hat tip, crouched to the ground it is down by her feet; the party's poses too
     // (lying back she is low and long); a pair pose's meeting anchors inside every frame (the conga's back too)
     const base = stats(G.witchSprite(st)), bad = [], P = G.WITCH_FOOT_POSES, PR = G.WITCH_PAIRS;
@@ -215,8 +271,8 @@ const report = await b.page.evaluate(async () => {
     const counts = Object.fromEntries(Object.entries(P).map(([k, v]) => [k, v.frames])), want = { stand: 3, land: 3, takeoff: 3, talk: 4, placeSigil: 3, liftSigil: 3, sit: 2,
       twoStep: 4, bounce: 2, shuffle: 4, spin: 4, headbang: 2, jump: 3, dancePair: 4, holdHands: 2, hug: 2, highFive: 2, laugh: 3, drink: 4, run: 4, sitGround: 2, stargaze: 2, conga: 4, twirl: 4, twirled: 4, limboHold: 2, limboHelp: 2, limbo: 4, dj: 20 };
     res.push({ what: "witch on foot: stand (3), land and takeoff (3 each), talk (4), placeSigil and liftSigil (3 each), sit (2), and the party's 21 (7 dances with the limbo, dance with a partner, hold hands, hug, high-five, laugh, drink, run, sit on the ground, stargaze, conga, twirl and twirled, the broom limbo's two holders), towards and away, at her ordinary scale, standing, no NaN; hand and hat-tip anchors inside, and the pairs' meeting anchors, the limbo dancer under the bar; reaching up above her hat, down to the ground", good: !bad.length && JSON.stringify(counts) === JSON.stringify(want), info: bad.join(", ") || Object.entries(counts).map(([k, n]) => k + " " + n).join(", ") });
-  }
-  { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
+  });
+  task("witch-lean", async () => { // her lean cycle (WITCH_FLIGHT_POSES.lean): 4 frames, both facings and both headings, at her ordinary scale, standing, hand and hat-tip anchors inside; the frames differ (it moves)
     const bad = [], scale = G.witchSprite(st, { pose: "fast" }).scale, F = G.WITCH_FLIGHT_POSES;
     for (const o of [{ facing: "towards" }, { facing: "away" }, { heading: "away" }, { heading: "towards" }]) {
       const sps = [0, 1, 2, 3].map(frame => G.witchSprite(st, { ...o, pose: "lean", frame }));
@@ -225,8 +281,8 @@ const report = await b.page.evaluate(async () => {
     }
     if (!(F.lean && F.lean.frames === 4 && F.lean.fps > 0 && F.hover.frames === 3 && F.fast.frames === 3 && F.brake.frames === 2)) bad.push("WITCH_FLIGHT_POSES");
     res.push({ what: "witch lean cycle: 4 frames, towards and away and heading up and down the screen, at her ordinary scale, standing, hand and hat-tip anchors inside, every frame different", good: !bad.length, info: bad.join(", ") || `lean ${F.lean.frames} frames at ${F.lean.fps} fps` });
-  }
-  { // party witches: 8 to 12 outfits, each a different look from WITCH_LOOKS, every one drawn in her flight frames and every pose on foot at her
+  });
+  task("party-witches", async () => { // party witches: 8 to 12 outfits, each a different look from WITCH_LOOKS, every one drawn in her flight frames and every pose on foot at her
     // ordinary scale, standing, a hat in every pose and its glowing hatband showing hovering and standing (still a witch); partyWitch is seeded (same seed, same witch) and varied (outfits, skins, glow sticks)
     const bad = [], O = G.PARTY_OUTFITS, Lk = G.WITCH_LOOKS, scale = G.witchSprite(st, { pose: "stand" }).scale, looks = new Set();
     if (!(O.length >= 8 && O.length <= 12) || new Set(O.map(o => o.id)).size !== O.length) bad.push(`${O.length} outfits`);
@@ -245,8 +301,8 @@ const report = await b.page.evaluate(async () => {
     if (JSON.stringify([a.id, a.outfit, a.look]) !== JSON.stringify([b.id, b.outfit, b.look])) bad.push("partyWitch not seeded");
     if (seen.size < Math.min(8, O.length) || skins.size < 4 || glows.size < 4) bad.push(`partyWitch varied: ${seen.size} outfits, ${skins.size} skins, ${glows.size} neons over 40 seeds`);
     res.push({ what: "party witches: 8 to 12 outfits, each its own look (hat, hair, top, shades, glow sticks, headphones), drawn in flight and every pose on foot at her scale, a witch's hat on, its band glowing; partyWitch seeded and varied", good: !bad.length, info: bad.slice(0, 8).join(", ") || `${O.length} outfits; 40 seeds: ${seen.size} outfits, ${skins.size} skins, ${glows.size} glow-stick neons` });
-  }
-  { // no flecks on the witch (Ed: "these little flecks"): in every sprite of hers (flight, headings, the lean cycle, on foot) and of every party outfit, no pixel
+  });
+  task("witch-flecks", async () => { // no flecks on the witch (Ed: "these little flecks"): in every sprite of hers (flight, headings, the lean cycle, on foot) and of every party outfit, no pixel
     // whose colour differs strongly from all 4 neighbours (or that stands alone) without one of its own colour round it, no interior-line dot one or two pixels long,
     // and no eye poking out past her face's edge; her eyes' glints and her mouth are meant
     const KEEP = new Set([G.M.EYE, G.M.GLINT, G.M.NOSE]), diff = (a, b) => Math.max(...[0, 1, 2].map(k => Math.abs(a[k] - b[k])));
@@ -272,8 +328,8 @@ const report = await b.page.evaluate(async () => {
     for (const P of G.PARTY_OUTFITS) { const pw = G.partyWitch(2, { outfit: P.id }), col = pw.colours(st);
       for (const o of [{ frame: 0 }, { frame: 1 }, ...[0, 1, 2, 3].map(frame => ({ pose: "lean", frame })), { pose: "rise", frame: 0 }, { pose: "descend", frame: 0 }, ...Object.entries(G.WITCH_FOOT_POSES).flatMap(([pose, { frames }]) => [...Array(frames).keys()].map(frame => ({ pose, frame })))]) { const f = flecks(G.witchSprite(st, { ...o, look: pw.look }), col); n++; if (f.length) bad.push(`${P.id} ${o.pose || "hover"}${o.frame ?? ""}: ${f.slice(0, 3).join(" ")}`); } }
     res.push({ what: "witch flecks: no stray single pixels (a colour unlike all 4 neighbours, none of its own round it), no one- or two-pixel interior-line dots, no eye past her face's edge, on all her sprites and every party outfit's", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${n} sprites clean` });
-  }
-  { // attack effects (Stage 5): projectiles (spit, barb, two lobs and their shadow, a feather, a mote), short and long beams (start, a loop that
+  });
+  task("effects", async () => { // attack effects (Stage 5): projectiles (spit, barb, two lobs and their shadow, a feather, a mote), short and long beams (start, a loop that
     // repeats exactly, end), pulses (the quake's ring, a spore cloud and stain), telegraphs (a target circle, a line that repeats exactly with its
     // start and arrowhead, a wind-up flash, the quake's reach), hit sparks, and slow and knockback marks: every frame, light and dark, ground and
     // treetop, drawn, anchors inside, frames differing, the light ones haloed and the dark ones rimmed, only glowing pixels tinted, the treetop
@@ -301,9 +357,9 @@ const report = await b.page.evaluate(async () => {
     for (const [atk, fx] of Object.entries(A)) for (const v of Object.values(fx).flat()) if (!G.EFFECT_BY_ID[v].attacks.includes(atk)) bad.push(`${v} doesn't list ${atk}`);
     for (const v of Object.values(G.STATE_EFFECTS).flatMap(x => typeof x === "string" ? [x] : Object.values(x))) if (!G.EFFECT_BY_ID[v]) bad.push(`state effect ${v} missing`);
     res.push({ what: "attack effects: projectiles, short and long beams (start, a repeating loop, end), quake ring and spore cloud, telegraphs (target circle, a repeating line with its ends, wind-up flash, quake reach), hit sparks, slow and knockback marks, Stage 5's pulse rings, web, mole mound, charge dust, stun stars, strong and resisted hits, six trait marks, the Cyclone hat's whirlwind (rising, looping, falling); every frame light and dark, ground and treetop, drawn, anchors inside, frames differing, halos and rims, only glowing pixels tinted, as big from the treetops; every attack in config/combat.json has its effects", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${E.length} effects, ${n} sprites; ${Object.keys(combat.attacks).length} attacks covered` });
-  }
-  for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); }
-  { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,
+  });
+  task("away-sprites", async () => { for (const id of ["wolf", "owl", "snake"]) { const s = stats(G.critter(id, 1, 0, st, "away")); res.push({ what: `${id} turned away`, good: s.n > 50 && s.bottom > 0, info: `${s.w}x${s.h}` }); } });
+  task("treehouse", async () => { // the treehouse (Ed's second go: mostly wood, modern touches, its top standing above the treeline, her seat in a cutaway studio): towards and away,
     // 28 to 40 m tall, standing; its top storey's floor above the 24 m treetops and its roof tip well over them; top and bottom split it with nothing
     // lost, the tower in the top half and the studio in the bottom; lit windows glow; anchors inside, the seat on the studio's floor (planks or rug)
     // and the camera anchor just above it
@@ -320,8 +376,8 @@ const report = await b.page.evaluate(async () => {
       info = `${sp.w}x${sp.h} (${Mx.height} m; top storey at ${Mx.towerFloor} m, roof tip ${Mx.roofTip} m; trunk ${Mx.trunk} m across, crown ${Mx.crown} m; footprint ${Mx.footprint} m, decks to ${Mx.overhang} m), ${A.lights.length} lights (${A.lights.filter(L => L.kind === "decks").length} on the decks)`;
     }
     res.push({ what: "treehouse: towards and away, 28 to 40 m, its top storey above the 24 m treetops; its giant tree's trunk 5 m+ across and crown 11 m+; fore (the DJ table) part of the whole; top + bottom = whole, the studio below the split; windows glow; anchors inside; the seat on the studio floor, the camera over it", good: !bad.length, info: bad.join("; ") || info });
-  }
-  { // the treehouse Ent (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent"; a gnarled kneeling tree, a suggestion
+  });
+  task("ent", async () => { // the treehouse Ent (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent"; a gnarled kneeling tree, a suggestion
     // of Atlas, no face; the deck at 22 m, radius 7; the world map at its centre; the DJ decks along its south arc; art/ent.js): towards and away,
     // standing; far and near the whole's size, near a part of the whole and the two covering it; no face; anchors inside (the deck over the base,
     // the table on the deck's middle, the seat on its planks in front of the middle); the deck as wide as its radius and as high as deckY; the DJ
@@ -348,12 +404,12 @@ const report = await b.page.evaluate(async () => {
       info = `${W}x${H} (${Mx.height} m tall, ${Mx.width} m wide; deck ${Mx.deckR} m round at ${Mx.deckY} m, table ${Mx.tableR * 2} m across; desk ${Mx.desk.from}..${Mx.desk.to} rad, her spot ${Mx.desk.inner} m from the middle), ${A.lights.length} lights`;
     }
     res.push({ what: "treehouse Ent: towards and away, standing, no face; far and near the whole's size, near part of it, the two covering it; anchors inside, the deck over the base, the table on its middle, the seat on its planks; the deck its radius wide and deckY high; DJ fore frames turning, the first the whole's; lanterns and decks lit; her DJ hands on the decks", good: !bad.length, info: bad.join("; ") || info });
-  }
-  { // the Ent's carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of its
+  });
+  task("carrier", async () => { // the Ent's carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of its
     // kind; art/carrier.js): every species draws one, standing on its bottom row (a flyer landed, its shadow gone), its back between
     // 6 m and CARRIER.maxBack, no longer than CARRIER.maxLength, its back's top anchor inside it on its own pixels
     const bad = [], C = G.CARRIER, out = [];
-    for (const S of G.SPECIES) {
+    for (const S of SPECIES) {
       const c = G.carrierSprite(st, S.id, { ppm: 16 }); if (!c) { bad.push(`${S.id}: none`); continue; }
       const sp = c.sprite, standing = [...Array(sp.w).keys()].some(x => sp.m[(sp.h - 2) * sp.w + x] && sp.m[(sp.h - 2) * sp.w + x] !== G.M.NOSE);
       const onIt = sp.get(c.back.x, c.back.y) || sp.get(c.back.x, c.back.y + 1);
@@ -361,8 +417,8 @@ const report = await b.page.evaluate(async () => {
       out.push(`${S.id} ${c.backM.toFixed(0)}/${c.lengthM.toFixed(0)}`);
     }
     res.push({ what: "the Ent's carrier: every species, standing, back 6 m to maxBack, no longer than maxLength (back/length m)", good: !bad.length, info: bad.length ? bad.join("; ") : out.join(", ") });
-  }
-  { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
+  });
+  task("dj-booth", async () => { // the DJ booth (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"): the DJ
     // table's fore frames (DJ_FRAMES of them, one size, each different: the platters turning, the LEDs chasing; the first is the
     // whole's own table); her DJ frames, facing us, every gesture's frames different, each with an upper layer (what's over the
     // decks: her head and arms, none of her legs); stood with her ground anchor on the seat, every hand meant for the decks lands
@@ -382,13 +438,13 @@ const report = await b.page.evaluate(async () => {
     const played = new Set(); for (let b = 0; b < 48 * 4; b += .25) played.add(G.djFrame(b)); const ROUTINE = new Set(["cast", "needle", "chirp", "spin"]); for (const [gname, fr] of Object.entries(G.DJ_GESTURES)) if (!ROUTINE.has(gname) && !fr.every(f => played.has(f))) bad.push(`djFrame never plays ${gname}`); // (the routine's: rules/djSet.ts, its test checks every gesture it names is drawn)
     if (!G.DJ_GESTURES.cast.includes(G.djFrame(3.2, { cast: true }))) bad.push("djFrame cast");
     res.push({ what: "DJ booth: the table's fore frames turn (one size, each different, the first the whole's table); her DJ frames facing us, every gesture's frames different, each with an upper layer (head and arms, no legs); her deck hands on the decks' pixels; djFrame plays every gesture", good: !bad.length, info: bad.join("; ") || `${FF.length} fore frames ${FF[0].w}x${FF[0].h}, ${P.frames} DJ frames` });
-  }
-  { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
+  });
+  task("soundsystems", async () => { const H = G.soundsystemHeight(st), ws = G.witchSprite(st);
     for (let v = 0; v < G.SOUNDSYSTEMS.length; v++) {
       const play = [0, 1, 2].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame }))), dmg = [0, 1].map(frame => stats(G.soundsystemSprite(st, { variant: v, frame, state: "damaged" }))), dead = stats(G.soundsystemSprite(st, { variant: v, state: "destroyed" }));
       res.push({ what: `soundsystem ${G.SOUNDSYSTEMS[v].id}: 3 playing, 2 damaged, destroyed; standing; about 3 times the witch; rubble lower than the stack`, good: [...play, ...dmg, dead].every(s => s.n > 200 && s.bottom > 0) && play[0].h > ws.h * 2.4 && dead.h < play[0].h * .7, info: `${play[0].w}x${play[0].h} rubble ${dead.w}x${dead.h} witch ${ws.h}` });
-    } }
-  { // the hero dancefloor (Ed: a magic disco floor whose squares draw magical shapes to the music; a system to light squares): every pattern fits the circle,
+    } });
+  task("dancefloor", async () => { // the hero dancefloor (Ed: a magic disco floor whose squares draw magical shapes to the music; a system to light squares): every pattern fits the circle,
     // uses only its palette (2 to 4 of the party's neon), runs a whole number of beats (frames = beats x frames a beat) and lights something; levels 1 to 4 all in use;
     // 20+ general patterns, the switch-on sequence, and one shape for each of the 30 areas from its creature's sigil in its neon; the transitions run from all old to all new;
     // the looks: the unlit tile, the lit tile brighter at each intensity, grout, the rim strip repeating exactly every period, the whole floor
@@ -401,7 +457,7 @@ const report = await b.page.evaluate(async () => {
       let lit = 0; for (const f of p.frames) for (let i = 0; i < f.length; i++) { if (f[i] && !G.DISCO_MASK[i]) { bad.push(p.id + " outside the circle"); break; } if (f[i] > p.palette.length) { bad.push(p.id + " off its palette"); break; } if (f[i]) lit++; }
       if (lit / p.frames.length < 8) bad.push(p.id + " too dark");
     }
-    for (const A of G.AREAS) { const p = L.find(q => q.kind === "area" && q.area === A.id); if (!p) bad.push(A.id + " has no floor shape"); else if (p.palette[0] !== G.SIGIL_NEON[A.creature]) bad.push(A.id + " not in its neon"); }
+    for (const A of AREAS) { const p = L.find(q => q.kind === "area" && q.area === A.id); if (!p) bad.push(A.id + " has no floor shape"); else if (p.palette[0] !== G.SIGIL_NEON[A.creature]) bad.push(A.id + " not in its neon"); }
     if (!kinds.boot) bad.push("no switch-on sequence"); if ((kinds.shape || 0) + (kinds.loop || 0) + (kinds.fill || 0) < 20) bad.push("fewer than 20 general patterns"); if (levels.size < 4) bad.push("levels " + [...levels]);
     for (const T of G.DISCO_TRANSITIONS) { const a = G.discoTransition(T.id, 0), z = G.discoTransition(T.id, 1), mid = G.discoTransition(T.id, .5); if (a.some(v => v) || z.some((v, i) => G.DISCO_MASK[i] && v !== 1) || !mid.some(v => v) || !(Number.isInteger(T.beats))) bad.push("transition " + T.id); }
     const un = stats(G.discoTileSprite("unlit")), bright = [1, 2, 3].map(l => { const sp = G.discoTileSprite("lit", { level: l }), c = G.discoColours(l); let v = 0; for (const m of sp.m) v += (c[m] || [0, 0, 0])[1]; return v; });
@@ -409,8 +465,8 @@ const report = await b.page.evaluate(async () => {
     const rim = G.discoRimStrip(G.DISCO_RIM.period * 2), P2 = G.DISCO_RIM.period; for (let y = 0; y < rim.h; y++) for (let x = 0; x < P2; x++) if (rim.get(x, y) !== rim.get(x + P2, y)) { bad.push("the rim doesn't repeat"); y = rim.h; break; }
     const fb = G.discoFloorBase(); if (!(stats(fb.sp).n > fb.size * fb.size * .7)) bad.push("floor base");
     res.push({ what: "dancefloor: every pattern fits the circle, keeps to its 2-4 neon palette, runs whole beats and lights up; levels 1-4; 20+ general patterns, the switch-on, one shape per area in its neon; transitions old to new; tiles, grout, rim (repeating), floor", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${L.length} patterns (${Object.entries(kinds).map(([k, n]) => k + " " + n).join(", ")}); ${G.DISCO_TRANSITIONS.length} transitions; floor ${fb.size} px` });
-  }
-  { // the dancefloor speakers (Ed: one column, 12 round the floor, the far half facing in and the near half out, so 3 angles drawn and mirrored; destroyable): every angle draws in every state, standing;
+  });
+  task("dancefloor-speakers", async () => { // the dancefloor speakers (Ed: one column, 12 round the floor, the far half facing in and the near half out, so 3 angles drawn and mirrored; destroyable): every angle draws in every state, standing;
     // all share one scale (every intact one as tall at every angle, about the soundsystem's height or a little less; rubble low); the front (cones) and the back (plain stone) differ;
     // the facing rule maps the 12 ring places onto the 3 angles, each twice plain and twice mirrored, every one showing us its front (|yaw| 75 or less)
     const bad = [], ws = G.witchSprite(st), hs = [], glow = {}, GL = new Set([G.M.GLOW, G.M.MAGIC2]);
@@ -428,11 +484,10 @@ const report = await b.page.evaluate(async () => {
     if (Object.keys(uses).length !== 6 || Object.values(uses).some(n => n !== 2)) bad.push("the ring doesn't use each angle twice plain and twice mirrored");
     for (let i = 0; i < 12; i++) { const a = 15 + 30 * i, f = G.dancefloorSpeakerFacing(a); if (Math.abs(f.yaw) > 75 || f.outward !== Math.cos(a * Math.PI / 180) > 0) bad.push(`ring place ${a} shows its back`); }
     res.push({ what: "dancefloor speakers: 3 angles x (3 playing, 2 damaged, destroyed) stand at one scale, about 2.6 times the witch, rubble low; front and back differ; 12 ring places (far half facing in, near half out) all show fronts, each angle twice plain, twice mirrored", good: !bad.length, info: bad.join("; ") || `${hs[0]} px tall (witch ${ws.h}); glow front ${glow[15]} vs back ${glow[165]}` });
-  }
+  });
   // sigils: one per species; non-empty as vector (SVG, and drawn on a canvas) and as a 12 px pixel glyph; strokes inside the box;
   // on the ground at every level, the draw-on only adds ink, and each level's rune is bigger and has more rings than the one below
-  const pixels = f => { let n = 0; for (let i = 0; i < f.atCore.length; i++) if (f.atCore[i] <= 1) n++; return n; };
-  for (const S of G.SPECIES) {
+  task("sigils", async () => { for (const S of SPECIES) {
     const id = S.id, strokes = G.sigilStrokes(id), half = G.SIGIL_STROKE / 2;
     const inside = strokes.length > 0 && strokes.every(k => k.pts.every(([x, y]) => { const m = k.dot ? G.SIGIL_DOT : half; return x >= m - 1e-9 && x <= 1 - m + 1e-9 && y >= m - 1e-9 && y <= 1 - m + 1e-9; }));
     const svg = G.sigilSVG(id), c = document.createElement("canvas"); c.width = c.height = 48; G.drawSigil(c.getContext("2d"), id, { size: 48, glow: false });
@@ -445,14 +500,14 @@ const report = await b.page.evaluate(async () => {
     const dotted = ringInk(1), full = ringInk(2), ringsRead = dotted > 1 && dotted < full * .75;
     const fl = G.floatSigil(id, { level: 3 });
     res.push({ what: `sigil ${id}: vector, 12 px glyph, inside the box, ground draw-on, four levels grow (no ring, a dotted ring, a full ring, then a banded double ring with rays; the dotted and full rings tell apart at 14 px), floating form`, good: inside && /<(polyline|circle)/.test(svg) && ink > 40 && gn > 8 && done > 60 && early < done && grows && ringsRead && pixels(fl) > 20, info: `${strokes.length} strokes, ${ink} px at 48, ${gn} px at 12, ground ${gr.map(g => g.w + "x" + g.h).join(" < ")}` });
-  }
+  } });
   // legendary sigils (Ed, 2026-10-06: "huge, twice as wide and more detailed than the normal ones", then his reference, a magic
   // circle with the animal in the centre): every species' has detail of its own (inside its unit box); its circle's lines all in
   // the unit square, with three medallions, runes when full and none when small, its runes seeded (no two species' alike); its
   // SVG, glyph, ground rune and floating form LEGEND_SCALE times a normal's or a legend's across and inkier; its carving mask
   // whole, its outer ring touching the edge; the stack carries one
-  { const bad = [], runeKeys = new Set();
-    for (const S of G.SPECIES) {
+  task("legend-sigils", async () => { const bad = [], runeKeys = new Set();
+    for (const S of SPECIES) {
       const id = S.id, det = G.LEGEND_DETAIL[id] || [];
       if (!det.length) bad.push(`${id}: no detail`);
       if (det.some(k => (k.l || (k.d ? [k.d] : [])).some(([x, y]) => x < 0 || y < 0 || x > 1 || y > 1))) bad.push(`${id}: detail outside its box`);
@@ -470,12 +525,12 @@ const report = await b.page.evaluate(async () => {
       const m = G.legendSigilMask(id, 128), edge = [64 * 128 + 1, 64 * 128 + 126, 128 + 64, 126 * 128 + 64].map(i => Math.max(m[i], m[i - 1], m[i + 1])), lit = m.reduce((a, v) => a + (v > .5 ? 1 : 0), 0);
       if (edge.some(v => v < .3) || lit < 1200 || m.some(v => !(v >= 0 && v <= 1))) bad.push(`${id}: mask (edge ${edge.map(v => v.toFixed(1))}, ${lit} px)`);
     }
-    if (runeKeys.size < G.SPECIES.length) bad.push(`runes alike: ${runeKeys.size} of ${G.SPECIES.length}`);
+    if (runeKeys.size < SPECIES.length) bad.push(`runes alike: ${runeKeys.size} of ${SPECIES.length}`);
     const st = new G.SigilStack(), it = st.push("wolf", 3, null, { legendary: true }); st.update(0, { head: [0, 0, 0] }); const lay = st.layout()[0];
     if (!(lay.legendary && Math.abs(lay.width - lay.size) < 1e-9 && Math.abs(it.size - G.LEGEND_SCALE * G.floatSize(3)) < 1e-9)) bad.push("the stack's legendary sigil not twice a legend's");
-    res.push({ what: "legendary sigils: every species' magic circle with its own detail and runes, inside its square, full when big and simple when small, its SVG, glyph, ground rune and floating form twice a legend's and inkier, its carving mask whole; the stack carries one", good: !bad.length, info: bad.slice(0, 6).join(", ") || `${G.SPECIES.length} species` });
-  }
-  { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
+    res.push({ what: "legendary sigils: every species' magic circle with its own detail and runes, inside its square, full when big and simple when small, its SVG, glyph, ground rune and floating form twice a legend's and inkier, its carving mask whole; the stack carries one", good: !bad.length, info: bad.slice(0, 6).join(", ") || `${SPECIES.length} species` });
+  });
+  task("leash-stack", async () => { // the leash stack: still, it stands over her head, newest at the bottom; flying right, it trails left, higher sigils further; stopped, it settles back
     const s = new G.SigilStack(); ["wolf", "owl", "stag"].forEach(id => s.push(id, 1));
     for (let i = 0; i < 240; i++) s.update(1 / 60);
     const still = s.layout(), order = still.map(l => l.id).join(",");
@@ -485,11 +540,11 @@ const report = await b.page.evaluate(async () => {
     const back = s.layout(), placed = s.place();
     const ok = order === "stag,owl,wolf" && still.every((l, i) => Math.abs(l.offset[0]) < .2 && (i === 0 || l.offset[1] - still[i - 1].offset[1] > (l.size + still[i - 1].size) / 2)) && fly[2].offset[0] < fly[1].offset[0] && fly[1].offset[0] < fly[0].offset[0] && fly[0].offset[0] < 0 && back.every(l => Math.abs(l.offset[0]) < .25) && placed?.id === "stag" && s.length === 2;
     res.push({ what: "leash stack: newest at the bottom, trails behind her flight, settles, places the bottom one", good: ok, info: `flying: ${fly.map(l => l.offset[0].toFixed(2)).join(" ")}` });
-  }
+  });
   // party gear: on every species at baby, young and adult (towards and away), the glowing collar shows and nothing else breaks;
   // the feet that have shoes show them; woken eyes glow red; partyGear is seeded and varied
-  { const count = (sp, mat) => { let n = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === mat) n++; return n; }, bad = [];
-    for (const S of G.SPECIES) for (const level of [0, 1, 2]) for (const facing of ["towards", "away"]) {
+  task("party-gear", async () => { const count = (sp, mat) => { let n = 0; for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === mat) n++; return n; }, bad = [];
+    for (const S of SPECIES) for (const level of [0, 1, 2]) for (const facing of ["towards", "away"]) {
       const gear = { collar: G.sigilColour(S.id), hat: level % 3, glasses: G.GLASSES_STYLES[level], shoes: "sneakers" }, sp = G.critter(S.id, level, 0, st, facing, gear), plain = G.critter(S.id, level, 0, st, facing);
       const hat = sp2 => count(sp2, G.M.HAT1) + count(sp2, G.M.HAT2), hats = hat(sp) + (S.plan === "bat" || S.plan === "moth" ? hat(G.critter(S.id, level, 1, st, facing, gear)) : 0); // flyers' wings hide the hat on the upstroke
       const hidden = S.id === "spider" && facing === "away"; // turned away, its own abdomen hides its head
@@ -503,28 +558,30 @@ const report = await b.page.evaluate(async () => {
       if (fit !== "claw") { const R = G.rigParts(id, 2, st, gear); if (!R?.pieces.shoe || R.pieces.shoe.some(p => !p)) bad.push(`${id} ${shoes} rig shoe`); }
     }
     if (G.rigParts("fox", 2, st, { collar: [1, 2, 3] })?.pieces.shoe) bad.push("fox barefoot rig has a shoe");
-    const woke = G.SPECIES.filter(S => count(G.critter(S.id, 1, 0, st, "towards", { woken: true }), G.M.WOKEN) === 0).map(S => S.id);
+    const woke = SPECIES.filter(S => count(G.critter(S.id, 1, 0, st, "towards", { woken: true }), G.M.WOKEN) === 0).map(S => S.id);
     const mixes = Array.from({ length: 40 }, (_, i) => JSON.stringify(G.partyGear(i, [1, 2, 3]))), same = JSON.stringify(G.partyGear(5, [1, 2, 3])) === mixes[5];
     const varied = new Set(mixes).size > 10 && mixes.some(m => m.includes('"hat":null')) && mixes.some(m => !m.includes("null"));
     res.push({ what: "party gear on all 30 at three levels, both views (collar, hat; shoes on four-legged feet; same body size); every party shoe style on a hoof, a paw and a claw, and on the rig; woken eyes; partyGear seeded and varied", good: !bad.length && !woke.length && same && varied, info: [...bad, ...woke.map(w => w + " not woken")].slice(0, 60).join(", ") || "ok" });
-  }
-  { // only magical things glow (Ed's playtest: glowing gorse flowers floated over the night's dark bushes)
+  });
+  task("glow", async () => { // only magical things glow (Ed's playtest: glowing gorse flowers floated over the night's dark bushes)
     const magic = new Set([G.M.GLINT, G.M.MAGIC, G.M.MAGIC2, G.M.RUNE, G.M.GLOW, G.M.COLLAR, G.M.WOKEN]), extra = [...G.EMISSIVE].filter(m => !magic.has(m));
     const lit = ["heath", "meadow", "berry-thicket", "garden"].map(id => { const a = G.areaAssets(id, st); let n = 0; for (const x of [a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])]) { const d = x.sp.A.getContext("2d").getImageData(0, 0, x.sp.w, x.sp.h).data; for (let k = 3; k < d.length; k += 4) if (d[k] === 254) n++; } return [id, n]; });
     res.push({ what: "only magical materials glow; flowering areas (heath, meadow, berry thicket, garden) have no glowing pixels", good: !extra.length && lit.every(([, n]) => n === 0), info: lit.map(([id, n]) => id + " " + n).join(", ") + (extra.length ? "; extra glowing materials " + extra : "") });
-  }
-  { // tree variety: every area whose big objects are trees has at least 8 variants over at least 3 height classes, taller by class, sane sizes, a crown line inside each
+  });
+  task("tree-variety", async () => { // tree variety: every area whose big objects are trees has at least 8 variants over at least 3 height classes, taller by class, sane sizes, a crown line inside each
     const bad = [], order = ["sapling", "mature", "tall", "giant"];
-    for (const A of G.AREAS) {
+    for (const A of AREAS) {
       const vs = G.areaTreeVariants(A.id, st); if (!(A.big || []).some(([k]) => k === "tree")) { if (vs.length) bad.push(A.id + " has trees it should not"); continue; }
       const classes = new Set(vs.map(v => v.heightClass)), mean = c => { const h = vs.filter(v => v.heightClass === c).map(v => v.whole.h); return h.reduce((a, x) => a + x, 0) / Math.max(1, h.length); };
       const rising = order.filter(c => classes.has(c)).every((c, k, arr) => k === 0 || mean(c) > mean(arr[k - 1]) * (A.big.some(([, o]) => o.type === "willow") ? .98 : 1.05));
       const sane = vs.every(v => v.whole.h > 8 && v.whole.w > 4 && v.whole.h < 1200 && v.crownY > 0 && v.crownY < v.whole.h && v.top.h > 0 && v.bot.h > 0 && v.metres.height > 0);
       if (!(vs.length >= 8 && classes.size >= 3 && rising && sane)) bad.push(`${A.id}: ${vs.length} variants, ${classes.size} classes${rising ? "" : ", not rising"}${sane ? "" : ", bounds"}`);
+      // no crown cut off flat by its canvas (Ed, 2026-10-13: "The tops of some treetops are cut off"): its sprite's top row empty
+      vs.forEach((v, i) => { if (v.face) return; const d = v.whole.A.getContext("2d").getImageData(0, 0, v.whole.w, 1).data; let n = 0; for (let x = 0; x < v.whole.w; x++) if (d[x * 4 + 3]) n++; if (n) bad.push(`${A.id} #${i} ${v.species} ${v.heightClass}: its crown cut off at the top (${n} px)`); });
     }
-    res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
-  }
-  { // tree species (Ed: the forest should vary from area to area, mostly UK kinds): every species draws, standing, its crown line inside;
+    res.push({ what: "tree variety: every wooded area has 8+ variants over 3+ height classes, taller by class (willows wider instead), sane bounds, no crown cut off at its top", good: !bad.length, info: bad.slice(0, 6).join("; ") || "ok" });
+  });
+  task("tree-species", async () => { // tree species (Ed: the forest should vary from area to area, mostly UK kinds): every species draws, standing, its crown line inside;
     // seen from the treetops each species' crown differs measurably from every other's (fill, shade shares, leaf grain, outline, colour);
     // no two areas with the same layout pattern share a main species, no species is the main kind of more than two areas, and the old broadleaf only of dead woods
     const ids = Object.keys(G.TREE_SPECIES), bad = [], stats2 = {};
@@ -536,10 +593,10 @@ const report = await b.page.evaluate(async () => {
     // (e.g. snowy vs not snowy)"): its species, or a variant of it (art/flora/variants.js), no two areas sharing one
     const { TREE_VARIANTS, treeKey } = await import("/art/flora/variants.js");
     const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], owner = {}, uses = {};
-    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = treeKey(o); if (owner[key]) bad.push(`${A.id} and ${owner[key]} share their main tree ${key}`); owner[key] = A.id; uses[key] = 1; if (o.variant && !TREE_VARIANTS[o.variant]) bad.push(`${A.id} names no variant ${o.variant}`); if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species " + o.type); }
+    for (const A of AREAS) { const o = main(A); if (!o) continue; const key = treeKey(o); if (owner[key]) bad.push(`${A.id} and ${owner[key]} share their main tree ${key}`); owner[key] = A.id; uses[key] = 1; if (o.variant && !TREE_VARIANTS[o.variant]) bad.push(`${A.id} names no variant ${o.variant}`); if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species " + o.type); }
     res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); every area's main tree its own (a species, or a variant of one), plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main trees over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
-  }
-  { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
+  });
+  task("life-below-crown", async () => { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
     // a skirt), more on saplings than on mature trees; the top half is exactly what the tree draws without them (the canopy and its cut-out unchanged);
     // and no wall of leaves at the witch's eye height: there, no row of the bottom half's leaves spans more than 0.6 of the crown's width (or half the witch's height, for a narrow tree)
     const L = new Set([G.M.LEAF, G.M.LEAF2, G.M.LEAF3]), wh = G.witchSprite(st).h, bad = [], K = 2 / (st.pixel || 2); let young = 0, old = 0, worst = 0;
@@ -559,12 +616,12 @@ const report = await b.page.evaluate(async () => {
     if (worst > .6) bad.push(`a ${worst.toFixed(2)}-wide wall of leaves at eye height`);
     if (young <= old) bad.push("saplings no leafier below than mature trees");
     res.push({ what: "life below the crown: every species' bottom half carries leaves, saplings more; the canopy unchanged; no wall of leaves at eye height", good: !bad.length, info: bad.join("; ") || `widest eye-height leaves ${worst.toFixed(2)} of the crown; leaf share below, saplings ${(young / 60).toFixed(2)} vs mature ${(old / 60).toFixed(2)}` });
-  }
-  { // ground cover and wind (for the prototype's rendering): every area has 3+ kinds of tuft, 8 to 13 px, each drawn, their weights adding up to 1;
+  });
+  task("tufts-wind", async () => { // ground cover and wind (for the prototype's rendering): every area has 3+ kinds of tuft, 8 to 13 px, each drawn, their weights adding up to 1;
     // sway masks: on every species' trees the trunk's foot is still (0) and the leaves sway (their top more than their low leaves), rocks never sway,
     // and the leafy props carry a mask the size of their albedo
     const bad = [], L = new Set([G.M.LEAF, G.M.LEAF2, G.M.LEAF3]);
-    for (const A of G.AREAS) { const ts = G.tuftSprites(A.id, st), sum = ts.reduce((a, t) => a + t.weight, 0); if (ts.length < 3 || Math.abs(sum - 1) > .001) bad.push(`${A.id} tufts ${ts.length}, weights ${sum.toFixed(3)}`); for (const t of ts) { const n = t.sp.m.filter(v => v).length; if (!(n >= 6 && t.sp.w >= 8 && t.sp.w <= 13 && t.sp.h >= 3 && t.sp.h <= 13)) bad.push(`${A.id} ${t.kind} ${t.sp.w}x${t.sp.h} (${n} px)`); } }
+    for (const A of AREAS) { const ts = G.tuftSprites(A.id, st), sum = ts.reduce((a, t) => a + t.weight, 0); if (ts.length < 3 || Math.abs(sum - 1) > .001) bad.push(`${A.id} tufts ${ts.length}, weights ${sum.toFixed(3)}`); for (const t of ts) { const n = t.sp.m.filter(v => v).length; if (!(n >= 6 && t.sp.w >= 8 && t.sp.w <= 13 && t.sp.h >= 3 && t.sp.h <= 13)) bad.push(`${A.id} ${t.kind} ${t.sp.w}x${t.sp.h} (${n} px)`); } }
     for (const id of Object.keys(G.TREE_SPECIES)) {
       const t = G.TREE_SPECIES[id].fn(G.rng(9), { ...st }, st.treeSize), sp = t.sp, sw = G.swayMask(sp); let footMax = 0, leafHi = 0, leafLo = 255, leaves = 0;
       for (let y = sp.h - 3; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const i = y * sp.w + x; if ([G.M.TRUNK, G.M.BARK2, G.M.BARKD, G.M.BARKL, G.M.BELLY].includes(sp.m[i])) footMax = Math.max(footMax, sw[i]); }
@@ -573,9 +630,9 @@ const report = await b.page.evaluate(async () => {
     }
     { const rock = G.areaAssets("ravine", st).big[0]; if (rock.sway) bad.push("a boulder sways"); }
     for (const id of ["meadow", "moor", "heath"]) for (const b of [...G.areaAssets(id, st).small, ...G.areaAssets(id, st).big]) if (G.SWAYING_PROPS.has(b.kind) && !(b.sway && b.sway.width === b.sp.w && b.sway.height === b.sp.h)) bad.push(`${id} ${b.kind} has no sway mask`);
-    res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${G.AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${G.AREAS.length} areas` });
-  }
-  { // the prop generator (art/props/, #119): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, no two alike;
+    res.push({ what: "ground cover and wind: every area has 3+ tufts (8 to 13 px), weights adding to 1; trees' feet still and leaves swaying (tops most), rocks still, leafy props masked", good: !bad.length, info: bad.slice(0, 6).join("; ") || `${AREAS.reduce((a, A) => a + G.tuftSprites(A.id, st).length, 0)} tufts over ${AREAS.length} areas` });
+  });
+  task("prop-generator", async () => { // the prop generator (art/props/, #119): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, no two alike;
     // standing stones grey slabs 3 to 6 m tall (squat and broken ones from 1.4 m), plain (lichen and moss under a third of them) and wider than deep in the picture;
     // cairns low (under 2.2 m) and wider than tall; pools wider than tall, mostly water, 1.5 to 5 m across (at the tall pieces' 16 px a metre); a broken trunk's wood all
     // one piece (its branch joined to it, never a stick laid beside it); and under ?props=gen the moor and the muddy forest get
@@ -606,12 +663,12 @@ const report = await b.page.evaluate(async () => {
     if (Math.max(...moor.big.map(a => a.metres?.height || 0)) < 4) bad.push("the moor has nothing 4 m tall under ?props=gen");
     if (Math.abs(moor.big.filter(a => a.kind === "standingstone").reduce((t, a) => t + (a.sparse || 0), 0) - .12) > 1e-6) bad.push("the standing stones' sparse share changed");
     res.push({ what: "prop generator: standing stones, cairns, pools and broken trunks, 12 variants each, standing, none alike; stones grey, plain slabs; cairns low; pools mostly water; each broken trunk and fallen log one piece; logs, mushroom rings and stone circles too; ?props=gen gives the moor and the muddy forest 3 shapes of each", good: !bad.length, info: bad.slice(0, 6).join("; ") });
-  }
-  { // the legend clearings' rim kit (#235; art/props/generator.js rimPiece, areaAssets' rim): every area has RIM_PIECES pieces, each drawn, standing
+  });
+  task("rim-kit", async () => { // the legend clearings' rim kit (#235; art/props/generator.js rimPiece, areaAssets' rim): every area has RIM_PIECES pieces, each drawn, standing
     // on its bottom row, nothing NaN, none over a metre, none glowing, at least 3 shapes of them; open and stony areas mostly stones, cairns and
     // boulders, wooded ones mostly toadstools, stumps and posts
     const bad = [], EM = new Set([...G.EMISSIVE]), stony = new Set(["stone", "cairn", "boulder"]);
-    for (const def of G.AREAS) {
+    for (const def of AREAS) {
       const a = G.areaAssets(def.id, st), rim = a.rim || [];
       if (rim.length !== G.RIM_PIECES) { bad.push(`${def.id}: ${rim.length} rim pieces`); continue; }
       for (const [k, b] of rim.entries()) {
@@ -626,8 +683,8 @@ const report = await b.page.evaluate(async () => {
       if (want ? share < .5 : share > .5) bad.push(`${id}'s rim ${forms.join(",")}`);
     }
     res.push({ what: "legend clearings' rim kit: every area 6 small pieces (stones, cairns, boulders, toadstools, stumps, posts), each drawn and standing, under a metre, unlit, 3+ shapes; stony areas mostly stone, wooded ones mostly wood and toadstools", good: !bad.length, info: bad.slice(0, 6).join("; ") });
-  }
-  { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
+  });
+  task("bridges", async () => { // generated bridges (art/props/bridges.js, under ?props=gen): each bridge's variants draw and stand, none alike, nothing NaN,
     // the hand-made piece's size within a third either way (so a crossing's corridor still fits), nothing glowing
     const bad = [], EM = new Set([...G.EMISSIVE]);
     for (const id of G.BRIDGE_IDS) {
@@ -649,8 +706,8 @@ const report = await b.page.evaluate(async () => {
       posts.add(key);
     }
     res.push({ what: "generated bridges: footbridges, rope bridges and root bridges, 8 variants each, standing, none alike, within a third of the hand-made piece's size, unlit; fingerposts 8 variants, standing, none alike, 1.4 to 3 m, unlit", good: !bad.length, info: bad.slice(0, 6).join("; ") });
-  }
-  { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
+  });
+  task("set-piece-generator", async () => { // the set-piece generator (art/props/sets.js): every kind's 12 seeded variants draw, stand on their bottom row, nothing NaN, none alike, landmark-sized
     // (6 to 12 m across or tall) with their origin on the sprite, one warm glowing touch at most (a lantern, embers), a punt's and a jetty's pool mostly water;
     // and an area naming one as its set piece gets it built (setPiece3d)
     const bad = [], EM = new Set([...G.EMISSIVE]), water = [G.M.WATER, G.M.BODY2, G.M.ACCENT, G.M.WEB, G.M.GLINT];
@@ -670,30 +727,36 @@ const report = await b.page.evaluate(async () => {
     const fake = { ...G.AREA_BY_ID["muddy-forest"], id: "test-area" }, a = G.setPiece3d("jetty", fake, st), b = G.setPiece3d("jetty", { ...fake, id: "another-area" }, st);
     if (!a.sp || !a.origin || a.sp.w * a.sp.h === b.sp.w * b.sp.h && a.sp.w === b.sp.w) bad.push("setPiece3d: a generated kind isn't built, or two areas get the same one");
     res.push({ what: "set-piece generator: punts, jetties, rings and heaps, 12 variants each, standing, none alike, 6 to 12 m, origin on it, one warm glow at most, punts and jetties in their pools; an area naming one gets its own", good: !bad.length, info: bad.slice(0, 6).join("; ") });
-  }
-  { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
+  });
+  task("tall-pieces", async () => { // something tall in every area (Ed: "each area should have at least some kind of taller thing"): each area's big pieces include one at least 4 m tall
     // (its trees across their heights, or for the open areas the tall pieces); the tall pieces (snag, cairn, standing stone, pillar, spire, stalagmite)
     // stand on the ground, 4.5 to 12 m tall, and are flagged sparse (a small share of the area's big objects), or big where they stand in for
     // the area's trees (the stone shrine's great standing stones: Ed, 2026-10-06)
     const bad = [], tallest = {};
-    for (const A of G.AREAS) {
+    for (const A of AREAS) {
       const a = G.areaAssets(A.id, st), hs = [...a.big.filter(b => A.big[b.from][0] !== "tree").map(b => b.sp.h / 16), ...G.areaTreeVariants(A.id, st).map(v => v.metres.height)]; tallest[A.id] = Math.max(0, ...hs); // trees: their variants, sapling to giant
       if (!(tallest[A.id] >= 4)) bad.push(`${A.id} ${tallest[A.id].toFixed(1)} m`);
       a.big.forEach(b => { const [kind, o] = A.big[b.from]; if (!G.TALL_KINDS.includes(kind)) return; let bottom = 0; const d = b.sp.A.getContext("2d").getImageData(0, b.sp.h - 1, b.sp.w, 1).data; for (let k = 3; k < d.length; k += 4) if (d[k]) bottom++;
         if (!(bottom > 0 && b.metres && b.metres.height >= 4.5 && b.metres.height <= 12 && (o.sparse > 0 && o.sparse <= .3 || o.big))) bad.push(`${A.id} ${kind} ${b.metres?.height} m${bottom ? "" : ", floating"}`); });
     }
-    const open = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
+    const open = ["moor", "stone-shrine", "log-pile", "ravine"].filter(id => tallest[id] != null).map(id => `${id} ${tallest[id].toFixed(1)} m`).join(", ");
     res.push({ what: "something tall in every area: a big piece 4 m+ in each; the open areas' tall pieces stand, 4.5 to 12 m, sparse", good: !bad.length, info: bad.join("; ") || `the open areas' tallest: ${open}` });
-  }
-  { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns (no pattern for more than 8 areas)
-    const bad = G.AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
-    const uses = {}; for (const A of G.AREAS) if (A.layout) uses[A.layout.pattern] = (uses[A.layout.pattern] || 0) + 1;
-    const varied = Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= 8;
-    res.push({ what: "layouts: every area has a sound layout (pattern, density, glades, heightMix iff wooded, terrain, decor weights, feel), 6+ patterns in use, none in more than 8 areas", good: !bad.length && varied, info: bad.slice(0, 4).join("; ") || Object.entries(uses).map(([k, n]) => k + " " + n).join(", ") });
-  }
-  { // set pieces: every area has one; the new ones (built in 3D) stand on the ground and are landmark-sized, 6 to 12 m across or tall
+  });
+  task("layouts", async () => { // layouts: every area has a sound layout descriptor, and between them they use most of the patterns; no pattern for more than
+    // a quarter of the areas (8 at the least: the cap of 8 couldn't hold 61 areas over 8 patterns, 2026-10-13); and every area's layout its own:
+    // its pattern, density and clump (to a tenth), glade count, tallest height class and terrain together unlike any other's (Ed's intent,
+    // each area different: the pattern is one axis of it)
+    const bad = AREAS.map(A => [A.id, G.layoutProblems(A)]).filter(([, p]) => p.length).map(([id, p]) => id + ": " + p.join(", "));
+    const uses = {}; for (const A of AREAS) if (A.layout) uses[A.layout.pattern] = (uses[A.layout.pattern] || 0) + 1;
+    const cap = Math.max(8, Math.ceil(AREAS.length / 4)), varied = !!only || Object.keys(uses).length >= 6 && Math.max(...Object.values(uses)) <= cap; // (--only: the roster's spread of patterns isn't the selection's to meet)
+    const sig = L => [L.pattern, Math.round(L.density * 10) / 10, Math.round(L.clump * 10) / 10, L.glades?.count ?? 0, L.heightMix ? Object.entries(L.heightMix).sort((a, b) => b[1] - a[1])[0][0] : "-", (L.terrain ?? []).join("+")].join("|");
+    const bySig = {}; for (const A of G.AREAS) if (A.layout) (bySig[sig(A.layout)] ??= []).push(A.id); // (every area, so a selected one is still compared with the rest)
+    const alike = Object.values(bySig).filter(ids => ids.length > 1 && ids.some(id => AREAS.some(A => A.id === id))).map(ids => ids.join(" = "));
+    res.push({ what: `layouts: every area has a sound layout (pattern, density, glades, heightMix iff wooded, terrain, decor weights, feel), 6+ patterns in use, none in more than a quarter of the ${AREAS.length} areas (${cap}), and no two areas' layouts alike (pattern, density, clump, glades, tallest class, terrain)`, good: !bad.length && varied && !alike.length, info: bad.slice(0, 4).join("; ") || (alike.length ? "alike: " + alike.slice(0, 4).join("; ") + "; " : "") + Object.entries(uses).map(([k, n]) => k + " " + n).join(", ") });
+  });
+  task("set-pieces", async () => { // set pieces: every area has one; the new ones (built in 3D) stand on the ground and are landmark-sized, 6 to 12 m across or tall
     const bad = [], sizes = [];
-    for (const A of G.AREAS) {
+    for (const A of AREAS) {
       const a = G.areaAssets(A.id, st), x = a.setPiece; if (!x) { bad.push(A.id + " has none"); continue; }
       if (!G.NEW_SET_PIECES[A.id]) continue;
       const big = Math.max(x.metres.width, x.metres.height); sizes.push(big);
@@ -701,9 +764,9 @@ const report = await b.page.evaluate(async () => {
       const o = x.origin, inside = o && o.x >= 0 && o.x <= x.sp.w && o.y >= 0 && o.y <= x.sp.h, tight = x.metres.height * 16 === x.sp.h || Math.abs(x.metres.height * 16 - x.sp.h) < 1; // its origin on the sprite; metres match the cropped sprite
       if (!(big >= 6 && big <= 12 && bottom > 0 && inside && tight)) bad.push(`${A.id} ${x.metres.width}x${x.metres.height} m${bottom ? "" : ", floating"}${inside ? "" : ", origin"}${tight ? "" : ", metres"}`);
     }
-    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && sizes.length >= 20, info: bad.join(", ") || `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
-  }
-  { // modern relics, the playground, the sports grounds: each standing (decals flat), sized, tall ones split, only the flagged ones glow; arrangements name real pieces, at most one glowing piece each; sports grounds 15 to 30 m across
+    res.push({ what: "set pieces: every area has one; the new ones (20 or more) stand on the ground, 6 to 12 m across or tall, cropped (metres match the sprite), their origin on it", good: !bad.length && (!!only || sizes.length >= 20), info: bad.join(", ") || (sizes.length ? `${sizes.length} new, ${Math.min(...sizes)} to ${Math.max(...sizes)} m` : "none new selected") }); // (--only: the 20 is the roster's)
+  });
+  task("modern-relics", async () => { // modern relics, the playground, the sports grounds: each standing (decals flat), sized, tall ones split, only the flagged ones glow; arrangements name real pieces, at most one glowing piece each; sports grounds 15 to 30 m across
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
     for (const d of G.RELICS) {
       const R = G.relicSprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)); fam[d.family] = (fam[d.family] || 0) + 1;
@@ -713,8 +776,8 @@ const report = await b.page.evaluate(async () => {
     }
     const L = G.relicLayouts(st), arr = Object.entries(L).filter(([, list]) => !list.every(p => G.RELIC_BY_ID[p.id]) || list.filter(p => G.RELIC_BY_ID[p.id].glow).length > 1).map(([n]) => n);
     res.push({ what: "modern relics (15+), the playground (6 pieces) and the sports grounds: standing, decals flat, tennis/baseball/football 15-30 m across, tall ones split, only the flagged ones glow; arrangements name real pieces, one glowing touch at most", good: !bad.length && !arr.length && fam.modern >= 15 && fam.playground === 6 && fam.sports >= 12, info: [...bad, ...arr.map(n => n + " arrangement")].join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
-  }
-  { // world decorations: 12 ruins in two conditions, 8 rocks, 13 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
+  });
+  task("decor", async () => { // world decorations: 12 ruins in two conditions, 8 rocks, 13 freak trees, each standing, sized for its family; tall ones split; only the flagged ones glow; the lake kit
     const bad = [], fam = { ruins: 0, rocks: 0, freak: 0 }, EM = new Set([...G.EMISSIVE]); let tallRuins = 0, glowing = 0;
     for (const d of G.DECOR) for (let variant = 0; variant < d.variants; variant++) {
       const D = G.decorSprite(d.id, st, { variant }), sp = D.whole, s2 = stats(sp), big = Math.max(D.metres.width, D.metres.height), lit = [...sp.m].some(v => EM.has(v));
@@ -726,8 +789,8 @@ const report = await b.page.evaluate(async () => {
     }
     const L = G.lakeKit(st), lake = L.water.w === 64 && L.water.h === 48 && L.shore.w === 64 && L.shore.h === 16 && [...L.reeds, ...L.lilies].every(x => stats(x).n > 20) && [...L.water.m].filter(v => v === G.M.WATER).length > 64 * 48 * .8;
     res.push({ what: "world decorations: 12 ruins (two conditions), 8 rocks, 13 freak trees; standing; ruins 4-14 m, a few tall enough for the treetops; tall ones split top and bottom; only the flagged ones glow (3+ ruins); the lake kit", good: !bad.length && fam.ruins === 12 && fam.rocks === 8 && fam.freak === 13 && tallRuins >= 2 && glowing >= 3 && lake, info: bad.join(", ") || `${tallRuins} tall ruins, ${glowing} glowing` });
-  }
-  { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
+  });
+  task("country", async () => { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
     for (const d of G.COUNTRY) {
       const R = G.countrySprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + 1;
@@ -735,8 +798,8 @@ const report = await b.page.evaluate(async () => {
       if (!(s2.n > 30 && s2.bottom > 0 && !nan && split && lit === !!d.glow && big >= .5 && big <= 9 && R.metres.footprint > 0 && R.metres.footprint <= 6 && R.origin.x >= 0 && R.origin.x <= sp.w && R.origin.y >= 0 && R.origin.y <= sp.h + 1)) bad.push(`${d.id} ${R.metres.width}x${R.metres.height} m, footprint ${R.metres.footprint}${split ? "" : " split"}${lit === !!d.glow ? "" : " glow"}`);
     }
     res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
-  }
-  { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
+  });
+  task("landmarks", async () => { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
     for (const d of G.LANDMARKS) {
       const R = G.landmarkSprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + (d.half === "near" ? 0 : 1);
@@ -745,8 +808,8 @@ const report = await b.page.evaluate(async () => {
     }
     const halves = Object.keys(G.LANDMARK_BUILDINGS).filter(b => G.LANDMARK_BY_ID[b + "-far"] && G.LANDMARK_BY_ID[b + "-near"]).length;
     res.push({ what: "large scenes' pieces: cemetery, car park, scrap yard, 7 places of worship, castle, classical; standing, sized, tall ones split, decals flat, only the flagged ones glow; walk-in buildings in far and near halves", good: !bad.length && fam.worship === 7 && fam.cemetery >= 8 && fam.castle >= 5 && fam.classical >= 6 && halves >= 5, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") + `, ${halves} in halves` });
-  }
-  { // party objects: each standing, nothing NaN, small in pixel area for its class (litter, small, furniture, set: they're reused many times), decals flat;
+  });
+  task("party-objects", async () => { // party objects: each standing, nothing NaN, small in pixel area for its class (litter, small, furniture, set: they're reused many times), decals flat;
     // only the flagged ones glow, each glowing one says its light (neon: its glow in the MAGIC materials, so it recolours by neon; warm: candle gold);
     // every light source glows, half of everything or more glows; a neon piece baked in two neons glows in two colours; clusters of 3 to 8 real objects, 1 to 6 m, mirroring true
     const bad = [], EM = new Set([...G.EMISSIVE]), area = { litter: 1200, balloon: 4000, small: 4000, furniture: 7000, set: 7000, home: 7000, picnic: 7000 }; let glowing = 0;
@@ -787,8 +850,8 @@ const report = await b.page.evaluate(async () => {
       if (F.filter(d => d.glow).length < 4 || F.filter(d => !d.glow).length < 1) bad.push("campfires: too few sizes or no cold one");
     }
     res.push({ what: "party objects: 40+ over the classes (litter, balloon, small, furniture, set, home, picnic); balloons shiny not glowing, every colour slot, bob hints, tie anchors; campfires in 4+ sizes animated in 3 frames with point lights, a cold one; hanging pieces with a hang anchor at the top, lanterns and lights swinging, point lights only on campfires and lanterns; standing, small in pixel area for their class, decals flat; only the flagged ones glow, with their light (neon recolourable, or warm); every light source glows, half or more of the rest (balloons aside) glow; 6+ clusters of 3 to 8, 1 to 6 m", good: !bad.length && n >= 40 && cls.every(k => k >= 6) && glowing * 2 >= n - cls[1] && G.PARTY_CLUSTERS.length >= 6, info: bad.join(", ") || `${n} objects (${cls.join("/")}), ${glowing} glowing, ${G.PARTY_CLUSTERS.length} clusters` });
-  }
-  { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
+  });
+  task("scenes", async () => { // scenes: every piece names a real sprite; 3+ pieces; at most one glowing kind; footprints sane (small 3 to 12 m) and holding every piece; mirroring keeps every distance and the footprint
     const bad = [], sizes = [];
     for (const S of G.SCENES) {
       const refs = S.pieces.map(p => p[0]), missing = refs.filter(r => !G.sceneRefExists(r));
@@ -801,8 +864,8 @@ const report = await b.page.evaluate(async () => {
     }
     const small = G.SCENES.filter(S => S.size === "small").length, large = G.SCENES.filter(S => S.size === "large").length;
     res.push({ what: "scenes: 10+ small, 12 large; every piece real, 3+ each, one glowing kind at most, footprints sane and holding their pieces, mirroring keeps distances; hay bales and fences as scenes", good: !bad.length && small >= 10 && large >= 12 && !!G.SCENE_BY_ID["hay-bales"] && !!G.SCENE_BY_ID["fence-line"], info: bad.join(", ") || `${small} small, ${large} large, footprints ${Math.min(...sizes)} to ${Math.max(...sizes)} m` });
-  }
-  { // paths: every kind's strip tiles along its length, its end, Y and T are drawn, only the magic trail glows; the railway's three variants, points, broken end and crossing; the 3D pieces stand, only flagged ones glow; every area has a path kind
+  });
+  task("paths", async () => { // paths: every kind's strip tiles along its length, its end, Y and T are drawn, only the magic trail glows; the railway's three variants, points, broken end and crossing; the 3D pieces stand, only flagged ones glow; every area has a path kind
     const bad = [], EM = new Set([...G.EMISSIVE]), lit = sp => [...sp.m].some(v => EM.has(v)), n = sp => { let k = 0; for (const v of sp.m) if (v) k++; return k; };
     for (const id of G.PATH_IDS) {
       const K = G.PATH_KINDS[id];
@@ -814,10 +877,10 @@ const report = await b.page.evaluate(async () => {
     }
     for (const sp of [G.railPoints({ variant: 1 }), G.railBrokenEnd(), G.railCrossing()]) if (n(sp) < 200) bad.push("railway piece");
     for (const d of G.PATH_PIECES) { const P = G.pathPieceSprite(d.id, st); if (!(stats(P.sp).bottom > 0 && n(P.sp) > 8 && lit(P.sp) === !!d.glow)) bad.push(d.id); }
-    const ap = G.areaPathKinds(), none = G.AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
+    const ap = G.areaPathKinds(), none = AREAS.filter(A => !(ap[A.id] || []).length).map(A => A.id);
     res.push({ what: "paths: 10 kinds, each strip tiling with its end, Y and T; only the magic trail glows; railway variants, points, broken end, crossing; the 3D pieces stand, only flagged ones glow; every area suits a path kind", good: !bad.length && !none.length && G.PATH_IDS.length >= 10, info: [...bad, ...none.map(a => a + " has no path kind")].join(", ") || `${G.PATH_IDS.length} kinds, ${G.PATH_PIECES.length} pieces` });
-  }
-  { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
+  });
+  task("generators", async () => { // every generator draws (phase 1: the ones no other check reached): every beach find and print (prints at every heading), the bedroom,
     // every broom kind under the witch, her hat alone both ways, every species' rune stone, a party patch, every legend's sprites; each
     // non-empty, nothing NaN in its normals, every material it uses coloured, its origin (where it has one) on the sprite
     const bad = [], seen = { beach: 0, brooms: 0, stones: 0, legends: 0 };
@@ -838,8 +901,8 @@ const report = await b.page.evaluate(async () => {
     { const p = G.partyPatch(1, (id, o) => G.scenePlacements(id, st, o)); if (!(p.length > 10) || p.some(q => !q.ref || Number.isNaN(q.x) || Number.isNaN(q.y))) bad.push(`party patch: ${p.length} pieces`); else { const missing = p.filter(q => !G.sceneRefExists(q.ref)); if (missing.length) bad.push(`party patch: ${missing[0].ref} is no piece`); } }
     for (const id of G.LEGEND_IDS) { const L = G.legendSprites(id, st); if (!L || !Object.keys(L).length) bad.push(`legend sprites ${id}`); seen.legends++; }
     res.push({ what: "every generator draws: the beach's finds and prints (every heading), the bedroom, every broom, the witch's hat both ways, every species' rune stone, a party patch, every legend's sprites; none empty, nothing NaN, every material coloured", good: !bad.length && seen.beach > 0 && seen.brooms >= 18, info: bad.slice(0, 6).join("; ") || `${seen.beach} beach pieces, ${seen.brooms} brooms, ${seen.stones} rune stones, ${seen.legends} legends` });
-  }
-  { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
+  });
+  task("runestones", async () => { // the runestones' 20 forms (Ed, 2026-10-12): each draws, mildly unlike today's (its size within 0.85 to 1.25 of it), and mirrored at the
     // same size with its carving the same glyph (as many lit pixels, the sigil stamped after the flip: never mirror-written)
     const lit = b => { const d = b.A.getContext("2d").getImageData(0, 0, b.w, b.h).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] === 254) n++; return n; };
     const base = G.runeStone(st, { sigil: "boar" }), bad = [];
@@ -850,14 +913,19 @@ const report = await b.page.evaluate(async () => {
       if (Math.abs(lit(f) - lit(a)) > 6 || lit(a) < 20) bad.push(`form ${v} carving ${lit(a)} / mirrored ${lit(f)}`);
     }
     res.push({ what: `the runestone's ${G.RUNESTONE_FORMS} forms draw, within 0.85 to 1.25 of today's size, mirrored the same size with the same carving`, good: G.RUNESTONE_FORMS === 20 && !bad.length, info: bad.slice(0, 4).join("; ") || `${G.RUNESTONE_FORMS} forms` });
-  }
-  { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); }
-  for (const A of G.AREAS) {
+  });
+  task("lights", async () => { { const L = G.lightProps(st), all = [...L.campfire, ...Object.values(L.stones), L.pond]; res.push({ what: "light sources: 3 campfire frames, 3 magic stones, a pond with a water mask", good: all.length === 7 && all.every(b => b.w > 4 && b.h > 4) && !!L.pond.mask, info: all.map(b => b.w + "x" + b.h).join(" ") }); } });
+  task("areas", async () => { for (const A of AREAS) {
     const a = G.areaAssets(A.id, st), props = [...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])];
     res.push({ what: `area ${A.id}: floor, ${props.length} props, creature ${A.creature} exists`, good: a.floor.sp.w > 0 && props.length > 0 && !!G.SPECIES_BY_ID[A.creature] && props.every(p => p.sp.w > 0 && p.sp.h > 0), info: "" });
-  }
-  return res;
-});
+  } });
+  const timings = [];
+  for (const t of tasks) if (!names || names.includes(t.name)) { const t0 = performance.now(), n0 = res.length; await t.fn(); timings.push([t.name, performance.now() - t0, res.length - n0]); }
+  return { res, timings, names: tasks.map(t => t.name) };
+};
+const report = await runSpriteChecks(b, SPRITE_CHECKS);
+for (const lines of await Promise.all(LABS)) for (const [cond, what] of lines) ok(cond, what);
+lap("lab pages (the rest)");
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
@@ -879,6 +947,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   if (!(D.detailTier(32) === 0 && D.detailTier(96) === 1 && D.detailTier(200) === 2)) bad.push("detailTier");
   ok(!bad.length, `detailed sigils: every species' and the World Tree (${S.SIGIL_IDS.length + 1}), plain glyph, carved bands and the carved emblem, crisp, clear of the box's edge, no circle, each tier its own${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+lap("detailed-sigils");
 // party relics (art/partyRelics.js, #87): 6+ bottles, each half-buried, drawn at a third of their built size (Ed, 2026-10-11: 2.3 to 5.4 m across and 2 to 5.7 m tall),
 // sitting in its mound (the bottom row earth); its liquid glows (200+ px of MAGIC; nothing glows but the liquid, its surface and the
 // motes); the glass is see-through (a rim in its colour and a half-clear dither of empty glass); it carries a light; its 3 frames
@@ -907,6 +976,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   if (tops.some((g, i) => g.sp.m.filter(Boolean).length <= frames[i].sp.m.filter(Boolean).length)) bad.push("treetop glint not bigger");
   ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} bottles, half-buried, a third of their built size, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+lap("party-relics");
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
 // area options, and the bushes, against art/flora/baseline/ (one file a species; when a change to them is meant, rewrite them:
 // node art/flora/fingerprint.mjs)
@@ -916,6 +986,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   const keys = Object.keys(base), diff = keys.filter(k => base[k] !== now[k]), extra = Object.keys(now).filter(k => !(k in base));
   ok(!diff.length && !extra.length, `flora genomes: ${keys.length - diff.length} of ${keys.length} trees and bushes as the baseline${diff.length ? " — differ: " + diff.slice(0, 8).join(", ") : ""}${extra.length ? " — not in it: " + extra.slice(0, 8).join(", ") : ""}`);
 }
+lap("flora-baseline");
 // snow-laden crowns (trees.js snowCrown, Ed 2026-10-11): at 0 a tree is untouched; laden, every leafy species holds snow, on its
 // leaves only (as WEB, which sways with them), more on its upper half than its lower, and no lone flecks
 {
@@ -936,6 +1007,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `snow crowns: ${n} leafy species hold snow, laden, on their leaves only, higher than its leaves as a whole, swaying with them, no lone flecks; untouched at 0${bad.length ? " — " + bad.slice(0, 8).join(", ") : ""}`);
 }
+lap("snow-crowns");
 // pixel wind (art/sway.js): every species' sway code keeps the trunk's foot still; the genome generator's trees sway by their
 // blobs (3+ regions, 3+ phases among them); with no wind a tree draws exactly as baked; in a strong gust every region moves whole,
 // by whole pixels (at most 2), and keeps most of itself in view
@@ -958,6 +1030,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `pixel wind: ${Object.keys(T.TREE_SPECIES).length} species' trees sway by whole regions and whole pixels (at most 2), feet still, blobs out of step, still in calm air, whole in a gust${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+lap("pixel-wind");
 // the witch generator (art/witchGenome.js): her own genome draws her exactly (flight, lean, rise, fast, standing, both facings,
 // each heading); 20 generated witches pass their limits, draw in every flight pose and some on foot with their hand and hat-tip
 // anchors inside, their hatband glowing, 0.8 to 1.7 times her height hovering, and no two alike
@@ -1015,6 +1088,7 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bbad.length, `broom kinds (Ed, 2026-10-06): every one of the ${Gn.WITCH_AXES.broom.length} (${Gn.WITCH_AXES.broom.join(", ")}) draws in every flight pose and frame, both facings, and on foot, her hand and hat tip inside, only her colours, its body or trim showing, about her size${bbad.length ? " — " + bbad.slice(0, 6).join("; ") : ""}`);
 }
+lap("witch-generator");
 // area flora (art/flora/areas.js): every wooded area lists 3 to 6 real species, shares adding to 1, its main kind first (as its big
 // names it), a palette within reason (sat and val 0.6 to 1.3); the open areas list none; fantasy species are never an area's main kind
 {
@@ -1035,16 +1109,19 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   }
   ok(!bad.length, `area flora: ${wooded} wooded areas each grow 3 to 6 species in their own palette, main kind first, fantasy only as a minority${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
+lap("area-flora");
 // The art lint (overnight phase 3), on the sprites as the game bakes them (style.json, the bold style): no anti-aliased pixels
 // (alpha only 0, 254 for what glows, or 255); on the pixel grid (whole-pixel sizes and anchors); within its palette (at most
 // LINT_TONES colours a material: the bold style's three tones, its outline and a glint, so a gradient or a stray colour
 // fails); and a silhouette contact sheet (art/out/silhouettes.png, every species' adult squared to its box), warning of
 // look-alikes: overlap at least LINT_LOOKALIKE and about the same proportions.
 {
-  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24;
+  const LINT_TONES = 5, LINT_LOOKALIKE = .8, SIL = 24, t0 = performance.now();
   await b.page.goto(b.base + "/art/headless-blank.html");
-  const r = await b.page.evaluate(async ({ LINT_TONES, SIL }) => {
-    const G = await import("/art/generator.js"), { AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+  // One unit a species (its 12 bakes), one an area (its assets), one the silhouettes, dealt out over the pages; put back in order.
+  const LINT = async ({ LINT_TONES, SIL, species, areas, withSil }) => {
+    const G = await import("/art/generator.js"), { AREAS: ALL_AREAS } = await import("/art/areas.js"), style = await (await fetch("/config/style.json")).json();
+    const SPECIES = G.SPECIES.filter(S => species.includes(S.id)), AREAS = ALL_AREAS.filter(A => areas.includes(A.id));
     const st = { ...G.defaultStyle(), ...style, artStyle: "bold" }, aa = [], grid = [], pal = [];
     let n = 0;
     const lint = (what, A, w, h, sp) => {
@@ -1057,13 +1134,13 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
       if (odd) aa.push(`${what} ${odd} px`);
       if (sp?.m) { const mats = new Set(); for (const m of sp.m) if (m) mats.add(m); if (cols.size > LINT_TONES * mats.size + 2) pal.push(`${what} ${cols.size} colours, ${mats.size} materials`); }
     };
-    for (const S of G.SPECIES) for (const level of [0, 1, 2, 3]) for (const [frame, away] of [[0, false], [1, false], [0, true]]) {
+    for (const S of SPECIES) for (const level of [0, 1, 2, 3]) for (const [frame, away] of [[0, false], [1, false], [0, true]]) {
       const sp = G.critter(S.id, level, frame, st, away ? "away" : undefined), bk = G.bake(sp, G.speciesColours(S.id, st), st);
       lint(`${S.id} level ${level} frame ${frame}${away ? " away" : ""}`, bk.A, bk.w, bk.h, sp);
     }
     for (const A of AREAS) { const a = G.areaAssets(A.id, st); for (const x of [a.floor, ...a.walls, ...a.small, ...a.big, ...(a.setPiece ? [a.setPiece] : [])]) if (x?.sp?.A) lint(`${A.id} asset`, x.sp.A, x.sp.w, x.sp.h, x.sp); }
     // The silhouettes: each species' adult, its drawn box squared to SIL × SIL.
-    const sil = G.SPECIES.map(S => {
+    const sil = !withSil ? [] : G.SPECIES.map(S => {
       const sp = G.critter(S.id, 2, 0, st);
       let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
       for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
@@ -1072,7 +1149,13 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
       return { id: S.id, m: Array.from(m), aspect: bw / bh };
     });
     return { n, aa, grid, pal, sil };
-  }, { LINT_TONES, SIL });
+  };
+  const ids = (await b.page.evaluate(async () => { const G = await import("/art/generator.js"), { AREAS } = await import("/art/areas.js"); return { species: G.SPECIES.map(S => S.id), areas: AREAS.map(A => A.id) }; }));
+  const units = [...ids.species.filter(id => !ONLY || ONLY.includes(id)).map(id => ({ species: [id], areas: [] })), ...ids.areas.filter(id => !ONLY || ONLY.includes(id)).map(id => ({ species: [], areas: [id] })), { species: [], areas: [], withSil: true }];
+  const parts = await dealOut(b, units, (page, u) => page.evaluate(LINT, { LINT_TONES, SIL, species: u.species, areas: u.areas, withSil: !!u.withSil }));
+  const r = { n: 0, aa: [], grid: [], pal: [], sil: [] };
+  for (const { result: x } of parts) { r.n += x.n; r.aa.push(...x.aa); r.grid.push(...x.grid); r.pal.push(...x.pal); r.sil.push(...x.sil); }
+  if (flag("times")) { console.log(`art lint: ${secs(performance.now() - t0)} over ${(await pool(b, units.length)).length} page(s)`); for (const [i, u] of units.entries()) if (parts[i].ms > 5000) console.log(`  ${(u.withSil ? "silhouettes" : u.species[0] ?? u.areas[0]).padEnd(22)} ${secs(parts[i].ms).padStart(9)}  page ${parts[i].page}`); }
   ok(!r.aa.length, `art lint, anti-aliasing: ${r.n} baked sprites (every species at every level, both frames and turned away; every area type's assets) have no half-transparent pixels${r.aa.length ? " — " + r.aa.slice(0, 6).join("; ") : ""}`);
   ok(!r.grid.length, `art lint, the pixel grid: every sprite's size and anchors are whole pixels${r.grid.length ? " — " + r.grid.slice(0, 6).join("; ") : ""}`);
   ok(!r.pal.length, `art lint, palette: no sprite has more than ${LINT_TONES} colours a material (+2)${r.pal.length ? " — " + r.pal.slice(0, 6).join("; ") : ""}`);
@@ -1099,6 +1182,8 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   writeFileSync(new URL("./out/silhouettes.png", import.meta.url), Buffer.from(sheet, "base64"));
   console.log(`${alike.length ? "WARN" : "ok  "} art lint, silhouettes: ${r.sil.length} adults on art/out/silhouettes.png${alike.length ? "; look alike: " + alike.join(", ") : ", none alike"}`);
 }
+lap("art-lint");
 await b.close();
+if (flag("times")) { console.log(`passes: ${laps.map(([n, ms]) => `${n} ${secs(ms)}`).join(", ")}; all ${secs(performance.now() - T0)}`); }
 console.log(failed ? `${failed} check(s) failed` : "all checks passed");
 process.exit(failed ? 1 : 0);

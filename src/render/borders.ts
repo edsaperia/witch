@@ -77,6 +77,7 @@ export class BorderView {
   update(): void {
     const g = this.game, B = g.tuning.borders;
     if (!B.on) { this.mesh.visible = false; return; }
+    this.mesh.visible = true; // (on again after the pause page's "Area edges" switched it off: Ed, 2026-10-13)
     (this.mesh.material as THREE.ShaderMaterial).uniforms.uBeat.value = (beatTime(g.beat, g.clock.time) * g.tuning.beat.bpm) / 60;
     // New areas: start working out their borders.
     for (const [k, a] of g.party.areas) {

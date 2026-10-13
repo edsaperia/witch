@@ -126,7 +126,11 @@ AREA_BY_ID.home = HOME_AREA;
 //   pattern     how the big objects are arranged: scatter (random, even) | groves (clumps with gaps)
 //               | rows (lines or an avenue, along `along`) | rings (circles round a centre) | thicket
 //               (packed close) | lone (single trees far apart) | stands (tight clumps of one kind
-//               on open ground) | edgeOnly (open middle, dense rim)
+//               on open ground) | edgeOnly (open middle, dense rim) | glades (a full wood with round
+//               holes in it, the inverse of groves) | hedges (trees along thin winding lines, old
+//               field walls, open ground between) | grid (rows crossing rows along `along`: an
+//               orchard, a plantation). With 61 areas over 8 patterns 12 shared one (2026-10-13): a
+//               new area takes a pattern few areas have (node art/check.mjs's layouts line counts them)
 //   along       for rows: what the rows follow (paths, stream)
 //   density     0-1, how full of big objects the area is (1 = as close as they can stand)
 //   clump       0-1, even (0) to clustered (1)
@@ -140,7 +144,7 @@ AREA_BY_ID.home = HOME_AREA;
 //   decor       world decorations: rate 0-1 (how often an area has one; about rate × 3 per area),
 //               and weights over the families ruins, rocks, freak (freak trees), lake, modern (relics), summing to 1
 //   feel        one sentence for the prototype builder
-const LAYOUT_PATTERNS = ["scatter", "groves", "rows", "rings", "thicket", "lone", "stands", "edgeOnly"];
+const LAYOUT_PATTERNS = ["scatter", "groves", "rows", "rings", "thicket", "lone", "stands", "edgeOnly", "glades", "hedges", "grid"];
 const LAYOUT_TERRAIN = ["stream", "pools", "rocky", "mounds", "paths", "hollows", "ridges"];
 const LAYOUT_DECOR = ["ruins", "rocks", "freak", "lake", "modern"];
 const LAY = (pattern, density, clump, glades, heightMix, undergrowth, lean, terrain, decor, feel, extra = {}) => ({
@@ -223,7 +227,7 @@ export function layoutProblems(a) {
   const y = a.layout, bad = [], in01 = v => typeof v === "number" && v >= 0 && v <= 1, sum1 = o => Math.abs(Object.values(o).reduce((s, v) => s + v, 0) - 1) < 1e-6;
   if (!y) return ["no layout"];
   if (!LAYOUT_PATTERNS.includes(y.pattern)) bad.push("pattern " + y.pattern);
-  if (y.pattern === "rows" && !y.along) bad.push("rows without along");
+  if ((y.pattern === "rows" || y.pattern === "grid") && !y.along) bad.push(y.pattern + " without along");
   for (const k of ["density", "clump", "undergrowth"]) if (!in01(y[k])) bad.push(k);
   if (!(y.glades.count >= 0 && y.glades.size[0] <= y.glades.size[1])) bad.push("glades");
   const wooded = (a.big || []).some(([k]) => k === "tree");
@@ -461,7 +465,7 @@ export const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, 
 // trees (mounds, boulders). ppm: art pixels per metre, for the metres.
 // How tall a species grows as a mature tree (px at the style's tree size), measured once per species and tree size.
 const statureCache = new Map();
-function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, treeSpecies(type).bare(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
+function speciesStature(type, st) { const key = type + ":" + st.treeSize; if (!statureCache.has(key)) statureCache.set(key, (treeSpecies(type).raw ?? treeSpecies(type).bare)(rng(5), { ...st }, st.treeSize).sp.h); return statureCache.get(key); }
 export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanvas, ppm = ART_PIXELS_PER_METRE, flora = null } = {}) {
   const def = AREA_BY_ID[id]; if (!def) throw new Error(`no area type "${id}"`);
   const recipes = (def.big || []).filter(([kind]) => kind === "tree").map(([, o]) => o);
