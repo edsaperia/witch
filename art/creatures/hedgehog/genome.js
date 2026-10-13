@@ -1,0 +1,1 @@
+export const GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: .08, sat: .4, val: .5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" } };

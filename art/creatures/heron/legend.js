@@ -1,0 +1,1 @@
+export const LEGEND_HERON = { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }; // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it

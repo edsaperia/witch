@@ -1,0 +1,1 @@
+export const LEGEND_POLARBEAR = { sink: .5, droop: .9, drop: [], over: { moss: .25, lichen: .02, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 5 } }; // the pack ice's polar bear (an area recipe's): sunk in the ice like a drift of old snow, its long coat laid back over it

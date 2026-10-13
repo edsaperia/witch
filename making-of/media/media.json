@@ -2072,13 +2072,13 @@
   },
   {
     "src": "media/builders/alpha-arcticfox.webp",
-    "caption": "The arctic fox's mock: kit, young, adult and the aurora-fox legend, the snowfield's floor, trees and set piece",
+    "caption": "The arctic fox's first mock: kit, young, adult and the aurora-fox legend (since redrawn as the elder), the snowfield's floor, trees and set piece",
     "chapter": "builders",
     "pr": 775
   },
   {
     "src": "media/builders/alpha-ibex.webp",
-    "caption": "The ibex from hornless kid to glacier legend",
+    "caption": "The ibex from hornless kid to its first, glacier legend (since redrawn as the elder)",
     "chapter": "builders",
     "pr": 782
   },
@@ -2103,5 +2103,23 @@
     "src": "media/builders/india-spine.webp",
     "caption": "India's spine: with the profile but no spine above, with a crest or a groove below",
     "chapter": "builders"
+  },
+  {
+    "src": "media/builders/alpha-snowleopard-elder.webp",
+    "caption": "The snow leopard from cub to elder: above, the first elder with its tail as a scarf; below, Ed's pick, the tail worn round its shoulders like a stole",
+    "chapter": "builders",
+    "pr": 828
+  },
+  {
+    "src": "media/builders/alpha-frosttroll.webp",
+    "caption": "The frost troll from kid to elder on its own upright builder: big eyes, a rosy nose, a white beard and long arms on its knuckles",
+    "chapter": "builders",
+    "pr": 831
+  },
+  {
+    "src": "media/builders/alpha-frosttroll-elder.webp",
+    "caption": "The troll's elder asleep (two breaths), a mossed hill with its nose and beard showing, and awake, stone creeping up its legs",
+    "chapter": "builders",
+    "pr": 831
   }
 ]

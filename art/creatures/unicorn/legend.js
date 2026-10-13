@@ -1,0 +1,1 @@
+export const LEGEND_UNICORN = { sink: .42, droop: .9, drop: [], over: { moss: .45, lichen: .1, ferns: 3, grass: 3, mushrooms: 1, roots: 2, stones: 3, flowers: 4 } }; // the moonpool glade's unicorn: lying by the pool under moss and white flowers, its horn along the ground

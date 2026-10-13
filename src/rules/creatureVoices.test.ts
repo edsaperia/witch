@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import voices from "../../config/creature-voices.json";
+import { VOICES as voices } from "../platform/audio/voices";
 import { AREA_TYPES } from "./map";
 
 const V = voices as unknown as { families: Record<string, Record<string, unknown>>; species: Record<string, { family?: string }> };
 
-describe("creature voices (config/creature-voices.json)", () => {
+describe("creature voices (config/creature-voices.json and each art/creatures/<id>/creature.js voice)", () => {
   it("gives every creature in the game a call family that exists", () => {
     for (const t of AREA_TYPES) {
       const sp = V.species[t.creature];

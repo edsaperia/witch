@@ -1,0 +1,1 @@
+export const LEGEND_MEERKAT = { sink: .55, droop: 1, drop: [3], over: { moss: .1, lichen: .2, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 5 } }; // the warren's meerkat (an area recipe's): sunk in red sand, stones and dry grass over it
