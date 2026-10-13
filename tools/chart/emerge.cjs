@@ -25,16 +25,15 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const page = await browser.newPage({ viewport: { width: W, height: H } });
   await page.goto(`http://127.0.0.1:${port}/chart.html?world=${WORLD}`);
   await page.waitForFunction(() => window.chart?.chart && window.chart.islands().length > 1, null, { timeout: 180000 });
-  // the chart still, looking at home from its opening view; the second island to arrive is the one watched (home comes first)
-  await page.evaluate(() => { const c = window.chart.chart, f = c.reshape.bind(c); window.__came = []; c.reshape = (id, o) => { f(id, o); window.__came.push({ id, at: performance.now() }); }; });
+  // The chart's clock driven by hand (a real-time strip can't be shot here: a frame, let alone a screenshot, takes longer than the
+  // rise under the software renderer): held at its moment now, so an island's rise waits for the strip; the second island to
+  // arrive is the one watched (home comes first), its moment of arrival noted as its land comes.
+  await page.evaluate(() => { const v = window.chart.view, f = v.update.bind(v); window.__at = performance.now() / 1000; v.update = () => f(1 / 60, window.__at); });
+  await page.evaluate(() => { const c = window.chart.chart, f = c.reshape.bind(c); window.__came = []; c.reshape = (id, o) => { f(id, o); window.__came.push({ id, rose: c.isles.get(id)?.rose }); }; });
   await page.waitForFunction(() => window.__came.length >= 2, null, { timeout: 600000 });
-  const id = await page.evaluate(() => window.__came[1].id);
-  // The chart's clock driven by hand from the moment its land came (a real-time strip can't be shot here: a screenshot takes
-  // longer than the rise under the software renderer): each frame's moment set, two frames drawn, then its picture.
-  const rose = await page.evaluate(id => window.chart.chart.isles.get(id).rose, id);
+  const { id, rose } = await page.evaluate(() => window.__came[1]);
   console.log(`${id}'s island came at ${rose} s on the chart's clock`);
-  if (!(rose >= 0)) { console.error("its rise wasn't found (rose undefined): is the chart's clock driven?"); process.exit(1); }
-  await page.evaluate(() => { const v = window.chart.view, f = v.update.bind(v); window.__at = 0; v.update = () => f(1 / 60, window.__at); });
+  if (!(rose >= 0)) { console.error("its rise wasn't found (rose undefined)"); process.exit(1); }
   const frames = [];
   for (let at = 0; at <= SECONDS * 1000 + 1; at += EVERY) {
     await page.evaluate(({ rose, at }) => { window.__at = rose + at / 1000; }, { rose, at });

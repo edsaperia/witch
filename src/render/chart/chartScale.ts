@@ -8,3 +8,6 @@ export const CHART_SCALE = 100;
  *  its real size in metres, CHART_METRES to the disc's radius, its home's middle where the archipelago places it, so neighbouring
  *  coasts follow each other across their straits. Units a metre. */
 export const K = CHART_SCALE / CHART_METRES;
+/** A sigil's art tiers on the chart (render/chart/seaChart.ts): from how many pixels it spans, drawn how many across; its ink made
+ *  with the island off the page (app/chartOutlines.worker.ts), one tier each. */
+export const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 64, px: 128 }, { from: 128, px: 256 }];

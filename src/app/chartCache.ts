@@ -16,9 +16,9 @@ export const OUTLINE_ACROSS = 150, OUTLINE_DETAIL = 420;
 declare const __BUILD__: string;
 function hashOf(t: string): string { let h = 2166136261; for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
 export const CACHE_PREFIX = `${typeof __BUILD__ === "string" ? __BUILD__ : "dev"}|${hashOf(JSON.stringify(TUNING))}|`;
-/** What's kept with an island, numbered: 2 since its meshes come with its ground (render/chart/islandMesh.ts), so an older
- *  entry is made again. */
-export const KEPT_VERSION = 2;
+/** What's kept with an island, numbered: 2 since its meshes come with its ground (render/chart/islandMesh.ts), 3 with its
+ *  sigil's ink at each tier, so an older entry is made again. */
+export const KEPT_VERSION = 3;
 /** An island's key: by the world, its grid (step, samples across) and, for home, the kinds she's found. */
 export const cacheKey = (id: string, world: number, found: readonly string[], step: number, across: number): string =>
   `${CACHE_PREFIX}v${KEPT_VERSION}|${world}|${id}|${step}|${across}|${id === "home" ? knownKinds([...found]).join(",") : ""}`;

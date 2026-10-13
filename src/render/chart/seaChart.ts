@@ -15,7 +15,7 @@ import { islandPoints } from "../../../art/islands.js";
 import { sigilColour } from "../../../art/sigils.js";
 import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
-import { CHART_SCALE, K } from "./chartScale";
+import { CHART_SCALE, K, SIGIL_TIERS } from "./chartScale";
 import { buildIslandMesh, RELIEF, TIER_STEP, type IslandMesh } from "./islandMesh";
 export { CHART_SCALE };
 /** Till an island's land comes, about how far it reaches (units) by its phase: its round coast drawn that big. */
@@ -72,7 +72,6 @@ const SIGIL_SHARE = 1.0;
 /** A sigil's art by how many pixels it spans on screen (art/sigilDetail.js detailTier; Ed, 2026-10-12: "we don't need the circles
  *  around the rune; ideally we want more detailed versions of the rune itself"): the plain glyph while small, the carved bands,
  *  then the carved emblem; each texture about as many pixels as it shows, so it stays crisp. */
-const SIGIL_TIERS = [{ from: 0, px: 48 }, { from: 64, px: 128 }, { from: 128, px: 256 }];
 /** When the chart opens, a sigil spans this many art pixels, and at the furthest no fewer than this. */
 const SIGIL_OPEN_PX = 96, SIGIL_MIN_PX = 16;
 /** A typical sailable island's sigil (units), for the zoom's limits. */
@@ -82,7 +81,7 @@ const SIGIL_FLOOR = 9;
 
 /** An island's real land (app/chartOutlines.worker.ts): its coast's loops (x, z interleaved, metres from its home's middle; `sea`
  *  its coast, one loop for each piece of land, else a lake's shore), their box, and its ground on a grid (heights and colours). */
-export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; /** its meshes, made with its ground off the page (render/chart/islandMesh.ts) */ mesh?: IslandMesh; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number>; /** each sample's lake look (chartOutlines.worker.ts LOOK_IDS: 0 water, 1 ice, 2 lava, 3 oasis, 4 sinkhole, 5 tarn, 6 hot spring, 7 rust pool, 8 lily pond) */ looks?: ArrayLike<number> } }
+export interface ChartOutline { loops: { pts: ArrayLike<number>; sea: boolean }[]; box: { minX: number; maxX: number; minZ: number; maxZ: number }; /** its meshes, made with its ground off the page (render/chart/islandMesh.ts) */ mesh?: IslandMesh; /** its sigil's ink at each tier, drawn off the page with it */ sigils?: { px: number; ink: ArrayLike<number> }[]; ground?: { x0: number; z0: number; step: number; cols: number; rows: number; h: ArrayLike<number>; rgb: ArrayLike<number>; /** 0 land, 1 sea, 2 lake */ water?: ArrayLike<number>; /** a lake's water level (m, as h) */ level?: ArrayLike<number>; /** each sample's lake look (chartOutlines.worker.ts LOOK_IDS: 0 water, 1 ice, 2 lava, 3 oasis, 4 sinkhole, 5 tarn, 6 hot spring, 7 rust pool, 8 lily pond) */ looks?: ArrayLike<number> } }
 
 export interface ChartIsland {
   id: string;
@@ -315,9 +314,10 @@ const RISE = 0.9;
 
 interface Isle { /** its heights' tile and its uniforms (once its real ground has come) */ tileU?: { uTile: { value: THREE.Texture }; uTileB: { value: THREE.Vector4 }; uTileN: { value: THREE.Vector2 }; uTileMax: { value: number }; uYScale: { value: number } }; d: ChartIsland; group: THREE.Group; /** its land, to pick (none till its land has come) */ pick?: THREE.Mesh; x: number; z: number; top: number; reach: number; /** when its land came (the time of that frame): it rises out of the sea for RISE seconds from then */ rose?: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
 
-/** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js). */
-function sigilTexture(id: string, px = 24, tier = 0): THREE.Texture {
-  const ink = sigilDetail(id, px, { tier }), data = new Uint8Array(px * px * 4);
+/** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js): its ink as the worker drew it
+ *  with the island, else drawn here. */
+function sigilTexture(id: string, px = 24, tier = 0, drawn?: ArrayLike<number>): THREE.Texture {
+  const ink = drawn ?? sigilDetail(id, px, { tier }), data = new Uint8Array(px * px * 4);
   for (let y = 0; y < px; y++) for (let x = 0; x < px; x++) { const i = y * px + x, o = ((px - 1 - y) * px + x) * 4; if (ink[i]) data.set([255, 255, 255, 255], o); }
   const t = new THREE.DataTexture(data, px, px); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter; t.needsUpdate = true;
   return t;
@@ -493,6 +493,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     g.add(body);
     { const hb = new THREE.Mesh(body.geometry, this.heightMat); hb.matrixAutoUpdate = false; hb.frustumCulled = false; this.hScene.add(hb); this.hBodies.push({ hb, body }); g.userData.hb = hb; this.markHeights(); }
     const isle: Isle = { d, group: g, pick: body, x, z, top, reach, tileU };
+    if (d.outline?.sigils?.length) this.sigilInk.set(d.sigil, d.outline.sigils); // (its sigil's ink, drawn with it off the page)
     if (d.sail) { // its sigil, lying over the land and glowing as a placed sigil does, a halo of its light under it
       const c = sigilColour(d.sigil), s = Math.max(SIGIL_FLOOR, reach * SIGIL_SHARE);
       const sg = new THREE.Mesh(new THREE.PlaneGeometry(s, s).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.sigilArt(d.sigil, 0), color: col(c, 0.95), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -591,12 +592,13 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.scene.add(this.sea, this.fall);
   }
 
-  /** A sigil's art at a tier (SIGIL_TIERS), made once. */
+  /** A sigil's art at a tier (SIGIL_TIERS), made once: from the ink its island brought (drawn off the page), else drawn here. */
   private sigilArts = new Map<string, THREE.Texture>();
+  private sigilInk = new Map<string, { px: number; ink: ArrayLike<number> }[]>();
   private sigilArt(id: string, tier: number): THREE.Texture {
     const key = `${id}|${tier}`;
     let t = this.sigilArts.get(key);
-    if (!t) { t = sigilTexture(id, SIGIL_TIERS[tier].px, tier); this.sigilArts.set(key, t); }
+    if (!t) { const drawn = this.sigilInk.get(id)?.[tier]; t = sigilTexture(id, SIGIL_TIERS[tier].px, tier, drawn && drawn.px === SIGIL_TIERS[tier].px ? drawn.ink : undefined); this.sigilArts.set(key, t); }
     return t;
   }
 
