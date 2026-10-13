@@ -15,7 +15,7 @@ import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
 import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
-import { fxOn, VoiceFx } from "./voiceFx";
+import { fxOn, VoiceFx, prepareWhisperEnvelopes } from "./voiceFx";
 import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
 /** A part's way into the mix; `lfo`: its filter's slow wobble, one for all its notes (made when first wanted). */
@@ -170,6 +170,9 @@ export class MusicEngine {
     for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
     this.setStyle(style);
     if (Object.values(style.patches).some(p => p.kind === "fof") && style.form?.sung && style.patches[style.form.sung.patch]?.kind === "fof") void fofReady(ctx); // (the FOF voice loading ahead of its first note, when it sings)
+    // (the sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
+    // from here on (VoiceFx.warm, in step): the stall hunt, 2026-10-13: that first note was a 190 ms frame)
+    { const sung = style.form?.sung, p = sung && style.patches[sung.patch]; if (sung && p) this.channel(sung.part, p); }
   }
 
   /** A new or edited style: takes effect from the next block. */
@@ -198,7 +201,7 @@ export class MusicEngine {
   setRecordings(recs: Record<string, AudioBuffer>): void { for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b); }
   /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
   private whisperRec: AudioBuffer | null = null;
-  setWhisper(rec: AudioBuffer): void { this.whisperRec = rec; for (const ch of this.channels.values()) ch.fx?.whisper(rec); }
+  setWhisper(rec: AudioBuffer): void { void prepareWhisperEnvelopes(this.ctx, rec).then(() => { this.whisperRec = rec; for (const ch of this.channels.values()) ch.fx?.whisper(rec); }); } // (its envelopes made ahead, a band a task)
 
   /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
   private setMix(): void {
@@ -218,6 +221,7 @@ export class MusicEngine {
   private leadNow = 0;
 
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
+    for (const ch of this.channels.values()) if (ch.fx?.warm()) break; // (one piece of the effects' work put off, a frame)
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
     const want = Math.max(0, Math.min(MusicEngine.maxLead, this.lead)); this.leadNow += Math.max(-.002, Math.min(.002, want - this.leadNow)); const L = this.leadNow;
     if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
