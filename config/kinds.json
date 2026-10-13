@@ -207,12 +207,11 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-03": {
+    "redpanda": {
       "phase": 3,
       "bearing": 63,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-04": {
       "phase": 3,
@@ -245,12 +244,11 @@
       "dir": "SSW",
       "biome": "hot"
     },
-    "unknown-09": {
+    "crocodile": {
       "phase": 3,
       "bearing": 218,
       "dir": "SW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "dragonfly": {
       "phase": 3,
@@ -338,12 +336,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-23": {
+    "rhino": {
       "phase": 4,
       "bearing": 165,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "cheetah": {
       "phase": 4,
@@ -398,12 +395,11 @@
       "biome": "cold rainforest",
       "placeholder": true
     },
-    "unknown-32": {
+    "polarbear": {
       "phase": 4,
       "bearing": 345,
       "dir": "NNW",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     }
   }
 }
