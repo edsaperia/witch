@@ -2,6 +2,31 @@
   "_note": "Ed's decisions panel (src/ui/decide.ts; ?decide or F2 in the game) and the pause page's test sliders (Esc: every entry, by group, down the left, with Copy values; Ed, 2026-10-12). Each entry: id, pr (the pull request that added it) and group (that PR's short name: the pause page's heading, \"#pr group\", newest PR first), label, a one-line note, a control (toggle, choice of 2 to 4 options, or slider with min, max and step), the shipped default, and what it changes: a tuning knob by its path (applied live to the running game) or a URL switch (param; reload: true when the game reads it only as it loads). Confirm opens a new GitHub issue labelled decision with the choice; the coordinator acts on those.",
   "decisions": [
     {
+      "id": "fightScale", "pr": 806, "group": "Debug knobs", "label": "Fight scale ([ ])", "note": "Every length in a fight times this: attack ranges, lunges, knockback, the packs' patterns, pursuit and aggro (this run's; [ and ] step it). Moved from the debug overlay's panel (Ed, 2026-10-13).",
+      "control": { "type": "slider", "min": 0.25, "max": 3, "step": 0.05 },
+      "default": 1, "apply": { "param": "fightScale" }
+    },
+    {
+      "id": "fightSpeed", "pr": 806, "group": "Debug knobs", "label": "Fight speed (; ')", "note": "Every speed in a fight times this: running, charging, lunging, shots (this run's; ; and ' step it).",
+      "control": { "type": "slider", "min": 0.25, "max": 3, "step": 0.05 },
+      "default": 1, "apply": { "param": "fightSpeed" }
+    },
+    {
+      "id": "fightMomentum", "pr": 806, "group": "Debug knobs", "label": "Fight momentum (, .)", "note": "How heavily creatures in a fight change speed and turn (2: twice as heavy; this run's; , and . step it).",
+      "control": { "type": "slider", "min": 0.25, "max": 3, "step": 0.05 },
+      "default": 1, "apply": { "param": "fightMomentum" }
+    },
+    {
+      "id": "treetopSpeed", "pr": 806, "group": "Debug knobs", "label": "Treetop speed (m/s)", "note": "How fast she flies over the treetops, live.",
+      "control": { "type": "slider", "min": 16, "max": 160, "step": 2 },
+      "default": 48, "apply": { "param": "treetopSpeed" }
+    },
+    {
+      "id": "areaSize", "pr": 806, "group": "Debug knobs", "label": "Area size (m)", "note": "How wide each area is: a new map, so it reloads (the old panel's reset; double-click for the built size).",
+      "control": { "type": "slider", "min": 56, "max": 560, "step": 8 },
+      "default": 168, "apply": { "param": "areaSize", "reload": true }
+    },
+    {
       "id": "chaseBand", "pr": 770, "group": "Chase", "label": "Chase past the edge", "note": "How far past their area's edge wild animals follow her once they're after her (her 💌 provoked them, or the warning ran out with her inside). Ed: chase outside, relatively far.",
       "control": { "type": "slider", "min": 10, "max": 120, "step": 5 },
       "default": 30, "apply": { "knob": "combat.leaveArea" }

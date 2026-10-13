@@ -100,6 +100,8 @@ export class MusicEngine {
    *  frames), up to `maxAhead` seconds, easing back down by `aheadEase` seconds a second (Ed, round 16: "Music is still
    *  starting and stopping unexpectedly"). */
   static maxAhead = 2;
+  /** The most the notes are sent early by the context's latency (s). */
+  static maxLead = 0.25;
   static aheadEase = 0.05;
   private lagAhead = 0;
   /** Notes' pitch now (the tape slowing with the music: 1 at full speed). */
@@ -210,8 +212,14 @@ export class MusicEngine {
 
   /** Each frame: schedule what's due in the next `ahead` seconds of audio time, at game time
    *  `gameTime` (seconds) on the beat clock `clock`. `playing` false: nothing new is scheduled. */
+  /** How early (s) the notes go out so they're heard on the beat the game shows: the context's own latency (its buffer and the
+   *  device's; a bigger buffer against under-runs, platform/audio/buffer.ts), eased so a change never jolts the timeline. */
+  lead = 0;
+  private leadNow = 0;
+
   update(cue: MusicCue, gameTime: number, clock: BeatClock, playing: boolean, ahead = 0.6, rate = 1, pitch = 1): void {
     const now = this.ctx.currentTime, stepNow = beatAt(clock, gameTime) * 4;
+    const want = Math.max(0, Math.min(MusicEngine.maxLead, this.lead)); this.leadNow += Math.max(-.002, Math.min(.002, want - this.leadNow)); const L = this.leadNow;
     if (!playing) { this.nextStep = -1; this.cNext = -1; this.heardTo = -1; this.lastNow = -1; return; }
     // a knockdown just heard of: the record scratched (sfx), the music cut now, notes already scheduled with it
     const knocks = cue.knockdowns?.length ?? 0;
@@ -238,7 +246,7 @@ export class MusicEngine {
     if (!Number.isFinite(err) || err > 0.25 * rate) { if (Number.isFinite(this.g0)) this.stats.resyncs++; this.g0 = gameTime; this.a0 = now; this.nextStep = -1; }
     else if (err < -6 * rate) { this.g0 += err + 6 * rate; this.stats.resyncs++; } // (a game running far slower than its audio for long: the music waits, never more than 6 s ahead)
     else this.g0 += Math.max(-slew, Math.min(slew, err * 0.05));
-    const audioAt = (g: number) => this.a0 + (g - this.g0) / rate;
+    const audioAt = (g: number) => this.a0 + (g - this.g0) / rate - L; // (early by the lead: heard when it's shown)
     if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
       this.nextStep = Math.ceil(stepNow);
       // (not what's already scheduled, unless time went back: a new run, a jump)
@@ -250,7 +258,7 @@ export class MusicEngine {
     // dropped: the music held for the hitch, then on from where it was (the slew takes it back into step).
     if (this.heardTo >= 0 && this.nextStep >= 0) { const t = audioAt(timeAt(clock, this.nextStep / 4)); if (t < now) { this.a0 += now + 0.005 - t; this.stats.late++; } }
     for (;;) {
-      const g = timeAt(clock, this.nextStep / 4), t = this.a0 + (g - this.g0) / rate;
+      const g = timeAt(clock, this.nextStep / 4), t = this.a0 + (g - this.g0) / rate - L;
       if (t >= now + ahead) break;
       if (t >= now) {
         const sps = 60 / bpmAt(clock, g) / 4 / rate;
@@ -267,7 +275,7 @@ export class MusicEngine {
     if (this.cNext < 0 || this.cAt < now - 1 || this.cAt > now + 2) { this.cNext = this.nextStep; this.cAt = Math.max(now, audioAt(timeAt(clock, this.nextStep / 4))); }
     while (this.cAt < now + ahead) {
       if (this.cAt >= now) {
-        const main = Math.floor(beatAt(clock, this.g0 + (this.cAt - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
+        const main = Math.floor(beatAt(clock, this.g0 + (this.cAt + L - this.a0) * rate) * 4), plan = this.conductor.plan(cue, Math.floor(main / 16));
         if (silentAt(cue, main / 16)) { this.cNext++; this.cAt += sps; continue; }
         const events = notesAt(this.style, plan, null, main, { ...this.formAt(cue, Math.floor(main / 16)), siege: 0, circle: cue.circle, only: "circle", circleStep: this.cNext });
         const swing = this.cNext % 2 === 1 ? this.style.swing * sps : 0;
