@@ -1,7 +1,8 @@
 // Fingerprints of every tree and bush the flora draws (art/check.mjs and the data-wrap's proof): each species' tree over a few seeds,
 // two sizes and the area options that change its shape, and the bushes; a hash of each sprite's materials, normals, crown line and the
-// pixels its life below the crown put there. node art/flora/fingerprint.mjs [out.json] writes them; check.mjs compares with flora/baseline.json.
-import { writeFileSync } from "node:fs";
+// pixels its life below the crown put there. node art/flora/fingerprint.mjs writes them, one file a species under art/flora/baseline/
+// (bush.json the bushes'; art/flora/baseline.mjs); check.mjs compares with them.
+import { writeBaseline } from "./baseline.mjs";
 import { rng } from "../core.js";
 import { TREE_SPECIES, bush } from "../trees.js";
 import { defaultStyle } from "../generator.js";
@@ -26,6 +27,6 @@ export function fingerprints(trees = TREE_SPECIES, bushFn = bush) {
   return out;
 }
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const f = fingerprints(); writeFileSync(process.argv[2] || "art/flora/baseline.json", JSON.stringify(f, null, 0).replace(/,"/g, ',\n"'));
-  console.log(Object.keys(f).length, "fingerprints");
+  const f = fingerprints(), n = writeBaseline(f);
+  console.log(Object.keys(f).length, "fingerprints in", n, "files under art/flora/baseline/");
 }

@@ -29,10 +29,15 @@ describe("the creatures' folders (art/creatures/)", () => {
 });
 
 // The other split registries (tools/data.mjs): the decisions' fragments (config/decisions/<pr>-<group>.json) sound and none
-// left in config/decisions.json's array.
+// left in config/decisions.json's array; the flora's species files (art/flora/species/<id>.js) each exporting PLANT_<ID>, their
+// index current, no record left in art/flora/genomes.js, and the baseline folder (art/flora/baseline/<id>.json) only known species'.
 describe("the split registries (tools/data.mjs)", () => {
   it("decisions: every fragment named by its pr and group, ids unique, none left in the file", () => {
     const out = execFileSync("node", ["tools/data.mjs", "decisions", "check"], { encoding: "utf8" });
     expect(out).toMatch(/^ok: decisions/);
+  });
+  it("flora: one file a species, the index current, none left in genomes.js, the baseline folder sound", () => {
+    const out = execFileSync("node", ["tools/data.mjs", "flora", "check"], { encoding: "utf8" });
+    expect(out).toMatch(/^ok: flora/);
   });
 });
