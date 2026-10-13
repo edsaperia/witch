@@ -2138,6 +2138,19 @@ trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at
 | `mist.height` | number | 0 to … |
 | `mist.wind` | number | 0 to … |
 
+### `coldPalette`
+
+Away from the party, colder (Ed, 2026-10-07, making the wild forest eerier: "a subtle colour shift where areas far from the party read colder, bluer and greyer, and colour returns as you approach the music"; render/post.ts): a grade of colour only, never darker, the brightest (lights, the party's far glow) and her own light spared. By how far she is from the nearest partified area's middle: none within near metres, all from far; eased over ease seconds. amount: how much of the cold grade at its fullest (0 to 1); desat: how much of the colour it takes at most.
+
+| knob | type | range |
+|---|---|---|
+| `coldPalette.on` | boolean |  |
+| `coldPalette.amount` | number | 0 to … |
+| `coldPalette.desat` | number | 0 to … |
+| `coldPalette.near` | number | 0 to … |
+| `coldPalette.far` | number | 0 to … |
+| `coldPalette.ease` | number | 0 to … |
+
 ### `lightRings`
 
 Light rings in the canopy (Ed, 2026-10-07, making the wild forest eerier: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view"; render/lightRings.ts): one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); strength: a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since Ed, 2026-10-08: "there's now concentric circles under the witch on the canopy ... I think we should remove them". Treetops only (fading in as she rises). Scattered rings off (Ed, 2026-10-11: strength 0); the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.
