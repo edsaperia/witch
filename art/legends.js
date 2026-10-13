@@ -35,7 +35,7 @@ export const LEGEND_POSES = {
   stoat: { sink: .4, droop: 1, drop: [60, 61, 90, 91, 92], over: { moss: .3, lichen: .16, ferns: 1, grass: 3, mushrooms: 0, roots: 2, stones: 5 } },
   owl: { ground: .58, droop: 0, drop: [40, 50, 95, 96, 97, 98, 99, 100, 101], lid: M.BELLY, over: { moss: .4, lichen: .06, ferns: 2, grass: 2, mushrooms: 3, brackets: 4, roots: 2, stones: 0, nest: true } },
   snail: { ground: .2, droop: 1, drop: [5], eyes: [5], over: { moss: .4, lichen: .08, ferns: 3, grass: 3, mushrooms: 4, roots: 1, stones: 1 } },
-  wolf: { sink: .45, droop: 1, drop: [40, 50, 60, 61, 77], over: { moss: .45, lichen: .06, ferns: 2, grass: 5, mushrooms: 2, roots: 3, stones: 2, sapling: "broad" } },
+  wolf: { sink: .68, droop: 1, drop: [40, 50, 60, 61, 77], over: { moss: .45, lichen: .06, ferns: 2, grass: 5, mushrooms: 2, roots: 3, stones: 2, sapling: "broad" } },
   fox: { sink: .42, droop: 1, drop: [70, 71], over: { moss: .35, lichen: .14, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 5 } },
   badger: { sink: .5, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 1, grass: 6, mushrooms: 0, roots: 1, stones: 3 } },
   boar: { sink: .45, droop: .8, drop: [78], over: { moss: .4, lichen: .04, ferns: 6, grass: 2, mushrooms: 2, roots: 3, stones: 1 } },
