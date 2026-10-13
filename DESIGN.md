@@ -172,6 +172,7 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 | Fen | peat moss and sedge | black pools | sedge and reeds | aspen and alder carr | a punt sunk among the sedge | Newt | recipe |
 | Heronry | rough grass and reed litter | the mere's edge | reeds and rushes | tall elms with herons' nests | an old jetty out over the mere | Heron | recipe |
 | Warren | red sand and pebbles | low rock ledges | dry tussocks | twisted junipers among red rock hoodoos | a heap of red stones over the warren | Meerkat | recipe (badlands, phase 3) |
+| Mossy creek | deep moss and wet stones | the creek | sword ferns | tall mossy cedars and spruces, alders by the water | a mossy logjam where the creek pools | Raccoon | recipe (cold rainforest, phase 4) |
 | Scrub wash | cracked dry clay | the wash's sandy banks | thorny scrub | stunted thorn trees, junipers and sun-split boulders | a ring of sun-split stones round a dry hollow | Armadillo | recipe (badlands, phase 3) |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
@@ -304,6 +305,7 @@ Each delivery has a factor so its expected damage a second (allowing for misses 
 | heron (recipe) | 13 | 35 | arrive, separation | — | charge: a short stab (5 to 20 m off, 28 m/s, 0.9 s windup) | — |
 | newt (recipe) | 11 | 30 | keep range, separation | — | — | — |
 | meerkat (recipe) | 18 | 165 | arrive, slot, strafe, dodge, separation | hit and run | — | — |
+| raccoon (recipe) | 15 | 85 | arrive, slot, separation, cohesion | flank, pincer | — | — |
 | armadillo (recipe) | 10 | 28 | arrive, separation | — | charge: rolls at her (6 to 28 m off, 24 m/s, 0.7 s windup) | — |
 
 (The heron and the newt, the recipe areas' creatures: as built, 2026-10-06; not yet ruled.)
@@ -458,7 +460,7 @@ This replaces the legend rules of 2026-10-04 (every area's legend asleep until i
 - **Balance** comes from the enemies in later fights, not from weaker buffs.
 - **One projectile model** (`rules/invites.ts`), its modifiers composing:
   - **Pattern:** Fan (beetle), Rear guard (woodlouse), Howl's ring every 5th burst (wolf), Echo (owl), Wind-up's charged volley (bear), Flutter's extra volley (moth).
-  - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Wriggle's speed and range (newt), Lookout's range (meerkat), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander).
+  - **Flight:** Charm's hard homing (fox), Spiral's boomerang (snail), Strike's speed (snake), Long thread's range (spider), Wriggle's speed and range (newt), Lookout's range (meerkat), Big heart's hitbox (badger), Quick fire's shorter cooldown (salamander), Light fingers' quicker bursts and faster 💌s (raccoon).
   - **On landing:** Pierce (stag), Skimming stone's ricochet (otter), Spawn's split into 3 (toad), Slip past the enraged (elk).
   - **Lying about:** Lanterns' trail (glow-worm), Cache (squirrel), Lullaby orbit (dormouse).
 - **Movement:** Dash bursts, 3 blink charges (hare); Flit, a longer blink (bat); Roll, a little longer blink and untouchable a little longer (armadillo); Curl, untouchable longer (hedgehog); Momentum after a blink (boar); Frenzy, a blink back for each animal won over (stoat); Decoy, a waiting 💌 left where she blinked from (beaver); Scamper on the ground (marten); Poise, sharper turns and quicker starts (lynx); Steady, no slowing while firing (ram); Wings in the treetops (raven); Burrow, quicker rising and landing (mole); Stride, quicker on foot and a longer blink (heron).
