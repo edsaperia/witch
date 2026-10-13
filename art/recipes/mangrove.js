@@ -10,9 +10,9 @@ export const MANGROVE = {
   layout: {
     pattern: "stands", density: .5, clump: .7, glades: { count: 2, size: [14, 20] },
     heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
-    terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .05, freak: .15, lake: .6, modern: .05 },
+    terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .15, rocks: .05, freak: .15, lake: .6, modern: .05 },
     feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge.",
   },
-  flora: { species: [["mangrove", .75], ["datePalm", .25]], palette: { sat: .9, val: .85 } },
+  flora: { species: [["mangrove", .65], ["datePalm", .2], ["willow", .15]], palette: { sat: .9, val: .85 } },
   settings: { treeDensity: .55, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };
