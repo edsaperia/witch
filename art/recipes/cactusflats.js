@@ -10,7 +10,7 @@ export const CACTUS_FLATS = {
   pathKinds: ["track"],
   setPiece: ["heap", "a heap of pale stones", 1, { of: "stones", moss: 0 }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
-    pattern: "scatter", density: .3, clump: .35, glades: { count: 2, size: [16, 26] },
+    pattern: "lone", density: .3, clump: .35, glades: { count: 2, size: [16, 26] },
     heightMix: { sapling: .25, mature: .5, tall: .25, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "mounds"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: 0, modern: .1 },
     feel: "Pale flats of gravelly sand, saguaros standing alone with their arms raised, Joshua trees and prickly pear between; open, dry and rattling.",
