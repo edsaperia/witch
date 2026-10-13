@@ -253,6 +253,10 @@ export class Creator {
   /** The way out, mid-night: her look as it is now. */
   onExit: (g: Genome) => void = () => {};
   private exitBtn = h("button", { type: "button", text: "Back to the island" });
+  /** The build's version (Ed, 2026-10-13: "so he can see at once which version he's looking at"): small and dim in the top
+   *  left, in the margin above the tapestry (laid out by place()), never over anything. */
+  private ver = document.createElement("div");
+  set version(v: string) { this.ver.textContent = v; }
 
   constructor(private style: Style, start: Genome | null, pixel = 3) {
     this.st = { ...style, pixel } as Style;
@@ -277,7 +281,9 @@ export class Creator {
     this.title.id = "creator-title";
     Object.assign(this.extras.style, { position: "absolute", display: "flex", flexWrap: "wrap", zIndex: "3" });
     this.sheet.append(this.title, this.body, this.extras);
-    this.root.append(this.night, this.preview, this.sheet);
+    this.ver.id = "creator-version";
+    Object.assign(this.ver.style, { position: "absolute", color: "rgba(239,230,255,.45)", fontFamily: "ui-monospace, Menlo, Consolas, monospace", pointerEvents: "none", whiteSpace: "nowrap", userSelect: "none" });
+    this.root.append(this.night, this.preview, this.sheet, this.ver);
     document.body.append(this.root);
     void installPixelUi().then(() => { const t = pixelTitle("Coven Rush"); this.title.width = t.width; this.title.height = t.height; this.title.getContext("2d")!.drawImage(t, 0, 0); this.title.className = t.className; this.laid = ""; this.dirty = true; });
     this.scroll = new SpellScroll(this.root);
@@ -666,6 +672,9 @@ export class Creator {
     // the tapestry
     const pw = tall ? SW - 2 * MARGIN : Math.max(least, fits(u).pw), sx = MARGIN, sy = tall ? RH + 2 * MARGIN : MARGIN, sh = SH - sy - MARGIN;
     Object.assign(this.sheet.style, { left: px(sx), top: px(sy), width: px(pw), height: px(sh), backgroundImage: `url(${tapestry(pw, sh)})` });
+    // the version, in the margin strip over the tapestry's top left (the room, in a tall layout, starts below it too)
+    const mh = MARGIN * cu;
+    Object.assign(this.ver.style, { left: px(sx), top: "0", height: `${mh}px`, lineHeight: `${mh}px`, fontSize: `${Math.max(9, Math.min(12, Math.floor(mh * .7)))}px` });
     const tw = this.title.width || 0, th = this.title.height || 0, head = th ? th + 4 : 8, foot = 22;
     Object.assign(this.title.style, { left: px(Math.floor((pw - tw) / 2)), top: px(4), width: px(tw), height: px(th) });
     Object.assign(this.body.style, { left: "0", right: "0", top: px(head), bottom: px(foot) });
