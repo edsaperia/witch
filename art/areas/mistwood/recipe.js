@@ -5,7 +5,7 @@ export const MISTWOOD = {
   slot: 28, id: "mistwood", name: "Mistwood", creature: "flyingsquirrel", by: "recipe", leaf: .31, floor: ["moss", .3, .45, .26],
   text: { floor: "deep wet moss", wall: "fallen nurse logs", small: "sword ferns and fungi", big: "giant spruce and cedar, tree ferns beneath", set: "a nurse log, a fallen giant with young spruce growing out of its back" },
   wall: [["log", { rot: true }], ["fern", {}]], small: [["fern", {}], ["fungi", {}]],
-  big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
+  big: [["tree", { type: "fir", variant: "mossy", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
   wet: true, pathKinds: ["boardwalk"],
   setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", .95],
   layout: {
