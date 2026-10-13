@@ -1273,11 +1273,11 @@ function heronModel(S, level, frame) {
   if (legend) for (let k = 0; k < 4; k++) { const z = (k - 1.5) * .05; // and long aigrettes over its folded wings, past its tail
     m.chain([[.05, by + .12, z, .01], [-.25, by + .1 + .02 * k, z * 1.3, .007], [-.55, by - .02, z * 1.6, .003]], M.BELLY, { group: 8, extra: true }); }
   m.seg(v3.add(hc, [hr * .8, -hr * .15, 0]), v3.add(hc, [hr * (.8 + 3.6 * bk), -hr * (.6 + 1.6 * fd), 0]), hr * .3, hr * .05, M.ACCENT, { group: 1 });
-  if (lantern) { // the elder's lantern: an old paper lantern in a wooden frame, hung on a cord from the tip of its bill, swinging as it walks
+  if (lantern) { // the elder's lantern: an old paper lantern in a wooden frame, hung on a cord from the tip of its bill, swinging as it walks, lit (Ed, 2026-10-13: a soft warm light, awake only)
     const tip = v3.add(hc, [hr * (.8 + 3.2 * bk), -hr * .5, 0]), sw = Math.sin(f0 / F * Math.PI * 2) * .03, top = v3.add(tip, [sw, -.12, 0]), lc = v3.add(top, [sw * .3, -.07, 0]);
     m.seg(tip, top, .004, .004, M.WOOD, { group: 93, extra: true }); // its cord
     m.ell(v3.add(top, [0, -.005, 0]), [.035, .012, .035], M.WOOD, { group: 93, extra: true }); // its cap
-    m.ell(lc, [.042, .06, .042], M.GLINT, { group: 93, extra: true, paint: p => Math.abs(p[1] - lc[1]) % .03 < .006 ? M.WOOD : undefined }); // its paper, ribbed
+    m.ell(lc, [.042, .06, .042], M.GLOW, { group: 93, extra: true, paint: p => Math.abs(p[1] - lc[1]) % .03 < .006 ? M.WOOD : undefined }); // its paper, ribbed, lit warm from within (render/view/lights.ts lanternLights its light; asleep it's out: no lantern on the sleeping form)
     m.ell(v3.add(lc, [0, -.062, 0]), [.03, .01, .03], M.WOOD, { group: 93, extra: true }); // its base
   }
   eyesOn(m, hc, [hr * 1.15, hr * .9, hr * .85], [[.5, .3, .7], [.5, .3, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
