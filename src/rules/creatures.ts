@@ -16,6 +16,7 @@ import { isInside } from "./mapShape";
 import { facingAway } from "./witch";
 import type { Tuning } from "./tuning";
 import type { Fight } from "./combat";
+import { glideOf } from "./movement";
 
 export type Level = 0 | 1 | 2 | 3;
 export const LEGEND = 3;
@@ -357,7 +358,8 @@ export function spawnCreatures(map: ForestMap): Creature[] {
       // swarm growing to the last runestone, the same danger whatever its kind, weaker kinds in larger numbers (Ed, 2026-10-08):
       // rules/growth.ts routePopulation.
       const species = AREA_TYPES[map.typeOf(cx, cy)].creature, at = route.get(`${cx},${cy}`) ?? route.size + 1;
-      const [babies, young, adults] = routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species);
+      // (the zoo: every block its group, calm: rules/zoo.ts, config/zoo.json; Ed, 2026-10-13: "Default state: calm")
+      const [babies, young, adults] = map.zoo ? [map.zoo.group.babies, map.zoo.group.young, map.zoo.group.adults] : routePopulation(at, route.size, map.tuning.population.byRoute, map.tuning.population.swarm, pop, species);
       for (let i = 0; i < babies; i++) make(0);
       for (let i = 0; i < young; i++) make(1);
       for (let i = 0; i < adults; i++) make(2);
@@ -382,7 +384,7 @@ export function spawnCreatures(map: ForestMap): Creature[] {
 
 /** Roam: walk to a random spot in its own area, pause a while, pick another. It never crosses
  *  its area's border: a step that would cross it is not taken, and it chooses again. */
-export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
+export function stepCreature(c: Creature, dt: number, map: ForestMap, time?: number): void {
   // Out of its own area (it chased the witch, Ed 2026-10-04): it walks back to its spot first.
   if (!inOwnArea(map, c, c.x, c.z)) {
     const dx = c.anchorX - c.x, dz = c.anchorZ - c.z, d = Math.hypot(dx, dz) || 1, step = Math.min(d, c.speed * 2 * dt);
@@ -399,11 +401,24 @@ export function stepCreature(c: Creature, dt: number, map: ForestMap): void {
     c.moving = true; c.walk += dt * 4;
     return;
   }
+  // Gliding to its next spot (a glider's roam: Profile.glide), from tree to tree: it holds still through its pause, then sails there.
+  if (c.leap && time !== undefined) {
+    const L = c.leap, k = (time - L.at) / Math.max(0.01, L.lands - L.at);
+    if (k < 0) { c.moving = false; c.away = false; return; }
+    const kk = Math.min(1, k); c.x = L.fx + (L.tx - L.fx) * kk; c.z = L.fz + (L.tz - L.fz) * kk; c.moving = false;
+    if (k >= 1) { c.leap = undefined; c.tx = c.x; c.tz = c.z; c.rest = 0.5 + c.rand() * 2; }
+    return;
+  }
   if (c.rest > 0) { c.rest -= dt; c.moving = false; c.away = false; return; }
   const dx = c.tx - c.x, dz = c.tz - c.z, d = Math.hypot(dx, dz);
   if (d < 0.05) {
     [c.tx, c.tz] = pointInArea(map, c, c.rand);
     c.rest = 0.8 + c.rand() * 3.5; c.moving = false;
+    const G = time !== undefined && c.level < LEGEND ? glideOf(c.species) : undefined, far = Math.hypot(c.tx - c.x, c.tz - c.z);
+    if (G && far >= G.min && c.rand() < G.chance) { // it glides there after its pause
+      const at = time! + c.rest; c.leap = { fx: c.x, fz: c.z, tx: c.tx, tz: c.tz, at, lands: at + far / G.speed, height: G.height }; c.rest = 0;
+      if (Math.abs(c.tx - c.x) > 0.02) c.facing = c.tx > c.x ? 1 : -1;
+    }
     return;
   }
   const step = Math.min(d, c.speed * dt), nx = c.x + (dx / d) * step, nz = c.z + (dz / d) * step;
@@ -469,7 +484,7 @@ export function stepCreaturesNear(all: Creature[], x: number, z: number, radius:
     }
     c.seen = time;
     const paused = c.rest > 0;
-    stepCreature(c, full ? dt : dt * lod.every, map);
+    stepCreature(c, full ? dt : dt * lod.every, map, time);
     // Just paused: now and then it lies down for a nap instead (never with her on the ground in its area).
     const nr = naps && keepsToCircle(c) && naps.circle ? naps.circle : naps; // (a legend circle's baby: mostly asleep)
     if (naps && nr && !paused && c.rest > 0 && napper(c) && naps.wild(c) && !naps.roused(c) && c.rand() < nr.chance) {
