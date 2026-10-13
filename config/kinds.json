@@ -1,5 +1,5 @@
 {
-  "_": "Every kind of creature (each is an area type's species and a legend), with the phase it's introduced in (0 home: its island is phase 1; 1 phase 1; 2 phase 2) and its island's planned bearing on the sea chart, degrees clockwise from north (Ed, 2026-10-11, docs/backlog/journey.md 'Rosters' and 'Biomes by direction': north cold, south hot, east rocky, west jungle, the diagonals blending; today's 32 are temperate, so the bearing only places its island). dir is the bearing's compass point, for reading. Home 10, phase 1 10, phase 2 12: the easiest and most familiar at home, tougher and stranger later. Ed approved the 32 as drafted (2026-10-11). The other 32 (Ed, 2026-10-11: \"We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'\"; journey.md: 14 introduced in phase 3, 18 in phase 4, none in phase 5) are placeholders (unknown-NN, placeholder true): their islands have a seed, size and coast and show on the sea chart as '?', but no one sails there and they're never dealt or put on a playable island. biome: the theme its island's direction suggests (the compass's biomes; today's 32 are temperate).",
+  "_": "Every kind of creature (each is an area type's species and a legend), with the phase it's introduced in (0 home: its island is phase 1; 1 phase 1; 2 phase 2) and its island's planned bearing on the sea chart, degrees clockwise from north (Ed, 2026-10-11, docs/backlog/journey.md 'Rosters' and 'Biomes by direction': north cold, south hot, east rocky, west jungle, the diagonals blending; today's 32 are temperate, so the bearing only places its island). dir is the bearing's compass point, for reading. Home 10, phase 1 10, phase 2 12: the easiest and most familiar at home, tougher and stranger later. Ed approved the 32 as drafted (2026-10-11). Home is green forests and mostly cute mammals, no flyers or insects (Ed, 2026-10-12): owl, toad and beetle swapped phase and bearing with marten, stoat and badger, so the chart's rings stay as they were. The other 32 (Ed, 2026-10-11: \"We should generate all the islands. For islands where we haven't designed the creatures yet, use '?'\"; journey.md: 14 introduced in phase 3, 18 in phase 4, none in phase 5) are placeholders (unknown-NN, placeholder true): their islands have a seed, size and coast and show on the sea chart as '?', but no one sails there and they're never dealt or put on a playable island. biome: the theme its island's direction suggests (the compass's biomes; today's 32 are temperate).",
   "kinds": {
     "hedgehog": {
       "phase": 0,
@@ -25,13 +25,13 @@
       "dir": "NE",
       "biome": "temperate"
     },
-    "owl": {
+    "marten": {
       "phase": 0,
       "bearing": 345,
       "dir": "NNW",
       "biome": "temperate"
     },
-    "toad": {
+    "stoat": {
       "phase": 0,
       "bearing": 250,
       "dir": "WSW",
@@ -55,13 +55,13 @@
       "dir": "NW",
       "biome": "temperate"
     },
-    "beetle": {
+    "badger": {
       "phase": 0,
       "bearing": 130,
       "dir": "SE",
       "biome": "temperate"
     },
-    "badger": {
+    "beetle": {
       "phase": 1,
       "bearing": 70,
       "dir": "ENE",
@@ -109,7 +109,7 @@
       "dir": "SSW",
       "biome": "temperate"
     },
-    "stoat": {
+    "toad": {
       "phase": 1,
       "bearing": 15,
       "dir": "NNE",
@@ -187,7 +187,7 @@
       "dir": "NW",
       "biome": "temperate"
     },
-    "marten": {
+    "owl": {
       "phase": 2,
       "bearing": 335,
       "dir": "NNW",
@@ -220,12 +220,11 @@
       "dir": "E",
       "biome": "rocky"
     },
-    "unknown-05": {
+    "meerkat": {
       "phase": 3,
       "bearing": 115,
       "dir": "ESE",
-      "biome": "badlands",
-      "placeholder": true
+      "biome": "badlands"
     },
     "unknown-06": {
       "phase": 3,
