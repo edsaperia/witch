@@ -79,6 +79,7 @@
     "stoat":      { "name": "Frenzy",         "kind": "move", "mods": { "frenzy": 1 },              "label": "Stoat's Frenzy: winning an animal over gives back a blink" },
     "beaver":     { "name": "Decoy",          "kind": "move", "mods": { "decoy": 1 },               "label": "Beaver's Decoy: blinking leaves a waiting 💌 where you were" },
     "marten":     { "name": "Scamper",        "kind": "move", "scale": { "groundSpeed": 1.2 },      "label": "Marten's Scamper: faster on the ground" },
+    "arcticfox":  { "name": "Pounce",         "kind": "move", "scale": { "dash.distance": 1.2, "groundAcceleration": 1.6 }, "label": "Arctic fox's Pounce: a longer blink, and quicker starts on foot" },
     "lynx":       { "name": "Poise",          "kind": "move", "scale": { "groundAcceleration": 2, "treetop.turnRate": 1.4 }, "label": "Lynx's Poise: sharper turns, quicker starts" },
     "ram":        { "name": "Steady",         "kind": "move", "mods": { "steady": 1 },              "label": "Ram's Steady: no slowing while you fire" },
     "raven":      { "name": "Wings",          "kind": "move", "scale": { "treetopSpeed": 1.2 },     "label": "Raven's Wings: faster in the treetops" },

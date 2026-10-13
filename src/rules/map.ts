@@ -20,7 +20,7 @@ import { makeLand, type LandMap } from "./land";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, homeIsland, homeKinds, islandOf, KINDS, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -67,6 +67,8 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
   layout: a.layout ?? { pattern: "scatter", density: 0.6, clump: 0.3, undergrowth: 0.5 },
   ponds: !!a.ponds, wet: !!a.wet, steep: !!a.steep, sharesCreature: !!a.sharesCreature,
 }));
+/** The area types a map deals at random (outside an island's roster): the temperate kinds' (config/kinds.json's biome), by index. */
+export const TEMPERATE_TYPES: readonly number[] = AREA_TYPES.flatMap((a, i) => ((KINDS[a.creature]?.biome ?? "temperate") === "temperate" ? [i] : []));
 /** Home's look (Ed, 2026-10-05: "its own custom floor; a pleasant green meadow with flowers"; party
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
  *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
@@ -237,7 +239,7 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 }
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
-  const A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
+  const A = tuning.areaSize * tuning.areaScale;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
   // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
@@ -321,8 +323,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
   const neighbours = findNeighbours(partition, lo, hi, 6);
 
-  // Area types: random, never the same as a touching area nor any area within two cells.
-  const types = new Map<string, number>();
+  // Area types: random, never the same as a touching area nor any area within two cells; only the temperate ones (the north's and
+  // the other biomes' areas, config/kinds.json, come only by an island's roster, so a new one changes no map but its island's).
+  const types = new Map<string, number>(), wild = TEMPERATE_TYPES;
   const r = rng(shapeSeed * 5 + 1);
   for (let cy = lo; cy < hi; cy++) for (let cx = lo; cx < hi; cx++) {
     const near = new Set<number>(), homeKey = cellKey(centreCell[0], centreCell[1]);
@@ -332,11 +335,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (t !== undefined) near.add(t);
     }
     for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
-    const free = [...Array(typeCount).keys()].filter(t => !near.has(t));
-    const pool = free.length ? free : [...Array(typeCount).keys()];
+    const free = wild.filter(t => !near.has(t));
+    const pool = free.length ? free : wild;
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount);
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? wild[Math.floor(hash2(cx, cy, shapeSeed + 17) * wild.length)];
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();
