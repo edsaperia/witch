@@ -7,6 +7,7 @@
 // blocks at the end of their rows; paths along every border, a relic's flask at each crossing (rules/legends.ts placeRelics). No
 // drawing here.
 import ZOO from "../../config/zoo.json";
+import { AREAS } from "../../art/areas.js";
 import { KINDS } from "./rosters";
 
 export interface ZooBlock {
@@ -40,13 +41,19 @@ export interface ZooPlan {
 interface ZooRow { name: string; biomes: string[]; areas: string[] }
 interface ZooConfig { group: ZooPlan["group"]; pathHalf: number; rows: ZooRow[] }
 
-/** The zoo's plan: every row's areas from column 1 (home's column 0 left free but for home), then its biomes' placeholder kinds. */
-export function zooPlan(cfg: ZooConfig = ZOO as ZooConfig, kinds: Record<string, { biome?: string; placeholder?: boolean }> = KINDS): ZooPlan {
+/** The zoo's plan: every row's areas from column 1 (home's column 0 left free but for home), then any area type its list doesn't
+ *  name yet whose creature's biome is the row's (the first such row: a new kind is in the zoo the day it lands, at its row's end,
+ *  till tools/zoo/order.mjs --write puts it in its place), then its biomes' placeholder kinds. */
+export function zooPlan(cfg: ZooConfig = ZOO as ZooConfig, kinds: Record<string, { biome?: string; placeholder?: boolean }> = KINDS,
+  areas: readonly { id: string; creature: string }[] = AREAS as unknown as { id: string; creature: string }[]): ZooPlan {
   const blocks: ZooBlock[] = [];
   let widest = 0;
+  const listed = new Set(cfg.rows.flatMap(r => r.areas)), firstRow = (biome: string) => cfg.rows.findIndex(r => r.biomes.includes(biome));
   cfg.rows.forEach((row, r) => {
-    const unknown = Object.keys(kinds).filter(k => kinds[k].placeholder && row.biomes.includes(kinds[k].biome ?? "")).sort();
-    const line = [...row.areas.map(a => ({ area: a as string | null, kind: a })), ...unknown.map(k => ({ area: null, kind: k }))];
+    const mine = (biome: string | undefined) => firstRow(biome ?? "") === r;
+    const unknown = Object.keys(kinds).filter(k => kinds[k].placeholder && mine(kinds[k].biome)).sort();
+    const unlisted = areas.filter(a => !listed.has(a.id) && mine(kinds[a.creature]?.biome)).map(a => a.id);
+    const line = [...[...row.areas, ...unlisted].map(a => ({ area: a as string | null, kind: a })), ...unknown.map(k => ({ area: null, kind: k }))];
     line.forEach((b, i) => blocks.push({ cell: [1 + i, r], area: b.area, kind: b.kind, row: row.name }));
     widest = Math.max(widest, line.length);
   });
