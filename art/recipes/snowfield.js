@@ -3,7 +3,7 @@
 // drift; the arctic fox its creature.
 export const SNOWFIELD = {
   id: "snowfield", name: "Snowfield", creature: "arcticfox", by: "recipe", leaf: .36, floor: ["snow", .58, .06, .86], snow: 1,
-  text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden firs and dwarf birch", set: "a ring of old stones half buried in a drift" },
+  text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden junipers and firs, dwarf birch", set: "a ring of old stones half buried in a drift" },
   wall: [["stones", {}]], small: [["grass", { h: .9 }]],
   big: [["tree", { type: "fir", scale: .95 }], ["tree", { type: "birch", minor: true, scale: .6 }], ["boulder", { sparse: .1 }]],
   pathKinds: ["footpath"],
@@ -14,6 +14,6 @@ export const SNOWFIELD = {
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .1, rocks: .55, freak: .05, lake: .25, modern: .05 },
     feel: "A wide white quiet: deep snow and lone snow-laden firs standing out of it, dwarf birch bent low, old stones showing through the drifts.",
   },
-  flora: { species: [["fir", .6], ["pine", .25], ["birch", .15]], palette: { sat: .6, val: .8 } },
+  flora: { species: [["juniper", .45], ["fir", .35], ["birch", .2]], palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .35, groundCover: { density: .45, kinds: ["blades", "moss"] } },
 };
