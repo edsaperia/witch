@@ -18,7 +18,8 @@
 // if it isn't the default lie, nap.js (`NAP_<ID>`), and creature.js (`CREATURE_<ID>`: its movement profile, body radius,
 // legend moves, attacks, strength, traits, temperament, voice, buff and character, the config files' sections: the schema is
 // config/schema/creature.schema.json), run `node tools/creatures.mjs index`, and commit the lot. Not here: its island in
-// config/kinds.json (an ordered table: it takes a placeholder's place) and the tuning file's heavy and swarm-class lists.
+// its area's art/areas/<id>/kind.json (its line of the kinds table: it takes a placeholder's slot, and that placeholder's
+// config/kinds/<id>.json goes; tools/data.mjs areas) and the tuning file's heavy and swarm-class lists.
 // CI runs `check` (src/creatures.test.ts). Named exports, not default ones: the Art Lab's build (tools/art-lab/build.mjs)
 // inlines every module into one page and only knows `import { ... } from`.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";

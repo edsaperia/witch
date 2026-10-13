@@ -11,15 +11,16 @@ export function entriesOf(text, name) {
   const skipString = q => { i++; while (i < text.length && text[i] !== q) { if (text[i] === "\\") i++; i++; } i++; };
   while (i < text.length && depth > 0) {
     const ch = text[i], two = text.slice(i, i + 2);
+    if (depth === 1 && key === null && /[A-Za-z_$"']/.test(ch)) { // a key, quoted or not (before a string is passed over)
+      const m = /^("[^"]+"|'[^']+'|[A-Za-z_$][\w$]*)\s*:/.exec(text.slice(i));
+      if (m) { key = m[1].replace(/^["']|["']$/g, ""); i += m[0].length; while (text[i] === " ") i++; valueStart = i; continue; }
+    }
     if (ch === '"' || ch === "'" || ch === "`") { skipString(ch); continue; }
     if (two === "//") { const end = text.indexOf("\n", i), line = text.slice(i, end < 0 ? text.length : end); if (depth === 1 && key === null) { const lineStart = text.lastIndexOf("\n", i) + 1; if (!text.slice(lineStart, i).trim()) pendingComments.push(line); else if (entries.length) entries[entries.length - 1].after = line; } i = end < 0 ? text.length : end; continue; }
     if (two === "/*") { i = text.indexOf("*/", i) + 2; continue; }
     if (ch === "{" || ch === "[" || ch === "(") depth++;
     else if (ch === "}" || ch === "]" || ch === ")") { depth--; if (depth === 0) break; }
-    else if (depth === 1 && key === null && /[A-Za-z_$"']/.test(ch)) {
-      const m = /^("[^"]+"|'[^']+'|[A-Za-z_$][\w$]*)\s*:/.exec(text.slice(i));
-      if (m) { key = m[1].replace(/^["']|["']$/g, ""); i += m[0].length; while (text[i] === " ") i++; valueStart = i; continue; }
-    } else if (depth === 1 && key !== null && ch === ",") {
+    else if (depth === 1 && key !== null && ch === ",") {
       entries.push({ key, text: text.slice(valueStart, i).trim(), before: pendingComments, after: "" }); pendingComments = []; key = null;
     }
     i++;
