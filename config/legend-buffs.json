@@ -80,6 +80,7 @@
     "spider":     { "name": "Long thread",    "kind": "shot", "scale": { "invites.range": 1.5 },    "label": "Spider's Long thread: 💌s fly further" },
     "badger":     { "name": "Big heart",      "kind": "shot", "scale": { "invites.radius": 2.2 },   "label": "Badger's Big heart: bigger 💌s, easier to land" },
     "fox":        { "name": "Charm",          "kind": "shot", "mods": { "charm": 1 },               "label": "Fox's Charm: 💌s home in on the nearest animal" },
+    "unicorn":    { "name": "Grace",          "kind": "move", "scale": { "dash.distance": 1.2, "groundAcceleration": 1.5 }, "label": "Unicorn's Grace: a longer blink and quicker starts" },
     "stag":       { "name": "Pierce",         "kind": "shot", "mods": { "pierce": 1 },              "label": "Stag's Pierce: 💌s pass through the first animal and fly on" },
     "otter":      { "name": "Skimming stone", "kind": "shot", "mods": { "ricochet": 1 },            "label": "Otter's Skimming stone: 💌s bounce on to another animal" },
     "toad":       { "name": "Spawn",          "kind": "shot", "mods": { "split": 1 },               "label": "Toad's Spawn: a 💌 that lands splits into 3 small ones" },
