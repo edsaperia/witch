@@ -27,7 +27,7 @@ export const NAP_POSES = {
   elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
-  newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
+  komodo: { kind: "lie", sink: .03, droop: 1, curl: .35 }, newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   // curl
   fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
   marten: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 }, stoat: { kind: "curl", sink: .03, droop: 1, curl: 4, tailDown: .25 },

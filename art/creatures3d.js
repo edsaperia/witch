@@ -367,6 +367,8 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
     m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
   }
+  // a monitor's long forked tongue, flicking: out long on one frame, half in on the other (q.tongue: its length, a share of the head)
+  if (q.tongue) { const out = hr * q.tongue * (frame ? 1 : .45), a = [tip[0] + hr * .05, tip[1] - hr * .12, 0], b = [a[0] + out, a[1] - out * .12, 0]; m.seg(a, b, hr * .045, hr * .035, M[q.tongueMat || "BELLY"], { group: 62, extra: true }); for (const side of [-1, 1]) m.seg(b, [b[0] + out * .3, b[1] + side * out * .06, side * out * .12], hr * .03, hr * .02, M[q.tongueMat || "BELLY"], { group: 62, extra: true }); }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   m.part = "body";
@@ -463,6 +465,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "marten") m.chain([[...tb, .12], [X(1.15) - .3, top - .02 + tw, 0, .2], [X(1.15) - .75, top - .05 + tw, 0, .22], [X(1.15) - 1.15, top + .1 + tw, 0, .17], [X(1.15) - 1.35, top + .3, 0, .08]], M.BODY, { ...o, paint: p => p[0] < X(1.15) - 1.0 ? M.BODY3 : undefined }); // a long, thick brush held out level, curling up at its dark end
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
+  else if (kind === "monitor") m.chain([[tb[0] + .1, tb[1] * .6, 0, .2], [X(1.3), .2 + tw * .5, .08, .14], [X(1.65), .1, .3, .09], [X(1.9), .06 + tw * .4, .6, .05], [X(2.0), .05, .85, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.4) && Math.sin(p[0] * 9) > .55 ? M.BODY2 : undefined }); // a monitor lizard's: thick at its root, long, dragged low and curling round toward us, faintly ringed
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }

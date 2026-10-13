@@ -214,12 +214,11 @@
       "biome": "mountains and glaciers",
       "placeholder": true
     },
-    "unknown-04": {
+    "komodo": {
       "phase": 3,
       "bearing": 89,
       "dir": "E",
-      "biome": "rocky",
-      "placeholder": true
+      "biome": "rocky"
     },
     "unknown-05": {
       "phase": 3,

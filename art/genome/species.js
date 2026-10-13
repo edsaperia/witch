@@ -133,6 +133,17 @@ export const GENOMES = [
   { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
   { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .68, len: .78, chest: .35, tuck: .42, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: ["mane"] },
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .4, len: .95, chest: .16, tuck: .16, neck: .1, neckAng: -.05, neckW: .6, hr: .29, legW: 1.45, bw: .36 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
+  // the Komodo dragon (unknown-04's rocky island, Ed 2026-10-12: more animals for later islands; art builder 2's record): a big
+  // low monitor lizard, long and heavy, its long flat head, its sprawled legs and its tail as long again as its body. Its evolution:
+  // a banded yellow-and-green tree-climbing hatchling, a speckled young, a heavy grey-brown adult, and the island's legend, a
+  // dragon in earnest: a spined crest down its back and long hooked claws
+  { id: "komodo", name: "Komodo dragon", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .3, val: .36, belly: "yellow" }, body: { hgt: .62, len: 1.3, chest: .26, tuck: .22, neck: .34, neckAng: .18, neckW: .42, hr: .22, legW: 1.6, bw: .4 }, head: { snout: 1.0, snoutD: .72, snoutTaper: .9, tongue: 1.1 }, parts: { ears: { kind: "none" }, tail: "monitor", feet: "paw" }, coat: { belly: true }, legend: ["flames"], texture: { kind: "scales" },
+    levels: [
+      { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
+      { coat: { spots: true, spotMat: "belly" } },
+      null,
+      { coat: { ridge: 2.2 }, features: [{ kind: "claws", hind: true }] },
+    ] },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
