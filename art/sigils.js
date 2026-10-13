@@ -111,6 +111,8 @@ export const SIGILS = {
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
+  // the flying squirrel: spread in its glide, seen from above: its membrane a kite scalloped between wrists and ankles, a round head with big eyes, its flat tail
+  flyingsquirrel: [C(.5, .2, .1), D(.46, .19), D(.54, .19), ...pair(bow([.43, .12], [.38, .05], .3)), L([.44, .3], [.18, .32], [.27, .5], [.17, .68], [.42, .64]), L([.56, .3], [.82, .32], [.73, .5], [.83, .68], [.58, .64]), L([.5, .62], [.5, .94]), ...pair(L([.45, .74], [.5, .8]), L([.44, .84], [.5, .9]))],
   // a segmented grub arching round to its glowing lantern tail, rays shining out
   glowworm: [A(.4, .58, .26, 180, 340), ...[200, 235, 270, 305].map(a => L(at(.4, .58, .2, a), at(.4, .58, .32, a))), D(.14, .58), C(.69, .55, .1), ...rays(.69, .55, .15, .24, [-90, -30, 30, 90, 150])],
   // seen from above: a round body and a small head, eight bent legs
@@ -214,6 +216,7 @@ export const LEGEND_DETAIL = {
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
+  flyingsquirrel: [D(.32, .44), D(.66, .52), D(.4, .58), D(.6, .4), D(.28, .6)],
   glowworm: [...rays(.69, .55, .15, .2, [-60, 0, 60, 120]), L([.14, .58], [.08, .5]), D(.69, .55)],
   spider: [...pair(D(.47, .37)), L([.5, .54], [.5, .7]), L([.44, .6], [.56, .6])],
   dormouse: [C(.32, .3, .035), L([.3, .44], [.18, .42]), L([.3, .47], [.19, .5]), ...rays(.52, .58, .23, .28, [120, 160, 200])],
@@ -329,7 +332,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", worldTree: "mint" };
+export const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", flyingsquirrel: "violet", worldTree: "mint" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;

@@ -90,12 +90,12 @@ export function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
 
 export function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
-  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : ""].join(",") : ""].join("|");
+  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : ""].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down
-    const build = () => g?.nap ? withForm(napForm(S, { frame }), () => buildCreature(S, level, 0, st, facing)) : buildCreature(S, level, frame, st, facing);
+    // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down. gliding (gear.glide): spread out in the air
+    const build = () => g?.nap ? withForm(napForm(S, { frame }), () => buildCreature(S, level, 0, st, facing)) : buildCreature(g?.glide && S.q ? { ...S, q: { ...S.q, glide: true } } : S, level, frame, st, facing); // (gliding, gear.glide: a glider's legs spread, its membrane taut: the quad builder's q.glide)
     sp = withTexture({ S, level, st }, () => withGear(g?.nap ? { ...g, face: "asleep" } : g, build));
     textureSprite(sp, S, level, st, textureSeed(S.id)); // its fur, feathers or scales (genome/texture.js)
     if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes

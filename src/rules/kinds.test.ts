@@ -16,7 +16,7 @@ describe("the kind table", () => {
     const by = [0, 1, 2, 3, 4, 5].map(p => Object.values(kinds).filter(k => k.phase === p).length);
     expect(by).toEqual([10, 10, 12, 14, 18, 0]);
     expect(Object.keys(kinds).length).toBe(64);
-    for (const [id, k] of Object.entries(kinds)) expect(!!k.placeholder, id).toBe(k.phase >= 3); // (every kind from phase 3 on is a placeholder, for now)
+    for (const [id, k] of Object.entries(kinds)) if (k.phase < 3 || k.placeholder) expect(!!k.placeholder, id).toBe(k.phase >= 3); // (placeholders only from phase 3 on; a new animal replaces one there: Ed, 2026-10-12)
     for (const k of Object.values(kinds)) { expect(k.bearing).toBeGreaterThanOrEqual(0); expect(k.bearing).toBeLessThan(360); }
   });
 });

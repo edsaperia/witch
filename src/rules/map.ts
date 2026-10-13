@@ -20,7 +20,7 @@ import { makeLand, type LandMap } from "./land";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, randomKind, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -237,7 +237,7 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 }
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
-  const A = tuning.areaSize * tuning.areaScale, typeCount = AREA_TYPES.length;
+  const A = tuning.areaSize * tuning.areaScale, randomTypes = AREA_TYPES.flatMap((a, i) => (randomKind(a.creature) ? [i] : [])), typeCount = randomTypes.length; // (the random pool: never the roster-only kinds' area types, rules/rosters.ts randomKind)
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
   // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
@@ -332,11 +332,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (t !== undefined) near.add(t);
     }
     for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
-    const free = [...Array(typeCount).keys()].filter(t => !near.has(t));
-    const pool = free.length ? free : [...Array(typeCount).keys()];
+    const free = randomTypes.filter(t => !near.has(t));
+    const pool = free.length ? free : randomTypes;
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount);
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? randomTypes[Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount)];
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();

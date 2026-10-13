@@ -18,6 +18,7 @@ import { bossBreath, legendNeon } from "../leash";
 import { dormant } from "../../rules/game";
 import { hash2 } from "../../rules/random";
 import { restlessness } from "../../rules/dream";
+import { glideOf } from "../../rules/movement";
 import { sigilColour } from "../../../art/generator.js";
 import type { View } from "../view";
 import type { Style } from "../style";
@@ -126,12 +127,14 @@ export function drawCreatures(v: View, time = 0): void {
     const slept = sleeping ? (g.tuning.wildLegends.seen?.nap ? v.assets.napArt(c.species) : v.assets.sleepArt(c.species)) : undefined;
     // Lain down asleep (more than half way: the rig, where it draws, carries it there and back), its nap (art/naps.js), its level's frames.
     const napped = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
-    const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
+    // Gliding (Profile.glide: the flying squirrel's roam and its pounce, Ed 2026-10-12): in the air, spread out, its membrane taut; the rig leaves it to the baked frames.
+    const glided = !napped && !st && !!c.leap && time >= c.leap.at && !!glideOf(c.species) ? v.assets.glideArt(c.species) : undefined;
+    const art = glided ?? napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = glided ? `glide-${c.species}` : napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
     const lk = c.boss && !c.leashed && g.tuning.wildLegends.seen ? `legend-${key}` : key; // (a wild legend in a batch of its own: its rim and its light in steps)
     if (lk !== key) legendKeys.set(lk, c.species);
     arts.set(lk, art);
-    const gait = art.walk, fi = slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
+    const gait = art.walk, fi = glided ? art.frame(c.level, Math.floor(time * 3 + c.id * 0.37) % 2) : slept || napped ? art.frame(c.level, Math.floor(time / (slept ? 2.5 : 1.8) + c.id * 0.37) % 2) : art.frame(c.level, strideFrame(v, c, time, art.atlas.frames[art.frame(c.level, 0, c.away)].w * v.mpp * (gait?.step ?? 0.3), gait?.frames ?? 2), c.away), frame = art.atlas.frames[fi]; // (walking: its cycle by the distance it's gone, a planted foot staying put) // (asleep: a slow breath, in and out)
     // A wild legend (Ed, 2026-10-04): bigger and imposing, swelling slowly as it breathes (slower asleep).
     const boss = c.boss && !c.leashed ? g.tuning.wildLegends : null;
     // (its size a constant, so its pixels stay the scene's: its breath a squash in whole art pixels, sy, not a swelling; Ed's round 14 playtest)
@@ -219,7 +222,7 @@ export function drawCreatures(v: View, time = 0): void {
     // body's middle lies from its place (a sleeping form's frame is often off-centre: a curl, a legend's tails).
     const flip = ((c.facing < 0) !== (toss > 0.5 && Math.floor(time * 0.35 + c.id * 0.13) % 2 === 1)) !== feel.flip, mid = (slept ?? napped)?.centre?.[fi] ?? 0, RT = SPRITE_UNIFORMS.uRight.value;
     let rigged = false;
-    if (!(v.rig && !form && (rigged = v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined })))) // the rig draws it, if it can
+    if (!(v.rig && !form && !glided && (rigged = v.rig.add(c, { y: dance + hop + (st ? rigSunk : sunk), tap, scale, glow, fresh, h: frame.h - (frame.pad ?? 0), face: lying > 0.5 ? "asleep" : face, sleep: lying, droop, twitch: toss, sx: feel.sx * csx, sy: feel.sy * breathY * csy, dx: cx, dz: cz, crouch: feel.crouch, lunging: feel.lunging, gear: party ? v.rigGear(c, look === "leashed") : c.enraged ? WOKEN_GEAR : undefined, posture: ch.rig, quirk: ch.quirk, quirkK, lookAt: watching ? g.witch : undefined })))) // the rig draws it, if it can
     { // (lying down, its body's middle on its place, under which its shadow lies: a sleeping form's frame is often off-centre, a curl, a legend's tails)
       spriteQuirk(ch.sprite, quirkK, time, SQ); // (its idle quirk as a whole frame can show it: a hop, a puff, a look back, a shiver)
       const turned = flip !== SQ.turned, k = -mid * v.mpp * scale * (turned ? -1 : 1) + SQ.x * fh;

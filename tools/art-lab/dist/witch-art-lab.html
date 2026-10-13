@@ -3888,6 +3888,15 @@ const GENOMES = [
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
+  // the cold rainforest's flying squirrel (Ed, 2026-10-12: a new animal for a later island, unknown-12's): a squirrel built for the night,
+  // huge dark eyes, a flat feathered tail and loose furred skin from wrist to ankle that spreads into a glide; its legend's membrane the night sky
+  { id: "flyingsquirrel", name: "Flying squirrel", template: "quadruped", builder: "quad", palette: { hue: .06, sat: .3, val: .42, belly: "white" }, body: { hgt: .5, len: .5, chest: .32, tuck: .36, neck: .16, neckAng: .75, neckW: .38, hr: .33, legW: .7, haunch: 1.1, back: "arch" }, head: { snout: .4, snoutD: .65, whiskers: true, eyeK: 1.9 }, parts: { ears: { kind: "round", size: .9 }, tail: "glider", feet: "paw" }, coat: { belly: true }, legend: ["starTail"], texture: { kind: "fur", size: 2 },
+    levels: [
+      { head: { eyeK: 2.1 }, features: [{ kind: "patagium", spread: .3 }] },
+      { features: [{ kind: "patagium", spread: .45 }] },
+      { features: [{ kind: "patagium", spread: .6 }] },
+      { head: { eyeGlow: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: .09 }] },
+    ] },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },
 ];
 
@@ -3911,7 +3920,7 @@ const TEMPLATES = {
     name: "Four-legged", builders: ["quad"],
     sockets: {
       ears: ["ear.point", "ear.round", "ear.long", "ear.tuft", "ear.small", "ear.big", "ear.none"],
-      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander"],
+      tail: ["tail.brush", "tail.bushy", "tail.stub", "tail.deer", "tail.bob", "tail.puff", "tail.squirrel", "tail.thin", "tail.otter", "tail.flat", "tail.stoat", "tail.dormouse", "tail.marten", "tail.newt", "tail.salamander", "tail.glider"],
       feet: ["foot.paw", "foot.hoof"],
       horns: ["horn.curl", "horn.twist"], antlers: ["antler.branch", "antler.palm"], tusks: ["tusk"],
     },
@@ -4205,7 +4214,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings"];
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "patagium"];
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -4285,7 +4294,7 @@ const NAP_POSES = {
   elk: { kind: "lie", sink: .06, droop: .5 }, stag: { kind: "lie", sink: .06, droop: .5 }, boar: { kind: "lie", sink: .05, droop: .8 },
   bear: { kind: "lie", sink: .05, droop: 1 }, badger: { kind: "lie", sink: .04, droop: 1 }, ram: { kind: "lie", sink: .06, droop: .6 },
   beaver: { kind: "lie", sink: .04, droop: 1 }, hare: { kind: "lie", sink: .05, droop: .6 }, otter: { kind: "lie", sink: .03, droop: 1, curl: .7 },
-  newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
+  flyingsquirrel: { kind: "curl", sink: .04, droop: 1, curl: 3.2, tailDown: .5 }, newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
   // curl
   fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
   marten: { kind: "curl", sink: .03, droop: 1, curl: 3.8, tailDown: .25 }, stoat: { kind: "curl", sink: .03, droop: 1, curl: 4, tailDown: .25 },
@@ -4661,6 +4670,21 @@ function evolve3d(m, feats, c) {
         m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
+    if (f.kind === "patagium" && m.rig?.legs) { // a flying squirrel's gliding membrane: loose furred skin from each wrist to its ankle along the flank, its rim pale; spread: how far it hangs out (a legend's, its night sky)
+      m.part = "body";
+      const mat = M[f.mat || "BODY"], rim = M[f.rim || "BELLY"], spread = f.spread ?? .5, sky = f.stars;
+      for (const side of [-1, 1]) {
+        const F = m.rig.legs.find(L => L.fore && L.side === side), Hd = m.rig.legs.find(L => !L.fore && L.side === side); if (!F || !Hd) continue;
+        if (c.glide) { // spread taut, a flat square kite from wrist to ankle, its rim pale (a legend's the night sky)
+          const fa = F.foot, ha = Hd.foot, mid = [(fa[0] + ha[0]) / 2, (fa[1] + ha[1]) / 2 + .03, side * c.bw * 1.6], w2 = side * c.bw * 1.55;
+          m.flat(mid, [1, 0, 0], [0, 0, side], (fa[0] - ha[0]) / 2 + .04, w2 * side, (a, b) => { const e = .98 - .32 * (1 - a * a) * (a < 0 ? 1.2 : 1); if (b > e) return null; if (b > e - .12 || Math.abs(a) > .93) return rim; return sky && spotty([a * 3, b * 3, side], 40, .1) ? M.GLINT : mat; }, { group: side > 0 ? 160 : 161, extra: true, bend: .1 });
+          continue;
+        }
+        const wr = v3.lerp(F.knee, F.foot, .5), an = v3.lerp(Hd.knee, Hd.foot, .45), u = v3.norm(v3.sub(wr, an)), half = Math.hypot(...v3.sub(wr, an)) * .58;
+        const y0 = (wr[1] + an[1]) / 2, y1 = (F.hip[1] + Hd.hip[1]) / 2 - .02, ctr = [(wr[0] + an[0]) / 2, (y0 + y1) / 2, side * c.bw * (.72 + spread * .12)], dy = (y1 - y0) / 2 * (1 + spread * .15), low = ctr[1] - dy * .55;
+        m.ell(ctr, [half, dy, .04 + spread * .03], mat, { group: side > 0 ? 160 : 161, extra: true, dir: u, paint: p => p[1] < low ? rim : sky && spotty(p, 40, .1) ? M.GLINT : undefined });
+      }
+    }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
       m.part = "body";
       const n = f.count ?? 5, s = f.size ?? .22;
@@ -4711,7 +4735,8 @@ function quad3d(S, level, frame, st, facing = "towards") {
     m.part = `leg${fore ? "F" : "H"}${side > 0 ? "N" : "F"}`; // fore or hind, near or far
     const z = side * bw * .62, x = fore ? len * .62 : -len * .62, a = (fore ? 1 : -1) * side * sw, topY = fore ? chest + .1 : tuck + .15;
     const lift = (fore ? side : -side) * (frame ? 1 : -1) > 0 ? .06 : 0;  // the leg swinging forward is lifted
-    const knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
+    let knee = [x + Math.sin(a) * .2 + (fore ? .02 : .1), Math.max(.3, topY * .55), z], foot = [x + Math.sin(a) * .42, .05 + lift, z];
+    if (q.glide) { const o = side * bw, gy = (top + chest) / 2; knee = [x * 1.15, gy, o * 1.9]; foot = [x * 1.35 + (fore ? .14 : -.1), gy - .04, o * 3.1]; } // gliding: its legs spread out sideways, the membrane taut between them
     const hipTop = [x, topY + .12, z * .8], mat = side > 0 ? (q.legMat || M.BODY) : (q.legMat ? M.BODY3 : M.BODY2);
     const pts = fore ? [[...hipTop, lw * 1.5], [...knee, lw * 1.05], [...foot, lw * .9]] : [[...hipTop, lw * 2 * (q.haunch || 1)], [...v3.add(knee, [-.12, .06, 0]), lw * 1.2], [...v3.add(foot, [-.06 * (q.hindFoot || 1), .12, 0]), lw * .9], [...foot, lw * .9]];
     m.chain(pts, mat, { group: side > 0 ? 6 + (fore ? 1 : 0) : 2, paint: q.socks || q.beads ? p => q.beads && p[1] > .12 && p[1] < (q.socks ?? 0) + .45 && Math.floor(p[1] * 16) % 3 === 0 && spotty(p, 30, .55) ? M.STONE : q.socks && p[1] < q.socks ? M.BODY3 : undefined : undefined }); // beads: stone-grey prayer beads round its legs
@@ -4777,7 +4802,7 @@ function quad3d(S, level, frame, st, facing = "towards") {
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame, glide: q.glide });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
@@ -4870,6 +4895,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "newt") { m.chain([[...tb, .1], [X(1.35), .3 + tw, 0, .07], [X(1.85), .2 + tw * .5, 0, .04]], M.BODY, o); m.ell([X(1.55), .33 + tw * .7, 0], [.42, .2, .03], M.BODY2, { ...o, dir: [1, -.12, 0] }); } // a newt's tail: a tall flat crested fin (its signature)
   else if (kind === "salamander") m.chain([[...tb, .12], [X(1.3), .18 + tw, 0, .08], [X(1.75), .1, 0, .055], [X(2.1), .16 + tw, 0, .035], [X(2.25), .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[0] < X(1.6) && Math.sin(p[0] * 18) > .4 ? M.BELLY : undefined }); // long and slim, banded, curling up at its tip
   else if (kind === "flat") { m.seg(tb, [X(1.15), .3, 0], .1, .09, M.BODY2, o); m.ell([X(1.5), .17 + tw * .5, 0], [.44, .07, .3], M.BODY3, { ...o, dir: [1, .25, 0], paint: p => (Math.floor(p[0] * 14) + Math.floor(p[2] * 14)) % 2 ? M.BODY2 : undefined }); } // the broad scaly paddle, tipped up so it shows (its signature)
+  else if (kind === "glider") { m.seg(tb, [X(1.2), top - .12 + tw, 0], .09, .1, M.BODY, o); m.ell([X(1.65), top - .16 + tw * .7, 0], [.5, .06, .2], M.BODY, { ...o, dir: [1, .12, 0], paint: p => p[0] < X(1.95) ? M.BODY3 : Math.abs(p[2]) > .13 ? M.BODY2 : undefined }); } // a flying squirrel's: flat and feathered either side, held level behind (its rudder in a glide), its tip dark
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
 
@@ -5394,12 +5420,12 @@ function walkGait(id) { return GAITS[id] ?? { frames: 2, step: 0.3 }; }
 
 function critter(spId, level, frame, st, facing = "towards", gear = null) {
   if (facing === "away" && gear?.face) gear = { ...gear, face: null }; // (its face can't be seen from behind)
-  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
-  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : ""].join(",") : ""].join("|");
+  const S = (typeof spId === "object" ? spId : SPECIES_BY_ID[spId]) || SPECIES[0], /* (a species object: one not in the bestiary yet, art/preview.mjs genome) */ g = gear && (gear.collar || gear.hat != null || gear.glasses || gear.shoes || gear.woken || gear.nap || gear.glide || (gear.face && gear.face !== "neutral")) ? { ...gear, faceStyle: S.face } : null;
+  const key = [S.id, level, frame, facing, ...SHAPE_KNOBS.map(k => st[k]), g ? [!!g.collar, g.hat ?? "", g.glasses || "", g.shoes || "", !!g.woken, g.face && g.face !== "neutral" ? g.face : "", g.nap ? "nap" : "", g.glide ? "glide" : ""].join(",") : ""].join("|");
   let sp = cache.get(key);
   if (!sp) {
-    // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down
-    const build = () => g?.nap ? withForm(napForm(S, { frame }), () => buildCreature(S, level, 0, st, facing)) : buildCreature(S, level, frame, st, facing);
+    // asleep (gear.nap: art/naps.js): lying down, eyes shut, frame its breath; its walk's first frame laid down. gliding (gear.glide): spread out in the air
+    const build = () => g?.nap ? withForm(napForm(S, { frame }), () => buildCreature(S, level, 0, st, facing)) : buildCreature(g?.glide && S.q ? { ...S, q: { ...S.q, glide: true } } : S, level, frame, st, facing); // (gliding, gear.glide: a glider's legs spread, its membrane taut: the quad builder's q.glide)
     sp = withTexture({ S, level, st }, () => withGear(g?.nap ? { ...g, face: "asleep" } : g, build));
     textureSprite(sp, S, level, st, textureSeed(S.id)); // its fur, feathers or scales (genome/texture.js)
     if (g?.woken) for (let i = 0; i < sp.m.length; i++) if (sp.m[i] === M.EYE || sp.m[i] === M.IRIS || sp.m[i] === M.PUPIL) sp.m[i] = M.WOKEN; // angry glowing eyes
@@ -6927,6 +6953,8 @@ const SIGILS = {
   newt: [E(.36, .58, .24, .08), C(.17, .55, .07), D(.15, .53), L([.6, .58], [.94, .52]), L(...Array.from({ length: 25 }, (_, i) => [.2 + .72 * i / 24, .47 - .012 * i / 24 * 6 - .035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([.26, .65], [.22, .76], [.15, .78]), L([.46, .65], [.5, .76], [.57, .78])],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
+  // the flying squirrel: spread in its glide, seen from above: its membrane a kite scalloped between wrists and ankles, a round head with big eyes, its flat tail
+  flyingsquirrel: [C(.5, .2, .1), D(.46, .19), D(.54, .19), ...pair(bow([.43, .12], [.38, .05], .3)), L([.44, .3], [.18, .32], [.27, .5], [.17, .68], [.42, .64]), L([.56, .3], [.82, .32], [.73, .5], [.83, .68], [.58, .64]), L([.5, .62], [.5, .94]), ...pair(L([.45, .74], [.5, .8]), L([.44, .84], [.5, .9]))],
   // a segmented grub arching round to its glowing lantern tail, rays shining out
   glowworm: [A(.4, .58, .26, 180, 340), ...[200, 235, 270, 305].map(a => L(at(.4, .58, .2, a), at(.4, .58, .32, a))), D(.14, .58), C(.69, .55, .1), ...rays(.69, .55, .15, .24, [-90, -30, 30, 90, 150])],
   // seen from above: a round body and a small head, eight bent legs
@@ -7030,6 +7058,7 @@ const LEGEND_DETAIL = {
   salamander: [...pair(D(.46, .38), D(.46, .5), L([.2, .7], [.16, .76]))],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   heron: [L([.35, .48], [.31, .6]), L([.4, .5], [.37, .62]), bow([.32, .56], [.64, .6], -.25), L([.42, .94], [.36, .97]), L([.56, .94], [.63, .97])],
+  flyingsquirrel: [D(.32, .44), D(.66, .52), D(.4, .58), D(.6, .4), D(.28, .6)],
   glowworm: [...rays(.69, .55, .15, .2, [-60, 0, 60, 120]), L([.14, .58], [.08, .5]), D(.69, .55)],
   spider: [...pair(D(.47, .37)), L([.5, .54], [.5, .7]), L([.44, .6], [.56, .6])],
   dormouse: [C(.32, .3, .035), L([.3, .44], [.18, .42]), L([.3, .47], [.19, .5]), ...rays(.52, .58, .23, .28, [120, 160, 200])],
@@ -7145,7 +7174,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", worldTree: "mint" };
+const SIGIL_NEON = { heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", glowworm: "mint", spider: "blue", dormouse: "magenta", newt: "acid", flyingsquirrel: "violet", worldTree: "mint" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -7825,6 +7854,25 @@ const spSETS = {
     for (let i = 0; i < 4; i++) spRockAt(m, [-.7 + i * .45, .12, (spHash(i) - .5) * .5], [.22, .18, .2], 6 + i);
     m.box([0, .35, -.2], [.16, .35, .08], M.STONE, { round: .05, rough: .01, group: 11, paint: p => Math.abs(p[1] - .4) < .14 && Math.abs(p[0]) < .05 ? M.MAGIC : p[1] > .62 ? M.MOSS : undefined }); // a rune stone under the arch
   },
+  // mistwood: a nurse log, a giant spruce fallen long ago, its root plate reared up at one end, moss thick along it and a
+  // row of young spruce growing out of its back, ferns and toadstools at its foot
+  "nurse-log"(m) {
+    const mossy = p => { const n = spHash(Math.floor(p[0] * 9), Math.floor(p[2] * 9) + Math.floor(p[1] * 9) * 5); return p[1] > .5 ? (n < .3 ? M.LEAF2 : M.MOSS) : n < .12 ? M.MOSS : undefined; };
+    m.chain([[-2.3, .48, .1, .5], [-1, .5, 0, .48], [.4, .44, -.05, .44], [1.7, .38, 0, .38], [2.6, .3, .05, .3]], M.TRUNK, { group: 1, rough: .02, paint: p => mossy(p) ?? spBark(p) });
+    m.ell([2.75, .3, .05], [.08, .28, .28], M.BARKL, { group: 1, paint: p => Math.abs(Math.hypot(p[1] - .3, p[2] - .05) - .15) < .03 ? M.BARKD : undefined }); // its broken end, the rings showing
+    // the root plate: a disc of roots and earth stood on edge, roots splaying out of it
+    m.ell([-2.7, 1.0, .05], [.25, 1.0, 1.05], M.BARKD, { group: 2, rough: .05, paint: p => p[1] > 1.6 ? M.MOSS : spHash(Math.floor(p[1] * 8), Math.floor(p[2] * 8)) < .3 ? M.STONED : undefined });
+    for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, r = .85 + spHash(i, 3) * .3; spLimb(m, [[-2.65, 1.0 + Math.sin(a) * r * .8, .05 + Math.cos(a) * r * .8, .08], [-2.75 - spHash(i) * .2, 1.0 + Math.sin(a) * r * 1.25, .05 + Math.cos(a) * r * 1.25, .03]], 3); }
+    // its saplings: young spruce in a row along its back, the middle ones tallest
+    for (let i = 0; i < 6; i++) {
+      const x = -1.6 + i * .75, h = .55 + .7 * Math.sin(Math.PI * (i + .5) / 6) * (.8 + .4 * spHash(i, 9)), y0 = .9 - i * .02, z = (spHash(i, 5) - .5) * .2;
+      m.seg([x, y0 - .1, z], [x, y0 + h, z], .03, .015, M.TRUNK, { group: 10 + i });
+      for (let k = 0; k < 4; k++) { const t = k / 4, r = (.24 - t * .18) * (h / 1), y = y0 + .12 + t * h * .85; m.ell([x, y, z], [r, h * .14, r], M.LEAF3, { group: 10 + i, rough: .02, paint: p => p[1] > y + h * .05 ? M.LEAF : undefined }); }
+    }
+    // ferns and toadstools at its foot
+    for (let i = 0; i < 7; i++) { const x = -2 + i * .7, z = (i % 2 ? .55 : -.5) + (spHash(i, 2) - .5) * .2; for (let k = 0; k < 5; k++) { const a = k / 5 * Math.PI * 2; m.ell([x + Math.cos(a) * .18, .14, z + Math.sin(a) * .18], [.2, .04, .07], M.LEAF2, { group: 30, dir: [Math.cos(a), .5, Math.sin(a)] }); } }
+    for (let i = 0; i < 5; i++) { const x = -1.2 + i * .65, z = .5; m.seg([x, 0, z], [x, .14, z], .02, .02, M.BELLY, { group: 40 }); m.ell([x, .16, z], [.07, .035, .07], M.ACCENT, { group: 40, paint: p => spHash(Math.floor(p[0] * 60), Math.floor(p[2] * 60)) < .2 ? M.BELLY : undefined }); }
+  },
   // Norway: a little log cabin with a turf roof, abandoned
   "turf-hut"(m) {
     m.box([0, .55, 0], [1.0, .55, .7], M.WOOD, { round: .04, group: 1, paint: p => (p[1] * 7) % 1 < .18 ? M.BARKD : p[2] > .66 && Math.abs(p[0] + .2) < .2 && p[1] < .85 ? M.NOSE : p[2] > .66 && Math.abs(p[0] - .5) < .14 && Math.abs(p[1] - .7) < .12 ? M.SHADES : undefined }); // log walls, a door, a dark window
@@ -8206,7 +8254,29 @@ const HERONRY = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY];
+// ---- inlined from art/recipes/mistwood.js ----
+// The mistwood (Ed, 2026-10-12: a new animal for a later island, unknown-12's, the cold rainforest at bearing 295): old-growth
+// spruce and cedar dripping with moss, tree ferns in the understorey, nurse logs sprouting saplings; the flying squirrel its creature,
+// gliding from trunk to trunk. Ed's columns as for the 30.
+const MISTWOOD = {
+  id: "mistwood", name: "Mistwood", creature: "flyingsquirrel", by: "recipe", leaf: .31, floor: ["moss", .3, .45, .26],
+  text: { floor: "deep wet moss", wall: "fallen nurse logs", small: "sword ferns and fungi", big: "giant spruce and cedar, tree ferns beneath", set: "a nurse log, a fallen giant with young spruce growing out of its back" },
+  wall: [["log", { rot: true }], ["fern", {}]], small: [["fern", {}], ["fungi", {}]],
+  big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
+  wet: true, pathKinds: ["boardwalk"],
+  setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", 1.2],
+  layout: {
+    pattern: "uniform", density: .7, clump: .4, glades: { count: 1, size: [10, 14] },
+    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
+    terrain: ["hollows"], decor: { rate: .2, ruins: .1, rocks: .2, freak: .2, lake: .3, modern: .05 },
+    feel: "Dim and dripping: giant mossy spruce and cedar trunks rising out of sight, tree ferns and sword ferns beneath, nurse logs green with saplings, mist between the trunks.",
+  },
+  flora: { species: [["fir", .45], ["cedar", .25], ["palm", .2], ["alder", .1]], palette: { sat: .75, val: .75 } },
+  settings: { treeDensity: .75, groundCover: { density: .95, kinds: ["moss", "fern"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY, MISTWOOD];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -11712,6 +11782,7 @@ const LEGEND_POSES = {
   ram: { sink: .42, droop: .9, drop: [], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 4, stones: 2, flowers: 0 } },
   squirrel: { sink: .45, droop: 1, drop: [], over: { moss: .3, lichen: .06, ferns: 0, grass: 3, mushrooms: 0, roots: 1, stones: 1, flowers: 6 } },
   dormouse: { sink: .45, droop: 1, drop: [], over: { moss: .4, lichen: .04, ferns: 1, grass: 3, mushrooms: 2, roots: 2, stones: 0, flowers: 5 } },
+  flyingsquirrel: { sink: .45, droop: 1, drop: [160, 161], over: { moss: .55, lichen: .16, ferns: 2, grass: 2, mushrooms: 2, roots: 2, stones: 1 } }, // the mistwood's flying squirrel (an area recipe's): curled in the moss, its starry membrane drawn in, lichen over it
   newt: { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }, // the fen's newt (an area recipe's): sunk in peat, sedge over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },

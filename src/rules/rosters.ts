@@ -19,6 +19,12 @@ export const KIND_NAMES = Object.keys(KINDS);
 export const isPlaceholder = (k: string): boolean => !!KINDS[k]?.placeholder;
 /** The kinds that are designed: creatures, area types and legends. */
 export const REAL_KINDS = KIND_NAMES.filter(k => !isPlaceholder(k));
+/** The phase from which a kind is only placed by rosters (its own island and later phases'), never in the random pool of
+ *  area types a map without a roster draws from (the radius map, the tests' maps): the new animals (Ed, 2026-10-12) replace
+ *  phase 3 and 4 placeholders, so maps without a roster, and every seed's map from before, stay as they were. */
+export const ROSTER_ONLY_PHASE = 3;
+/** Whether an area type's kind may be dealt at random on a map without a roster (Ed's 32, phases 0 to 2; any area type not in the kind table). */
+export const randomKind = (k: string): boolean => (KINDS[k]?.phase ?? 0) < ROSTER_ONLY_PHASE;
 /** Whether an island ("home" or a kind) can be played. */
 export const playableIsland = (island: string): boolean => island === "home" || (!!KINDS[island] && !isPlaceholder(island));
 
