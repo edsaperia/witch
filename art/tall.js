@@ -88,5 +88,8 @@ export function tallPiece(kind, o, def, st, r, ppm = 16) {
   const colours = { [M.STONE]: hsv2rgb(.09, .07, .58), [M.STONED]: hsv2rgb(.62, .1, .34), [M.BELLY]: hsv2rgb(.14, .15, .78), [M.MOSS]: hsv2rgb(leaf, .5, .4), [M.LEAF]: hsv2rgb(leaf, .55, .45), [M.LEAF2]: hsv2rgb(leaf - .03, .5, .6),
     [M.TRUNK]: hsv2rgb(.07, .2, .36), [M.BARKD]: hsv2rgb(.06, .25, .18), [M.BARKL]: hsv2rgb(.08, .15, .52), [M.FLOWER]: [196, 150, 96], [M.BODY2]: [52, 70, 86], [M.NOSE]: [20, 16, 24], [M.LINE]: [24, 22, 30] };
   if (kind === "snag") colours[M.BELLY] = [214, 196, 160]; // its pale splintered wood and the fungi's rims
+  if (o.rock) { const [h, sa, v] = o.rock; Object.assign(colours, { [M.STONE]: hsv2rgb(h, sa, v), [M.STONED]: hsv2rgb(h - .02, sa * 1.1, v * .62), [M.BELLY]: hsv2rgb(h + .03, sa * .55, Math.min(1, v * 1.25)) }); } // an area's own rock (the badlands' red sandstone)
+  if (o.dry) Object.assign(colours, { [M.MOSS]: colours[M.BELLY], [M.LEAF]: hsv2rgb(.11, .35, .55), [M.LEAF2]: hsv2rgb(.12, .3, .68) }); // sun-baked: sand on its ledges, dry grass for ferns
+  if (o.bleached) Object.assign(colours, { [M.TRUNK]: hsv2rgb(.09, .1, .66), [M.BARKD]: hsv2rgb(.08, .14, .42), [M.BARKL]: hsv2rgb(.1, .08, .82), [M.FLOWER]: hsv2rgb(.09, .1, .66) }); // a sun-bleached snag, no fungi
   return { sp, colours, metres: { height: +(sp.h / ppm).toFixed(1), width: +(sp.w / ppm).toFixed(1) } };
 }
