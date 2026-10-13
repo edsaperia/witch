@@ -444,9 +444,15 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (!P) for (const [c, r] of loaves) m.ell(c, r, M.BODY, { paint: paintBody });
   else {
     const envelope = x => { let w = 0, t = -Infinity, b = Infinity; for (const [c, r] of loaves) { const u = (x - c[0]) / r[0]; if (Math.abs(u) >= 1) continue; const f = Math.sqrt(1 - u * u); w = Math.max(w, r[2] * f); t = Math.max(t, c[1] + r[1] * f); b = Math.min(b, c[1] - r[1] * f); } return { w, t, b }; }; // the loaves at x: their widest, their back, their belly
-    for (const [k, at, rx] of [["hip", -.82, .32], ["hip", -.5, .36], ["loin", -.25, .36], ["waist", 0, .36], ["ribcage", .25, .36], ["shoulder", .48, .36], ["shoulder", .8, .32]]) {
-      const x = at * len, e = envelope(x), s = P[k], depth = (e.t - e.b) * s.d;
-      m.ell([x, e.t - depth / 2, 0], [len * rx, depth / 2, e.w * s.w], M.BODY, { paint: paintBody });
+    const AT = [-.5, -.25, 0, .25, .48], K = ["hip", "loin", "waist", "ribcage", "shoulder"], station = u => { // the profile between its stations, straight lines, held past the ends
+      if (u <= AT[0]) return P.hip; if (u >= AT[4]) return P.shoulder;
+      for (let i = 0; i < 4; i++) if (u <= AT[i + 1]) { const f = (u - AT[i]) / (AT[i + 1] - AT[i]), a = P[K[i]], b = P[K[i + 1]]; return { w: a.w + (b.w - a.w) * f, d: a.d + (b.d - a.d) * f }; }
+      return P.shoulder;
+    };
+    for (let u = -.82; u <= .81; u += .09) { // a slice every .09 of the length, each reaching its neighbours, so the loft between the stations runs smooth
+      const x = u * len, e = envelope(x), s = station(u), depth = (e.t - e.b) * s.d;
+      if (e.w <= 0 || depth <= 0) continue;
+      m.ell([x, e.t - depth / 2, 0], [len * .2, depth / 2, e.w * s.w], M.BODY, { paint: paintBody });
     }
   }
   if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the withers, over the shoulders
