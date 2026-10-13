@@ -5,7 +5,7 @@ export const SCRUB_WASH = {
   id: "scrub-wash", name: "Scrub wash", creature: "armadillo", by: "recipe", leaf: .24, floor: ["mud", .08, .32, .52],
   text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-  big: [["tree", { type: "hawthorn", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
+  big: [["tree", { type: "hawthorn", variant: "stunted", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
   pathKinds: ["animal", "dirt"],
   layout: {

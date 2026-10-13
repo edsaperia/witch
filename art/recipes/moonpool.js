@@ -5,7 +5,7 @@ export const MOONPOOL = {
   id: "moonpool-glade", name: "Moonpool glade", creature: "unicorn", by: "recipe", leaf: .28, floor: ["grass", .3, .3, .58],
   text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "silver birches and old yews", set: "a ring of white stones by the pool" },
   wall: [["water", { w: 1.6 }]], small: [["fern", {}], ["flowers", {}]],
-  big: [["tree", { type: "birch", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
+  big: [["tree", { type: "birch", variant: "mossy", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
   ponds: true, pathKinds: ["magic"],
   setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
   layout: {

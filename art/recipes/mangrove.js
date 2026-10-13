@@ -4,7 +4,7 @@ export const MANGROVE = {
   id: "mangrove", name: "Mangrove swamp", creature: "crocodile", by: "recipe", leaf: .3, floor: ["mud", .1, .45, .28],
   text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few date palms", set: "a dugout sunk among the roots" },
   wall: [["water", { w: 2 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.3 }]],
-  big: [["tree", { type: "mangrove", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: .95 }]],
+  big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: .95 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["punt", "a dugout sunk among the mangrove roots", 1, { seed: 3 }],
   layout: {
