@@ -163,6 +163,7 @@ function gearUp(m) {
 //   worn: { ear: "near" | "far" | "both" | false, tusk: "far" | "near", horn: "far" | "near", at }: a notch bitten out of an ear; a tusk or horn broken short.
 //   torc: { mat, size }: an open bronze ring round its neck, knobbed at the throat.  rings: { on: "horns" | "tusks" | "antlers", count, from, to, mat, width }: bands round them.
 //   earrings: { which, size, mat }: rings hung from its ears' tips.  bands: { at, width, height, fore, hind, mat }: cuffs round its legs above the feet.
+//   wreath: { count, size }: flowers and leaves wound round its neck, sagging in front.  bells with an `at` ("horns" | "antlers" | "ears" | "throat" | "tail"; size, mat): little bronze bells hung there, instead of the saddle-cloth.
 //   wings: { size, at, mat, bone, nub }: leathery wings off its shoulders, a dragon's (bones and a membrane between them, as the
 //     bat's), rising up and back, size times its body's length, flapping a little with its walk; nub: folded stubs (a young one's).
 function evolve3d(m, feats, c) {
@@ -246,7 +247,7 @@ function evolve3d(m, feats, c) {
       const N = m.anchors.neck, n = f.count ?? 16, sz = f.size ?? .07, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, [0, 0, 1])), w = v3.cross(d, u);
       for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, out = v3.norm(v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a)))), b = v3.add(v3.add(N.c, v3.mul(out, N.r * (f.out ?? 1.3))), v3.mul(d, -N.r * (f.drop ?? .3) * Math.max(0, -Math.cos(a)))); m.ell(b, [sz, sz, sz], M[i % (f.every ?? 3) === 0 && f.alt ? f.alt : f.mat || "FLOWER"], { group: 78, extra: true }); }
     }
-    if (f.kind === "bells") { // a saddle-cloth over its back, its hem trimmed in bronze, temple bells hanging from it: an elder hung with offerings
+    if (f.kind === "bells" && !f.at) { // a saddle-cloth over its back, its hem trimmed in bronze, temple bells hanging from it: an elder hung with offerings
       m.part = "body";
       const n = f.count ?? 4, cloth = M[f.mat || "FLOWER"], bell = M[f.bell || "WOOD"], sz = f.size ?? .07, W = c.bw * (c.front ?? 1), mid = c.backAt(((f.from ?? .25) + (f.to ?? .8)) / 2), half = c.len * ((f.to ?? .8) - (f.from ?? .25)) * .85, hem = (c.top - c.chest) * .55;
       m.ell([mid[0], mid[1] - hem * .75, 0], [half * 1.1, hem * 1.05, W * 1.1], cloth, { group: 79, extra: true, paint: p => p[1] < mid[1] - hem * 1.55 ? bell : undefined });
@@ -397,7 +398,7 @@ function evolve3d(m, feats, c) {
       const mat = M[f.mat || "WOOD"], k = f.at ?? .3;
       for (const L of m.rig.legs) { if (L.fore ? f.fore === false : f.hind === false) continue; m.part = L.name; const a = L.hock ?? L.knee, b = L.foot, p = v3.lerp(b, a, k), d = v3.norm(v3.sub(a, b)), r = L.r[2] * (f.width ?? 1.4), h = L.r[2] * (f.height ?? .6); m.seg(v3.add(p, v3.mul(d, -h)), v3.add(p, v3.mul(d, h)), r, r, mat, { group: 180 + (L.side > 0 ? 0 : 1), extra: true }); }
     }
-    if (f.kind === "chimes") { // little bronze bells hung from its horn or antler tips, its ears, or under its throat
+    if (f.kind === "bells" && f.at) { // little bronze bells hung from its horn or antler tips, its ears, or under its throat
       m.part = "head";
       const mat = M[f.mat || "WOOD"], R = c.hr * (f.size ?? .14), at = f.at || "horns";
       const spots = at === "throat" && m.anchors.neck ? [(() => { const N = m.anchors.neck; let p = v3.add(N.c, [0, -N.r * .5, 0]); for (let k = 0; k < 90 && m.field(p) < 0; k++) p = v3.add(p, [0, -.01, 0]); return p; })()] : at === "ears" ? c.earTips.map(e => v3.add(e.tip, [0, -R * .4, 0])) : at === "tail" ? [v3.add(c.tb, [-.12, -.05, 0])] : (at === "antlers" ? c.antlerPaths : c.hornPaths).map(path => path[path.length - 1].slice(0, 3));

@@ -39,7 +39,7 @@ export const GENOMES = [
       { body: { len: .7, legW: 1, neckAng: .6 }, head: { snout: 1.15, mask: true }, coat: { socks: .3, beads: true }, features: [
         { kind: "ruff", size: .24, count: 16 },
         { kind: "tails", count: 7, length: 1.1, spread: .38, tip: "MAGIC2", replace: true, width: 1.15 },
-        { kind: "earrings", which: "both" }, { kind: "chimes", at: "throat", size: .13 }, // the elder kit: a shrine fox's rings in its ears and a bell at its throat
+        { kind: "earrings", which: "both" }, { kind: "bells", at: "throat", size: .13 }, // the elder kit: a shrine fox's rings in its ears and a bell at its throat
       ] },
     ] },
   { id: "badger", name: "Badger", template: "quadruped", builder: "quad", palette: { hue: .65, sat: .08, val: .45 }, body: { hgt: .5, len: .82, chest: .18, tuck: .2, neck: .16, neckAng: 0, neckW: .55, hr: .26, legW: 1.4, bw: .38 }, head: { snout: 1.05, snoutD: .5, snoutTaper: .5, face: "badger" }, parts: { ears: { kind: "round", size: .7 }, tail: "stub", feet: "paw" }, coat: { shaggy: true, legMat: "BODY3" }, legend: [], elder: { kind: "badger", eye: "EYE" },
@@ -116,7 +116,7 @@ export const GENOMES = [
         { kind: "ruff", size: .28, count: 18, mat: "BODY" },
         { kind: "mane", belly: true, from: .1, to: .95, height: .2, count: 14, lean: .2, mat: "BODY" },
         { kind: "brambles", count: 4 },
-        { kind: "rings", on: "horns", count: 3, from: .18, to: .55, mat: "WEB" }, { kind: "chimes", at: "horns", size: .15 }, // the elder kit: the bellwether, its horns ringed in bronze with a bell at each tip
+        { kind: "rings", on: "horns", count: 3, from: .18, to: .55, mat: "WEB" }, { kind: "bells", at: "horns", size: .15 }, // the elder kit: the bellwether, its horns ringed in bronze with a bell at each tip
       ] },
     ] },
   { id: "woodlouse", name: "Woodlouse", template: "insectoid", builder: "woodlouse", palette: { hue: .65, sat: .12, val: .45 }, legend: ["crystals"],
