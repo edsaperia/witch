@@ -298,7 +298,13 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const hump = q.back === "hump" ? q.hump ?? .1 * (q.humpK ?? 1) : 0, arch = q.back === "arch" ? .1 * (q.archK ?? 1) : 0, front = q.front ?? 1; // front: a heavier front (an adult boar's)
   // ---- markings, painted by where a point is on the body ----
   const bellyY = chest + .12;
+  // an elder's marks (docs/ART-GUIDE.md 0c): old scars across its hide, a hoard frozen into it, an old gold harness
+  const SCARS = [[.4, .75, .3, -.6, .9], [-.2, .7, .35, .5, .85], [.15, .6, -.32, -.4, .9], [-.5, .65, -.3, .7, .7], [.65, .7, .25, .2, 1], [0, .55, .3, -.9, .4]];
+  const scarAt = p => { for (let i = 0; i < (q.scars || 0); i++) { const [x, y, z, a, b] = SCARS[i % SCARS.length], c = [x * len, y * top + (1 - y) * chest, z], d = v3.norm([Math.cos(a), Math.sin(a) * b, 0]), w = v3.sub(p, c), along = v3.dot(w, d), across = Math.abs(v3.dot(w, v3.norm([-d[1], d[0], 0]))); if (Math.abs(along) < .16 && across < .014 && p[2] * Math.sign(z || 1) > -bw * .2) return M.BELLY; } return undefined; };
   const paintBody = p => {
+    const sc = scarAt(p); if (sc) return sc;
+    if (q.hoard && p[1] < (chest + top) / 2 && spotty(p, 34, .14)) return M.FLOWER; // its hoard frozen into its underside: coins and cups in the ice of its belly
+    if (q.harness && (Math.abs(p[0] - len * .32) < .045 || (p[0] > len * .9 && p[1] < top - .12))) return M.FLOWER; // the girth strap and the breastplate of an old gold harness
     if (q.belly && p[1] < bellyY && p[0] > -len * .5) return M.BELLY;
     if (q.saddle && p[1] > top - .18 && p[0] < len * .55) return M.BODY2;
     if (q.spots === "solid") { const k = 24, f = p.map(c => c * k - Math.floor(c * k) - .5); if (f[0] * f[0] + f[1] * f[1] + f[2] * f[2] < .16 && spotty(p, k, .6)) return M.NOSE; } // a cheetah's: small round solid dots all over
@@ -379,7 +385,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.part = "head";
   // ---- horns, antlers, tusks ----
   const hornTips = [];
-  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * (.05 + (q.horn?.back ?? 0)), H[1] + hr * (.6 + (q.horn?.up ?? 0)), side * hr * (.45 + (q.horn?.wide ?? 0))], side, /* back, up, wide: its base moved, in head radii (clear of the brows) */ { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
+  if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * (.05 + (q.horn?.back ?? 0)), H[1] + hr * (.6 + (q.horn?.up ?? 0)), side * hr * (.45 + (q.horn?.wide ?? 0))], side, /* back, up, wide: its base moved, in head radii (clear of the brows) */ { ...q.horn, length: (q.horn?.length ?? 2) * hr * (q.hornBroken && side < 0 ? .45 : 1), r: (q.horn?.r ?? .3) * hr }));
   else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
   const tuskTips = [];
