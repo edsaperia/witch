@@ -159,6 +159,33 @@ export const GENOMES = [
         { kind: "wisps", at: "mane", size: .2, count: 6, from: .15, to: .85, mat: "MAGIC2", lift: .2 },
       ] },
     ] },
+  // the savanna's lion (a journey kind: unknown-08's, the hot south): a big tawny cat, a spotted cub, a lean young with a fuzz of mane,
+  // the adult's dark mane; its legend the sun's: a mane of flame-locks, its eyes lit, sun-fire rising off it
+  { id: "lion", name: "Lion", template: "quadruped", builder: "quad", palette: { hue: .075, sat: .58, val: .66, belly: "white", magic: .09 }, body: { hgt: 1.4, len: .78, chest: .6, tuck: .7, neck: .3, neckAng: .55, neckW: .44, hr: .25, legW: 1.05, bw: .27 }, head: { snout: .85, snoutD: .78, snoutTaper: .8, cheeks: true, whiskers: true }, parts: { ears: { kind: "round", size: .7 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"],
+    levels: [
+      { body: { len: .5, chest: .4, tuck: .45, hr: .3, legW: 1.3 }, head: { snout: .45 }, parts: { ears: { kind: "round", size: 1 } }, coat: { spots: true } },
+      { body: { len: .74, chest: .52, tuck: .6, legW: 1, neckW: .4 }, head: { snout: .65 }, features: [{ kind: "ruff", size: .1, count: 10, mat: "BODY2" }] },
+      { body: { front: 1.1, legW: 1.2, bw: .32, hgt: 1.35 }, head: { snout: .65 }, features: [{ kind: "ruff", size: .3, count: 22, mat: "BODY3" }, { kind: "mane", from: .7, to: 1, height: .2, count: 8, lean: .55, mat: "BODY3" }] },
+      { body: { front: 1.2, humpK: .6, legW: 1.35, bw: .34, len: .74 }, head: { snout: .7, eyeGlow: true }, features: [
+        { kind: "ruff", size: .42, count: 28, mat: "BODY3" },
+        { kind: "mane", from: .6, to: 1, height: .14, count: 10, lean: .7, mat: "BODY3" },
+        { kind: "wisps", at: "mane", size: .28, count: 8, from: .5, to: 1, mat: "MAGIC2", lift: .3 },
+      ] },
+    ] },
+  // the plains' cheetah (a journey kind: unknown-24's, the hot south): built to sprint, a greyhound of a cat. A very deep, narrow
+  // chest, a waist tucked up tight, its spine arched, long thin legs, a small round head with small ears, solid black spots, black
+  // tear lines and a long heavy ringed tail, its rudder; the cub in its silver mantle; its legend the wind's: longer and leaner still,
+  // its tears lit, wind streaming off its back
+  { id: "cheetah", name: "Cheetah", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .6, val: .84, belly: "white", magic: .13 }, body: { hgt: 1.4, len: .66, chest: .47, tuck: .86, neck: .36, neckAng: .5, neckW: .24, hr: .17, legW: .58, bw: .17, back: "arch", archK: 1.8 }, head: { snout: .4, snoutD: .75, snoutTaper: .85, whiskers: true, tears: true }, parts: { ears: { kind: "round", size: .5 }, tail: "ringed", feet: "paw" }, coat: { belly: true, spots: "solid" }, legend: ["mane"],
+    levels: [
+      { body: { len: .5, chest: .42, tuck: .5, hr: .25, legW: .9, bw: .22, archK: .6 }, head: { snout: .35 }, parts: { ears: { kind: "round", size: .7 } }, features: [{ kind: "mane", from: .15, to: 1, height: .1, count: 14, lean: .7, mat: "BELLY" }] },
+      { body: { len: .64, chest: .46, tuck: .8, legW: .6, archK: 1.4 }, features: [{ kind: "mane", from: .6, to: 1, height: .05, count: 6, lean: .8, mat: "BELLY" }] },
+      null,
+      { body: { len: .72, legW: .62, tuck: .9, hgt: 1.5, archK: 2.2 }, head: { snout: .45, eyeGlow: true, tears: "glow" }, features: [
+        { kind: "mane", from: .2, to: .95, height: .05, count: 14, lean: .9, mat: "BODY" },
+        { kind: "wisps", at: "mane", size: .26, count: 9, from: .05, to: .95, mat: "MAGIC2", lift: .1 },
+      ] },
+    ] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: ["starTail"] },
