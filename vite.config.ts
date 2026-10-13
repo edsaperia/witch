@@ -16,6 +16,20 @@ const artFiles = [...readdirSync("art").filter(f => f.endsWith(".js")).map(f => 
 const OVERRIDES = "art/overrides";
 const overrideFiles = existsSync(OVERRIDES) ? readdirSync(OVERRIDES, { withFileTypes: true }).filter(d => d.isDirectory()).flatMap(d => readdirSync(`${OVERRIDES}/${d.name}`).filter(f => f.endsWith(".png")).sort().map(f => `${OVERRIDES}/${d.name}/${f}`)).sort() : [];
 const artHash = createHash("sha1").update(artFiles.map(f => f + "\n" + readFileSync(f, "utf8")).join("\n")).update(overrideFiles.join("\n")).update(Buffer.concat(overrideFiles.map(f => readFileSync(f)))).digest("hex").slice(0, 12);
+// The config files' notes (keys starting with _: Ed's reference, generated into config/KNOBS.md) are not read by the game, so
+// a build leaves them out of the bundle: the tuning file alone is 187 kB minified, 159 kB of it notes, and it rides in the game
+// and in the sea chart's outlines worker both (about 95 kB gzipped off the download). Dev, the tests and the tools read the
+// files as they are (the schema test checks the notes).
+const stripNotes = (v: unknown): unknown => Array.isArray(v) ? v.map(stripNotes) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v as Record<string, unknown>).filter(([k]) => !k.startsWith("_")).map(([k, x]) => [k, stripNotes(x)])) : v;
+const configNotes = () => ({
+  name: "config-notes",
+  apply: "build" as const,
+  enforce: "pre" as const,
+  transform(code: string, id: string) {
+    if (!/\/config\/[^/]+\.json$/.test(id)) return null;
+    return { code: JSON.stringify(stripNotes(JSON.parse(code))), map: null };
+  },
+});
 const artOverrides = () => ({
   name: "art-overrides",
   resolveId: (id: string) => (id === "virtual:art-overrides" ? "\0virtual:art-overrides" : null),
@@ -38,8 +52,8 @@ export default defineConfig({
   define: { __BUILD__: JSON.stringify(sha ? `${version} · ${sha}` : version), __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)), __UPCOMING__: JSON.stringify(upcoming), __ART_HASH__: JSON.stringify(artHash) },
   // (two pages: the game, and the sea chart: chart.html, wave 2 part C)
   build: { target: "es2022", chunkSizeWarningLimit: 1200, rollupOptions: { input: { main: "index.html", chart: "chart.html" } } },
-  plugins: [artOverrides()],
-  worker: { plugins: () => [artOverrides()] },
+  plugins: [artOverrides(), configNotes()],
+  worker: { plugins: () => [artOverrides(), configNotes()] },
   // The rules tests build whole maps and play out fights and waves: CPU-bound seconds each, many more
   // under load (a smoke run or CI's busy runners), so vitest's 5 s default made them time out at random.
   // One generous limit for all (a hung test still fails, after a minute).

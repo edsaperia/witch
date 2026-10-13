@@ -2005,6 +2005,10 @@
         "fade": {
           "type": "number",
           "minimum": 0
+        },
+        "canopyReach": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -2015,7 +2019,8 @@
         "minRadius",
         "shrink",
         "grow",
-        "fade"
+        "fade",
+        "canopyReach"
       ],
       "additionalProperties": false
     },
@@ -8476,6 +8481,10 @@
         "lead": {
           "type": "number",
           "minimum": 0
+        },
+        "hold": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -8486,7 +8495,8 @@
         "outer",
         "ragged",
         "spread",
-        "lead"
+        "lead",
+        "hold"
       ],
       "additionalProperties": false
     },

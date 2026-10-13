@@ -6,7 +6,7 @@ export const PLAINS = {
   wall: [["shrub", { spiky: true }]], small: [["grass", { h: .6 }], ["mound", { brown: true, small: true }]],
   big: [["tree", { type: "acacia", scale: .6 }], ["tree", { type: "acacia", minor: true, scale: .45 }]],
   pathKinds: ["track"],
-  setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 3, rock: "laterite" }],
+  setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 5, width: 8, rock: "laterite" }],
   layout: {
     pattern: "lone", density: .14, clump: .25, glades: { count: 1, size: [40, 60] },
     heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
