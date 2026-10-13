@@ -62,6 +62,8 @@
     "dragonfly":  { "name": "Hover",          "kind": "move", "scale": { "treetopSpeed": 1.1, "treetop.turnRate": 1.6 }, "label": "Dragonfly's Hover: sharper turns over the treetops, and a little quicker" },
     "crab":       { "name": "Sidestep",       "kind": "move", "scale": { "groundAcceleration": 1.6, "dash.distance": 1.2 }, "label": "Crab's Sidestep: quicker off the mark on foot, and a longer blink" },
     "fennec":     { "name": "Ears",           "kind": "shot", "scale": { "invites.range": 1.35 }, "label": "Fennec's Ears: 💌s reach further" },
+    "lion":       { "name": "Pride",          "kind": "shot", "scale": { "invites.speed": 1.15, "invites.range": 1.15 }, "label": "Lion's Pride: 💌s fly a little faster and further" },
+    "cheetah":    { "name": "Sprint",         "kind": "move", "scale": { "groundSpeed": 1.15 }, "label": "Cheetah's Sprint: quicker on foot" },
     "salamander": { "name": "Quick fire",     "kind": "shot", "scale": { "invites.cooldown": 0.6 }, "label": "Salamander's Quick fire: less wait between bursts" },
     "snake":      { "name": "Strike",         "kind": "shot", "scale": { "invites.speed": 1.4 },    "label": "Snake's Strike: 💌s fly faster" },
     "spider":     { "name": "Long thread",    "kind": "shot", "scale": { "invites.range": 1.5 },    "label": "Spider's Long thread: 💌s fly further" },
