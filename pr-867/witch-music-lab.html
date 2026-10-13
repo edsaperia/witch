@@ -1103,7 +1103,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/otter/genome.js
-  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { onBack: true } }] };
+  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
 
   // art/creatures/owl/genome.js
   var GENOME_OWL = {
@@ -9408,7 +9408,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "deep snow, grass and needles poking through", wall: "drifts and frozen stones", small: "snowy tussocks", big: "snow-laden junipers and firs, dwarf birch", set: "a ring of old stones half buried in a drift" },
     wall: [["stones", {}]],
     small: [["grass", { h: 0.9 }]],
-    big: [["tree", { type: "juniper", scale: 0.9 }], ["tree", { type: "fir", minor: true, scale: 0.95 }], ["tree", { type: "birch", minor: true, scale: 0.6 }], ["boulder", { sparse: 0.1 }]],
+    big: [["tree", { type: "juniper", variant: "windbent", scale: 0.9 }], ["tree", { type: "fir", minor: true, scale: 0.95 }], ["tree", { type: "birch", minor: true, scale: 0.6 }], ["boulder", { sparse: 0.1 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
     layout: {
@@ -9440,7 +9440,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
     wall: [["rockwall", {}]],
     small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
+    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
     steep: true,
     pathKinds: ["footpath"],
     setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [0.74, 0.14, 0.62], dark: [0.72, 0.16, 0.34], lichen: [0.74, 0.08, 0.84] } }],
@@ -9473,7 +9473,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
     wall: [["stones", {}]],
     small: [["stones", {}]],
-    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
+    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
     layout: {
@@ -9504,7 +9504,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "deep wet moss", wall: "fallen nurse logs", small: "sword ferns and fungi", big: "giant spruce and cedar, tree ferns beneath", set: "a nurse log, a fallen giant with young spruce growing out of its back" },
     wall: [["log", { rot: true }], ["fern", {}]],
     small: [["fern", {}], ["fungi", {}]],
-    big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "fir", variant: "mossy", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
     wet: true,
     pathKinds: ["boardwalk"],
     setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", 0.95],
@@ -9537,7 +9537,7 @@ label.check input { accent-color: var(--accent); }
     text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
     wall: [["stones", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "weepingBirch", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
+    big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
     pathKinds: ["footpath"],
     setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: 0.3, top: "slab" }],
     layout: {
