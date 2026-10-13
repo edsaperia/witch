@@ -309,12 +309,11 @@
       "dir": "NE",
       "biome": "mountains and glaciers"
     },
-    "unknown-18": {
+    "griffin": {
       "phase": 4,
       "bearing": 65,
       "dir": "ENE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "unknown-19": {
       "phase": 4,
