@@ -3,11 +3,13 @@ import { readFileSync } from "node:fs";
 import { CONFIGS } from "./configSchemas";
 import { validate, type Schema } from "./schema";
 import { AREA_TYPES } from "./map";
+import { configData } from "./configData";
 
 // The other config files (housekeeping, issue #122): each against its schema, and the names in them
 // pointing at real things (species, attacks, area types, buffed knobs).
 const load = (f: string) => JSON.parse(readFileSync(f, "utf8"));
-const data = Object.fromEntries(CONFIGS.map(c => [c.name, load(c.file)]));
+// (combat, movement and legend-buffs as the game assembles them: their per-species entries live in art/creatures/<id>/creature.js)
+const data = Object.fromEntries(CONFIGS.map(c => [c.name, configData(c.name, c.file) as any]));
 const SPECIES = new Set(AREA_TYPES.map(t => t.creature)), AREAS = new Set(AREA_TYPES.map(t => t.id));
 const unknown = (names: Iterable<string>, known: Set<string>) => [...names].filter(n => !known.has(n));
 

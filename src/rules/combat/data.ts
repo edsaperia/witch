@@ -5,6 +5,7 @@ import TUNED from "../../../config/tuning.json";
 import { LEGEND, type Creature, type Level } from "../creatures";
 import { type State } from "../creatureStates";
 import { FIGHT } from "../movement";
+import { sectionOf, speciesWith } from "../creatureConfig";
 import { type Tuning } from "../tuning";
 
 export type Delivery = "melee" | "shot" | "quake" | "lob" | "beam" | "pulse";
@@ -67,7 +68,18 @@ export function classStrengths(swarm: { classes: Record<string, { cap: number; s
   for (const c of Object.values(swarm.classes)) for (const sp of c.species) out[sp] = ref / Math.max(1, c.cap);
   return out;
 }
-export const COMBAT = raw as unknown as CombatData;
+const R = raw as unknown as CombatData;
+// (each species' attacks, strength, ranged and kite flags, temperament and traits from its folder, over anything the file still
+// holds: rules/creatureConfig.ts; the lists in the order the folders come, by id)
+export const COMBAT: CombatData = {
+  ...R,
+  bySpecies: { ...R.bySpecies, ...sectionOf("attacks") },
+  strength: { species: { ...(R.strength?.species ?? {}), ...sectionOf("strength") } },
+  ranged: [...R.ranged, ...speciesWith("ranged")],
+  kite: { ...R.kite, species: [...R.kite.species, ...speciesWith("kite")] },
+  temperament: Object.fromEntries(Object.entries(R.temperament).map(([k, v]) => [k, [...v, ...speciesWith("temperament", k)]])) as CombatData["temperament"],
+  traits: Object.fromEntries(Object.entries(R.traits).map(([k, v]) => [k, [...v, ...speciesWith("traits", k)]])) as CombatData["traits"],
+};
 // (the classes' strengths, under any combat.json lists by species)
 COMBAT.strength = { species: { ...classStrengths((TUNED as unknown as { population: { swarm: Parameters<typeof classStrengths>[0] } }).population.swarm), ...(COMBAT.strength?.species ?? {}) } };
 /** A species' traits. */

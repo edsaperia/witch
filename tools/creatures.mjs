@@ -6,12 +6,19 @@
 //   node tools/creatures.mjs check           fails if the index is stale, a folder's record has another id, or a genome has problems
 //   node tools/creatures.mjs adopt           moves any record still written in the old registries (art/genome/species.js's
 //                                            GENOMES, art/sigils.js's SIGILS and SIGIL_NEON, art/legends.js's LEGEND_POSES,
-//                                            art/naps.js's NAP_POSES: a merge bringing an old-style one back) into its folder,
-//                                            and writes the index
+//                                            art/naps.js's NAP_POSES, and the config files' per-species entries: movement.json's
+//                                            profiles, legends.bySpecies and bodies.radius, combat.json's bySpecies, strength,
+//                                            ranged, kite, temperament and traits, creature-voices.json's, legend-buffs.json's
+//                                            and character.json's species: a merge bringing an old-style one back) into its
+//                                            folder, and writes the index
+//   node tools/creatures.mjs show <id>       everything the game knows about one species, section by section
 // A new creature: make art/creatures/<id>/genome.js (`export const GENOME_<ID> = { id, name, template, builder, ... }`: the
 // record as species.js documents it, its name the id in capitals), its sigil.js (`SIGIL_<ID> = { neon, strokes }`, the strokes
 // from art/sigils/strokes.js's building blocks), legend.js (`LEGEND_<ID>`, the sleeping form as legends.js documents it) and,
-// if it isn't the default lie, nap.js (`NAP_<ID>`), run `node tools/creatures.mjs index`, and commit the lot.
+// if it isn't the default lie, nap.js (`NAP_<ID>`), and creature.js (`CREATURE_<ID>`: its movement profile, body radius,
+// legend moves, attacks, strength, traits, temperament, voice, buff and character, the config files' sections: the schema is
+// config/schema/creature.schema.json), run `node tools/creatures.mjs index`, and commit the lot. Not here: its island in
+// config/kinds.json (an ordered table: it takes a placeholder's place) and the tuning file's heavy and swarm-class lists.
 // CI runs `check` (src/creatures.test.ts). Named exports, not default ones: the Art Lab's build (tools/art-lab/build.mjs)
 // inlines every module into one page and only knows `import { ... } from`.
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -77,6 +84,77 @@ function partText(part, id, e) {
   return lines.join("\n") + "\n";
 }
 
+/** The config files' per-species sections: where each lives (the file and the path of its name-keyed map or species list)
+ *  and the key it takes in a creature.js. A `list` section is a species list; its key holds true (or, for `by`, the list's name). */
+const CONFIG_SECTIONS = [
+  { file: "config/movement.json", path: ["profiles"], key: "movement" },
+  { file: "config/movement.json", path: ["legends", "bySpecies"], key: "legendMoves" },
+  { file: "config/movement.json", path: ["bodies", "radius"], key: "radius" },
+  { file: "config/combat.json", path: ["bySpecies"], key: "attacks" },
+  { file: "config/combat.json", path: ["strength", "species"], key: "strength" },
+  { file: "config/combat.json", path: ["ranged"], key: "ranged", list: true },
+  { file: "config/combat.json", path: ["kite", "species"], key: "kite", list: true },
+  { file: "config/combat.json", path: ["temperament"], key: "temperament", by: true },
+  { file: "config/combat.json", path: ["traits"], key: "traits", by: true, many: true },
+  { file: "config/creature-voices.json", path: ["species"], key: "voice" },
+  { file: "config/legend-buffs.json", path: ["species"], key: "buff" },
+  { file: "config/character.json", path: ["species"], key: "character" },
+];
+export const CREATURE_KEYS = [...new Set(CONFIG_SECTIONS.map(s => s.key))];
+
+/** The span [start, end) of the value at `path` in a JSON text (so the rest of the file keeps its formatting). */
+function jsonSpan(text, path) {
+  let i = 0;
+  const ws = () => { while (i < text.length && /\s/.test(text[i])) i++; };
+  const str = () => { const s = i; i++; while (text[i] !== '"') { if (text[i] === "\\") i++; i++; } i++; return JSON.parse(text.slice(s, i)); };
+  const skip = () => { // past one value
+    ws(); const c = text[i];
+    if (c === '"') { str(); return; }
+    if (c === "{" || c === "[") { let d = 0; do { const ch = text[i]; if (ch === '"') { str(); continue; } if (ch === "{" || ch === "[") d++; else if (ch === "}" || ch === "]") d--; i++; } while (d > 0); return; }
+    while (i < text.length && !/[,}\]\s]/.test(text[i])) i++;
+  };
+  const into = depth => { // inside an object: find path[depth]
+    ws(); if (text[i] !== "{") throw new Error(`no object at ${path.slice(0, depth).join(".")}`); i++;
+    for (;;) {
+      ws(); if (text[i] === "}") throw new Error(`no "${path[depth]}" in ${path.slice(0, depth).join(".") || "the file"}`);
+      const k = str(); ws(); i++; ws(); // past the colon
+      if (k === path[depth]) { if (depth === path.length - 1) { const start = i; skip(); return [start, i]; } return into(depth + 1); }
+      skip(); ws(); if (text[i] === ",") i++;
+    }
+  };
+  return into(0);
+}
+/** A JSON value's text re-indented under a key at `indent` spaces. */
+const jsonAt = (v, indent) => JSON.stringify(v, null, 2).split("\n").map((l, j) => (j ? " ".repeat(indent) + l : l)).join("\n");
+/** A value as a JS object literal (keys unquoted where they can be), for a creature.js. */
+function js(v, indent = 0) {
+  const pad = " ".repeat(indent + 2);
+  if (Array.isArray(v)) { const inner = v.map(x => js(x, indent)); const one = `[${inner.join(", ")}]`; return one.length < 110 && !one.includes("\n") ? one : `[\n${inner.map(x => pad + x).join(",\n")}\n${" ".repeat(indent)}]`; }
+  if (v && typeof v === "object") { const inner = Object.entries(v).map(([k, x]) => `${/^[A-Za-z_$][\w$]*$/.test(k) ? k : JSON.stringify(k)}: ${js(x, indent + 2)}`); const one = `{ ${inner.join(", ")} }`; return one.length < 110 && !one.includes("\n") ? one : `{\n${inner.map(x => pad + x).join(",\n")}\n${" ".repeat(indent)}}`; }
+  return JSON.stringify(v);
+}
+const configName = id => "CREATURE_" + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
+/** The config files' entries for the species in `known`: { id: { key: value } }, and each file's text with those entries out. */
+function configEntries(known) {
+  const byFile = new Map(), out = {};
+  for (const sec of CONFIG_SECTIONS) {
+    if (!byFile.has(sec.file)) byFile.set(sec.file, readFileSync(join(ROOT, sec.file), "utf8"));
+    let text = byFile.get(sec.file);
+    const [start, end] = jsonSpan(text, sec.path), value = JSON.parse(text.slice(start, end)), lineStart = text.lastIndexOf("\n", start) + 1, indent = text.slice(lineStart, start).search(/\S/);
+    let rest;
+    if (sec.list) { rest = value.filter(id => !known.has(id)); for (const id of value) if (known.has(id)) (out[id] ??= {})[sec.key] = true; }
+    else if (sec.by) { rest = {}; for (const [name, list] of Object.entries(value)) { rest[name] = list.filter(id => !known.has(id)); for (const id of list) if (known.has(id)) { const o = (out[id] ??= {}); if (sec.many) (o[sec.key] ??= []).push(name); else o[sec.key] = name; } } }
+    else { rest = {}; for (const [id, v] of Object.entries(value)) { if (known.has(id)) (out[id] ??= {})[sec.key] = v; else rest[id] = v; } }
+    if (JSON.stringify(rest) !== JSON.stringify(value)) byFile.set(sec.file, text.slice(0, start) + jsonAt(rest, Math.max(0, indent)) + text.slice(end));
+  }
+  return { entries: out, files: byFile };
+}
+/** A creature.js's text. */
+const configText = (id, entry) => `// ${id}: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
+// its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
+export const ${configName(id)} = ${js(Object.fromEntries(CREATURE_KEYS.filter(k => k in entry).map(k => [k, entry[k]])))};
+`;
+
 /** The index's text for these ids. */
 const indexText = list => `// The species, assembled from art/creatures/<id>/genome.js, sorted by id. Written by \`node tools/creatures.mjs index\`:
 // never edit by hand (add a folder and run the tool; CI's src/creatures.test.ts fails if this is stale).
@@ -85,6 +163,8 @@ ${PARTS.flatMap(part => list.filter(id => has(id, part.file)).map(id => `import 
 export const CREATURE_GENOMES = [${list.map(ident).join(", ")}];
 ${PARTS.map(part => `export const ${part.assembled} = { ${list.filter(id => has(id, part.file)).map(id => `${id}: ${partName(part, id)}${part.object === "SIGILS" ? ".strokes" : ""}`).join(", ")} };`).join("\n")}
 export const CREATURE_NEONS = { ${list.filter(id => has(id, "sigil.js")).map(id => `${id}: ${partName(PARTS[0], id)}.neon`).join(", ")} };
+${list.filter(id => has(id, "creature.js")).map(id => `import { ${configName(id)} } from "./${id}/creature.js";`).join("\n")}
+export const CREATURE_CONFIGS = { ${list.filter(id => has(id, "creature.js")).map(id => `${id}: ${configName(id)}`).join(", ")} };
 `;
 
 /** Records still written in species.js's GENOMES array: [{ id, text }] with the text as a module would export it, and the
@@ -155,6 +235,18 @@ if (cmd === "list") {
       writeFileSync(file, text);
     }
   }
+  {
+    const { entries, files } = configEntries(known);
+    for (const [id, entry] of Object.entries(entries)) {
+      const out = join(DIR, id, "creature.js");
+      if (existsSync(out)) { // (an entry pasted back into a config file: merged over the creature's own, which keeps the rest)
+        const mod = await import(pathToFileURL(out).href + `?t=${Date.now()}`), had = mod[configName(id)] ?? {};
+        writeFileSync(out, configText(id, { ...had, ...entry }));
+      } else writeFileSync(out, configText(id, entry));
+      console.log(`art/creatures/${id}/creature.js`); moved++;
+    }
+    for (const [file, text] of files) if (text !== readFileSync(join(ROOT, file), "utf8")) writeFileSync(join(ROOT, file), text);
+  }
   writeFileSync(INDEX, indexText(ids()));
   console.log(`${moved} record(s) moved; index written (${ids().length} species)`);
 } else if (cmd === "check") {
@@ -171,6 +263,12 @@ if (cmd === "list") {
     if (!v) problems.push(`art/creatures/${id}/${part.file}: no export named ${partName(part, id)}`);
     else if (part.object === "SIGILS" && (!Array.isArray(v.strokes) || typeof v.neon !== "string")) problems.push(`art/creatures/${id}/sigil.js: ${partName(part, id)} needs { neon, strokes }`);
   }
+  try { const { entries } = configEntries(known); for (const [id, e] of Object.entries(entries)) problems.push(`the config files still hold ${id}'s ${Object.keys(e).join(", ")}: run node tools/creatures.mjs adopt`); } catch (err) { problems.push(`the config files: ${err.message}`); }
+  for (const id of list) if (has(id, "creature.js")) {
+    const c = (await import(pathToFileURL(join(DIR, id, "creature.js")).href))[configName(id)];
+    if (!c) problems.push(`art/creatures/${id}/creature.js: no export named ${configName(id)}`);
+    else for (const k of Object.keys(c)) if (!CREATURE_KEYS.includes(k)) problems.push(`art/creatures/${id}/creature.js: no section called ${k} (${CREATURE_KEYS.join(", ")})`);
+  }
   for (const id of list) {
     const g = (await import(pathToFileURL(join(DIR, id, "genome.js")).href))[ident(id)];
     if (!g) problems.push(`art/creatures/${id}/genome.js: no export named ${ident(id)}`);
@@ -178,5 +276,8 @@ if (cmd === "list") {
     else for (const p of genomeProblems(g)) problems.push(`${id}: ${p}`);
   }
   if (problems.length) { console.error(problems.join("\n")); process.exit(1); }
-  console.log(`ok: ${list.length} species, the index current, no genome problems, ${PARTS.map(p => `${list.filter(id => has(id, p.file)).length} ${p.file.replace(".js", "s")}`).join(", ")}`);
-} else { console.error("usage: node tools/creatures.mjs list | index | check | adopt"); process.exit(2); }
+  console.log(`ok: ${list.length} species, the index current, no genome problems, ${PARTS.map(p => `${list.filter(id => has(id, p.file)).length} ${p.file.replace(".js", "s")}`).join(", ")}, ${list.filter(id => has(id, "creature.js")).length} creature.js`);
+} else if (cmd === "show") {
+  const id = process.argv[3]; if (!id || !ids().includes(id)) { console.error(`which species? one of: ${ids().join(", ")}`); process.exit(2); }
+  for (const f of ["genome.js", "creature.js", "sigil.js", "legend.js", "nap.js"]) if (has(id, f)) { const m = await import(pathToFileURL(join(DIR, id, f)).href); for (const [k, v] of Object.entries(m)) console.log(`== ${f} ${k} ==\n${js(v)}`); }
+} else { console.error("usage: node tools/creatures.mjs list | index | check | adopt | show <id>"); process.exit(2); }

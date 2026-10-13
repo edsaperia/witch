@@ -4,6 +4,7 @@
 // tactic gives it, with its own acceleration. Species without a profile keep the plain approach.
 // All seeded and stepped in fixed steps: deterministic. No drawing here.
 import raw from "../../config/movement.json";
+import { sectionOf } from "./creatureConfig";
 import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 
@@ -35,7 +36,9 @@ export interface Profile {
 /** A wild legend's move set (Stage 5): moves (combat.json attacks) in a loop, and its second phase. */
 export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
 export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> }; /** Body sizes, for spacing (rules/spacing.ts). */ bodies: import("./spacing").Bodies }
-export const MOVEMENT = raw as unknown as MovementData;
+const R = raw as unknown as MovementData;
+// (the species' own profiles, legend moves and radii from their folders, over anything the file still holds: rules/creatureConfig.ts)
+export const MOVEMENT: MovementData = { ...R, profiles: { ...R.profiles, ...(sectionOf("movement") as Record<string, Profile>) }, legends: { ...R.legends, bySpecies: { ...R.legends.bySpecies, ...(sectionOf("legendMoves") as Record<string, LegendSet>) } }, bodies: { ...R.bodies, radius: { ...R.bodies.radius, ...sectionOf("radius") } } };
 
 /** The fight's scale and speed (Ed's motion scale pass, 2026-10-04; tuning fight, ?fightScale= and
  *  ?fightSpeed=, and live in the debug overlay): every length in a fight (attack ranges, lunges,

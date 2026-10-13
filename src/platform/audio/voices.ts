@@ -6,6 +6,7 @@ import { strengthOf } from "../../rules/combat";
 import { hash2 } from "../../rules/random";
 import type { Tuning } from "../../rules/tuning";
 import voices from "../../../config/creature-voices.json";
+import { sectionOf } from "../../rules/creatureConfig";
 
 /** A voice's mood: happy rises and bounces, enraged falls clipped and gritty, grumpy sits low and flat. */
 export type Mood = "happy" | "grumpy" | "enraged";
@@ -18,7 +19,10 @@ export interface CallStyle {
 /** One creature's voice: its pitch (Hz), how far its formants sit above an adult's (small: higher), its source. */
 export interface CreatureVoice { pitch: number; formants: number; wave: OscillatorType; /** a legend: whale song, not babble */ legend?: boolean; call?: CallStyle }
 
-const VOICES = voices as unknown as { families: Record<string, Partial<CallStyle>>; species: Record<string, Partial<CallStyle> & { family?: string }> };
+type VoiceTable = { families: Record<string, Partial<CallStyle>>; species: Record<string, Partial<CallStyle> & { family?: string }> };
+const V0 = voices as unknown as VoiceTable;
+/** The families, and each species' call over its family's (its own from its folder: rules/creatureConfig.ts). */
+export const VOICES: VoiceTable = { ...V0, species: { ...V0.species, ...(sectionOf("voice") as VoiceTable["species"]) } };
 /** A species' call: its family's style with its own tweaks over it (config/creature-voices.json). */
 export function callOf(species: string): CallStyle {
   const sp = VOICES.species[species] ?? {}, fam = VOICES.families[sp.family ?? ""] ?? {};

@@ -13,6 +13,7 @@ const server = await createServer({ server: { middlewareMode: true, hmr: false, 
 const { validate, inferSchema, knobsMarkdown } = await server.ssrLoadModule("/src/rules/schema.ts");
 const { TUNING_OVER } = await server.ssrLoadModule("/src/rules/tuningSchema.ts");
 const { CONFIGS } = await server.ssrLoadModule("/src/rules/configSchemas.ts");
+const { configData } = await server.ssrLoadModule("/src/rules/configData.ts"); // (combat, movement, legend-buffs with their per-species entries from art/creatures/<id>/creature.js)
 const FILE = "config/tuning.json", SCHEMA = "config/schema/tuning.schema.json", DOCS = "config/KNOBS.md";
 const tuning = JSON.parse(readFileSync(FILE, "utf8"));
 const write = (p, o) => writeFileSync(p, JSON.stringify(o, null, 2) + "\n");
@@ -20,14 +21,14 @@ const has = f => process.argv.includes(`--${f}`);
 
 if (has("init")) {
   write(SCHEMA, inferSchema(tuning, TUNING_OVER));
-  for (const c of CONFIGS) write(c.schema, inferSchema(JSON.parse(readFileSync(c.file, "utf8")), c.over, "", new Set(c.records)));
+  for (const c of CONFIGS) write(c.schema, inferSchema(configData(c.name, c.file), c.over, "", new Set(c.records)));
 }
 if (has("add")) {
   // New keys (inferred) join each schema; what's there, hand edits included, stays, for the keys the file still has.
   // (Knobs the file no longer has leave the schema.)
   const merge = (a, b) => { if (a?.properties && b?.properties) { const props = {}; for (const k of Object.keys(b.properties)) props[k] = a.properties[k] ? merge(a.properties[k], b.properties[k]) : b.properties[k]; a.properties = props; a.required = b.required; } return a; };
   write(SCHEMA, merge(JSON.parse(readFileSync(SCHEMA, "utf8")), inferSchema(tuning, TUNING_OVER)));
-  for (const c of CONFIGS) write(c.schema, merge(JSON.parse(readFileSync(c.schema, "utf8")), inferSchema(JSON.parse(readFileSync(c.file, "utf8")), c.over, "", new Set(c.records))));
+  for (const c of CONFIGS) write(c.schema, merge(JSON.parse(readFileSync(c.schema, "utf8")), inferSchema(configData(c.name, c.file), c.over, "", new Set(c.records))));
 }
 const schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
 if (has("docs")) writeFileSync(DOCS, knobsMarkdown(tuning, schema, "Tuning knobs", FILE));
