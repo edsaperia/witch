@@ -7,7 +7,7 @@ export const CINDER_SLOPES = {
   wall: [["boulder", {}], ["rockwall", {}]], small: [["fern", {}], ["stones", {}]],
   big: [["tree", { type: "cycad", scale: .9 }], ["tree", { type: "pine", minor: true, scale: .8, gnarl: .8 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
   steep: true, pathKinds: ["stairs"],
-  setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.3],
+  setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.0],
   layout: {
     pattern: "stands", density: .3, clump: .8, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
