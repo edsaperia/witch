@@ -139,7 +139,7 @@ export const TRAIT_TINTS = { flier: [150, 210, 255], armoured: [190, 190, 205], 
 // each effect's attacks, kept in step with ATTACK_EFFECTS
 for (const [atk, fx] of Object.entries(ATTACK_EFFECTS)) for (const id of Object.values(fx).flat()) if (!EFFECT_BY_ID[id].attacks.includes(atk)) EFFECT_BY_ID[id].attacks.push(atk);
 // Species whose shots aren't the plain glob: the glowing ones throw motes, the raven feathers (its long shots, by level).
-export const SPECIES_PROJECTILE = { moth: "mote", glowworm: "mote", bat: "mote", raven: "feather", woodlouse: "barb", owl: "lobSeed" };
+export const SPECIES_PROJECTILE = { moth: "mote", bat: "mote", raven: "feather", woodlouse: "barb", owl: "lobSeed" };
 
 // The colours: greys (the game multiplies the tinted pixels by the tint) or tinted here (tint: [r, g, b] 0-255).
 export function effectColours(tint) {

@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `ab.mjs`
+
+A/B renders for Ed: node tools/music-lab/ab.mjs [out dir] [wave] [seed] [bars].
+
+## `ab.ts`
+
+A/B renders for Ed's music research: one fixed passage of the game's music, then the same with one ingredient added at a time, so each step can be judged against the last.
+
 ## `analyse.cjs`
 
 Measure the music: builds the Music Lab, renders every section offline in headless Chromium, and prints each one's loudness, peak, bands and centroid and each part's own loudness; saves a spectrogram per section.
@@ -66,15 +74,52 @@ The music's continuity through the frames' hitches: Loads the built game in head
 node tools/music-lab/flight.cjs [dist dir] [seconds]
 ```
 
+## `form.mjs`
+
+The 32-bar ABAC form, rendered: node tools/music-lab/form.mjs [section|form] [seed] [bars] [knockdown bar] [wave].
+
+## `form.ts`
+
+The 32-bar ABAC form: a wave's music on the game's mix, its sections on the form or one section looped, the form's melody over it, and, if asked, a knockdown as the game plays it: the record scratched and the music stopped, 5 bpm faster, the wait, the…
+
+## `fxcost.cjs`
+
+The voice effects' own cost, offline: node tools/music-lab/fxcost.cjs Prints each variant's load, the best of three.
+
+## `fxcost.ts`
+
+The voice effects' own cost: a sung line through VoiceFx with the style's settings, rendered offline at 48 kHz, timed against the audio it makes; then each effect taken out in turn, and none at all.
+
+## `ingredients.ts`
+
+The research ingredients' numbers, shared by the offline A/B renders and the live lab with sliders: the CC0 kit that takes the synthesised drums' place, the frame drums' ritual pattern, the vocalise's level, and the recorded voices' measured pitches.
+
 ## `lab.ts`
 
 The Witch Music Lab: plays the game's music engine through the game's own mix from a style, with a pretend run, any one section on a loop, the proximity mix, damage and the hooks, and knobs for the style.
+
+## `set.mjs`
+
+A night's set in miniature, rendered: node tools/music-lab/set.mjs [island] [waves] [seed] [bars a wave] [encore bars] [bpm].
+
+## `set.ts`
+
+A night's set in miniature: the night's music on the game's mix, each wave `bars` bars at one tempo, its build cut to a block so each wave lands on its own section first, then the victory's encore.
 
 ## `silence.cjs`
 
 The measured output, live: node tools/music-lab/silence.cjs [dist dir] Loads the built game in headless Chromium with sound, walks her off her decks so the home speakers boot and the music plays, checks the meter hears it, then cuts the music and the sound…
 
+## `voices.mjs`
+
+The voices' A/B for Ed: The same generated melody, five ways, each alone and in the music: a: Pink Trombone; b: the recorded woman's G4 retuned to each note, like a sampler; c: the FOF voice, three detuned singers, dry; d: the FOF voice through the…
+
+```
+node tools/music-lab/voices.mjs [out dir] [wave] [seed] [bars] (default previews/ed/music/voices, wave 2, seed 7, 32 bars).
+```
+
 ## Also here
 
 - `dist`
+- `live`
 - `music-lab.html`
