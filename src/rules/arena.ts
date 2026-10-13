@@ -38,7 +38,7 @@ export const ARENA_PRESETS: Record<string, string> = {
   dig: "wolf*4@2,badger*2@2", block: "raven*3@2,beaver*3@2", flank: "wolf*3@2,fox*3@2", pounce: "wolf*3@2,lynx*2@2",
   weave: "raven*3@2,stoat*3@2", packflank: "wolf*3@2,marten*4@2", otter: "raven*3@2,otter*3@2", squirrel: "beetle*2@2,squirrel*4@2",
   dart: "beetle*2@2,dormouse*5@2", roll: "wolf*3@2,hedgehog*3@2", slime: "wolf*3@2,snail*3@2", woodlouse: "wolf*3@2,woodlouse*3@2",
-  strike: "wolf*3@2,snake*3@2", moth: "glowworm*2@2,moth*6@2", flash: "wolf*4@2,glowworm*3@2",
+  strike: "wolf*3@2,snake*3@2", moth: "moth*6@2", cat: "cat*4@2",
 };
 
 export function setupArena(g: Game, spec: string): void {

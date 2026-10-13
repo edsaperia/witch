@@ -84,7 +84,7 @@ describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
     expect(partsOf("wolf")).not.toBe(partsOf("beetle"));
     expect(partsOf("elk")).toBe(partsOf("bear")); // the same family's instruments...
     expect(layer("elk")).not.toEqual(layer("bear")); // ...but its own music
-    const all = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "moth", "glowworm", "spider", "beetle"];
+    const all = ["bat", "marten", "elk", "stoat", "owl", "snail", "wolf", "fox", "badger", "boar", "stag", "hare", "bear", "lynx", "otter", "beaver", "ram", "squirrel", "dormouse", "salamander", "toad", "raven", "mole", "hedgehog", "woodlouse", "snake", "moth", "cat", "spider", "beetle"];
     const tunes = new Set(all.map(sp => layer(sp).join()));
     expect(tunes.size).toBe(all.length);
   });
