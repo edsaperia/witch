@@ -14,18 +14,18 @@ const areas = (map: ReturnType<typeof generateMap>) => new Map(map.cells.filter(
 describe("home grows with the kinds she knows", () => {
   it("knows home's 10, then each kind found with an area type, in the order found, none twice", () => {
     expect(knownKinds()).toEqual(homeKinds());
-    expect(knownKinds(["badger"]).length).toBe(11);
+    expect(knownKinds(["beetle"]).length).toBe(11);
     // (a home kind found is known already; a placeholder is never known)
-    expect(knownKinds(["badger", "fox", "unknown-01", "otter", "moth", "otter"])).toEqual([...homeKinds(), "badger", "otter", "moth"]);
-    expect(homeIsland(0, knownKinds(["badger", "otter", "moth"])).size).toBe(13);
+    expect(knownKinds(["beetle", "fox", "unknown-01", "otter", "moth", "otter"])).toEqual([...homeKinds(), "beetle", "otter", "moth"]);
+    expect(homeIsland(0, knownKinds(["beetle", "otter", "moth"])).size).toBe(13);
   });
 
   it("10 -> 11 -> 13 areas at home: the first ones kept, each new kind an area further out, the shape the world's", () => {
-    const m10 = generateMap(41, home([])), m11 = generateMap(42, home(["badger"])), m13 = generateMap(43, home(["badger", "otter", "moth"]));
+    const m10 = generateMap(41, home([])), m11 = generateMap(42, home(["beetle"])), m13 = generateMap(43, home(["beetle", "otter", "moth"]));
     const a10 = areas(m10), a11 = areas(m11), a13 = areas(m13);
     expect([a10.size, a11.size, a13.size]).toEqual([10, 11, 13]);
     expect([...a10.values()].sort()).toEqual([...homeKinds()].sort());
-    expect([...a13.values()].sort()).toEqual([...homeKinds(), "badger", "otter", "moth"].sort());
+    expect([...a13.values()].sort()).toEqual([...homeKinds(), "beetle", "otter", "moth"].sort());
     expect(m13.centreCell).toEqual(m10.centreCell);
     // the 10-area home's areas, kinds and all, every night after (whatever the night's seed)
     for (const [k, kind] of a10) { expect(a11.get(k)).toBe(kind); expect(a13.get(k)).toBe(kind); }
@@ -71,10 +71,10 @@ describe("home grows with the kinds she knows", () => {
   }, 120000);
 
   it("on the sea chart, home's outline grows with it (its coast the same, bigger)", () => {
-    const small = islandCoast(coastSpec(homeIsland(3)), TUNING.map?.coast), big = islandCoast(coastSpec(homeIsland(3, knownKinds(["badger", "otter", "moth"]))), TUNING.map?.coast);
+    const small = islandCoast(coastSpec(homeIsland(3)), TUNING.map?.coast), big = islandCoast(coastSpec(homeIsland(3, knownKinds(["beetle", "otter", "moth"]))), TUNING.map?.coast);
     expect(big.areas).toBe(13);
     expect(big.radii[0] / small.radii[0]).toBeCloseTo(Math.sqrt(13 / 10), 5);
     expect(big.radii[40] / big.radii[0]).toBeCloseTo(small.radii[40] / small.radii[0], 5);
-    expect(islandOf("badger")).not.toBeNull();
+    expect(islandOf("beetle")).not.toBeNull();
   });
 });

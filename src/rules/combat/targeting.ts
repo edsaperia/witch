@@ -149,7 +149,9 @@ export function acquire(w: CombatWorld, c: Creature, x: number, z: number, range
   if (huntsWitch(sideOf(c)) && !(c.watchUntil !== undefined && w.time < c.watchUntil)) for (const v of w.witches) { // (not while it's still watching her: rules/wildWatch.ts)
     if (!v.onGround || v.down || w.talkingTo(c.id) === v.id || sheltered(v, c) || unseen(v, c)) continue; // (the one she's inviting holds its fire on her; in a legend's circle she's safe; her Stealth broom hides her)
     const d = Math.hypot(v.x - c.x, v.z - c.z);
-    if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || !pastEdge(w, c, v.x, v.z)))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
+    // (With the wild watch on, a wild one takes her up only in its own area: she can walk out before they make up their minds, and
+    // none reaches across its edge for her; Ed, 2026-10-07: "time to run away". DECISION FOR ED: before, within its attack range.)
+    if ((w.inArea(c, v.x, v.z) || (d < attackRange && (c.siege || (!w.t.wildWatch?.on && !pastEdge(w, c, v.x, v.z))))) && (!best || d < bd)) { bd = d; best = { kind: "witch", id: v.id }; }
   }
   return best;
 }
