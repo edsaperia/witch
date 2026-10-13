@@ -24,6 +24,7 @@
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { entriesOf, exportedText, sameText, withImport } from "./lib/entries.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), ".."), DIR = join(ROOT, "art/creatures"), SPECIES = join(ROOT, "art/genome/species.js"), INDEX = join(DIR, "index.js");
 const cmd = process.argv[2] ?? "list";
@@ -42,34 +43,6 @@ const PARTS = [
 const partName = (part, id) => part.prefix + id.toUpperCase().replace(/[^A-Z0-9]/g, "_");
 const has = (id, file) => existsSync(join(DIR, id, file));
 
-/** The top-level entries of the object literal `export const <name> = {` in a module's text: [{ key, text (the value's source),
- *  before (comment lines of its own above it), after (a comment on its line after it) }], and the text's start and end
- *  (the braces' insides). A small scanner: strings, comments and nesting respected. */
-function entriesOf(text, name) {
-  const open = text.indexOf(`export const ${name} = {`);
-  if (open < 0) throw new Error(`no "export const ${name} = {"`);
-  let i = text.indexOf("{", open) + 1, depth = 1, start = i;
-  const entries = [];
-  let pendingComments = [], key = null, valueStart = 0;
-  const skipString = q => { i++; while (i < text.length && text[i] !== q) { if (text[i] === "\\") i++; i++; } i++; };
-  while (i < text.length && depth > 0) {
-    const ch = text[i], two = text.slice(i, i + 2);
-    if (ch === '"' || ch === "'" || ch === "`") { skipString(ch); continue; }
-    if (two === "//") { const end = text.indexOf("\n", i), line = text.slice(i, end < 0 ? text.length : end); if (depth === 1 && key === null) { const lineStart = text.lastIndexOf("\n", i) + 1; if (!text.slice(lineStart, i).trim()) pendingComments.push(line); else if (entries.length) entries[entries.length - 1].after = line; } else if (depth === 1 && key !== null) { /* inside a value's line: kept in the value text */ } i = end < 0 ? text.length : end; continue; }
-    if (two === "/*") { i = text.indexOf("*/", i) + 2; continue; }
-    if (ch === "{" || ch === "[" || ch === "(") depth++;
-    else if (ch === "}" || ch === "]" || ch === ")") { depth--; if (depth === 0) break; }
-    else if (depth === 1 && key === null && /[A-Za-z_$"']/.test(ch)) {
-      const m = /^("[^"]+"|'[^']+'|[A-Za-z_$][\w$]*)\s*:/.exec(text.slice(i));
-      if (m) { key = m[1].replace(/^["']|["']$/g, ""); i += m[0].length; while (text[i] === " ") i++; valueStart = i; continue; }
-    } else if (depth === 1 && key !== null && ch === ",") {
-      entries.push({ key, text: text.slice(valueStart, i).trim(), before: pendingComments, after: "" }); pendingComments = []; key = null;
-    }
-    i++;
-  }
-  if (key !== null) { entries.push({ key, text: text.slice(valueStart, i).trim(), before: pendingComments, after: "" }); pendingComments = []; }
-  return { entries, start, end: i, trailing: pendingComments };
-}
 const HELPER_NAMES = ["L", "A", "D", "C", "E", "at", "stave", "FOOT", "mirror", "pair", "bow", "wave", "spiral", "rays"];
 const helpersUsed = text => { const t = text.replace(/\.\.\./g, " "); return HELPER_NAMES.filter(h => new RegExp(`(^|[^\\w$.])${h}(?=[^\\w$]|$)`).test(t)); }; // (a spread's dots are not a property access)
 
@@ -173,16 +146,6 @@ const configText = (id, entry) => `// ${id}: what the game's rules and sounds kn
 export const ${configName(id)} = ${js(Object.fromEntries(CREATURE_KEYS.filter(k => k in entry).map(k => [k, entry[k]])))};
 `;
 
-/** Two record texts the same but for whitespace (a merge pasted back what the folder already holds). */
-const sameText = (a, b) => a.replace(/\s+/g, " ").trim() === b.replace(/\s+/g, " ").trim();
-/** The folder file's own export (its text after `export const NAME = `, without the trailing semicolon and comment). */
-const exportedText = (text, name) => { const m = new RegExp(`export const ${name} = ([\\s\\S]*?);(\\s*//.*)?\\s*$`).exec(text.replace(/^import .*\n/gm, "")); return m ? m[1] : ""; };
-/** The module's text with `import { names } from "<from>"` in it (after its last import, or at the top). */
-function withImport(text, names, from) {
-  if (text.includes(`from "${from}"`)) return text;
-  const line = `import { ${names.join(", ")} } from "${from}";\n`, imports = [...text.matchAll(/^import .*\n/gm)], at = imports.length ? imports[imports.length - 1].index + imports[imports.length - 1][0].length : 0;
-  return text.slice(0, at) + line + text.slice(at);
-}
 /** A pasted record against the folder's: "same" (dropped), "replaced" (the pasted one, newer, written over it) or "new". */
 function placeRecord(out, name, text, id, file) {
   if (!existsSync(out)) { writeFileSync(out, text); return "new"; }

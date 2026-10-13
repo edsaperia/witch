@@ -908,10 +908,11 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} bottles, half-buried, a third of their built size, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
-// area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)
+// area options, and the bushes, against art/flora/baseline/ (one file a species; when a change to them is meant, rewrite them:
+// node art/flora/fingerprint.mjs)
 {
-  const { fingerprints } = await import("./flora/fingerprint.mjs"), { readFileSync } = await import("node:fs");
-  const base = JSON.parse(readFileSync(new URL("./flora/baseline.json", import.meta.url))), now = fingerprints();
+  const { fingerprints } = await import("./flora/fingerprint.mjs"), { readBaseline } = await import("./flora/baseline.mjs");
+  const base = readBaseline(), now = fingerprints();
   const keys = Object.keys(base), diff = keys.filter(k => base[k] !== now[k]), extra = Object.keys(now).filter(k => !(k in base));
   ok(!diff.length && !extra.length, `flora genomes: ${keys.length - diff.length} of ${keys.length} trees and bushes as the baseline${diff.length ? " — differ: " + diff.slice(0, 8).join(", ") : ""}${extra.length ? " — not in it: " + extra.slice(0, 8).join(", ") : ""}`);
 }
