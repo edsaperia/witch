@@ -64,11 +64,11 @@ const PALETTES: Record<string, Palette> = {
 /** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
  *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
  *  water: north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. The diagonals have their own (Ed, via
- *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a hot spring in the cold rainforest (NW), a rust pool in
+ *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a tar pit in the cold rainforest (NW; a hot spring till Ed, 2026-10-13: it looked like somewhere you could walk), a rust pool in
  *  the badlands (SE), a lily pond in the mangrove swamp (SW). Temperate keeps water. Looks only. */
-export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "spring" | "rust" | "lily";
+export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "tar" | "rust" | "lily";
 /** The looks by number, as the chart's lake shader knows them (seaChart.ts LAKE_FRAG's uLook). */
-export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "spring", "rust", "lily"];
+export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "tar", "rust", "lily"];
 /** The compass's biomes, N first and on clockwise every 45° (config/kinds.json's by direction). An island's biome blends the two
  *  its bearing lies between, by how near it is to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have
  *  both"): its land's colours mixed by that share, and each of its lakes one of the two looks, by those odds, seeded. */
@@ -78,7 +78,7 @@ export function blendAt(bearing: number): Blend {
   const d = (((bearing % 360) + 360) % 360) / 45, i = Math.floor(d) % 8, t = d - Math.floor(d);
   return t <= 0.5 ? { a: COMPASS[i], b: COMPASS[(i + 1) % 8], w: 1 - t } : { a: COMPASS[(i + 1) % 8], b: COMPASS[i], w: t };
 }
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "spring", badlands: "rust", "mangrove swamp": "lily" };
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "tar", badlands: "rust", "mangrove swamp": "lily" };
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly. */
 const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
@@ -87,7 +87,7 @@ const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   oasis: { rgb: hsv(0.3, 0.7, 0.46), width: 44, k: 0.9 }, // palms and grass
   sinkhole: { rgb: hsv(0.34, 0.75, 0.3), width: 50, k: 0.95 }, // rainforest canopy right up to the pit's rim
   tarn: { rgb: hsv(0.58, 0.06, 0.6), width: 26, k: 0.8 }, // bare grey scree
-  spring: { rgb: hsv(0.12, 0.16, 0.78), width: 30, k: 0.85 }, // pale mineral crust
+  tar: { rgb: hsv(0.07, 0.35, 0.13), width: 24, k: 0.85 }, // a black, sticky shore
   rust: { rgb: hsv(0.1, 0.05, 0.95), width: 80, k: 0.95 }, // pale grey-white crusted ground round it
   lily: { rgb: hsv(0.3, 0.65, 0.4), width: 34, k: 0.85 }, // reeds
 };
