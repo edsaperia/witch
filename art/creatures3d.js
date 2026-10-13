@@ -651,7 +651,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.stripes && p[1] > H[1] - hr * .1 && p[0] < H[0] + hr * .55 && (((p[1] - H[1]) / hr * 3.2 + Math.abs(p[2]) / hr * 1.6 - (p[0] - H[0]) / hr) % 1 + 1) % 1 < .24) return M[q.stripes.mat || "BODY3"]; // stripes over its brow and cheeks
     const tear = tearAt(p); if (tear) return tear;
     if (q.mask && p[0] > H[0] + hr * .15 && p[1] > H[1] - hr * .4 && p[1] < H[1] + hr * .45) return M.BELLY; // a white mask over its eyes and muzzle
-    if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35) return M.BELLY;
+    if ((q.belly || q.muzzle) && p[1] < H[1] - hr * .35 && !(q.jawCoat && p[0] > H[0])) return M.BELLY; // (jawCoat: not its chin)
     return undefined;
   };
   m.ell(H, [hr * 1.05, hr * .92, hr * .88], M.BODY, { paint: headPaint });
@@ -675,7 +675,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
       m.ell(n, [hr * .13, hr * .1, hr * .1], M.BODY, {}); m.ell(v3.add(n, [0, hr * .08, 0]), [hr * .06, hr * .04, hr * .05], legend ? M.MAGIC2 : M.NOSE, { group: 1 });
     }
   } else if (!q.beak) {
-    m.ell(snU, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: liftD([1, -.25, 0]), paint: p => (roof(p) ? M.MOUTH : undefined) ?? tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < snU[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
+    m.ell(snU, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: liftD([1, -.25, 0]), paint: p => (roof(p) ? M.MOUTH : undefined) ?? tearAt(p) ?? ((q.muzzle || q.belly) && !q.jawCoat && p[1] < snU[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
     if (q.jaw) m.ell(turn([sn[0] - L * .05, sn[1] - Dm * .55, 0]), [L * .55 + hr * .18, Dm * .55 * q.jaw, Dm * .85 * Math.min(1.3, q.jaw)], M.BODY, { group: jawG, dir: turnD([1, -.15, 0]), paint: headPaint }); // a heavy lower jaw (a jaguar legend's crushing bite)
     if (!q.trunk) m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
     else { // a trunk (an elephant's): from its snout, hanging down and forward, wrinkled, its tip curling forward and up by curl
@@ -701,7 +701,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (jawK) {
     const jc = [sn[0] - L * .08, sn[1] - Dm * .5 * jawK, 0];
     const lip0 = Math.max(hinge[0] + hr * .1, sn[0] - L * .2), lip1 = sn[0] + L * .5 + hr * .05; // the gape, from the corner of the mouth to the front
-    m.ell(turn(jc), [L * .5 + hr * .12, Dm * .42 * jawK * (1 - open * .2), Dm * .78 * (1 - open * .15)], M.BODY, { group: jawG, dir: turnD([1, -.22, 0]), paint: p => gape && Math.abs(p[2]) < Dm * .6 && unturn(p)[1] > jc[1] + Dm * .15 * jawK ? M.MOUTH : !gape && p[1] > mouthY - .012 && p[1] < mouthY + .012 && p[0] > sn[0] - L * .05 && p[0] < sn[0] + L * .62 ? M.LINE : ((q.muzzle || q.belly) ? M.BELLY : headPaint(p)) }); // (shut: its mouth a dark line where the jaw meets the muzzle)
+    m.ell(turn(jc), [L * .5 + hr * .12, Dm * .42 * jawK * (1 - open * .2), Dm * .78 * (1 - open * .15)], M.BODY, { group: jawG, dir: turnD([1, -.22, 0]), paint: p => gape && Math.abs(p[2]) < Dm * .6 && unturn(p)[1] > jc[1] + Dm * .15 * jawK ? M.MOUTH : !gape && p[1] > mouthY - .012 && p[1] < mouthY + .012 && p[0] > sn[0] - L * .05 && p[0] < sn[0] + L * .62 ? M.LINE : q.jawCoat ? M.BODY : ((q.muzzle || q.belly) ? M.BELLY : headPaint(p)) }); // (jawCoat: its lower jaw in its coat, not its pale belly or muzzle, as its muzzle's underside and its chin: Ed's animal review, 2026-10-13) (shut: its mouth a dark line where the jaw meets the muzzle)
     if (gape) {
       // the lips, found on the model as built: down from inside the muzzle to its underside, and up from inside the turned jaw to its top
       const exit = (p, d, most) => { let t = 0; while (t < most && m.field(v3.add(p, v3.mul(d, t))) < 0) t += Dm * .02; return v3.add(p, v3.mul(d, t)); }; // (no further than most: where the jaws still meet, not out through the far side)
@@ -714,11 +714,11 @@ export function quad3d(S, level, frame, st, facing = "towards") {
       }
       m.chain(tg, M.SKIN, { group: jawG }); // a tongue lying on the jaw's floor
       if (!baby) { // its teeth, each side, from the upper lip down and from the jaw's lip up
-        const tooth = (x, len, w, down, side) => { const z = side * Dm * .55, a = down ? upLip(x, z) : loLip(x, z), d = down ? liftD([0, -1, 0]) : turnD([0, 1, 0]); m.seg(v3.sub(a, v3.mul(d, w)), v3.add(a, v3.mul(d, len)), w, w * (bite === "flat" ? .9 : .25), M.WEB, { group: down ? 1 : jawG }); }; // (ivory, whatever its horns)
+        const tooth = (x, len, w, down, side) => { const z = side * Dm * .55, a = down ? upLip(x, z) : loLip(x, z), d = down ? liftD([0, -1, 0]) : turnD([0, 1, 0]); m.seg(v3.sub(a, v3.mul(d, w)), v3.add(a, v3.mul(d, len)), w, w * (bite === "flat" ? .9 : .25), M.WEB, { group: 64 }); }; // (ivory, whatever its horns; a group of their own, so they are not blended into the jaw)
         for (const side of [-1, 1]) {
-          if (bite === "fangs") { tooth(lip1 - L * .05, hr * .55, hr * .12, true, side); tooth(lip1 - L * .18, hr * .4, hr * .1, false, side); for (let i = 1; i <= 2; i++) { tooth(lip1 - L * (.12 + i * .16), hr * .14, hr * .06, true, side); tooth(lip1 - L * (.26 + i * .16), hr * .12, hr * .06, false, side); } }
-          else if (bite === "flat") for (let i = 0; i < 4; i++) { const x = lip0 + (lip1 - lip0) * (.25 + i * .2); tooth(x, hr * .12, hr * .08, true, side); tooth(x, hr * .12, hr * .08, false, side); }
-          else for (let i = 0; i < 7; i++) { const x = lip0 + (lip1 - lip0) * (.08 + i * .14); tooth(x, hr * .24, hr * .07, true, side); tooth(x + (lip1 - lip0) * .07, hr * .22, hr * .07, false, side); }
+          if (bite === "fangs") { tooth(lip1 - L * .05, Dm * .9, Dm * .22, true, side); tooth(lip1 - L * .16, Dm * .65, Dm * .2, false, side); } // just its canines (sized by the snout's depth): rows of small teeth merged into one pale block at game size
+          else if (bite === "flat") tooth(lip1 - L * .04, Dm * .25, Dm * .16, false, side); // a grazer's: a small pair of lower incisors at the front (no upper ones, as a deer)
+          else for (let i = 0; i < 7; i++) { const x = lip0 + (lip1 - lip0) * (.08 + i * .14); tooth(x, Dm * .5, Dm * .14, true, side); tooth(x + (lip1 - lip0) * .07, Dm * .46, Dm * .14, false, side); }
         }
       }
     }
@@ -952,11 +952,13 @@ function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at
     for (let i = 0; i < 5; i++) { const a = .35 + i * .3, d = v3.norm([-Math.cos(a) * (q.pools ? .5 : 1), Math.sin(a) * (q.pools ? .7 : .9) + (q.pools ? .35 : 0), side * (q.pools ? .75 : .55)]), L = (.24 + .05 * (i % 2)) * A, cc = v3.add(k, v3.mul(d, L * .55)); m.ell(cc, [L * .6, w * 1.5, q.pools ? L * .35 : w * .6], mat, { ...o, dir: d, up: q.pools ? [0, 1, 0] : [0, 0, 1] }); if (q.pools) { m.ell(v3.add(cc, [0, w * 1.4, 0]), [L * .45, w * .4, L * .26], M.MAGIC, { ...o, dir: d, up: [0, 1, 0] }); m.ell(v3.add(cc, [L * .08, w * 1.9, 0]), [w * .9, w * .4, w * .9], M.MAGIC2, o); } }
     return;
   }
-  const p1 = v3.add(b, [-.18 * A, .3 * A, out * .4]), p2 = v3.add(b, [-.25 * A, .62 * A, out * .8]), p3 = v3.add(b, [-.1 * A, .95 * A, out]);
+  // q.antlerLean: tilted back about their base by this many radians (a stag legend's: Ed's animal review, 2026-10-13, so a great rack doesn't tower)
+  const ln = q.antlerLean ?? 0, cl = Math.cos(ln), sl = Math.sin(ln), back = d => [d[0] * cl - d[1] * sl, d[0] * sl + d[1] * cl, d[2]], at = d => v3.add(b, back(d));
+  const p1 = at([-.18 * A, .3 * A, out * .4]), p2 = at([-.25 * A, .62 * A, out * .8]), p3 = at([-.1 * A, .95 * A, out]);
   m.chain([[...b, w * 1.2], [...p1, w], [...p2, w * .85], [...p3, w * .4]], mat, o);
-  const tips = [p3], tine = (p, d, l, ww) => { const e = v3.add(p, v3.mul(v3.norm(d), l)); tips.push(e); m.seg(p, e, ww, ww * .35, mat, o); };
+  const tips = [p3], tine = (p, d, l, ww) => { const e = v3.add(p, v3.mul(v3.norm(back(d)), l)); tips.push(e); m.seg(p, e, ww, ww * .35, mat, o); };
   (m.antlerPaths ||= []).push([[...b, w * 1.2], [...p1, w], [...p2, w * .85], [...p3, w * .4]]); // its beam, for the elder kit's rings
-  tine(v3.add(b, [-.04 * A, .1 * A, out * .1]), [1, .6, 0], .28 * A, w * .8);
+  tine(at([-.04 * A, .1 * A, out * .1]), [1, .6, 0], .28 * A, w * .8);
   if (A > .4 || jack) tine(p1, [1, .9, 0], .3 * A, w * .7);
   if (A > .7) { tine(p2, [.8, 1, 0], .28 * A, w * .6); tine(p3, [.3, 1, side * .2], .18 * A, w * .5); }
   if (A > 1.2) { const p15 = v3.lerp(p1, p2, .5), p25 = v3.lerp(p2, p3, .5); tine(p15, [.5, 1, side * .4], .22 * A, w * .55); tine(p25, [-.6, 1, side * .3], .2 * A, w * .5); tine(p25, [.9, .7, 0], .16 * A, w * .45); } // a candelabra: more tines as it grows
