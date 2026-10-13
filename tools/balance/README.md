@@ -2,6 +2,14 @@
 
 <!-- written by tools/inventory.mjs; edit the scripts' header comments, then run it again -->
 
+## `bottrace.mjs`
+
+A bot's run, as a trace: every change in what it's doing, with the clock, her place, mode, hits, stack, the wave and the soundsystems standing; for reading why a bot plays as it does.
+
+```
+node tools/balance/bottrace.mjs [--seed 1000] [--bot skilled] [--island 10] [--kind badger (that kind's island)] [--time 900] [--every 0 (also a line every N s)] [--game (the bot game's options)] [--feed]
+```
+
 ## `buffs.mjs`
 
 💌 throughput under stacked legend buffs: how fast she can fill a crowd's affection with no buffs, typical builds and worst-case stacks, with the per-animal hit gap and other limits; then waves survived in the creature-state model with each build.
@@ -33,6 +41,14 @@ The coach's eye on one run: a bot plays a seed headless and, each --every second
 
 ```
 node tools/balance/coachwatch.mjs [--bot champion] [--seed 1000] [--time 2700] [--every 60] [--opts file.json]
+```
+
+## `dodgebot.mjs`
+
+Does dodging matter? A headless run of the real rules: she stands on the ground in a wild area two out from home, a group of one kind placed 25 to 33 m off, and one of four bots plays her for `time` seconds; we count the hits she takes a minute.
+
+```
+node tools/balance/dodgebot.mjs [--dodge none,a,b,c,abc] [--groups wolf*4,boar*4,...] [--all] [--bots still,back,strafe,dodger]
 ```
 
 ## `endgame.mjs`
@@ -79,6 +95,14 @@ The logistics sweep. Over a grid of area size × treetop speed, with the balance
 node tools/balance/logistics.mjs [--seeds 8] [--sizes 112,168,224,280] [--treetops 32,48,64,96]
 ```
 
+## `mapsize.mjs`
+
+What a smaller map gives: playable areas, legends, quests, relics, creatures and trees, by seed.
+
+```
+node tools/balance/mapsize.mjs [--radii 7.9,6,5.6] [--seeds 5] [--trees]
+```
+
 ## `opening.mjs`
 
 The opening. A bot plays the real rules headless from her first step to the first wave: it flies to the areas nearest home in turn, over the treetops, lands, and invites with 💌s, then moves on.
@@ -95,12 +119,20 @@ A whole run, headless, for sanity: a bot plays the real rules for --minutes of g
 node tools/balance/playthrough.mjs [--seed 123] [--minutes 15] [--carry 4] [--stuck 30] [--json out.json]
 ```
 
+## `pulsegaps.mjs`
+
+The waves' gaps with the ley pulse at a constant speed: on each seed's map, the route waved through stone by stone, each gap its stretch's length over the speed, the boot its 179 m path over it.
+
+```
+node tools/balance/pulsegaps.mjs [--seeds 10] [--speed 4] [--interval 60] [--boot 30]
+```
+
 ## `runbot.mjs`
 
 Full runs: a bot plays the real rules headless for the first --time seconds of a run, and we read off what a playtester would feel: when she's first knocked out, how much of each woken area she'd invited before its wave, how many legends are angry, and how…
 
 ```
-node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
+node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)] [--bots skilled,crude] [--time 1800] [--happy N (the N legends nearest home happy from the start)] [--calm (no legend ever turns angry)] [--quests (the skilled bot fetches what sleeping legends dream of)] [--relics (and picks up relics for them)] [--relic-policy nearest|home|front|far (which sleeping legend gets each relic)] [--quest-max N (at most N quests, then she plays on as usual)] [--relic-max N (at most N relics brought)] [--strategy invite|feed|quest|sigil|mixed (the skilled bot's strategies: rules/bot.ts STRATEGIES)] [--feed (the skilled bot leads her babies and young to berry patches)] [--guards 3 --keep 2 (the skilled bot parks up to G at the next soundsystem, keeping K)] [--island 10|20|...|off (map.islandAreas)] [--game (each bot with the bot game's own options, rules/bot.ts BOT_GAME, in place of the flags)] [--set path=value;...] [--combat path=value;... (config/combat.json's)] [--json out.json] | --report a.json,b.json
 ```
 
 ## `sim.mjs`
@@ -108,7 +140,7 @@ node tools/balance/runbot.mjs [--seeds 3 (seeds 0 to N-1; --skip K starts at K)]
 The balance simulator's runner: many seeds, wave gaps of 60 s and 300 s.
 
 ```
-node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,100] [--cap 60]
+node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300|4m/s] [--skills 10,30,50,70,100] [--cap 60]
 ```
 
 ## `states.mjs`
@@ -116,7 +148,16 @@ node tools/balance/sim.mjs [--seeds 12] [--gaps 60,300] [--skills 10,30,50,70,10
 The creature-state model's report: src/rules/states.ts on the real maps.
 
 ```
-node tools/balance/states.mjs [--seeds 6] [--gap 60] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
+node tools/balance/states.mjs [--seeds 6] [--gap 60|4m/s] [--skills 0.5,1,2,4] [--policies defend,third,leash,babies,relay] [--cap 40]
+```
+
+## `sweep.mjs`
+
+Bot sweeps: every bot kind over many seeds, the real rules headless, with a tuning overlay, out to a CSV and a summary.
+
+```
+node tools/balance/sweep.mjs [--bots idle,novice,crude,skilled,top] [--seeds 20 (seeds 1000 + 7919 i, as runbot)]
+node tools/balance/sweep.mjs --report a.csv,b.csv   (the summaries of earlier sweeps, side by side)
 ```
 
 ## `waves.mjs`
