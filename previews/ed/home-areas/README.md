@@ -18,3 +18,7 @@
 | old pinewood | marten | marten |
 
 The animals displaced from those areas move into the areas just vacated: owl to stone shrine, glowworm to meadow, boar to grassland, woodlouse to moor, snake to Norway.
+
+## As built (PR #770)
+- `home-after.png`: the 10 home areas as built, one row each, in this order: hazel forest, honeysuckle tangle, muddy forest, old pinewood, old oaks, bluebell glade, fern forest, wispy forest, alder forest, twiggy forest. Each row shows the area's pieces and its creature.
+- `ingame/NN-<animal>.png`: in-game shots (seed 123) of the witch on the ground beside one creature from each home area: mole, snail, stoat, hare, marten, fox, squirrel, badger, dormouse, hedgehog.
