@@ -151,12 +151,12 @@ export const GENOMES = [
       ] },
     ] },
   // the badlands' rattlesnake (Ed, 2026-10-13, unknown-21): a sandy sidewinder with dark diamonds, a wedge head and a rattle that grows a
-  // button a level; its legend great stacked coils and a colossal raised rattle whose shake ripples out through the sand
-  { id: "rattlesnake", name: "Rattlesnake", template: "serpent", builder: "rattlesnake", palette: { hue: .08, sat: .38, val: .68 }, legend: ["rattleBig", "ripple"], texture: { kind: "scales", size: 2 },
+  // button a level; its legend the elder of its kind: great stacked coils, a colossal raised rattle whose shake ripples through the sand, great horns over its eyes, scarred
+  { id: "rattlesnake", name: "Rattlesnake", template: "serpent", builder: "rattlesnake", palette: { hue: .08, sat: .38, val: .68 }, legend: ["rattleBig", "ripple", "horns"], texture: { kind: "scales", size: 2 },
     levels: [{ body: { thick: .8, rattle: 1 } }, { body: { thick: 1, rattle: 3 } }, { body: { thick: 1.2, rattle: 6 } }, { body: { thick: 1.3, rattle: 7, coil: 1 } }] },
   // the badlands' scorpion (Ed, 2026-10-13, unknown-22): a red-brown canyon scorpion, pincers ahead and its sting arched over its back; its
-  // legend a colossal curled tail and the scorpion's own trick, glowing blue-green along its plates under the moon
-  { id: "scorpion", name: "Scorpion", template: "insectoid", builder: "scorpion", palette: { hue: .06, sat: .5, val: .48, magic: .47 }, legend: ["fluoresce"], texture: { kind: "plates", size: 2 },
+  // legend the elder of its kind: a colossal curled tail, its young riding on its scarred back, glowing blue-green along its plates under the moon
+  { id: "scorpion", name: "Scorpion", template: "insectoid", builder: "scorpion", palette: { hue: .06, sat: .5, val: .48, magic: .47 }, legend: ["fluoresce", "brood"], texture: { kind: "plates", size: 2 },
     levels: [{ body: { tail: .85, pincer: .85 } }, { body: { tail: 1, pincer: 1 } }, { body: { tail: 1.1, pincer: 1.3 } }, { body: { tail: 1.9, pincer: 1.4 } }] },
   { id: "glowworm", name: "Glow-worm", template: "serpent", builder: "glowworm", palette: { hue: .12, sat: .4, val: .35 }, legend: ["lantern"] , texture: { kind: "plates", size: 3 } },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
