@@ -94,6 +94,27 @@ The ladder's rung 6 shows only the rendering half: palette, cel, outline and clu
   - markings per level as parts.
 - **Check:** at each level step, a species' silhouette should differ from the previous level scaled to the same height, by a minimum distance (the silhouette check, applied within a species).
 
+## 0c. What a legend is (Ed, 2026-10-13)
+
+Ed's brief, after the new-animals round and Golf's legend audit (`docs/art-review/mocks/legend-audit.md`):
+
+1. **Why legends exist.** "They are the thing that make the game mysterious and fantastical; they make the forest an exciting place to explore."
+2. **What a legend draws on.** "The animal's nature, plus ancient wisdom, power, and magic."
+3. **What a legend may use.** "Size, weathering, exaggerated nature, exaggerated features, magical-ness, jewellery/armour/decorations, scars, etc."
+4. **How far from the animal.** "Should be recognisable as from the same family, but can have fantastic elements. A penguin vs an elder god penguin that all penguins worship and has survived epochs and knows the deep songs of the earth and the age of the stars."
+5. **Shared look or not.** "Each its own." There is no common legend uniform.
+6. **Readability.** "You should be able to tell them apart, but they're mostly there to be mysterious than to be read quickly in a combat situation."
+
+And (Ed, the same day): "Legends are legendary; stories are told of them; when you go into their circle the world stops moving and you know you're in the presence of something very old and very powerful. Also sometimes they wear party hats."
+
+So a legend is the elder of its kind:
+- **It starts from the animal's own nature**, exaggerating its defining trait ("emphasise the thing that makes that creature unusual", Ed, 2026-10-12).
+- **It shows age and power:** great size, weathering, scars, and the wear of epochs.
+- **It carries ancient wisdom and magic,** shown through what that animal would plausibly be revered for.
+- **It may wear things:** jewellery, armour, offerings or decorations, as an object of worship might.
+- **A little playfulness is allowed:** sometimes a legend wears a party hat.
+- **Avoid generic features.** Crystals, flame crests, spirit wings, rings of eyes, ribbons and trees on the back are generic decoration (see the audit). They don't come from the animal.
+
 ## 1. Review an area as a set
 
 - **Judge an area as one picture.** Look at its creature at every level, its trees and props, its sleeping legend and the witch together. Use the set sheet (`tools/art-iterations/sheets.mjs`) and both in-game views (ground and treetops). A creature that looks good alone can still clash with its trees, and a tree can read well in isolation but turn neon in a clump.

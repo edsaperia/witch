@@ -63,7 +63,7 @@ uniform vec2 uTile, uFloorsSize;  // one tile's size and the atlas's, in art pix
 uniform float uSat;
 uniform vec3 uFloor; // dancefloor x, z, radius
 uniform vec4 uCircle; // magic circle: hue, second hue, brightness (pulsing), rune band's turn (radians)
-uniform vec4 uBeach; // the beach round the island: .x on (1) or off (0), .y how far past the coast the sea starts, .z half the land map's step (metres)
+uniform vec4 uBeach; // the beach round the island: .x on (1) or off (0), .y how far past the coast the sea starts, .z half the land map's step (metres), .w the sand's grain
 uniform vec4 uLandBox; // the land map's grid (rules/land.ts): its first sample's x, z, and 1 over its width and depth (metres)
 uniform sampler2D uLand; // the land map: r, the signed distance to the coast (+ on land); g, the sand's width there; ba, the way to the nearest point of the coast (m; rules/mapShape.ts beachOf)
 uniform vec4 uLake; // the lakes (rules/lakes.ts): .x on (1) or off, .y half their map's step (metres)
@@ -117,9 +117,11 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
 }
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
-  // How many art pixels one screen pixel spans (taken here, in uniform flow): over 1 at a low, squashed angle (stargazing, the
-  // bend's far edge), where pixel-fine patterns alias into stripes; the sand fades its fine detail by it (fine, 1 to 0).
-  float squash = max(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel, fine = 1.0 - smoothstep(0.75, 1.6, squash);
+  // How many art pixels one screen pixel spans, across and down (taken here, in uniform flow): over 1 when the camera is far
+  // back or low (the beach's, stargazing), where art-pixel-fine patterns would alias into stripes. The sand and sea draw on a
+  // coarser grid instead (sandCell: the art pixel doubled until it's at least a screen pixel; Ed, 2026-10-12: "The beach is not
+  // pixelated like everything else"), so their grain stays chunky and fixed to the world rather than fading to smooth.
+  vec2 sandCell = exp2(ceil(log2(max(vec2(1.0), vec2(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel))));
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
@@ -148,6 +150,7 @@ void main() {
       return;
     }
     if (into > 0.0) {
+      px = floor(vWorld.xz / (uPixel * sandCell)) * sandCell; // (the sand and sea's art pixel, never finer than the screen's)
       // The water's edge: a calm wave running up the sand and back, every seven seconds or so.
       float lap = 0.5 + 0.5 * sin(uTime * 0.9 + vnoise(cpt / 60.0 + 7.0) * 6.0);
       float front = shore - 1.0 - 4.0 * lap;
@@ -189,24 +192,25 @@ void main() {
       // on it, and a touch brighter toward the water, catching the moonlight off it; a line of foam at the water's edge; shells
       // and pebbles here and there. Her warm pool on it (glowPool) keeps the sand's own brightness, so it never blows it out.
       float g = vnoise(px / vec2(8.0, 5.0)) * 0.6 + vnoise(px / 1.7) * 0.4;
-      col = vec3(0.6, 0.58, 0.54) * mix(1.0, g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0, fine);
-      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 1.0 - 0.06 * fine; // ripples the wind left
+      col = vec3(0.6, 0.58, 0.54) * (g < 0.35 ? 0.93 : g > 0.68 ? 1.04 : 1.0);
+      col *= 1.0 + uBeach.w * (fract(sin(dot(px, vec2(7.13, 157.7))) * 43758.5453) - 0.5); // a grain cell by cell (the tuning's beach.grain)
+      if (mod(px.x + floor(vnoise(px / 9.0) * 6.0), 9.0) < 1.0 && vnoise(px / vec2(3.0, 14.0)) > 0.7) col *= 0.94; // ripples the wind left
       float wet = shore - 6.0 + vnoise(cpt / 20.0 + 1.0) * 1.5;
       if (bd > wet) col = mix(col, vec3(0.3, 0.31, 0.32), smoothstep(wet, wet + 1.5, bd));
       // The wave's edge (Ed, 2026-10-07: "a soft foamy pixel line that laps in and out on the sand"): a broken crest of foam
       // pixels at the front, bubbles thinning behind it, and as the wave draws back a lace of foam left on the wet sand; in
-      // the night's own foam colour (art2's #364), the bubbles and lace smoothed where the pixels squash (fine).
+      // the night's own foam colour (art2's #364), bubbles and lace.
       float fd = front - bd, ebb = cos(uTime * 0.9 + vnoise(cpt / 60.0 + 7.0) * 6.0); // (ebb > 0: running up; < 0: drawing back)
       float froth = vnoise(px / vec2(2.0, 1.0) + vec2(uTime * 0.7, 0.0)) * 0.65 + vnoise(px / 0.9 + 3.0) * 0.35;
       if (fd < uPixel * 1.5 && froth > 0.32) col = vec3(0.62, 0.68, 0.74); // the crest
       else if (fd < uPixel * 1.5) col = mix(col, vec3(0.62, 0.68, 0.74), 0.55);
-      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.58, 0.63, 0.68), 0.7 * fine); // bubbles behind it
-      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.5, 0.54, 0.58), 0.5 * fine); // the lace left as it draws back
+      else if (fd < 1.2 && froth > 0.55 + fd * 0.25) col = mix(col, vec3(0.58, 0.63, 0.68), 0.7); // bubbles behind it
+      else if (ebb < 0.0 && fd < 2.2 + 2.5 * lap && abs(fract(fd * 0.9 - lap * 2.0) - 0.5) < 0.08 && froth > 0.5) col = mix(col, vec3(0.5, 0.54, 0.58), 0.5); // the lace left as it draws back
       float sh = fract(sin(dot(floor(px / 2.0), vec2(41.3, 289.1))) * 43758.5453);
-      if (sh > 0.993) col = mix(col, mix(vec3(0.62, 0.6, 0.57), vec3(0.34, 0.33, 0.33), fract(sh * 13.0)), fine);
+      if (sh > 0.993) col = mix(vec3(0.62, 0.6, 0.57), vec3(0.34, 0.33, 0.33), fract(sh * 13.0));
       vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
       lit += uMoon * 0.14 * smoothstep(wet - 18.0, wet, bd); // (toward the water, the moonlight off it)
-      if (bd > wet && bd < front) lit += uMoon * (mod(px.x + px.y, 3.0) < 1.0 ? 0.12 * fine : 0.0) + uMoon * 0.04 * (1.0 - fine); // the wet sand's sheen (smooth where the pixels squash)
+      if (bd > wet && bd < front) lit += uMoon * (mod(px.x + px.y, 3.0) < 1.0 ? 0.12 : 0.0); // the wet sand's sheen
       // Under the bushes at the woods' edge, a soft dappled shadow (light can be smooth: Ed), and the sand's glow calmer near the
       // dark woods, so the step from sand to forest isn't harsh.
       float shade = (1.0 - smoothstep(0.0, 6.0, into)) * (0.7 + 0.3 * vnoise(p / 1.7 + 5.0));
@@ -658,8 +662,10 @@ export class Ground {
     }
     u.uLand.value = this.landTex;
     (u.uLandBox.value as THREE.Vector4).set(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows));
-    v.set(1, b.out, L.step / 2, 0);
+    v.set(1, b.out, L.step / 2, v.w);
   }
+  /** The sand's grain: how far each of its art pixels is lightened or darkened, at random (the tuning's beach.grain). */
+  sandGrain(k: number): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uBeach.value as THREE.Vector4).w = k; }
   private landFor: Beach | null = null;
   private landTex: THREE.DataTexture | null = null;
 
