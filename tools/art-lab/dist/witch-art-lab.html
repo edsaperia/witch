@@ -9434,7 +9434,7 @@ const ROOKERY = {
   ground: { patches: [{ mat: "STONE", n: 6, r: [4, 9] }] },
   text: { floor: "snow over dark wet shingle", wall: "black sea rocks", small: "tussock grass and pebbles", big: "wind-stunted firs, pines and birches", set: "the rookery's ring of pebble nests" },
   wall: [["boulder", { big: true }], ["stones", { big: true }]], small: [["stones", {}], ["grass", { h: 1.1 }]],
-  big: [["tree", { type: "fir", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
+  big: [["tree", { type: "fir", variant: "stunted", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
@@ -9456,7 +9456,7 @@ const DRAGON_SCRUB = {
   id: "dragon-scrub", name: "Dragon scrub", creature: "komodo", by: "recipe", leaf: .2, floor: ["tallgrass", .12, .42, .5],
   text: { floor: "dry savannah grass and dust", wall: "rock outcrops", small: "thorn scrub and dry grass", big: "fan palms and flat-topped acacias", set: "a great sun-warmed basking rock" },
   wall: [["outcrop", {}], ["boulder", {}]], small: [["shrub", {}], ["grass", { h: 1.4 }]],
-  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: 1.35 }]],
+  big: [["tree", { type: "datePalm", variant: "burnt", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: 1.35 }]],
   pathKinds: ["animal", "dirt"],
   setPiece: ["heap", "a great sun-warmed basking rock", 1.2, { of: "stones", moss: .02, top: "slab", height: 2.6 }],
   layout: {
@@ -9500,7 +9500,7 @@ const SCRUB_WASH = {
   id: "scrub-wash", name: "Scrub wash", creature: "armadillo", by: "recipe", leaf: .24, floor: ["mud", .08, .32, .52],
   text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-  big: [["tree", { type: "hawthorn", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
+  big: [["tree", { type: "hawthorn", variant: "stunted", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
   pathKinds: ["animal", "dirt"],
   layout: {
@@ -9522,7 +9522,7 @@ const MOSSY_CREEK = {
   id: "mossy-creek", name: "Mossy creek", creature: "raccoon", by: "recipe", leaf: .33, floor: ["moss", .3, .5, .3],
   text: { floor: "deep moss and wet stones", wall: "the creek", small: "sword ferns", big: "tall mossy cedars and spruces", set: "a mossy logjam where the creek pools" },
   wall: [["water", { w: 1.6 }], ["fern", {}]], small: [["fern", {}]],
-  big: [["tree", { type: "cedar", scale: 1.3 }], ["tree", { type: "fir", scale: 1.4 }], ["tree", { type: "alder", minor: true, scale: .9 }], ["log", { moss: true, sparse: .12 }]],
+  big: [["tree", { type: "cedar", variant: "mossy", scale: 1.3 }], ["tree", { type: "fir", scale: 1.4 }], ["tree", { type: "alder", minor: true, scale: .9 }], ["log", { moss: true, sparse: .12 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
@@ -9586,7 +9586,7 @@ const MUDFLAT = {
   id: "mudflat", name: "Mudflat", creature: "crab", by: "recipe", leaf: .25, floor: ["mud", .1, .18, .42],
   text: { floor: "grey shining mud and crab holes", wall: "tide channels", small: "breathing roots and pebbles", big: "mangroves on arching roots", set: "an old canoe stranded on the mud, crab pots in it" },
   wall: [["water", { w: 1.4 }]], small: [["reeds", { h: .5 }], ["grass", { h: .7, leafHue: .22, leafSat: .3 }]],
-  big: [["tree", { type: "mangrove", scale: .95 }], ["boulder", { sparse: .15 }]],
+  big: [["tree", { type: "mangrove", variant: "stunted", scale: .95 }], ["boulder", { sparse: .15 }]],
   wet: true, pathKinds: ["boardwalk"],
   setPiece: ["punt", "an old canoe stranded on the mud, crab pots in it", 1, { state: "broken", cargo: "trap", pole: 1 }],
   layout: {
@@ -9738,7 +9738,7 @@ const PLAINS = {
   id: "plains", name: "Plains", creature: "cheetah", by: "recipe", leaf: .19, floor: ["grass", .15, .45, .58],
   text: { floor: "short gold-green grass", wall: "a line of whistling thorn", small: "grass tufts and small termite mounds", big: "small whistling thorns, scattered and in twos and threes", set: "a cluster of tall termite mounds" },
   wall: [["shrub", { spiky: true }]], small: [["grass", { h: .6 }], ["mound", { brown: true, small: true }]],
-  big: [["tree", { type: "acacia", scale: .6 }], ["tree", { type: "acacia", minor: true, scale: .45 }]],
+  big: [["tree", { type: "acacia", variant: "stunted", scale: .6 }], ["tree", { type: "acacia", minor: true, scale: .45 }]],
   pathKinds: ["track"],
   setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 5, width: 8, rock: "laterite" }],
   layout: {
@@ -9760,7 +9760,7 @@ const BUSHVELD = {
   id: "bushveld", name: "Bushveld", creature: "rhino", by: "recipe", leaf: .22, floor: ["sand", .05, .5, .45],
   text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, thorny hawthorn", set: "a ring of old boma posts round a cold hearth" },
   wall: [["bush", {}]], small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-  big: [["tree", { type: "flat", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+  big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
@@ -9782,7 +9782,7 @@ const PACKICE = {
   id: "packice", name: "Pack ice", creature: "polarbear", by: "recipe", leaf: .45, floor: ["ice", .6, .38, .86],
   text: { floor: "sea ice and drifted snow", wall: "dark leads of open water", small: "snow drifts and ice blocks", big: "stunted wind-bent larches, firs and birch along the shore", set: "a pressure ridge of broken ice" },
   wall: [["water", { w: 2.2, dark: true }]], small: [["rock", { small: true, ice: true }], ["grass", { h: .8 }]],
-  big: [["tree", { type: "larch", scale: .65, gnarl: .7 }], ["tree", { type: "fir", minor: true, scale: .6, gnarl: .7 }], ["tree", { type: "birch", minor: true, scale: .6, gnarl: .6 }]],
+  big: [["tree", { type: "larch", variant: "snowy", scale: .65, gnarl: .7 }], ["tree", { type: "fir", minor: true, scale: .6, gnarl: .7 }], ["tree", { type: "birch", minor: true, scale: .6, gnarl: .6 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["heap", "a pressure ridge of broken ice", 1, { seed: 7, of: "stones", moss: 0, top: "slab", stone: [.55, .18, .9] }],
   layout: {
@@ -9804,7 +9804,7 @@ const DELL = {
   id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
   text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
   small: [["fern", {}], ["grass", { h: 1.1 }]],
-  big: [["tree", { type: "rowan", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
+  big: [["tree", { type: "rowan", variant: "mossy", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
   pathKinds: ["animal", "roots"],
   setPiece: ["ring", "an old ring in a glade, where the roe gather at dusk", 1],
   layout: {
@@ -9867,7 +9867,7 @@ const MANGROVE = {
   id: "mangrove", name: "Mangrove swamp", creature: "crocodile", by: "recipe", leaf: .3, floor: ["mud", .1, .45, .28],
   text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few date palms", set: "a dugout sunk among the roots" },
   wall: [["water", { w: 2 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.3 }]],
-  big: [["tree", { type: "mangrove", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: .95 }]],
+  big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: .95 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["punt", "a dugout sunk among the mangrove roots", 1, { seed: 3 }],
   layout: {
@@ -9911,7 +9911,7 @@ const MOONPOOL = {
   id: "moonpool-glade", name: "Moonpool glade", creature: "unicorn", by: "recipe", leaf: .28, floor: ["grass", .3, .3, .58],
   text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "silver birches and old yews", set: "a ring of white stones by the pool" },
   wall: [["water", { w: 1.6 }]], small: [["fern", {}], ["flowers", {}]],
-  big: [["tree", { type: "birch", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
+  big: [["tree", { type: "birch", variant: "mossy", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
   ponds: true, pathKinds: ["magic"],
   setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
   layout: {
@@ -9938,6 +9938,28 @@ function recipeProblems(R) {
 }
 
 
+// ---- inlined from art/flora/variants.js ----
+// Tree variants (Ed, 2026-10-13: "we should have a 'different' main tree in each area, even if they're only slightly different
+// (e.g. snowy vs not snowy)"): a species drawn another way, named, as data. An area's tree recipe names one with `variant`
+// (["tree", { type: "fir", variant: "windbent" }]); its knobs are the tree builders' own (art/areas.js areaTreeVariants: lean, gnarl,
+// scale, thick, hollow, trunks, thin, dark, snow, hang), laid over the recipe's, so the variant always shows. An area's main
+// tree is its species and variant together, and no two areas share one (art/check.mjs, tree species).
+const TREE_VARIANTS = {
+  windbent: { lean: .45, gnarl: .85 }, //    bent by the wind, leaning all one way
+  stunted: { scale: .7, gnarl: .95 }, //    short and twisted (krummholz, bog and scrub trees)
+  ancient: { thick: 1.4, gnarl: 1, hollow: true }, // very old: a broad trunk, gnarled, hollowing
+  coppiced: { trunks: 5, thin: true }, // cut back long ago: many slim stems from one stool
+  pollard: { thick: 1.5, scale: .75 }, //   cut at head height: a thick short bole under a mop of new growth
+  mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
+  snowy: { snow: .85 }, //                  snow lying on its crown
+  burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
+};
+/** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
+const withVariant = o => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
+/** An area main tree's key: its species, and its variant if it has one. */
+const treeKey = o => o ? o.type + (o.variant ? ":" + o.variant : "") : undefined;
+
+
 const RECIPE_LAYOUTS = {};
 
 // [kind, params] shorthands for the prop library below
@@ -9947,7 +9969,7 @@ const P = (kind, o = {}) => [kind, o];
 // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
 const AREAS = [
   { id: "moor", name: "Moor", creature: "woodlouse", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
-    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 }), tree("hawthorn", { scale: .9, lean: .5 }), tree("rowan", { minor: true, scale: .9 })] }, // (lone wind-bent hawthorns and rowans among the mounds: Ed, 2026-10-13, "trees into areas with no trees")
+    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 }), tree("hawthorn", { variant: "windbent", scale: .9, lean: .5 }), tree("rowan", { minor: true, scale: .9 })] }, // (lone wind-bent hawthorns and rowans among the mounds: Ed, 2026-10-13, "trees into areas with no trees")
   { id: "fern-forest", name: "Fern forest", creature: "mole", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
     small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
@@ -9965,7 +9987,7 @@ const AREAS = [
   { id: "twiggy-forest", name: "Twiggy forest", creature: "squirrel", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
-    small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
+    small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { variant: "ancient", scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
   { id: "norway", name: "Norway", creature: "snake", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
     small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })] },
   { id: "alder-forest", name: "Alder forest", creature: "stoat", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
@@ -9975,19 +9997,19 @@ const AREAS = [
   { id: "old-oaks", name: "Old oaks", creature: "fox", by: "draft", leaf: .22, floor: ["leaves", .07, .5, .35], text: { floor: "leaf litter", small: "acorns, fallen branches", big: "ancient gnarled oaks with hollow trunks", set: "a great hollow oak" },
     small: [P("cones", { acorn: true }), P("log", { branch: true })], big: [tree("oak", { gnarl: .9, hollow: true }), tree("holly", { minor: true, scale: .8 })], set: tree("broad", { scale: 1.6, gnarl: 1, hollow: true }) },
   { id: "berry-thicket", name: "Berry thicket", creature: "bear", by: "draft", leaf: .32, floor: ["needles", .08, .45, .3], text: { floor: "pine needles", wall: "bramble thickets", small: "berry bushes", big: "tall pines" },
-    wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { scale: 1.2 }), tree("rowan", { minor: true })] },
+    wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { variant: "stunted", scale: 1.2 }), tree("rowan", { minor: true })] },
   { id: "wetland", name: "Wetland", creature: "toad", by: "draft", leaf: .2, floor: ["mud", .15, .45, .3], text: { floor: "wet mud", wall: "puddles, reeds", small: "reeds and rushes", big: "willows" },
-    wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow"), tree("alder", { minor: true, scale: .9 })] },
+    wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow", { variant: "pollard" }), tree("alder", { minor: true, scale: .9 })] },
   { id: "stream", name: "Stream", creature: "otter", by: "draft", leaf: .27, floor: ["pebbles", .25, .3, .45], text: { floor: "pebbles and grass", wall: "a stream or pond", small: "alder saplings", big: "alders", set: "a fallen-log bridge" },
-    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("alder", { scale: .95, gnarl: .3 }), tree("willow", { minor: true, scale: .8 })], set: P("bridge") },
+    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("alder", { variant: "windbent", scale: .95, gnarl: .3 }), tree("willow", { minor: true, scale: .8 })], set: P("bridge") },
   { id: "rocky-slope", name: "Rocky slope", creature: "lynx", by: "draft", leaf: .34, floor: ["scree", .2, .2, .42], text: { floor: "scree and moss", wall: "boulders", small: "rocks", big: "pines", set: "a rocky outcrop" },
     wall: [P("boulder", { big: true })], small: [P("stones", { big: true })], big: [tree("rowan", { scale: 1.1 }), tree("pine", { minor: true })], set: P("outcrop") },
   { id: "bog", name: "Bog", creature: "elk", by: "draft", leaf: .38, floor: ["moss", .18, .55, .4], text: { floor: "sphagnum moss", wall: "bog pools", small: "cotton grass", big: "spruce" },
-    wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("birch", { scale: .8, dark: true }), tree("pine", { minor: true, scale: .7 })] },
+    wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("birch", { variant: "stunted", scale: .8, dark: true }), tree("pine", { minor: true, scale: .7 })] },
   { id: "deadwood", name: "Deadwood", creature: "raven", by: "draft", leaf: .15, floor: ["earth", .07, .35, .3], text: { floor: "bare earth", small: "broken branches", big: "blasted dead trees" },
     small: [P("log", { branch: true })], big: [tree("broad", { bare: true, gnarl: 1 })] },
   { id: "cave-mouth", name: "Cave mouth", creature: "bat", by: "draft", leaf: .2, floor: ["stone", .08, .15, .35], text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
-    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
+    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { variant: "mossy", bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
   { id: "grassland", name: "Grassland", creature: "boar", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "rooted-up turf", big: "lone birches" },
     small: [P("mound", { brown: true, small: true })], big: [tree("flat", { scale: 1.1 }), tree("weepingBirch", { minor: true })] },
   { id: "beaver-pond", name: "Beaver pond", creature: "beaver", by: "draft", leaf: .17, floor: ["leaves", .13, .6, .5], text: { floor: "birch leaves", wall: "a pond", small: "stumps", big: "birch and aspen", set: "a beaver dam" },
@@ -9999,13 +10021,13 @@ const AREAS = [
   { id: "old-pinewood", name: "Old pinewood", creature: "marten", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
   { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .6, .1, .42], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
-    wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
+    wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { variant: "windbent", scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
   { id: "bluebell-glade", name: "Bluebell glade", creature: "hare", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
   { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
     wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("holly", { scale: .9 }), tree("yew", { minor: true, scale: .7 })], set: tree("broad", { bare: true, webs: true }) },
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
-    wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
+    wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { variant: "coppiced", trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
 // Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
 // and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
@@ -10022,6 +10044,8 @@ for (const R of AREA_RECIPES) {
 }
 // Set pieces for the areas that had none (Ed: "Make set pieces for the other areas too"), built in 3D: setpieces.js
 for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) { const A = AREAS.find(x => x.id === id); if (A && !A.set) { A.set = P(kind, { three: true }); A.text = { ...A.text, set: text }; } }
+// A tree recipe naming a variant (art/flora/variants.js) carries its knobs from here on
+for (const A of AREAS) if (A.big) A.big = A.big.map(([k, o, ...rest]) => [k, k === "tree" ? withVariant(o) : o, ...rest]);
 const AREA_BY_ID = Object.fromEntries(AREAS.map(a => [a.id, a]));
 // Home's own look (Ed, 2026-10-05: "It should also have its own custom floor; a pleasant green meadow with flowers"; "It has party
 // decorations instead of trees"): not one of the creature area types (not in AREAS, so never rolled, no creature, no trees, no set
@@ -10190,7 +10214,7 @@ function prop(kind, o, def, st, r, s) {
   const water = { [M.MAGIC]: [60, 110, 150], [M.MAGIC2]: [150, 200, 220], [M.BODY2]: [35, 70, 100] };
   if (kind === "tree") {
     const f = treeSpecies(o.type).fn;
-    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
+    const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
     snowCrown(t.sp, o.snow ?? def.snow ?? 0, 1); // (a snowy area's snow on its crown)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
@@ -10403,7 +10427,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
-      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: def.layout?.hang ?? 0 };
+      treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
     const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
     snowCrown(t.sp, o.snow ?? def.snow ?? 0, n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
