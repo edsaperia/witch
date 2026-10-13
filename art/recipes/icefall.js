@@ -7,7 +7,7 @@ export const ICEFALL = {
   id: "icefall", name: "Icefall", creature: "snowleopard", by: "recipe", leaf: .38, floor: ["ice", .56, .12, .8], snow: .8,
   text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
   wall: [["stones", {}]], small: [["stones", {}]],
-  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "pine", scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
+  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "rowan", scale: .6 }], ["tree", { type: "pine", minor: true, scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
   pathKinds: ["footpath"],
   setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
   layout: {
@@ -16,6 +16,6 @@ export const ICEFALL = {
     terrain: ["rocky", "hollows"], decor: { rate: .25, ruins: .1, rocks: .7, freak: .05, lake: .1, modern: .05 },
     feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, stunted wind-bent pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
   },
-  flora: { species: [["rowan", .4], ["pine", .4], ["birch", .2]], palette: { sat: .55, val: .75 } },
+  flora: { species: [["rowan", .4], ["pine", .4], ["birch", .2]], palette: { sat: .6, val: .78 } },
   settings: { treeDensity: .2, groundCover: { density: .3, kinds: ["moss", "blades"] } },
 };
