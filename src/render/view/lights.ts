@@ -15,9 +15,11 @@ import * as Art from "../../../art/generator.js";
 import { LEGENDS } from "../../rules/legends";
 import { beachFires } from "../beach";
 
+const SOURCE_ITEMS: SpriteInstance[] = []; // (the sources' sprites: one list, emptied each frame)
+
 export function updateSources(v: View, time: number): void {
-  const f = v.assets.props.frames, items: SpriteInstance[] = [], lights: ForestLight[] = [], g = v.game;
-  v.fireSparks = []; v.worldFires = [];
+  const f = v.assets.props.frames, items = SOURCE_ITEMS, lights = v.forestLights, g = v.game;
+  items.length = 0; lights.length = 0; v.fireSparks.length = 0; v.worldFires.length = 0; // (the lists kept: read only within the frame)
   for (const src of v.sources) {
     if (src.kind === "pond") continue;
     const k = hash2(Math.round(src.x * 10), Math.round(src.z * 10), 7);
@@ -59,19 +61,28 @@ export function updateSources(v: View, time: number): void {
     if (inView(v, c.x, c.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: c.x, y: 0, z: c.z, frame: fr, flip: c.flip, fresh: mark(v, "prop", c.x, c.z, 2) });
   }
   v.propBatch.set(items);
-  v.forestLights = lights;
 }
 
 /** Shade with only the nearest lights (the light budget), fading out those at the budget's
  *  edge so none pops on or off. */
+const NEAR_L: ForestLight[] = [], NEAR_D: number[] = []; // (the nearest lights, kept sorted as they come: no record a light a frame)
 export function setLights(v: View, all: ForestLight[], x: number, z: number): void {
-  const budget = Math.min(MAX_LIGHTS, v.game.tuning.lightBudget);
-  const near = all.map(l => ({ l, d: Math.hypot(l.x - x, l.z - z) - l.reach })).sort((a, b) => a.d - b.d).slice(0, budget + 1);
+  const budget = Math.min(MAX_LIGHTS, v.game.tuning.lightBudget), keep = budget + 1;
+  // The nearest keep of them by distance less reach, in the order a stable sort would give (an equal distance after the earlier).
+  NEAR_L.length = 0; NEAR_D.length = 0;
+  for (let i = 0; i < all.length; i++) {
+    const l = all[i], d = Math.hypot(l.x - x, l.z - z) - l.reach, n0 = NEAR_D.length;
+    if (n0 >= keep && d >= NEAR_D[n0 - 1]) continue; // (past the last kept: an equal one would come after it)
+    let k = n0; while (k > 0 && NEAR_D[k - 1] > d) k--;
+    for (let m = Math.min(n0, keep - 1); m > k; m--) { NEAR_L[m] = NEAR_L[m - 1]; NEAR_D[m] = NEAR_D[m - 1]; }
+    NEAR_L[k] = l; NEAR_D[k] = d;
+  }
   // The light just outside the budget sets the fade: the last ones in fade as it nears them.
-  const edge = near.length > budget ? near[budget].d : Infinity;
+  const edge = NEAR_D.length > budget ? NEAR_D[budget] : Infinity, used = Math.min(budget, NEAR_D.length);
   const U = LIGHT_UNIFORMS;
   let n = 0;
-  for (const { l, d } of near.slice(0, budget)) {
+  for (let i = 0; i < used; i++) {
+    const l = NEAR_L[i], d = NEAR_D[i];
     const fade = Math.min(1, Math.max(0, (edge - d) / 15));
     U.uLightPos.value[n].set(l.x, l.y + groundHeight(l.x, l.z), l.z, l.reach); // its height above the rolling ground
     U.uLightCol.value[n].set(l.rgb.x, l.rgb.y, l.rgb.z, l.strength * fade);
