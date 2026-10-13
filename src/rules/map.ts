@@ -20,7 +20,7 @@ import { makeLand, type LandMap } from "./land";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { KINDS, dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, homeIsland, homeKinds, islandOf, KINDS, knownKinds, playableIsland, type Island } from "./rosters";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
  *  the game's own numbers. Only plain data is read here. */
@@ -71,6 +71,10 @@ export const AREA_TYPES: readonly AreaType[] = (AREAS as unknown as ArtArea[]).m
  *  decorations instead of trees): its ground and flora are its own (art/areas.js HOME_AREA), not one
  *  of the creature area types; home keeps the type it rolls for the rest (its colour, its sigil). */
 export const HOME_LOOK = AREA_TYPES.length;
+/** The area types a map without a roster deals (the classic map): the kinds introduced before phase 3. The journey's new kinds (phase
+ *  3 on, area recipes added at the end of AREA_TYPES) come only through their islands' rosters, so adding one leaves every
+ *  classic map as it was. */
+export const CLASSIC_TYPES: readonly number[] = AREA_TYPES.map((a, i) => ((KINDS[a.creature]?.phase ?? 0) < 3 ? i : -1)).filter(i => i >= 0);
 const H_ = HOME_AREA as unknown as ArtArea;
 /** How the ground looks, by an area sample's `look`: the area types, then home's meadow. */
 export const LOOKS: readonly AreaType[] = [...AREA_TYPES, {
@@ -238,9 +242,6 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
 
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
   const A = tuning.areaSize * tuning.areaScale;
-  // (a map not by roster deals the kinds of phases 0 to 2 alone: the later islands' kinds, config/kinds.json phase 3 on, only
-  // ever by their islands' rosters, so adding one changes no other map: Ed, 2026-10-12, the later islands' animals)
-  const DEALT = AREA_TYPES.map((_, i) => i).filter(i => (KINDS[AREA_TYPES[i].creature]?.phase ?? 0) < 3), typeCount = DEALT.length;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
   // playable areas' outer edges, half an area past their centres). The grid of cells covers all of
@@ -335,11 +336,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       if (t !== undefined) near.add(t);
     }
     for (const k of neighbours.get(cellKey(cx, cy)) ?? []) { if (k === homeKey) continue; const t = types.get(k); if (t !== undefined) near.add(t); }
-    const free = DEALT.filter(t => !near.has(t));
-    const pool = free.length ? free : DEALT;
+    const free = CLASSIC_TYPES.filter(t => !near.has(t));
+    const pool = free.length ? free : CLASSIC_TYPES;
     types.set(cellKey(cx, cy), pool[Math.floor(r() * pool.length)]);
   }
-  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? DEALT[Math.floor(hash2(cx, cy, shapeSeed + 17) * typeCount)];
+  const typeOf = (cx: number, cy: number) => types.get(cellKey(cx, cy)) ?? CLASSIC_TYPES[Math.floor(hash2(cx, cy, shapeSeed + 17) * CLASSIC_TYPES.length)];
 
   // (an area's centre never moves: each is worked out once, then read from SITES; a fresh object each time, as before)
   const SITES = new Map<number, [number, number]>();
@@ -400,6 +401,19 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (past one area each, islandAreas's padding: the kinds again, dealt as any roster's)
     const pad = extra.slice(more.length);
     if (pad.length) assignRoster(homeIsland(world, known, known.length + pad.length), pad, types, neighbours, shapeSeed, known.length);
+  }
+  // (an island by roster grows only its roster's species, Ed 2026-10-12: every area past its playable ones, the buffer ring's, the
+  // sea's and the lakes', takes the type of the nearest playable area but home's, centre to centre, so its shore is its own forest)
+  if (rosterIsland && others.length) {
+    const own = others.map(([x, y]) => { const s = siteXZ(x, y); return { x: s[0], z: s[1], t: types.get(cellKey(x, y))! }; });
+    for (const k of [...types.keys()]) {
+      const [cx, cy] = k.split(",").map(Number);
+      if (playable(cx, cy) || (cx === centreCell[0] && cy === centreCell[1])) continue;
+      const s = siteXZ(cx, cy);
+      let best = own[0], bd = Infinity;
+      for (const o of own) { const d = (o.x - s[0]) ** 2 + (o.z - s[1]) ** 2; if (d < bd) { bd = d; best = o; } }
+      types.set(k, best.t);
+    }
   }
 
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres

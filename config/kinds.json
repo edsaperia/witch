@@ -234,12 +234,11 @@
       "biome": "badlands",
       "placeholder": true
     },
-    "unknown-07": {
+    "fennec": {
       "phase": 3,
       "bearing": 166,
       "dir": "SSE",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "unknown-08": {
       "phase": 3,
