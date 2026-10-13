@@ -20,8 +20,8 @@
 // The leash stack: a chain of springs that sways and trails behind her as she flies.
 import { hash2 } from "./core.js";
 import { SPECIES } from "./creatures.js";
-import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
 import { L, A, D, C, E, at, stave, FOOT, mirror, pair, bow, wave, spiral, rays } from "./sigils/strokes.js";
+import { CREATURE_SIGILS, CREATURE_NEONS } from "./creatures/index.js";
 
 export const SIGIL_STROKE = .07;  // stroke width, in the unit box
 export const SIGIL_DOT = .048;    // end-dot radius
@@ -129,6 +129,7 @@ export const LEGEND_DETAIL = {
   ram: [...pair(...rays(.24, .38, .12, .2, [75, 135, 195, 255]), D(.46, .78)), L([.4, .34], [.45, .41], [.5, .35], [.55, .41], [.6, .34])],
   ibex: [...pair(L([.36, .15], [.32, .18]), L([.25, .07], [.21, .1]), L([.42, .6], [.36, .62])), L([.46, .86], [.5, .9], [.54, .86])],
   snowleopard: [...pair(L([.12, .62], [.04, .6]), L([.14, .68], [.06, .72]), D(.3, .36)), D(.5, .4), L([.5, .7], [.5, .76])],
+  frosttroll: [...pair(L([.36, .6], [.3, .66]), D(.28, .36)), L([.5, .62], [.5, .7])],
   woodlouse: [...pair(L([.24, .06], [.16, .1]), L([.43, .9], [.39, .97]), D(.43, .27))],
   rattlesnake: [...pair(L([.62, .26], [.6, .2])), D(.4, .6), D(.5, .66)],
   scorpion: [D(.5, .54), D(.5, .62), D(.5, .7)],
