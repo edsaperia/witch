@@ -34,7 +34,8 @@ export interface Partition {
  *  circle, so the areas round it are made round it (partition units). */
 export interface HomeCircle { cell: Cell; radius: number; gap: number }
 
-export function makePartition(seed: number, depth: number, home?: HomeCircle): Partition {
+/** grid: every layer-0 site at its cell's middle (the zoo's square blocks, rules/zoo.ts: with depth 0, an area is its cell). */
+export function makePartition(seed: number, depth: number, home?: HomeCircle, { grid = false }: { grid?: boolean } = {}): Partition {
   const siteCache = new Map<number, [number, number]>();
   const rootCache = new Map<number, Cell>();
   // Integer keys: layers stay under 16 and cells within +-2^20, which a 20 x 20 map never nears.
@@ -47,7 +48,7 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     let s = siteCache.get(k);
     if (!s) {
       const c = Math.pow(2, -layer);
-      s = [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
+      s = grid && layer === 0 ? [cx + 0.5, cy + 0.5] : [c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1))];
       // Home's neighbours keep their sites out past its circle (pushed straight out from its site).
       if (home && layer === 0 && !(cx === home.cell[0] && cy === home.cell[1])) {
         const h = site(0, home.cell[0], home.cell[1]), dx = s[0] - h[0], dy = s[1] - h[1], d = Math.hypot(dx, dy), R = home.radius + home.gap;
@@ -92,7 +93,9 @@ export function makePartition(seed: number, depth: number, home?: HomeCircle): P
     if (r) return r;
     if (layer === 0) r = [cx, cy];
     else {
-      const s = site(layer, cx, cy), p = nearest(layer - 1, s[0], s[1]);
+      // (a deeper layer's site inline, the two hashes ringOf writes: site()'s map lookup and tuple were a third of the
+      // partition's share of a map's making; home's push applies to layer 0 alone, never reached here)
+      const c = Math.pow(2, -layer), p = nearest(layer - 1, c * (cx + hash2(cx * 7 + layer, cy, seed)), c * (cy + hash2(cx, cy * 13 + layer, seed + 1)));
       r = root(layer - 1, p[0], p[1]);
     }
     rootCache.set(k, r);

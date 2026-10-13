@@ -31,11 +31,16 @@ export interface Profile {
   fight: Behaviour[];
   tactics?: { kind: TacticKind; w: number }[];
   move?: Move;
+  /** A glider's roam (the flying squirrel: Ed, 2026-10-12, "its movement should glide between trees"): a spot it roams to `min` m or
+   *  more off it glides to with `chance`, after its pause, at `speed` m/s, `height` m up at the top of the arc (rules/creatures.ts). */
+  glide?: { min: number; speed: number; height: number; chance: number };
 }
 /** A wild legend's move set (Stage 5): moves (combat.json attacks) in a loop, and its second phase. */
 export interface LegendSet { pattern: string[]; phase2: { at: number; pattern: string[]; speed: number; cooldown: number } }
 export interface MovementData { repick: number; packRadius: number; profiles: Record<string, Profile>; legends: LegendSet & { bySpecies: Record<string, LegendSet> }; /** Body sizes, for spacing (rules/spacing.ts). */ bodies: import("./spacing").Bodies }
 export const MOVEMENT = raw as unknown as MovementData;
+/** A species' roaming glide, if it glides (Profile.glide). */
+export const glideOf = (species: string): Profile["glide"] => MOVEMENT.profiles[species]?.glide;
 
 /** The fight's scale and speed (Ed's motion scale pass, 2026-10-04; tuning fight, ?fightScale= and
  *  ?fightSpeed=, and live in the debug overlay): every length in a fight (attack ranges, lunges,
@@ -99,7 +104,7 @@ export interface SteerContext {
   side: string;
   /** Which way the target is heading (a unit vector), or none if it's standing still (flanking goes round to its back). */
   heading?: { x: number; z: number } | null;
-  /** Lights near it (glow-worms, soundsystems): moths are drawn to them. */
+  /** Lights near it (soundsystems): moths are drawn to them. */
   lights?: { x: number; z: number }[];
   /** Its attack is ready (hit and run goes in only then). */
   ready: boolean;

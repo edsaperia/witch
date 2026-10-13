@@ -19,9 +19,6 @@
     #debug.on { display: block; }
     #debug-buttons { position: fixed; left: 10px; top: 150px; display: none; gap: 6px; }
     #debug-buttons.on { display: flex; }
-    #fight-knobs { position: fixed; left: 10px; bottom: 44px; display: none; background: var(--panel); border-radius: 6px; padding: 6px 10px; font-size: 12px; color: var(--ink); }
-    #fight-knobs.on { display: grid; grid-template-columns: auto 120px 34px; gap: 4px 8px; align-items: center; }
-    #fight-knobs button { grid-column: 1 / -1; font: inherit; color: var(--ink); background: transparent; border: 1px solid #3a2f5c; border-radius: 6px; padding: 3px 8px; }
     #debug-buttons button { font: inherit; font-size: 12px; color: var(--ink); background: var(--panel); border: 1px solid #3a2f5c; border-radius: 6px; padding: 6px 10px; }
     /* The game clock (Ed, 2026-10-06: "Add a game clock at the top middle of the screen mm:ss counting up from 0"): the time
        played, top centre, small; it stops while the game is paused. The wave timer bar that stood on the right is gone (Ed:
@@ -105,6 +102,30 @@
     .deck-bpm.up { animation: bpm-up 1.4s ease-out; }
     .legend-panel { position: absolute; max-width: 290px; padding: 10px 14px; border-radius: 10px; background: rgba(14, 11, 28, .72); box-shadow: 0 0 0 1px rgba(232, 180, 106, .25), 0 6px 24px rgba(0, 0, 0, .35); color: var(--ink); font-size: 14px; line-height: 1.35; text-shadow: 0 1px 0 #000; pointer-events: none; z-index: 2; }
     .legend-panel p { margin: 0 0 6px; }
+    /* The zoo (?zoo; src/zoo/panel.ts, render/zooPlates.ts): nameplates under the blocks, the block bar, the jump list, the badge. */
+    .zoo-plate { position: absolute; left: 0; top: 0; max-width: 240px; padding: 6px 10px 7px; border-radius: 6px; background: rgba(40, 28, 20, .82); box-shadow: 0 0 0 1px rgba(214, 172, 108, .55), 0 4px 14px rgba(0, 0, 0, .4); color: var(--ink); font-size: 12px; line-height: 1.3; text-align: center; pointer-events: none; text-shadow: 0 1px 0 #000; }
+    .zoo-plate p { margin: 0; }
+    .zoo-plate .name { font-size: 17px; color: #ffe7c2; }
+    .zoo-plate .where { color: #d9c3a0; font-size: 11px; margin-bottom: 3px; }
+    .zoo-plate .boon { color: #c9b4ff; margin-top: 3px; }
+    #zoo-badge { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); padding: 2px 14px; border-radius: 6px; background: rgba(30, 24, 44, .85); box-shadow: 0 0 0 1px rgba(200, 160, 255, .6); color: #e6d6ff; font-size: 18px; letter-spacing: .2em; z-index: 5; pointer-events: none; }
+    #zoo-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); display: none; flex-wrap: wrap; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 8px 12px; border-radius: 10px; background: rgba(22, 18, 34, .9); box-shadow: 0 0 0 1px rgba(150, 120, 200, .6); color: var(--ink); font-size: 13px; z-index: 6; }
+    #zoo-bar.on { display: flex; }
+    #zoo-bar .who { min-width: 110px; }
+    #zoo-bar .title { font-size: 17px; color: #ffe7c2; }
+    #zoo-bar .counts { font-size: 11px; color: #b9aed0; }
+    #zoo-bar .group { display: flex; align-items: center; gap: 4px; }
+    #zoo-bar .label { color: #b9aed0; font-size: 11px; margin-right: 2px; }
+    #zoo-bar button, #zoo-jump button { font: inherit; color: #fff4ff; background: #342c48; border: 1px solid #786496; border-radius: 6px; padding: 5px 9px; cursor: pointer; }
+    #zoo-bar button.sel { background: #6e46a0; border-color: #d2b4ff; }
+    #zoo-bar .hint { flex-basis: 100%; font-size: 11px; color: #b9aed0; }
+    #zoo-jump { position: fixed; right: 16px; top: 56px; bottom: 90px; width: min(340px, calc(100vw - 32px)); overflow-y: auto; padding: 10px 12px; border-radius: 10px; background: rgba(22, 18, 34, .94); box-shadow: 0 0 0 1px rgba(150, 120, 200, .6); color: var(--ink); z-index: 7; }
+    #zoo-jump[hidden] { display: none; }
+    #zoo-jump .head { font-size: 17px; margin-bottom: 6px; }
+    #zoo-jump .row-name { color: #c9b4ff; font-size: 12px; margin: 6px 0 3px; }
+    #zoo-jump .blocks { display: flex; flex-wrap: wrap; gap: 4px; }
+    #zoo-jump button { padding: 3px 7px; font-size: 12px; }
+    #zoo-jump button:disabled { opacity: .45; cursor: default; }
     .legend-panel p:last-child { margin-bottom: 0; }
     .legend-panel p:first-child { color: rgb(232, 196, 136); font-weight: 600; }
     .legend-panel[data-state="restless"] p:first-child { color: rgb(236, 160, 120); }
@@ -140,7 +161,6 @@
   <div id="seed"></div>
   <div id="version"></div>
   <div id="debug"></div>
-  <div id="fight-knobs"><span>fight scale [ ]</span><input type="range" name="scale" min="0.25" max="3" step="0.05"><span class="scale"></span><span>fight speed ; '</span><input type="range" name="speed" min="0.25" max="3" step="0.05"><span class="speed"></span><span>momentum , .</span><input type="range" name="momentum" min="0.25" max="3" step="0.05"><span class="momentum"></span><button type="button" class="fight-reset">reset fight scale, speed and momentum</button><span>treetop speed m/s</span><input type="range" name="treetop" min="16" max="160" step="2"><span class="treetop"></span><span>area (?areaSize=)</span><span class="area" style="grid-column: 2 / -1"></span><button type="button" class="world-reset">reset area size and treetop speed (new map)</button></div>
   <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
   <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>

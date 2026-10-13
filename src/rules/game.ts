@@ -77,7 +77,7 @@ export interface Witch {
   hat: HatState;
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
   pinned?: Pinned | null;
-  /** Slowed (a snail's slime, a glow-worm's flash) until then: her speeds times slowMult. */
+  /** Slowed (a snail's slime, a flash) until then: her speeds times slowMult. */
   slowUntil?: number;
   slowMult?: number;
   /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
@@ -147,6 +147,8 @@ export interface Game {
   lod?: LodCounts;
   /** The debug arena (?arena=, rules/arena.ts): its spec and the creatures it put down. */
   arena?: { spec: string; ids: number[] };
+  /** The zoo's blocks' moods, as its block bar set them (rules/zooControls.ts; calm when not set). */
+  zooMoods?: Map<string, import("./zooControls").ZooMood>;
   /** The party's over (Ed, 2026-10-06: every soundsystem and the home ring's speakers destroyed): the afterparty, when it
    *  began and how far it has eased in (rules/partyOver.ts). Null while the party's on. */
   partyOver: PartyOver | null;
@@ -247,6 +249,9 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
   // Home is its ring of speakers, each its own soundsystem in the fight (Ed, 2026-10-08; rules/speakers.ts).
   const C = tuning.combat;
   map.dancefloor.speakers.forEach((p, i) => g.combat.sounds.set(speakerKey(i), { hp: C.speakerHealth, max: C.speakerHealth, x: p.x, z: p.z, radius: C.speakerRadius }));
+  // The zoo (rules/zoo.ts; Ed, 2026-10-13: "Default state: calm"): every block's creatures calm, as a friendly area's (a legend's
+  // quest done): wild, to be invited, but leaving her and her party be (its block bar changes it: rules/zooControls.ts).
+  if (map.zoo) for (const [cx, cy] of map.cells) { const k = `${cx},${cy}`; g.friendly.add(k); for (const c of g.creatures) if (!c.boss && c.cell[0] === cx && c.cell[1] === cy) c.friendly = true; }
   return g as Game;
 }
 

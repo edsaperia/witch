@@ -28,7 +28,7 @@ function draw(map, box, W, label) {
     p.push(`<rect x="${X(x)}" y="${Z(z)}" width="${(step * k + 0.6).toFixed(1)}" height="${(step * k + 0.6).toFixed(1)}" fill="${fill}"/>`);
   }
   for (const l of b.land?.loops ?? []) { const pts = []; for (let i = 0; i < l.pts.length; i += 8) pts.push(`${X(l.pts[i])},${Z(l.pts[i + 1])}`); p.push(`<polygon points="${pts.join(" ")}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`); } // (the island's coast: rules/land.ts)
-  else p.push(`<rect x="${X(b.minX)}" y="${Z(b.minZ)}" width="${((b.maxX - b.minX) * k).toFixed(1)}" height="${((b.maxZ - b.minZ) * k).toFixed(1)}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`);
+  if (!b.land?.loops?.length) p.push(`<rect x="${X(b.minX)}" y="${Z(b.minZ)}" width="${((b.maxX - b.minX) * k).toFixed(1)}" height="${((b.maxZ - b.minZ) * k).toFixed(1)}" fill="none" stroke="#ff6fcf" stroke-width="2"/>`);
   p.push(`<rect x="${X(e.minX)}" y="${Z(e.minZ)}" width="${((e.maxX - e.minX) * k).toFixed(1)}" height="${((e.maxZ - e.minZ) * k).toFixed(1)}" fill="none" stroke="#555" stroke-dasharray="4 4"/>`);
   for (const lc of map.legendClearings) p.push(`<circle cx="${X(lc.x)}" cy="${Z(lc.z)}" r="${Math.max(1.5, lc.r * k).toFixed(1)}" fill="#8fd18f" fill-opacity=".7"/>`);
   for (const [cx, cy] of map.cells) { if (cx === C[0] && cy === C[1]) continue; const s = map.soundsystemSpot(cx, cy); p.push(`<circle cx="${X(s.x)}" cy="${Z(s.z)}" r="2.6" fill="#7fe8ff"/>`); }

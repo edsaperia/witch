@@ -1,5 +1,5 @@
 // The page's own HUD over the game: the clock top centre (with the boot's and a lost soundsystem's pops under it) and the
-// debug overlay (~), its buttons and the debug knobs shown with it. Driven by the loop (app/loop.ts in main.ts).
+// debug overlay (~) and its buttons. Driven by the loop (app/loop.ts in main.ts).
 import { leashLoad, type Game, type WaveEvent } from "../rules/game";
 import { freeOf } from "../rules/leashWeight";
 import { waveCountdown } from "../rules/party";
@@ -19,13 +19,13 @@ export class Hud {
   private readonly clockT = this.clockEl.querySelector<HTMLElement>(".t")!;
   private readonly clockLabel = this.clockEl.querySelector<HTMLElement>(".label")!;
 
-  constructor(private readonly game: Game, private readonly knobs: HTMLElement) {}
+  constructor(private readonly game: Game) {}
 
-  /** The debug overlay, its buttons, the knobs and the bedroom's Player pick, on or off. */
+  /** The debug overlay, its buttons and the bedroom's Player pick, on or off. */
   setDebug(on: boolean): void {
     this.debugOn = on;
     this.debugEl.classList.toggle("on", on);
-    this.debugButtons.classList.toggle("on", on); this.knobs.classList.toggle("on", on);
+    this.debugButtons.classList.toggle("on", on);
     showPlayerPick(on); // (the dev Player pick: debug only)
   }
 

@@ -49,6 +49,10 @@ import { readArrival } from "./app/arrival";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
+// The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
+if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
+// (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
+let zooPanel: import("./zoo/panel").ZooPanel | null = null;
 let seed = parseSeed(params.get("seed"));
 if (seed === null) {
   seed = Math.floor(Math.random() * 1000000);
@@ -60,6 +64,7 @@ if (seed === null) {
 const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
+if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(game); });
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
 const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
@@ -91,8 +96,9 @@ const playtest = new PlaytestLog(game, typeof __BUILD__ === "string" ? __BUILD__
 window.addEventListener("keydown", e => { if (e.code === "KeyL" && !e.repeat) playtest.download(); });
 if (params.get("playtest") === "download") setTimeout(() => playtest.download(), 500);
 
-// The debug knobs: the fight's scale and speed, the treetop speed (app/knobs.ts).
-const knobs = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
+// The debug knobs: the fight's scale, speed and momentum, the treetop speed (app/knobs.ts): their keys, and their live setters
+// for the pause page's sliders and the decisions panel (by the link's param).
+const knobLive = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
 
 // Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
@@ -122,7 +128,7 @@ let castQueued = false;
 const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 // The clock, its pops and the debug overlay (app/hud.ts).
-const hud = new Hud(game, knobs);
+const hud = new Hud(game);
 hud.setDebug(params.has("debug"));
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
@@ -290,7 +296,7 @@ freeze.onToggle = on => {
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
-    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} });
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: knobLive });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
   });
 };
@@ -310,6 +316,8 @@ if (arrival) { /* (no card, no bedroom: the still, then the flight) */ } else if
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
   if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
+  // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
+  creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 } else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
@@ -318,7 +326,7 @@ let decide: DecidePanel | null = null, decideLoading = false;
 const decidePanel = (open: boolean) => {
   if (decide || decideLoading) return;
   decideLoading = true;
-  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: {} }, open); });
+  void import("./ui/decide").then(({ DecidePanel }) => { decide = new DecidePanel({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: knobLive }, open); });
 };
 if (params.has("decide")) decidePanel(true);
 window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.preventDefault(); if (decide) decide.toggle(); else decidePanel(true); });
@@ -438,6 +446,7 @@ function frame(now: number): void {
   if (!ready) return;
   hud.losses();
   hud.clock();
+  zooPanel?.update(); // (the zoo's block bar: src/zoo/panel.ts)
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
