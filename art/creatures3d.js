@@ -149,6 +149,12 @@ function gearUp(m) {
 //     different lengths, their tips pale (BELLY) or in fox-fire (tip: "MAGIC2"); replace: instead of its own tail.
 //   ruff: { size, count, mat }: a ruff of fur round its neck and cheeks, locks swept back.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
+//   The elder kit (Ed, 2026-10-13: a legend shows age, wear, and jewellery, armour and offerings; docs/ART-GUIDE.md 0c), for any legend:
+//   grizzle: { amount, back, mat }: an old one's muzzle and brows (and shoulders) speckled grey-white.
+//   worn: { ear: "near" | "far" | "both" | false, tusk: "far" | "near", horn: "far" | "near", at }: a notch bitten out of an ear; a tusk or horn broken short.
+//   torc: { mat, size }: an open bronze ring round its neck, knobbed at the throat.  rings: { on: "horns" | "tusks" | "antlers", count, from, to, mat, width }: bands round them.
+//   earrings: { which, size, mat }: rings hung from its ears' tips.  bands: { at, width, height, fore, hind, mat }: cuffs round its legs above the feet.
+//   garland: { count, size }: flowers and leaves round its neck, sagging in front.  bells: { at: "horns" | "antlers" | "ears" | "throat" | "tail", size, mat }: little bronze bells.
 //   wings: { size, at, mat, bone, nub }: leathery wings off its shoulders, a dragon's (bones and a membrane between them, as the
 //     bat's), rising up and back, size times its body's length, flapping a little with its walk; nub: folded stubs (a young one's).
 function evolve3d(m, feats, c) {
@@ -255,6 +261,59 @@ function evolve3d(m, feats, c) {
         m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
+    // ---- the elder kit (Ed, 2026-10-13, docs/ART-GUIDE.md 0c: a legend shows age, wear and the trappings of something revered) ----
+    if (f.kind === "grizzle") { // an old one's muzzle, brows and (back) shoulders gone pale and grey: speckled white hairs over its own coat
+      const k = f.amount ?? .5, H = c.H, hr = c.hr, pale = M[f.mat || "WEB"];
+      const old = p => (p[0] > H[0] + hr * (.45 - k * .35) && p[1] < H[1] + hr * .35 && spotty(p, 24, .25 + k * .45)) // the muzzle
+        || (p[1] > H[1] + hr * .3 && p[0] > H[0] + hr * .25 && Math.abs(p[2]) > hr * .3 && spotty(p, 26, .2 + k * .4)) // over the eyes
+        || (f.back && p[1] > c.top - .12 && p[0] > c.len * .2 && spotty(p, 20, k * .3)); // the shoulders
+      for (const q of m.parts) { if (q.part !== "head" && !(f.back && q.part === "body")) continue; if (q.mat !== M.BODY && q.mat !== M.BODY2 && q.mat !== M.BODY3) continue; const base = q.paint; q.paint = p => old(p) ? pale : base?.(p); }
+    }
+    if (f.kind === "worn") { // the wear of epochs: a bite out of an ear, a tusk or a horn broken short
+      if (f.ear !== false) for (const fl of m.flats) { if (fl.group !== 5 && fl.group !== 25) continue; if (f.ear === "far" ? fl.group !== 25 : f.ear === "both" ? false : fl.group !== 5) continue; const mask = fl.mask; fl.mask = (s2, t) => (s2 > .2 && t > -.1 && t < .7 && (s2 - .2) > Math.abs(t - .3) * 1.6) ? null : mask(s2, t); } // a bite out of one edge, a third of the way across
+      const breakAt = (path, group, k) => { if (!path) return; const n = path.length, at = Math.round((n - 1) * (k ?? .55)); for (let i = at; i < n; i++) { const q = path[i], r = Math.max(q[3] * (i === at ? 1.6 : 2.6), .04); m.ell(q.slice(0, 3), [r, r, r], M.ACCENT, { group, cut: true, rough: i === at ? r * .35 : 0 }); } }; // everything past the break carved away (hollows cut out of the tusk's or horn's group), a rough stump left
+      if (f.tusk) breakAt(c.tuskPaths[f.tusk === "near" ? 1 : 0], 8, f.at);
+      if (f.horn) breakAt(c.hornPaths[f.horn === "near" ? 1 : 0], 14, f.at);
+    }
+    if (f.kind === "torc" && m.anchors.neck) { // an open ring of bronze (or stone, or its own magic) round its neck, its two ends knobbed at the throat
+      m.part = "head";
+      const N = m.anchors.neck, mat = M[f.mat || "WOOD"], d = v3.norm(N.dir), u = v3.norm(v3.cross(d, Math.abs(d[2]) < .9 ? [0, 0, 1] : [1, 0, 0])), w = v3.cross(d, u), tube = Math.max(.025, N.r * (f.size ?? .16)), pts = [];
+      for (let i = 0; i <= 20; i++) { const a = -.35 + (i / 20) * (Math.PI * 2 - .7) + Math.PI, dir = v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a))); let t = 0; while (t < .9 && m.field(v3.add(N.c, v3.mul(dir, t))) < 0) t += .01; if (t >= .9) t = N.r; pts.push([...v3.add(N.c, v3.mul(dir, t + tube * .8)), tube]); }
+      m.chain(pts, mat, { group: 170, extra: true }); // (the gap faces down and forward: its open throat)
+      for (const e of [pts[0], pts[pts.length - 1]]) m.ell(e.slice(0, 3), [tube * 1.6, tube * 1.6, tube * 1.6], mat, { group: 170, extra: true });
+    }
+    if (f.kind === "rings") { // bands of bronze round its horns, tusks or antlers
+      const paths = f.on === "tusks" ? c.tuskPaths : f.on === "antlers" ? c.antlerPaths : c.hornPaths, mat = M[f.mat || "WOOD"], n = f.count ?? 2;
+      m.part = "head";
+      for (const [pi, path] of (paths || []).entries()) for (let k = 0; k < n; k++) {
+        const t = (f.from ?? .3) + ((f.to ?? .7) - (f.from ?? .3)) * (n > 1 ? k / (n - 1) : .5), i = Math.max(1, Math.min(path.length - 2, Math.round((path.length - 1) * t))), a = path[i - 1], b = path[i + 1], r = path[i][3] * (f.width ?? 1.3);
+        m.seg(v3.lerp(a.slice(0, 3), path[i].slice(0, 3), .55), v3.lerp(path[i].slice(0, 3), b.slice(0, 3), .45), r, r, mat, { group: 172 + pi, extra: true });
+      }
+    }
+    if (f.kind === "earrings" && c.earTips?.length) { // a ring through each ear (or the near one), hung from its outer edge half way up, facing us
+      m.part = "head";
+      const mat = M[f.mat || "WOOD"], R = c.hr * (f.size ?? .34); // (big enough that its hole survives the blend at the legend's scale)
+      for (const e of c.earTips) { if (f.which === "near" && e.side < 0) continue; const g = 176 + (e.side > 0 ? 0 : 1), edge = v3.add(v3.add(e.base, v3.mul(e.dir, e.h * (f.at ?? .9))), v3.mul(e.across, e.side * e.w * .8)), hang = v3.add(edge, [0, -R * .9, e.side * R * .25]), pts = []; for (let k = 0; k <= 12; k++) { const a = k / 12 * Math.PI * 2; pts.push([hang[0] + Math.sin(a) * R, hang[1] + Math.cos(a) * R, hang[2], R * .15]); } m.chain(pts, mat, { group: g, extra: true }); m.ell(hang, [R * .82, R * .82, R * 1.6], mat, { group: g, cut: true }); } // (its middle cut out, so it's a ring, not a disc)
+    }
+    if (f.kind === "bands" && m.rig?.legs) { // bands round its legs (anklets, or an old harness's cuffs), on the cannon above each foot
+      const mat = M[f.mat || "WOOD"], k = f.at ?? .3;
+      for (const L of m.rig.legs) { if (L.fore ? f.fore === false : f.hind === false) continue; m.part = L.name; const a = L.hock ?? L.knee, b = L.foot, p = v3.lerp(b, a, k), d = v3.norm(v3.sub(a, b)), r = L.r[2] * (f.width ?? 1.4), h = L.r[2] * (f.height ?? .6); m.seg(v3.add(p, v3.mul(d, -h)), v3.add(p, v3.mul(d, h)), r, r, mat, { group: 180 + (L.side > 0 ? 0 : 1), extra: true }); }
+    }
+    if (f.kind === "garland" && m.anchors.neck) { // flowers and leaves wound round its neck, sagging at the front (an offering)
+      m.part = "head";
+      const N = m.anchors.neck, d = v3.norm(N.dir), u = v3.norm(v3.cross(d, Math.abs(d[2]) < .9 ? [0, 0, 1] : [1, 0, 0])), w = v3.cross(d, u), n = f.count ?? 14, sz = Math.max(.03, N.r * (f.size ?? .2));
+      for (let i = 0; i < n; i++) {
+        const a = i / n * Math.PI * 2, dir = v3.add(v3.mul(u, Math.cos(a)), v3.mul(w, Math.sin(a))); let t = 0; while (t < .9 && m.field(v3.add(N.c, v3.mul(dir, t))) < 0) t += .01; if (t >= .9) t = N.r;
+        const down = Math.max(0, -dir[1]), p = v3.add(v3.add(N.c, v3.mul(dir, t + sz * .5)), [0, -down * sz * 1.2 + down * sz * .6 * Math.sin(i * 2.1), 0]); // (sagging on the underside)
+        m.ell(p, i % 3 === 1 ? [sz * .9, sz * .7, sz * .9] : [sz * 1.2, sz * .5, sz * .8], i % 3 === 1 ? M.FLOWER : i % 2 ? M.LEAF : M.LEAF2, { group: 184, extra: true, rough: sz * .15, dir: i % 3 === 1 ? [0, 1, 0] : dir, up: [0, 1, 0] });
+      }
+    }
+    if (f.kind === "bells") { // little bronze bells hung from its horn or antler tips, its ears, or under its throat
+      m.part = "head";
+      const mat = M[f.mat || "WOOD"], R = c.hr * (f.size ?? .14), at = f.at || "horns";
+      const spots = at === "throat" && m.anchors.neck ? [(() => { const N = m.anchors.neck; let p = v3.add(N.c, [0, -N.r * .5, 0]); for (let k = 0; k < 90 && m.field(p) < 0; k++) p = v3.add(p, [0, -.01, 0]); return p; })()] : at === "ears" ? c.earTips.map(e => v3.add(e.tip, [0, -R * .4, 0])) : at === "tail" ? [v3.add(c.tb, [-.12, -.05, 0])] : (at === "antlers" ? c.antlerPaths : c.hornPaths).map(path => path[path.length - 1].slice(0, 3));
+      spots.forEach((p, i) => { const hang = v3.add(p, [0, -R * 1.4, 0]); m.seg(p, hang, R * .12, R * .12, mat, { group: 188 + i, extra: true }); m.ell(v3.add(hang, [0, -R * .6, 0]), [R * .75, R * .85, R * .75], mat, { group: 188 + i, extra: true, paint: q => q[1] < hang[1] - R * 1.2 ? M.NOSE : undefined }); m.ell(v3.add(hang, [R * .3, -R * .35, R * .5]), [R * .16, R * .16, R * .16], M.GLINT, { group: 188 + i, extra: true }); }); // its ring, the bell, its dark mouth, a glint
+    }
     if (f.kind === "wisps" && f.at === "mane") { // flames rising off the spine, over the hump
       m.part = "body";
       const n = f.count ?? 5, s = f.size ?? .22;
@@ -347,6 +406,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(H, [hr * 1.05, hr * .92, hr * .88], v3.norm([.75, .32, side * .62]))), size: hr * .16 * (q.eyeK || 1) * sz("eye") };
   m.anchors.neck = { c: v3.lerp(nb, H, sz("neckAnchor")), r: q.neckW * .5 * sz("neckR"), dir: v3.norm(v3.sub(H, nb)), tag: sz("tag") }; // lower on the neck when the head is big
   // ears
+  const earTips = []; // each ear's tip (for the elder kit's earrings)
   for (const side of [-1, 1]) {
     const E = q.ear, base = [H[0] - hr * .15, H[1] + hr * .7, side * hr * .5], k = q.earS * sz("ear") * (q.ear === "long" ? .62 : 1);
     if (E === "none") continue;
@@ -354,6 +414,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     const long = E === "long", sail = E === "sail", droop = E === "small" ? -.6 : 0, eh = hr * .55 * k * (E === "big" ? 1.35 : long ? 2.2 : 1), ew = hr * .3 * (E === "big" ? 1.2 : long ? 1.35 : sail ? .8 * k : 1); // sail: a fennec's, as wide as it's tall, flared out
     const dirE = v3.norm([droop * .6 - (long ? .3 : .12), 1, side * (sail ? .6 : .3)]), n = v3.norm([.55, .2, side]), across = v3.norm(v3.cross(n, dirE)); // the ear opens forward and out, towards us on the near side
     m.flat(v3.add(base, v3.mul(dirE, eh)), across, dirE, ew, eh, masks.ear(M.BODY, M.EAR, sail ? M.BODY : M.BODY3), { group: 5 + (side > 0 ? 0 : 20), extra: long });
+    earTips.push({ tip: v3.add(base, v3.mul(dirE, eh * 1.9)), base, h: eh * 2, across, side, dir: dirE, w: ew });
     if (E === "tuft") m.seg(v3.add(base, [0, eh * 1.4, side * .02]), v3.add(base, [0, eh * 1.85, side * .04]), hr * .05, hr * .02, M.BODY3, { group: 1 });
   }
   // ---- tail ----
@@ -366,20 +427,20 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (q.horns === "twist") for (const side of [-1, 1]) hornTips.push(horn3d(m, [H[0] - hr * (.05 + (q.horn?.back ?? 0)), H[1] + hr * (.6 + (q.horn?.up ?? 0)), side * hr * (.45 + (q.horn?.wide ?? 0))], side, /* back, up, wide: its base moved, in head radii (clear of the brows) */ { ...q.horn, length: (q.horn?.length ?? 2) * hr, r: (q.horn?.r ?? .3) * hr }));
   else if (q.horns) for (const side of [-1, 1]) { const k = has("hornsGlow") ? 1.5 : sz("horns"), pts = []; for (let i = 0; i <= 8; i++) { const a = .3 - i / 8 * Math.PI * 1.6, r = hr * .65 * k * (1 - .45 * i / 8); pts.push([H[0] - hr * .1 + Math.cos(a) * r, H[1] + hr * .45 + Math.sin(a) * r, side * (hr * .6 + i * .015)]); pts[i].push(hr * .2 * k * (1 - .6 * i / 8)); } m.chain(pts, has("hornsGlow") ? M.MAGIC : M.ACCENT, { group: 13 }); }
   if (q.antlers || has("jackalope")) for (const side of [-1, 1]) antlers3d(m, q, [H[0] - hr * .05, H[1] + hr * .75, side * hr * .4], side, sz("antlers"), has);
-  const tuskTips = [];
+  const tuskTips = [], tuskPaths = []; // (each tusk's path, for the elder kit's rings)
   if (q.tusks) for (const side of [-1, 1]) {
     const k = has("tusksBig") ? 1.4 : q.tuskSize ?? sz("tusks"); if (!k) continue; const b = [sn[0] + L * .25, sn[1] - Dm * .4, side * Dm * .8];
-    if (q.tuskCurl === undefined) { m.chain([[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]], M.ACCENT, { group: 8 }); tuskTips.push(v3.add(b, [.06 * k, .24 * k, side * .05])); continue; }
+    if (q.tuskCurl === undefined) { const tp = [[...b, .045 * k], [...v3.add(b, [.1 * k, .1 * k, side * .03]), .04 * k], [...v3.add(b, [.06 * k, .24 * k, side * .05]), .02 * k]]; m.chain(tp, M.ACCENT, { group: 8 }); tuskTips.push(v3.add(b, [.06 * k, .24 * k, side * .05])); tuskPaths.push(tp); continue; }
     // an evolved tusk (genome levels): a tapering curve out, up and back round by tuskCurl (half turns), its tip fine
     const pts = [], n = 9, R = .13 * k;
     for (let i = 0; i <= n; i++) { const t = i / n, a = t * q.tuskCurl * Math.PI, r = R * (1 - t * .35); pts.push([b[0] + Math.sin(a) * r * 1.2, b[1] + (1 - Math.cos(a)) * r, b[2] + side * t * .07 * k, .034 * k * (1 - t * .8)]); }
-    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3));
+    m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(pts[n].slice(0, 3)); tuskPaths.push(pts);
   }
   if (q.teeth && !baby) m.ell([tip[0] - hr * .1, tip[1] - hr * .25, 0], [hr * .08, hr * .14, hr * .12], M.ACCENT, { group: 1 });
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tuskPaths, hornPaths: m.hornPaths || [], antlerPaths: m.antlerPaths || [], earTips, tb, backAt, len, top, chest, tuck, bw, frame });
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
   if (has("tails")) for (let i = 0; i < 7; i++) { m.part = "tail"; const a = Math.PI * (.55 + i * .08), z = (i - 3) * .1, e = v3.add(tb, [Math.cos(a) * .9, Math.sin(a) * .85, z]); m.chain([[...tb, .1], [...v3.lerp(tb, e, .5), .17], [...e, .08]], i % 2 ? M.BODY2 : M.BODY, { group: 70, extra: true }); m.ell(e, [.09, .09, .09], M.MAGIC2, { group: 71, extra: true }); }
@@ -453,6 +514,7 @@ export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist =
     if (thorns && ridges && i % ridges === 0 && i > 1 && i < n - 1 && (i / ridges) % Math.max(1, Math.round(n / ridges / thorns)) === 0) { const sp = v3.norm(v3.add(u, v3.mul(dir, -.3))); m.seg(v3.add(p, v3.mul(sp, rr * .5)), v3.add(p, v3.mul(sp, rr * 2.1)), rr * .22, rr * .03, M.BODY3, { group: group + 2, extra: true }); } // a thorn off the ridge
     if (i < n) p = v3.add(p, v3.mul(dir, ds * (1 - tighten * t) / (1 - tighten / 2)));
   }
+  (m.hornPaths ||= []).push(A[0].map(q => q.slice())); // its path, for the elder kit's rings and bells
   const cut = Math.round(n * .8);
   for (const [k, s] of A.entries()) { m.chain(s.slice(0, tip ? cut + 1 : n + 1), M[k && mat2 ? mat2 : mat] ?? M.ACCENT, { group, extra: true }); if (tip) m.chain(s.slice(cut), M[tip] ?? M.MAGIC2, { group: group + 1, extra: true }); }
   return p;
@@ -490,6 +552,7 @@ function antlers3d(m, q, b, side, size, has) { // size: its antler size curve at
   }
   const p1 = v3.add(b, [-.18 * A, .3 * A, out * .4]), p2 = v3.add(b, [-.25 * A, .62 * A, out * .8]), p3 = v3.add(b, [-.1 * A, .95 * A, out]);
   m.chain([[...b, w * 1.2], [...p1, w], [...p2, w * .85], [...p3, w * .4]], mat, o);
+  (m.antlerPaths ||= []).push([[...b, w * 1.2], [...p1, w], [...p2, w * .85], [...p3, w * .4]]); // its beam, for the elder kit's rings
   const tine = (p, d, l, ww) => m.seg(p, v3.add(p, v3.mul(v3.norm(d), l)), ww, ww * .35, mat, o);
   tine(v3.add(b, [-.04 * A, .1 * A, out * .1]), [1, .6, 0], .28 * A, w * .8);
   if (A > .4 || jack) tine(p1, [1, .9, 0], .3 * A, w * .7);
