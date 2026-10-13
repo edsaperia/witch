@@ -73,6 +73,7 @@ export const LEGEND_POSES = {
   lion: { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .14, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 4 } }, // the savanna's lion (an area recipe's): lying like a kopje in the long grass, its mane gone to dry grass and lichen
   komodo: { sink: .5, droop: 1, drop: [60, 61, 62], over: { moss: .15, lichen: .2, ferns: 0, grass: 4, mushrooms: 0, roots: 1, stones: 6 } }, // the dragon scrub's Komodo dragon (an area recipe's): sunk in dust among the rocks, dry grass over it, its tongue in
   fennec: { sink: .45, droop: 1, drop: [70, 71], over: { moss: .08, lichen: .12, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 5 } }, // the erg's fennec (an area recipe's): curled half under the sand, its ears laid back, pebbles over it
+  frosttroll: { ground: .3, droop: .6, drop: [], over: { moss: .55, lichen: .3, ferns: 1, grass: 1, mushrooms: 1, roots: 1, stones: 6 } }, // the trollwood's troll: asleep, a mossy boulder among the boulders
   salamander: { sink: .55, droop: 1, drop: [60, 61], over: { moss: .35, lichen: .14, ferns: 2, grass: 1, mushrooms: 2, roots: 1, stones: 5 } },
   toad: { ground: .2, droop: .5, drop: [], over: { moss: .55, lichen: .06, ferns: 1, grass: 5, mushrooms: 2, roots: 1, stones: 3 } },
   raven: { ground: .42, droop: .6, drop: [40, 50, 95, 96, 97, 98, 99, 100], over: { moss: .35, lichen: .1, ferns: 1, grass: 2, mushrooms: 3, roots: 3, stones: 1, nest: true } },
