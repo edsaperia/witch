@@ -5,6 +5,9 @@
 // quietly answers nothing and the sets are drawn as before.
 import type { ArtJob, ArtResult } from "./artBuild";
 
+/** A job's cache key, carried with it to the art worker, which keeps the cache (render/artWorker.ts); null: not kept. */
+export interface CacheHint { cacheKey?: string | null }
+
 declare const __ART_HASH__: string;
 export const ART_HASH = typeof __ART_HASH__ === "string" ? __ART_HASH__ : "dev";
 

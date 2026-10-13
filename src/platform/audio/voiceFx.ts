@@ -23,9 +23,18 @@ export const NO_FX: VoiceFxSettings = { chorus: 0, saturation: 0, air: 0, delay:
 /** Whether any effect is on. */
 export const fxOn = (s: Partial<VoiceFxSettings> | undefined): boolean => !!s && VOICE_FX.some(k => (s[k] ?? 0) > 0);
 
-/** A seeded noise impulse decaying over `seconds`, its top rolled off by `dark` (0 bright to 1 dark), two channels. */
+/** A seeded noise impulse decaying over `seconds`, its top rolled off by `dark` (0 bright to 1 dark), two channels. Made once a
+ *  context for each length, darkness and seed and shared (a buffer can feed any number of convolvers), its envelope from a table of
+ *  ENV steps rather than a Math.pow a sample: the hall's 5.5 s and the shimmer's 3.5 s were about 190 ms on the page's thread the
+ *  first time the sung part played (the stall hunt, 2026-10-13); about a tenth of that now, once. */
+const IMPULSES = new WeakMap<BaseAudioContext, Map<string, AudioBuffer>>();
+const ENV = 4096;
 function impulse(ctx: BaseAudioContext, seconds: number, dark: number, seed: number): AudioBuffer {
+  let made = IMPULSES.get(ctx); if (!made) IMPULSES.set(ctx, made = new Map());
+  const key = `${seconds}|${dark}|${seed}`, had = made.get(key); if (had) return had;
   const n = Math.max(1, Math.floor(seconds * ctx.sampleRate)), b = ctx.createBuffer(2, n, ctx.sampleRate);
+  const env = new Float32Array(ENV + 1); for (let j = 0; j <= ENV; j++) env[j] = Math.pow(1 - j / ENV, 2.2);
+  const ramp = Math.max(1, Math.floor(n * 0.01)), perSample = ENV / n;
   for (let ch = 0; ch < 2; ch++) {
     const d = b.getChannelData(ch);
     let r = (seed + ch * 7919) >>> 0 || 1, lp = 0;
@@ -33,10 +42,10 @@ function impulse(ctx: BaseAudioContext, seconds: number, dark: number, seed: num
     for (let i = 0; i < n; i++) {
       r = (Math.imul(r, 1664525) + 1013904223) >>> 0;
       lp += k * ((r / 4294967296) * 2 - 1 - lp);
-      const t = i / n;
-      d[i] = lp * Math.pow(1 - t, 2.2) * (t < 0.01 ? t / 0.01 : 1);
+      d[i] = lp * env[Math.floor(i * perSample)] * (i < ramp ? i / ramp : 1);
     }
   }
+  made.set(key, b);
   return b;
 }
 
@@ -52,14 +61,35 @@ const BANDS = Array.from({ length: 14 }, (_, b) => 220 * Math.pow(7500 / 220, b 
 const ENVELOPES = new WeakMap<AudioBuffer, AudioBuffer>();
 /** A recording's level in each vocoder band, as the live chain had it (a band-pass, rectified, smoothed at 35 Hz, times 6),
  *  a channel a band at 3 kHz (the lowest rate a buffer can have), worked out once a recording. */
+/** The envelopes made ahead, a band a task, so the first sung note doesn't pay for them (the stall hunt, 2026-10-13: about
+ *  95 ms on the page's thread in one frame); whisperEnvelopes then finds them made. */
+const PREPARING = new WeakMap<AudioBuffer, Promise<AudioBuffer>>();
+export function prepareWhisperEnvelopes(ctx: BaseAudioContext, rec: AudioBuffer): Promise<AudioBuffer> {
+  const have = ENVELOPES.get(rec); if (have) return Promise.resolve(have);
+  const under = PREPARING.get(rec); if (under) return under;
+  const p = (async () => {
+    const parts = whisperEnvelopeParts(ctx, rec);
+    for (let b = 0; b < BANDS.length; b++) { await new Promise(r => setTimeout(r, 0)); parts.band(b); }
+    return parts.done();
+  })();
+  PREPARING.set(rec, p);
+  return p;
+}
 export function whisperEnvelopes(ctx: BaseAudioContext, rec: AudioBuffer): AudioBuffer {
   const have = ENVELOPES.get(rec);
   if (have) return have;
+  const parts = whisperEnvelopeParts(ctx, rec);
+  for (let b = 0; b < BANDS.length; b++) parts.band(b);
+  return parts.done();
+}
+/** The envelopes' work in parts: the recording as mono, then each band's level over it (band), then the buffer (done). */
+function whisperEnvelopeParts(ctx: BaseAudioContext, rec: AudioBuffer): { band(b: number): void; done(): AudioBuffer } {
   const sr = rec.sampleRate, n = rec.length, mono = new Float32Array(n);
   for (let ch = 0; ch < rec.numberOfChannels; ch++) { const d = rec.getChannelData(ch); for (let i = 0; i < n; i++) mono[i] += d[i] / rec.numberOfChannels; }
   const OUT = 3000, step = sr / OUT, m = Math.max(1, Math.floor(n / step)), out = ctx.createBuffer(BANDS.length, m, OUT);
   const lp = 1 - Math.exp((-2 * Math.PI * 35) / sr);
-  BANDS.forEach((f, b) => {
+  const band = (b: number): void => {
+    const f = BANDS[b];
     // RBJ band-pass (constant 0 dB peak), as a BiquadFilterNode's
     const w = (2 * Math.PI * f) / sr, al = Math.sin(w) / (2 * BAND_Q), a0 = 1 + al;
     const b0 = al / a0, b2 = -al / a0, a1 = (-2 * Math.cos(w)) / a0, a2 = (1 - al) / a0;
@@ -71,9 +101,8 @@ export function whisperEnvelopes(ctx: BaseAudioContext, rec: AudioBuffer): Audio
       e += lp * (Math.abs(y) - e);
       if (i >= k * step && k < m) d[k++] = 6 * e;
     }
-  });
-  ENVELOPES.set(rec, out);
-  return out;
+  };
+  return { band, done: () => { ENVELOPES.set(rec, out); return out; } };
 }
 
 export class VoiceFx {
@@ -94,6 +123,12 @@ export class VoiceFx {
   private chorus?: { mix: GainNode; nodes: AudioNode[] };
   private delay?: { send: GainNode; l: DelayNode; r: DelayNode; nodes: AudioNode[] };
   private hall?: { send: GainNode; conv: ConvolverNode; nodes: AudioNode[] };
+  /** Work put off to the frames after (warm): a convolver taking its impulse is about 30 ms of the page's thread, so the hall's
+   *  and the shimmer's come one a frame, the reverb silent till then (a tail a frame or two late: nothing heard). */
+  private pending: (() => void)[] = [];
+  private later(work: () => void): void { this.pending.push(work); }
+  /** One piece of the work put off, if any is left: true while some is. */
+  warm(): boolean { const w = this.pending.shift(); if (w) w(); return this.pending.length > 0; }
   private shimmer?: { send: GainNode; fb: GainNode; conv: ConvolverNode; nodes: AudioNode[] };
   private freeze?: { send: GainNode; nodes: AudioNode[] };
   private whisperRig?: { mix: GainNode; nodes: AudioNode[] };
@@ -151,7 +186,7 @@ export class VoiceFx {
   /** A dark hall (the swells go into it too). */
   private buildHall(): NonNullable<VoiceFx["hall"]> {
     const c = this.ctx, conv = c.createConvolver(), send = c.createGain();
-    conv.buffer = impulse(c, 5.5, 0.8, 4441); send.gain.value = 0;
+    this.later(() => { conv.buffer = impulse(c, 5.5, 0.8, 4441); }); send.gain.value = 0;
     this.air.connect(send).connect(conv).connect(this.wet);
     this.wetIn.connect(conv);
     return { send, conv, nodes: [send, conv] };
@@ -159,7 +194,7 @@ export class VoiceFx {
   /** Shimmer: a reverb whose tail goes back through an octave-up shifter into itself (the swells go into it too). */
   private buildShimmer(): NonNullable<VoiceFx["shimmer"]> {
     const c = this.ctx, conv = c.createConvolver(), send = c.createGain(), fb = c.createGain(), out = c.createGain();
-    conv.buffer = impulse(c, 3.5, 0.3, 9001); send.gain.value = 0; fb.gain.value = 0; out.gain.value = 0.7;
+    this.later(() => { conv.buffer = impulse(c, 3.5, 0.3, 9001); }); send.gain.value = 0; fb.gain.value = 0; out.gain.value = 0.7;
     const up = this.octaveUp();
     this.air.connect(send).connect(conv);
     this.wetIn.connect(conv);
