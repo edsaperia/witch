@@ -593,8 +593,9 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: 0.46, chest: 0.42, tuck: 0.46, hr: 0.31 }, head: { snout: 0.58 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "puff" }, coat: { saddle: true } },
-      { body: { len: 0.58, legW: 0.9 } },
-      { body: { len: 0.6 }, features: [{ kind: "ruff", size: 0.2, count: 14 }] },
+      { body: { len: 0.46, legW: 0.95, chest: 0.44, tuck: 0.48, hr: 0.33, neck: 0.2, tailL: 0.8, profile: { shoulder: { w: 0.95, d: 0.95 }, waist: { w: 0.95, d: 0.95 } } }, head: { snout: 0.5, snoutD: 0.62 }, parts: { ears: { kind: "point", size: 1.3 } } },
+      // a round kit-faced young: short muzzle, big ears, a short brush
+      { body: { len: 0.64, chest: 0.5, tuck: 0.56, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.82, d: 0.88 } } }, head: { snout: 0.86 }, features: [{ kind: "ruff", size: 0.2, count: 14 }] },
       // the elder of the white foxes (docs/ART-GUIDE.md 0c): the long winter's own, its coat gone deep and shaggy, one vast brush
       // swept low behind it, its muzzle grizzled with frost, offerings of stone beads round its legs
       { body: { len: 0.64, legW: 1.1, neckAng: 0.55, hgt: 0.72 }, head: { frost: true }, parts: { tail: "plume" }, coat: { beads: true }, features: [
@@ -604,7 +605,17 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/armadillo/genome.js
-  var GENOME_ARMADILLO = { id: "armadillo", name: "Armadillo", template: "squat", builder: "armadillo", palette: { hue: 0.06, sat: 0.22, val: 0.58 }, legend: ["ball"], elder: { kind: "armadillo" }, texture: { kind: "plates" } };
+  var GENOME_ARMADILLO = {
+    id: "armadillo",
+    name: "Armadillo",
+    template: "squat",
+    builder: "armadillo",
+    palette: { hue: 0.06, sat: 0.22, val: 0.58 },
+    legend: ["ball"],
+    elder: { kind: "armadillo" },
+    texture: { kind: "plates" },
+    levels: [{ body: { soft: 1, dome: 1.3, head: 1.35, snout: 0.6, ears: 1.5, tail: 0.5, legs: 1.5 } }, { body: { dome: 1.12, head: 1.12, snout: 0.8, ears: 1.2, tail: 0.75, legs: 1.2 } }, null, null]
+  };
 
   // art/creatures/badger/genome.js
   var GENOME_BADGER = {
@@ -613,8 +624,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.65, sat: 0.08, val: 0.45 },
-    body: { stance: "flat", hgt: 0.5, len: 0.82, chest: 0.18, tuck: 0.2, neck: 0.16, neckAng: 0, neckW: 0.55, hr: 0.26, legW: 1.4, bw: 0.38 },
-    head: { snout: 1.05, snoutD: 0.5, snoutTaper: 0.5, face: "badger" },
+    body: { stance: "flat", hgt: 0.5, len: 0.82, chest: 0.18, tuck: 0.2, neck: 0.2, neckAng: -0.22, neckW: 0.55, hr: 0.25, legW: 1.4, bw: 0.38, profile: { shoulder: { w: 1.3, d: 1.08 }, ribcage: { w: 1.18 }, waist: { w: 0.82, d: 0.9 }, loin: { w: 0.9, d: 0.95 }, hip: { w: 1 } } },
+    head: { snout: 1.3, snoutD: 0.55, snoutTaper: 0.45, skullY: 0.85, skullZ: 1.15, brow: 0.7, jaw: 0.7, face: "badger" },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "stub", feet: "paw" },
     coat: { shaggy: true, legMat: "BODY3" },
     legend: [],
@@ -625,7 +636,7 @@ label.check input { accent-color: var(--accent); }
     levels: [
       { body: { len: 0.58, chest: 0.22, tuck: 0.24, hr: 0.3, legW: 1.1 }, head: { snout: 0.8, blaze: 1.6 } },
       { body: { len: 0.9, chest: 0.18, tuck: 0.2, neckAng: 0 }, head: { snout: 1.2, snoutTaper: 0.45, blaze: 1.3 } },
-      { body: { len: 1.6, hgt: 0.55, bw: 0.62, chest: 0.04, tuck: 0.05, legW: 1.7, hr: 0.3, neckAng: 0.12 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: 0.1, to: 0.85, height: 0.04, count: 16, lean: 0.95 }, { kind: "claws", size: 0.14 }] },
+      { body: { len: 1.6, hgt: 0.55, bw: 0.62, chest: 0.04, tuck: 0.05, legW: 1.7, hr: 0.28, neckAng: -0.15 }, head: { blaze: 1.8 }, features: [{ kind: "mane", from: 0.1, to: 0.85, height: 0.04, count: 16, lean: 0.95 }, { kind: "claws", size: 0.14 }] },
       // (Ed, 2026-10-07: low, wide and flat-backed on short legs, not a bear: art lint)
       { body: { len: 0.95, bw: 0.5, chest: 0.14, tuck: 0.16, legW: 1.8, neckAng: 0.25, hr: 0.3 }, head: { blaze: 1.6 }, features: [{ kind: "mane", from: 0.05, to: 0.9, height: 0.08, count: 20, lean: 1 }, { kind: "claws", size: 0.24 }] }
       // the elder (art/elders.js): grizzled, scarred, its stripes running down its back as chalk hill-figure lines, a bronze torc
@@ -636,7 +647,7 @@ label.check input { accent-color: var(--accent); }
   var GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: 0.78, sat: 0.25, val: 0.45 }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
 
   // art/creatures/bear/genome.js
-  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: 0.3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
+  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: 0.3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
 
   // art/creatures/beaver/genome.js
   var GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: 0.06, sat: 0.6, val: 0.45 }, body: { stance: "flat", hgt: 0.66, len: 0.62, chest: 0.34, tuck: 0.3, neck: 0.18, neckAng: 0.35, neckW: 0.6, hr: 0.3, legW: 1.25, back: "hump" }, head: { snout: 0.55, snoutD: 0.8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "flat", feet: "paw" }, legend: ["moss"], levels: [{ body: { hgt: 0.66, len: 0.48, chest: 0.4, tuck: 0.38, back: "arch", legW: 1.4 }, head: { snout: 0.4, snoutD: 0.75, teeth: false }, parts: { ears: { kind: "round", size: 0.65 }, tail: "stub" } }, { body: { hgt: 0.7, len: 0.7, chest: 0.3, tuck: 0.26, back: "arch", legW: 1.1 }, head: { snout: 0.58 }, parts: { ears: { kind: "round", size: 0.5 } } }, null, { head: { bigTeeth: true, log: true } }] };
@@ -735,7 +746,7 @@ label.check input { accent-color: var(--accent); }
     palette: { hue: 0.02, sat: 0.62, val: 0.58 },
     legend: ["wave", "reef"],
     texture: { kind: "plates", size: 3 },
-    levels: [{ body: { shell: 0.85, claw: 1 } }, { body: { shell: 1, claw: 1.25 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }]
+    levels: [{ body: { shell: 0.85, claw: 0.4, small: 0.4, stalk: 1.1, legs: 0.3 } }, { body: { shell: 1, claw: 1, small: 0.7, stalk: 1.1, legs: 0.5 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }]
   };
 
   // art/creatures/crocodile/genome.js
@@ -745,15 +756,15 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.2, sat: 0.35, val: 0.32 },
-    body: { hgt: 0.7, len: 2.1, chest: 0.05, tuck: 0.05, neck: 0.12, neckAng: -0.04, neckW: 0.75, hr: 0.32, legW: 1.6, bw: 0.55 },
-    head: { snout: 4.4, snoutD: 0.9, snoutTaper: 0.9, flatJaw: true, eyeK: 1.15 },
+    body: { stance: "sprawl", sprawl: 0.3, hgt: 0.72, len: 2.1, chest: 0.05, tuck: 0.05, neck: 0.12, neckAng: -0.08, neckW: 0.75, hr: 0.3, legW: 1.5, bw: 0.55 },
+    head: { snout: 4, snoutD: 0.7, snoutTaper: 0.9, flatJaw: true, jawW: 1.05, jawLine: true, skullY: 0.7, skullZ: 1.5, eyeK: 1.15 },
     parts: { ears: { kind: "none" }, tail: "croc", feet: "paw" },
     coat: {},
     legend: [],
     texture: { kind: "scales", size: 5, contrast: 0.35 },
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
     // of standing stones down its back and tail root, its eyes glowing just above the water line
-    levels: [null, null, null, { body: { len: 2.3, bw: 0.62, hr: 0.38 }, head: { snout: 5, snoutD: 1.05, jawW: 0.78 }, features: [{ kind: "stones", from: 0.05, to: 0.95, count: 8, height: 1.05 }, { kind: "eyeglint", size: 0.05 }, { kind: "scars", count: 4, len: 0.55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: 0.04, ry: 0.32, rz: 0.82, rings: [0.3, 0.5] }] }]
+    levels: [null, null, null, { body: { len: 2.3, bw: 0.62, hr: 0.38 }, head: { snout: 5, snoutD: 0.85, jawW: 1.2 }, features: [{ kind: "stones", from: 0.05, to: 0.95, count: 8, height: 1.05 }, { kind: "eyeglint", size: 0.05 }, { kind: "scars", count: 4, len: 0.55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: 0.04, ry: 0.32, rz: 0.82, rings: [0.3, 0.5] }] }]
   };
 
   // art/creatures/dormouse/genome.js
@@ -858,9 +869,9 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "fur", size: 2 },
     levels: [
       { head: { eyeK: 1.5 }, features: [{ kind: "patagium", spread: 0.3 }] },
-      { features: [{ kind: "patagium", spread: 0.45 }] },
-      { features: [{ kind: "patagium", spread: 0.6 }] },
-      { head: { eyeGlow: true, frost: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: 0.09 }] }
+      { body: { tailL: 0.75 }, features: [{ kind: "patagium", spread: 0.2 }] },
+      { features: [{ kind: "patagium", spread: 0.75 }] },
+      { body: { tailL: 1.35, tailK: 1.5 }, head: { eyeGlow: true, frost: true }, features: [{ kind: "patagium", spread: 1.25, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: 0.09 }] }
     ]
   };
 
@@ -908,7 +919,7 @@ label.check input { accent-color: var(--accent); }
     body: { hr: 0.24, bw: 0.42, hunch: 1 },
     head: { nose: 1, beard: 1, eyeK: 1 },
     texture: { kind: "fur", size: 2 },
-    levels: [{ body: { hr: 0.3, bw: 0.34, hunch: 0.5 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: 0.26, bw: 0.38, hunch: 0.8 }, head: { beard: 0.45, eyeK: 1.15 }, coat: { moss: 3 } }, { head: { beard: 1 }, coat: { moss: 6 } }, { body: { hr: 0.25, bw: 0.46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: 0.9, lids: true }, coat: { moss: 9, stone: 0.48, beads: true } }]
+    levels: [{ body: { hr: 0.3, bw: 0.34, hunch: 0.5, reach: 0.35 }, head: { nose: 1.1, beard: 0, eyeK: 1.35, tooth: true } }, { body: { hr: 0.26, bw: 0.38, hunch: 0.8, reach: 0.7 }, head: { beard: 0.45, eyeK: 1.15, tusks: 0.7 }, coat: { moss: 3 } }, { head: { beard: 1, tusks: 1 }, coat: { moss: 7, mossK: 1.6 } }, { body: { hr: 0.25, bw: 0.46, hunch: 1.3 }, head: { nose: 1.3, beard: 1.6, eyeK: 0.9, lids: true, tusks: 1.2 }, coat: { moss: 9, mossK: 1.4, stone: 0.48, beads: true, boulder: 1.4 } }]
   };
 
   // art/creatures/frostwyrm/genome.js
@@ -965,7 +976,17 @@ label.check input { accent-color: var(--accent); }
   var GENOME_HARE = { id: "hare", name: "Hare", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.4, val: 0.72 }, body: { hgt: 0.72, len: 0.5, chest: 0.4, tuck: 0.45, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.27, legW: 0.85, haunch: 1.35, hindFoot: 1.6, back: "arch" }, head: { snout: 0.65, snoutD: 0.7, whiskers: true }, parts: { ears: { kind: "long", size: 2.4 }, tail: "puff", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "hare", ears: true, eye: "EYE" } };
 
   // art/creatures/hedgehog/genome.js
-  var GENOME_HEDGEHOG = { id: "hedgehog", name: "Hedgehog", template: "squat", builder: "hedgehog", palette: { hue: 0.08, sat: 0.4, val: 0.5, flower: [200, 44, 40] }, legend: [], elder: { kind: "hedgehog" }, texture: { kind: "bristles" } };
+  var GENOME_HEDGEHOG = {
+    id: "hedgehog",
+    name: "Hedgehog",
+    template: "squat",
+    builder: "hedgehog",
+    palette: { hue: 0.08, sat: 0.4, val: 0.5, flower: [200, 44, 40] },
+    legend: [],
+    elder: { kind: "hedgehog" },
+    texture: { kind: "bristles" },
+    levels: [{ body: { spines: 0.2, soft: 1, head: 1.5, round: 1.2, legs: 1.9 } }, { body: { spines: 0.45, spineFrom: 0, head: 1.1, round: 0.3 } }, null, null]
+  };
 
   // art/creatures/heron/genome.js
   var GENOME_HERON = { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: 0.6, sat: 0.08, val: 0.62 }, legend: ["stilts"], texture: { kind: "feathers" } };
@@ -1031,7 +1052,7 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.09, sat: 0.3, val: 0.36, belly: "yellow" },
-    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.34, neckAng: 0.18, neckW: 0.42, hr: 0.22, legW: 1.6, bw: 0.4 },
+    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.66, neckAng: 0.22, neckW: 0.3, hr: 0.22, legW: 1.6, bw: 0.4, brisket: 0, profile: { shoulder: { d: 0.8 }, ribcage: { d: 0.92 } } },
     head: { snout: 1, snoutD: 0.72, snoutTaper: 0.9, tongue: 1.1 },
     parts: { ears: { kind: "none" }, tail: "monitor", feet: "paw" },
     coat: { belly: true },
@@ -1039,8 +1060,9 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "scales" },
     levels: [
       { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
-      { coat: { spots: true, spotMat: "belly" } },
-      null,
+      { body: { bw: 0.32, hr: 0.2 }, head: { snout: 0.85, snoutD: 0.65 }, coat: { spots: true, spotMat: "belly" } },
+      // a slim speckled young, its head still short
+      { head: { snout: 1.4, snoutD: 0.95 }, body: { hr: 0.26, neckW: 0.4, profile: { shoulder: { w: 1.15, d: 0.85 }, ribcage: { w: 1.1, d: 0.95 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
       { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: 0.16 }] }
     ]
   };
@@ -1053,7 +1075,7 @@ label.check input { accent-color: var(--accent); }
     builder: "quad",
     palette: { hue: 0.075, sat: 0.58, val: 0.66, belly: "white", magic: 0.09 },
     body: { hgt: 1.4, len: 0.78, chest: 0.6, tuck: 0.7, neck: 0.3, neckAng: 0.55, neckW: 0.44, hr: 0.25, legW: 1.05, bw: 0.27, profile: { shoulder: { w: 1.2, d: 1.06 }, ribcage: { w: 1.08 }, waist: { w: 0.78, d: 0.88 }, loin: { w: 0.85, d: 0.94 }, hip: { w: 0.95 } }, spine: { ribcage: -0.04, waist: -0.05, loin: -0.04, hip: -0.015 } },
-    head: { snout: 0.85, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true },
+    head: { snout: 0.85, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true, jawCoat: true },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "tuft", feet: "paw" },
     coat: { belly: true },
     legend: ["mane"],
@@ -1078,7 +1100,20 @@ label.check input { accent-color: var(--accent); }
   ] };
 
   // art/creatures/marten/genome.js
-  var GENOME_MARTEN = { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.6, val: 0.45 }, body: { hgt: 0.68, len: 0.78, chest: 0.35, tuck: 0.42, neck: 0.3, neckAng: 0.55, neckW: 0.35, hr: 0.25, legW: 0.85, back: "arch" }, head: { snout: 0.65, snoutD: 0.6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "marten", eye: "EYE" } };
+  var GENOME_MARTEN = {
+    id: "marten",
+    name: "Pine marten",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.07, sat: 0.6, val: 0.45 },
+    body: { hgt: 0.68, len: 0.78, chest: 0.35, tuck: 0.42, neck: 0.3, neckAng: 0.55, neckW: 0.35, hr: 0.25, legW: 0.85, back: "arch" },
+    head: { snout: 0.65, snoutD: 0.6 },
+    parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" },
+    coat: { belly: true },
+    legend: [],
+    levels: [{ body: { tailK: 0.6 } }, { body: { tailK: 0.7, tailL: 0.8, len: 0.7 } }, { body: { tailK: 1.4, chest: 0.4, profile: { shoulder: { w: 1.12, d: 1.08 }, waist: { w: 0.82, d: 0.88 } } } }, { body: { tailK: 1.55, tailL: 1.15 } }],
+    elder: { kind: "marten", eye: "EYE" }
+  };
 
   // art/creatures/meerkat/genome.js
   var GENOME_MEERKAT = { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: 0.09, sat: 0.35, val: 0.72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: 0.8, len: 0.62, chest: 0.44, tuck: 0.5, neck: 0.34, neckAng: 0.75, neckW: 0.26, hr: 0.2, legW: 0.55, bw: 0.2, back: "arch" }, head: { snout: 0.8, snoutD: 0.45, snoutTaper: 0.4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 }, levels: [null, { body: { len: 0.521, legW: 0.396, neckW: 0.221, hr: 0.184, chest: 0.52, tuck: 0.56, profile: { shoulder: { w: 0.86, d: 0.86 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.85, d: 0.9 }, hip: { w: 0.9 } } } }, { body: { chest: 0.39, tuck: 0.48, profile: { shoulder: { w: 1.22, d: 1.16 }, ribcage: { w: 1.08 }, waist: { w: 0.78, d: 0.88 }, loin: { w: 0.88 }, hip: { w: 0.98 } } } }, null] };
@@ -1102,7 +1137,7 @@ label.check input { accent-color: var(--accent); }
     coat: { spots: true, spotMat: "belly", ridge: 2.4 },
     legend: [],
     texture: { kind: "smooth" },
-    levels: [null, null, null, { coat: { ridge: false }, head: { eyeGlow: true, frost: true }, features: [{ kind: "sail", height: 0.5 }] }]
+    levels: [{ coat: { ridge: false }, body: { tailK: 0.45 } }, { coat: { ridge: 1 }, body: { tailK: 0.7 } }, { coat: { ridge: 3 }, body: { tailK: 1.35 } }, { coat: { ridge: false }, head: { eyeGlow: true, frost: true }, features: [{ kind: "sail", height: 0.5 }] }]
   };
 
   // art/creatures/otter/genome.js
@@ -1155,10 +1190,11 @@ label.check input { accent-color: var(--accent); }
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: the coat a long hanging
     // fleece; the legend brief: an elder, revered): a vast fleece hanging off it to the ground, a ruff, frost on its muzzle,
     // a necklace of bronze offerings with a stone at its throat
+    // Ed's review (2026-10-13): less loaf: a longer neck, the head lower and smaller, a higher shoulder (levels 0 to 2; the elder is its own)
     levels: [
-      null,
-      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.27, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.84, d: 0.84 }, ribcage: { w: 0.88 }, waist: { w: 0.78, d: 0.82 }, loin: { w: 0.86, d: 0.9 }, hip: { w: 0.88 } } } },
-      { body: { chest: 0.33, tuck: 0.4, profile: { shoulder: { w: 1.22, d: 1.18 }, ribcage: { w: 1.12 }, waist: { w: 0.9, d: 0.92 }, loin: { w: 0.95 }, hip: { w: 1.02 } } } },
+      { body: { len: 0.8, neck: 0.42, neckAng: -0.06, hr: 0.33, withers: 0.07, chest: 0.44, tuck: 0.46 } },
+      { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.25, neck: 0.48, neckAng: -0.14, withers: 0.1, front: 1.1, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.9, d: 0.95 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.82, d: 0.88 }, hip: { w: 0.86 } } } },
+      { body: { chest: 0.33, tuck: 0.4, hr: 0.25, neck: 0.6, neckAng: -0.22, withers: 0.15, front: 1.18, brisket: 0.06, profile: { shoulder: { w: 1.26, d: 1.26 }, ribcage: { w: 1.14, d: 1.06 }, waist: { w: 0.86, d: 0.85 }, loin: { w: 0.92, d: 0.94 }, hip: { w: 1, d: 0.98 } } } },
       { body: { bw: 0.44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: 0.96, d: 0.96 }, loin: { w: 1 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: 0.42, count: 40, lean: 0.25, mat: "BELLY" }, { kind: "ruff", size: 0.28, count: 16 }, { kind: "beads", count: 11, size: 0.055, mat: "WOOD", pendant: "STONE" }] }
     ]
   };
@@ -1248,8 +1284,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.58, sat: 0.05, val: 0.46 },
-    body: { hgt: 1.15, len: 0.98, chest: 0.42, tuck: 0.44, neck: 0.24, neckAng: -0.18, neckW: 0.75, hr: 0.36, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: 0.48 },
-    head: { snout: 1.35, snoutD: 0.78, snoutTaper: 0.7, noseHorn: 1 },
+    body: { hgt: 1.15, len: 0.98, chest: 0.42, tuck: 0.44, neck: 0.3, neckAng: -0.42, neckW: 0.75, hr: 0.34, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: 0.48, profile: { shoulder: { w: 1.18, d: 1.1 }, ribcage: { w: 1.1, d: 1.04 }, waist: { w: 0.94, d: 0.96 }, loin: { w: 0.98 }, hip: { w: 1.04 } } },
+    head: { snout: 1.3, snoutD: 0.78, snoutTaper: 0.7, noseHorn: 2.2 },
     parts: { ears: { kind: "small", size: 1 }, tail: "thin", feet: "hoof" },
     coat: { folds: [-0.55, 0.35] },
     legend: [],
@@ -1257,7 +1293,8 @@ label.check input { accent-color: var(--accent); }
     // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: one giant horn; the legend
     // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
     // necklace of offerings, the hump a hill
-    levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: 0.56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: 0.9 }, coat: { folds: [-0.6, -0.35, 0.3, 0.55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: 0.4, width: 0.5 }] }]
+    // Ed's review (2026-10-13): a horn that grows by level (a calf's nub, a young one's short horn), the head carried low, a young of its own (lighter, smooth-hided, no hump yet)
+    levels: [{ body: { neckAng: -0.25, hr: 0.4 }, head: { noseHorn: 0.5 }, coat: { folds: [] } }, { body: { len: 0.88, hgt: 1.05, legW: 1.75, hr: 0.37, neck: 0.28, neckAng: -0.32, chest: 0.46, tuck: 0.48, humpK: 0.7, front: 1.05, bw: 0.42, profile: { shoulder: { w: 1.02, d: 1.02 }, ribcage: { w: 1 }, waist: { w: 0.88, d: 0.92 }, loin: { w: 0.94 }, hip: { w: 1 } } }, head: { noseHorn: 1.3, snout: 1.2 }, coat: { folds: [-0.5] } }, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: 0.56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: 0.9 }, coat: { folds: [-0.6, -0.35, 0.3, 0.55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: 0.4, width: 0.5 }] }]
   };
 
   // art/creatures/roe/genome.js
@@ -1293,14 +1330,14 @@ label.check input { accent-color: var(--accent); }
     name: "Salamander",
     template: "quadruped",
     builder: "quad",
-    palette: { hue: 0.1, sat: 0.1, val: 0.22, belly: "yellow" },
+    palette: { hue: 0.1, sat: 0.1, val: 0.22, belly: "yellow", magic: 0.05 },
     body: { stance: "sprawl", hgt: 0.4, len: 0.95, chest: 0.16, tuck: 0.16, neck: 0.1, neckAng: -0.05, neckW: 0.6, hr: 0.29, legW: 1.45, bw: 0.36 },
     head: { snout: 0.55, snoutD: 0.55 },
     parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" },
     coat: { spots: true, spotMat: "belly" },
     legend: [],
     texture: { kind: "smooth" },
-    levels: [null, null, null, { coat: { coals: true }, head: { eyeGlow: true, frost: true } }]
+    levels: [null, { body: { tailK: 0.55, bw: 0.22, hr: 0.34, legW: 1.2 } }, { body: { tailK: 1.9, len: 1.15, legW: 1.6, bw: 0.52, neck: 0.1 } }, { body: { tailK: 2.1, bw: 0.48 }, coat: { coals: true }, head: { eyeGlow: true, frost: true }, features: [{ kind: "wisps", at: "mane", count: 11, size: 0.5, from: 0.05, to: 0.98 }] }]
   };
 
   // art/creatures/scorpion/genome.js
@@ -1347,18 +1384,18 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.12, sat: 0.1, val: 0.82, belly: "white" },
-    body: { hgt: 0.86, len: 0.66, chest: 0.52, tuck: 0.56, neck: 0.26, neckAng: 0.55, neckW: 0.44, hr: 0.27, legW: 1.05 },
+    body: { hgt: 0.94, len: 0.66, chest: 0.6, tuck: 0.64, neck: 0.26, neckAng: 0.55, neckW: 0.44, hr: 0.27, legW: 1.15, pawK: 1.35, tailK: 1.35 },
     head: { snout: 0.48, snoutD: 0.78, snoutTaper: 0.8, cheeks: true, whiskers: true },
     parts: { ears: { kind: "round", size: 0.7 }, tail: "banner", feet: "paw" },
     coat: { belly: true, spots: true },
     texture: { kind: "fur", size: 2 },
     levels: [
-      { body: { len: 0.5, chest: 0.5, hr: 0.31 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
-      { body: { len: 0.66, legW: 0.95 } },
-      { body: { len: 0.7, legW: 1.1 } },
+      { body: { len: 0.5, chest: 0.58, hr: 0.31, tailK: 1 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
+      { body: { len: 0.66, legW: 1.05 } },
+      { body: { len: 0.7, legW: 1.2 } },
       // the elder of the snow leopards (docs/ART-GUIDE.md 0c): the high ice's ghost, its coat thick and pale as fresh snow, its
       // tail grown so long it wraps round it like a scarf, a grizzled muzzle, offerings of stone beads round its legs
-      { body: { len: 0.72, legW: 1.15, neckAng: 0.5 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
+      { body: { len: 0.72, legW: 1.25, neckAng: 0.5, tailK: 1 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
         { kind: "ruff", size: 0.3, count: 20, mat: "BELLY" }
       ] }
     ]
@@ -1368,10 +1405,23 @@ label.check input { accent-color: var(--accent); }
   var GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: 0.07, sat: 0.45, val: 0.4 }, legend: ["rose"], texture: { kind: "bristles", size: 2 } };
 
   // art/creatures/squirrel/genome.js
-  var GENOME_SQUIRREL = { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: 0.03, sat: 0.75, val: 0.75, belly: "white" }, body: { hgt: 0.55, len: 0.45, chest: 0.35, tuck: 0.4, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.3, legW: 0.8, haunch: 1.3, back: "arch" }, head: { snout: 0.55, snoutD: 0.65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "squirrel", tail: true, eye: "EYE" } };
+  var GENOME_SQUIRREL = {
+    id: "squirrel",
+    name: "Squirrel",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.03, sat: 0.75, val: 0.75, belly: "white" },
+    body: { hgt: 0.55, len: 0.45, chest: 0.35, tuck: 0.4, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.3, legW: 0.8, haunch: 1.3, back: "arch" },
+    head: { snout: 0.55, snoutD: 0.65, whiskers: true },
+    parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" },
+    coat: { belly: true },
+    legend: [],
+    levels: [null, { body: { tailL: 0.55, tailK: 0.75, len: 0.4, hr: 0.34 } }, null, null],
+    elder: { kind: "squirrel", tail: true, eye: "EYE" }
+  };
 
   // art/creatures/stag/genome.js
-  var GENOME_STAG = { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.5, val: 0.7 }, body: { hgt: 1.3, len: 0.6, chest: 0.6, tuck: 0.7, neck: 0.55, neckAng: 0.95, neckW: 0.32, hr: 0.2, legW: 0.75, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.72, d: 0.82 }, loin: { w: 0.8, d: 0.9 }, hip: { w: 0.95 } }, spine: { shoulder: 0.04, ribcage: 0.025 } }, head: { snout: 1.15, snoutD: 0.6, snoutTaper: 0.65 }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"], levels: [null, null, null, { head: { antlerK: 1.9, tineFlames: true } }] };
+  var GENOME_STAG = { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.5, val: 0.7 }, body: { hgt: 1.3, len: 0.6, chest: 0.6, tuck: 0.7, neck: 0.55, neckAng: 0.95, neckW: 0.32, hr: 0.2, legW: 0.75, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.72, d: 0.82 }, loin: { w: 0.8, d: 0.9 }, hip: { w: 0.95 } }, spine: { shoulder: 0.04, ribcage: 0.025 } }, head: { snout: 1.15, snoutD: 0.6, snoutTaper: 0.65, jawCoat: true }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"], levels: [null, null, null, { head: { antlerK: 0.9, antlerLean: 1.15, tineFlames: true } }] };
 
   // art/creatures/stegosaurus/genome.js
   var GENOME_STEGOSAURUS = {
@@ -1380,23 +1430,35 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.27, sat: 0.28, val: 0.38, belly: "white", flower: [214, 92, 48] },
-    body: { hgt: 1.36, len: 1.05, chest: 0.38, tuck: 0.45, neck: 0.18, neckAng: -0.6, neckW: 0.34, hr: 0.2, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: 0.36, profile: { shoulder: { w: 0.82, d: 0.9 }, ribcage: { w: 1.05, d: 1.12 }, waist: { w: 1.08, d: 1.1 }, loin: { w: 1.06, d: 1.05 }, hip: { w: 1.12, d: 1.02 } }, spine: { shoulder: -0.02, ribcage: 0.02, waist: 0.05, loin: 0.07, hip: 0.05 } },
-    head: { snout: 0.8, snoutD: 0.5, muzzle: true, eyeK: 1.3 },
+    body: { hgt: 1.36, len: 1.05, chest: 0.38, tuck: 0.45, neck: 0.5, neckAng: -0.15, neckW: 0.26, hr: 0.12, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: 0.36, profile: { shoulder: { w: 0.82, d: 0.9 }, ribcage: { w: 1.05, d: 1.12 }, waist: { w: 1.08, d: 1.1 }, loin: { w: 1.06, d: 1.05 }, hip: { w: 1.12, d: 1.02 } }, spine: { shoulder: -0.02, ribcage: 0.02, waist: 0.05, loin: 0.07, hip: 0.05 } },
+    head: { snout: 0.9, snoutD: 0.42, snoutTaper: 0.55, beak: 0.5, eyeK: 1.2 },
     parts: { ears: { kind: "none" }, tail: "stego", feet: "paw" },
     coat: { belly: true, spots: true, spotMat: "BODY2" },
     legend: ["crystals"],
     texture: { kind: "scales", size: 3 },
     levels: [
-      { body: { len: 0.8 }, head: { eyeK: 1.6 }, features: [{ kind: "backPlates", count: 5, height: 0.5, width: 0.5, mat: "FLOWER", rim: "BODY3", from: 0.1, to: 0.75 }] },
+      { body: { len: 0.8 }, head: { eyeK: 1.5 }, features: [{ kind: "backPlates", count: 5, height: 0.5, width: 0.5, mat: "FLOWER", rim: "BODY3", from: 0.1, to: 0.75 }] },
       { features: [{ kind: "backPlates", count: 7, height: 0.5, width: 0.48, mat: "FLOWER", rim: "BODY3", from: 0.05, to: 0.8 }] },
       { features: [{ kind: "backPlates", count: 9, height: 0.66, width: 0.46, mat: "FLOWER", rim: "BODY3", from: 0, to: 0.85 }] },
-      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 9, height: 0.85, width: 0.46, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: 0.85 }, { kind: "moss", count: 6, size: 0.12 }] }
+      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 7, height: 0.85, width: 0.34, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: 0.85 }, { kind: "moss", count: 6, size: 0.12 }] }
       // its elder: an epoch-old survivor of the volcano (Ed's brief, ART-GUIDE §0c): plates of obsidian veined with lava, chipped by ages, old scars across its flank, ash-grey frost on its muzzle, moss in its folds, a gold ring offered round each spike, one spike broken short
     ]
   };
 
   // art/creatures/stoat/genome.js
-  var GENOME_STOAT = { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: 0.1, sat: 0.25, val: 0.92 }, body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.5, neckAng: 0.9, neckW: 0.3, hr: 0.25, legW: 0.8, back: "arch" }, head: { snout: 0.6, snoutD: 0.6, whiskers: true }, parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] };
+  var GENOME_STOAT = {
+    id: "stoat",
+    name: "Stoat",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.1, sat: 0.25, val: 0.92 },
+    body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.85, neckAng: 0.55, neckW: 0.2, hr: 0.25, legW: 0.8, back: "arch", brisket: 0, profile: { shoulder: { w: 0.9, d: 0.8 }, ribcage: { d: 0.9 } } },
+    head: { snout: 0.6, snoutD: 0.6, whiskers: true },
+    parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" },
+    coat: { belly: true },
+    legend: ["ribbons", "mane"],
+    levels: [null, { body: { len: 0.7, neck: 0.34, hr: 0.31, hgt: 0.48, legW: 0.9, tailL: 0.7 }, head: { snout: 0.48 } }, { body: { len: 1.15, hgt: 0.44, neck: 0.92 } }, null]
+  };
 
   // art/creatures/tiger/genome.js
   var GENOME_TIGER = {
@@ -1433,8 +1495,8 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.6, sat: 0.05, val: 0.95, magic: 0.13 },
-    body: { hgt: 1.35, len: 0.7, chest: 0.52, tuck: 0.6, neck: 0.8, neckAng: 1.15, neckW: 0.32, hr: 0.24, legW: 0.66 },
-    head: { snout: 1.1, snoutD: 0.65, snoutTaper: 0.75, eyeK: 1.3 },
+    body: { hgt: 1.42, len: 0.7, chest: 0.64, tuck: 0.72, neck: 1, neckAng: 1.05, neckW: 0.3, hr: 0.215, legW: 0.7, bw: 0.28, withers: 0.09, croup: 0.06, profile: { shoulder: { w: 1.08, d: 1.1 }, ribcage: { w: 1.02 }, waist: { w: 0.8, d: 0.86 }, loin: { w: 0.88, d: 0.92 }, hip: { w: 1 } } },
+    head: { snout: 1.5, snoutD: 0.52, snoutTaper: 0.6, eyeK: 1.15, brow: 0.8, jowl: 0.9, jaw: 0.8 },
     parts: { ears: { kind: "point", size: 0.8 }, tail: "brush", feet: "hoof", horns: "single" },
     coat: { socks: 0.25, legMat: "BELLY", maneHair: { mat: "BODY3" } },
     sizes: { horns: [0.4, 0.7, 1, 1.7] },
@@ -1446,7 +1508,7 @@ label.check input { accent-color: var(--accent); }
       null,
       null,
       null,
-      { body: { hgt: 1.45, neck: 0.85 }, head: { frost: true, hornLight: true }, coat: { beads: true, socks: 0.4 }, features: [
+      { body: { hgt: 1.52, neck: 1.05 }, head: { frost: true, hornLight: true }, coat: { beads: true, socks: 0.4 }, features: [
         { kind: "ruff", size: 0.18, count: 10, mat: "BELLY" }
       ] }
     ]
@@ -1699,7 +1761,7 @@ label.check input { accent-color: var(--accent); }
   var SIGIL_STAG = { neon: "magenta", strokes: [...pair(L([0.4, 0.42], [0.4, 0.68], [0.5, 0.9]), L([0.4, 0.44], [0.2, 0.4], [0.36, 0.52]), L([0.43, 0.4], [0.35, 0.26], [0.24, 0.07]), L([0.37, 0.3], [0.17, 0.25]), L([0.3, 0.17], [0.38, 0.07]), D(0.44, 0.56)), L([0.4, 0.42], [0.6, 0.42])] };
 
   // art/creatures/stegosaurus/sigil.js
-  var SIGIL_STEGOSAURUS = { neon: "red", strokes: [bow([0.12, 0.66], [0.84, 0.7], 0.32), L([0.2, 0.52], [0.27, 0.33], [0.35, 0.47], [0.44, 0.25], [0.52, 0.45], [0.6, 0.3], [0.68, 0.5]), L([0.13, 0.66], [0.04, 0.54]), L([0.12, 0.68], [0.03, 0.76]), C(0.87, 0.72, 0.045), L([0.34, 0.74], [0.34, 0.86]), L([0.66, 0.74], [0.66, 0.86])] };
+  var SIGIL_STEGOSAURUS = { neon: "red", strokes: [bow([0.12, 0.66], [0.84, 0.7], 0.32), L([0.2, 0.52], [0.27, 0.33], [0.35, 0.47], [0.44, 0.25], [0.52, 0.45], [0.6, 0.3], [0.68, 0.5]), L([0.13, 0.66], [0.07, 0.55]), L([0.12, 0.68], [0.06, 0.75]), C(0.87, 0.72, 0.045), L([0.34, 0.74], [0.34, 0.86]), L([0.66, 0.74], [0.66, 0.86])] };
 
   // art/creatures/stoat/sigil.js
   var SIGIL_STOAT = { neon: "pink", strokes: [A(0.5, 0.54, 0.33, -40, 250), C(0.68, 0.26, 0.1), ...[[0.62, 0.18], [0.72, 0.16]].map(([x, y]) => L([x, y + 0.02], [x - 0.02, y - 0.07], [x + 0.03, y - 0.01])), D(0.71, 0.27), D(...at(0.5, 0.54, 0.33, 250))] };
@@ -6233,24 +6295,26 @@ label.check input { accent-color: var(--accent); }
   };
   var crystals3d = (m, pts) => pts.forEach(([b, h], i) => m.ell(v3.add(b, [0, h * 0.45, 0]), [h * 0.55, 0.07, 0.07], M.MAGIC, { dir: [(i % 3 - 1) * 0.25, 1, (i % 2 - 0.5) * 0.3], group: 80 + i % 2, extra: true, paint: (p) => p[2] > b[2] ? M.MAGIC2 : void 0 }));
   function hedgehog3d(S, level, frame, st, facing = "towards") {
-    const legend = level === 3, m = new Model(), f = frame ? 0.03 : 0;
+    const legend = level === 3, m = new Model(), f = frame ? 0.03 : 0, q = { ...S.q, ...S.levelQ?.[level] || {} };
     if (legend && S.elder) return hedgehogElder(S, frame, st, facing);
+    const sp = q.spines ?? 1, reach = q.spineFrom ?? 1, soft = q.soft ?? 0, hk = q.head ?? 1, rd = q.round ?? 0, lift = ((q.legs ?? 1) - 1) * 0.12;
     for (const [x, z] of [[0.28, 0.2], [0.28, -0.2], [-0.28, 0.2], [-0.28, -0.2]]) {
       const d = (frame ? -1 : 1) * Math.sign(x * z) * 0.08;
-      m.seg([x, 0.15, z], [x + d, 0.03, z], 0.06, 0.05, M.BODY3, { group: z > 0 ? 6 : 2 });
-      m.anchors.feet.push({ c: [x + 0.03 + d, 0.03, z], r: 0.065, group: z > 0 ? 6 : 2 });
+      m.seg([x * (1 - rd * 0.3), 0.15 + lift, z], [x * (1 - rd * 0.3) + d, 0.03, z], 0.06, 0.05, M.BODY3, { group: z > 0 ? 6 : 2 });
+      m.anchors.feet.push({ c: [x * (1 - rd * 0.3) + 0.03 + d, 0.03, z], r: 0.065, group: z > 0 ? 6 : 2 });
     }
-    const c = [0, 0.32, 0], r = [0.5, 0.32, 0.38];
-    m.ell(c, r, M.BODY2, { paint: (p) => spotty(p, 22, 0.3) ? M.BODY3 : spotty(p, 19, 0.12) ? M.BELLY : void 0 });
+    const c = [0, 0.32 + lift, 0], r = [0.5 * (1 - rd * 0.25), 0.32 * (1 + rd * 0.1), 0.38];
+    m.ell(c, r, soft ? M.BELLY : M.BODY2, { paint: (p) => soft ? spotty(p, 22, 0.25) ? M.BODY2 : void 0 : spotty(p, 22, 0.3) ? M.BODY3 : spotty(p, 19, 0.12) ? M.BELLY : void 0 });
     for (let i = 0; i < 64; i++) {
       const a = i * 2.399 % (Math.PI * 2), t = i / 64 * 0.9 + 0.05, d = v3.norm([Math.cos(a) * Math.sin(t * Math.PI * 0.5) - 0.25, Math.cos(t * Math.PI * 0.5) * 0.9 + 0.1, Math.sin(a) * Math.sin(t * Math.PI * 0.5)]);
-      if (d[0] > 0.55) continue;
-      m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, 0.08)), [0.17, 0.028, 0.028], i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-0.3, 0.05, 0]), group: 1 });
+      if (d[0] > 0.55 - (1 - reach) * 0.9) continue;
+      const len = 0.17 * sp, w = 0.028 * (soft ? 1.3 : 1);
+      m.ell(v3.add(Model.surface(c, r, d), v3.mul(d, len * 0.47)), [len, w, w], soft ? i % 3 ? M.BELLY : M.BODY2 : i % 4 ? M.BODY2 : M.BODY3, { dir: v3.add(d, [-0.3 - (soft ? 0.4 : 0), 0.05, 0]), group: 1 });
     }
-    const sn = [0.48, 0.22, 0];
-    m.ell(sn, [0.22, 0.14, 0.15], M.BELLY, { dir: [1, -0.3, 0], group: 1 });
-    m.ell([0.69, 0.16, 0], [0.04, 0.04, 0.04], M.NOSE, { group: 1 });
-    eyesOn(m, sn, [0.22, 0.14, 0.15], [[0.3, 0.6, 0.55], [0.3, 0.6, -0.55]], 0.035, legend ? M.MAGIC2 : M.EYE);
+    const sn = [0.48 - rd * 0.08, 0.22 + lift + (hk - 1) * 0.08, 0], snr = [0.22 * hk, 0.14 * hk, 0.15 * hk];
+    m.ell(sn, snr, M.BELLY, { dir: [1, -0.3, 0], group: 1 });
+    m.ell([sn[0] + 0.21 * hk, sn[1] - 0.06 * hk, 0], [0.04 * hk, 0.04 * hk, 0.04 * hk], M.NOSE, { group: 1 });
+    eyesOn(m, sn, snr, [[0.3, 0.6, 0.55], [0.3, 0.6, -0.55]], 0.035 * hk, legend ? M.MAGIC2 : M.EYE);
     if (legend) crystals3d(m, [[[-0.3, 0.55, 0.1], 0.35], [[-0.05, 0.62, -0.1], 0.5], [[0.2, 0.55, 0.12], 0.4], [[-0.15, 0.58, 0.2], 0.3]]);
     return finish(m, S, level, st, 0.6, facing);
   }
@@ -6325,7 +6389,7 @@ label.check input { accent-color: var(--accent); }
     const m = new Model(), q = { ...S.q, ...S.levelQ?.[level] || {} }, sw = frame ? 1 : -1;
     const F = [0.8, 0, 0.6], R4 = [-0.6, 0, 0.8];
     const P2 = (f, u, s) => [F[0] * f + R4[0] * s, u, F[2] * f + R4[2] * s], D2 = (f, u, s) => v3.norm(P2(f, u, s)), at2 = (c, f, u, s) => v3.add(c, P2(f, u, s));
-    const hr = q.hr ?? 0.24, bw = q.bw ?? 0.42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0;
+    const hr = q.hr ?? 0.24, bw = q.bw ?? 0.42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0, reach = q.reach ?? 1, tusk = q.tusks ?? 0, mossK = q.mossK ?? 1, hump = q.boulder ?? 0;
     const fr = (p) => p[0] * F[0] + p[2] * F[2];
     const stoned = (p, base) => stoneTo && p[1] < stoneTo + 0.05 * Math.sin(p[0] * 29 + p[2] * 23) + 0.03 * Math.sin(p[0] * 61 - p[2] * 47) ? spotty(p, 22, 0.12) ? M.STONED : M.STONE : base;
     const fur = (p, base) => stoned(p, spotty(p, 16, 0.1) ? M.BODY2 : base);
@@ -6356,19 +6420,33 @@ label.check input { accent-color: var(--accent); }
     const tip = at2(hc, hr * 1.02, -hr * 0.2, 0);
     m.ell(tip, [hr * 0.34 * nose, hr * 0.3 * nose, hr * 0.34 * nose], M.EAR, { group: 1 });
     if (q.tooth) m.ell(at2(hc, hr * 0.9, -hr * 0.62, hr * 0.12), [hr * 0.07, hr * 0.11, hr * 0.07], M.BELLY, { group: 1 });
+    if (tusk) for (const side of [-1, 1]) {
+      const b = at2(hc, hr * 0.8, -hr * 0.62, side * hr * 0.38);
+      m.chain([[...b, hr * 0.09 * tusk], [...at2(b, hr * 0.12, hr * 0.32 * tusk, side * hr * 0.08), hr * 0.05 * tusk], [...at2(b, hr * 0.02, hr * 0.55 * tusk, side * hr * 0.02), hr * 0.012]], M.BELLY, { group: 10, extra: true });
+    }
     if (beard) for (let i = 0; i < 7; i++) {
       const s = (i / 6 - 0.5) * hr * 1.4, root = at2(hc, hr * 0.85, -hr * 0.5, s), bl = hr * 1.5 * beard * (1 - Math.abs(i / 6 - 0.5) * 0.7), w = Math.sin(i * 2.3) * hr * 0.1;
       m.chain([[...root, hr * 0.24], [...at2(root, hr * 0.3, -bl * 0.55, s * 0.15 + w), hr * 0.2], [...at2(root, hr * 0.22, -bl, s * 0.1 - w), hr * 0.07]], M.BELLY, { group: 5 + i % 2 * 3 });
     }
     for (const side of [-1, 1]) {
-      const g = side > 0 ? 7 : 2, d = -sw * side * 0.05, sh = P2(0.02, 0.78, side * bw * 0.85), el = P2(0.1 + d * 0.5, 0.45, side * (bw + 0.05)), wr = P2(0.2 + d, 0.15, side * (bw + 0.03));
+      const g = side > 0 ? 7 : 2, d = -sw * side * 0.05, wy = 0.78 - 0.63 * reach, sh = P2(0.02, 0.78, side * bw * 0.85), el = P2(0.1 * reach + d * 0.5, 0.78 - 0.33 * reach, side * (bw + 0.05)), wr = P2(0.2 * reach + d, wy, side * (bw + 0.03));
       m.chain([[...sh, 0.1], [...el, 0.075], [...wr, 0.09]], M.BODY, { group: g, paint: (p) => fur(p, M.BODY) });
-      m.ell(P2(0.23 + d, 0.09, side * (bw + 0.03)), [0.12, 0.09, 0.1], M.BODY2, { dir: F, group: g, paint: (p) => stoned(p, M.BODY2) });
-      for (let k = 0; k < 3; k++) m.ell(P2(0.33 + d, 0.06, side * (bw + 0.03) + (k - 1) * 0.055), [0.045, 0.045, 0.04], M.BODY2, { group: g, paint: (p) => stoned(p, M.BODY2) });
+      if (reach >= 0.9) {
+        m.ell(P2(0.23 + d, 0.09, side * (bw + 0.03)), [0.12, 0.09, 0.1], M.BODY2, { dir: F, group: g, paint: (p) => stoned(p, M.BODY2) });
+        for (let k = 0; k < 3; k++) m.ell(P2(0.33 + d, 0.06, side * (bw + 0.03) + (k - 1) * 0.055), [0.045, 0.045, 0.04], M.BODY2, { group: g, paint: (p) => stoned(p, M.BODY2) });
+      } else m.ell(P2(0.2 * reach + d + 0.02, wy - 0.07, side * (bw + 0.03)), [0.09, 0.1, 0.09], M.BODY2, { group: g });
     }
     for (let i = 0; i < (q.moss || 0); i++) {
       const a = (i / Math.max(1, q.moss - 1) - 0.5) * 2.4, c = P2(-0.1 + 0.05 * Math.cos(i * 1.7), 0.9 + 0.06 * Math.cos(a * 1.3), Math.sin(a) * bw * 0.85);
-      m.ell(c, [0.07, 0.045, 0.07], M.MOSS, { group: 3, extra: true });
+      m.ell(c, [0.07 * mossK, 0.045 * mossK, 0.07 * mossK], M.MOSS, { group: 3, extra: true });
+    }
+    if (hump) {
+      const hb = P2(-0.22, 0.98, 0);
+      m.ell(hb, [0.3 * hump, 0.26 * hump, bw * 0.8], M.STONE, { dir: F, up, paint: (p) => p[1] > hb[1] + 0.12 * hump && spotty(p, 9, 0.45) ? M.MOSS : spotty(p, 20, 0.15) ? M.STONED : void 0 });
+      for (let k = 0; k < 4; k++) {
+        const a = (k / 3 - 0.5) * 1.8;
+        m.ell(at2(hb, -0.05 + 0.04 * Math.cos(k * 2.1), 0.22 * hump, Math.sin(a) * bw * 0.5), [0.09, 0.08, 0.09], k % 2 ? M.STONED : M.STONE, { group: 11 + k, extra: true });
+      }
     }
     if (q.beads) for (let i = 0; i < 9; i++) {
       const a = (i / 8 - 0.5) * 2.6;
@@ -6612,26 +6690,27 @@ label.check input { accent-color: var(--accent); }
   }
   function armadillo3d(S, level, frame, st, facing = "towards") {
     if (level === 3) return armadilloBall(S, frame, st, facing);
-    const legend = false, m = new Model(), bob = frame ? 0.012 : 0;
+    const legend = false, m = new Model(), bob = frame ? 0.012 : 0, q = { ...S.q, ...S.levelQ?.[level] || {} };
+    const soft = q.soft ?? 0, snout = q.snout ?? 1, ears = q.ears ?? 1, tail = q.tail ?? 1, dome = q.dome ?? 1, lift = ((q.legs ?? 1) - 1) * 0.1;
     for (const [x, z] of [[0.26, 0.2], [0.26, -0.2], [-0.28, 0.21], [-0.28, -0.21]]) {
       const d = (frame ? -1 : 1) * Math.sign(x * z) * 0.06;
-      m.seg([x, 0.14, z], [x + d, 0.03, z], 0.06, 0.05, M.SKIN, { group: z > 0 ? 6 : 2 });
+      m.seg([x, 0.14 + lift, z], [x + d, 0.03, z], 0.06, 0.05, M.SKIN, { group: z > 0 ? 6 : 2 });
       for (let k = -1; k <= 1; k++) m.ell([x + d + 0.06, 0.02, z + k * 0.025], [0.035, 0.012, 0.01], M.ACCENT, { group: z > 0 ? 6 : 2 });
       m.anchors.feet.push({ c: [x + 0.03 + d, 0.03, z], r: 0.065, group: z > 0 ? 6 : 2 });
     }
-    const c = [0, 0.3 + bob, 0], r = [0.5, 0.27, 0.32], band2 = (p) => Math.floor((p[0] + 0.26) * 15);
-    m.ell(c, r, M.BODY, { paint: (p) => p[0] > -0.26 && p[0] < 0.2 ? band2(p) % 2 ? M.BODY2 : M.BODY : spotty(p, 26, 0.3) ? M.BODY3 : spotty(p, 22, 0.2) ? M.BODY2 : void 0 });
-    m.ell([0, 0.17 + bob, 0], [0.46, 0.08, 0.3], M.SKIN, { group: 1 });
-    const hc = [0.6, 0.22 + bob, 0], hr = [0.14, 0.12, 0.12];
+    const c = [0, 0.3 + bob + lift, 0], r = [0.5 * (1 - (dome - 1) * 0.5), 0.27 * dome, 0.32], band2 = (p) => Math.floor((p[0] + 0.26) * 15);
+    m.ell(c, r, soft ? M.SKIN : M.BODY, { paint: soft ? (p) => spotty(p, 20, 0.25) ? M.BODY : void 0 : (p) => p[0] > -0.26 && p[0] < 0.2 ? band2(p) % 2 ? M.BODY2 : M.BODY : spotty(p, 26, 0.3) ? M.BODY3 : spotty(p, 22, 0.2) ? M.BODY2 : void 0 });
+    m.ell([0, 0.17 + bob + lift, 0], [0.46 * r[0] / 0.5, 0.08, 0.3], M.SKIN, { group: 1 });
+    const hk = q.head ?? 1, hc = [0.6 * r[0] / 0.5 + (hk - 1) * 0.06, 0.22 + bob + lift + (hk - 1) * 0.06, 0], hr = [0.14 * hk, 0.12 * hk, 0.12 * hk];
     m.ell(hc, hr, M.BODY, { paint: (p) => p[1] > hc[1] + 0.04 ? M.BODY2 : void 0 });
-    m.seg(v3.add(hc, [0.08, -0.02, 0]), v3.add(hc, [0.3, -0.08, 0]), 0.055, 0.022, M.SKIN, { group: 1 });
-    m.ell(v3.add(hc, [0.31, -0.08, 0]), [0.025, 0.025, 0.028], M.NOSE, { group: 1 });
-    for (const side of [-1, 1]) m.ell(v3.add(hc, [-0.03, 0.15, side * 0.07]), [0.1, 0.035, 0.03], M.SKIN, { dir: [-0.2, 1, side * 0.35], group: 1 });
+    m.seg(v3.add(hc, [0.08 * hk, -0.02, 0]), v3.add(hc, [0.08 * hk + 0.22 * snout, -0.08 * snout, 0]), 0.055 * hk, 0.022 * hk, M.SKIN, { group: 1 });
+    m.ell(v3.add(hc, [0.08 * hk + 0.23 * snout, -0.08 * snout, 0]), [0.025 * hk, 0.025 * hk, 0.028 * hk], M.NOSE, { group: 1 });
+    for (const side of [-1, 1]) m.ell(v3.add(hc, [-0.03, (0.15 + (ears - 1) * 0.08) * hk, side * 0.07 * hk]), [0.1 * ears * hk, 0.035 * ears, 0.03 * ears], M.SKIN, { dir: [-0.2, 1, side * 0.35], group: 1 });
     eyesOn(m, hc, hr, [[0.55, 0.3, 0.6], [0.55, 0.3, -0.6]], 0.02, legend ? M.MAGIC2 : M.EYE);
-    m.chain([[-0.46, 0.24 + bob, 0, 0.08], [-0.66, 0.12, 0, 0.05], [-0.86, 0.05, 0, 0.02]], M.BODY, { paint: (p) => Math.floor(p[0] * 30) % 2 ? M.BODY2 : void 0, group: 3 });
+    m.chain([[-0.46 * r[0] / 0.5, 0.24 + bob + lift, 0, 0.08], [-0.46 * r[0] / 0.5 - 0.2 * tail, 0.12 + lift * 0.5, 0, 0.05], [-0.46 * r[0] / 0.5 - 0.4 * tail, 0.05, 0, 0.02]], M.BODY, { paint: (p) => Math.floor(p[0] * 30) % 2 ? M.BODY2 : void 0, group: 3 });
     m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + 0.16, 0] };
     m.anchors.eyes = { pts: [-1, 1].map((side) => Model.surface(hc, hr, v3.norm([0.55, 0.3, side * 0.6]))), size: 0.025 };
-    m.anchors.neck = { c: [0.44, 0.22 + bob, 0], r: 0.12, dir: [1, -0.1, 0] };
+    m.anchors.neck = { c: [0.44 * r[0] / 0.5, 0.22 + bob + lift, 0], r: 0.12, dir: [1, -0.1, 0] };
     if (legend) crystals3d(m, [[[-0.2, 0.54, 0.1], 0.35], [[0, 0.57, -0.1], 0.5], [[0.18, 0.53, 0.1], 0.4], [[-0.05, 0.56, 0.18], 0.3]]);
     return finish(m, S, level, st, 0.5, facing);
   }
@@ -7064,11 +7143,11 @@ label.check input { accent-color: var(--accent); }
   }
   function crab3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
-    const cw = q.shell ?? 1, big = q.claw ?? 1, y = 0.3 * cw;
+    const cw = q.shell ?? 1, big = q.claw ?? 1, small = q.small ?? 1, stalk = q.stalk ?? 1, span = q.legs ?? 1, y = 0.3 * cw;
     const shell = [0, y, 0], sr = [0.42 * cw, 0.15 * cw, 0.28 * cw];
     for (const side of [-1, 1]) for (let i = 0; i < 4; i++) {
       const z = 0.12 - i * 0.1, ph = ((i + (side > 0 ? 1 : 0) + frame) % 2 ? 1 : -1) * 0.05, base = [side * sr[0] * 0.8, y - 0.02, z * cw];
-      m.chain([[...base, 0.035 * cw], [side * (sr[0] + 0.2) * cw + ph, y + 0.14 * cw, (z - 0.04) * cw, 0.03 * cw], [side * (sr[0] + 0.34) * cw + ph * 1.6, 0.02, (z - 0.1) * cw, 0.015 * cw]], i % 2 ? M.BODY2 : M.BODY, { group: side > 0 ? 7 : 2 });
+      m.chain([[...base, 0.035 * cw], [side * (sr[0] + 0.2 * span) * cw + ph, y + 0.14 * cw * span, (z - 0.04) * cw, 0.03 * cw], [side * (sr[0] + 0.34 * span) * cw + ph * 1.6, 0.02, (z - 0.1) * cw, 0.015 * cw]], i % 2 ? M.BODY2 : M.BODY, { group: side > 0 ? 7 : 2 });
     }
     const reef = has("reef");
     m.ell(shell, sr, M.BODY, { paint: (p) => q.barnacles && spotty(p, 18, reef ? 0.3 : 0.12) ? M.BELLY : reef && Math.abs(Math.sin(p[0] * 30 + p[2] * 11)) < 0.05 ? M.BODY3 : p[1] > y + sr[1] * 0.55 ? M.BODYL : void 0 });
@@ -7078,7 +7157,7 @@ label.check input { accent-color: var(--accent); }
     }
     m.ell([0, y - sr[1] * 0.4, sr[2] * 0.3], [sr[0] * 0.85, sr[1] * 0.55, sr[2] * 0.8], M.BELLY, { group: 1 });
     for (const side of [-1, 1]) {
-      const k = side > 0 ? big : 1, great = side > 0 && big > 1.2, cm = great ? M.BODY : M.BODY2, out = great ? 0.12 * (k - 1) : 0;
+      const k = side > 0 ? big : small, great = side > 0 && big > 1.2, cm = great ? M.BODY : M.BODY2, out = great ? 0.12 * (k - 1) : 0;
       const lift = side > 0 && has("wave") && !FORM ? frame % 2 ? 0.1 : 0.32 : 0;
       const sh = [side * 0.16 * cw, y - 0.04, sr[2] * 0.6], el = [side * 0.22 * cw, y - 0.02 + lift * 0.5, sr[2] * 0.9], hand = [side * (0.24 + 0.06 * k + out) * cw, y + (0.06 + 0.05 * k + lift) * cw, (sr[2] + 0.1 + 0.06 * k) * cw];
       m.seg(sh, el, 0.04 * cw, 0.035 * cw, M.BODY2, { group: side > 0 ? 6 : 5 });
@@ -7090,12 +7169,12 @@ label.check input { accent-color: var(--accent); }
       m.chain([[...v3.add(hand, [0, -0.03 * k * cw, 0.05 * k * cw]), 0.035 * k * cw], [...v3.lerp(hand, tipD, 0.6), 0.022 * k * cw], [...tipD, 6e-3]], cm, { group: side > 0 ? 6 : 5 });
     }
     for (const side of [-1, 1]) {
-      const b = [side * 0.07 * cw, y + sr[1] * 0.6, sr[2] * 0.7], e = v3.add(b, [side * 0.02, 0.14 * cw, 0.04 * cw]);
+      const b = [side * 0.07 * cw, y + sr[1] * 0.6, sr[2] * 0.7], e = v3.add(b, [side * 0.02, 0.14 * cw * stalk, 0.04 * cw]);
       m.seg(b, e, 0.018 * cw, 0.014 * cw, M.BODY2, { group: 9 });
       m.ell(e, [0.04 * cw, 0.045 * cw, 0.04 * cw], legend ? M.MAGIC2 : M.EYE, { group: 9 });
     }
     m.anchors.head = { c: [0, y + sr[1] * 0.7, sr[2] * 0.7], r: [0.12, 0.1, 0.1], top: [0, y + sr[1] + 0.12, 0] };
-    m.anchors.eyes = { pts: [-1, 1].map((side) => [side * 0.09 * cw, y + sr[1] * 0.6 + 0.14 * cw, sr[2] * 0.7 + 0.04 * cw]), size: 0.04 * cw };
+    m.anchors.eyes = { pts: [-1, 1].map((side) => [side * 0.09 * cw, y + sr[1] * 0.6 + 0.14 * cw * stalk, sr[2] * 0.7 + 0.04 * cw]), size: 0.04 * cw };
     m.anchors.neck = { c: [0, y + sr[1] * 0.2, sr[2] * 0.6], r: 0.14 * cw, dir: [0, 0, 1] };
     return finish(m, S, level, st, 0.45, facing);
   }
@@ -7501,7 +7580,7 @@ label.check input { accent-color: var(--accent); }
     generator: "blob",
     grow: "normal",
     crown: { envelope: "umbrella", clumps: "fronds" },
-    params: { w: 150, wPad: 0, h: 125, trunk: { w: 11, len: 0.6, taper: 0.92, bend: 0.3, lean: 0.15, scars: 3, roots: 0.2 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [16, 20], len: [44, 56], leaflet: 5, droop: 0.45, spread: 2.7, fruit: { n: [1, 1], r: 4.5 } } } },
+    params: { w: 150, wPad: 0, h: 125, trunk: { w: 11, len: 0.6, taper: 0.92, bend: 0.3, lean: 0.15, scars: 3, roots: 0.2 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [16, 20], len: [44, 56], leaflet: 5, droop: 0.8, spread: 2.2, fruit: { n: [1, 1], r: 4.5 } } } },
     low: { sprigs: 0.1 },
     colour: { hue: 0.03, sat: 0.8, val: 0.7, trunk: [0.07, 0.3, 0.34] }
   };
