@@ -137,6 +137,9 @@ const VARIANTS = [
     rows.push(row);
     lap(`${V.id}: gap ${f1(row.gap50)} ms (p95 ${f1(row.gap95)}), draw ${f1(row.draw50)} ms, scene ${f1(row.scene50)} ms, gpu ${f1(row.gpu50)} ms, calls ${row.calls}, tris ${row.tris}`);
   }
+  // A shader that didn't compile draws nothing, and nothing is cheap: the run is void (2026-10-13: `half` is a reserved word in GLSL).
+  const shaderErrors = errors.filter(e => /Shader Error|not compiled|VALIDATE_STATUS/.test(e));
+  if (shaderErrors.length) { console.error(`SHADER ERRORS (${shaderErrors.length}): the numbers below are of a picture missing what didn't compile\n` + shaderErrors[0].slice(0, 1500)); }
   const base = rows.find(r => r.id === "base");
   const end = await page.evaluate(() => { const g = window.witch.game, v = window.witch.view; return { wave: g.party.wave, lights: v.stats?.lights, trees: v.stats?.trees, bushes: v.stats?.bushes, creatures: g.creatures.length, cover: v.grass?.count }; });
   const lines = [
@@ -152,4 +155,5 @@ const VARIANTS = [
   fs.writeFileSync(path.join(out, "gpu.json"), JSON.stringify({ where, rows, errors }, null, 1));
   await page.screenshot({ path: path.join(out, "spot.png") });
   await browser.close(); server.close();
+  if (shaderErrors.length) process.exit(2);
 })().catch(e => { console.error(e); process.exit(1); });
