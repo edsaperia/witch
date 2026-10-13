@@ -1,0 +1,1 @@
+export const LEGEND_ELEPHANT = { sink: .4, droop: .8, drop: [], over: { moss: .6, lichen: .08, ferns: 4, grass: 4, mushrooms: 2, roots: 4, stones: 3 } }; // the temple jungle's elephant: a matriarch knelt among the temple stones, mossed like one of them, her bells green with age

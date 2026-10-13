@@ -94,7 +94,7 @@ const report = await b.page.evaluate(async () => {
     const detail = sp => { let e = 0, n = 0; for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const v = sp.m[y * sp.w + x]; if (!coat.has(v)) continue; n++; const r = sp.get(x + 1, y), b = sp.get(x, y + 1); if (coat.has(r) && r !== v) e++; if (coat.has(b) && b !== v) e++; } return n ? e / n : 0; };
     for (const S of G.SPECIES) {
       const col = G.speciesColours(S.id, st), dv = [0, 1, 2, 3].map(level => {
-        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, Math.ceil(b.h * .01));
+        const a = G.critter(S.id, level, 0, st), b = G.critter(S.id, level, 0, off), id = `${S.id} ${level}`, tol = Math.max(2, Math.ceil(Math.max(b.w, b.h) * .01)); // (1% of its bigger side: the lumps pull a legend's farthest points, its nose and tail, in by a few pixels)
         if (Math.abs(a.w - b.w) > tol || Math.abs(a.h - b.h) > tol) bad.push(`${id} ${a.w}x${a.h} vs ${b.w}x${b.h}`);
         if (![...a.n].every(Number.isFinite)) bad.push(`${id} NaN`);
         for (const v of new Set(a.m)) if (v && v !== G.M.LINE && !col[v]) bad.push(`${id} material ${v} uncoloured`);
@@ -111,6 +111,18 @@ const report = await b.page.evaluate(async () => {
       const sh = Object.fromEntries(G.SPECIES.map(S => [S.id, G.silhouette(G.critter(S.id, level, 0, st))])), pairs = G.silhouettePairs(sh), close = pairs.filter(p => p.d < .15);
       res.push({ what: `silhouettes: no two species alike at ${G.SILHOUETTE_SIZE} px (${["", "young", "adult"][level]}s, every pair 0.15 apart or more)`, good: !close.length, info: (close.length ? close : pairs.slice(0, 3)).map(p => `${p.a}/${p.b} ${p.d.toFixed(2)}`).join(", ") });
     }
+  }
+  { // growth, not scale (docs/ART-GUIDE.md 0b, the menagerie review): each level's shape against the level before it, both scaled into
+    // the same 24 px box (1 - overlap over union): a step under LEVEL_STEP is a scaled copy. A warning today (the review's baseline has
+    // mole 0.07 baby to young, bear 0.11 young to adult, marten 0.11 adult to legend); it fails once every species clears it.
+    const LEVEL_STEP = .2, bad = [], all = [];
+    for (const S of G.SPECIES) {
+      const sh = [0, 1, 2, 3].map(l => G.silhouette(G.critter(S.id, l, 0, st)));
+      const d = [1, 2, 3].map(l => G.silhouetteDistance(sh[l - 1], sh[l]));
+      all.push(`${S.id} ${d.map(x => x.toFixed(2)).join("/")}`);
+      d.forEach((x, i) => { if (x < LEVEL_STEP) bad.push(`${S.id} ${["baby→young", "young→adult", "adult→legend"][i]} ${x.toFixed(2)}`); });
+    }
+    res.push({ what: `growth, not scale: every level's silhouette ${LEVEL_STEP} or more from the level before, scaled to one box (${G.SPECIES.length} species)`, good: true, warn: bad.length ? "scaled copies: " + bad.join(", ") : "", info: all.join("; ") });
   }
   { // the live rig's parts (#79 stage 4): every four-legged species and the snake, at each level, baked as pieces at the five headings (torso, head:
     // the four-legged, and their tails where they have one; the serpent's head), each with its pivot near it, four legs with two bones each, discs to string them
@@ -520,11 +532,12 @@ const report = await b.page.evaluate(async () => {
     const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
     let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = Math.hypot(...vec(stats2[ids[i]]).map((v, k) => v - vec(stats2[ids[j]])[k])); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
     if (closest[0] < 1.5) bad.push(`${closest[1]} and ${closest[2]} look alike from above (${closest[0].toFixed(2)})`);
-    // (an open area carrying a few trees among its props, layout.treeShare, has no main kind shaping its look: not counted)
-    const main = A => A.layout?.treeShare ? undefined : (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], byPattern = {}, uses = {};
-    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = A.layout.pattern + ":" + o.type; if (byPattern[key]) bad.push(`${A.id} and ${byPattern[key]} (both ${A.layout.pattern}) share ${o.type}`); byPattern[key] = A.id; uses[o.type] = (uses[o.type] || 0) + 1; if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species"); }
-    for (const [k, n] of Object.entries(uses)) if (n > 2) bad.push(`${k} is the main kind of ${n} areas`);
-    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); neighbours by layout pattern never share a main species, none is the main kind of 3+ areas, plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main kinds over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
+    // every area's main tree its own (Ed, 2026-10-13: "a 'different' main tree in each area, even if they're only slightly different
+    // (e.g. snowy vs not snowy)"): its species, or a variant of it (art/flora/variants.js), no two areas sharing one
+    const { TREE_VARIANTS, treeKey } = await import("/art/flora/variants.js");
+    const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], owner = {}, uses = {};
+    for (const A of G.AREAS) { const o = main(A); if (!o) continue; const key = treeKey(o); if (owner[key]) bad.push(`${A.id} and ${owner[key]} share their main tree ${key}`); owner[key] = A.id; uses[key] = 1; if (o.variant && !TREE_VARIANTS[o.variant]) bad.push(`${A.id} names no variant ${o.variant}`); if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species " + o.type); }
+    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); every area's main tree its own (a species, or a variant of one), plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main trees over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
   }
   { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
     // a skirt), more on saplings than on mature trees; the top half is exactly what the tree draws without them (the canopy and its cut-out unchanged);
@@ -846,6 +859,7 @@ const report = await b.page.evaluate(async () => {
   return res;
 });
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
+for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
@@ -894,10 +908,11 @@ ok(report.every(r => r.good), `${report.length} sprite checks`);
   ok(!bad.length, `party relics: ${P.PARTY_RELIC_IDS.length} bottles, half-buried, a third of their built size, see-through glass, glowing liquid that lights the ground, motes rising over 3 frames, a glint on each (bigger from the treetops), one sigil for all${bad.length ? " — " + bad.slice(0, 6).join("; ") : ""}`);
 }
 // the trees and bushes grown from their genomes (art/flora/genomes.js) draw exactly as before: every species over seeds, sizes and
-// area options, and the bushes, against art/flora/baseline.json (when a change to them is meant, rewrite it: node art/flora/fingerprint.mjs)
+// area options, and the bushes, against art/flora/baseline/ (one file a species; when a change to them is meant, rewrite them:
+// node art/flora/fingerprint.mjs)
 {
-  const { fingerprints } = await import("./flora/fingerprint.mjs"), { readFileSync } = await import("node:fs");
-  const base = JSON.parse(readFileSync(new URL("./flora/baseline.json", import.meta.url))), now = fingerprints();
+  const { fingerprints } = await import("./flora/fingerprint.mjs"), { readBaseline } = await import("./flora/baseline.mjs");
+  const base = readBaseline(), now = fingerprints();
   const keys = Object.keys(base), diff = keys.filter(k => base[k] !== now[k]), extra = Object.keys(now).filter(k => !(k in base));
   ok(!diff.length && !extra.length, `flora genomes: ${keys.length - diff.length} of ${keys.length} trees and bushes as the baseline${diff.length ? " — differ: " + diff.slice(0, 8).join(", ") : ""}${extra.length ? " — not in it: " + extra.slice(0, 8).join(", ") : ""}`);
 }

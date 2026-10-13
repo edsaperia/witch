@@ -1,0 +1,1 @@
+export const LEGEND_FROSTTROLL = { ground: .3, droop: .6, drop: [], over: { moss: .55, lichen: .3, ferns: 1, grass: 1, mushrooms: 1, roots: 1, stones: 6 } }; // the trollwood's troll: asleep, a mossy boulder among the boulders

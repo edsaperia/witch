@@ -39,6 +39,15 @@ const ROUTES = new WeakMap<ForestMap, LeyRoute>();
  *  and untangled again, up to TRIES times, the least crossed kept (none, on every seed tried). */
 export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () => string[], finish?: (r: LeyRoute) => LeyRoute, others?: () => string[][]): LeyRoute {
   let r = ROUTES.get(map);
+  // The zoo (rules/zoo.ts): no waves, so no route to plan (planning one over its grid took a minute and a half): its blocks
+  // in reading order, stone to stone, straight.
+  if (!r && map.zoo) {
+    const order = map.cells.filter(([x, y]) => x !== map.centreCell[0] || y !== map.centreCell[1]).sort((a, b) => a[1] - b[1] || a[0] - b[0]).map(([x, y]) => `${x},${y}`);
+    const stones = order.map(k => { const [x, y] = k.split(",").map(Number), q = map.soundsystemSpot(x, y); return [q.x, q.z] as P2; });
+    const links = stones.map((s, i) => [i ? stones[i - 1] : ([map.treehouse.x, map.treehouse.z] as P2), s]);
+    r = { order, stones, links, straight: links };
+    ROUTES.set(map, r);
+  }
   if (!r) {
     r = planRoute(map, initial());
     // A route that turns back toward home late on (untangling can reverse a long run: seed 2 once the ghost areas went,

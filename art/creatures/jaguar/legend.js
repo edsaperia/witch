@@ -1,0 +1,1 @@
+export const LEGEND_JAGUAR = { sink: .45, droop: 1, drop: [], over: { moss: .55, lichen: .05, ferns: 4, grass: 2, mushrooms: 3, roots: 4, stones: 1 } }; // the river jungle's black jaguar: stretched along a root by the water, mossed over, its beads green with age

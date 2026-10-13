@@ -165,7 +165,7 @@ One area type per creature, each a small definition in Ed's columns: **floor** t
 
 ### Area types from recipes (#119)
 
-Area types after the first 30 are written as **recipes**: one object of data each (`art/recipes/`), with no code (see the glossary in CLAUDE.md). The first, the proof that the tools are enough:
+Area types after the first 30 are written as **recipes**: one object of data each (`art/areas/<id>/recipe.js`), with no code (see the glossary in CLAUDE.md). The first, the proof that the tools are enough:
 
 | Area | Floor | Wall | Small | Big | Set piece | Creature | By |
 |---|---|---|---|---|---|---|---|
@@ -178,6 +178,8 @@ Area types after the first 30 are written as **recipes**: one object of data eac
 | Bushveld | red earth and trampled dry grass | walls of thorn scrub | thorn bushes and dry grass clumps | flat-topped thorn trees in clumps, umbrella acacias | a ring of old boma posts round a cold hearth | Rhino | recipe (hot, phase 4) |
 | Pack ice | sea ice and drifted snow | dark leads of open water | snow drifts and ice blocks | stunted wind-bent firs and birch along the shore | a pressure ridge of broken ice | Polar bear | recipe (cold, phase 4) |
 | Scrub wash | cracked dry clay | the wash's sandy banks | thorny scrub | stunted thorn trees, junipers and sun-split boulders | a ring of sun-split stones round a dry hollow | Armadillo | recipe (badlands, phase 3) |
+| Penguin rookery | snow over dark wet shingle | black sea rocks | tussock grass and pebbles | wind-stunted firs, pines and birches | the rookery's ring of pebble nests | Penguin | recipe (cold, phase 3) |
+| Dragon scrub | dry savannah grass and dust | rock outcrops | thorn scrub and dry grass | fan palms and flat-topped acacias | a great sun-warmed basking rock | Komodo dragon | recipe |
 
 ## Combat, pacing and forecasting (Ed, 2026-10-04)
 

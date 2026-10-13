@@ -236,6 +236,35 @@
           "pursuit": {
             "type": "number",
             "minimum": 0
+          },
+          "glide": {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number",
+                "minimum": 0
+              },
+              "speed": {
+                "type": "number",
+                "minimum": 0
+              },
+              "height": {
+                "type": "number",
+                "minimum": 0
+              },
+              "chance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              }
+            },
+            "required": [
+              "min",
+              "speed",
+              "height",
+              "chance"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [

@@ -1,0 +1,1 @@
+export const LEGEND_NEWT = { sink: .6, droop: 1, drop: [60, 61], over: { moss: .3, lichen: .08, ferns: 1, grass: 3, mushrooms: 1, roots: 1, stones: 2 } }; // the fen's newt (an area recipe's): sunk in peat, sedge over it

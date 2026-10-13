@@ -13,7 +13,7 @@
 //   node art/preview.mjs partyobjects litter|small|furniture|set|all|<ids> art/previews/party-objects.png [scale]   (the party objects, neon ones cycling the neons; NIGHT=1 to see them glow)
 //   node art/preview.mjs partypatch 1 art/previews/party-patch.png [scale]   (a sample patch of party ground: clusters and loose objects, seeded; NIGHT=1)
 //   node art/preview.mjs sizes all|<species> art/previews/sizes.png [scale]   (each species' baby, young and adult beside the witch standing, at today's size and bigger: SCALES=1,1.2,1.35,1.5, st.creatureScale)
-//   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row; IDLE=1 its idle pose too)
+//   node art/preview.mjs lineup all|<species> art/previews/lineup.png [scale]   (each species' baby, young, adult and legend side by side, the witch for scale; PER=n species to a row; IDLE=1 its idle pose too; TOP=1 each row again from straight above; LEVELS=2,3 those levels only; PROFILE=0 the bodies with no profile; SPINE=0 no spine)
 //   node art/preview.mjs naps all|<species> art/previews/naps.png [scale]   (each species asleep, art/naps.js: baby, young and adult awake, then each asleep in its 2 breathing frames, the witch for scale; LEVELS=[...] to choose; DRESSED=1: in party gear awake, then asleep bare and asleep dressed)
 //   node art/preview.mjs legends all|<species> art/previews/legends.png [scale]   (each sleeping legend asleep, its 2 breathing frames, then the legend awake as it is, then the witch for scale; FACINGS=away for the other view)
 //   node art/preview.mjs genome wolf,fox,...|all art/previews/genome-palettes.png [scale]   (each species' sprite baked once as a material mask, then painted with its own palette and every curated variant: no rebake)
@@ -71,6 +71,10 @@ if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; }
 if (process.env.DRESSED) await b.page.addInitScript(() => { window.DRESSED = true; });
 if (process.env.IDLE) await b.page.addInitScript(() => { window.IDLE = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
+if (process.env.TOP) await b.page.addInitScript(() => { window.TOP = 1; });
+if (process.env.PROFILE === "0") await b.page.addInitScript(() => { window.NO_PROFILE = 1; }); // the bodies as built with no profile (a before sheet)
+if (process.env.SPINE === "0") await b.page.addInitScript(() => { window.NO_SPINE = 1; }); // the bodies with their profile but no spine (the spine sheet's before)
+if (process.env.LEVELS) await b.page.addInitScript(l => { window.LEVELS = l; }, process.env.LEVELS.split(",").map(Number));
 if (process.env.VARIANTS) await b.page.addInitScript(() => { window.VARIANTS = true; });
 if (process.env.HALVES) await b.page.addInitScript(() => { window.HALVES = true; });
 if (process.env.MIRROR) await b.page.addInitScript(() => { window.MIRROR = true; });
@@ -293,9 +297,14 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
     const label = (t, h = 14) => { const A = document.createElement("canvas"), N = document.createElement("canvas"); A.width = N.width = 8 * t.length + 8; A.height = N.height = h; const a = A.getContext("2d"); a.font = "bold 12px monospace"; a.fillStyle = "#fff"; a.textBaseline = "top"; a.fillText(t, 2, 1); const nn = N.getContext("2d"); nn.fillStyle = "rgb(128,128,255)"; nn.fillRect(0, 0, N.width, h); return { A, N, w: A.width, h }; };
     for (const id of ids) rows.push([label(id.padEnd(10)), ...scales.flatMap(c => { const s2 = { ...st, creatureScale: c }; return [label(c === 1 ? " today" : ` +${Math.round(c * 100 - 100)}%`), ...[0, 1, 2].map(l => G.bake(G.critter(id, l, 0, s2), G.speciesColours(id, s2), s2, s2.cOutline)), wit]; })]);
   } else if (what === "lineup") { // per species (or all): baby, young, adult and legend standing side by side, then the witch for scale; PER=n species to a row
-    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [];
-    for (const id of ids) items.push(...[0, 1, 2, 3].map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
-    for (let i = 0; i < ids.length; i += per) rows.push([...items.slice(i * 4, (i + per) * 4), wit]);
+    const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline), per = window.PER || 1, items = [], L = window.LEVELS || [0, 1, 2, 3]; // LEVELS=2,3: those levels only
+    if (window.NO_PROFILE) for (const s of G.SPECIES) { if (s.q) { delete s.q.profile; delete s.q.spine; } for (const l of Object.values(s.levelQ || {})) if (l) { delete l.profile; delete l.spine; } } // PROFILE=0: every body as the loaves build it, no spine
+    if (window.NO_SPINE) for (const s of G.SPECIES) { if (s.q) delete s.q.spine; for (const l of Object.values(s.levelQ || {})) if (l) delete l.spine; } // SPINE=0: no spine, the profile kept
+    for (const id of ids) items.push(...L.map(l => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline)));
+    for (let i = 0; i < ids.length; i += per) {
+      rows.push([...items.slice(i * L.length, (i + per) * L.length), wit]);
+      if (window.TOP) rows.push(ids.slice(i, i + per).flatMap(id => L.map(l => G.withView({ yaw: 0, pitch: 1.5 }, () => G.bake(G.critter(id, l, 0, st), G.speciesColours(id, st), st, st.cOutline))))); // TOP=1: the same from straight above (its girth along its length: the body profile)
+    }
     if (window.IDLE) for (const id of ids) rows.push([...[0, 1, 2, 3].flatMap(l => [0, 1].map(f => G.bake(G.critter(id, l, f, st, "towards", { idle: true }), G.speciesColours(id, st), st, st.cOutline))), wit]); // IDLE=1: then its idle pose (a genome's `idle`: the meerkat's sentinel), each level in its 2 frames
   } else if (what === "naps" && window.DRESSED) { // per species: in party gear awake (adult), asleep as before (bare), asleep dressed (Ed, 2026-10-06: sleepers keep their party gear), the witch for scale
     const ids = list === "all" ? G.SPECIES.map(s => s.id) : list.split(","), wit = G.bake(G.witchSprite(st), G.witchColours(st), st, st.cOutline);

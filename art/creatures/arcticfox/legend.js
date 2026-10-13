@@ -1,0 +1,1 @@
+export const LEGEND_ARCTICFOX = { sink: .4, droop: 1, drop: [70, 71], over: { moss: .1, lichen: .2, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 5 } }; // the snowfield's arctic fox: curled in a drift

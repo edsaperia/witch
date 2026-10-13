@@ -1,0 +1,40 @@
+{
+  "pr": 752,
+  "group": "Sigil glow",
+  "decisions": [
+    {
+      "id": "sigilGlyph",
+      "pr": 752,
+      "group": "Sigil glow",
+      "label": "Sigil strength",
+      "note": "How bright every sigil is drawn (placed, runes, ghost, stack, treetops). 0.5 stays under the bloom; lift it if they're faint on bright ground.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1.5,
+        "step": 0.05
+      },
+      "default": 0.5,
+      "apply": {
+        "knob": "leash.sigilGlyph"
+      }
+    },
+    {
+      "id": "sigilHalo",
+      "pr": 752,
+      "group": "Sigil glow",
+      "label": "Sigil halo",
+      "note": "The soft glow under placed sigils, ready runes and relic sigils, times its old strength (0: none).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "leash.sigilHalo"
+      }
+    }
+  ]
+}

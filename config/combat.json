@@ -305,184 +305,24 @@
    "quake"
   ]
  },
- "ranged": [
-  "owl",
-  "bat",
-  "raven",
-  "moth",
-  "spider",
-  "toad",
-  "salamander",
-  "snake",
-  "woodlouse"
- ],
- "bySpecies": {
-  "raven": [
-   null,
-   "longspit",
-   "longbarb",
-   "quake"
-  ],
-  "owl": [
-   null,
-   "lob",
-   "biglob",
-   "quake"
-  ],
-  "salamander": [
-   null,
-   "beam",
-   "widebeam",
-   "quake"
-  ],
-  "spider": [
-   null,
-   "web",
-   "bigweb",
-   "quake"
-  ],
-  "bat": [
-   null,
-   "screech",
-   "bigscreech",
-   "quake"
-  ],
-  "mole": [
-   null,
-   "upheaval",
-   "bigupheaval",
-   "quake"
-  ],
-  "toad": [
-   null,
-   "slam",
-   "bigslam",
-   "quake"
-  ],
-  "bear": [
-   null,
-   "swipe",
-   "bigswipe",
-   "quake"
-  ],
-  "tiger": [
-   null,
-   "swipe",
-   "bigswipe",
-   "legendCharge"
-  ],
-  "jaguar": [
-   null,
-   "swipe",
-   "bigswipe",
-   "legendCharge"
-  ],
-  "elephant": [
-   null,
-   "slam",
-   "bigslam",
-   "quake"
-  ],
-  "lion": [
-   null,
-   "swipe",
-   "bigswipe",
-   "legendCharge"
-  ],
-  "frostwyrm": [
-   null,
-   "swipe",
-   "bigswipe",
-   "legendNova"
-  ]
- },
+ "ranged": [],
+ "bySpecies": {},
  "kite": {
-  "species": [
-   "raven"
-  ],
+  "species": [],
   "near": 0.55,
   "far": 0.9
  },
  "temperament": {
-  "curious": [
-   "tiger",
-   "lion",
-   "squirrel",
-   "fox",
-   "otter",
-   "hedgehog",
-   "dormouse",
-   "badger",
-   "bear",
-   "beaver",
-   "mole",
-   "raven",
-   "wolf",
-   "boar",
-   "redpanda"
-  ],
-  "skittish": [
-   "cheetah",
-   "hare",
-   "roe",
-   "stag",
-   "elk",
-   "owl",
-   "bat",
-   "moth",
-   "toad",
-   "salamander",
-   "lynx",
-   "marten",
-   "stoat",
-   "snake",
-   "spider",
-   "cat",
-   "woodlouse",
-   "beetle",
-   "snail",
-   "ram"
-  ]
+   "curious": [],
+   "skittish": []
  },
  "traits": {
-  "flier": [
-   "raven",
-   "bat",
-   "owl",
-   "moth"
-  ],
-  "armoured": [
-   "beetle",
-   "woodlouse",
-   "snail",
-   "hedgehog"
-  ],
-  "swarm": [
-   "bat",
-   "moth"
-  ],
-  "heavy": [
-   "boar",
-   "bear",
-   "elk",
-   "stag",
-   "tiger",
-   "elephant",
-   "lion",
-   "frostwyrm",
-   "griffin"
-  ],
-  "nimble": [
-   "cheetah",
-   "hare",
-   "stoat",
-   "otter",
-   "squirrel",
-   "dormouse"
-  ],
-  "burrower": [
-   "mole"
-  ]
+   "flier": [],
+   "armoured": [],
+   "swarm": [],
+   "heavy": [],
+   "nimble": [],
+   "burrower": []
  },
  "counters": {
   "flier": {
