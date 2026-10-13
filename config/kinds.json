@@ -285,12 +285,11 @@
       "biome": "cold",
       "placeholder": true
     },
-    "unknown-15": {
+    "frosttroll": {
       "phase": 4,
       "bearing": 5,
       "dir": "N",
-      "biome": "cold",
-      "placeholder": true
+      "biome": "cold"
     },
     "snowleopard": {
       "phase": 4,
