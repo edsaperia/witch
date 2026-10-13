@@ -19,6 +19,7 @@
     "fox": {"family": "canid", "pitch": 1.5, "glide": 0.8},
     "arcticfox": {"family": "canid", "pitch": 1.75, "glide": 0.6},
     "bear": {"family": "big", "pitch": 0.8},
+    "frosttroll": {"family": "big", "pitch": 0.65, "glide": 0.4},
     "boar": {"family": "big", "pitch": 1.2, "noise": 0.55, "am": [40, 0.6], "volume": 1.3},
     "elk": {"family": "big", "pitch": 1.4, "glide": 1.25, "dur": 1.5, "noise": 0.15, "am": [0, 0], "volume": 0.8},
     "unicorn": {"family": "big", "pitch": 1.5, "glide": 0.9, "dur": 1.2, "noise": 0.1},
