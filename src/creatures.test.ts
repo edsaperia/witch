@@ -27,3 +27,12 @@ describe("the creatures' folders (art/creatures/)", () => {
     }
   });
 });
+
+// The other split registries (tools/data.mjs): the decisions' fragments (config/decisions/<pr>-<group>.json) sound and none
+// left in config/decisions.json's array.
+describe("the split registries (tools/data.mjs)", () => {
+  it("decisions: every fragment named by its pr and group, ids unique, none left in the file", () => {
+    const out = execFileSync("node", ["tools/data.mjs", "decisions", "check"], { encoding: "utf8" });
+    expect(out).toMatch(/^ok: decisions/);
+  });
+});
