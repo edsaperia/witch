@@ -9,11 +9,11 @@ export const DRAGON_SCRUB = {
   pathKinds: ["animal", "dirt"],
   setPiece: ["heap", "a great sun-warmed basking rock", 1.2, { of: "stones", moss: .02, top: "slab", height: 2.6 }],
   layout: {
-    pattern: "scattered", density: .22, clump: .3, glades: { count: 3, size: [16, 24] },
+    pattern: "scatter", density: .22, clump: .3, glades: { count: 3, size: [16, 24] },
     heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: .3, amount: .15 },
-    terrain: ["rocks", "hollows"], decor: { rate: .3, ruins: .15, rocks: .5, freak: .05, lake: 0, modern: .1 },
+    terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .15, rocks: .7, freak: .05, lake: 0, modern: .1 },
     feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock.",
   },
-  flora: { species: [["acacia", .65], ["datePalm", .35]], palette: { sat: .75, val: .95 } },
+  flora: { species: [["acacia", .55], ["datePalm", .3], ["hawthorn", .15]], palette: { sat: .75, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .7, kinds: ["tallgrass", "blades"] } },
 };
