@@ -156,10 +156,37 @@ function gearUp(m) {
 //   torc: { mat, size }: an open bronze ring round its neck, knobbed at the throat.  rings: { on: "horns" | "tusks" | "antlers", count, from, to, mat, width }: bands round them.
 //   earrings: { which, size, mat }: rings hung from its ears' tips.  bands: { at, width, height, fore, hind, mat }: cuffs round its legs above the feet.
 //   garland: { count, size }: flowers and leaves round its neck, sagging in front.  bells: { at: "horns" | "antlers" | "ears" | "throat" | "tail", size, mat }: little bronze bells.
+//   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
+//   beads: { count, size, mat, pendant }: a necklace of offerings round its neck, bronze (WOOD) by default, a bigger pendant (its mat,
+//     STONE by default) hanging at its throat: something worshipped once.
 //   wings: { size, at, mat, bone, nub }: leathery wings off its shoulders, a dragon's (bones and a membrane between them, as the
 //     bat's), rising up and back, size times its body's length, flapping a little with its walk; nub: folded stubs (a young one's).
 function evolve3d(m, feats, c) {
   for (const f of feats) {
+    if (f.kind === "scars") { // old claw rakes down its flanks, three to a scar, healed pale
+      m.part = "body";
+      const n = f.count ?? 3, mat = M[f.mat || "WEB"], L0 = f.len ?? .22;
+      for (let i = 0; i < n; i++) {
+        const t = .2 + .6 * (n > 1 ? i / (n - 1) : .5), b = c.backAt(t), side = i % 2 ? -1 : 1, y = (b[1] + c.chest) / 2 + .04 * Math.sin(i * 2.3);
+        const onSkin = p => { let z = side * c.bw * 2; while (Math.abs(z) > .01 && m.field([p[0], p[1], z]) >= 0) z -= side * .01; return [p[0], p[1], z + side * .012]; }; // (pressed onto its flank, not stuck out)
+        for (let k = -1; k <= 1; k++) { const pts = Array.from({ length: 7 }, (_, j) => { const u = j / 6 - .5; return onSkin([b[0] + k * .1 + u * L0 * .6, y - u * L0 * .7]); });
+          for (let j = 0; j < 6; j++) m.seg(pts[j], pts[j + 1], .018 * (f.width ?? 1), .018 * (f.width ?? 1), mat, { group: 150 + i, extra: true }); }
+      }
+    }
+    if (f.kind === "beads" && f.at === "snout") { // rings of offering beads round its jaws (a crocodile's: its neck is lost in its body), ry and rz the ring's half-heights in head radii
+      m.part = "head";
+      const n = f.count ?? 16, s = (f.size ?? .045) * c.hr / .3;
+      for (const at of f.rings ?? [.15, .35]) { const x = c.sn[0] - c.L * .5 + at * c.L * 1.2;
+        for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; m.ell([x, c.sn[1] + Math.sin(a) * c.hr * (f.ry ?? .3), Math.cos(a) * c.hr * (f.rz ?? .8)], [s * .8, s, s], M[f.mat || "WOOD"], { group: 160, extra: true }); } }
+    }
+    else if (f.kind === "beads" && m.anchors.neck) { // a necklace of offerings: beads round its neck, a pendant hanging at its throat
+      m.part = "head";
+      const { c: N, r: R0, dir } = m.anchors.neck, n = f.count ?? 14, s = f.size ?? .045, R = R0 * 1.08 + s * .6;
+      const u = v3.norm(v3.cross(dir, [0, 0, 1])), w = v3.norm(v3.cross(dir, u)); // two axes round the neck
+      for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, p = v3.add(N, v3.add(v3.mul(u, Math.cos(a) * R), v3.mul(w, Math.sin(a) * R))); m.ell(p, [s, s, s], M[f.mat || "WOOD"], { group: 160, extra: true }); }
+      const low = v3.add(N, v3.mul(u, -R)), dn = v3.add(low, [0, -s * 2.2, 0]); // its lowest point, under the throat
+      m.seg(low, dn, s * .25, s * .25, M[f.mat || "WOOD"], { group: 160, extra: true }); m.ell(v3.add(dn, [0, -s * 1.1, 0]), [s * 1.5, s * 2, s * 1.1], M[f.pendant || "STONE"], { group: 161, extra: true });
+    }
     if (f.kind === "mane") {
       m.part = "body";
       const n = f.count ?? 12, mat = M[f.mat || "BODY3"], h0 = f.height ?? .2, lean = f.lean ?? .5;
@@ -372,6 +399,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     if (q.ridge && p[1] > top - .08 + hump * .5) return M[q.ridgeMat || "BODY3"]; // (ridgeMat: its crest's own material, the frost wyrm's ice-pale BELLY)
     if (q.tabby && p[1] > chest + .04) { const t = (p[0] + Math.sin(p[1] * 17 + p[2] * 9) * .035) / (len * 2 / q.tabby.n) + 64; if (t - Math.floor(t) < (q.tabby.w ?? .32)) return M[q.tabby.mat || "BODY3"]; } // a tabby's stripes, thin, across its body, a little wavy
     if (q.bands && p[1] > chest && p[0] > -len * 1.1 && Math.floor((p[1] - chest) / Math.max(.01, top + hump - chest) * q.bands.n * 2 + .5) % 2) return M[q.bands.mat || "BELLY"]; // a piglet's stripes, running its length
+    if (q.folds && p[1] < top - .02 && Math.abs(p[2]) > bw * .45 && q.folds.some(f => Math.abs(p[0] - f * len - (p[1] - chest) * .25) < .016 * (q.foldW ?? 1))) return M.BODY3; // a rhino's armour: deep folds of hide down its flanks (folds: where, -1 rump to 1 chest)
     return undefined;
   };
   // ---- torso: a deep chest, a tucked waist, a rump ----
@@ -422,7 +450,14 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   const L = hr * q.snout * sz("snout"), Dm = hr * q.snoutD * .55, sn = [H[0] + hr * .65 + L * .5, H[1] - hr * .28, 0];
   if (q.beak) m.chain([[H[0] + hr * .7, H[1] - hr * .05, 0, hr * .34], [H[0] + hr * 1.2 * q.beak, H[1] - hr * .12, 0, hr * .22], [H[0] + hr * 1.5 * q.beak, H[1] - hr * .38, 0, hr * .1], [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0, hr * .03]], M.ACCENT, { group: 1 }); // a griffin's hooked beak (beak: its length), in its accent
   const tip = q.beak ? [H[0] + hr * 1.42 * q.beak, H[1] - hr * .62, 0] : [sn[0] + L * .62 + hr * .1, sn[1] - .02, 0]; // (its snout's tip, or its beak's)
-  if (!q.beak) {
+  if (q.flatJaw && !q.beak) { // a crocodile's: long, flat and wide, lying low, a row of teeth along its edge
+    m.ell(sn, [L * .62 + hr * .2, Dm * .55, hr * (q.jawW ?? .5)], M.BODY, { dir: [1, -.08, 0], paint: p => p[1] < sn[1] - Dm * .25 ? M.BELLY : headPaint(p) });
+    if (!baby) for (let i = 0; i < 6; i++) for (const side of [-1, 1]) m.ell([sn[0] - L * .4 + i * L * .17, sn[1] - Dm * .3, side * hr * ((q.jawW ?? .5) - .06)], [hr * .035, hr * .06, hr * .03], M.ACCENT, { group: 1 });
+    for (const side of [-1, 1]) { // its nostrils on a knob at its snout's tip, up above the water line with its eyes (its legend's glowing)
+      const n = [tip[0] - hr * .2, tip[1] + Dm * .4, side * hr * .09];
+      m.ell(n, [hr * .13, hr * .1, hr * .1], M.BODY, {}); m.ell(v3.add(n, [0, hr * .08, 0]), [hr * .06, hr * .04, hr * .05], legend ? M.MAGIC2 : M.NOSE, { group: 1 });
+    }
+  } else if (!q.beak) {
     m.ell(sn, [L * .62 + hr * .2, Dm, Dm * .95], M.BODY, { dir: [1, -.25, 0], paint: p => tearAt(p) ?? ((q.muzzle || q.belly) && p[1] < sn[1] - Dm * .1 ? M.BELLY : headPaint(p)) });
     m.ell(tip, [hr * (q.disc ? .1 : .12), hr * (q.disc ? .2 : .12), hr * (q.disc ? .2 : .15)], M.NOSE, { group: 1 });
   }
@@ -467,6 +502,17 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   // ---- legendary features ----
   m.part = "body";
   const backAt = t => [-len * .9 + t * len * 1.65, top + hump * Math.max(0, 1 - Math.abs(t - .8) * 3) + arch * (1 - Math.abs(t - .4) * 2), 0];
+  if (q.noseHorn) { // a rhino's: a great horn near the tip of its nose and a smaller one behind it, in line, curving up and back (noseHorn: the front one's size;
+    // oneHorn: the front one alone, its legend's; hornRings: bronze bands round it, offerings)
+    const k = q.noseHorn * Math.max(.35, sz("tusks") || 0);
+    for (const [at, s] of q.oneHorn ? [[.4, 1]] : [[.4, 1], [.02, .45]]) {
+      const b = [sn[0] + L * at, sn[1] + Dm * .5, 0], h = hr * .9 * k * s, tip = [b[0] - h * .22, b[1] + h * 1.05, 0];
+      const pts = [[...b, h * .22], [b[0] + h * .06, b[1] + h * .45, 0, h * .13], [b[0] - h * .06, b[1] + h * .85, 0, h * .06], [...tip, h * .015]];
+      m.chain(pts, M.ACCENT, { group: 8 }); tuskTips.push(tip);
+      if (q.hornRings && s === 1) for (const t of [.22, .4]) { const i = Math.floor(t * 3), f = t * 3 - i, a = pts[i], z = pts[i + 1], p = a.map((v, j) => v + (z[j] - v) * f);
+        m.ell(p.slice(0, 3), [p[3] * .3, p[3] * 1.3, p[3] * 1.3], M.WOOD, { group: 9, dir: v3.norm(v3.sub(z.slice(0, 3), a.slice(0, 3))) }); }
+    }
+  }
   if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tuskPaths, hornPaths: m.hornPaths || [], antlerPaths: m.antlerPaths || [], earTips, tb, backAt, len, top, chest, tuck, bw, frame });
   if (elder) { elderQuad(m, S, { H, hr, sn, L, Dm, nb, tb, backAt, len, top, chest, tuck, bw, frame }); m.part = "body"; }
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
@@ -551,11 +597,13 @@ export function horn3d(m, base, side, { length = .5, r = .08, curl = .6, twist =
 function tail3d(m, kind, tb, len, top, tw) {
   const o = { group: 3 }, X = k => -len * k;
   if (kind === "brush") m.chain([[...tb, .1], [X(1.3), top - .25 + tw, 0, .15], [X(1.4), top - .55, 0, .14], [X(1.35), .38 + tw, 0, .09]], M.BODY, { ...o, paint: p => p[1] < .32 ? M.BODY3 : undefined });
+  else if (kind === "panda") m.chain([[...tb, .11], [X(1.05) - .35, top - .1 + tw, 0, .17], [X(1.05) - .75, top - .3 + tw, 0, .18], [X(1.05) - 1.05, top - .5 + tw, 0, .13]], M.BODY, { ...o, paint: p => Math.floor((X(1.05) - p[0]) * 6.5) % 2 ? M.BODY3 : undefined }); // a red panda's: thick, its rings dark
   else if (kind === "bushy") m.chain([[...tb, .1], [X(1.05) - .35, top - .05 + tw, 0, .17], [X(1.05) - .75, top - .2 + tw, 0, .18], [X(1.05) - 1.0, top - .35 + tw, 0, .1]], M.BODY, { ...o, paint: p => p[0] < X(1.05) - .82 ? M.BELLY : undefined });
   else if (kind === "stub" || kind === "deer" || kind === "bob") m.ell(v3.add(tb, [-.06, .02 + tw, 0]), [.1, .08, .07], kind === "deer" ? M.BELLY : M.BODY, { ...o, paint: kind === "bob" ? p => p[0] < tb[0] - .08 ? M.BODY3 : undefined : undefined });
   else if (kind === "puff") m.ell(v3.add(tb, [-.04, .02, 0]), [.11, .11, .1], M.BELLY, o);
   else if (kind === "dormouse") m.chain([[...tb, .1], [X(1.3), top - .2 + tw, 0, .12], [X(1.7), top - .42, 0, .13], [X(2.05), top - .3 + tw, 0, .12], [X(2.2), top - .08, 0, .08]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) ? M.BODY2 : undefined }); // long, low and furry, curling up at its tip (the silhouette check: it read as a squirrel's)
   else if (kind === "squirrel" || kind === "star") m.chain([[...tb, .12], [X(1.3), top + .05 + tw, 0, .25], [X(1.3), top + .6 + tw, 0, .3], [X(1.0), top + .95 + tw, 0, .27], [X(.65), top + .9 + tw, 0, .16]], kind === "star" ? M.MAGIC : M.BODY, { ...o, extra: true, paint: kind === "star" ? p => spotty(p, 14, .12) ? M.GLINT : undefined : undefined });
+  else if (kind === "croc") m.chain([[...tb, .3], [X(1.25), top - .25 + tw, 0, .26], [X(1.75), .3, 0, .19], [X(2.25), .18 + tw * .5, 0, .11], [X(2.7), .1 + tw, 0, .04]], M.BODY, { ...o, paint: p => p[1] > .28 && Math.sin(p[0] * 22) > .55 ? M.BODY2 : undefined }); // a crocodile's: thick at the root, long, low along the ground, scutes along its top
   else if (kind === "otter") m.chain([[...tb, .22], [X(1.3), top - .4 + tw, 0, .17], [X(1.65), .12, 0, .1], [X(1.95), .07 + tw, 0, .04]], M.BODY, o); // a thick tapering rudder (its signature)
   else if (kind === "stoat") m.chain([[...tb, .08], [X(1.25), top + .08 + tw, 0, .07], [X(1.45), top + .3 + tw, 0, .085], [X(1.5), top + .45 + tw, 0, .07]], M.BODY, { ...o, paint: p => p[1] > top + .26 ? M.BODY3 : undefined }); // held up, its big black tip its signature
   else if (kind === "marten") m.chain([[...tb, .12], [X(1.15) - .3, top - .02 + tw, 0, .2], [X(1.15) - .75, top - .05 + tw, 0, .22], [X(1.15) - 1.15, top + .1 + tw, 0, .17], [X(1.15) - 1.35, top + .3, 0, .08]], M.BODY, { ...o, paint: p => p[0] < X(1.15) - 1.0 ? M.BODY3 : undefined }); // a long, thick brush held out level, curling up at its dark end
@@ -1102,6 +1150,82 @@ export function moth3d(S, level, frame, st, facing = "towards") {
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .5, facing);
+}
+
+// The dragonfly (Ed, 2026-10-12: the mangrove swamp's, unknown-10; "it flies, darting and hovering over water"): a hawker hovering
+// with four long glassy wings, veined, a dark mark near each tip; a long thin segmented tail, a stout thorax, a head that is nearly
+// all eye. Its levels (the genome's levelQ: wing and tail lengths): every level flies (Ed: the baby a small dragonfly, not a nymph),
+// the baby stubby and big-eyed, the young's wings short, the adult bright and metallic; the legend the elder of its kind (Ed, docs/
+// ART-GUIDE.md §0c): a giant of the coal forests, all eye and wing, eyes wrapping its whole head (feature eyesHuge), its vast wings
+// tattered by epochs (ancient), its body scarred. Two frames: wings raised, wings lowered.
+const dfWing = (mat, vein, stig, torn = 0) => (s, t) => {
+  const u = (s + 1) / 2, half = .9 * Math.pow(Math.sin(Math.PI * Math.min(1, .06 + u * .97)), .55) * (1 - .2 * u);
+  if (Math.abs(t) > half) return null;
+  if (torn && t < -half * .45 && Math.sin(u * 37 + t * 9) > 1 - torn) return null; // an ancient wing's tattered trailing edge
+  if (u > .76 && u < .86 && t > half * .25) return stig; // the pterostigma
+  if (Math.abs(t) > half * .8 || (Math.floor(u * 8) % 2 === 0 && Math.abs(t - half * .1) < .07)) return vein;
+  return mat;
+};
+export function dragonfly3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
+  const up = frame === 0, y = .55, span = q.wing ?? 1, tl = q.tail ?? 1;
+  const pairs = [[0, .05, .62], [1, -.06, .58]], old = has("ancient"), scar = p => old && Math.abs(Math.sin(p[0] * 41 + p[2] * 13)) < .06 ? M.BELLY : undefined;
+  shadow(m, -.15, .2 * span);
+  for (const side of [-1, 1]) for (const [k, dx, len] of pairs) { // the wings, straight out, flicking up and down
+    const lift = (up ? .45 : -.25) * (k ? .8 : 1), root = [dx, y + .07, side * .05], dir = v3.norm([k ? -.18 : .12, lift, side]);
+    const across = v3.norm(v3.cross(dir, [0, 1, 0]));
+    m.flat(v3.add(root, v3.mul(dir, len * span * .5)), dir, across, len * span * .5, (k ? .16 : .13) * span, dfWing(M.BELLY, M.BODY3, M.BODY3, old ? .35 : 0), { group: 10 + k * 2 + (side > 0 ? 1 : 0), extra: true });
+  }
+  // the tail: ten segments, long and thin, banded, curving a little down
+  for (let i = 0; i < 10; i++) { const t = i / 9, x = -.12 - t * .78 * tl, yy = y - .02 - t * t * .1; m.ell([x, yy, 0], [.05 * tl, .036 - t * .008, .036 - t * .008], i % 3 === 2 ? M.BODY3 : i % 2 ? M.BODY2 : M.BODY, { group: 3, paint: scar }); }
+  m.ell([0, y, 0], [.13, .1, .09], M.BODY, { group: 1, paint: p => scar(p) ?? (p[1] > y + .05 ? M.BODY2 : undefined) }); // the thorax (an elder's scarred)
+  for (const side of [-1, 1]) for (let i = 0; i < 3; i++) m.seg([.03 - i * .04, y - .07, side * .04], [.08 - i * .07, y - .13, side * .09], .01, .006, M.BODY3, { group: side > 0 ? 7 : 2 }); // its legs, held under it
+  const ek = has("eyesHuge") ? 1.6 : 1, hc = [.16, y + .02, 0], hr = [.08 * ek, .085 * ek, .11 * ek], ed = side => v3.norm([.3, .4, side]);
+  m.ell(hc, hr, M.BODY2, { group: 1 });
+  for (const side of [-1, 1]) m.ell(Model.surface(hc, hr, ed(side)), [.07 * ek, .075 * ek, .06 * ek], legend ? M.MAGIC2 : M.EYE, { group: 8 + (side > 0 ? 1 : 0), paint: p => p[1] > hc[1] + .07 * ek ? M.BELLY : undefined }); // the great eyes
+  m.anchors.head = { c: hc, r: hr, top: [hc[0], hc[1] + hr[1], 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => Model.surface(hc, hr, ed(side))), size: .06 * ek };
+  m.anchors.neck = { c: [.09, y, 0], r: .08, dir: [1, 0, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
+// The crab (Ed, 2026-10-12: the mangrove swamp's mudflats and roots, unknown-26; "sideways scuttling movement"): a broad carapace
+// carried sideways, so it scuttles the way it faces: its length across the screen, its claws and stalked eyes towards the camera,
+// four walking legs out to each side, stepping in two alternating sets. Its levels (levelQ: shell and great-claw sizes): the baby
+// small, round and pale, its claws alike; the young one claw growing; the adult a fiddler's great claw, barnacles on its shell; the
+// legend the elder of its kind (Ed, docs/ART-GUIDE.md §0c): one colossal gleaming claw, bigger than its body, raised and lowered frame
+// to frame in a slow beckoning wave (feature wave), its stalked eyes lit, its shell aged like a reef (feature reef): crusted with
+// barnacles, knobs of coral and old scars.
+export function crab3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), q = S.levelQ?.[level] || {};
+  const cw = q.shell ?? 1, big = q.claw ?? 1, y = .3 * cw;
+  const shell = [0, y, 0], sr = [.42 * cw, .15 * cw, .28 * cw];
+  for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, four a side, out along x (the way it scuttles): kneed high
+    const z = .12 - i * .1, ph = ((i + (side > 0 ? 1 : 0) + frame) % 2 ? 1 : -1) * .05, base = [side * sr[0] * .8, y - .02, z * cw];
+    m.chain([[...base, .035 * cw], [side * (sr[0] + .2) * cw + ph, y + .14 * cw, (z - .04) * cw, .03 * cw], [side * (sr[0] + .34) * cw + ph * 1.6, .02, (z - .1) * cw, .015 * cw]], i % 2 ? M.BODY2 : M.BODY, { group: side > 0 ? 7 : 2 });
+  }
+  const reef = has("reef");
+  m.ell(shell, sr, M.BODY, { paint: p => (q.barnacles && spotty(p, 18, reef ? .3 : .12)) ? M.BELLY : reef && Math.abs(Math.sin(p[0] * 30 + p[2] * 11)) < .05 ? M.BODY3 : p[1] > y + sr[1] * .55 ? M.BODYL : undefined }); // the carapace, its top lit (an elder's crusted and scarred)
+  if (reef) for (let i = 0; i < 12; i++) { const a = i * 2.4, rr = .2 + (i % 4) * .2, c = [Math.cos(a) * sr[0] * rr - .08, y + sr[1] * (.95 - rr * .45), Math.sin(a) * sr[2] * rr * .8 - .04], h = (.07 + (i % 4) * .025) * cw; m.ell(v3.add(c, [0, h * .5, 0]), [h * .6, h, h * .6], M.BELLY, { group: 4, paint: p => p[1] > c[1] + h * 1.2 ? M.BODY3 : p[0] < c[0] - h * .2 ? M.BODY2 : undefined }); } // knobs of coral and barnacle cones
+  m.ell([0, y - sr[1] * .4, sr[2] * .3], [sr[0] * .85, sr[1] * .55, sr[2] * .8], M.BELLY, { group: 1 }); // its pale underside in front
+  for (const side of [-1, 1]) { // the claws, at the front (towards the camera); the right one a fiddler's great claw
+    const k = side > 0 ? big : 1, great = side > 0 && big > 1.2, cm = great ? M.BODY : M.BODY2, out = great ? .12 * (k - 1) : 0; // (the great claw held out to the side, clear of its face)
+    const lift = side > 0 && has("wave") && !FORM ? (frame % 2 ? .1 : .32) : 0; // the legend's beckoning wave: raised, then lowered (not asleep)
+    const sh = [side * .16 * cw, y - .04, sr[2] * .6], el = [side * .22 * cw, y - .02 + lift * .5, sr[2] * .9], hand = [side * (.24 + .06 * k + out) * cw, y + (.06 + .05 * k + lift) * cw, (sr[2] + .1 + .06 * k) * cw];
+    m.seg(sh, el, .04 * cw, .035 * cw, M.BODY2, { group: side > 0 ? 6 : 5 });
+    m.seg(el, hand, .035 * cw, .03 * k * cw, M.BODY2, { group: side > 0 ? 6 : 5 });
+    const pr = [.1 * k * cw, .07 * k * cw, .08 * k * cw];
+    m.ell(hand, pr, cm, { group: side > 0 ? 6 : 5, dir: [side * .3, .25, 1], paint: great ? p => (p[1] > hand[1] + pr[1] * .62 && p[2] > hand[2] - pr[2] * .1 ? M.BELLY : p[1] > hand[1] + pr[1] * .2 ? M.BODYL : undefined) : undefined }); // the palm, lit along its top, a gleam on its crest
+    // its pincer: a fixed finger and a moving one, long, pointed and parted, their tips pale
+    const tipU = v3.add(hand, [side * .04 * k * cw, .1 * k * cw, .26 * k * cw]), tipD = v3.add(hand, [side * .06 * k * cw, -.05 * k * cw, .22 * k * cw]);
+    m.chain([[...v3.add(hand, [0, .03 * k * cw, .05 * k * cw]), .04 * k * cw], [...v3.lerp(hand, tipU, .6).map((v, j) => j === 1 ? v + .02 * k * cw : v), .025 * k * cw], [...tipU, .006]], cm, { group: side > 0 ? 6 : 5, paint: p => Math.hypot(...v3.sub(p, tipU)) < .05 * k * cw ? M.BELLY : undefined });
+    m.chain([[...v3.add(hand, [0, -.03 * k * cw, .05 * k * cw]), .035 * k * cw], [...v3.lerp(hand, tipD, .6), .022 * k * cw], [...tipD, .006]], cm, { group: side > 0 ? 6 : 5 });
+  }
+  for (const side of [-1, 1]) { const b = [side * .07 * cw, y + sr[1] * .6, sr[2] * .7], e = v3.add(b, [side * .02, .14 * cw, .04 * cw]); m.seg(b, e, .018 * cw, .014 * cw, M.BODY2, { group: 9 }); m.ell(e, [.04 * cw, .045 * cw, .04 * cw], legend ? M.MAGIC2 : M.EYE, { group: 9 }); } // eyes on stalks (a legend's lit)
+  m.anchors.head = { c: [0, y + sr[1] * .7, sr[2] * .7], r: [.12, .1, .1], top: [0, y + sr[1] + .12, 0] };
+  m.anchors.eyes = { pts: [-1, 1].map(side => [side * .09 * cw, y + sr[1] * .6 + .14 * cw, sr[2] * .7 + .04 * cw]), size: .04 * cw };
+  m.anchors.neck = { c: [0, y + sr[1] * .2, sr[2] * .6], r: .14 * cw, dir: [0, 0, 1] };
+  return finish(m, S, level, st, .45, facing);
 }
 
 export function spider3d(S, level, frame, st, facing = "towards") {

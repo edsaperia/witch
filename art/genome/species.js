@@ -137,8 +137,38 @@ export const GENOMES = [
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .4, len: .95, chest: .16, tuck: .16, neck: .1, neckAng: -.05, neckW: .6, hr: .29, legW: 1.45, bw: .36 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
   // the fen's newt (an area recipe's, #119; art builder 2's record): a slimmer, lower salamander with a crest along its back
   { id: "newt", name: "Newt", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .55, val: .35, belly: "yellow" }, body: { hgt: .4, len: 1.1, chest: .1, tuck: .1, neck: .14, neckAng: .1, neckW: .45, hr: .28, legW: .6, bw: .22 }, head: { snout: .42, snoutD: .5 }, parts: { ears: { kind: "none" }, tail: "newt", feet: "paw" }, coat: { spots: true, spotMat: "belly", ridge: 2.4 }, legend: ["crystals"], texture: { kind: "smooth" } },
+  // the mossy dell's roe deer (an area recipe's): a small, slight deer, all ears and eyes, a white rump and a black nose; the buck's
+  // short three-tined antlers (its own antler curve, a third of the stag's), the fawn dappled
+  { id: "roe", name: "Roe deer", template: "quadruped", builder: "quad", palette: { hue: .055, sat: .62, val: .66, belly: "white" }, body: { hgt: 1.0, len: .52, chest: .36, tuck: .54, neck: .42, neckAng: .9, neckW: .28, hr: .23, legW: .55 }, head: { snout: .8, snoutD: .55, snoutTaper: .6, eyeK: 1.35 }, parts: { ears: { kind: "big", size: 1.15 }, tail: "bob", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, sizes: { antlers: [0, .3, .42, .95] }, legend: [],
+    // its legend, the elder of the roe (docs/ART-GUIDE.md 0c): an ancient buck grown tall and grey-muzzled, its antlers the old
+    // bucks' "perruque", heavy, many-tined and furred with moss, a pale winter ruff at its throat, moss on its flanks from lying
+    // out for ages in the dell, and bead offerings bound round its legs
+    levels: [null, null, null,
+      { body: { hgt: 1.15, neck: .5, chest: .4 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
+        { kind: "ruff", size: .16, count: 12, mat: "BELLY" },
+        { kind: "moss", count: 9, size: .1 },
+      ] }] },
+  // the mangrove swamp's crocodile (an area recipe's, phase 3): long and low, a flat wide jaw lined with teeth, a heavy tail along the ground
+  { id: "crocodile", name: "Crocodile", template: "quadruped", builder: "quad", palette: { hue: .2, sat: .35, val: .32 }, body: { hgt: .7, len: 2.1, chest: .05, tuck: .05, neck: .12, neckAng: -.04, neckW: .75, hr: .32, legW: 1.6, bw: .55 }, head: { snout: 4.4, snoutD: .9, snoutTaper: .9, flatJaw: true, eyeK: 1.15 }, parts: { ears: { kind: "none" }, tail: "croc", feet: "paw" }, coat: {}, legend: [], texture: { kind: "scales", size: 5, contrast: .35 },
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"): enormous jaws, its scutes risen into a ridge
+    // of standing stones down its back and tail root, its eyes glowing just above the water line
+    levels: [null, null, null, { body: { len: 2.3, bw: .62, hr: .38 }, head: { snout: 5, snoutD: 1.05, jawW: .78 }, features: [{ kind: "stones", from: .05, to: .95, count: 8, height: 1.05 }, { kind: "eyeglint", size: .05 }, { kind: "scars", count: 4, len: .55, width: 1 }, { kind: "beads", at: "snout", count: 22, size: .04, ry: .32, rz: .82, rings: [.3, .5] }] }] },
+  // the bushveld's rhino (an area recipe's, phase 4): a grey hulk, a great horn on its nose and a smaller one behind it, its hide in folds
+  { id: "rhino", name: "Rhino", template: "quadruped", builder: "quad", palette: { hue: .58, sat: .05, val: .46 }, body: { hgt: 1.15, len: .98, chest: .42, tuck: .44, neck: .24, neckAng: -.18, neckW: .75, hr: .36, legW: 2.1, back: "hump", front: 1.15, humpK: 1.4, bw: .48 }, head: { snout: 1.35, snoutD: .78, snoutTaper: .7, noseHorn: 1 }, parts: { ears: { kind: "small", size: 1 }, tail: "thin", feet: "hoof" }, coat: { folds: [-.55, .35] }, legend: [], texture: { kind: "scales", size: 9, contrast: .18 },
+    // its legend (Ed, 2026-10-12: "emphasise the thing that makes that creature unusual"; Ed, 2026-10-13: one giant horn; the legend
+    // brief: an elder, revered): one colossal horn ringed with bronze offerings, the hide in heavy armour folds and old scars, a
+    // necklace of offerings, the hump a hill
+    levels: [{ coat: { folds: [] } }, null, null, { body: { humpK: 2.4, front: 1.3, legW: 2.5, bw: .56 }, head: { noseHorn: 3, oneHorn: true, hornRings: true, snout: 1.5, snoutD: .9 }, coat: { folds: [-.6, -.35, .3, .55], foldW: 1.5 }, features: [{ kind: "scars", count: 4, len: .4, width: .5 }] }] },
   // the heronry's heron (an area recipe's, #119; art builder 2's heron builder): a tall grey wader, S-necked, dagger-billed
   { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: .6, sat: .08, val: .62 }, legend: ["wings"], texture: { kind: "feathers" } },
+  // the mangrove swamp's dragonfly (Ed, 2026-10-12, unknown-10): a hawker over the water, metallic blue-green, four glassy veined wings;
+  // every level flies (Ed: the baby a small dragonfly); its legend the elder of its kind, a coal-forest giant: all eye, vast tattered wings, scarred
+  { id: "dragonfly", name: "Dragonfly", template: "flyer", builder: "dragonfly", palette: { hue: .5, sat: .62, val: .62 }, legend: ["eyesHuge", "ancient"], texture: { kind: "plates", size: 2 },
+    levels: [{ body: { wing: .62, tail: .6 } }, { body: { wing: .8, tail: .85 } }, { body: { wing: 1, tail: 1 } }, { body: { wing: 1.45, tail: 1.4 } }] },
+  // the mangrove swamp's crab (Ed, 2026-10-12, unknown-26): a mudflat fiddler that scuttles sideways, its shell orange-red, one great claw
+  // on an adult, barnacles; its legend the elder of its kind: one colossal gleaming claw bigger than its body, waved in a slow beckoning display, its eyes lit, its shell aged like a reef
+  { id: "crab", name: "Crab", template: "insectoid", builder: "crab", palette: { hue: .02, sat: .62, val: .58 }, legend: ["wave", "reef"], texture: { kind: "plates", size: 3 },
+    levels: [{ body: { shell: .85, claw: 1 } }, { body: { shell: 1, claw: 1.25 } }, { body: { shell: 1, claw: 1.8, barnacles: true } }, { body: { shell: 1.05, claw: 3.2, barnacles: true } }] },
   // the badlands' meerkat (Ed, 2026-10-12, unknown-05): a slim sandy sentinel, long-necked and upright, banded faintly across the back,
   // dark round its eyes, a thin dark-tipped tail
   { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: .09, sat: .35, val: .72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: .8, len: .62, chest: .44, tuck: .5, neck: .34, neckAng: .75, neckW: .26, hr: .2, legW: .55, bw: .2, back: "arch" }, head: { snout: .8, snoutD: .45, snoutTaper: .4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: .45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 } },
@@ -226,6 +256,17 @@ export const GENOMES = [
         { kind: "claws", size: .26, mat: "FLOWER" },
       ] },
     ] },
+  // the misty terraces' red panda (Ed, 2026-10-12: "a few more animals"; its island to the east-north-east, the mountains): rusty
+  // red, a white mask and ear rims, dark legs, a thick ringed tail
+  { id: "redpanda", name: "Red panda", template: "quadruped", builder: "quad", palette: { hue: .03, sat: .8, val: .62, belly: "white" }, body: { hgt: .62, len: .6, chest: .3, tuck: .36, neck: .2, neckAng: .6, neckW: .42, hr: .32, legW: .9, back: "arch" }, head: { snout: .45, snoutD: .7, snoutTaper: .75, mask: true, whiskers: true, eyeK: 1.4 }, parts: { ears: { kind: "round", size: 1.2 }, tail: "panda", feet: "paw" }, coat: { legMat: "BODY3" }, legend: [],
+    // its legend, the elder of the red pandas (docs/ART-GUIDE.md 0c): an old mountain sage, big and round, its whiskers and
+    // muzzle gone white, a long pale ruff like a beard, its ringed tail heavier, the long claws of a life in the trees, and
+    // prayer beads wound round its legs
+    levels: [null, null, null,
+      { body: { hgt: .72, len: .66, chest: .32 }, head: { frost: true }, coat: { beads: true, socks: .3 }, features: [
+        { kind: "ruff", size: .24, count: 16, mat: "BELLY" },
+        { kind: "claws", size: .14 },
+      ] }] },
   { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["eyesRing"] , texture: { kind: "bristles", size: 2 } },
   { id: "dormouse", name: "Dormouse", template: "quadruped", builder: "quad", palette: { hue: .09, sat: .6, val: .75, belly: "white" }, body: { hgt: .38, len: .45, chest: .35, tuck: .38, neck: .15, neckAng: .6, neckW: .4, hr: .34, legW: .8, back: "arch" }, head: { snout: .45, snoutD: .7, whiskers: true, eyeK: 1.6 }, parts: { ears: { kind: "round", size: .85 }, tail: "dormouse", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "dormouse", tail: true, eye: "EYE" } },
   { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["horn", "crystals"] },

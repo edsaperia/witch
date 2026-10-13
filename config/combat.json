@@ -399,11 +399,13 @@
    "mole",
    "raven",
    "wolf",
-   "boar"
+   "boar",
+   "redpanda"
   ],
   "skittish": [
    "cheetah",
    "hare",
+   "roe",
    "stag",
    "elk",
    "owl",
