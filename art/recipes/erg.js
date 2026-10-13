@@ -1,9 +1,9 @@
 // The erg (a journey kind: unknown-07's, the hot south; Ed approved the mock, 2026-10-12): golden dunes and an oasis of date palms, the fennec fox its creature.
 export const ERG = {
   id: "erg", name: "Erg", creature: "fennec", by: "recipe", leaf: .2, floor: ["sand", .11, .42, .64],
-  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps", set: "a ring of wind-worn stones round an old hearth" },
+  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
   wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["bush", { small: true }]],
-  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "datePalm", minor: true, scale: .7 }]],
+  big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: .8 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
   layout: {
@@ -12,6 +12,6 @@ export const ERG = {
     terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .4, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
-  flora: { species: [["datePalm", 1]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["datePalm", .75], ["acacia", .25]], palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["blades"] } },
 };
