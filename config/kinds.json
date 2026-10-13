@@ -199,12 +199,11 @@
       "dir": "NNE",
       "biome": "cold"
     },
-    "unknown-02": {
+    "ibex": {
       "phase": 3,
       "bearing": 38,
       "dir": "NE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "redpanda": {
       "phase": 3,
@@ -286,12 +285,11 @@
       "biome": "cold",
       "placeholder": true
     },
-    "unknown-16": {
+    "snowleopard": {
       "phase": 4,
       "bearing": 25,
       "dir": "NNE",
-      "biome": "mountains and glaciers",
-      "placeholder": true
+      "biome": "mountains and glaciers"
     },
     "frostwyrm": {
       "phase": 4,
