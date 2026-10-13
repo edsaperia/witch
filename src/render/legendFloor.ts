@@ -67,6 +67,8 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "mossy-dell": look("granite", "leaves", "moss", 0.7, false, 0.6),
   "fen": look("granite", "reeds", "moss", 0.65, true),
   "heronry": look("granite", "reeds", "lichen", 0.55, true),
+  "mangrove-pools": look("granite", "reeds", "moss", 0.6, true), // dark wet stone among the roots,
+  "mudflat": look("granite", "pebbles", "lichen", 0.5, true), // mud-washed stone, barnacled,
   "eyrie": look("buffSandstone", "pebbles", "lichen", 0.45), // wind-scoured stone, feathers in the cracks
   "frostcave": look("slate", "pebbles", "lichen", 0.4, true), // blue-grey slate under the ice
   "plains": look("redSandstone", "grass", "lichen", 0.35), // red earth and short grass
