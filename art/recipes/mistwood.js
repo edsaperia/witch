@@ -7,13 +7,13 @@ export const MISTWOOD = {
   wall: [["log", { rot: true }], ["fern", {}]], small: [["fern", {}], ["fungi", {}]],
   big: [["tree", { type: "fir", scale: 1.35 }], ["tree", { type: "cedar", minor: true, scale: 1.2 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
   wet: true, pathKinds: ["boardwalk"],
-  setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", 1.2],
+  setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", .95],
   layout: {
-    pattern: "uniform", density: .7, clump: .4, glades: { count: 1, size: [10, 14] },
+    pattern: "groves", density: .7, clump: .4, glades: { count: 1, size: [10, 14] },
     heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
-    terrain: ["hollows"], decor: { rate: .2, ruins: .1, rocks: .2, freak: .2, lake: .3, modern: .05 },
+    terrain: ["hollows"], decor: { rate: .2, ruins: .1, rocks: .2, freak: .2, lake: .4, modern: .1 },
     feel: "Dim and dripping: giant mossy spruce and cedar trunks rising out of sight, tree ferns and sword ferns beneath, nurse logs green with saplings, mist between the trunks.",
   },
-  flora: { species: [["fir", .45], ["cedar", .25], ["palm", .2], ["alder", .1]], palette: { sat: .75, val: .75 } },
+  flora: { species: [["fir", .45], ["cedar", .25], ["alder", .2], ["yew", .1]], palette: { sat: .75, val: .75 } },
   settings: { treeDensity: .75, groundCover: { density: .95, kinds: ["moss", "fern"] } },
 };
