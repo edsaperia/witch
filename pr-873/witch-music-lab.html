@@ -593,8 +593,9 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "fur", size: 2 },
     levels: [
       { body: { len: 0.46, chest: 0.42, tuck: 0.46, hr: 0.31 }, head: { snout: 0.58 }, parts: { ears: { kind: "point", size: 1.05 }, tail: "puff" }, coat: { saddle: true } },
-      { body: { len: 0.58, legW: 0.9 } },
-      { body: { len: 0.6 }, features: [{ kind: "ruff", size: 0.2, count: 14 }] },
+      { body: { len: 0.46, legW: 0.95, chest: 0.44, tuck: 0.48, hr: 0.33, neck: 0.2, tailL: 0.8, profile: { shoulder: { w: 0.95, d: 0.95 }, waist: { w: 0.95, d: 0.95 } } }, head: { snout: 0.5, snoutD: 0.62 }, parts: { ears: { kind: "point", size: 1.3 } } },
+      // a round kit-faced young: short muzzle, big ears, a short brush
+      { body: { len: 0.64, chest: 0.5, tuck: 0.56, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.82, d: 0.88 } } }, head: { snout: 0.86 }, features: [{ kind: "ruff", size: 0.2, count: 14 }] },
       // the elder of the white foxes (docs/ART-GUIDE.md 0c): the long winter's own, its coat gone deep and shaggy, one vast brush
       // swept low behind it, its muzzle grizzled with frost, offerings of stone beads round its legs
       { body: { len: 0.64, legW: 1.1, neckAng: 0.55, hgt: 0.72 }, head: { frost: true }, parts: { tail: "plume" }, coat: { beads: true }, features: [
@@ -646,7 +647,7 @@ label.check input { accent-color: var(--accent); }
   var GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: 0.78, sat: 0.25, val: 0.45 }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
 
   // art/creatures/bear/genome.js
-  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, null, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "claws", size: 0.3, mat: "GLOW" }, { kind: "scars", count: 4 }] }] };
+  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: 0.3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: 0.2 }, { kind: "moss", amount: 0.5 }, { kind: "scars", count: 4 }, { kind: "claws", size: 0.26 }] }] };
 
   // art/creatures/beaver/genome.js
   var GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: 0.06, sat: 0.6, val: 0.45 }, body: { stance: "flat", hgt: 0.66, len: 0.62, chest: 0.34, tuck: 0.3, neck: 0.18, neckAng: 0.35, neckW: 0.6, hr: 0.3, legW: 1.25, back: "hump" }, head: { snout: 0.55, snoutD: 0.8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "flat", feet: "paw" }, legend: ["moss"], levels: [{ body: { hgt: 0.66, len: 0.48, chest: 0.4, tuck: 0.38, back: "arch", legW: 1.4 }, head: { snout: 0.4, snoutD: 0.75, teeth: false }, parts: { ears: { kind: "round", size: 0.65 }, tail: "stub" } }, { body: { hgt: 0.7, len: 0.7, chest: 0.3, tuck: 0.26, back: "arch", legW: 1.1 }, head: { snout: 0.58 }, parts: { ears: { kind: "round", size: 0.5 } } }, null, { head: { bigTeeth: true, log: true } }] };
@@ -868,9 +869,9 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "fur", size: 2 },
     levels: [
       { head: { eyeK: 1.5 }, features: [{ kind: "patagium", spread: 0.3 }] },
-      { features: [{ kind: "patagium", spread: 0.45 }] },
-      { features: [{ kind: "patagium", spread: 0.6 }] },
-      { head: { eyeGlow: true, frost: true }, features: [{ kind: "patagium", spread: 1, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: 0.09 }] }
+      { body: { tailL: 0.75 }, features: [{ kind: "patagium", spread: 0.2 }] },
+      { features: [{ kind: "patagium", spread: 0.75 }] },
+      { body: { tailL: 1.35, tailK: 1.5 }, head: { eyeGlow: true, frost: true }, features: [{ kind: "patagium", spread: 1.25, mat: "BODY2", rim: "MAGIC2", stars: true }, { kind: "moss", count: 6, size: 0.09 }] }
     ]
   };
 
@@ -988,7 +989,10 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/heron/genome.js
-  var GENOME_HERON = { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: 0.6, sat: 0.08, val: 0.62 }, legend: ["stilts"], texture: { kind: "feathers" } };
+  var GENOME_HERON = { id: "heron", name: "Heron", template: "avian", builder: "heron", palette: { hue: 0.6, sat: 0.08, val: 0.62 }, legend: ["lantern"], texture: { kind: "feathers" } };
+
+  // art/creatures/hydra/genome.js
+  var GENOME_HYDRA = { id: "hydra", name: "Hydra", template: "serpent", builder: "hydra", palette: { hue: 0.4, sat: 0.35, val: 0.3 }, legend: [], hydra: { crest: true }, texture: { kind: "scales", size: 4, contrast: 0.3 } };
 
   // art/creatures/ibex/genome.js
   var GENOME_IBEX = {
@@ -1048,7 +1052,7 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.09, sat: 0.3, val: 0.36, belly: "yellow" },
-    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.34, neckAng: 0.18, neckW: 0.42, hr: 0.22, legW: 1.6, bw: 0.4 },
+    body: { hgt: 0.62, len: 1.3, chest: 0.26, tuck: 0.22, neck: 0.66, neckAng: 0.22, neckW: 0.3, hr: 0.22, legW: 1.6, bw: 0.4, brisket: 0, profile: { shoulder: { d: 0.8 }, ribcage: { d: 0.92 } } },
     head: { snout: 1, snoutD: 0.72, snoutTaper: 0.9, tongue: 1.1 },
     parts: { ears: { kind: "none" }, tail: "monitor", feet: "paw" },
     coat: { belly: true },
@@ -1056,9 +1060,11 @@ label.check input { accent-color: var(--accent); }
     texture: { kind: "scales" },
     levels: [
       { body: { len: 1.2, legW: 1.1 }, coat: { bands: { n: 5, mat: "BELLY" } } },
-      { coat: { spots: true, spotMat: "belly" } },
-      null,
-      { head: { tongue: 1.6 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: 0.16 }] }
+      { body: { bw: 0.32, hr: 0.2 }, head: { snout: 0.85, snoutD: 0.65 }, coat: { spots: true, spotMat: "belly" } },
+      // a slim speckled young, its head still short
+      { head: { snout: 1.4, snoutD: 0.95 }, body: { hr: 0.26, neckW: 0.4, profile: { shoulder: { w: 1.15, d: 0.85 }, ribcage: { w: 1.1, d: 0.95 } } }, features: [{ kind: "dewlap", size: 1.4 }] },
+      { head: { tongue: 1.6, snout: 1.4, snoutD: 0.95 }, features: [{ kind: "plates", count: 14 }, { kind: "scars", count: 4 }, { kind: "offerings" }, { kind: "claws", hind: true, size: 0.16 }, { kind: "dewlap", size: 1.4 }, { kind: "crown", count: 9, size: 1.6, mat: "BELLY", spread: 1 }] }
+      // the elder: the adult's long heavy head and dewlap, crowned with spines
     ]
   };
 
@@ -1095,7 +1101,20 @@ label.check input { accent-color: var(--accent); }
   ] };
 
   // art/creatures/marten/genome.js
-  var GENOME_MARTEN = { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.6, val: 0.45 }, body: { hgt: 0.68, len: 0.78, chest: 0.35, tuck: 0.42, neck: 0.3, neckAng: 0.55, neckW: 0.35, hr: 0.25, legW: 0.85, back: "arch" }, head: { snout: 0.65, snoutD: 0.6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "marten", eye: "EYE" } };
+  var GENOME_MARTEN = {
+    id: "marten",
+    name: "Pine marten",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.07, sat: 0.6, val: 0.45 },
+    body: { hgt: 0.68, len: 0.78, chest: 0.35, tuck: 0.42, neck: 0.3, neckAng: 0.55, neckW: 0.35, hr: 0.25, legW: 0.85, back: "arch" },
+    head: { snout: 0.65, snoutD: 0.6 },
+    parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" },
+    coat: { belly: true },
+    legend: [],
+    levels: [{ body: { tailK: 0.6 } }, { body: { tailK: 0.7, tailL: 0.8, len: 0.7 } }, { body: { tailK: 1.4, chest: 0.4, profile: { shoulder: { w: 1.12, d: 1.08 }, waist: { w: 0.82, d: 0.88 } } } }, { body: { tailK: 1.55, tailL: 1.15 } }],
+    elder: { kind: "marten", eye: "EYE" }
+  };
 
   // art/creatures/meerkat/genome.js
   var GENOME_MEERKAT = { id: "meerkat", name: "Meerkat", template: "quadruped", builder: "quad", idle: "sentinel", palette: { hue: 0.09, sat: 0.35, val: 0.72, belly: "white", flower: [168, 76, 50] }, elder: { kind: "meerkat", eye: "GLOW" }, body: { hgt: 0.8, len: 0.62, chest: 0.44, tuck: 0.5, neck: 0.34, neckAng: 0.75, neckW: 0.26, hr: 0.2, legW: 0.55, bw: 0.2, back: "arch" }, head: { snout: 0.8, snoutD: 0.45, snoutTaper: 0.4, face: "meerkat", whiskers: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "meerkat", feet: "paw" }, coat: { belly: true, bands: { n: 5, mat: "BODY2" } }, legend: [], texture: { kind: "fur", size: 2 }, levels: [null, { body: { len: 0.521, legW: 0.396, neckW: 0.221, hr: 0.184, chest: 0.52, tuck: 0.56, profile: { shoulder: { w: 0.86, d: 0.86 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.85, d: 0.9 }, hip: { w: 0.9 } } } }, { body: { chest: 0.39, tuck: 0.48, profile: { shoulder: { w: 1.22, d: 1.16 }, ribcage: { w: 1.08 }, waist: { w: 0.78, d: 0.88 }, loin: { w: 0.88 }, hip: { w: 0.98 } } } }, null] };
@@ -1119,7 +1138,7 @@ label.check input { accent-color: var(--accent); }
     coat: { spots: true, spotMat: "belly", ridge: 2.4 },
     legend: [],
     texture: { kind: "smooth" },
-    levels: [null, null, null, { coat: { ridge: false }, head: { eyeGlow: true, frost: true }, features: [{ kind: "sail", height: 0.5 }] }]
+    levels: [{ coat: { ridge: false }, body: { tailK: 0.45 } }, { coat: { ridge: 1 }, body: { tailK: 0.7 } }, { coat: { ridge: 3 }, body: { tailK: 1.35 } }, { coat: { ridge: false }, head: { eyeGlow: true, frost: true }, features: [{ kind: "sail", height: 0.5 }] }]
   };
 
   // art/creatures/otter/genome.js
@@ -1177,7 +1196,7 @@ label.check input { accent-color: var(--accent); }
       { body: { len: 0.8, neck: 0.42, neckAng: -0.06, hr: 0.33, withers: 0.07, chest: 0.44, tuck: 0.46 } },
       { body: { len: 0.72, legW: 1.152, neckW: 0.451, hr: 0.25, neck: 0.48, neckAng: -0.14, withers: 0.1, front: 1.1, chest: 0.48, tuck: 0.5, profile: { shoulder: { w: 0.9, d: 0.95 }, ribcage: { w: 0.9 }, waist: { w: 0.74, d: 0.8 }, loin: { w: 0.82, d: 0.88 }, hip: { w: 0.86 } } } },
       { body: { chest: 0.33, tuck: 0.4, hr: 0.25, neck: 0.6, neckAng: -0.22, withers: 0.15, front: 1.18, brisket: 0.06, profile: { shoulder: { w: 1.26, d: 1.26 }, ribcage: { w: 1.14, d: 1.06 }, waist: { w: 0.86, d: 0.85 }, loin: { w: 0.92, d: 0.94 }, hip: { w: 1, d: 0.98 } } } },
-      { body: { bw: 0.44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: 0.96, d: 0.96 }, loin: { w: 1 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "mane", belly: true, from: 0, to: 1, height: 0.42, count: 40, lean: 0.25, mat: "BELLY" }, { kind: "ruff", size: 0.28, count: 16 }, { kind: "beads", count: 11, size: 0.055, mat: "WOOD", pendant: "STONE" }] }
+      { body: { bw: 0.44, len: 0.954, chest: 0.3, tuck: 0.38, profile: { shoulder: { w: 1.34, d: 1.28 }, ribcage: { w: 1.2, d: 1.08 }, waist: { w: 0.96, d: 0.96 }, loin: { w: 1 }, hip: { w: 1.08, d: 1.04 } } }, head: { frost: true }, features: [{ kind: "ruff", size: 0.28, count: 16 }, { kind: "worn", ear: "near" }, { kind: "scars", count: 5 }, { kind: "crown", count: 9, size: 1.6, mat: "WEB", spread: 1 }] }
     ]
   };
 
@@ -1254,7 +1273,9 @@ label.check input { accent-color: var(--accent); }
       { body: { chest: 0.25, tuck: 0.34, profile: { shoulder: { w: 1.24, d: 1.16 }, ribcage: { w: 1.1 }, waist: { w: 0.82, d: 0.9 }, loin: { w: 0.9 }, hip: { w: 1 } } } },
       { body: { hgt: 0.72, len: 0.66, chest: 0.32 }, head: { frost: true }, coat: { beads: true, socks: 0.3 }, features: [
         { kind: "ruff", size: 0.24, count: 16, mat: "BELLY" },
-        { kind: "claws", size: 0.14 }
+        { kind: "claws", size: 0.14 },
+        { kind: "grizzle", amount: 0.55 },
+        { kind: "wreath", count: 14 }
       ] }
     ]
   };
@@ -1312,14 +1333,14 @@ label.check input { accent-color: var(--accent); }
     name: "Salamander",
     template: "quadruped",
     builder: "quad",
-    palette: { hue: 0.1, sat: 0.1, val: 0.22, belly: "yellow" },
+    palette: { hue: 0.1, sat: 0.1, val: 0.22, belly: "yellow", magic: 0.05 },
     body: { stance: "sprawl", hgt: 0.4, len: 0.95, chest: 0.16, tuck: 0.16, neck: 0.1, neckAng: -0.05, neckW: 0.6, hr: 0.29, legW: 1.45, bw: 0.36 },
     head: { snout: 0.55, snoutD: 0.55 },
     parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" },
     coat: { spots: true, spotMat: "belly" },
     legend: [],
     texture: { kind: "smooth" },
-    levels: [null, null, null, { coat: { coals: true }, head: { eyeGlow: true, frost: true } }]
+    levels: [null, { body: { tailK: 0.55, bw: 0.22, hr: 0.34, legW: 1.2 } }, { body: { tailK: 1.9, len: 1.15, legW: 1.6, bw: 0.52, neck: 0.1 } }, { body: { tailK: 2.1, bw: 0.48 }, coat: { coals: true }, head: { eyeGlow: true, frost: true }, features: [{ kind: "wisps", at: "mane", count: 11, size: 0.5, from: 0.05, to: 0.98 }] }]
   };
 
   // art/creatures/scorpion/genome.js
@@ -1372,12 +1393,12 @@ label.check input { accent-color: var(--accent); }
     coat: { belly: true, spots: true },
     texture: { kind: "fur", size: 2 },
     levels: [
-      { body: { len: 0.5, chest: 0.58, hr: 0.31 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
+      { body: { len: 0.5, chest: 0.58, hr: 0.31, tailK: 1 }, parts: { ears: { kind: "round", size: 0.95 }, tail: "bushy" } },
       { body: { len: 0.66, legW: 1.05 } },
       { body: { len: 0.7, legW: 1.2 } },
       // the elder of the snow leopards (docs/ART-GUIDE.md 0c): the high ice's ghost, its coat thick and pale as fresh snow, its
       // tail grown so long it wraps round it like a scarf, a grizzled muzzle, offerings of stone beads round its legs
-      { body: { len: 0.72, legW: 1.25, neckAng: 0.5 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
+      { body: { len: 0.72, legW: 1.25, neckAng: 0.5, tailK: 1 }, palette: { val: 0.9, sat: 0.07 }, head: { frost: true }, parts: { tail: "scarf" }, coat: { beads: true }, features: [
         { kind: "ruff", size: 0.3, count: 20, mat: "BELLY" }
       ] }
     ]
@@ -1387,7 +1408,20 @@ label.check input { accent-color: var(--accent); }
   var GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: 0.07, sat: 0.45, val: 0.4 }, legend: ["rose"], texture: { kind: "bristles", size: 2 } };
 
   // art/creatures/squirrel/genome.js
-  var GENOME_SQUIRREL = { id: "squirrel", name: "Squirrel", template: "quadruped", builder: "quad", palette: { hue: 0.03, sat: 0.75, val: 0.75, belly: "white" }, body: { hgt: 0.55, len: 0.45, chest: 0.35, tuck: 0.4, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.3, legW: 0.8, haunch: 1.3, back: "arch" }, head: { snout: 0.55, snoutD: 0.65, whiskers: true }, parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "squirrel", tail: true, eye: "EYE" } };
+  var GENOME_SQUIRREL = {
+    id: "squirrel",
+    name: "Squirrel",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.03, sat: 0.75, val: 0.75, belly: "white" },
+    body: { hgt: 0.55, len: 0.45, chest: 0.35, tuck: 0.4, neck: 0.2, neckAng: 0.9, neckW: 0.35, hr: 0.3, legW: 0.8, haunch: 1.3, back: "arch" },
+    head: { snout: 0.55, snoutD: 0.65, whiskers: true },
+    parts: { ears: { kind: "tuft", size: 1.1 }, tail: "squirrel", feet: "paw" },
+    coat: { belly: true },
+    legend: [],
+    levels: [null, { body: { tailL: 0.55, tailK: 0.75, len: 0.4, hr: 0.34 } }, null, null],
+    elder: { kind: "squirrel", tail: true, eye: "EYE" }
+  };
 
   // art/creatures/stag/genome.js
   var GENOME_STAG = { id: "stag", name: "Stag", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.5, val: 0.7 }, body: { hgt: 1.3, len: 0.6, chest: 0.6, tuck: 0.7, neck: 0.55, neckAng: 0.95, neckW: 0.32, hr: 0.2, legW: 0.75, profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.08 }, waist: { w: 0.72, d: 0.82 }, loin: { w: 0.8, d: 0.9 }, hip: { w: 0.95 } }, spine: { shoulder: 0.04, ribcage: 0.025 } }, head: { snout: 1.15, snoutD: 0.6, snoutTaper: 0.65, jawCoat: true }, parts: { ears: { kind: "point", size: 1.1 }, tail: "deer", feet: "hoof", antlers: "branch" }, coat: { belly: true, spots: "young", rump: true }, legend: ["antlersGlow"], levels: [null, null, null, { head: { antlerK: 0.9, antlerLean: 1.15, tineFlames: true } }] };
@@ -1399,23 +1433,34 @@ label.check input { accent-color: var(--accent); }
     template: "quadruped",
     builder: "quad",
     palette: { hue: 0.27, sat: 0.28, val: 0.38, belly: "white", flower: [214, 92, 48] },
-    body: { hgt: 1.36, len: 1.05, chest: 0.38, tuck: 0.45, neck: 0.18, neckAng: -0.6, neckW: 0.34, hr: 0.2, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: 0.36, profile: { shoulder: { w: 0.82, d: 0.9 }, ribcage: { w: 1.05, d: 1.12 }, waist: { w: 1.08, d: 1.1 }, loin: { w: 1.06, d: 1.05 }, hip: { w: 1.12, d: 1.02 } }, spine: { shoulder: -0.02, ribcage: 0.02, waist: 0.05, loin: 0.07, hip: 0.05 } },
-    head: { snout: 0.8, snoutD: 0.5, muzzle: true, eyeK: 1.3 },
+    body: { hgt: 1.36, len: 1.05, chest: 0.38, tuck: 0.45, neck: 0.5, neckAng: -0.15, neckW: 0.26, hr: 0.12, legW: 1.6, haunch: 1.5, hindFoot: 1.2, back: "arch", bw: 0.36, profile: { shoulder: { w: 0.82, d: 0.9 }, ribcage: { w: 1.05, d: 1.12 }, waist: { w: 1.08, d: 1.1 }, loin: { w: 1.06, d: 1.05 }, hip: { w: 1.12, d: 1.02 } }, spine: { shoulder: -0.02, ribcage: 0.02, waist: 0.05, loin: 0.07, hip: 0.05 } },
+    head: { snout: 0.9, snoutD: 0.42, snoutTaper: 0.55, beak: 0.5, eyeK: 1.2 },
     parts: { ears: { kind: "none" }, tail: "stego", feet: "paw" },
     coat: { belly: true, spots: true, spotMat: "BODY2" },
     legend: ["crystals"],
     texture: { kind: "scales", size: 3 },
     levels: [
-      { body: { len: 0.8 }, head: { eyeK: 1.6 }, features: [{ kind: "backPlates", count: 5, height: 0.5, width: 0.5, mat: "FLOWER", rim: "BODY3", from: 0.1, to: 0.75 }] },
+      { body: { len: 0.8 }, head: { eyeK: 1.5 }, features: [{ kind: "backPlates", count: 5, height: 0.5, width: 0.5, mat: "FLOWER", rim: "BODY3", from: 0.1, to: 0.75 }] },
       { features: [{ kind: "backPlates", count: 7, height: 0.5, width: 0.48, mat: "FLOWER", rim: "BODY3", from: 0.05, to: 0.8 }] },
       { features: [{ kind: "backPlates", count: 9, height: 0.66, width: 0.46, mat: "FLOWER", rim: "BODY3", from: 0, to: 0.85 }] },
-      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 9, height: 0.85, width: 0.46, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: 0.85 }, { kind: "moss", count: 6, size: 0.12 }] }
+      { coat: { scarred: true }, parts: { tail: "stegoElder" }, head: { eyeGlow: true, frost: true }, features: [{ kind: "backPlates", count: 7, height: 0.85, width: 0.34, mat: "BODY3", rim: "NOSE", glow: true, chips: true, from: 0, to: 0.85 }, { kind: "moss", count: 6, size: 0.12 }] }
       // its elder: an epoch-old survivor of the volcano (Ed's brief, ART-GUIDE §0c): plates of obsidian veined with lava, chipped by ages, old scars across its flank, ash-grey frost on its muzzle, moss in its folds, a gold ring offered round each spike, one spike broken short
     ]
   };
 
   // art/creatures/stoat/genome.js
-  var GENOME_STOAT = { id: "stoat", name: "Stoat", template: "quadruped", builder: "quad", palette: { hue: 0.1, sat: 0.25, val: 0.92 }, body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.5, neckAng: 0.9, neckW: 0.3, hr: 0.25, legW: 0.8, back: "arch" }, head: { snout: 0.6, snoutD: 0.6, whiskers: true }, parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" }, coat: { belly: true }, legend: ["ribbons", "mane"] };
+  var GENOME_STOAT = {
+    id: "stoat",
+    name: "Stoat",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.1, sat: 0.25, val: 0.92 },
+    body: { hgt: 0.48, len: 1.05, chest: 0.3, tuck: 0.33, neck: 0.85, neckAng: 0.55, neckW: 0.2, hr: 0.25, legW: 0.8, back: "arch", brisket: 0, profile: { shoulder: { w: 0.9, d: 0.8 }, ribcage: { d: 0.9 } } },
+    head: { snout: 0.6, snoutD: 0.6, whiskers: true },
+    parts: { ears: { kind: "round", size: 0.6 }, tail: "stoat", feet: "paw" },
+    coat: { belly: true },
+    levels: [null, { body: { len: 0.7, neck: 0.34, hr: 0.31, hgt: 0.48, legW: 0.9, tailL: 0.7 }, head: { snout: 0.48 } }, { body: { len: 1.15, hgt: 0.44, neck: 0.92 } }, { body: { hgt: 0.56, len: 1.2, neck: 0.92 }, features: [{ kind: "darken", mat: "BODY3" }, { kind: "grizzle", amount: 0.7 }, { kind: "worn", ear: "near" }, { kind: "garland", count: 14 }, { kind: "earrings", which: "both" }] }]
+  };
 
   // art/creatures/tiger/genome.js
   var GENOME_TIGER = {
@@ -1627,6 +1672,9 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/heron/sigil.js
   var SIGIL_HERON = { neon: "blue", strokes: [C(0.36, 0.18, 0.07), D(0.38, 0.17), L([0.43, 0.19], [0.92, 0.26]), L([0.3, 0.15], [0.1, 0.1]), bow([0.33, 0.25], [0.42, 0.5], 0.35), E(0.48, 0.58, 0.2, 0.1), L([0.44, 0.68], [0.42, 0.94]), L([0.52, 0.68], [0.56, 0.94])] };
 
+  // art/creatures/hydra/sigil.js
+  var SIGIL_HYDRA = { neon: "violet", strokes: [L([0.14, 0.9], [0.86, 0.9]), L([0.5, 0.9], [0.56, 0.72], [0.44, 0.52], [0.5, 0.36]), C(0.5, 0.28, 0.08), L([0.45, 0.21], [0.41, 0.1]), L([0.55, 0.21], [0.59, 0.1]), ...pair(L([0.38, 0.9], [0.27, 0.74], [0.22, 0.58], [0.22, 0.48]), C(0.22, 0.41, 0.07))] };
+
   // art/creatures/ibex/sigil.js
   var SIGIL_IBEX = { neon: "orange", strokes: [...pair(L([0.44, 0.34], [0.39, 0.2], [0.3, 0.09], [0.17, 0.05]), L([0.4, 0.19], [0.35, 0.21]), L([0.33, 0.11], [0.29, 0.14]), L([0.44, 0.34], [0.37, 0.44], [0.43, 0.72], [0.5, 0.78]), D(0.41, 0.5)), L([0.44, 0.34], [0.56, 0.34]), L([0.5, 0.8], [0.5, 0.95])] };
 
@@ -1715,7 +1763,7 @@ label.check input { accent-color: var(--accent); }
   var SIGIL_STAG = { neon: "magenta", strokes: [...pair(L([0.4, 0.42], [0.4, 0.68], [0.5, 0.9]), L([0.4, 0.44], [0.2, 0.4], [0.36, 0.52]), L([0.43, 0.4], [0.35, 0.26], [0.24, 0.07]), L([0.37, 0.3], [0.17, 0.25]), L([0.3, 0.17], [0.38, 0.07]), D(0.44, 0.56)), L([0.4, 0.42], [0.6, 0.42])] };
 
   // art/creatures/stegosaurus/sigil.js
-  var SIGIL_STEGOSAURUS = { neon: "red", strokes: [bow([0.12, 0.66], [0.84, 0.7], 0.32), L([0.2, 0.52], [0.27, 0.33], [0.35, 0.47], [0.44, 0.25], [0.52, 0.45], [0.6, 0.3], [0.68, 0.5]), L([0.13, 0.66], [0.04, 0.54]), L([0.12, 0.68], [0.03, 0.76]), C(0.87, 0.72, 0.045), L([0.34, 0.74], [0.34, 0.86]), L([0.66, 0.74], [0.66, 0.86])] };
+  var SIGIL_STEGOSAURUS = { neon: "red", strokes: [bow([0.12, 0.66], [0.84, 0.7], 0.32), L([0.2, 0.52], [0.27, 0.33], [0.35, 0.47], [0.44, 0.25], [0.52, 0.45], [0.6, 0.3], [0.68, 0.5]), L([0.13, 0.66], [0.07, 0.55]), L([0.12, 0.68], [0.06, 0.75]), C(0.87, 0.72, 0.045), L([0.34, 0.74], [0.34, 0.86]), L([0.66, 0.74], [0.66, 0.86])] };
 
   // art/creatures/stoat/sigil.js
   var SIGIL_STOAT = { neon: "pink", strokes: [A(0.5, 0.54, 0.33, -40, 250), C(0.68, 0.26, 0.1), ...[[0.62, 0.18], [0.72, 0.16]].map(([x, y]) => L([x, y + 0.02], [x - 0.02, y - 0.07], [x + 0.03, y - 0.01])), D(0.71, 0.27), D(...at(0.5, 0.54, 0.33, 250))] };
@@ -2222,6 +2270,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/heron/nap.js
   var NAP_HERON = { kind: "tuck", ground: 0.56, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101] };
+
+  // art/creatures/hydra/nap.js
+  var NAP_HYDRA = { kind: "lie", ground: 0.06, droop: 0.6 };
 
   // art/creatures/jaguar/nap.js
   var NAP_JAGUAR = { kind: "curl", sink: 0.04, droop: 1, curl: 2.4, tailDown: 0.25 };
@@ -2954,6 +3005,25 @@ label.check input { accent-color: var(--accent); }
       label: "Heron's Stride: a little quicker on foot, and a longer blink"
     },
     character: { sprite: "puff", every: [6, 11], for: 1.4 }
+  };
+
+  // art/creatures/hydra/creature.js
+  var CREATURE_HYDRA = {
+    movement: {
+      speed: 9,
+      accel: 20,
+      fight: [{ kind: "arrive", w: 1 }, { kind: "separation", w: 0.6, radius: 10.5 }],
+      move: { kind: "ambush", cooldown: 7, trigger: 12, speed: 2, time: 0.5 }
+    },
+    radius: 1.3,
+    voice: { family: "snake", pitch: 0.6, glide: 0.8, volume: 1.2 },
+    buff: {
+      name: "Many Heads",
+      kind: "shot",
+      scale: { "invites.cooldown": 0.75, "invites.radius": 1.2 },
+      label: "Hydra's Many Heads: \u{1F48C}s come quicker and land a little more easily"
+    },
+    character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 }
   };
 
   // art/creatures/ibex/creature.js
@@ -3906,11 +3976,11 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/index.js
-  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
-  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
-  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
-  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
+  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
   // src/rules/creatureConfig.ts
   var CREATURES = CREATURE_CONFIGS;
@@ -5833,7 +5903,7 @@ label.check input { accent-color: var(--accent); }
     },
     avian: { name: "Bird", builders: ["owl", "raven", "heron", "penguin"], sizes: { head: [0.48, 0.36, 0.36, 0.36], headY: [0.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], texture: { kind: "feathers" }, face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, 0.5], dutyWalk: 0.6, dutyRun: 0.4 } },
     flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth", "dragonfly"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-    serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+    serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake", "hydra"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
     insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab", "crab", "scorpion"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, 0.5, 0, 0.5, 0, 0.5], dutyWalk: 0.6, dutyRun: 0.5 } },
     // alternating tripods
     squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo", "troll"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, 0.5, 0.5, 0], dutyWalk: 0.7, dutyRun: 0.5 } }
@@ -5940,6 +6010,7 @@ label.check input { accent-color: var(--accent); }
     if (g.idle) S.idle = g.idle;
     if (g.palette.ear) S.ear = g.palette.ear;
     if (g.palette.magic != null) S.magic = g.palette.magic;
+    if (g.hydra) S.hydra = g.hydra;
     if (g.palette.flower) S.flower = g.palette.flower;
     if (g.template === "quadruped") {
       const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -6388,19 +6459,25 @@ label.check input { accent-color: var(--accent); }
     return finish(m, S, level, st, 1, facing);
   }
   function raven3d(S, level, frame, st, facing = "towards") {
-    const legend = level === 3, young = false, has = (f) => legend && S.legend.includes(f), m = new Model(), bob = frame ? 0.02 : 0;
+    const legend = level === 3, baby = level === 0, young = level === 1, has = (f) => legend && S.legend.includes(f), m = new Model(), bob = frame ? 0.02 : 0;
     for (const side of [-1, 1]) {
       const f = (frame ? -1 : 1) * side * 0.07;
       m.seg([0, 0.3, side * 0.08], [0.03 + f, 0.03, side * 0.08], 0.03, 0.025, M.NOSE, { group: side > 0 ? 7 : 2 });
       m.ell([0.08 + f, 0.02, side * 0.08], [0.08, 0.015, 0.04], M.NOSE, { group: 2 });
       m.anchors.feet.push({ c: [0.07 + f, 0.03, side * 0.08], r: 0.06, group: side > 0 ? 7 : 2 });
     }
-    m.ell([-0.55, 0.42, 0], [0.32, 0.035, 0.12], M.BODY2, { dir: [-1, -0.25, 0], group: 3 });
-    m.ell([0, 0.52 + bob, 0], [0.42, 0.26, 0.24], M.BODY, { dir: [1, 0.45, 0] });
-    if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.1, 0.55 + bob, side * 0.2], [0.45, 0.17, 0.05], M.BODY2, { dir: [-1, -0.25, 0], group: side > 0 ? 4 : 2 });
-    const hc = [0.36, 0.84 + bob, 0], hr = young ? 0.19 : 0.16;
+    const tl = baby ? 0.12 : young ? 0.24 : 0.32;
+    m.ell([-0.23 - tl, 0.42, 0], [tl, 0.035, 0.12], M.BODY2, { dir: [-1, -0.25, 0], group: 3 });
+    m.ell([0, 0.52 + bob, 0], baby ? [0.36, 0.3, 0.27] : [0.42, 0.26, 0.24], M.BODY, { dir: [1, 0.45, 0], paint: baby ? (p) => spotty(p, 45, 0.45) ? M.BELLY : void 0 : void 0 });
+    if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.1, 0.55 + bob, side * 0.2], baby ? [0.28, 0.14, 0.05] : [0.45, 0.17, 0.05], M.BODY2, { dir: [-1, -0.25, 0], group: side > 0 ? 4 : 2 });
+    const hc = [0.36, (baby ? 0.86 : 0.84) + bob, 0], hr = baby ? 0.21 : young ? 0.18 : 0.16;
     m.ell(hc, [hr * 1.1, hr, hr * 0.95], M.BODY, { paint: (p) => p[1] > hc[1] + hr * 0.55 || has("hoard") && spotty(p, 60, 0.3) ? M.BELLY : void 0 });
-    m.ell(v3.add(hc, [hr * 1.5, -hr * 0.25, 0]), [hr * 1, hr * 0.38, hr * 0.3], M.NOSE, { dir: [1, -0.2, 0], group: 1 });
+    const bl = baby ? 0.6 : young ? 0.85 : 1;
+    m.ell(v3.add(hc, [hr * (0.5 + bl), -hr * 0.25, 0]), [hr * bl, hr * 0.38, hr * 0.3], M.NOSE, { dir: [1, -0.2, 0], group: 1 });
+    if (baby) {
+      for (const side of [-1, 1]) m.ell(v3.add(hc, [hr * 0.75, -hr * 0.3, side * hr * 0.3]), [hr * 0.14, hr * 0.1, hr * 0.1], M.BELLY, { group: 1 });
+      for (const [dx, dz] of [[-0.2, -0.25], [0.05, 0.2], [-0.4, 0.1]]) m.chain([[hc[0] + hr * dx, hc[1] + hr * 0.85, hr * dz, hr * 0.09], [hc[0] + hr * (dx - 0.25), hc[1] + hr * 1.35, hr * dz * 1.3, hr * 0.03]], M.BELLY, { group: 5, extra: true });
+    }
     eyesOn(m, hc, [hr * 1.1, hr, hr * 0.95], [[0.55, 0.35, 0.65], [0.55, 0.35, -0.65]], hr * 0.16, legend ? M.MAGIC2 : M.EYE);
     if (has("wings")) for (const side of [-1, 1]) wing3d(m, [-0.05, 0.65 + bob, side * 0.18], side, 1.1, frame ? 0.1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
     if (has("eyesRing")) for (let i = 0; i < 6; i++) {
@@ -6439,19 +6516,10 @@ label.check input { accent-color: var(--accent); }
     return finish(heronModel(S, level, f0), S, level, st, 1.25, facing, !FORM && f0 ? heronModel(S, level, 0) : null);
   }
   function heronModel(S, level, frame) {
-    const legend = level === 3, m = new Model(), q = { ...S.levelQ?.[level] || {} }, stilts = legend && S.legend.includes("stilts") && !FORM, lk = q.legs ?? (stilts ? 2.3 : 1), nk = q.neck ?? 1.45, bk = q.beak ?? 1;
+    const legend = level === 3, m = new Model(), q = { ...S.levelQ?.[level] || {} }, lantern = legend && S.legend.includes("lantern") && !FORM;
+    const lk = q.legs ?? [0.7, 0.9, 1, 1.3][level], nk = q.neck ?? [1.05, 1.3, 1.45, 1.75][level], bk = q.beak ?? [0.55, 0.8, 1, 1.1][level], down = level === 0;
     const F = HERON_GAIT.frames, hip = 0.52 * lk + 0.25, by = hip + 0.18, f0 = frame;
-    const legs0 = m.parts.length, pose = stilts ? [{ foot: [-0.02, hip * 0.62, -0.07], knee: [0.14, hip * 0.8, -0.07] }, { foot: [0.02, 0.03, 0.07], knee: [-0.04, hip * 0.5, 0.07] }] : heronLegs(f0 / F, hip);
-    if (stilts) for (const y of [0.18, 0.24]) m.ell([0.02 - 0.04 * y, hip * y * 1.6, 0.07], [0.03, 0.012, 0.03], M.GLINT, { group: 91, extra: true });
-    if (stilts) m.flat([0.05, 0.012, 0.1], [1, 0, 0], [0, 0, 1], 0.62, 0.42, (a, b) => {
-      const d = Math.hypot(a, b);
-      if (d > 1) return null;
-      if (d > 0.9) return M.BELLY;
-      if (Math.abs(a + 0.05) < 0.025 && b > -0.1 && b < 0.45) return M.ACCENT;
-      if (Math.hypot((a + 0.02) / 0.32, (b - 0.62) / 0.16) < 1) return M.BODY2;
-      if (Math.abs(d - 0.5 - frame % 2 * 0.08) < 0.03) return M.GLINT;
-      return M.NOSE;
-    }, { group: 90, extra: true, bend: 0 });
+    const legs0 = m.parts.length, pose = heronLegs(f0 / F, hip);
     for (const side of [-1, 1]) {
       const { foot, knee } = pose[side > 0 ? 1 : 0];
       m.chain([[0, hip, foot[2], 0.024], [...knee, 0.015], [...foot, 0.013]], M.ACCENT, { group: side > 0 ? 7 : 2 });
@@ -6459,7 +6527,7 @@ label.check input { accent-color: var(--accent); }
       m.anchors.feet.push({ c: v3.add(foot, [0.04, 0, 0]), r: 0.05, group: side > 0 ? 7 : 2, fit: "claw" });
     }
     for (let i = legs0; i < m.parts.length; i++) m.parts[i].lean = true;
-    m.ell([0, by, 0], [0.3, 0.13, 0.12], M.BODY, { dir: [1, 0.3, 0] });
+    m.ell([0, by, 0], down ? [0.27, 0.16, 0.15] : [0.3, 0.13, 0.12], M.BODY, { dir: [1, 0.3, 0], paint: down ? (p) => spotty(p, 40, 0.5) ? M.BELLY : void 0 : void 0 });
     for (const side of [-1, 1]) m.ell([-0.06, by + 0.02, side * 0.1], [0.32, 0.11, 0.035], M.BODY2, { dir: [-1, -0.2, 0], group: side > 0 ? 4 : 2, paint: (p) => p[0] > 0.12 ? M.BODY3 : void 0 });
     m.ell([-0.36, by - 0.04, 0], [0.14, 0.03, 0.08], M.BODY2, { dir: [-1, -0.3, 0], group: 3 });
     const fd = FORM?.fold ?? 0, mix = (u, v) => u.map((x, i) => x + (v[i] - x) * fd);
@@ -6467,8 +6535,24 @@ label.check input { accent-color: var(--accent); }
     m.chain([[...n0, 0.055], [...n1, 0.038], [...n2, 0.034], [...hc, 0.036]], M.BELLY, { paint: (p) => p[0] > (p[1] < n1[1] ? n0[0] + (p[1] - n0[1]) / (n1[1] - n0[1]) * (n1[0] - n0[0]) : n2[0]) + 0.03 && spotty(p, 30, 0.6) ? M.BODY3 : void 0 });
     const hr = 0.075;
     m.ell(hc, [hr * 1.15, hr * 0.9, hr * 0.85], M.BELLY, { paint: (p) => p[1] > hc[1] + hr * 0.3 && p[0] < hc[0] + hr * 0.3 ? M.BODY3 : void 0 });
-    const ck = q.crest ?? (stilts ? 1.9 : 1);
+    const ck = q.crest ?? [0, 0.45, 1, 1.9][level];
+    if (ck) m.chain([[hc[0] - hr * 0.6, hc[1] + hr * 0.4, 0, 0.016], [hc[0] - hr * 2.2 * ck, hc[1] + hr * 0.7, 0, 0.01], [hc[0] - hr * 3.6 * ck, hc[1] + hr * 0.2, 0, 4e-3]], M.BODY3, { group: 5, extra: true });
+    if (level >= 2 && !FORM?.fold) for (let k = 0; k < (legend ? 5 : 3); k++) {
+      const t = 0.2 + k * 0.12, a = v3.lerp(n0, n1, t), len = (legend ? 0.26 : 0.14) * (1 - k * 0.08), z = (k % 2 ? 1 : -1) * 0.018 * k;
+      m.chain([[a[0] + 0.03, a[1], z, 0.012], [a[0] + 0.07, a[1] - len * 0.5, z * 1.4, 8e-3], [a[0] + 0.05, a[1] - len, z * 1.6, 3e-3]], M.BELLY, { group: 6, extra: true });
+    }
+    if (legend) for (let k = 0; k < 4; k++) {
+      const z = (k - 1.5) * 0.05;
+      m.chain([[0.05, by + 0.12, z, 0.01], [-0.25, by + 0.1 + 0.02 * k, z * 1.3, 7e-3], [-0.55, by - 0.02, z * 1.6, 3e-3]], M.BELLY, { group: 8, extra: true });
+    }
     m.seg(v3.add(hc, [hr * 0.8, -hr * 0.15, 0]), v3.add(hc, [hr * (0.8 + 3.6 * bk), -hr * (0.6 + 1.6 * fd), 0]), hr * 0.3, hr * 0.05, M.ACCENT, { group: 1 });
+    if (lantern) {
+      const tip = v3.add(hc, [hr * (0.8 + 3.2 * bk), -hr * 0.5, 0]), sw = Math.sin(f0 / F * Math.PI * 2) * 0.03, top = v3.add(tip, [sw, -0.12, 0]), lc = v3.add(top, [sw * 0.3, -0.07, 0]);
+      m.seg(tip, top, 4e-3, 4e-3, M.WOOD, { group: 93, extra: true });
+      m.ell(v3.add(top, [0, -5e-3, 0]), [0.035, 0.012, 0.035], M.WOOD, { group: 93, extra: true });
+      m.ell(lc, [0.042, 0.06, 0.042], M.GLOW, { group: 93, extra: true, paint: (p) => Math.abs(p[1] - lc[1]) % 0.03 < 6e-3 ? M.WOOD : void 0 });
+      m.ell(v3.add(lc, [0, -0.062, 0]), [0.03, 0.01, 0.03], M.WOOD, { group: 93, extra: true });
+    }
     eyesOn(m, hc, [hr * 1.15, hr * 0.9, hr * 0.85], [[0.5, 0.3, 0.7], [0.5, 0.3, -0.7]], hr * 0.2, legend ? M.MAGIC2 : M.EYE);
     m.anchors.neck = { c: v3.lerp(n0, n1, 0.5), r: 0.06, dir: v3.norm(v3.sub(n1, n0)) };
     if (!FORM) for (let g = 0; g < F; g++) {
@@ -6845,14 +6929,16 @@ label.check input { accent-color: var(--accent); }
     return finish(m, S, level, st, 0.4, facing);
   }
   function snake3d(S, level, frame, st, facing = "towards") {
-    const legend = level === 3, young = false, has = (f) => legend && S.legend.includes(f), m = new Model(), ph = frame ? 0.7 : 0, pts = [];
+    const legend = level === 3, baby = level === 0, young = level === 1, has = (f) => legend && S.legend.includes(f), m = new Model(), ph = frame ? 0.7 : 0, pts = [];
+    const girth = [0.9, 0.82, 1, 1][level], rise = [1, 0.85, 1.15, 1.15][level];
     for (let i = 0; i <= 12; i++) {
       const t = i / 12;
-      pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), 0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)]);
+      pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), (0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]);
     }
-    pts.push([0.38, 0.25, pts[12][2], 0.07], [0.42, 0.45, pts[12][2] * 0.8, 0.065]);
-    m.chain(pts, M.BODY, { paint: (p) => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 14, 0.3) ? M.BODY3 : void 0 });
-    const hc = [0.5, 0.5, pts[13][2] * 0.8], hr = young ? 0.11 : 0.09;
+    pts.push([0.38, 0.07 + 0.18 * rise, pts[12][2], 0.07 * girth], [0.42, 0.07 + 0.38 * rise, pts[12][2] * 0.8, 0.065 * girth]);
+    const spots = baby ? 0 : young ? 0.15 : 0.3, bands = level >= 2;
+    m.chain(pts, M.BODY, { paint: (p) => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
+    const hc = [0.5, 0.07 + 0.43 * rise, pts[13][2] * 0.8], hr = baby ? 0.13 : young ? 0.105 : 0.09;
     m.rig = { spine: pts.map((p) => p.slice()), head: hc, hr };
     m.part = "head";
     m.ell(hc, [hr * 1.5, hr * 0.75, hr], M.BODY, { dir: [1, -0.15, 0], group: 1 });
@@ -6947,6 +7033,70 @@ label.check input { accent-color: var(--accent); }
       m.seg(v3.add(c, [-0.035 * k, 0.01, 0]), v3.add(c, [-0.04 * k, 0.05 * k, 0]), 0.01 * k, 6e-3 * k, M.BELLY, { group: 30 + i });
     }
     m.anchors.neck = { c: [0.2, y + 0.05, 0], r: 0.1, dir: [1, 0, 0] };
+    return finish(m, S, level, st, 0.45, facing);
+  }
+  function hydra3d(S, level, frame, st, facing = "towards") {
+    const legend = level === 3, m = new Model(), ph = frame ? 0.6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
+    for (let i = 0; i <= 10; i++) {
+      const t = i / 10;
+      pts.push([-0.75 + t * 0.95, 0.07, Math.sin(t * Math.PI * 1.6 + ph) * 0.2 * (1 - t * 0.4), 0.035 + 0.05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]);
+    }
+    m.chain(pts, M.BODY, { paint: (p) => p[1] < 0.06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, 0.28) ? M.BODY3 : void 0 });
+    const root = pts[10].slice(0, 3), hr = 0.058;
+    const eyes = [];
+    const head = (at2, dir, h, open, group) => {
+      const d = v3.norm(dir), side = v3.norm(v3.cross(d, [0, 1, 0])), up = v3.norm(v3.cross(side, d));
+      m.ell(at2, [h * 1.05, h * 0.72, h * 0.8], M.BODY, { dir: d, group, paint: (p) => v3.dot(v3.sub(p, at2), up) > h * 0.45 ? M.BODY3 : void 0 });
+      const sn = v3.add(at2, v3.add(v3.mul(d, h * 1.5), v3.mul(up, -h * 0.15)));
+      m.ell(sn, [h * 1.3, h * 0.36, h * 0.5], M.BODY, { dir: d, group, paint: (p) => v3.dot(v3.sub(p, sn), up) < -h * 0.15 ? M.BELLY : void 0 });
+      const jd = v3.norm(v3.add(d, v3.mul(up, -open * 0.9))), jc = v3.add(at2, v3.add(v3.mul(jd, h * 1.2), v3.mul(up, -h * 0.42)));
+      m.ell(jc, [h * 1.1, h * 0.22, h * 0.48], M.BELLY, { dir: jd, group });
+      if (open > 0.1) {
+        m.ell(v3.lerp(sn, jc, 0.5), [h * 0.75, h * 0.2, h * 0.38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
+        for (const s2 of [-1, 1]) {
+          const f = v3.add(sn, v3.add(v3.mul(d, h * 0.7), v3.mul(side, s2 * h * 0.3)));
+          m.seg(f, v3.add(f, v3.mul(up, -h * 0.35)), h * 0.07, h * 0.02, M.ACCENT, { group });
+        }
+      }
+      for (const s2 of [-1, 1]) {
+        const e = v3.add(at2, v3.add(v3.add(v3.mul(d, h * 0.35), v3.mul(up, h * 0.48)), v3.mul(side, s2 * h * 0.55)));
+        m.ell(e, [h * 0.17, h * 0.13, h * 0.17], M.PUPIL, { group: 1 });
+        eyes.push(e);
+        m.ell(v3.add(e, [h * 0.05, h * 0.06, h * 0.09]), [h * 0.055, h * 0.055, h * 0.055], M.GLINT, { group: 1 });
+      }
+      m.anchors.head ||= { c: at2, r: [h, h * 0.8, h * 0.8] };
+      if (crest) {
+        for (let k = 0; k < 4; k++) {
+          const b = v3.add(at2, v3.add(v3.mul(d, -h * (0.1 + k * 0.3)), v3.mul(up, h * 0.7)));
+          m.chain([[...b, h * 0.16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * 0.15)), v3.mul(d, -h * 0.6))), h * 0.02]], M.BODY3, { group, extra: true });
+        }
+        for (const s2 of [-1, 1]) m.flat(v3.add(at2, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * 0.45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -0.6))), up, h * 0.85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group });
+      }
+    };
+    const neck = (from, to, r0, r1, group, hK, open, ring2) => {
+      const dv = v3.sub(to, from), mid = v3.add(from, [dv[0] * 0.35 + 0.07, dv[1] * 0.45, dv[2] * 0.5]), mid2 = v3.add(from, [dv[0] * 0.75 - 0.03, dv[1] * 0.85, dv[2] * 0.85]);
+      m.chain([[...from, r0], [...mid, r0 * 0.75 + r1 * 0.25], [...mid2, r0 * 0.3 + r1 * 0.7], [...to, r1]], M.BODY, { group, extra: true, paint: (p) => p[1] < v3.lerp(from, to, 0.5)[1] - 0.02 && spotty(p, 30, 0.15) ? M.BODY3 : void 0 });
+      if (ring2) for (const t of [0.7, 0.85]) m.ell(v3.lerp(mid2, to, t - 0.6), [r1 * 0.45, r1 * 1.7, r1 * 1.7], M.WOOD, { dir: v3.norm(v3.sub(to, mid)), group: 60 });
+      head(v3.add(to, [hr * hK * 0.6, 0.01, hr * hK * 0.25]), [1, -0.25, 0.45 * Math.sign(to[2] - from[2] + 1e-3) * 0.6 + 0.25], hr * hK, open, 1);
+    };
+    let main = null;
+    for (let k = 0; k < heads; k++) {
+      const u = heads > 1 ? k / (heads - 1) - 0.5 : 0, sway = Math.sin(k * 1.7 + ph * 2.5) * 0.035, len = (0.5 + 0.12 * Math.cos(u * 2.4)) * (legend ? 1.1 : 1);
+      const tip = [root[0] + 0.14 + sway - Math.abs(u) * 0.22 + k % 2 * 0.08, root[1] + len * (1 - Math.abs(u) * 0.4) + 0.09 * Math.sin(k * 2.3), root[2] + u * len * 2.1 - (legend ? 0.12 : 0)];
+      neck(root, tip, 0.034, 0.022, 20 + k, legend ? 1.25 : 1.1, k % 3 === 1 ? 0.55 : 0, legend);
+      if (!main || Math.abs(u) < 0.01) main = tip;
+    }
+    if (legend) for (const [dz, dy] of [[0.62, 0.02], [0.42, 0.12]]) {
+      const stump = [root[0] + 0.22, root[1] + dy + 0.1, root[2] + dz];
+      m.chain([[...root, 0.034], [...v3.lerp(root, stump, 0.5), 0.032], [...stump, 0.03]], M.BODY, { group: 40, extra: true });
+      m.ell(stump, [0.034, 0.014, 0.034], M.WEB, { group: 40 });
+      for (const k of [-1, 1]) neck(v3.add(stump, [0, 0.01, k * 0.015]), [stump[0] + 0.1, stump[1] + 0.14, stump[2] + k * 0.08 + 0.04], 0.018, 0.013, 42, 0.6, k > 0 ? 0.5 : 0, false);
+    }
+    m.rig = { spine: pts.map((p) => p.slice()), head: main, hr };
+    m.anchors.eyes = { pts: eyes, size: hr * (legend ? 1.25 : 1.1) * 0.17 };
+    m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-0.02, -0.01, 0]), r: 0.06, group: 3, tail: true });
+    m.anchors.neck = { c: v3.lerp(root, main, 0.3), r: 0.06, dir: v3.norm(v3.sub(main, root)) };
+    m.part = "body";
     return finish(m, S, level, st, 0.45, facing);
   }
   function moth3d(S, level, frame, st, facing = "towards") {
@@ -7081,7 +7231,7 @@ label.check input { accent-color: var(--accent); }
   }
 
   // art/creatures.js
-  var MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d }));
+  var MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d }));
   var SPECIES = GENOMES.map(speciesOf);
   var SPECIES_BY_ID = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
   var GAITS = { heron: { frames: HERON_GAIT.frames, step: 0.08 } };
@@ -7182,6 +7332,7 @@ label.check input { accent-color: var(--accent); }
     redpanda: [...pair(L([0.27, 0.78], [0.2, 0.9]), L([0.33, 0.82], [0.3, 0.94])), L([0.5, 0.82], [0.5, 0.9])],
     newt: [D(0.28, 0.62), D(0.38, 0.63), D(0.48, 0.62), L([0.22, 0.76], [0.18, 0.82])],
     crocodile: [...pair(D(0.42, 0.3), D(0.36, 0.3), L([0.465, 0.5], [0.465, 0.76])), D(0.5, 0.28)],
+    hydra: [L([0.45, 0.6], [0.55, 0.6]), ...pair(L([0.17, 0.62], [0.27, 0.62]), D(0.24, 0.41)), D(0.5, 0.28)],
     tiger: [...pair(L([0.2, 0.44], [0.3, 0.47]), L([0.45, 0.79], [0.44, 0.86]))],
     jaguar: [...pair(C(0.37, 0.36, 0.03), L([0.17, 0.56], [0.26, 0.58]), D(0.42, 0.8)), L([0.44, 0.84], [0.56, 0.84])],
     elephant: [...pair(A(0.24, 0.42, 0.1, 110, 250), L([0.43, 0.26], [0.47, 0.24])), L([0.46, 0.63], [0.54, 0.63]), L([0.46, 0.7], [0.54, 0.7]), L([0.47, 0.77], [0.55, 0.78])],
@@ -7260,7 +7411,7 @@ label.check input { accent-color: var(--accent); }
     grow: "narrow",
     style: { gnarl: { mul: 0.6 } },
     crown: { envelope: "sphere", clumps: [7, 10] },
-    params: { trunk: 0.4, tw: 9, limbs: 3, spreadA: 0.45, limb: 0.26, depth: 3, splay: 0.6, clumpR: [7, 10], flat: 0.8, extra: 0.35, ragged: 1.8, tall: 160, wide: 0.8, darkBack: 0.1, tex: { grain: 1.2, holes: 0.3, flecks: 0.26 } },
+    params: { trunk: 0.4, tw: 9, limbs: 3, spreadA: 0.7, limb: 0.26, depth: 3, splay: 0.6, clumpR: [7, 10], flat: 0.7, extra: 0.35, ragged: 1.8, tall: 160, wide: 1.2, darkBack: 0.1, tex: { grain: 1.2, holes: 0.3, flecks: 0.26 } },
     low: { ivy: 0.6, sprigs: 0.3, boughs: 0.2 },
     colour: { hue: -0.04, sat: 0.85, val: 1.12 }
   };
@@ -7446,7 +7597,7 @@ label.check input { accent-color: var(--accent); }
     generator: "blob",
     grow: "normal",
     crown: { envelope: "umbrella", clumps: "fronds" },
-    params: { w: 150, wPad: 0, h: 125, trunk: { w: 11, len: 0.6, taper: 0.92, bend: 0.3, lean: 0.15, scars: 3, roots: 0.2 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [16, 20], len: [44, 56], leaflet: 5, droop: 0.45, spread: 2.7, fruit: { n: [1, 1], r: 4.5 } } } },
+    params: { w: 150, wPad: 0, h: 125, trunk: { w: 11, len: 0.6, taper: 0.92, bend: 0.3, lean: 0.15, scars: 3, roots: 0.2 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [16, 20], len: [44, 56], leaflet: 5, droop: 0.8, spread: 2.2, fruit: { n: [1, 1], r: 4.5 } } } },
     low: { sprigs: 0.1 },
     colour: { hue: 0.03, sat: 0.8, val: 0.7, trunk: [0.07, 0.3, 0.34] }
   };
@@ -7458,7 +7609,7 @@ label.check input { accent-color: var(--accent); }
     generator: "blob",
     grow: "narrow",
     crown: { envelope: "umbrella", clumps: "fronds" },
-    params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: 0.9, taper: 0.75, bend: 1.6, lean: 0.7, scars: 2, roots: 0.4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.3, fruit: { n: [6, 9], r: 2.2 } } } },
+    params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: 0.9, taper: 0.75, bend: 1.6, lean: 0.7, scars: 2, roots: 0.4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.6, fruit: { n: [6, 9], r: 2.2 } } } },
     low: { sprigs: 0.2 },
     colour: { hue: -0.02, sat: 0.9, val: 0.95, trunk: [0.08, 0.25, 0.5] }
   };
@@ -9621,7 +9772,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.15, rocks: 0.7, freak: 0.1, lake: 0, modern: 0.05 },
       feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
     },
-    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.55, val: 0.8 } },
+    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.5, kinds: ["fern", "moss", "blades"] } }
   };
 
@@ -9655,6 +9806,39 @@ label.check input { accent-color: var(--accent); }
     },
     flora: { species: [["cycad", 0.45], ["pine", 0.35], ["datePalm", 0.2]], palette: { sat: 0.7, val: 0.8 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["fern", "moss"] } }
+  };
+
+  // art/areas/drowned-wood/recipe.js
+  var DROWNED_WOOD = {
+    slot: 31,
+    id: "drowned-wood",
+    name: "Drowned wood",
+    creature: "hydra",
+    by: "recipe",
+    leaf: 0.28,
+    floor: ["mud", 0.3, 0.25, 0.17],
+    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
+    wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]],
+    small: [["reeds", {}], ["grass", { h: 0.9 }]],
+    big: [["tree", { type: "larch", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+    ponds: true,
+    wet: true,
+    pathKinds: ["boardwalk"],
+    setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: 0.5, top: "none" }],
+    layout: {
+      pattern: "stands",
+      density: 0.55,
+      clump: 0.6,
+      glades: { count: 2, size: [16, 24] },
+      heightMix: { sapling: 0.05, mature: 0.35, tall: 0.45, giant: 0.15 },
+      undergrowth: 0.4,
+      lean: { dir: 0, amount: 0.05 },
+      terrain: ["pools", "hollows"],
+      decor: { rate: 0.3, ruins: 0.6, rocks: 0.1, freak: 0.1, lake: 0.2, modern: 0 },
+      feel: "Tall drowned larches standing in still black water, roots knuckled up out of it, willows trailing, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
+    },
+    flora: { species: [["larch", 0.6], ["willow", 0.25], ["alder", 0.15]], palette: { sat: 0.6, val: 0.7 } },
+    settings: { treeDensity: 0.5, groundCover: { density: 0.5, kinds: ["reeds", "blades"] } }
   };
 
   // art/areas/alder-forest/flora.js
@@ -9748,7 +9932,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_WISPY_FOREST = { species: [["lime", 0.4], ["birch", 0.25], ["aspen", 0.2], ["whitebeam", 0.15]], palette: { sat: 0.85, val: 1.12 } };
 
   // art/areas/index.js
-  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES];
+  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD];
   var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
@@ -9807,7 +9991,7 @@ label.check input { accent-color: var(--accent); }
     { "kind": "scorpion", "slot": 53, "phase": 4, "bearing": 145, "dir": "SE", "biome": "badlands" },
     { "kind": "rhino", "slot": 54, "phase": 4, "bearing": 165, "dir": "SSE", "biome": "hot" },
     { "kind": "cheetah", "slot": 55, "phase": 4, "bearing": 185, "dir": "S", "biome": "hot" },
-    { "kind": "unknown-25", "slot": 56, "phase": 4, "bearing": 205, "dir": "SSW", "biome": "mangrove swamp", "placeholder": true },
+    { "kind": "hydra", "slot": 56, "phase": 4, "bearing": 205, "dir": "SSW", "biome": "mangrove swamp" },
     { "kind": "crab", "slot": 57, "phase": 4, "bearing": 225, "dir": "SW", "biome": "mangrove swamp" },
     { "kind": "unknown-27", "slot": 58, "phase": 4, "bearing": 245, "dir": "WSW", "biome": "mangrove swamp", "placeholder": true },
     { "kind": "elephant", "slot": 59, "phase": 4, "bearing": 265, "dir": "W", "biome": "jungle" },
@@ -14831,7 +15015,7 @@ label.check input { accent-color: var(--accent); }
     _guard: `Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead (Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"): any wild or enraged creature anywhere in it, never one outside it, whatever radius says.`,
     guard: { radius: 40 },
     _creatures: `Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and, from the start (Ed, 2026-10-07: his new core design, "no population growth on a clock"), more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat \xF7 the profile's mean F a creature \xD7 the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). byRoute.babies: babies in every area, start's included (Ed, 2026-10-07: about two, for quest sigils and berries), at most babyCap. byRoute.minHostile: at least this many young or adults in every wild area (Ed, 2026-10-07: "every wild area has at least one hostile wild creature"), any shortfall made up with young. The hostile swarm (Ed, 2026-10-08, the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts): its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. swarm.classes: strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong \xD72, light \xD70.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (\u03A3hp \xD7 \u03A3dps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage \u2212 swarm.start)\xB7p^swarm.curve creatures (1 + 11\xB7p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's (Ed, 2026-10-10, 2026-10-11): by the area's wave, (wave \u2212 1)/(swarm.waves \u2212 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.`,
-    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant", "stegosaurus"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
+    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant", "stegosaurus", "hydra"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
     creatureSimRadius: 600,
     _simLod: "The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.",
     simLod: { full: { ground: 200, treetop: 300 }, action: 120, band: 30, every: 30 },
@@ -15311,8 +15495,17 @@ registerProcessor("witch-fof", WitchFof);
   var VOICE_FX = ["chorus", "saturation", "air", "delay", "hall", "shimmer", "duck", "swells", "freeze", "whisper", "octave"];
   var NO_FX = { chorus: 0, saturation: 0, air: 0, delay: 0, hall: 0, shimmer: 0, duck: 0, swells: 0, freeze: 0, whisper: 0, octave: 0 };
   var fxOn = (s) => !!s && VOICE_FX.some((k) => (s[k] ?? 0) > 0);
+  var IMPULSES = /* @__PURE__ */ new WeakMap();
+  var ENV = 4096;
   function impulse(ctx2, seconds, dark, seed2) {
+    let made = IMPULSES.get(ctx2);
+    if (!made) IMPULSES.set(ctx2, made = /* @__PURE__ */ new Map());
+    const key = `${seconds}|${dark}|${seed2}`, had = made.get(key);
+    if (had) return had;
     const n = Math.max(1, Math.floor(seconds * ctx2.sampleRate)), b = ctx2.createBuffer(2, n, ctx2.sampleRate);
+    const env = new Float32Array(ENV + 1);
+    for (let j = 0; j <= ENV; j++) env[j] = Math.pow(1 - j / ENV, 2.2);
+    const ramp = Math.max(1, Math.floor(n * 0.01)), perSample = ENV / n;
     for (let ch = 0; ch < 2; ch++) {
       const d = b.getChannelData(ch);
       let r = seed2 + ch * 7919 >>> 0 || 1, lp = 0;
@@ -15320,10 +15513,10 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < n; i++) {
         r = Math.imul(r, 1664525) + 1013904223 >>> 0;
         lp += k * (r / 4294967296 * 2 - 1 - lp);
-        const t = i / n;
-        d[i] = lp * Math.pow(1 - t, 2.2) * (t < 0.01 ? t / 0.01 : 1);
+        d[i] = lp * env[Math.floor(i * perSample)] * (i < ramp ? i / ramp : 1);
       }
     }
+    made.set(key, b);
     return b;
   }
   function loopBuffer(ctx2, period, shape) {
@@ -15334,9 +15527,31 @@ registerProcessor("witch-fof", WitchFof);
   var BANDS = Array.from({ length: 14 }, (_, b) => 220 * Math.pow(7500 / 220, b / 13));
   var BAND_Q = 5;
   var ENVELOPES = /* @__PURE__ */ new WeakMap();
+  var PREPARING = /* @__PURE__ */ new WeakMap();
+  function prepareWhisperEnvelopes(ctx2, rec) {
+    const have = ENVELOPES.get(rec);
+    if (have) return Promise.resolve(have);
+    const under = PREPARING.get(rec);
+    if (under) return under;
+    const p = (async () => {
+      const parts = whisperEnvelopeParts(ctx2, rec);
+      for (let b = 0; b < BANDS.length; b++) {
+        await new Promise((r) => setTimeout(r, 0));
+        parts.band(b);
+      }
+      return parts.done();
+    })();
+    PREPARING.set(rec, p);
+    return p;
+  }
   function whisperEnvelopes(ctx2, rec) {
     const have = ENVELOPES.get(rec);
     if (have) return have;
+    const parts = whisperEnvelopeParts(ctx2, rec);
+    for (let b = 0; b < BANDS.length; b++) parts.band(b);
+    return parts.done();
+  }
+  function whisperEnvelopeParts(ctx2, rec) {
     const sr = rec.sampleRate, n = rec.length, mono = new Float32Array(n);
     for (let ch = 0; ch < rec.numberOfChannels; ch++) {
       const d = rec.getChannelData(ch);
@@ -15344,7 +15559,8 @@ registerProcessor("witch-fof", WitchFof);
     }
     const OUT = 3e3, step2 = sr / OUT, m = Math.max(1, Math.floor(n / step2)), out = ctx2.createBuffer(BANDS.length, m, OUT);
     const lp = 1 - Math.exp(-2 * Math.PI * 35 / sr);
-    BANDS.forEach((f, b) => {
+    const band2 = (b) => {
+      const f = BANDS[b];
       const w = 2 * Math.PI * f / sr, al = Math.sin(w) / (2 * BAND_Q), a0 = 1 + al;
       const b0 = al / a0, b2 = -al / a0, a1 = -2 * Math.cos(w) / a0, a2 = (1 - al) / a0;
       let x1 = 0, x2 = 0, y1 = 0, y2 = 0, e = 0, k = 0;
@@ -15358,9 +15574,11 @@ registerProcessor("witch-fof", WitchFof);
         e += lp * (Math.abs(y) - e);
         if (i >= k * step2 && k < m) d[k++] = 6 * e;
       }
-    });
-    ENVELOPES.set(rec, out);
-    return out;
+    };
+    return { band: band2, done: () => {
+      ENVELOPES.set(rec, out);
+      return out;
+    } };
   }
   var VoiceFx = class {
     constructor(ctx2, settings2 = {}, bpm = () => 120, duckInto) {
@@ -15400,6 +15618,18 @@ registerProcessor("witch-fof", WitchFof);
     chorus;
     delay;
     hall;
+    /** Work put off to the frames after (warm): a convolver taking its impulse is about 30 ms of the page's thread, so the hall's
+     *  and the shimmer's come one a frame, the reverb silent till then (a tail a frame or two late: nothing heard). */
+    pending = [];
+    later(work) {
+      this.pending.push(work);
+    }
+    /** One piece of the work put off, if any is left: true while some is. */
+    warm() {
+      const w = this.pending.shift();
+      if (w) w();
+      return this.pending.length > 0;
+    }
     shimmer;
     freeze;
     whisperRig;
@@ -15459,7 +15689,9 @@ registerProcessor("witch-fof", WitchFof);
     /** A dark hall (the swells go into it too). */
     buildHall() {
       const c = this.ctx, conv = c.createConvolver(), send = c.createGain();
-      conv.buffer = impulse(c, 5.5, 0.8, 4441);
+      this.later(() => {
+        conv.buffer = impulse(c, 5.5, 0.8, 4441);
+      });
       send.gain.value = 0;
       this.air.connect(send).connect(conv).connect(this.wet);
       this.wetIn.connect(conv);
@@ -15468,7 +15700,9 @@ registerProcessor("witch-fof", WitchFof);
     /** Shimmer: a reverb whose tail goes back through an octave-up shifter into itself (the swells go into it too). */
     buildShimmer() {
       const c = this.ctx, conv = c.createConvolver(), send = c.createGain(), fb = c.createGain(), out = c.createGain();
-      conv.buffer = impulse(c, 3.5, 0.3, 9001);
+      this.later(() => {
+        conv.buffer = impulse(c, 3.5, 0.3, 9001);
+      });
       send.gain.value = 0;
       fb.gain.value = 0;
       out.gain.value = 0.7;
@@ -15740,6 +15974,10 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
       this.setStyle(style2);
       if (Object.values(style2.patches).some((p) => p.kind === "fof") && style2.form?.sung && style2.patches[style2.form.sung.patch]?.kind === "fof") void fofReady(ctx2);
+      {
+        const sung = style2.form?.sung, p = sung && style2.patches[sung.patch];
+        if (sung && p) this.channel(sung.part, p);
+      }
     }
     ctx;
     style;
@@ -15860,9 +16098,12 @@ registerProcessor("witch-fof", WitchFof);
     /** A whispering recording for the voice effects' vocoder (the CC0 whispers). */
     whisperRec = null;
     setWhisper(rec) {
-      this.whisperRec = rec;
-      for (const ch of this.channels.values()) ch.fx?.whisper(rec);
+      void prepareWhisperEnvelopes(this.ctx, rec).then(() => {
+        this.whisperRec = rec;
+        for (const ch of this.channels.values()) ch.fx?.whisper(rec);
+      });
     }
+    // (its envelopes made ahead, a band a task)
     /** The style's mix on the buses (shed 3: the reverbs cut short, the delay off). */
     setMix() {
       const m = this.style.mix, lite = this.shedLevel >= 3, time = lite ? Math.min(0.7, m.reverbTime) : m.reverbTime;
@@ -15883,6 +16124,7 @@ registerProcessor("witch-fof", WitchFof);
     lead = 0;
     leadNow = 0;
     update(cue2, gameTime, clock2, playing2, ahead = 0.6, rate = 1, pitch = 1) {
+      for (const ch of this.channels.values()) if (ch.fx?.warm()) break;
       const now = this.ctx.currentTime, stepNow = beatAt(clock2, gameTime) * 4;
       const want = Math.max(0, Math.min(_MusicEngine.maxLead, this.lead));
       this.leadNow += Math.max(-2e-3, Math.min(2e-3, want - this.leadNow));
@@ -16576,19 +16818,31 @@ registerProcessor("witch-fof", WitchFof);
       o.start(t);
       o.stop(t + decay);
     }
+    /** The impulses made, by their length: the shed's short reverb (level 3) and the full one swap without being made again. */
+    impulses = /* @__PURE__ */ new Map();
     impulse(seconds) {
+      const had = this.impulses.get(seconds);
+      if (had) return had;
       const c = this.ctx, rate = c.sampleRate, pre = Math.floor(0.015 * rate), n = Math.max(pre + 1, Math.floor(seconds * rate)), b = c.createBuffer(2, n, rate);
+      const ENV2 = 4096, env = new Float32Array(ENV2 + 1), coef = new Float32Array(ENV2 + 1);
+      for (let j = 0; j <= ENV2; j++) {
+        const k = j / ENV2, a = 0.85 - 0.75 * k;
+        coef[j] = a;
+        env[j] = Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+      }
+      const perSample = ENV2 / Math.max(1, n - pre);
       let r = 777;
       for (let ch = 0; ch < 2; ch++) {
         const d = b.getChannelData(ch);
         let y = 0;
         for (let i = pre; i < n; i++) {
           r = Math.imul(r, 1664525) + 1013904223 >>> 0;
-          const k = (i - pre) / (n - pre), a = 0.85 - 0.75 * k;
+          const j = Math.min(ENV2, Math.floor((i - pre) * perSample)), a = coef[j];
           y += a * (r / 4294967296 * 2 - 1 - y);
-          d[i] = y * Math.pow(1 - k, 2.5) * (1 + 0.6 * (1 - a));
+          d[i] = y * env[j];
         }
       }
+      this.impulses.set(seconds, b);
       return b;
     }
   };
