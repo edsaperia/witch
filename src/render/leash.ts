@@ -34,6 +34,7 @@ import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeO
 import { drawCombat } from "./leash/combat";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
+import { ZooPlates } from "./zooPlates";
 import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
@@ -98,6 +99,8 @@ export class LeashView {
   bristle = { x: 0, y: 0, z: 0, on: false };
   bubbleWitch = document.getElementById("bubble-witch");
   bubbleCreature = document.getElementById("bubble-creature");
+  /** The zoo's nameplates (render/zooPlates.ts), on a zoo's map only. */
+  private zooPlates: ZooPlates | null | undefined;
   v = new THREE.Vector3();
   /** Where each stacked sigil was last frame (a knockout's release splashes from there). */
   lastSlots = new Map<number, THREE.Vector3>();
@@ -592,6 +595,8 @@ export class LeashView {
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);
     drawCirclePanel(this, camera, width, height);
+    if (this.zooPlates === undefined) this.zooPlates = this.game.map.zoo && this.bubbleWitch?.parentElement ? new ZooPlates(this.bubbleWitch.parentElement) : null;
+    this.zooPlates?.draw(this.game, camera, width, height);
     drawDeckBpm(this, camera, width, height); // (the party's tempo over her decks: render/leash/deckBpm.ts)
   }
 

@@ -24,6 +24,7 @@ import { MANGROVE_POOLS } from "./recipes/mangrovepools.js";
 import { MUDFLAT } from "./recipes/mudflat.js";
 import { CACTUS_FLATS } from "./recipes/cactusflats.js";
 import { RED_CANYON } from "./recipes/redcanyon.js";
+import { MISTWOOD } from "./recipes/mistwood.js";
 import { SAVANNA } from "./recipes/savanna.js";
 import { BAMBOO_JUNGLE } from "./recipes/bambooJungle.js";
 import { TEMPLE_JUNGLE } from "./recipes/templeJungle.js";
@@ -41,7 +42,7 @@ import { CRAGS } from "./recipes/crags.js";
 import { ICEFALL } from "./recipes/icefall.js";
 import { MOONPOOL } from "./recipes/moonpool.js";
 import { TROLLWOOD } from "./recipes/trollwood.js";
-export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, TROLLWOOD];
+export const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD];
 
 // What is missing from a recipe, if anything.
 export function recipeProblems(R) {

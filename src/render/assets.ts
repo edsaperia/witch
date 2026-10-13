@@ -230,6 +230,7 @@ export class AssetLibrary {
       if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
+    else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
@@ -326,6 +327,12 @@ export class AssetLibrary {
   }
   /** A creature's idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel; each level in 2 frames, a look round), or
    *  undefined (and asked for). Baked as a nap is (its ground line and middle). */
+  /** A glider spread out in the air (Profile.glide: its legs out, its membrane taut; each level in 2 frames), or undefined (and asked for). */
+  glideArt(species: string): CreatureArt | undefined {
+    const k = `glide-${species}`, a = this.creatures.get(k);
+    if (!a) this.ask({ kind: "glide", id: k, species, style: this.style });
+    return a;
+  }
   idleArt(species: string): CreatureArt | undefined {
     const k = `idle-${species}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, idle: true });

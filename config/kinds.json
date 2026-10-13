@@ -259,12 +259,11 @@
       "dir": "W",
       "biome": "jungle"
     },
-    "unknown-12": {
+    "flyingsquirrel": {
       "phase": 3,
       "bearing": 295,
       "dir": "WNW",
-      "biome": "cold rainforest",
-      "placeholder": true
+      "biome": "cold rainforest"
     },
     "roe": {
       "phase": 3,
