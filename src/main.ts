@@ -49,6 +49,8 @@ import { readArrival } from "./app/arrival";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
+// The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
+if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
 let seed = parseSeed(params.get("seed"));
 if (seed === null) {
   seed = Math.floor(Math.random() * 1000000);

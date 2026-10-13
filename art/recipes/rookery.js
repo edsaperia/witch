@@ -7,7 +7,7 @@ export const ROOKERY = {
   ground: { patches: [{ mat: "STONE", n: 6, r: [4, 9] }] },
   text: { floor: "snow over dark wet shingle", wall: "black sea rocks", small: "tussock grass and pebbles", big: "wind-stunted firs, pines and birches", set: "the rookery's ring of pebble nests" },
   wall: [["boulder", { big: true }], ["stones", { big: true }]], small: [["stones", {}], ["grass", { h: 1.1 }]],
-  big: [["tree", { type: "fir", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
+  big: [["tree", { type: "fir", variant: "stunted", scale: .6, gnarl: .8 }], ["tree", { type: "birch", minor: true, scale: .55, gnarl: .7 }]],
   pathKinds: ["animal"],
   setPiece: ["ring", "the rookery's ring of pebble nests", 1, { member: "stone", count: 12, height: 1.1, width: .6, centre: "stone", fallen: 0, gap: 1, lean: .05, embers: 0 }],
   layout: {
