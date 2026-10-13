@@ -82,7 +82,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto`);
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
   lap("ready");
-  if (NODRAW) await page.evaluate(() => { const r = window.witch.view.renderer; r.render = () => {}; });
+  // (NODRAW: the draw a no-op, but any texture not yet on the GPU is still uploaded, as the first draw that used it would: the
+  // atlases let their pixels go once uploaded (render/atlas.ts), and the upload is the page's own work too)
+  if (NODRAW) await page.evaluate(() => { const r = window.witch.view.renderer; r.render = scene => { scene.traverse(o => { const u = o.material && o.material.uniforms; if (!u) return; for (const k in u) { const v = u[k].value; if (v && v.isTexture && v.image && v.image.data && v.version > 0 && !v.__up) { v.__up = v.version; r.initTexture(v); } } }); }; });
   // The long animation frames (Chrome 123+): their length and the scripts that took the most.
   await page.evaluate(() => {
     window.__loaf = [];
