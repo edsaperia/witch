@@ -72,8 +72,10 @@ export function treeChance(map: ForestMap, x: number, z: number, type: number): 
   return (w >= D.lone ? w : Math.max(w, D.lone * map.arenaOpen(x, z))) * along; // (no lone trees in an area's arena)
 }
 
-/** How a type's pattern shapes its trees, around 1 on average. */
-function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): number {
+/** How a type's pattern shapes its trees, around 1 on average (art/areas.js LAYOUT_PATTERNS says what each looks like;
+ *  the three of 2026-10-13, glades, hedges and grid, give new areas patterns of their own: 61 areas over 8 patterns had
+ *  12 on one). */
+export function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): number {
   const s = map.seed, c = L.clump;
   switch (L.pattern) {
     case "groves": case "stands": {
@@ -81,12 +83,26 @@ function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout): numbe
       return 1 + c * (2.2 * smoothstep((v - 0.45) / 0.2) - 1);
     }
     case "thicket": return 1.25;
-    case "rows": {
+    case "glades": {
+      // A full wood with round holes in it (the inverse of groves): the holes where the noise runs high, as deep as the clump.
+      const v = vnoise(x / 14, z / 14, s + 131);
+      return 1.3 * (1 - c * smoothstep((v - 0.55) / 0.15));
+    }
+    case "hedges": {
+      // Trees along thin winding lines (hedgerows, windbreaks, the walls of old fields) with open ground between: the
+      // ridges of a noise field.
+      const r = 1 - Math.abs(2 * vnoise(x / 16, z / 16, s + 137) - 1);
+      return 0.3 + 1.6 * smoothstep((r - 0.72) / 0.14);
+    }
+    case "rows": case "grid": {
       // Rows run along a direction, or along a feature (a path, a stream) once those exist; until
-      // then, along the area's lean.
+      // then, along the area's lean. A grid is rows crossing rows: an orchard, a plantation.
       const dir = typeof L.along === "number" ? L.along : (L.lean?.dir ?? 0) + 20;
       const a = ((dir + 90) * Math.PI) / 180, u = x * Math.cos(a) + z * Math.sin(a);
-      return 0.25 + 1.5 * smoothstep((Math.cos((u / 5) * Math.PI * 2) - 0.2) / 0.6);
+      const along = smoothstep((Math.cos((u / 5) * Math.PI * 2) - 0.2) / 0.6);
+      if (L.pattern === "rows") return 0.25 + 1.5 * along;
+      const w = -x * Math.sin(a) + z * Math.cos(a), across = smoothstep((Math.cos((w / 7) * Math.PI * 2) - 0.2) / 0.6);
+      return 0.2 + 1.2 * Math.max(along, across);
     }
     case "rings": { const o = map.areaAt(x, z).openness; return 0.3 + 1.4 * smoothstep((Math.cos(o * Math.PI * 7) - 0.1) / 0.6); }
     case "edgeOnly": return 1.6 * smoothstep((map.areaAt(x, z).openness - 0.45) / 0.35);
