@@ -352,12 +352,11 @@
       "biome": "hot",
       "placeholder": true
     },
-    "unknown-24": {
+    "cheetah": {
       "phase": 4,
       "bearing": 185,
       "dir": "S",
-      "biome": "hot",
-      "placeholder": true
+      "biome": "hot"
     },
     "unknown-25": {
       "phase": 4,
