@@ -1,0 +1,1 @@
+export const LEGEND_HYDRA = { ground: .05, droop: 1, drop: [], over: { moss: .5, lichen: .05, ferns: 0, grass: 0, mushrooms: 1, roots: 0, stones: 2 } }; // the drowned wood's hydra (an area recipe's): coiled half under the black water like a heap of drowned roots, every head laid down, its bronze rings green with age and its two regrown stumps standing out of the moss
