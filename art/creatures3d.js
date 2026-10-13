@@ -388,14 +388,6 @@ export function quad3d(S, level, frame, st, facing = "towards") {
     for (const [i, t, h] of [[0, .22, .95], [1, .5, 1.35], [2, .78, .8]]) backTree3d(m, backAt(t + uni(r, -.04, .04)), h * len * uni(r, .9, 1.1), seed + i * 977, kind, 86);
     for (const t of [.12, .4, .65, .9]) { const b = backAt(t); m.ell(v3.add(b, [0, .12, bw * .3]), [.07, .035, .07], M.MAGIC, { group: 89, extra: true }); }
   }
-  // the raccoon's legend, the bandit (Ed, 2026-10-12, option A: "emphasise the thing that makes that creature unusual"):
-  // its mask a lantern-bright band, brows of light, its hands aglow and shining handprints left behind it
-  if (has("bandit")) {
-    m.ell(v3.add(H, [hr * .3, hr * .26, 0]), [hr * .95, hr * .24, hr * 1.0], M.MAGIC2, { group: 70, extra: true }); // (wrapping round its head over its eyes)
-    for (const side of [-1, 1]) m.ell(v3.add(H, [hr * .4, hr * .75, side * hr * .55]), [hr * .45, hr * .1, hr * .16], M.MAGIC, { dir: [1, .7, 0], group: 70, extra: true });
-    for (const f of m.anchors.feet) m.ell(v3.add(f.c, [.04, .04, 0]), [f.r * 1.5, f.r * .9, f.r * 1.2], M.MAGIC2, { group: f.group, extra: true });
-    for (let k = 0; k < 5; k++) m.ell([-len * .4 - k * .42, .006, (k % 2 ? 1 : -1) * bw * .7], [.1, .006, .075], M.MAGIC, { group: 71, extra: true });
-  }
   if (has("ribbons")) for (let i = 0; i < 3; i++) { const pts = []; for (let k = 0; k < 9; k++) { const t = k / 8; pts.push([len * (.5 - t * 2.2), top + .05 + i * .1 + t * (.25 + i * .12) + Math.sin(t * 6 + frame + i) * .07, (i - 1) * .18, .04 * (1 - t * .6)]); } m.chain(pts, i % 2 ? M.MAGIC2 : M.MAGIC, { group: 90 + i, extra: true }); }
   gearUp(m);
   const sp = drawForm(m, { height: drawHeight(level, st, q.hgt), facing }, S, level);
