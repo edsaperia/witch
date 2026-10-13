@@ -72,6 +72,7 @@ Two baked frames, each leg swung ±0.32 with a 0.06 lift, the body bobbed 0.04: 
 - **Materials**: one BODY ramp (BODYL/BODY/BODY2/BODY3) plus BELLY and ACCENT; a species with two coat colours (a badger's grey back and black legs, a lion's mane) borrows BODY3, so the texture pass treats a mane as shadow.
 - **Lumps**: `texture.lumps` is 0.004 model units at young (a ~0.1 px bump); the surface texture carries all the "fur" and it reads as noise on a balloon rather than shoulders and haunches.
 - **Ears** are one flat plane at one fixed point on the head, four shapes; ears don't turn with level or mood.
+- **Dead knobs**: `head.cheeks`, `head.whiskers` and `head.snoutTaper` are set in a dozen records (lynx, lion, hare, otter, beaver, stoat, squirrel, dormouse, fox...) and read by no builder: a builder tuning them changes nothing, and nobody noticed because nothing checks that a knob is read.
 - **Motes**: every adult has three, every legend nine, in one seed per species, so they land on the same pixels of every frame.
 
 ## 3. What I'm changing, in order (generator first)
