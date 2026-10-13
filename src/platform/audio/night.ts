@@ -24,7 +24,7 @@ export const AREA_NIGHTS: Record<string, NightKind> = {
   "alder-forest": "wood", "berry-thicket": "wood", deadwood: "wood", "log-pile": "wood", "honeysuckle-tangle": "wood",
   "old-oaks": "oaks", ancient: "oaks",
   "muddy-forest": "wet", wetland: "wet", bog: "wet", "beaver-pond": "wet", fen: "wet", heronry: "wet", "mossy-creek": "stream",
-  stream: "stream", ravine: "ravine", crags: "ravine",
+  stream: "stream", ravine: "ravine", crags: "ravine", icefall: "ravine",
   meadow: "meadow", garden: "meadow", grassland: "meadow", "bluebell-glade": "meadow", heath: "meadow",
   "rocky-slope": "open", erg: "open", snowfield: "open", warren: "open", savanna: "meadow", plains: "meadow", moor: "stones", "stone-shrine": "stones", "cave-mouth": "cave", frostcave: "cave", "scrub-wash": "open",
   home: "home",

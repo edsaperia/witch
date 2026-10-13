@@ -53,6 +53,7 @@
     "bat": {"family": "bat"},
     "otter": {"family": "whistler", "volume": 0.7},
     "beaver": {"family": "whistler", "pitch": 0.8, "trill": [4, 30], "volume": 0.7},
-    "lynx": {"family": "cat", "volume": 0.4}
+    "lynx": {"family": "cat", "volume": 0.4},
+    "snowleopard": {"family": "cat", "pitch": 0.85, "volume": 0.45}
   }
 }

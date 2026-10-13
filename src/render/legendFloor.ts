@@ -52,6 +52,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "wetland": look("granite", "reeds", "moss", 0.66, true),
   "stream": look("limestone", "pebbles", "moss", 0.5, true),
   "rocky-slope": look("slate", "pebbles", "lichen", 0.4),
+  "icefall": look("granite", "pebbles", "lichen", 0.35),
   "crags": look("slate", "pebbles", "lichen", 0.4),
   "bog": look("granite", "reeds", "moss", 0.75, true, 0.35),
   "deadwood": look("buffSandstone", "darkLeaves", "lichen", 0.45, false, 0.6),
