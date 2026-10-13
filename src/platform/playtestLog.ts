@@ -30,6 +30,10 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** The frames of the last two seconds (platform/frameStats.ts; Ed's overlay, 2026-10-13: "gpu 21.4 ms median", so a log shows
+   *  where a slow frame's time goes): their length and the page's own work (ms, median and p95), the GPU's own time where the
+   *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
+  frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number };
   /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
@@ -48,6 +52,8 @@ export class PlaytestLog {
   private next = EVERY;
   /** The sound as it is now, for each sample (main.ts sets it). */
   audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** The frames' stats (main.ts sets it: the overlay's own numbers). */
+  frameState?: () => PlaytestSample["frames"];
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
   }
@@ -65,6 +71,7 @@ export class PlaytestLog {
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
       audio: this.audioState?.(),
+      frames: this.frameState?.(),
     });
     this.save();
   }
