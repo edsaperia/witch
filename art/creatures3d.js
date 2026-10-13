@@ -67,6 +67,14 @@ export function withTexture(tex, f) { const was = TEX; TEX = tex; try { return f
 // sprite; form.motes says whether the glowing motes still float round it.
 let FORM = null;
 export function withForm(form, f) { const was = FORM; FORM = form; try { return f(); } finally { FORM = was; } }
+// A genome's spine (quad3d) as a height along the body, x in body lengths from the hip station (-.5) to the shoulder's (.48): a
+// number for the whole back, or heights at the profile's stations, straight lines between, fading to nothing past the ends.
+function spineOf(s) {
+  if (s == null) return null;
+  const at = [-.5, -.25, 0, .25, .48], h = typeof s === "number" ? [s, s, s, s, s] : ["hip", "loin", "waist", "ribcage", "shoulder"].map(k => s[k] ?? 0);
+  if (!h.some(v => v)) return null;
+  return x => { if (x <= at[0] - .35 || x >= at[4] + .35) return 0; if (x <= at[0]) return h[0] * (1 - (at[0] - x) / .35); if (x >= at[4]) return h[4] * (1 - (x - at[4]) / .35); for (let i = 0; i < 4; i++) if (x <= at[i + 1]) return h[i] + (h[i + 1] - h[i]) * (x - at[i]) / (at[i + 1] - at[i]); return 0; };
+}
 // Another view for the tools (a sheet from above: art/preview.mjs TOP=1): { yaw, pitch } for model3d's render, at the scale the
 // usual view would give, so the two line up. Never in the game.
 let VIEW = null;
@@ -380,6 +388,21 @@ function evolve3d(m, feats, c) {
         m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, S * (f.nub ? .1 : .2))), u, v, Math.hypot(...span) * .55, S * (f.nub ? .22 : .4), dragonWing(mem), { group: g + 2, extra: true, bend: .2 });
       }
     }
+    if (f.kind === "patagium" && m.rig?.legs) { // a flying squirrel's gliding membrane: loose furred skin from each wrist to its ankle along the flank, its rim pale; spread: how far it hangs out (a legend's, its night sky)
+      m.part = "body";
+      const mat = M[f.mat || "BODY"], rim = M[f.rim || "BELLY"], spread = f.spread ?? .5, sky = f.stars;
+      for (const side of [-1, 1]) {
+        const F = m.rig.legs.find(L => L.fore && L.side === side), Hd = m.rig.legs.find(L => !L.fore && L.side === side); if (!F || !Hd) continue;
+        if (c.glide) { // spread taut, a flat square kite from wrist to ankle, its rim pale (a legend's the night sky)
+          const fa = F.foot, ha = Hd.foot, mid = [(fa[0] + ha[0]) / 2, (fa[1] + ha[1]) / 2 + .03, side * c.bw * 1.6], w2 = side * c.bw * 1.55;
+          m.flat(mid, [1, 0, 0], [0, 0, side], (fa[0] - ha[0]) / 2 + .04, w2 * side, (a, b) => { const e = .98 - .32 * (1 - a * a) * (a < 0 ? 1.2 : 1); if (b > e) return null; if (b > e - .12 || Math.abs(a) > .93) return rim; return sky && spotty([a * 3, b * 3, side], 40, .1) ? M.GLINT : mat; }, { group: side > 0 ? 160 : 161, extra: true, bend: .1 });
+          continue;
+        }
+        const wr = v3.lerp(F.knee, F.foot, .5), an = v3.lerp(Hd.knee, Hd.foot, .45), u = v3.norm(v3.sub(wr, an)), half = Math.hypot(...v3.sub(wr, an)) * .58;
+        const y0 = (wr[1] + an[1]) / 2, y1 = (F.hip[1] + Hd.hip[1]) / 2 - .02, ctr = [(wr[0] + an[0]) / 2, (y0 + y1) / 2, side * c.bw * (.72 + spread * .12)], dy = (y1 - y0) / 2 * (1 + spread * .15), low = ctr[1] - dy * .55;
+        m.ell(ctr, [half, dy, .04 + spread * .03], mat, { group: side > 0 ? 160 : 161, extra: true, dir: u, paint: p => p[1] < low ? rim : sky && spotty(p, 40, .1) ? M.GLINT : undefined });
+      }
+    }
     if (f.kind === "sail") { // a newt's breeding crest grown into a tall wavy sail along its back and tail, edged in glow (the legend audit's ★, Ed 2026-10-13)
       m.part = "body";
       const H = f.height ?? .45, x0 = -c.len * 2.1, x1 = c.len * .75, tailY = .32, top = c.top;
@@ -488,7 +511,20 @@ export function quad3d(S, level, frame, st, facing = "towards") {
   if (withers) m.ell([len * .58, top - .1 + withers + hump * .4, 0], [len * .3, .13 + withers, bw * .8 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the withers, over the shoulders
   if (croup) m.ell([-len * .66, top - .11 + croup + arch * .5, 0], [len * .24, .12 + croup, bw * .74 * wAt("hip")], M.BODY, { paint: paintBody }); // the pelvis
   if (brisket) m.ell([len * .8, chest + .06 + brisket * .5, 0], [len * .22, .1 + brisket, bw * .62 * front * wAt("shoulder")], M.BODY, { paint: paintBody }); // the brisket, the chest's keel
-  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5, 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
+  // ---- its spine (Ed, 2026-10-13: "giving animals the possibility of having a distinct spine along its back, which can be anything
+  // from a tall crest to a recessed depression"): q.spine, a height in model units at each of the profile's stations (or one number
+  // for the whole back): + a crest standing up along the back line (a boar's bristles, a stag's shoulder line), 0 flat (as built),
+  // - a groove sunk into it (a big cat's or a lean dog's spine lying in the dip between its back muscles), interpolated between the
+  // stations and fading out at the neck and the rump. The back line is the body's own (the loaves, the withers and the croup) at each
+  // place, so a crest rides over the withers and a groove runs down into the loin. The ridge's spikes stand on the crest. ----
+  const spineAt = spineOf(q.spine), backTop = x => { let y = -Infinity; for (const P of m.parts) { if (P.type !== "ell" || P.cut || P.extra || P.part !== "body") continue; const u = (x - P.c[0]) / P.r[0]; if (Math.abs(u) >= 1) continue; y = Math.max(y, P.c[1] + P.r[1] * Math.sqrt(1 - u * u)); } return y; };
+  if (spineAt) for (let i = 0; i <= 12; i++) {
+    const x = (-.85 + i * 1.7 / 12) * len, s = spineAt(x / len), y = backTop(x); if (!s || y === -Infinity) continue;
+    const dx = len * 1.7 / 12 * .75;
+    if (s > 0) m.ell([x, y + s * .3, 0], [dx, s * .8, bw * .11 + s * .15], M.BODY, { paint: paintBody }); // a crest: a fin of flesh and hair standing along the back line
+    else m.ell([x, y + s * .15, 0], [dx, -s * .85, bw * .16 - s * .3], M.BODY, { paint: paintBody, cut: true }); // a groove: a valley cut down into the back between its muscles, its walls the body's own
+  }
+  if (q.ridge) for (let i = 0, rk = typeof q.ridge === "number" ? q.ridge : 1, n = Math.round((legend ? 16 : 10) * Math.max(1, rk * .7)); i < n; i++) { const x = -len * .8 + i * len * 1.75 / (n - 1), h = (.07 + (legend ? .04 : 0)) * (1 + .5 * Math.max(0, x / len)) * rk * (rk > 1 && i % 2 ? .6 : 1); m.ell([x, top + .02 + hump * Math.max(0, 1 - Math.abs(x / len - .5) * 2) + h * .5 + Math.max(0, spineAt?.(x / len) ?? 0), 0], [h, .03, bw * .25], M[q.ridgeMat || "BODY3"], { dir: [-.3, 1, 0], up: [1, 0, 0] }); }
   if (q.wool) for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2; m.ell([len * Math.cos(a) * .7, (top + chest) / 2 + Math.sin(a) * .2, bw * (i % 2 ? .5 : -.5)], [.16, .14, .14], M.BODY); }
   // ---- legs: a real skeleton (the menagerie review, 2026-10-13: every leg was hip, a knee straight below it, a ball) ----
   // Fore: shoulder, elbow (behind), wrist (ahead), paw; hind: hip, stifle (ahead), hock (behind), paw; the stance by how the species
@@ -510,6 +546,10 @@ export function quad3d(S, level, frame, st, facing = "towards") {
       : hoof ? [[.12, .62, 0], [-.1, .35, 0], [-.04, .1, 0], [-.02, .03, 0]] : flat ? [[.14, .55, 0], [-.1, .2, 0], [.08 * hf, .04, 0]] : sprawl ? [[.02, .62, out], [-.06, .25, out * 1.2], [.02, .04, out * 1.2]] : [[.14, .6, 0], [-.08 - .04 * (hf - 1), .3, 0], [.02, .05, 0]];
     const pts = [hipTop], last = J.length - 1;
     for (let k = 0; k <= last; k++) { const [dx, hy, dz] = J[k], y = Y * hy + (k === last ? lift : lift * .6 * (k / last)), drop = Y - y, trail = flex * (k >= last - 1 ? -.05 : k ? -.02 : 0); pts.push([x + dx + Math.sin(a) * Math.min(drop, .75) * .7 + trail, y, z + dz]); }
+    if (q.glide) { // gliding: its legs spread out sideways, taut, holding the membrane open (the joints from knee to paw along it)
+      const o = side * bw, gy = (top + chest) / 2, kn = [x * 1.15, gy, o * 1.9], ft = [x * 1.35 + (fore ? .14 : -.1), gy - .04, o * 3.1];
+      for (let k = 1; k < pts.length; k++) pts[k] = v3.lerp(kn, ft, last ? (k - 1) / last : 1);
+    }
     // thick at the hip and thigh, slimming to the paw; a hoofed leg's cannon slim as a deer's; a hind thigh fuller (haunch)
     const R = fore ? (hoof ? [1.45, 1.0, .62, .55, .55] : flat ? [1.5, 1.05, .85, .75] : sprawl ? [1.3, .95, .75, .7] : [1.5, 1.05, .8, .75]) : (hoof ? [2 * (q.haunch || 1), 1.25, .7, .5, .5] : flat ? [2 * (q.haunch || 1), 1.25, .9, .75] : sprawl ? [1.7 * (q.haunch || 1), 1.0, .75, .7] : [2 * (q.haunch || 1), 1.3, .85, .75]);
     const chainPts = pts.map((p, k) => [...p, lw * R[k]]);
@@ -659,7 +699,7 @@ export function quad3d(S, level, frame, st, facing = "towards") {
         m.ell(p.slice(0, 3), [p[3] * .3, p[3] * 1.3, p[3] * 1.3], M.WOOD, { group: 9, dir: v3.norm(v3.sub(z.slice(0, 3), a.slice(0, 3))) }); }
     }
   }
-  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame, front });
+  if (feats?.length) evolve3d(m, feats, { H, hr, sn, L, Dm, tuskTips, hornTips, tb, backAt, len, top, chest, tuck, bw, frame, front, glide: q.glide });
   if (elder) { elderQuad(m, S, { H, hr, sn, L, Dm, nb, tb, backAt, len, top, chest, tuck, bw, frame }); m.part = "body"; }
   if (has("wings")) for (const side of [-1, 1]) wing3d(m, [len * .2, top, side * bw * .5], side, 1.15, frame ? .1 : 0, side > 0 ? M.MAGIC2 : M.MAGIC, M.MAGIC, 40 + (side > 0 ? 10 : 0));
   if (has("mane") || has("flames")) for (let i = 0; i < 7; i++) { const t = i / 6, b = v3.lerp(v3.add(H, [-hr * .5, hr * .3, 0]), backAt(.55), t), h = [.4, .3, .45, .28, .38, .25, .3][i], up = v3.norm([-.35 - (frame ? .1 : 0), 1, 0]); m.flat(v3.add(b, v3.mul(up, h * .5)), [1, 0, 0], up, h * .32, h * .55, masks.flame(i % 2 ? M.MAGIC : M.MAGIC2, M.MAGIC2), { group: 60 + i % 2, extra: true }); }
@@ -804,6 +844,7 @@ function tail3d(m, kind, tb, len, top, tw) {
   else if (kind === "ringed") m.chain([[...tb, .085], [X(1.2), top - .3, 0, .075], [X(1.5), top - .62 + tw, 0, .068], [X(1.85), .24 + tw, 0, .06], [X(2.1), .36 + tw, 0, .05]], M.BODY, { ...o, extra: true, paint: p => p[0] < X(2.0) && p[1] > .3 + tw ? M.BELLY : p[0] < X(1.45) && Math.sin(p[0] * 26) > .25 ? M.BODY3 : undefined }); // a cheetah's: long and heavy (its rudder), low, curling up at its end, black rings and a white tip
   else if (kind === "tuft") { m.chain([[...tb, .06], [X(1.2), top - .35, 0, .045], [X(1.45), .32 + tw, 0, .04], [X(1.7), .26 + tw, 0, .035]], M.BODY, o); m.ell([X(1.78), .3 + tw, 0], [.08, .11, .07], M.BODY3, o); } // a lion's: long, hanging low and curling up, a dark tuft at its end
   else if (kind === "meerkat") m.chain([[...tb, .06], [X(1.2), top - .05 + tw, 0, .045], [X(1.55), top + .12 + tw, 0, .035], [X(1.7), top + .3 + tw, 0, .02]], M.BODY, { ...o, paint: p => p[1] > top + .2 ? M.BODY3 : undefined }); // long and thin, held up in a curve, dark-tipped (the meerkat's)
+  else if (kind === "glider") { m.seg(tb, [X(1.2), top - .12 + tw, 0], .09, .1, M.BODY, o); m.ell([X(1.65), top - .16 + tw * .7, 0], [.5, .06, .2], M.BODY, { ...o, dir: [1, .12, 0], paint: p => p[0] < X(1.95) ? M.BODY3 : Math.abs(p[2]) > .13 ? M.BODY2 : undefined }); } // a flying squirrel's: flat and feathered either side, held level behind (its rudder in a glide), its tip dark
   else if (kind === "ringed") m.chain([[...tb, .1], [X(1.05) - .3, top - .1 + tw, 0, .15], [X(1.05) - .7, top - .25 + tw, 0, .15], [X(1.05) - .95, top - .4 + tw, 0, .09]], M.BODY, { ...o, paint: p => Math.floor(-p[0] * 7) % 2 || p[0] < X(1.05) - .85 ? M.BODY3 : undefined }); // thick, held low, ringed in black, its tip black (the raccoon's)
   else if (kind === "thin") { m.chain([[...tb, .04], [X(1.1), top - .3, 0, .03], [X(1.12) + tw, top - .55, 0, .025]], M.BODY, o); m.ell([X(1.12) + tw, top - .62, 0], [.04, .07, .04], M.BODY3, o); }
 }
