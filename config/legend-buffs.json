@@ -61,6 +61,7 @@
     "roe":        { "name": "Spring",         "kind": "move", "scale": { "dash.cooldown": 0.7 }, "label": "Roe's Spring: your dodge comes back sooner" },
     "redpanda":   { "name": "Cuddle",         "kind": "shot", "scale": { "invites.radius": 1.5 }, "label": "Red panda's Cuddle: 💌s land on animals a little wider of where they strike" },
     "heron":      { "name": "Stride",         "kind": "move", "scale": { "groundSpeed": 1.1, "dash.distance": 1.25 }, "label": "Heron's Stride: a little quicker on foot, and a longer blink" },
+    "hydra":      { "name": "Many Heads",     "kind": "shot", "scale": { "invites.cooldown": 0.75, "invites.radius": 1.2 }, "label": "Hydra's Many Heads: 💌s come quicker and land a little more easily" },
     "crocodile":  { "name": "Snap",           "kind": "move", "scale": { "dash.cooldown": 0.6 },   "label": "Crocodile's Snap: your blink comes back quicker" },
     "rhino":      { "name": "Charge",         "kind": "move", "scale": { "groundSpeed": 1.25, "groundAcceleration": 0.7 }, "label": "Rhino's Charge: much faster on the ground, slower to get going" },
     "polarbear":  { "name": "Blizzard",       "kind": "shot", "scale": { "invites.range": 1.25, "invites.radius": 1.3 }, "label": "Polar bear's Blizzard: 💌s fly further and land more easily" },

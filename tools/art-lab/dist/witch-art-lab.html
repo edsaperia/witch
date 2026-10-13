@@ -3909,6 +3909,10 @@ const GENOMES = [
       { body: { plates: 10, rim: true, flecks: true, feelers: 2, jointed: true, tailSpikes: true, shields: true, crystals: true, leaves: true } },
     ] },
   { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["wings"] },
+  // the hydra (Ed's magical outer islands, phase 4: unknown-25's): a many-headed swamp serpent, its heads by level (hydra3d: 1, 3, 5, 7),
+  // draconic (Ed, 2026-10-13, from the mock: "crested"): a crest of spines down each head and frills at its sides; the legend's necks ringed
+  // in old bronze, two cut short in front and each grown back as two; dark eyes with a glint, nothing glowing
+  { id: "hydra", name: "Hydra", template: "serpent", builder: "hydra", palette: { hue: .4, sat: .35, val: .3 }, legend: [], hydra: { crest: true }, texture: { kind: "scales", size: 4, contrast: .3 } },
   { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["wingsBig"] , texture: { kind: "fur", size: 3, stretch: 1.6 } },
   { id: "marten", name: "Pine marten", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .6, val: .45 }, body: { hgt: .68, len: .78, chest: .35, tuck: .42, neck: .3, neckAng: .55, neckW: .35, hr: .25, legW: .85, back: "arch" }, head: { snout: .65, snoutD: .6 }, parts: { ears: { kind: "round", size: 1.3 }, tail: "marten", feet: "paw" }, coat: { belly: true }, legend: [], elder: { kind: "marten", eye: "EYE" } },
   { id: "salamander", name: "Salamander", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .1, val: .22, belly: "yellow" }, body: { hgt: .4, len: .95, chest: .16, tuck: .16, neck: .1, neckAng: -.05, neckW: .6, hr: .29, legW: 1.45, bw: .36 }, head: { snout: .55, snoutD: .55 }, parts: { ears: { kind: "none" }, tail: "salamander", feet: "paw" }, coat: { spots: true, spotMat: "belly" }, legend: ["flames"] , texture: { kind: "smooth" } },
@@ -4149,7 +4153,7 @@ const TEMPLATES = {
   },
   avian: { name: "Bird", builders: ["owl", "raven", "heron"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], texture: { kind: "feathers" }, face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
   flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth", "dragonfly"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake"], sockets: { head: ["head.snake"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "hydra"], sockets: { head: ["head.snake"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
   insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab", "crab"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
   squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
@@ -4396,6 +4400,7 @@ function speciesOf(g) {
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
+  if (g.hydra) S.hydra = g.hydra; // the hydra builder's own options (its heads by level, a crest)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -4507,6 +4512,7 @@ const NAP_POSES = {
   rhino: { kind: "lie", sink: .05, droop: .7 },
   polarbear: { kind: "lie", sink: .05, droop: 1 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
+  hydra: { kind: "lie", ground: .06, droop: .6 }, // (sunk a little: its heads laid down with their lids shut stand no taller than awake)
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
   // curl
   fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },
@@ -6043,6 +6049,61 @@ function snake3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .45, facing);
 }
 
+// The hydra (Ed's magical outer islands, phase 4: unknown-25's): a many-headed swamp serpent. A thick body coiled low in the
+// black water, its heads by level (a hatchling's one, then 3, 5, the legend's 7), each on its own long neck fanned out and up,
+// swaying in turn, every head a serpent's in three-quarter view: a long snout, a jaw line (some open, fangs showing), a glinting
+// eye. Its legend (Ed's brief, ART-GUIDE §0c: the elder of its kind; "emphasise the thing that makes that creature unusual"):
+// the most heads, and two necks cut short long ago, in front, each sprouting two new heads (heads that regrow), bronze offering
+// rings high on its necks, old scars. S.hydra: { heads: [per level], crest: true (a draconic crest of spines and frills) }.
+function hydra3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
+  for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
+  m.chain(pts, M.BODY, { paint: p => p[1] < .06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, .28) ? M.BODY3 : undefined });
+  const root = pts[10].slice(0, 3), hr = .058; const eyes = []; // every head's eyes (the face's anchors: each head shuts its eyes asleep, frowns angry)
+  // a serpent's head at `at` pointing along `dir` (mostly forward and towards us, a little down): skull, long snout, lower jaw
+  // (open by `open`, its mouth dark, two fangs), a glinting eye each side, a crest of spines and side frills if draconic
+  const head = (at, dir, h, open, group) => {
+    const d = v3.norm(dir), side = v3.norm(v3.cross(d, [0, 1, 0])), up = v3.norm(v3.cross(side, d));
+    m.ell(at, [h * 1.05, h * .72, h * .8], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, at), up) > h * .45 ? M.BODY3 : undefined }); // its brow darker
+    const sn = v3.add(at, v3.add(v3.mul(d, h * 1.5), v3.mul(up, -h * .15)));
+    m.ell(sn, [h * 1.3, h * .36, h * .5], M.BODY, { dir: d, group, paint: p => v3.dot(v3.sub(p, sn), up) < -h * .15 ? M.BELLY : undefined });
+    const jd = v3.norm(v3.add(d, v3.mul(up, -open * .9))), jc = v3.add(at, v3.add(v3.mul(jd, h * 1.2), v3.mul(up, -h * .42)));
+    m.ell(jc, [h * 1.1, h * .22, h * .48], M.BELLY, { dir: jd, group });
+    if (open > .1) { m.ell(v3.lerp(sn, jc, .5), [h * .75, h * .2, h * .38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
+      for (const s2 of [-1, 1]) { const f = v3.add(sn, v3.add(v3.mul(d, h * .7), v3.mul(side, s2 * h * .3))); m.seg(f, v3.add(f, v3.mul(up, -h * .35)), h * .07, h * .02, M.ACCENT, { group }); } }
+    for (const s2 of [-1, 1]) { const e = v3.add(at, v3.add(v3.add(v3.mul(d, h * .35), v3.mul(up, h * .48)), v3.mul(side, s2 * h * .55)));
+      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+    m.anchors.head ||= { c: at, r: [h, h * .8, h * .8] };
+    if (crest) { for (let k = 0; k < 4; k++) { const b = v3.add(at, v3.add(v3.mul(d, -h * (.1 + k * .3)), v3.mul(up, h * .7))); m.chain([[...b, h * .16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * .15)), v3.mul(d, -h * .6))), h * .02]], M.BODY3, { group, extra: true }); }
+      for (const s2 of [-1, 1]) m.flat(v3.add(at, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * .45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -.6))), up, h * .85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group }); }
+  };
+  const neck = (from, to, r0, r1, group, hK, open, ring) => { // an S-bent neck from `from` up to its head at `to`
+    const dv = v3.sub(to, from), mid = v3.add(from, [dv[0] * .35 + .07, dv[1] * .45, dv[2] * .5]), mid2 = v3.add(from, [dv[0] * .75 - .03, dv[1] * .85, dv[2] * .85]);
+    m.chain([[...from, r0], [...mid, r0 * .75 + r1 * .25], [...mid2, r0 * .3 + r1 * .7], [...to, r1]], M.BODY, { group, extra: true, paint: p => p[1] < v3.lerp(from, to, .5)[1] - .02 && spotty(p, 30, .15) ? M.BODY3 : undefined });
+    if (ring) for (const t of [.7, .85]) m.ell(v3.lerp(mid2, to, t - .6), [r1 * .45, r1 * 1.7, r1 * 1.7], M.WOOD, { dir: v3.norm(v3.sub(to, mid)), group: 60 }); // a bronze offering ring high on the neck
+    head(v3.add(to, [hr * hK * .6, .01, hr * hK * .25]), [1, -.25, .45 * Math.sign(to[2] - from[2] + .001) * .6 + .25], hr * hK, open, 1);
+  };
+  let main = null;
+  for (let k = 0; k < heads; k++) {
+    const u = heads > 1 ? k / (heads - 1) - .5 : 0, sway = Math.sin(k * 1.7 + ph * 2.5) * .035, len = (.5 + .12 * Math.cos(u * 2.4)) * (legend ? 1.1 : 1);
+    const tip = [root[0] + .14 + sway - Math.abs(u) * .22 + (k % 2) * .08, root[1] + len * (1 - Math.abs(u) * .4) + .09 * Math.sin(k * 2.3), root[2] + u * len * 2.1 - (legend ? .12 : 0)];
+    neck(root, tip, .034, .022, 20 + k, legend ? 1.25 : 1.1, k % 3 === 1 ? .55 : 0, legend);
+    if (!main || Math.abs(u) < .01) main = tip;
+  }
+  if (legend) for (const [dz, dy] of [[.62, .02], [.42, .12]]) { // two necks cut short long ago, in front, each sprouting two new heads
+    const stump = [root[0] + .22, root[1] + dy + .1, root[2] + dz];
+    m.chain([[...root, .034], [...v3.lerp(root, stump, .5), .032], [...stump, .03]], M.BODY, { group: 40, extra: true });
+    m.ell(stump, [.034, .014, .034], M.WEB, { group: 40 }); // the old cut, healed pale
+    for (const k of [-1, 1]) neck(v3.add(stump, [0, .01, k * .015]), [stump[0] + .1, stump[1] + .14, stump[2] + k * .08 + .04], .018, .013, 42, .6, k > 0 ? .5 : 0, false);
+  }
+  m.rig = { spine: pts.map(p => p.slice()), head: main, hr };
+  m.anchors.eyes = { pts: eyes, size: hr * (legend ? 1.25 : 1.1) * .17 };
+  m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
+  m.anchors.neck = { c: v3.lerp(root, main, .3), r: .06, dir: v3.norm(v3.sub(main, root)) };
+  m.part = "body";
+  return finish(m, S, level, st, .45, facing);
+}
+
 function moth3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
@@ -6157,7 +6218,7 @@ function spider3d(S, level, frame, st, facing = "towards") {
 
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
-const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d })); // body plan -> 3D builder; four-legged species all use quad3d
+const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
 // Idle poses (a genome's `idle`; Ed, 2026-10-12): drawn as a baked frame while it stands still now and then (render/view/creatures.ts),
 // the four-legged rig standing aside. The meerkat sat up as a sentinel.
@@ -7814,6 +7875,8 @@ const SIGILS = {
   rhino: [...pair(L([.5, .93], [.35, .9], [.27, .7], [.25, .48], [.31, .36]), L([.31, .36], [.2, .19], [.38, .3]), D(.3, .57), D(.45, .87)), L([.43, .8], [.5, .14], [.57, .8])],
   // the polar bear side on (unlike the brown bear's round face front on): a long neck, a small round ear, a long Roman-nosed head
   polarbear: [L([.08, .92], [.12, .64], [.28, .36]), A(.34, .27, .075, 165, 345), L([.41, .22], [.6, .25], [.9, .44]), D(.91, .47), L([.88, .51], [.64, .6], [.5, .7], [.52, .92]), D(.55, .33)],
+  // the hydra front on: three serpent necks rising from one body, the middle one tallest, each with its head, the middle one crested
+  hydra: [L([.14, .9], [.86, .9]), L([.5, .9], [.56, .72], [.44, .52], [.5, .36]), C(.5, .28, .08), L([.45, .21], [.41, .1]), L([.55, .21], [.59, .1]), ...pair(L([.38, .9], [.27, .74], [.22, .58], [.22, .48]), C(.22, .41, .07))],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
@@ -7929,6 +7992,7 @@ const LEGEND_DETAIL = {
   redpanda: [...pair(L([.27, .78], [.2, .9]), L([.33, .82], [.3, .94])), L([.5, .82], [.5, .9])],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   crocodile: [...pair(D(.42, .3), D(.36, .3), L([.465, .5], [.465, .76])), D(.5, .28)],
+  hydra: [L([.45, .6], [.55, .6]), ...pair(L([.17, .62], [.27, .62]), D(.24, .41)), D(.5, .28)],
   tiger: [...pair(L([.2, .44], [.3, .47]), L([.45, .79], [.44, .86]))],
   jaguar: [...pair(C(.37, .36, .03), L([.17, .56], [.26, .58]), D(.42, .8)), L([.44, .84], [.56, .84])],
   elephant: [...pair(A(.24, .42, .1, 110, 250), L([.43, .26], [.47, .24])), L([.46, .63], [.54, .63]), L([.46, .7], [.54, .7]), L([.47, .77], [.55, .78])],
@@ -8060,7 +8124,7 @@ function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx = 1 } 
 const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint", hydra: "violet" };
 const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;
@@ -9518,7 +9582,30 @@ const TERRACES = {
 };
 
 
-const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE];
+// ---- inlined from art/recipes/drownedwood.js ----
+// The drowned wood (a journey kind: unknown-25's, phase 4, the south-west's swamps; the hydra's): a forest of tall larches drowned
+// standing in black water, their roots knuckled up out of it, willows trailing, the tops of old walls and pillars breaking the
+// surface. Unlike the crocodile's tidal mangrove (brown, tangled, warm), the dragonfly's pools and the crab's mudflat, it is still,
+// deep and cold: black water under a high dark canopy, and something with many heads under it.
+const DROWNED_WOOD = {
+  id: "drowned-wood", name: "Drowned wood", creature: "hydra", by: "recipe", leaf: .28, floor: ["mud", .3, .25, .17],
+  text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
+  wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: .9 }]],
+  big: [["tree", { type: "larch", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+  ponds: true, wet: true, pathKinds: ["boardwalk"],
+  setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
+  layout: {
+    pattern: "stands", density: .55, clump: .6, glades: { count: 2, size: [16, 24] },
+    heightMix: { sapling: .05, mature: .35, tall: .45, giant: .15 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
+    terrain: ["pools", "hollows"], decor: { rate: .3, ruins: .6, rocks: .1, freak: .1, lake: .2, modern: 0 },
+    feel: "Tall drowned larches standing in still black water, roots knuckled up out of it, willows trailing, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be.",
+  },
+  flora: { species: [["larch", .6], ["willow", .25], ["alder", .15]], palette: { sat: .6, val: .7 } },
+  settings: { treeDensity: .5, groundCover: { density: .5, kinds: ["reeds", "blades"] } },
+};
+
+
+const AREA_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, DROWNED_WOOD];
 
 // What is missing from a recipe, if anything.
 function recipeProblems(R) {
@@ -13038,6 +13125,7 @@ const LEGEND_POSES = {
   roe: { sink: .42, droop: .9, drop: [], wood: [11, 12], over: { moss: .6, lichen: .05, ferns: 4, grass: 3, mushrooms: 2, roots: 3, stones: 1, beard: 3 } }, // the mossy dell's roe: curled in the moss, ferns over it
   redpanda: { sink: .45, droop: 1, drop: [], over: { moss: .5, lichen: .08, ferns: 3, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }, // the misty terraces' red panda: curled on a mossy ledge, tail over its nose
   crocodile: { sink: .55, droop: 1, drop: [120, 121, 140, 141, 142, 143, 144, 145, 146, 147], over: { moss: .35, lichen: .06, ferns: 0, grass: 4, mushrooms: 1, roots: 3, stones: 1 } }, // the mangrove's crocodile (an area recipe's): sunk in the mud like a log, its ridge of stones standing out of it, roots over it
+  hydra: { ground: .05, droop: 1, drop: [], over: { moss: .5, lichen: .05, ferns: 0, grass: 0, mushrooms: 1, roots: 0, stones: 2 } }, // the drowned wood's hydra (an area recipe's): coiled half under the black water like a heap of drowned roots, every head laid down, its bronze rings green with age and its two regrown stumps standing out of the moss
   rhino: { sink: .45, droop: .8, drop: [], over: { moss: .45, lichen: .05, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 4 } }, // the bushveld's rhino (an area recipe's): sunk to its flanks in red earth like a great grey boulder, its horn standing out of the earth
   polarbear: { sink: .5, droop: .9, drop: [], over: { moss: .25, lichen: .02, ferns: 0, grass: 0, mushrooms: 0, roots: 0, stones: 5 } }, // the pack ice's polar bear (an area recipe's): sunk in the ice like a drift of old snow, its long coat laid back over it
   heron: { ground: .68, droop: 0, fold: 1, drop: [95, 96, 97, 98, 99, 100, 101], over: { moss: .35, lichen: .1, ferns: 1, grass: 4, mushrooms: 1, roots: 2, stones: 2, nest: true } }, // the heronry's heron (an area recipe's): folded down in the reeds, its neck laid along its back, a nest of sticks on it

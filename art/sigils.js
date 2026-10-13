@@ -139,6 +139,8 @@ export const SIGILS = {
   rhino: [...pair(L([.5, .93], [.35, .9], [.27, .7], [.25, .48], [.31, .36]), L([.31, .36], [.2, .19], [.38, .3]), D(.3, .57), D(.45, .87)), L([.43, .8], [.5, .14], [.57, .8])],
   // the polar bear side on (unlike the brown bear's round face front on): a long neck, a small round ear, a long Roman-nosed head
   polarbear: [L([.08, .92], [.12, .64], [.28, .36]), A(.34, .27, .075, 165, 345), L([.41, .22], [.6, .25], [.9, .44]), D(.91, .47), L([.88, .51], [.64, .6], [.5, .7], [.52, .92]), D(.55, .33)],
+  // the hydra front on: three serpent necks rising from one body, the middle one tallest, each with its head, the middle one crested
+  hydra: [L([.14, .9], [.86, .9]), L([.5, .9], [.56, .72], [.44, .52], [.5, .36]), C(.5, .28, .08), L([.45, .21], [.41, .1]), L([.55, .21], [.59, .1]), ...pair(L([.38, .9], [.27, .74], [.22, .58], [.22, .48]), C(.22, .41, .07))],
   // the heron side on: the dagger bill, a plume behind its head, an S-neck, long legs
   heron: [C(.36, .18, .07), D(.38, .17), L([.43, .19], [.92, .26]), L([.3, .15], [.1, .1]), bow([.33, .25], [.42, .5], .35), E(.48, .58, .2, .1), L([.44, .68], [.42, .94]), L([.52, .68], [.56, .94])],
   // the meerkat sat up as a sentinel, front-on: a small round head, dark rings round its eyes, a tall body, forepaws tucked to
@@ -254,6 +256,7 @@ export const LEGEND_DETAIL = {
   redpanda: [...pair(L([.27, .78], [.2, .9]), L([.33, .82], [.3, .94])), L([.5, .82], [.5, .9])],
   newt: [D(.28, .62), D(.38, .63), D(.48, .62), L([.22, .76], [.18, .82])],
   crocodile: [...pair(D(.42, .3), D(.36, .3), L([.465, .5], [.465, .76])), D(.5, .28)],
+  hydra: [L([.45, .6], [.55, .6]), ...pair(L([.17, .62], [.27, .62]), D(.24, .41)), D(.5, .28)],
   tiger: [...pair(L([.2, .44], [.3, .47]), L([.45, .79], [.44, .86]))],
   jaguar: [...pair(C(.37, .36, .03), L([.17, .56], [.26, .58]), D(.42, .8)), L([.44, .84], [.56, .84])],
   elephant: [...pair(A(.24, .42, .1, 110, 250), L([.43, .26], [.47, .24])), L([.46, .63], [.54, .63]), L([.46, .7], [.54, .7]), L([.47, .77], [.55, .78])],
@@ -385,7 +388,7 @@ export function legendSigilMask(id, size = 256, { tier = legendTier(size), minPx
 export const NEON = { pink: [255, 64, 200], cyan: [50, 235, 255], acid: [175, 255, 45], violet: [165, 95, 255], orange: [255, 135, 35], lemon: [255, 238, 70], red: [255, 55, 95], mint: [70, 255, 175], blue: [70, 145, 255], magenta: [235, 70, 255] };
 // Each species' slot, given in the order of the area types they live in (areas.js), ten apart,
 // so area types near each other in the list never share a colour.
-export const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint" };
+export const SIGIL_NEON = { fennec: "orange", redpanda: "red", roe: "orange", lion: "lemon", cheetah: "magenta", tiger: "orange", elephant: "magenta", jaguar: "mint", heron: "blue", badger: "pink", boar: "cyan", snail: "acid", fox: "violet", ram: "orange", woodlouse: "lemon", hedgehog: "red", squirrel: "mint", wolf: "blue", stag: "magenta", stoat: "pink", snake: "cyan", hare: "acid", owl: "violet", bear: "orange", toad: "lemon", otter: "red", lynx: "mint", elk: "blue", raven: "magenta", bat: "pink", mole: "cyan", beaver: "acid", beetle: "violet", moth: "orange", marten: "lemon", salamander: "red", cat: "mint", spider: "blue", dormouse: "magenta", newt: "acid", meerkat: "orange", worldTree: "mint", armadillo: "lemon", raccoon: "cyan", frostwyrm: "cyan", griffin: "red", polarbear: "cyan", rhino: "violet", dragonfly: "cyan", crab: "red", crocodile: "mint", hydra: "violet" };
 export const sigilColour = id => NEON[SIGIL_NEON[id]] || NEON.cyan;
 const WHITE = [255, 255, 250], toward = (c, w, k) => c.map((v, j) => Math.round(v + (w[j] - v) * k));
 const rgb = c => `rgb(${c.join(",")})`;

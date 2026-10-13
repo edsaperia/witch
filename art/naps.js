@@ -33,6 +33,7 @@ export const NAP_POSES = {
   rhino: { kind: "lie", sink: .05, droop: .7 },
   polarbear: { kind: "lie", sink: .05, droop: 1 },
   newt: { kind: "lie", sink: .02, droop: 1, curl: .5 }, salamander: { kind: "lie", sink: .02, droop: 1, curl: .5 },
+  hydra: { kind: "lie", ground: .06, droop: .6 }, // (sunk a little: its heads laid down with their lids shut stand no taller than awake)
   crocodile: { kind: "lie", sink: .02, droop: .3 }, // (its head held low already: a full droop pushes its long jaw past its ground line)
   // curl
   fox: { kind: "curl", sink: .04, droop: 1, curl: 3.6, tailDown: .25 }, wolf: { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 }, lynx: { kind: "curl", sink: .04, droop: 1, curl: 3.4, tailDown: .25 },

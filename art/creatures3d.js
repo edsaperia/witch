@@ -1197,7 +1197,7 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
   m.chain(pts, M.BODY, { paint: p => p[1] < .06 ? M.BELLY : spotty([p[0] * 1.5, p[1], p[2]], 12, .28) ? M.BODY3 : undefined });
-  const root = pts[10].slice(0, 3), hr = .058;
+  const root = pts[10].slice(0, 3), hr = .058; const eyes = []; // every head's eyes (the face's anchors: each head shuts its eyes asleep, frowns angry)
   // a serpent's head at `at` pointing along `dir` (mostly forward and towards us, a little down): skull, long snout, lower jaw
   // (open by `open`, its mouth dark, two fangs), a glinting eye each side, a crest of spines and side frills if draconic
   const head = (at, dir, h, open, group) => {
@@ -1210,7 +1210,7 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
     if (open > .1) { m.ell(v3.lerp(sn, jc, .5), [h * .75, h * .2, h * .38], M.NOSE, { dir: v3.norm(v3.add(d, jd)), group });
       for (const s2 of [-1, 1]) { const f = v3.add(sn, v3.add(v3.mul(d, h * .7), v3.mul(side, s2 * h * .3))); m.seg(f, v3.add(f, v3.mul(up, -h * .35)), h * .07, h * .02, M.ACCENT, { group }); } }
     for (const s2 of [-1, 1]) { const e = v3.add(at, v3.add(v3.add(v3.mul(d, h * .35), v3.mul(up, h * .48)), v3.mul(side, s2 * h * .55)));
-      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
+      m.ell(e, [h * .17, h * .13, h * .17], M.PUPIL, { group: 1 }); eyes.push(e); m.ell(v3.add(e, [h * .05, h * .06, h * .09]), [h * .055, h * .055, h * .055], M.GLINT, { group: 1 }); } // a dark slit eye, a glint in it (no glow, its legend's either: ART-GUIDE §0c)
     m.anchors.head ||= { c: at, r: [h, h * .8, h * .8] };
     if (crest) { for (let k = 0; k < 4; k++) { const b = v3.add(at, v3.add(v3.mul(d, -h * (.1 + k * .3)), v3.mul(up, h * .7))); m.chain([[...b, h * .16], [...v3.add(b, v3.add(v3.mul(up, h * (1.2 - k * .15)), v3.mul(d, -h * .6))), h * .02]], M.BODY3, { group, extra: true }); }
       for (const s2 of [-1, 1]) m.flat(v3.add(at, v3.add(v3.mul(side, s2 * h * 1.1), v3.mul(d, -h * .45))), v3.norm(v3.add(v3.mul(side, s2), v3.mul(d, -.6))), up, h * .85, h * 1.1, masks.ear(M.BODY2, M.BODY3, M.BODY3), { group }); }
@@ -1235,6 +1235,7 @@ export function hydra3d(S, level, frame, st, facing = "towards") {
     for (const k of [-1, 1]) neck(v3.add(stump, [0, .01, k * .015]), [stump[0] + .1, stump[1] + .14, stump[2] + k * .08 + .04], .018, .013, 42, .6, k > 0 ? .5 : 0, false);
   }
   m.rig = { spine: pts.map(p => p.slice()), head: main, hr };
+  m.anchors.eyes = { pts: eyes, size: hr * (legend ? 1.25 : 1.1) * .17 };
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: v3.lerp(root, main, .3), r: .06, dir: v3.norm(v3.sub(main, root)) };
   m.part = "body";

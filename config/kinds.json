@@ -348,12 +348,11 @@
       "dir": "S",
       "biome": "hot"
     },
-    "unknown-25": {
+    "hydra": {
       "phase": 4,
       "bearing": 205,
       "dir": "SSW",
-      "biome": "mangrove swamp",
-      "placeholder": true
+      "biome": "mangrove swamp"
     },
     "crab": {
       "phase": 4,
