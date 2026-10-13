@@ -31,6 +31,8 @@ import { inView } from "./culling";
 import { mark } from "./pops";
 import { attackFeel, newFeel } from "../attackFeel";
 import { legendSleep, newSleepTrack, type SleepPose } from "../legendSleep";
+/** How near her (m) a rattlesnake rattles its warning (config/character.json's "rattle" quirk). */
+const RATTLE_NEAR = 14;
 const SQ = { hop: 0, x: 0, sx: 1, sy: 1, turned: false }; // (a baked frame's idle quirk, filled each creature: no allocation)
 const CP = newCongaPose(); // (a conga dancer's step, filled each creature: no allocation)
 
@@ -127,8 +129,12 @@ export function drawCreatures(v: View, time = 0): void {
     // Lain down asleep (more than half way: the rig, where it draws, carries it there and back), its nap (art/naps.js), its level's frames.
     const asleepArt = !st && lying > 0.5 ? v.assets.napArt(c.species, party ? { id: c.id, colour: look === "leashed" ? sigilColour(c.species) : null } : undefined) : undefined; // (a party animal asleep in its party gear: Ed, 2026-10-06)
     // Its idle pose (Ed, 2026-10-12: the meerkat "sits up as a sentinel when idle"; config/character.json's "sentinel" quirk, art/creatures.js
-    // IDLE_BUILDERS): while the quirk plays and it stands still, wild, its own baked frames stand in for the rig, as a nap's do.
-    const ch0 = characterOf(c.species), idlePose = !asleepArt && !party && !woken && !st && lying <= 0 && ch0.quirk === "sentinel" && !c.moving && !c.charge && !c.leap && quirkAt(c.id, ch0, time) >= 0 ? v.assets.idleArt(c.species) : undefined;
+    // IDLE_BUILDERS): while the quirk plays and it stands still, wild, its own baked frames stand in for the rig, as a nap's do. The
+    // rattlesnake's "rattle" (Ed, 2026-10-13: "it rattles only near the witch, as a warning"): its rattle raised and shaking while she's
+    // within RATTLE_NEAR metres of it or its area is watching her.
+    const ch0 = characterOf(c.species), still = !asleepArt && !party && !woken && !st && lying <= 0 && !c.moving && !c.charge && !c.leap;
+    const warns = ch0.quirk === "rattle" && ((c.watchUntil !== undefined && g.clock.time < c.watchUntil) || Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < RATTLE_NEAR);
+    const idlePose = still && ((ch0.quirk === "sentinel" && quirkAt(c.id, ch0, time) >= 0) || warns) ? v.assets.idleArt(c.species) : undefined;
     const napped = asleepArt ?? idlePose;
     const art = napped ?? party ?? woken ?? slept ?? faced ?? v.assets.creatureArt(c.species), key = idlePose && !asleepArt ? `idle-${c.species}` : napped ? (party ? `nap-${look === "happy" ? "happy" : "party"}-${c.id}` : `nap-${c.species}`) : party ? `${look === "happy" ? "happy" : "party"}-${c.id}` : slept ? `sleep-${c.species}` : sleeping ? `sunk-${c.species}` : woken ? `woken-${c.species}` : faced ? `face-${face}-${c.species}` : c.species;
     if (!art) continue;
