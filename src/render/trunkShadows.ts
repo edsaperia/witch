@@ -17,10 +17,11 @@ import { CAST_LAYER } from "./castShadows";
 import type { Atlas } from "./atlas";
 import type { Frame } from "./artBuild";
 
-/** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach; and how far each has flared up), how
+/** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach; how far each has flared up; and its colour:
+ *  the campfires, the soundsystems and the runestones, render/view.ts ForestLight.shadow), how
  *  strong, hard (1: on the art's pixels, two tones) or soft (0: a blurred silhouette, its penumbra widening toward its tip, as
  *  dark as hard where its fade passes uTrunkCore), and the longest a shadow gets (times its trunk's height). */
-export const MAX_FIRES = 4;
+export const MAX_FIRES = 8;
 export const TRUNK_SHADOW_UNIFORMS = {
   uFires: { value: Array.from({ length: MAX_FIRES }, () => new THREE.Vector4()) },
   uFireCount: { value: 0 },
@@ -36,9 +37,9 @@ export const TRUNK_SHADOW_UNIFORMS = {
   uTrunkTaper: { value: 2 },
   uTrunkNear: { value: 6 },
   uTrunkCover: { value: 1 },
-  /** The fires' colour (one for them all); how far a shadow takes the complement of its light's colour (0: black; scenery, trees);
+  /** The fires' colours; how far a shadow takes the complement of its light's colour (0: black; scenery, trees);
    *  how light a glowing caster's shadow is, in its own colour (Ed, 2026-10-12: "they shouldn't be black"). */
-  uFireRgb: { value: new THREE.Vector3(1, 0.6, 0.3) },
+  uFireRgb: { value: Array.from({ length: MAX_FIRES }, () => new THREE.Vector3(1, 0.6, 0.3)) },
   uTintScenery: { value: 0 },
   uTintTrees: { value: 0 },
   uCasterLight: { value: 0 },
@@ -55,7 +56,8 @@ attribute vec4 iUv;    // its frame in the atlas (u0, v0 top, u1, v1 bottom; u0 
 attribute vec3 iPad;   // its empty rows at the bottom, a share of its height; (unused); scenery (1) or a tree (0)
 attribute vec4 iShade; // a glowing caster's own colour (0..1) and how much it glows (0: not at all)
 uniform float uSlot, uTrunkLong, uGlowReach, uGlowLift, uTrunkAcross, uTrunkNear, uTintScenery, uTintTrees, uCasterLight, uTrunkFoot, uSceneryFoot, uTrunkTaper, uSceneryTaper;
-uniform vec3 uGlowPos, uGlowRgb, uFireRgb;
+uniform vec3 uGlowPos, uGlowRgb;
+uniform vec3 uFireRgb[${MAX_FIRES}];
 varying vec3 vShade;
 uniform vec4 uFires[${MAX_FIRES}];
 uniform float uFireFade[${MAX_FIRES}];
@@ -66,14 +68,14 @@ varying vec4 vFrame;
 ${HEIGHT_VERT_GLSL}
 void main() {
   vec2 foot = iTrunk.xy;
-  vec3 L; float reach, lit = 1.0; // (lit: a fire's share of itself, as it flares up or dies down)
+  vec3 L, lc = uGlowRgb; float reach, lit = 1.0; // (lit: a fire's share of itself, as it flares up or dies down; lc: its light's colour)
   if (uSlot < 0.5) { L = vec3(uGlowPos.x, uGlowLift, uGlowPos.z); reach = uGlowReach; } // (her glow, as from uGlowLift metres up: lower than it shines from, for shadows that read)
   else { // the nearest fire whose reach it's in
     float best = 1e9; L = vec3(0.0); reach = 0.0;
-    for (int i = 0; i < ${MAX_FIRES}; i++) { if (i >= uFireCount) break; vec4 F = uFires[i]; float d = length(foot - F.xz); if (d < F.w && d < best) { best = d; L = vec3(F.x, F.y - groundH(F.xz), F.z); reach = F.w; lit = uFireFade[i]; } }
+    for (int i = 0; i < ${MAX_FIRES}; i++) { if (i >= uFireCount) break; vec4 F = uFires[i]; float d = length(foot - F.xz); if (d < F.w && d < best) { best = d; L = vec3(F.x, F.y - groundH(F.xz), F.z); reach = F.w; lit = uFireFade[i]; lc = uFireRgb[i]; } }
   }
   vec2 off = foot - L.xz; float d = length(off);
-  if (reach <= 0.0 || d > reach || d < 0.4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (out of its light: nothing)
+  if (reach <= 0.0 || d > reach || d < 0.4) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (out of its light, or the light's own source (a soundsystem, a runestone, cast from where it stands): nothing)
   vec2 dir = off / d, side = vec2(dir.y, -dir.x); // (so across, along turn as x, z do: facing up, not culled)
   float pad = iPad.x, h = iTrunk.w * (1.0 - pad), len = clamp(d * h / max(0.6, L.y), 0.6 * h, uTrunkLong * h);
   float t = position.z + 0.5, u = position.x; // (along from its foot, across)
@@ -90,7 +92,7 @@ void main() {
   // Its colour at its darkest (Ed, 2026-10-12: "Can we have complementary colours in shadows cheaply?"): black, toward the
   // complement of its light's colour by the tint (a fire's orange throws blue-violet), and a glowing caster's toward a soft shade of
   // its own colour (a runestone's, a soundsystem's: lit with coloured light, never black)
-  vec3 lc = uSlot < 0.5 ? uGlowRgb : uFireRgb; float mx = max(max(lc.r, lc.g), lc.b), mn = min(min(lc.r, lc.g), lc.b);
+  float mx = max(max(lc.r, lc.g), lc.b), mn = min(min(lc.r, lc.g), lc.b);
   vec3 comp = vec3(mx + mn) - lc; comp /= max(1e-3, max(max(comp.r, comp.g), comp.b));
   vShade = comp * 0.45 * mix(uTintTrees, uTintScenery, iPad.z);
   vec3 own = iShade.rgb / max(1e-3, max(max(iShade.r, iShade.g), iShade.b));
