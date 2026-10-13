@@ -13,6 +13,7 @@
     "squirrel": {"posture": {"head": [0, 0.04], "body": 0}, "quirk": "tailflick", "every": [2, 4], "for": 0.7},
     "otter": {"posture": {"head": [0.02, 0.02], "body": -0.01}, "quirk": "shake", "every": [5, 9], "for": 0.8},
     "lynx": {"posture": {"head": [0.04, -0.02], "body": -0.03}, "quirk": "tailflick", "every": [3, 6], "for": 0.6},
+    "cat": {"posture": {"head": [0.03, 0.0], "body": -0.01}, "quirk": "tailflick", "every": [3, 7], "for": 0.8},
     "elk": {"posture": {"head": [0.03, 0.02], "body": 0}, "quirk": "stomp", "every": [6, 11], "for": 1.2},
     "beaver": {"posture": {"head": [0.02, -0.02], "body": -0.01}, "quirk": "tailslap", "every": [5, 9], "for": 0.7},
     "stoat": {"posture": {"head": [0, 0.05], "body": 0}, "quirk": "perk", "every": [3, 6], "for": 1.0},
@@ -37,7 +38,6 @@
     "woodlouse": {"sprite": "puff", "every": [4, 8], "for": 1.0},
     "snail": {"sprite": "puff", "every": [6, 12], "for": 2.0},
     "moth": {"sprite": "shiver", "every": [2, 5], "for": 0.6},
-    "glowworm": {"sprite": "puff", "every": [3, 6], "for": 1.6},
     "hedgehog": {"sprite": "puff", "every": [4, 8], "for": 0.9},
     "toad": {"sprite": "hop", "every": [5, 10], "for": 0.7},
     "mole": {"sprite": "look", "every": [4, 8], "for": 1.0}
