@@ -24,7 +24,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 ## Open questions
 
 - Single-file tightness: shipped at 1.6 m, raised to 5 m by Ed (#666; `leash.babies.gap`). Settled unless Ed says otherwise.
-- The rest are answered: babies on the ground (the Decision below, built), the flying cooldown's length (3 s, now a pause-page slider), blink when standing still (her facing, #649).
+- The rest are answered: babies on the ground (the Decision below, built), the flying cooldown's length (3 s, a pause-page slider since #916), blink when standing still (her facing, #649).
 
 ## Decisions (Ed, 2026-10-11)
 
@@ -38,7 +38,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 - **Flasks a third the size** (#647; `PARTY_RELIC_SIZE` in `art/partyRelics.js`, the light scaled with it) and the relic sigil's offset back to 6 m (`config/legends.json` `relics.sigilOffset`).
 - **Relics: one per 10 areas** (#650; `relics.perAreas` in `config/legends.json`, `placeRelics` in `src/rules/legends.ts`).
 - **Flyers' longer dive bottom** (#611, on #588's swoop): now 4 s for the owl, bat and raven (`movement.swoop.bottom` in each `art/creatures/<id>/creature.js`).
-- **Flying cooldown** (#649): after landing she can't rise for `riseCooldown` seconds (3; `src/rules/game.ts`, `riseCooldownOf` in `src/rules/spells.ts`; the plain broom halves it, `spells.plain.riseCooldown`, #695). A pause-page slider for it since Kilo's PR.
+- **Flying cooldown** (#649): after landing she can't rise for `riseCooldown` seconds (3; `src/rules/game.ts`, `riseCooldownOf` in `src/rules/spells.ts`; the plain broom halves it, `spells.plain.riseCooldown`, #695). A pause-page slider for it since #916.
 - **Enraged animals march inward** (#649): `nearestSound` in `src/rules/combat/targeting.ts` never picks a soundsystem further from the map's centre than the besieger (`INWARD_SLACK` 10 m; home always); `marchOn` in `src/rules/combat.ts`.
 - **Blink goes the way she's moving** (#649; `src/rules/dash.ts`).
 - **Controller bindings** (#618; `PAD` in `src/platform/input.ts`).

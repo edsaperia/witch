@@ -1,0 +1,23 @@
+{
+  "pr": 916,
+  "group": "Flying cooldown",
+  "decisions": [
+    {
+      "id": "riseCooldown",
+      "pr": 916,
+      "group": "Flying cooldown",
+      "label": "Flying cooldown (s)",
+      "note": "Seconds after she lands before she can rise to the treetops again (riseCooldown; 3 as shipped in #649: players rose instead of dodging). The plain broom halves it (spells.plain.riseCooldown). 0 lets her rise at once.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 10,
+        "step": 0.25
+      },
+      "default": 3,
+      "apply": {
+        "knob": "riseCooldown"
+      }
+    }
+  ]
+}
