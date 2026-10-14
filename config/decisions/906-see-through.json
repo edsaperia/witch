@@ -119,6 +119,34 @@
       "apply": {
         "knob": "suspects.seeCull"
       }
+    },
+    {
+      "id": "seeKeep",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Keep solid copy",
+      "note": "On: the solid pass draws what's in front of her as well, and the see-through pass over it (nothing is see-through then). If the circle's edge goes, it came from what showed through the gap the solid pass left; if it stays, from the see-through pass's own drawing (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeKeep"
+      }
+    },
+    {
+      "id": "seeStencil",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through marks",
+      "note": "On: the see-through pass marks the trees it draws in the stencil, as the solid pass does (the marks the ley line shows through). Off as ever (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeStencil"
+      }
     }
   ]
 }

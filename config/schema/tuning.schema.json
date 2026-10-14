@@ -8277,6 +8277,12 @@
         },
         "seeCull": {
           "type": "boolean"
+        },
+        "seeKeep": {
+          "type": "boolean"
+        },
+        "seeStencil": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8295,7 +8301,9 @@
         "mist",
         "lightRings",
         "seeWrite",
-        "seeCull"
+        "seeCull",
+        "seeKeep",
+        "seeStencil"
       ],
       "additionalProperties": false
     },
