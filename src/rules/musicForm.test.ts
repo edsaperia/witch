@@ -7,7 +7,7 @@ import styleJson from "../../config/music-style.json";
 import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
 import { hitWitch, newGame } from "./game";
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
-import { arcStep, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
+import { arcStep, degreeToMidi, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!;
@@ -272,6 +272,22 @@ describe("the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in t
     for (const sec of S.breakdown) expect(sungHere(style, { section: sec, start: 0, bars: 8, wave: 1, arc: 1 }, a, resolveSection(style, sec)), sec).toBe("breakdown");
     expect(sungHere(style, { section: a.build, start: 0, bars: 8, wave: 1, arc: 1 }, a, resolveSection(style, a.build))).toBe("build");
     const events = (section: string, start: number, bars: number) => Array.from({ length: bars * 16 }, (_, i) => notesAt(style, { section, start, bars, wave: 1, arc: 1 }, null, start * 16 + i, { seed: 7, siege: 0, formStart: 0 })).flat();
+    // the Music Lab's voice test (Ed, 2026-10-14, "constant arpeggios"): the voice sings in every section, a chord tone
+    // every eighth within the alto's range, up and down, no wash, and the melody's instrument gives way; off in the game's style
+    expect(F.sung.arpeggio).toBeUndefined();
+    const arp = { ...style, form: { ...F, sung: { ...F.sung, arpeggio: true } } } as MusicStyle;
+    const arpEv = Array.from({ length: 16 * 16 }, (_, i) => notesAt(arp, { section: S.four[0], start: 0, bars: 16, wave: 1, arc: 1 }, null, i, { seed: 7, siege: 0, formStart: 0 })).flat();
+    const sungArp = arpEv.filter(e => e.part === F.sung.part);
+    expect(sungArp.length).toBe(16 * 8);
+    expect(sungArp.every((e, i) => e.step === 2 * i && e.dur === 2 && !e.double && e.fx === "pure")).toBe(true);
+    expect(sungArp.every(e => e.midi! >= 55 && e.midi! <= 67)).toBe(true); // (G3 to G4 in the home key)
+    expect(arpEv.some(e => style.parts[e.part]?.role === "motif")).toBe(false);
+    const tr = (style.arc[1].transpose ?? 0) + (resolveSection(style, S.four[0]).transpose ?? 0), sc = style.scales[style.scale];
+    for (const e of sungArp) { // (every note a tone of that bar's chord, with its seventh)
+      const c = formChord(style, 7, Math.floor(e.step / 16), false), ok = new Set([...c.tones, c.root + 6].flatMap(t => [-7, 0, 7].map(o => degreeToMidi(style, sc, t + o, F.sung.octave, tr))));
+      expect(ok.has(e.midi!), `step ${e.step}`).toBe(true);
+    }
+    expect(new Set(sungArp.slice(0, 6).map(e => e.midi)).size).toBeGreaterThan(2); // (up and down a chord, not one note)
     // the form's bars 0-15 (A and B) in the four-on-the-floor section: nothing sung
     expect(events(S.four[0], 0, 16).filter(e => e.part === F.sung.part)).toEqual([]);
     expect(events(S.four[0], 0, 16).some(e => style.parts[e.part]?.role === "motif")).toBe(true);

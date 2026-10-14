@@ -81,6 +81,15 @@ async function main() {
     await page.close();
   }
   const state = page => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, area: window.witch.areaUnderWitch(), stats: window.witch.view.stats }; });
+  // Rise from the ground: a press within riseCooldown seconds of her landing is dropped by the rules (#649, Ed, 2026-10-11:
+  // "players rise to the treetops instead of dodging"; the plain broom halves it), so wait that out on her own clock first.
+  const rise = async page => {
+    await page.waitForFunction(() => {
+      const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
+      return W.landedAt == null || g.herTime >= W.landedAt + cd + 0.05;
+    }, null, { timeout: 240000, polling: 100 });
+    await page.keyboard.press("Space");
+  };
   // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
   const hold = async (page, key, secs, timeout = 240000) => { // the software renderer here runs the treetops (sky, bend) at about a frame a second
     const from = await state(page);
@@ -165,7 +174,7 @@ async function main() {
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 240000 });
-    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await rise(page); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
@@ -288,7 +297,7 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "55-string-lights-ground.png");
-    await page.keyboard.press("Space");
+    await rise(page);
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "56-string-lights-treetop.png");

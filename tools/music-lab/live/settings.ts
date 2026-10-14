@@ -10,8 +10,15 @@ export const LAYER_NAMES: Record<Layer, string> = {
   drone: "Drone (low fifth)", frames: "Frame drums", tape: "Tape wobble + crackle", kit: "CC0 kit (for the synth drums)",
   vocalise: "Vocalise (the B and C melodies)", choir: "Recorded choir", whispers: "Whispers (breakdowns)", throat: "Throat-sung drone",
 };
-/** Who sings the form's melody: the game's synth soprano, Pink Trombone (5), or the recorded woman's note (5b). */
-export const VOICES = ["synth", "fof", "pinkTrombone", "recorded"] as const;
+/** Who sings the form's melody: the game's singer as it is, the FOF voice, Pink Trombone (5), the recorded woman's note (5b),
+ *  and the singer's A/B (Ed, 2026-10-14, "build two and A/B them"): the alto's sample set (the woman's note shifted with its
+ *  formants kept, every two semitones) or the vocal-tract voice (Pink Trombone in a worklet, an alto's tract). */
+export const VOICES = ["synth", "fof", "pinkTrombone", "recorded", "sampled", "tract"] as const;
+/** The voices the engine sings itself (the player's own are Pink Trombone's worker and the one retuned note). */
+export const engineSings = (v: Voice): boolean => v === "synth" || v === "fof" || v === "sampled" || v === "tract";
+/** Which effects chain the singer goes through: as the game plays it (pure, dark in the dark families), or one of them forced. */
+export const CHAINS = ["auto", "pure", "dark"] as const;
+export type Chain = typeof CHAINS[number];
 /** The voice line's ethereal effects (src/platform/audio/voiceFx.ts; Ed, 2026-10-11), a level each, 0 off. */
 export const FX = ["chorus", "saturation", "air", "delay", "hall", "shimmer", "duck", "swells", "freeze", "whisper", "octave"] as const;
 export type Fx = typeof FX[number];
@@ -39,20 +46,38 @@ export interface LabState {
   /** The set view's night (rules/musicSet.ts): its waves and island ("home": the first home night is the hand-picked one at
    *  10), or null. */
   night: { waves: number; island: string } | null;
-  /** The voice line's effects (on the sung melody, whoever sings it). */
+  /** The voice line's effects (on the sung melody, whoever sings it): the chain in force's own values until moved. */
   voiceFx: Record<Fx, number>;
   /** The choir part's chords on the FOF voice (fofChoir) rather than the synth choir. */
   fofChoir: boolean;
+  /** The singer's breath (its patch's `breath`, 0 none to 1): null, the voice's own (Ed, 2026-10-14: "let me hear both"). */
+  breath: number | null;
+  /** The effects chain the singer goes through (Ed: two chains by place). */
+  chain: Chain;
+  /** The voice test (Ed, 2026-10-14): the singer sings the chord as constant arpeggios in every section, not the form's
+   *  melodies in the breakdowns and builds. */
+  arpeggio: boolean;
 }
 
-export interface Defaults { bpm: number; mode: string; parts: string[]; victory: { transpose: number; layers: Record<string, number> } }
+export interface Defaults {
+  bpm: number; mode: string; parts: string[]; victory: { transpose: number; layers: Record<string, number> };
+  /** The game's voice-effects chains (the style's voiceFx and voiceFxDark over it): the sliders start at the chain in force's. */
+  voiceFx?: { pure?: Partial<Record<Fx, number>>; dark?: Partial<Record<Fx, number>> };
+}
+
+/** The game's chain a choice hears: "auto" is the pure one (the lab's passages have no family; a dark night's steps do). */
+export function chainFx(d: Defaults, chain: Chain): Record<Fx, number> {
+  const c = (chain === "dark" ? d.voiceFx?.dark : d.voiceFx?.pure) ?? {};
+  return Object.fromEntries(FX.map(f => [f, c[f] ?? 0])) as Record<Fx, number>;
+}
 
 export function defaultState(d: Defaults): LabState {
   return {
     wave: 2, section: "", seed: 7, bpm: d.bpm, mode: d.mode, witchHouse: false,
     layers: Object.fromEntries(LAYERS.map(l => [l, l === "vocalise" ? 1 : 0])) as Record<Layer, number>, voice: "synth",
     parts: Object.fromEntries(d.parts.map(p => [p, 1])), mute: [], solo: [],
-    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null, voiceFx: Object.fromEntries(FX.map(f => [f, 0])) as Record<Fx, number>, fofChoir: false,
+    victory: { transpose: d.victory.transpose, layers: { ...d.victory.layers } }, night: null, voiceFx: chainFx(d, "auto"), fofChoir: false,
+    breath: null, chain: "auto", arpeggio: false,
   };
 }
 
@@ -82,8 +107,11 @@ export function settingsJson(s: LabState, d: Defaults): string {
   const vl = changed(s.victory.layers, base.victory.layers);
   if (s.victory.transpose !== base.victory.transpose || some(vl)) out.victory = { ...(s.victory.transpose !== base.victory.transpose ? { transpose: s.victory.transpose } : {}), ...(some(vl) ? { layers: vl } : {}) };
   if (s.night) out.night = { ...s.night };
-  const fx = changed(s.voiceFx, base.voiceFx);
+  if (s.chain !== base.chain) out.chain = s.chain;
+  const fx = changed(s.voiceFx, chainFx(d, s.chain)); // (against the chain in force's own values)
   if (some(fx)) out.voiceFx = fx;
+  if (s.breath !== null) out.breath = round(s.breath);
+  if (s.arpeggio) out.arpeggio = true;
   if (s.fofChoir) out.fofChoir = true;
   // one key a line, what's under it on the same line: short enough to paste in a message, easy to read
   return `{\n${Object.entries(out).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v).replace(/([,:])(?=["{\[\d-])/g, "$1 ")}`).join(",\n")}\n}`;
@@ -100,6 +128,7 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
   const raw = JSON.parse(text.trim().replace(/^```(json)?|```$/g, "")) as Record<string, unknown>;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("not a settings object");
   const s = defaultState(d), ignored: string[] = [];
+  if ((CHAINS as readonly unknown[]).includes(raw.chain)) { s.chain = raw.chain as Chain; s.voiceFx = chainFx(d, s.chain); } // (first: the effects are over its values)
   for (const [k, v] of Object.entries(raw)) {
     switch (k) {
       case "lab": break;
@@ -120,6 +149,9 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
       }
       case "voiceFx": levels(v, s.voiceFx, f => (FX as readonly string[]).includes(f), 1); break;
       case "fofChoir": s.fofChoir = v === true; break;
+      case "chain": if (!(CHAINS as readonly unknown[]).includes(v)) ignored.push(k); break;
+      case "breath": if (typeof v === "number") s.breath = num(v, 0, 1, 0); else if (v !== null) ignored.push(k); break;
+      case "arpeggio": s.arpeggio = v === true; break;
       case "night": {
         const n = v as { waves?: unknown; island?: unknown } | null;
         s.night = n && typeof n === "object" ? { waves: Math.round(num(n.waves, 1, 64, 10)), island: typeof n.island === "string" ? n.island.slice(0, 24) : "home" } : null;

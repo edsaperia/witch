@@ -1,7 +1,7 @@
 {
   "builder": "India",
   "phase": "The menagerie: how animals are generated",
-  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage; then the growth batch, Ed's review sheets and the six bodies he approved from them",
+  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage; then the growth batch, Ed's review sheets and the six bodies he approved from them; then the music's singer (Ed's review, 2026-10-14): the plan, an alto in tune, and two voices to A/B in the Music Lab",
   "prs": [
     800,
     812,
@@ -14,7 +14,9 @@
     843,
     849,
     859,
-    866
+    866,
+    917,
+    920
   ],
   "built": [
     "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
@@ -29,7 +31,10 @@
     "The growth batch: levels that grow as animals, not as scaled copies, for the species the growth check warned on (#843, #849, #859)",
     "Ed's animal review sheets: one a biome row as the zoo lays them out, each species on a line at game size from baby to legend with the adult zoomed, the witch for scale, its builder named and its known issues marked (on the shots branch, `previews/ed/review/`)",
     "Six bodies from Ed's review (#866): the polar bear's head low on a longer neck over a high shoulder, the unicorn tall on long legs with a horse's head, the badger's shoulders, waist and wedge head, the rhino's horn growing by level and its own young, the crocodile's wide flat head with its jaw line and its legs out to the sides, the snow leopard's longer legs, thicker tail and bigger paws",
-    "The body knobs those needed (`quad3d`, each 1 or off as built): `body.tailK` (tail thickness), `body.pawK` (paw size), `body.sprawl` (how far a sprawler's legs go out), `head.skullY` and `head.skullZ` (a flatter or wider skull) and `head.jawLine` (a flat jaw's mouth as a dark line between the jaws, drawn while it's shut)"
+    "The body knobs those needed (`quad3d`, each 1 or off as built): `body.tailK` (tail thickness), `body.pawK` (paw size), `body.sprawl` (how far a sprawler's legs go out), `head.skullY` and `head.skullZ` (a flatter or wider skull) and `head.jawLine` (a flat jaw's mouth as a dark line between the jaws, drawn while it's shut)",
+    "The singer's plan (#917, docs/backlog/music.md): the vocalise measured (its one G4 note retuned up to 16 semitones, so a chipmunk; its chorus, octave and shimmer smearing it up to 36 cents off), three slices, and Ed's choices from four rounds of questions",
+    "The alto (#920): the sung line an octave down, G3 to G4, stepwise within a fifth with its phrase ends bent to the root, sung only in the breakdowns and builds, with a swell into each note, breath, the recording's flat first quarter second skipped, and two effects chains by place (pure for the breakdowns, dark for the dark families); `node tools/music-lab/tune.cjs` pitch-tracks the line and fails over 20 cents",
+    "Two voices to A/B, live in the Music Lab: the alto sample set (the woman's note shifted with its formants kept, every two semitones, built offline from `samples/sources.json`'s derived entries) and a vocal-tract voice (Pink Trombone's tract in an AudioWorklet, an alto's length), with a breath slider and a chain choice"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
@@ -38,7 +43,9 @@
     "Lofting a body through five stations looked right from the side and lumpy from above until the slices ran every tenth of the length with the stations interpolated: the smooth union only hides bumps smaller than its blend.",
     "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine.",
     "A review sheet is only useful if everything on it is on one scale: once every species stood beside the witch at game size, Ed could point at six bodies in one pass, and each fix was a few numbers in a genome record.",
-    "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too."
+    "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too.",
+    "Measure a voice before judging it: a pitch tracker over the sung line said in numbers what Ed heard (out of tune), and found the cause in a sample's first quarter second singing 20 cents flat.",
+    "A physical-model voice drifts on purpose: Pink Trombone's glottis wanders a few cents by design, which reads as a singer solo and as out of tune in a chord; one knob scaling the wander turned 46 cents off into 13."
   ],
   "previews": [
     {

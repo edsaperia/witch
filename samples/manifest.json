@@ -2,6 +2,138 @@
   "_": "Written by tools/samples/build.mjs from samples/sources.json: never edit by hand. Checked by tools/samples/check.mjs (npm test).",
   "files": [
     {
+      "file": "alto/alto-55.ogg",
+      "what": "The woman's sung note shifted to G3 (MIDI 55) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -12.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (+1.4 dB), Opus 64 kbps",
+      "bytes": 15306
+    },
+    {
+      "file": "alto/alto-57.ogg",
+      "what": "The woman's sung note shifted to A3 (MIDI 57) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -10.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (+1.2 dB), Opus 64 kbps",
+      "bytes": 14777
+    },
+    {
+      "file": "alto/alto-59.ogg",
+      "what": "The woman's sung note shifted to B3 (MIDI 59) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -8.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (+2.1 dB), Opus 64 kbps",
+      "bytes": 15724
+    },
+    {
+      "file": "alto/alto-61.ogg",
+      "what": "The woman's sung note shifted to C#4 (MIDI 61) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -6.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (+0.6 dB), Opus 64 kbps",
+      "bytes": 15892
+    },
+    {
+      "file": "alto/alto-63.ogg",
+      "what": "The woman's sung note shifted to D#4 (MIDI 63) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -4.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (+0.1 dB), Opus 64 kbps",
+      "bytes": 16502
+    },
+    {
+      "file": "alto/alto-65.ogg",
+      "what": "The woman's sung note shifted to F4 (MIDI 65) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted -2.17 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 16634
+    },
+    {
+      "file": "alto/alto-69.ogg",
+      "what": "The woman's sung note shifted to A4 (MIDI 69) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +1.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 17071
+    },
+    {
+      "file": "alto/alto-71.ogg",
+      "what": "The woman's sung note shifted to B4 (MIDI 71) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +3.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-0.5 dB), Opus 64 kbps",
+      "bytes": 17237
+    },
+    {
+      "file": "alto/alto-73.ogg",
+      "what": "The woman's sung note shifted to C#5 (MIDI 73) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +5.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 16869
+    },
+    {
+      "file": "alto/alto-75.ogg",
+      "what": "The woman's sung note shifted to D#5 (MIDI 75) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +7.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 17287
+    },
+    {
+      "file": "alto/alto-77.ogg",
+      "what": "The woman's sung note shifted to F5 (MIDI 77) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +9.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 17992
+    },
+    {
+      "file": "alto/alto-79.ogg",
+      "what": "The woman's sung note shifted to G5 (MIDI 79) with its formants kept, for the alto's sample set",
+      "source": "https://freesound.org/people/owstu/sounds/628817/",
+      "licence": "CC0-1.0",
+      "author": "owstu",
+      "credit": "\"A woman singing one steady note, G4 (from the uploader's own single-note improvisation)\" by owstu on Freesound (CC0-1.0)",
+      "sourceSha256": "d13858c476b5a8d9401419682e2a3324539768ff1ddd1541885cfb654aa70c2c",
+      "processing": "from samples/voices/female-note.ogg: its first 0.25 s dropped, pitch shifted +11.83 semitones with formants preserved (Rubber Band, offline), cut to 1.5 s with a 0.15 s fade, peak-normalised to -1 dBFS (-1.0 dB), Opus 64 kbps",
+      "bytes": 19298
+    },
+    {
       "file": "vcsl/bass-drum.ogg",
       "what": "Concert bass drum, medium hit",
       "source": "https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Membranophones/Struck%20Membranophones/Bass%20Drum%202/bassdrum_hit_mf1.wav",

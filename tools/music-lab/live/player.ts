@@ -8,7 +8,7 @@ import { newBeatClock, type BeatClock } from "../../../src/rules/beat";
 import { formClock, type planBlock, type MusicCue } from "../../../src/rules/musicPlan";
 import { arcStep, formChord, musicSeed, resolveSection, tuneSeed, type MusicStyle, type NoteEvent } from "../../../src/rules/musicScore";
 import { BREAKDOWN, FRAMES, FRAME_IDS, frameHit, KIT, PITCH, PRESENCE_DB, VOCALISE_GAIN, VOWELS } from "../ingredients";
-import { heard, type LabState } from "./settings";
+import { engineSings, heard, type LabState } from "./settings";
 import { VoiceFx } from "../../../src/platform/audio/voiceFx";
 
 type Hooked = {
@@ -140,7 +140,7 @@ export class Player {
     if (!this.engine) return;
     const h = this.engine as unknown as Hooked;
     for (const [part, ch] of h.channels) if (!part.startsWith("circle:")) {
-      const lvl = part === this.style.form?.sung.part ? (s.voice === "synth" || s.voice === "fof" ? L("vocalise") : 0) : heard(s, part, s.parts[part] ?? 1);
+      const lvl = part === this.style.form?.sung.part ? (engineSings(s.voice) ? L("vocalise") : 0) : heard(s, part, s.parts[part] ?? 1);
       ch.in.gain.setTargetAtTime(lvl, t, 0.02);
     }
     const game = Math.max(0, t - this.startedAt);
@@ -150,7 +150,7 @@ export class Player {
   /** A note the engine is about to play: the kit's sample for a synth drum, a voice for the sung melody, else as it was. */
   private note(ev: NoteEvent, t: number, dur: number, sps: number, chord: number[] | undefined, play: Hooked["play"]): void {
     const s = this.state(), S = this.style, part = ev.part;
-    if (S.form && part === S.form.sung.part && s.voice !== "synth" && s.voice !== "fof") { this.sing(ev, t, dur); return; } // (the FOF voice is the engine's)
+    if (S.form && part === S.form.sung.part && !engineSings(s.voice)) { this.sing(ev, t, dur); return; } // (the FOF, sampled and tract voices are the engine's)
     if (s.witchHouse && S.parts[part]?.role === "drum") return; // (the half-time beat instead)
     const kit = heard(s, "kit", s.layers.kit), k = KIT[part];
     if (kit > 0 && k) {

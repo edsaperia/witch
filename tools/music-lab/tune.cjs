@@ -3,6 +3,7 @@
 // a breakdown in headless Chromium, dry; each sung note it scheduled is pitch-tracked over its middle and compared with the
 // note asked for. Fails if any note's centre is more than TOL cents off its note, or wobbles more than TOL cents within it, or
 // if the line leaves the alto (MIDI 55 to 67 in the home key); then renders again through the voice effects and reports the
+// same. --voice=altoSampled renders the sample set, --voice=altoTract the vocal-tract worklet (the A/B's two voices).
 // same, for the record (a hall smears a tracker, so that run never fails). Nothing here touches the game.
 const { build } = require("esbuild");
 const { readFileSync, readdirSync } = require("node:fs");
@@ -10,7 +11,8 @@ const { createServer } = require("node:http");
 const { join, resolve } = require("node:path");
 
 const root = resolve(__dirname, "../..");
-const [section = "breakdown", seed = "7", bars = "16", wave = "2"] = process.argv.slice(2);
+const args = process.argv.slice(2), voiceArg = args.find(a => a.startsWith("--voice="))?.slice(8), rest = args.filter(a => !a.startsWith("--"));
+const [section = "breakdown", seed = "7", bars = "16", wave = "2"] = rest, voice = voiceArg || "recordedVoice";
 const TOL = 20, LOW = 55, HIGH = 67;
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -47,12 +49,13 @@ const median = a => { const s = [...a].sort((x, y) => x - y); return s.length ? 
   page.on("pageerror", e => errors.push(String(e)));
   await page.goto(`http://localhost:${server.address().port}/`);
   await page.addScriptTag({ content: code });
-  const samples = Object.fromEntries(readdirSync(join(root, "samples/voices")).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples/voices", f)).toString("base64")]));
-  const base = { wave: +wave, seed: +seed, bars: +bars, section, samples, wash: false };
+  const samples = Object.fromEntries(["voices", "alto"].flatMap(d => readdirSync(join(root, "samples", d)).filter(f => f.endsWith(".ogg")).map(f => [f.replace(/\.ogg$/, ""), readFileSync(join(root, "samples", d, f)).toString("base64")])));
+  const base = { wave: +wave, seed: +seed, bars: +bars, section, samples, wash: false, voice };
+  console.log(`the singer: ${voice}`);
   for (const fx of [false, true]) {
     const r = await page.evaluate(o => window.tuneRender(o), { ...base, fx });
     const label = fx ? "through the voice effects" : "dry";
-    ok(r.recorded, `${label}: the recording loaded (the engine sings the recorded voice)`);
+    ok(r.kind === "tract" ? true : r.recorded, `${label}: ${r.kind === "tract" ? "the vocal-tract worklet sings" : "the recording loaded (the engine sings the recorded voice)"}`);
     ok(r.nan === 0 && r.peak > 0.005, `${label}: sounds, no NaN (peak ${r.peak.toFixed(3)})`);
     const pcm = new Int16Array(Buffer.from(r.pcm, "base64").buffer), tr = track(pcm, r.rate);
     const leads = r.notes.filter(n => !n.double);

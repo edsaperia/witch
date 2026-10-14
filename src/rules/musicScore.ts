@@ -13,7 +13,7 @@ export interface Patch {
    *  tone; synth: oscillators through a filter; bell: two square tones (a cowbell, pitched);
    *  riser: noise swept up over a build; impact: a noise burst and a falling sub; voice: a sung
    *  note, synthesised (a buzz through vowel formants, vibrato, breath). */
-  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof" | "sample";
+  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof" | "sample" | "tract";
   gain: number;
   /** synth: oscillator shapes (one oscillator each, spread by detune cents). */
   waves?: OscillatorType[];
@@ -61,6 +61,9 @@ export interface Patch {
    *  at 3 kHz). The formant voice sings its notes until it's loaded. */
   sample?: string;
   root?: number;
+  /** A sample set (Ed's singer review, 2026-10-14: the alto's, every two semitones with the formants kept): each recording
+   *  and the MIDI note it sings; a note plays the nearest, bent at most a semitone. With none, `sample` at `root` plays every note. */
+  notes?: { midi: number; sample: string }[];
   presence?: number;
   /** A consonant opening each note ("l": Ed, 2026-10-11, "Can it go laa?"), shaped by a filter opening over its first moment. */
   onset?: string;
@@ -70,6 +73,15 @@ export interface Patch {
   /** A recording's first seconds skipped (its onset: the woman's note starts 20 cents under its pitch for a quarter second, so
    *  a short note read from its start sang flat). */
   skip?: number;
+  /** The vocal-tract voice (kind "tract": Pink Trombone's physics in a worklet, platform/audio/tract; Ed, 2026-10-14): the tract's
+   *  length (44 a man's, 36 a soprano's, 40 an alto's), tenseness from a note's start to its body (0 breathy to 1 clear), how
+   *  long after a note's start the vibrato creeps in (s), the tongue's `glide` (the synth's knob, in seconds); `vibrato` here a
+   *  share of the pitch, `vibratoRate` Hz, `breath` 0 to 1 lowering the tenseness (more aspiration). */
+  tractLength?: number;
+  tense?: [number, number];
+  vibratoAfter?: number;
+  /** The tract voice's share of the model's own slow pitch drift (1 as Pink Trombone has it; 0 none). */
+  wander?: number;
   vibratoRate?: number;
   vibratoDelay?: number;
   octave?: number;
@@ -247,6 +259,10 @@ export interface FormDef {
     /** The breakdown's wash (Ed, 2026-10-14: three voices, Julianna Barwick's layers): each sung note doubled at these
      *  scale steps up (4 a fifth, 7 an octave: always in the key), at this share of its level, this many steps late. */
     wash?: { intervals: number[]; level: number; late: number };
+    /** The Music Lab's voice test (Ed, 2026-10-14: "the voice and its effects singing constant arpeggios"): the voice sings
+     *  the chord's tones up and down within the range, a note every `rate` sixteenths (2, eighths), in every section, in
+     *  place of the form's melodies and the hold; no wash. Never set in the game's style. */
+    arpeggio?: boolean | { rate?: number };
   };
   /** The melody's range in scale steps above the root (in its part's octave). */
   range: [number, number];
@@ -655,7 +671,20 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // the form's melody: A on its instrument; the voice in the breakdowns and the build (Ed, 2026-10-14; sungHere), the
   // instrument everywhere else; in a breakdown the voice sometimes holds the chord instead of a tune ("sometimes just the
   // chord"), and every sung note there is washed (doubled a fifth and an octave up, late and quieter: three voices)
-  if (melody > 0 && form) {
+  if (form?.sung.arpeggio && (a.vocal ?? form.sung.patch) !== "none") {
+    // the lab's voice test: the chord's tones folded into the range, sorted, sung up and then down, a note every `rate`
+    // sixteenths through every section, so a voice and its effects are heard without waiting for a breakdown
+    const A = form.sung.arpeggio, rate = Math.max(1, Math.round((typeof A === "object" ? A.rate : undefined) ?? 2));
+    const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+    const patch = a.vocal && style.patches[a.vocal] ? a.vocal : form.sung.patch, [lo, hi] = form.range, n = scale.length;
+    const degs = [...new Set([...chord.tones, chord.root + 6].map(t => { let d = lo + mod(t - lo, n); while (d > hi) d -= n; return d; }))].filter(d => d >= lo && d <= hi).sort((x, y) => x - y);
+    const cycle = degs.length > 2 ? [...degs, ...degs.slice(1, -1).reverse()] : degs;
+    const k = Math.floor((formBar * 16 + s) / rate);
+    if (cycle.length && mod(formBar * 16 + s, rate) === 0) {
+      const deg = cycle[mod(k, cycle.length)], level = melody > 0 ? melody : 0.8;
+      out.push({ part: form.sung.part, patch, step, offset: 0, dur: rate, midi: degreeToMidi(style, scale, deg, form.sung.octave, transpose), vel: (s % 4 === 0 ? 0.88 : 0.74) * level, fx });
+    }
+  } else if (melody > 0 && form) {
     const place = sungHere(style, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
     const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place === "breakdown" && hash2(ctx.seed, 457, pass) < 0.5;
     const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
