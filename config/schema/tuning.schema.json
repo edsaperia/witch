@@ -8259,6 +8259,12 @@
         },
         "cutWhole": {
           "type": "boolean"
+        },
+        "seeSplit": {
+          "type": "boolean"
+        },
+        "seeMark": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8271,7 +8277,9 @@
         "haze",
         "areaAverage",
         "seeDepth",
-        "cutWhole"
+        "cutWhole",
+        "seeSplit",
+        "seeMark"
       ],
       "additionalProperties": false
     },

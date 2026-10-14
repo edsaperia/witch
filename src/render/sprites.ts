@@ -69,6 +69,7 @@ export const SPRITE_UNIFORMS = {
   /** The circle-bug suspects' switches (tuning suspects: render/view/frameUniforms.ts): scenery averaged where it shrinks; the see-through pass's depth. */
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
+  uSeeDbg: { value: new THREE.Vector2(1, 0) }, // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
   /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
@@ -266,6 +267,7 @@ uniform float uLegendFloor; // and the share of its own (mossed) look it never d
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth;
+uniform vec2 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
@@ -345,7 +347,7 @@ void shade() {
   // (screenDist, not length(a - b): at mediump, the 16-bit floats some GPUs run this shader at, the square of a distance over about 256
   // screen pixels overflows, and everything further from her than that came out wrong: the circle bug, Ed, 2026-10-14, isolated to this fade)
   float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
-  float occl = uFlat > 0.5 ? 0.0 : uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
+  float occl = uFlat > 0.5 ? 0.0 : uOcc.w * uSeeDbg.x * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
   // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
   // (Ed: no dithering). A crown partly shown in the hole
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
@@ -392,6 +394,7 @@ void shade() {
   if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
+  if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
   // A wild creature's eye pixels are marked with alpha 253 (artBuild.ts markEyes); glowing ones 254.

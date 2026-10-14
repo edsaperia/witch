@@ -1,0 +1,68 @@
+{
+  "pr": 906,
+  "group": "See-through",
+  "decisions": [
+    {
+      "id": "seeReach",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through reach",
+      "note": "How far past her the soft see-through circle reaches, a share of her size (occlusion.edge, 0.8 as ever). If the circle bug's ring grows and shrinks with this, the ring is the see-through's own edge (Ed, 2026-10-14).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 0.8,
+      "apply": {
+        "knob": "occlusion.edge"
+      }
+    },
+    {
+      "id": "seeOpacity",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through opacity",
+      "note": "How solid things in front of her stay at the circle's middle (occlusion.fadeOpacity, 0.38 as ever; 1: not see-through at all, though still drawn in the see-through pass).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+      },
+      "default": 0.38,
+      "apply": {
+        "knob": "occlusion.fadeOpacity"
+      }
+    },
+    {
+      "id": "seeSplit",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through fade",
+      "note": "Off: things in front of her stay solid and in the solid pass (the fade alone off; everything else of the see-through as ever). On as ever.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeSplit"
+      }
+    },
+    {
+      "id": "seeMark",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Mark see-through pixels",
+      "note": "On: every pixel the see-through pass draws tinted magenta, to see whether the circle bug's ring is exactly that pass's edge. Off as ever.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeMark"
+      }
+    }
+  ]
+}

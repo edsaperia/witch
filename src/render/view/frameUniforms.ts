@@ -48,7 +48,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
-  SPRITE_UNIFORMS.uOcc.value.w = t.occlusion.on && S.seeThrough ? 1 : 0;
+  SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0);
   SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
   SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
   if (!t.bare) LIGHT_UNIFORMS.uGlowPower.value = S.glow ? t.glowPower : 0;
