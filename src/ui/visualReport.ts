@@ -69,8 +69,14 @@ export async function measure(h: ReportHost, pairs: NeutralPair[] = NEUTRAL_PAIR
 }
 
 /** The smoke test's check: each pair's numbers alone. */
-export async function neutralCheck(h: ReportHost): Promise<{ name: string; changed: number; maxDiff: number }[]> {
-  return (await measure(h)).pairs.map(({ name, changed, maxDiff }) => ({ name, changed, maxDiff }));
+export async function neutralCheck(h: ReportHost): Promise<{ pairs: { name: string; changed: number; maxDiff: number }[]; seeThroughInUse: number; still: number; pixels: number }> {
+  const { frame, pairs } = await measure(h);
+  // (and how much the paused frame changes by itself, drawn again as it is: anything still moving while paused)
+  const still = compare("still", frame, await drawn(h, {}), [0, 0]).changed;
+  // (and that the frame has something in front of her for the see-through to fade: the frame as it is against none, else the
+  // see-through pair proves nothing)
+  const used = compare("in use", frame, await drawn(h, NEUTRAL_PAIRS[0].b), [0, 0]).changed;
+  return { pairs: pairs.map(({ name, changed, maxDiff }) => ({ name, changed, maxDiff })), seeThroughInUse: used, still, pixels: frame.width * frame.height };
 }
 
 function save(name: string, blob: Blob): void {
