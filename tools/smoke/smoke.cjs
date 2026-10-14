@@ -665,6 +665,19 @@ async function main() {
     check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
   });
 
+  // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
+  // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full
+  // opacity against none, the mist at strength 0 against none. The circle bug was the first differing in a disc round her. Where
+  // it showed: an Old oaks wood, on the ground among tall trees in front of her.
+  await run("neutral", { width: 1000, height: 663 }, async page => {
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 300000, polling: 500 });
+    await sleep(4000);
+    const r = await page.evaluate(() => window.__neutralCheck());
+    for (const p of r) check(p.changed === 0, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff})`);
+    if (r.some(p => p.changed > 0)) await shot(page, "neutral-differs.png");
+  }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
+
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
   // cave mouth, in ground mode, zoomed in.
