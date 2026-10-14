@@ -301,6 +301,9 @@ vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
   }
   return vec4(sum / w, c.a);
 }
+// The distance in screen pixels between two points, safe at mediump: scaled down before it's squared (a 16-bit float tops out
+// near 65504, so length() of a difference over about 256 pixels overflowed) and clamped, so nothing far off can overflow either.
+float screenDist(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
@@ -339,7 +342,9 @@ void shade() {
   // opaque pass there and drawn in a second, see-through pass after her.
   // A soft circle round her body, a little bigger than her sprite: fully see-through at the
   // centre, easing smoothly to opaque at the edge (uOcc.y: how far the edge reaches, a share of it).
-  float e = length(gl_FragCoord.xy - uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+  // (screenDist, not length(a - b): at mediump, the 16-bit floats some GPUs run this shader at, the square of a distance over about 256
+  // screen pixels overflows, and everything further from her than that came out wrong: the circle bug, Ed, 2026-10-14, isolated to this fade)
+  float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
   float occl = uFlat > 0.5 ? 0.0 : uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
   // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
   // (Ed: no dithering). A crown partly shown in the hole
@@ -354,7 +359,8 @@ void shade() {
   // line wobbled by a slow noise on the ground (world space: it doesn't crawl as she moves) so the fade's lines aren't
   // circles, and fading over a wide band past the radius too (uCutShape: the wobble, and how far out the fade reaches).
   float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, mix(length(gl_FragCoord.xy - uCutout.xy) + wob, vCrownD, uCutWhole));
+  float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
