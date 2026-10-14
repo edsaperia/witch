@@ -611,7 +611,7 @@ export class MusicEngine {
   private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
     const rec = this.recordings.get(p.sample ?? "");
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(p.root ?? 69), len = Math.min(dur * 0.97, (rec.duration - 0.05) / rate);
+    const c = this.ctx, rate = freq / mtof(p.root ?? 69), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
@@ -654,7 +654,7 @@ export class MusicEngine {
       const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
       last.connect(pk); last = pk; nodes.push(pk);
     }
-    last.connect(ch.presence); src.start(t, 0, len * rate + 0.02);
+    last.connect(ch.presence); src.start(t, skip, len * rate + 0.02);
     // breath (Ed, 2026-10-14: "gentler, breathier"): shaped noise under the note, through the same swell, at the patch's level
     if ((p.breath ?? 0) > 0) {
       const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();

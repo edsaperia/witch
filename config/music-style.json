@@ -71,7 +71,7 @@
     "fofSoprano": {"kind": "fof", "gain": 0.8, "voiceType": "soprano", "vowels": ["ah", "oh", "ee", "eh", "oo"], "vowelStep": 1, "detune": 9, "vibrato": 24, "vibratoRate": 5.4, "vibratoDelay": 0.3, "breath": 0.06, "attack": 0.1, "release": 0.6, "reverb": 0.55, "delay": 0.2, "hp": 200, "pan": -0.1},
     "fofAlto": {"kind": "fof", "gain": 0.8, "voiceType": "alto", "vowels": ["oh", "ah", "oo", "eh"], "vowelStep": 1, "detune": 11, "vibrato": 18, "vibratoRate": 5, "vibratoDelay": 0.35, "breath": 0.07, "attack": 0.14, "release": 0.7, "reverb": 0.55, "delay": 0.2, "hp": 160, "pan": 0.1},
     "fofChoir": {"kind": "fof", "gain": 0.45, "voiceType": "alto", "vowels": ["oo", "ah", "oh"], "vowelStep": 4, "detune": 16, "vibrato": 12, "vibratoRate": 4.6, "vibratoDelay": 0.6, "breath": 0.05, "attack": 0.6, "release": 1.4, "octave": 0.35, "reverb": 0.7, "hp": 180},
-    "recordedVoice": {"kind": "sample", "gain": 0.8, "sample": "female-note", "root": 67.2, "presence": 4, "vowels": ["aa", "aa", "oo"], "onset": "l", "swell": 0.33, "breath": 0.12, "hp": 120}
+    "recordedVoice": {"kind": "sample", "gain": 0.8, "sample": "female-note", "root": 67.2, "presence": 4, "vowels": ["aa", "aa", "oo"], "onset": "l", "skip": 0.25, "swell": 0.33, "breath": 0.12, "hp": 120}
   },
   "parts": {
     "kick": {"patch": "kick", "role": "drum", "patterns": {"four": "x...x...x...x...", "drive": "X...x...X...x...", "break": "x.........x.....x.x.......x..x..", "twostep": "x......x..x.....", "electro": "x..x..x...x.....", "half": "x.........x....."}},

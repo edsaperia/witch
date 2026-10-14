@@ -67,6 +67,9 @@ export interface Patch {
   /** A sampled note's swell (Ed, 2026-10-14: "more dynamic range"): the share of each note rising from nothing and the share
    *  fading to it (0 the old 30 ms ramp); `breath` on a sampled voice is breath noise under every note at this level. */
   swell?: number;
+  /** A recording's first seconds skipped (its onset: the woman's note starts 20 cents under its pitch for a quarter second, so
+   *  a short note read from its start sang flat). */
+  skip?: number;
   vibratoRate?: number;
   vibratoDelay?: number;
   octave?: number;
