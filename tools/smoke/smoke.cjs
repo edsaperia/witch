@@ -673,7 +673,9 @@ async function main() {
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 300000, polling: 500 });
     await sleep(4000);
+    await page.keyboard.press("Escape"); await sleep(3000); // (paused, as the Report is: a running game's frames differ by themselves)
     const r = await page.evaluate(() => window.__neutralCheck());
+    await page.keyboard.press("Escape");
     for (const p of r) check(p.changed === 0, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff})`);
     if (r.some(p => p.changed > 0)) await shot(page, "neutral-differs.png");
   }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
