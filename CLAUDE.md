@@ -11,6 +11,7 @@ The playable game is a static site on GitHub Pages, served from the `gh-pages` b
 - a push or merge to `main` builds the game and publishes it at the site's root, https://edsaperia.github.io/witch/ — **merging to `main` deploys**;
 - each pull request from this repository is built and published under `/pr-<number>/` (https://edsaperia.github.io/witch/pr-<number>/), and the workflow comments that link on the PR; closing the PR removes it;
 - documents-only changes still rebuild and republish the same game (no `docs` lane yet).
+- every build writes `version.json` beside the game (its label, `vite.config.ts` `versionFile`; main's at the root, a PR's in its `pr-<number>/`); a page left open reads it on load, on pausing and every five minutes, never from a cache, and while a newer build is up says so in the bedroom and on the pause page: "A newer version (v3712) is out", with a reload button (Ed, 2026-10-14; `src/app/newBuild.ts`), and so does a menu whose code a deploy has replaced under it (Hotel's #906).
 - many deploys at once are fine: each writes only its own folder (main the root, a PR its `pr-<number>/`), and one whose push to `gh-pages` is beaten fetches the newer branch and tries again (up to ten times).
 
 Pages must be switched on once in the repository's settings (Source: *Deploy from a branch*, `gh-pages`, `/ (root)`); until then the links return 404. A deploy is verified by opening the link and checking the seed and the game load.

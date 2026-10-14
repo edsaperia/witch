@@ -33,6 +33,7 @@ import { onTreehouse } from "./rules/treehouse";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { warmChart } from "./app/chartWarm";
 import { Hud, powerLines } from "./app/hud";
+import { NewBuildNotice } from "./app/newBuild";
 import { SPRITE_UNIFORMS } from "./render/sprites";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
@@ -302,8 +303,13 @@ sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () =
 let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
 freeze.quiet = true;
 freeze.onStamp = text => pauseSliders?.setStamp(text);
+// "A newer version is out" (Ed, 2026-10-14; app/newBuild.ts): read version.json on load, on pausing and every few minutes; shown in the
+// bedroom and on the pause page, and when a menu's code has been replaced under it.
+const newBuild = new NewBuildNotice(typeof __BUILD__ === "string" ? __BUILD__ : "dev", document.getElementById("new-build"));
+let menuGone = false;
 freeze.onToggle = on => {
   sound.freeze(on);
+  if (on) void newBuild.check();
   if (pauseSliders) { pauseSliders.show(on); return; }
   if (!on || pauseLoading) return;
   pauseLoading = true;
@@ -312,7 +318,10 @@ freeze.onToggle = on => {
     const report = () => import("./ui/circleReport").then(({ circleReport }) => circleReport({ canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, witch: () => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; } }));
     pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
-  }, () => { pauseLoading = false; window.alert("A newer build of the game is up, so the pause page can't load: reload the page (Shift+Reload)."); }); // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
+  }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
+    pauseLoading = false;
+    void newBuild.check().then(() => { if (newBuild.latest) menuGone = true; else window.alert("A newer build of the game is up, so the pause page can't load: reload the page (Shift+Reload)."); });
+  });
 
 };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
@@ -469,6 +478,7 @@ function frame(now: number): void {
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   { const want = !bot && onTreehouse(game) && !creator.open && !game.witches[0].ko ? "block" : "none"; if (bedroomBtn && bedroomBtn.style.display !== want) bedroomBtn.style.display = want; } // (on the treehouse deck: back to her room)
+  newBuild.update(creator.open || freeze.frozen || menuGone); // (a newer build is out: in the bedroom and on the pause page)
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)
