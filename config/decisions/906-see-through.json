@@ -189,6 +189,20 @@
       "apply": {
         "knob": "suspects.seeShowAlpha"
       }
+    },
+    {
+      "id": "showBroken",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Show broken pixels",
+      "note": "On: any pixel of the scene whose colour isn't a number shows bright red, infinite magenta, negative yellow (before the blur, bloom and grade). A broken colour behind a see-through tree would spoil it even at full strength (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.showBroken"
+      }
     }
   ]
 }

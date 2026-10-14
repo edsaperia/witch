@@ -8292,6 +8292,9 @@
         },
         "seeShowAlpha": {
           "type": "boolean"
+        },
+        "showBroken": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8315,7 +8318,8 @@
         "seeStencil",
         "seeEarly",
         "seeSolid",
-        "seeShowAlpha"
+        "seeShowAlpha",
+        "showBroken"
       ],
       "additionalProperties": false
     },
