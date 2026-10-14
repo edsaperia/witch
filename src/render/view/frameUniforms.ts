@@ -52,7 +52,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   for (const m of FADE_MATERIALS) m.depthWrite = S.seeWrite;
   if (v.mist) v.mist.mesh.visible = S.mist;
   if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
-  SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0);
+  SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0, S.seeCull ? 1 : 0);
   SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
   SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
   if (!t.bare) LIGHT_UNIFORMS.uGlowPower.value = S.glow ? t.glowPower : 0;

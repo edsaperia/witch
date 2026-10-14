@@ -105,6 +105,20 @@
       "apply": {
         "knob": "suspects.seeWrite"
       }
+    },
+    {
+      "id": "seeCull",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through skipping",
+      "note": "On as ever: the see-through pass skips whole sprites it reckons can't reach her circle. Off: it draws them all and each pixel decides (slower). If the circle goes when this is off, the skip and the pixels disagree and pixels fall between the passes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeCull"
+      }
     }
   ]
 }

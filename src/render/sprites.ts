@@ -69,7 +69,7 @@ export const SPRITE_UNIFORMS = {
   /** The circle-bug suspects' switches (tuning suspects: render/view/frameUniforms.ts): scenery averaged where it shrinks; the see-through pass's depth. */
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
-  uSeeDbg: { value: new THREE.Vector2(1, 0) }, // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
+  uSeeDbg: { value: new THREE.Vector3(1, 0, 1) }, // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
   /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
@@ -80,6 +80,7 @@ export const SPRITE_UNIFORMS = {
 };
 
 const VERT = /* glsl */ `
+uniform vec3 uSeeDbg;
 uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
@@ -206,7 +207,7 @@ void main() {
   // The see-through pass: only what could have a see-through pixel (the fragment shader's \`see\`): a tall thing over her circle
   // and nearer than her; a crown or a cut trunk whose fade reaches into the hole's band; scenery at its budget's edge (or its
   // batch still appearing). Anything else is wholly the opaque pass's.
-  if (uFadePass > 0.5 && uSilhouette.a <= 0.0) {
+  if (uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeDbg.z > 0.5) { // (uSeeDbg.z: the circle hunt's switch for this cull)
     bool need = uIsScenery > 0.5 && uAppear < 0.996;
     if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
       float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
@@ -267,7 +268,7 @@ uniform float uLegendFloor; // and the share of its own (mossed) look it never d
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth;
-uniform vec2 uSeeDbg;
+uniform vec3 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;

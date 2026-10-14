@@ -8274,6 +8274,9 @@
         },
         "seeWrite": {
           "type": "boolean"
+        },
+        "seeCull": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8291,7 +8294,8 @@
         "seeMark",
         "mist",
         "lightRings",
-        "seeWrite"
+        "seeWrite",
+        "seeCull"
       ],
       "additionalProperties": false
     },
