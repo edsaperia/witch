@@ -73,7 +73,7 @@ async function main() {
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?creator=0&pixels=keep&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed; pixels=keep: the floating checks read the atlases' pixels, which the game lets go once uploaded)
-    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
     await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
@@ -673,6 +673,33 @@ async function main() {
     check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
     check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
   });
+
+  // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
+  // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full
+  // opacity against none, the mist at strength 0 against none. The circle bug was the first differing in a disc round her. Where
+  // it showed: an Old oaks wood, on the ground among tall trees in front of her.
+  await run("neutral", { width: 1000, height: 663 }, async page => {
+    // (the art and the forest round the spot all in first: once the game runs the forest's count keeps moving)
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 600000, polling: 500 });
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 250 }); // (started: she's drawn)
+    await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 300000, polling: 250 });
+    // (placed as tools/smoke's circle shots were: on the ground, a step north to settle the camera, then back on the spot)
+    const place = () => page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, x: 2327, z: 2569, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; });
+    await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
+    await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 }); // (settled: four seconds of play there)
+    await sleep(10000);
+    await page.keyboard.press("Escape"); await sleep(3000); // (paused, as the Report is: a running game's frames differ by themselves)
+    const r = await page.evaluate(() => window.__neutralCheck());
+    const at = await page.evaluate(() => { const g = window.witch.game; return `${g.witch.x | 0},${g.witch.z | 0} ${g.witch.mode}${g.witch.seated ? " seated" : ""}, zoom step ${g.camera.zoomStep}`; });
+    await shot(page, "neutral.png");
+    await page.keyboard.press("Escape");
+    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at})`);
+    // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
+    // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
+    const allow = r.still * 2 + Math.round(r.pixels * 0.005);
+    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
+  }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a

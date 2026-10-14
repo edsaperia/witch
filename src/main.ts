@@ -315,7 +315,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-    const report = () => import("./ui/circleReport").then(({ circleReport }) => circleReport({ canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, witch: () => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; } }));
+    const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
     pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
@@ -390,6 +390,17 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
 });
 playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
 playtest.debugText = () => repro.full();
+// The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
+// camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
+const reportHost = () => {
+  const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev", w = game.witch, c = game.camera;
+  return {
+    canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, link: repro.link, changed: repro.changed,
+    witch: (): [number, number] | null => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; },
+    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz } }),
+  };
+};
+(window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));
 playtest.viewState = () => { const w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
