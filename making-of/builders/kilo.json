@@ -3,7 +3,8 @@
   "phase": "Phase 5: the backlog's reckoning",
   "slice": "The smaller gameplay backlog checked against the code and a pause-page slider for the flying cooldown (#916); invitations bouncing off the enraged finished",
   "prs": [
-    916
+    916,
+    923
   ],
   "built": [
     "Every item of `docs/backlog/gameplay.md` checked in the rules and marked built (with its PR), partly built or not built; the built ones gathered into one short list at the foot of the page",
