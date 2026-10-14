@@ -8,6 +8,7 @@
 // same line on the clipboard instead.
 import { button, h } from "./dom";
 import { byPr, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, setKnob, currentValue, valuesText, type Decision } from "./decisions";
+import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
 /** What the panel needs from the game. */
@@ -232,7 +233,7 @@ export class PauseSliders {
       if (r && document.activeElement !== r) r.value = String(v);
       if (out) out.textContent = String(v);
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); paint(); this.status.textContent = ""; };
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); paint(); this.status.textContent = ""; }; // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";

@@ -2154,5 +2154,12 @@
     "chapter": "builders",
     "from": "previews/bedroom-pause.png",
     "pr": 925
+  },
+  {
+    "src": "media/builders/kilo-volume.webp",
+    "caption": "The pause page's Volume group at its top: Music and Sound effects, remembered on the browser.",
+    "chapter": "builders",
+    "from": "previews/volume-sliders.png",
+    "pr": 927
   }
 ]

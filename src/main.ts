@@ -14,6 +14,7 @@ import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { applySavedSettings } from "./app/settings";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
@@ -181,6 +182,7 @@ requestAnimationFrame(() => setTimeout(async () => {
 }, 0));
 
 // The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
+applySavedSettings(tuning); // (the volumes this browser remembers, on to their knobs before the sound is built: app/settings.ts)
 const sound = new Sound(tuning, musicStyle, seed!);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
