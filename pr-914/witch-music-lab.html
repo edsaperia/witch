@@ -175,6 +175,19 @@ label.check input { accent-color: var(--accent); }
     }
   });
 
+  // src/platform/audio/tract/tractModule.ts
+  var tractModule_exports = {};
+  __export(tractModule_exports, {
+    TRACT_SOURCE: () => TRACT_SOURCE
+  });
+  var TRACT_SOURCE;
+  var init_tractModule = __esm({
+    "src/platform/audio/tract/tractModule.ts"() {
+      "use strict";
+      TRACT_SOURCE = '"use strict";(()=>{function f(a,t,e){this.x=a,this.y=t,this.z=e}f.prototype.dot2=function(a,t){return this.x*a+this.y*t};f.prototype.dot3=function(a,t,e){return this.x*a+this.y*t+this.z*e};var G=[new f(1,1,0),new f(-1,1,0),new f(1,-1,0),new f(-1,-1,0),new f(1,0,1),new f(-1,0,1),new f(1,0,-1),new f(-1,0,-1),new f(0,1,1),new f(0,-1,1),new f(0,1,-1),new f(0,-1,-1)],E=[151,160,137,91,90,15,131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,190,6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,88,237,149,56,87,174,20,125,136,171,168,68,175,74,165,71,134,139,48,27,166,77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,102,143,54,65,25,63,161,1,216,80,73,209,76,132,187,208,89,18,169,200,196,135,130,116,188,159,86,164,100,109,198,173,186,3,64,52,217,226,250,124,123,5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,223,183,170,213,119,248,152,2,44,154,163,70,221,153,101,155,167,43,172,9,129,22,39,253,19,98,108,110,79,113,224,232,178,185,112,104,218,246,97,228,251,34,242,193,238,210,144,12,191,179,162,241,81,51,145,235,249,14,239,107,49,192,214,31,181,199,106,157,184,84,204,176,115,121,50,45,127,4,150,254,138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180],b=class{perm=new Array(512);gradP=new Array(512);constructor(t){this.init(t??Date.now())}init(t){t>0&&t<1&&(t*=65536),t=Math.floor(t),t<256&&(t|=t<<8);for(var e=0;e<256;e++){var s;e&1?s=E[e]^t&255:s=E[e]^t>>8&255,this.perm[e]=this.perm[e+256]=s,this.gradP[e]=this.gradP[e+256]=G[s%12]}}simplex2(t,e){var s,r,n,i=(t+e)*H,o=Math.floor(t+i),h=Math.floor(e+i),u=(o+h)*R,c=t-o+u,l=e-h+u,m,d;c>l?(m=1,d=0):(m=0,d=1);var p=c-m+R,x=l-d+R,A=c-1+2*R,M=l-1+2*R;o&=255,h&=255;var L=this.gradP[o+this.perm[h]],q=this.gradP[o+m+this.perm[h+d]],O=this.gradP[o+1+this.perm[h+1]],g=.5-c*c-l*l;g<0?s=0:(g*=g,s=g*g*L.dot2(c,l));var y=.5-p*p-x*x;y<0?r=0:(y*=y,r=y*y*q.dot2(p,x));var T=.5-A*A-M*M;return T<0?n=0:(T*=T,n=T*T*O.dot2(A,M)),70*(s+r+n)}simplex1=t=>this.simplex2(t*1.2,-t*.7)},H=.5*(Math.sqrt(3)-1),R=(3-Math.sqrt(3))/6,Y=1/3,Z=1/6;var D=(a,t,e)=>a+(t-a)*e,P=(a,t,e)=>(a-t)/(e-t),v=(a,t,e)=>Math.max(t,Math.min(e,a)),Q=a=>12*Math.log2(a/440)+69,K=a=>440*Math.pow(2,(a-69)/12),V=(a,t,e,s)=>a<t?Math.min(a+e,t):Math.max(a-s,t),w,I=()=>Date.now(),j=Math.random,z=44,J=a=>{I=a};var X;var F=class{isDisposed=!1;constructor(t,e={}){z=e.tractLength??44,this.glottis=new _,this.tract=new B(this.glottis),e.offline?this.offline=new N(e.offline.sampleRate,this.glottis,this.tract):this.audioSystem=new k(t,this.glottis,this.tract)}render(t){return this.offline.render(t)}dispose(){this.isDisposed=!0,this.audioSystem?.dispose(),this.audioSystem=null,this.glottis=null,this.tract=null}get isVoiced(){return this.glottis.isTouched}set isVoiced(t){this.glottis.isTouched=t}get voicedness(){return Math.acos(1-this.#s)*2/Math.PI}set voicedness(t){this.#s=1-Math.cos(t*Math.PI*.5),this.#i=Math.pow(this.#s,.25)}get#i(){return this.glottis.loudness}set#i(t){this.glottis.loudness=t}get#s(){return this.glottis.UITenseness}set#s(t){this.glottis.UITenseness=t}get frequency(){return this.glottis.UIFrequency}set frequency(t){this.glottis.UIFrequency=t}get pitch(){return Q(this.frequency)}set pitch(t){this.frequency=K(t)}get vibrato(){let t=this.glottis;return{get amount(){return t.vibratoAmount},set amount(e){t.vibratoAmount=e},get frequency(){return t.vibratoFrequency},set frequency(e){t.vibratoFrequency=e}}}get nasality(){return P(this.tract.velumTarget,.01,.4)}set nasality(t){this.tract.velumTarget=D(.01,.4,t)}#t=.5;#e=1;get vowel(){let t=this;return{get frontness(){return t.#t},set frontness(e){t.#t=v(e,0,1);let s=1-Math.sqrt(1-Math.pow(1-t.#t,2));t.#e=v(t.#e,s,1),t.updateTongue()},get openness(){return t.#e},set openness(e){t.#e=v(e,0,1);let s=1-Math.sqrt(1-Math.pow(1-t.#e,2));t.#t=v(t.#t,s,1),t.updateTongue()}}}updateTongue(){let t=Math.atan2(1-this.#e,1-this.#t),e=Math.sqrt(Math.pow(1-this.#e,2)+Math.pow(1-this.#t,2));this.tract.tongue.setPolarCoords(e,t)}get constrictions(){return this.tract.constrictions}},N=class{blockLength=512;constructor(t,e,s){w=t,this.blockTime=this.blockLength/t,this.glottis=e,this.tract=s,this.bp=[this.bandpass(500,.5),this.bandpass(1e3,.5)],this.pending=new Float32Array(0)}bandpass(t,e){let s=2*Math.PI*t/w,r=Math.sin(s)/(2*e),n=1+r;return{b0:r/n,b2:-r/n,a1:-2*Math.cos(s)/n,a2:(1-r)/n,x1:0,x2:0,y1:0,y2:0}}filter(t,e){let s=t.b0*e+t.b2*t.x2-t.a1*t.y1-t.a2*t.y2;return t.x2=t.x1,t.x1=e,t.y2=t.y1,t.y1=s,s}render(t){let e=new Float32Array(t),s=this.blockLength,r=0;for(;r<t;){if(!this.pending.length){let i=new Float32Array(s);for(let o=0;o<s;o++){let h=j(),u=this.filter(this.bp[0],h),c=this.filter(this.bp[1],h),l=this.glottis.runStep(o/s,u),m=0;this.tract.runStep(l,c,o/s),m+=this.tract.lipOutput+this.tract.noseOutput,this.tract.runStep(l,c,(o+.5)/s),m+=this.tract.lipOutput+this.tract.noseOutput,i[o]=m*.125}this.glottis.finishBlock(),this.tract.finishBlock(this.blockTime),this.pending=i}let n=Math.min(this.pending.length,t-r);e.set(this.pending.subarray(0,n),r),r+=n,this.pending=this.pending.subarray(n)}return e}},k=class{blockLength=512;blockTime=1;isDisposed=!1;constructor(t,e,s){this.audioContext=t,w=this.audioContext.sampleRate,this.blockTime=this.blockLength/w,this.glottis=e,this.tract=s,this.scriptProcessor=this.audioContext.createScriptProcessor(this.blockLength,2,1),this.scriptProcessor.connect(this.audioContext.destination),this.scriptProcessor.onaudioprocess=i=>this.doScriptProcessor(i),this.whiteNoise=this.createWhiteNoiseNode(2*w);var r=this.audioContext.createBiquadFilter();r.type="bandpass",r.frequency.value=500,r.Q.value=.5,this.whiteNoise.connect(r),r.connect(this.scriptProcessor);var n=this.audioContext.createBiquadFilter();n.type="bandpass",n.frequency.value=1e3,n.Q.value=.5,this.whiteNoise.connect(n),n.connect(this.scriptProcessor),this.filters=[r,n],this.whiteNoise.start(0)}createWhiteNoiseNode(t){for(var e=this.audioContext.createBuffer(1,t,w),s=e.getChannelData(0),r=0;r<t;r++)s[r]=Math.random();var n=this.audioContext.createBufferSource();return n.buffer=e,n.loop=!0,n}doScriptProcessor(t){for(var e=t.inputBuffer.getChannelData(0),s=t.inputBuffer.getChannelData(1),r=t.outputBuffer.getChannelData(0),n=0,i=r.length;n<i;n++){var o=n/i,h=(n+.5)/i,u=this.glottis.runStep(o,e[n]),c=0;this.tract.runStep(u,s[n],o),c+=this.tract.lipOutput+this.tract.noseOutput,this.tract.runStep(u,s[n],h),c+=this.tract.lipOutput+this.tract.noseOutput,r[n]=c*.125}this.glottis.finishBlock(),this.tract.finishBlock(this.blockTime)}mute(){this.scriptProcessor.disconnect()}unmute(){this.scriptProcessor.connect(this.audioContext.destination)}dispose(){this.isDisposed=!0,this.scriptProcessor.disconnect(),this.scriptProcessor.onaudioprocess=null,this.scriptProcessor=null,this.whiteNoise.stop(),this.whiteNoise.disconnect(),this.whiteNoise.buffer=null,this.whiteNoise=null,this.filters.forEach(t=>t.disconnect()),this.filters=null,this.glottis=null,this.tract=null}},_=class{timeInWaveform=0;oldFrequency=140;newFrequency=140;UIFrequency=140;smoothFrequency=140;oldTenseness=.6;newTenseness=.6;UITenseness=.6;totalTime=0;vibratoAmount=.005;vibratoFrequency=6;intensity=0;loudness=1;isTouched=!1;alwaysVoice=!1;autoWobble=!1;wander=1;constructor(){this.setupWaveform(0),this.noise=new b(X)}runStep(t,e){var s=1/w;this.timeInWaveform+=s,this.totalTime+=s,this.timeInWaveform>this.waveformLength&&(this.timeInWaveform-=this.waveformLength,this.setupWaveform(t));var r=this.normalizedLFWaveform(this.timeInWaveform/this.waveformLength),n=this.intensity*(1-Math.sqrt(this.UITenseness))*this.getNoiseModulator()*e;return n*=.2+.02*this.noise.simplex1(this.totalTime*1.99),r+=n,r}getNoiseModulator(){var t=.1+.2*Math.max(0,Math.sin(Math.PI*2*this.timeInWaveform/this.waveformLength));return this.UITenseness*this.intensity*t+(1-this.UITenseness*this.intensity)*.3}finishBlock(){let t=this.noise;var e=0;e+=this.vibratoAmount*Math.sin(2*Math.PI*this.totalTime*this.vibratoFrequency),e+=this.wander*.02*t.simplex1(this.totalTime*4.07),e+=this.wander*.04*t.simplex1(this.totalTime*2.15),this.autoWobble&&(e+=.2*t.simplex1(this.totalTime*.98),e+=.4*t.simplex1(this.totalTime*.5)),this.UIFrequency>this.smoothFrequency&&(this.smoothFrequency=Math.min(this.smoothFrequency*1.1,this.UIFrequency)),this.UIFrequency<this.smoothFrequency&&(this.smoothFrequency=Math.max(this.smoothFrequency/1.1,this.UIFrequency)),this.oldFrequency=this.newFrequency,this.newFrequency=this.smoothFrequency*(1+e),this.oldTenseness=this.newTenseness,this.newTenseness=this.UITenseness+.1*t.simplex1(this.totalTime*.46)+.05*t.simplex1(this.totalTime*.36),!this.isTouched&&this.alwaysVoice&&(this.newTenseness+=(3-this.UITenseness)*(1-this.intensity)),this.isTouched||this.alwaysVoice?this.intensity+=.13:this.intensity-=.05,this.intensity=v(this.intensity,0,1)}setupWaveform(t){this.frequency=this.oldFrequency*(1-t)+this.newFrequency*t;var e=this.oldTenseness*(1-t)+this.newTenseness*t;this.Rd=3*(1-e),this.waveformLength=1/this.frequency;var s=this.Rd;s<.5&&(s=.5),s>2.7&&(s=2.7);var r,n=-.01+.048*s,i=.224+.118*s,o=i/4*(.5+1.2*i)/(.11*s-n*(.5+1.2*i)),h=n,u=1/(2*o),c=u+u*i,l=1/h,m=Math.exp(-l*(1-c)),d=1-m,p=1/l*(m-1)+(1-c)*m;p=p/d;var x=-(c-u)/2+p,A=-x,M=Math.PI/u,L=Math.sin(M*c),q=-Math.PI*L*A/(u*2),O=Math.log(q),g=O/(u/2-c),y=-1/(L*Math.exp(g*c));this.alpha=g,this.E0=y,this.epsilon=l,this.shift=m,this.Delta=d,this.Te=c,this.omega=M}normalizedLFWaveform(t){let e;return t>this.Te?e=(-Math.exp(-this.epsilon*(t-this.Te))+this.shift)/this.Delta:e=this.E0*Math.exp(this.alpha*t)*Math.sin(this.omega*t),e*this.intensity*this.loudness}},C=class{setPolarCoords(t,e){let s=e/(Math.PI/2);this.r=t,this.index=this.getIndexFromLocalNorm(t,s)}constructor(t){this.tract=t,this.refTriangle=this.buildRefTriangle(),this._r=this.diameterToLocalR()}buildRefTriangle(){let t=Math.PI/2,e=(Math.PI*2-t)/2,s=this.tract.__diameter-this.maxDiameter,r=this.tract.__diameter-this.minDiameter,n=Math.asin(s*Math.sin(e)/r),i=Math.PI-e-n;return{A:s*Math.sin(i)/Math.sin(n),B:s,C:r,ALPHA:i,BETA:n,GAMMA:e}}_index=12.9;get index(){return this._index}get minIndex(){return this.tract.bladeStart+2}get maxIndex(){return this.tract.tipStart-3}get meanIndex(){return(this.minIndex+this.maxIndex)*.5}set index(t){this._index=t,this.tract.setRestDiameter()}_diameter=2.43;get diameter(){return this._diameter}set diameter(t){this._diameter=t,this._r=this.diameterToLocalR(),this.tract.setRestDiameter()}minDiameter=2.05;maxDiameter=3.5;_r=void 0;get r(){return this._r}set r(t){this._r=t,this.diameter=this.localRToDiameter(t)}localRToDiameter(){if(this.r===0)return this.maxDiameter;if(this.r===1)return this.minDiameter;let{A:t,B:e,GAMMA:s}=this.refTriangle,r=this.r*t,n=e,i=s,o=Math.sqrt(r**2+n**2-2*r*n*Math.cos(i));return this.tract.__diameter-o}diameterToLocalR(){if(this.diameter===this.maxDiameter)return 0;if(this.diameter===this.minDiameter)return 1;let{A:t,B:e,GAMMA:s}=this.refTriangle,r=this.tract.__diameter-this.diameter,n=e,i=s,o=Math.asin(Math.sin(i)*n/r),h=Math.PI-i-o;return r*Math.sin(h)/Math.sin(i)/t}getIndexFromLocalNorm(t,e){let{A:s,ALPHA:r,GAMMA:n}=this.refTriangle,i=t*s,o=this.tract.__diameter-this.diameter,c=Math.asin(i*Math.sin(n)/o)/r,m=(this.maxIndex-this.meanIndex)*c,d=this.meanIndex-m,p=this.meanIndex+m;return D(d,p,e)}},S=class{index;minIndex=2;diameter;minDiameter=0;maxDiameter=3;fricativeAttackTime=100;constructor(t=1,e=1,s,r){this.updateTract=r,this.minIndex=2,this.maxIndex=s,this.location=t,this.strength=e,this.creationTime=I()}get location(){return P(this.index,this.minIndex,this.maxIndex)}set location(t){this.index=D(this.minIndex,this.maxIndex,t),this.updateTract()}get strength(){return P(this.diameter,this.maxDiameter,this.minDiameter)}set strength(t){this.diameter=D(this.maxDiameter,this.minDiameter,t),this.updateTract()}get fricativeIntensity(){let t=I(),e=this.removeTime?1-(t-this.removeTime):t-this.creationTime;return v(e/this.fricativeAttackTime,0,1)}get isDestroyed(){return this.removeTime!==void 0}destroy(t){this.removeTime=I(),t()}},B=class{n=z;bladeStart=10;tipStart=32;lipStart=39;R=[];L=[];reflection=[];junctionOutputR=[];junctionOutputL=[];maxAmplitude=[];diameter=[];restDiameter=[];targetDiameter=[];newDiameter=[];A=[];glottalReflection=.75;lipReflection=-.85;lastObstruction=-1;fade=1;movementSpeed=15;transients=[];lipOutput=0;noseOutput=0;velumTarget=.01;gridOffset=1.7;__diameter=4.966;constrictions=new Set;tongue=new C(this);constructor(t){this.glottis=t,this.bladeStart=Math.floor(this.bladeStart*this.n/44),this.tipStart=Math.floor(this.tipStart*this.n/44),this.lipStart=Math.floor(this.lipStart*this.n/44),this.diameter=new Float64Array(this.n),this.restDiameter=new Float64Array(this.n),this.targetDiameter=new Float64Array(this.n),this.newDiameter=new Float64Array(this.n);for(var e=0;e<this.n;e++){var s=0;e<7*this.n/44-.5?s=.6:e<12*this.n/44?s=1.1:s=1.5,this.diameter[e]=this.restDiameter[e]=this.targetDiameter[e]=this.newDiameter[e]=s}this.R=new Float64Array(this.n),this.L=new Float64Array(this.n),this.reflection=new Float64Array(this.n+1),this.newReflection=new Float64Array(this.n+1),this.junctionOutputR=new Float64Array(this.n+1),this.junctionOutputL=new Float64Array(this.n+1),this.A=new Float64Array(this.n),this.maxAmplitude=new Float64Array(this.n),this.noseLength=Math.floor(28*this.n/44),this.noseStart=this.n-this.noseLength+1,this.noseR=new Float64Array(this.noseLength),this.noseL=new Float64Array(this.noseLength),this.noseJunctionOutputR=new Float64Array(this.noseLength+1),this.noseJunctionOutputL=new Float64Array(this.noseLength+1),this.noseReflection=new Float64Array(this.noseLength+1),this.noseDiameter=new Float64Array(this.noseLength),this.noseA=new Float64Array(this.noseLength),this.noseMaxAmplitude=new Float64Array(this.noseLength);for(var e=0;e<this.noseLength;e++){var s,r=2*(e/this.noseLength);r<1?s=.4+1.6*r:s=.5+1.5*(2-r),s=Math.min(s,1.9),this.noseDiameter[e]=s}this.newReflectionLeft=this.newReflectionRight=this.newReflectionNose=0,this.calculateReflections(),this.calculateNoseReflections(),this.noseDiameter[0]=this.velumTarget,this.setRestDiameter(),this.restDiameter.forEach((n,i)=>this.diameter[i]=n),this.constrictions._add=this.constrictions.add,this.constrictions.add=(n,i)=>{let o=new S(n,i,this.n,this.handleConstrictions.bind(this));return this.constrictions._add(o),this.handleConstrictions(),o},this.constrictions.remove=n=>{n instanceof S&&n.destroy(()=>{this.constrictions.delete(n),this.handleConstrictions()})}}handleConstrictions(){this.setRestDiameter(),this.constrictions.forEach(t=>{let{index:e,diameter:s}=t,r=Math.round(e),n=v(10-5*(e-25)/(this.tipStart-25),5,10);for(var i=-Math.ceil(n)-1;i<n+1;i++)if(!(r+i<0||r+i>=this.n)){var o=r+i-e;o=Math.abs(o)-.5;var h;o<=0?h=0:o>n?h=1:h=.5*(1-Math.cos(Math.PI*o/n)),s<this.targetDiameter[r+i]&&(this.targetDiameter[r+i]=s+(this.targetDiameter[r+i]-s)*h)}})}setRestDiameter(){for(var t=this.bladeStart;t<this.lipStart;t++){var e=1.1*Math.PI*(this.tongue.index-t)/(this.tipStart-this.bladeStart),s=2+(this.tongue.diameter-2)/1.5,r=(1.5-s+this.gridOffset)*Math.cos(e);(t==this.bladeStart-2||t==this.lipStart-1)&&(r*=.8),(t==this.bladeStart||t==this.lipStart-2)&&(r*=.94),this.restDiameter[t]=1.5-r}this.restDiameter.forEach((n,i)=>this.targetDiameter[i]=n)}reshapeTract(t){for(var e=t*this.movementSpeed,s=-1,r=0;r<this.n;r++){var n=this.diameter[r],i=this.targetDiameter[r];n<=0&&(s=r);var o;r<this.noseStart?o=.6:r>=this.tipStart?o=1:o=.6+.4*(r-this.noseStart)/(this.tipStart-this.noseStart),this.diameter[r]=V(n,i,o*e,2*e)}this.lastObstruction>-1&&s==-1&&this.noseA[0]<.05&&this.addTransient(this.lastObstruction),this.lastObstruction=s,e=t*this.movementSpeed,this.noseDiameter[0]=V(this.noseDiameter[0],this.velumTarget,e*.25,e*.1),this.noseA[0]=this.noseDiameter[0]*this.noseDiameter[0]}calculateReflections(){for(var t=0;t<this.n;t++)this.A[t]=this.diameter[t]*this.diameter[t];for(var t=1;t<this.n;t++)this.reflection[t]=this.newReflection[t],this.A[t]==0?this.newReflection[t]=.999:this.newReflection[t]=(this.A[t-1]-this.A[t])/(this.A[t-1]+this.A[t]);this.reflectionLeft=this.newReflectionLeft,this.reflectionRight=this.newReflectionRight,this.reflectionNose=this.newReflectionNose;var e=this.A[this.noseStart]+this.A[this.noseStart+1]+this.noseA[0];this.newReflectionLeft=(2*this.A[this.noseStart]-e)/e,this.newReflectionRight=(2*this.A[this.noseStart+1]-e)/e,this.newReflectionNose=(2*this.noseA[0]-e)/e}calculateNoseReflections(){for(var t=0;t<this.noseLength;t++)this.noseA[t]=this.noseDiameter[t]*this.noseDiameter[t];for(var t=1;t<this.noseLength;t++)this.noseReflection[t]=(this.noseA[t-1]-this.noseA[t])/(this.noseA[t-1]+this.noseA[t])}runStep(t,e,s){var r=j()<.1;this.processTransients(),this.addTurbulenceNoise(e),this.junctionOutputR[0]=this.L[0]*this.glottalReflection+t,this.junctionOutputL[this.n]=this.R[this.n-1]*this.lipReflection;for(var i=1;i<this.n;i++){var o=this.reflection[i]*(1-s)+this.newReflection[i]*s,n=o*(this.R[i-1]+this.L[i]);this.junctionOutputR[i]=this.R[i-1]-n,this.junctionOutputL[i]=this.L[i]+n}var i=this.noseStart,o=this.newReflectionLeft*(1-s)+this.reflectionLeft*s;this.junctionOutputL[i]=o*this.R[i-1]+(1+o)*(this.noseL[0]+this.L[i]),o=this.newReflectionRight*(1-s)+this.reflectionRight*s,this.junctionOutputR[i]=o*this.L[i]+(1+o)*(this.R[i-1]+this.noseL[0]),o=this.newReflectionNose*(1-s)+this.reflectionNose*s,this.noseJunctionOutputR[0]=o*this.noseL[0]+(1+o)*(this.L[i]+this.R[i-1]);for(var i=0;i<this.n;i++)if(this.R[i]=this.junctionOutputR[i]*.999,this.L[i]=this.junctionOutputL[i+1]*.999,r){var h=Math.abs(this.R[i]+this.L[i]);h>this.maxAmplitude[i]?this.maxAmplitude[i]=h:this.maxAmplitude[i]*=.999}this.lipOutput=this.R[this.n-1],this.noseJunctionOutputL[this.noseLength]=this.noseR[this.noseLength-1]*this.lipReflection;for(var i=1;i<this.noseLength;i++){var n=this.noseReflection[i]*(this.noseR[i-1]+this.noseL[i]);this.noseJunctionOutputR[i]=this.noseR[i-1]-n,this.noseJunctionOutputL[i]=this.noseL[i]+n}for(var i=0;i<this.noseLength;i++)if(this.noseR[i]=this.noseJunctionOutputR[i]*this.fade,this.noseL[i]=this.noseJunctionOutputL[i+1]*this.fade,r){var h=Math.abs(this.noseR[i]+this.noseL[i]);h>this.noseMaxAmplitude[i]?this.noseMaxAmplitude[i]=h:this.noseMaxAmplitude[i]*=.999}this.noseOutput=this.noseR[this.noseLength-1]}finishBlock(t){this.reshapeTract(t),this.calculateReflections()}addTransient(t){var e={};e.position=t,e.timeAlive=0,e.lifeTime=.2,e.strength=.3,e.exponent=200,this.transients.push(e)}processTransients(){for(var t=0;t<this.transients.length;t++){var e=this.transients[t],s=e.strength*Math.pow(2,-e.exponent*e.timeAlive);this.R[e.position]+=s/2,this.L[e.position]+=s/2,e.timeAlive+=1/(w*2)}for(var t=this.transients.length-1;t>=0;t--){var e=this.transients[t];e.timeAlive>e.lifeTime&&this.transients.splice(t,1)}}addTurbulenceNoise(t){this.constrictions.forEach(e=>{let{index:s,diameter:r}=e,n=e.fricativeIntensity;n!==0&&this.addTurbulenceNoiseAtIndex(.66*t*n,s,r)})}addTurbulenceNoiseAtIndex(t,e,s){var r=Math.floor(e),n=e-r;t*=this.glottis.getNoiseModulator();var i=v(8*(.7-s),0,1),o=v(30*(s-.3),0,1),h=t*(1-n)*i*o,u=t*n*i*o;this.R[r+1]+=h/2,this.L[r+1]+=h/2,this.R[r+2]+=u/2,this.L[r+2]+=u/2}};var U=128,W=class extends AudioWorkletProcessor{constructor(t){super();let e=t.processorOptions||{};J(()=>globalThis.currentTime*1e3),this.N=e.voices||3,this.v=[];for(let s=0;s<this.N;s++){let r=new F(null,{offline:{sampleRate:globalThis.sampleRate},tractLength:e.tractLength||40});r.isVoiced=!1,r.vibrato.frequency=e.vibratoRate||5.2,r.vibrato.amount=0,r.glottis.wander=e.wander??.15,this.v.push({pt:r,note:null,env:0,fr:.35,op:.95,from:[.35,.95],offAt:-1e12,onAt:-1e12})}this.events=[],this.port.onmessage=s=>{for(let r of s.data)this.events.push(r);this.events.sort((r,n)=>r.t-n.t)}}pick(){let t=0,e=1/0;for(let s=0;s<this.N;s++){let r=this.v[s],n=r.note?1e15+r.onAt:r.offAt;n<e&&(e=n,t=s)}return this.v[t]}handle(t,e){if(t.type==="on"){let s=this.pick();s.note={...t,start:e},s.onAt=e,s.from=[s.fr,s.op],s.pt.isVoiced=!0,s.pt.pitch=t.midi,s.pt.glottis.UITenseness=t.tense[0],s.pt.glottis.loudness=Math.pow(t.tense[0],.25),s.pt.vibrato.amount=0}else if(t.type==="off")for(let s of this.v)s.note&&s.note.id===t.id&&(s.note=null,s.offAt=e,s.pt.isVoiced=!1,s.pt.vibrato.amount=0);else if(t.type==="set")for(let s of this.v)t.name==="vibratoRate"&&(s.pt.vibrato.frequency=t.value),t.name==="wander"&&(s.pt.glottis.wander=t.value)}process(t,e){try{return this.render(e[0][0])}catch(s){return this.failed||(this.failed=!0,this.port.postMessage({error:String(s&&s.stack||s)})),!0}}render(t){let e=globalThis.sampleRate,s=globalThis.currentTime,r=s+U/e;for(;this.events.length&&this.events[0].t<r;){let n=this.events.shift();this.handle(n,Math.max(s,n.t))}t.fill(0);for(let n of this.v){let i=n.note;if(i){let l=s-i.start,m=Math.max(.001,Math.min(i.glide,i.dur/2)),d=Math.min(1,l/m);n.fr=n.from[0]+(i.vowel[0]-n.from[0])*d,n.op=n.from[1]+(i.vowel[1]-n.from[1])*d,n.pt.vowel.frontness=n.fr,n.pt.vowel.openness=n.op;let p=i.tense[0]+(i.tense[1]-i.tense[0])*Math.min(1,l/Math.max(.2,i.dur));n.pt.glottis.UITenseness=p,n.pt.glottis.loudness=Math.pow(p,.25),n.pt.vibrato.amount=l>i.vibratoAfter?i.vibrato*Math.min(1,(l-i.vibratoAfter)/.3):0,l>=i.dur&&(n.note=null,n.offAt=s,n.pt.isVoiced=!1,n.pt.vibrato.amount=0)}else if(n.env<=1e-4&&s-n.offAt>1.5)continue;let o=n.pt.render(U),h=i?i.gain:0,u=1/(.02*e),c=1/(.08*e);for(let l=0;l<U;l++)n.env+=n.env<h?Math.min(u,h-n.env):-Math.min(c,n.env-h),t[l]+=o[l]*n.env}return!0}};registerProcessor("witch-tract",W);})();\n';
+    }
+  });
+
   // config/music-style.json
   var music_style_default = {
     name: "Forest rave",
@@ -249,7 +262,9 @@ label.check input { accent-color: var(--accent); }
       fofSoprano: { kind: "fof", gain: 0.8, voiceType: "soprano", vowels: ["ah", "oh", "ee", "eh", "oo"], vowelStep: 1, detune: 9, vibrato: 24, vibratoRate: 5.4, vibratoDelay: 0.3, breath: 0.06, attack: 0.1, release: 0.6, reverb: 0.55, delay: 0.2, hp: 200, pan: -0.1 },
       fofAlto: { kind: "fof", gain: 0.8, voiceType: "alto", vowels: ["oh", "ah", "oo", "eh"], vowelStep: 1, detune: 11, vibrato: 18, vibratoRate: 5, vibratoDelay: 0.35, breath: 0.07, attack: 0.14, release: 0.7, reverb: 0.55, delay: 0.2, hp: 160, pan: 0.1 },
       fofChoir: { kind: "fof", gain: 0.45, voiceType: "alto", vowels: ["oo", "ah", "oh"], vowelStep: 4, detune: 16, vibrato: 12, vibratoRate: 4.6, vibratoDelay: 0.6, breath: 0.05, attack: 0.6, release: 1.4, octave: 0.35, reverb: 0.7, hp: 180 },
-      recordedVoice: { kind: "sample", gain: 0.8, sample: "female-note", root: 67.2, presence: 6, vowels: ["aa", "aa", "oo"], onset: "l", hp: 150 }
+      recordedVoice: { kind: "sample", gain: 0.8, sample: "female-note", root: 67.2, presence: 4, vowels: ["aa", "aa", "oo"], onset: "l", skip: 0.25, swell: 0.33, breath: 0.12, hp: 120 },
+      altoSampled: { kind: "sample", gain: 0.8, sample: "female-note", root: 67.2, notes: [{ midi: 55, sample: "alto-55" }, { midi: 57, sample: "alto-57" }, { midi: 59, sample: "alto-59" }, { midi: 61, sample: "alto-61" }, { midi: 63, sample: "alto-63" }, { midi: 65, sample: "alto-65" }, { midi: 69, sample: "alto-69" }, { midi: 71, sample: "alto-71" }, { midi: 73, sample: "alto-73" }, { midi: 75, sample: "alto-75" }, { midi: 77, sample: "alto-77" }, { midi: 79, sample: "alto-79" }, { midi: 67.17, sample: "female-note" }], presence: 4, vowels: ["aa", "aa", "oo"], onset: "l", skip: 0.25, swell: 0.33, breath: 0.12, hp: 120 },
+      altoTract: { kind: "tract", gain: 0.75, tractLength: 40, vowels: ["ah", "ah", "oo", "oh"], tense: [0.45, 0.72], breath: 0.3, vibrato: 0.012, vibratoRate: 5.2, vibratoAfter: 0.3, glide: 0.1, wander: 0.15, hp: 120, pan: -0.05 }
     },
     parts: {
       kick: { patch: "kick", role: "drum", patterns: { four: "x...x...x...x...", drive: "X...x...X...x...", break: "x.........x.....x.x.......x..x..", twostep: "x......x..x.....", electro: "x..x..x...x.....", half: "x.........x....." } },
@@ -382,8 +397,8 @@ label.check input { accent-color: var(--accent); }
       question: 4,
       answer: 0,
       instruments: ["pluck", "lead", "chiplead", "vox", "bell", "lgHorn"],
-      sung: { part: "sung", patch: "recordedVoice", octave: 3 },
-      range: [-1, 8],
+      sung: { part: "sung", patch: "recordedVoice", octave: 2, where: ["breakdown", "build"], hookBars: 2, wash: { intervals: [4, 7], level: 0.5, late: 0.5 } },
+      range: [-1, 6],
       cells: {
         slow: ["x---------------", "x---------------", "x-------x-------", "x-----x-x-------", "x-----------x---", "x---x---x-------", "T_______x-------", "x-------T_______", "x-------x---x---", "....x-----------", "x-------x-----x-"],
         mid: ["x---x---T_______", "x-x-x---x-------", "x--x--x-x-------", "x---x-x-x---x---", "t___x---x-------", "..x-x---x---x---", "x-x-x-x-x-------", "x-----x-x---x---"]
@@ -392,9 +407,10 @@ label.check input { accent-color: var(--accent); }
         slow: ["x-------........", "x---x---........", "x-----x-........", "T_______........"],
         mid: ["x-x-x---........", "t___x---........", "x--x--x-........"]
       },
-      pace: { default: 0.25, pluck: 0.35, lead: 0.3, chiplead: 0.5, vox: 0.3, bell: 0.35, lgHorn: 0.1, sung: 0.2 }
+      pace: { default: 0.25, pluck: 0.35, lead: 0.3, chiplead: 0.5, vox: 0.3, bell: 0.35, lgHorn: 0.1, sung: 0 }
     },
-    voiceFx: { _: `The voice line's ethereal effects (Ed, 2026-10-11: "e Recorded + ethereal will do for now ... a bit quieter than in the sample"; then, hearing it, "make it quieter and have even more reverb"; platform/audio/voiceFx.ts): the A/B's preset with more hall, shimmer and freeze, each a level 0 to 1, on the sung part.`, chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.85, shimmer: 0.7, duck: 0.3, swells: 0.6, freeze: 0.65, whisper: 0.25, octave: 0.3 },
+    voiceFx: { _: `The voice line's ethereal effects (Ed, 2026-10-11: "e Recorded + ethereal will do for now ... a bit quieter than in the sample"; then, hearing it, "make it quieter and have even more reverb"; platform/audio/voiceFx.ts): the A/B's preset with more hall, shimmer and freeze, each a level 0 to 1, on the sung part. Since Ed's singer review (2026-10-14, docs/backlog/music.md "The singer, and the music round it"): this is the pure chain, for breakdowns and builds: no chorus, no octave double, no shimmer (they smeared each note's tuning by up to a third of a semitone), a bigger hall instead; \`voiceFxDark\` plays in the dark families.`, chorus: 0, saturation: 0.12, air: 0.5, delay: 0.3, hall: 0.9, shimmer: 0, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.2, octave: 0 },
+    voiceFxDark: { _: 'The processed chain (Ed, 2026-10-14: "two chains by place"), on the sung part while the night\'s family is one of `families` (the dark ones): grit, the whisper vocoder, long frozen tails, the echoes; aimed at Holy Other and Salem. Its pitched-down, chopped take comes with the A/B.', families: ["coven", "phonk", "industrial", "thunder", "stampede"], chorus: 0, saturation: 0.5, air: 0.3, delay: 0.5, hall: 0.9, shimmer: 0, duck: 0.4, swells: 0.4, freeze: 0.7, whisper: 0.6, octave: 0 },
     families: {
       grove: { name: "Grove (forest folk)", palette: [0, 0.3], energy: [0, 0.45], land: "forestBeat", four: ["forestBeat", "forestArp"], breaks: ["forestBreaks"], breakdown: ["whisper"], build: "rise", bass: ["sub808", "subSoft"], leads: ["pluck", "flute", "keys", "bell", "vox", "lead"] },
       ritual: { name: "Ritual (frame drums)", palette: [0, 0.35], energy: [0, 0.5], land: "ritualBeat", four: ["ritualBeat", "ritual"], breaks: ["ritualBreaks"], breakdown: ["ether"], build: "rise", bass: ["subSoft", "sub808"], leads: ["flute", "pluck", "bell", "lgHorn"] },
@@ -4082,33 +4098,40 @@ label.check input { accent-color: var(--accent); }
     if (sevenths) tones.push(root + 6);
     return { root, tones };
   }
-  function formPhrase(style2, seed2, letter) {
+  function formPhrase(style2, seed2, letter, hookSeed) {
     const F = style2.form, P2 = F.phraseBars, salt = letter.charCodeAt(0) * 13;
-    const part = letter === "A" ? formInstrument(F, seed2) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
+    const sungLetter = letter !== "A", part = sungLetter ? F.sung.part : formInstrument(F, seed2), pace = F.pace[part] ?? F.pace.default ?? 0.25;
     const at2 = F.order.indexOf(letter) * P2;
+    const hookBars = sungLetter && hookSeed !== void 0 && hookSeed !== seed2 ? F.sung.hookBars ?? 0 : 0;
+    const sd = (b) => b < hookBars ? hookSeed : seed2;
     const rhythm = [];
     for (let b = 0; b < P2; b++) {
-      const r = hash2(seed2 + b * 31, 419, salt), half = Math.floor(P2 / 2), kind = hash2(seed2 + b * 17, 423, salt) < pace ? "mid" : "slow";
+      const r = hash2(sd(b) + b * 31, 419, salt), half = Math.floor(P2 / 2), kind = hash2(sd(b) + b * 17, 423, salt) < pace ? "mid" : "slow";
       if (b % half === half - 1) rhythm.push(pick2(F.cadence[kind], r));
-      else if (b >= half && hash2(seed2 + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
+      else if (b >= half && hash2(sd(b) + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]);
       else rhythm.push(pick2(F.cells[kind], r));
     }
     const [lo, hi] = F.range, out = new Array(P2 * 16).fill(null), onsets = [];
-    let v = 2 + Math.floor(hash2(seed2, 431, salt) * 3);
-    const nearest = (want, ok) => {
-      let best = want, bd = Infinity;
-      for (let d = lo; d <= hi; d++) if (ok(d) && Math.abs(d - want) < bd) {
+    const SPAN = 4, mod7 = (d) => mod(d, 7);
+    const windows = [];
+    for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some((d) => mod7(d) === 0)) windows.push(w);
+    const wlo = sungLetter && windows.length ? windows[Math.floor(hash2(sd(0), 437, salt) * windows.length)] : lo, whi = sungLetter && windows.length ? wlo + SPAN : hi;
+    const maxLeap = sungLetter ? 2 : Infinity;
+    let v = sungLetter ? wlo + Math.floor(hash2(sd(0), 431, salt) * (whi - wlo + 1)) : 2 + Math.floor(hash2(seed2, 431, salt) * 3);
+    const nearest = (want, ok, near2 = maxLeap) => {
+      let best = null, bd = Infinity;
+      for (let d = wlo; d <= whi; d++) if (ok(d) && Math.abs(d - v) <= near2 && Math.abs(d - want) < bd) {
         bd = Math.abs(d - want);
         best = d;
       }
-      return best;
+      return best ?? (near2 === Infinity ? want : nearest(want, ok, Infinity));
     };
     for (let b = 0; b < P2; b++) {
       const tones = formChord(style2, seed2, at2 + b).tones.map((t) => mod(t, 7)), cell = rhythm[b];
       const note = (pos, dur, strong) => {
-        const i = b * 16 + Math.floor(pos), r = hash2(seed2 + i * 7919, 433, salt);
-        if (strong) v = nearest(v + pick2([-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod(d, 7)));
-        else v = Math.max(lo, Math.min(hi, v + pick2([-2, -1, -1, 1, 1, 2], r)));
+        const i = b * 16 + Math.floor(pos), r = hash2(sd(b) + i * 7919, 433, salt);
+        if (strong) v = nearest(v + pick2(sungLetter ? [-2, -1, 0, 0, 1, 2] : [-2, -1, 0, 1, 2, 3], r), (d) => tones.includes(mod7(d)));
+        else v = Math.max(wlo, Math.min(whi, v + pick2(sungLetter ? [-1, -1, 0, 1, 1] : [-2, -1, -1, 1, 1, 2], r)));
         out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
         onsets.push(i);
       };
@@ -4128,30 +4151,36 @@ label.check input { accent-color: var(--accent); }
     if (last !== void 0) {
       const n = out[last], chordEnd = formChord(style2, seed2, at2 + P2 - 1).tones.map((t) => mod(t, 7));
       const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter((t) => t !== 0);
-      n.deg = nearest(n.deg, (d) => ends.includes(mod(d, 7)));
+      v = n.deg;
+      n.deg = nearest(n.deg, (d) => ends.includes(mod7(d)));
+      for (let k = onsets.length - 2; k >= 0 && sungLetter; k--) {
+        const cur = out[onsets[k]], nxt = out[onsets[k + 1]];
+        if (Math.abs(nxt.deg - cur.deg) <= maxLeap) break;
+        cur.deg = nxt.deg + Math.sign(cur.deg - nxt.deg) * maxLeap;
+      }
     }
     return out;
   }
   var phraseCache = /* @__PURE__ */ new Map();
-  function phraseFor(style2, seed2, letter) {
-    const k = `${seed2}|${letter}`;
+  function phraseFor(style2, seed2, letter, hookSeed) {
+    const k = `${seed2}|${letter}|${hookSeed ?? ""}`;
     let p = phraseCache.get(k);
     if (!p) {
       if (phraseCache.size > 64) phraseCache.clear();
-      phraseCache.set(k, p = formPhrase(style2, seed2, letter));
+      phraseCache.set(k, p = formPhrase(style2, seed2, letter, hookSeed));
     }
     return p;
   }
   var musicSeed = (base, n) => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 2147483647);
-  function formNoteAt(style2, seed2, formStep, transpose = 0, step2) {
+  function formNoteAt(style2, seed2, formStep, transpose = 0, step2, opts) {
     const F = style2.form, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-    const n = phraseFor(style2, seed2, letter)[fs % (F.phraseBars * 16)];
+    const n = phraseFor(style2, seed2, letter, letter !== "A" ? opts?.hookSeed : void 0)[fs % (F.phraseBars * 16)];
     if (!n) return null;
     const lead = step2?.lead && style2.parts[step2.lead] ? step2.lead : formInstrument(F, seed2), voice = step2?.vocal ?? F.sung.patch;
-    const sung = letter !== "A" && voice !== "none" && !!style2.patches[voice], part = sung ? F.sung.part : lead, def = style2.parts[part];
+    const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style2.patches[voice], part = sung ? F.sung.part : lead, def = style2.parts[part];
     const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
     const scale = style2.scales[step2?.scale ?? style2.scale] ?? style2.scales[style2.scale];
-    return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style2, scale, n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
+    return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style2, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter };
   }
   var tuneSeed = (seed2, tune) => tune ? Math.floor(hash2(seed2, 449 + tune, tune * 104729) * 2147483647) : seed2;
   function sectionCutoff(sec, progress) {
@@ -4183,10 +4212,20 @@ label.check input { accent-color: var(--accent); }
     }
     return out;
   }
+  function sungHere(style2, plan, a, sec) {
+    const F = style2.form;
+    if (!F) return null;
+    if (!F.sung.where) return "sung";
+    const S = a.sections;
+    if (F.sung.where.includes("breakdown") && (S ? S.breakdown.includes(plan.section) : plan.section === "breakdown")) return "breakdown";
+    if (F.sung.where.includes("build") && (plan.section === a.build || !!sec.riser)) return "build";
+    return null;
+  }
   function notesAt(style2, plan, next, step2, ctx2) {
     const bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16, barIn = bar2 - plan.start;
     const sec = resolveSection(style2, plan.section), a = arcStep(style2, plan.arc);
     const scale = style2.scales[a.scale ?? style2.scale] ?? style2.scales[style2.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0);
+    const nightSeed = ctx2.seed;
     ctx2 = a.tune ? { ...ctx2, seed: tuneSeed(ctx2.seed, a.tune) } : ctx2;
     const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
     const formBar = bar2 - (ctx2.formStart ?? 0), form = style2.form;
@@ -4272,14 +4311,46 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if (onlyCircle) return out;
-    const fn = melody > 0 ? formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose, a) : null;
-    if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...fn.dur % 1 ? { straight: true } : {} });
+    if (form?.sung.arpeggio && (a.vocal ?? form.sung.patch) !== "none") {
+      const A2 = form.sung.arpeggio, rate = Math.max(1, Math.round((typeof A2 === "object" ? A2.rate : void 0) ?? 2));
+      const fx = style2.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+      const patch = a.vocal && style2.patches[a.vocal] ? a.vocal : form.sung.patch, [lo, hi] = form.range, n = scale.length;
+      const degs = [...new Set([...chord.tones, chord.root + 6].map((t) => {
+        let d = lo + mod(t - lo, n);
+        while (d > hi) d -= n;
+        return d;
+      }))].filter((d) => d >= lo && d <= hi).sort((x, y) => x - y);
+      const cycle = degs.length > 2 ? [...degs, ...degs.slice(1, -1).reverse()] : degs;
+      const k = Math.floor((formBar * 16 + s) / rate);
+      if (cycle.length && mod(formBar * 16 + s, rate) === 0) {
+        const deg = cycle[mod(k, cycle.length)], level = melody > 0 ? melody : 0.8;
+        out.push({ part: form.sung.part, patch, step: step2, offset: 0, dur: rate, midi: degreeToMidi(style2, scale, deg, form.sung.octave, transpose), vel: (s % 4 === 0 ? 0.88 : 0.74) * level, fx });
+      }
+    } else if (melody > 0 && form) {
+      const place2 = sungHere(style2, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
+      const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place2 === "breakdown" && hash2(ctx2.seed, 457, pass) < 0.5;
+      const fx = style2.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+      const patch = a.vocal && style2.patches[a.vocal] ? a.vocal : form.sung.patch;
+      const sing = (deg, dur, off, v) => {
+        out.push({ part: form.sung.part, patch, step: step2, offset: off, dur, midi: degreeToMidi(style2, scale, deg, oct, transpose), vel: v, fx, ...dur % 1 ? { straight: true } : {} });
+        if (place2 === "breakdown" && W) for (const iv of W.intervals) out.push({ part: form.sung.part, patch, step: step2, offset: off + W.late, dur: Math.max(1, dur - W.late), midi: degreeToMidi(style2, scale, deg + iv, oct, transpose), vel: v * W.level, fx, double: true, ...dur % 1 ? { straight: true } : {} });
+      };
+      const voiceOk = (a.vocal ?? form.sung.patch) !== "none";
+      if (hold && voiceOk) {
+        if (s === 0 && mod(formBar, form.chordBars) === 0) sing(chord.root, form.chordBars * 16 - 1, 0, 0.8 * melody);
+      } else {
+        const fn = formNoteAt(style2, ctx2.seed, formBar * 16 + s, transpose, a, { voice: place2 !== null, hookSeed: nightSeed });
+        if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel);
+        else if (fn) out.push({ part: fn.part, patch: fn.patch, step: step2, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: fn.off ? 0.78 * melody : vel, ...fn.dur % 1 ? { straight: true } : {} });
+      }
+    }
     if (s === 0 && barIn === 0 && sec.impact && style2.patches.impact) out.push({ part: "impact", patch: "impact", step: step2, offset: 0, dur: 16, midi: null, vel: 1 });
     if (s === 0 && sec.riser && style2.patches.riser) out.push({ part: "riser", patch: "riser", step: step2, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
     return out;
   }
   function checkStyle(style2) {
     const errs = [], B = style2.blockBars;
+    for (const f of style2.voiceFxDark?.families ?? []) if (!style2.families?.[f]) errs.push(`voiceFxDark: no family "${f}"`);
     const checkUse = (where, name, u) => {
       const def = style2.parts[name];
       if (!def) {
@@ -4317,6 +4388,8 @@ label.check input { accent-color: var(--accent); }
       for (const n of [...F.a, ...F.b]) if (!style2.progressions[n]) errs.push(`form: no progression "${n}"`);
       for (const n of F.instruments) if (!style2.parts[n]) errs.push(`form: no part "${n}"`);
       if (!style2.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
+      for (const w of F.sung.where ?? []) if (w !== "breakdown" && w !== "build") errs.push(`form: sung.where "${w}" (breakdown or build)`);
+      if (F.sung.wash && !(F.sung.wash.intervals.length && F.sung.wash.level > 0 && F.sung.wash.level <= 1)) errs.push("form: sung.wash wants intervals and a level in (0, 1]");
       const tripletsWhole = (c) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3)) && [...c].filter((ch) => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
       for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
         if (c.length !== 16 || c[0] === "-" || c[0] === "_" || /[^x\-._Tt]/.test(c)) errs.push(`form: cell ${k} "${c}" not one bar`);
@@ -15055,7 +15128,7 @@ label.check input { accent-color: var(--accent); }
     runeMarkers: { variants: true, laser: { opacity: 0.55, width: 0.25, length: 70 }, scale: 2.25, beamHeight: 46, lightRange: 160, dormant: { glow: 0.8, light: 0.55, reach: 12, beam: 0.1 }, awake: { glow: [0.7, 1], light: 0.9, lightBuild: 1, reach: 18, beam: 0.3, motes: 8, moteBuild: 12 }, flare: { time: 1.6, light: 3.5 } },
     _music: `buffer: the audio output's buffer to ask for, in seconds (Ed's v3167 playtest, "music is still cutting out": 474 device under-runs, each one 10 ms buffer, on his busy laptop; balanced gives Chrome the same 10 ms as interactive), 0 for the latency category below; a browser that under-runs 20 times in a load asks for twice as much next load, up to 0.24 s (platform/audio/buffer.ts); the music goes out early by the context's latency so it stays on the beat shown, only the sound effects come later. latency: the audio context's latencyHint (Ed, 2026-10-07: "the music is still cutting out"): interactive the smallest output buffer, balanced more room for the audio thread, playback the most (under-runs least likely, sound effects latest); ?latency= tries one for a load (DECISION FOR ED). Music by proximity (Ed, 2026-10-04): one shared track, full and clear within nearDist metres of a playing soundsystem (or the dancefloor's ring, as loud as its speakers are on), fading to floor of the volume and muffled to a muffle Hz low-pass by farDist metres (clear: the cutoff close by), never gone (Ed's playtest, 2026-10-05: "The music stops playing after about 20 seconds": at 0.08 and 380 Hz it was, flying away from home; audible: the most dB it may fall from by a soundsystem to anywhere far off, as a laptop plays it, checked by tools/music-lab/check.cjs); a damaged soundsystem nearby wobbles, crackles and drops out, by its damage times distort. volume: the master. src: an audio file to loop (empty: the built-in loop at beat.bpm until there's a real track). ?music=off silences it. circle: in a sleeping legend's clearing on the ground (Ed, 2026-10-06), the music muffled to muffle Hz and quiet times its volume, eased in and out with a time constant of ease seconds, and the legend's own layer (the music style's circle) over it at level; radius: the clearing's metres round a legend where the map draws none. dropLayers: when her needle-drop routine ends after the party spell (Ed, 2026-10-07: the first music drops straight after it, before she steps off), that many of the intro's layers come in on the next bar line, each home speaker then adding its own on top.`,
     _sfx: `The sound effects, all synthesised in the music's key (2026-10-05): volume over the music's, hear metres (a sound fades to nothing that far from her). voice: the babble (Ed, 2026-10-05: \u{1F48C}s are her speech, attacks the animals'). witch: each \u{1F48C} a syllable in her voice (pitch Hz, range: how far her phrases rise and fall, pace: a syllable's seconds, timbre: her formants over an adult's, phraseGap: a pause this long starts a new phrase); animals: an attack a burst of babble in the creature's own voice (pitch Hz for a normal-sized young, lower by level and size; maxVoices at once, the farthest giving way (only to one swapBy nearer, at most one every swapGap seconds: a crowd otherwise cut itself off many times a second), duck: how much the others quieten; syllables per burst; gap: a creature speaks at most every gap seconds; reply: a \u{1F48C} hit's answering syllable, its volume share). hit: a \u{1F48C} landing (a spent one a faint tick); fill: the affection tick, climbing octaves as the meter fills; invited: the flourish (fuller by level); enraged: the growl when one turns (gap: at most one every gap seconds, a crowd turning at once one heavier growl); happy: the pop; snore: a sleeping legend within range metres moaning softly in its dreams (volume); nightmare: its moans when restless (volume); windup: a legend's attack winding up, its whale song swelling for length seconds before it fires; lost: a soundsystem lost, the sting heard anywhere (volume); land: a \u{1F48C} that met no one landing on the ground, a soft puff (at most one every gap seconds); stir: the boot-up over, the first wave's countdown begun, things stirring (volume); roar: a legend turning angry, its roar (heard twice as far); power: a runestone crackling into life as a speaker or soundsystem (Ed, 2026-10-06), heard within range metres: its static (crackle), a capacitor's whine, the mains buzz, the cone's thump and the clean tone it settles into, each the home ring's next step up the scale, the last a chord; at most one every gap seconds (volume); lament: a restless legend calling out sadly (Ed, 2026-10-06), its own call lowered (pitch) and slowed (slow) into the legends' space, heard within range metres from the way of its clearing and muffled with distance; a call about every every seconds, down to urgent as its restlessness runs out; at most max restless legends call, the nearest, at least gap seconds apart (volume); shoes: dancers within range metres tapping their party shoes on the beat, at most max at once; pond: by a pond within range metres, water lapping (lap), a frog every frogEvery seconds or so (frogs), a drip every dripEvery (drips); picnic: by a picnic in a partified area within range metres, its party-goers' murmur and cups clinking every clinkEvery seconds or so; aggro: the wild watch's warning (Ed, 2026-10-07; art builder 3's aggroOf), while a wild area's watchers stand looking at her before they attack: a low swell in the music's key (swell) opening up and throbbing faster as the watch runs, a gritty riser over it (riser) by the area's danger, a hit as they attack (hit); called off, it sags and falls away over fall seconds; times volume; sparkler: by the ley line's pulse, its tip a burning sparkler (art builder 2's #491), its fizz within range metres (louder as she nears it): a flickering hiss (hiss) and a crackle of pops (pops), rate sparks a second, a share fork of them forking into a double tick, times volume; fireworks: over a soundsystem when a wave reaches an area she'd already cleared (Hotel's waveCelebrate, art builder 2's shells): each shell's climb (whoosh, now and then whistling), its burst (boom, its echo into the night echo, its stars' crackle), heard within range metres and late by the distance over speed metres a second, and the party under it cheering as the finale bursts (cheer) within cheerRange; the shells are rules/fireworks.ts's, the ones drawn, times volume; ambience: each area's own soundscape in play (Ed, 2026-10-07: "Each area gets its own ambient soundscape that gives it individual character": a ravine's gusts, a marsh's frogs and drips, standing stones' low hum, old oaks creaking), the afterparty night's layers without their pad and bells (bed 0), its noise and sounds at noise and sounds, times volume; near the party it keeps only quiet of itself, by how loud the music is there, and gives way to the night once the party's over; sadTrumpet: knocked down, a muted trumpet's "wah-wah-wah-waaah" as her hat drops (Ed, 2026-10-07: "a sad trumpet sound"), the music dipped by duck under it; knocked down with no hat to drop, its shorter "wah-waaah" if bare is 1 (0: none); and as she's whisked to her decks (the teleport's midpoint, the knockout's cut; Ed, 2026-10-07: the hat's scene turns into her decks with a rewind) a backwards record scratch (rewind, times volume) cuts its last note off, never before that note has had cutAfter seconds; seaLife: what lives in the sea off the beach (Ed, 2026-10-07), heard within range metres of it, under the music and the waves: a dolphin leaping off the east coast (splash: its blow and its splash back in), the kraken off the west coast (groan: a deep distant moan; room: the creator's room in the treehouse while it's open, its hum, a record's crackle, the timber creaking every creakEvery seconds or so, and after the spell, at her decks before the first home speaker, at decks times its level; deck: her decks while she stands behind them (the DJ witch): a stroke of the record on each half-beat of her scratch bars (scratch, its hiss under the stylus hiss, a stroke stroke seconds long) and her "woo-hoo!" when she throws a hand up (hype), and in her routine (Ed, 2026-10-07: the needle dropped and a little scratching) the tonearm's tick and the needle's drop (needle), times volume; impact: a lobbed shot landing, a thud (small times volume) or a legend's boom (volume), heard from the lob's landing spot (a legend's twice as far); knock: the witch knocked back (#108), a thump and a whoosh by how far (volume, whoosh), and stunned, a soft dizzy twinkle every twinkleEvery seconds (twinkle); charge: a legend's long charge, its windup's bellow, heavy hoofbeats by its speed, the ground's rumble along its lane, the skid of its braking arc, a lighter trot home, heard within range metres; relic: a relic bottle found (a rare chime), spotted within spot metres on the ground or spotTreetop from the treetops, or reached within reach; meadow: home's ambience (breeze, bees, birds, a bird's song about every birdEvery seconds; its picnic's far murmur, its cups clinking about every clinkEvery seconds (clinks), its balloons squeaking about every squeakEvery (balloons)), in home's circle (the map's homeRadius round the dancefloor) fading out over its last fade metres; ouch: the witch hurt, her cry and a thump (volume; knocked down, her "whoa-oh" at knockdown times that), the music dipped by duck for duckTime seconds (twice that knocked down); whale: the legends' voice (Ed, 2026-10-05: "whale song; deep and slow"): volume, speed (1: moans of 2 to 3 s; 2: twice as fast), depth (Hz of its lowest moan), reverb (how big its space), sleepEvery (seconds between a sleeper's moans, sooner when restless). nope (Ed, 2026-10-07: a sigil refused, put down too near one already down, now heard and not drawn): a soft two-note "uh-uh" at volume, at most one each gap seconds. tempoUp (Ed, 2026-10-07: the BPM up by 1 each knockdown): the crowd cheering on the beat the party starts speeding up, at volume (a share of the fireworks' cheer; 0 off). cleared (Ed, 2026-10-08: an area cleared before the pulse came): a small "cleared!" sting on the next half-beat, at volume, from the new soundsystem, fading over range metres to no less than floor of itself (she cleared it: she hears it). budget.voices: the most one-shot sounds at once (0: no limit); over it, those that matter least (far creatures, the beds' scattered details) aren't played and lesser ones playing are cut short for her own sounds and the stings (Ed's playtest, 2026-10-12: "the sound is cutting out ... too many simultaneous sounds").`,
-    sfx: { on: true, volume: 1, hear: 70, budget: { voices: 24 }, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1, knock: 3, respawn: 3 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, nope: { volume: 0.5, gap: 0.25 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
+    sfx: { on: true, volume: 1, hear: 70, budget: { voices: 24 }, voice: { witch: { volume: 0.2, pitch: 330, range: 0.3, pace: 0.09, timbre: 1.15, phraseGap: 0.3 }, animals: { volume: 0.28, pitch: 240, maxVoices: 4, duck: 0.6, syllables: [2, 4], gap: 0.7, reply: 0.35, swapBy: 0.15, swapGap: 0.25 } }, hit: { volume: 0.2, gap: 0.05 }, fill: { volume: 0.07, octaves: 1 }, invited: { volume: 0.3 }, enraged: { volume: 0.32, gap: 0.4 }, happy: { volume: 0.36, gap: 0.15 }, snore: { volume: 0.045, range: 40 }, nightmare: { volume: 0.06 }, windup: { volume: 0.4, length: 1 }, lost: { volume: 0.28 }, ouch: { volume: 0.28, knockdown: 0.45, duck: 0.35, duckTime: 0.45 }, impact: { volume: 0.6, small: 0.8 }, roar: { volume: 0.1 }, power: { volume: 0.65, crackle: 0.5, whine: 0.06, buzz: 0.35, thump: 0.8, tone: 0.3, gap: 0.1, range: 160 }, lament: { volume: 0.42, pitch: 0.8, slow: 1.6, every: 14, urgent: 5, range: 160, gap: 3, max: 2 }, shoes: { volume: 0.4, range: 30, max: 4 }, pond: { volume: 0.2, lap: 0.6, frogs: 0.5, frogEvery: 6, drips: 0.2, dripEvery: 2.5, range: 30 }, picnic: { volume: 0.18, murmur: 0.5, clinks: 0.3, clinkEvery: 6, range: 25 }, aggro: { volume: 0.45, swell: 1, riser: 0.5, hit: 1, fall: 0.6 }, sparkler: { volume: 0.07, hiss: 0.5, pops: 1, rate: 60, fork: 0.4, range: 45 }, fireworks: { volume: 0.55, whoosh: 0.7, boom: 1, echo: 0.4, crackle: 0.35, cheer: 0.8, range: 400, cheerRange: 150, speed: 343 }, seaLife: { volume: 0.3, splash: 0.5, groan: 0.25, pour: 0.2, range: 300 }, room: { volume: 0.2, hum: 0.4, crackle: 0.5, creak: 0.3, creakEvery: 9, decks: 0.5 }, deck: { volume: 0.3, scratch: 1.1, hiss: 0.6, stroke: 0.16, hype: 0.7, needle: 1, knock: 3, respawn: 3 }, spell: { volume: 0.4, hum: 0.2, rustle: 0.3, crackle: 0.45, burst: 0.6 }, land: { volume: 0.6, gap: 0.06 }, nope: { volume: 0.5, gap: 0.25 }, refused: { volume: 0.4, gap: 0.12 }, cleared: { volume: 0.3, range: 300, floor: 0.4 }, tempoUp: { volume: 0.45 }, stir: { volume: 0.45 }, knock: { volume: 0.6, whoosh: 1, twinkle: 0.16, twinkleEvery: 0.13 }, charge: { volume: 0.5, bellow: 0.28, hooves: 0.8, rumble: 0.5, skid: 0.35, trot: 0.35, range: 140 }, relic: { volume: 0.145, spot: 30, spotTreetop: 18, reach: 4 }, meadow: { volume: 0.18, breeze: 0.5, bees: 0.06, birds: 0.35, birdEvery: 3.5, fade: 30, murmur: 0.25, clinks: 0.25, clinkEvery: 7, balloons: 0.15, squeakEvery: 9 }, whale: { volume: 0.11, speed: 1, depth: 62, reverb: 0.7, sleepEvery: 9 }, waves: { volume: 0.3, every: 7, wash: 0.5, range: 260 }, ambience: { volume: 0.35, bed: 0, noise: 0.1, sounds: 0.3, quiet: 0.25 }, sadTrumpet: { volume: 0.18, duck: 0.55, bare: 1, rewind: 0.9, cutAfter: 0.35 }, night: { volume: 0.5, bed: 0.05, noise: 0.12, sounds: 0.3, from: 0.6, snore: { volume: 0.3, gap: 1.2, range: 40, max: 3 } } },
     music: { on: true, volume: 0.5, latency: "balanced", buffer: 0.06, dropLayers: 3, nearDist: 25, farDist: 260, floor: 0.3, muffle: 1e3, audible: 15, circle: { muffle: 320, quiet: 0.85, ease: 0.35, level: 1.3, radius: 14 }, slow: { on: true, pitch: 0.35, floor: 0.5 }, clear: 16e3, distort: 1, src: "", over: { stop: 0.6, floor: 0.15 }, beach: { fade: 140, quiet: 0.08 } },
     _alarms: `The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a soundsystem or speaker is being attacked offscreen. It can look like the \u{1F3B6} indicator, but with \u{1F507}"): a soundsystem (or the home ring's speakers) hit while off screen shows a \u{1F507} at the screen's edge toward it, its ring its health, shaking at each blow. linger: seconds it stays after the last blow; fall: seconds a fallen one stays, flashing then fading; most: how many show at once (the most recently hit).`,
     alarms: { linger: 4, fall: 1.2, most: 3 },
@@ -15491,6 +15564,70 @@ registerProcessor("witch-fof", WitchFof);
         this.node.disconnect();
         this.out.disconnect();
         this.node.port.close();
+      } catch {
+      }
+    }
+  };
+
+  // src/platform/audio/tract/tract.ts
+  var ready2 = /* @__PURE__ */ new WeakSet();
+  var loading = /* @__PURE__ */ new WeakMap();
+  function tractReady(ctx2) {
+    let p = loading.get(ctx2);
+    if (!p) {
+      p = (async () => {
+        try {
+          if (!ctx2.audioWorklet) return false;
+          const m = await Promise.resolve().then(() => (init_tractModule(), tractModule_exports));
+          const url = URL.createObjectURL(new Blob([m.TRACT_SOURCE], { type: "application/javascript" }));
+          await ctx2.audioWorklet.addModule(url);
+          URL.revokeObjectURL(url);
+          ready2.add(ctx2);
+          return true;
+        } catch {
+          return false;
+        }
+      })();
+      loading.set(ctx2, p);
+    }
+    return p;
+  }
+  var tractLoaded = (ctx2) => ready2.has(ctx2);
+  var TRACT_VOWELS = { ah: [0.35, 0.95], aa: [0.35, 0.95], a: [0.35, 0.95], oh: [0.12, 0.6], o: [0.12, 0.6], oo: [0.05, 0.25], u: [0.05, 0.25], eh: [0.75, 0.7], e: [0.75, 0.7], ee: [0.95, 0.15], i: [0.95, 0.15], uh: [0.4, 0.6] };
+  var nextId2 = 1;
+  var TractVoices = class {
+    constructor(ctx2, dest, voices = 3, s = {}) {
+      this.s = s;
+      this.node = new AudioWorkletNode(ctx2, "witch-tract", { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1], processorOptions: { voices, tractLength: s.tractLength ?? 40, vibratoRate: s.vibratoRate ?? 5.2, wander: s.wander ?? 0.15 } });
+      const level = ctx2.createGain();
+      level.gain.value = 1.6;
+      this.node.connect(level).connect(dest);
+    }
+    s;
+    node;
+    pending = [];
+    flushAt = -1;
+    /** A note from `t` for `dur` seconds at `midi`, `gain` 0-1, on `vowel` (a name, or the tongue's place). */
+    note(t, midi, dur, gain, vowel) {
+      const v = typeof vowel === "string" ? TRACT_VOWELS[vowel] ?? TRACT_VOWELS.ah : vowel, id = nextId2++;
+      const on = { type: "on", t, id, midi, dur: Math.max(0.05, dur), gain: Math.min(1, gain), vowel: v, tense: this.s.tense ?? [0.45, 0.72], vibrato: this.s.vibrato ?? 0.012, vibratoAfter: this.s.vibratoAfter ?? 0.3, glide: this.s.glide ?? 0.09 };
+      this.post([on]);
+    }
+    post(evs) {
+      this.pending.push(...evs);
+      if (this.flushAt >= 0) return;
+      this.flushAt = 1;
+      const flush = () => {
+        this.node.port.postMessage(this.pending);
+        this.pending = [];
+        this.flushAt = -1;
+      };
+      if (typeof queueMicrotask === "function") queueMicrotask(flush);
+      else flush();
+    }
+    dispose() {
+      try {
+        this.node.disconnect();
       } catch {
       }
     }
@@ -16091,6 +16228,15 @@ registerProcessor("witch-fof", WitchFof);
     /** The tempo now (the voice effects' echoes are on the beat). */
     bpmNow = 120;
     /** The voice line's effects changed while playing (the Music Lab's sliders): set at once on its parts. */
+    /** The voice effects' settings for a chain: the style's voiceFx (pure, for breakdowns and builds) or, "dark", its voiceFxDark
+     *  over it (the dark families: Ed, 2026-10-14, "two chains by place"). */
+    fxChain(kind) {
+      const F = this.style.voiceFx ?? {};
+      if (kind !== "dark" || !this.style.voiceFxDark) return F;
+      const { families: _f, parts: _p, ...dark } = this.style.voiceFxDark;
+      delete dark._;
+      return { ...F, ...dark };
+    }
     setVoiceFx(settings2) {
       this.style = { ...this.style, voiceFx: { ...this.style.voiceFx, ...settings2 } };
       for (const ch of this.channels.values()) ch.fx?.set(settings2);
@@ -16346,6 +16492,10 @@ registerProcessor("witch-fof", WitchFof);
       if (!p || this.solo && !this.solo.has(e.part)) return;
       const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
       const pf = this.notePitch = e.layer === "circle" ? 1 : this.pitch;
+      if (e.fx && ch.fx && ch.fxKind !== e.fx) {
+        ch.fxKind = e.fx;
+        ch.fx.set(this.fxChain(e.fx));
+      }
       switch (p.kind) {
         case "kick":
           this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in);
@@ -16371,6 +16521,9 @@ registerProcessor("witch-fof", WitchFof);
           break;
         case "sample":
           this.sampled(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch);
+          break;
+        case "tract":
+          this.tract(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch);
           break;
         case "riser":
           this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in);
@@ -16637,16 +16790,36 @@ registerProcessor("witch-fof", WitchFof);
       if (double > 0) ch.fof.note(t, freq * 2, dur, Math.min(1, gain * double), v, vTo);
       ch.lastEnd = t + dur;
     }
+    /** A sung note on the vocal-tract voice (Ed, 2026-10-14: Pink Trombone's physics in a worklet, A/B'd against the sampled
+     *  alto): its vowel from the patch's in turn through the phrase, breathier by the patch's `breath` (lower tenseness), the
+     *  phrase's effects told where phrases start and end as the sampled voice tells them. The formant voice sings until the
+     *  worklet's loaded, or with the sound shed to step 2. */
+    tract(t, p, peak, freq, dur, step2, ch) {
+      if (!tractLoaded(this.ctx) || this.shedLevel >= 2) {
+        void tractReady(this.ctx);
+        this.voice(t, { ...p, kind: "voice", formantShift: 1.02, q: 9, vibrato: 16 }, peak, freq, dur, step2, ch);
+        return;
+      }
+      const b = Math.min(1, Math.max(0, p.breath ?? 0)), [t0, t1] = p.tense ?? [0.45, 0.72], tense = [Math.max(0.1, t0 - 0.3 * b), Math.max(0.15, t1 - 0.3 * b)];
+      ch.tract ??= new TractVoices(this.ctx, ch.in, 3, { tractLength: p.tractLength ?? 40, tense, vibrato: p.vibrato ?? 0.012, vibratoRate: p.vibratoRate ?? 5.2, vibratoAfter: p.vibratoAfter ?? 0.3, glide: p.glide ?? 0.09, wander: p.wander ?? 0.15 });
+      const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), phrase = ch.lastEnd === void 0 || t - ch.lastEnd > beat;
+      if (fx && phrase && ch.lastEnd !== void 0) fx.release(ch.lastEnd);
+      ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
+      ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + dur);
+      const vs = p.vowels?.length ? p.vowels : ["ah"], vowel = vs[(ch.sung ?? 0) % vs.length];
+      ch.tract.note(t, 69 + 12 * Math.log2(freq / 440), dur * 0.97, Math.min(1, peak), vowel);
+    }
     /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
      *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
      *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
     sampled(t, p, peak, freq, dur, step2, ch) {
-      const rec = this.recordings.get(p.sample ?? "");
+      const want = 69 + 12 * Math.log2(freq / 440), near2 = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
+      const rec = this.recordings.get(near2?.sample ?? p.sample ?? "") ?? (near2 ? this.recordings.get(p.sample ?? "") : void 0), root = near2 && this.recordings.has(near2.sample) ? near2.midi : p.root ?? 69;
       if (!rec) {
         this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step2, ch);
         return;
       }
-      const c = this.ctx, rate = freq / mtof(p.root ?? 69), len = Math.min(dur * 0.97, (rec.duration - 0.05) / rate);
+      const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
       if (len < 0.05) return;
       if (!ch.presence) {
         ch.presence = c.createBiquadFilter();
@@ -16661,16 +16834,16 @@ registerProcessor("witch-fof", WitchFof);
         if (ch.lastEnd !== void 0) fx.release(ch.lastEnd);
         const swell = Math.min(4 * beat, Math.max(beat, t - (ch.lastEnd ?? t - 4 * beat) - 0.1));
         if (fx.s.swells > 0 && t - swell >= c.currentTime) {
-          const sw = c.createBufferSource(), sg = c.createGain();
-          sw.buffer = rec;
-          sw.playbackRate.value = rate;
-          sw.loop = true;
-          sw.loopStart = Math.min(0.3, rec.duration / 4);
-          sw.loopEnd = Math.min(1.6, rec.duration);
-          sw.connect(sg).connect(fx.wetIn);
+          const sw2 = c.createBufferSource(), sg = c.createGain();
+          sw2.buffer = rec;
+          sw2.playbackRate.value = rate;
+          sw2.loop = true;
+          sw2.loopStart = Math.min(0.3, rec.duration / 4);
+          sw2.loopEnd = Math.min(1.6, rec.duration);
+          sw2.connect(sg).connect(fx.wetIn);
           fx.swellEnvelope(sg, t, swell, peak);
-          sw.start(t - swell);
-          sw.stop(t + 0.05);
+          sw2.start(t - swell);
+          sw2.stop(t + 0.05);
         }
       }
       const phrase = ch.lastEnd === void 0 || t - ch.lastEnd > beat;
@@ -16679,10 +16852,14 @@ registerProcessor("witch-fof", WitchFof);
       const src = c.createBufferSource(), g = c.createGain();
       src.buffer = rec;
       src.playbackRate.value = rate;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(peak, t + 0.03);
-      g.gain.setValueAtTime(peak, t + Math.max(0.03, len - 0.08));
-      g.gain.linearRampToValueAtTime(0, t + len);
+      const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+      const envelope = (gain, top) => {
+        gain.setValueAtTime(0, t);
+        gain.linearRampToValueAtTime(top, t + rise);
+        gain.setValueAtTime(top, t + Math.max(rise, len - fall));
+        gain.linearRampToValueAtTime(0, t + len);
+      };
+      envelope(g.gain, peak);
       const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[ch.sung % vs.length] : "";
       const nodes = [src, g];
       src.connect(g);
@@ -16711,7 +16888,20 @@ registerProcessor("witch-fof", WitchFof);
         nodes.push(pk);
       }
       last.connect(ch.presence);
-      src.start(t, 0, len * rate + 0.02);
+      src.start(t, skip, len * rate + 0.02);
+      if ((p.breath ?? 0) > 0) {
+        const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();
+        n.buffer = this.noise;
+        n.loop = true;
+        bp.type = "bandpass";
+        bp.frequency.value = 2400;
+        bp.Q.value = 0.9;
+        envelope(bg.gain, peak * (p.breath ?? 0));
+        n.connect(bp).connect(bg).connect(ch.presence);
+        n.start(t);
+        n.stop(t + len + 0.02);
+        nodes.push(n, bp, bg);
+      }
       src.onended = () => {
         for (const n of nodes) n.disconnect();
       };
