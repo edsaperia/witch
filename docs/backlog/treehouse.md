@@ -8,7 +8,7 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 
 - **A walkable house, not a set of panels** (Ed): "no transitions, just different rooms you can walk between". She walks from room to room as she walks the deck today; nothing opens over the game.
 - **Organised round a hub with the map at its centre.** The hub is the room behind the balcony; every other room is reached from it, by a door, a corridor or a stair.
-- **Three-dimensional:** "it spreads out but also rooms are higher and lower, and you walk up and down stairs to get to them". The house spreads **wide**, with **corridors running out along the Ent's branches**. The bedrooms are above the hub; **the kitchen is the only room below it**.
+- **Three-dimensional:** "it spreads out but also rooms are higher and lower, and you walk up and down stairs to get to them". The house spreads **wide**, with **corridors running out along the Ent's branches**. The bedrooms are above the hub, and **the dressing rooms lie between the bedrooms and everything else: you get to the hub by going through them** (Ed). **The kitchen is the only room below the hub**.
 - **The game's own camera, zoomed in** (Ed): "a seamless transition from treehouse to game, but the camera zooms in so you can see the detail". No cut to another scene: the camera that followed her over the island follows her in, pushing in closer indoors.
 - **Seen from the party, the house is seen from outside** (Ed): from the dancefloor you see the outside of the house along the branches, never its rooms; "you only see the inside after you land on the balcony and walk inside".
 - **The Ent itself doesn't change** over the campaign, and **no new rooms unlock**: the house is whole from the first night.
@@ -29,7 +29,7 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 | **Hub** | behind the balcony | the **map table** in the centre: a drawing of the world, one size for good; a button (E) opens the sea chart to look and to sail. Also the **tea table**: wait, drink tea, play a little card game (the lobby's waiting place) |
 | **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. One is hers; **the other two are locked with magic** until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose, **trophies** from achievements; it carries across to other games |
 | **Telephone** | near the bedrooms | multiplayer: call friends to the party (a party code) |
-| **Dressing stations**: the mirror, the closet, the cloakroom | along a corridor | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options |
+| **Dressing rooms**: the mirror, the closet, the cloakroom | between the bedrooms and the hub, on the way down | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options |
 | **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it; the station is where she brings a hat to customise its look |
 | **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, pick one up, customise it at its station |
 | **Studio** | off the hub | the records she has earned; take one to the decks (below). Ed is not yet sure what else the studio does: "perhaps you can play or even record music" |
@@ -46,7 +46,7 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 ## A night through the house
 
 1. **She wakes in her bed, in her nightie.** The game waits here (no clock, no boot) as it waits for the party spell today.
-2. **She dresses, or doesn't.** "She has to dress every time she wakes up, but yesterday's clothes are the defaults": at a station she puts on yesterday's clothes at once, and changes what she likes. She may leave in her nightie if she wants to (it is one of the options).
+2. **She dresses, or doesn't.** The way from the bedrooms to the hub runs through the dressing rooms, so she passes every station. "She has to dress every time she wakes up, but yesterday's clothes are the defaults": at a station she puts on yesterday's clothes at once, and changes what she likes. She may walk on in her nightie if she wants to (it is one of the options).
 3. **A hat and a broom** from their corridors. Without a broom she can't fly, and the balcony is a drop.
 4. **A record.** In a **brand new game there is one record and it is already on the decks**, so a new player has nothing to find. **Unlocked records appear in the studio**, and she learns she can carry one to the decks.
 5. **The decks.** The needle drops on the record: that is the party spell (journey.md: "the dancefloor is a spell"). She flies off the balcony and the night begins.
