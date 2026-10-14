@@ -12,7 +12,7 @@ import { openBrowser, ROOT } from "./headless.mjs";
 
 let failed = 0;
 const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); if (!cond) failed++; };
-// node art/check.mjs [--pages N] [--tasks a,b] [--only id,id] [--no-lab] [--list] [--times]: N pages draw the sprite checks' tasks at once (as many
+// node art/check.mjs [--pages N] [--tasks a,b] [--only id,id] [--no-lab] [--list] [--times] [--info]: N pages draw the sprite checks' tasks at once (as many
 // as the machine has cores, less one, by default; PAGES=N too); --tasks runs only those (--list names them); --only keeps every check
 // that walks the species or the areas to those ids (a builder's own creature and area), --no-lab skips the two lab pages (minutes each);
 // --times prints what each task and pass took.
@@ -587,14 +587,28 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     const ids = Object.keys(G.TREE_SPECIES), bad = [], stats2 = {};
     for (const id of ids) { const t = G.TREE_SPECIES[id].fn(G.rng(5), { ...st }, st.treeSize), s2 = stats(t.sp); if (!(s2.n > 200 && s2.bottom > 0 && t.crownY > 0 && t.crownY < s2.h)) bad.push(id + " draws"); stats2[id] = G.crownStats(id, st); }
     const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
-    let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = Math.hypot(...vec(stats2[ids[i]]).map((v, k) => v - vec(stats2[ids[j]])[k])); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
-    if (closest[0] < 1.5) bad.push(`${closest[1]} and ${closest[2]} look alike from above (${closest[0].toFixed(2)})`);
+    const apart = (a, b) => Math.hypot(...vec(stats2[a]).map((v, k) => v - vec(stats2[b])[k]));
+    let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = apart(ids[i], ids[j]); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
+    // Two species are only ever seen side by side where one area grows them both (art/flora/areas.js AREA_FLORA, its species
+    // list), so only such a pair looking alike from above (under 1.5 apart) matters, and only as a warning (the coordinator for
+    // Ed, 2026-10-14: loosened from every pair across all the trees failing, the rule of 2026-10-03); the closest pair of all is
+    // reported for information.
+    const { AREA_FLORA: FLORA } = await import("/art/flora/areas.js"), alike = [], seenPair = new Set();
+    let together = [9, "", "", ""];
+    for (const [area, F] of Object.entries(FLORA)) {
+      const sp = [...new Set((F.species || []).map(([id]) => id).filter(id => stats2[id]))];
+      for (let i = 0; i < sp.length; i++) for (let j = i + 1; j < sp.length; j++) {
+        const key = [sp[i], sp[j]].sort().join("+"); if (seenPair.has(key)) continue; seenPair.add(key);
+        const d = apart(sp[i], sp[j]); if (d < together[0]) together = [d, sp[i], sp[j], area];
+        if (d < 1.5) alike.push(`${sp[i]} and ${sp[j]} look alike from above in ${area} (${d.toFixed(2)})`);
+      }
+    }
     // every area's main tree its own (Ed, 2026-10-13: "a 'different' main tree in each area, even if they're only slightly different
     // (e.g. snowy vs not snowy)"): its species, or a variant of it (art/flora/variants.js), no two areas sharing one
     const { TREE_VARIANTS, treeKey } = await import("/art/flora/variants.js");
     const main = A => (A.big || []).find(([k, o]) => k === "tree" && !o.minor)?.[1], owner = {}, uses = {};
     for (const A of AREAS) { const o = main(A); if (!o) continue; const key = treeKey(o); if (owner[key]) bad.push(`${A.id} and ${owner[key]} share their main tree ${key}`); owner[key] = A.id; uses[key] = 1; if (o.variant && !TREE_VARIANTS[o.variant]) bad.push(`${A.id} names no variant ${o.variant}`); if (o.type === "broad" && !o.bare) bad.push(A.id + " still plain broadleaf"); if (!G.TREE_SPECIES[o.type]) bad.push(A.id + " names no species " + o.type); }
-    res.push({ what: "tree species: 20 kinds draw; each crown differs from every other's from above (1.5+ apart); every area's main tree its own (a species, or a variant of one), plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, info: bad.join("; ") || `${Object.keys(uses).length} main trees over the wooded areas; closest pair ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}` });
+    res.push({ what: "tree species: 20 kinds draw; no two species that grow in one area look alike from above (1.5+ apart; a warning); every area's main tree its own (a species, or a variant of one), plain broadleaf only for dead woods", good: !bad.length && ids.length >= 16, warn: alike.join("; "), info: bad.join("; ") || `${Object.keys(uses).length} main trees over the wooded areas; closest pair of all ${closest[1]}/${closest[2]} at ${closest[0].toFixed(2)}, closest sharing an area ${together[1]}/${together[2]} at ${together[0].toFixed(2)} (${together[3]})` });
   });
   task("life-below-crown", async () => { // life below the crown (Ed: "the trunks don't have to be totally devoid of foliage"): every species' bottom half carries some leaves (ivy, moss, sprigs, low boughs,
     // a skirt), more on saplings than on mature trees; the top half is exactly what the tree draws without them (the canopy and its cut-out unchanged);
@@ -928,6 +942,7 @@ for (const lines of await Promise.all(LABS)) for (const [cond, what] of lines) o
 lap("lab pages (the rest)");
 for (const r of report) if (!r.good) ok(false, `${r.what} (${r.info})`);
 for (const r of report) if (r.good && r.warn) console.log(`WARN ${r.what} — ${r.warn}`); // (a warning: reported, not failed)
+if (flag("info")) for (const r of report) if (r.good && r.info) console.log(`info ${r.what} — ${r.info}`); // (--info: what a passing check measured)
 ok(report.every(r => r.good), `${report.length} sprite checks`);
 // the detailed sigils (Ed, 2026-10-12, the sea chart's island runes: "more detailed versions of the rune itself", no circles):
 // every species' and home's World Tree, at each tier: ink, crisp (every pixel ink or not), clear of its box's edge (no circle
