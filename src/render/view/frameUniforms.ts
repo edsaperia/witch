@@ -10,7 +10,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { SPRITE_UNIFORMS } from "../sprites";
+import { FADE_MATERIALS, SPRITE_UNIFORMS } from "../sprites";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
@@ -49,6 +49,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  for (const m of FADE_MATERIALS) m.depthWrite = S.seeWrite;
   if (v.mist) v.mist.mesh.visible = S.mist;
   if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
   SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0);

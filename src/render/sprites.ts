@@ -541,6 +541,9 @@ export function asFloor<B extends { meshes: THREE.Mesh[] }>(b: B): B {
   return b;
 }
 
+/** Every see-through pass's material (the circle hunt: the pause page's switch for its depth). */
+export const FADE_MATERIALS: THREE.ShaderMaterial[] = [];
+
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
   /** Every mesh to add to the scene: the batch itself, plus its see-through pass (things in
@@ -584,6 +587,7 @@ export class SpriteBatch {
       // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
       const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
       fade.frustumCulled = false; fade.renderOrder = 11;
+      FADE_MATERIALS.push(fade.material as THREE.ShaderMaterial);
       // Its depth, once every colour is down (Ed, 2026-10-13, "Clear example of the circle bug"): the see-through pass writes
       // none, so the smooth effects layer (mist, dapple: post.ts, laid by the scene's depth) lay over its pixels as if they weren't
       // there, and everything the fade so much as touched round her came out milkier than the same trees just beyond: a ring. The

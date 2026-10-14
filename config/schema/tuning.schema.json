@@ -8271,6 +8271,9 @@
         },
         "lightRings": {
           "type": "boolean"
+        },
+        "seeWrite": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8287,7 +8290,8 @@
         "seeSplit",
         "seeMark",
         "mist",
-        "lightRings"
+        "lightRings",
+        "seeWrite"
       ],
       "additionalProperties": false
     },

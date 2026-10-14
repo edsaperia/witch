@@ -91,6 +91,20 @@
       "apply": {
         "knob": "suspects.lightRings"
       }
+    },
+    {
+      "id": "seeWrite",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through depth order",
+      "note": "On: where two faded things in front of her overlap, the nearer wins, as everywhere else (the see-through pass writes depth as it draws). Off as ever: whichever is drawn last wins, nearer or not (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeWrite"
+      }
     }
   ]
 }
