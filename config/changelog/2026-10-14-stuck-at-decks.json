@@ -1,0 +1,1 @@
+{ "version": null, "items": ["Fixed a new game sometimes sticking at the decks: no scratching, can't move, nothing starting (the party spell now always gets cast)"] }

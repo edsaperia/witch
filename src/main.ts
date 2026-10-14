@@ -126,8 +126,10 @@ const startEl = document.getElementById("start")!;
 /** The party spell (Ed, 2026-10-06): cast by the creator's scroll (ui/spellScroll.ts), its burst starting play; without the
  *  creator (?creator=0&spell=wait), Enter (once play has begun, so the start screen's Enter isn't it) or her spell key casts it
  *  on the next step. */
-let castQueued = false;
-const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+// Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
+// game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
+let castWanted = false;
+const queueCast = () => { if (awaitingSpell(game.party)) castWanted = true; };
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 // The clock, its pops and the debug overlay (app/hud.ts).
 const hud = new Hud(game);
@@ -399,7 +401,7 @@ function frame(now: number): void {
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
-  if (castQueued) { c.castParty = !bot; castQueued = false; }
+  if (castWanted && !game.clock.paused) { if (awaitingSpell(game.party)) c.castParty = !bot; else castWanted = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) hud.setDebug(!hud.debugOn);
