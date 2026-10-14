@@ -235,6 +235,20 @@
       "apply": {
         "knob": "suspects.seeNoBlend"
       }
+    },
+    {
+      "id": "seeDither",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through by dither",
+      "note": "On (a test): the see-through done in the solid pass itself, by leaving out a fine pattern of pixels of what stands in front of her, more toward her, none at the edge; no second pass for it. If the circle goes, the second pass is the cause (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeDither"
+      }
     }
   ]
 }
