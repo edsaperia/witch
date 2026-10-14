@@ -1,11 +1,11 @@
 {
-  "pr": 925,
+  "pr": 927,
   "group": "Volume",
   "pinned": true,
   "decisions": [
     {
       "id": "musicVolume",
-      "pr": 925,
+      "pr": 927,
       "group": "Volume",
       "label": "Music",
       "note": "The music's volume (music.volume; 0.5 as built). Remembered on this browser (Ed, 2026-10-14: \"being able to control music and sfx volume separately\").",
@@ -16,7 +16,7 @@
     },
     {
       "id": "sfxVolume",
-      "pr": 925,
+      "pr": 927,
       "group": "Volume",
       "label": "Sound effects",
       "note": "The sound effects' volume (sfx.volume; 1 as built): the 💌s, the animals' voices, the ambience, her decks. Remembered on this browser.",
