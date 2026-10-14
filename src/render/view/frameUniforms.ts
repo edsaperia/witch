@@ -42,11 +42,17 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     hx += v.holeLead.x; hy += v.holeLead.y;
   }
   v.holeAt = time;
-  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
+  const S = t.suspects; // (the circle-bug suspects: tuning.json _suspects, the pause page's toggles)
+  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * (S.holeCut ? 1 : 0) * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
   SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
-  SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, v.mpp, t.trunkFade.share);
+  SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
+  SPRITE_UNIFORMS.uOcc.value.w = t.occlusion.on && S.seeThrough ? 1 : 0;
+  SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
+  if (!t.bare) LIGHT_UNIFORMS.uGlowPower.value = S.glow ? t.glowPower : 0;
+  { const H = LIGHT_UNIFORMS.uHazeRange.value; if (!S.haze && !v.hazeKept) { v.hazeKept = H.clone(); H.set(1e5, 2e5); } else if (S.haze && v.hazeKept) { H.copy(v.hazeKept); v.hazeKept = null; } }
   SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
   SPRITE_UNIFORMS.uDebugTrunks.value = v.debugTrunks ? 1 : 0;
   const Fd = t.find; // finding wild creatures in the dark (Ed, v244)

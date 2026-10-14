@@ -131,6 +131,8 @@ export class View {
   camera: THREE.PerspectiveCamera;
   /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
   holeLead = { x: 0, y: 0 };
+  /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
+  hazeKept: THREE.Vector2 | null = null;
   holeAt = 0;
   ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
@@ -942,7 +944,7 @@ export class View {
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
-    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
+    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);

@@ -10,6 +10,7 @@ import { moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
+  suspects: { effectsLayer: boolean };
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
   tiltShift: { on: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
@@ -212,7 +213,7 @@ export class Post {
       }
     }
     // The smooth effects layer, over a clear background, then a small blur each way.
-    const fxOn = !!this.fxScene;
+    const fxOn = !!this.fxScene && t.suspects.effectsLayer; // (tuning suspects: the circle bug's toggles)
     if (this.fxScene) {
       const col = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
       r.setRenderTarget(this.fx);

@@ -1729,7 +1729,7 @@ Everything the camera can see is drawn, plus viewMargin metres round the view, s
 | `artPixelsPerMetre` | number | 0 to … |
 | `viewMargin` | number | 0 to … |
 
-### `sigilProjection`, `occlusion`, `canopyShadow`
+### `sigilProjection`
 
 From the treetops, each placed sigil shows above the canopy over its spot: height metres above the crowns, opacity, size (times the ground rune), and a faint column of light (beam opacity) from the rune up to it. Fades in as she rises. creatures (Ed's playtest, 2026-10-06: "I should be able to see sigils of leashed creatures and happy creatures from treetop mode"): each leashed or happy creature's sigil hangs over it at the same height, moving with it, no beam: only the nearest max within range metres, size times its ground rune, at opacity (a happy one's times happy, as its rune is dimmer on the ground), fading out over the last fade (a share) of the range. Not for one in her stack (its sigil's already over her) or one standing at its placed sigil (that one's projected already).
 
@@ -1745,6 +1745,22 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.creatures.opacity` | number | 0 to … |
 | `sigilProjection.creatures.happy` | number | 0 to … |
 | `sigilProjection.creatures.fade` | number | 0 to … |
+
+### `suspects`, `occlusion`, `canopyShadow`
+
+The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896).
+
+| knob | type | range |
+|---|---|---|
+| `suspects.seeThrough` | boolean |  |
+| `suspects.holeCut` | boolean |  |
+| `suspects.trunkFade` | boolean |  |
+| `suspects.groundCover` | boolean |  |
+| `suspects.glow` | boolean |  |
+| `suspects.effectsLayer` | boolean |  |
+| `suspects.haze` | boolean |  |
+| `suspects.areaAverage` | boolean |  |
+| `suspects.seeDepth` | boolean |  |
 | `occlusion.on` | boolean |  |
 | `occlusion.fadeOpacity` | number | 0 to … |
 | `occlusion.edge` | number | 0 to … |

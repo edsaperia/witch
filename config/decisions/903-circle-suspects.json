@@ -1,0 +1,174 @@
+{
+  "pr": 903,
+  "group": "Circle-bug suspects",
+  "decisions": [
+    {
+      "id": "susSeeThrough",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "See-through in front of her",
+      "note": "Tall things in front of her fading within a soft circle round her (occlusion). On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeThrough"
+      }
+    },
+    {
+      "id": "susHoleCut",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Canopy cut-away",
+      "note": "The crowns cut away in a circle round her. Off: crowns everywhere. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.holeCut"
+      }
+    },
+    {
+      "id": "susTrunkFade",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Trunk-top fade",
+      "note": "Trunk tops fading out where their crowns are cut away. Off: trunks whole. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.trunkFade"
+      }
+    },
+    {
+      "id": "susGroundCover",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Ground cover kept to the cut-away",
+      "note": "The tufts drawn only out to the cut-away's reach. Off: out to their own full radius. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.groundCover"
+      }
+    },
+    {
+      "id": "susGlow",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Her light",
+      "note": "Her glow and its warm pool on the ground and scenery. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.glow"
+      }
+    },
+    {
+      "id": "susEffects",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Smooth effects layer",
+      "note": "The mist and dapple layer, drawn separately, blurred and laid over the picture. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.effectsLayer"
+      }
+    },
+    {
+      "id": "susHaze",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Far haze",
+      "note": "The twilight haze thickening with distance from her. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.haze"
+      }
+    },
+    {
+      "id": "susAreaAvg",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Scenery averaging",
+      "note": "Scenery sprites averaged over their pixels where they're drawn smaller than their art. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.areaAverage"
+      }
+    },
+    {
+      "id": "susSeeDepth",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "See-through depth (#896)",
+      "note": "The see-through pass writing its depth, so the mist hides behind it. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeDepth"
+      }
+    },
+    {
+      "id": "susCastShadows",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Cast shadows on things",
+      "note": "Shadows darkening what stands in them: a square map of the ground round her. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "shadows.cast"
+      }
+    },
+    {
+      "id": "susTilt",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Tilt-shift",
+      "note": "The blur toward the top and bottom of the screen. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "tiltShift.on"
+      }
+    },
+    {
+      "id": "susBloom",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Bloom",
+      "note": "The glow round bright things. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "bloom.on"
+      }
+    }
+  ]
+}

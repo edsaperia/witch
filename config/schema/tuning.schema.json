@@ -8227,6 +8227,50 @@
       ],
       "additionalProperties": false
     },
+    "suspects": {
+      "type": "object",
+      "properties": {
+        "seeThrough": {
+          "type": "boolean"
+        },
+        "holeCut": {
+          "type": "boolean"
+        },
+        "trunkFade": {
+          "type": "boolean"
+        },
+        "groundCover": {
+          "type": "boolean"
+        },
+        "glow": {
+          "type": "boolean"
+        },
+        "effectsLayer": {
+          "type": "boolean"
+        },
+        "haze": {
+          "type": "boolean"
+        },
+        "areaAverage": {
+          "type": "boolean"
+        },
+        "seeDepth": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "seeThrough",
+        "holeCut",
+        "trunkFade",
+        "groundCover",
+        "glow",
+        "effectsLayer",
+        "haze",
+        "areaAverage",
+        "seeDepth"
+      ],
+      "additionalProperties": false
+    },
     "occlusion": {
       "type": "object",
       "properties": {
@@ -10615,6 +10659,7 @@
     "artPixelsPerMetre",
     "viewMargin",
     "sigilProjection",
+    "suspects",
     "occlusion",
     "canopyShadow",
     "rig",
