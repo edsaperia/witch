@@ -147,6 +147,34 @@
       "apply": {
         "knob": "suspects.seeStencil"
       }
+    },
+    {
+      "id": "seeEarly",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through drawn early",
+      "note": "On: the see-through pass drawn straight after the solid trees, not after everything else (a test: she then shows through them whole). If the circle's edge goes, something drawn between changes the trees (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeEarly"
+      }
+    },
+    {
+      "id": "seeSolid",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through solid",
+      "note": "On: the see-through pass draws its pixels fully solid, with no blending (a test: nothing is see-through then). If the circle's edge goes, it's the blending (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeSolid"
+      }
     }
   ]
 }

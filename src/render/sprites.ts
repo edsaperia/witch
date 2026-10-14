@@ -69,7 +69,8 @@ export const SPRITE_UNIFORMS = {
   /** The circle-bug suspects' switches (tuning suspects: render/view/frameUniforms.ts): scenery averaged where it shrinks; the see-through pass's depth. */
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
-  uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) }, // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
+  uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uSeeSolid: { value: 0 }, // (the circle hunt: the see-through pass drawn solid, alpha 1, no blending) // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
   /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
@@ -267,7 +268,7 @@ uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
-uniform float uAreaAvg, uSeeDepth;
+uniform float uAreaAvg, uSeeDepth, uSeeSolid;
 uniform vec4 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
@@ -394,6 +395,7 @@ void shade() {
   if (uFadePass > 0.5 ? !see : (uSeeDbg.w > 0.5 ? seePart : see)) discard; // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
   if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
+  if (uSeeSolid > 0.5 && uFadePass > 0.5) alpha = 1.0;
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
@@ -544,6 +546,7 @@ export function asFloor<B extends { meshes: THREE.Mesh[] }>(b: B): B {
 
 /** Every see-through pass's material (the circle hunt: the pause page's switch for its depth). */
 export const FADE_MATERIALS: THREE.ShaderMaterial[] = [];
+export const FADE_MESHES: THREE.Mesh[] = [];
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -589,7 +592,7 @@ export class SpriteBatch {
       const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
       fade.frustumCulled = false; fade.renderOrder = 11;
       if (opts.scenery) Object.assign(fade.material, mark, { stencilWrite: false }); // (its marks off as ever; the circle hunt's switch puts them on)
-      FADE_MATERIALS.push(fade.material as THREE.ShaderMaterial);
+      FADE_MATERIALS.push(fade.material as THREE.ShaderMaterial); FADE_MESHES.push(fade);
       // Its depth, once every colour is down (Ed, 2026-10-13, "Clear example of the circle bug"): the see-through pass writes
       // none, so the smooth effects layer (mist, dapple: post.ts, laid by the scene's depth) lay over its pixels as if they weren't
       // there, and everything the fade so much as touched round her came out milkier than the same trees just beyond: a ring. The

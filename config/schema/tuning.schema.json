@@ -8283,6 +8283,12 @@
         },
         "seeStencil": {
           "type": "boolean"
+        },
+        "seeEarly": {
+          "type": "boolean"
+        },
+        "seeSolid": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8303,7 +8309,9 @@
         "seeWrite",
         "seeCull",
         "seeKeep",
-        "seeStencil"
+        "seeStencil",
+        "seeEarly",
+        "seeSolid"
       ],
       "additionalProperties": false
     },
