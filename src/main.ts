@@ -1,5 +1,4 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
-import { SPRITE_UNIFORMS } from "./render/sprites";
 import { wavesOver } from "./rules/win";
 import { chartOpen, openChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
