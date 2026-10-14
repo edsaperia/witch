@@ -76,8 +76,9 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     // (her frames without her hat are baked on their own, a moment after the game is up: waited for here, so she shows at the circle)
     await unpause();
     await page.evaluate(() => { window.witch.view.assets.witchBare(); });
-    await page.waitForFunction(() => window.witch.view.assets.witchBare().frames.length > 8, null, { timeout: 400000, polling: 500 }).catch(() => {});
-    out.bareReady = await page.evaluate(() => window.witch.view.assets.witchBare().frames.length > 8);
+    // (till they're baked, witchBare() is a stand-in atlas of 1 px frames)
+    await page.waitForFunction(() => window.witch.view.assets.witchBare().frames.some(f => f.w > 1), null, { timeout: 600000, polling: 500 }).catch(() => {});
+    out.bareReady = await page.evaluate(() => window.witch.view.assets.witchBare().frames.some(f => f.w > 1));
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + 30, z: T.z + 60, vx: 0, vz: 0, mode: "ground", lift: 0, perch: undefined, seated: false }; });
     await wait(300);
     out.hit = await page.evaluate(() => { const W = window.witch.game.witches[0]; W.health.hp = 1; W.health.hurtAt = -Infinity; return window.witch.hit(); }); // (her last hit: app/hooks.ts)
