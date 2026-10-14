@@ -157,6 +157,26 @@ export function nope(K: SfxKit, pan = 0): void {
   }
 }
 
+/** A 💌 refused by an enraged animal (Ed, 2026-10-12: "an angry, whiny sound"; the rules' "blocked"): a nasal whine, two
+ *  sawtooths a few cents apart through a vowel-like band-pass closing from "eh" to "uh", its pitch sagging a minor third (the
+ *  key's fifth down to its third) under a quickening wobble, a little grit on it, and a short dry "tch" of noise as it starts:
+ *  about a third of a second. The tuning's sfx.refused (volume, gap). */
+export function refused(K: SfxKit, pan = 0, near = 1): void {
+  const R = K.T.refused;
+  if (!R || !K.ready("refused", R.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(pan, 0.35 + 0.4 * near), vol = R.volume * near;
+  const bp = c.createBiquadFilter(); bp.type = "bandpass"; bp.Q.value = 5; bp.frequency.setValueAtTime(1500, at); bp.frequency.exponentialRampToValueAtTime(650, at + 0.3);
+  const sh = c.createWaveShaper(); sh.curve = grit(); sh.connect(bp);
+  const g = c.createGain(); g.connect(out); K.env(g, at, vol * 3, 0.015, 0.3); bp.connect(g); // (×3: the band-pass takes most of the saws' energy)
+  const f = mtof(K.root + 7), lfo = c.createOscillator(), depth = c.createGain();
+  lfo.type = "sine"; lfo.frequency.setValueAtTime(6, at); lfo.frequency.linearRampToValueAtTime(14, at + 0.3);
+  depth.gain.setValueAtTime(2, at); depth.gain.linearRampToValueAtTime(14, at + 0.3); lfo.connect(depth);
+  for (const det of [-6, 7]) { const o = K.osc("sawtooth", f, at, 0.36, sh); o.detune.value = det; depth.connect(o.frequency); o.frequency.setValueAtTime(f, at + 0.06); o.frequency.exponentialRampToValueAtTime(f * 2 ** (-4 / 12), at + 0.3); }
+  lfo.start(at); lfo.stop(at + 0.4);
+  const tch = c.createGain(); tch.connect(out); K.env(tch, at, vol * 0.5, 0.002, 0.03);
+  const hp = c.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 3000; hp.connect(tch); K.noiseBurst(at, 0.04, hp);
+}
+
 /** An area cleared early (Ed, 2026-10-08; the rules' "areaCleared": every hostile native invited and its runestone a
  *  soundsystem before the pulse came): a small "cleared!" sting, about a second, in the key's bright side: a quick rising
  *  swoosh into a chord stab (the relative major's triad and its octave, triangles and a square through a low-pass opening

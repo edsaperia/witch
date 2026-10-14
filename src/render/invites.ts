@@ -12,7 +12,7 @@ import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
 import { placed, shownOverBend } from "./height";
-import { pixelEmoji, pixelEmojiData, sizeBubble, speechBubble } from "./bubbles";
+import { pixelEmoji, pixelEmojiData, pixelSprite, sizeBubble, speechBubble } from "./bubbles";
 
 import { bodyRadius } from "../rules/spacing";
 import type { Creature } from "../rules/creatures";
@@ -24,6 +24,25 @@ const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
 const REPLIES = [["😳", "🤨", "😶", "🫣"], ["😮", "🤭", "😊", "🙂"], ["😍", "🥰", "😆", "🤩"], ["🥳", "🎉", "💖", "💃"]];
 const BLOCKED = ["😠", "🙅", "💢", "😤"];
+
+/** A 💌 refused by an enraged animal (Ed, 2026-10-12: "the invitation crumples into a ball of paper and is tossed away"; the
+ *  rules' "blocked"): at the animal's face the letter scrunches up over CRUMPLE seconds, twitching, then the ball is flung back
+ *  the way it came (TOSS m/s, TOSS_UP up, swung a little to one side), tumbling, bounces once, lies there BALL_REST seconds and
+ *  fades over the last BALL_FADE. Its 💢 shakes meanwhile (the pops below). */
+const CRUMPLE = 0.2, TOSS = 4.5, TOSS_UP = 3.2, GRAVITY = 10, BALL_REST = 1.1, BALL_FADE = 0.4, BALL = "crumpled";
+/** The ball of paper, n pixels across: a lumpy round of cream lit from the top left, creases across it, a glimpse of its heart. */
+function paintBall(x: CanvasRenderingContext2D, n: number): void {
+  const c = (n - 1) / 2, R = n * 0.42;
+  const r = (a: number) => R * (1 + 0.14 * Math.sin(a * 3 + 0.7) + 0.08 * Math.sin(a * 5 + 2.1));
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    const dx = i - c, dy = j - c, d = Math.hypot(dx, dy);
+    if (d > r(Math.atan2(dy, dx))) continue;
+    const lit = (-dx - dy) / (2 * R), crease = Math.abs(Math.sin(dx * 0.9 + dy * 0.5 + 0.4)) < 0.14 || Math.abs(Math.sin(dx * 0.35 - dy * 1.1 + 1.3)) < 0.1;
+    x.fillStyle = crease ? "#9a7b55" : lit > 0.25 ? "#fff6e2" : lit < -0.3 ? "#cdb38c" : "#f1e2c4";
+    if (!crease && n > 6 && Math.abs(dx - 1) < 1 && Math.abs(dy + 1) < 1) x.fillStyle = "#d9789e";
+    x.fillRect(i, j, 1, 1);
+  }
+}
 
 /** Where pixel (i, j) of a W x H picture of an n-pixel sprite turned by (cos c, sin s) and scaled (sx, sy) comes from in
  *  the sprite: [x, y], or null outside it (nearest pixel: a CSS rotate, or a scale that isn't whole, would tilt and smear
@@ -91,6 +110,9 @@ export class InviteView {
   private lastHers = -Infinity;
   /** Little pops where letters land: { element, where, when }. */
   private pops: { el: HTMLImageElement; e: string; x: number; y: number; z: number; at: number }[] = [];
+  /** Refused letters: scrunching up, then flung away as balls of paper (CRUMPLE and after). */
+  private crumples: { x: number; y: number; z: number; vx: number; vy: number; vz: number; at: number; landed: number; bounced: boolean; el: HTMLImageElement; seed: number }[] = [];
+  private lastTime = -1;
   /** 💌s that met no one, resting where they came down (Ed's playtest, 2026-10-06: "invitations
    *  should sit on the ground for a little while before they fade away"): drawn only (the rules ended
    *  them; they're no hits), at most invites.lingerMax, their images pooled and reused. */
@@ -146,6 +168,20 @@ export class InviteView {
     if (this.pops.length > 40) this.pops.shift()!.el.remove();
   }
 
+  /** A letter refused at (x, z) by creature `id`, `y` up its face: flung back the way it came (its flight reversed; with
+   *  none, away from the animal), swung to one side by its number. */
+  private crumple(e: { x: number; z: number; id: number; n: number; vx?: number; vz?: number }, y: number, time: number): void {
+    const c = this.game.creatures[e.id];
+    let dx = -(e.vx ?? 0), dz = -(e.vz ?? 0), d = Math.hypot(dx, dz);
+    if (d < 1e-3 && c) { dx = e.x - c.x; dz = e.z - c.z; d = Math.hypot(dx, dz); }
+    if (d < 1e-3) { dx = 1; dz = 0; }
+    const a = Math.atan2(dz, dx) + (hash2(e.n, 5, 41) - 0.5) * 1.2, el = document.createElement("img");
+    Object.assign(el.style, { position: "absolute", imageRendering: "pixelated", filter: "drop-shadow(0 0 2px rgba(232,180,106,.6))" });
+    this.root.append(el);
+    this.crumples.push({ x: e.x, y, z: e.z, vx: Math.cos(a) * TOSS, vy: TOSS_UP, vz: Math.sin(a) * TOSS, at: time, landed: -1, bounced: false, el, seed: e.n });
+    if (this.crumples.length > 24) this.crumples.shift()!.el.remove();
+  }
+
   update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>, heads?: Map<number, { x: number; z: number }>): void {
     const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch;
     // (Pixel art (the 💌s, hearts and pops) on whole art pixels, each k CSS pixels: on the grid as it moves.)
@@ -181,7 +217,7 @@ export class InviteView {
         this.rest(e.x, e.z, time, this.spins.get(e.n ?? -1) ?? (hash2(e.n ?? 0, 3, 29) - 0.5) * 50);
       } else if ((e.kind === "hit" || e.kind === "blocked" || e.kind === "happy") && e.id !== undefined) {
         // A blocked letter pops 💢; one that lands joins its ring (below); won over, the ring goes to hearts.
-        if (e.kind === "blocked") this.pop("💢", e.x, head(e.id) * 0.6, e.z, time);
+        if (e.kind === "blocked") { this.pop("💢", e.x, head(e.id) * 0.6 + 0.5, e.z, time); this.crumple(e, head(e.id) * 0.5, time); }
         if (e.kind === "happy") won.push(e.id);
         if (e.spent) continue;
         let b = this.replies.get(e.id);
@@ -194,12 +230,41 @@ export class InviteView {
     }
     if (this.seen.size > 400) this.seen = new Set([...this.seen].slice(-200));
     this.pops = this.pops.filter(p => {
-      const k = (time - p.at) / 0.35;
+      // (the 💢 of a refusal holds at the animal's face and vibrates, a whole art pixel round and round 30 times a second,
+      // the rest rise and fade: Ed, 2026-10-12)
+      const shake = p.e === "💢", k = (time - p.at) / (shake ? 0.7 : 0.35);
       if (k >= 1 || k < 0) { p.el.remove(); return false; }
-      place(p.el, p.x, p.y + k * 0.5, p.z);
-      p.el.style.opacity = String(1 - k);
-      const sc = 0.6 + 0.6 * Math.sin((Math.min(1, k * 2) * Math.PI) / 2);
+      place(p.el, p.x, p.y + (shake ? 0.1 : k * 0.5), p.z);
+      p.el.style.opacity = String(shake ? Math.min(1, (1 - k) * 3) : 1 - k);
+      const sc = shake ? 1.3 - 0.3 * Math.min(1, k * 4) : 0.6 + 0.6 * Math.sin((Math.min(1, k * 2) * Math.PI) / 2);
       showTurned(p.el, p.e, 7, sc, sc, 0, kp);
+      if (shake) { const ph = Math.floor((time - p.at) * 30) % 4; p.el.style.translate = `${[1, 0, -1, 0][ph] * kp}px ${[0, -1, 0, 1][ph] * kp}px`; }
+      return true;
+    });
+    // The refused letters: scrunched up where they were stopped, then flung away as balls of paper, tumbling, one bounce,
+    // a moment on the ground and gone.
+    const dt = this.lastTime < 0 ? 0 : Math.max(0, Math.min(0.1, time - this.lastTime)), bn = Math.round(t.bubbles.emojiPixels * 0.8);
+    this.lastTime = time;
+    pixelSprite(BALL, bn, paintBall);
+    this.crumples = this.crumples.filter(q => {
+      const u = time - q.at;
+      if (u < 0) { q.el.remove(); return false; }
+      if (u < CRUMPLE) {
+        const f = u / CRUMPLE, j = hash2(q.seed, Math.floor(u * 40), 9) - 0.5;
+        place(q.el, q.x, q.y, q.z);
+        showTurned(q.el, "💌", bn, 1 - 0.5 * f + 0.15 * j, 1 - 0.4 * f - 0.15 * j, j * 60, kp);
+        return true;
+      }
+      if (q.landed < 0) {
+        q.vy -= GRAVITY * dt; q.x += q.vx * dt; q.y += q.vy * dt; q.z += q.vz * dt;
+        if (q.y <= 0.15) { q.y = 0.15; if (!q.bounced) { q.bounced = true; q.vy = -q.vy * 0.35; q.vx *= 0.5; q.vz *= 0.5; } else q.landed = time; }
+      }
+      const rest = q.landed < 0 ? 0 : time - q.landed;
+      if (rest > BALL_REST) { q.el.remove(); return false; }
+      place(q.el, q.x, q.y, q.z);
+      const flying = (q.landed < 0 ? u : q.landed - q.at) - CRUMPLE;
+      showTurned(q.el, BALL, bn, 0.8, 0.8, flying * 540 + q.seed * 50, kp);
+      q.el.style.opacity = rest > BALL_REST - BALL_FADE ? ((BALL_REST - rest) / BALL_FADE).toFixed(2) : "1";
       return true;
     });
     // Hers follows her; theirs follow them.

@@ -87,6 +87,8 @@ export class Sfx {
   cleared(pan = 0, near = 1): void { chimes.cleared(this.k, pan, near); }
   /** A sigil refused (too near one already down). */
   nope(pan = 0): void { chimes.nope(this.k, pan); }
+  /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */
+  refused(pan = 0, near = 1): void { chimes.refused(this.k, pan, near); }
   reply(v: CreatureVoice, amount: number, pan = 0, near = 1): void { this.babble.reply(v, amount, pan, near); }
 
   // ——— creatures ———
