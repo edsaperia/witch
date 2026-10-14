@@ -152,15 +152,24 @@ export class AssetLibrary {
     // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
+    (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job);
     this.dispatch();
   }
+  /** The night is playing (the party spell cast): the art drawn ahead of need keeps to half the workers, so the audio thread
+   *  and the GPU's keep a core among them (Ed's log, 2026-10-14: the device under-ran in bursts, seconds of the audio clock lost
+   *  at a time, while the workers baked on every core but the page's). What the view needs now (an urgent ask) takes them all. */
+  playing = false;
   private dispatch(): void {
     if (!this.useWorkers) return;
+    const n = this.workers.length, ahead = this.playing ? Math.max(1, Math.floor(n / 2)) : n;
     for (const slot of this.workers) {
       if (slot.busy || !this.queue.length) continue;
+      const busy = this.workers.filter(s => s.busy).length;
+      const i = busy < ahead ? 0 : this.queue.findIndex(j => (j as ArtJob & { urgent?: boolean }).urgent); // (the pool's share for the art ahead full: an urgent job only)
+      if (i < 0) break;
       slot.busy = true;
-      slot.job = this.queue.shift();
+      slot.job = this.queue.splice(i, 1)[0];
       slot.w.postMessage(slot.job);
     }
   }
@@ -207,7 +216,7 @@ export class AssetLibrary {
       for (const p of pieces) (families[p.family] ??= []).push(p);
       this.decor = { atlas, pieces, families };
     } else if (r.job.kind === "rig") {
-      if (r.result.rig) this.rigs.set(r.job.id, { atlas, meta: r.result.rig, used: performance.now() });
+      if (r.result.rig) this.rigs.set(r.job.id, { atlas, meta: r.result.rig, used: performance.now() }); else this.noRig.add(r.job.id);
       this.evictRigs();
     } else if (r.job.kind === "type") {
       // Each tree's cut: where its crown's bulk ends (both halves share the frame's box): the row
@@ -286,9 +295,15 @@ export class AssetLibrary {
     if (h === undefined) this.genomeHashes.set(species, (h = Art.genomeHash(g) as string)); // (the genomes are fixed for the run: hashed once, not per creature per frame)
     const k = `rig-${species}-${level}-${h}${gear ? "-" + rigGearKey(gear) : ""}`, a = this.rigs.get(k);
     if (a) { a.used = performance.now(); return a; }
+    // Only the four-legged and the snakes have rig parts (art/genome/parts.js); a page that came back without any (a squat
+    // mole's, say) was asked for again every frame, a job at the head of the queue each round for the whole night (2026-10-14).
+    const template = (g as { template?: string }).template;
+    if ((template !== "quadruped" && template !== "serpent") || this.noRig.has(k)) return undefined;
     this.ask({ kind: "rig", id: k, species, level, style: this.style, ...(gear ? { gear } : {}) }, true); // gameplay: ahead of the scenery
     return undefined;
   }
+  /** Rig pages asked for that came back empty (no rig parts for the species): never asked for again. */
+  private noRig = new Set<string>();
   /** Least recently used rig pages are let go past RIG_PAGES, their textures freed. */
   private evictRigs(): void {
     while (this.rigs.size > RIG_PAGES) {

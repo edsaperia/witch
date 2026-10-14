@@ -553,7 +553,13 @@ export class View {
     warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
-    for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
+    // The island's own creatures' art ahead (the map's area types' and the night's legends'), not every species' (Ed's log,
+    // 2026-10-14: the audio under-ran in bursts through the first ten minutes of every night; the workers were baking all sixty
+    // species, 1 to 14 s each, on every core but the page's, with the audio thread starved among them: a wave landing's own art,
+    // the woken looks and the party witches, then queued behind them).
+    const own = new Set<string>(this.game.map.legendKinds);
+    for (const [t] of near) { const sp = AREA_TYPES[t]?.creature; if (sp) own.add(sp); }
+    for (const sp of own) this.assets.creatureArt(sp);
   }
 
   batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
@@ -805,6 +811,7 @@ export class View {
   private ringCount = 0;
 
   render(time: number, draw = true): void {
+    this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
     // (arriving from the sea chart: the flight's shot, app/arrive.ts)

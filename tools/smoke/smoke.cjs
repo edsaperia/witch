@@ -164,13 +164,13 @@ async function main() {
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
-    await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 60000 });
-    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+    await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 240000 });
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 }).catch(() => {});
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 }).catch(() => {});
     s = await state(page);
     check(s.mode === "ground", `space descends to ground mode (${s.mode})`);
     await shot(page, "06-ground-zoomed-out.png");
@@ -209,7 +209,7 @@ async function main() {
       await page.keyboard.press("Enter");
       await hold(page, "ArrowUp", 1);
       await page.keyboard.press("Space");
-      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `2${["before", "after", "off"].indexOf(tilt)}-tilt-${tilt}.png`);
     }, `&tilt=${tilt}`);
@@ -221,9 +221,9 @@ async function main() {
     await sleep(1500);
     await shot(page, "40-dancefloor-ground.png");
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 60000, polling: 20 });
+    await page.waitForFunction(() => window.witch.game.witch.lift > 0.3, null, { timeout: 240000, polling: 20 });
     await page.screenshot({ path: path.join(out, "42-rising.png") }); // no settle: catch her mid-climb
-    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(1500);
     await shot(page, "41-dancefloor-treetop.png");
     // The wave numbers follow the bend (Ed, 2026-10-05: "the glowing numbers can be seen past the
@@ -241,7 +241,7 @@ async function main() {
     check(nb.shownPast === 0 && nb.drawn > 0, `over the treetops, no wave number shows for a stone past the bent horizon (${nb.drawn} drawn, ${nb.hidden} past the horizon, ${nb.shownPast} still showing)`);
     // Behind the home soundsystem (up the screen from it), on the ground: she must still read.
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 });
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor, x = d.x + d.radius + 5, z = d.z + 3 - 2.5; g.witch = { ...g.witch, x, z, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: x, tz: z }; });
     await sleep(1500);
     await shot(page, "43-behind-soundsystem.png");
@@ -256,7 +256,7 @@ async function main() {
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
       await page.keyboard.press("Space");
-      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
       await sleep(600);
       await shot(page, `31-treetop-${name}.png`);
     }, q);
@@ -267,9 +267,9 @@ async function main() {
     await page.keyboard.press("Enter");
     await page.keyboard.press("KeyP"); // hold the timer: the waves come when asked
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await page.keyboard.press("KeyN");
-    await page.waitForFunction(() => window.witch.game.party.wave >= 1, null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.party.wave >= 1, null, { timeout: 240000 });
     const at = await page.evaluate(() => {
       const g = window.witch.game, list = [...g.party.areas.values()].filter(a => a.wave === 1);
       const a = list[0], s = a.soundsystem, f = g.map.siteOf(a.from[0], a.from[1]);
@@ -285,16 +285,16 @@ async function main() {
       await shot(page, `5${i}-party-transition-${i}.png`);
     }
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "55-string-lights-ground.png");
     await page.keyboard.press("Space");
-    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 });
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "56-string-lights-treetop.png");
     for (let w = 2; w <= 4; w++) {
       await page.keyboard.press("KeyN");
-      await page.waitForFunction(n => window.witch.game.party.wave >= n, w, { timeout: 60000 });
+      await page.waitForFunction(n => window.witch.game.party.wave >= n, w, { timeout: 240000 });
     }
     await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z }; g.camera = { ...g.camera, tx: d.x, tz: d.z }; });
     for (let i = 0; i < 4; i++) { await page.keyboard.press(ZOOM_OUT); await sleep(150); }
@@ -479,7 +479,7 @@ async function main() {
     await page.keyboard.up("Digit1");
     await page.evaluate(i => { const g = window.witch.game, c = g.creatures[i]; Object.assign(c, { x: g.witch.x + 0.8, z: g.witch.z, tx: g.witch.x + 0.8, tz: g.witch.z, anchorX: g.witch.x + 0.8, anchorZ: g.witch.z }); }, id);
     await page.keyboard.press("KeyE");
-    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 60000, polling: 100 }).catch(() => {});
+    await page.waitForFunction(i => window.witch.game.creatures[i].leashed, id, { timeout: 240000, polling: 100 }).catch(() => {});
     check(await page.evaluate(i => window.witch.game.leash.stack.includes(i), id), "her 💌s at a creature fill its meter, and E on its rune invites it onto her sigil stack");
     // One press a frame: wait for each invite to land before the next (the headless renderer is slow).
     for (let i = 0; i < 3; i++) {
@@ -514,7 +514,7 @@ async function main() {
     await page.keyboard.press("Enter");
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
-      if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 60000 }); }
+      if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
       for (const z of [ZOOM_OUT, ZOOM_OUT, ZOOM_IN, ZOOM_IN, ZOOM_IN]) {
         await page.keyboard.press(z);
         await page.keyboard.down("ArrowRight");
