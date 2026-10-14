@@ -50,6 +50,7 @@ import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { ArrivalFlight } from "./app/arrive";
+import { SHED_STEPS } from "./platform/audio/shed";
 import { readArrival } from "./app/arrival";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
@@ -407,6 +408,7 @@ playtest.frameState = () => {
 };
 const micWanted = params.get("micCheck") === "1";
 let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
+const SLOW_AUDIO = 150; let slowAudioLogged = 0; // (ms: a frame's audio work worth a line in the playtest log)
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return ready; } };
@@ -476,6 +478,7 @@ function frame(now: number): void {
   // The music: one track, mixed by how near the witch is to a playing soundsystem.
   musicCueNow = musicCue(game, musicCueNow);
   sound.update(game, musicCueNow, creator.open);
+  const meter0 = performance.now();
   if (sound.audio) {
     meter.tap(sound.audio, [sound.music?.output, sound.music?.circleOutput, sound.sfx?.output]);
     meter.read(performance.now(), sound.musicExpected());
@@ -487,6 +490,12 @@ function frame(now: number): void {
     });
   }
   const outside = { playtest: audio0 - log0, audio: performance.now() - audio0 }; // (for the stall log: not the view's own parts)
+  // A slow audio frame's parts in the playtest log (Ed's v3668: a second of "audio" on play's first frame, 2026-10-14), a few a load
+  if (outside.audio > SLOW_AUDIO && slowAudioLogged < 8) {
+    slowAudioLogged++;
+    const p = sound.parts, r = (x: number) => Math.round(x);
+    playtest.audio(`slow audio frame ${r(outside.audio)} ms: music ${r(p.music ?? 0)}, cues ${r(p.cues ?? 0)}, mix ${r(p.mix ?? 0)}, room ${r(p.room ?? 0)}, meter ${r(performance.now() - meter0)}`);
+  }
   if (!ready) return;
   hud.losses();
   hud.clock();
@@ -517,7 +526,7 @@ function overlayHead(): string[] {
   return [
     ...frameStats.lines(),
     stallLog.line(),
-    meter.line() + (sound.valve.level ? `  shed ${sound.valve.level}` : ""),
+    meter.line() + (sound.valve.level ? `  shed ${sound.valve.level} (${SHED_STEPS[sound.valve.level]})` : "  full mix"),
     repro.line(),
     `seed   ${seed}  ${typeof __BUILD__ === "string" ? __BUILD__ : "dev"}`,
     `area   ${areaUnderWitch(game)}`,
