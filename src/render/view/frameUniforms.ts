@@ -120,7 +120,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
       const d = g.map.dancefloor;
       v.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
     }
-    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist);
+    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
     v.moodTime = time;
   }
 }

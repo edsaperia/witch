@@ -14,7 +14,7 @@
         "max": 1,
         "step": 0.05
       },
-      "default": 0.6,
+      "default": 1,
       "apply": {
         "knob": "shadows.tint"
       }

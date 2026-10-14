@@ -1,0 +1,23 @@
+{
+  "pr": 911,
+  "group": "Low mist",
+  "decisions": [
+    {
+      "id": "mistGain",
+      "pr": 911,
+      "group": "Low mist",
+      "label": "Low mist strength",
+      "note": "The low drifting mist, times this (mist.gain; 1 as ever). Each area's mood sets its own mist (0.15 at home to 0.34 in the bogs: light.spooky.mist and its areas), and this scales them all (Ed, 2026-10-14: \"almost impossible to see\").",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 5,
+        "step": 0.05
+      },
+      "default": 1,
+      "apply": {
+        "knob": "mist.gain"
+      }
+    }
+  ]
+}
