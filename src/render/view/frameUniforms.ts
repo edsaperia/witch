@@ -52,6 +52,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeSolid ? THREE.NoBlending : THREE.NormalBlending; }
   for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;
   SPRITE_UNIFORMS.uSeeSolid.value = S.seeSolid ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeShowA.value = S.seeShowAlpha ? 1 : 0;
   if (v.mist) v.mist.mesh.visible = S.mist;
   if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
   SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0, S.seeCull ? 1 : 0, S.seeKeep ? 1 : 0);

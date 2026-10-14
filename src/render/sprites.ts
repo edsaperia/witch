@@ -70,6 +70,7 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
   uSeeSolid: { value: 0 }, // (the circle hunt: the see-through pass drawn solid, alpha 1, no blending) // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
   /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
   uDebugTrunks: { value: 0 },
@@ -268,7 +269,7 @@ uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
-uniform float uAreaAvg, uSeeDepth, uSeeSolid;
+uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA;
 uniform vec4 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
@@ -527,6 +528,7 @@ void main() {
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
+  if (uSeeShowA > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) gl_FragColor = vec4(vec3(gl_FragColor.a), 1.0); // (the circle hunt: its opacity, white solid)
 }
 `;
 

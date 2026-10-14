@@ -8289,6 +8289,9 @@
         },
         "seeSolid": {
           "type": "boolean"
+        },
+        "seeShowAlpha": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8311,7 +8314,8 @@
         "seeKeep",
         "seeStencil",
         "seeEarly",
-        "seeSolid"
+        "seeSolid",
+        "seeShowAlpha"
       ],
       "additionalProperties": false
     },

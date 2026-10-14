@@ -175,6 +175,20 @@
       "apply": {
         "knob": "suspects.seeSolid"
       }
+    },
+    {
+      "id": "seeShowAlpha",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Show see-through opacity",
+      "note": "On: everything the see-through pass draws shows as grey by its own opacity, white fully solid, black fully clear. At the circle's edge it should be white (Ed, 2026-10-14: \"are you sure the see-through blend goes all the way to 0 at the edge?\").",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeShowAlpha"
+      }
     }
   ]
 }
