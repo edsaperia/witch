@@ -185,7 +185,7 @@ const sound = new Sound(tuning, musicStyle, seed!);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
-freeze.started = () => startEl.style.display === "none";
+freeze.started = () => startEl.style.display === "none" || creator.open; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 
 // Arriving from the sea chart (?arrive=1; Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart's
 // last frame (index.html put it up) while the night builds, then the flight from the chart's camera to her decks; no bedroom.
@@ -309,15 +309,16 @@ const newBuild = new NewBuildNotice(typeof __BUILD__ === "string" ? __BUILD__ : 
 let menuGone = false;
 freeze.onToggle = on => {
   sound.freeze(on);
+  creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
   if (on) void newBuild.check();
-  if (pauseSliders) { pauseSliders.show(on); return; }
+  if (pauseSliders) { pauseSliders.show(on, creator.open); return; }
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
     pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
-    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
+    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
     void newBuild.check().then(() => { if (newBuild.latest) menuGone = true; else window.alert("A newer build of the game is up, so the pause page can't load: reload the page (Shift+Reload)."); });

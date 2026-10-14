@@ -141,6 +141,7 @@ export function applyDecision(host: DecideHost, d: Decision, v: string | number 
 const PAUSE_CSS = `
 #pause-sliders { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 31; display: flex; flex-direction: column; background: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; transform: translateX(-105%); transition: transform .22s ease-out; pointer-events: none; }
 #pause-sliders.open { transform: translateX(0); }
+#pause-sliders.backed { background: rgba(14,11,28,.88); box-shadow: 2px 0 12px rgba(0,0,0,.5); }
 #pause-sliders > * { pointer-events: auto; }
 #pause-sliders .top { padding: 9px 10px 7px 16px; }
 #pause-sliders .title { color: var(--accent, #e8b46a); font-weight: 700; font-size: 13px; }
@@ -193,9 +194,11 @@ export class PauseSliders {
     document.body.append(this.el);
   }
 
-  /** Slid in (frozen) or out. */
-  show(on: boolean): void {
+  /** Slid in (frozen) or out; `backed` over the bedroom's own panel (Ed, 2026-10-14: paused from her room), where the
+   *  see-through page would read as one with it. */
+  show(on: boolean, backed = false): void {
     this.el.classList.toggle("open", on);
+    this.el.classList.toggle("backed", on && backed);
     if (!on) return;
     this.status.textContent = "";
     // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)
