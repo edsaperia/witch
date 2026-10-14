@@ -71,7 +71,7 @@
     "fofSoprano": {"kind": "fof", "gain": 0.8, "voiceType": "soprano", "vowels": ["ah", "oh", "ee", "eh", "oo"], "vowelStep": 1, "detune": 9, "vibrato": 24, "vibratoRate": 5.4, "vibratoDelay": 0.3, "breath": 0.06, "attack": 0.1, "release": 0.6, "reverb": 0.55, "delay": 0.2, "hp": 200, "pan": -0.1},
     "fofAlto": {"kind": "fof", "gain": 0.8, "voiceType": "alto", "vowels": ["oh", "ah", "oo", "eh"], "vowelStep": 1, "detune": 11, "vibrato": 18, "vibratoRate": 5, "vibratoDelay": 0.35, "breath": 0.07, "attack": 0.14, "release": 0.7, "reverb": 0.55, "delay": 0.2, "hp": 160, "pan": 0.1},
     "fofChoir": {"kind": "fof", "gain": 0.45, "voiceType": "alto", "vowels": ["oo", "ah", "oh"], "vowelStep": 4, "detune": 16, "vibrato": 12, "vibratoRate": 4.6, "vibratoDelay": 0.6, "breath": 0.05, "attack": 0.6, "release": 1.4, "octave": 0.35, "reverb": 0.7, "hp": 180},
-    "recordedVoice": {"kind": "sample", "gain": 0.8, "sample": "female-note", "root": 67.2, "presence": 6, "vowels": ["aa", "aa", "oo"], "onset": "l", "hp": 150}
+    "recordedVoice": {"kind": "sample", "gain": 0.8, "sample": "female-note", "root": 67.2, "presence": 4, "vowels": ["aa", "aa", "oo"], "onset": "l", "skip": 0.25, "swell": 0.33, "breath": 0.12, "hp": 120}
   },
   "parts": {
     "kick": {"patch": "kick", "role": "drum", "patterns": {"four": "x...x...x...x...", "drive": "X...x...X...x...", "break": "x.........x.....x.x.......x..x..", "twostep": "x......x..x.....", "electro": "x..x..x...x.....", "half": "x.........x....."}},
@@ -200,8 +200,8 @@
     "a": ["forest", "home", "dark", "phonk"], "b": ["chip", "lift", "home"],
     "question": 4, "answer": 0,
     "instruments": ["pluck", "lead", "chiplead", "vox", "bell", "lgHorn"],
-    "sung": {"part": "sung", "patch": "recordedVoice", "octave": 3},
-    "range": [-1, 8],
+    "sung": {"part": "sung", "patch": "recordedVoice", "octave": 2, "where": ["breakdown", "build"], "hookBars": 2, "wash": {"intervals": [4, 7], "level": 0.5, "late": 0.5}},
+    "range": [-1, 6],
     "cells": {
       "slow": ["x---------------", "x---------------", "x-------x-------", "x-----x-x-------", "x-----------x---", "x---x---x-------", "T_______x-------", "x-------T_______", "x-------x---x---", "....x-----------", "x-------x-----x-"],
       "mid": ["x---x---T_______", "x-x-x---x-------", "x--x--x-x-------", "x---x-x-x---x---", "t___x---x-------", "..x-x---x---x---", "x-x-x-x-x-------", "x-----x-x---x---"]
@@ -210,9 +210,10 @@
       "slow": ["x-------........", "x---x---........", "x-----x-........", "T_______........"],
       "mid": ["x-x-x---........", "t___x---........", "x--x--x-........"]
     },
-    "pace": {"default": 0.25, "pluck": 0.35, "lead": 0.3, "chiplead": 0.5, "vox": 0.3, "bell": 0.35, "lgHorn": 0.1, "sung": 0.2}
+    "pace": {"default": 0.25, "pluck": 0.35, "lead": 0.3, "chiplead": 0.5, "vox": 0.3, "bell": 0.35, "lgHorn": 0.1, "sung": 0}
   },
-  "voiceFx": {"_": "The voice line's ethereal effects (Ed, 2026-10-11: \"e Recorded + ethereal will do for now ... a bit quieter than in the sample\"; then, hearing it, \"make it quieter and have even more reverb\"; platform/audio/voiceFx.ts): the A/B's preset with more hall, shimmer and freeze, each a level 0 to 1, on the sung part.", "chorus": 0.5, "saturation": 0.15, "air": 0.5, "delay": 0.35, "hall": 0.85, "shimmer": 0.7, "duck": 0.3, "swells": 0.6, "freeze": 0.65, "whisper": 0.25, "octave": 0.3},
+  "voiceFx": {"_": "The voice line's ethereal effects (Ed, 2026-10-11: \"e Recorded + ethereal will do for now ... a bit quieter than in the sample\"; then, hearing it, \"make it quieter and have even more reverb\"; platform/audio/voiceFx.ts): the A/B's preset with more hall, shimmer and freeze, each a level 0 to 1, on the sung part. Since Ed's singer review (2026-10-14, docs/backlog/music.md \"The singer, and the music round it\"): this is the pure chain, for breakdowns and builds: no chorus, no octave double, no shimmer (they smeared each note's tuning by up to a third of a semitone), a bigger hall instead; `voiceFxDark` plays in the dark families.", "chorus": 0, "saturation": 0.12, "air": 0.5, "delay": 0.3, "hall": 0.9, "shimmer": 0, "duck": 0.3, "swells": 0.6, "freeze": 0.5, "whisper": 0.2, "octave": 0},
+  "voiceFxDark": {"_": "The processed chain (Ed, 2026-10-14: \"two chains by place\"), on the sung part while the night's family is one of `families` (the dark ones): grit, the whisper vocoder, long frozen tails, the echoes; aimed at Holy Other and Salem. Its pitched-down, chopped take comes with the A/B.", "families": ["coven", "phonk", "industrial", "thunder", "stampede"], "chorus": 0, "saturation": 0.5, "air": 0.3, "delay": 0.5, "hall": 0.9, "shimmer": 0, "duck": 0.4, "swells": 0.4, "freeze": 0.7, "whisper": 0.6, "octave": 0},
   "families": {
     "grove": {"name": "Grove (forest folk)", "palette": [0, 0.3], "energy": [0, 0.45], "land": "forestBeat", "four": ["forestBeat", "forestArp"], "breaks": ["forestBreaks"], "breakdown": ["whisper"], "build": "rise", "bass": ["sub808", "subSoft"], "leads": ["pluck", "flute", "keys", "bell", "vox", "lead"]},
     "ritual": {"name": "Ritual (frame drums)", "palette": [0, 0.35], "energy": [0, 0.5], "land": "ritualBeat", "four": ["ritualBeat", "ritual"], "breaks": ["ritualBreaks"], "breakdown": ["ether"], "build": "rise", "bass": ["subSoft", "sub808"], "leads": ["flute", "pluck", "bell", "lgHorn"]},

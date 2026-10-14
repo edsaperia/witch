@@ -64,6 +64,12 @@ export interface Patch {
   presence?: number;
   /** A consonant opening each note ("l": Ed, 2026-10-11, "Can it go laa?"), shaped by a filter opening over its first moment. */
   onset?: string;
+  /** A sampled note's swell (Ed, 2026-10-14: "more dynamic range"): the share of each note rising from nothing and the share
+   *  fading to it (0 the old 30 ms ramp); `breath` on a sampled voice is breath noise under every note at this level. */
+  swell?: number;
+  /** A recording's first seconds skipped (its onset: the woman's note starts 20 cents under its pitch for a quarter second, so
+   *  a short note read from its start sang flat). */
+  skip?: number;
   vibratoRate?: number;
   vibratoDelay?: number;
   octave?: number;
@@ -204,6 +210,9 @@ export interface MusicStyle {
   /** The voice line's ethereal effects (platform/audio/voiceFx.ts; Ed, 2026-10-11): each a level 0 (off) to 1, on the form's
    *  sung part and the parts listed in `parts`. None: the voice dry, as before. */
   voiceFx?: { parts?: string[]; chorus?: number; saturation?: number; air?: number; delay?: number; hall?: number; shimmer?: number; duck?: number; swells?: number; freeze?: number; whisper?: number; octave?: number };
+  /** The processed chain (Ed, 2026-10-14: "two chains by place"): the sung part's effects while the night's family is one of
+   *  `families` (the dark ones: witch house, phonk, industrial...), over `voiceFx` for the rest. */
+  voiceFxDark?: MusicStyle["voiceFx"] & { families?: string[] };
   set?: SetDef;
   curated?: { island: string; waves: number; steps: CuratedStep[] };
   arc: ArcStep[];
@@ -227,7 +236,18 @@ export interface FormDef {
   answer: number;
   /** The parts A may play on (one taken by the seed), and the part and patch B and C sing on, and its octave. */
   instruments: string[];
-  sung: { part: string; patch: string; octave: number };
+  sung: {
+    part: string; patch: string; octave: number;
+    /** Where the voice sings (Ed, 2026-10-14: in breakdowns and builds, not the drops; the A instrument plays the rest):
+     *  "breakdown" (the arc step's breakdown sections), "build" (its build). None: B and C sung wherever they fall, as before. */
+    where?: ("breakdown" | "build")[];
+    /** The returning hook (Ed, 2026-10-14): the sung phrase's first bars dealt from the night's own seed, so every wave's
+     *  breakdown opens on the same motif while the rest is the wave's own. */
+    hookBars?: number;
+    /** The breakdown's wash (Ed, 2026-10-14: three voices, Julianna Barwick's layers): each sung note doubled at these
+     *  scale steps up (4 a fifth, 7 an octave: always in the key), at this share of its level, this many steps late. */
+    wash?: { intervals: number[]; level: number; late: number };
+  };
   /** The melody's range in scale steps above the root (in its part's octave). */
   range: [number, number];
   /** Rhythm cells, a bar each (x a note, - held, . a rest, T a quarter-note triplet: three notes over the 8 sixteenths
@@ -268,6 +288,10 @@ export interface NoteEvent {
   midi: number | null;
   /** 0-1, the part's level in it. */
   vel: number;
+  /** A sung note's effects chain (the style's voiceFx or voiceFxDark), by the night's family. */
+  fx?: "pure" | "dark";
+  /** A wash voice: this note doubles a sung note a fifth or an octave up (the breakdown's three voices). */
+  double?: true;
   /** Played straight, without the swing (a triplet's notes). */
   straight?: boolean;
   /** Risers: the build's progress from and to over this note (0-1). */
@@ -384,30 +408,41 @@ export interface PhraseNote { deg: number; dur: number; off: number }
  *  over the form's chords, landing on chord tones on the beats, in bar-long rhythm cells (mostly slow: whole notes, halves and triplets; its part's `pace` of them busier)
  *  (the 2nd half-phrase's echoing the 1st's now and then), each half-phrase ending on rests; A ends open (a chord tone
  *  not the root), B on a question (the 2nd or 5th), C answering it on the root. */
-export function formPhrase(style: MusicStyle, seed: number, letter: string): (PhraseNote | null)[] {
+export function formPhrase(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
   const F = style.form!, P = F.phraseBars, salt = letter.charCodeAt(0) * 13;
-  const part = letter === "A" ? formInstrument(F, seed) : F.sung.part, pace = F.pace[part] ?? F.pace.default ?? 0.25;
+  const sungLetter = letter !== "A", part = sungLetter ? F.sung.part : formInstrument(F, seed), pace = F.pace[part] ?? F.pace.default ?? 0.25;
   const at = F.order.indexOf(letter) * P; // (its chords: its first place in the form)
+  // the returning hook (Ed, 2026-10-14): a sung phrase's first `hookBars` bars dealt from the night's own seed, so every
+  // wave's breakdown opens on the same motif while the rest of the phrase is the wave's own
+  const hookBars = sungLetter && hookSeed !== undefined && hookSeed !== seed ? F.sung.hookBars ?? 0 : 0;
+  const sd = (b: number) => b < hookBars ? hookSeed! : seed;
   const rhythm: string[] = [];
   for (let b = 0; b < P; b++) {
-    const r = hash2(seed + b * 31, 419, salt), half = Math.floor(P / 2), kind = hash2(seed + b * 17, 423, salt) < pace ? "mid" : "slow";
+    const r = hash2(sd(b) + b * 31, 419, salt), half = Math.floor(P / 2), kind = hash2(sd(b) + b * 17, 423, salt) < pace ? "mid" : "slow";
     if (b % half === half - 1) rhythm.push(pick(F.cadence[kind], r));
-    else if (b >= half && hash2(seed + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]); // (the answer echoing the call)
+    else if (b >= half && hash2(sd(b) + b, 421, salt) < 0.5) rhythm.push(rhythm[b - half]); // (the answer echoing the call)
     else rhythm.push(pick(F.cells[kind], r));
   }
   const [lo, hi] = F.range, out: (PhraseNote | null)[] = new Array(P * 16).fill(null), onsets: number[] = [];
-  let v = 2 + Math.floor(hash2(seed, 431, salt) * 3);
-  const nearest = (want: number, ok: (d: number) => boolean) => {
-    let best = want, bd = Infinity;
-    for (let d = lo; d <= hi; d++) if (ok(d) && Math.abs(d - want) < bd) { bd = Math.abs(d - want); best = d; }
-    return best;
+  // the sung line (Ed, 2026-10-14: "narrow and stepwise"): within a fifth, a window of SPAN scale steps set by the seed inside
+  // the range (always holding a root, so C can answer on it), steps and thirds only; the instrument's A walks the whole range
+  const SPAN = 4, mod7 = (d: number) => mod(d, 7);
+  const windows: number[] = [];
+  for (let w = lo; w + SPAN <= hi; w++) if (Array.from({ length: SPAN + 1 }, (_, k) => w + k).some(d => mod7(d) === 0)) windows.push(w);
+  const wlo = sungLetter && windows.length ? windows[Math.floor(hash2(sd(0), 437, salt) * windows.length)] : lo, whi = sungLetter && windows.length ? wlo + SPAN : hi;
+  const maxLeap = sungLetter ? 2 : Infinity;
+  let v = sungLetter ? wlo + Math.floor(hash2(sd(0), 431, salt) * (whi - wlo + 1)) : 2 + Math.floor(hash2(seed, 431, salt) * 3);
+  const nearest = (want: number, ok: (d: number) => boolean, near = maxLeap): number => {
+    let best: number | null = null, bd = Infinity;
+    for (let d = wlo; d <= whi; d++) if (ok(d) && Math.abs(d - v) <= near && Math.abs(d - want) < bd) { bd = Math.abs(d - want); best = d; }
+    return best ?? (near === Infinity ? want : nearest(want, ok, Infinity));
   };
   for (let b = 0; b < P; b++) {
     const tones = formChord(style, seed, at + b).tones.map(t => mod(t, 7)), cell = rhythm[b];
     const note = (pos: number, dur: number, strong: boolean) => {
-      const i = b * 16 + Math.floor(pos), r = hash2(seed + i * 7919, 433, salt);
-      if (strong) v = nearest(v + pick([-2, -1, 0, 1, 2, 3], r), d => tones.includes(mod(d, 7))); // (the beats: a chord tone)
-      else v = Math.max(lo, Math.min(hi, v + pick([-2, -1, -1, 1, 1, 2], r)));
+      const i = b * 16 + Math.floor(pos), r = hash2(sd(b) + i * 7919, 433, salt);
+      if (strong) v = nearest(v + pick(sungLetter ? [-2, -1, 0, 0, 1, 2] : [-2, -1, 0, 1, 2, 3], r), d => tones.includes(mod7(d))); // (the beats: a chord tone)
+      else v = Math.max(wlo, Math.min(whi, v + pick(sungLetter ? [-1, -1, 0, 1, 1] : [-2, -1, -1, 1, 1, 2], r)));
       out[i] = { deg: v, dur, off: pos - Math.floor(pos) };
       onsets.push(i);
     };
@@ -427,16 +462,22 @@ export function formPhrase(style: MusicStyle, seed: number, letter: string): (Ph
   if (last !== undefined) {
     const n = out[last]!, chordEnd = formChord(style, seed, at + P - 1).tones.map(t => mod(t, 7));
     const ends = letter === "B" ? [1, 4] : letter === "C" ? [0] : chordEnd.filter(t => t !== 0);
-    n.deg = nearest(n.deg, d => ends.includes(mod(d, 7)));
+    v = n.deg; n.deg = nearest(n.deg, d => ends.includes(mod7(d)));
+    // (a sung line reaches its ending in steps: the notes before it bend toward it till every leap is within maxLeap)
+    for (let k = onsets.length - 2; k >= 0 && sungLetter; k--) {
+      const cur = out[onsets[k]]!, nxt = out[onsets[k + 1]]!;
+      if (Math.abs(nxt.deg - cur.deg) <= maxLeap) break;
+      cur.deg = nxt.deg + Math.sign(cur.deg - nxt.deg) * maxLeap;
+    }
   }
   return out;
 }
 
 const phraseCache = new Map<string, (PhraseNote | null)[]>();
-function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote | null)[] {
-  const k = `${seed}|${letter}`;
+function phraseFor(style: MusicStyle, seed: number, letter: string, hookSeed?: number): (PhraseNote | null)[] {
+  const k = `${seed}|${letter}|${hookSeed ?? ""}`;
   let p = phraseCache.get(k);
-  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = formPhrase(style, seed, letter)); }
+  if (!p) { if (phraseCache.size > 64) phraseCache.clear(); phraseCache.set(k, p = formPhrase(style, seed, letter, hookSeed)); }
   return p;
 }
 
@@ -444,16 +485,18 @@ function phraseFor(style: MusicStyle, seed: number, letter: string): (PhraseNote
 export const musicSeed = (base: number, n: number): number => n <= 0 ? base : Math.floor(hash2(base, 433 + n, n * 7919) * 0x7fffffff);
 
 /** The form's note (if one starts) on the form's sixteenth `formStep`: its part, patch and MIDI note, and its length. */
-export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">): { part: string; patch: string; midi: number; dur: number; off: number; letter: string } | null {
+export function formNoteAt(style: MusicStyle, seed: number, formStep: number, transpose = 0, step?: Pick<ArcStep, "lead" | "vocal" | "scale">, opts?: { voice?: boolean; hookSeed?: number }): { part: string; patch: string; midi: number; deg: number; dur: number; off: number; letter: string } | null {
   const F = style.form!, fs = mod(formStep, formBars(F) * 16), letter = F.order[Math.floor(fs / (F.phraseBars * 16))];
-  const n = phraseFor(style, seed, letter)[fs % (F.phraseBars * 16)];
+  const n = phraseFor(style, seed, letter, letter !== "A" ? opts?.hookSeed : undefined)[fs % (F.phraseBars * 16)];
   if (!n) return null;
-  // (a night's set: the step's own instrument for A, its own singer for B and C, or none, the A instrument playing them too)
+  // (a night's set: the step's own instrument for A, its own singer, or none, the A instrument playing them too; since Ed's
+  // singer review, 2026-10-14, the voice sings only where `opts.voice` says (the breakdowns and the build: sungHere), and in
+  // the build it sings A too; the instrument plays the rest)
   const lead = step?.lead && style.parts[step.lead] ? step.lead : formInstrument(F, seed), voice = step?.vocal ?? F.sung.patch;
-  const sung = letter !== "A" && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
+  const sung = (opts?.voice ?? letter !== "A") && voice !== "none" && !!style.patches[voice], part = sung ? F.sung.part : lead, def = style.parts[part];
   const oct = sung ? F.sung.octave : Math.max(2, def?.octave ?? 3);
   const scale = style.scales[step?.scale ?? style.scale] ?? style.scales[style.scale];
-  return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), dur: n.dur, off: n.off, letter };
+  return { part, patch: sung ? voice : def?.patch ?? "", midi: degreeToMidi(style, scale, n.deg, oct, transpose), deg: n.deg, dur: n.dur, off: n.off, letter };
 }
 
 /** A wave's own tune in a night's set (ArcStep.tune): the music's seed salted, so each wave has its own melodies and chords. */
@@ -518,10 +561,24 @@ export function circleParts(style: MusicStyle, species: string): [string, { p: s
 
 /** Every note starting on sixteenth `step` (absolute), in the block `plan`; `next` is the plan of
  *  the block after this bar (for the fill), when this bar is the block's last. */
+/** Where the voice sings (Ed, 2026-10-14: in breakdowns and builds, never the drops): "breakdown" in the arc step's breakdown
+ *  sections, "build" in its build, null elsewhere (the A instrument plays the melody). With no `where` on the form's sung part,
+ *  the old rule: everywhere but A ("sung" here stands for that). */
+export function sungHere(style: MusicStyle, plan: BlockPlan, a: ArcStep, sec: Resolved): "breakdown" | "build" | "sung" | null {
+  const F = style.form;
+  if (!F) return null;
+  if (!F.sung.where) return "sung";
+  const S = a.sections;
+  if (F.sung.where.includes("breakdown") && (S ? S.breakdown.includes(plan.section) : plan.section === "breakdown")) return "breakdown";
+  if (F.sung.where.includes("build") && (plan.section === a.build || !!sec.riser)) return "build";
+  return null;
+}
+
 export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | null, step: number, ctx: ScoreContext): NoteEvent[] {
   const bar = Math.floor(step / 16), s = step - bar * 16, barIn = bar - plan.start;
   const sec = resolveSection(style, plan.section), a = arcStep(style, plan.arc);
   const scale = style.scales[a.scale ?? style.scale] ?? style.scales[style.scale], transpose = (a.transpose ?? 0) + (sec.transpose ?? 0); // (one scale, dorian, in each stage's key: Ed, 2026-10-09; a section's own lift on top, the victory's; a night's set may darken a step's: rules/musicSet.ts)
+  const nightSeed = ctx.seed; // (the returning hook's: the night's, before each wave's own tune)
   ctx = a.tune ? { ...ctx, seed: tuneSeed(ctx.seed, a.tune) } : ctx; // (a night's set: each wave its own tune)
   const progress = (barIn + s / 16) / Math.max(1, plan.bars), pass = plan.pass ?? 0;
   // the form's chords (Ed, 2026-10-09: the 32-bar ABAC form), or, with none, the section's own, a step on each pass round the loop
@@ -595,9 +652,27 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
     }
   }
   if (onlyCircle) return out;
-  // the form's melody: A on its instrument, B and C sung
-  const fn = melody > 0 ? formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a) : null;
-  if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: (s % 4 === 0 && !fn.off ? 0.9 : 0.78) * melody, ...(fn.dur % 1 ? { straight: true } : {}) });
+  // the form's melody: A on its instrument; the voice in the breakdowns and the build (Ed, 2026-10-14; sungHere), the
+  // instrument everywhere else; in a breakdown the voice sometimes holds the chord instead of a tune ("sometimes just the
+  // chord"), and every sung note there is washed (doubled a fifth and an octave up, late and quieter: three voices)
+  if (melody > 0 && form) {
+    const place = sungHere(style, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
+    const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place === "breakdown" && hash2(ctx.seed, 457, pass) < 0.5;
+    const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+    const patch = a.vocal && style.patches[a.vocal] ? a.vocal : form.sung.patch;
+    const sing = (deg: number, dur: number, off: number, v: number) => { // (deg: a scale step over the root, in the sung octave)
+      out.push({ part: form.sung.part, patch, step, offset: off, dur, midi: degreeToMidi(style, scale, deg, oct, transpose), vel: v, fx, ...(dur % 1 ? { straight: true } : {}) });
+      if (place === "breakdown" && W) for (const iv of W.intervals) out.push({ part: form.sung.part, patch, step, offset: off + W.late, dur: Math.max(1, dur - W.late), midi: degreeToMidi(style, scale, deg + iv, oct, transpose), vel: v * W.level, fx, double: true, ...(dur % 1 ? { straight: true } : {}) });
+    };
+    const voiceOk = (a.vocal ?? form.sung.patch) !== "none";
+    if (hold && voiceOk) {
+      if (s === 0 && mod(formBar, form.chordBars) === 0) sing(chord.root, form.chordBars * 16 - 1, 0, 0.8 * melody);
+    } else {
+      const fn = formNoteAt(style, ctx.seed, formBar * 16 + s, transpose, a, { voice: place !== null, hookSeed: nightSeed });
+      if (fn && fn.part === form.sung.part) sing(fn.deg, fn.dur, fn.off, fn.off ? 0.78 * melody : vel);
+      else if (fn) out.push({ part: fn.part, patch: fn.patch, step, offset: fn.off, dur: fn.dur, midi: fn.midi, vel: fn.off ? 0.78 * melody : vel, ...(fn.dur % 1 ? { straight: true } : {}) });
+    }
+  }
   // the section's own events: a crash on its first beat, a riser over a build (one note a bar)
   if (s === 0 && barIn === 0 && sec.impact && style.patches.impact) out.push({ part: "impact", patch: "impact", step, offset: 0, dur: 16, midi: null, vel: 1 });
   if (s === 0 && sec.riser && style.patches.riser) out.push({ part: "riser", patch: "riser", step, offset: 0, dur: 16, midi: null, vel: 1, from: barIn / plan.bars, to: (barIn + 1) / plan.bars });
@@ -608,6 +683,7 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
  *  patterns run whole bars, and every section's length in the arc is a whole number of blocks. */
 export function checkStyle(style: MusicStyle): string[] {
   const errs: string[] = [], B = style.blockBars;
+  for (const f of style.voiceFxDark?.families ?? []) if (!style.families?.[f]) errs.push(`voiceFxDark: no family "${f}"`);
   const checkUse = (where: string, name: string, u: PartUse) => {
     const def = style.parts[name];
     if (!def) { errs.push(`${where}: no part "${name}"`); return; }
@@ -640,6 +716,8 @@ export function checkStyle(style: MusicStyle): string[] {
     for (const n of [...F.a, ...F.b]) if (!style.progressions[n]) errs.push(`form: no progression "${n}"`);
     for (const n of F.instruments) if (!style.parts[n]) errs.push(`form: no part "${n}"`);
     if (!style.patches[F.sung.patch]) errs.push(`form: no patch "${F.sung.patch}"`);
+    for (const w of F.sung.where ?? []) if (w !== "breakdown" && w !== "build") errs.push(`form: sung.where "${w}" (breakdown or build)`);
+    if (F.sung.wash && !(F.sung.wash.intervals.length && F.sung.wash.level > 0 && F.sung.wash.level <= 1)) errs.push("form: sung.wash wants intervals and a level in (0, 1]");
     const tripletsWhole = (c: string) => [...c].every((ch, i) => ch !== "T" && ch !== "t" || c.slice(i + 1, i + (ch === "T" ? 8 : 4)) === "_".repeat(ch === "T" ? 7 : 3))
       && [...c].filter(ch => ch === "_").length === [...c].reduce((n, ch) => n + (ch === "T" ? 7 : ch === "t" ? 3 : 0), 0);
     for (const [k, cs] of [...Object.entries(F.cells), ...Object.entries(F.cadence)]) for (const c of cs) {
