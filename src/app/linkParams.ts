@@ -59,6 +59,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // The circle round her (Ed, 2026-10-13: switches to find which effect draws it): ?occ=off the see-through fade of tall things
   // in front of her; ?hole=off no cut-away in the canopy (crowns everywhere), ?hole=all every crown cut away;
   // ?seedepth=off the see-through pass writing no depth (render/sprites.ts, as before #896).
+  // ?area=off scenery not averaged where it shrinks; ?cut=pixel the cut-away pixel by pixel, ?cut=whole by each crown whole (tuning suspects)
+  tuning.suspects = { ...TUNING.suspects };
+  if (params.get("area") === "off") tuning.suspects.areaAverage = false;
+  const cutBy = params.get("cut");
+  if (cutBy === "pixel") tuning.suspects.cutWhole = false;
+  else if (cutBy === "whole") tuning.canopyCutout = { ...TUNING.canopyCutout, whole: 1 };
   if (params.get("occ") === "off") tuning.occlusion = { ...TUNING.occlusion, on: false };
   const hole = params.get("hole");
   if (hole === "off" || hole === "all") tuning.canopyCutout = { ...TUNING.canopyCutout, screenFraction: hole === "off" ? 0 : 8 };

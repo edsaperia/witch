@@ -31,6 +31,20 @@
       }
     },
     {
+      "id": "susCutWhole",
+      "pr": 903,
+      "group": "Circle-bug suspects",
+      "label": "Cut-away by whole crowns",
+      "note": "The canopy cut-away hiding each crown whole (canopyCutout.whole). Off: pixel by pixel. On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.cutWhole"
+      }
+    },
+    {
       "id": "susTrunkFade",
       "pr": 903,
       "group": "Circle-bug suspects",

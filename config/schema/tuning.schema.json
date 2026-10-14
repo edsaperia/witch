@@ -8256,6 +8256,9 @@
         },
         "seeDepth": {
           "type": "boolean"
+        },
+        "cutWhole": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8267,7 +8270,8 @@
         "effectsLayer",
         "haze",
         "areaAverage",
-        "seeDepth"
+        "seeDepth",
+        "cutWhole"
       ],
       "additionalProperties": false
     },

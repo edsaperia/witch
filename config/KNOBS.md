@@ -1748,7 +1748,7 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 
 ### `suspects`, `occlusion`, `canopyShadow`
 
-The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896).
+The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896); cutWhole: the cut-away by each crown whole, as canopyCutout.whole has it (off: pixel by pixel).
 
 | knob | type | range |
 |---|---|---|
@@ -1761,6 +1761,7 @@ The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that dr
 | `suspects.haze` | boolean |  |
 | `suspects.areaAverage` | boolean |  |
 | `suspects.seeDepth` | boolean |  |
+| `suspects.cutWhole` | boolean |  |
 | `occlusion.on` | boolean |  |
 | `occlusion.fadeOpacity` | number | 0 to … |
 | `occlusion.edge` | number | 0 to … |
