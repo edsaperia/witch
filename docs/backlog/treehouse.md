@@ -27,13 +27,13 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 |---|---|---|
 | **Balcony** | south, facing the dancefloor | fly in and out; the decks on its rail; the magic circle behind them |
 | **Hub** | behind the balcony | the **map table** in the centre: a drawing of the world, one size for good; a button (E) opens the sea chart to look and to sail |
-| **Tea room**, perhaps a **greenhouse** | a room of its own off the hub | wait, drink tea, play a card game at the table (the lobby's waiting place). A custom card game for 1, 2 or 3 players is to be designed; **for now just an animation** (she sits, deals, sips) |
+| **Tea room**, perhaps a **greenhouse** | a room of its own off the hub | wait, drink tea, play a card game at the table (the lobby's waiting place). **For now just an animation** (she sits, deals, sips); a custom card game for 1, 2 or 3 players is a backlog item of its own (below) |
 | **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. **The host's in the middle, the other two either side**, locked with magic until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose, **trophies** from achievements; it carries across to other games: joining a friend's game you see **your own bedroom**, as you made it, in their house |
 | **Telephone** | near the bedrooms | multiplayer: call friends to the party (a party code) |
 | **Dressing rooms**: the mirror, the closet, the cloakroom | between the bedrooms and the hub, on the way down | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options |
 | **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it. **Each hat has one power but any shape**: the station is where she brings it to change its shape and colour, with **the creator's hat sliders as they are** (shape, height, brim, tilt, band, curl) |
 | **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, one power each, pick one up, its shape and colour changed at its station (the creator's broom rotator and width slider) |
-| **Studio** | off the hub | the records she has earned; take one to the decks (below). And **three instruments: keys, a drum kit and a microphone**, so three players can play very simple music together with their controls: **the notes are locked to the music's key, but you can play off the beat**; nothing is recorded or kept. Played mid-night, **it's heard on the island as a layer over the music** |
+| **Studio** | off the hub | the records she has earned; take one to the decks (below). And **three instruments: keys, a drum kit and a microphone**, so three players can play very simple music together with their controls: **the notes are locked to the music's key, but you can play off the beat**; nothing is recorded or kept. Played mid-night, **it's heard on the island as a layer over the music**. **Only the buttons the game has** (Ed): the mapping below |
 | **Kitchen** | the only room below the hub | the cauldron and its six baskets ([cauldron.md](cauldron.md)) |
 | **Library** | off the hub | a natural history library: specimens and animal skeletons. **The way into the zoo** (as the map table is the way to the islands). A new skeleton per biome; each biome has one key fantasy creature (the unicorn, the stegosaurus...) and something of it appears once every island in that biome is cleared. **The biome souvenirs live here too: the skull of each island's animal** |
 | **Crow's nest** | at the top | an observatory with a telescope: **a view of its own, panning round the island 360°**, as the chart opens over the game (the game's camera itself never turns) |
@@ -92,14 +92,23 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 - **The character creator** (`ui/creator.ts`, the isometric bedroom): its sliders become the stations' panels; the bedroom's art becomes her bedroom in the house.
 - **The Ent** (`art/ent.js`): stays as the house's tree (Ed: it doesn't change), the house built out along its branches.
 
-## Open questions
+## The instruments' controls (proposed mapping, on the buttons the game already has)
 
-- The tea room's card game: its rules, for 1, 2 or 3 players (an animation until then).
-- How the studio's three instruments map onto the controls.
+The action bar's nine slots (1 2 3 4 Q E R, Space, the right mouse button) and the left button, so the gamepad and touch get the same by their slots. Every note is snapped to the music's key and scale; nothing quantises to the beat.
+
+| Instrument | 1 2 3 4 Q E R | Space (held) | Left click | Right click | Wheel |
+|---|---|---|---|---|---|
+| **Keys** | the scale's seven notes, low to high | an octave up | a chord on the note nearest the cursor's height | sustain | shift the octave |
+| **Drum kit** | kick, snare, closed hat, open hat, clap, rim, crash | a roll on the last drum hit | the kick | the snare | |
+| **Microphone** | the seven notes, sung "aa" | "oo" instead | hold to sing the note at the cursor's height, sliding as it moves | a breath | vibrato on or off |
+
+## Backlog from this page
+
+- **The tea room's card game:** a custom game for 1, 2 or 3 players, to design; the animation stands in until then.
 
 ## The build order (Ed, 2026-10-14: the balcony and the hub first)
 
-1. **The balcony and the hub:** fly straight in, the camera pushing in, walk the hub and out again, the fall without a broom, the magic circle as the respawn spot with the scratch routine inside the timer. The deck's rules carry over (time at a tenth, nothing reaches her, the map table's E to the chart, her seat at the decks). Proposed: the deck as built stays playable until this step lands, and this step replaces it whole (the old deck kept behind a tuning switch for a build or two, as `treehouse.deck.on` keeps the old treehouse today), since the balcony takes the deck's decks and seat and the hub takes its map table; a balcony bolted onto the round deck would be a third thing to maintain.
+1. **The balcony and the hub:** fly straight in, the camera pushing in, walk the hub and out again, the fall without a broom, the magic circle as the respawn spot with the scratch routine inside the timer. The deck's rules carry over (time at a tenth, nothing reaches her, the map table's E to the chart, her seat at the decks). **The deck as built stays playable until this step lands, and this step replaces it whole** (Ed, 2026-10-14), the old deck kept behind a tuning switch for a build or two, as `treehouse.deck.on` keeps the old treehouse today, since the balcony takes the deck's decks and seat and the hub takes its map table.
 2. **The dressing rooms and their panels:** the creator's sliders split into the mirror, closet and cloakroom; wake in the nightie, yesterday's clothes at a station.
 3. **The corridors and stations:** hats and brooms as objects on hooks; one power each; the stations' panels.
 4. **The studio and the records**, with the first record on the decks; then its instruments.
