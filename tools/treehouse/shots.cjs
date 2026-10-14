@@ -25,51 +25,63 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 4, null, { timeout: 600000, polling: 500 });
     log("ready");
+    const KEYS = { W: "KeyW", S: "KeyS", A: "KeyA", D: "KeyD" }, held = new Set();
+    const hold = async (want) => { for (const k of Object.keys(KEYS)) { if (want.has(k) && !held.has(k)) { await page.keyboard.down(KEYS[k]); held.add(k); } if (!want.has(k) && held.has(k)) { await page.keyboard.up(KEYS[k]); held.delete(k); } } };
+    const release = () => hold(new Set());
+    const unpause = async () => { if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Escape"); await wait(400); } };
+    /** Walks her toward a target (an expression of the game, giving { x, z }) by the game's own keys until `done` (an expression) holds, or `ms` pass. */
+    const walkTo = async (targetJs, doneJs, ms = 240000) => {
+      const t1 = Date.now();
+      while (Date.now() - t1 < ms) {
+        const r = await page.evaluate(([tj, dj]) => { const g = window.witch.game, w = g.witch, T = new Function("g", "w", `return (${tj});`)(g, w), done = new Function("g", "w", `return (${dj});`)(g, w); return { dx: T.x - w.x, dz: T.z - w.z, done }; }, [targetJs, doneJs]);
+        if (r.done) break;
+        const want = new Set(); if (r.dz < -0.3) want.add("W"); else if (r.dz > 0.3) want.add("S"); if (r.dx > 0.3) want.add("D"); else if (r.dx < -0.3) want.add("A");
+        await hold(want); await wait(150);
+      }
+      await release();
+    };
     const state = () => page.evaluate(() => { const w = window.witch.game.witch; return { mode: w.mode, perch: !!w.perch, seated: !!w.seated, x: +w.x.toFixed(1), z: +w.z.toFixed(1), lift: +w.lift.toFixed(2), house: window.witch.game.camera.house }; });
     const shot = async (name) => { await page.screenshot({ path: path.join(outDir, `${name}.png`) }); log(`${name}: ${JSON.stringify(await state())}`); };
     // 1. The approach: at treetop height 70 m south of the balcony, flying north at it (the game's own keys), until she lands.
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse, H = g.tuning.treehouse.house; g.witch = { ...g.witch, x: T.x + 1.5, z: T.z + H.balcony.out + 70, vx: 0, vz: -10, mode: "treetop", lift: 1, perch: undefined, seated: false }; g.camera.intro = 0; });
-    await page.keyboard.down("KeyW");
-    await page.waitForFunction(() => { const w = window.witch.game.witch, T = window.witch.game.map.treehouse; return w.z < T.z + 40; }, null, { timeout: 120000, polling: 100 });
+    await hold(new Set(["W"]));
+    await page.waitForFunction(() => { const w = window.witch.game.witch, T = window.witch.game.map.treehouse; return w.z < T.z + 40; }, null, { timeout: 240000, polling: 100 });
     await shot("approach");
-    await page.waitForFunction(() => { const w = window.witch.game.witch; return w.mode === "ground" && !!w.perch; }, null, { timeout: 180000, polling: 100 }).catch(() => {});
-    await page.keyboard.up("KeyW");
+    await page.waitForFunction(() => { const w = window.witch.game.witch; return w.mode === "ground" && !!w.perch; }, null, { timeout: 240000, polling: 100 }).catch(() => {});
+    await release();
     out.landed = await state();
     await wait(1200);
     await shot("landed");
-    // 2. Into the hub, up to the map (walking north), then E: the chart opens over the game.
-    await page.keyboard.down("KeyW");
-    await page.waitForFunction(() => { const g = window.witch.game, w = g.witch, T = g.map.treehouse, H = g.tuning.treehouse.house; return Math.hypot(w.x - T.x, w.z - T.z) <= H.table + H.tableUse + 0.3; }, null, { timeout: 120000, polling: 100 }).catch(() => {});
-    await page.keyboard.up("KeyW");
+    // 2. Into the hub, up to the map (walking toward it, whichever way she slid on landing), then E: the chart opens over the game.
+    await walkTo("({ x: g.map.treehouse.x, z: g.map.treehouse.z })", "Math.hypot(w.x - g.map.treehouse.x, w.z - g.map.treehouse.z) <= g.tuning.treehouse.house.table + g.tuning.treehouse.house.tableUse - 0.2");
     await wait(1500);
     await shot("hub");
     out.hub = await state();
     await page.keyboard.press("KeyE");
-    await page.waitForFunction(() => !!document.querySelector("#chart-overlay, .chart-overlay, [data-chart]") || !!window.witch.game.leashEvents?.some?.(e => e.kind === "chart"), null, { timeout: 30000, polling: 200 }).catch(() => {});
+    await page.waitForFunction(() => !!document.querySelector("#chart-overlay"), null, { timeout: 60000, polling: 200 }).catch(() => {});
     await wait(2500);
     await shot("chart");
-    out.chart = await page.evaluate(() => !!document.querySelector("#chart-overlay, .chart-overlay, [data-chart]"));
-    await page.keyboard.press("Escape");
-    await wait(800);
-    // 3. Back out and off the open rim (south-east, past the decks' end): she flies again.
-    await page.keyboard.down("KeyS"); await page.keyboard.down("KeyD");
-    await page.waitForFunction(() => { const w = window.witch.game.witch; return w.mode === "rising" || w.mode === "treetop"; }, null, { timeout: 60000, polling: 100 }).catch(() => {});
-    await page.keyboard.up("KeyS"); await page.keyboard.up("KeyD");
+    out.chart = await page.evaluate(() => !!document.querySelector("#chart-overlay"));
+    if (out.chart) { await page.keyboard.press("Escape"); await wait(800); }
+    await unpause();
+    // 3. Back out and off the open rim (east of the decks' end): she flies again.
+    await walkTo("(() => { const T = g.map.treehouse, H = g.tuning.treehouse.house; return { x: T.x + H.balcony.r + 3, z: T.z + H.balcony.out + 2 }; })()", "w.mode === 'rising' || w.mode === 'treetop'", 120000);
     out.off = await state();
     await wait(600);
     await shot("off");
     // 4. A knockout on the ground (the debug arena isn't needed: her hits taken directly), then back at the circle, rising, and the walk to her decks.
+    await unpause();
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + 30, z: T.z + 60, vx: 0, vz: 0, mode: "ground", lift: 0, perch: undefined, seated: false }; });
     await wait(300);
     out.hit = await page.evaluate(() => { const W = window.witch.game.witches[0]; W.health.hp = 1; W.health.hurtAt = -Infinity; return window.witch.hit(); }); // (her last hit: app/hooks.ts)
     const ko = await page.evaluate(() => { const k = window.witch.game.witches[0].ko; return k ? { inAt: k.inAt, riseUntil: k.riseUntil, seatAt: k.seatAt, backAt: k.backAt } : null; });
     out.ko = ko;
     if (ko) {
-      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= (k.teleportAt + k.inAt) / 2 + 0.15; }, null, { timeout: 120000, polling: 50 });
+      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= (k.teleportAt + k.inAt) / 2 + 0.15; }, null, { timeout: 400000, polling: 50 });
       await shot("circle");
-      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= k.riseUntil - 0.25; }, null, { timeout: 120000, polling: 50 });
+      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= k.riseUntil - 0.25; }, null, { timeout: 400000, polling: 50 });
       await shot("rising");
-      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= k.seatAt + 0.4; }, null, { timeout: 120000, polling: 50 });
+      await page.waitForFunction(() => { const g = window.witch.game, k = g.witches[0].ko; return !k || g.herTime >= k.seatAt + 0.4; }, null, { timeout: 400000, polling: 50 });
       await shot("decks");
       out.decks = await state();
     }
