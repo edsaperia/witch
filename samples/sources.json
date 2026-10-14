@@ -34,6 +34,20 @@
       { "id": "throat-cave", "repo": "freesound", "sound": 816640, "user": "ItsThatRoboGuy", "preview": "https://cdn.freesound.org/previews/816/816640_8175042-hq.mp3", "licence": "CC0-1.0", "max": 12, "bed": true, "what": "Throat singing in a cave (the uploader's own)" },
       { "id": "female-note", "repo": "freesound", "sound": 628817, "user": "owstu", "preview": "https://cdn.freesound.org/previews/628/628817_1690102-hq.mp3", "licence": "CC0-1.0", "start": 0.3, "max": 1.8, "bed": true, "what": "A woman singing one steady note, G4 (from the uploader's own single-note improvisation)" },
       { "id": "kargyraa", "repo": "freesound", "sound": 732443, "user": "Hjaarlmarch", "preview": "https://cdn.freesound.org/previews/732/732443_3699553-hq.mp3", "licence": "CC0-1.0", "max": 10, "bed": true, "what": "Kargyraa throat chant, low register (the uploader's own)" }
+    ],
+    "alto": [
+      { "id": "alto-55", "from": "voices/female-note", "skip": 0.25, "semitones": -12.17, "max": 1.5, "what": "The woman's sung note shifted to G3 (MIDI 55) with its formants kept, for the alto's sample set" },
+      { "id": "alto-57", "from": "voices/female-note", "skip": 0.25, "semitones": -10.17, "max": 1.5, "what": "The woman's sung note shifted to A3 (MIDI 57) with its formants kept, for the alto's sample set" },
+      { "id": "alto-59", "from": "voices/female-note", "skip": 0.25, "semitones": -8.17, "max": 1.5, "what": "The woman's sung note shifted to B3 (MIDI 59) with its formants kept, for the alto's sample set" },
+      { "id": "alto-61", "from": "voices/female-note", "skip": 0.25, "semitones": -6.17, "max": 1.5, "what": "The woman's sung note shifted to C#4 (MIDI 61) with its formants kept, for the alto's sample set" },
+      { "id": "alto-63", "from": "voices/female-note", "skip": 0.25, "semitones": -4.17, "max": 1.5, "what": "The woman's sung note shifted to D#4 (MIDI 63) with its formants kept, for the alto's sample set" },
+      { "id": "alto-65", "from": "voices/female-note", "skip": 0.25, "semitones": -2.17, "max": 1.5, "what": "The woman's sung note shifted to F4 (MIDI 65) with its formants kept, for the alto's sample set" },
+      { "id": "alto-69", "from": "voices/female-note", "skip": 0.25, "semitones": 1.83, "max": 1.5, "what": "The woman's sung note shifted to A4 (MIDI 69) with its formants kept, for the alto's sample set" },
+      { "id": "alto-71", "from": "voices/female-note", "skip": 0.25, "semitones": 3.83, "max": 1.5, "what": "The woman's sung note shifted to B4 (MIDI 71) with its formants kept, for the alto's sample set" },
+      { "id": "alto-73", "from": "voices/female-note", "skip": 0.25, "semitones": 5.83, "max": 1.5, "what": "The woman's sung note shifted to C#5 (MIDI 73) with its formants kept, for the alto's sample set" },
+      { "id": "alto-75", "from": "voices/female-note", "skip": 0.25, "semitones": 7.83, "max": 1.5, "what": "The woman's sung note shifted to D#5 (MIDI 75) with its formants kept, for the alto's sample set" },
+      { "id": "alto-77", "from": "voices/female-note", "skip": 0.25, "semitones": 9.83, "max": 1.5, "what": "The woman's sung note shifted to F5 (MIDI 77) with its formants kept, for the alto's sample set" },
+      { "id": "alto-79", "from": "voices/female-note", "skip": 0.25, "semitones": 11.83, "max": 1.5, "what": "The woman's sung note shifted to G5 (MIDI 79) with its formants kept, for the alto's sample set" }
     ]
   }
 }

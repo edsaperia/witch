@@ -15,6 +15,7 @@ import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
 import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
+import { TractVoices, tractLoaded, tractReady } from "./tract/tract";
 import { fxOn, VoiceFx, prepareWhisperEnvelopes } from "./voiceFx";
 import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
@@ -29,7 +30,7 @@ interface Channel {
   running?: AudioScheduledSourceNode[];
   /** A FOF part's voices (one worklet a part), its voice line's effects, when its last note ends (its phrases), and its
    *  swells' voices (into the effects' reverbs only, under a rising envelope). */
-  fof?: FofVoices; fx?: VoiceFx; lastEnd?: number;
+  fof?: FofVoices; tract?: TractVoices; fx?: VoiceFx; lastEnd?: number;
   /** Which chain the voice effects are set to (the style's voiceFx, "pure", or voiceFxDark): Ed, 2026-10-14, two chains by place. */
   fxKind?: "pure" | "dark"; swell?: { voices: FofVoices; gain: GainNode };
   /** A recorded voice's presence lift, shared by its notes, and its notes so far this phrase (its vowels taken in turn). */
@@ -403,6 +404,7 @@ export class MusicEngine {
       case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "fof": this.fof(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "sample": this.sampled(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
+      case "tract": this.tract(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -605,13 +607,35 @@ export class MusicEngine {
     ch.lastEnd = t + dur;
   }
 
+  /** A sung note on the vocal-tract voice (Ed, 2026-10-14: Pink Trombone's physics in a worklet, A/B'd against the sampled
+   *  alto): its vowel from the patch's in turn through the phrase, breathier by the patch's `breath` (lower tenseness), the
+   *  phrase's effects told where phrases start and end as the sampled voice tells them. The formant voice sings until the
+   *  worklet's loaded, or with the sound shed to step 2. */
+  private tract(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    if (!tractLoaded(this.ctx) || this.shedLevel >= 2) {
+      void tractReady(this.ctx);
+      this.voice(t, { ...p, kind: "voice", formantShift: 1.02, q: 9, vibrato: 16 }, peak, freq, dur, step, ch);
+      return;
+    }
+    const b = Math.min(1, Math.max(0, p.breath ?? 0)), [t0, t1] = p.tense ?? [0.45, 0.72], tense: [number, number] = [Math.max(0.1, t0 - 0.3 * b), Math.max(0.15, t1 - 0.3 * b)];
+    ch.tract ??= new TractVoices(this.ctx, ch.in, 3, { tractLength: p.tractLength ?? 40, tense, vibrato: p.vibrato ?? 0.012, vibratoRate: p.vibratoRate ?? 5.2, vibratoAfter: p.vibratoAfter ?? 0.3, glide: p.glide ?? 0.09, wander: p.wander ?? 0.15 });
+    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
+    if (fx && phrase && ch.lastEnd !== undefined) fx.release(ch.lastEnd);
+    ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
+    ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + dur);
+    const vs = p.vowels?.length ? p.vowels : ["ah"], vowel = vs[(ch.sung ?? 0) % vs.length];
+    ch.tract.note(t, 69 + 12 * Math.log2(freq / 440), dur * 0.97, Math.min(1, peak), vowel);
+  }
+
   /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
   private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
-    const rec = this.recordings.get(p.sample ?? "");
+    // the recording: the sample set's nearest note (bent at most a semitone), else the one recording at its root
+    const want = 69 + 12 * Math.log2(freq / 440), near = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
+    const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(p.root ?? 69), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);

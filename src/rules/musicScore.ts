@@ -13,7 +13,7 @@ export interface Patch {
    *  tone; synth: oscillators through a filter; bell: two square tones (a cowbell, pitched);
    *  riser: noise swept up over a build; impact: a noise burst and a falling sub; voice: a sung
    *  note, synthesised (a buzz through vowel formants, vibrato, breath). */
-  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof" | "sample";
+  kind: "kick" | "noise" | "snare" | "synth" | "voice" | "bell" | "riser" | "impact" | "fof" | "sample" | "tract";
   gain: number;
   /** synth: oscillator shapes (one oscillator each, spread by detune cents). */
   waves?: OscillatorType[];
@@ -61,6 +61,9 @@ export interface Patch {
    *  at 3 kHz). The formant voice sings its notes until it's loaded. */
   sample?: string;
   root?: number;
+  /** A sample set (Ed's singer review, 2026-10-14: the alto's, every two semitones with the formants kept): each recording
+   *  and the MIDI note it sings; a note plays the nearest, bent at most a semitone. With none, `sample` at `root` plays every note. */
+  notes?: { midi: number; sample: string }[];
   presence?: number;
   /** A consonant opening each note ("l": Ed, 2026-10-11, "Can it go laa?"), shaped by a filter opening over its first moment. */
   onset?: string;
@@ -70,6 +73,15 @@ export interface Patch {
   /** A recording's first seconds skipped (its onset: the woman's note starts 20 cents under its pitch for a quarter second, so
    *  a short note read from its start sang flat). */
   skip?: number;
+  /** The vocal-tract voice (kind "tract": Pink Trombone's physics in a worklet, platform/audio/tract; Ed, 2026-10-14): the tract's
+   *  length (44 a man's, 36 a soprano's, 40 an alto's), tenseness from a note's start to its body (0 breathy to 1 clear), how
+   *  long after a note's start the vibrato creeps in (s), the tongue's `glide` (the synth's knob, in seconds); `vibrato` here a
+   *  share of the pitch, `vibratoRate` Hz, `breath` 0 to 1 lowering the tenseness (more aspiration). */
+  tractLength?: number;
+  tense?: [number, number];
+  vibratoAfter?: number;
+  /** The tract voice's share of the model's own slow pitch drift (1 as Pink Trombone has it; 0 none). */
+  wander?: number;
   vibratoRate?: number;
   vibratoDelay?: number;
   octave?: number;

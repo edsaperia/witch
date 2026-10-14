@@ -2,6 +2,22 @@
 
 Written by tools/samples/credits.mjs from samples/manifest.json: never edit by hand.
 
+## owstu (CC0-1.0)
+
+- `alto/alto-55.ogg`: The woman's sung note shifted to G3 (MIDI 55) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-57.ogg`: The woman's sung note shifted to A3 (MIDI 57) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-59.ogg`: The woman's sung note shifted to B3 (MIDI 59) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-61.ogg`: The woman's sung note shifted to C#4 (MIDI 61) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-63.ogg`: The woman's sung note shifted to D#4 (MIDI 63) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-65.ogg`: The woman's sung note shifted to F4 (MIDI 65) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-69.ogg`: The woman's sung note shifted to A4 (MIDI 69) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-71.ogg`: The woman's sung note shifted to B4 (MIDI 71) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-73.ogg`: The woman's sung note shifted to C#5 (MIDI 73) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-75.ogg`: The woman's sung note shifted to D#5 (MIDI 75) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-77.ogg`: The woman's sung note shifted to F5 (MIDI 77) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `alto/alto-79.ogg`: The woman's sung note shifted to G5 (MIDI 79) with its formants kept, for the alto's sample set. Source: https://freesound.org/people/owstu/sounds/628817/
+- `voices/female-note.ogg`: A woman singing one steady note, G4 (from the uploader's own single-note improvisation). Source: https://freesound.org/people/owstu/sounds/628817/
+
 ## Versilian Studios LLC and contributors (CC0-1.0)
 
 - `vcsl/bass-drum.ogg`: Concert bass drum, medium hit. Source: https://github.com/sgossner/VCSL/blob/c1ea7bcc3c7309650ab0da9d15c9cd1fbc4a4c7e/Membranophones/Struck%20Membranophones/Bass%20Drum%202/bassdrum_hit_mf1.wav
@@ -31,10 +47,6 @@ Written by tools/samples/credits.mjs from samples/manifest.json: never edit by h
 ## chenny0607 (CC0-1.0)
 
 - `voices/female-chops.ogg`: Soft female vocal chops (the uploader's own singing). Source: https://freesound.org/people/chenny0607/sounds/437584/
-
-## owstu (CC0-1.0)
-
-- `voices/female-note.ogg`: A woman singing one steady note, G4 (from the uploader's own single-note improvisation). Source: https://freesound.org/people/owstu/sounds/628817/
 
 ## Hjaarlmarch (CC0-1.0)
 
