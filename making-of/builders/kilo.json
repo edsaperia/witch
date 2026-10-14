@@ -12,12 +12,14 @@
     "Every item of `docs/backlog/gameplay.md` checked in the rules and marked built (with its PR), partly built or not built; the built ones gathered into one short list at the foot of the page",
     "A pause-page slider for the flying cooldown (`riseCooldown`, 0 to 10 s), the delay after landing before she can rise again",
     "An enraged animal refusing a 💌: its angry whine (`chimes.ts refused`), its 💢 shaking at its face, and the letter crumpling into a ball of paper flung back the way it came (`render/invites.ts`); `node tools/smoke/bounce-off.cjs` shoots it",
-    "Pausing from the bedroom: Esc or the pad's Start opens the pause page over her room, backed, her keys and clicks held till it resumes (#925)"
+    "Pausing from the bedroom: Esc or the pad's Start opens the pause page over her room, backed, her keys and clicks held till it resumes (#925)",
+    "Music and Sound effects volume sliders pinned at the top of the pause page, read live by the sound and remembered on the browser (#925; the first step of Ed's pause-page music lab)"
   ],
   "learned": [
     "Most of a backlog from three days ago was already built, in two rule-tweak PRs (#648, #649) that nobody had marked off; a page that says what shipped and where saves the next builder the whole hunt.",
     "A shallow clone can't tell you which PR shipped a line: deepen it, find the line's first commit, then the first merge on the ancestry path to the main branch.",
-    "In the debug arena the first group is hers (leashed) and letters pass straight through a leashed animal: a shot that shows nothing is a setup bug before it is a drawing bug. Instrument the rules frame by frame before touching the art."
+    "In the debug arena the first group is hers (leashed) and letters pass straight through a leashed animal: a shot that shows nothing is a setup bug before it is a drawing bug. Instrument the rules frame by frame before touching the art.",
+    "Under the cloud's software renderer a game frame can take over a second, so a browser check that waits a fixed half second after a key sees nothing change: wait for the value itself."
   ],
   "previews": [
     {
@@ -31,6 +33,10 @@
     {
       "src": "media/builders/kilo-bedroom-pause.webp",
       "caption": "Paused in the bedroom"
+    },
+    {
+      "src": "media/builders/kilo-volume.webp",
+      "caption": "The Volume group on the pause page"
     }
   ]
 }
