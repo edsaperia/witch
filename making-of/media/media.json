@@ -2147,5 +2147,12 @@
     "chapter": "builders",
     "from": "previews/bounce-off/wolf/f019.png",
     "pr": 923
+  },
+  {
+    "src": "media/builders/kilo-bedroom-pause.webp",
+    "caption": "Paused in the bedroom (Esc): the test sliders slide in backed over her room's panel, her keys and clicks waiting till it resumes.",
+    "chapter": "builders",
+    "from": "previews/bedroom-pause.png",
+    "pr": 925
   }
 ]
