@@ -64,6 +64,22 @@ export function pixelEmojiData(e: string, n: number): ImageData | null {
   if (!pixelData.has(`${e}:${n}`)) emojiPixels(e, n);
   return pixelData.get(`${e}:${n}`) ?? null;
 }
+/** A pixel sprite of our own, drawn by `paint` on an n by n canvas and kept under `key` as the emoji are (alpha 0 or 255),
+ *  so pixelEmoji, pixelEmojiData and the turned drawing (render/invites.ts pixelTurned) serve it like one: the crumpled
+ *  letter. Painted once a key and size; returns the key. */
+const sprites = new Set<string>();
+export function pixelSprite(key: string, n: number, paint: (x: CanvasRenderingContext2D, n: number) => void): string {
+  const k = `${key}:${n}`;
+  if (!sprites.has(k)) {
+    const c = document.createElement("canvas");
+    c.width = c.height = n;
+    const x = c.getContext("2d", { willReadFrequently: true });
+    let d: ImageData | null = null;
+    if (x) { paint(x, n); d = x.getImageData(0, 0, n, n); for (let i = 3; i < d.data.length; i += 4) d.data[i] = d.data[i] < 110 ? 0 : 255; x.putImageData(d, 0, 0); }
+    pixelData.set(k, d); pixelCache.set(k, c.toDataURL()); sprites.add(k);
+  }
+  return key;
+}
 /** A pixel emoji as an image, `n` pixels across. */
 export function emojiImage(e: string, n: number): HTMLImageElement {
   const img = document.createElement("img");

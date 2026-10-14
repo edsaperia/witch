@@ -75,7 +75,7 @@ interface InviteEventAt { x: number; z: number; at: number }
 export type InviteEvent =
   | (InviteEventAt & { kind: "shot" | "fizzled" | "vanished"; n: number; id?: undefined; spent?: undefined })
   | (InviteEventAt & { kind: "hit"; id: number; n: number; spent: boolean })
-  | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined })
+  | (InviteEventAt & { kind: "blocked"; id: number; n: number; spent?: undefined; /** its flight (m/s) as it was stopped: the view tosses the crumpled letter back the way it came */ vx?: number; vz?: number })
   | (InviteEventAt & { kind: "happy"; id: number; n?: undefined; spent?: undefined });
 
 export interface Invites {
@@ -319,7 +319,7 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
       first = k; ft = f;
     }
     if (first) {
-      if (blocks(L, first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n }); return false; }
+      if (blocks(L, first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n, vx: L.vx, vz: L.vz }); return false; }
       love(first, L.x, L.z, L.n);
       L.hit.push(first.id);
       // Pierce (Stag): on through it. Skimming stone (Otter): on to another. Spawn (Toad): small ones.

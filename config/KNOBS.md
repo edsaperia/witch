@@ -1416,6 +1416,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.land.gap` | number | 0 to … |
 | `sfx.nope.volume` | number | 0 to … |
 | `sfx.nope.gap` | number | 0 to … |
+| `sfx.refused.volume` | number | 0 to … |
+| `sfx.refused.gap` | number | 0 to … |
 | `sfx.cleared.volume` | number | 0 to … |
 | `sfx.cleared.range` | number | 0 to … |
 | `sfx.cleared.floor` | number | 0 to … |

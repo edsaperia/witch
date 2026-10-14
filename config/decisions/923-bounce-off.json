@@ -1,0 +1,23 @@
+{
+  "pr": 923,
+  "group": "Bounce-off",
+  "decisions": [
+    {
+      "id": "refusedVolume",
+      "pr": 923,
+      "group": "Bounce-off",
+      "label": "Refusal whine volume",
+      "note": "How loud an enraged animal's whine is when it refuses a 💌 (sfx.refused.volume; 0.4 as shipped: about the enraged growl's level). 0 is silent.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.4,
+      "apply": {
+        "knob": "sfx.refused.volume"
+      }
+    }
+  ]
+}
