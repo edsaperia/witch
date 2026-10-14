@@ -81,7 +81,7 @@ export class Hud {
 
 /** The power meter (Ed, 2026-10-04): fighting value, Σ √(hp × dps) (rules/power.ts), of the party
  *  (leashed and parked) against each siege and every besieger together. */
-function powerLines(game: Game): string[] {
+export function powerLines(game: Game): string[] {
   const p = powerReport(game.creatures, game.witches, game.combat.sounds), n = p.counts, f = (x: number) => x.toFixed(0);
   const sieges = p.sieges.slice(0, 4).map(s => `${s.key} ${f(s.value)} (${s.count}, ${f(s.hp)} hp)`).join("  ");
   return [

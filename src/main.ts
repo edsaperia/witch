@@ -5,6 +5,9 @@ import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the ol
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, newGame, STEP, stepGame } from "./rules/game";
+import { TUNING } from "./rules/tuning";
+import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
+import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
 import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
@@ -29,7 +32,8 @@ import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { onTreehouse } from "./rules/treehouse";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { warmChart } from "./app/chartWarm";
-import { Hud } from "./app/hud";
+import { Hud, powerLines } from "./app/hud";
+import { SPRITE_UNIFORMS } from "./render/sprites";
 import { setupKnobs } from "./app/knobs";
 import { Sound } from "./app/sound";
 import { OutputMeter } from "./platform/audio/outputMeter";
@@ -70,6 +74,8 @@ if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel =
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
 const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
+// The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
+const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, tuning); // (app/viewParams.ts)
@@ -127,8 +133,10 @@ const startEl = document.getElementById("start")!;
 /** The party spell (Ed, 2026-10-06): cast by the creator's scroll (ui/spellScroll.ts), its burst starting play; without the
  *  creator (?creator=0&spell=wait), Enter (once play has begun, so the start screen's Enter isn't it) or her spell key casts it
  *  on the next step. */
-let castQueued = false;
-const queueCast = () => { if (awaitingSpell(game.party) && !game.clock.paused) castQueued = true; };
+// Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
+// game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
+let castWanted = false;
+const queueCast = () => { if (awaitingSpell(game.party)) castWanted = true; };
 window.addEventListener("keydown", e => { if (e.code === "Enter" && game.clock.time > 0.3 && !creator.open) queueCast(); });
 // The clock, its pops and the debug overlay (app/hud.ts).
 const hud = new Hud(game);
@@ -344,6 +352,32 @@ const perfHud = params.get("perf") === "1" ? new PerfHud(game, view, frameStats)
 // Frames of 100 ms or more, with what they spent it on (Ed, 2026-10-06: occasional half-second freezes): the overlay and the playtest log.
 const stallLog = new StallLog();
 playtest.stalls = () => stallLog.stalls;
+// What a builder needs from a screenshot of the overlay (Ed, 2026-10-14; app/repro.ts): the link that rebuilds what she saw, the
+// machine, and every setting changed from the build's; the same in the playtest log (L).
+const repro = (() => {
+  let machine: string[] | null = null, diff: [string, unknown][] = [], at = -Infinity;
+  const changed = () => { const now = performance.now(); if (now - at > 1000) { at = now; diff = tuningDiff(tuning, BUILT); } return diff; };
+  const link = () => location.origin + location.pathname + reproQuery(reproState(game, changed()), params);
+  const gl = () => view.renderer.getContext();
+  const mach = () => (machine ??= (() => { try { return [...machineLines(gl(), canvas, tuning.pixelSize), ...precisionLines(gl())]; } catch { return ["gpu    (unknown)"]; } })());
+  const targets = () => { const z = view.post.sizes(), c = SPRITE_UNIFORMS.uCutout.value, d = { x: gl().drawingBufferWidth, y: gl().drawingBufferHeight }, f = (a: [number, number]) => a.join("×");
+    return [`rt     scene ${f(z.scene)}  effects ${f(z.fx)}  bloom ${f(z.bloom)}  out ${f(z.out)}  drawing buffer ${d.x}×${d.y}`, `hole   canopy cut-away at ${c.x.toFixed(0)}, ${c.y.toFixed(0)} px  radius ${c.z.toFixed(1)} px  edge ${c.w.toFixed(1)} px`]; };
+  /** All of it, for the button and the log: the link, the machine, the targets, the overlay's lines, every setting changed and every test slider. */
+  const full = () => debugText(`Witch debug info · ${typeof __BUILD__ === "string" ? __BUILD__ : "dev"} · seed ${seed} · ${new Date().toISOString()}`, [
+    ["Link", [link()]],
+    ["Machine", [...mach(), ...targets()]],
+    ["Overlay", [...overlayHead(), ...powerLines(game)]],
+    ["Settings changed from the build's", changed().map(([p, v]) => `${p} = ${JSON.stringify(v)}`)],
+    ["Test sliders (the pause page)", valuesText(new Map(DECISION_LIST.map(d => [d.id, currentValue(d, tuning, params)])), "", seed).split("\n").slice(1)],
+  ]);
+  return { link, machine: mach, changed, full, line: () => reproLine(reproState(game, changed()), changed().length) };
+})();
+document.getElementById("copy-debug")?.addEventListener("click", e => {
+  const b = e.currentTarget as HTMLButtonElement, text = repro.full();
+  void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
+});
+playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
+playtest.debugText = () => repro.full();
 playtest.viewState = () => { const w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
@@ -401,7 +435,7 @@ function frame(now: number): void {
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
-  if (castQueued) { c.castParty = !bot; castQueued = false; }
+  if (castWanted && !game.clock.paused) { if (awaitingSpell(game.party)) c.castParty = !bot; else castWanted = false; }
   if (c.toggleAutoTalk) setAutoTalk(!autoTalk);
   c.autoTalk = autoTalk;
   if (c.debug) hud.setDebug(!hud.debugOn);
@@ -484,22 +518,25 @@ function frame(now: number): void {
   shake.apply();
   freeze.update();
   // The overlay (app/hud.ts), four times a second.
-  hud.overlay(now, () => {
-    const w = game.witch, s = view.stats;
-    return [
-      ...frameStats.lines(),
-      stallLog.line(),
-      meter.line() + (sound.valve.level ? `  shed ${sound.valve.level} (${SHED_STEPS[sound.valve.level]})` : "  full mix"),
-      `seed   ${seed}`,
-      `area   ${areaUnderWitch(game)}`,
-      `mode   ${w.mode}`,
-      `at     ${w.x.toFixed(0)}, ${w.z.toFixed(0)} m   zoom ${game.camera.zoomStep}`,
-      `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
-      `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
-      `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
-      ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
-    ];
-  });
+  hud.overlay(now, overlayHead);
+}
+/** The overlay's lines (the power meter's are hud.ts's), shared with the debug info's copied text. */
+function overlayHead(): string[] {
+  const w = game.witch, s = view.stats;
+  return [
+    ...frameStats.lines(),
+    stallLog.line(),
+    meter.line() + (sound.valve.level ? `  shed ${sound.valve.level} (${SHED_STEPS[sound.valve.level]})` : "  full mix"),
+    repro.line(),
+    `seed   ${seed}  ${typeof __BUILD__ === "string" ? __BUILD__ : "dev"}`,
+    `area   ${areaUnderWitch(game)}`,
+    `mode   ${w.mode}`,
+    `at     ${w.x.toFixed(0)}, ${w.z.toFixed(0)} m   zoom ${game.camera.zoomStep}`,
+    `trees  ${s.trees}  bushes ${s.bushes}  creatures ${s.creatures}`,
+    `budget scenery to ${s.sceneryRadius.toFixed(0)} m (${s.scenery})  gameplay ${s.gameplay}  dropped ${s.dropped}`,
+    `draws  ${s.drawCalls}  art queued ${s.pendingArt}  ground tiles ${s.pendingGround}`,
+    ...(game.lod ? [`sim    full ${game.lod.full}  coarse ${game.lod.coarse}  frozen ${game.lod.frozen}   marching full ${game.lod.marchFull}  coarse ${game.lod.marchCoarse}`] : []),
+  ];
 }
 requestAnimationFrame(frame);
 
