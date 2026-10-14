@@ -4,7 +4,7 @@
 // knocked out on the ground, comes back at the magic circle, rises out of its floor and walks to her decks. Shots: approach,
 // landed, hub, map, chart, off, circle, rising, decks. Fails on a page error, a landing that doesn't happen, a chart that doesn't
 // open, or a respawn that doesn't reach the circle and then the decks.
-//   npm run build && node tools/treehouse/shots.cjs <out dir> [seed]
+//   npm run build && node tools/treehouse/shots.cjs <out dir> [seed]      (STEPS=respawn: only the knockout's shots)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/treehouse", seed = "123"] = process.argv.slice(2);
@@ -42,6 +42,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     };
     const state = () => page.evaluate(() => { const w = window.witch.game.witch; return { mode: w.mode, perch: !!w.perch, seated: !!w.seated, x: +w.x.toFixed(1), z: +w.z.toFixed(1), lift: +w.lift.toFixed(2), house: window.witch.game.camera.house }; });
     const shot = async (name) => { await page.screenshot({ path: path.join(outDir, `${name}.png`) }); log(`${name}: ${JSON.stringify(await state())}`); };
+    const STEPS = process.env.STEPS || "all";
+    if (STEPS !== "respawn") {
     // 1. The approach: at treetop height 70 m south of the balcony, flying north at it (the game's own keys), until she lands.
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse, H = g.tuning.treehouse.house; g.witch = { ...g.witch, x: T.x + 1.5, z: T.z + H.balcony.out + 70, vx: 0, vz: -10, mode: "treetop", lift: 1, perch: undefined, seated: false }; g.camera.intro = 0; });
     await hold(new Set(["W"]));
@@ -69,8 +71,13 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     out.off = await state();
     await wait(600);
     await shot("off");
+    }
     // 4. A knockout on the ground (the debug arena isn't needed: her hits taken directly), then back at the circle, rising, and the walk to her decks.
+    // (her frames without her hat are baked on their own, a moment after the game is up: waited for here, so she shows at the circle)
     await unpause();
+    await page.evaluate(() => { window.witch.view.assets.witchBare(); });
+    await page.waitForFunction(() => window.witch.view.assets.witchBare().frames.length > 8, null, { timeout: 400000, polling: 500 }).catch(() => {});
+    out.bareReady = await page.evaluate(() => window.witch.view.assets.witchBare().frames.length > 8);
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + 30, z: T.z + 60, vx: 0, vz: 0, mode: "ground", lift: 0, perch: undefined, seated: false }; });
     await wait(300);
     out.hit = await page.evaluate(() => { const W = window.witch.game.witches[0]; W.health.hp = 1; W.health.hurtAt = -Infinity; return window.witch.hit(); }); // (her last hit: app/hooks.ts)
@@ -87,6 +94,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
     }
   } finally { await browser.close(); server.close(); }
   console.log(JSON.stringify({ ...out, errors }));
-  const bad = errors.length || !out.landed || out.landed.mode !== "ground" || !out.landed.perch || !out.off || !(out.off.mode === "rising" || out.off.mode === "treetop") || (out.ko && (!out.decks || !out.decks.seated));
+  const flown = process.env.STEPS === "respawn" || (out.landed && out.landed.mode === "ground" && out.landed.perch && out.off && (out.off.mode === "rising" || out.off.mode === "treetop"));
+  const bad = errors.length || !flown || (out.ko && (!out.decks || !out.decks.seated));
   if (bad) process.exit(1);
 })();
