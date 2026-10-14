@@ -7,7 +7,7 @@ import styleJson from "../../config/music-style.json";
 import { bpmAt, timeAt, waveArrived, waveTempo } from "./beat";
 import { hitWitch, newGame } from "./game";
 import { Conductor, formClock, musicCue, silentAt, type MusicCue } from "./musicPlan";
-import { formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, type BlockPlan, type MusicStyle } from "./musicScore";
+import { arcStep, formBars, formChord, formInstrument, formNoteAt, formPhrase, musicSeed, notesAt, resolveSection, sungHere, type BlockPlan, type MusicStyle } from "./musicScore";
 import { TUNING, type Tuning } from "./tuning";
 
 const style = styleJson as unknown as MusicStyle, F = style.form!;
@@ -227,5 +227,81 @@ describe("the form's sections (Ed, 2026-10-09: \"ABAC; the first two sections sh
       expect(p.section, `bar ${bar}`).toBe(want);
       expect(formClock(style, cue, bar).start).toBe(landed);
     }
+  });
+});
+
+describe("the singer's redesign (Ed, 2026-10-14: an alto in tune, stepwise, in the breakdowns and builds, two chains by place)", () => {
+  const degs = (seed: number, L: string, hook?: number) => formPhrase(style, seed, L, hook).filter((n): n is NonNullable<typeof n> => !!n).map(n => n.deg);
+
+  it("sings as an alto, G3 to G4 in the home key, whatever the seed", () => {
+    expect(F.sung.octave).toBe(2);
+    expect(F.range).toEqual([-1, 6]);
+    for (let seed = 0; seed < 120; seed++) for (let i = 0; i < 32 * 16; i++) {
+      const n = formNoteAt(style, seed, i, 0, undefined, { voice: true });
+      if (n && n.part === F.sung.part) { expect(n.midi, `${seed} at ${i}`).toBeGreaterThanOrEqual(55); expect(n.midi, `${seed} at ${i}`).toBeLessThanOrEqual(67); }
+    }
+  });
+
+  it("walks the sung phrases in steps and thirds within a fifth, and still answers on the root", () => {
+    for (let seed = 0; seed < 120; seed++) for (const L of "BC") {
+      const d = degs(seed, L);
+      expect(Math.max(...d) - Math.min(...d), `${seed} ${L} span`).toBeLessThanOrEqual(4);
+      for (let k = 1; k < d.length; k++) expect(Math.abs(d[k] - d[k - 1]), `${seed} ${L} leap at ${k}`).toBeLessThanOrEqual(2);
+    }
+    for (const seed of seeds) expect(((degs(seed, "C").pop()! % 7) + 7) % 7).toBe(0);
+    // A, the instrument's, keeps its wider walk
+    const wide = seeds.map(seed => degs(seed, "A")).filter(d => Math.max(...d) - Math.min(...d) > 4);
+    expect(wide.length).toBeGreaterThan(0);
+  });
+
+  it("opens every wave's sung phrase on the night's own hook, the rest the wave's own", () => {
+    expect(F.sung.hookBars).toBe(2);
+    const night = 4242, hookOf = (seed: number) => formPhrase(style, seed, "C", night).slice(0, 32).map(n => n ? `${n.deg}:${n.dur}` : ".").join();
+    const rest = (seed: number) => formPhrase(style, seed, "C", night).slice(32).map(n => n ? `${n.deg}:${n.dur}` : ".").join();
+    expect(hookOf(night)).toBe(formPhrase(style, night, "C").slice(0, 32).map(n => n ? `${n.deg}:${n.dur}` : ".").join()); // (the night's own phrase: the hook is its opening)
+    let same = 0, differ = 0;
+    for (const seed of [1, 7, 42, 123, 9001]) { if (hookOf(seed) === hookOf(night)) same++; if (rest(seed) !== rest(night)) differ++; }
+    expect(same).toBe(5);
+    expect(differ).toBeGreaterThanOrEqual(4);
+  });
+
+  it("sings only in the breakdowns and the build, the instrument playing the rest; washed in the breakdowns; the dark chain in the dark families", () => {
+    expect(F.sung.where).toEqual(["breakdown", "build"]);
+    const a = arcStep(style, 1), S = a.sections!;
+    for (const sec of [S.land!, ...S.four, ...S.breaks]) expect(sungHere(style, { section: sec, start: 0, bars: 16, wave: 1, arc: 1 }, a, resolveSection(style, sec)), sec).toBeNull();
+    for (const sec of S.breakdown) expect(sungHere(style, { section: sec, start: 0, bars: 8, wave: 1, arc: 1 }, a, resolveSection(style, sec)), sec).toBe("breakdown");
+    expect(sungHere(style, { section: a.build, start: 0, bars: 8, wave: 1, arc: 1 }, a, resolveSection(style, a.build))).toBe("build");
+    const events = (section: string, start: number, bars: number) => Array.from({ length: bars * 16 }, (_, i) => notesAt(style, { section, start, bars, wave: 1, arc: 1 }, null, start * 16 + i, { seed: 7, siege: 0, formStart: 0 })).flat();
+    // the form's bars 0-15 (A and B) in the four-on-the-floor section: nothing sung
+    expect(events(S.four[0], 0, 16).filter(e => e.part === F.sung.part)).toEqual([]);
+    expect(events(S.four[0], 0, 16).some(e => style.parts[e.part]?.role === "motif")).toBe(true);
+    // bars 24-31 (C) in the breakdown: sung, each note washed a fifth and an octave up at half the level, in the pure chain
+    let sungIn = 0;
+    for (const seed of [7, 8, 9, 10]) {
+      const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt(style, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
+      if (!ev.length) continue;
+      sungIn++;
+      const leads = ev.filter(e => !e.double), wash = ev.filter(e => e.double);
+      expect(wash.length).toBe(2 * leads.length);
+      for (const e of ev) expect(e.fx).toBe("pure");
+      for (const w of wash) { const lead = leads.find(l => l.step === w.step)!; expect(w.midi!).toBeGreaterThan(lead.midi!); expect(w.vel).toBeCloseTo(lead.vel * F.sung.wash!.level, 6); }
+    }
+    expect(sungIn).toBeGreaterThan(0);
+    // the dark chain for a dark family
+    const dark = { ...a, family: "coven" };
+    const ev = Array.from({ length: 8 * 16 }, (_, i) => notesAt({ ...style, arc: style.arc.map((x, k) => k === 1 ? dark : x) }, { section: S.breakdown[0], start: 24, bars: 8, wave: 1, arc: 1 }, null, 24 * 16 + i, { seed: 7, siege: 0, formStart: 0 })).flat().filter(e => e.part === F.sung.part);
+    for (const e of ev) expect(e.fx).toBe("dark");
+    expect(style.voiceFxDark!.families).toContain("coven");
+  });
+
+  it("has the pure chain with no chorus, octave double or shimmer, and a swelling, breathing voice", () => {
+    expect(style.voiceFx!.chorus).toBe(0);
+    expect(style.voiceFx!.octave).toBe(0);
+    expect(style.voiceFx!.shimmer).toBe(0);
+    expect(style.voiceFx!.hall!).toBeGreaterThanOrEqual(0.85);
+    const v = style.patches[F.sung.patch];
+    expect(v.swell).toBeGreaterThan(0.2);
+    expect(v.breath).toBeGreaterThan(0);
+    expect(F.pace.sung).toBe(0); // (slow cells only: long notes)
   });
 });

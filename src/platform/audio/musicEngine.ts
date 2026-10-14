@@ -29,7 +29,9 @@ interface Channel {
   running?: AudioScheduledSourceNode[];
   /** A FOF part's voices (one worklet a part), its voice line's effects, when its last note ends (its phrases), and its
    *  swells' voices (into the effects' reverbs only, under a rising envelope). */
-  fof?: FofVoices; fx?: VoiceFx; lastEnd?: number; swell?: { voices: FofVoices; gain: GainNode };
+  fof?: FofVoices; fx?: VoiceFx; lastEnd?: number;
+  /** Which chain the voice effects are set to (the style's voiceFx, "pure", or voiceFxDark): Ed, 2026-10-14, two chains by place. */
+  fxKind?: "pure" | "dark"; swell?: { voices: FofVoices; gain: GainNode };
   /** A recorded voice's presence lift, shared by its notes, and its notes so far this phrase (its vowels taken in turn). */
   presence?: BiquadFilterNode; sung?: number;
 }
@@ -192,6 +194,16 @@ export class MusicEngine {
   /** The tempo now (the voice effects' echoes are on the beat). */
   private bpmNow = 120;
   /** The voice line's effects changed while playing (the Music Lab's sliders): set at once on its parts. */
+  /** The voice effects' settings for a chain: the style's voiceFx (pure, for breakdowns and builds) or, "dark", its voiceFxDark
+   *  over it (the dark families: Ed, 2026-10-14, "two chains by place"). */
+  private fxChain(kind: "pure" | "dark"): NonNullable<MusicStyle["voiceFx"]> {
+    const F = this.style.voiceFx ?? {};
+    if (kind !== "dark" || !this.style.voiceFxDark) return F;
+    const { families: _f, parts: _p, ...dark } = this.style.voiceFxDark as NonNullable<MusicStyle["voiceFxDark"]> & { _?: string };
+    delete (dark as { _?: string })._;
+    return { ...F, ...dark };
+  }
+
   setVoiceFx(settings: NonNullable<MusicStyle["voiceFx"]>): void {
     this.style = { ...this.style, voiceFx: { ...this.style.voiceFx, ...settings } };
     for (const ch of this.channels.values()) ch.fx?.set(settings);
@@ -381,6 +393,7 @@ export class MusicEngine {
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
+    if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch); break;
@@ -616,8 +629,14 @@ export class MusicEngine {
     ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
     const src = c.createBufferSource(), g = c.createGain();
     src.buffer = rec; src.playbackRate.value = rate;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.03);
-    g.gain.setValueAtTime(peak, t + Math.max(0.03, len - 0.08)); g.gain.linearRampToValueAtTime(0, t + len);
+    // the swell (Ed, 2026-10-14: "more dynamic range"): each note rising from nothing over its first `swell` share and fading
+    // over its last (a 30 ms ramp with none), so a held note breathes rather than switches on
+    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+    const envelope = (gain: AudioParam, top: number) => {
+      gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + rise);
+      gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len);
+    };
+    envelope(g.gain, peak);
     // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
     // vowel (its partials strong to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed
     // to "oo" by a low-pass; and its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
@@ -636,6 +655,14 @@ export class MusicEngine {
       last.connect(pk); last = pk; nodes.push(pk);
     }
     last.connect(ch.presence); src.start(t, 0, len * rate + 0.02);
+    // breath (Ed, 2026-10-14: "gentler, breathier"): shaped noise under the note, through the same swell, at the patch's level
+    if ((p.breath ?? 0) > 0) {
+      const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();
+      n.buffer = this.noise; n.loop = true; bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 0.9;
+      envelope(bg.gain, peak * (p.breath ?? 0));
+      n.connect(bp).connect(bg).connect(ch.presence); n.start(t); n.stop(t + len + 0.02);
+      nodes.push(n, bp, bg);
+    }
     src.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 
