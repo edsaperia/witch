@@ -1,6 +1,6 @@
 // The debug overlay's repro link (app/repro.ts): what changed is listed, ?set= puts it back, and the link rebuilds the game as it was.
 import { describe, expect, it } from "vitest";
-import { applyRepro, applySet, browserOs, reproQuery, reproState, setText, tuningDiff, wrapLines } from "./repro";
+import { applyRepro, applySet, browserOs, debugText, reproLine, reproQuery, reproState, setText, tuningDiff } from "./repro";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 
@@ -49,9 +49,10 @@ describe("the repro link", () => {
 });
 
 describe("the overlay's text", () => {
-  it("wraps the link under its label and names the browser and OS", () => {
-    const L = wrapLines("link   ", "x".repeat(200), 96);
-    expect(L.length).toBe(3); expect(L[1].startsWith("       x")).toBe(true);
+  it("is one short line in the overlay, the rest in the copied text, and names the browser and OS", () => {
+    const g = newGame(7, clone(TUNING)), line = reproLine(reproState(g, []), 2);
+    expect(line.startsWith("repro  wave 0")).toBe(true); expect(line).toContain("2 settings changed"); expect(line.length).toBeLessThan(120);
+    expect(debugText("Witch", [["Link", ["?seed=7"]], ["Machine", ["gpu x", "gl y"]]])).toBe("Witch\n\nLink:\n?seed=7\n\nMachine:\ngpu x\ngl y");
     expect(browserOs("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36")).toBe("Chrome 141 Windows");
     expect(browserOs("Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15")).toBe("Safari 18 macOS");
   });

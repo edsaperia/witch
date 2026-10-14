@@ -116,6 +116,12 @@ export function machineLines(gl: WebGLRenderingContext | WebGL2RenderingContext,
     `screen ${screen.width}×${screen.height} @${devicePixelRatio}  window ${innerWidth}×${innerHeight}  canvas ${canvas.width}×${canvas.height} (px ${pixelSize})`,
   ];
 }
+/** The fragment shader's precision (Hotel, the circle bug): highp and mediump floats and ints, as getShaderPrecisionFormat gives
+ *  them (range min..max, precision bits; 0 bits: not supported). */
+export function precisionLines(gl: WebGLRenderingContext | WebGL2RenderingContext): string[] {
+  const f = (t: number) => { const p = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, t); return p ? `${p.rangeMin}..${p.rangeMax}/${p.precision}` : "?"; };
+  return [`frag   highp float ${f(gl.HIGH_FLOAT)} int ${f(gl.HIGH_INT)}   mediump float ${f(gl.MEDIUM_FLOAT)} int ${f(gl.MEDIUM_INT)}`];
+}
 /** The browser and its version, and the OS, from the user agent (compact). */
 export function browserOs(ua = navigator.userAgent): string {
   const m = ua.match(/(Edg|OPR|Firefox|Chrome|Version)\/(\d+)/), safari = /Safari\//.test(ua) && !/Chrome\//.test(ua);
@@ -124,18 +130,11 @@ export function browserOs(ua = navigator.userAgent): string {
   return `${name} ${m?.[2] ?? ""} ${os}`.replace(/\s+/g, " ").trim();
 }
 
-/** Text cut into lines of at most `width` characters, the first after `label`, the rest indented to match. */
-export function wrapLines(label: string, text: string, width = 96): string[] {
-  const out: string[] = [], pad = " ".repeat(label.length);
-  for (let i = 0; i < text.length || i === 0; i += width) out.push((i ? pad : label) + text.slice(i, i + width));
-  return out;
+/** Everything the debug info's button copies (Ed, 2026-10-14: the overlay itself kept small, so the screenshot still shows the
+ *  bug; the rest pasted beside it): a heading, then each section under its name. */
+export function debugText(heading: string, sections: [string, string[]][]): string {
+  return [heading, ...sections.flatMap(([name, lines]) => ["", `${name}:`, ...lines])].join("\n");
 }
-/** The settings changed, compact: path=value, a few a line, at most `max` (then how many more). */
-export function settingsLines(diff: [string, unknown][], max = 12): string[] {
-  if (!diff.length) return ["set    (all as built)"];
-  const items = diff.slice(0, max).map(([p, v]) => `${p}=${JSON.stringify(v).slice(0, 40)}`);
-  const lines: string[] = [];
-  for (let i = 0; i < items.length; i += 3) lines.push((i ? "       " : "set    ") + items.slice(i, i + 3).join("  "));
-  if (diff.length > max) lines.push(`       +${diff.length - max} more (in the link and the L log)`);
-  return lines;
-}
+/** The overlay's one short line (the full link is in the copied text): the wave, the world, hat and broom, how many settings changed. */
+export const reproLine = (s: ReproState, changed: number): string =>
+  `repro  wave ${s.wave}${s.cleared.length ? ` +${s.cleared.length} cleared` : ""}  world ${s.world ?? 0}  hat ${s.hat}  broom ${s.broom}  ${changed ? `${changed} setting${changed > 1 ? "s" : ""} changed` : "settings as built"}  (copy debug info: the link)`;

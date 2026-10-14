@@ -170,6 +170,10 @@ export class Post {
   /** The smooth effects layer's size, for its shaders' depth lookups (render/mist.ts). */
   get fxSize(): THREE.Vector2 { return this.fxRes; }
 
+  /** Its targets' sizes (pixels), for the debug info (app/repro.ts): the scene, the smooth effects layer, the bloom's and the output. */
+  sizes(): { scene: [number, number]; fx: [number, number]; bloom: [number, number]; out: [number, number] } {
+    return { scene: [this.scene.width, this.scene.height], fx: [this.fx.width, this.fx.height], bloom: [this.bright.width, this.bright.height], out: [this.out.x, this.out.y] };
+  }
   resize(lowW: number, lowH: number, outW: number, outH: number): void {
     this.low.set(lowW, lowH);
     const fw = Math.max(1, Math.round(lowW / 2)), fh = Math.max(1, Math.round(lowH / 2));
