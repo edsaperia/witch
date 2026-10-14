@@ -1,0 +1,158 @@
+Witch debug info · dev · seed 886806 · 2026-10-14T00:28:28.365Z
+
+Link:
+http://127.0.0.1:37259/?seed=886806&world=0&found=&hat=none&broom=none&wave=4&at=2327,2569&mode=ground&zoom=4&creator=0&set=camera.curve.treetop=0.002;pixelSize=4&px=4&debug
+
+Machine:
+gpu    ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader drive (Google Inc. (Google))
+gl     WebGL2  highp yes  max tex 8192  Chrome 141 Linux
+screen 1600×900 @1  window 1600×900  canvas 400×225 (px 4)
+frag   highp float 127..127/23 int 31..30/0   mediump float 15..15/10 int 15..14/0
+rt     scene 400×225  effects 200×113  bloom 200×113  out 400×225  drawing buffer 400×225
+hole   canopy cut-away at 200, 109 px  radius 160.0 px  edge 100.0 px
+
+Overlay:
+fps    5 avg  15 median  1 1% low
+frame  66.6 ms median  899.9 p95  899.9 worst  67% over 20 ms
+cpu    30.9 ms median  6188.9 p95  (its own work)
+gpu    2519.4 ms median  4759.2 p95
+stalls 12 over 100 ms; last 50 ms at 1.3 s (step 6.1, draw 26, hud 14, grass+lights 12; 26 ms FrameRequestCallback qk main-BlLfKDer.js:1178068)
+audio  out -39 dBFS (peak -29)  running  lat 61+184 ms  clock 1.00  silences 0
+clock  clock true  (slow 0, fast 0, drift -2, played -20 ms)
+repro  wave 4  world 0  hat none  broom none  2 settings changed  (copy debug info: the link)
+seed   886806  dev
+area   Old oaks
+mode   ground
+at     2327, 2569 m   zoom 4
+trees  410  bushes 134  creatures 0
+budget scenery to 360 m (544)  gameplay 0  dropped 0
+draws  104  art queued 61  ground tiles 58
+sim    full 14  coarse 21  frozen 0   marching full 3  coarse 0
+power  party 0 = leashed 0 + parked 0   0b 0y 0a 0L   berries 0 invites 0
+wild   peopled from the start by route (no growth)   creatures 40   cleared early 0
+load   0.00 pull, 0.00 over the free 4.5   stack 0   lift 0.00
+enemy  marching 61   16,15 23 (1, 500 hp)  14,16 17 (2, 500 hp)  14,15 12 (1, 500 hp)  15,16 9 (1, 500 hp)   (L saves the playtest log)
+
+Settings changed from the build's:
+camera.curve.treetop = 0.002
+pixelSize = 4
+
+Test sliders (the pause page):
+
+#889 Area edges:
+  Area edges · borders.on = false (built false)
+
+#857 Coloured shadows:
+  Shadow colour · shadows.tint = 0.6 (built 0.6)
+  Shadows darken what stands in them · shadows.cast = true (built true)
+
+#806 Debug knobs:
+  Fight scale ([ ]) · ?fightScale = 1 (built 1)
+  Fight speed (; ') · ?fightSpeed = 1 (built 1)
+  Fight momentum (, .) · ?fightMomentum = 1 (built 1)
+  Treetop speed (m/s) · ?treetopSpeed = 48 (built 48)
+  Area size (m) · ?areaSize = 168 (built 168)
+
+#771 Beach pixels:
+  Sand grain · beach.grain = 0.14 (built 0.14)
+
+#770 Chase:
+  Chase past the edge · combat.leaveArea = 30 (built 30)
+  Provoked for · wildWatch.provoked = 6 (built 6)
+
+#763 Soundsystem light:
+  Light knee · lights.knee = 0.9 (built 0.9)
+  Light ceiling · lights.ceiling = 1.1 (built 1.1)
+  Soundsystem light · party.lightStrength = 1.6 (built 1.6)
+  Bloom threshold · bloom.threshold = 0.55 (built 0.55)
+
+#759 Scenery shadows:
+  Scenery casts shadows · shadows.trunks.scenery = true (built true)
+  Shortest that casts (m) · shadows.trunks.sceneryMin = 1.2 (built 1.2)
+  Glowing casters' shadows · shadows.trunks.glowLight = 0.7 (built 0.7)
+  Fade at the base (m) · shadows.trunks.sceneryFoot = 2 (built 2)
+  Taper (times its width) · shadows.trunks.sceneryTaper = 0.5 (built 0.5)
+
+#756 Sigil backing:
+  Backing darkness · leash.sigilBacking.dark = 0.85 (built 0.85)
+  Backing size (times the sigil) · leash.sigilBacking.size = 1.1 (built 1.1)
+  Sigil opacity · leash.sigilBacking.ink = 1.5 (built 1.5)
+
+#755 Sound voice budget:
+  Most sound effects at once · sfx.budget.voices = 24 (built 24)
+
+#754 Trunk shadow fades:
+  Fade at the foot (m) · shadows.trunks.foot = 1.5 (built 1.5)
+  Taper at the foot (m) · shadows.trunks.taper = 2 (built 2)
+  Fade near her (m) · shadows.trunks.near = 6 (built 6)
+  Darkens grass and flowers · shadows.trunks.cover = 1 (built 1)
+
+#752 Sigil glow:
+  Sigil strength · leash.sigilGlyph = 0.5 (built 0.5)
+  Sigil halo · leash.sigilHalo = 0 (built 0)
+
+#751 Chart moon:
+  Island shadow darkness · chart.moon.shadow = 0.6 (built 0.6)
+  Moon height (degrees) · chart.moon.height = 22 (built 22)
+  Seconds a turn · chart.moon.turn = 240 (built 240)
+  Rise (s) · chart.moon.rise = 6 (built 6)
+  Moon disc in the sky · chart.moon.disc = true (built true)
+  Empty sea round the edge · chart.edgeBand = 0.18 (built 0.18)
+
+#748 Trunk shadows:
+  Shadow darkness · shadows.trunks.strength = 0.75 (built 0.75)
+  Shadow length (times the trunk) · shadows.trunks.long = 2.5 (built 2.5)
+  Her glow's reach (m) · shadows.trunks.glowReach = 50 (built 50)
+  Her glow's height (m) · shadows.trunks.glowHeight = 1.25 (built 1.25)
+  Shadow style · shadows.trunks.mode = soft (built soft)
+  Soft shadow's core · shadows.trunks.core = 0.8 (built 0.8)
+  Width that casts · shadows.trunks.across = 1 (built 1)
+  A campfire's reach (m) · lights.campfire.reach = 40 (built 40)
+
+#726 Dream bubbles grow:
+  Bubble size · bubbles.scale = 1 (built 1)
+  A baby's bubble · bubbles.levelScale.0 = 0.8 (built 0.8)
+  An adult's bubble · bubbles.levelScale.2 = 1.3 (built 1.3)
+  A legend's bubble · bubbles.levelScale.3 = 1.8 (built 1.8)
+
+#483 Quests point later:
+  Quest buff strength · legends.questRoll = 1.25 (built 1.25)
+  Dreams from later areas · legends.questLater = true (built true)
+
+#346 Balance pass 1:
+  Farthest dream (areas) · legends.questCap = 6 (built 6)
+
+#339 No walking away:
+  Charge speed vs her walk · fight.charge.chase = 1.6 (built 1.6)
+  Winded after a missed charge (s) · fight.charge.miss = 1.2 (built 1.2)
+  Leaps lead her · fight.leap.lead = 1 (built 1)
+
+#290 Legend layers:
+  Legend bombardment · legends.bombard.damage = 150 (built 150)
+  Legend stomp · legends.stomp.on = false (built false)
+  Restless time with the stomp (s) · legends.stomp.angryAfter = 120 (built 120)
+  Legend buff strength · legends.buffPower = 1 (built 1)
+  Happy legend reach (m) · legends.happyRange = 420 (built 420)
+
+#259 Legends in half the areas:
+  Areas with a legend · legends.share = 0.2 (built 0.2)
+
+#249 Stars through the tilt-shift:
+  Stars through the blur · tiltShift.skyBlur = 0.3 (built 0.3)
+  Tilt-shift from the treetops · tiltShift.treetop.strength = 3 (built 3)
+
+#243 Charges and leaps go further:
+  Charge length · fight.charge.reach = 2 (built 2)
+  Charge turning · fight.charge.turn = 0.4 (built 0.4)
+  Charge momentum · fight.charge.brake = 0.5 (built 0.5)
+  Charges hurt on touch · fight.charge.contact = true (built true)
+  Leap length · fight.leap.reach = 1.5 (built 1.5)
+  Pounce carry-through (m) · fight.leap.through = 5 (built 5)
+  Downed stun (s) · combat.daze = 20 (built 20)
+  Chase past their area (m) · combat.leaveArea = 30 (built 30)
+
+#227 Decisions panel:
+  Pixel style · ?style = bold (built bold)
+  Wild growth a wave · population.growth.perWave = 0.5 (built 0.5)
+  Grace after a hit (s) · witchHealth.grace = 0.5 (built 0.5)
+  Legend hit flash · attackFx.legendFlash = 0.5 (built 0.5)
