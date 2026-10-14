@@ -138,6 +138,11 @@ describe("the treehouse's house", () => {
       expect(r).toBeGreaterThanOrEqual(d.table.r + 0.35 - 1e-6);
       expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
     }
+    // from the hub's south-east corner she walks out onto the balcony and off its rim (no notch where the half-disc meets the round wall)
+    g.witch = { ...g.witch, x: d.x + 3, z: d.z + 4.4, vx: 0, vz: 0 };
+    let out = false;
+    for (let i = 0; i < 240 && !out; i++) { press(g, { moveX: 0.7, moveZ: 0.7 }); out = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
+    expect(out).toBe(true);
     // the balcony's sides and the hub's wall keep her; its open rim doesn't
     const b = d.house!.balcony;
     expect(keepInHouse(d, d.x - d.r - 3, d.z).off).toBe(false);

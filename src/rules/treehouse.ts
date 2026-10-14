@@ -113,9 +113,13 @@ export function keepOnDeck(d: Deck, x: number, z: number): { x: number; z: numbe
 /** The nearest place to (x, z) she can stand in the house: the hub's floor inside its wall and clear of the map, or the balcony inside
  *  its rail and out of the decks' desk; `off` when (x, z) has gone out over the balcony's open rim (either side of the desk: she
  *  flies, or falls), the place given then on the rim. */
+/** How far north of the balcony's centre line its floor still counts (metres): the half-disc meets the hub's round wall in a notch
+ *  either side of the doorway, and the floor is drawn whole there (art/ent.js: the balcony's disc overlaps the hub's), so she walks
+ *  through it rather than wedging in the corner. */
+const JOIN = 1.5;
 export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: number; off: boolean } {
   const b = d.house!.balcony, hubOut = d.r - d.rail, balOut = b.r - d.rail, inn = d.table.r + 0.35;
-  const dz = z - b.z, inBal = dz >= 0 && Math.hypot(x - b.x, dz) <= balOut, rh = Math.hypot(x - d.x, z - d.z), inHub = rh <= hubOut;
+  const dz = z - b.z, inBal = dz >= -JOIN && Math.hypot(x - b.x, dz) <= balOut, rh = Math.hypot(x - d.x, z - d.z), inHub = rh <= hubOut;
   if (inHub || inBal) {
     let px = x, pz = z;
     if (rh < inn) { const a = rh < 1e-6 ? Math.PI / 2 : Math.atan2(z - d.z, x - d.x); px = d.x + Math.cos(a) * inn; pz = d.z + Math.sin(a) * inn; } // (clear of the map's pedestal: the grating round it is walked on)
@@ -123,7 +127,7 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
   }
   // outside both: the nearer edge, the hub's wall or the balcony's rim
   const ah = rh < 1e-6 ? Math.PI / 2 : Math.atan2(z - d.z, x - d.x), hub = { x: d.x + Math.cos(ah) * hubOut, z: d.z + Math.sin(ah) * hubOut };
-  if (dz < 0) return { ...hub, off: false };
+  if (dz < -JOIN) return { ...hub, off: false };
   const ab = Math.atan2(dz, x - b.x), bal = { x: b.x + Math.cos(ab) * balOut, z: b.z + Math.sin(ab) * balOut };
   if (Math.hypot(hub.x - x, hub.z - z) <= Math.hypot(bal.x - x, bal.z - z)) return { ...hub, off: false };
   const A = ab / DEG, desk = A >= d.decks.from && A <= d.decks.to; // (behind the desk the rim is the desk's own: no way off there)
