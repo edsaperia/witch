@@ -13,6 +13,10 @@
     #game { position: fixed; left: 0; top: 0; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
     #seed { position: fixed; left: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: auto; }
     #seed a { color: var(--dim); }
+    /* A newer build is out (Ed, 2026-10-14; app/newBuild.ts): in the bedroom and on the pause page, top centre, over everything. */
+    #new-build { position: fixed; left: 50%; top: 36px; transform: translateX(-50%); z-index: 50; display: none; padding: 6px 10px; border-radius: 6px; background: var(--panel); border: 1px solid #e8b46a; color: var(--ink); font-size: 13px; white-space: nowrap; }
+    #new-build.on { display: block; }
+    #new-build button { font: inherit; font-size: 12px; margin-left: 8px; color: #1a1430; background: #e8b46a; border: 0; border-radius: 4px; padding: 3px 9px; cursor: pointer; }
     #version { position: fixed; right: 10px; bottom: 8px; color: var(--dim); font-size: 12px; text-shadow: 0 1px 0 #000; pointer-events: none; }
     .touch #version { bottom: auto; top: 8px; }
     #debug { position: fixed; left: 10px; top: 10px; background: var(--panel); padding: 8px 10px; border-radius: 6px; white-space: pre; font-size: 12px; display: none; pointer-events: none; }
@@ -149,9 +153,9 @@
     .bubble .bar { position: absolute; left: 6px; right: 6px; bottom: calc(var(--px) * -5); height: 3px; background: rgba(255,255,255,.2); border-radius: 2px; overflow: hidden; }
     .bubble .bar i { display: block; height: 100%; background: var(--love); }
   </style>
-  <script type="module" crossorigin src="./assets/main-Dvx3OLJ7.js"></script>
-  <link rel="modulepreload" crossorigin href="./assets/chartView-BctXmxNu.js">
-  <link rel="modulepreload" crossorigin href="./assets/viewParams-D6s873ts.js">
+  <script type="module" crossorigin src="./assets/main-GNy70U7o.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/chartView-BJ2Zd5I6.js">
+  <link rel="modulepreload" crossorigin href="./assets/viewParams-DCUewuXf.js">
   <link rel="stylesheet" crossorigin href="./assets/main-DnShPyXc.css">
 </head>
 <body>
@@ -164,8 +168,9 @@
   <script>(function () { try { if (new URLSearchParams(location.search).get("arrive") !== "1") return; var r = JSON.parse(sessionStorage.getItem("witch.arrive") || "null"); if (!r || !r.cam || Date.now() - r.at > 30000) return; var i = document.getElementById("arrive-still"); if (r.still) i.src = r.still; i.style.display = "block"; document.getElementById("arrive-landing").style.display = "block"; } catch (e) {} })();</script>
   <div id="seed"></div>
   <div id="version"></div>
+  <div id="new-build">A newer version (<b></b>) is out <button type="button">reload</button></div>
   <div id="debug"></div>
-  <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button></div>
+  <div id="debug-buttons"><button id="next-wave" type="button">next wave (N)</button><button id="pause-waves" type="button">pause waves (P)</button><button id="rulers" type="button">rulers (G)</button><button id="copy-debug" type="button">copy debug info</button></div>
   <div id="clock"><span class="t">00:00</span><div class="label"></div></div>
   <div id="bubbles"><div class="bubble" id="bubble-witch"></div><div class="bubble" id="bubble-creature"><span></span><div class="bar"><i></i></div></div></div>
   <div id="touch">
