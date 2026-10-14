@@ -39,10 +39,12 @@ export interface PlaytestSample {
    *  mode and area, the camera's zoom step, the world's time scale (under 1 in a sleeping legend's circle, where the world beyond
    *  greys), and whether L took this sample (the moment Ed saw something). */
   view?: { x: number; z: number; mode: string; area: string; zoom: number; timeScale: number; pressed?: boolean };
+  /** The repro link at this sample (app/repro.ts): the world as it was and her place, for a builder to open. */
+  link?: string;
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
+export interface PlaytestRun { seed: number; build: string; started: string; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -60,6 +62,8 @@ export class PlaytestLog {
   frameState?: () => PlaytestSample["frames"];
   /** Where she is and how it's seen, for each sample (main.ts sets it). */
   viewState?: () => PlaytestSample["view"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** What a builder needs to reproduce what she saw (app/repro.ts): the repro link, the machine and the settings changed. */
+  debugInfo?: () => { link: string; machine: string[]; changed: Record<string, unknown> };
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
   }
@@ -80,6 +84,8 @@ export class PlaytestLog {
       frames: this.frameState?.(),
       view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
     });
+    const D = this.debugInfo?.();
+    if (D) { this.run.machine = D.machine; this.run.changed = D.changed; this.run.samples[this.run.samples.length - 1].link = D.link; } // (each sample's link: where she was then)
     this.save();
   }
   /** The stall log's stalls, kept with the run (main.ts sets it). */
