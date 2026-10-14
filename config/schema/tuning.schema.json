@@ -8265,6 +8265,12 @@
         },
         "seeMark": {
           "type": "boolean"
+        },
+        "mist": {
+          "type": "boolean"
+        },
+        "lightRings": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8279,7 +8285,9 @@
         "seeDepth",
         "cutWhole",
         "seeSplit",
-        "seeMark"
+        "seeMark",
+        "mist",
+        "lightRings"
       ],
       "additionalProperties": false
     },

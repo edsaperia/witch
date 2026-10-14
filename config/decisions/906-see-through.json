@@ -63,6 +63,34 @@
       "apply": {
         "knob": "suspects.seeMark"
       }
+    },
+    {
+      "id": "susMist",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Low mist",
+      "note": "The low drifting mist (part of the smooth effects layer). On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.mist"
+      }
+    },
+    {
+      "id": "susLightRings",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Light rings",
+      "note": "The faint moonlight rings on the crowns (part of the smooth effects layer). On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.lightRings"
+      }
     }
   ]
 }

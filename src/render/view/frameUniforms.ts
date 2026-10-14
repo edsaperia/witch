@@ -49,6 +49,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  if (v.mist) v.mist.mesh.visible = S.mist;
+  if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
   SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0);
   SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
   SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
