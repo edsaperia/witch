@@ -26,7 +26,7 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 | Room | Where | What you do there |
 |---|---|---|
 | **Balcony** | south, facing the dancefloor | fly in and out; the decks on its rail; the magic circle behind them |
-| **Hub** | behind the balcony | **the map, a water feature** (Ed, 2026-10-14): the world's disc at table height, the sea flowing off its sides into a pool on the floor, with **koi** in it; a **golden grating** over the pool, so she walks up to the map; **flagstones** round it; a **glass domed roof** overhead, and **a clockwork moon** going round the edge of the room like an orrery (the moon's phase as it is tonight). The map is a drawing, one size for good; a button (E) opens the sea chart to look and to sail. It is also the house's altar of sigils: the legends she has befriended are on it. And **a crystal ball** (backlog, below): the run history and its stats |
+| **Hub** | behind the balcony | **the map, a water feature** (Ed, 2026-10-14): the world's disc at table height, the sea flowing off its sides into a pool on the floor, with **koi** in it; a **golden grating** over the pool, so she walks up to the map; **flagstones** round it; a **glass domed roof** overhead, and **a clockwork moon** going round the edge of the room like an orrery (the moon's phase as it is tonight). The map is **a drawing, not the chart itself** (Ed: the real thing on the table might be expensive, and the disc won't be large): it hints at the islands, their biomes and sigils, one size for good; a button (E) opens the sea chart to look and to sail. The live miniature on today's deck table (`render/mapTable.ts`) retires with the deck. It is also the house's altar of sigils: the legends she has befriended are on it. And **a crystal ball** (backlog, below): the run history and its stats |
 | **Tea room**, perhaps a **greenhouse** | a room of its own off the hub | wait, drink tea, play a card game at the table (the lobby's waiting place). **For now just an animation** (she sits, deals, sips); the custom game, with **tarot cards**, is a backlog item of its own (below). Nothing grows here that matters: mushrooms are found in the world, never grown at home |
 | **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. **The host's in the middle, the other two either side**, locked with magic until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose (a **hot tub** among them), **trophies** from achievements; it carries across to other games: joining a friend's game you see **your own bedroom**, as you made it, in their house |
 | **Telephone** | near the bedrooms | multiplayer: call friends to the party (a party code) |
@@ -64,7 +64,7 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 - **The studio fills** with records earned (an island's record for every quest dealt that night done in one run, journey.md section 2).
 - **The library fills** with a skeleton per biome, and its key creature once the biome is cleared.
 - **The bedroom** gains trophies from achievements.
-- **The map table stays one size** (a drawing; the chart it opens grows).
+- **The map stays one size**, a drawing hinting at islands, biomes and sigils; the chart it opens is what grows.
 - **Biome souvenirs are the skulls in the library**: the skull of each island's animal (the earlier snow-and-sand idea is dropped).
 - **No new rooms, and the Ent unchanged.**
 
