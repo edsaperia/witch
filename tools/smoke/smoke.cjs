@@ -599,12 +599,21 @@ async function main() {
         if (s > bs) { bs = s; best = [x, z]; }
       }
       g.witch = { ...g.witch, x: best[0], z: best[1], vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 };
+      // Her area friendly, as a legend's quest done makes it (rules/sigilButton.ts befriendArea): its wild watch would attack
+      // her while the art bakes (minutes here), knock her out and send her back to her decks, and the ground flight would then
+      // measure the deck's flat floor (India's run on #928: "0.0 vs 0.0" on the ground, the check failing on 0 < 0).
+      const cell = g.map.areaAt(best[0], best[1]).cell;
+      g.friendly.add(`${cell[0]},${cell[1]}`);
+      for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && !c.partyLegend && c.cell[0] === cell[0] && c.cell[1] === cell[1]) { c.friendly = true; c.enraged = false; c.fight = undefined; c.siege = undefined; }
+      g.byArea = null;
       return { x: best[0], z: best[1], slope: bs };
     });
     await sleep(1500);
     await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
     await sleep(1500);
     await shot(page, file);
+    const still = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { x: w.x, z: w.z, perch: !!w.perch, seated: !!w.seated, kds: g.knockdowns?.length ?? 0 }; });
+    check(!still.perch && !still.seated && Math.hypot(still.x - at.x, still.z - at.z) < 5, `seed ${slopeSeed}: she's still at the steep spot as the flight starts, not knocked back to her decks (${still.kds} knockdowns, ${Math.hypot(still.x - at.x, still.z - at.z).toFixed(0)} m off)`);
     const r = await page.evaluate(async () => {
       const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
       w.manual = true;
@@ -629,7 +638,8 @@ async function main() {
     results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(2)} against the ground's ${r.ground.ground.toFixed(2)} m/s² (ground), ${r.treetop.ride.toFixed(2)} against ${r.treetop.ground.toFixed(2)} (treetops)`);
     check(at.slope < Math.tan(30 * Math.PI / 180), `seed ${slopeSeed}: the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
     check(Math.max(r.ground.lift, r.treetop.lift) < 3, `seed ${slopeSeed}: flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
-    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+    const smooth = a => a.ride < a.ground * 0.8 || (a.ride < 0.1 && a.ground < 0.1); // (ground this flat has nothing to smooth)
+    check(smooth(r.ground) && smooth(r.treetop), `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her, or both under 0.1 (rms acceleration ${r.ground.ride.toFixed(2)} vs ${r.ground.ground.toFixed(2)}, ${r.treetop.ride.toFixed(2)} vs ${r.treetop.ground.toFixed(2)} m/s²)`);
   }, slopeSeed === seed ? "&debug" : `&seed=${slopeSeed}&debug`); // (Ed, v297: seed 165272 had cliffs and broken trees)
 
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
