@@ -67,6 +67,8 @@ Bring a bug back to Ed early rather than guess: he can answer questions, take a 
 - **15 minutes to reproduce.** Can't make it happen by then? Stop and report what you tried and exactly what you need from Ed: a question, a log taken a certain way, or something to try in play.
 - **No unconfirmed "fixed".** If you can't see the bug go away yourself, say so in the PR and give Ed a short in-game check (e.g. "load v36xx with an empty cache, start a night: is the witch visible?").
 - **Make the next sighting count.** If the L log wouldn't show what went wrong, add the logging that would.
+- **Visual bugs: measure, don't eyeball** (Ed, 2026-10-14, after the circle hunt). First write down what should hold (e.g. "see-through at full opacity draws the same as see-through off"), render both and pixel-diff them; bisect with that number, not by comparing screenshots in a dark forest. Try it on the cloud renderer before assuming it's Ed's machine.
+- **No fix on an untested theory.** Push a fix only once the measurement changes; otherwise send Ed one build with every switch in it, not one build per guess.
 
 ## Testing
 
