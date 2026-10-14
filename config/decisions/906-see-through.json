@@ -1,0 +1,268 @@
+{
+  "pr": 906,
+  "group": "See-through",
+  "decisions": [
+    {
+      "id": "seeTwo",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Circle fix (two see-through passes)",
+      "note": "On, the fix: what stands in front of her is drawn in a see-through pass of its own, nearer winning, before the things that are half faded anyway. Off: as before, one pass, the circle bug (Ed, 2026-10-14; found with the Circle report).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeTwo"
+      }
+    },
+    {
+      "id": "seeReach",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through reach",
+      "note": "How far past her the soft see-through circle reaches, a share of her size (occlusion.edge, 0.8 as ever). If the circle bug's ring grows and shrinks with this, the ring is the see-through's own edge (Ed, 2026-10-14).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.05
+      },
+      "default": 0.8,
+      "apply": {
+        "knob": "occlusion.edge"
+      }
+    },
+    {
+      "id": "seeOpacity",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through opacity",
+      "note": "How solid things in front of her stay at the circle's middle (occlusion.fadeOpacity, 0.38 as ever; 1: not see-through at all, though still drawn in the see-through pass).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+      },
+      "default": 0.38,
+      "apply": {
+        "knob": "occlusion.fadeOpacity"
+      }
+    },
+    {
+      "id": "seeSplit",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through fade",
+      "note": "Off: things in front of her stay solid and in the solid pass (the fade alone off; everything else of the see-through as ever). On as ever.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeSplit"
+      }
+    },
+    {
+      "id": "seeMark",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Mark see-through pixels",
+      "note": "On: every pixel the see-through pass draws tinted magenta, to see whether the circle bug's ring is exactly that pass's edge. Off as ever.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeMark"
+      }
+    },
+    {
+      "id": "susMist",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Low mist",
+      "note": "The low drifting mist (part of the smooth effects layer). On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.mist"
+      }
+    },
+    {
+      "id": "susLightRings",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Light rings",
+      "note": "The faint moonlight rings on the crowns (part of the smooth effects layer). On as ever; off to see if the circle round her goes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.lightRings"
+      }
+    },
+    {
+      "id": "seeWrite",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through depth order",
+      "note": "On: where two faded things in front of her overlap, the nearer wins, as everywhere else (the see-through pass writes depth as it draws). Off as ever: whichever is drawn last wins, nearer or not (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeWrite"
+      }
+    },
+    {
+      "id": "seeCull",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through skipping",
+      "note": "On as ever: the see-through pass skips whole sprites it reckons can't reach her circle. Off: it draws them all and each pixel decides (slower). If the circle goes when this is off, the skip and the pixels disagree and pixels fall between the passes (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeCull"
+      }
+    },
+    {
+      "id": "seeKeep",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Keep solid copy",
+      "note": "On: the solid pass draws what's in front of her as well, and the see-through pass over it (nothing is see-through then). If the circle's edge goes, it came from what showed through the gap the solid pass left; if it stays, from the see-through pass's own drawing (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeKeep"
+      }
+    },
+    {
+      "id": "seeStencil",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through marks",
+      "note": "On: the see-through pass marks the trees it draws in the stencil, as the solid pass does (the marks the ley line shows through). Off as ever (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeStencil"
+      }
+    },
+    {
+      "id": "seeEarly",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through drawn early",
+      "note": "On: the see-through pass drawn straight after the solid trees, not after everything else (a test: she then shows through them whole). If the circle's edge goes, something drawn between changes the trees (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeEarly"
+      }
+    },
+    {
+      "id": "seeSolid",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through solid",
+      "note": "Which of the see-through pass's pixels are drawn fully solid: off as ever; all; only those in her see-through circle; only the rest (the faded trunk tops and crowns at the cut-away's edge, everywhere). Which one takes the circle away (Ed, 2026-10-14)?",
+      "control": {
+        "type": "choice",
+        "options": [
+          {
+            "value": "off",
+            "label": "off"
+          },
+          {
+            "value": "all",
+            "label": "all"
+          },
+          {
+            "value": "circle",
+            "label": "only her circle"
+          },
+          {
+            "value": "rest",
+            "label": "only the rest"
+          }
+        ]
+      },
+      "default": "off",
+      "apply": {
+        "knob": "suspects.seeSolid"
+      }
+    },
+    {
+      "id": "seeShowAlpha",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Show see-through opacity",
+      "note": "On: everything the see-through pass draws shows as grey by its own opacity, white fully solid, black fully clear. At the circle's edge it should be white (Ed, 2026-10-14: \"are you sure the see-through blend goes all the way to 0 at the edge?\").",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeShowAlpha"
+      }
+    },
+    {
+      "id": "showBroken",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Show broken pixels",
+      "note": "On: any pixel of the scene whose colour isn't a number shows bright red, infinite magenta, negative yellow (before the blur, bloom and grade). A broken colour behind a see-through tree would spoil it even at full strength (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.showBroken"
+      }
+    },
+    {
+      "id": "seeNoBlend",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through blending off",
+      "note": "On: the see-through pass draws with no blending at all (its colour straight in, whatever its opacity). With See-through solid off this shows whether it's the blending itself (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeNoBlend"
+      }
+    },
+    {
+      "id": "seeDither",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through by dither",
+      "note": "On (a test): the see-through done in the solid pass itself, by leaving out a fine pattern of pixels of what stands in front of her, more toward her, none at the edge; no second pass for it. If the circle goes, the second pass is the cause (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeDither"
+      }
+    }
+  ]
+}

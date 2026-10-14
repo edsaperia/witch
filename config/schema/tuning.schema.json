@@ -8259,6 +8259,57 @@
         },
         "cutWhole": {
           "type": "boolean"
+        },
+        "seeSplit": {
+          "type": "boolean"
+        },
+        "seeMark": {
+          "type": "boolean"
+        },
+        "mist": {
+          "type": "boolean"
+        },
+        "lightRings": {
+          "type": "boolean"
+        },
+        "seeWrite": {
+          "type": "boolean"
+        },
+        "seeCull": {
+          "type": "boolean"
+        },
+        "seeKeep": {
+          "type": "boolean"
+        },
+        "seeStencil": {
+          "type": "boolean"
+        },
+        "seeEarly": {
+          "type": "boolean"
+        },
+        "seeSolid": {
+          "type": "string",
+          "enum": [
+            "off",
+            "all",
+            "circle",
+            "rest"
+          ]
+        },
+        "seeNoBlend": {
+          "type": "boolean"
+        },
+        "seeShowAlpha": {
+          "type": "boolean"
+        },
+        "showBroken": {
+          "type": "boolean"
+        },
+        "seeDither": {
+          "type": "boolean"
+        },
+        "seeTwo": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8271,7 +8322,22 @@
         "haze",
         "areaAverage",
         "seeDepth",
-        "cutWhole"
+        "cutWhole",
+        "seeSplit",
+        "seeMark",
+        "mist",
+        "lightRings",
+        "seeWrite",
+        "seeCull",
+        "seeKeep",
+        "seeStencil",
+        "seeEarly",
+        "seeSolid",
+        "seeNoBlend",
+        "seeShowAlpha",
+        "showBroken",
+        "seeDither",
+        "seeTwo"
       ],
       "additionalProperties": false
     },

@@ -1,0 +1,23 @@
+{
+  "pr": 906,
+  "group": "Canopy cut-away",
+  "decisions": [
+    {
+      "id": "cutRadius",
+      "pr": 906,
+      "group": "Canopy cut-away",
+      "label": "Cut-away size",
+      "note": "How big the circle cut in the canopy round her on the ground is, as a share of the screen's width (Ed, 2026-10-14: \"the canopy cut-away radius is too large\": two thirds of the old 0.8). Her light's reach is set from it (glowToCutout), so it grows and shrinks with it; at 0.53 her light is as before.",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 1.2,
+        "step": 0.01
+      },
+      "default": 0.53,
+      "apply": {
+        "knob": "canopyCutout.screenFraction"
+      }
+    }
+  ]
+}

@@ -10,7 +10,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { SPRITE_UNIFORMS } from "../sprites";
+import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
@@ -48,7 +48,16 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
-  SPRITE_UNIFORMS.uOcc.value.w = t.occlusion.on && S.seeThrough ? 1 : 0;
+  SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
+  for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;
+  SPRITE_UNIFORMS.uSeeSolid.value = ({ off: 0, all: 1, circle: 2, rest: 3 } as Record<string, number>)[S.seeSolid] ?? 0;
+  SPRITE_UNIFORMS.uSeeShowA.value = S.seeShowAlpha ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeDither.value = S.seeDither ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeTwo.value = S.seeTwo ? 1 : 0;
+  if (v.mist) v.mist.mesh.visible = S.mist;
+  if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
+  SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0, S.seeCull ? 1 : 0, S.seeKeep ? 1 : 0);
   SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
   SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
   if (!t.bare) LIGHT_UNIFORMS.uGlowPower.value = S.glow ? t.glowPower : 0;
