@@ -132,6 +132,7 @@ Three slices, each a PR Ed can hear before the next.
 2. **The pure chain's reference: Lisa Gerrard's alto in Julianna Barwick's layers.** One dark alto tone, long notes; in breakdowns the multitracked wash (the same voice layered, looped, in the long hall). The processed chain's reference stays Holy Other and Salem.
 3. **Slice 3 starts with mode by family** (phrygian for witch house and legend circles, aeolian for dark folk and breakdowns, dorian kept for house and folk), not with a ritual record; the drone-and-ostinato record waits.
 4. **The A/B is heard live in the Music Lab**: a Vocalise picker with both voices and both chains, sliders, and "Copy my settings"; no mp3s needed.
+5. **Build order** (Ed, the same day): the cheap fixes go **straight into the game first** (the alto, the chorus and octave double off, the stepwise melody), then the A/B in the Music Lab. The alto's range is **G3 to G4**. The breakdown's multitracked wash is **three voices** (the alto, a fifth and an octave up at half the level, each a little late and a few cents apart). Breath: **a slider in the lab's Vocalise card**, Ed sets it.
 
 ## Open questions
 
