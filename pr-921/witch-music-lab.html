@@ -4311,7 +4311,22 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if (onlyCircle) return out;
-    if (melody > 0 && form) {
+    if (form?.sung.arpeggio && (a.vocal ?? form.sung.patch) !== "none") {
+      const A2 = form.sung.arpeggio, rate = Math.max(1, Math.round((typeof A2 === "object" ? A2.rate : void 0) ?? 2));
+      const fx = style2.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+      const patch = a.vocal && style2.patches[a.vocal] ? a.vocal : form.sung.patch, [lo, hi] = form.range, n = scale.length;
+      const degs = [...new Set([...chord.tones, chord.root + 6].map((t) => {
+        let d = lo + mod(t - lo, n);
+        while (d > hi) d -= n;
+        return d;
+      }))].filter((d) => d >= lo && d <= hi).sort((x, y) => x - y);
+      const cycle = degs.length > 2 ? [...degs, ...degs.slice(1, -1).reverse()] : degs;
+      const k = Math.floor((formBar * 16 + s) / rate);
+      if (cycle.length && mod(formBar * 16 + s, rate) === 0) {
+        const deg = cycle[mod(k, cycle.length)], level = melody > 0 ? melody : 0.8;
+        out.push({ part: form.sung.part, patch, step: step2, offset: 0, dur: rate, midi: degreeToMidi(style2, scale, deg, form.sung.octave, transpose), vel: (s % 4 === 0 ? 0.88 : 0.74) * level, fx });
+      }
+    } else if (melody > 0 && form) {
       const place2 = sungHere(style2, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
       const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place2 === "breakdown" && hash2(ctx2.seed, 457, pass) < 0.5;
       const fx = style2.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
