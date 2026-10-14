@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { SPRITE_UNIFORMS } from "./render/sprites";
 import { wavesOver } from "./rules/win";
 import { chartOpen, openChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
@@ -299,7 +300,9 @@ freeze.onToggle = on => {
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
-    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version: typeof __BUILD__ === "string" ? __BUILD__ : "dev", live: knobLive });
+    const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+    const report = () => import("./ui/circleReport").then(({ circleReport }) => circleReport({ canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, witch: () => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; } }));
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
   });
 };

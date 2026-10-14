@@ -11,7 +11,7 @@ import { byPr, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, setKno
 export * from "./decisions";
 
 /** What the panel needs from the game. */
-export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void> }
+export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The circle report (ui/circleReport.ts), if the game offers it. */ report?: () => Promise<string> }
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -180,7 +180,7 @@ export class PauseSliders {
     const params = new URLSearchParams(location.search);
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, this.status);
+    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Circle report", () => { this.status.textContent = "drawing the frame three ways…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "Draw this frame three ways and save a picture and a JSON of where they differ (the circle bug)" })] : []), this.status);
     const body = h("div", { class: "list" });
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
