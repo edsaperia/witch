@@ -259,6 +259,10 @@ export interface FormDef {
     /** The breakdown's wash (Ed, 2026-10-14: three voices, Julianna Barwick's layers): each sung note doubled at these
      *  scale steps up (4 a fifth, 7 an octave: always in the key), at this share of its level, this many steps late. */
     wash?: { intervals: number[]; level: number; late: number };
+    /** The Music Lab's voice test (Ed, 2026-10-14: "the voice and its effects singing constant arpeggios"): the voice sings
+     *  the chord's tones up and down within the range, a note every `rate` sixteenths (2, eighths), in every section, in
+     *  place of the form's melodies and the hold; no wash. Never set in the game's style. */
+    arpeggio?: boolean | { rate?: number };
   };
   /** The melody's range in scale steps above the root (in its part's octave). */
   range: [number, number];
@@ -667,7 +671,20 @@ export function notesAt(style: MusicStyle, plan: BlockPlan, next: BlockPlan | nu
   // the form's melody: A on its instrument; the voice in the breakdowns and the build (Ed, 2026-10-14; sungHere), the
   // instrument everywhere else; in a breakdown the voice sometimes holds the chord instead of a tune ("sometimes just the
   // chord"), and every sung note there is washed (doubled a fifth and an octave up, late and quieter: three voices)
-  if (melody > 0 && form) {
+  if (form?.sung.arpeggio && (a.vocal ?? form.sung.patch) !== "none") {
+    // the lab's voice test: the chord's tones folded into the range, sorted, sung up and then down, a note every `rate`
+    // sixteenths through every section, so a voice and its effects are heard without waiting for a breakdown
+    const A = form.sung.arpeggio, rate = Math.max(1, Math.round((typeof A === "object" ? A.rate : undefined) ?? 2));
+    const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";
+    const patch = a.vocal && style.patches[a.vocal] ? a.vocal : form.sung.patch, [lo, hi] = form.range, n = scale.length;
+    const degs = [...new Set([...chord.tones, chord.root + 6].map(t => { let d = lo + mod(t - lo, n); while (d > hi) d -= n; return d; }))].filter(d => d >= lo && d <= hi).sort((x, y) => x - y);
+    const cycle = degs.length > 2 ? [...degs, ...degs.slice(1, -1).reverse()] : degs;
+    const k = Math.floor((formBar * 16 + s) / rate);
+    if (cycle.length && mod(formBar * 16 + s, rate) === 0) {
+      const deg = cycle[mod(k, cycle.length)], level = melody > 0 ? melody : 0.8;
+      out.push({ part: form.sung.part, patch, step, offset: 0, dur: rate, midi: degreeToMidi(style, scale, deg, form.sung.octave, transpose), vel: (s % 4 === 0 ? 0.88 : 0.74) * level, fx });
+    }
+  } else if (melody > 0 && form) {
     const place = sungHere(style, plan, a, sec), W = form.sung.wash, oct = form.sung.octave;
     const vel = (s % 4 === 0 ? 0.9 : 0.78) * melody, hold = place === "breakdown" && hash2(ctx.seed, 457, pass) < 0.5;
     const fx: NoteEvent["fx"] = style.voiceFxDark?.families?.includes(a.family ?? "") ? "dark" : "pure";

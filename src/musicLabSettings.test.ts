@@ -45,9 +45,9 @@ describe("music lab settings", () => {
     expect(JSON.parse(settingsJson(base, d))).toEqual({ lab: "witch-music-lab/1" });
     // a voice, a breath and a forced chain round-trip; the effects copy only what differs from the chain in force
     const s = defaultState(d);
-    s.voice = "tract"; s.breath = 0.45; s.chain = "dark"; s.voiceFx = { ...chainFx(d, "dark"), whisper: 0.3 };
+    s.voice = "tract"; s.breath = 0.45; s.chain = "dark"; s.voiceFx = { ...chainFx(d, "dark"), whisper: 0.3 }; s.arpeggio = true;
     const text = settingsJson(s, d), j = JSON.parse(text);
-    expect(j.voice).toBe("tract"); expect(j.breath).toBe(0.45); expect(j.chain).toBe("dark");
+    expect(j.voice).toBe("tract"); expect(j.breath).toBe(0.45); expect(j.chain).toBe("dark"); expect(j.arpeggio).toBe(true);
     expect(j.voiceFx).toEqual({ whisper: 0.3 });
     const back = parseSettings(text, d, SECTIONS);
     expect(back.ignored).toEqual([]);
