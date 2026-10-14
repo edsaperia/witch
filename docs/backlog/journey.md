@@ -128,6 +128,8 @@ A third axis of progress, separate from the other two:
 
 ## 3. The treehouse
 
+**Superseded in part by [treehouse.md](treehouse.md)** (Ed, 2026-10-14): the house is a walkable set of rooms round a hub with the map at its centre, entered by flying onto a balcony; the room table and the octagon-for-now below are kept for the record.
+
 **No voyage** (Ed, 2026-10-12, superseding the voyage below): sailing is one continuous zoom. At the map table she picks an island; the chart's camera glides to it and zooms in, past its dancefloor and sigil, and on down into the game's own camera until she's at the night's start (yawning and getting out of bed). The legend-carries-the-Ent voyage and its pictures are dropped.
 
 **The same treehouse on every island; a legend carries it** (Ed, 2026-10-10). Each island is the home of one kind of legend. When she sets off for an island, its legend comes for the house: the giant tree rides **on the creature's back** across the sea, through the night while she sleeps (a short dreamy voyage: moonlight, the legend swimming or flying, the moon's phase changing). She wakes on its island and gets dressed. Proposed: the tree keeps souvenirs of where it's been (snow from the north, sand from the south).
