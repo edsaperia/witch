@@ -126,11 +126,12 @@ Three slices, each a PR Ed can hear before the next.
 - Freesound CC0 only, each sound the uploader's own, its page's licence checked; the candidates so far: 274121 (a woman's three-part triad, 6 s, CC0), 8067 (a man's "arh" on a low D, 32 s, CC0, processed by its uploader with chorus and reverb: a drone layer, not a lead), and the five already in `samples/voices/`. No CC0 multisampled choir exists; Sonatina's three chorus patches are Sampling Plus, outside our rules.
 - Comparable games: No Man's Sky's wordless voices are a physically modelled vocal tract (Paul Weir's VocAlien, a Wwise plugin fed by the creatures' sizes) over 65daysofstatic's generative system; Spore assembles Brian Eno's samples by rules in Pure Data. Both keep voices as instruments, never words: the same bet as here.
 
-### Decisions for Ed, after this proposal
+### Ed's decisions (2026-10-14, in India's session)
 
-1. Approve slice 1 as written (the alto, the A/B of two voices, the melody rules, the two chains, the voice leaving the drops).
-2. Which reference's vocal treatment to aim the pure chain at: Julianna Barwick's layered vocalise, Lisa Gerrard (Dead Can Dance), Enya's multitracked hush, or Holy Other's pitched witch house (the processed chain's reference).
-3. Whether slice 3 starts with one ritual record (drone and chant, no melody) as the test of dropping ABAC, or with the mode-by-family change alone.
+1. **Slice 1 approved as written**: the alto, both lead voices built and A/B'd (the sampled alto set and the vocal-tract worklet), the melody rules, the two chains by place, the voice out of the drops, the tuning check.
+2. **The pure chain's reference: Lisa Gerrard's alto in Julianna Barwick's layers.** One dark alto tone, long notes; in breakdowns the multitracked wash (the same voice layered, looped, in the long hall). The processed chain's reference stays Holy Other and Salem.
+3. **Slice 3 starts with mode by family** (phrygian for witch house and legend circles, aeolian for dark folk and breakdowns, dorian kept for house and folk), not with a ritual record; the drone-and-ostinato record waits.
+4. **The A/B is heard live in the Music Lab**: a Vocalise picker with both voices and both chains, sliders, and "Copy my settings"; no mp3s needed.
 
 ## Open questions
 
