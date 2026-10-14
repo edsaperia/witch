@@ -27,15 +27,15 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 |---|---|---|
 | **Balcony** | south, facing the dancefloor | fly in and out; the decks on its rail; the magic circle behind them |
 | **Hub** | behind the balcony | the **map table** in the centre: a drawing of the world, one size for good; a button (E) opens the sea chart to look and to sail. Also the **tea table**: wait, drink tea, play a little card game (the lobby's waiting place) |
-| **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. One is hers; **the other two are locked with magic** until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose, **trophies** from achievements; it carries across to other games |
+| **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. **The host's in the middle, the other two either side**, locked with magic until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose, **trophies** from achievements; it carries across to other games: joining a friend's game you see **your own bedroom**, as you made it, in their house |
 | **Telephone** | near the bedrooms | multiplayer: call friends to the party (a party code) |
 | **Dressing rooms**: the mirror, the closet, the cloakroom | between the bedrooms and the hub, on the way down | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options |
-| **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it; the station is where she brings a hat to customise its look |
-| **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, pick one up, customise it at its station |
-| **Studio** | off the hub | the records she has earned; take one to the decks (below). Ed is not yet sure what else the studio does: "perhaps you can play or even record music" |
+| **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it. **Each hat has one power but any shape**: the station is where she brings it to change its shape and colour |
+| **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, one power each, pick one up, its shape and colour changed at its station |
+| **Studio** | off the hub | the records she has earned; take one to the decks (below). And **three instruments: keys, a drum kit and a microphone**, so three players can play very simple music together with their controls (nothing recorded or kept) |
 | **Kitchen** | the only room below the hub | the cauldron and its six baskets ([cauldron.md](cauldron.md)) |
-| **Library** | off the hub | a natural history library: specimens and animal skeletons. **The way into the zoo** (as the map table is the way to the islands). A new skeleton per biome; each biome has one key fantasy creature (the unicorn, the stegosaurus...) and something of it appears once every island in that biome is cleared |
-| **Crow's nest** | at the top | an observatory with a telescope: look round the island, 360° |
+| **Library** | off the hub | a natural history library: specimens and animal skeletons. **The way into the zoo** (as the map table is the way to the islands). A new skeleton per biome; each biome has one key fantasy creature (the unicorn, the stegosaurus...) and something of it appears once every island in that biome is cleared. **The biome souvenirs live here too: the skull of each island's animal** |
+| **Crow's nest** | at the top | an observatory with a telescope: **a view of its own, panning round the island 360°**, as the chart opens over the game (the game's camera itself never turns) |
 
 Some of these are **areas of the hub or of another room rather than rooms of their own** (Ed): the tea table in the hub, the telephone on the bedrooms' landing. "One button per room" stands: E at the thing, no menus where a thing in the room will do.
 
@@ -53,7 +53,7 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 
 **Mid-night:** **every room is open** during the party (change hat, brew, swap the record). Inside the house time runs at a tenth, as on the deck today and in a calm legend's circle, the music slowing like a tape.
 
-**A knockout** brings her back to the magic circle: **a respawn animation** (Ed: "perhaps blood rises from the floor and forms her shape"), then she walks to the decks and plays her scratch routine, **all within the respawn timer** (the candles round the circle count it down, as journey.md planned). She **respawns dressed**, in what she went down in.
+**A knockout** brings her back to the magic circle: **a respawn animation: blood rises from the floor and forms her shape** (Ed), then she walks to the decks and plays her scratch routine, **all within the respawn timer** (the candles round the circle count it down, as journey.md planned). She **respawns dressed**, in what she went down in.
 
 **The end of the night:** she goes up to bed (creator-and-house.md); on a win the voyage happens while she sleeps (journey.md).
 
@@ -64,18 +64,19 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 - **The library fills** with a skeleton per biome, and its key creature once the biome is cleared.
 - **The bedroom** gains trophies from achievements.
 - **The map table stays one size** (a drawing; the chart it opens grows).
-- **Biome souvenirs** (snow from the north, sand from the south) "might be nice if we can think of a good way to do them": open.
+- **Biome souvenirs are the skulls in the library**: the skull of each island's animal (the earlier snow-and-sand idea is dropped).
 - **No new rooms, and the Ent unchanged.**
 
 ## The lobby (three players)
 
 - The house is the lobby: "players may be waiting here while their friends join".
 - **The host calls from the telephone** by the bedrooms (a party code). A friend who joins **wakes in one of the locked bedrooms, its lock lifting**. Everyone dresses, picks a hat and a broom, and waits (tea, cards). **The host drops the needle** and the night starts for all.
-- Each player's bedroom customisation is their own and carries across games.
+- Each player's bedroom customisation is their own and carries across games: in a friend's house you see your own bedroom, the host's in the middle and the guests' either side.
+- **The studio is the lobby's band:** keys, drum kit and microphone, three players playing together while they wait.
 
 ## Ties
 
-- **Hats and brooms** ([unlocks.md](unlocks.md)): chosen in the corridors as objects; their look customised at the hat and broom stations (the creator's hat and broom boxes retire). Ed's "one power per hat, one of each in play" is still to design; the corridor's one hook per hat is the natural place for it.
+- **Hats and brooms** ([unlocks.md](unlocks.md)): chosen in the corridors as objects; **one power per hat and per broom, any shape**, the shape and colour changed at the hat and broom stations (the creator's hat and broom boxes retire); the corridor's one hook per hat is where "one of each in play" lives.
 - **Records** ([journey.md](journey.md) section 2): earned ones on the studio's shelf; the first game's single record already on the decks.
 - **The sea chart** (journey.md section 1): opened from the hub's map table with a button; sail at any time, mid-night ending the night unwon, as built.
 - **The zoo** (`?zoo`): opened from the library.
@@ -91,12 +92,9 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 
 ## Open questions
 
-- When you join a friend's game, do you see your own customised bedroom in their house, or the host's three?
-- The studio beyond the shelf: an instrument, recording a loop that plays on the island, or nothing more for now.
-- Biome souvenirs: a good way to do them.
-- The respawn animation's look (Ed's first thought: blood rising from the floor into her shape).
-- How a hat's or broom's customised look relates to "one power per hat" (unlocks.md).
-- The crow's nest's 360° look: the game's camera never turns (DESIGN.md); the telescope's view would be its own picture, like the chart.
+- The hub's tea table card game: which game, and whether it is a room of its own or a corner of the hub.
+- How the studio's three instruments play on the controls, and whether they are heard on the island mid-night.
+- The hat and broom stations' panels: the creator's hat and broom sliders as they are, or fewer.
 
 ## A proposed build order (for Ed to accept or reorder)
 
