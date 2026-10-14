@@ -10255,13 +10255,18 @@
         "wind": {
           "type": "number",
           "minimum": 0
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
         "strength",
         "height",
-        "wind"
+        "wind",
+        "gain"
       ],
       "additionalProperties": false
     },
