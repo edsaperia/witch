@@ -10,7 +10,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
-import { SPRITE_UNIFORMS } from "../sprites";
+import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
 export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void {
@@ -42,11 +42,26 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
     hx += v.holeLead.x; hy += v.holeLead.y;
   }
   v.holeAt = time;
-  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
-  SPRITE_UNIFORMS.uCutWhole.value = cut.whole ?? 0;
+  const S = t.suspects; // (the circle-bug suspects: tuning.json _suspects, the pause page's toggles)
+  SPRITE_UNIFORMS.uCutout.value.set(hx, hy, 0.5 * cut.screenFraction * (S.holeCut ? 1 : 0) * v.width * (1 - lifted), Math.max(1, cut.edge * v.width * edgeGrow));
+  SPRITE_UNIFORMS.uCutWhole.value = t.suspects.cutWhole ? cut.whole ?? 0 : 0;
   SPRITE_UNIFORMS.uCutShape.value.set(cut.wobble ?? 0, cut.outer ?? 0.35, cut.ragged ?? 0, cut.spread ?? 0.2);
   SPRITE_UNIFORMS.uTopFade.value = lifted;
-  SPRITE_UNIFORMS.uTrunkFade.value.set(t.trunkFade.metres, v.mpp, t.trunkFade.share);
+  SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
+  SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
+  for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;
+  SPRITE_UNIFORMS.uSeeSolid.value = ({ off: 0, all: 1, circle: 2, rest: 3 } as Record<string, number>)[S.seeSolid] ?? 0;
+  SPRITE_UNIFORMS.uSeeShowA.value = S.seeShowAlpha ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeDither.value = S.seeDither ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeTwo.value = S.seeTwo ? 1 : 0;
+  if (v.mist) v.mist.mesh.visible = S.mist;
+  if (v.lightRings) v.lightRings.mesh.visible = S.lightRings;
+  SPRITE_UNIFORMS.uSeeDbg.value.set(S.seeSplit ? 1 : 0, S.seeMark ? 1 : 0, S.seeCull ? 1 : 0, S.seeKeep ? 1 : 0);
+  SPRITE_UNIFORMS.uAreaAvg.value = S.areaAverage ? 1 : 0;
+  SPRITE_UNIFORMS.uSeeDepth.value = S.seeDepth ? 1 : 0;
+  if (!t.bare) LIGHT_UNIFORMS.uGlowPower.value = S.glow ? t.glowPower : 0;
+  { const H = LIGHT_UNIFORMS.uHazeRange.value; if (!S.haze && !v.hazeKept) { v.hazeKept = H.clone(); H.set(1e5, 2e5); } else if (S.haze && v.hazeKept) { H.copy(v.hazeKept); v.hazeKept = null; } }
   SPRITE_UNIFORMS.uTrunkLook.value.set(t.trunkFade.lightFloor, t.trunkFade.rim);
   SPRITE_UNIFORMS.uDebugTrunks.value = v.debugTrunks ? 1 : 0;
   const Fd = t.find; // finding wild creatures in the dark (Ed, v244)
@@ -105,7 +120,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
       const d = g.map.dancefloor;
       v.moodArea = Math.hypot(w.x - d.x, w.z - d.z) < g.map.homeRadius ? "home" : AREA_TYPES[g.map.typeOf(...g.map.cellSafe(w.x, w.z).cell)]?.id ?? "";
     }
-    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist);
+    v.areaMoods.update(v.moodArea, Number.isNaN(v.moodTime) ? 0 : time - v.moodTime, LIGHT_UNIFORMS.uHazeColour.value, v.post.gradeTint, v.mist && { setStrength: (k: number) => v.mist!.setStrength(k * (t.mist.gain ?? 1)) }); // (mist.gain: the pause page's Low mist slider, Ed 2026-10-14)
     v.moodTime = time;
   }
 }

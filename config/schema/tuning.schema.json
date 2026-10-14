@@ -8227,6 +8227,120 @@
       ],
       "additionalProperties": false
     },
+    "suspects": {
+      "type": "object",
+      "properties": {
+        "seeThrough": {
+          "type": "boolean"
+        },
+        "holeCut": {
+          "type": "boolean"
+        },
+        "trunkFade": {
+          "type": "boolean"
+        },
+        "groundCover": {
+          "type": "boolean"
+        },
+        "glow": {
+          "type": "boolean"
+        },
+        "effectsLayer": {
+          "type": "boolean"
+        },
+        "haze": {
+          "type": "boolean"
+        },
+        "areaAverage": {
+          "type": "boolean"
+        },
+        "seeDepth": {
+          "type": "boolean"
+        },
+        "cutWhole": {
+          "type": "boolean"
+        },
+        "seeSplit": {
+          "type": "boolean"
+        },
+        "seeMark": {
+          "type": "boolean"
+        },
+        "mist": {
+          "type": "boolean"
+        },
+        "lightRings": {
+          "type": "boolean"
+        },
+        "seeWrite": {
+          "type": "boolean"
+        },
+        "seeCull": {
+          "type": "boolean"
+        },
+        "seeKeep": {
+          "type": "boolean"
+        },
+        "seeStencil": {
+          "type": "boolean"
+        },
+        "seeEarly": {
+          "type": "boolean"
+        },
+        "seeSolid": {
+          "type": "string",
+          "enum": [
+            "off",
+            "all",
+            "circle",
+            "rest"
+          ]
+        },
+        "seeNoBlend": {
+          "type": "boolean"
+        },
+        "seeShowAlpha": {
+          "type": "boolean"
+        },
+        "showBroken": {
+          "type": "boolean"
+        },
+        "seeDither": {
+          "type": "boolean"
+        },
+        "seeTwo": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "seeThrough",
+        "holeCut",
+        "trunkFade",
+        "groundCover",
+        "glow",
+        "effectsLayer",
+        "haze",
+        "areaAverage",
+        "seeDepth",
+        "cutWhole",
+        "seeSplit",
+        "seeMark",
+        "mist",
+        "lightRings",
+        "seeWrite",
+        "seeCull",
+        "seeKeep",
+        "seeStencil",
+        "seeEarly",
+        "seeSolid",
+        "seeNoBlend",
+        "seeShowAlpha",
+        "showBroken",
+        "seeDither",
+        "seeTwo"
+      ],
+      "additionalProperties": false
+    },
     "occlusion": {
       "type": "object",
       "properties": {
@@ -10017,6 +10131,10 @@
         "cast": {
           "type": "boolean"
         },
+        "castRes": {
+          "type": "number",
+          "minimum": 0
+        },
         "trunks": {
           "type": "object",
           "properties": {
@@ -10115,6 +10233,7 @@
         "trees",
         "tint",
         "cast",
+        "castRes",
         "trunks"
       ],
       "additionalProperties": false
@@ -10136,13 +10255,18 @@
         "wind": {
           "type": "number",
           "minimum": 0
+        },
+        "gain": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "on",
         "strength",
         "height",
-        "wind"
+        "wind",
+        "gain"
       ],
       "additionalProperties": false
     },
@@ -10610,6 +10734,7 @@
     "artPixelsPerMetre",
     "viewMargin",
     "sigilProjection",
+    "suspects",
     "occlusion",
     "canopyShadow",
     "rig",

@@ -66,6 +66,14 @@ export const SPRITE_UNIFORMS = {
   uEyeRange: { value: 40 },
   /** Trees' trunks: their light floor (a share of their unlit look) and the rim from her glow (Ed, v271). */
   uTrunkLook: { value: new THREE.Vector2(0.8, 0.5) },
+  /** The circle-bug suspects' switches (tuning suspects: render/view/frameUniforms.ts): scenery averaged where it shrinks; the see-through pass's depth. */
+  uAreaAvg: { value: 1 },
+  uSeeDepth: { value: 1 },
+  uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
+  uSeeDither: { value: 0 }, // (the circle hunt: the see-through as a dither in the solid pass, no second pass)
+  uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
+  uSeeSolid: { value: 0 }, // (the circle hunt: the see-through pass drawn solid, alpha 1, no blending) // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
   /** The smoke test: trunks drawn flat magenta, to count where they are on screen. */
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
@@ -76,6 +84,7 @@ export const SPRITE_UNIFORMS = {
 };
 
 const VERT = /* glsl */ `
+uniform vec4 uSeeDbg;
 uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
@@ -89,6 +98,10 @@ varying float vHole;   // crowns and cut trunks: the radius of the hole round he
 varying float vCrownD; // and how far the nearest of its crown is from the hole's middle on screen (pixels)
 uniform vec4 uCutShape;
 varying float vOverHer; // over her on screen and nearer the camera: it could hide her
+uniform float uCutWhole, uTopFade, uFadePass, uIsScenery, uAppear, uFlat;
+uniform vec4 uSilhouette;
+uniform vec2 uScenery, uHazeCentre;
+uniform float uCanopyReach;
 attribute vec3 iPos;
 attribute vec2 iSize;
 attribute vec4 iUv;
@@ -165,13 +178,16 @@ void main() {
   // sharp edge"): each tree's crown (and its cut trunk with it) has its own radius for it, a little
   // nearer or further than the next, so no line runs across the canopy, and fades over a wide band.
   vHole = 1.0; vOverHer = 0.0; vCrownD = 0.0;
+  // Its rectangle on screen (pixels): its middle and half-widths, from its foot and its top.
+  vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
+  vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
+  float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
+  vec2 cc = (s0 + s1) * 0.5;
+  float wob = 0.5 * uCutout.w * uCutShape.x; // (the hole's edge wobbles this far either way)
   if (abs(iFlags.y) > 0.001) {
-    vec4 c0 = clipOf(base), c1 = clipOf(base + uUp * iSize.y);
-    vec2 s0 = (c0.xy / c0.w * 0.5 + 0.5) * uRes, s1 = (c1.xy / c1.w * 0.5 + 0.5) * uRes;
     // Its own radius for the hole (vHole here: in pixels): each tree's own, spread round the hole's (uCutShape.w), and the
     // outline ragged round her, its bays and points drifting slowly round (uCutShape.z: Ed, 2026-10-06, "circle": no round line).
-    float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
-    vec2 cc = (s0 + s1) * 0.5, off = cc - uCutout.xy;
+    vec2 off = cc - uCutout.xy;
     float j = fract(sin(dot(floor(iPos.xz * 2.0), vec2(12.9898, 78.233))) * 43758.5453), ang = atan(off.y, off.x), tw = uWind.w;
     float rag = 0.5 * sin(ang * 3.0 + tw * 0.07 + 1.3) + 0.3 * sin(ang * 5.0 - tw * 0.05 + 4.1) + 0.2 * sin(ang * 7.0 + tw * 0.11 + 2.2);
     vHole = uCutout.z * (1.0 + uCutShape.w * (j - 0.5) * 2.0) * (1.0 + uCutShape.z * rag);
@@ -180,6 +196,37 @@ void main() {
     vCrownD = length(max(abs(off) - vec2(hw, hh) * 0.5, 0.0));
     // Whether it could hide her: over her sprite on screen and nearer the camera than her.
     vOverHer = abs(cc.x - uWitch.x) < hw + uWitch.z && abs(cc.y - uWitch.y) < hh + uWitch.w && uWitchDepth + (viewMatrix * vec4(base, 1.0)).z > 0.0 ? 1.0 : 0.0;
+  }
+  // What the pixels could never show, left undrawn whole (the ground-mode GPU cost, the coordinator's ask from Ed's overlay,
+  // 2026-10-13: the scenery's quads rasterised twice over, the see-through pass discarding nearly every pixel after its taps). Its
+  // rectangle with a margin for the wind, the lean, the watch and the snap, in pixels. Conservative: a quad kept whenever any of
+  // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
+  float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
+  vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  // A crown wholly inside the hole (every pixel of it cut away, in either pass): its farthest corner still within the hole's inner edge.
+  if (iFlags.y > 0.5 && uTopFade < 0.004) {
+    vec2 far = abs(uCutout.xy - cc) + halfPx;
+    if (mix(length(far) + wob, vCrownD, uCutWhole) + 1.0 < vHole - uCutout.w) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
+  }
+  // The see-through pass: only what could have a see-through pixel (the fragment shader's \`see\`): a tall thing over her circle
+  // and nearer than her; a crown or a cut trunk whose fade reaches into the hole's band; scenery at its budget's edge (or its
+  // batch still appearing). Anything else is wholly the opaque pass's.
+  if (uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeDbg.z > 0.5) { // (uSeeDbg.z: the circle hunt's switch for this cull)
+    bool need = uIsScenery > 0.5 && uAppear < 0.996;
+    if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
+      float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+      vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
+      if (dot(d, d) < R * R) need = true;
+    }
+    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
+      vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
+      if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0) need = true;
+    }
+    if (uIsScenery > 0.5) {
+      float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
+      if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y) need = true;
+    }
+    if (!need) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
 }
 `;
@@ -224,6 +271,8 @@ uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
+uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
+uniform vec4 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
@@ -259,6 +308,9 @@ vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
   }
   return vec4(sum / w, c.a);
 }
+// The distance in screen pixels between two points, safe at mediump: scaled down before it's squared (a 16-bit float tops out
+// near 65504, so length() of a difference over about 256 pixels overflowed) and clamped, so nothing far off can overflow either.
+float screenDist(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
 void shade() {
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
@@ -289,7 +341,7 @@ void shade() {
   if (vNear < 1.0 && bayer(gl_FragCoord.xy) >= vNear) discard; // (near the low stargazing camera: dithered away)
   if (uIsScenery > 0.5) {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
-    if (max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
+    if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
@@ -297,8 +349,10 @@ void shade() {
   // opaque pass there and drawn in a second, see-through pass after her.
   // A soft circle round her body, a little bigger than her sprite: fully see-through at the
   // centre, easing smoothly to opaque at the edge (uOcc.y: how far the edge reaches, a share of it).
-  float e = length(gl_FragCoord.xy - uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
-  float occl = uFlat > 0.5 ? 0.0 : uOcc.w * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
+  // (screenDist, not length(a - b): at mediump, the 16-bit floats some GPUs run this shader at, the square of a distance over about 256
+  // screen pixels overflows, and everything further from her than that came out wrong: the circle bug, Ed, 2026-10-14, isolated to this fade)
+  float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+  float occl = uFlat > 0.5 ? 0.0 : uOcc.w * uSeeDbg.x * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
   // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
   // (Ed: no dithering). A crown partly shown in the hole
   // is drawn see-through in the second pass where it's over her, after her, like whatever stands
@@ -312,7 +366,8 @@ void shade() {
   // line wobbled by a slow noise on the ground (world space: it doesn't crawl as she moves) so the fade's lines aren't
   // circles, and fading over a wide band past the radius too (uCutShape: the wobble, and how far out the fade reaches).
   float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, mix(length(gl_FragCoord.xy - uCutout.xy) + wob, vCrownD, uCutWhole));
+  float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
   float shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
@@ -339,10 +394,21 @@ void shade() {
   // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
   float edgeK = uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0; // (a crown: out to the canopy's reach)
   bool part = shown * trunkA * edgeK < 0.996;
-  bool see = occl > 0.001 || (part && (uHasFade > 0.5 || vOverHer > 0.5));
-  if (uFadePass > 0.5 ? !see : see) discard;
+  bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
+  if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) discard; } // (the circle hunt)
+  // Two see-through passes (Ed, 2026-10-14, the circle bug, measured by the pause page's Circle report): what's in front of her
+  // alone (uFadePass 3) first, writing its depth, so where it overlaps itself or what's half faded behind it the nearer wins as in
+  // the solid pass; then whatever is half faded anyway (crowns at the cut-away's edge, trunk tops: uFadePass 1), blended over it.
+  // In one pass, unsorted, a half-faded crown drawn before the trunk behind it lost or covered that trunk, but only inside her
+  // circle, where the trunks were in that pass too: a hard round edge with the drawing jumbled inside it. (uSeeTwo 0: one pass, as before.)
+  bool occOnly = see && !seePart, two = uSeeTwo > 0.5;
+  bool mine = uFadePass < 0.5 ? !(uSeeDbg.w > 0.5 ? seePart : see) : uFadePass > 2.5 ? two && occOnly : uFadePass > 1.5 ? see : (two ? seePart : see); // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
+  if (!mine) discard;
+  if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
+  if (uFadePass > 0.5 && (uSeeSolid > 2.5 ? occl <= 0.001 : uSeeSolid > 1.5 ? occl > 0.001 : uSeeSolid > 0.5)) alpha = 1.0; // (the circle hunt: 1 all, 2 only her circle's, 3 only the rest)
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
+  if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && (uFadePass < 1.5 || uFadePass > 2.5)) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
   // A wild creature's eye pixels are marked with alpha 253 (artBuild.ts markEyes); glowing ones 254.
@@ -472,6 +538,7 @@ void main() {
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
+  if (uSeeShowA > 0.5 && uFadePass > 0.5 && (uFadePass < 1.5 || uFadePass > 2.5)) gl_FragColor = vec4(vec3(gl_FragColor.a), 1.0); // (the circle hunt: its opacity, white solid)
 }
 `;
 
@@ -488,6 +555,10 @@ export function asFloor<B extends { meshes: THREE.Mesh[] }>(b: B): B {
   for (const m of b.meshes) { m.renderOrder = FLOOR_ORDER; (m.material as THREE.Material).depthWrite = false; }
   return b;
 }
+
+/** Every see-through pass's material (the circle hunt: the pause page's switch for its depth). */
+export const FADE_MATERIALS: THREE.ShaderMaterial[] = [];
+export const FADE_MESHES: THREE.Mesh[] = [];
 
 export class SpriteBatch {
   readonly mesh: THREE.Mesh;
@@ -531,15 +602,20 @@ export class SpriteBatch {
     if (opts.fade) {
       // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
       const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
+      // Before it, what stands in front of her alone, writing its depth (uFadePass 3: see the fragment shader's \`mine\`).
+      const front = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 3 } }), transparent: true, depthWrite: true }));
+      front.frustumCulled = false; front.renderOrder = 10.9;
       fade.frustumCulled = false; fade.renderOrder = 11;
+      if (opts.scenery) Object.assign(fade.material, mark, { stencilWrite: false }); // (its marks off as ever; the circle hunt's switch puts them on)
+      FADE_MATERIALS.push(fade.material as THREE.ShaderMaterial); FADE_MESHES.push(fade);
       // Its depth, once every colour is down (Ed, 2026-10-13, "Clear example of the circle bug"): the see-through pass writes
       // none, so the smooth effects layer (mist, dapple: post.ts, laid by the scene's depth) lay over its pixels as if they weren't
       // there, and everything the fade so much as touched round her came out milkier than the same trees just beyond: a ring. The
       // same pixels' depth, written last (no colour), hides that layer behind them as behind anything solid.
-      const depth = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, colorWrite: false, depthWrite: true }));
+      const depth = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 2 } }), transparent: true, colorWrite: false, depthWrite: true })); // (uFadePass 2: the see-through pass's pixels, its depth only)
       depth.frustumCulled = false; depth.renderOrder = 19.9;
       if (typeof location !== "undefined" && new URLSearchParams(location.search).get("seedepth") === "off") (depth.material as THREE.ShaderMaterial).depthWrite = false; // (?seedepth=off: as before, to compare) // (after the see-through pass and the effects over it; before the HUD's numbers)
-      this.meshes.push(fade, depth);
+      this.meshes.push(fade, depth, front);
     }
     if (opts.silhouette) {
       // Where she is hidden (behind something already drawn), a flat tint, so she's never lost.
@@ -548,6 +624,9 @@ export class SpriteBatch {
       this.meshes.push(sil); this.sil = sil;
     }
   }
+
+  /** Named, for the probes' draw-call lists (tools/bench/gpu.cjs): its meshes carry the name, the see-through one marked. */
+  name(n: string): this { this.meshes.forEach((m, i) => { m.name = i === 0 ? n : `${n} (${i === 1 && this.meshes.length > 1 && m !== this.sil ? "see-through" : "silhouette"})`; }); return this; }
 
   /** Its art swapped for another set's (the same frames: a stand-in replaced by the art workers' set when it arrives). */
   setAtlas(atlas: Atlas): void {

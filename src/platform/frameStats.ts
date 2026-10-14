@@ -64,6 +64,9 @@ export class FrameStats {
     }
   }
 
+  /** The last frames' GPU times (ms, oldest first; empty where the browser can't time the GPU) and their own CPU work, for the probes (tools/bench/gpu.cjs). */
+  recent(): { gpu: number[]; cpu: number[]; frames: number[] } { return { gpu: this.gpu.slice(), cpu: this.cpu.slice(), frames: this.times.slice() }; }
+
   /** The overlay's lines. */
   lines(): string[] {
     const t = [...this.times].sort((a, b) => a - b), n = t.length;

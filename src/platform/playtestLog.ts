@@ -30,15 +30,21 @@ export interface PlaytestSample {
   marching: number;
   /** The witch's hits left. */
   hits: number;
+  /** The frames of the last two seconds (platform/frameStats.ts; Ed's overlay, 2026-10-13: "gpu 21.4 ms median", so a log shows
+   *  where a slow frame's time goes): their length and the page's own work (ms, median and p95), the GPU's own time where the
+   *  browser can time it, the share over 20 ms, and what was drawn (draw calls, trees, bushes, creatures, the mode and zoom). */
+  frames?: { ms: number; p95: number; cpu: number; cpu95: number; gpu: number | null; gpu95: number | null; over20: number; draws: number; trees: number; bushes: number; creatures: number; mode: string; zoom: number };
   /** The sound (round 13: the music stopping): the context's state, the music's volume now, the damage heard, metres to the music. */
   /** Where she was and how it was seen (Ed's circle bug, 2026-10-13: the log couldn't say where a picture went wrong): her place,
    *  mode and area, the camera's zoom step, the world's time scale (under 1 in a sleeping legend's circle, where the world beyond
    *  greys), and whether L took this sample (the moment Ed saw something). */
   view?: { x: number; z: number; mode: string; area: string; zoom: number; timeScale: number; pressed?: boolean };
+  /** The repro link at this sample (app/repro.ts): the world as it was and her place, for a builder to open. */
+  link?: string;
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
+export interface PlaytestRun { seed: number; build: string; started: string; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -51,9 +57,15 @@ export class PlaytestLog {
   private run: PlaytestRun;
   private next = EVERY;
   /** The sound as it is now, for each sample (main.ts sets it). */
-  audioState?: () => PlaytestSample["audio"];
+  audioState?: () => PlaytestSample["audio"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** The frames' stats (main.ts sets it: the overlay's own numbers). */
+  frameState?: () => PlaytestSample["frames"];
   /** Where she is and how it's seen, for each sample (main.ts sets it). */
   viewState?: () => PlaytestSample["view"]; // (nothing before the first 10 s: a page opened and never played keeps no run)
+  /** What a builder needs to reproduce what she saw (app/repro.ts): the repro link, the machine and the settings changed. */
+  debugInfo?: () => { link: string; machine: string[]; changed: Record<string, unknown> };
+  /** All of the debug info as text (the overlay's "copy debug info"), kept with the run when the log is saved (L). */
+  debugText?: () => string;
   constructor(private game: Game, build: string) {
     this.run = { seed: game.seed, build, started: new Date().toISOString(), interval: game.tuning.leyLines.pulseSpeed, samples: [] };
   }
@@ -71,8 +83,11 @@ export class PlaytestLog {
       sieges: p.sieges.map(s => ({ key: s.key, value: round(s.value), count: s.count, hp: Math.round(s.hp) })), marching: round(p.marching),
       hits: g.witches[0].health.hp,
       audio: this.audioState?.(),
+      frames: this.frameState?.(),
       view: (v => (v && pressed ? { ...v, pressed: true } : v))(this.viewState?.()),
     });
+    const D = this.debugInfo?.();
+    if (D) { this.run.machine = D.machine; this.run.changed = D.changed; this.run.samples[this.run.samples.length - 1].link = D.link; } // (each sample's link: where she was then)
     this.save();
   }
   /** The stall log's stalls, kept with the run (main.ts sets it). */
@@ -116,6 +131,7 @@ export class PlaytestLog {
   /** Every run kept on this browser (this one included), as a JSON file to save. */
   download(): void {
     this.update(true); // (a sample of this moment: what Ed saw when he pressed L)
+    try { const t = this.debugText?.(); if (t) { this.run.debug = t; this.save(); } } catch { /* the rest is still worth saving */ }
     const runs = readRuns(), all = runs.some(r => r.started === this.run.started) ? runs : [...runs, this.run];
     const blob = new Blob([JSON.stringify(all, null, 1)], { type: "application/json" }), a = document.createElement("a");
     a.href = URL.createObjectURL(blob);

@@ -3,6 +3,7 @@
 import { TUNING } from "../rules/tuning";
 import { islandOf, playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
+import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -59,6 +60,12 @@ export function tuningFromLink(params: URLSearchParams) {
   // The circle round her (Ed, 2026-10-13: switches to find which effect draws it): ?occ=off the see-through fade of tall things
   // in front of her; ?hole=off no cut-away in the canopy (crowns everywhere), ?hole=all every crown cut away;
   // ?seedepth=off the see-through pass writing no depth (render/sprites.ts, as before #896).
+  // ?area=off scenery not averaged where it shrinks; ?cut=pixel the cut-away pixel by pixel, ?cut=whole by each crown whole (tuning suspects)
+  tuning.suspects = { ...TUNING.suspects };
+  if (params.get("area") === "off") tuning.suspects.areaAverage = false;
+  const cutBy = params.get("cut");
+  if (cutBy === "pixel") tuning.suspects.cutWhole = false;
+  else if (cutBy === "whole") tuning.canopyCutout = { ...TUNING.canopyCutout, whole: 1 };
   if (params.get("occ") === "off") tuning.occlusion = { ...TUNING.occlusion, on: false };
   const hole = params.get("hole");
   if (hole === "off" || hole === "all") tuning.canopyCutout = { ...TUNING.canopyCutout, screenFraction: hole === "off" ? 0 : 8 };
@@ -196,8 +203,11 @@ export function tuningFromLink(params: URLSearchParams) {
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
-  if (tuning.map) { const save = loadSave(), w = params.get("world"); tuning.map = { ...tuning.map, found: save.found, world: w ? worldSeed(w) : save.world }; }
+  // (?found=a,b: those islands found for this load, whatever this browser's save says: the debug overlay's repro link, app/repro.ts)
+  if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
   // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
   { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
+  // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
+  applySet(tuning, params.get("set"));
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };
 }

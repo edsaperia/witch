@@ -1,6 +1,6 @@
 // The link's switches for the game itself, once it's made: the party spell's start (?creator=0, ?spell=), forced buffs
 // (?buffs=), the quest demo (?quest=1), the party's over (?partyover=1), the debug arena (?arena=, J sets it up again) and
-// how often the waves come (?wave=, or what this viewer last picked).
+// how often the waves come (?wave=, or what this viewer last picked); the repro link's place and waves (app/repro.ts).
 import { LEGEND_BUFFS } from "../rules/buffs";
 import { setupArena } from "../rules/arena";
 import { endParty } from "../rules/partyOver";
@@ -10,6 +10,7 @@ import { witchHeight } from "../rules/witch";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { PULSE_CHOICES } from "./wavePick";
+import { applyRepro } from "./repro";
 
 export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams) {
   // The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
@@ -30,6 +31,8 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   // no waves; J sets it up again.
   // ?partyover=1 (a debug flag): the party's over from the start, the afterparty (rules/partyOver.ts).
   if (params.get("partyover") === "1") endParty(game);
+  // The debug overlay's repro link (app/repro.ts): ?wave=N, ?cleared=, ?at=x,z&mode=, ?zoom=.
+  applyRepro(game, params);
   const arenaParam = params.get("arena");
   if (arenaParam) {
     setupArena(game, arenaParam);

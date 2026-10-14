@@ -29,6 +29,11 @@ const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist-prof"));
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../bench-out"));
 const SEED = env("SEED", "2267"), X = Number(env("X", 2673)), Z = Number(env("Z", 2484)), ZOOM = Number(env("ZOOM", 3));
+const MODE = env("MODE", "treetop"), WAVES = Number(env("WAVES", 0)); // (MODE=ground: on foot at the spot; WAVES=N: N waves brought on first, as N does)
+// LAND=1 (Ed, 2026-10-14: "profile a wave landing"): the next wave brought on LAND_AT seconds into the profile, and the seconds
+// round it accounted for second by second: the page's own work by kind, the art sets the workers sent (and their time), the
+// textures uploaded, the sound's own work, the music's continuity and the audio clock (outputMeter.ts ClockWatch).
+const LAND = env("LAND", "0") !== "0", LAND_AT = Number(env("LAND_AT", 8));
 const SECONDS = Number(env("SECONDS", 60)), WARM = Number(env("WARM", 8)), RUN_MS = Number(env("RUN_MS", 50));
 const [W, H] = env("SIZE", "640x360").split("x").map(Number), NODRAW = env("NODRAW", "1") !== "0";
 const HEAP = env("HEAP", "0") !== "0", HEAP_LIVE = env("HEAP", "0") === "live", HEAP_EVERY = Number(env("HEAP_EVERY", 4096));
@@ -94,7 +99,8 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   await page.keyboard.press("Space"); await wait(800);
   await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
   // Up into the treetops: Space only while she's on the ground (pressed again mid-rise it brings her back down), then wait.
-  for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; if (mode === "ground") await page.keyboard.press("Space"); await wait(500); }
+  if (MODE === "treetop") for (let i = 0; i < 40; i++) { const mode = await page.evaluate(() => window.witch.game.witch.mode); if (mode === "treetop") break; if (mode === "ground") await page.keyboard.press("Space"); await wait(500); }
+  for (let i = 0; i < WAVES; i++) { await page.keyboard.press("KeyN"); await wait(400); }
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: g.map.typeOf ? a.type : a.type, zoom: g.camera.zoomStep, wave: g.party.wave, t: Math.round(g.clock.time) }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
   await wait(WARM * 1000);
@@ -110,7 +116,22 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const counts0 = COUNT ? await countKinds(cdp) : null;
   const heap0 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0), tg0 = await page.evaluate(() => window.witch.game.clock.time);
   lap(`profiling ${SECONDS} s`);
-  await wait(SECONDS * 1000);
+  if (LAND) {
+    await page.evaluate(() => {
+      const v = window.witch.view, A = window.witch.audio, cw = A.meter?.clockWatch, ms = () => A.music?.stats ?? {};
+      window.__land = { t0: performance.now(), at: null, rows: [], art0: v.assets.timings.length };
+      window.__landTimer = setInterval(() => {
+        const m = ms(), r = v.renderer.info.memory;
+        window.__land.rows.push({ t: performance.now(), pending: v.assets.pending, queue: v.assets.queue?.length ?? -1, busy: (v.assets.workers ?? []).filter(w => w.busy).length, textures: r.textures, audioMs: v.ms?.audio ?? 0,
+          slow: cw?.slow ?? null, fast: cw?.fast ?? null, drift: cw?.drift ?? null, underruns: cw?.underruns ?? null, resyncs: m.resyncs ?? null, gap: m.gap ?? null, late: m.late ?? null, ahead: m.ahead ?? null, game: window.witch.game.clock.time, wave: window.witch.game.party.wave });
+      }, 250);
+    });
+    await wait(LAND_AT * 1000);
+    await page.evaluate(() => { window.__land.at = performance.now(); });
+    await page.keyboard.press("KeyN");
+    lap(`N pressed (the wave lands)`);
+    await wait((SECONDS - LAND_AT) * 1000);
+  } else await wait(SECONDS * 1000);
   const { profile } = await cdp.send("Profiler.stop");
   const heapProfile = HEAP ? (await cdp.send("HeapProfiler.stopSampling")).profile : null;
   const tg1 = await page.evaluate(() => window.witch.game.clock.time), heap1 = await page.evaluate(() => performance.memory?.usedJSHeapSize ?? 0);
@@ -122,6 +143,27 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const loaf = await page.evaluate(() => window.__loaf), overlay = await page.evaluate(() => { const g = window.witch.game, v = window.witch.view; return { creatures: g.creatures.length, stats: v.stats ? { trees: v.stats.trees, bushes: v.stats.bushes, draws: v.stats.draws ?? v.stats.calls } : null }; });
   lap(`done: ${(tg1 - tg0).toFixed(1)} s of game time; ${stalls.length} stalls logged by the game; ${loaf.length} long animation frames`);
   fs.writeFileSync(path.join(out, "stalls.cpuprofile"), JSON.stringify(profile));
+  if (LAND) {
+    const L = await page.evaluate(() => { clearInterval(window.__landTimer); const v = window.witch.view; return { ...window.__land, art: v.assets.timings.slice(window.__land.art0), wave: window.witch.game.party.wave }; });
+    // the profile's samples by second from the landing: the page's work by kind (script, program, gc; idle left out)
+    const nodes = new Map(profile.nodes.map(n => [n.id, n])), kindOf = n => { const f = n.callFrame.functionName; return f === "(idle)" ? "idle" : f === "(garbage collector)" ? "gc" : f === "(program)" ? "program" : "script"; };
+    // (the profile's clock is its own: its startTime is when Profiler.start answered, about when the sampler began; the landing is LAND_AT s in)
+    const secs = new Map(); let t = profile.startTime; const land = profile.startTime + (L.at - L.t0) * 1000;
+    for (let i = 0; i < profile.samples.length; i++) { t += profile.timeDeltas[i] ?? 0; const k = Math.floor((t - land) / 1e6); const b = secs.get(k) ?? (secs.set(k, { script: 0, program: 0, gc: 0, idle: 0 }), secs.get(k)); b[kindOf(nodes.get(profile.samples[i]))] += (profile.timeDeltas[i] ?? 0) / 1000; }
+    const rowsBy = k => L.rows.filter(r => Math.floor((r.t - L.at) / 1000) === k), artBy = k => L.art.filter(a => Math.floor((a.at - L.at) / 1000) === k), loafBy = k => loaf.filter(e => Math.floor((e.at - (L.at - performance.timeOrigin)) / 1000) === k);
+    const lines = [`the landing: wave ${L.wave} brought on at ${LAND_AT} s; second by second from it (page ms: script / program / gc; art sets in: n, worker ms, cached; textures +; audio: the sound's own ms a frame, resyncs +, under-runs +, drift ms; long frames ms):`];
+    let lastRow = null;
+    const ks = [...new Set([...secs.keys(), ...L.rows.map(r => Math.floor((r.t - L.at) / 1000))])].filter(k => k >= -LAND_AT && k <= SECONDS - LAND_AT).sort((a, b) => a - b);
+    for (const k of ks) {
+      const b = secs.get(k) ?? { script: 0, program: 0, gc: 0 }, rows = rowsBy(k), last = rows[rows.length - 1] ?? lastRow, first = lastRow ?? rows[0], art = artBy(k), lf = loafBy(k);
+      const d = (key) => (last && first && last[key] != null && first[key] != null ? last[key] - first[key] : 0);
+      lines.push(`  ${String(k).padStart(4)} s  page ${Math.round(b.script).toString().padStart(4)} / ${Math.round(b.program).toString().padStart(3)} / ${Math.round(b.gc).toString().padStart(3)} ms  art ${art.length} sets ${Math.round(art.reduce((a, x) => a + x.ms, 0))} ms ${art.filter(a => a.cached).length} cached, pending ${last?.pending ?? "?"}, busy ${last?.busy ?? "?"}  tex +${d("textures")}  audio ${last ? last.audioMs.toFixed(1) : "?"} ms, resyncs +${d("resyncs")}, under-runs +${d("underruns")}, drift ${last?.drift ?? "?"}  long frames ${lf.reduce((a, e) => a + e.ms, 0)} ms (${lf.length})`);
+      if (rows.length) lastRow = rows[rows.length - 1];
+    }
+    lines.push(`  art sets in the window: ${L.art.map(a => `${a.set} ${Math.round(a.ms)} ms${a.cached ? " (cached)" : ""} @${((a.at - L.at) / 1000).toFixed(1)} s`).join("; ") || "none"}`);
+    console.log(lines.join("\n"));
+    fs.writeFileSync(path.join(out, "landing.json"), JSON.stringify(L, null, 1));
+  }
   if (heapProfile) fs.writeFileSync(path.join(out, "stalls.heapprofile"), JSON.stringify(heapProfile));
   // The profile, read: self time a function, inclusive time a subsystem, runs of JavaScript.
   const nodes = new Map(profile.nodes.map(n => [n.id, n])), parent = new Map();

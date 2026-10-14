@@ -34,8 +34,7 @@ Today every note is synthesised live; samples are now allowed, especially for **
 
 ## A better vocalise
 
-- **Pink Trombone** (MIT licence): an open-source human vocal-tract model that runs in the browser, giving sung vowels that glide; still generated live, so melodies never sound canned. For the lead soprano.
-- **CC0 choir vowels** (VCSL, Freesound) for pads and chants beneath it.
+Superseded by the proposal below (India, 2026-10-14). Kept for the record: **Pink Trombone** (MIT) for the lead, **CC0 choir vowels** beneath it.
 
 ## The palette
 
@@ -66,7 +65,78 @@ Proposed mapping (records and biomes: see journey.md): home and temperate island
 4. In the Music Lab (`tools/music-lab`), A/B renders adding one ingredient at a time (drone, chant syllables, frame drums, tape wobble, then the new kit and vocalise) for Ed to judge by ear.
 5. Propose the palette's first genres and whether to keep dorian and the current structure.
 
+## The singer, and the music round it: a proposal (India, 2026-10-14)
+
+For Ed to approve. Nothing here is built. Two rounds of questions with Ed and a measurement of today's renders are behind it.
+
+### What Ed said
+
+Round 1: the singer is unpleasant because of its **timbre** and its **melody**; it **often sounds out of tune**; it is **too plain** (it could take more effects, more reverb) and it should be **gentler, breathier, with more dynamic range**. The ideal voice is **all four** at once: a real singer as texture, a real singer as lead, an openly synthetic voice, and chant and drone with no lead. Voices belong in **breakdowns and builds** and in **legend circles and the dark**, not everywhere. Scope: **rethink the music itself** where the research finds better.
+
+Round 2: the singer moves to the **alto, an octave down**; **build two lead voices and A/B them** (a sampled voice and a vocal-tract model); the melody becomes **narrow and stepwise, long notes that swell, a returning hook each night, and sometimes just the chord**; and the effects become **two chains by place**: pure and wet in breakdowns and builds, heavily processed in legend circles and the dark waves.
+
+### What's wrong today, measured
+
+The game's singer is one CC0 recording of a woman's G4 (MIDI 67.2) retuned to each note by its playback rate, through the ethereal chain (chorus 0.5, shimmer 0.7, an octave double 0.3, hall 0.85, freeze 0.65). A pitch track of the A/B renders (`previews/ed/music/voices/`, claude/ed-shots; an autocorrelation tracker, notes segmented, each compared to its nearest semitone):
+
+| Render | Range (MIDI) | Note centres off a semitone, median / p90 | Wobble within a note (cents), median / p90 |
+|---|---|---|---|
+| b, the recording retuned, dry | 74 to 83 (D5 to B5) | 5 / 19 cents | 8 / 15 |
+| f, the game's singer (the recording through the ethereal chain) | 69 to 83 | 9 / 36 cents | 10 / 31 |
+| c, the FOF voice, dry | 72 to 83 | 13 / 41 cents | 15 / 57 |
+| a, Pink Trombone (the research's) | 74 to 83 | 14 / 43 cents | 24 / 37 |
+
+Two causes, both fixable:
+
+1. **The chipmunk.** The sung line (`form.sung.octave` 3, `range` [-1, 8]) lives between D5 and B5: 7 to 16 semitones above the one G4 recording. Speeding a recording up shifts its formants with its pitch, so every note is a small, hard copy of the singer. Dry, it is in tune; it just isn't a voice any more.
+2. **The smear.** The chorus, the octave double and the shimmer's octave-up feedback each add a detuned copy. Through them the note centres wander up to a third of a semitone and wobble within the note: that is the "out of tune", and "plain" at the same time, because the smear hides the voice without making it bigger.
+
+### The plan
+
+Three slices, each a PR Ed can hear before the next.
+
+**Slice 1: the singer.** Nothing else in the music changes.
+
+- **The alto.** `form.sung.octave` 2 (A3 to about A4, the range narrowed as below), so the one recording bends at most a few semitones. The soprano returns only from real high recordings.
+- **Two lead voices, A/B'd in the Music Lab, then one picked:**
+  - *The sampled alto*, built offline: from the CC0 recordings (the woman's G4; the woman's three-part triad, Freesound 274121; more as found) a note every 2 semitones over the alto's range, each made with formant-preserving pitch shift (Rubber Band, offline only: it is GPL, so nothing of it ships), trimmed and encoded as the kit is (`samples/voices/alto/`, about 20 files, under 300 KB). In the game a note bends at most 1 semitone from its nearest sample, two samples cross-fading at the boundary, each note's own vibrato and breath. Cheap on the audio thread; honest.
+  - *The vocal-tract model*, live: Pink Trombone's physics in an AudioWorklet. Not the ScriptProcessor library and not zakaton's worklet port (GPL-3); Paul Batchelor's `voc` (the model in C, MIT, its generated code public domain) compiled to WebAssembly, as the FOF voice was from Faust. Tuned mellow: a longer tract, low tenseness, a breathy glottis, vowels gliding over 150 ms, vibrato creeping in after half a second. A voice cap of 3 and the safety valve's sheds. More work and more CPU; never canned.
+  - The A/B: the same B and C phrases, each voice alone and in the music, through each of the two chains below, loudness-matched, on claude/ed-shots. Ed picks; the other stays in the lab.
+- **The melody rules** (the form's `sung` cells and range, `formPhrase`): a range of a fifth, steps and thirds only (no leap over a fourth), chord tones on the beats, whole and half notes with a breath (a rest of a beat or more) between phrases, no two phrases alike in rhythm; **a returning hook**: one 2-bar motif dealt per night (`musicSeed`), sung at the start of every B, varied (inverted, a step up, half-time) each wave; and in breakdowns **just the chord**: the voice holds the chord's root and fifth (two notes a fifth apart, the alto and a second voice an octave up at half the level) as a pad, no melody.
+- **Dynamics in the note.** Every sung note swells from nothing over its first third and fades over its last third (today it is a 30 ms ramp to full), a phrase's first note softest, its longest note loudest; breath noise (filtered, shaped by the same envelope) under every note at a level that reads as a singer, not a leak.
+- **Two chains by place** (the style's `voiceFx`, chosen by the plan's cue):
+  - *Pure and wet*, in breakdowns and builds: one voice in tune, air, a long dark hall (4 to 6 s) with a slow pre-delay (60 to 80 ms), the reverse swells kept, ducked by the kick in builds; **no chorus, no octave double**, shimmer only on the victory and a legend turning happy.
+  - *Processed*, in legend circles and the dark families (coven, phonk, the late waves): the same line pitched down an octave and slowed (the tape), chopped on eighths, a short gated room then the hall, the whisper vocoder over it, grit; the witch-house take's treatment, which Ed heard in the A/B.
+- **Where the voice plays.** The sung part leaves the drops and the four-on-the-floor blocks: it sings the breakdown (C), the build into the next wave, legend circles (its own layer there already) and the dark families' sections. The A instrument keeps A; B is sung only where the family's `voices` say so.
+- **Check.** The pitch tracker above becomes `tools/music-lab/tune.cjs`: it renders the sung line and fails if a note's centre is more than 20 cents off its semitone or wobbles more than 20 cents (dry), and reports the same through each chain.
+
+**Slice 2: voices as texture, by family.** Each genre family gets a `voices` shelf: which recorded layers it may use and where. The CC0 recordings become instruments: the crowd's "uh" retuned to the chord as a choir (already in the A/B), the whispers (the vocoder's modulator, and as a bed), the throat singing and the kargyraa as drones on the root in ritual and the dark, the woman's triad as a pad, the new alto set as a chant (a one-note ostinato on the root, "oh", for ritual and witch house). Each a `sample` patch with its root measured, bending at most 2 semitones, never retuned past that. Freesound is reachable from the builders' environment now (the research said it wasn't), so the search for more CC0 voices continues: each upload the uploader's own, its page's licence checked, no plugin demos.
+
+**Slice 3: the palette, and whether dorian and ABAC stay.** Ed is open to rethinking the music. Proposed, to be heard one record at a time in the Music Lab, not decided here:
+
+- **Mode by family**, not one dorian: dorian for the folk and house families, aeolian for dark folk and breakdowns (already), phrygian with its flat second for witch house and legend circles, the tritone as a jump scare on a legend waking.
+- **Two kinds of record.** *Melodic records* keep the 32-bar ABAC form. *Ritual and witch-house records* drop the melody for a **drone plus ostinato**: a held fifth (organum) under a one-bar chant cell and the frame drums, over the same 32 bars, the voice a chant rather than a tune (the references: Heilung, Dead Can Dance, Salem).
+- **Half time** for the dark families: the drums at half the tempo under the hats (no change to the beat clock), as the witch-house take did.
+- **The first genres**, by Ed's mapping: home and temperate islands house and ritual folk; the north cold ambient techno; the south dub and desert trance; the east techno and drum & bass; the west jungle and tribal house; legend circles and the far phases witch house.
+
+### Licences and tools
+
+- Rubber Band (formant-preserving shift) is GPL: **offline only**, to build the sample set; the manifest records it as processing. Nothing GPL ships.
+- `voc` (Paul Batchelor): the CWEB source MIT, the generated C public domain; credited in `samples/CREDITS.md` like Faust.
+- Freesound CC0 only, each sound the uploader's own, its page's licence checked; the candidates so far: 274121 (a woman's three-part triad, 6 s, CC0), 8067 (a man's "arh" on a low D, 32 s, CC0, processed by its uploader with chorus and reverb: a drone layer, not a lead), and the five already in `samples/voices/`. No CC0 multisampled choir exists; Sonatina's three chorus patches are Sampling Plus, outside our rules.
+- Comparable games: No Man's Sky's wordless voices are a physically modelled vocal tract (Paul Weir's VocAlien, a Wwise plugin fed by the creatures' sizes) over 65daysofstatic's generative system; Spore assembles Brian Eno's samples by rules in Pure Data. Both keep voices as instruments, never words: the same bet as here.
+
+### Ed's decisions (2026-10-14, in India's session)
+
+1. **Slice 1 approved as written**: the alto, both lead voices built and A/B'd (the sampled alto set and the vocal-tract worklet), the melody rules, the two chains by place, the voice out of the drops, the tuning check.
+2. **The pure chain's reference: Lisa Gerrard's alto in Julianna Barwick's layers.** One dark alto tone, long notes; in breakdowns the multitracked wash (the same voice layered, looped, in the long hall). The processed chain's reference stays Holy Other and Salem.
+3. **Slice 3 starts with mode by family** (phrygian for witch house and legend circles, aeolian for dark folk and breakdowns, dorian kept for house and folk), not with a ritual record; the drone-and-ostinato record waits.
+4. **The A/B is heard live in the Music Lab**: a Vocalise picker with both voices and both chains, sliders, and "Copy my settings"; no mp3s needed.
+5. **Build order** (Ed, the same day): the cheap fixes go **straight into the game first** (the alto, the chorus and octave double off, the stepwise melody), then the A/B in the Music Lab. The alto's range is **G3 to G4**. The breakdown's multitracked wash is **three voices** (the alto, a fifth and an octave up at half the level, each a little late and a few cents apart). Breath: **a slider in the lab's Vocalise card**, Ed sets it.
+
 ## Open questions
+
+- (2026-10-14) Answered in part by the proposal above: voices in breakdowns, builds, legend circles and the dark; the first genres by Ed's mapping, one record at a time.
 
 - Should witchiness vary by context (more ritual in legend circles and at home, more rave on the dancefloor)?
 - Which genres make the first set of records?

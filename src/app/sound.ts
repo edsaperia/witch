@@ -55,8 +55,25 @@ export class Sound {
     return new AudioContext({ latencyHint: bufferHint(this.tuning.music.buffer, this.tuning.music.latency, q, learntBuffer()) });
   }
 
-  /** A first press (the creator's): the context, resumed, and the sound effects. */
-  wake(): void { try { this.audio ??= this.context(); void this.audio.resume(); this.ensureSfx(); } catch { /* no sound yet */ } }
+  /** A first press (the creator's): the context, resumed, the sound effects, and the music built (silent till play starts:
+   *  Ed, 2026-10-14, its making off play's first frame, where his logs had it at a second). */
+  wake(): void { try { this.build("wake"); } catch { /* no sound yet */ } }
+
+  /** The context, the music and the sound effects, as far as they're wanted and not made yet; what each took goes in the
+   *  playtest log when it's slow (`?audio` timing for Ed's laptop, 2026-10-14). */
+  private build(why: string): void {
+    const { tuning } = this, t0 = performance.now();
+    const fresh = !this.audio;
+    this.audio ??= this.context(); void this.audio.resume();
+    const t1 = performance.now();
+    if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
+    const t2 = performance.now();
+    this.ensureSfx();
+    const t3 = performance.now(), ms = (x: number) => Math.round(x);
+    if (t3 - t0 > 50) this.note(`audio ${why} ${ms(t3 - t0)} ms: ${fresh ? `context ${ms(t1 - t0)}, ` : ""}music ${ms(t2 - t1)}, effects ${ms(t3 - t2)}`);
+  }
+  /** A line for the playtest log (once it's watching). */
+  private note: (what: string) => void = () => {};
 
   /** The music's recorded voices (the singer's and the vocoder's), once loaded: given to each music made. */
   private voices(): void {
@@ -67,9 +84,10 @@ export class Sound {
 
   /** Play starts: the context, the music and the sound effects. */
   start(): void {
-    const { tuning } = this;
-    try { this.audio ??= this.context(); void this.audio.resume(); if (!this.music && tuning.music.on) { this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); } this.ensureSfx(); } catch { /* no sound yet anyway */ }
+    try { this.build("start"); } catch { /* no sound yet anyway */ }
+    if (!this.begun) { this.begun = true; this.valve.begin(performance.now() / 1000); } // (the safety valve lets the start pass: shed.ts)
   }
+  private begun = false;
 
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
    *  resumed, and music gone silent (or anything non-finite in the music or the sound effects) is rebuilt afresh; each
@@ -78,6 +96,7 @@ export class Sound {
   watch(live: () => boolean, booted: () => boolean, playtest: PlaytestLog): void {
     const { tuning } = this;
     this.live = live; this.booted = booted;
+    this.note = what => playtest.audio(what);
     const watchdog = this.watchdog = new AudioWatchdog(
       () => ({ ctx: this.audio, music: this.music, sfx: this.sfx, wanted: !!this.audio && live(), musicExpected: this.musicExpected() }),
       what => {
@@ -105,14 +124,20 @@ export class Sound {
   /** Once a second, from the output meter's ClockWatch: sheds a step if the audio thread is falling behind (the reason, if
    *  it did, for the playtest log). */
   shedCheck(t: number, underruns: number | null, drift: number): string | null {
+    if (t < this.valve.graceUntil) { this.startRuns = underruns ?? 0; return this.valve.feed(t, underruns, drift); } // (the start's own under-runs not counted)
+    const runs = underruns === null ? null : underruns - this.startRuns;
     // under-running anyway: next load asks for a bigger buffer (platform/audio/buffer.ts), once a load
-    if (!this.bumped && this.audio) { const next = nextBuffer(underruns, this.audio.baseLatency ?? 0, learntBuffer()); if (next !== null) { learnBuffer(next); this.bumped = true; return `${underruns} under-runs: next load asks for a ${Math.round(next * 1000)} ms buffer`; } }
+    if (!this.bumped && this.audio) { const next = nextBuffer(runs, this.audio.baseLatency ?? 0, learntBuffer()); if (next !== null) { learnBuffer(next); this.bumped = true; return `${runs} under-runs: next load asks for a ${Math.round(next * 1000)} ms buffer`; } }
     return this.valve.feed(t, underruns, drift, this.music?.stats.resyncs ?? 0);
   }
   private bumped = false;
+  private startRuns = 0;
+  /** This frame's audio work by part (ms), for the stall log's slow audio frames (main.ts). */
+  parts: Record<string, number> = {};
 
   /** A frame: the music, one track mixed by how near the witch is to a playing soundsystem; the cues; the bedroom's room. */
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
+    const t0 = performance.now();
     this.lastMix = musicMix(game, game.witch);
     // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block
     const night = nightStyle(this.style, game.musicSet);
@@ -120,15 +145,19 @@ export class Sound {
     if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
     if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)
     if (this.sfx) this.sfx.shed = this.valve.level;
+    const t1 = performance.now();
     this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    const t2 = performance.now();
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
+    const t3 = performance.now();
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter
     // still before), till the boot's first speaker brings the music in
     const end = djIntroEnd(game), atDecks = game.witch.seated && typeof game.party.spellAt === "number" && !game.speakerBoot.some(t => t !== null) && (end === null || game.clock.time < end); // (her routine done, the record becomes the music: rules/musicPlan.ts dropBar)
     const sp = game.party.spellAt, dropped = atDecks && typeof sp === "number" && game.clock.time >= timeAt(game.beat, Math.ceil(beatAt(game.beat, sp + PARTY_CAST) - 1e-6) + 1); // (her routine's needle down: rules/djSet.ts, its beat 1)
     this.sfx?.room(roomOpen ? 1 : atDecks ? this.tuning.sfx.room.decks * (dropped ? 1 : 0.3) : 0);
+    this.parts = { mix: t1 - t0, music: t2 - t1, cues: t3 - t2, room: performance.now() - t3 };
   }
 }
 

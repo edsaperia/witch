@@ -10,6 +10,7 @@ import { moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
 
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
+  suspects: { effectsLayer: boolean; showBroken: boolean };
   bloom: { on: boolean; strength: number; threshold: number };
   tone: { black: number; gamma: number; ambient: number };
   tiltShift: { on: boolean; /** The share of the blur the sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", "the stars don't have to be crisp, just perceptible"); 1 as the ground. */ skyBlur?: number; strength: number; band: number; centre: number; /** Over the treetops (Ed, v160: stronger there), blended in by lift. */ treetop: { strength: number; band: number } };
@@ -39,7 +40,7 @@ void main() {
 const POOL_SPARE = 0.8;
 
 const COMPOSITE = /* glsl */ `
-uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
+uniform sampler2D uScene, uBloom, uFx; uniform vec2 uLow; uniform float uBloomStrength, uBlack, uGamma, uFxOn, uKoDim, uBroken; uniform vec4 uGrade, uPool, uIris, uIris2; uniform vec3 uGradeTint; varying vec2 vUv;
 float irisHash(float n) { return fract(sin(n * 91.345) * 47453.21); }
 // The knockout's iris and its record at a pixel q from its centre (low-res pixels), over the picture's colour there.
 vec3 irisShade(vec2 q, vec3 base) {
@@ -58,6 +59,8 @@ vec3 irisShade(vec2 q, vec3 base) {
 void main() {
   vec2 p = (floor(vUv * uLow) + 0.5) / uLow;
   vec3 c = texture2D(uScene, p).rgb;
+  // (the circle hunt: a scene pixel that's not a number, infinite or negative shows red, magenta or yellow)
+  if (uBroken > 0.5) { bool nan = !(c.r == c.r) || !(c.g == c.g) || !(c.b == c.b) || any(isnan(c)); if (nan) { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); return; } if (any(isinf(c)) || max(c.r, max(c.g, c.b)) > 60000.0) { gl_FragColor = vec4(1.0, 0.0, 1.0, 1.0); return; } if (min(c.r, min(c.g, c.b)) < 0.0) { gl_FragColor = vec4(1.0, 1.0, 0.0, 1.0); return; } }
   if (uFxOn > 0.5) { vec4 f = texture2D(uFx, vUv); c = c * (1.0 - f.a) + f.rgb; }
   // Levels: a black point and a gamma, so the shade goes near-black and the lit stays bright.
   c = pow(clamp((c - uBlack) / (1.0 - uBlack), 0.0, 1.0), vec3(uGamma));
@@ -147,7 +150,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
-      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
+      composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
     this.quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), this.mats.composite);
@@ -170,6 +173,10 @@ export class Post {
   /** The smooth effects layer's size, for its shaders' depth lookups (render/mist.ts). */
   get fxSize(): THREE.Vector2 { return this.fxRes; }
 
+  /** Its targets' sizes (pixels), for the debug info (app/repro.ts): the scene, the smooth effects layer, the bloom's and the output. */
+  sizes(): { scene: [number, number]; fx: [number, number]; bloom: [number, number]; out: [number, number] } {
+    return { scene: [this.scene.width, this.scene.height], fx: [this.fx.width, this.fx.height], bloom: [this.bright.width, this.bright.height], out: [this.out.x, this.out.y] };
+  }
   resize(lowW: number, lowH: number, outW: number, outH: number): void {
     this.low.set(lowW, lowH);
     const fw = Math.max(1, Math.round(lowW / 2)), fh = Math.max(1, Math.round(lowH / 2));
@@ -212,7 +219,7 @@ export class Post {
       }
     }
     // The smooth effects layer, over a clear background, then a small blur each way.
-    const fxOn = !!this.fxScene;
+    const fxOn = !!this.fxScene && t.suspects.effectsLayer; // (tuning suspects: the circle bug's toggles)
     if (this.fxScene) {
       const col = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
       r.setRenderTarget(this.fx);
@@ -228,7 +235,7 @@ export class Post {
     this.pass("composite", tilt ? this.a : null, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
-      u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0;
+      u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0; u.uBroken.value = t.suspects.showBroken ? 1 : 0;
       this.setGrade(u);
     });
     if (!tilt) return;

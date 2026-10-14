@@ -131,6 +131,8 @@ export class View {
   camera: THREE.PerspectiveCamera;
   /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
   holeLead = { x: 0, y: 0 };
+  /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
+  hazeKept: THREE.Vector2 | null = null;
   holeAt = 0;
   ground: Ground;
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
@@ -209,7 +211,7 @@ export class View {
   private lastReal = 0;
   readonly post: Post;
   /** The cast shadows from above, for what stands in them (render/castShadows.ts). */
-  private castMap = new CastShadowMap();
+  private castMap: CastShadowMap;
   private castOn = false;
   private dancefloor: Dancefloor;
   propBatch: SpriteBatch;
@@ -326,7 +328,9 @@ export class View {
   constructor(readonly canvas: HTMLCanvasElement, readonly game: Game, readonly style: Style, witchGenome: unknown = null) {
     const t = game.tuning;
     this.budget = newBudget(t);
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true });
+    this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
+    const prec = typeof location !== "undefined" ? new URLSearchParams(location.search).get("precision") : null; // (?precision=high|medium|low: every shader's float precision, for the circle bug; three.js takes high where the GPU has it)
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance", preserveDrawingBuffer: true, ...(prec === "high" || prec === "medium" || prec === "low" ? { precision: prec === "high" ? "highp" : prec === "medium" ? "mediump" : "lowp" } as const : {}) });
     // A lost and restored GL context (a GPU reset, a tab long in the background on a phone): three.js would upload every texture
     // again from its pixels, which the atlases let go once uploaded (render/atlas.ts), so the art would come back black. The
     // page reloads instead (DECISION FOR ED: a run is lost either way; nothing handled it before, and the ground's own GPU-side
@@ -416,7 +420,7 @@ export class View {
     // foot on its spot. It fades like other tall things when she's behind it.
     {
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
-      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true });
+      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true }).name("treehouse");
       this.scene.add(...this.treehouseBatch.meshes);
       // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       if (deckOn) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); }
@@ -424,7 +428,7 @@ export class View {
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
     this.markerArt = new MarkerArt(style, t, game.map);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true });
+    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true }).name("markers");
     this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
@@ -434,7 +438,7 @@ export class View {
     this.scene.add(this.trail.mesh);
     // The dancefloor's speakers: their batch comes with their art (drawSpeakers).
     this.assets.speakerArt();
-    this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true });
+    this.propBatch = new SpriteBatch(this.assets.props, this.mpp, { fade: true }).name("props");
     // Berries: a small shiny dark-red berry, drawn here (a highlight upper left, a darker side),
     // always drawn (gameplay), unlit so it reads at night; its halo and glints are in leash.ts.
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
@@ -467,7 +471,7 @@ export class View {
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
-    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true });
+    this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true }).name("soundsystems");
     this.scene.add(...this.soundBatch.meshes);
     this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
     this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
@@ -552,7 +556,13 @@ export class View {
     warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
-    for (const t of AREA_TYPES) this.assets.creatureArt(t.creature);
+    // The island's own creatures' art ahead (the map's area types' and the night's legends'), not every species' (Ed's log,
+    // 2026-10-14: the audio under-ran in bursts through the first ten minutes of every night; the workers were baking all sixty
+    // species, 1 to 14 s each, on every core but the page's, with the audio thread starved among them: a wave landing's own art,
+    // the woken looks and the party witches, then queued behind them).
+    const own = new Set<string>(this.game.map.legendKinds);
+    for (const [t] of near) { const sp = AREA_TYPES[t]?.creature; if (sp) own.add(sp); }
+    for (const sp of own) this.assets.creatureArt(sp);
   }
 
   batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
@@ -561,6 +571,7 @@ export class View {
       b = atlas();
       if (b) {
         map.set(key, b); this.scene.add(...b.meshes);
+        b.name(`${map === this.typeBatches ? "type" : map === this.creatureBatches ? "creature" : "decor"} ${String(key)}`); // (the probes' draw-call names: tools/bench/gpu.cjs)
         // A set drawn after the start (flying toward an area whose art was still being drawn)
         // fades in rather than popping in.
         if (this.prepared) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
@@ -803,6 +814,7 @@ export class View {
   private ringCount = 0;
 
   render(time: number, draw = true): void {
+    this.assets.playing = this.game.party.spellAt !== null; // (the night playing: the art ahead of need shares the workers, render/assets.ts dispatch)
     this.ms = {}; this.lap = this.frameStart = performance.now();
     const g = this.game, t = g.tuning, P0 = poseOf(g), F = this.fly;
     // (arriving from the sea chart: the flight's shot, app/arrive.ts)
@@ -940,7 +952,7 @@ export class View {
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     this.time("markers");
-    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, LIGHT_UNIFORMS.uGlowR.value * 1.05, clear); // out to the canopy hole's edge
+    this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
