@@ -26,13 +26,13 @@ Backlog (Ed, 2026-10-14, from an interview with Juliet). **Not built yet; don't 
 | Room | Where | What you do there |
 |---|---|---|
 | **Balcony** | south, facing the dancefloor | fly in and out; the decks on its rail; the magic circle behind them |
-| **Hub** | behind the balcony | the **map table** in the centre: a drawing of the world, one size for good; a button (E) opens the sea chart to look and to sail |
-| **Tea room**, perhaps a **greenhouse** | a room of its own off the hub | wait, drink tea, play a card game at the table (the lobby's waiting place). **For now just an animation** (she sits, deals, sips); a custom card game for 1, 2 or 3 players is a backlog item of its own (below) |
-| **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. **The host's in the middle, the other two either side**, locked with magic until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose, **trophies** from achievements; it carries across to other games: joining a friend's game you see **your own bedroom**, as you made it, in their house |
+| **Hub** | behind the balcony | the **map table** in the centre: a drawing of the world, one size for good; a button (E) opens the sea chart to look and to sail. The map is also the house's altar of sigils: the legends she has befriended are on it. And **a crystal ball** (backlog, below): the run history and its stats |
+| **Tea room**, perhaps a **greenhouse** | a room of its own off the hub | wait, drink tea, play a card game at the table (the lobby's waiting place). **For now just an animation** (she sits, deals, sips); the custom game, with **tarot cards**, is a backlog item of its own (below). Nothing grows here that matters: mushrooms are found in the world, never grown at home |
+| **Bedrooms**, three | up a stair, off a landing | sleep: the end of a night, where the next one starts. **The host's in the middle, the other two either side**, locked with magic until a friend joins. Each player's bedroom is their own: **furniture and personal items** to choose (a **hot tub** among them), **trophies** from achievements; it carries across to other games: joining a friend's game you see **your own bedroom**, as you made it, in their house |
 | **Telephone** | near the bedrooms | multiplayer: call friends to the party (a party code) |
-| **Dressing rooms**: the mirror, the closet, the cloakroom | between the bedrooms and the hub, on the way down | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options |
-| **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it. **Each hat has one power but any shape**: the station is where she brings it to change its shape and colour, with **the creator's hat sliders as they are** (shape, height, brim, tilt, band, curl) |
-| **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, one power each, pick one up, its shape and colour changed at its station (the creator's broom rotator and width slider) |
+| **Dressing rooms**: the mirror, the closet, the cloakroom | between the bedrooms and the hub, on the way down | the character creator split into places, no tabs: the **mirror** for hair, face and earrings; the **closet** for trousers and jacket; the **cloakroom** for the cloak; more stations as the look needs (shoes, scarf). A **nightie** is one of the options. And **a washing machine** (Ed: "the mix of spooky witch stuff with the odd mundane modern thing"): go to it for **yesterday's clothes** or **randomise** |
+| **Hat corridor** and **hat station** | out along a branch | the hats she has unlocked hang in a line; she **picks one up as a game object** (E) and wears it. **Each hat has one power but any shape**: the station is where she brings it to change its shape and colour, with **the creator's hat sliders as they are** (shape, height, brim, tilt, band, curl). **The hat station is a grimoire**: it describes the hat's power as a spell |
+| **Broom corridor** and **broom station** | out along a branch, near the balcony | the brooms, the same way: lined up, one power each, pick one up, its shape and colour changed at its station (the creator's broom rotator and width slider). **The broom station is a workbench with tools**: it describes the broom's power |
 | **Studio** | off the hub | the records she has earned; take one to the decks (below). And **three instruments: keys, a drum kit and a microphone**, so three players can play very simple music together with their controls: **the notes are locked to the music's key, but you can play off the beat**; nothing is recorded or kept. Played mid-night, **it's heard on the island as a layer over the music**. **Only the buttons the game has** (Ed): the mapping below |
 | **Kitchen** | the only room below the hub | the cauldron and its six baskets ([cauldron.md](cauldron.md)) |
 | **Library** | off the hub | a natural history library: specimens and animal skeletons. **The way into the zoo** (as the map table is the way to the islands). A new skeleton per biome; each biome has one key fantasy creature (the unicorn, the stegosaurus...) and something of it appears once every island in that biome is cleared. **The biome souvenirs live here too: the skull of each island's animal** |
@@ -104,7 +104,11 @@ The action bar's nine slots (1 2 3 4 Q E R, Space, the right mouse button) and t
 
 ## Backlog from this page
 
-- **The tea room's card game:** a custom game for 1, 2 or 3 players, to design; the animation stands in until then.
+- **The tea room's card game:** a custom game for 1, 2 or 3 players with **tarot cards**, to design; the animation stands in until then.
+- **The crystal ball** in the hub: the run history and its stats (what the playtest log keeps: past nights, how long she lasted, how many came), looked into rather than read.
+- **The washing machine** in the dressing rooms: yesterday's clothes, or randomise.
+
+**Not in the house** (Ed): live animals (a familiar, bats, an owl): confusing beside the game's creatures. Mushrooms grown at home: they are found in the world. A separate altar of sigils: the world map is the altar.
 
 ## The build order (Ed, 2026-10-14: the balcony and the hub first)
 
