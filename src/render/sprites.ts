@@ -70,6 +70,7 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
   uSeeDither: { value: 0 }, // (the circle hunt: the see-through as a dither in the solid pass, no second pass)
   uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
   uSeeSolid: { value: 0 }, // (the circle hunt: the see-through pass drawn solid, alpha 1, no blending) // (the circle hunt: x, occlusion splits the passes; y, the see-through pass's pixels marked magenta)
@@ -270,7 +271,7 @@ uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim
 uniform float uLegendFloor; // and the share of its own (mossed) look it never drops below
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
-uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither;
+uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
 uniform vec4 uSeeDbg;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
@@ -395,12 +396,19 @@ void shade() {
   bool part = shown * trunkA * edgeK < 0.996;
   bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
   if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) discard; } // (the circle hunt)
-  if (uFadePass > 0.5 ? !see : (uSeeDbg.w > 0.5 ? seePart : see)) discard; // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
+  // Two see-through passes (Ed, 2026-10-14, the circle bug, measured by the pause page's Circle report): what's in front of her
+  // alone (uFadePass 3) first, writing its depth, so where it overlaps itself or what's half faded behind it the nearer wins as in
+  // the solid pass; then whatever is half faded anyway (crowns at the cut-away's edge, trunk tops: uFadePass 1), blended over it.
+  // In one pass, unsorted, a half-faded crown drawn before the trunk behind it lost or covered that trunk, but only inside her
+  // circle, where the trunks were in that pass too: a hard round edge with the drawing jumbled inside it. (uSeeTwo 0: one pass, as before.)
+  bool occOnly = see && !seePart, two = uSeeTwo > 0.5;
+  bool mine = uFadePass < 0.5 ? !(uSeeDbg.w > 0.5 ? seePart : see) : uFadePass > 2.5 ? two && occOnly : uFadePass > 1.5 ? see : (two ? seePart : see); // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
+  if (!mine) discard;
   if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
   if (uFadePass > 0.5 && (uSeeSolid > 2.5 ? occl <= 0.001 : uSeeSolid > 1.5 ? occl > 0.001 : uSeeSolid > 0.5)) alpha = 1.0; // (the circle hunt: 1 all, 2 only her circle's, 3 only the rest)
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
-  if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
+  if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && (uFadePass < 1.5 || uFadePass > 2.5)) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }
   if (uUnlit > 0.5) { gl_FragColor = vec4(a.rgb, alpha); return; }
   // A wild creature's eye pixels are marked with alpha 253 (artBuild.ts markEyes); glowing ones 254.
@@ -530,7 +538,7 @@ void main() {
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
-  if (uSeeShowA > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) gl_FragColor = vec4(vec3(gl_FragColor.a), 1.0); // (the circle hunt: its opacity, white solid)
+  if (uSeeShowA > 0.5 && uFadePass > 0.5 && (uFadePass < 1.5 || uFadePass > 2.5)) gl_FragColor = vec4(vec3(gl_FragColor.a), 1.0); // (the circle hunt: its opacity, white solid)
 }
 `;
 
@@ -594,6 +602,9 @@ export class SpriteBatch {
     if (opts.fade) {
       // Drawn after the witch (render order 10): the parts of tall things covering her, see-through.
       const fade = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 1 } }), transparent: true, depthWrite: false }));
+      // Before it, what stands in front of her alone, writing its depth (uFadePass 3: see the fragment shader's \`mine\`).
+      const front = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 3 } }), transparent: true, depthWrite: true }));
+      front.frustumCulled = false; front.renderOrder = 10.9;
       fade.frustumCulled = false; fade.renderOrder = 11;
       if (opts.scenery) Object.assign(fade.material, mark, { stencilWrite: false }); // (its marks off as ever; the circle hunt's switch puts them on)
       FADE_MATERIALS.push(fade.material as THREE.ShaderMaterial); FADE_MESHES.push(fade);
@@ -604,7 +615,7 @@ export class SpriteBatch {
       const depth = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, uniforms: uniforms({ uFadePass: { value: 2 } }), transparent: true, colorWrite: false, depthWrite: true })); // (uFadePass 2: the see-through pass's pixels, its depth only)
       depth.frustumCulled = false; depth.renderOrder = 19.9;
       if (typeof location !== "undefined" && new URLSearchParams(location.search).get("seedepth") === "off") (depth.material as THREE.ShaderMaterial).depthWrite = false; // (?seedepth=off: as before, to compare) // (after the see-through pass and the effects over it; before the HUD's numbers)
-      this.meshes.push(fade, depth);
+      this.meshes.push(fade, depth, front);
     }
     if (opts.silhouette) {
       // Where she is hidden (behind something already drawn), a flat tint, so she's never lost.

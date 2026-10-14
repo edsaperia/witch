@@ -312,7 +312,8 @@ freeze.onToggle = on => {
     const report = () => import("./ui/circleReport").then(({ circleReport }) => circleReport({ canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, witch: () => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; } }));
     pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
-  });
+  }, () => { pauseLoading = false; window.alert("A newer build of the game is up, so the pause page can't load: reload the page (Shift+Reload)."); }); // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
+
 };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
 // The waves' pace: a "Waves:" dropdown in the bedroom's top right (app/wavePick.ts; Ed, 2026-10-08), the dev "Player:" pick

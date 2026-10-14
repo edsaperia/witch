@@ -8307,6 +8307,9 @@
         },
         "seeDither": {
           "type": "boolean"
+        },
+        "seeTwo": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -8333,7 +8336,8 @@
         "seeNoBlend",
         "seeShowAlpha",
         "showBroken",
-        "seeDither"
+        "seeDither",
+        "seeTwo"
       ],
       "additionalProperties": false
     },

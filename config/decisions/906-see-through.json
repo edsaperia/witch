@@ -3,6 +3,20 @@
   "group": "See-through",
   "decisions": [
     {
+      "id": "seeTwo",
+      "pr": 906,
+      "group": "See-through",
+      "label": "Circle fix (two see-through passes)",
+      "note": "On, the fix: what stands in front of her is drawn in a see-through pass of its own, nearer winning, before the things that are half faded anyway. Off: as before, one pass, the circle bug (Ed, 2026-10-14; found with the Circle report).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "suspects.seeTwo"
+      }
+    },
+    {
       "id": "seeReach",
       "pr": 906,
       "group": "See-through",
