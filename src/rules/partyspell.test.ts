@@ -25,6 +25,15 @@ describe("the party spell", () => {
     expect(g.party.bootUntil - g.clock.time).toBeCloseTo(bootLeft0, 3);
     expect(pointerShown(g.party, g.map, g.clock.time)).toBe(0);
   });
+  it("is cast even when pressed on a frame too short for a step (Ed's v3668: the start's first frame, under a step, dropped it)", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false; g.acc = 0;
+    const c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+    stepGame(g, { ...c, castParty: true }, STEP * 0.5); // (a 120 Hz frame: no step yet)
+    expect(g.party.spellAt).toBeNull();
+    stepGame(g, c, STEP * 0.5); // (the next frame makes the step: the press is still there)
+    expect(typeof g.party.spellAt).toBe("number");
+  });
   it("starts the clock and the boot when pressed, and lets her move once the cast and her routine are done", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false; g.witch.perch = false; // (her decks on the ground: the treehouse deck slows time, treehouse.test.ts)
