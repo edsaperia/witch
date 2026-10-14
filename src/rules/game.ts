@@ -52,7 +52,7 @@ import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
-import { deckOf } from "./treehouse";
+import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 
@@ -334,12 +334,14 @@ export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tun
   if (hurt(w.health, at, t)) {
     const hatFloats = dropHat(w.hat, w.body.x, w.body.z, at, t.knockout.dropHat), streak = nextStreak(w.koStreak, at, t);
     w.koStreak = { n: streak, at };
-    w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
+    const house = deckOf(g.map, t)?.house; // (the house: back at the magic circle, up out of its floor, then the walk to her decks: rules/knockout.ts)
+    const start = g.map.start, walk = house ? Math.hypot(start.x - house.circle.x, start.z - house.circle.z) / Math.max(1, t.groundSpeed * 0.5) : 0;
+    w.ko = knockOut(w.leash, g.creatures, at, t, { hatFloats, streak, ...(house ? { house: { rise: t.knockout.rise ?? 0, walk } } : {}) }); g.koEvents.push({ kind: "down", at, x: w.body.x, z: w.body.z });
     knockdownTempo(g.beat, t, g.clock.time); // (the beat speeds up: Ed, 2026-10-07, "the BPM goes up by 1 each time you die")
     // her wait ends on a bar line at the new tempo, the nearest to it (never under knockout.respawn.minScratch of scratching):
     // her scratching on the new record leads straight into its first downbeat (Ed, 2026-10-09; the wait a second or so off knockout.respawn
     // for it is fine: Ed, 2026-10-11)
-    const off = g.clock.time - g.herTime, ko = w.ko, min = ko.inAt + (t.knockout.respawn?.minScratch ?? 0) + off;
+    const off = g.clock.time - g.herTime, ko = w.ko, min = ko.seatAt + (t.knockout.respawn?.minScratch ?? 0) + off;
     let bar = Math.round(beatAt(g.beat, ko.backAt + off) / 4);
     while (timeAt(g.beat, bar * 4) < min - 1e-6) bar++;
     ko.backAt = timeAt(g.beat, bar * 4) - off;
@@ -478,7 +480,7 @@ function fixedStep(g: Game, controls: Controls): void {
   const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null); // (in a legend's circle: the lower view, camera.circle)
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g)); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
   const lapping = g.win?.phase === "lap"; // (the victory lap: its pulses race along the line, the waves done with: rules/win.ts)
@@ -522,6 +524,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
   if (perchTurn) W.leash.events.push({ kind: "perch", id: W.id, x: W.body.x, z: W.body.z, at: ht, on: perchTurn > 0 });
+  if (was.falling !== undefined && W.body.falling === undefined) W.leash.events.push({ kind: "fell", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (off the balcony with no broom: back at the circle)
   // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
   // Stealth (rules/brooms.ts): throwing 💌s, or putting down or picking up anything, gives her away for a moment.
   if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);

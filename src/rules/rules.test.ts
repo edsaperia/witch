@@ -1,4 +1,5 @@
 import { STATES, stateOf } from "./creatureStates";
+import { seatOffset } from "./treehouse";
 import { bootPath, bootSeconds, ringOrder } from "./bootRing";
 import { stretchLengths } from "./pulseRoute";
 import { readFileSync } from "node:fs";
@@ -224,7 +225,7 @@ describe("the map", () => {
     expect(far).toBeGreaterThan(floorClearing(TUNING)); // outside the speakers and the clearing
     expect(far).toBeLessThan(floorClearing(TUNING) + 20);
     expect(map.hardClear(th.x, th.z)).toBe(true);
-    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z - (TUNING.treehouse.deck?.on ? TUNING.treehouse.deck.seat : 1))).toBeLessThan(1e-9); // (at her decks: on the treehouse deck, rules/treehouse.ts)
+    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z - seatOffset(TUNING))).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
     const g = newGame(5, TUNING);

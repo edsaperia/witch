@@ -14,7 +14,8 @@ import { setOverlayTilt } from "../overlayTilt";
 import { SPRITE_UNIFORMS, SpriteBatch, type SpriteInstance } from "../sprites";
 import { hatKey, noteHatLooks } from "./hatLooks";
 import { inView } from "./culling";
-import { alongRay, DJ_DEPTH, ENT_DEPTH, nearerCamera } from "./home";
+import { alongRay, DJ_DEPTH, entDepth, nearerCamera } from "./home";
+import { aggroGlow } from "../aggro";
 import { beatAt } from "../../rules/beat";
 import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
@@ -115,7 +116,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
         // Her set's routine (rules/djSet.ts: the needle drop after the cast, the scratching after a respawn) over her ordinary set.
         const R = djRoutineAt(g, time);
         // (from the iris's cut, render/koIris.ts, to her respawn routine at ko.inAt: her hand on the record, mid-scratch, as it opens on her)
-        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
+        const j = R ? v.assets.djGestureFrame(R.gesture, R.frame) : KO && irisOn && KO.riseUntil === undefined && ht >= atDecksFrom(KO, true) && ht < KO.inAt ? v.assets.djGestureFrame("scratch", 0) : v.assets.djFrame(beatAt(g.beat, time), casting, respawnLeft(g.witches[0].ko, ht) !== null); // (its fallback: scratching through a knockout's wait, rules/knockout.ts)
         wf = Dj.full[j]; djUpper = Dj.upper[j];
       }
       if (typeof sp === "number" && sp !== v.castSeen) { v.castSeen = sp; v.spellFx.partyBurst(wx, wyy, wz, sp); }
@@ -126,10 +127,14 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Mid-blink she's nowhere (from the step it starts, so she never slides between its two points).
   const D = g.witches[0].dash;
   let hidden = ht >= D.at - STEP && ht < D.until;
+  let riseK = 1; // the house (rules/knockout.ts riseUntil; Ed, 2026-10-14): back at the magic circle she rises out of its floor, red
   if (KO) {
     if (ht < KO.teleportAt) { wf = F.sit.towards[Math.floor(ht * F.sit.fps) % F.sit.towards.length]; wyy = 0; djUpper = -1; }
     else hidden = ht < atDecksFrom(KO, irisOn); // (with the iris, at her decks from its cut: render/koIris.ts)
+    if (KO.riseUntil !== undefined && KO.moved && ht < KO.riseUntil) { const from = (KO.teleportAt + KO.inAt) / 2; riseK = Math.min(1, Math.max(0, (ht - from) / Math.max(1e-6, KO.riseUntil - from))); hidden = false; }
   }
+  // The fall off the balcony (rules/treehouse.ts house.fall): dropping out of the picture, then gone till she's back at the circle.
+  if (w.falling !== undefined && deck?.house) { const u = Math.min(1, w.falling / Math.max(1e-6, deck.house.fall.time)); wyy -= u * u * deck.h * 1.4; wf = F.sit.towards[0]; if (u > 0.7) hidden = true; }
   // Over the ride's smoothed height (eased in off the treehouse seat), in the air only: on foot she stands on the ground itself,
   // over her shadow (the ride, smoothed along her flight, sits above a slope she drifts down; Ed, 2026-10-06: "check shadows in general").
   wyy += v.rideOff * (1 - v.seatK * v.seatK * (3 - 2 * v.seatK)) * (1 - footEase);
@@ -156,11 +161,11 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
   // her upper layer goes over the DJ table, nearer the camera along the same ray.
   const wcen = djUpper >= 0 && wg ? (wg.x - wframe.w / 2) * v.mpp : 0;
-  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip, ...(herScale !== 1 ? { scale: herScale } : {}) }];
+  const her = v.partyWitchView.herIdle || onBeach || hidden ? [] : [{ x: wx - U.x * wsink - R.x * wcen, y: wyy + groundHeight(wx, wz) - U.y * wsink - R.y * wcen, z: wz - U.z * wsink - R.z * wcen, frame: wframe, flip: wflip, ...(herScale !== 1 ? { scale: herScale } : {}), ...(riseK < 1 ? { sy: 0.04 + 0.96 * riseK, glow: aggroGlow(1 - riseK) } : {}) }];
   if (djUpper >= 0 && her.length) {
     const b = her[0];
     if (T.ent && deck) { // (over the Ent's desk, brought forward with its near half: render/view/home.ts ENT_DEPTH; scaled to land on her own pixels)
-      const up = alongRay(v, b, ENT_DEPTH.near + DJ_DEPTH.upper - 2 * DJ_DEPTH.her); // (her batch's heights are the world's)
+      const up = alongRay(v, b, entDepth(deck).near + DJ_DEPTH.upper - 2 * DJ_DEPTH.her); // (her batch's heights are the world's)
       her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
