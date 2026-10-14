@@ -167,11 +167,29 @@
       "pr": 906,
       "group": "See-through",
       "label": "See-through solid",
-      "note": "On: the see-through pass draws its pixels fully solid, with no blending (a test: nothing is see-through then). If the circle's edge goes, it's the blending (Ed, 2026-10-14).",
+      "note": "Which of the see-through pass's pixels are drawn fully solid: off as ever; all; only those in her see-through circle; only the rest (the faded trunk tops and crowns at the cut-away's edge, everywhere). Which one takes the circle away (Ed, 2026-10-14)?",
       "control": {
-        "type": "toggle"
+        "type": "choice",
+        "options": [
+          {
+            "value": "off",
+            "label": "off"
+          },
+          {
+            "value": "all",
+            "label": "all"
+          },
+          {
+            "value": "circle",
+            "label": "only her circle"
+          },
+          {
+            "value": "rest",
+            "label": "only the rest"
+          }
+        ]
       },
-      "default": false,
+      "default": "off",
       "apply": {
         "knob": "suspects.seeSolid"
       }
@@ -202,6 +220,20 @@
       "default": false,
       "apply": {
         "knob": "suspects.showBroken"
+      }
+    },
+    {
+      "id": "seeNoBlend",
+      "pr": 906,
+      "group": "See-through",
+      "label": "See-through blending off",
+      "note": "On: the see-through pass draws with no blending at all (its colour straight in, whatever its opacity). With See-through solid off this shows whether it's the blending itself (Ed, 2026-10-14).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": false,
+      "apply": {
+        "knob": "suspects.seeNoBlend"
       }
     }
   ]

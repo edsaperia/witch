@@ -396,7 +396,7 @@ void shade() {
   if (uFadePass > 0.5 ? !see : (uSeeDbg.w > 0.5 ? seePart : see)) discard; // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
   if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
-  if (uSeeSolid > 0.5 && uFadePass > 0.5) alpha = 1.0;
+  if (uFadePass > 0.5 && (uSeeSolid > 2.5 ? occl <= 0.001 : uSeeSolid > 1.5 ? occl > 0.001 : uSeeSolid > 0.5)) alpha = 1.0; // (the circle hunt: 1 all, 2 only her circle's, 3 only the rest)
   // Eye glints, flowers and magic glow: the generator marks them with alpha 254.
   if (uSeeDbg.y > 0.5 && uFadePass > 0.5 && uFadePass < 1.5) { gl_FragColor = vec4(mix(a.rgb, vec3(1.0, 0.0, 1.0), 0.6), alpha); return; } // (the circle hunt: what the see-through pass draws)
   if (uDebugCull > 0.5 && vFlags.z > 0.5) { gl_FragColor = vec4(1.0, 0.0, 0.0, alpha); return; }

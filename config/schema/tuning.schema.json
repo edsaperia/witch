@@ -8288,6 +8288,15 @@
           "type": "boolean"
         },
         "seeSolid": {
+          "type": "string",
+          "enum": [
+            "off",
+            "all",
+            "circle",
+            "rest"
+          ]
+        },
+        "seeNoBlend": {
           "type": "boolean"
         },
         "seeShowAlpha": {
@@ -8318,6 +8327,7 @@
         "seeStencil",
         "seeEarly",
         "seeSolid",
+        "seeNoBlend",
         "seeShowAlpha",
         "showBroken"
       ],
