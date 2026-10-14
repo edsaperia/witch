@@ -83,12 +83,19 @@ async function main() {
   const state = page => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, area: window.witch.areaUnderWitch(), stats: window.witch.view.stats }; });
   // Rise from the ground: a press within riseCooldown seconds of her landing is dropped by the rules (#649, Ed, 2026-10-11:
   // "players rise to the treetops instead of dodging"; the plain broom halves it), so wait that out on her own clock first.
+  // A press can also be dropped while she's staggered by a blow or knocked out, so press again until she leaves the ground,
+  // and say what state she was in if she never does.
   const rise = async page => {
-    await page.waitForFunction(() => {
-      const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
-      return W.landedAt == null || g.herTime >= W.landedAt + cd + 0.05;
-    }, null, { timeout: 240000, polling: 100 });
-    await page.keyboard.press("Space");
+    for (let i = 0; i < 6; i++) {
+      await page.waitForFunction(() => {
+        const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
+        return W.landedAt == null || g.herTime >= W.landedAt + cd + 0.05;
+      }, null, { timeout: 240000, polling: 100 });
+      await page.keyboard.press("Space");
+      if (await page.waitForFunction(() => window.witch.game.witch.mode !== "ground", null, { timeout: 60000, polling: 100 }).then(() => true, () => false)) return;
+    }
+    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, ko: !!W.ko, knock: W.knock, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
+    throw new Error(`she wouldn't rise from the ground: ${JSON.stringify(st)}`);
   };
   // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
   const hold = async (page, key, secs, timeout = 240000) => { // the software renderer here runs the treetops (sky, bend) at about a frame a second
