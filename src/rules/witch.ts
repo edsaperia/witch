@@ -111,8 +111,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
   if (deck && intent.toggleMode && mode === "descending" && overDeck(deck, w.x, w.z)) perch = true;
-  // The house's balcony (Ed, 2026-10-14): at treetop height over it, she lands on it, no button.
-  if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && flyOnto(deck, w.x, w.z)) { perch = true; mode = "descending"; }
+  // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
+  // move is known: she must come onto it from outside, so rising straight up off it doesn't land her again at once).
+  const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);
   const Wt = t.leash.weight, over = load.over, steering = Math.hypot(intent.moveX, intent.moveZ) > 0.1;
   if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
   else if (mode === "descending") { lift -= dt / Math.max(1e-3, perch && deck?.house ? deck.house.landTime : t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
@@ -162,6 +163,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
     if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
   }
+  if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
   // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house
   // (rules/treehouse.ts keepInHouse): kept in by the hub's wall and the balcony's sides, but out over the balcony's open rim on
   // foot she's off: flying again (rising, as the button would), or falling with no broom (house.fall).

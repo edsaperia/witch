@@ -150,7 +150,7 @@ export function djStrokes(g: Game, from: number, to: number): { at: number; stro
     cues.forEach((c, i) => {
       if (!c.stroke || c.at >= beats) return;
       const at = timeAt(g.beat, b0 + c.at);
-      if (at < a || at >= e) return;
+      if (at < a - 1e-6 || at >= e) return; // (a run's start that isn't a whole beat's time, the house's seatAt: its first cue lands a rounding under it)
       const next = Math.min(cues[i + 1]?.at ?? beats, beats);
       out.push({ at, stroke: c.stroke, len: timeAt(g.beat, b0 + next) - at });
     });
