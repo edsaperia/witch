@@ -1,0 +1,15 @@
+{
+  "builder": "Kilo",
+  "phase": "Phase 5: the backlog's reckoning",
+  "slice": "The smaller gameplay backlog checked against the code; a pause-page slider for the flying cooldown (#916)",
+  "prs": [916],
+  "built": [
+    "Every item of `docs/backlog/gameplay.md` checked in the rules and marked built (with its PR), partly built or not built; the built ones gathered into one short list at the foot of the page",
+    "A pause-page slider for the flying cooldown (`riseCooldown`, 0 to 10 s), the delay after landing before she can rise again"
+  ],
+  "learned": [
+    "Most of a backlog from three days ago was already built, in two rule-tweak PRs (#648, #649) that nobody had marked off; a page that says what shipped and where saves the next builder the whole hunt.",
+    "A shallow clone can't tell you which PR shipped a line: deepen it, find the line's first commit, then the first merge on the ancestry path to the main branch."
+  ],
+  "previews": []
+}

@@ -3,6 +3,7 @@
 **Nothing in docs/backlog/ is built yet unless marked shipped; don't build without Ed's go.**
 
 - [journey.md](journey.md): islands, records, the treehouse, mushrooms on the journey and the master difficulty curve. The authoritative doc where others overlap.
+- [treehouse.md](treehouse.md): the treehouse: a walkable house on the Ent round a hub, its rooms, the night's loop through it, the lobby (Ed, 2026-10-14; it overrides journey.md's room table).
 - [unlocks.md](unlocks.md): hats and brooms, unlocked by achievements.
 - [cauldron.md](cauldron.md): the kitchen's cauldron, mushrooms and the 56 trips.
 - [creator-and-house.md](creator-and-house.md): getting dressed, the mirror and poster, stargazing witches and the end of the night.
