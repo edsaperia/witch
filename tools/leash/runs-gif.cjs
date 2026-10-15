@@ -20,12 +20,12 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const page = await browser.newPage({ viewport: { width: 960, height: 540 } });
     page.on("pageerror", e => errors.push(e.message));
     if (process.env.DEBUG) page.on("console", m => console.log("console:", m.text().slice(0, 200)));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&quick=1`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
     console.log(await page.evaluate(() => {
-      const g = window.witch.game, D = g.map.dancefloor, x = D.x + 30, z = D.z + 36; // (home's open ground, south-east of the floor)
+      const g = window.witch.game, D = g.map.dancefloor, x = D.x + 22, z = D.z + 30; // (home's open ground, south-east of the floor: she walks east over it)
       g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0, perch: undefined }; const w = g.witch;
       const near = g.creatures.filter(c => !c.gone && !c.boss && !c.partyLegend && c.level < 3 && !c.leashed).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, 6);
       near.forEach((c, i) => { const px = x - 10 + i * 4, pz = z - 6; Object.assign(c, { x: px, z: pz, tx: px, tz: pz, leashed: true, state: "leashed", enraged: false, siege: undefined, fight: undefined, circle: undefined }); g.leash.stack.push(c.id); });
@@ -43,8 +43,10 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (let i = 0; i < 105; i++) { await step({ moveX: 1, place: i === 0, sigilHeld: true }); if (i % EVERY === 0) await shoot(); }
     const afterPlace = await state();
     for (let i = 0; i < 15; i++) { await step({}); if (i % 5 === 0) await shoot(); } // (let go, stand)
-    // The pick-up run: press on the last one, then walk back west holding.
-    for (let i = 0; i < 120; i++) { await step({ moveX: -1, place: i === 0, sigilHeld: true }); if (i % EVERY === 0) await shoot(); }
+    // The pick-up run: walk back west till she's in the last sigil's cell, press there (that one comes up), then on west holding.
+    const overLast = () => page.evaluate(() => { const g = window.witch.game, s = g.leash, H = g.tuning.leash.hex, p = s.placed[s.placed.length - 1]; const q = (x, z) => { const fr = z / (H.size * Math.sqrt(3) / 2), fq = x / H.size - fr / 2; return [Math.round(fq), Math.round(fr)].join(","); }; return q(g.witch.x, g.witch.z) === q(p.x, p.z); });
+    for (let i = 0; i < 90 && !(await overLast()); i++) { await step({ moveX: -1 }); if (i % EVERY === 0) await shoot(); }
+    for (let i = 0; i < 110; i++) { await step({ moveX: -1, place: i === 0, sigilHeld: true }); if (i % EVERY === 0) await shoot(); }
     const afterPick = await state();
     for (let i = 0; i < 10; i++) { await step({}); if (i % 5 === 0) await shoot(); }
     out = { afterPlace, afterPick, frames: n };
@@ -52,7 +54,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     fs.copyFileSync(path.join(frames, `f${String(n - 1).padStart(3, "0")}.png`), path.join(outDir, "after.png"));
     const mid = fs.readdirSync(frames).sort()[Math.round(n * 0.45)]; fs.copyFileSync(path.join(frames, mid), path.join(outDir, "placed.png"));
     try {
-      execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "8", "-i", path.join(frames, "f%03d.png"), "-vf", "fps=8,scale=720:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer", path.join(outDir, "runs.gif")]);
+      execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-framerate", "8", "-i", path.join(frames, "f%03d.png"), "-vf", "fps=8,scale=640:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=96[p];[s1][p]paletteuse=dither=bayer", path.join(outDir, "runs.gif")]);
       out.gif = path.join(outDir, "runs.gif");
     } catch (e) { out.gif = `ffmpeg failed: ${e.message.split("\n")[0]}`; }
   } finally { await browser.close(); server.close(); }
