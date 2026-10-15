@@ -1,0 +1,66 @@
+{
+  "pr": 940,
+  "group": "One cooldown",
+  "decisions": [
+    {
+      "id": "cooldownShared",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Dodge and take-off share one cooldown",
+      "note": "On, her dodge and her take-off share one counter (Ed, 2026-10-15: \"One trail, one cooldown\"): a dodge adds the dodge cooldown, a take-off the take-off amount, a landing the flying cooldown (#916), each going only when the counter has room for it; her trail is as long as the counter is full. Off: the dodge's charges and the flying cooldown run apart as before.",
+      "control": { "type": "toggle" },
+      "default": true,
+      "apply": { "knob": "cooldown.shared" }
+    },
+    {
+      "id": "cooldownRise",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Take-off adds (s)",
+      "note": "Seconds a take-off adds to the shared counter (2 now; the plain broom halves it). Over the counter's room, a take-off needs it empty.",
+      "control": { "type": "slider", "min": 0, "max": 6, "step": 0.25 },
+      "default": 2,
+      "apply": { "knob": "cooldown.rise" }
+    },
+    {
+      "id": "dashCooldown",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Dodge adds (s)",
+      "note": "Seconds a dodge adds to the shared counter (1 as shipped; shared off, the seconds before the next blink comes back).",
+      "control": { "type": "slider", "min": 0.25, "max": 4, "step": 0.25 },
+      "default": 1,
+      "apply": { "knob": "dash.cooldown" }
+    },
+    {
+      "id": "dashCharges",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Dodges in a row",
+      "note": "How many dodges the counter has room for (2 as shipped, Ed 2026-10-08: its room is this times the dodge's seconds; shared off, her blinks before the cooldown). The flying cooldown (#916) adds more than the room, so after landing both wait.",
+      "control": { "type": "slider", "min": 1, "max": 4, "step": 1 },
+      "default": 2,
+      "apply": { "knob": "dash.charges" }
+    },
+    {
+      "id": "trailCooldown",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Trail per full cooldown (m)",
+      "note": "Her trail is at least this many metres times the counter's share in use (full right after a take-off or a landing, half after a dodge with two in hand), draining with it. 0: the trail shows only her speed, as before.",
+      "control": { "type": "slider", "min": 0, "max": 60, "step": 1 },
+      "default": 24,
+      "apply": { "knob": "trail.cooldown" }
+    },
+    {
+      "id": "trailBySpeed",
+      "pr": 940,
+      "group": "One cooldown",
+      "label": "Trail by speed too",
+      "note": "On, her speed still gives the trail its length as before (5 m at full speed on the ground, 20 m over the treetops), the cooldown's length over it. Off, the trail shows the cooldown alone.",
+      "control": { "type": "toggle" },
+      "default": true,
+      "apply": { "knob": "trail.bySpeed" }
+    }
+  ]
+}
