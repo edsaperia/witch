@@ -25,7 +25,7 @@ const slacks = (process.env.SLACKS || "").split(",").map(Number).filter(n => n >
     console.log(await page.evaluate(() => {
       const g = window.witch.game, D = g.map.dancefloor, x = D.x + 40, z = D.z + 30; // (home's open ground)
       g.witch = { ...g.witch, x, z, seated: false, mode: "ground", lift: 0 }; const w = g.witch;
-      const near = g.creatures.filter(c => !c.gone && !c.boss && c.level === 2 && !c.leashed).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, 2);
+      const near = g.creatures.filter(c => !c.gone && !c.boss && c.level >= 1 && c.level < 3 && !c.leashed).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, 2);
       const d = g.tuning.leash.length * 0.92; // (past the thread's strain point, 0.85 of the leash's length)
       // one on her stack, held d metres to her left; one at a sigil placed d metres to her right, held d metres beyond it
       const pin = [{ x: x - d, z: z + 1.5 }, { x: x + d * 2 + 2, z: z + 1.5 }];
