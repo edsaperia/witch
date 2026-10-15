@@ -21,6 +21,14 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
   - **Pad prompts:** on-screen prompts show keyboard keys even on a pad.
   - **Rumble:** none yet.
 
+## Ed's notes, 2026-10-15
+
+- **Sigils defend their whole area.** Today a sigil placed in the home area has her creatures fight any hostile in that area; a sigil placed in any other area only defends a radius round it. Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil.
+- **The arc of leashes should be higher.**
+- **The stack's sigils (above her head) more visible:** more opacity, and never obscured by scenery.
+- **Pick up and place in runs.** Picking up: if the first press picks a sigil up, holding the button keeps picking up any she runs over. Placing: if the first press places one, moving into empty hexes while holding places more. **Pad:** her hat is placed and picked up with triangle (was holding square); circle cycles the stack.
+- **One trail, one cooldown.** The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it).
+
 ## Open questions
 
 - Single-file tightness: shipped at 1.6 m, raised to 5 m by Ed (#666; `leash.babies.gap`). Settled unless Ed says otherwise.
