@@ -72,6 +72,7 @@ import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
@@ -874,7 +875,8 @@ export class View {
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
+      // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
+      this.ley.grow(routeSeen(g) ? null : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at

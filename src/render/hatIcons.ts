@@ -210,6 +210,22 @@ export const HAT_ICONS: Record<string, readonly string[]> = {
     "#.#.#.#.#.#.#",
     ".............",
   ],
+  // the Route-seer: an eye over a winding line with its stones along it
+  routeseer: [
+    ".............",
+    "....#####....",
+    "..##.....##..",
+    ".#...###...#.",
+    "#...#+#+#...#",
+    "#...#####...#",
+    ".#...###...#.",
+    "..##.....##..",
+    "....#####....",
+    ".............",
+    "+#..........+",
+    ".#.#+#...#+#.",
+    "..#...#+#....",
+  ],
 };
 
 /** The Broom box's chips' icons (golf, 2026-10-12): each built broom spell ("none" the plain broom), as HAT_ICONS. */
