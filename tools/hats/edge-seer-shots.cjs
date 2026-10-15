@@ -24,6 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
     // Up in the treetops over the home area's south-east edge, so the border runs across the picture.
     await page.evaluate(() => { const g = window.witch.game, D = g.map.dancefloor, a = g.map.areaSize; g.witch = { ...g.witch, x: D.x + a * 0.42, z: D.z + a * 0.3, seated: false, mode: "treetop", lift: 1, perch: undefined, vx: 0, vz: 0 }; });
+    page.setDefaultTimeout(600000); // (the software renderer: a screenshot can take minutes)
     const step = (o, dt = 1 / 30) => page.evaluate(([o, dt]) => { const w = window.witch; w.manual = true; w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, dt); }, [o, dt]);
     const seen = () => page.evaluate(() => { const w = window.witch; return { edges: w.view.borders.mesh.visible, hat: w.game.witches[0].spells.hat }; });
     for (let i = 0; i < 90; i++) await step({}); // (the camera settles, the border's points are worked out)
