@@ -13,7 +13,11 @@ export interface CoolState {
   left: number;
 }
 
-export const newCool = (): CoolState => ({ left: 0 });
+/** A new game starts a dodge's worth in (as the charges did: one blink in hand at the start, the second a cooldown later). */
+export const newCool = (left = 0): CoolState => ({ left });
+
+/** Seconds till the next action of `amount` may go (0: now). */
+export const coolWait = (c: CoolState, amount: number, room: number): number => Math.max(0, c.left - Math.max(0, room - amount));
 
 /** A step of her clock: the counter drains a second a second. */
 export function stepCool(c: CoolState, dt: number): void {

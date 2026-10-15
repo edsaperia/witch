@@ -21,8 +21,9 @@ const blink = (g: Game): boolean => { const at = g.witches[0].dash.at; stepGame(
 const rise = (g: Game): boolean => { stepGame(g, { ...idle, toggleMode: true }, STEP); return g.witches[0].body.mode !== "ground"; };
 
 describe("the shared cooldown counter (rules/cooldown.ts)", () => {
-  it("is on, with room for two dodges (dash.charges × dash.cooldown) and a take-off adding cooldown.rise", () => {
+  it("is on, with room for two dodges (dash.charges × dash.cooldown) and a take-off adding cooldown.rise; a new game starts a dodge's worth in (as the charges did: one blink in hand, the second a second later)", () => {
     expect(TUNING.cooldown?.shared).toBe(true);
+    expect(newGame(7, TUNING).witches[0].cool.left).toBe(TUNING.dash.cooldown);
     expect(TUNING.dash.charges).toBe(2); expect(TUNING.dash.cooldown).toBe(1); expect(TUNING.cooldown!.rise).toBe(2); expect(TUNING.riseCooldown).toBe(3);
   });
 
@@ -81,6 +82,6 @@ describe("the shared cooldown counter (rules/cooldown.ts)", () => {
     expect(blink(g)).toBe(true);
     run(g, 0.3);
     expect(rise(g)).toBe(true); // (a dodge never held her take-off before)
-    expect(g.witches[0].cool.left).toBe(0);
+    expect(g.witches[0].cool.left).toBe(TUNING.dash.cooldown); // (the counter untouched: its starting value, a dodge's worth in)
   });
 });

@@ -45,7 +45,7 @@ import { dropCache, newInvites, stepInvites, type Affection, type InviteControls
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
-import { coolReady, coolRefund, coolRoom, coolSpend, newCool, stepCool, type CoolState } from "./cooldown";
+import { coolReady, coolRefund, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
 import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -226,7 +226,7 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
 
 export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
   // (at her decks, on the treehouse deck: rules/treehouse.ts)
-  return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
+  return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1): Game {
@@ -488,6 +488,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, riseCooldownOf(W.spells, t), room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
   if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, (t.cooldown?.rise ?? 0) * plainK, room); // (taken off: its share; not her first step off the decks)
+  if (shared) { const wait = coolWait(W.cool, t.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
   // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
   const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
