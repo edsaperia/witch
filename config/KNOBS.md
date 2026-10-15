@@ -857,7 +857,7 @@ sigilBacking (Ed, 2026-10-12, Bravo's o3: "a dark patch directly underneath a si
 
 ### `bond`
 
-The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), never more than threadArcMax metres.
+The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.
 
 | knob | type | range |
 |---|---|---|
