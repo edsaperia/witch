@@ -6,7 +6,7 @@
 // creatures but never damage them (Ed, 2026-10-11). No drawing here.
 import type { Tuning } from "./tuning";
 
-export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing";
+export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing" | "edgeseer";
 export type BroomSpellId = "none" | "speed" | "battering" | "long" | "double" | "leyjump" | "haul" | "pound" | "stealth";
 
 /** How a spell works: a hat worn, placed (working while it's down), or fired once on placing; a broom passive or active (a
@@ -28,6 +28,7 @@ export const HAT_SPELLS: SpellInfo<HatSpellId>[] = [
   { id: "lullaby", name: "Lullaby", how: "onPlace", line: "Put it down: wild creatures within 15 m fall asleep; a 💌 wakes one.", built: true }, // (Ed, 2026-10-12: "wake up when hit with an invitation")
   { id: "cyclone", name: "Cyclone", how: "placed", line: "Put it down: a whirlwind sweeps creatures near it round, lifts them and flings them out.", built: true }, // (Ed, 2026-10-12, instead of the Decoy)
   { id: "nursing", name: "Nursing", how: "placed", line: "Put it down: her creatures near it heal.", built: true },
+  { id: "edgeseer", name: "Edge-seer", how: "placed", line: "While it's in play, worn or put down, the areas' edges glow.", built: true }, // (Ed, 2026-10-15: "shows the area edges ... while it's in play")
 ];
 
 export const BROOM_SPELLS: SpellInfo<BroomSpellId>[] = [

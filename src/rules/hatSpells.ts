@@ -82,6 +82,18 @@ export function hatsDown(W: Witch): { x: number; z: number; spell: string }[] {
   return W.hat.left.length ? [...own, ...W.hat.left] : own;
 }
 
+/** The Edge-seer hat (Ed, 2026-10-15: "shows the area edges (the glowing dotted borders, off by default since #889) while it's in
+ *  play"): whether any Edge-seer hat is in play, worn by a witch who isn't knocked out, lying where she put it (or dropped it),
+ *  or left behind when she took another in her room. The view draws the areas' edges while it is (render/borders.ts), as the
+ *  tuning's borders.on does for good. */
+export function edgesSeen(g: Game): boolean {
+  for (const w of g.witches) {
+    if (w.spells.hat === "edgeseer" && !w.ko && w.hat.has) return true;
+    if (w.hat.left.some(h => h.spell === "edgeseer")) return true;
+  }
+  return false;
+}
+
 /** What her hats lying about throw (rules/invites.ts): every Sentry's and Slingshot's place and numbers; undefined for none. */
 export function hatLetters(down: { x: number; z: number; spell: string }[], t: Tuning): HatLetters | undefined {
   const S = t.spells.sentry, SL = t.spells.slingshot;
