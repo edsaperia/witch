@@ -11,6 +11,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import { borderSteps, type BorderPoint } from "../rules/borders";
+import { edgesSeen } from "../rules/hatSpells";
 import type { Game } from "../rules/game";
 import { AREA_TYPES } from "../rules/map";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -76,7 +77,8 @@ export class BorderView {
 
   update(): void {
     const g = this.game, B = g.tuning.borders;
-    if (!B.on) { this.mesh.visible = false; return; }
+    // Drawn with the tuning's borders.on (the pause page's "Area edges"), or while an Edge-seer hat is in play (rules/hatSpells.ts).
+    if (!B.on && !edgesSeen(g)) { this.mesh.visible = false; return; }
     this.mesh.visible = true; // (on again after the pause page's "Area edges" switched it off: Ed, 2026-10-13)
     (this.mesh.material as THREE.ShaderMaterial).uniforms.uBeat.value = (beatTime(g.beat, g.clock.time) * g.tuning.beat.bpm) / 60;
     // New areas: start working out their borders.

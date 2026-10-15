@@ -178,7 +178,7 @@ export interface Tuning {
    *  drawn or hittable for gone seconds, then cooldown seconds; it lands clear of each obstacle by its `clear` metres. */
   dash: { distance: number; gone: number; cooldown: number; buffer: number; /** blinks before the cooldown (Ed, 2026-10-08: two), each back one at a time, cooldown seconds apart */ charges?: number; toCursor: boolean; aimDead: number; clear: { tree: number; decor: number; sound: number; speaker: number; treehouse: number } };
   spells: { hat: string; broom: string; speed: { mult: number; duration: number; cooldown: number }; /** the plain broom: riseCooldown times this */ plain?: { riseCooldown: number }; /** the Long broom: blink distance times mult */ long?: { mult: number }; /** the Healing ring: within radius m of it she heals a hit every `every` s */ healing?: { radius: number; every: number }; /** the Helmet: knocked off, it lands drop m beside her */ helmet?: { drop: number }; /** the Double blink broom: this many more blinks before the cooldown */ double?: { charges: number }; battering?: { width: number; stun: number }; leyjump?: { cooldown: number }; haul?: { pull: number }; pound?: { cooldown: number; radius: number; push: number; stun: number }; stealth?: { reveal: number; range: number }; harvest?: { berries: number; radius: number; every: number }; dowsing?: { time: number }; sentry?: { range: number; every: number }; slingshot?: { catch: number; fire: number; hold: number; radius: number; max: number }; gathering?: { range: number }; bramble?: { range: number }; mine?: { range: number; stun: number; every: number }; lullaby?: { range: number; time: number; every: number }; cyclone?: { radius: number; time: number; every: number; spin: number; lift: number; fling: number; flingTime: number; stun: number }; nursing?: { range: number; rate: number } };
-  trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean };
+  trail: { on: boolean; ground: number; treetops: number; from: number; curve: number; width: number[]; bright: number; fade: number; grow: number; shrink: number; colourEase: number; sparks: boolean; /** One trail, one cooldown (Ed, 2026-10-15): at least cooldown metres times the shared cooldown counter's share in use; bySpeed off, only that. */ cooldown?: number; bySpeed?: boolean };
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
   /** Sigil weight, made visible (render/load.ts). */
   load?: { on: boolean; full: number; stackSag: number; stackLean: number; threadFrom: number; threadBright: number; witchLean: number; broomTilt: number; broomBow: number; sparks: number };
@@ -273,6 +273,8 @@ export interface Tuning {
   riseTime: number;
   /** Seconds after she lands before she can rise again (Ed, 2026-10-11). */
   riseCooldown?: number;
+  /** One shared cooldown for her dodge and her take-off (Ed, 2026-10-15; rules/cooldown.ts): shared on, a take-off adds rise seconds (a dodge dash.cooldown, a landing riseCooldown). */
+  cooldown?: { shared: boolean; rise: number };
   descendTime: number;
   groundHeight: number;
   treetopHeight: number;
@@ -399,7 +401,7 @@ export interface Tuning {
   /** The circle-bug suspects (Ed, 2026-10-14): each effect centred on her with a round edge, on as ever or off (the pause page's toggles). */
   suspects: { seeThrough: boolean; holeCut: boolean; trunkFade: boolean; groundCover: boolean; glow: boolean; effectsLayer: boolean; haze: boolean; areaAverage: boolean; seeDepth: boolean; cutWhole: boolean; seeSplit: boolean; seeMark: boolean; mist: boolean; lightRings: boolean; seeWrite: boolean; seeCull: boolean; seeKeep: boolean; seeStencil: boolean; seeEarly: boolean; seeSolid: "off" | "all" | "circle" | "rest"; seeNoBlend: boolean; seeShowAlpha: boolean; showBroken: boolean; seeDither: boolean; seeTwo: boolean };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
-  stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number };
+  stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number; /** Its sigils more visible (Ed, 2026-10-15): each drawn at bright times leash.sigilGlyph, over a near-black disc at backing (0 none) backSize times its width, and with over drawn over the scenery (no depth test), so no crown hides the stack. */ bright?: number; backing?: number; backSize?: number; over?: boolean };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
   /** The 💌 invite (issue #87): rules/invites.ts. on: 💌s instead of the proximity chat. */

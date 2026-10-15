@@ -2281,6 +2281,23 @@
       "type": "number",
       "minimum": 0
     },
+    "cooldown": {
+      "type": "object",
+      "properties": {
+        "shared": {
+          "type": "boolean"
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shared",
+        "rise"
+      ],
+      "additionalProperties": false
+    },
     "groundHeight": {
       "type": "number",
       "minimum": 0
@@ -2415,6 +2432,21 @@
         "idleSway": {
           "type": "number",
           "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "backing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "backSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "over": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2424,7 +2456,11 @@
         "stiffness",
         "damping",
         "trail",
-        "idleSway"
+        "idleSway",
+        "bright",
+        "backing",
+        "backSize",
+        "over"
       ],
       "additionalProperties": false
     },
@@ -3128,6 +3164,13 @@
         },
         "sparks": {
           "type": "boolean"
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bySpeed": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -3142,7 +3185,9 @@
         "grow",
         "shrink",
         "colourEase",
-        "sparks"
+        "sparks",
+        "cooldown",
+        "bySpeed"
       ],
       "additionalProperties": false
     },
@@ -10865,6 +10910,7 @@
     "riseTime",
     "descendTime",
     "riseCooldown",
+    "cooldown",
     "groundHeight",
     "treetopHeight",
     "witch",

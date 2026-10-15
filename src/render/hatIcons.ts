@@ -194,6 +194,22 @@ export const HAT_ICONS: Record<string, readonly string[]> = {
     ".............",
     ".............",
   ],
+  // the Edge-seer: an eye, a dotted edge running under it
+  edgeseer: [
+    ".............",
+    ".............",
+    "....#####....",
+    "..##.....##..",
+    ".#...###...#.",
+    "#...#+#+#...#",
+    "#...#####...#",
+    ".#...###...#.",
+    "..##.....##..",
+    "....#####....",
+    ".............",
+    "#.#.#.#.#.#.#",
+    ".............",
+  ],
 };
 
 /** The Broom box's chips' icons (golf, 2026-10-12): each built broom spell ("none" the plain broom), as HAT_ICONS. */

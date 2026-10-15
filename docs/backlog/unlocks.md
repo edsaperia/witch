@@ -37,7 +37,7 @@ Suggested:
 - **Decoy hat:** draws aggro.
 - **Nursing hat:** heals her creatures near it.
 - **Beacon hat:** leashed creatures gather at it.
-- **Edge-seer hat** (Ed, 2026-10-15): shows the area edges (the glowing dotted borders, off by default since #889) while it's in play.
+- **Edge-seer hat** (Ed, 2026-10-15): shows the area edges (the glowing dotted borders, off by default since #889) while it's in play. **Built** (#939; `edgeseer` in `rules/spells.ts`, `edgesSeen` in `rules/hatSpells.ts`): in play worn or lying anywhere (put down, dropped at a knockdown, or left behind for another hat); the edges are drawn as the pause page's "Area edges" draws them.
 
 ## Other powers
 

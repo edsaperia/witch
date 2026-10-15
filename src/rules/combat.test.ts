@@ -10,7 +10,7 @@ import { hasRune } from "./creatureStates";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
 import { FIGHT, MOVEMENT } from "./movement";
-import { homeArea } from "./homeArea";
+import { areaOf, homeArea } from "./homeArea";
 const PEOPLED = withTuning({ population: { ...TUNING.population, start: { ...TUNING.population.start, young: 1 } } }); // (a young in every area, whatever the tuning's curve: the mechanics, not the balance)
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -377,7 +377,7 @@ describe("Ed's Stage 4 rulings", () => {
     expect(mine.fight?.target).toEqual({ kind: "creature", id: idler.id });
   }, 60000);
 
-  it("has one parked with its sigil in the home area guard all of that area, and nothing outside it; parked elsewhere, guard.radius round its sigil (Ed, 2026-10-11)", () => {
+  it("has one parked with its sigil in the home area guard all of that area, and nothing outside it (Ed, 2026-10-11)", () => {
     const g = quiet(), w = g.witch, H = homeArea(g.map), R = TUNING.guard.radius * FIGHT.scale;
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
     // a spot in the home area, and the farthest point of it from there (well past guard.radius); and one just outside it, near the sigil
@@ -407,16 +407,40 @@ describe("Ed's Stage 4 rulings", () => {
       expect(mine.fight?.target ?? null).toBeNull();
       near.gone = true;
     }
-    // parked outside the home area, the same distance off: too far, as ever
-    const site = g.map.siteOf(g.map.centreCell[0] + 2, g.map.centreCell[1]);
-    for (const c of g.creatures) if (!c.leashed && Math.hypot(c.x - site.x, c.z - site.z) < 150) c.gone = true;
-    const other = place(g, 0, "wolf", 2, site.x, site.z, true);
-    park(other, site.x, site.z);
-    expect(H.inside(site.x, site.z)).toBe(false);
-    const there = place(g, 0, "boar", 1, site.x + far.d * 0.9, site.z);
-    there.rest = 100;
+    // (parked outside the home area it guarded only guard.radius round its sigil; since Ed's note of 2026-10-15 it guards its
+    // sigil's whole area too: the next test)
+  }, 60000);
+
+  it("has one parked in any other area guard the whole of that area plus guard.radius round its sigil (Ed, 2026-10-15)", () => {
+    const g = quiet(), R = TUNING.guard.radius * FIGHT.scale;
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // nothing attacks her up there
+    // an area two out from home: its site, the farthest point of it from there (well past guard.radius), and a point just outside
+    // it, more than guard.radius from the sigil
+    const cell: [number, number] = [g.map.centreCell[0] + 2, g.map.centreCell[1]], A = areaOf(g.map, cell), sx = A.x, sz = A.z;
+    expect(A.inside(sx, sz)).toBe(true);
+    for (const c of g.creatures) if (!c.leashed && Math.hypot(c.x - sx, c.z - sz) < A.r + 60) c.gone = true;
+    let far = { x: sx, z: sz, d: 0 }, out: { x: number; z: number } | null = null;
+    for (let a = 0; a < 64; a++) for (let r = 4; r < A.r * 2; r += 4) {
+      const x = sx + Math.cos(a / 64 * Math.PI * 2) * r, z = sz + Math.sin(a / 64 * Math.PI * 2) * r, inside = A.inside(x, z);
+      if (inside && r > far.d) far = { x, z, d: r };
+      if (!inside && !out && r > R + 6 && r < R + 20) out = { x, z };
+    }
+    expect(far.d).toBeGreaterThan(R + 10);
+    expect(out).not.toBeNull();
+    const park = (c: Creature, x: number, z: number) => { g.leash.stack = g.leash.stack.filter(id => id !== c.id); g.leash.placed.push({ id: c.id, x, z, at: g.clock.time }); };
+    const mine = place(g, 0, "fox", 2, sx, sz, true);
+    park(mine, sx, sz);
+    const foe = place(g, 0, "boar", 1, far.x, far.z); // at the far side of its area, well past guard.radius
+    foe.rest = 100;
     run(g, 3);
-    expect(other.fight?.target ?? null).toBeNull();
+    expect(mine.fight?.target).toEqual({ kind: "creature", id: foe.id });
+    // just outside its area and beyond guard.radius of the sigil: left be
+    foe.gone = true;
+    Object.assign(mine, { fight: undefined, x: sx, z: sz, tx: sx, tz: sz });
+    const near = place(g, 0, "boar", 1, out!.x, out!.z);
+    near.rest = 100;
+    run(g, 3);
+    expect(mine.fight?.target ?? null).toBeNull();
   }, 60000);
 
   it("heals a party animal to full when it eats a berry (even a legend) or is invited", () => {
