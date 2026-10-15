@@ -43,7 +43,7 @@ const slacks = (process.env.SLACKS || "").split(",").map(Number).filter(n => n >
     const shoot = async (name, slack, max) => {
       console.log(name, await set(slack, max));
       for (let i = 0; i < 4; i++) await step({});
-      await page.screenshot({ path: path.join(outDir, `${name}.png`), clip });
+      await page.screenshot({ path: path.join(outDir, `${name}.png`), clip, timeout: 300000 }); // (the software renderer: a frame can take a minute)
     };
     await shoot("before-0.4", 0.4, 4);
     await shoot("after-0.8", 0.8, 8);
