@@ -16,6 +16,7 @@ Backlog (Ed, 2026-10-09). **Not built yet; don't build without Ed's go.** The tr
 - **Every slider works for every option** (no greyed-out sliders).
 - **Colours:** keep every part; the colour grid has five rows (was nine), on every part.
 - **Hat:** keep all 17 shapes as a rotator; keep height, brim, tilt and band sliders; add a curl slider.
+- **Spartan helmet** (Ed, 2026-10-15): a new hat kind; on it the brim slider sets the size of the crest and the plume (band) colour sets the crest's colour.
 - **Hair:** a rotator; add a length slider that works for every style.
 - **Face:** skin, plus an eyewear rotator (none, sunglasses, round glasses, visor, goggles...); headphones and earrings move here.
 - **Top and Cloak** are separate steps. Cloak: none / short / long becomes a length slider; add a collar option and a width slider.
