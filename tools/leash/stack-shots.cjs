@@ -45,10 +45,10 @@ const gaps = (process.env.GAPS || "2,4,6").split(",").map(Number);
       for (let i = 0; i < 50; i++) await step({});
       await set(false, 1, 0);
       for (let i = 0; i < 4; i++) await step({});
-      await page.screenshot({ path: path.join(outDir, `gap${gap}-before.png`), clip });
+      await page.screenshot({ path: path.join(outDir, `gap${gap}-before.png`), clip, timeout: 300000 });
       await set(true, 1.6, 0.6);
       for (let i = 0; i < 4; i++) await step({});
-      await page.screenshot({ path: path.join(outDir, `gap${gap}-after.png`), clip });
+      await page.screenshot({ path: path.join(outDir, `gap${gap}-after.png`), clip, timeout: 300000 });
     }
     await page.screenshot({ path: path.join(outDir, "screen.png") });
   } finally { await browser.close(); server.close(); }
