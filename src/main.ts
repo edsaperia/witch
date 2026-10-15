@@ -303,6 +303,19 @@ sound.watch(() => !game.clock.paused && !freeze.frozen && !document.hidden, () =
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
 // of its own: nothing else over the game), its stamp at their foot. Their code loads on the first freeze.
 let pauseSliders: import("./ui/decide").PauseSliders | null = null, pauseLoading = false;
+// The Music Lab panel (Ed, 2026-10-15, from Kilo's mock; ui/musicLabPanel.ts, app/musicLab.ts): the pause page's 🎛 button opens
+// it down the right edge; Esc resumes with it up, so changes are heard in play; ✕ closes it. Its code loads on the first open.
+let musicLabPanel: import("./ui/musicLabPanel").MusicLabPanel | null = null, musicLabLoading = false;
+const openMusicLab = () => {
+  if (musicLabPanel) { musicLabPanel.show(true); return; }
+  if (musicLabLoading) return;
+  musicLabLoading = true;
+  void Promise.all([import("./ui/musicLabPanel"), import("./app/musicLab")]).then(([{ MusicLabPanel }, { MusicLab }]) => {
+    const lab = sound.lab ?? (sound.lab = new MusicLab(musicStyle));
+    musicLabPanel = new MusicLabPanel({ lab, sound, game: () => game, nextWave: () => { input.touch.nextWave = true; }, noNight: () => !game.speakerBoot.some(t => t !== null) });
+    musicLabPanel.show(true);
+  }, () => { musicLabLoading = false; window.alert("The Music Lab's code couldn't load (a newer build may be up: reload the page)."); });
+};
 freeze.quiet = true;
 freeze.onStamp = text => pauseSliders?.setStamp(text);
 // "A newer version is out" (Ed, 2026-10-14; app/newBuild.ts): read version.json on load, on pausing and every few minutes; shown in the
@@ -311,6 +324,7 @@ const newBuild = new NewBuildNotice(typeof __BUILD__ === "string" ? __BUILD__ : 
 let menuGone = false;
 freeze.onToggle = on => {
   sound.freeze(on);
+  musicLabPanel?.frozen(on);
   creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
   if (on) void newBuild.check();
   if (pauseSliders) { pauseSliders.show(on, creator.open); return; }
@@ -319,7 +333,7 @@ freeze.onToggle = on => {
   void import("./ui/decide").then(({ PauseSliders }) => {
     const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
+    pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report, musicLab: openMusicLab });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;

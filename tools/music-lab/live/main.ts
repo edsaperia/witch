@@ -8,7 +8,7 @@ import { newBeatClock } from "../../../src/rules/beat";
 import type { MusicStyle, NoteEvent, PartUse } from "../../../src/rules/musicScore";
 import { Player } from "./player";
 import { nightStyle, planNight, type NightSet } from "../../../src/rules/musicSet";
-import { chainFx, CHAINS, defaultState, FX, FX_NAMES, heard, LAYERS, LAYER_NAMES, MODES, parseSettings, settingsJson, VOICES, type Chain, type Defaults, type Fx, type LabState, type Layer, type Voice } from "./settings";
+import { chainFx, CHAINS, defaultState, ETHEREAL, FX, FX_NAMES, heard, labParts, LAYERS, LAYER_NAMES, MODES, parseSettings, ROLES, settingsJson, SUNG_PATCH, VOICES, WORDS, type Chain, type Defaults, type Fx, type LabState, type Layer, type Voice } from "./settings";
 import { fofReady } from "../../../src/platform/audio/fof/fof";
 import { tractReady } from "../../../src/platform/audio/tract/tract";
 
@@ -18,20 +18,8 @@ const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getEleme
 const STORE = "witch.musicLab.live";
 
 // ---- the music's parts, the victory's layers, the defaults ----
-const legend = (p: string) => p.startsWith("lg") && !BASE.form?.instruments.includes(p);
-const PARTS = Object.keys(BASE.parts).filter(p => !legend(p));
-const ROLES: Record<string, string> = { drum: "Drums", bass: "Bass", chord: "Chords and pads", arp: "Arpeggios", motif: "Melodies and hooks" };
+const PARTS = labParts(BASE);
 const roleOf = (p: string) => BASE.parts[p]?.role ?? "other";
-const rank = (p: string) => { const i = Object.keys(ROLES).indexOf(roleOf(p)); return i < 0 ? 99 : i; };
-PARTS.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
-/** The parts' names in words (the style's own name after it). */
-const WORDS: Record<string, string> = {
-  kick: "Kick", softkick: "Soft kick", hardkick: "Hard kick", boom: "Boom (sub hit)", hat: "Hi-hat", ohat: "Open hi-hat", clap: "Clap",
-  snare: "Snare", snap: "Snap", shaker: "Shaker", clank: "Clank (metal)", bass: "Bass", sub: "Sub bass", reese: "Reese bass",
-  darkbass: "Dark bass", chipbass: "Chip bass", tension: "Tension drone", pad: "Pad", gatepad: "Gated pad", stab: "Stabs",
-  strings: "Strings", choir: "Choir (synth)", arp: "Arp", pluck: "Pluck", lead: "Lead", chiplead: "Chip lead", vox: "Vox",
-  bell: "Bell", lgHorn: "Horn",
-};
 const useLevel = (u: PartUse) => (typeof u === "string" ? 1 : u.level ?? 1);
 const VICTORY = BASE.victory ?? "victory";
 const victoryDef = BASE.sections[VICTORY];
@@ -42,8 +30,6 @@ const DEFAULTS: Defaults = {
   victory: { transpose: victoryDef?.transpose ?? 0, layers: Object.fromEntries(Object.entries(victoryDef?.parts ?? {}).map(([k, u]) => [k, useLevel(u as PartUse)])) },
   voiceFx: { pure: fxOf(BASE.voiceFx), dark: { ...fxOf(BASE.voiceFx), ...fxOf(BASE.voiceFxDark) } },
 };
-/** The sung patch each voice picks (the rest sing the game's, or the player's own). */
-const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract" };
 /** A voice's own breath (its patch's), the breath slider's rest. */
 const ownBreath = (v: Voice): number => BASE.patches[SUNG_PATCH[v] ?? BASE.form?.sung.patch ?? ""]?.breath ?? 0;
 const SECTIONS = Object.keys(BASE.sections).sort();
@@ -118,8 +104,6 @@ async function play(): Promise<void> {
   restart();
 }
 
-/** The voice effects' ethereal preset (the voices' A/B's: tools/music-lab/voices.mjs). */
-const ETHEREAL: Record<Fx, number> = { chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.6, shimmer: 0.5, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.25, octave: 0.3 };
 
 /** The set view's night in miniature: this many bars a wave, at the tempo slider's bpm (the gameplay sets the game's). */
 const NIGHT_BARS = 8;
