@@ -6,6 +6,7 @@ import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
+import { DISC } from "./glyphs";
 
 /** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
 const ROUTE_EASE = 0.3;
@@ -24,6 +25,9 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   const LV = lv.load, LT = t.load ?? LOAD_DEFAULT;
   lv.lastTime = time;
   const order = stackOrder(s), keys = new Set(order.map(it => stackKey(it.kind, it.id)));
+  // Its sigils more visible (Ed, 2026-10-15: "more opacity, and never obscured by scenery"): drawn over the scenery (stack.over: no
+  // depth test, after the see-through pass), brighter (stack.bright, in the batch's gain), each over a near-black disc (stack.backing).
+  const batch = S.over ?? true ? lv.stackGlyphs : lv.standing, back = S.backing ?? 0, backUv = back > 0 ? lv.uv(DISC) : null;
   while (lv.chain.length < order.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
   let below = { x: 0, z: 0 }, y = hatTop;
   for (const id of [...lv.stackY.keys()]) if (!keys.has(id)) lv.stackY.delete(id);
@@ -46,23 +50,24 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
     y += size / 2;
     let col: { r: number; g: number; b: number };
+    if (backUv) lv.stackBack.add(pos.x, pos.y, pos.z, size * (S.backSize ?? 1.3), backUv, 0.02, 0.02, 0.035, back); // (the dark disc behind it)
     if (c) {
       slotPos.set(it.id, pos);
       col = (lv.slotOf(c.species, c.level), lv.colours.get(c.species)!);
       // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
       // claw slashes say how hurt she is.)
-      lv.standing.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
+      batch.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
     } else {
       const slot = lv.slotOf("relic", 0), tw = 0.88 + 0.12 * Math.sin(time * 3 + it.id);
       col = lv.colours.get("relic")!;
-      if (lv.haloGain > 0) lv.standing.add(pos.x, pos.y, pos.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw * lv.haloGain); // (its halo)
-      lv.standing.add(pos.x, pos.y, pos.z, size, lv.uv(slot), col.r * tw, col.g * tw, col.b * tw, 1);
+      if (lv.haloGain > 0) batch.add(pos.x, pos.y, pos.z, size * 1.6, dot, col.r, col.g, col.b, 0.22 * tw * lv.haloGain); // (its halo)
+      batch.add(pos.x, pos.y, pos.z, size, lv.uv(slot), col.r * tw, col.g * tw, col.b * tw, 1);
     }
     const cyc = lv.cycledAt.get(key);
     if (cyc !== undefined) {
       const q = (time - cyc) / 0.45;
       if (q >= 1 || q < 0) lv.cycledAt.delete(key);
-      else lv.standing.add(pos.x, pos.y, pos.z, size * (2 + q * 1.6), dot, col.r, col.g, col.b, 0.75 * (1 - q)); // (its flare: a halo of its neon, opening and fading)
+      else batch.add(pos.x, pos.y, pos.z, size * (2 + q * 1.6), dot, col.r, col.g, col.b, 0.75 * (1 - q)); // (its flare: a halo of its neon, opening and fading)
     }
   }
   lv.lastSlots = slotPos;

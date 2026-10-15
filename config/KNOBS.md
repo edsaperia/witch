@@ -581,7 +581,7 @@ The witch knocked back and staggered by a blow (Ed, 2026-10-05: "add a knockback
 
 ### `stack`
 
-The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still).
+The sigil stack above the witch's hat: scale (of the sigils' size), offset (the gap between her hat tip and the bottom sigil, in sigil heights), gap (between sigils, in sigil heights). It sways as a chain of springs: stiffness and damping, trail (how far it leans back per m/s of her speed), idleSway (metres of gentle sway when she's still). Its sigils more visible (Ed, 2026-10-15: "more opacity, and never obscured by scenery"): bright, how bright each stacked sigil is drawn, times leash.sigilGlyph (1 as the sigils on the ground; 1.6 now); backing, a near-black disc behind each (0 none, 1 solid), backSize times the sigil across, so it reads against lit crowns and the sky; over, drawn over the scenery (no depth test, after the see-through pass), so no tree or crown ever hides the stack.
 
 | knob | type | range |
 |---|---|---|
@@ -592,6 +592,10 @@ The sigil stack above the witch's hat: scale (of the sigils' size), offset (the 
 | `stack.damping` | number | 0 to … |
 | `stack.trail` | number | 0 to … |
 | `stack.idleSway` | number | 0 to … |
+| `stack.bright` | number | 0 to … |
+| `stack.backing` | number | 0 to … |
+| `stack.backSize` | number | 0 to … |
+| `stack.over` | boolean |  |
 
 ### `witchHealth`
 
