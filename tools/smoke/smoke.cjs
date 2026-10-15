@@ -184,8 +184,10 @@ async function main() {
     results.push(`area under the witch: ${s.area}`);
   });
 
-  // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the old radius map: the home
-  // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14).
+  // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the moth's island: the home
+  // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14), and the old
+  // radius map (?island=off, 98 areas of every classic type) bakes so much art ahead that its assets never settle here within
+  // the wait; the moth's (21 areas, 8 types on seed 123, the heath plentiful) carries three heaths and three cave mouths.
   await run("heath", { width: 1280, height: 720 }, async page => {
     await page.keyboard.press("Enter");
     await sleep(300);
@@ -214,7 +216,7 @@ async function main() {
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
-  }, "&debug&island=off");
+  }, "&debug&island=moth");
 
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
     await page.touchscreen.tap(200, 400);
@@ -759,14 +761,23 @@ async function main() {
       const px = best.s.x + 18, pz = best.s.z + 22;
       // Off the treehouse's seat (else the opening shot keeps the camera close in on her).
       g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: px, tz: pz };
+      // Its bats friendly (as the slope scene calms its area): the wild watch attacks her while the forest builds round her
+      // here (a minute or two of real time is only seconds of game time), and knocked out she'd be back at her decks.
+      g.friendly.add(`${best.x},${best.y}`);
+      for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && !c.partyLegend && c.cell[0] === best.x && c.cell[1] === best.y) { c.friendly = true; c.enraged = false; c.fight = undefined; c.siege = undefined; }
+      g.byArea = null;
       document.getElementById("debug").classList.remove("on");
       return `${best.x},${best.y}`;
     });
     check(!!cave, `there is a cave mouth to look at (${cave})`);
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press("KeyH");
     await sleep(2000);
-    // The art, and the forest round her (built a few chunks a frame since the speed work), all in.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 300000, polling: 500 });
+    // The forest round her (built a few chunks a frame since the speed work) and its ground all in; then a while for the
+    // art, not for all of it: the art baked ahead of need (the island's species, their looks and rigs) drains a job a
+    // minute under the software renderer here, 10 to 20 minutes after a move to a new area, and what the checks below
+    // read is the scenery placed, which the forest's count says is in (probed on the moth's island, 2026-10-15).
+    await page.waitForFunction(() => window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0 && window.witch.view.stats.pendingGround === 0, null, { timeout: 900000, polling: 500 }); // (about 3 minutes here)
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 1000 }).catch(() => {});
     await sleep(1500);
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
@@ -818,7 +829,7 @@ async function main() {
       return out;
     });
     check(hr.n > 50 && hr.bad.length === 0, `on the rolling ground nothing floats or sinks past 1 art px at its foot's ends (${hr.n} checked, ${hr.hilly} off the flat, worst ${hr.worst.toFixed(2)} px)${hr.bad.length ? ": " + hr.bad.join("; ") : ""}`);
-  }, "&debug&island=off"); // (the old radius map: the home island's roster is the ten home kinds, so no seed puts a cave mouth on it)
+  }, "&debug&island=moth"); // (the moth's island: the home island's roster is the ten home kinds, so no seed puts a cave mouth on it, and the old radius map's art never settles here; see the heath scene)
 
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
