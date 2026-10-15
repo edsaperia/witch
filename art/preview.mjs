@@ -69,6 +69,7 @@ if (process.env.SMALL) await b.page.addInitScript(() => { window.SMALL = true; }
 if (process.env.DRAWON) await b.page.addInitScript(() => { window.DRAWON = true; });
 if (process.env.STYLE) await b.page.addInitScript(o => { window.STYLE = o; }, JSON.parse(process.env.STYLE));
 if (process.env.NIGHT) await b.page.addInitScript(() => { window.NIGHT = true; });
+if (process.env.HOUSE) await b.page.addInitScript(() => { window.HOUSE = true; }); // (the ent sheet: the treehouse plan's house on the Ent, art/ent.js HOUSE)
 if (process.env.DRESSED) await b.page.addInitScript(() => { window.DRESSED = true; });
 if (process.env.IDLE) await b.page.addInitScript(() => { window.IDLE = true; });
 if (process.env.PER) await b.page.addInitScript(n => { window.PER = n; }, +process.env.PER);
@@ -240,11 +241,11 @@ const url = await b.page.evaluate(async ({ gen, lighting, what, list, scale }) =
   if (what === "ent") { // the treehouse Ent (art/ent.js): towards and away, the witch at the decks (dj frame `list`) between its far and near halves; then the deck up close
     const wc = G.witchColours(st), hc = G.entColours(st), panels = [], wsp = G.witchSprite(st, { pose: "dj", frame: +list || 0 }), wit = G.bake(wsp, wc, st, st.cOutline);
     for (const facing of ["towards", "away"]) {
-      const T = G.entSprite(st, { facing }), far = G.bake(T.far, hc, st, "none"), near = G.bake(T.near, hc, st, "none");
+      const T = G.entSprite(st, { facing, house: !!window.HOUSE }), far = G.bake(T.far, hc, st, "none"), near = G.bake(T.near, hc, st, "none");
       panels.push({ T, far, near, w: far.w, h: far.h, wx: Math.round(T.anchors.seat.x - wsp.anchors.ground[0]), wy: Math.round(T.anchors.seat.y - wsp.anchors.ground[1]) });
     }
     { // the deck up close, round the first panel's deck (twice the size)
-      const P = panels[0], cw = 260, ch = 130, cx = Math.round(P.T.anchors.deck.x - cw / 2), cy = Math.round(P.T.anchors.deck.y - ch * .45), K = 2;
+      const P = panels[0], cw = window.HOUSE ? 300 : 260, ch = window.HOUSE ? 200 : 130, cx = Math.round(P.T.anchors.deck.x - cw / 2), cy = Math.round(P.T.anchors.deck.y - ch * (window.HOUSE ? .3 : .45)), K = 2;
       const c2 = d => { const c = document.createElement("canvas"); c.width = cw * K; c.height = ch * K; const g2 = c.getContext("2d"); g2.imageSmoothingEnabled = false; g2.drawImage(d.far, -cx * K, -cy * K, P.w * K, P.h * K); g2.drawImage(d.wit, (P.wx - cx) * K, (P.wy - cy) * K, wit.w * K, wit.h * K); g2.drawImage(d.near, -cx * K, -cy * K, P.w * K, P.h * K); return c; };
       panels.push({ close: true, A: c2({ far: P.far.A, wit: wit.A, near: P.near.A }), N: c2({ far: P.far.N, wit: wit.N, near: P.near.N }), w: cw * K, h: ch * K, T: { anchors: { lights: P.T.anchors.lights.map(L => ({ ...L, x: (L.x - cx) * K, y: (L.y - cy) * K })).filter(L => L.x >= 0 && L.y >= 0 && L.x <= cw * K && L.y <= ch * K) } } });
     }

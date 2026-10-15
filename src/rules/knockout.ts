@@ -13,6 +13,7 @@ import { anchorOf, LEGEND, wanderRange, type Creature } from "./creatures";
 import { letPartyLegendGo, type LeashState } from "./leash";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
+import { deckOf } from "./treehouse";
 
 export interface Health {
   hp: number;
@@ -32,9 +33,16 @@ export interface Knockout {
   /** Game time her hat has floated to the ground (Ed, 2026-10-07: the screen dimmed, a sad trumpet; knockout.hatFloat), or `at`
    *  if she had no hat to drop. */
   floatUntil: number;
-  /** Game time the teleport starts (after the hat's float and the last sigil), and ends (she's in at the treehouse). */
+  /** Game time the teleport starts (after the hat's float and the last sigil), and ends (she's in at the treehouse: at the magic
+   *  circle in the house, rules/treehouse.ts; behind her decks before it). */
   teleportAt: number;
   inAt: number;
+  /** The house: she rises out of the circle's floor till riseUntil (knockout.rise; Ed, 2026-10-14: blood rises from the floor and
+   *  forms her shape), then walks to her decks, there at seatAt; without the house, seatAt is inAt. Her scratching runs from seatAt. */
+  riseUntil?: number;
+  seatAt: number;
+  /** She's at her decks (seated), the walk over. */
+  seated?: boolean;
   /** Game time she can move again: after her scratching behind her decks, the whole wait (knockout.respawn: base, a step
    *  more for each knockdown within cooldown of the last, to max) counted from `at`, and at least minScratch of scratching. */
   backAt: number;
@@ -84,15 +92,15 @@ export function respawnWait(streak: number, t: Tuning): number {
 
 /** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go, bottom first (legends kept if
  *  they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
-export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number } = {}): Knockout {
+export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number; /** the house: seconds rising out of the circle's floor, and the walk to her decks */ house?: { rise: number; walk: number } } = {}): Knockout {
   const K = t.knockout, R = K.respawn ?? RESPAWN_NONE, streak = o.streak ?? 0, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
   const each = K.releaseMax > 0 && order.length * K.releaseEach > K.releaseMax ? K.releaseMax / order.length : K.releaseEach;
   const times = order.map((_, i) => time + (i + 1) * each);
   const floatUntil = time + (o.hatFloats ? K.hatFloat ?? 0 : 0);
   const teleportAt = Math.max(floatUntil, order.length ? times[times.length - 1] + each * 0.5 : time + K.emptyBeat);
-  const inAt = teleportAt + K.teleport;
-  const backAt = Math.max(inAt + R.minScratch, time + respawnWait(streak, t));
-  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
+  const inAt = teleportAt + K.teleport, H = o.house, riseUntil = H ? inAt + Math.max(0, H.rise) : undefined, seatAt = H ? riseUntil! + Math.max(0, H.walk) : inAt;
+  const backAt = Math.max(seatAt + R.minScratch, time + respawnWait(streak, t));
+  return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, ...(riseUntil !== undefined ? { riseUntil } : {}), seatAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
 }
 
 /** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
@@ -119,13 +127,25 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // behind the decks in your treehouse, as when the game begins (but not zoomed in)"): seated till she first moves. (The
     // opening close-up doesn't come back: the camera's intro only ever eases out, rules/camera.ts; nor the boot, which runs
     // from the first time she left.)
-    body = { ...body, x: map.start.x, z: map.start.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: true, ...(map.tuning.treehouse.deck?.on ? { perch: true } : {}) }; // (her decks: on the treehouse deck)
+    // In the house (rules/treehouse.ts; Ed, 2026-10-14) she comes back at the magic circle behind her decks, standing, and walks to them.
+    const d = deckOf(map, map.tuning), spot = d?.house && k.riseUntil !== undefined ? d.house.circle : map.start;
+    body = { ...body, x: spot.x, z: spot.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: spot === map.start, facing: 1, away: false, heading: "side", lean: false, ...(d ? { perch: true } : {}) }; // (her decks, or the circle: on the treehouse's floor)
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
     events.push({ kind: "cut", at: time, x: body.x, z: body.z }); // (the cut from the hat to the decks: render/koIris.ts, and the music's scratch)
     // Loyal legends come home with her.
     for (const id of leash.stack) { const c = creatures[id]; c.x = body.x + (c.rand() - 0.5) * 3; c.z = body.z + 2 + c.rand() * 2; c.tx = c.x; c.tz = c.z; }
   }
-  if (!k.scratching && k.backAt > k.inAt && time >= k.inAt) { k.scratching = true; events.push({ kind: "scratch", at: time, x: body.x, z: body.z }); }
+  // The house: still while she rises out of the circle's floor, then the walk to her decks (a straight line, there at seatAt), then seated.
+  if (k.moved && k.riseUntil !== undefined && !k.seated) {
+    const from = deckOf(map, map.tuning)?.house?.circle ?? map.start, to = map.start;
+    if (time >= k.seatAt) { k.seated = true; body = { ...body, x: to.x, z: to.z, vx: 0, vz: 0, seated: true }; }
+    else if (time >= k.riseUntil) {
+      const u = (time - k.riseUntil) / Math.max(1e-6, k.seatAt - k.riseUntil), T = Math.max(1e-6, k.seatAt - k.riseUntil);
+      const vx = (to.x - from.x) / T, vz = (to.z - from.z) / T;
+      return { body: { ...body, x: from.x + (to.x - from.x) * u, z: from.z + (to.z - from.z) * u, vx, vz, facing: vx > 0.3 ? 1 : vx < -0.3 ? -1 : body.facing, away: vz < -Math.abs(vx), heading: "side", lean: false }, done: false };
+    }
+  }
+  if (!k.scratching && k.backAt > k.seatAt && time >= k.seatAt) { k.scratching = true; events.push({ kind: "scratch", at: time, x: body.x, z: body.z }); }
   if (time >= k.backAt) { events.push({ kind: "back", at: time, x: body.x, z: body.z }); return { body, done: true }; }
   return { body: { ...body, vx: 0, vz: 0 }, done: false };
 }
@@ -156,13 +176,13 @@ export function stepWanderers(creatures: Creature[], map: ForestMap, dt: number)
 
 /** Seconds left of her wait behind her decks after a knockout (knockout.respawn), or null when she isn't waiting: for the
  *  countdown at the decks (render/leash/respawn.ts). */
-export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.inAt && time < k.backAt ? k.backAt - time : null);
+export const respawnLeft = (k: Knockout | null | undefined, time: number): number | null => (k && time >= k.seatAt && time < k.backAt ? k.backAt - time : null);
 
 /** The candles along the front of her DJ desk while she scratches (Ed, 2026-10-07; art builder 4 draws them), a loading bar:
  *  one for every knockout.candleStep seconds of the wait (1: 6 for the first knockdown's 6 s, up to 12 for 12; 0.5: 12 to 24),
  *  0 with no wait. */
 export const candleCount = (k: Knockout | null | undefined, t: Tuning): number =>
-  (k && k.backAt > k.inAt ? Math.max(1, Math.round(k.wait / (t.knockout.candleStep ?? 1))) : 0);
+  (k && k.backAt > k.seatAt ? Math.max(1, Math.round(k.wait / (t.knockout.candleStep ?? 1))) : 0);
 
 /** How many of them are red (Ed, 2026-10-07: "the base cooldown WHITE candles, the extra cooldown from repeat knockdowns RED"):
  *  the wait past knockout.respawn's base, by candleStep. They burn first (candles 0 to red - 1), the bar emptying from its red
@@ -175,6 +195,6 @@ export const candleRed = (k: Knockout | null | undefined, t: Tuning): number => 
 export function candleMelt(k: Knockout | null | undefined, time: number, i: number, t: Tuning): number {
   const n = candleCount(k, t);
   if (!k || !n) return 0;
-  const p = Math.min(1, Math.max(0, (time - k.inAt) / (k.backAt - k.inAt))) * n - i;
+  const p = Math.min(1, Math.max(0, (time - k.seatAt) / (k.backAt - k.seatAt))) * n - i;
   return Math.min(1, Math.max(0, p));
 }

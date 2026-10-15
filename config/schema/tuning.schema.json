@@ -1224,6 +1224,143 @@
           ],
           "additionalProperties": false
         },
+        "house": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "hub": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "grace": {
+              "type": "number",
+              "minimum": 0
+            },
+            "rail": {
+              "type": "number",
+              "minimum": 0
+            },
+            "table": {
+              "type": "number",
+              "minimum": 0
+            },
+            "tableUse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "balcony": {
+              "type": "object",
+              "properties": {
+                "out": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "r": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "out",
+                "r"
+              ],
+              "additionalProperties": false
+            },
+            "decks": {
+              "type": "object",
+              "properties": {
+                "inner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "outer": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "from": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "to": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "inner",
+                "outer",
+                "from",
+                "to"
+              ],
+              "additionalProperties": false
+            },
+            "seat": {
+              "type": "number",
+              "minimum": 0
+            },
+            "circle": {
+              "type": "object",
+              "properties": {
+                "out": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "r": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "out",
+                "r"
+              ],
+              "additionalProperties": false
+            },
+            "landTime": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fall": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "time": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "time"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "on",
+            "hub",
+            "height",
+            "grace",
+            "rail",
+            "table",
+            "tableUse",
+            "balcony",
+            "decks",
+            "seat",
+            "circle",
+            "landTime",
+            "fall"
+          ],
+          "additionalProperties": false
+        },
         "carrier": {
           "type": "string"
         }
@@ -1235,6 +1372,7 @@
         "lightReach",
         "lightStrength",
         "deck",
+        "house",
         "carrier"
       ],
       "additionalProperties": false
@@ -2356,6 +2494,10 @@
           "type": "number",
           "minimum": 0
         },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        },
         "respawn": {
           "type": "object",
           "properties": {
@@ -2407,6 +2549,7 @@
         "dropHat",
         "hatFloat",
         "dim",
+        "rise",
         "respawn",
         "candleStep",
         "bpmStep"
@@ -8141,6 +8284,33 @@
             "look"
           ],
           "additionalProperties": false
+        },
+        "house": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "angle",
+            "distance",
+            "ease"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8159,7 +8329,8 @@
         "shake",
         "follow",
         "intro",
-        "circle"
+        "circle",
+        "house"
       ],
       "additionalProperties": false
     },

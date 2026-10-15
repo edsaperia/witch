@@ -39,7 +39,7 @@ export const DJ_ROUTINE: readonly DjCue[] = [
 /** Its length in beats. */
 export const DJ_ROUTINE_BEATS = 13;
 
-type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; backAt: number } | null }[]; clock?: { time: number }; herTime?: number; seed?: number; knockdowns?: readonly unknown[] };
+type Game = { beat: BeatClock; party: PartyState; witch: { seated?: boolean }; witches?: { ko: { inAt?: number; seatAt?: number; backAt: number } | null }[]; clock?: { time: number }; herTime?: number; seed?: number; knockdowns?: readonly unknown[] };
 
 /** Her scratch techniques, a beat each: [beat offset, stroke] (Ed, 2026-10-09: "a little scratch performance during the
  *  respawn wait period, generated from the new seed each time"). */
@@ -90,9 +90,10 @@ function respawnCues(g: Game, lead: number, beats: number): DjCue[] {
  *  clock's: the knockout's times are on her own clock, g.herTime, which a legend's slowed circle sets apart from the world's). */
 export function respawnOf(g: Game): { inAt: number; backAt: number } | null {
   const k = g.witches?.[0]?.ko;
-  if (!k || typeof k.inAt !== "number" || !(k.backAt > k.inAt)) return null;
+  const inAt = typeof k?.seatAt === "number" ? k.seatAt : k?.inAt; // (the house: at her decks after the walk from the circle, rules/knockout.ts)
+  if (!k || typeof inAt !== "number" || !(k.backAt > inAt)) return null;
   const off = g.clock && typeof g.herTime === "number" ? g.clock.time - g.herTime : 0;
-  return { inAt: k.inAt + off, backAt: k.backAt + off };
+  return { inAt: inAt + off, backAt: k.backAt + off };
 }
 const nextBeat = (g: Game, t: number) => timeAt(g.beat, Math.ceil(beatAt(g.beat, t) - 1e-6));
 /** The routine's runs: each its start and end (game times), and whether it's a respawn's (looping to fill its wait). */
@@ -149,7 +150,7 @@ export function djStrokes(g: Game, from: number, to: number): { at: number; stro
     cues.forEach((c, i) => {
       if (!c.stroke || c.at >= beats) return;
       const at = timeAt(g.beat, b0 + c.at);
-      if (at < a || at >= e) return;
+      if (at < a - 1e-6 || at >= e) return; // (a run's start that isn't a whole beat's time, the house's seatAt: its first cue lands a rounding under it)
       const next = Math.min(cues[i + 1]?.at ?? beats, beats);
       out.push({ at, stroke: c.stroke, len: timeAt(g.beat, b0 + next) - at });
     });
