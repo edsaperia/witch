@@ -3,7 +3,7 @@
 // (a sigil goes down in each empty hex she enters), lets go, presses on the last and walks back holding (each comes up again).
 // Frames every few game steps, a gif of the two runs (ffmpeg) and the first and last frame as PNGs. Fails on a page error, or
 // if the run didn't put all six down and pick them all up.
-//   npm run build && node tools/leash/runs-gif.cjs <out dir> [seed]
+//   npm run build && node tools/leash/runs-gif.cjs <out dir> [seed]   (ZOOM=2: zoomed out two steps first)
 const http = require("http"), fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/leash-runs", seed = "123"] = process.argv.slice(2);
@@ -35,7 +35,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const step = (o, dt = 1 / 30) => page.evaluate(([o, dt]) => { const w = window.witch; w.manual = true; w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, dt); }, [o, dt]);
     const state = () => page.evaluate(() => { const s = window.witch.game.leash; return { placed: s.placed.length, stack: s.stack.length, run: s.run?.kind ?? null }; });
     let n = 0; const shoot = async () => page.screenshot({ path: path.join(frames, `f${String(n++).padStart(3, "0")}.png`) });
-    for (let i = 0; i < 20; i++) await step({}); // (settle: her party gathers)
+    const ZOOM = Number(process.env.ZOOM || 0); // (zoom out this many steps first: the row of hexes in view)
+    for (let i = 0; i < 20; i++) await step({ zoom: i < ZOOM ? 1 : 0 }); // (settle: her party gathers)
     await shoot();
     // The placing run: press, then walk east holding for about 3.5 s of game time (seven cells at her walking pace).
     const EVERY = 6;
