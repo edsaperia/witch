@@ -6,6 +6,8 @@
 // DOM only, laid over the canvas; nothing in the rules.
 import type { Game } from "../rules/game";
 import { dashCharge } from "../rules/dash";
+import { coolCharge, coolRoom } from "../rules/cooldown";
+import { blinkCharges } from "../rules/game";
 
 const NS = "http://www.w3.org/2000/svg";
 const SIZE = 36, C = SIZE / 2, RING = 7, ARC = 12;
@@ -57,7 +59,7 @@ export class AimHud {
     this.dot.setAttribute("fill", ink);
     this.dot.setAttribute("r", canThrow ? "1.4" : "2.2"); // (alone in the treetops: a little bigger, so the mouse isn't lost)
     // The dodge's recharge: an arc filling round the ring, a short flash as it comes ready.
-    const charge = dashCharge(W.dash, time), charging = charge < 1 && b.mode === "ground" && !b.seated;
+    const charge = t.cooldown?.shared ? coolCharge(W.cool, t.dash.cooldown, coolRoom(t, blinkCharges(g, W))) : dashCharge(W.dash, time), charging = charge < 1 && b.mode === "ground" && !b.seated; // (the shared cooldown: rules/cooldown.ts)
     if (this.wasCharging && !charging) this.flashUntil = performance.now() + 180;
     this.wasCharging = charging;
     const flash = performance.now() < this.flashUntil;
