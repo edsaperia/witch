@@ -3688,6 +3688,9 @@
           ],
           "additionalProperties": false
         },
+        "runs": {
+          "type": "boolean"
+        },
         "runePull": {
           "type": "object",
           "properties": {
@@ -3828,6 +3831,7 @@
         "sigilBacking",
         "runeGap",
         "hex",
+        "runs",
         "runePull",
         "weight",
         "babies"

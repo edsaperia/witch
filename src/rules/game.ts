@@ -218,8 +218,12 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
   cycleSpeakers?: boolean;
   /** The spell button: cast the equipped spell. */
   spell?: boolean;
-  /** The sigil button (E, the pad's, touch's) is down this frame: held long enough with nothing to do, she puts her hat down (rules/hat.ts putHat). */
+  /** The sigil button (E, the pad's square, touch's) is down this frame: since a press that picked up or put down, a run (rules/leash.ts, Ed 2026-10-15). */
   sigilHeld?: boolean;
+  /** E or touch's sigil button is down this frame: held long enough with nothing to do, she puts her hat down (rules/hat.ts putHat; not the pad's square: its hat is triangle). */
+  hatHold?: boolean;
+  /** The hat button (the pad's triangle, Ed 2026-10-15): her hat put down at her feet, or a hat of hers near her picked up and put on (rules/sigilButton.ts). */
+  hat?: boolean;
   /** The dash button (rules/dash.ts). */
   dash?: boolean;
 }
@@ -443,7 +447,7 @@ function fixedStep(g: Game, controls: Controls): void {
   stepBuffs(g.buffs, g.creatures, [...g.leash.stack, ...g.leash.placed.map(p => p.id), ...legends.filter(id => buffing(g.creatures[id]))], g.tuning);
   const t = g.buffs.tuning;
   // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
-  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, gamepad B, touch
+  // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
   // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
