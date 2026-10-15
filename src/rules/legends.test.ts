@@ -310,7 +310,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     expect(L.legendState).toBe("angry");
     const other = L.species === "wolf" ? "fox" : "wolf";
     const target = put(g, other, 2, L.x + far, L.z); target.leashed = true; g.leash.placed.push({ id: target.id, x: target.x, z: target.z, at: 0 });
-    const inLane = [put(g, "beetle", 1, L.x + 30, L.z + 1), put(g, "otter", 2, L.x + 50, L.z - 1.5)];
+    const inLane = [put(g, other, 1, L.x + 30, L.z + 1), put(g, other, 2, L.x + 50, L.z - 1.5)]; // (its target's own kind, which never fights its kind: the parked target guards its whole area now (Ed, 2026-10-15) and would otherwise go for them, and so leave its spot)
     for (const c of g.creatures) if (!c.boss && c !== target && !inLane.includes(c) && Math.hypot(c.x - L.x, c.z - L.z) < 250) c.gone = true; // (no other wild crowd in its lanes)
     g.byArea = null;
     // (wild ones: it charges only her and her posse, but tramples whatever's in its way)
@@ -325,7 +325,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
       if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
       for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
-        if (e.kind === "hit" && e.id !== undefined && (e.id !== target.id || e.big)) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (its target: only the legend's own hits; the trampled wild may go for it after)
+        if (e.kind === "hit" && e.id !== undefined && e.big) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (only the legend's own hits: the trampled wild may go for its target after, and the parked wolf guards its whole area now (Ed, 2026-10-15), so it goes for the wild in the lane too)
         if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; t0 = g.clock.time; }
       }
       if (L.run?.phase === "run") ran = true;
