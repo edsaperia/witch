@@ -1,7 +1,7 @@
 // Spells: a hat and a broom (Ed, 2026-10-11; docs/backlog/unlocks.md). She has two slots, a hat and a broom, each with a spell
 // (or none: the plain hat and broom). Hats are mostly placed (put down with the sigil button held, rules/hat.ts): some fire once
 // when placed, some work over time while placed; the Helmet is worn. Brooms change how she moves or how much she can pull:
-// some passive, some active, cast with the spell button (R; gamepad circle; touch "spell"), then recharging. The plain broom
+// some passive, some active, cast with the spell button (R; the pad's L3, Ed 2026-10-15; touch "spell"), then recharging. The plain broom
 // lets her rise again sooner after landing. All unlocked for now; achievements come later. Spells may stun or slow enraged
 // creatures but never damage them (Ed, 2026-10-11). No drawing here.
 import type { Tuning } from "./tuning";

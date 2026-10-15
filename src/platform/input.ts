@@ -23,9 +23,11 @@ export const KEYS = {
 } as const;
 
 /** Gamepad bindings (standard mapping button numbers; PlayStation names): left stick or d-pad moves. Ed, 2026-10-10:
- *  cross (0) rises or lands, square (2) picks up and puts down (held: her hat), triangle (3) cycles the stack, circle (1)
- *  boosts (the speed spell), the right trigger (7) invites, the left trigger (6) blinks. */
-export const PAD = { rise: [0], dash: [6], spell: [1], sigil: [2], cycle: [3], zoomOut: [4], zoomIn: [5], invite: [7], debug: [8] } as const;
+ *  cross (0) rises or lands, square (2) picks up and puts down (held on: a run, rules/leash.ts), the right trigger (7)
+ *  invites, the left trigger (6) blinks. Ed, 2026-10-15: triangle (3) puts her hat down and picks it up (it was holding
+ *  square), circle (1) cycles the stack (it was triangle); the broom's spell (the boost) moves off circle to L3 (10, the left
+ *  stick pressed, where games put sprint). */
+export const PAD = { rise: [0], dash: [6], spell: [10], sigil: [2], hat: [3], cycle: [1], zoomOut: [4], zoomIn: [5], invite: [7], debug: [8] } as const;
 
 const GAME_KEYS = new Set<string>(Object.values(KEYS).flat() as string[]);
 
@@ -113,7 +115,8 @@ export class Input {
     let debug = p(KEYS.debug);
     let sigil = false, spell = p(KEYS.spell), dash = p(KEYS.dash) || this.rightClicked;
     const place = p(KEYS.place); let cycle = p(KEYS.cycle);
-    let sigilHeld = k(KEYS.place) > 0;
+    // E held: a run (rules/leash.ts), and, with nothing to do, her hat (rules/hat.ts putHat); the pad's square only the run (its hat is triangle).
+    let hatHold = k(KEYS.place) > 0, sigilHeld = hatHold, hat = false;
     this.rightClicked = false;
     const inviteNearest = p(KEYS.inviteNearest), feedNearest = p(KEYS.feedNearest), happyNearest = p(KEYS.happyNearest);
     // The 💌: fire with the mouse button or 1 (held, or a click since the last read); aim at the cursor.
@@ -145,6 +148,7 @@ export class Input {
       if (any(PAD.debug)) debug = true;
       if (any(PAD.sigil)) sigil = true;
       if (PAD.sigil.some(btn)) sigilHeld = true;
+      if (any(PAD.hat)) hat = true;
       if (any(PAD.spell)) spell = true;
       if (any(PAD.cycle)) cycle = true;
       if (any(PAD.dash)) dash = true;
@@ -162,7 +166,7 @@ export class Input {
     zoom += t.zoom;
     if (t.debug) debug = true;
     if (t.sigil) sigil = true;
-    if (t.sigilHeld) sigilHeld = true;
+    if (t.sigilHeld) { sigilHeld = true; hatHold = true; }
     if (t.spell) spell = true;
     if (t.dash) dash = true;
     if (t.invite) { fire = true; if (!cursorAim) { aimX = 0; aimZ = 0; } }
@@ -172,6 +176,6 @@ export class Input {
     if (len > 1) { moveX /= len; moveZ /= len; }
     const toggleAutoTalk = p(KEYS.autoTalk) || this.touch.autoTalk === true, talkHeld = k(KEYS.talk) > 0;
     this.touch.autoTalk = false;
-    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
+    return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
 }

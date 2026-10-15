@@ -15,6 +15,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 ## Controller — partly built
 
 - **Built (#618):** cross rises or lands, square picks up and puts down sigils (held: her hat), triangle cycles the stack, circle boosts (the spell), R2 invites, L2 blinks. Start pauses.
+- **Built (Lima, 2026-10-15, Ed's notes of 15 Oct):** triangle puts her hat down and picks it up (it was holding square), circle cycles the stack (it was triangle), the broom's spell (the boost) moves to L3 (the left stick pressed, where games put sprint; Ed to confirm). Square still picks up and puts down; **held on, it runs** (`src/rules/leash.ts` `run`, `leash.runs`, E on the keyboard too): since a press that picked a sigil up it keeps picking up any she runs over, since a press that put one down each empty hex she moves into takes the next; a press that did nothing starts no run, so holding E with nothing to do still puts her hat down (not square: its hat is triangle).
 - **Built (#649):** blink goes the way she's moving, not the way she's aiming, on the pad and on keyboard and mouse; standing still, the way she's facing (`src/rules/dash.ts`; `dash.toCursor` off).
 - Remaining (not built; nothing in `src/ui/` reads a gamepad but the sea chart):
   - **Creator and treehouse on the pad:** today they're mouse-only. Next / Back on buttons, left and right for options.
