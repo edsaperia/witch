@@ -38,7 +38,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (let i = 0; i < 20; i++) await step({}); // (settle: her party gathers)
     await shoot();
     // The placing run: press, then walk east holding for about 3.5 s of game time (seven cells at her walking pace).
-    const EVERY = 4;
+    const EVERY = 6;
+    page.setDefaultTimeout(300000); // (the software renderer: a screenshot can take a while)
     for (let i = 0; i < 105; i++) { await step({ moveX: 1, place: i === 0, sigilHeld: true }); if (i % EVERY === 0) await shoot(); }
     const afterPlace = await state();
     for (let i = 0; i < 15; i++) { await step({}); if (i % 5 === 0) await shoot(); } // (let go, stand)

@@ -63,7 +63,7 @@ describe("the decisions panel", () => {
 
   it("the pause page's test sliders (Ed, 2026-10-12): every entry has its PR and a short name, newest PR first; Copy values gives a line each, label, key, value and built default", () => {
     for (const d of DECISION_LIST) { expect(d.pr, d.id).toBeGreaterThan(0); expect(d.group, d.id).toBeTruthy(); }
-    const prs = byPr(DECISION_LIST).map(d => d.pr!);
+    const prs = byPr(DECISION_LIST).filter(d => !d.pinned).map(d => d.pr!); // (the pinned Volume group sits first whatever its PR)
     for (let i = 1; i < prs.length; i++) expect(prs[i]).toBeLessThanOrEqual(prs[i - 1]);
     expect(groupOf(DECISION_LIST.find(d => d.id === "bombard")!)).toBe("#290 Legend layers");
     const values = new Map<string, string | number | boolean>(DECISION_LIST.map(d => [d.id, d.default]));

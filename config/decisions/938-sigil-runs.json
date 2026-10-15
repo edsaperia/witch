@@ -1,0 +1,20 @@
+{
+  "pr": 938,
+  "group": "Sigil runs",
+  "decisions": [
+    {
+      "id": "sigilRuns",
+      "pr": 938,
+      "group": "Sigil runs",
+      "label": "Sigil runs",
+      "note": "Hold the sigil button (E, the pad's square, touch) on after a press that picked a sigil up and she keeps picking up every sigil she runs over; hold it after a press that put one down and each empty hex she walks into takes the next (Ed, 2026-10-15). Off: a press does one thing, holding does nothing more (holding E with nothing to do still puts her hat down either way).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "leash.runs"
+      }
+    }
+  ]
+}
