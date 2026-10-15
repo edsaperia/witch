@@ -27,7 +27,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 - **Sigils defend their whole area.** Today a sigil placed in the home area has her creatures fight any hostile in that area; a sigil placed in any other area only defends a radius round it. Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil.
 - **The arc of leashes should be higher.**
 - **The stack's sigils (above her head) more visible:** more opacity, and never obscured by scenery.
-- **Pick up and place in runs.** Picking up: if the first press picks a sigil up, holding the button keeps picking up any she runs over. Placing: if the first press places one, moving into empty hexes while holding places more. **Pad:** her hat is placed and picked up with triangle (was holding square); circle cycles the stack.
+- **Pick up and place in runs.** Picking up: if the first press picks a sigil up, holding the button keeps picking up any she runs over. Placing: if the first press places one, moving into empty hexes while holding places more. **Pad:** her hat is placed and picked up with triangle (was holding square); circle cycles the stack. — **Built** (#938; `leash.runs`, the Controller line above; the broom's spell moved off circle to L3, Ed to confirm).
 - **One trail, one cooldown.** The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it).
 
 ## Open questions
