@@ -373,7 +373,7 @@ export class View {
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     const deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
     const carrier = deckOn ? carrierOf(game.map, t) : null; // (the island's legend carrying it: art/carrier.js)
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `ent:${deckOn.h}:${deckOn.r}${carrier ? `:${carrier}` : ""}` : "home");
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `${deckOn.house ? "house" : "ent"}:${deckOn.h}:${deckOn.r}${carrier ? `:${carrier}` : ""}` : "home"); // (the house, art/ent.js HOUSE, or the deck on the Ent)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
     {
@@ -423,7 +423,7 @@ export class View {
       this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true }).name("treehouse");
       this.scene.add(...this.treehouseBatch.meshes);
       // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
-      if (deckOn) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); }
+      if (deckOn && !deckOn.house) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); } // (the house's map is a drawing: Ed, 2026-10-14)
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
@@ -914,7 +914,9 @@ export class View {
       const tp = deck && T.ent ? onTreehouse(T.ent.table.x, T.ent.table.y) : null;
       this.mapTable.update(tp && deck ? { x: tp.x, y: tp.y + groundHeight(deck.x, deck.z) + 0.02, z: tp.z } : null, deck ? Math.hypot(w.x - deck.x, w.z - deck.z) : Infinity, canopyShown(w) < 0.05, ht);
     }
-    const thLights: ForestLight[] = deck // (the deck: one warm lantern over it, at the map table)
+    const thLights: ForestLight[] = deck?.house && T.ent // (the house: the clockwork moon over the map, the lantern posts by the decks: the art's own lights, art/ent.js)
+      ? T.lights.filter(l => l.kind === "moon" || l.kind === "lantern").slice(0, 3).map(l => { const p = onTreehouse(l.x, l.y); return { x: p.x, y: p.y + groundHeight(deck.x, deck.z), z: p.z, reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (l.kind === "moon" ? 0.8 : 0.92 + 0.08 * Math.sin(time * 3 + l.x)) }; })
+      : deck // (the deck: one warm lantern over it, at the map table)
       ? [{ x: deck.x, y: groundHeight(deck.x, deck.z) + deck.h + 3, z: deck.z, reach: t.treehouse.lightReach, rgb: DECK_LANTERN_RGB, strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3)) }]
       : T.lights.filter(l => l.kind === "lantern" || l.kind === "window").slice(0, 2).map(l => ({
         ...onTreehouse(l.x, l.y), reach: t.treehouse.lightReach, rgb: new THREE.Vector3(l.rgb[0] / 255, l.rgb[1] / 255, l.rgb[2] / 255), strength: t.treehouse.lightStrength * (0.92 + 0.08 * Math.sin(time * 3 + l.x)),

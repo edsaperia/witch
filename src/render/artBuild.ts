@@ -551,7 +551,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };
   if (job.kind === "soundsystem") { const { sprites, art } = soundsystemGenSprites(job.style, job.genome, job.yaw, job.size, mk, job.part); return { px: packPixels(sprites, 1024), ss: art }; }
-  if (job.kind === "treehouse") { const [ent, y, r, kind] = job.id.split(":"), { sprites, treehouse } = ent === "ent" ? entTreehouseSprites(job.style, mk, +y, +r, kind || null) : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
+  if (job.kind === "treehouse") { const [ent, y, r, kind] = job.id.split(":"), { sprites, treehouse } = ent === "ent" || ent === "house" ? entTreehouseSprites(job.style, mk, +y, +r, kind || null, ent === "house") : treehouseSprites(job.style, mk); return { px: packPixels(sprites, 2048), treehouse }; }
   if (job.kind === "partyObjects") { const { sprites, party } = partyObjectSprites(job.style, mk); return { px: packPixels(sprites, 2048), party }; }
   if (job.kind === "partyWitch") { const { sprites, witch } = partyWitchSprites(job.style, job.seed, mk, job.genome ?? null); return { px: packPixels(sprites, 2048), witch }; }
   if (job.kind === "creature") return { px: packPixels(creatureSprites(job.style, job.id, mk), 2048) };

@@ -6,7 +6,7 @@ import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
 import { NO_LOAD, type LeashLoad } from "./leashWeight";
-import { keepOnDeck, overDeck, type Deck } from "./treehouse";
+import { flyOnto, keepInHouse, keepOnDeck, overDeck, type Deck } from "./treehouse";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -35,6 +35,8 @@ export interface WitchState {
   seated?: boolean;
   /** On the treehouse deck (rules/treehouse.ts): landing on it, standing on it (mode "ground", its floor her ground), or rising off it. */
   perch?: boolean;
+  /** Falling off the balcony's open rim with no broom (rules/treehouse.ts, house.fall): seconds fallen; at fall.time she's back at the circle. */
+  falling?: number;
   /** Lying on the beach looking at the stars (the tuning's beach): she flew on out over the sand, so landed; any other way gets her up. */
   stargazing?: boolean;
   /** How long she's been pushing on out over the sand (seconds). */
@@ -97,13 +99,24 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     if (!intent.toggleMode && seaward(w, intent, bounds) !== false) return w.vx || w.vz ? { ...w, vx: 0, vz: 0 } : w;
     w = { ...w, stargazing: false, beachPush: 0 };
   }
+  // The fall (the house, rules/treehouse.ts): off the balcony's open rim with no broom, she drops out of sight (drawing only: her
+  // height stays the floor's, so the camera stays up) and, after house.fall.time, is back at the magic circle. No steering meanwhile.
+  if (w.falling !== undefined && deck?.house) {
+    const f = w.falling + dt;
+    if (f >= deck.house.fall.time) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    const k = Math.exp(-3 * dt);
+    return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
+  }
   let { mode, lift } = w, perch = !!w.perch && !!deck && overDeck(deck, w.x, w.z); // (put somewhere else, she's off it)
   if (intent.toggleMode) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
   if (deck && intent.toggleMode && mode === "descending" && overDeck(deck, w.x, w.z)) perch = true;
+  // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
+  // move is known: she must come onto it from outside, so rising straight up off it doesn't land her again at once).
+  const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);
   const Wt = t.leash.weight, over = load.over, steering = Math.hypot(intent.moveX, intent.moveZ) > 0.1;
   if (mode === "rising") { lift += dt / Math.max(1e-3, t.riseTime * (1 + Wt.rise * over)); if (lift >= 1) { lift = 1; mode = "treetop"; perch = false; } }
-  else if (mode === "descending") { lift -= dt / Math.max(1e-3, t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
+  else if (mode === "descending") { lift -= dt / Math.max(1e-3, perch && deck?.house ? deck.house.landTime : t.descendTime); if (lift <= 0) { lift = 0; mode = "ground"; } }
   else if (mode === "treetop") {
     // Loaded, she's slowly pulled down: to the floor while she flies on (never dropped into a fight she didn't choose),
     // all the way if she stops or the load is extreme, landing; unloaded, she floats back up.
@@ -150,14 +163,19 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
     if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
   }
-  // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks.
+  if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
+  // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house
+  // (rules/treehouse.ts keepInHouse): kept in by the hub's wall and the balcony's sides, but out over the balcony's open rim on
+  // foot she's off: flying again (rising, as the button would), or falling with no broom (house.fall).
+  let falling: number | undefined;
   if (perch && deck && mode !== "rising" && mode !== "treetop") {
-    const p = keepOnDeck(deck, x, z);
-    if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
+    const p = deck.house ? keepInHouse(deck, x, z) : { ...keepOnDeck(deck, x, z), off: false };
+    if (p.off && mode === "ground") { if (deck.house!.fall.on) falling = 0; else mode = "rising"; }
+    else if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
   }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);
-  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}) };
+  const next: WitchState = { x, z, vx, vz, lift, mode, facing, away, heading, lean: speed > max * t.leanAt, boost, braking, ...(perch ? { perch: true } : {}), ...(falling !== undefined ? { falling } : {}) };
   if (perch) return next; // (no beach up here)
   // Flying on out over the beach (Ed, 2026-10-06: "If you try and fly past the beach, you land and stargaze"): pushing seaward
   // against the edge's soft hold, on the sand, for restAfter seconds, she comes down (from the treetops too) and, landed, lies down.

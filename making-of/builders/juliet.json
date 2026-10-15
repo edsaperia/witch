@@ -15,7 +15,9 @@
     872,
     875,
     884,
-    892
+    892,
+    918,
+    922
   ],
   "built": [
     "One file a thing (#837, #844, #847, #848, #851, #852): a creature is a folder with its genome, sigil, legend, nap and config; a tree species a file with its baseline; an area a folder with its recipe, its kind line and its trees; the decisions a fragment a pull request; the lab pages built, not committed. Each registry's index is generated, each has a check in `npm test`, and an `adopt` that moves a record a merge pastes back into the old array out to its own file.",
@@ -24,7 +26,8 @@
     "The churn behind the collections (#884): the frame's garbage cut by a quarter (the wave pointer's ring worked out once, the creatures', berries', party pieces' and motes' records pooled, the light budget without a record a light), and the real cause found with heap snapshots: the atlases' pixels kept on the page after the GPU had them, 360 MB growing 70 MB a minute, which the browser answered with full, synchronous collections. They're let go once uploaded now.",
     "The map's real coastlines: each island's land, heights, lakes and the ink of its sigil are made in the chart's worker (one job an island, the chosen one and its neighbours first) and kept in this browser by world and build; the page only wraps what comes. No round stand-in: an island rises out of the sea as its land arrives, and the map table at the decks asks only for what's kept, so nothing is ever made while she flies by the treehouse. The chart's reshapes went from 1.3 s on the page (one of 0.5 s) to 80 ms in all, none over 23 ms.",
     "The ground-mode GPU cost (Ed's overlay: 21 ms a frame on the GPU, 11 on the page): a probe that times every draw call on the GPU found the forest's sprite batch drawn twice (its opaque pass and its see-through pass, each a full rasterisation of every quad) and crowns hidden in the hole round her still rasterised. The vertex shader now leaves out, conservatively, what the pixels could never show: a fifth off the opaque pass, 8% off the frame under the software renderer, the picture the same to the pixel; the rest is the forest's own overdraw, and her see-through circle reaches most of what stands in front of her, so the second pass is mostly the look.",
-    "The wave landings' audio under-runs (Ed's log: bursts of them as each wave landed in a night's first ten minutes): a landing probe found the page quiet and the workers loud, every core but the page's baking all sixty species' art for minutes while the audio thread waited among them. Now only the island's own species are baked ahead, a mole's rig page that was asked for every frame all night isn't, and the art ahead of need keeps to half the workers while the night plays."
+    "The wave landings' audio under-runs (Ed's log: bursts of them as each wave landed in a night's first ten minutes): a landing probe found the page quiet and the workers loud, every core but the page's baking all sixty species' art for minutes while the audio thread waited among them. Now only the island's own species are baked ahead, a mole's rig page that was asked for every frame all night isn't, and the art ahead of need keeps to half the workers while the night plays.",
+    "The treehouse plan (#918), written up from six rounds of multiple-choice questions with Ed, and its first step (#922): the hub on the Ent where the deck was, with the map as a water feature pouring into a pool under a golden grating and the magic circle behind the decks, and the balcony she flies straight onto at treetop height, walks off to fly again, or falls from with no broom; the camera pushing in indoors; a knockout bringing her back at the circle, up out of its floor, then the walk to her decks."
   ],
   "learned": [
     "The page's memory counter isn't the JavaScript heap. Counting live objects after a forced collection showed the heap proper at 32 MB while the counter said 400; the rest was typed-array pixels outside it, and V8 collects the whole heap, synchronously, each time that outside memory grows past its limit. A sampling allocation profile can't see that growth at all; a snapshot diff by kind can.",
@@ -35,7 +38,8 @@
     "A rise that never ran: the page wrote an island's outline on the shared record before it asked the chart to reshape, so the chart's 'first coming' test on that record was always false. Test what the thing itself has (its land mesh), not what the caller may already have written.",
     "The software renderer can time the GPU (the timer-query extension works under SwiftShader), and though a frame takes seconds there, the shares between draw calls are what a real GPU would show. Switching a feature off by its tuning knob told me nothing; timing each draw call did.",
     "`half` is a reserved word in GLSL. The shader that used it compiled nowhere, drew nothing, and nothing is cheap: I read a 5x gain off a blank batch before CI's smoke and the quick bench's pictures caught it. A probe that measures a draw must fail on a shader error before it prints a number.",
-    "An under-running audio thread isn't always the page's fault: a pool of workers on every core but one starves it just as well, and the log's \"stall\" list, which watches the main thread, shows nothing. Count what the whole machine is doing."
+    "An under-running audio thread isn't always the page's fault: a pool of workers on every core but one starves it just as well, and the log's \"stall\" list, which watches the main thread, shows nothing. Count what the whole machine is doing.",
+    "Interview in rounds of multiple choice with a picture first: Ed answered six rounds in an hour where open questions would have stalled; a mock drawn in the real art kit (the Ent's own model builder) was the design review and most of the art in one step."
   ],
   "previews": [
     {

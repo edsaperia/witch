@@ -402,7 +402,7 @@ export class AssetLibrary {
    *  ground (`witchHatFrame`): asked for the first time they're wanted (the view asks once the game is up); a stand-in
    *  till they arrive (then onWitch). */
   witchBare(): Atlas {
-    if (!this.bare && !this.bareAsked) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true)); }
+    if (!this.bare && !this.bareAsked) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true), true); } // (urgent: her own frames, one job, needed at her first knockdown; behind the art drawn ahead they came minutes late on a slow machine, and she was drawn from the stand-in: invisible)
     return this.bare ?? this.bareStandIn;
   }
   private bare: Atlas | null = null;

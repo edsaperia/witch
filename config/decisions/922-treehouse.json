@@ -1,0 +1,66 @@
+{
+  "pr": 922,
+  "group": "Treehouse",
+  "decisions": [
+    {
+      "id": "houseCameraAngle",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Indoor camera angle",
+      "note": "Landed on the treehouse's floor the camera eases to this angle, degrees below the horizon (camera.house.angle; Ed, 2026-10-14: \"the camera zooms in so you can see the detail\").",
+      "control": { "type": "slider", "min": 10, "max": 45, "step": 1 },
+      "default": 24,
+      "apply": { "knob": "camera.house.angle" }
+    },
+    {
+      "id": "houseCameraDistance",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Indoor camera distance",
+      "note": "Indoors the camera's distance is the ordinary one times this (camera.house.distance): smaller is closer.",
+      "control": { "type": "slider", "min": 0.3, "max": 1, "step": 0.02 },
+      "default": 0.62,
+      "apply": { "knob": "camera.house.distance" }
+    },
+    {
+      "id": "houseCameraEase",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Indoor camera ease",
+      "note": "Seconds the camera takes to push in as she lands on the balcony, and back out as she flies off (camera.house.ease).",
+      "control": { "type": "slider", "min": 0.2, "max": 3, "step": 0.1 },
+      "default": 1,
+      "apply": { "knob": "camera.house.ease" }
+    },
+    {
+      "id": "houseLandTime",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Landing on the balcony",
+      "note": "Seconds she takes to come down onto the balcony when she flies onto it at treetop height (treehouse.house.landTime).",
+      "control": { "type": "slider", "min": 0.1, "max": 1.2, "step": 0.05 },
+      "default": 0.35,
+      "apply": { "knob": "treehouse.house.landTime" }
+    },
+    {
+      "id": "houseRise",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Rising from the circle",
+      "note": "After a knockout, seconds she takes to rise out of the magic circle's floor before walking to her decks (knockout.rise).",
+      "control": { "type": "slider", "min": 0, "max": 3, "step": 0.1 },
+      "default": 0.9,
+      "apply": { "knob": "knockout.rise" }
+    },
+    {
+      "id": "houseFall",
+      "pr": 922,
+      "group": "Treehouse",
+      "label": "Fall off the balcony",
+      "note": "With this on she has no broom: off the balcony's open rim she falls and comes back at the circle (treehouse.house.fall.on). Off, she flies again. A switch until the brooms are objects (step 3).",
+      "control": { "type": "toggle" },
+      "default": false,
+      "apply": { "knob": "treehouse.house.fall.on" }
+    }
+  ]
+}
