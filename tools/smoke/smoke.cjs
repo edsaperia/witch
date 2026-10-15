@@ -772,8 +772,12 @@ async function main() {
     check(!!cave, `there is a cave mouth to look at (${cave})`);
     await page.keyboard.press(ZOOM_IN); await page.keyboard.press("KeyH");
     await sleep(2000);
-    // The art, and the forest round her (built a few chunks a frame since the speed work), all in.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 900000, polling: 500 }); // (about 2 minutes here; 15 as the heath scene allows)
+    // The forest round her (built a few chunks a frame since the speed work) and its ground all in; then a while for the
+    // art, not for all of it: the art baked ahead of need (the island's species, their looks and rigs) drains a job a
+    // minute under the software renderer here, 10 to 20 minutes after a move to a new area, and what the checks below
+    // read is the scenery placed, which the forest's count says is in (probed on the moth's island, 2026-10-15).
+    await page.waitForFunction(() => window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0 && window.witch.view.stats.pendingGround === 0, null, { timeout: 900000, polling: 500 }); // (about 3 minutes here)
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 1000 }).catch(() => {});
     await sleep(1500);
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
