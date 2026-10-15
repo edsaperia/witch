@@ -1,10 +1,11 @@
-// The Edge-seer hat (Ed, 2026-10-15: "shows the area edges (the glowing dotted borders, off by default since #889) while it's in
-// play"; rules/hatSpells.ts edgesSeen, drawn by render/borders.ts): in play worn, lying where she put it or dropped it, or left
-// behind in the world; not while she's knocked out, nor with any other hat.
+// The seer hats (Ed, 2026-10-15: the Edge-seer "shows the area edges (the glowing dotted borders, off by default since #889)",
+// the Route-seer "a 'see the entire route' hat power as well"; "only the player wearing the hat sees the things"; rules/hatSpells.ts
+// seerWorn, drawn by render/borders.ts, render/view.ts and render/view/home.ts): worn only; nothing from a hat lying where she
+// put it, left behind, or while she's knocked out; nothing with any other hat.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { hitWitch, newGame, stepGame, type Controls, type Game } from "./game";
-import { edgesSeen } from "./hatSpells";
+import { edgesSeen, routeSeen } from "./hatSpells";
 import { HAT_SPELLS, hatOf } from "./spells";
 import { wearing } from "./hat";
 
@@ -25,44 +26,57 @@ function putDown(g: Game): void {
   stepGame(g, C, 1 / 60);
   expect(wearing(g.witches[0].hat)).toBe(false);
 }
+const pickUp = (g: Game) => { const d = g.witches[0].hat.down!; g.witch = { ...g.witch, x: d.x, z: d.z }; stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60); expect(wearing(g.witches[0].hat)).toBe(true); };
 
-describe("the Edge-seer hat", () => {
-  it("is a built hat spell the picker offers, and the tuning's borders stay off by default", () => {
-    expect(hatOf("edgeseer")).toBe("edgeseer");
-    expect(HAT_SPELLS.find(s => s.id === "edgeseer")?.built).toBe(true);
+describe("the seer hats", () => {
+  it("are built, worn hat spells the picker offers, and the tuning's borders stay off by default", () => {
+    for (const id of ["edgeseer", "routeseer"] as const) {
+      expect(hatOf(id)).toBe(id);
+      expect(HAT_SPELLS.find(s => s.id === id)).toMatchObject({ built: true, how: "worn" });
+    }
     expect(TUNING.borders.on).toBe(false);
   });
 
-  it("shows the edges while it's worn, while it lies where she put it, and not with another hat", () => {
-    const g = game(wearingHat("edgeseer"));
-    expect(edgesSeen(g)).toBe(true);
+  it.each([["edgeseer", edgesSeen], ["routeseer", routeSeen]] as const)("%s: shows while worn, not while it lies where she put it, and again once it's back on", (id, seen) => {
+    const g = game(wearingHat(id));
+    expect(seen(g)).toBe(true);
     putDown(g);
-    expect(edgesSeen(g)).toBe(true);
-    const h = game(wearingHat("harvest"));
-    expect(edgesSeen(h)).toBe(false);
-    putDown(h);
-    expect(edgesSeen(h)).toBe(false);
-    expect(edgesSeen(game(TUNING))).toBe(false);
+    expect(seen(g)).toBe(false);
+    pickUp(g);
+    expect(seen(g)).toBe(true);
   });
 
-  it("keeps showing them when it's left behind for another hat, and not while she's knocked out wearing it", () => {
+  it("neither shows with another hat, with no hat at all, or when left behind for another hat", () => {
+    const h = game(wearingHat("harvest"));
+    expect(edgesSeen(h)).toBe(false); expect(routeSeen(h)).toBe(false);
+    expect(edgesSeen(game(TUNING))).toBe(false);
     const g = game(wearingHat("edgeseer")), W = g.witches[0];
     putDown(g);
-    W.hat.left.push({ ...W.hat.down!, spell: "edgeseer" }); W.hat.down = null; // (she took a new hat in her room: rules/hatSpells.ts changeLoadout)
-    W.spells.hat = "harvest";
-    expect(edgesSeen(g)).toBe(true);
-    W.hat.left.length = 0;
+    W.hat.left.push({ ...W.hat.down!, spell: "edgeseer" }); W.hat.down = null; W.spells.hat = "routeseer"; // (she took a Route-seer in her room: rules/hatSpells.ts changeLoadout)
     expect(edgesSeen(g)).toBe(false);
-    // Knocked out wearing it: no edges till she's back (her hat drops where she fell, and shows them again from there).
-    const k = game({ ...wearingHat("edgeseer"), knockout: { ...TUNING.knockout, dropHat: false } }), K = k.witches[0];
-    for (let i = 0; i < 50 && !K.ko; i++) hitWitch(k, 0, k.clock.time + i * (TUNING.witchHealth.grace + 0.05));
-    expect(K.ko).not.toBeNull();
-    expect(edgesSeen(k)).toBe(false);
+    expect(routeSeen(g)).toBe(true);
+    const n = game(wearingHat("routeseer"));
+    n.witches[0].hat.has = false; // (the creator's none)
+    expect(routeSeen(n)).toBe(false);
   });
 
-  it("a witch with no hat at all (the creator's none) sees none", () => {
-    const g = game(wearingHat("edgeseer"));
-    g.witches[0].hat.has = false;
-    expect(edgesSeen(g)).toBe(false);
+  it("the Edge-seer and the Route-seer are each their own: one shows only its own thing", () => {
+    const e = game(wearingHat("edgeseer")), r = game(wearingHat("routeseer"));
+    expect([edgesSeen(e), routeSeen(e)]).toEqual([true, false]);
+    expect([edgesSeen(r), routeSeen(r)]).toEqual([false, true]);
+  });
+
+  it("nothing while she's knocked out wearing one", () => {
+    const k = game({ ...wearingHat("routeseer"), knockout: { ...TUNING.knockout, dropHat: false } }), K = k.witches[0];
+    for (let i = 0; i < 50 && !K.ko; i++) hitWitch(k, 0, k.clock.time + i * (TUNING.witchHealth.grace + 0.05));
+    expect(K.ko).not.toBeNull();
+    expect(routeSeen(k)).toBe(false);
+  });
+
+  it("only the wearer's own view: player 1's hat shows nothing to player 0", () => {
+    const g = newGame(123, wearingHat("edgeseer"), 2);
+    g.witches[0].spells.hat = "none";
+    expect(edgesSeen(g, 0)).toBe(false);
+    expect(edgesSeen(g, 1)).toBe(true);
   });
 });

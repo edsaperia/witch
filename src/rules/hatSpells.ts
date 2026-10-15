@@ -10,7 +10,7 @@ import type { Tuning } from "./tuning";
 import type { HatLetters } from "./invites";
 import { growRing } from "./berries";
 import { setLoadout, type SpellState } from "./spells";
-import { leaveHat } from "./hat";
+import { leaveHat, wearing } from "./hat";
 import { LEGEND, healBy, type Creature } from "./creatures";
 import { creatureMaxHp } from "./combat";
 
@@ -82,17 +82,19 @@ export function hatsDown(W: Witch): { x: number; z: number; spell: string }[] {
   return W.hat.left.length ? [...own, ...W.hat.left] : own;
 }
 
-/** The Edge-seer hat (Ed, 2026-10-15: "shows the area edges (the glowing dotted borders, off by default since #889) while it's in
- *  play"): whether any Edge-seer hat is in play, worn by a witch who isn't knocked out, lying where she put it (or dropped it),
- *  or left behind when she took another in her room. The view draws the areas' edges while it is (render/borders.ts), as the
- *  tuning's borders.on does for good. */
-export function edgesSeen(g: Game): boolean {
-  for (const w of g.witches) {
-    if (w.spells.hat === "edgeseer" && !w.ko && w.hat.has) return true;
-    if (w.hat.left.some(h => h.spell === "edgeseer")) return true;
-  }
-  return false;
+/** The seer hats (Ed, 2026-10-15: the Edge-seer "shows the area edges (the glowing dotted borders, off by default since #889)",
+ *  the Route-seer "a 'see the entire route' hat power as well"; "only the player wearing the hat sees the things"): whether
+ *  player `player`'s witch is wearing a hat of that spell (on her head, not lying anywhere, not left behind, not while she's
+ *  knocked out). Drawing only, for her own view. */
+export function seerWorn(g: Game, spell: "edgeseer" | "routeseer", player = 0): boolean {
+  const w = g.witches[player];
+  return !!w && w.spells.hat === spell && !w.ko && wearing(w.hat);
 }
+/** The Edge-seer hat worn: the view draws the areas' edges (render/borders.ts), as the tuning's borders.on does for good. */
+export const edgesSeen = (g: Game, player = 0): boolean => seerWorn(g, "edgeseer", player);
+/** The Route-seer hat worn: the view draws the whole ley line to the route's last stone and every runestone's beacon
+ *  (render/view.ts, render/view/home.ts), not just as far as the line's reveal has grown. */
+export const routeSeen = (g: Game, player = 0): boolean => seerWorn(g, "routeseer", player);
 
 /** What her hats lying about throw (rules/invites.ts): every Sentry's and Slingshot's place and numbers; undefined for none. */
 export function hatLetters(down: { x: number; z: number; spell: string }[], t: Tuning): HatLetters | undefined {
