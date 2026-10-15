@@ -33,7 +33,7 @@ export interface HookDeps {
 export function installHooks({ game, view, tuning, hud, sound, meter, shake, frameStats, loadTimes, loop }: HookDeps): void {
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
-  (window as unknown as { witch: unknown }).witch = { game, view, tuning, frameStats, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
+  (window as unknown as { witch: unknown }).witch = { game, view, tuning, frameStats, sound, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
