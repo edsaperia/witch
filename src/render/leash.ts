@@ -71,6 +71,9 @@ export class LeashView {
   /** Each glyph's reach from its slot's middle, a share of its half-width (measured from the atlas when drawn), by its rect. */
   private extent = new Map<string, number>();
   standing: Instances;
+  /** The stack above her hat drawn over the scenery (no depth test, after the see-through pass: Ed, 2026-10-15, "never obscured by scenery"), and a near-black disc behind each of its sigils. */
+  stackGlyphs: Instances;
+  stackBack: Instances;
   flat: Instances;
   /** The placed sigils, and the happy creatures' runes (Ed, 2026-10-12), again where scenery or grass hides them (Ed, 2026-10-11: "Placed animal sigils should show through scenery"): only where
    *  something nearer is drawn and it is scenery or ground cover (their stencil marks), never the witch, at leash.placedThrough. */
@@ -161,6 +164,8 @@ export class LeashView {
     this.standing = new Instances(mat(0));
     this.flat = new Instances(mat(1));
     this.over = new Instances(mat(0, false));
+    this.stackGlyphs = new Instances(mat(0, false)); this.stackGlyphs.mesh.renderOrder = 11.5; // (after the see-through pass at 11, before her silhouette at 12)
+    this.stackBack = new Instances(mat(0, false, true)); this.stackBack.mesh.renderOrder = 11.45;
     const thr = mat(1);
     Object.assign(thr, { depthFunc: THREE.GreaterDepth, stencilWrite: true, stencilRef: 0, stencilFuncMask: 3, stencilFunc: THREE.NotEqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp });
     this.through = new Instances(thr); this.through.mesh.renderOrder = 13; // (scenery marks 1, grass 2: sprites.ts, grass.ts; she clears it)
@@ -168,7 +173,7 @@ export class LeashView {
     this.blood = new Instances(mat(1, true, true, BLOOD_PULL)); // (over the grass tufts: Ed's pick, 2026-10-09)
     this.backing = new Instances(mat(1, true, true)); this.backing.mesh.renderOrder = 2.9;
     this.ink = new Instances(mat(1, true, true)); this.ink.mesh.renderOrder = 2.95;
-    scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh);
+    scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
   }
@@ -432,11 +437,12 @@ export class LeashView {
   update(time: number, camera: THREE.Camera, width: number, height: number, hatTop: number, bodyY = hatTop * 0.5, feetY = 0, frameH = 0): void {
     this.bodyY = bodyY; this.hatTop = hatTop; this.feetY = feetY; this.frameH = frameH;
     const g = this.game, s = g.leash, t = g.tuning, w = g.witch, L = t.leash, dot = this.uv(0);
-    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin();
+    this.standing.begin(); this.flat.begin(); this.through.begin(); this.over.begin(); this.solid.begin(); this.blood.begin(); this.backing.begin(); this.ink.begin(); this.stackBack.begin(); this.stackGlyphs.begin();
     // Every sigil's glyph (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home) under the
     // bloom's threshold, and its halo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation").
     const gain = L.sigilGlyph ?? 1, halo = L.sigilHalo ?? 1;
     this.standing.glyphGain = this.flat.glyphGain = this.through.glyphGain = this.over.glyphGain = gain;
+    this.stackGlyphs.glyphGain = gain * (t.stack.bright ?? 1); // (the stack brighter than the ground's sigils: Ed, 2026-10-15)
     this.haloGain = halo;
     const BK = bloodKnobs(t);
     if (BK.on) {
@@ -591,7 +597,7 @@ export class LeashView {
 
     drawBond(this, time, slotPos, dot); // (the bond: render/leash/stack.ts)
     drawStrain(this, time, dot);
-    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end();
+    this.standing.end(); this.flat.end(); this.through.end(); this.over.end(); this.solid.end(); this.blood.end(); this.backing.end(); this.ink.end(); this.stackBack.end(); this.stackGlyphs.end();
     bubbles(this, time, camera, width, height);
     drawDreams(this, camera, width, height);
     drawSnores(this, camera, width, height);

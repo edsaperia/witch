@@ -2415,6 +2415,21 @@
         "idleSway": {
           "type": "number",
           "minimum": 0
+        },
+        "bright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "backing": {
+          "type": "number",
+          "minimum": 0
+        },
+        "backSize": {
+          "type": "number",
+          "minimum": 0
+        },
+        "over": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -2424,7 +2439,11 @@
         "stiffness",
         "damping",
         "trail",
-        "idleSway"
+        "idleSway",
+        "bright",
+        "backing",
+        "backSize",
+        "over"
       ],
       "additionalProperties": false
     },
