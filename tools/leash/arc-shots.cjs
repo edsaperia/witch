@@ -2,13 +2,13 @@
 // (DIST, default dist/) at 1280×720 on a seed; on home's open ground she stands with one adult on her stack and another at a
 // placed sigil, each held just past the thread's strain point, and the same frame is shot with the old numbers (the tuning's
 // bond.threadArcSlack 0.4, threadArcMax 4) and the new (0.8, 8), then at every bond.threadArcSlack given (SLACKS=0.4,0.8,1.2).
-//   npm run build && node tools/leash/arc-shots.cjs <out dir> [seed]   (ZOOM=0..8 the camera's zoom step, 0 closest)
+//   npm run build && node tools/leash/arc-shots.cjs <out dir> [seed]   (ZOOM=0..8 the camera's zoom step, 0 closest; STRAIN= the leashes' length as a share of leash.length, 1.3)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/leash-arc", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm" };
-const slacks = (process.env.SLACKS || "").split(",").map(Number).filter(n => n > 0), zoom = process.env.ZOOM || "0"; // (zoomed right in, so the thread's dots show)
+const slacks = (process.env.SLACKS || "").split(",").map(Number).filter(n => n > 0), zoom = process.env.ZOOM || "2", strain = Number(process.env.STRAIN || 1.3); // (zoomed in two steps, the leashes taut past their length, so the thread's dots show and the creatures stay in the frame)
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "content-type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
@@ -22,11 +22,12 @@ const slacks = (process.env.SLACKS || "").split(",").map(Number).filter(n => n >
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
+    await page.evaluate(s => { window.__strain = s; }, strain);
     console.log(await page.evaluate(() => {
       const g = window.witch.game, D = g.map.dancefloor, x = D.x + 40, z = D.z + 30; // (home's open ground)
       g.witch = { ...g.witch, x, z, seated: false, mode: "ground", lift: 0 }; const w = g.witch;
       const near = g.creatures.filter(c => !c.gone && !c.boss && c.level >= 1 && c.level < 3 && !c.leashed).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z)).slice(0, 2);
-      const d = g.tuning.leash.length * 0.97; // (past the thread's strain point, 0.85 of the leash's length, and under a little strain, so the dots show)
+      const d = g.tuning.leash.length * window.__strain; // (past the thread's strain point, 0.85 of the leash's length: under strain the dots show)
       // one on her stack, held d metres to her left; one at a sigil placed d metres to her right, held d metres beyond it
       const pin = [{ x: x - d, z: z + 1.5 }, { x: x + d * 2 + 2, z: z + 1.5 }];
       near.forEach((c, i) => { Object.assign(c, { x: pin[i].x, z: pin[i].z, tx: pin[i].x, tz: pin[i].z, leashed: true, state: "leashed", enraged: false, siege: undefined, fight: undefined }); });
