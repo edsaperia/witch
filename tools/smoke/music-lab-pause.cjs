@@ -16,7 +16,7 @@ const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if
   const errors = [];
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
-  await page.goto(`http://127.0.0.1:${port}/?creator=0&quick=1&seed=123&debug`);
+  await page.goto(`http://127.0.0.1:${port}/?creator=0&quick=1&seed=123${process.env.NODEBUG ? "" : "&debug"}`); // (NODEBUG=1: a clean shot for Ed)
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 1, null, { timeout: 120000, polling: 200 });
