@@ -25,7 +25,7 @@ import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, 
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
 import { AREA_TYPES, generateMap, type ForestMap } from "./map";
-import { homeArea } from "./homeArea";
+import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
 import { isHomeKey, nextSpeakerState, speakerIndex, speakerKey, speakerRadius, speakerStateOf, type SpeakerState } from "./speakers";
@@ -667,6 +667,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
     centre: g.map.dancefloor,
     home: homeArea(g.map),
+    areaAt: (x, z) => areaOf(g.map, g.map.cellSafe(x, z).cell), // (a parked animal guards its sigil's whole area: Ed, 2026-10-15)
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
