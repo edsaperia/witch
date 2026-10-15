@@ -2133,5 +2133,33 @@
     "caption": "An island rising out of the sea on the chart as its real coastline arrives from the worker, 0 to 1.2 s (the marten's island, world 0): no round stand-in, its hilltops first, then the whole land",
     "chapter": "builders",
     "pr": 892
+  },
+  {
+    "src": "media/builders/kilo-bounce-off.gif",
+    "caption": "A 💌 refused by an enraged wolf: the letter scrunches up at its flank and the ball of paper is flung back, tumbling, while its 💢 shakes overhead (tools/smoke/bounce-off.cjs).",
+    "chapter": "builders",
+    "from": "previews/bounce-off/wolf/f012.png",
+    "pr": 923
+  },
+  {
+    "src": "media/builders/kilo-bounce-off-sheet.webp",
+    "caption": "Twelve frames of the refusal, a fifteenth of a second apart: the crumple, the toss and the bounce.",
+    "chapter": "builders",
+    "from": "previews/bounce-off/wolf/f019.png",
+    "pr": 923
+  },
+  {
+    "src": "media/builders/kilo-bedroom-pause.webp",
+    "caption": "Paused in the bedroom (Esc): the test sliders slide in backed over her room's panel, her keys and clicks waiting till it resumes.",
+    "chapter": "builders",
+    "from": "previews/bedroom-pause.png",
+    "pr": 925
+  },
+  {
+    "src": "media/builders/kilo-volume.webp",
+    "caption": "The pause page's Volume group at its top: Music and Sound effects, remembered on the browser.",
+    "chapter": "builders",
+    "from": "previews/volume-sliders.png",
+    "pr": 927
   }
 ]

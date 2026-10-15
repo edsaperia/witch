@@ -5,7 +5,10 @@
 import femaleNote from "../../../samples/voices/female-note.ogg?url";
 import whispers from "../../../samples/voices/whispers.ogg?url";
 
-const URLS: Record<string, string> = { "female-note": femaleNote, whispers };
+// the alto's sample set (Ed's singer review, 2026-10-14): samples/alto/alto-<midi>.ogg, the woman's note shifted with its
+// formants kept, every two semitones (tools/samples/build.mjs, "derived")
+const ALTO = import.meta.glob("../../../samples/alto/*.ogg", { eager: true, query: "?url", import: "default" }) as Record<string, string>;
+const URLS: Record<string, string> = { "female-note": femaleNote, whispers, ...Object.fromEntries(Object.entries(ALTO).map(([path, url]) => [path.replace(/^.*\//, "").replace(/\.ogg$/, ""), url])) };
 let loading: Promise<Record<string, AudioBuffer>> | null = null;
 
 /** The voices, decoded on `ctx` (an empty record if they can't be: the formant voice sings on). */

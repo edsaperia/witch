@@ -3,13 +3,13 @@
 import DECISIONS from "../../config/decisions.json";
 // (one fragment a pull request's group, config/decisions/<pr>-<group>.json, collected newest PR first, the file's own array after
 // them: Ed, 2026-10-13, so builders adding sliders don't collide; node tools/data.mjs decisions adopt moves a pasted entry out)
-const FRAGMENTS = import.meta.glob<{ pr?: number; group?: string; decisions: Decision[] }>("../../config/decisions/*.json", { eager: true, import: "default" });
+const FRAGMENTS = import.meta.glob<{ pr?: number; group?: string; pinned?: boolean; decisions: Decision[] }>("../../config/decisions/*.json", { eager: true, import: "default" });
 
 export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
-export interface Decision { id: string; /** the pull request that added it */ pr?: number; /** that PR's short name (the pause page's heading: "#pr group") */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; apply: { knob?: string; param?: string; reload?: boolean } }
+export interface Decision { id: string; /** the pull request that added it */ pr?: number; /** that PR's short name (the pause page's heading: "#pr group") */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; /** kept on this browser (localStorage witch.settings) and taken again as the game loads: app/settings.ts (Ed, 2026-10-14: the volumes) */ persist?: boolean; /** its group pinned at the top of the pause page (the fragment's flag), headed by its name alone */ pinned?: boolean; apply: { knob?: string; param?: string; reload?: boolean } }
 /** Every decision: the fragments' (newest pull request first, each in its file's order) and then the file's own. */
 export const DECISION_LIST: Decision[] = [
-  ...Object.keys(FRAGMENTS).sort((a, b) => Number(b.split("/").pop()!.split("-")[0]) - Number(a.split("/").pop()!.split("-")[0]) || a.localeCompare(b)).flatMap(f => FRAGMENTS[f].decisions.map(d => ({ pr: FRAGMENTS[f].pr, group: FRAGMENTS[f].group, ...d }))),
+  ...Object.keys(FRAGMENTS).sort((a, b) => Number(b.split("/").pop()!.split("-")[0]) - Number(a.split("/").pop()!.split("-")[0]) || a.localeCompare(b)).flatMap(f => FRAGMENTS[f].decisions.map(d => ({ pr: FRAGMENTS[f].pr, group: FRAGMENTS[f].group, ...(FRAGMENTS[f].pinned ? { pinned: true } : {}), ...d }))),
   ...(DECISIONS as unknown as { decisions: Decision[] }).decisions,
 ];
 /** Where an issue is opened. */
@@ -57,9 +57,9 @@ export function applyKnobParams(tuning: object, params: URLSearchParams): void {
 
 /** Its group's heading: the PR that added it and that PR's short name ("#495 Ground fog"; Ed, 2026-10-12: "The panel shows all
  *  the sliders in PR order"). */
-export const groupOf = (d: Decision): string => (d.pr ? `#${d.pr} ${d.group ?? ""}`.trim() : d.group ?? "Other");
+export const groupOf = (d: Decision): string => (d.pinned ? d.group ?? "Settings" : d.pr ? `#${d.pr} ${d.group ?? ""}`.trim() : d.group ?? "Other");
 /** The registry in the pause page's order: by PR, newest first (those without one last), each PR's in the registry's order. */
-export const byPr = (list: readonly Decision[]): Decision[] => list.map((d, i) => ({ d, i })).sort((a, b) => (b.d.pr ?? -1) - (a.d.pr ?? -1) || a.i - b.i).map(x => x.d);
+export const byPr = (list: readonly Decision[]): Decision[] => list.map((d, i) => ({ d, i })).sort((a, b) => (b.d.pinned ? 1 : 0) - (a.d.pinned ? 1 : 0) || (b.d.pr ?? -1) - (a.d.pr ?? -1) || a.i - b.i).map(x => x.d); // (the pinned groups first: the Volume)
 /** What it changes, as Ed would name it to a builder: the tuning key, or the URL switch. */
 export const keyOf = (d: Decision): string => d.apply.knob ?? `?${d.apply.param}`;
 

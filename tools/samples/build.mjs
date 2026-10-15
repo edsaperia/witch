@@ -24,6 +24,7 @@ for (const [set, list] of Object.entries(src.sets)) {
   for (const s of list) {
     const repo = src.repos[s.repo ?? set], file = `${set}/${s.id}.ogg`, fs = (s.repo ?? set) === "freesound";
     if (only && !only.includes(s.id)) { const was = old.find(f => f.file === file); if (was) files.push(was); continue; }
+    if (s.from) { files.push(derived(set, s, file)); continue; }
     // (a repository's file at its pinned commit; a Freesound sound's public preview)
     const url = fs ? s.preview : `${repo.raw}/${repo.commit}/${s.path.split("/").map(encodeURIComponent).join("/")}`;
     const raw = join(tmp, `${s.id}${fs ? ".mp3" : ".wav"}`);
@@ -54,6 +55,29 @@ for (const [set, list] of Object.entries(src.sets)) {
   }
 }
 rmSync(tmp, { recursive: true, force: true });
+
+/** A sample made from one already built (Ed's singer review, 2026-10-14: the alto's sample set): `from` (set/id) shifted by
+ *  `semitones` with its formants kept (ffmpeg's rubberband filter: Rubber Band is GPL, so it runs here, offline, and nothing of
+ *  it ships; the output is a recording, not code), its first `skip` seconds dropped (the woman's note starts 20 cents flat),
+ *  cut to `max` with the tail faded, peak-normalised, Opus. Its licence, author and source are its source's. */
+function derived(set, s, file) {
+  const from = old.find(f => f.file === `${s.from}.ogg`);
+  if (!from) throw new Error(`${s.id}: no built sample ${s.from} to derive from (build it first)`);
+  const raw = join(dir, `${s.from}.ogg`), fade = Math.min(0.15, s.max * 0.25), ratio = Math.pow(2, (s.semitones ?? 0) / 12);
+  const pre = `aformat=channel_layouts=mono,atrim=${s.skip ?? 0},asetpts=PTS-STARTPTS,rubberband=pitch=${ratio.toFixed(6)}:formant=preserved:pitchq=quality,atrim=0:${s.max},afade=t=out:st=${(s.max - fade).toFixed(2)}:d=${fade.toFixed(2)}`;
+  const peakOf = text => { const m = /max_volume: (-?[\d.]+|-inf) dB/.exec(text)?.[1]; return m === undefined || m === "-inf" ? -Infinity : Number(m); };
+  const log = execFileSync("sh", ["-c", `ffmpeg -hide_banner -i "$1" -af "$2,volumedetect" -f null - 2>&1`, "_", raw, pre]).toString();
+  const peak = peakOf(log), gain = -1 - peak, out = join(dir, file);
+  mkdirSync(dirname(out), { recursive: true });
+  execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", raw, "-af", `${pre},volume=${gain.toFixed(2)}dB`, "-ar", "48000", "-c:a", "libopus", "-b:a", `${src.kbps}k`, "-application", "audio", out]);
+  const sign = n => (n >= 0 ? "+" : "") + n.toFixed(2);
+  console.log(`${file.padEnd(28)} ${(statSync(out).size / 1024).toFixed(1).padStart(6)} KB  ${s.what}`);
+  return {
+    file, what: s.what, source: from.source, licence: from.licence, author: from.author, credit: from.credit, sourceSha256: from.sourceSha256,
+    processing: `from samples/${s.from}.ogg: its first ${s.skip ?? 0} s dropped, pitch shifted ${sign(s.semitones ?? 0)} semitones with formants preserved (Rubber Band, offline), cut to ${s.max} s with a ${fade.toFixed(2)} s fade, peak-normalised to -1 dBFS (${gain >= 0 ? "+" : ""}${gain.toFixed(1)} dB), Opus ${src.kbps} kbps`,
+    bytes: statSync(out).size,
+  };
+}
 files.sort((a, b) => a.file.localeCompare(b.file));
 writeFileSync(join(dir, "manifest.json"), JSON.stringify({ _: "Written by tools/samples/build.mjs from samples/sources.json: never edit by hand. Checked by tools/samples/check.mjs (npm test).", files }, null, 2) + "\n");
 writeCredits(root);

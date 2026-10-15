@@ -34,14 +34,11 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // means something new"): checks that fail on claude/prototype itself for a reason we know and have an
 // issue for. A known check that fails is reported apart ("known: N") and doesn't fail the run; one that
 // passes says so, so it can come off the list. Every entry: the check's key, its issue, and why.
+// (2026-10-14, India's full run on #928: speed-build and boost-p99 (#310), both vanish flights (#311) and trunks-round (#509)
+// passed outright, so they came off; boost-worst and pops still fail here for their known reasons.)
 const KNOWN = {
-  "speed-build": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
-  "boost-p99": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
   "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
-  "vanish-1900x1240": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
-  "vanish-2000x1076": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
-  "trunks-round": { issue: 509, why: "the measure swings 1.04-1.47 run to run at the same spots with the same build (her glow's angle, the moment), with 1.3 inside its noise" },
 };
 
 async function main() {
@@ -73,7 +70,7 @@ async function main() {
     page.on("pageerror", e => errors.push(`${name}: page error: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${name}: console error: ${m.text()}`); });
     await page.goto(`http://127.0.0.1:${port}/?creator=0&pixels=keep&${/(^|&)seed=/.test(query || "") ? (query || "").replace(/^&/, "") : `seed=${seed}${query || "&debug"}`}`); // (a run may ask for its own seed; pixels=keep: the floating checks read the atlases' pixels, which the game lets go once uploaded)
-    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 120000 });
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
     await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
@@ -81,6 +78,22 @@ async function main() {
     await page.close();
   }
   const state = page => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, area: window.witch.areaUnderWitch(), stats: window.witch.view.stats }; });
+  // Rise from the ground: a press within riseCooldown seconds of her landing is dropped by the rules (#649, Ed, 2026-10-11:
+  // "players rise to the treetops instead of dodging"; the plain broom halves it), so wait that out on her own clock first.
+  // A press can also be dropped while she's staggered by a blow or knocked out, so press again until she leaves the ground,
+  // and say what state she was in if she never does.
+  const rise = async page => {
+    for (let i = 0; i < 6; i++) {
+      await page.waitForFunction(() => {
+        const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
+        return W.landedAt == null || g.herTime >= W.landedAt + cd + 0.05;
+      }, null, { timeout: 240000, polling: 100 });
+      await page.keyboard.press("Space");
+      if (await page.waitForFunction(() => window.witch.game.witch.mode !== "ground", null, { timeout: 60000, polling: 100 }).then(() => true, () => false)) return;
+    }
+    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, ko: !!W.ko, knock: W.knock, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
+    throw new Error(`she wouldn't rise from the ground: ${JSON.stringify(st)}`);
+  };
   // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
   const hold = async (page, key, secs, timeout = 240000) => { // the software renderer here runs the treetops (sky, bend) at about a frame a second
     const from = await state(page);
@@ -92,6 +105,24 @@ async function main() {
   };
   const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file), timeout: 300000 }); /* big windows: seconds a frame in the software renderer */ results.push(`shot previews/${file}`); };
 
+  // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
+  // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
+  const flyPath = async page => {
+    const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
+    const keys = ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"];
+    for (const mode of ["treetop", "ground"]) {
+      for (let i = 0; i < steps; i++) await page.keyboard.press(ZOOM_IN); // all the way in
+      for (let z = 0; z < steps; z++) {
+        await hold(page, keys[z % 4], 0.8);
+        await page.keyboard.press(ZOOM_OUT); // a step out, while flying on
+        await hold(page, keys[(z + 1) % 4], 0.6);
+      }
+      for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
+      await page.keyboard.press("Space"); // change mode mid-path
+      await hold(page, "ArrowUp", 1.2);
+    }
+  };
+
   await run("laptop", { width: 1280, height: 720 }, async page => {
     await shot(page, "00-start-screen.png");
     await page.keyboard.press("Enter");
@@ -101,6 +132,17 @@ async function main() {
     // (Not by batch count: 0.3 s in, seated at the treehouse zoomed in, it can be as few as 3 (6 area types' and 4 creatures' once she's out); the trees and draw calls are what matter.)
     check(s.stats.trees > 20 && s.stats.batches >= 1 && s.stats.drawCalls > 15, `trees drawn round the start (${s.stats.trees} trees, ${s.stats.batches} batches, ${s.stats.drawCalls} draw calls)`);
     await shot(page, "01-ground-dancefloor.png");
+    // She starts at her decks on the treehouse deck, 22 m up, kept inside its rail (rules/treehouse.ts): up off it, out over the
+    // forest and down, as the quick smoke does, before the ground flight is measured (held at the rail she made 3.2 m/s).
+    if (await page.evaluate(() => !!window.witch.game.witch.perch)) {
+      await rise(page);
+      await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000, polling: 100 }).catch(() => {});
+      check(await page.evaluate(() => window.witch.game.witch.mode === "treetop" && !window.witch.game.witch.perch), "space rises off the treehouse deck");
+      await hold(page, "ArrowLeft", 1.5);
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000, polling: 100 }).catch(() => {});
+      check(await page.evaluate(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch), "lands on the ground away from the deck");
+    }
     // Speeds are measured in game time: a slow headless renderer runs fewer, capped frames.
     const tuning = await page.evaluate(() => window.witch.game.tuning);
     let s0;
@@ -122,50 +164,12 @@ async function main() {
     // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
     // vanish in clear view on the way (trees, undergrowth, walls, set pieces, creatures, props).
     await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
-    const steps = await page.evaluate(() => window.witch.game.tuning.camera.zoomSteps);
-    const keys = ["ArrowLeft", "ArrowDown", "ArrowRight", "ArrowUp"];
-    const path = async () => {
-      for (const mode of ["treetop", "ground"]) {
-        for (let i = 0; i < steps; i++) await page.keyboard.press(ZOOM_IN); // all the way in
-        for (let z = 0; z < steps; z++) {
-          await hold(page, keys[z % 4], 0.8);
-          await page.keyboard.press(ZOOM_OUT); // a step out, while flying on
-          await hold(page, keys[(z + 1) % 4], 0.6);
-        }
-        for (let i = 0; i < steps; i++) { await page.keyboard.press(ZOOM_IN); await hold(page, keys[i % 4], 0.3); }
-        await page.keyboard.press("Space"); // change mode mid-path
-        await hold(page, "ArrowUp", 1.2);
-      }
-    };
-    await path();
-    // Again in a Heath (gorse: small bright details), where Ed saw bushes blink.
-    const heath = await page.evaluate(() => {
-      const g = window.witch.game, m = g.map;
-      for (const [x, y] of m.cells) {
-        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
-        const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
-        g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0 }; g.camera = { ...g.camera, tx: px, tz: pz };
-        return `${x},${y}`;
-      }
-      return null;
-    });
-    if (heath) {
-      // Wait for frames drawn at the new place (game time passing), not wall time: the first
-      // rebuild there makes new forest, which a slow renderer can take over a second to finish,
-      // and what it draws then must not count as popping in.
-      const t0 = await page.evaluate(() => window.witch.game.clock.time);
-      await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
-      await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
-      await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
-      await path();
-      await shot(page, "08-heath.png");
-    }
-    check(!!heath, `the pop check also flies a Heath (${heath})`);
+    await flyPath(page);
     const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
     const popCount = await page.evaluate(() => window.witch.view.pops.length);
     check(popCount === 0, `nothing pops in or out in clear view, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
     await page.waitForFunction(() => !["rising", "descending"].includes(window.witch.game.witch.mode), null, { timeout: 240000 });
-    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
+    if (await page.evaluate(() => window.witch.game.witch.mode) !== "treetop") { await rise(page); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
     await page.keyboard.press(ZOOM_OUT); await page.keyboard.press(ZOOM_OUT);
     await sleep(800);
     await shot(page, "05-treetop-zoomed-out.png");
@@ -179,6 +183,38 @@ async function main() {
     await shot(page, "07-ground-zoomed-in.png");
     results.push(`area under the witch: ${s.area}`);
   });
+
+  // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the old radius map: the home
+  // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14).
+  await run("heath", { width: 1280, height: 720 }, async page => {
+    await page.keyboard.press("Enter");
+    await sleep(300);
+    const heath = await page.evaluate(() => {
+      const g = window.witch.game, m = g.map;
+      for (const [x, y] of m.cells) {
+        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "heath") continue;
+        const s = m.siteOf(x, y), px = s.x + 20, pz = s.z + 20;
+        // (off her decks: a witch put somewhere else is off the deck, rules/treehouse.ts)
+        g.witch = { ...g.witch, x: px, z: pz, vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: px, tz: pz, intro: 0 };
+        return `${x},${y}`;
+      }
+      return null;
+    });
+    check(!!heath, `the pop check also flies a Heath (${heath})`);
+    if (!heath) return;
+    // Wait for frames drawn at the new place (game time passing), not wall time: the first
+    // rebuild there makes new forest, which a slow renderer can take over a second to finish,
+    // and what it draws then must not count as popping in.
+    const t0 = await page.evaluate(() => window.witch.game.clock.time);
+    await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
+    await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
+    await flyPath(page);
+    await shot(page, "08-heath.png");
+    const pops = await page.evaluate(() => window.witch.view.pops.slice(0, 12));
+    const popCount = await page.evaluate(() => window.witch.view.pops.length);
+    check(popCount === 0, `nothing pops in or out in clear view in the Heath, flying through every zoom level in both modes (${popCount})${popCount ? ": " + pops.join("; ") : ""}`, "pops");
+  }, "&debug&island=off");
 
   await run("phone", { width: 390, height: 844, hasTouch: true }, async page => {
     await page.touchscreen.tap(200, 400);
@@ -288,7 +324,7 @@ async function main() {
     await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "55-string-lights-ground.png");
-    await page.keyboard.press("Space");
+    await rise(page);
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 });
     await sleep(800);
     await shot(page, "56-string-lights-treetop.png");
@@ -563,12 +599,21 @@ async function main() {
         if (s > bs) { bs = s; best = [x, z]; }
       }
       g.witch = { ...g.witch, x: best[0], z: best[1], vx: 0, vz: 0, seated: false }; g.camera = { ...g.camera, tx: best[0], tz: best[1], intro: 0 };
+      // Her area friendly, as a legend's quest done makes it (rules/sigilButton.ts befriendArea): its wild watch would attack
+      // her while the art bakes (minutes here), knock her out and send her back to her decks, and the ground flight would then
+      // measure the deck's flat floor (India's run on #928: "0.0 vs 0.0" on the ground, the check failing on 0 < 0).
+      const cell = g.map.areaAt(best[0], best[1]).cell;
+      g.friendly.add(`${cell[0]},${cell[1]}`);
+      for (const c of g.creatures) if (!c.gone && !c.leashed && !c.boss && !c.partyLegend && c.cell[0] === cell[0] && c.cell[1] === cell[1]) { c.friendly = true; c.enraged = false; c.fight = undefined; c.siege = undefined; }
+      g.byArea = null;
       return { x: best[0], z: best[1], slope: bs };
     });
     await sleep(1500);
     await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
     await sleep(1500);
     await shot(page, file);
+    const still = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { x: w.x, z: w.z, perch: !!w.perch, seated: !!w.seated, kds: g.knockdowns?.length ?? 0 }; });
+    check(!still.perch && !still.seated && Math.hypot(still.x - at.x, still.z - at.z) < 5, `seed ${slopeSeed}: she's still at the steep spot as the flight starts, not knocked back to her decks (${still.kds} knockdowns, ${Math.hypot(still.x - at.x, still.z - at.z).toFixed(0)} m off)`);
     const r = await page.evaluate(async () => {
       const w = window.witch, v = w.view, dt = 1 / 60, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }), yieldNow = () => new Promise(res => setTimeout(res, 0));
       w.manual = true;
@@ -590,10 +635,11 @@ async function main() {
       w.manual = false;
       return { ground, treetop };
     });
-    results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(1)} against the ground's ${r.ground.ground.toFixed(1)} m/s² (ground), ${r.treetop.ride.toFixed(1)} against ${r.treetop.ground.toFixed(1)} (treetops)`);
+    results.push(`info slope (seed ${slopeSeed}): the steepest spot near home ${(at.slope * 100).toFixed(0)}% (${at.x.toFixed(0)}, ${at.z.toFixed(0)}); flying north from it, camera lift at most ${r.ground.lift.toFixed(1)} m on the ground and ${r.treetop.lift.toFixed(1)} m over the treetops; her height's rms acceleration ${r.ground.ride.toFixed(2)} against the ground's ${r.ground.ground.toFixed(2)} m/s² (ground), ${r.treetop.ride.toFixed(2)} against ${r.treetop.ground.toFixed(2)} (treetops)`);
     check(at.slope < Math.tan(30 * Math.PI / 180), `seed ${slopeSeed}: the steepest slope near home is under the camera's shallowest pitch (${(at.slope * 100).toFixed(0)}%, 30° is 58%)`);
     check(Math.max(r.ground.lift, r.treetop.lift) < 3, `seed ${slopeSeed}: flying directly away from the camera over the steepest hill, no rise hides her: the camera's safety-net lift stays under 3 m (${r.ground.lift.toFixed(1)} m, ${r.treetop.lift.toFixed(1)} m)`);
-    check(r.ground.ride < r.ground.ground * 0.8 && r.treetop.ride < r.treetop.ground * 0.8, `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her (rms acceleration ${r.ground.ride.toFixed(1)} vs ${r.ground.ground.toFixed(1)}, ${r.treetop.ride.toFixed(1)} vs ${r.treetop.ground.toFixed(1)} m/s²)`);
+    const smooth = a => a.ride < a.ground * 0.8 || (a.ride < 0.1 && a.ground < 0.1); // (ground this flat has nothing to smooth)
+    check(smooth(r.ground) && smooth(r.treetop), `seed ${slopeSeed}: she rides the hills smoothly: her height bobs less than the ground under her, or both under 0.1 (rms acceleration ${r.ground.ride.toFixed(2)} vs ${r.ground.ground.toFixed(2)}, ${r.treetop.ride.toFixed(2)} vs ${r.treetop.ground.toFixed(2)} m/s²)`);
   }, slopeSeed === seed ? "&debug" : `&seed=${slopeSeed}&debug`); // (Ed, v297: seed 165272 had cliffs and broken trees)
 
   // Boosting over the treetops (Ed, v256: "framerate drops a bit during boost mode in treetop
@@ -660,10 +706,40 @@ async function main() {
       return { hover: q(hover, 0.5), median: q(boost, 0.5), p99: q(boost, 0.99), worst: q(boost, 1), top, dist: Math.hypot(w.game.witch.x - x0, w.game.witch.z - z0) };
     });
     results.push(`info boost: ${r.dist.toFixed(0)} m north in 10 s at up to ${r.top.toFixed(0)} m/s; frame work hovering ${r.hover.toFixed(1)} ms (median), boosting median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms`);
-    check(r.top > 100, `boosting over the treetops goes over 100 m/s (${r.top.toFixed(0)} m/s)`);
+    // (full boost with the Speed broom's spell: treetopSpeed × boost × the spell's mult, 48 × 1.7 × 2.2 = 180 m/s as built; the plain broom,
+    // the default since #695, tops out at 82, which is what this measured till the scene asked for ?broom=speed, 2026-10-14)
+    const T = await page.evaluate(() => window.witch.game.tuning), full = T.treetopSpeed * (T.treetop?.boost ?? 1) * (T.spells?.speed?.mult ?? 1);
+    check(r.top > Math.max(100, full * 0.9), `boosting over the treetops with the Speed broom goes over 100 m/s and near its full ${full.toFixed(0)} (${r.top.toFixed(0)} m/s)`);
     check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
     check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
-  });
+  }, "&debug&broom=speed");
+
+  // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
+  // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full
+  // opacity against none, the mist at strength 0 against none. The circle bug was the first differing in a disc round her. Where
+  // it showed: an Old oaks wood, on the ground among tall trees in front of her.
+  await run("neutral", { width: 1000, height: 663 }, async page => {
+    // (the art and the forest round the spot all in first: once the game runs the forest's count keeps moving)
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 600000, polling: 500 });
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 250 }); // (started: she's drawn)
+    await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 300000, polling: 250 });
+    // (placed as tools/smoke's circle shots were: on the ground, a step north to settle the camera, then back on the spot)
+    const place = () => page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, x: 2327, z: 2569, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; });
+    await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
+    await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 }); // (settled: four seconds of play there)
+    await sleep(10000);
+    await page.keyboard.press("Escape"); await sleep(3000); // (paused, as the Report is: a running game's frames differ by themselves)
+    const r = await page.evaluate(() => window.__neutralCheck());
+    const at = await page.evaluate(() => { const g = window.witch.game; return `${g.witch.x | 0},${g.witch.z | 0} ${g.witch.mode}${g.witch.seated ? " seated" : ""}, zoom step ${g.camera.zoomStep}`; });
+    await shot(page, "neutral.png");
+    await page.keyboard.press("Escape");
+    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at})`);
+    // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
+    // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
+    const allow = r.still * 2 + Math.round(r.pixels * 0.005);
+    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
+  }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
@@ -699,6 +775,7 @@ async function main() {
         const img = b.atlas.albedo.image, W = img.width, H = img.height, D = img.data;
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
+          if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves, moved along the camera's rays to land on their own pixels: render/view/home.ts alongRay; their y isn't a ground height)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * H);
           let low = -1;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { low = row; break; }
@@ -723,6 +800,7 @@ async function main() {
         const img = b.atlas.albedo.image, W = img.width, D = img.data;
         for (const it of b.items) {
           if (it.top || it.overlay) continue; // (crowns, and the treehouse's DJ table drawn over it, stand on their trunk)
+          if (type === "treehouse" && it.scale !== undefined) continue; // (the Ent's halves along the rays, as above)
           const f = it.frame, x0 = Math.round(f.uv[0] * W), y0 = Math.round(f.uv[1] * img.height);
           let low = -1, left = 0, right = 0;
           for (let row = f.h - 1; row >= 0 && low < 0; row--) for (let x = 0; x < f.w; x++) if (D[((y0 + row) * W + x0 + x) * 4 + 3] >= 128) { if (low < 0) { low = row; left = x; } right = x; }
@@ -740,7 +818,7 @@ async function main() {
       return out;
     });
     check(hr.n > 50 && hr.bad.length === 0, `on the rolling ground nothing floats or sinks past 1 art px at its foot's ends (${hr.n} checked, ${hr.hilly} off the flat, worst ${hr.worst.toFixed(2)} px)${hr.bad.length ? ": " + hr.bad.join("; ") : ""}`);
-  });
+  }, "&debug&island=off"); // (the old radius map: the home island's roster is the ten home kinds, so no seed puts a cave mouth on it)
 
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:

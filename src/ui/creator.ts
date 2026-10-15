@@ -250,6 +250,10 @@ export class Creator {
    *  bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): no
    *  party scroll, its place taken by the way out. */
   visiting = false;
+  /** Paused by the pause page (Esc) while her room is open (Ed, 2026-10-14): her keys and clicks wait, she stands still. */
+  private _frozen = false;
+  get frozen(): boolean { return this._frozen; }
+  set frozen(on: boolean) { this._frozen = on; this.held.clear(); this.root.style.pointerEvents = on ? "none" : ""; }
   /** The way out, mid-night: her look as it is now. */
   onExit: (g: Genome) => void = () => {};
   private exitBtn = h("button", { type: "button", text: "Back to the island" });
@@ -299,10 +303,13 @@ export class Creator {
     // While it's open, its keys are its own but the debug overlay's ` (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open || e.code === "Backquote") return; // (bar the debug overlay's key: the Player pick shows with it, app/playerPick.ts)
+      // Paused in her room (Esc, the pause page; Ed, 2026-10-14): nothing of hers acts (the scroll's own Enter included) till it resumes;
+      // Esc and the freeze's step key go on to it.
+      if (this.frozen) { if (e.code !== "Escape" && e.code !== "Period") e.stopPropagation(); return; }
       e.stopPropagation();
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); this.keyHint.pressed(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
-      if (e.code === "Enter" || (this.visiting && e.code === "Escape")) { e.preventDefault(); if (this.visiting) this.leave(); else this.scroll.cast(); } else if (e.code === "KeyR") this.randomise();
+      if (e.code === "Enter") { e.preventDefault(); if (this.visiting) this.leave(); else this.scroll.cast(); } else if (e.code === "KeyR") this.randomise(); // (Esc pauses, in her room as anywhere: Ed, 2026-10-14; the way out of a visit is its button)
       else if (e.key === "?" && this.boxes.has("controls")) { e.preventDefault(); this.openBox("controls"); }
       else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });

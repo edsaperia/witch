@@ -25,8 +25,11 @@ export class Sound {
   sfxCues: SfxCues | null = null;
   /** The ley line's drawn current link (the view's), for the pulse's fizz (SfxCues.leyLink). */
   leyLink: SfxCues["leyLink"] = null;
-  /** The volume, 0 to 1 (fixed: the corner slider went, Ed 2026-10-10). */
+  /** The volume, 0 to 1 (fixed: the corner slider went, Ed 2026-10-10; the pause page's Music and Sound effects sliders since
+   *  2026-10-14 set the tuning's music.volume and sfx.volume, read live in update, app/settings.ts remembering them). */
   level = 0.8;
+  /** The effects' sfx.volume as last given to their kit (update: given again when the slider moves). */
+  private sfxVol = -1;
   /** The music's last mix (by how near she is to a playing soundsystem): the playtest log reads it. */
   lastMix: ReturnType<typeof musicMix> | null = null;
   watchdog: AudioWatchdog | null = null;
@@ -43,7 +46,7 @@ export class Sound {
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
     const { tuning } = this;
-    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, tuning.music.volume * this.level, tuning.sfx, this.style.root + 24); this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
+    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24); this.sfxVol = tuning.sfx.volume; this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
   /** The context, with the tuning's output buffer (music.buffer, seconds; else its latencyHint category, music.latency; ?latency= a
@@ -116,7 +119,7 @@ export class Sound {
   private booted: () => boolean = () => false;
   /** Whether the music should be heard now: playing, its volume up, the game running and shown, the home speakers booting
    *  (the watchdog's and the output meter's test). */
-  musicExpected(): boolean { return !!this.music && this.level > 0 && this.music.audible && this.live() && this.booted(); }
+  musicExpected(): boolean { return !!this.music && this.level > 0 && this.tuning.music.volume > 0 && this.music.audible && this.live() && this.booted(); }
 
   /** Frozen (platform/freeze.ts): the context suspended, and resumed after. */
   freeze(on: boolean): void { try { void (on ? this.audio?.suspend() : this.audio?.resume()); } catch { /* no sound */ } }
@@ -139,6 +142,12 @@ export class Sound {
   update(game: Game, cue: MusicCue, roomOpen: boolean): void {
     const t0 = performance.now();
     this.lastMix = musicMix(game, game.witch);
+    // The volumes (Ed, 2026-10-14: the pause page's Music and Sound effects sliders; app/settings.ts remembers them): the tuning's
+    // music.volume and sfx.volume read live, the music's on its own bus, the effects' on their kit (SFX_BASE holds today's loudness
+    // at the built values, so the two move apart).
+    const mv = this.tuning.music.volume * this.level;
+    if (this.music && this.music.volume !== mv) this.music.volume = mv;
+    if (this.sfx && this.sfxVol !== this.tuning.sfx.volume) { this.sfxVol = this.tuning.sfx.volume; this.sfx.setVolume(SFX_BASE * this.level); }
     // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block
     const night = nightStyle(this.style, game.musicSet);
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
@@ -160,6 +169,10 @@ export class Sound {
     this.parts = { mix: t1 - t0, music: t2 - t1, cues: t3 - t2, room: performance.now() - t3 };
   }
 }
+
+/** What the effects' kit is given before its own sfx.volume: the music's built volume (0.5), as the kit was built with before
+ *  the sliders (sfxKit.ts setVolume: this times the tuning's sfx.volume on its bus). */
+const SFX_BASE = 0.5;
 
 /** `?audio=lite|full` for one load (shed.ts). */
 function audioParam(): string | null { try { return new URLSearchParams(location.search).get("audio"); } catch { return null; } }

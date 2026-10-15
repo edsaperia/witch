@@ -148,6 +148,7 @@ export class SfxCues {
         if (c && !e.spent && this.ready(c.id, time, 0.3)) S.reply(voiceOf(c, g.tuning), m ?? 0, pan(e.x), k);
       } else if (e.kind === "happy" && e.id !== undefined) this.flourish(g, e.id, time, k, pan(e.x));
       else if (e.kind === "fizzled") S.land(pan(e.x), k); // (thrown its full range: down on the ground)
+      else if (e.kind === "blocked") S.refused(pan(e.x), k); // (an enraged animal's refusal: its whine, as the letter crumples; Ed, 2026-10-12)
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
       else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)

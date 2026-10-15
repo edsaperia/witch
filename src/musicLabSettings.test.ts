@@ -1,7 +1,7 @@
 // The live Music Lab's settings (tools/music-lab/live/settings.ts): what Ed copies is only what he changed, and pasting it
 // back gives the same settings.
 import { describe, expect, it } from "vitest";
-import { defaultState, heard, parseSettings, settingsJson, type Defaults } from "../tools/music-lab/live/settings";
+import { chainFx, defaultState, engineSings, heard, parseSettings, settingsJson, type Defaults } from "../tools/music-lab/live/settings";
 
 const D: Defaults = { bpm: 120, mode: "dorian", parts: ["kick", "bass", "lead"], victory: { transpose: 2, layers: { choir: 0.6, clap: 1 } } };
 const SECTIONS = ["drop", "build", "victory"];
@@ -35,6 +35,30 @@ describe("music lab settings", () => {
     expect(state.section).toBe("");
     expect(ignored).toEqual(["mode", "extra"]);
     expect(() => parseSettings("not json", D, SECTIONS)).toThrow();
+  });
+
+  it("picks the singer's A/B voice, its breath and its chain (Ed, 2026-10-14)", () => {
+    const d: Defaults = { ...D, voiceFx: { pure: { hall: 0.9, air: 0.5, whisper: 0.2 }, dark: { hall: 0.9, air: 0.3, whisper: 0.6, saturation: 0.5 } } };
+    // the sliders start at the game's pure chain, so nothing copies
+    const base = defaultState(d);
+    expect(base.voiceFx.hall).toBe(0.9); expect(base.voiceFx.chorus).toBe(0); expect(base.breath).toBeNull(); expect(base.chain).toBe("auto");
+    expect(JSON.parse(settingsJson(base, d))).toEqual({ lab: "witch-music-lab/1" });
+    // a voice, a breath and a forced chain round-trip; the effects copy only what differs from the chain in force
+    const s = defaultState(d);
+    s.voice = "tract"; s.breath = 0.45; s.chain = "dark"; s.voiceFx = { ...chainFx(d, "dark"), whisper: 0.3 }; s.arpeggio = true;
+    const text = settingsJson(s, d), j = JSON.parse(text);
+    expect(j.voice).toBe("tract"); expect(j.breath).toBe(0.45); expect(j.chain).toBe("dark"); expect(j.arpeggio).toBe(true);
+    expect(j.voiceFx).toEqual({ whisper: 0.3 });
+    const back = parseSettings(text, d, SECTIONS);
+    expect(back.ignored).toEqual([]);
+    expect(back.state).toEqual(s);
+    expect(back.state.voiceFx.saturation).toBe(0.5); // (the dark chain's own under the one slider moved)
+    // the chain read first whatever the order; a bad breath or chain is ignored
+    expect(parseSettings('{ "voiceFx": { "whisper": 0.3 }, "chain": "dark" }', d, SECTIONS).state.voiceFx).toEqual({ ...chainFx(d, "dark"), whisper: 0.3 });
+    const bad = parseSettings('{ "breath": "lots", "chain": "muddy", "voice": "sampled" }', d, SECTIONS);
+    expect(bad.ignored).toEqual(["breath", "chain"]); expect(bad.state.voice).toBe("sampled"); expect(bad.state.breath).toBeNull();
+    expect(parseSettings('{ "breath": 3 }', d, SECTIONS).state.breath).toBe(1);
+    expect(engineSings("sampled") && engineSings("tract") && engineSings("synth") && !engineSings("recorded") && !engineSings("pinkTrombone")).toBe(true);
   });
 
   it("mutes and solos", () => {

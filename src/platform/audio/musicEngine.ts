@@ -15,6 +15,7 @@ import { beatAt, bpmAt, timeAt, type BeatClock } from "../../rules/beat";
 import { Conductor, bootLayers, formClock, silentAt, type MusicCue } from "../../rules/musicPlan";
 import { mtof, noiseBuffer } from "./dsp";
 import { FOF_TYPES, FOF_VOWELS, FofVoices, fofLoaded, fofReady } from "./fof/fof";
+import { TractVoices, tractLoaded, tractReady } from "./tract/tract";
 import { fxOn, VoiceFx, prepareWhisperEnvelopes } from "./voiceFx";
 import { musicSeed, notesAt, resolveSection, sectionCutoff, type BlockPlan, type MusicStyle, type NoteEvent, type Patch } from "../../rules/musicScore";
 
@@ -29,7 +30,9 @@ interface Channel {
   running?: AudioScheduledSourceNode[];
   /** A FOF part's voices (one worklet a part), its voice line's effects, when its last note ends (its phrases), and its
    *  swells' voices (into the effects' reverbs only, under a rising envelope). */
-  fof?: FofVoices; fx?: VoiceFx; lastEnd?: number; swell?: { voices: FofVoices; gain: GainNode };
+  fof?: FofVoices; tract?: TractVoices; fx?: VoiceFx; lastEnd?: number;
+  /** Which chain the voice effects are set to (the style's voiceFx, "pure", or voiceFxDark): Ed, 2026-10-14, two chains by place. */
+  fxKind?: "pure" | "dark"; swell?: { voices: FofVoices; gain: GainNode };
   /** A recorded voice's presence lift, shared by its notes, and its notes so far this phrase (its vowels taken in turn). */
   presence?: BiquadFilterNode; sung?: number;
 }
@@ -192,6 +195,16 @@ export class MusicEngine {
   /** The tempo now (the voice effects' echoes are on the beat). */
   private bpmNow = 120;
   /** The voice line's effects changed while playing (the Music Lab's sliders): set at once on its parts. */
+  /** The voice effects' settings for a chain: the style's voiceFx (pure, for breakdowns and builds) or, "dark", its voiceFxDark
+   *  over it (the dark families: Ed, 2026-10-14, "two chains by place"). */
+  private fxChain(kind: "pure" | "dark"): NonNullable<MusicStyle["voiceFx"]> {
+    const F = this.style.voiceFx ?? {};
+    if (kind !== "dark" || !this.style.voiceFxDark) return F;
+    const { families: _f, parts: _p, ...dark } = this.style.voiceFxDark as NonNullable<MusicStyle["voiceFxDark"]> & { _?: string };
+    delete (dark as { _?: string })._;
+    return { ...F, ...dark };
+  }
+
   setVoiceFx(settings: NonNullable<MusicStyle["voiceFx"]>): void {
     this.style = { ...this.style, voiceFx: { ...this.style.voiceFx, ...settings } };
     for (const ch of this.channels.values()) ch.fx?.set(settings);
@@ -381,6 +394,7 @@ export class MusicEngine {
     if (!p || (this.solo && !this.solo.has(e.part))) return;
     const ch = this.channel(e.part, p, e.layer === "circle"), peak = p.gain * e.vel;
     const pf = (this.notePitch = e.layer === "circle" ? 1 : this.pitch); // (the tape slowing: the circle's own layer never)
+    if (e.fx && ch.fx && ch.fxKind !== e.fx) { ch.fxKind = e.fx; ch.fx.set(this.fxChain(e.fx)); } // (two chains by place: Ed, 2026-10-14)
     switch (p.kind) {
       case "kick": this.kick(t, pf === 1 ? p : { ...p, pitch: (p.pitch ?? 150) * pf, pitchEnd: (p.pitchEnd ?? 45) * pf }, peak, ch.in); this.duck(t, e.vel, sps); break;
       case "noise": this.noiseHit(t, p, peak, ch); break;
@@ -390,6 +404,7 @@ export class MusicEngine {
       case "voice": this.voice(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "fof": this.fof(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "sample": this.sampled(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
+      case "tract": this.tract(t, p, peak, mtof(e.midi ?? 57) * pf, dur, e.step, ch); break;
       case "riser": this.riser(t, p, dur, e.from ?? 0, e.to ?? 1, ch.in); break;
       case "impact": this.impact(t, p, peak, ch.in); break;
     }
@@ -592,13 +607,35 @@ export class MusicEngine {
     ch.lastEnd = t + dur;
   }
 
+  /** A sung note on the vocal-tract voice (Ed, 2026-10-14: Pink Trombone's physics in a worklet, A/B'd against the sampled
+   *  alto): its vowel from the patch's in turn through the phrase, breathier by the patch's `breath` (lower tenseness), the
+   *  phrase's effects told where phrases start and end as the sampled voice tells them. The formant voice sings until the
+   *  worklet's loaded, or with the sound shed to step 2. */
+  private tract(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+    if (!tractLoaded(this.ctx) || this.shedLevel >= 2) {
+      void tractReady(this.ctx);
+      this.voice(t, { ...p, kind: "voice", formantShift: 1.02, q: 9, vibrato: 16 }, peak, freq, dur, step, ch);
+      return;
+    }
+    const b = Math.min(1, Math.max(0, p.breath ?? 0)), [t0, t1] = p.tense ?? [0.45, 0.72], tense: [number, number] = [Math.max(0.1, t0 - 0.3 * b), Math.max(0.15, t1 - 0.3 * b)];
+    ch.tract ??= new TractVoices(this.ctx, ch.in, 3, { tractLength: p.tractLength ?? 40, tense, vibrato: p.vibrato ?? 0.012, vibratoRate: p.vibratoRate ?? 5.2, vibratoAfter: p.vibratoAfter ?? 0.3, glide: p.glide ?? 0.09, wander: p.wander ?? 0.15 });
+    const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow), phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
+    if (fx && phrase && ch.lastEnd !== undefined) fx.release(ch.lastEnd);
+    ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
+    ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + dur);
+    const vs = p.vowels?.length ? p.vowels : ["ah"], vowel = vs[(ch.sung ?? 0) % vs.length];
+    ch.tract.note(t, 69 + 12 * Math.log2(freq / 440), dur * 0.97, Math.min(1, peak), vowel);
+  }
+
   /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
   private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
-    const rec = this.recordings.get(p.sample ?? "");
+    // the recording: the sample set's nearest note (bent at most a semitone), else the one recording at its root
+    const want = 69 + 12 * Math.log2(freq / 440), near = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
+    const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(p.root ?? 69), len = Math.min(dur * 0.97, (rec.duration - 0.05) / rate);
+    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
@@ -616,8 +653,14 @@ export class MusicEngine {
     ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
     const src = c.createBufferSource(), g = c.createGain();
     src.buffer = rec; src.playbackRate.value = rate;
-    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(peak, t + 0.03);
-    g.gain.setValueAtTime(peak, t + Math.max(0.03, len - 0.08)); g.gain.linearRampToValueAtTime(0, t + len);
+    // the swell (Ed, 2026-10-14: "more dynamic range"): each note rising from nothing over its first `swell` share and fading
+    // over its last (a 30 ms ramp with none), so a held note breathes rather than switches on
+    const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
+    const envelope = (gain: AudioParam, top: number) => {
+      gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + rise);
+      gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len);
+    };
+    envelope(g.gain, peak);
     // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
     // vowel (its partials strong to 800 Hz, weak past 1 kHz), opened to "aa" by lifts at aa's formants (800 and 1150 Hz) or closed
     // to "oo" by a low-pass; and its onset ("l": the filter opening from a muffle over its first 80 ms, "laa")
@@ -635,7 +678,15 @@ export class MusicEngine {
       const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
       last.connect(pk); last = pk; nodes.push(pk);
     }
-    last.connect(ch.presence); src.start(t, 0, len * rate + 0.02);
+    last.connect(ch.presence); src.start(t, skip, len * rate + 0.02);
+    // breath (Ed, 2026-10-14: "gentler, breathier"): shaped noise under the note, through the same swell, at the patch's level
+    if ((p.breath ?? 0) > 0) {
+      const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();
+      n.buffer = this.noise; n.loop = true; bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 0.9;
+      envelope(bg.gain, peak * (p.breath ?? 0));
+      n.connect(bp).connect(bg).connect(ch.presence); n.start(t); n.stop(t + len + 0.02);
+      nodes.push(n, bp, bg);
+    }
     src.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 

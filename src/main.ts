@@ -14,6 +14,7 @@ import { Input } from "./platform/input";
 import { View } from "./render/view";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
+import { applySavedSettings } from "./app/settings";
 import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { PlaytestLog } from "./platform/playtestLog";
@@ -181,11 +182,12 @@ requestAnimationFrame(() => setTimeout(async () => {
 }, 0));
 
 // The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
+applySavedSettings(tuning); // (the volumes this browser remembers, on to their knobs before the sound is built: app/settings.ts)
 const sound = new Sound(tuning, musicStyle, seed!);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = new Freeze(game, seed!, typeof __BUILD__ === "string" ? __BUILD__ : "dev");
-freeze.started = () => startEl.style.display === "none";
+freeze.started = () => startEl.style.display === "none" || creator.open; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 
 // Arriving from the sea chart (?arrive=1; Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart's
 // last frame (index.html put it up) while the night builds, then the flight from the chart's camera to her decks; no bedroom.
@@ -309,15 +311,16 @@ const newBuild = new NewBuildNotice(typeof __BUILD__ === "string" ? __BUILD__ : 
 let menuGone = false;
 freeze.onToggle = on => {
   sound.freeze(on);
+  creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
   if (on) void newBuild.check();
-  if (pauseSliders) { pauseSliders.show(on); return; }
+  if (pauseSliders) { pauseSliders.show(on, creator.open); return; }
   if (!on || pauseLoading) return;
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
-    const report = () => import("./ui/circleReport").then(({ circleReport }) => circleReport({ canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, witch: () => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; } }));
+    const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
     pauseSliders = new PauseSliders({ tuning: game.tuning, seed: game.seed, version, live: knobLive, report });
-    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen)); // (a frame shut first, so it slides in)
+    requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
     void newBuild.check().then(() => { if (newBuild.latest) menuGone = true; else window.alert("A newer build of the game is up, so the pause page can't load: reload the page (Shift+Reload)."); });
@@ -390,6 +393,17 @@ document.getElementById("copy-debug")?.addEventListener("click", e => {
 });
 playtest.debugInfo = () => ({ link: repro.link(), machine: repro.machine().map(l => l.slice(7)), changed: Object.fromEntries(repro.changed()) });
 playtest.debugText = () => repro.full();
+// The pause page's Report (ui/visualReport.ts): the frame drawn with each neutral pair, where they differ, the GPU, her place, the
+// camera and the repro link. window.__neutralCheck: the same pairs' numbers for the smoke test (tools/smoke/smoke.cjs "neutral").
+const reportHost = () => {
+  const version = typeof __BUILD__ === "string" ? __BUILD__ : "dev", w = game.witch, c = game.camera;
+  return {
+    canvas, gl: view.renderer.getContext(), tuning: game.tuning, seed: game.seed, version, link: repro.link, changed: repro.changed,
+    witch: (): [number, number] | null => { const u = SPRITE_UNIFORMS.uWitch.value, low = view.post.lowSize; return low.x > 0 ? [u.x * canvas.width / low.x, (low.y - u.y) * canvas.height / low.y] : null; },
+    world: () => ({ x: w.x, z: w.z, mode: w.mode, lift: w.lift, area: game.map.areaAt(w.x, w.z).type, camera: { zoomStep: c.zoomStep, zoom: c.zoom, tx: c.tx, ty: c.ty, tz: c.tz } }),
+  };
+};
+(window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));
 playtest.viewState = () => { const w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music

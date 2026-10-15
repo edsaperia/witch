@@ -8,10 +8,11 @@
 // same line on the clipboard instead.
 import { button, h } from "./dom";
 import { byPr, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, setKnob, currentValue, valuesText, type Decision } from "./decisions";
+import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
 /** What the panel needs from the game. */
-export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The circle report (ui/circleReport.ts), if the game offers it. */ report?: () => Promise<string> }
+export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string> }
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -141,6 +142,7 @@ export function applyDecision(host: DecideHost, d: Decision, v: string | number 
 const PAUSE_CSS = `
 #pause-sliders { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 31; display: flex; flex-direction: column; background: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; transform: translateX(-105%); transition: transform .22s ease-out; pointer-events: none; }
 #pause-sliders.open { transform: translateX(0); }
+#pause-sliders.backed { background: rgba(14,11,28,.88); box-shadow: 2px 0 12px rgba(0,0,0,.5); }
 #pause-sliders > * { pointer-events: auto; }
 #pause-sliders .top { padding: 9px 10px 7px 16px; }
 #pause-sliders .title { color: var(--accent, #e8b46a); font-weight: 700; font-size: 13px; }
@@ -180,7 +182,7 @@ export class PauseSliders {
     const params = new URLSearchParams(location.search);
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Circle report", () => { this.status.textContent = "drawing the frame three ways…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "Draw this frame three ways and save a picture and a JSON of where they differ (the circle bug)" })] : []), this.status);
+    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), this.status);
     const body = h("div", { class: "list" });
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
@@ -193,9 +195,11 @@ export class PauseSliders {
     document.body.append(this.el);
   }
 
-  /** Slid in (frozen) or out. */
-  show(on: boolean): void {
+  /** Slid in (frozen) or out; `backed` over the bedroom's own panel (Ed, 2026-10-14: paused from her room), where the
+   *  see-through page would read as one with it. */
+  show(on: boolean, backed = false): void {
     this.el.classList.toggle("open", on);
+    this.el.classList.toggle("backed", on && backed);
     if (!on) return;
     this.status.textContent = "";
     // (afresh as it opens: a key may have moved a knob since, the fight's [ ] ; ' , . keys among them)
@@ -229,7 +233,7 @@ export class PauseSliders {
       if (r && document.activeElement !== r) r.value = String(v);
       if (out) out.textContent = String(v);
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); paint(); this.status.textContent = ""; };
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); paint(); this.status.textContent = ""; }; // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";

@@ -328,6 +328,7 @@ class Glottis {
     isTouched = false;
     alwaysVoice = false;
     autoWobble = false;
+    wander = 1; // Witch: how much of the model's own pitch drift (the two slow noises below) is kept: 1 as written, 0 none
     
     constructor() {
         this.setupWaveform(0);
@@ -360,8 +361,8 @@ class Glottis {
         const noise = this.noise;
         var vibrato = 0;
         vibrato += this.vibratoAmount * Math.sin(2*Math.PI * this.totalTime *this.vibratoFrequency);          
-        vibrato += 0.02 * noise.simplex1(this.totalTime * 4.07);
-        vibrato += 0.04 * noise.simplex1(this.totalTime * 2.15);
+        vibrato += this.wander * 0.02 * noise.simplex1(this.totalTime * 4.07); // Witch: scaled by wander
+        vibrato += this.wander * 0.04 * noise.simplex1(this.totalTime * 2.15);
         if (this.autoWobble)
         {
             vibrato += 0.2 * noise.simplex1(this.totalTime * 0.98);
