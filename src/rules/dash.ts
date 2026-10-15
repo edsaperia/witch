@@ -69,9 +69,11 @@ export function dashCharge(d: DashState, time: number): number {
 /** The dash button: blink if she's on the ground, off her seat and it's ready, toward the cursor
  *  (`aimX`, `aimZ`: the ground under it from her, metres; 0, 0 with none) or, with none, the way she
  *  steers. `clear(x, z)` says whether she can stand there. Returns whether she did. */
-export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0, aimX = 0, aimZ = 0): boolean {
-  rechargeDash(d, time, max, t.dash.cooldown);
-  if (time < d.readyAt || d.charges < 1 || w.mode !== "ground" || w.seated || w.perch) return false; // (no blinking off the treehouse deck)
+export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: number, time: number, t: Tuning, bounds: Bounds, clear: (x: number, z: number) => boolean = () => true, max = 1, chain = 0, aimX = 0, aimZ = 0, gate?: boolean): boolean {
+  // (gate given: the shared cooldown decides (rules/cooldown.ts), the charges don't count; chain still keeps a burst's blinks apart)
+  if (gate === undefined) rechargeDash(d, time, max, t.dash.cooldown);
+  const ready = gate === undefined ? time >= d.readyAt && d.charges >= 1 : gate && time >= d.readyAt;
+  if (!ready || w.mode !== "ground" || w.seated || w.perch) return false; // (no blinking off the treehouse deck)
   let dx = moveX, dz = moveZ, len = Math.hypot(dx, dz);
   const al = Math.hypot(aimX, aimZ);
   // The way she's moving (Ed, 2026-10-11: on the pad and on keyboard and mouse, not the way she's aiming): her
@@ -81,9 +83,11 @@ export function startDash(d: DashState, w: WitchState, moveX: number, moveZ: num
   if (len < 0.1) { const v = w.heading === "up" || w.heading === "down"; dx = v ? 0 : w.facing; dz = !v ? 0 : w.heading === "up" ? -1 : 1; len = 1; }
   const D = t.dash;
   d.dx = dx / len; d.dz = dz / len; d.at = time; d.until = time + blinkGone(t);
-  if (d.charges >= max) d.chargeAt = time + D.cooldown;
-  d.charges--;
-  d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;
+  if (gate === undefined) {
+    if (d.charges >= max) d.chargeAt = time + D.cooldown;
+    d.charges--;
+    d.readyAt = d.charges >= 1 ? time + chain : d.chargeAt;
+  } else d.readyAt = time + chain;
   d.fromX = w.x; d.fromZ = w.z;
   // The furthest clear spot along the line, in half-metre steps back from the full distance.
   d.toX = w.x; d.toZ = w.z;

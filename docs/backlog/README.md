@@ -7,6 +7,7 @@
 - [unlocks.md](unlocks.md): hats and brooms, unlocked by achievements.
 - [cauldron.md](cauldron.md): the kitchen's cauldron, mushrooms and the 56 trips.
 - [creator-and-house.md](creator-and-house.md): getting dressed, the mirror and poster, stargazing witches and the end of the night.
+- [combat.md](combat.md): pack combat: packs that combo their moves (a lunge, crossfire, a smoke bomb), three moves per animal (melee, ranged, special) from young, lulls and retreats, flyers that take off only to attack, sieges shelled from the trees (Ed, 2026-10-15).
 - [gameplay.md](gameplay.md): smaller changes: babies, flasks, tempo, flying cooldown, enraged marches, controller.
 - [music.md](music.md): a witchier sound, open samples, a better vocalise, and a palette of genres for the records.
 - [platform.md](platform.md): Steam and consoles, the Godot port, online co-op, and the cleanup before it.

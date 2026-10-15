@@ -31,9 +31,14 @@ export interface TrailTuning {
   colourEase: number;
   /** The broom's little amber sparks as well (render/spellfx.ts). */
   sparks: boolean;
+  /** One trail, one cooldown (Ed, 2026-10-15; rules/cooldown.ts): at least `cooldown` metres times the shared cooldown counter's
+   *  share in use (full after a take-off or a landing, draining to nothing), and laid along her blink when she dodges; bySpeed
+   *  off leaves only that (no length from her speed). */
+  cooldown?: number;
+  bySpeed?: boolean;
 }
 
-export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true };
+export const TRAIL_DEFAULT: TrailTuning = { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true, cooldown: 24, bySpeed: true };
 
 const DYNAMIC = ["position", "aDir", "aT", "aS", "aCol"];
 /** Points of her path kept (enough for the longest trail at its spacing). */
@@ -137,28 +142,45 @@ export class WitchTrail {
   /** Forgets her path (a blink, a teleport home): the trail starts again from where she is. */
   reset(): void { this.count = 0; this.head = -1; this.len = 0; }
 
+  /** A point added to her path. */
+  private point(x: number, y: number, z: number): void {
+    const P = this.path;
+    this.head = (this.head + 1) % CAP; this.count = Math.min(CAP, this.count + 1);
+    const o = this.head * 6;
+    P[o] = x; P[o + 1] = y; P[o + 2] = z; P[o + 3] = this.rgb.x; P[o + 4] = this.rgb.y; P[o + 5] = this.rgb.z;
+  }
+
   /** x, y, z: where her broom's bristles are (y: metres over the ground); speed (m/s) and her top speed now; lift: 0 on the
-   *  ground to 1 over the treetops; area: the colour (0..1) of the area she's over; blinkAt: her last blink's time. */
-  update(x: number, y: number, z: number, speed: number, top: number, lift: number, area: THREE.Vector3, time: number, dt: number, blinkAt: number): void {
+   *  ground to 1 over the treetops; area: the colour (0..1) of the area she's over; blinkAt: her last blink's time, and blink
+   *  its line (where she left and where she landed); cool: the shared cooldown counter's share in use, 0 to 1 (rules/cooldown.ts). */
+  update(x: number, y: number, z: number, speed: number, top: number, lift: number, area: THREE.Vector3, time: number, dt: number, blinkAt: number, blink: { fromX: number; fromZ: number; toX: number; toZ: number } | null = null, cool = 0): void {
     const T = this.T;
     this.mesh.visible = T.on;
     if (!T.on) return;
-    if (blinkAt !== this.lastBlink) { this.lastBlink = blinkAt; if (Number.isFinite(blinkAt)) this.reset(); }
     // its colour: eased toward the area's
     if (this.rgb.x < 0) this.rgb.copy(area);
     else this.rgb.lerp(area, 1 - Math.exp(-Math.max(0, dt) / Math.max(0.01, T.colourEase)));
-    // its length: by her speed, growing quickly and shrinking more slowly
-    const share = Math.min(1, Math.max(0, (speed / Math.max(1, top) - T.from) / Math.max(0.01, 1 - T.from)));
+    if (blinkAt !== this.lastBlink) {
+      this.lastBlink = blinkAt;
+      // A blink (Ed, 2026-10-15: the trail "should also appear when she dodges"): the ribbon laid along its line, from where she
+      // left to where she landed, on from her path before it; without the line (a teleport home), her path starts again from here.
+      if (Number.isFinite(blinkAt)) {
+        if (blink && (T.cooldown ?? 0) > 0) {
+          const d = Math.hypot(blink.toX - blink.fromX, blink.toZ - blink.fromZ), n = Math.max(1, Math.ceil(d / 0.5));
+          for (let i = 0; i <= n; i++) { const k = i / n; this.point(blink.fromX + (blink.toX - blink.fromX) * k, y, blink.fromZ + (blink.toZ - blink.fromZ) * k); }
+        } else this.reset();
+      }
+    }
+    // its length: by her speed, growing quickly and shrinking more slowly; and at least the cooldown counter's share of
+    // trail.cooldown metres (Ed, 2026-10-15: "its length shows one shared cooldown counter"), at once, draining with it
+    const share = T.bySpeed ?? true ? Math.min(1, Math.max(0, (speed / Math.max(1, top) - T.from) / Math.max(0.01, 1 - T.from))) : 0;
     const want = (T.ground + (T.treetops - T.ground) * lift) * Math.pow(share, T.curve);
     this.len += (want - this.len) * (1 - Math.exp(-Math.max(0, dt) / Math.max(0.01, want > this.len ? T.grow : T.shrink)));
+    this.len = Math.max(this.len, (T.cooldown ?? 0) * Math.min(1, Math.max(0, cool)));
     // her path: a point when she has moved far enough from the last (closer together for a short trail)
     const P = this.path, gap = Math.max(0.15, Math.min(1, this.len / 60));
     const last = this.head * 6;
-    if (this.count === 0 || Math.hypot(x - P[last], z - P[last + 2]) >= gap) {
-      this.head = (this.head + 1) % CAP; this.count = Math.min(CAP, this.count + 1);
-      const o = this.head * 6;
-      P[o] = x; P[o + 1] = y; P[o + 2] = z; P[o + 3] = this.rgb.x; P[o + 4] = this.rgb.y; P[o + 5] = this.rgb.z;
-    }
+    if (this.count === 0 || Math.hypot(x - P[last], z - P[last + 2]) >= gap) this.point(x, y, z);
     // the ribbon: from her broom back along her path until it's as long as it should be
     let s = 0, px = x, pz = z;
     this.n = 0;

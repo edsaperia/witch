@@ -15,11 +15,20 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 ## Controller — partly built
 
 - **Built (#618):** cross rises or lands, square picks up and puts down sigils (held: her hat), triangle cycles the stack, circle boosts (the spell), R2 invites, L2 blinks. Start pauses.
+- **Built (Lima, 2026-10-15, Ed's notes of 15 Oct):** triangle puts her hat down and picks it up (it was holding square), circle cycles the stack (it was triangle), the broom's spell (the boost) moves to L3 (the left stick pressed, where games put sprint; Ed to confirm). Square still picks up and puts down; **held on, it runs** (`src/rules/leash.ts` `run`, `leash.runs`, E on the keyboard too): since a press that picked a sigil up it keeps picking up any she runs over, since a press that put one down each empty hex she moves into takes the next; a press that did nothing starts no run, so holding E with nothing to do still puts her hat down (not square: its hat is triangle).
 - **Built (#649):** blink goes the way she's moving, not the way she's aiming, on the pad and on keyboard and mouse; standing still, the way she's facing (`src/rules/dash.ts`; `dash.toCursor` off).
 - Remaining (not built; nothing in `src/ui/` reads a gamepad but the sea chart):
   - **Creator and treehouse on the pad:** today they're mouse-only. Next / Back on buttons, left and right for options.
   - **Pad prompts:** on-screen prompts show keyboard keys even on a pad.
   - **Rumble:** none yet.
+
+## Ed's notes, 2026-10-15
+
+- **Sigils defend their whole area.** Today a sigil placed in the home area has her creatures fight any hostile in that area; a sigil placed in any other area only defends a radius round it. Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil.
+- **The arc of leashes should be higher.**
+- **The stack's sigils (above her head) more visible:** more opacity, and never obscured by scenery.
+- **Pick up and place in runs.** Picking up: if the first press picks a sigil up, holding the button keeps picking up any she runs over. Placing: if the first press places one, moving into empty hexes while holding places more. **Pad:** her hat is placed and picked up with triangle (was holding square); circle cycles the stack. — **Built** (#938; `leash.runs`, the Controller line above; the broom's spell moved off circle to L3, Ed to confirm).
+- **One trail, one cooldown.** The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it).
 
 ## Open questions
 

@@ -2161,5 +2161,19 @@
     "chapter": "builders",
     "from": "previews/volume-sliders.png",
     "pr": 927
+  },
+  {
+    "src": "media/builders/kilo-music-lab-pause.webp",
+    "caption": "The Music Lab on the pause page: the test sliders down the left, the lab down the right, driving the night's own music",
+    "chapter": "builders",
+    "from": "previews/music-lab-pause-01-open.png",
+    "pr": 943
+  },
+  {
+    "src": "media/builders/kilo-music-lab-levels.webp",
+    "caption": "Its Levels: every part of the music with mute and solo, the kick muted, the jump to the drop",
+    "chapter": "builders",
+    "from": "previews/music-lab-pause-02-playing.png",
+    "pr": 943
   }
 ]

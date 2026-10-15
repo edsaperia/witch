@@ -29,6 +29,28 @@ export const FX_NAMES: Record<Fx, string> = {
 };
 export type Voice = typeof VOICES[number];
 export const MODES = ["dorian", "aeolian", "phrygian"] as const;
+/** The sung patch each voice picks (the rest sing the game's, or the lab player's own). */
+export const SUNG_PATCH: Partial<Record<Voice, string>> = { fof: "fofSoprano", sampled: "altoSampled", tract: "altoTract" };
+/** The voice effects' ethereal preset (the voices' A/B's: tools/music-lab/voices.mjs). */
+export const ETHEREAL: Record<Fx, number> = { chorus: 0.5, saturation: 0.15, air: 0.5, delay: 0.35, hall: 0.6, shimmer: 0.5, duck: 0.3, swells: 0.6, freeze: 0.5, whisper: 0.25, octave: 0.3 };
+/** The parts' roles in words, in the order the lab lists them. */
+export const ROLES: Record<string, string> = { drum: "Drums", bass: "Bass", chord: "Chords and pads", arp: "Arpeggios", motif: "Melodies and hooks" };
+/** The parts' names in words (the style's own name after it). */
+export const WORDS: Record<string, string> = {
+  kick: "Kick", softkick: "Soft kick", hardkick: "Hard kick", boom: "Boom (sub hit)", hat: "Hi-hat", ohat: "Open hi-hat", clap: "Clap",
+  snare: "Snare", snap: "Snap", shaker: "Shaker", clank: "Clank (metal)", bass: "Bass", sub: "Sub bass", reese: "Reese bass",
+  darkbass: "Dark bass", chipbass: "Chip bass", tension: "Tension drone", pad: "Pad", gatepad: "Gated pad", stab: "Stabs",
+  strings: "Strings", choir: "Choir (synth)", arp: "Arp", pluck: "Pluck", lead: "Lead", chiplead: "Chip lead", vox: "Vox",
+  bell: "Bell", lgHorn: "Horn", tom: "Tom", acid: "Acid", flute: "Flute", keys: "Keys", sung: "Singer (the sung line)",
+};
+/** The music's own parts in the lab's order (by role, then name), the legends' circle parts left out (a style's `parts`
+ *  and its form's instruments, which may name one of them). */
+export function labParts(style: { parts: Record<string, { role?: string }>; form?: { instruments: string[] } }): string[] {
+  const legend = (p: string) => p.startsWith("lg") && !style.form?.instruments.includes(p);
+  const roleOf = (p: string) => style.parts[p]?.role ?? "other";
+  const rank = (p: string) => { const i = Object.keys(ROLES).indexOf(roleOf(p)); return i < 0 ? 99 : i; };
+  return Object.keys(style.parts).filter(p => !legend(p)).sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
+}
 
 export interface LabState {
   /** The arc step (0 the first wave's) and a section to loop ("" the wave's own, as the game plays it). */
@@ -57,6 +79,11 @@ export interface LabState {
   /** The voice test (Ed, 2026-10-14): the singer sings the chord as constant arpeggios in every section, not the form's
    *  melodies in the breakdowns and builds. */
   arpeggio: boolean;
+  /** The game's pause-page panel (Ed, 2026-10-15): a genre family forced on every wave of the night ("" the night's own), and
+   *  whether the music follows the game's own wave and section (true) rather than the passage above (the lab page always
+   *  plays its passage; the panel sets it false when pasted settings carry a `passage`). */
+  record?: string;
+  follow?: boolean;
 }
 
 export interface Defaults {
@@ -92,7 +119,8 @@ const some = (o: object) => Object.keys(o).length > 0;
 /** What Ed copies: only what differs from the defaults, readable. */
 export function settingsJson(s: LabState, d: Defaults): string {
   const base = defaultState(d), out: Record<string, unknown> = { lab: "witch-music-lab/1" };
-  if (s.wave !== base.wave || s.section) out.passage = { wave: s.wave, ...(s.section ? { section: s.section } : {}) };
+  if (s.follow !== true && (s.wave !== base.wave || s.section)) out.passage = { wave: s.wave, ...(s.section ? { section: s.section } : {}) };
+  if (s.record) out.record = s.record;
   if (s.seed !== base.seed) out.seed = s.seed;
   if (s.bpm !== base.bpm) out.bpm = s.bpm;
   if (s.mode !== base.mode) out.mode = s.mode;
@@ -133,6 +161,7 @@ export function parseSettings(text: string, d: Defaults, sections: string[]): { 
     switch (k) {
       case "lab": break;
       case "passage": { const p = v as { wave?: unknown; section?: unknown }; s.wave = Math.round(num(p?.wave, 0, 99, s.wave)); if (typeof p?.section === "string" && sections.includes(p.section)) s.section = p.section; break; }
+      case "record": if (typeof v === "string" && /^[a-z]{1,24}$/i.test(v)) s.record = v; else ignored.push(k); break;
       case "seed": s.seed = Math.round(num(v, 0, 1e9, s.seed)); break;
       case "bpm": s.bpm = Math.round(num(v, 60, 200, s.bpm)); break;
       case "mode": if (typeof v === "string" && (MODES as readonly string[]).includes(v)) s.mode = v; else ignored.push(k); break;

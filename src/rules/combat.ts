@@ -198,9 +198,12 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     // Party animals fight only near their leash point (a parked one within guard.radius of its
     // sigil); wild ones within aggro of where they are.
     // (Ed's motion scale pass: party animals chase about 40 m from her or their sigil before giving up)
-    // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11)
-    const H = c.leashed && guarding && lp && w.home?.inside(lp.x, lp.z) ? w.home : null;
-    const S = FIGHT.scale, reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
+    // (parked with its sigil in the home area, it guards all of that area and nothing outside it: Ed, 2026-10-11; parked in any
+    // other area, all of that area plus guard.radius round its sigil: Ed, 2026-10-15, "Placing a sigil in any area should work as
+    // home does: the creatures defend the whole area, plus a radius round the sigil")
+    const S = FIGHT.scale, parkedIn = c.leashed && guarding && lp ? (w.home?.inside(lp.x, lp.z) ? w.home : w.areaAt?.(lp.x, lp.z) ?? null) : null, atHome = !!parkedIn && parkedIn === w.home;
+    const H = parkedIn && lp ? (atHome ? parkedIn : { x: parkedIn.x, z: parkedIn.z, r: Math.max(parkedIn.r, Math.hypot(lp.x - parkedIn.x, lp.z - parkedIn.z) + t.guard.radius * S), inside: (x: number, z: number) => parkedIn.inside(x, z) || Math.hypot(x - lp.x, z - lp.z) <= t.guard.radius * S }) : null; // (the circle covers the area and the radius round the sigil, so acquire finds everything in either)
+    const reachX = H ? H.x : lp ? lp.x : c.x, reachZ = H ? H.z : lp ? lp.z : c.z, reach = H ? H.r : (lp ? (happy ? t.wildLegends.guard : guarding ? t.guard.radius : C.pursuit) : C.aggro) * S;
     if (f.target && !valid(w, s, c, f.target)) {
       // Lost her (or her party) past its band, or she rose (Ed, 2026-10-06: "instead they should retreat
       // and go back to idling"): a wild one that isn't besieging gives up and heads home.

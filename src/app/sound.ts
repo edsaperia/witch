@@ -17,6 +17,7 @@ import { voiceRecordings } from "../platform/audio/voiceSamples";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import type { PlaytestLog } from "../platform/playtestLog";
+import type { MusicLab } from "./musicLab";
 
 export class Sound {
   audio: AudioContext | null = null;
@@ -40,6 +41,9 @@ export class Sound {
   }
   /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
   private night: MusicStyle | null = null;
+  /** The pause page's Music Lab (app/musicLab.ts; Ed, 2026-10-15), once opened: its settings over the night's style and cue,
+   *  its levels on the engine's channels each frame, and its preview in the bedroom on a clock of its own. */
+  lab: MusicLab | null = null;
   private get playing(): MusicStyle { return this.night ?? this.style; }
 
 
@@ -148,14 +152,19 @@ export class Sound {
     const mv = this.tuning.music.volume * this.level;
     if (this.music && this.music.volume !== mv) this.music.volume = mv;
     if (this.sfx && this.sfxVol !== this.tuning.sfx.volume) { this.sfxVol = this.tuning.sfx.volume; this.sfx.setVolume(SFX_BASE * this.level); }
-    // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block
-    const night = nightStyle(this.style, game.musicSet);
+    // the night's set (Ed, 2026-10-11): the music plays its arc, from the next block; the Music Lab's settings over it (the same
+    // object while nothing changes there)
+    const night0 = nightStyle(this.style, game.musicSet), night = this.lab ? this.lab.styled(night0, game.musicSet) : night0;
     if (night !== this.night) { this.night = night; this.music?.engine?.setStyle(night); }
     if (this.music) this.music.shed = this.valve.level; // (the watchdog's rebuilt music too)
     if (this.music?.engine && this.audio) this.music.engine.lead = (this.audio.baseLatency ?? 0) + ((this.audio as AudioContext & { outputLatency?: number }).outputLatency ?? 0); // (the notes sent early by the context's latency: heard on the beat shown)
     if (this.sfx) this.sfx.shed = this.valve.level;
     const t1 = performance.now();
-    this.music?.update(this.lastMix, cue, game.clock.time, game.beat, !game.clock.paused, this.tuning.music, game.timeScale ?? 1, partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    // (the Music Lab's jump on the cue; its bedroom preview on its own clock, the mix whole, with no night playing)
+    const labCue = this.lab ? this.lab.cued(cue) : cue, pv = this.lab?.previewTime(performance.now() / 1000) ?? null;
+    const mix = pv ? { ...this.lastMix, volume: 1, cutoff: 16000, distort: 0 } : this.lastMix;
+    this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    if (this.lab && this.music?.engine && this.audio) this.lab.frame(this.music.engine, this.audio);
     const t2 = performance.now();
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);

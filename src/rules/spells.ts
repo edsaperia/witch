@@ -1,12 +1,12 @@
 // Spells: a hat and a broom (Ed, 2026-10-11; docs/backlog/unlocks.md). She has two slots, a hat and a broom, each with a spell
 // (or none: the plain hat and broom). Hats are mostly placed (put down with the sigil button held, rules/hat.ts): some fire once
 // when placed, some work over time while placed; the Helmet is worn. Brooms change how she moves or how much she can pull:
-// some passive, some active, cast with the spell button (R; gamepad circle; touch "spell"), then recharging. The plain broom
+// some passive, some active, cast with the spell button (R; the pad's L3, Ed 2026-10-15; touch "spell"), then recharging. The plain broom
 // lets her rise again sooner after landing. All unlocked for now; achievements come later. Spells may stun or slow enraged
 // creatures but never damage them (Ed, 2026-10-11). No drawing here.
 import type { Tuning } from "./tuning";
 
-export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing";
+export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing" | "edgeseer" | "routeseer";
 export type BroomSpellId = "none" | "speed" | "battering" | "long" | "double" | "leyjump" | "haul" | "pound" | "stealth";
 
 /** How a spell works: a hat worn, placed (working while it's down), or fired once on placing; a broom passive or active (a
@@ -28,6 +28,8 @@ export const HAT_SPELLS: SpellInfo<HatSpellId>[] = [
   { id: "lullaby", name: "Lullaby", how: "onPlace", line: "Put it down: wild creatures within 15 m fall asleep; a 💌 wakes one.", built: true }, // (Ed, 2026-10-12: "wake up when hit with an invitation")
   { id: "cyclone", name: "Cyclone", how: "placed", line: "Put it down: a whirlwind sweeps creatures near it round, lifts them and flings them out.", built: true }, // (Ed, 2026-10-12, instead of the Decoy)
   { id: "nursing", name: "Nursing", how: "placed", line: "Put it down: her creatures near it heal.", built: true },
+  { id: "edgeseer", name: "Edge-seer", how: "worn", line: "Worn: she sees the areas' edges glow.", built: true }, // (Ed, 2026-10-15: "shows the area edges"; "only the player wearing the hat sees the things")
+  { id: "routeseer", name: "Route-seer", how: "worn", line: "Worn: she sees the whole ley line, and every runestone's beacon.", built: true }, // (Ed, 2026-10-15: "a 'see the entire route' hat power as well")
 ];
 
 export const BROOM_SPELLS: SpellInfo<BroomSpellId>[] = [

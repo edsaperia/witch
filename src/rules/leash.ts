@@ -55,6 +55,11 @@ export interface LeashState {
    *  this regard; sit in the stack, and cycle when it cycles"): by relic id, how many of the creatures' sigils are above it.
    *  One missing, or past the stack's end, sits at the bottom. See stackOrder. */
   relicAt?: Record<number, number>;
+  /** A run of the sigil button (Ed, 2026-10-15: "Pick up and place in runs"): the button held on since a press that picked a sigil
+   *  up (`pick`: she keeps picking up any she runs over) or put one down (`place`: moving into an empty hex puts down the next);
+   *  `cell`, the hex cell she last put one down in or stood in (so one goes down only as she enters another), `x`,`z` where the
+   *  last went down off the grid. Let go, it's over (undefined). */
+  run?: { kind: "pick" | "place"; cell?: string; x: number; z: number };
 }
 
 /** One sigil in her stack: a leashed creature's, or a carried relic's. */
@@ -128,6 +133,9 @@ export interface LeashControls {
   place?: boolean;
   /** Cycle (Q): the bottom sigil to the top, on the ground or in the treetops. */
   cycle?: boolean;
+  /** The sigil button is held on this frame (E, the pad's square, touch): since a press that picked up or put down, a run
+   *  (LeashState.run, Ed 2026-10-15): picking up any sigil she runs over, or putting one down in each empty hex she enters. */
+  held?: boolean;
   /** The happy creature whose sigil rune is ready within r of (x, z), nearest first (states.leash "pickup"), or null. */
   rune?: (x: number, z: number, r: number) => Creature | null;
   /** Debug: invite the nearest invitable creature, however far. */
@@ -257,45 +265,26 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     const it = cycleStack(s)!;
     s.events.push({ kind: "cycled", id: it.id, x: witch.x, z: witch.z, at: time, ...(it.kind === "relic" ? { relic: true } : {}) });
   }
-  if ((c.sigil || c.place) && onGround) {
-    let pick = -1, pd = L.pickRadius;
-    // On the hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): the cell nearest her decides; taken, the press
-    // picks its sigil up (no fizzling); free, a sigil goes down on it, or, if it's barred, on the nearest free cell that isn't.
-    const H = L.hex && L.hex.size > 0 ? L.hex : null;
-    const spot = H ? hexSpot(s, witch.x, witch.z, H.size, c.barred) : null;
-    if (spot) pick = spot.taken;
-    else s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
-    // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
-    const rune = pick < 0 ? c.rune?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null; // (further than her own sigils: Ed's playtest, "difficult to pick up")
-    if (pick >= 0) {
-      const [p] = s.placed.splice(pick, 1);
-      s.stack.push(p.id);
-      s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
-    } else if (rune) {
-      // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
-      inviteCreature(s, rune, rune.x, rune.z + runeOffset(rune, t), time, "picked"); // (where its rune lay, south of it)
-    } else if (stackBottom(s)?.kind === "relic") {
-      // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
-      // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
-      // down on the ground where she stands, to pick up again like any sigil.
-      const id = stackBottom(s)!.id;
-      if (c.dropRelic) {
-        c.dropRelic(id, witch.x, witch.z);
-        dropRelic(s, id);
-        s.events.push({ kind: "relicDropped", id, x: witch.x, z: witch.z, at: time });
-      }
-    } else if (s.stack.length) {
-      const id = s.stack[s.stack.length - 1];
-      // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
-      if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); }
-      else if (spot) {
-        if (spot.at) { s.stack.pop(); s.placed.push({ id, x: spot.at.x, z: spot.at.z, at: time }); s.events.push({ kind: "placed", id, x: spot.at.x, z: spot.at.z, at: time }); }
-        // (no allowed free cell near her: nothing)
-      } else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
-      else {
-        s.stack.pop();
-        s.placed.push({ id, x: witch.x, z: witch.z, at: time });
-        s.events.push({ kind: "placed", id, x: witch.x, z: witch.z, at: time });
+  // A run (Ed, 2026-10-15; leash.runs): the button held on since a press that picked up ("pick": she keeps picking up any sigil she
+  // runs over) or put down ("place": each empty hex she moves into takes the next; off the grid, every leash.spacing metres). A press
+  // that did nothing starts none (so holding with nothing to do still puts her hat down: rules/hat.ts putHat). Let go, it's over.
+  const runs = L.runs !== false;
+  if (!c.held || !onGround || !runs) s.run = undefined;
+  const pressed = (c.sigil || c.place) && onGround;
+  const H = L.hex && L.hex.size > 0 ? L.hex : null;
+  const cellOf = (x: number, z: number) => { const h = hexCell(x, z, H!.size); return `${h.q},${h.r}`; };
+  if (pressed) {
+    const did = sigilPress(s, creatures, c, witch, time, t, undefined);
+    if (did && runs && c.held) s.run = { kind: did, cell: H ? cellOf(witch.x, witch.z) : undefined, x: witch.x, z: witch.z };
+  } else if (s.run && onGround) {
+    const r = s.run;
+    if (r.kind === "pick") sigilPress(s, creatures, c, witch, time, t, "pick");
+    else {
+      // Into another cell (or, off the grid, spacing metres on): the next sigil goes down there, if the cell's free.
+      const here = H ? cellOf(witch.x, witch.z) : undefined, moved = H ? here !== r.cell : Math.hypot(witch.x - r.x, witch.z - r.z) >= L.spacing;
+      if (moved) {
+        if (sigilPress(s, creatures, c, witch, time, t, "place") === "place") { r.x = witch.x; r.z = witch.z; }
+        r.cell = here;
       }
     }
   }
@@ -326,6 +315,63 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
   // Parked, it rests north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up (Ed, 2026-10-10: "Leashed
   // animals should come to rest 10m above their placed sigil"; 2026-10-13: the sigil's top just below its feet, by its size: rules/runeOffset.ts).
   for (const p of s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
+}
+
+/** The sigil button on the ground at her feet (`only`: in a run, just picking up or just putting down; a press does whichever
+ *  the spot asks): picks up her placed sigil in the hex cell she stands in (or within leash.pickRadius off the grid), else a
+ *  happy creature's rune near her, else puts the bottom of her stack down (a relic's sigil on the ground, a creature's on the
+ *  cell or at her feet). Returns what it did ("pick", "place"), or null when nothing happened (a fizzle counts as nothing). */
+function sigilPress(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, time: number, t: Tuning, only: "pick" | "place" | undefined): "pick" | "place" | null {
+  const L = t.leash, byId = (id: number) => creatures[id];
+  let pick = -1, pd = L.pickRadius;
+  // On the hex grid (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): the cell nearest her decides; taken, the press
+  // picks its sigil up (no fizzling); free, a sigil goes down on it, or, if it's barred, on the nearest free cell that isn't.
+  const H = L.hex && L.hex.size > 0 ? L.hex : null;
+  const spot = H ? hexSpot(s, witch.x, witch.z, H.size, c.barred) : null;
+  if (spot) pick = spot.taken;
+  else s.placed.forEach((p, i) => { const d = Math.hypot(p.x - witch.x, p.z - witch.z); if (d <= pd) { pd = d; pick = i; } });
+  if (only === "place") pick = -1;
+  // (Her own placed sigil first, then a happy creature's rune: Ed, 2026-10-06, the nearest; her hat before both, rules/game.ts.)
+  const rune = pick < 0 && only !== "place" ? c.rune?.(witch.x, witch.z, L.runeRadius ?? L.pickRadius) ?? null : null; // (further than her own sigils: Ed's playtest, "difficult to pick up")
+  if (pick >= 0) {
+    const [p] = s.placed.splice(pick, 1);
+    s.stack.push(p.id);
+    s.events.push({ kind: "picked", id: p.id, x: p.x, z: p.z, at: time });
+    return "pick";
+  } else if (rune) {
+    // A happy creature's rune (states.leash "pickup"): picked up like a placed sigil, it's leashed, at the bottom of her stack.
+    inviteCreature(s, rune, rune.x, rune.z + runeOffset(rune, t), time, "picked"); // (where its rune lay, south of it)
+    return "pick";
+  }
+  if (only === "pick") return null;
+  if (spot && spot.taken >= 0) return null; // (a run of placing over a taken cell: nothing)
+  if (stackBottom(s)?.kind === "relic") {
+    // A relic's sigil at the bottom (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you put down when you press
+    // e"): by a sleeping legend the sigil button has given it already (rules/legends.ts relicButton); anywhere else it goes
+    // down on the ground where she stands, to pick up again like any sigil.
+    const id = stackBottom(s)!.id;
+    if (c.dropRelic) {
+      c.dropRelic(id, witch.x, witch.z);
+      dropRelic(s, id);
+      s.events.push({ kind: "relicDropped", id, x: witch.x, z: witch.z, at: time });
+      return "place";
+    }
+  } else if (s.stack.length) {
+    const id = s.stack[s.stack.length - 1];
+    // A party legend's (the Easter egg): put down, it's let go where it stands, dancing (its rune at its feet), and she's free.
+    if (byId(id).partyLegend) { s.stack.pop(); letPartyLegendGo(byId(id)); s.events.push({ kind: "placed", id, x: byId(id).x, z: byId(id).z, at: time }); return "place"; }
+    else if (spot) {
+      if (spot.at) { s.stack.pop(); s.placed.push({ id, x: spot.at.x, z: spot.at.z, at: time }); s.events.push({ kind: "placed", id, x: spot.at.x, z: spot.at.z, at: time }); return "place"; }
+      // (no allowed free cell near her: nothing)
+    } else if (blocked(s, witch.x, witch.z, t)) s.events.push({ kind: "fizzled", id, x: witch.x, z: witch.z, at: time });
+    else {
+      s.stack.pop();
+      s.placed.push({ id, x: witch.x, z: witch.z, at: time });
+      s.events.push({ kind: "placed", id, x: witch.x, z: witch.z, at: time });
+      return "place";
+    }
+  }
+  return null;
 }
 
 /** The hex cell (axial q, r) nearest (x, z), on a world-fixed grid `size` metres between neighbours (rows along x, each

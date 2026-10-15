@@ -1,7 +1,7 @@
 {
   "builder": "Kilo",
   "phase": "Phase 5: the backlog's reckoning",
-  "slice": "The smaller gameplay backlog checked against the code and a pause-page slider for the flying cooldown (#916); invitations bouncing off the enraged finished; pausing from the bedroom and the volume sliders; the full smoke run's leftover failures cleaned up (#929)",
+  "slice": "The smaller gameplay backlog checked against the code and a pause-page slider for the flying cooldown (#916); invitations bouncing off the enraged finished; pausing from the bedroom, the volume sliders and the Music Lab on the pause page; the full smoke run's leftover failures cleaned up",
   "prs": [
     916,
     923,
@@ -9,7 +9,8 @@
     925,
     927,
     929,
-    932
+    932,
+    943
   ],
   "built": [
     "Every item of `docs/backlog/gameplay.md` checked in the rules and marked built (with its PR), partly built or not built; the built ones gathered into one short list at the foot of the page",
@@ -17,7 +18,8 @@
     "An enraged animal refusing a 💌: its angry whine (`chimes.ts refused`), its 💢 shaking at its face, and the letter crumpling into a ball of paper flung back the way it came (`render/invites.ts`); `node tools/smoke/bounce-off.cjs` shoots it",
     "Pausing from the bedroom: Esc or the pad's Start opens the pause page over her room, backed, her keys and clicks held till it resumes (#925)",
     "Music and Sound effects volume sliders pinned at the top of the pause page, read live by the sound and remembered on the browser (#927; the first step of Ed's pause-page music lab)",
-    "The full smoke run's harness faults mended (#929, #932: its heath and cave-mouth scenes on the moth's island): the laptop scene hops off the treehouse deck before its ground flight (she was held at the rail), the cave mouth and the heath are found on the radius map (`?island=off`: the home island's ten kinds have neither), the boost ceiling is read from the tuning with the Speed broom asked for, the Ent's halves (moved along the camera's rays by design) are left out of the float check, the hills ride check accepts a bob too small to measure, and the five KNOWN entries that pass now are off the list"
+    "The full smoke run's harness faults mended (#929, #932: its heath and cave-mouth scenes on the moth's island): the laptop scene hops off the treehouse deck before its ground flight (she was held at the rail), the cave mouth and the heath are found on the radius map (`?island=off`: the home island's ten kinds have neither), the boost ceiling is read from the tuning with the Speed broom asked for, the Ent's halves (moved along the camera's rays by design) are left out of the float check, the hills ride check accepts a bob too small to measure, and the five KNOWN entries that pass now are off the list",
+    "The Music Lab on the pause page (#943, from my mock with Ed's answers): the pause page's 🎛 button opens the live lab's controls down the right edge over the night's own music, through the engine's own hooks: a jump to any wave, section or record, the singer's A/B voices, breath, chain and arpeggios, the voice effects, every part's level with mute and solo, and the settings copied out as the lab's JSON, pasted back or reset; Esc resumes with it up, ▶ Preview plays a passage in the bedroom; `node tools/smoke/music-lab-pause.cjs` drives it"
   ],
   "learned": [
     "Most of a backlog from three days ago was already built, in two rule-tweak PRs (#648, #649) that nobody had marked off; a page that says what shipped and where saves the next builder the whole hunt.",
@@ -25,7 +27,8 @@
     "In the debug arena the first group is hers (leashed) and letters pass straight through a leashed animal: a shot that shows nothing is a setup bug before it is a drawing bug. Instrument the rules frame by frame before touching the art.",
     "Under the cloud's software renderer a game frame can take over a second, so a browser check that waits a fixed half second after a key sees nothing change: wait for the value itself.",
     "A harness that fails on its own assumptions (a scene that flies before she has left the deck, an area the island no longer has, a broom the default witch no longer carries) costs every builder a wasted read of a red run: check the report line by line against the game as it is today before touching a single game number.",
-    "A scene that teleports her to a new area must not wait for the assets' pending count to reach 0: after a move it is the art baked ahead of need (the island's species, their looks and rigs), a job a minute under the software renderer, 10 to 20 minutes in all. Wait on the forest's own counts, then a bounded while for the art. And calm the area first, or the wild watch knocks her back to her decks while you wait."
+    "A scene that teleports her to a new area must not wait for the assets' pending count to reach 0: after a move it is the art baked ahead of need (the island's species, their looks and rigs), a job a minute under the software renderer, 10 to 20 minutes in all. Wait on the forest's own counts, then a bounded while for the art. And calm the area first, or the wild watch knocks her back to her decks while you wait.",
+    "A panel that drives a running engine should never own a copy of its state: the live lab's settings module already had the JSON Ed pastes between builders, so the panel is that same state applied through three hooks (a style transform memoised by identity so the engine is set once, a cue transform, and the channels' gains stamped with a version), and the engine stays someone else's untouched code."
   ],
   "previews": [
     {
@@ -43,6 +46,14 @@
     {
       "src": "media/builders/kilo-volume.webp",
       "caption": "The Volume group on the pause page"
+    },
+    {
+      "src": "media/builders/kilo-music-lab-pause.webp",
+      "caption": "The Music Lab on the pause page"
+    },
+    {
+      "src": "media/builders/kilo-music-lab-levels.webp",
+      "caption": "Its Levels: a mute, a jump"
     }
   ]
 }

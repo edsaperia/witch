@@ -12,7 +12,7 @@ import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
 /** What the panel needs from the game. */
-export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string> }
+export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void }
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -147,7 +147,7 @@ const PAUSE_CSS = `
 #pause-sliders .top { padding: 9px 10px 7px 16px; }
 #pause-sliders .title { color: var(--accent, #e8b46a); font-weight: 700; font-size: 13px; }
 #pause-sliders .hint { color: #d6cfe6; margin: 2px 0 6px; }
-#pause-sliders .copyall { font: inherit; text-shadow: inherit; width: 100%; background: rgba(14,11,28,.25); color: var(--accent, #e8b46a); border: 1px solid var(--accent, #e8b46a); border-radius: 4px; padding: 4px 6px; cursor: pointer; }
+#pause-sliders .copyall { font: inherit; text-shadow: inherit; width: 100%; background: rgba(14,11,28,.25); color: var(--accent, #e8b46a); border: 1px solid var(--accent, #e8b46a); border-radius: 4px; padding: 4px 6px; cursor: pointer; margin-bottom: 3px; }
 #pause-sliders .copyall:hover { background: var(--accent, #e8b46a); color: #1d1408; text-shadow: none; }
 #pause-sliders .status { color: var(--accent, #e8b46a); font-size: 11px; min-height: 1em; margin-top: 3px; white-space: pre-wrap; }
 #pause-sliders .list { flex: 1; overflow-y: auto; direction: rtl; padding: 0 10px 8px 6px; scrollbar-color: var(--accent, #e8b46a) rgba(0,0,0,.35); scrollbar-width: thin; }
@@ -182,7 +182,7 @@ export class PauseSliders {
     const params = new URLSearchParams(location.search);
     for (const d of list) this.values.set(d.id, currentValue(d, host.tuning, params));
     const copy = button("Copy values", () => this.copy(), { class: "copyall", title: "Copy every slider's name, key, value and built default, to paste to the coordinator" });
-    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), this.status);
+    const top = h("div", { class: "top", html: `<div class="title">❚❚ Paused · test sliders</div><p class="hint">Esc resumes · . steps (Shift+. ten) · changes show now; double-click a slider for its built value</p>` }, copy, ...(host.report ? [button("Report", () => { this.status.textContent = "drawing the frame with each neutral pair…"; void host.report!().then(t => { this.status.textContent = t; }, e => { this.status.textContent = `report failed: ${e}`; }); }, { class: "copyall", title: "For a visual bug: draw this frame with each neutral pair of settings and save a picture and a JSON (where they differ, the GPU, her place, the repro link)" })] : []), ...(host.musicLab ? [button("🎛 Music Lab", () => host.musicLab!(), { class: "copyall", title: "The night's own music with the lab's sliders, down the right edge: the singer, the levels, a jump to any wave or section; Esc resumes with it up" })] : []), this.status);
     const body = h("div", { class: "list" });
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);

@@ -12,7 +12,8 @@ import { MapTable } from "./mapTable";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { poseOf } from "../rules/game";
+import { blinkCharges, poseOf } from "../rules/game";
+import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
@@ -71,6 +72,7 @@ import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
 import { Wisps } from "./wisps";
@@ -873,7 +875,8 @@ export class View {
       // 2026-10-07): there it branches off, an extension of the boot's line, out to the first stone as the boot goes on round
       // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
-      this.ley.grow(leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
+      // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
+      this.ley.grow(routeSeen(g) ? null : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
@@ -930,8 +933,10 @@ export class View {
       const lift = canopyShown(w), A = g.map.areaAt(w.x, w.z), sp = Math.hypot(w.vx, w.vz), top = t.groundSpeed + (t.treetopSpeed - t.groundSpeed) * lift;
       const c = A.look === HOME_LOOK ? this.trailRgb.set(0.8, 0.7, 1) : this.trailRgb.copy(this.markerArt.colour.get(AREA_TYPES[A.type].creature) ?? this.trailRgb.set(0.8, 0.7, 1));
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
-      const back = sp > 0.1 ? 0.6 / sp : 0, D = g.witches[0].dash;
-      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at);
+      const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
+      // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
+      const cool = t.cooldown?.shared ? coolShare(W0.cool, coolRoom(t, blinkCharges(g, W0))) : 0;
+      this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
       // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);
       const Bp = this.leashView.bristle; Bp.x = w.x - w.vx * back; Bp.y = witchHeight(w, t) + 0.25 + this.rideOff; Bp.z = w.z - w.vz * back;

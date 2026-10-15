@@ -13,7 +13,7 @@ import { carryRelic, dropRelic, stackBottom, stepLeash, type LeashEvent } from "
 import { relicButton } from "./legends";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
-import { hatButton, putHat } from "./hat";
+import { hatButton, putHat, wearing } from "./hat";
 import { setLoadout } from "./spells";
 import { questOutside, questPlaced } from "./quest";
 import { onAreaDone } from "./leylines";
@@ -55,14 +55,28 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, g.witch.x, g.witch.z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
     sigil = false; place = false;
   }
+  const onFoot = g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko;
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
   // Bare-headed by another hat of hers left lying (Ed, 2026-10-12), she puts that one on, and its spell is hers.
-  const worn = (sigil || place) && g.witch.mode === "ground" ? hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius, W.spells.hat) : null;
+  // The hat button (the pad's triangle, Ed 2026-10-15: "her hat is placed and picked up with triangle"): the same pick-up, else,
+  // wearing it, her hat goes down at her feet at once.
+  const hatPress = !!c.hat && onFoot;
+  const worn = (sigil || place || hatPress) && g.witch.mode === "ground" ? hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius, W.spells.hat) : null;
   if (worn !== null) {
     if (worn !== W.spells.hat) setLoadout(W.spells, worn, W.spells.broom);
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
+  } else if (hatPress && wearing(W.hat)) {
+    W.hat.down = { x: g.witch.x, z: g.witch.z, at: ht }; delete W.hat.hold;
+    relicEvents.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
+  }
+  // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
+  // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).
+  const held = !!c.sigilHeld && onFoot, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
+  if (run === "pick" && g.witch.mode === "ground") {
+    const r = relicButton(g.relics, [], g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
+    if (r && "picked" in r) { carryRelic(g.leash, r.picked.id); relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht }); }
   }
   if ((sigil || place) && g.witch.mode === "ground") {
     // (A relic's sigil sits in her stack like the rest, Ed's playtest 2026-10-08: only the one at its bottom is given, in a
@@ -79,12 +93,12 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
       else relicEvents.push(outsideCircle(g, r.outside));
     }
   }
-  stepLeash(g.leash, g.creatures, { sigil, place, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
+  stepLeash(g.leash, g.creatures, { sigil, place, held, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
   g.leash.events.push(...relicEvents);
   // Held with nothing to do (no sigil, relic, rune or hat picked up or put down, nothing refused), on the ground: her hat goes
   // down at her feet (rules/hat.ts putHat).
   const idle = pressed && !g.leash.events.some(e => e.at === ht && e.kind !== "invited" && e.kind !== "befriended" && e.kind !== "cancelled");
-  if (putHat(W.hat, idle, !!c.sigilHeld && g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko, g.witch.x, g.witch.z, ht, t.leash.hatHold))
+  if (putHat(W.hat, idle, !!(c.hatHold ?? c.sigilHeld) && onFoot, g.witch.x, g.witch.z, ht, t.leash.hatHold))
     g.leash.events.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
   // A happy creature's rune near her on the ground comes to her (Ed's playtest, 2026-10-06: "Floor sigils of happy creatures ... are
   // difficult to pick up"): its creature trots over (leash.runePull), so she needn't stop dead on it.

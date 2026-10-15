@@ -1,0 +1,46 @@
+{
+  "pr": 937,
+  "group": "Stack sigils",
+  "decisions": [
+    {
+      "id": "stackOver",
+      "pr": 937,
+      "group": "Stack sigils",
+      "label": "Stack over the scenery",
+      "note": "The sigils stacked above her head drawn over everything (no depth test, after the see-through pass), so no trunk or crown hides them (Ed, 2026-10-15: \"never obscured by scenery\"). Off: hidden behind scenery as before.",
+      "control": { "type": "toggle" },
+      "default": true,
+      "apply": { "knob": "stack.over" }
+    },
+    {
+      "id": "stackBright",
+      "pr": 937,
+      "group": "Stack sigils",
+      "label": "Stack brightness",
+      "note": "How bright each stacked sigil is drawn, times the ground sigils' (leash.sigilGlyph). 1 as before; 1.6 now (Ed: \"more opacity\"). Past about 1.1 the glyph starts to bloom.",
+      "control": { "type": "slider", "min": 0.5, "max": 3, "step": 0.1 },
+      "default": 1.6,
+      "apply": { "knob": "stack.bright" }
+    },
+    {
+      "id": "stackBacking",
+      "pr": 937,
+      "group": "Stack sigils",
+      "label": "Stack backing disc",
+      "note": "A near-black disc behind each stacked sigil, this opaque (0 none, 1 solid), so the glyph reads against lit crowns and the sky.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.6,
+      "apply": { "knob": "stack.backing" }
+    },
+    {
+      "id": "stackBackSize",
+      "pr": 937,
+      "group": "Stack sigils",
+      "label": "Backing disc size",
+      "note": "The backing disc's width, times the sigil's.",
+      "control": { "type": "slider", "min": 1, "max": 2, "step": 0.05 },
+      "default": 1.3,
+      "apply": { "knob": "stack.backSize" }
+    }
+  ]
+}

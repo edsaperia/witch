@@ -15,6 +15,7 @@ import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
 import { columnShown, leyReachTimes } from "../../rules/leypulse";
+import { routeSeen } from "../../rules/hatSpells";
 import { speakerBoot } from "../../rules/game";
 import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
@@ -66,7 +67,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   // (its times ahead are by the pulse's speed now, which a knockdown's BPM raises).
   const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}:${g.party.bootUntil}:${Math.floor(g.clock.time * 2)}`; // (the line's own party: leyLines.advance)
   if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map, g.clock.time) };
-  const FLARE = R.flare.time;
+  const FLARE = R.flare.time, allSeen = routeSeen(g); // (the Route-seer hat worn: every beacon up, rules/hatSpells.ts)
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
     if (d > range) continue;
@@ -88,7 +89,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
     const grow = m.stage === "next" ? 0.5 + 0.5 * build : m.stage === "afterNext" ? 0.15 + 0.35 * build : 1;
     // Not reached by the line yet: no column, no laser (its dim rune glow above is all, findable up close, not from the
     // treetops). Reached: the column shoots up with a flare-up as the line meets it, and stays.
-    const shown = columnShown(v.leyReach.times?.get(m.key), time, FLARE);
+    const shown = columnShown(allSeen ? -Infinity : v.leyReach.times?.get(m.key), time, FLARE);
     if (!shown) continue;
     const { up, flare } = shown;
     if (flare > 0) near.push({ d: d - 1e3, l: { x: m.x, y: 3, z: m.z, reach: R.awake.reach * 1.5, rgb: col, strength: R.flare.light * flare, shadow: { x: m.x, y: 3, z: m.z, k: flare } } });
