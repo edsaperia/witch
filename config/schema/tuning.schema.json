@@ -2281,6 +2281,23 @@
       "type": "number",
       "minimum": 0
     },
+    "cooldown": {
+      "type": "object",
+      "properties": {
+        "shared": {
+          "type": "boolean"
+        },
+        "rise": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "shared",
+        "rise"
+      ],
+      "additionalProperties": false
+    },
     "groundHeight": {
       "type": "number",
       "minimum": 0
@@ -3147,6 +3164,13 @@
         },
         "sparks": {
           "type": "boolean"
+        },
+        "cooldown": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bySpeed": {
+          "type": "boolean"
         }
       },
       "required": [
@@ -3161,7 +3185,9 @@
         "grow",
         "shrink",
         "colourEase",
-        "sparks"
+        "sparks",
+        "cooldown",
+        "bySpeed"
       ],
       "additionalProperties": false
     },
@@ -10880,6 +10906,7 @@
     "riseTime",
     "descendTime",
     "riseCooldown",
+    "cooldown",
     "groundHeight",
     "treetopHeight",
     "witch",

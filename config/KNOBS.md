@@ -546,13 +546,22 @@ Treetop flight (Ed: a high top speed and momentum; the ground stays snappy): pre
 | `riseTime` | number | 0 to … |
 | `descendTime` | number | 0 to … |
 
-### `riseCooldown`, `groundHeight`, `treetopHeight`
+### `riseCooldown`
 
 After she lands she can't rise again for this many seconds (Ed, 2026-10-11: players rose to the treetops instead of dodging, since rising takes her out of ground mode, and out of reach, at once). 0: no wait.
 
 | knob | type | range |
 |---|---|---|
 | `riseCooldown` | number | 0 to … |
+
+### `cooldown`, `groundHeight`, `treetopHeight`
+
+One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown. The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts): shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the plain broom's spells.plain.riseCooldown times both of the last). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Double blink broom): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.
+
+| knob | type | range |
+|---|---|---|
+| `cooldown.shared` | boolean |  |
+| `cooldown.rise` | number | 0 to … |
 | `groundHeight` | number | 0 to … |
 | `treetopHeight` | number | 0 to … |
 
@@ -703,7 +712,7 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 
 ### `trail`
 
-Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it.
+Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it. One trail, one cooldown (Ed, 2026-10-15; the tuning's cooldown): it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed).
 
 | knob | type | range |
 |---|---|---|
@@ -719,6 +728,8 @@ Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the l
 | `trail.shrink` | number | 0 to … |
 | `trail.colourEase` | number | 0 to … |
 | `trail.sparks` | boolean |  |
+| `trail.cooldown` | number | 0 to … |
+| `trail.bySpeed` | boolean |  |
 
 ### `swoopTrail`
 
