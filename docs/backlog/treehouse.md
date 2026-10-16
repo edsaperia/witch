@@ -78,7 +78,7 @@ Some of these are **areas of the hub or of another room rather than rooms of the
 
 ## Ties
 
-- **Hats and brooms** ([unlocks.md](unlocks.md)): chosen in the corridors as objects; **one power per hat and per broom, any shape**, the shape and colour changed at the hat and broom stations (the creator's hat and broom boxes retire); the corridor's one hook per hat is where "one of each in play" lives.
+- **Hats and brooms** ([unlocks.md](unlocks.md)): hats after the first are **found at shrines on the islands and carried home to the corridor mid-night** to become hers, and **brooms are made at the broom station** (Ed, 2026-10-16; unlocks.md); chosen in the corridors as objects; **one power per hat and per broom, any shape**, the shape and colour changed at the hat and broom stations (the creator's hat and broom boxes retire); the corridor's one hook per hat is where "one of each in play" lives.
 - **Records** ([journey.md](journey.md) section 2): earned ones on the studio's shelf; the first game's single record already on the decks.
 - **The sea chart** (journey.md section 1): opened from the hub's map table with a button; sail at any time, mid-night ending the night unwon, as built.
 - **The zoo** (`?zoo`): opened from the library.
