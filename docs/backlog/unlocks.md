@@ -74,11 +74,58 @@ Ed's idea, superseding the achievements rule below for hats (kept for the record
 - **Her first hat is hers; every hat after it is found on an island, at a shrine themed on its power.** A shrine is a set piece in one of the island's areas (placed like relics: about one per island, which hat by the island's kind or biome, so a player learns where to look); e.g. the Harvest hat in a ring of berries, Sentry on a watchtower, Bramble in thorns, Lullaby in a bed of poppies, Mine in a crater, Cyclone on a windy tor, Nursing at a spring, the Helmet on a cairn. The Dowsing hat could point to shrines as well as relics.
 - **She picks it up as a game object** (E, as any hat lying in the world: #717's rule): wearing one already, her own hat goes down where she stands and keeps working there, with its pointer; bareheaded, she puts the found one on and its spell is hers for the night.
 - **It becomes hers when she carries it to the balcony mid-night** (Ed, 2026-10-16): fly it home (every room is open mid-night, time at a tenth), hang it on its hook in the hat corridor, and go back out. Until then it is only a hat she's carrying: a knockdown drops it where she fell (its pointer shows where), and a night ended with it still out leaves it at its shrine for next time. So fetching a hat is a detour with a risk, and the house is where the risk ends.
-- **Brooms are not found: she makes them** (Ed, 2026-10-16: "You can't go out without a broom and take a new one home. Brooms feel like something you make at a crafting station in the treehouse."): the broom station (treehouse.md: a workbench with tools) is where a new broom is built. What a broom costs, and what unlocks the recipe, is open (proposed: an island's biome souvenir, or the skull in the library, or simply a won island each).
+- **Brooms are not found: they are built from parts** found on the islands, at the broom garage (the section below; Ed, 2026-10-16).
 - **Achievements** then unlock nothing, or only trophies for the bedroom (treehouse.md). The afterparty's "new unlocks" card shows the hat she brought home and the broom she made.
 - **The first hat with a spell** could sit at a tutorial shrine on home, so a new player meets the loop on the first island.
 
 Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
+
+## The broom garage (Ed, 2026-10-16)
+
+Ed's design, from a conversation on 2026-10-16. **Not built; don't build without Ed's go.** It replaces the broom room and broom station of treehouse.md and the "brooms by achievements" rule. The game is about exploring the forest to find cool stuff, so broom parts are rare discoveries, and the garage is where they go.
+
+### One broom, three slots
+
+- **She has one broom with three slots:** the **tip** (the front end), the **chassis** (the handle) and the **exhaust** (the bristles, at the back). A **component** fits one kind of slot only, one per slot.
+- **Each component changes attributes** (top speed, acceleration, turning, take-off and landing cooldown, number of dodges, dodge cooldown, haul, blink length...), **often with both advantages and disadvantages**: a jet exhaust halves the take-off cooldown but widens her turns; a heavy chassis hauls more but accelerates slowly. Proposed slot themes, so the slot tells you roughly what a part changes: front = steering (turning, how a blink aims), chassis = body (top speed, haul), back = thrust (acceleration, boost, take-off and landing, dodges). Every component must change something she feels on the first take-off or turn, not a number only the log sees.
+- **Matching sets** unlock better bonuses or abilities: **some sets are two pieces, some three**. The abilities of today's active brooms (Battering, Ground pound, Stealth, Ley jump) are candidates for set abilities; today's passive brooms (Speed, Long, Haul, Double blink) become components. How many sets, and which: **decided later**.
+- **Biome and phase locked** (maybe): a set's pieces live in its biome's direction, the rarer ones further out.
+- **The default broom** has no components (its slots empty), as the default hat has no spell. Today's eighteen broom looks and the width slider map onto the parts' looks and the lathe (below).
+
+### Finding parts
+
+- **Rare discoveries:** at most **one component on an island**, most islands with none, perhaps rarer still. A part lies at a **wreck**: an old witch's crashed broom, half buried like a relic, posed to tell its story (nose-down in a bog, through a trunk, hanging from a branch).
+- **A ground-mode find** (Ed): wrecks are **hard to see from the treetops**; if she's lucky the wreck is in an area with less canopy. Seeing rare collectibles is **a perk of being in ground mode**, beside inviting and placing.
+- **The game says there's a piece, not where** (Ed: "encourage exploration"): the garage's pegboard (below) shows that a piece is on tonight's island; nothing points to its area.
+- **Heavy. She tows it.** A find (a broom part, and later furniture for the bedroom: the same loop) is **hoisted under or behind her: a trailer**, hitched with E at the wreck, pulled along the ground like a heavy leashed animal (the leash weight rules; the chassis's haul stat sets how fast). **Towing is slow**, and **she can't take off with it**: taking off unhitches it where it stands, with its own pointer, and she can come back. A knockdown leaves it where she fell. A night ended with it still out leaves it at its wreck for next time; never lost, only left lying. **The party's end is when you haul** (Ed): the island is quiet then, and she can walk back to what she found. The tricky part is finding it.
+- Light finds (hats) stay carried, by the shrine rule above.
+
+### The garage
+
+- **On the ground floor of the treehouse** (Ed), with a door between the Ent's roots, north of the dancefloor: she tows the trailer in. The balcony stays the flying door; the garage is the walking one. Time at a tenth inside, as in every room.
+- **Separate stations, taken in turn** (Ed: better that players take turns than three bays):
+  - **The bay:** the broom up on a stand; she **lies on a mechanic's creeper and rolls under it**, **welding sparks** while a component goes in or out (the stargazing lying pose on a board; the hit-spark and fireworks families tinted white). Swapping is free.
+  - **The lathe is the customiser** (Ed): the broom spins on it; the creator's broom look and width slider become turning it on the lathe, colour a paint tin on the bench. No panel where the things will do.
+  - **The pegboard: spare parts on the wall, laid out like the world map** (Ed): **a 3 × 3 grid, the nine biomes** (the compass's eight directions round temperate in the middle), each cell a pegboard of outlines. A found part hangs on its peg; a missing one is an empty outline. When tonight's island is chosen at the map, **the outline of a piece lying on it glows** in its biome's cell: there's one out there.
+- **Repair: none.** Brooms don't wear or dent; the garage builds and customises only.
+- **Multiplayer** (Ed): **only the parts the host has unlocked are available**, and **each part can be used by only one witch** at a time: taken from its peg by whoever gets there first. Anyone can tow a find home.
+
+### Ideas kept, not decided
+
+- A full set changes her treetop trail (sparks for a jet set, petals for a forest set): visible to friends.
+- One silly set (the hobby-horse head, bicycle wheels, a bell): slow, wide turns, every creature she passes turns to look. No upside, in the cauldron's spirit.
+- A heavy chassis could count against her carry allowance like sigils do, so haul costs stack.
+- Lakes could hide wrecks once biome lakes have their looks (a handle out of the tar pit, a glint under the floes).
+- The crystal ball could remember what she flew each night.
+- A short test loop round the Ent with a lap timer drawn as candles.
+
+### Open questions
+
+- The sets: how many, which pieces, which abilities; which sets are two and which three.
+- Biome and phase locking: strict, or a lean.
+- Slot themes as proposed, or free.
+- How rare: one per island at most, or rarer; whether home holds one so a new player meets the loop.
+- What "less canopy" means for the glint: a thin-canopy area shows it from above, or never from above at all.
 
 ## Unlocking (the older rule: achievements)
 
