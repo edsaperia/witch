@@ -30,6 +30,10 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 - **Pick up and place in runs.** Picking up: if the first press picks a sigil up, holding the button keeps picking up any she runs over. Placing: if the first press places one, moving into empty hexes while holding places more. **Pad:** her hat is placed and picked up with triangle (was holding square); circle cycles the stack. — **Built** (#938; `leash.runs`, the Controller line above; the broom's spell moved off circle to L3, Ed to confirm).
 - **One trail, one cooldown.** The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it).
 
+## Ed's notes, 2026-10-16
+
+- **Envelopes go behind scenery as animals do.** A 💌 in flight should be hidden by trees and scenery the way animals are, not drawn over everything.
+
 ## Open questions
 
 - Single-file tightness: shipped at 1.6 m, raised to 5 m by Ed (#666; `leash.babies.gap`). Settled unless Ed says otherwise.

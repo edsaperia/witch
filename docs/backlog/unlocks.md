@@ -38,6 +38,7 @@ Suggested:
 - **Nursing hat:** heals her creatures near it.
 - **Beacon hat:** leashed creatures gather at it.
 - **Edge-seer hat** (Ed, 2026-10-15): shows the area edges (the glowing dotted borders, off by default since #889) while it's in play. **Built** (#939; `edgeseer` in `rules/spells.ts`, `seerWorn` in `rules/hatSpells.ts`): the edges are drawn as the pause page's "Area edges" draws them. Ed, 2026-10-15, after #939: **worn only; "only the player wearing the hat sees the things"** (a hat lying or left behind shows nothing; built in the Route-seer's PR).
+- **Thermal-vision hat** (Ed, 2026-10-16): worn only, like the seer hats: while she wears it she sees animals through foliage (the canopy and the ground cover), so nothing hides from her; only the player wearing it sees them.
 - **Route-seer hat** (Ed, 2026-10-15: "a 'see the entire route' hat power as well"): worn, the whole ley line is drawn out to the route's last stone and every runestone's beacon is up, however far the line's reveal has grown; the pulse, the wave order and the music are untouched. **Built** (`routeseer` in `rules/spells.ts`; `render/view.ts` and `render/view/home.ts` read `routeSeen`).
 
 ## Other powers
