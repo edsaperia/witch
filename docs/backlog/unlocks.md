@@ -67,7 +67,20 @@ Suggested:
 - **Boombox hat: rejected** (Ed). Music enrages wild animals: that's the core premise.
 - **Low flight** (invite from the treetops) and **Sky leash** (a weightless army): flagged, as they weaken core rules.
 
-## Unlocking
+## Unlocking: hats found at shrines, brooms made at home (Ed, 2026-10-16)
+
+Ed's idea, superseding the achievements rule below for hats (kept for the record). **Not built; don't build without Ed's go.** It lands with the treehouse's corridors and stations (treehouse.md, build order step 3).
+
+- **Her first hat is hers; every hat after it is found on an island, at a shrine themed on its power.** A shrine is a set piece in one of the island's areas (placed like relics: about one per island, which hat by the island's kind or biome, so a player learns where to look); e.g. the Harvest hat in a ring of berries, Sentry on a watchtower, Bramble in thorns, Lullaby in a bed of poppies, Mine in a crater, Cyclone on a windy tor, Nursing at a spring, the Helmet on a cairn. The Dowsing hat could point to shrines as well as relics.
+- **She picks it up as a game object** (E, as any hat lying in the world: #717's rule): wearing one already, her own hat goes down where she stands and keeps working there, with its pointer; bareheaded, she puts the found one on and its spell is hers for the night.
+- **It becomes hers when she carries it to the balcony mid-night** (Ed, 2026-10-16): fly it home (every room is open mid-night, time at a tenth), hang it on its hook in the hat corridor, and go back out. Until then it is only a hat she's carrying: a knockdown drops it where she fell (its pointer shows where), and a night ended with it still out leaves it at its shrine for next time. So fetching a hat is a detour with a risk, and the house is where the risk ends.
+- **Brooms are not found: she makes them** (Ed, 2026-10-16: "You can't go out without a broom and take a new one home. Brooms feel like something you make at a crafting station in the treehouse."): the broom station (treehouse.md: a workbench with tools) is where a new broom is built. What a broom costs, and what unlocks the recipe, is open (proposed: an island's biome souvenir, or the skull in the library, or simply a won island each).
+- **Achievements** then unlock nothing, or only trophies for the bedroom (treehouse.md). The afterparty's "new unlocks" card shows the hat she brought home and the broom she made.
+- **The first hat with a spell** could sit at a tutorial shrine on home, so a new player meets the loop on the first island.
+
+Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
+
+## Unlocking (the older rule: achievements)
 
 - **By achievements.** At most **one unlock per run**, in **any order**: whichever achievement comes first unlocks its own item.
 - New unlocks are shown at the afterparty.
