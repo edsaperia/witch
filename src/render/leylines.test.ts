@@ -111,7 +111,7 @@ describe("the first line branching off the boot ring (Ed, v2001 and 2026-10-07)"
   const g = newGame(123, TUNING), p = g.party, map = g.map, P = bootPath(map), first = P.stoneAt[P.order[0]], last = P.stoneAt[P.order[P.order.length - 1]];
   const branch = { share: 0.3, at: first + (last - first) / 3 }, reveal = TUNING.leyLines.reveal ?? 3, v = TUNING.leyLines.pulseSpeed;
   castPartySpell(p, map, 0); p.bootFrom = 0; p.bootUntil = bootSeconds(map); p.pulse.at = p.bootUntil; p.pulse.d = 0; p.pulse.v = v;
-  const when = (m: number) => m / v; // (the time the boot's pulse passes m along its path)
+  const when = (m: number) => m / TUNING.boot.speed!; // (the time the boot's pulse passes m along its path: its own speed)
   const lens = routeLengths(p, map), C1 = lens[0], wave1 = p.bootUntil + C1 / v;
   it("isn't there before the boot's pulse reaches where it leaves the ring", () => {
     expect(leyReveal(p, map, 0.1, reveal, branch)).toBe(0);
@@ -128,7 +128,7 @@ describe("the first line branching off the boot ring (Ed, v2001 and 2026-10-07)"
     expect(leyReveal(p, map, wave1, reveal, branch)).toBeCloseTo(metresToLinks(lens, reveal * C1), 6);
   });
   it("keeps to the boot pulse's progress, not the clock: a faster pulse branches as early in it", () => {
-    const fast = { ...map, tuning: { ...map.tuning, leyLines: { ...map.tuning.leyLines, pulseSpeed: 40 } } } as typeof map;
+    const fast = { ...map, tuning: { ...map.tuning, boot: { ...map.tuning.boot, speed: 40 } } } as typeof map;
     const short = { ...p, bootUntil: bootSeconds(fast) } as typeof p, at = branch.at / 40;
     expect(leyReveal(short, fast, at - 0.05, reveal, branch)).toBe(0);
     expect(leyReveal(short, fast, at + 0.05, reveal, branch)!).toBeGreaterThan(0.3);

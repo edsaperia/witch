@@ -147,13 +147,13 @@ export function leyReachTimes(p: PartyState, map: ForestMap, time = p.pulse?.at 
   const done = (questsMove(map) ? p.leyDone : undefined) ?? new Map<string, number>();
   // The pulse's distance and speed now (a wave, so the front, at a constant speed along the route: Ed, 2026-10-09), and when
   // it sets off if it hasn't: each stone's time by the distance the pulse must run for the front to reach it.
-  const v = p.pulse?.v || map.tuning.leyLines.pulseSpeed || 4, m = pulseRouteMetres(p, map, time), C1 = lens[0] ?? 0, wait = Math.max(0, (p.pulse?.at ?? 0) - time);
+  const v = p.pulse?.v || map.tuning.leyLines.pulseSpeed, m = pulseRouteMetres(p, map, time), C1 = lens[0] ?? 0, wait = Math.max(0, (p.pulse?.at ?? 0) - time);
   let C = 0;
   stones.forEach((s, k) => {
     if (k > 0) C += lens[k - 1] ?? 0;
     const key = cellKey(s.cell), at = key === cellKey(map.centreCell) ? -Infinity : waveReached(p, key) ?? Infinity, was = Math.min(at, done.get(key) ?? Infinity); // (cleared early: at its wave's pace, not its clear)
     const mk = C < r * C1 ? Math.max(0, (C - C1) / (r - 1)) : C / r; // (the pulse's distance as the front reaches it)
-    const tip = k === 0 ? -Infinity : k === 1 ? p.bootUntil : time + (mk > m ? wait : 0) + (mk - m) / v;
+    const tip = k === 0 ? -Infinity : k === 1 ? p.bootUntil : v > 0 ? time + (mk > m ? wait : 0) + (mk - m) / v : mk > m ? Infinity : time; // (the pulse held at 0 m/s: not yet)
     out.set(key, Math.min(tip, was));
   });
   return out;

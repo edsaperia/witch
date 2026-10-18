@@ -1,10 +1,10 @@
-// The ley pulse at a constant speed (Ed, 2026-10-09: "Pure constant speed", 4 m/s, boot included; rules/pulseRoute.ts): its
+// The ley pulse at a constant speed (Ed, 2026-10-09: "Pure constant speed"; 1 m/s since 2026-10-18; rules/pulseRoute.ts): its
 // distance along the route grows at leyLines.pulseSpeed times the party's tempo, a wave lands as it reaches its stone, and the
-// boot runs its 179 m path at the same speed.
+// boot runs its 179 m path at its own speed (boot.speed, 4 m/s).
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, type Game } from "./game";
 import { TUNING } from "./tuning";
-import { pulseRouteMetres } from "./leypulse";
+import { leyReachTimes, pulseRouteMetres } from "./leypulse";
 import { behindLength, stretchLengths } from "./pulseRoute";
 import { bootPath, bootSeconds } from "./bootRing";
 import { tempoRate } from "./beat";
@@ -21,13 +21,15 @@ function game(): Game {
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, still, 1 / 60); };
 
 describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
-  it("is 4 m/s, and the boot runs its 179 m path at it: about 45 s", () => {
+  it("is 1 m/s (Ed, 2026-10-18), and the boot runs its 179 m path at its own 4 m/s: about 45 s, whatever the waves' speed", () => {
     const g = game();
-    expect(V).toBe(4);
+    expect(V).toBe(1); expect(TUNING.boot.speed).toBe(4);
     expect(bootPath(g.map).length).toBeCloseTo(179, 0);
     expect(bootSeconds(g.map)).toBeCloseTo(179 / 4, 0);
     run(g, 0.05);
-    expect(g.party.bootUntil - g.party.bootFrom!).toBeCloseTo(bootPath(g.map).length / V, 9);
+    expect(g.party.bootUntil - g.party.bootFrom!).toBeCloseTo(bootPath(g.map).length / 4, 9);
+    const slow = { ...g.map, tuning: { ...g.map.tuning, leyLines: { ...g.map.tuning.leyLines, pulseSpeed: 0.25 } } } as typeof g.map;
+    expect(bootSeconds(slow)).toBeCloseTo(bootSeconds(g.map), 9);
   });
 
   it("runs pulseSpeed metres a second along the route at the base tempo, and pulseSpeed times the tempo's rate after a knockdown's BPM", () => {
@@ -51,4 +53,19 @@ describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
       expect(pulseRouteMetres(g.party, g.map, g.clock.time) - behindLength(g.party, g.map)).toBeLessThan(V / 60 + 1e-9); // (just past the stone)
     }
   }, 60000);
+  it("set to 0 on the pause page mid-night, holds the pulse where it is (no waves, nothing NaN), and moves on when set again", () => {
+    const g = newGame(123, JSON.parse(JSON.stringify(TUNING)));
+    g.clock.paused = false; g.party.spellAt = undefined;
+    g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1 };
+    g.witches[0].health.hp = 1e6;
+    run(g, bootSeconds(g.map) + 5);
+    const m0 = pulseRouteMetres(g.party, g.map, g.clock.time);
+    expect(m0).toBeGreaterThan(0);
+    g.tuning.leyLines.pulseSpeed = 0; run(g, 20);
+    expect(Math.abs(pulseRouteMetres(g.party, g.map, g.clock.time) - m0)).toBeLessThan(0.05); // (a step's metres at the old speed, at most)
+    expect(g.party.wave).toBe(0); expect(g.party.nextAt).toBe(Infinity);
+    for (const t of leyReachTimes(g.party, g.map)!.values()) expect(Number.isNaN(t)).toBe(false);
+    g.tuning.leyLines.pulseSpeed = 3; run(g, 2);
+    expect(pulseRouteMetres(g.party, g.map, g.clock.time)).toBeCloseTo(m0 + 6, 1);
+  });
 });
