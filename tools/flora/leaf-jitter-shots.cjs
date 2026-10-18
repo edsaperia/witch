@@ -90,7 +90,7 @@ const DENSE = 0.75, THIN = 0.3;
     for (const s of list) {
       for (const mode of ["treetop", "ground"]) {
         await setJ(0, 0);
-        await page.evaluate(([x, z, mode]) => { const g = window.witch.game; window.witch.manual = false; g.witch = { ...g.witch, x, z: mode === "ground" ? z + 12 : z, seated: false, perch: undefined, mode, lift: mode === "ground" ? 0 : 1 }; }, [s.x, s.z, mode]);
+        await page.evaluate(([x, z, mode]) => { const g = window.witch.game; window.witch.manual = false; g.tuning.wind.on = false; g.witch = { ...g.witch, x, z: mode === "ground" ? z + 12 : z, seated: false, perch: undefined, mode, lift: mode === "ground" ? 0 : 1 }; }, [s.x, s.z, mode]); // (no wind: the three shots of a spot differ by the jitter alone)
         const t0 = await page.evaluate(() => window.witch.game.clock.time);
         await page.waitForFunction(t => window.witch.game.clock.time > t, t0 + 10, { timeout: 900000, polling: 500 }); // (the art arrives, the camera settles)
         for (let i = 0; i < 6; i++) await step({});
@@ -109,6 +109,7 @@ const DENSE = 0.75, THIN = 0.3;
       }
     }
     await setJ(defaults.hue, defaults.value);
+    await page.evaluate(() => { window.witch.game.tuning.wind.on = true; });
     fs.writeFileSync(path.join(outDir, "measure.json"), JSON.stringify({ seed, defaults, spots: list, measure }, null, 2));
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
