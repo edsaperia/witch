@@ -66,7 +66,7 @@ const DENSE = 0.75, THIN = 0.3;
             m = n ? { hue: (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360, val: sv / n, n } : null;
             hueOf.set(key, m);
           }
-          if (m) out.push({ x: Math.round(it.x * 10) / 10, z: Math.round(it.z * 10) / 10, hue: m.hue, val: m.val, jh: it.jitter[0] * L.hue, jv: it.jitter[1] * L.value });
+          if (m) out.push({ x: Math.round(it.x * 10) / 10, z: Math.round(it.z * 10) / 10, hue: m.hue, val: m.val, sh: it.jitter[0], sv: it.jitter[1], jh: it.jitter[0] * L.hue, jv: it.jitter[1] * L.value }); // (sh, sv: its seeds, so the spread with the jitter can be worked out on the very trees of the off capture)
         }
       }
       return out;
@@ -98,13 +98,12 @@ const DENSE = 0.75, THIN = 0.3;
         await shot(`${name}-off`);
         const trees = await perTree();
         await setJ(defaults.hue, defaults.value); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-on`);
-        const treesOn = await perTree();
         await setJ(defaults.hue * 2, defaults.value * 2); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-x2`);
-        // (one entry a tree: its crown, in the batches drawn at this spot)
-        const before = spread(trees.map(t => t.hue)), after = spread(treesOn.map(t => t.hue + t.jh)), x2s = spread(treesOn.map(t => t.hue + 2 * t.jh));
-        const deltas = treesOn.map(t => Math.abs(t.jh)), maxDelta = deltas.length ? +Math.max(...deltas).toFixed(2) : 0;
+        // (one entry a tree: its crown, in the batches drawn at this spot; the same trees before and with the jitter, by their seeds)
+        const before = spread(trees.map(t => t.hue)), after = spread(trees.map(t => t.hue + t.sh * defaults.hue)), x2s = spread(trees.map(t => t.hue + 2 * t.sh * defaults.hue));
+        const deltas = trees.map(t => Math.abs(t.sh * defaults.hue)), maxDelta = deltas.length ? +Math.max(...deltas).toFixed(2) : 0;
         const px = { off: await pixels(off), on: await pixels(on, off), x2: await pixels(x2, off) };
-        measure[name] = { spot: { x: Math.round(s.x), z: Math.round(s.z) }, trees: trees.length, perTreeHue: { before, after, x2: x2s, maxHueShiftDeg: maxDelta, maxValueScale: treesOn.length ? +Math.max(...treesOn.map(t => Math.abs(t.jv))).toFixed(3) : 0 }, pixels: px };
+        measure[name] = { spot: { x: Math.round(s.x), z: Math.round(s.z) }, trees: trees.length, perTreeHue: { before, after, x2: x2s, maxHueShiftDeg: maxDelta, maxValueScale: trees.length ? +Math.max(...trees.map(t => Math.abs(t.sv * defaults.value))).toFixed(3) : 0 }, pixels: px };
         console.log(name, JSON.stringify(measure[name]));
       }
     }
