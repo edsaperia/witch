@@ -89,6 +89,16 @@ Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is
 - **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; being built).
 - Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
 
+## The crystal ball: where an upgrade lies (Ed, 2026-10-18)
+
+**Not built; don't build without Ed's go.** "We should have a crystal ball that tells you a permanent upgrade and on what island it can be found. It only shows you upgrades on islands you've already unlocked. Perhaps only appears when you've finished the second phase (home plus the ones after that)."
+
+- **What it shows:** one permanent upgrade (a hat, a bag or a broom part) and **the island** where it can be found. Never where on the island: finding it there is still the game (the garage's pegboard only says a piece is on tonight's island).
+- **Only islands she has unlocked**, so it points somewhere she can sail tonight.
+- **Appears late:** perhaps only once she has finished the second phase, home and the islands after it (Ed). Until then it isn't in the house.
+- **Where:** the treehouse's hub already has a crystal ball in the plan (treehouse.md: the run history); this gives it a job.
+- Open: what "finished" means for a phase (every island won, or found); whether it shows one upgrade at a time (and when it changes: each night, or once that one is found); whether it also keeps the run history.
+
 ## Permanent unlocks only while the party is on (Ed, 2026-10-18)
 
 **Not built** (legends' part being built: quests aren't accepted after a lost party). "All permanent unlock items disappear from the map after a party is lost. You should keep them if you find them earlier even if you lose the night though."
