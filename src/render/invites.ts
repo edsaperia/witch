@@ -228,19 +228,19 @@ export class InviteView {
         this.show(b, face, 0, 0, 0, time + (e.kind === "happy" ? 1.6 : 0.9), c.boss ? 3 : c.level);
       }
     }
-    // A take-off refused, too many following her (Ed, 2026-10-18; the "grounded" leash event, rules/game.ts): an anchor beside her
+    // A take-off refused, too many following her (Ed, 2026-10-18; the "grounded" leash event, rules/game.ts): a 🚫 beside her
     // head, shaking like a refusal's 💢 (and her shake, render/view/witch.ts).
     for (const e of g.leashEvents) if (e.kind === "grounded") {
       const key = `grounded:${e.at}`;
       if (this.seen.has(key)) continue;
       this.seen.add(key);
-      this.pop("⚓", e.x + 0.9, 2.1, e.z, time);
+      this.pop("🚫", e.x + 0.9, 2.1, e.z, time);
     }
     if (this.seen.size > 400) this.seen = new Set([...this.seen].slice(-200));
     this.pops = this.pops.filter(p => {
       // (the 💢 of a refusal holds at the animal's face and vibrates, a whole art pixel round and round 30 times a second,
       // the rest rise and fade: Ed, 2026-10-12)
-      const shake = p.e === "💢" || p.e === "⚓", k = (time - p.at) / (shake ? 0.7 : 0.35);
+      const shake = p.e === "💢" || p.e === "🚫", k = (time - p.at) / (shake ? 0.7 : 0.35);
       if (k >= 1 || k < 0) { p.el.remove(); return false; }
       place(p.el, p.x, p.y + (shake ? 0.1 : k * 0.5), p.z);
       p.el.style.opacity = String(shake ? Math.min(1, (1 - k) * 3) : 1 - k);

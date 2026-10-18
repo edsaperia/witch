@@ -24,7 +24,7 @@ function follow(g: Game, levels: number[]): Creature[] {
   const W = g.witches[0], pool = g.creatures.filter(c => !c.boss && !c.gone && !c.leashed);
   return levels.map((level, i) => {
     const c = pool[i];
-    c.level = level; c.leashed = true; c.x = W.body.x + 2 + i; c.z = W.body.z;
+    c.level = level as Creature["level"]; c.leashed = true; c.x = W.body.x + 2 + i; c.z = W.body.z;
     W.leash.stack.push(c.id);
     return c;
   });
