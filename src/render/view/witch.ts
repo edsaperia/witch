@@ -91,6 +91,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, dz);
     wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
   }
+  // A take-off refused, too many following her (Ed, 2026-10-18; the "grounded" leash event, rules/game.ts): a quick shake side
+  // to side, a third of a second, as she tugs against them (the ⚓ beside her head: render/invites.ts).
+  for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
+  { const k = (ht - v.groundedAt) / 0.35; if (k >= 0 && k < 1) wx += Math.sin((ht - v.groundedAt) * 46) * 0.16 * (1 - k); }
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
   // Her decks: on the treehouse deck (rules/treehouse.ts), where she stands, the opening shot just over her; else the old studio's seat.

@@ -186,6 +186,8 @@ export class View {
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
   seatK = 1;
   seatTime = 0;
+  /** Her last refused take-off (the "grounded" leash event, rules/game.ts), on her clock: the shake (render/view/witch.ts). */
+  groundedAt = -9;
   speakerBatch: SpriteBatch | null = null;
   readonly grass: GrassView;
   spellFx = new SpellFx();

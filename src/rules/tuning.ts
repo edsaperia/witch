@@ -417,6 +417,8 @@ export interface Tuning {
      *  freely, as before); no cell within stone metres of a runestone or soundsystem, or speaker metres of a home speaker, plus half a cell. */
     hex?: { size: number; stone: number; speaker: number }; /** Runs (Ed, 2026-10-15): the sigil button held on since a press that picked up keeps picking up any sigil she runs over, since one that put down puts one down in each empty hex she enters (false: a press does one thing; absent: on). */ runs?: boolean; /** On the ground the nearest rune within radius (m) comes to her: its creature trots over at speed (m/s), stopping stop (m) away. */ runePull: { radius: number; speed: number; stop: number };
     /** Sigil weight (rules/leashWeight.ts): free allowance, levels' weights, drag, drift, rise, sink, sinkMax, floor, extreme, maxTension. */
+    /** Who grounds her (Ed, 2026-10-18: "One adult stops you taking off. Three young do."; rules/leashWeight.ts groundedBy): this many adults (or legends), or this many young, following her (their sigils in her stack) and she can't take off; 0 turns that half off. */
+    grounded?: { adults: number; young: number };
     weight: { /** a baby's weight on the ground (the treetops': levels[0]) */ babyGround?: number; free: number; levels: number[]; drag: number; drift: number; rise: number; sink: number; sinkMax: number; floor: number; extreme: number; maxTension: number } };
   bond: { rim: boolean; sparks: boolean; thread: boolean; sparkEvery: number; /** The thread's upward bow: metres per metre of length, from threadArcSlack when slack to threadArcTaut at full strain, up to threadArcMax. */ threadArcSlack: number; threadArcTaut: number; threadArcMax: number };
   tone: { black: number; gamma: number; ambient: number; moon: number };

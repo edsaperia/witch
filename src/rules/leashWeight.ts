@@ -62,3 +62,21 @@ export function loadOf(stack: readonly number[], creatures: readonly Creature[],
   const over = Math.max(0, total - freeOf(t, at.mode === "ground"));
   return { total, over, x: px / raw, z: pz / raw, extreme: over >= W.extreme };
 }
+
+/** Who grounds her (Ed, 2026-10-18: "One adult stops you taking off. Three young do."): the creatures following her, their
+ *  sigils in her stack (parked ones at a sigil on the ground don't count, nor babies), counted by level, an adult or a legend
+ *  as an adult. With leash.grounded's adults or more adults, or its young or more young, she can't take off from the ground
+ *  (rules/game.ts drops the press and says so: a "grounded" leash event). Apart from the weight (loadOf): this is a count, not
+ *  a pull, so it holds however near they stand; once she's up it doesn't bring her down (it only stops the next take-off).
+ *  A knob of 0 turns its half off. */
+export interface Grounding { adults: number; young: number; grounded: boolean }
+export function groundedBy(stack: readonly number[], creatures: readonly Creature[], t: Tuning): Grounding {
+  let adults = 0, young = 0;
+  for (const id of stack) {
+    const c = creatures[id];
+    if (!c || c.gone) continue;
+    if (c.level >= 2) adults++; else if (c.level === 1) young++;
+  }
+  const G = t.leash.grounded, a = G?.adults ?? 0, y = G?.young ?? 0;
+  return { adults, young, grounded: (a > 0 && adults >= a) || (y > 0 && young >= y) };
+}

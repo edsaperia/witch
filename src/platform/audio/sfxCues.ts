@@ -152,6 +152,7 @@ export class SfxCues {
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
       else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)
+      else if (e.kind === "grounded") S.nope(pan(e.x)); // (a take-off refused, too many following her: the same "uh-uh", Ed, 2026-10-18)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 

@@ -76,6 +76,8 @@ Home's speakers are each a soundsystem in the fight: animals marching on home go
 
 Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So you can't just drag a huge army everywhere.
 
+**Grounded by her followers** (Ed, 2026-10-18: "One adult stops you taking off. Three young do."). With **one adult** (a legend counts as one) or **three young** following her, she **can't take off**: a press to rise does nothing but say why, a quick shake, an anchor ⚓ shaking beside her head and a soft "uh-uh" (the sigil refusal's sound), the same from the keyboard, the pad and touch (`leash.grounded`: `adults` 1, `young` 3; 0 turns that half off). Only animals *following* her count, their sigils in her stack: put their sigils down (parked) and she's free to go; babies never count. It's a count, not a weight: it holds however close they stand, and apart from the sigil weight above (which still slows a take-off it allows). A refused press spends none of the shared cooldown. **Up in the treetops she stays up**: if a young grows up while she flies, or she's coming down, nothing pulls her out of the sky; the rule only stops her next take-off from the ground.
+
 **Knocked out.** At zero hits she collapses.
 - Her carried sigils come off one a second, bottom first (`knockout.releaseEach`). **Each is put down where its animal stands, so they stay hers** as a parked group.
 - She sparkles out and back in **behind her decks** (the teleport takes 1.6 s, `knockout.teleport`) with full health. She scratches there until **6 s** after she went down (`knockout.respawn.base`), the same every time: repeat knockdowns no longer wait longer (Ed, 2026-10-07: "We can remove the extra knockdown time", since each knockdown costs a BPM instead; `respawn.step` 0).
