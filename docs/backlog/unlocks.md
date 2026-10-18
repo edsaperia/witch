@@ -15,7 +15,7 @@ Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; 
 
 ## Rules for spells
 
-- **Hats and brooms change verbs; quest buffs change numbers** (proposed). Quest buffs already cover numbers (hare: 3 blink charges; mole: fast rise and land; raven: faster treetops; fox: homing 💌s). A hat or broom changes *what* she can do.
+- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; being built). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
 - Spells support the basics (speed, attacks, healing, movement). They never fix the failure cascade (soundsystems, bpm, creatures that ran off).
 
 ## Hats
@@ -43,7 +43,7 @@ Suggested:
 
 ## Other powers
 
-- **Welcome mend** (Ed, 2026-10-13): each time she successfully invites a creature, she heals to full hp. Slot (hat, broom or quest buff) to decide.
+- **Welcome mend** (Ed, 2026-10-13): each time she successfully invites a creature, she heals to full hp. Slot (hat, bag or broom part) to decide; quest buffs are gone (Ed, 2026-10-18).
 
 ## Brooms
 
@@ -51,7 +51,7 @@ Ed's:
 
 - **Speed** (active): today's boost, now an unlock.
 - **Battering broom:** blinks hit creatures in the way.
-- **Long broom:** blinks twice as long. By the verbs rule this is a number, so it may suit a quest buff better, or the two stack (open).
+- **Long broom:** blinks twice as long. By the verbs rule this is a number; with quest buffs gone (2026-10-18), a broom component is its natural home (the broom garage, below).
 
 Suggested:
 
@@ -148,7 +148,7 @@ Ed's design, from a conversation on 2026-10-16. **Not built; don't build without
 - Final hat and broom lists; which brooms are passive and which active.
 - Which achievement unlocks which item.
 - Cooldowns and durations.
-- Long broom: broom, quest buff, or both stacking?
+- Long broom: a broom component now that quest buffs are gone (2026-10-18).
 - Earlier hat ideas from before hats were placed (Berry patch, Mend, Second wind): drop, or rework as placed hats? (Harvest already covers berries.)
 
 ## Decisions (Ed, 2026-10-11)
