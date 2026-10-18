@@ -80,6 +80,23 @@ Ed's idea, superseding the achievements rule below for hats (kept for the record
 
 Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
 
+## Bags: weapons, found like hats (Ed, 2026-10-18)
+
+**Not built; don't build without Ed's go.** "There will be bags that give you different 'weapons', which are found like hats."
+
+- **A bag sets how she throws 💌s:** a shooting style (a shotgun spread, a sniper's long slow shot, and so on). She carries one at a time, so a bag is a deliberate choice of build. Easier to balance than the old legend boons, which stacked at random.
+- **Found like hats:** at a shrine themed on its power, picked up as a game object, by the same rules as hats (above).
+- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; being built).
+- Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
+
+## Permanent unlocks only while the party is on (Ed, 2026-10-18)
+
+**Not built** (legends' part being built: quests aren't accepted after a lost party). "All permanent unlock items disappear from the map after a party is lost. You should keep them if you find them earlier even if you lose the night though."
+
+- Hats, bags, broom parts and legends' quests can only be claimed **while the party is on**. When the party is lost (the party's over, the afterparty), the unclaimed ones vanish from the map.
+- **Whatever she found before the loss is hers to keep**, even though the night is lost (a quest done during the night has already found its island: Ed, 2026-10-18).
+- Open: what "found" means for a hat, bag or broom part: picked up (or hitched) is enough, or brought home to the balcony or the garage as written above. This rule loosens "carried to the balcony mid-night" and "tow it after the party" (the broom garage), so those two need settling with it.
+
 ## The broom garage (Ed, 2026-10-16)
 
 Ed's design, from a conversation on 2026-10-16. **Not built; don't build without Ed's go.** It replaces the broom room and broom station of treehouse.md and the "brooms by achievements" rule. The game is about exploring the forest to find cool stuff, so broom parts are rare discoveries, and the garage is where they go.
