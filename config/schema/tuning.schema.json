@@ -7388,12 +7388,17 @@
     "boot": {
       "type": "object",
       "properties": {
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
         "transform": {
           "type": "number",
           "minimum": 0
         }
       },
       "required": [
+        "speed",
         "transform"
       ],
       "additionalProperties": false

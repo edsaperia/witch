@@ -19,12 +19,13 @@ export function saveSetting(d: Decision, v: string | number | boolean): void {
   try { localStorage.setItem(KEY, JSON.stringify(s)); } catch { /* storage blocked: this load only */ }
 }
 
-/** The saved values on to their knobs (as the game loads, before the sound is built); the ids applied. */
-export function applySavedSettings(tuning: object, list: readonly Decision[] = DECISION_LIST): string[] {
+/** The saved values on to their knobs (as the game loads, before the game and the sound are made), but for the knobs in `skip`
+ *  (the link's own ?set=); the ids applied. */
+export function applySavedSettings(tuning: object, list: readonly Decision[] = DECISION_LIST, skip: ReadonlySet<string> = new Set()): string[] {
   const s = loadSettings(), applied: string[] = [];
   for (const d of list) {
     const v = s[d.id];
-    if (!d.persist || !d.apply.knob || v === undefined || typeof v !== typeof d.default) continue;
+    if (!d.persist || !d.apply.knob || skip.has(d.apply.knob) || v === undefined || typeof v !== typeof d.default) continue;
     if (d.control.type === "slider" && typeof v === "number" && !(v >= d.control.min && v <= d.control.max)) continue;
     setKnob(tuning, d.apply.knob, v); applied.push(d.id);
   }

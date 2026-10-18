@@ -1560,10 +1560,11 @@ The soundsystem alarm (Ed, 2026-10-06: "We should have an indicator for when a s
 
 ### `boot`
 
-At the start the home speaker ring boots up (Ed, 2026-10-04): its pulse runs from the treehouse's front down to the ring and once round it at the ley pulse's own speed (Ed, 2026-10-09: "Pure constant speed", boot included; leyLines.pulseSpeed: the 179 m path in about 45 s at 4 m/s, the first stone about 3 s off the decks, as Ed asked on 2026-10-06), each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures. It waits for her first step off the decks, the party spell cast (golf: rules/party.ts castPartySpell; rules/bootRing.ts). The ley line runs ahead of it at leyLines.reveal times its pace. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
+At the start the home speaker ring boots up (Ed, 2026-10-04): its pulse runs from the treehouse's front down to the ring and once round it at speed m/s (4: the ley pulse's speed till Ed set the waves' to 1 m/s on 2026-10-18, the boot kept as it was; the 179 m path in about 45 s, the first stone about 3 s off the decks, as Ed asked on 2026-10-06), each stone turning into its speaker as it passes; only then does the first wave's pulse set off: time to find and invite your first creatures. It waits for her first step off the decks, the party spell cast (golf: rules/party.ts castPartySpell; rules/bootRing.ts). The ley line runs ahead of it at leyLines.reveal times its pace. transform (Ed, 2026-10-06: the home ring starts as small runestones, and the boot pulse turns each into its speaker): the seconds each takes to turn, glowing and rising into the speaker.
 
 | knob | type | range |
 |---|---|---|
+| `boot.speed` | number | 0 to … |
 | `boot.transform` | number | 0 to … |
 
 ### `party`

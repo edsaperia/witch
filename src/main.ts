@@ -44,7 +44,6 @@ import { gameStyle, styleFromLink, viewFromLink } from "./app/viewParams";
 import { setupDebugKeys } from "./app/keys";
 import { ScreenShake } from "./app/shake";
 import { playerPick as makePlayerPick } from "./app/playerPick";
-import { wavePick as makeWavePick } from "./app/wavePick";
 import { installHooks } from "./app/hooks";
 import { PerfHud } from "./app/perfHud";
 import { keepAtlasPixels } from "./render/atlas";
@@ -70,12 +69,15 @@ if (seed === null) {
 
 // The link's switches and the tuning for this load (app/linkParams.ts).
 const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
+// The settings this browser remembers (the volumes, the waves' speed: app/settings.ts), on to their knobs before the game and
+// the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
+applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
 let musicCueNow = linkMusicCue;
 const game = newGame(seed, tuning);
 if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(game); });
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
-const { WAVE_CHOICES, setPulseSpeed, waveChoice } = gameFromLink(game, tuning, params);
+gameFromLink(game, tuning, params);
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
 const canvas = document.getElementById("game") as HTMLCanvasElement;
@@ -182,7 +184,6 @@ requestAnimationFrame(() => setTimeout(async () => {
 }, 0));
 
 // The sound: the volume slider in the corner, then the context, music and sound effects at the first press (app/sound.ts).
-applySavedSettings(tuning); // (the volumes this browser remembers, on to their knobs before the sound is built: app/settings.ts)
 const sound = new Sound(tuning, musicStyle, seed!);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
@@ -342,10 +343,6 @@ freeze.onToggle = on => {
 
 };
 startOnGesture(startEl, start); // a click or a tap starts; a touch that drags scrolls the text
-// The waves' pace: a "Waves:" dropdown in the bedroom's top right (app/wavePick.ts; Ed, 2026-10-08), the dev "Player:" pick
-// under it with the debug overlay on (Ed, 2026-10-11), never remembered; picking one doesn't start the game.
-if (params.get("creator") !== "0" && !arrival) makeWavePick(creator, WAVE_CHOICES, waveChoice, false, setPulseSpeed);
-setPulseSpeed(waveChoice);
 // Screen shake when she's hit, and the camera's sub-pixel glide (app/shake.ts).
 const shake = new ScreenShake(game, tuning, view, canvas, params), shakeEl = shake.option;
 // No start card before her room (Ed, 2026-10-06: "There is something before the bedroom… can we skip it and go straight to

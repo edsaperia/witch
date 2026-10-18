@@ -80,9 +80,9 @@ function serve() {
 
     // the boot: from the first speaker to its end
     for (let i = 0; i < 120 && (await page.evaluate(() => window.witch.game.clock.time < window.witch.game.party.bootUntil)); i++) await run(60, {});
-    const boot = await page.evaluate(() => ({ first: window.__qa.firstSpeakerAt, from: window.witch.game.party.bootFrom, until: window.witch.game.party.bootUntil, speed: window.witch.game.tuning.leyLines.pulseSpeed }));
+    const boot = await page.evaluate(() => ({ first: window.__qa.firstSpeakerAt, from: window.witch.game.party.bootFrom, until: window.witch.game.party.bootUntil, speed: window.witch.game.tuning.boot?.speed ?? 4 }));
     const bootLen = boot.until - boot.from;
-    check("the boot runs its 179 m path at the ley pulse's speed (Ed, 2026-10-09: about 45 s at 4 m/s)", boot.first !== null && Math.abs(bootLen * boot.speed - 179) <= 4, { bootLen: +bootLen.toFixed(2), ...boot });
+    check("the boot runs its 179 m path at its own speed (boot.speed: about 45 s at 4 m/s, whatever the waves' speed)", boot.first !== null && Math.abs(bootLen * boot.speed - 179) <= 4, { bootLen: +bootLen.toFixed(2), ...boot });
     await shot("after-boot");
 
     // clear the next wave's area: every creature holding it turned happy, as if invited

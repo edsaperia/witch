@@ -1,6 +1,6 @@
 // The link's switches for the game itself, once it's made: the party spell's start (?creator=0, ?spell=), forced buffs
 // (?buffs=), the quest demo (?quest=1), the party's over (?partyover=1), the debug arena (?arena=, J sets it up again) and
-// how often the waves come (?wave=, or what this viewer last picked); the repro link's place and waves (app/repro.ts).
+// how fast the waves come (?pulse=, ?wave=off); the repro link's place and waves (app/repro.ts).
 import { LEGEND_BUFFS } from "../rules/buffs";
 import { setupArena } from "../rules/arena";
 import { endParty } from "../rules/partyOver";
@@ -9,7 +9,6 @@ import { setupQuestDemo } from "../rules/quest";
 import { witchHeight } from "../rules/witch";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
-import { PULSE_CHOICES } from "./wavePick";
 import { applyRepro } from "./repro";
 
 export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams) {
@@ -39,18 +38,13 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
     window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
   }
 
-  // How fast the party spreads: the ley pulse's speed (Ed, 2026-10-09: "Pure constant speed", leyLines.pulseSpeed m/s; a wave
-  // lands as it reaches its stone), or ?pulse=<m/s> (or "off": no waves; the old ?wave=off too); the bedroom's "Waves:"
-  // dropdown (app/wavePick.ts: slow, normal, fast, off) changes it, never remembered (Ed, 2026-10-08).
-  const WAVE_CHOICES = PULSE_CHOICES;
-  function setPulseSpeed(speed: number): void {
-    if (speed > 0) tuning.leyLines.pulseSpeed = speed; // (the party reads it each step, and the boot as she leaves her decks)
-    game.party.paused = !(speed > 0);
-    const sel = document.querySelector<HTMLSelectElement>("#wave-pick select"); if (sel && [...sel.options].some(o => +o.value === speed)) sel.value = String(speed);
-  }
-  let waveChoice = tuning.leyLines.pulseSpeed;
+  // How fast the party spreads: the ley pulse's speed (leyLines.pulseSpeed m/s, 1 as built: Ed, 2026-10-18; a wave lands as it
+  // reaches its stone), set live by the pause page's Waves slider and remembered on this browser (app/settings.ts), or for one
+  // load by ?pulse=<m/s> over it (or "off", and the old ?wave=off: the waves held where they are, the boot too); the debug
+  // arena and the zoo have none (Ed 2026-10-13, the zoo: "no timer etc"; rules/zoo.ts).
   const pulseParam = params.get("pulse") ?? (params.get("wave") === "off" ? "off" : null);
-  if (pulseParam !== null) waveChoice = pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
-  if (arenaParam || game.map.zoo) waveChoice = 0; // (the zoo: no waves, Ed 2026-10-13 "no timer etc"; rules/zoo.ts)
-  return { WAVE_CHOICES, setPulseSpeed, waveChoice };
+  const linkSpeed = pulseParam === null ? null : pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
+  if (linkSpeed) tuning.leyLines.pulseSpeed = linkSpeed;
+  if (linkSpeed === 0 || arenaParam || game.map.zoo) game.party.paused = true;
 }
+
