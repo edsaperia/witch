@@ -256,6 +256,8 @@ export interface Tuning {
   /** How much bushes gather in clumps with open floor between (0 even, 1 strongly clumped). */
   bushClump: number;
   treeHeight: number;
+  /** Each tree's own leaf colour (Ed, 2026-10-16; render/sprites.ts): its leaves' hue turned up to hue degrees and value scaled up to value either way, by its own seeds. */
+  leafJitter?: { hue: number; value: number };
   crownWidth: number;
   treeSpacingX: number;
   treeSpacingZ: number;

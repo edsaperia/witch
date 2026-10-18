@@ -433,6 +433,15 @@ treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns
 |---|---|---|
 | `treeDensity` | number | 0 to … |
 
+### `leafJitter`
+
+Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform; small enough that no tree reads as a different season from its neighbours"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each), and its leaves are drawn with their hue turned by hue degrees times the first and their value scaled by 1 + value times the second (render/sprites.ts, on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike; the baked art unchanged, so it changes live). 0 and 0: every tree of a variant the same colour, as before. Small on purpose: an area's ten baked variants already differ by the style's leafVariety.
+
+| knob | type | range |
+|---|---|---|
+| `leafJitter.hue` | number | 0 to … |
+| `leafJitter.value` | number | 0 to … |
+
 ### `wind`
 
 Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.
