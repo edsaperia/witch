@@ -1,11 +1,11 @@
 {
-  "pr": 0,
+  "pr": 953,
   "group": "Waves",
   "pinned": true,
   "decisions": [
     {
       "id": "waveSpeed",
-      "pr": 0,
+      "pr": 953,
       "group": "Waves",
       "label": "Wave speed (m/s)",
       "note": "How fast the ley pulse runs to the next stone, metres a second (leyLines.pulseSpeed; 1 as built: Ed, 2026-10-18, \"Default starting wave speed is 1m/s, and let me set this from the pause menu\"); a wave lands as it reaches its stone, so at 2 they come twice as often. 0 holds the pulse where it is: no waves. Live during a night, remembered on this browser; the boot keeps its own 4 m/s (boot.speed).",
