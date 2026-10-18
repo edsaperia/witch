@@ -78,6 +78,8 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
+  /** Per-tree leaf-colour jitter (Ed, 2026-10-16; the tuning's leafJitter): hue in turns and value share at a seed of 1 (render/view/frameUniforms.ts). */
+  uLeafJitter: { value: new THREE.Vector2(0, 0) },
   /** The trees watching her (Ed, 2026-10-07): where she was a beat ago (x, z), how near (m) a leafy thing must stand to lean
    *  her way, and how far its tip leans (m). */
   uWatch: { value: new THREE.Vector4(0, 0, 9, 0) },
@@ -107,7 +109,9 @@ attribute vec2 iSize;
 attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
 attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine); -0.5: switched off (its glowing pixels unlit)
+attribute vec2 iJitter; // a tree's own leaf-colour jitter seeds, -1 to 1 (hue, value); 0 for everything else (render/view/scenery.ts; Ed, 2026-10-16)
 varying float vGlow;
+varying vec2 vJitter;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 uniform vec4 uWind;
@@ -165,6 +169,7 @@ void main() {
   vUv = vec2(mix(iUv.x, iUv.z, u), mix(iUv.w, iUv.y, uv.y));
   vFlags = iFlags.xyz;
   vGlow = iGlow;
+  vJitter = iJitter;
   vLocal = uv;
   vSizeY = iSize.y;
   vWorld = w;
@@ -254,6 +259,10 @@ varying float vGlow;
 varying float vSwayM; // metres its leafiest pixels move this frame (masked sprites)
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
+varying vec2 vJitter;
+uniform vec2 uLeafJitter; // per-tree leaf-colour jitter (Ed, 2026-10-16; the tuning's leafJitter): hue in turns and value share at a seed of 1
+// A hue rotation about the grey axis (Rodrigues), a in radians: cheap, and the pixel's value and saturation kept.
+vec3 hueRotate(vec3 c, float a) { const vec3 k = vec3(0.57735027); float ca = cos(a), sa = sin(a); return c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca); }
 varying float vHole, vOverHer, vCrownD;
 uniform float uCutWhole;
 uniform vec4 uCutShape;
@@ -342,6 +351,11 @@ void shade() {
   if (uIsScenery > 0.5) {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
     if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
+    // Each tree's own leaf colour (Ed, 2026-10-16: "a small amount of per-tree colour jitter", docs/ART-GUIDE.md section 3): its
+    // leaves' hue turned and value scaled by its seeds times the tuning's leafJitter; its wood (sway code 0) untouched.
+    if ((vJitter.x != 0.0 || vJitter.y != 0.0) && (uLeafJitter.x != 0.0 || uLeafJitter.y != 0.0) && texture2D(uNormal, uvS).a * 255.0 >= 0.5) {
+      a.rgb = clamp(hueRotate(a.rgb, vJitter.x * uLeafJitter.x * 6.2831853) * (1.0 + vJitter.y * uLeafJitter.y), 0.0, 1.0);
+    }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
   if (uSilhouette.a > 0.0) { gl_FragColor = vec4(uSilhouette.rgb, uSilhouette.a); return; }
@@ -542,7 +556,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -0.5, switched off (its glowing pixels lit as paint: a soundsystem standing when the party's over); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -0.5, switched off (its glowing pixels lit as paint: a soundsystem standing when the party's over); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean; /** A tree's own leaf-colour jitter seeds, -1 to 1 (hue, value), times the tuning's leafJitter in the shader; left out, none (Ed, 2026-10-16). */ jitter?: [number, number] }
 
 /** Where a floor draws: right after the ground (-1) and before anything standing (creatures 0, scenery 0.5, shadows 1), and
  *  writing no depth, so it can never hide an actor, a prop or a shadow on it or at its edge (Ed's playtest, 2026-10-06: "the sports
@@ -571,9 +585,10 @@ export class SpriteBatch {
   private uvs: THREE.InstancedBufferAttribute;
   private flags: THREE.InstancedBufferAttribute;
   private glow: THREE.InstancedBufferAttribute;
+  private jitter!: THREE.InstancedBufferAttribute;
   private capacity = 0;
   /** What changed this set, per attribute: pos, size, uvs, flags, glow (dirty.ts). */
-  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
+  private dirty = [new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty(), new Dirty()];
   count = 0;
 
   /** metresPerPixel: world size of one art pixel. */
@@ -650,9 +665,9 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow);
+    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow); this.jitter = make(2, this.jitter);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
-    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow);
+    this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow); this.geo.setAttribute("iJitter", this.jitter);
     this.capacity = cap;
   }
 
@@ -668,8 +683,8 @@ export class SpriteBatch {
   set(items: SpriteInstance[]): void {
     this.items = items;
     if (items.length > this.capacity) this.grow(items.length);
-    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array;
-    const dP = this.dirty[0], dS = this.dirty[1], dU = this.dirty[2], dF = this.dirty[3], dG = this.dirty[4];
+    const P = this.pos.array as Float32Array, S = this.size.array as Float32Array, U = this.uvs.array as Float32Array, F = this.flags.array as Float32Array, G = this.glow.array as Float32Array, J = this.jitter.array as Float32Array;
+    const dP = this.dirty[0], dS = this.dirty[1], dU = this.dirty[2], dF = this.dirty[3], dG = this.dirty[4], dJ = this.dirty[5];
     // (a plain loop, the numbers written straight in: thousands of instances a frame, every batch, every frame; each
     // attribute written, and sent, only where it changed: dirty.ts)
     const mpp = this.metresPerPixel;
@@ -686,10 +701,13 @@ export class SpriteBatch {
       if (F[j] !== f0 || F[j + 1] !== f1 || F[j + 2] !== f2 || F[j + 3] !== f3) { F[j] = f0; F[j + 1] = f1; F[j + 2] = f2; F[j + 3] = f3; dF.touch(i); }
       const gl = it.glow ?? 0;
       if (G[i] !== gl) { G[i] = gl; dG.touch(i); }
+      const jt = it.jitter, jx = jt ? jt[0] : 0, jy = jt ? jt[1] : 0;
+      j = i * 2;
+      if (J[j] !== jx || J[j + 1] !== jy) { J[j] = jx; J[j + 1] = jy; dJ.touch(i); }
     }
     // Only the instances in use that changed go to the GPU (the buffers keep their largest size, often twice what's
     // drawn, and most instances are as they were last frame). Nothing changed, nothing sent.
-    dP.flush(this.pos); dS.flush(this.size); dU.flush(this.uvs); dF.flush(this.flags); dG.flush(this.glow);
+    dP.flush(this.pos); dS.flush(this.size); dU.flush(this.uvs); dF.flush(this.flags); dG.flush(this.glow); dJ.flush(this.jitter);
     this.count = items.length;
     this.geo.instanceCount = items.length;
     const ms = this.meshes, on = items.length > 0;
