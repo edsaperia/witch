@@ -1,7 +1,7 @@
 // The sleeping legends' dream bubbles (render/leash/bubbles.ts drawDreams, render/thoughtCloud.ts; Ed, 2026-10-08: pixel thought
 // bubbles, small clouds rising to a large one, one symbol at a time): the built game (DIST, default dist/) at 1280×720 on a seed;
 // the witch set down on the ground beside the nearest dreaming legend, a crop of its bubble showing each symbol (its face, the
-// sigil it dreams of, the flask), and one as a nightmare. Fails on a page error or a symbol that never shows. Writes previews/dreams/.
+// kind it dreams of, any age: no flask since 2026-10-18), and one as a nightmare. Fails on a page error or a symbol that never shows. Writes previews/dreams/.
 //   npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -56,7 +56,6 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     };
     await shoot("emoji", "emoji");
     await shoot("sigil", "sigil");
-    await shoot("flask", "flask");
     await page.screenshot({ path: path.join(outDir, "screen.png") });
     await page.evaluate(id => { window.witch.game.creatures[id].restlessness = 0.75; }, legend.id);
     await shoot("nightmare-emoji", "emoji");

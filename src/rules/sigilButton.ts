@@ -1,6 +1,6 @@
 // The sigil button (split from rules/game.ts, no change in behaviour): what E (the gamepad's and touch's sigil button) does
-// on the ground, in order: her dropped hat first (rules/hat.ts), then a relic lying there or one she carries by a sleeping
-// legend (rules/legends.ts relicButton), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
+// on the ground, in order: her dropped hat first (rules/hat.ts), then a flask whose sigil she stands on, drunk on the spot (a
+// growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { atMapTable, deckOf } from "./treehouse";
@@ -9,8 +9,9 @@ import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
-import { carryRelic, dropRelic, stackBottom, stepLeash, type LeashEvent } from "./leash";
-import { relicButton } from "./legends";
+import { stepLeash, type LeashEvent } from "./leash";
+import { flaskUnder } from "./legends";
+import { growthSpurt } from "./berries";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
 import { hatButton, putHat, wearing } from "./hat";
@@ -43,7 +44,7 @@ export function sigilBarred(g: Game, x: number, z: number, t: Tuning): boolean {
 
 /** Witch W's sigil button this step (her controls c, her clock ht and step hdt; the game's legends; whether a creature's
  *  busy eating or evolving; the rules' fixed step). Its events join the leash's, after the leash's own step. */
-export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: number, hdt: number, legends: number[], busy: (id: number) => boolean, step: number): void {
+export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: number, hdt: number, _legends: number[], busy: (id: number) => boolean, step: number): void {
   // (the relic button's events: added after the leash's step, which starts its events afresh)
   const relicEvents: LeashEvent[] = [];
   // The sigil button by a lying relic picks it up; carrying one, by a sleeping legend, puts it down there (rules/legends.ts).
@@ -74,23 +75,16 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).
   const held = !!c.sigilHeld && onFoot, run = held && t.leash.runs !== false ? W.leash.run?.kind : undefined;
-  if (run === "pick" && g.witch.mode === "ground") {
-    const r = relicButton(g.relics, [], g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
-    if (r && "picked" in r) { carryRelic(g.leash, r.picked.id); relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht }); }
-  }
-  if ((sigil || place) && g.witch.mode === "ground") {
-    // (A relic's sigil sits in her stack like the rest, Ed's playtest 2026-10-08: only the one at its bottom is given, in a
-    // legend's clearing, or put down on the ground elsewhere (rules/leash.ts); with a creature's at the bottom the button puts
-    // that down, in a legend's clearing too, for its quest.)
-    const bottom = stackBottom(g.leash), give = bottom?.kind === "relic" ? [bottom.id] : [];
-    const r = relicButton(g.relics, give, g.creatures, legends, g.witch.x, g.witch.z, g.clock.time, t.leash.runeRadius, g.map);
-    if (r && "picked" in r) carryRelic(g.leash, r.picked.id);
-    else if (r && "placed" in r) dropRelic(g.leash, r.placed.id);
-    if (r) {
+  if ((sigil || place) && g.witch.mode === "ground" && !run) {
+    // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
+    // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
+    // becomes one at once; with none to grow, nothing happens but the refusal's sound, and the flask stays where it lies.
+    const f = flaskUnder(g.relics, g.witch.x, g.witch.z, t.leash.runeRadius);
+    if (f) {
       sigil = false; place = false;
-      if ("picked" in r) relicEvents.push({ kind: "relicPicked", id: r.picked.id, x: r.picked.x, z: r.picked.z, at: ht });
-      else if ("placed" in r) relicEvents.push({ kind: "relicPlaced", id: r.placed.id, x: r.legend.x, z: r.legend.z, at: ht });
-      else relicEvents.push(outsideCircle(g, r.outside));
+      const grown = growthSpurt(g.berries, g.creatures, W.leash.stack, g.clock.time);
+      if (grown > 0) { Object.assign(f, { state: "used", x: g.witch.x, z: g.witch.z }); relicEvents.push({ kind: "flaskDrunk", id: f.id, x: g.witch.x, z: g.witch.z, at: ht }); }
+      else relicEvents.push({ kind: "fizzled", id: f.id, x: g.witch.x, z: g.witch.z, at: ht });
     }
   }
   stepLeash(g.leash, g.creatures, { sigil, place, held, cycle: !!c.cycle && !W.ko, rune: (x, z, r) => runeNear(g.creatures, x, z, r, g.clock.time, undefined, k => runeOffset(k, t)), dropRelic: (id, x, z) => Object.assign(g.relics[id], { state: "dropped", sx: x, sz: z }), inviteNearest: c.inviteNearest, barred: (x, z) => sigilBarred(g, x, z, t), talk: !t.invites.on && (c.autoTalk !== false || !!c.talkHeld) }, g.witch, g.witch.mode === "ground" && !perched && !W.ko, ht, hdt, t, id => busy(id) || heldByCombat(g.creatures[id]) || !!g.creatures[id].travelling);
@@ -107,6 +101,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
 
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest. */
 export function questsFromPlaced(g: Game, ht: number): void {
+  if (g.partyOver) return; // (no quests once the party's over: Ed, 2026-10-18)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
   for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === ht) {
     const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
@@ -122,7 +117,7 @@ export function questsFromPlaced(g: Game, ht: number): void {
  *  standing inside its circle. Every step; cheap (her animals, each against its own area's legend). */
 export function questsFromStanding(g: Game): void {
   const s = g.leash;
-  if (!s.stack.length && !s.placed.length) return;
+  if (g.partyOver || (!s.stack.length && !s.placed.length)) return; // (no quests once the party's over: Ed, 2026-10-18)
   const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), partified = (k: string) => g.party.areas.has(k);
   const check = (id: number) => {
     const c = g.creatures[id];
@@ -134,8 +129,10 @@ export function questsFromStanding(g: Game): void {
   for (const p of s.placed) check(p.id);
 }
 
-/** A legend's quest just done (questPlaced has marked it): the event, the ley line, the area friendly while wild. */
+/** A legend's quest just done (questPlaced has made it happy): the event, the ley line, the area friendly while wild, and its
+ *  island found tonight (kept only if the night is won: Ed, 2026-10-18). */
 function questDone(g: Game, L: Creature, joined: number): void {
+  if (!g.islandsTonight.includes(L.species)) g.islandsTonight.push(L.species);
   g.questEvents.push({ kind: "done", id: L.id, joined, cell: [L.cell[0], L.cell[1]], key: cellKey(L.cell), x: L.x, z: L.z, at: g.clock.time });
   if (!g.party.areas.has(cellKey(L.cell))) onAreaDone(g.party, L.cell, g.clock.time); // (the ley line moves on: its quest done before its wave; after it, the line has moved on already)
   if (g.friendly.has(cellKey(L.cell))) befriendArea(g, cellKey(L.cell));

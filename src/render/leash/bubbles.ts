@@ -32,7 +32,7 @@ export const BUBBLE_PX = GRID; // (every bubble's grid: render/thoughtCloud.ts)
 const DREAM_INNER = 30, DREAM_EMOJI = 20, SNORE_INNER = 12;
 /** Its ink and flat fill (no gradient, no glow): the HUD's amber, as before but crisp; a nightmare's fill a deep ember. */
 const DREAM_INK: Rgba = [232, 180, 106, 0.8], DREAM_FILL: Rgba = [20, 14, 34, 0.55], NIGHTMARE_FILL: Rgba = [44, 8, 14, 0.6];
-const DREAM_CYCLE = { hold: 1.8, fade: 0.3, flask: 0.25 };
+const DREAM_CYCLE = { hold: 1.8, fade: 0.3, flask: 0 }; // (no flask in the dream since a flask no longer wakes a legend: Ed, 2026-10-18)
 /** How far she goes (metres) before a dream's pointer works out her nearest runestone again. */
 const DREAM_REFRESH = 15;
 export const bubblePx = (level: number): number => BUBBLE_PX + Math.max(0, Math.min(3, level));
@@ -116,8 +116,8 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     el.style.display = "";
     // A pixel thought bubble (Ed, 2026-10-08, relayed by the coordinator: "drawn in the same way as the speech bubbles ... small
     // clouds going up to a large cloud"; render/thoughtCloud.ts), holding one symbol at a time: its face (sleepy, or the
-    // nightmare's), then the sigil it dreams of (fading as it grows restless), then its face again, now and then the flask's
-    // relic sigil instead of the sigil; each fading in and out (dreams.cycle). A nightmare's ink reddens.
+    // nightmare's), then the sigil it dreams of (fading as it grows restless), then its face again (the flask's relic sigil
+    // in place of the sigil now and then, by dreams.cycle.flask: 0 since 2026-10-18); each fading in and out (dreams.cycle). A nightmare's ink reddens.
     // A legend's dream as big as its speech (Ed, 2026-10-12: "dream bubbles should also grow"): its cloud's pixel P its level's.
     const S = thoughtShape(DREAM_INNER, 3), P = bubbleGrid(g.tuning, c.level), tone = faces ? Math.round(ire * 8) / 8 : -1;
     const snapToP = (v: number) => snapTo(v, P);
@@ -126,7 +126,7 @@ export function drawDreams(lv: LeashView, camera: THREE.Camera, width: number, h
     const sym = dreamSymbol(performance.now() / 1000, c.id, g.tuning.dreams.cycle ?? DREAM_CYCLE, open); // (the screen's clock: game time slows to a crawl in a legend's clearing)
     if (sym.kind === "emoji") thoughtEmoji(el, S, faceE, DREAM_EMOJI, sym.alpha, P);
     else if (sym.kind === "flask") thoughtSymbol(el, S, "flask", "relic", DREAM_INNER, () => sigilCanvas("relic", null, [255, 205, 90], DREAM_INNER), sym.alpha, P);
-    else thoughtSymbol(el, S, "sigil", `${q.species}:${q.level}`, DREAM_INNER, () => sigilCanvas(q.species, q.level, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r), P);
+    else thoughtSymbol(el, S, "sigil", `${q.species}:kind`, DREAM_INNER, () => sigilCanvas(q.species, null, sigilColour(q.species), DREAM_INNER), sym.alpha * (1 - 0.75 * r), P);
     const bx = ((lv.v.x + 1) / 2) * width, ly = ((1 - lv.v.y) / 2) * height;
     const shake = faces ? snapToP(ire * P * Math.sin(performance.now() * 0.05 + c.id)) : 0; // (a nightmare shakes, a whole grid step)
     const at = thoughtAt(S, bx, ly, P); // (its smallest puff over the sleeper)
@@ -266,7 +266,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   if (!lv.circleFade || !lv.circleLast) { if (el) el.style.display = "none"; return; }
   if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); lv.circlePanel = el; }
   const { legend: c, x, z, r } = lv.circleLast, brought = broughtLine(g, lv.circleLast), lines = brought ? [...circleLines(c), brought] : circleLines(c);
-  const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.quest?.level}:${brought?.text ?? ""}`;
+  const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${brought?.text ?? ""}`;
   if (el.dataset.k !== key) {
     el.dataset.k = key;
     el.dataset.state = c.legendState ?? "asleep";
@@ -281,7 +281,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
       const p = document.createElement("p");
       if (l.done) p.className = "done"; else if (l === brought) p.className = "wrong";
       l.text.split(/(\{sigil\}|\{relic\}|\{boon\})/).forEach(part => {
-        if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, c.quest.level, sigilColour(c.quest.species)));
+        if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, null, sigilColour(c.quest.species)));
         else if (part === "{boon}") p.append(icon(c.species, null, sigilColour(c.species))); // (its own sigil: the buff's icon in the HUD)
         else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
         else if (part) p.append(document.createTextNode(part));

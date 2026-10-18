@@ -22,7 +22,7 @@ describe("the early easy quest", () => {
     expect(E.wants).not.toBe(kindOf(map, E.host));
     expect(first.filter(k => k !== E.host).map(k => kindOf(map, k))).toContain(E.wants);
     const L = spawnCreatures(map).find(c => c.legendState && cellKey(c.cell) === E.host)!;
-    expect(L.quest).toMatchObject({ species: E.wants, level: 0 });
+    expect(L.quest).toMatchObject({ species: E.wants }); // (any age: Ed, 2026-10-18)
   });
 
   it("forces a legend circle into the first three where the share left them none", () => {

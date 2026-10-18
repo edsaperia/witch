@@ -42,13 +42,14 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - **The victory lap:** with none left, at once, **two** fast pulses (sparklers) set off from wherever the wave's pulse is on the ley line (Ed, 2026-10-12), one racing back to home and one on to the route's end, both at **120 m/s** (`win.lapSpeed`), the pointer following the one going home with 🎉, each stone either passes shooting **fireworks** (the outward one lighting the line as it goes), the waves stopping as it sets off, the music on to its **victory** section from that block (the music style's `victory`; the drop until it has one).
    - **The win**, as the lap reaches home:
      - the night's legends (the dealt kinds', `map.legendKinds`) wake and come home to dance as **party legends**, dancing in place on the dancefloor's far (north) side, beyond the conga and behind it all from the camera: in an arc 12 m outside the conga's ring, 14 m apart, clear of the treehouse, a row further out if many (`win.legendGap`, `legendRow`, `legendSpace`, `legendArc`); they don't join the conga;
-     - an enraged legend calms and goes back to sleep in its clearing instead, and **its island isn't found**;
+     - an enraged legend calms and goes back to sleep in its clearing instead;
+     - the win itself finds **no islands** (Ed, 2026-10-18: "Just winning an island does not unlock more islands"): the islands found are those whose legends' quests you did tonight, and the won night is what keeps them on the sea chart;
      - every other animal on the island becomes a party animal, and they all join **one conga line** round the dancefloor (2.5 m/s, 2.4 m apart, a circle at least 34 m across or as big as the line needs: `win.conga*`), walking to their places (out of her sight, they're simply there); her leash lets go of hers to join it;
      - **fireworks** from every soundsystem still standing;
      - **the island's sigil flares on the dancefloor** (its kind's, home's the World Tree: rules/rosters.ts), drawn on again over 3 s and held 16 s (`win.flareDraw`, `win.flare`), then the party's patterns again;
      - each woken legend's **dream bubble shows its home island**: its coast with its sigil, the picture the sea chart shows;
      - nothing fights and no more waves come.
-   - About 20 s later (`win.cardAfter`) the **Night won** card lists the islands found (the woken legends' kinds) and those an angry legend kept hidden, with a button on to a new island (the sea chart's, to come).
+   - About 20 s later (`win.cardAfter`) the **Night won** card lists the **islands found tonight**, one for each legend whose quest you did this night (or says none were), with a button on to a new island (the sea chart's). Only now are they saved to the sea chart: a night lost keeps none of them (Ed, 2026-10-18).
    - Losing still comes first: if home's speakers all fall before the lap reaches home, the party's over as above.
 
 Home's speakers are each a soundsystem in the fight: animals marching on home go for the nearest speaker still standing, and on to the next nearest when it falls. Each shows its own damage (damaged at half its health, destroyed at none). Home is lost, and the next wave hurried, only when the last speaker falls; and with it the party's over.
@@ -166,13 +167,15 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 
 **Asleep in their circles.** A legend lies half sunk in its own small clearing, mossed over like a boulder. The clearing is about 9 m across, bigger for big species (`legendClearing`), ringed with the area's tallest trees. **Waves don't wake legends.**
 
-**Dreams and quests.** Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other species at one level (baby, young or adult). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
-- **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the baby of another of those three (`legends.earlyQuest`).
-- **Put down the sigil of exactly that creature, at that age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**: the buff and its fanfare come as the sigil lands, wherever the animal is; it walks over to its sigil afterwards. One of yours of that kind and age standing inside the circle counts too, following you or parked. You get its **buff for good**, and the animal stays yours.
-- The circle's panel names the dream in words beside its sigil ("a young elk"). Drop the wrong kind or age in the circle, or bring one in, and it says so at once: "Not this one: it dreams of a young elk, and you've brought an adult stag."
-- **Every quest's buff is the same strength**, 1.25× as written (`legends.questRoll`), however far the dream creature lived: the encounter is the gamble, not the reward. (A relic's buff stays as written.)
-- If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**. (Only animals that grew there *after* the quest were ever marked friendly, and nothing grows now, so in practice none are.)
+**Dreams and quests** (Ed, 2026-10-18: "Legends accept any level animal for their quest, at which point they fight for you and unlock their island"). Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other **kind**, any age (its bare sigil, no age frame). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
+- **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the kind of another of those three (`legends.earlyQuest`).
+- **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. One of yours of that kind standing inside the circle counts too, following you or parked. The animal stays yours.
+- **The legend wakes happy at once and fights for you** (below), and **its island is found tonight**. The island is kept on the sea chart **only if the night is won** (Ed, 2026-10-18: "The island is only kept if the night is won"); lose the night and tonight's islands are not kept.
+- **No boon** (Ed, 2026-10-18: "Finishing quests no longer gives boons").
+- The circle's panel names the dream in words beside its sigil ("a badger, any age"). Drop the wrong kind in the circle, or bring one in, and it says so at once: "Not this one: it dreams of an elk, and you've brought a young stag."
+- If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**.
 - Drop the sigil just outside the circle and the circle flashes as a hint.
+- **Once the party's over, no legend takes a quest** (Ed, 2026-10-18: permanent unlocks only happen while the party is on): its dream closes and the panel says it sleeps on.
 
 **Restless and angry.**
 - Each legend checks every **5 s** whether any of its own kind is in its area. That counts any state: wild, happy, your parked ones, babies.
@@ -183,13 +186,12 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 - (A "stomp" variant, where a legend turning angry flattens its own area's soundsystem, exists but is switched off: `legends.stomp.on` false.)
 
 **Relics.** Giant half-buried bottles lie on each map, **one per 10 areas** the waves reach, at least one (`legends.json` `relics.perAreas`; Ed, 2026-10-11): one just inside the edge of home, the rest scattered far out, at least 150 m apart. Each is one of the six bottles, mirrored or not, in one of six colours (its glass and glowing liquid; `relics.colours`): **72 kinds** (Ed, 2026-10-11). A map never holds the same bottle in the same colour twice, mirrored or not, while there are looks to spare (36). You can spot their glint from the treetops only through gaps in the canopy.
-- Stand on a relic's sigil and press E to carry it.
-- Press E inside a sleeping or restless legend's circle and the relic makes that legend **happy**.
+- **A flask is a growth spurt** (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"). Stand on its sigil and press E to **drink it on the spot**: every animal **following you** (on your stack, not parked at a sigil) younger than an adult becomes an **adult at once**, with the evolving's flash and sparkle burst on each. With nothing following you to grow it does nothing (a refusal's sound) and the flask stays where it lies. It's not carried, and it no longer wakes a legend.
 
-**Happy legends.** A happy legend gives its **buff for good**. It defends its area, shooting enraged animals from up to **420 m** (`legends.happyRange`), and heals to full over **120 s** (`legends.json` `healTime`).
+**Happy legends.** A legend is made happy by doing its quest. It gives **no buff** (Ed, 2026-10-18). It defends its area, shooting enraged animals from up to **420 m** (`legends.happyRange`), and heals to full over **120 s** (`legends.json` `healTime`).
 - **The party-legend Easter egg** (`legends.partyEgg` on): 100 💌s (`legends.partyHits`) turn a happy legend into a **party legend**. You can pick up its rune, but it never moves, and it pins you within 6.8 m of it (`legends.partyReach`). Totally useless, as intended.
 
-**Buffs** (`config/legend-buffs.json`): 32 of them, one per species. Each changes **only your 💌s or your movement**. Buffs stack, within limits. Examples:
+**Buffs** (`config/legend-buffs.json`): 32 of them, one per species. Each changes **only your 💌s or your movement**. **Nothing grants them now** (Ed, 2026-10-18: no quest boons, and flasks and happy legends give none); the file and the code stay, and `?buffs=` still forces some on for testing. Buffs stack, within limits. Examples:
 - Fox, *Charm*: 💌s home in hard.
 - Stag, *Pierce*: 💌s fly through the first animal.
 - Toad, *Spawn*: a 💌 that lands splits into three.
