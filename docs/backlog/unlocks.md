@@ -94,7 +94,7 @@ Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is
 **Not built** (legends' part being built: quests aren't accepted after a lost party). "All permanent unlock items disappear from the map after a party is lost. You should keep them if you find them earlier even if you lose the night though."
 
 - Hats, bags, broom parts and legends' quests can only be claimed **while the party is on**. When the party is lost (the party's over, the afterparty), the unclaimed ones vanish from the map.
-- **Whatever she found before the loss is hers to keep**, even though the night is lost (a quest done during the night has already found its island: Ed, 2026-10-18).
+- **Whatever she found before the loss is hers to keep**, even though the night is lost. **Islands are the exception** (Ed, 2026-10-18): a quest done during the night finds its island for tonight, but the island is kept only if the night is won.
 - Open: what "found" means for a hat, bag or broom part: picked up (or hitched) is enough, or brought home to the balcony or the garage as written above. This rule loosens "carried to the balcony mid-night" and "tow it after the party" (the broom garage), so those two need settling with it.
 
 ## The broom garage (Ed, 2026-10-16)
