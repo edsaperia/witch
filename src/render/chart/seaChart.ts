@@ -716,13 +716,16 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
   }
 
+  /** The size the canvas and the post pass were last made at (art pixels). */
+  private made = { w: 0, h: 0 };
   /** Fit the canvas (CSS pixels): the scene at low resolution, scaled up with whole pixels. */
   resize(cssW: number, cssH: number): void {
     const p = CHART_PIXEL, w = Math.max(1, Math.ceil(cssW / p)), h = Math.max(1, Math.ceil(cssH / p));
-    if (this.sized && w === this.w && h === this.h) return; // (the same: a canvas sized again is made again, seconds on a software renderer)
+    if (this.sized && w === this.w && h === this.h) return;
     this.w = w; this.h = h;
-    this.renderer.setSize(this.w, this.h, false);
-    this.post.resize(this.w, this.h, this.w, this.h);
+    // (the canvas and the post pass's targets only when their size changes: sized again, they're made again, seconds on a software
+    // renderer, and the chart kept between openings opens at the size it was made at)
+    if (this.made.w !== w || this.made.h !== h) { this.renderer.setSize(w, h, false); this.post.resize(w, h, w, h); this.made = { w, h }; }
     this.canvas.style.width = `${this.w * p}px`; this.canvas.style.height = `${this.h * p}px`;
     this.camera.aspect = this.w / this.h; this.camera.updateProjectionMatrix();
     (this.skyU.uRes.value as THREE.Vector2).set(this.w, this.h);
