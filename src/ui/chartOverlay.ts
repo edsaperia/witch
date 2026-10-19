@@ -4,7 +4,6 @@
 // pad's B or Close shuts it; while it's open the game's own controls are held still (main.ts, chartOpen).
 import { mountChart, type ChartView } from "../app/chartView";
 import { stopWarmChart } from "../app/chartWarm";
-import { mark } from "../app/timing";
 import { prepareSeaChart } from "../render/chart/seaChart";
 import { TUNING } from "../rules/tuning";
 
@@ -14,7 +13,7 @@ let open: { wrap: HTMLDivElement; view: ChartView; raf: number } | null = null;
  *  carried on as chart.html's links do. Does nothing if it's already open. */
 export function openChart(onSail: (href: string) => void, world?: number): void {
   if (open) return;
-  mark("chart:open");
+  performance.mark("chart:open");
   stopWarmChart(); // (the chart's own worker makes what isn't kept yet)
   const wrap = document.createElement("div");
   wrap.id = "chart-overlay";
@@ -29,7 +28,7 @@ export function openChart(onSail: (href: string) => void, world?: number): void 
   let last = performance.now();
   const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); open.raf = requestAnimationFrame(loop); };
   open = { wrap, view, raf: requestAnimationFrame(loop) };
-  mark("chart:mounted");
+  performance.mark("chart:mounted");
   (window as unknown as { chart: unknown }).chart = { chart: view.chart, choose: view.choose, islands: view.islands, view }; // (as chart.html's: for the screenshots and timings)
   addEventListener("resize", fit);
 }

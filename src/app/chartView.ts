@@ -22,7 +22,6 @@ import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
-import { carryTiming, mark } from "./timing";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 
 export type ChartMode = "look" | "sail" | "miniature";
@@ -141,20 +140,20 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
   const go = async (id: string) => {
-    mark("chart:flown");
+    performance.mark("chart:flown");
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
     await b?.settle(); // (what's drawn, written before the page goes)
     // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
     const m = bake?.island === id ? await bake.map : null;
     if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
-    mark("chart:go"); carryTiming(); // (?timing=1: this page's steps carried to the next, app/timing.ts)
+    performance.mark("chart:go"); // (?timing=1: main.ts carries this page's steps to the next as it sails, app/timing.ts)
     if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || !isl?.sail || chart.flying) return;
     const w = worldNow();
-    mark("chart:sail");
+    performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
     if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!); })) { void go(id!); return; }
     root.classList.add("flying");
@@ -190,7 +189,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const isl = islands.find(i => i.id === best!.id);
     if (!isl || best!.world !== worldNow()) return;
     isl.outline = best!; chart.reshape(best!.id, best!);
-    { const n = islands.filter(i => i.outline).length; if (n === 1) mark("chart:island1"); if (n === islands.length) mark("chart:islands"); } // (app/timing.ts)
+    { const n = islands.filter(i => i.outline).length; if (n === 1) performance.mark("chart:island1"); if (n === islands.length) performance.mark("chart:islands"); } // (app/timing.ts)
   }
   const make = (): Worker | null => {
     if (!worker) {

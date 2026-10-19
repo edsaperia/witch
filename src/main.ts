@@ -1,7 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
 import { chartOpen, openChart, prepareChart } from "./ui/chartOverlay";
-import { clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
+import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -517,6 +517,7 @@ function frame(now: number): void {
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(href => {
     const W = tuning.map?.world ?? 0, save = loadSave();
     if (save.world === W) storeSave(sailNight(save, tuning.map?.island ?? "", !wavesOver(game) && !chartRecorded && !overShown)); // (in the campaign's world only, as nightOver)
+    carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
     location.href = href;
   }, new URLSearchParams(location.search).has("world") ? tuning.map?.world : undefined);
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
