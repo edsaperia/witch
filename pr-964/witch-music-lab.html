@@ -9912,7 +9912,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_GRASSLAND = { species: [["flat", 0.3], ["hawthorn", 0.25], ["crabApple", 0.2], ["weepingBirch", 0.15], ["whitebeam", 0.1]], palette: { sat: 1, val: 1.1 } };
 
   // art/areas/hazel-forest/flora.js
-  var AREA_FLORA_HAZEL_FOREST = { species: [["hazel", 0.45], ["oak", 0.2], ["elder", 0.2], ["glowcap", 0.15]], palette: { sat: 1.05, val: 1 } };
+  var AREA_FLORA_HAZEL_FOREST = { species: [["hazel", 0.45], ["oak", 0.2], ["elder", 0.2], ["hazel", 0.15, { variant: "tall" }]], palette: { sat: 1.05, val: 1 } };
 
   // art/areas/heath/flora.js
   var AREA_FLORA_HEATH = { species: [["birch", 0.4], ["pine", 0.25], ["hawthorn", 0.2], ["rowan", 0.15]], palette: { sat: 0.9, val: 0.95 } };
@@ -10038,23 +10038,6 @@ label.check input { accent-color: var(--accent); }
     { "kind": "polarbear", "slot": 63, "phase": 4, "bearing": 345, "dir": "NNW", "biome": "cold" }
   ];
 
-  // art/flora/areas.js
-  var AREA_FLORA = {
-    ...AREA_FOLDER_FLORA
-  };
-
-  // art/recipes.js
-  var AREA_RECIPES = [...AREA_FOLDER_RECIPES];
-  function recipeProblems(R4) {
-    const out = [];
-    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R4[k] == null) out.push(k);
-    if (!Number.isInteger(R4.slot) || R4.slot < 0) out.push("slot");
-    if (R4.floor && (!Array.isArray(R4.floor) || R4.floor.length !== 4)) out.push("floor");
-    if (!R4.set && !R4.setPiece) out.push("set or setPiece");
-    if (!R4.big?.length) out.push("big");
-    return out;
-  }
-
   // art/flora/variants.js
   var TREE_VARIANTS = {
     windbent: { lean: 0.45, gnarl: 0.85 },
@@ -10073,10 +10056,29 @@ label.check input { accent-color: var(--accent); }
     //                  snow lying on its crown
     burnt: { dark: true, gnarl: 1 },
     //       scorched: its crown dark, its limbs twisted
+    tall: { scale: 1.45, trunks: 3, thin: true, narrow: true, gnarl: 0.35 },
+    // grown up from a coppice stool and left: taller, a few straight slim stems, its crown narrow (the hazel forest's second hazel: Ed, 2026-10-19)
     drowned: { dark: true, hang: 0.6, thick: 1.2 }
     // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
   };
   var withVariant = (o) => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
+
+  // art/flora/areas.js
+  var AREA_FLORA = {
+    ...AREA_FOLDER_FLORA
+  };
+
+  // art/recipes.js
+  var AREA_RECIPES = [...AREA_FOLDER_RECIPES];
+  function recipeProblems(R4) {
+    const out = [];
+    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R4[k] == null) out.push(k);
+    if (!Number.isInteger(R4.slot) || R4.slot < 0) out.push("slot");
+    if (R4.floor && (!Array.isArray(R4.floor) || R4.floor.length !== 4)) out.push("floor");
+    if (!R4.set && !R4.setPiece) out.push("set or setPiece");
+    if (!R4.big?.length) out.push("big");
+    return out;
+  }
 
   // art/props/genomes.js
   var PROP_GENOMES = {

@@ -13576,7 +13576,7 @@ const AREA_FLORA_GRASSLAND = { species: [["flat", .3], ["hawthorn", .25], ["crab
 
 
 // ---- inlined from art/areas/hazel-forest/flora.js ----
-const AREA_FLORA_HAZEL_FOREST = { species: [["hazel", .45], ["oak", .2], ["elder", .2], ["glowcap", .15]], palette: { sat: 1.05, val: 1 } };
+const AREA_FLORA_HAZEL_FOREST = { species: [["hazel", .45], ["oak", .2], ["elder", .2], ["hazel", .15, { variant: "tall" }]], palette: { sat: 1.05, val: 1 } };
 
 
 // ---- inlined from art/areas/heath/flora.js ----
@@ -13721,10 +13721,34 @@ const AREA_FOLDER_KINDS = [
 ];
 
 
+// ---- inlined from art/flora/variants.js ----
+// Tree variants (Ed, 2026-10-13: "we should have a 'different' main tree in each area, even if they're only slightly different
+// (e.g. snowy vs not snowy)"): a species drawn another way, named, as data. An area's tree recipe names one with `variant`
+// (["tree", { type: "fir", variant: "windbent" }]); its knobs are the tree builders' own (art/areas.js areaTreeVariants: lean, gnarl,
+// scale, thick, hollow, trunks, thin, narrow, dark, snow, hang), laid over the recipe's, so the variant always shows. An area's main
+// tree is its species and variant together, and no two areas share one (art/check.mjs, tree species).
+const TREE_VARIANTS = {
+  windbent: { lean: .45, gnarl: .85 }, //    bent by the wind, leaning all one way
+  stunted: { scale: .7, gnarl: .95 }, //    short and twisted (krummholz, bog and scrub trees)
+  ancient: { thick: 1.4, gnarl: 1, hollow: true }, // very old: a broad trunk, gnarled, hollowing
+  coppiced: { trunks: 5, thin: true }, // cut back long ago: many slim stems from one stool
+  pollard: { thick: 1.5, scale: .75 }, //   cut at head height: a thick short bole under a mop of new growth
+  mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
+  snowy: { snow: .85 }, //                  snow lying on its crown
+  burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
+  tall: { scale: 1.45, trunks: 3, thin: true, narrow: true, gnarl: .35 }, // grown up from a coppice stool and left: taller, a few straight slim stems, its crown narrow (the hazel forest's second hazel: Ed, 2026-10-19)
+  drowned: { dark: true, hang: .6, thick: 1.2 }, // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
+};
+/** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
+const withVariant = o => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
+/** An area main tree's key: its species, and its variant if it has one. */
+const treeKey = o => o ? o.type + (o.variant ? ":" + o.variant : "") : undefined;
+
+
 // Area flora (stage 8 of issue #79): which trees each area type grows and in what colours. Each wooded area lists 3 to 6 species
 // with their shares (the first is its main kind, as its `big` names it in art/areas.js), and a palette: its leaves' hue (the area's
 // own `leaf`), and how saturated and how bright its leaves are (sat, val: times the species' own). A species may carry options as
-// the area recipes do (bare: dead; dark: shadowed leaves). areaTreeVariants grows an area's ten tree variants from this list, each
+// the area recipes do (bare: dead; dark: shadowed leaves), or a variant of it (art/flora/variants.js: ["hazel", .15, { variant: "tall" }]). areaTreeVariants grows an area's ten tree variants from this list, each
 // species in its share of them, spread over the height classes. The open areas (moor, stone shrine, log pile, ravine) grow a few
 // among their props (their layout's treeShare; Ed, 2026-10-13: "let's see if we can reasonably put trees into areas with no trees").
 // The fantasy species (glowcap, crystal-leaf tree, vinewood) are here only where the place suits magic, and only as a minority.
@@ -13742,7 +13766,7 @@ function floraSlots(id, n) {
   const order = raw.map((x, i) => [x - Math.floor(x), i]).sort((a, b) => b[0] - a[0]);
   for (let k = 0; left > 0; k++, left--) cnt[order[k % order.length][1]]++;
   for (let k = cnt.length - 1; left < 0; k = (k + cnt.length - 1) % cnt.length) if (cnt[k] > 1) { cnt[k]--; left++; }
-  const out = []; while (out.length < n) for (let i = 0; i < sp.length && out.length < n; i++) if (cnt[i] > 0) { cnt[i]--; out.push({ type: sp[i][0], ...(sp[i][2] || {}) }); }
+  const out = []; while (out.length < n) for (let i = 0; i < sp.length && out.length < n; i++) if (cnt[i] > 0) { cnt[i]--; out.push(withVariant({ type: sp[i][0], ...(sp[i][2] || {}) })); }
   return out;
 }
 
@@ -13879,28 +13903,6 @@ function recipeProblems(R) {
   return out;
 }
 
-
-// ---- inlined from art/flora/variants.js ----
-// Tree variants (Ed, 2026-10-13: "we should have a 'different' main tree in each area, even if they're only slightly different
-// (e.g. snowy vs not snowy)"): a species drawn another way, named, as data. An area's tree recipe names one with `variant`
-// (["tree", { type: "fir", variant: "windbent" }]); its knobs are the tree builders' own (art/areas.js areaTreeVariants: lean, gnarl,
-// scale, thick, hollow, trunks, thin, dark, snow, hang), laid over the recipe's, so the variant always shows. An area's main
-// tree is its species and variant together, and no two areas share one (art/check.mjs, tree species).
-const TREE_VARIANTS = {
-  windbent: { lean: .45, gnarl: .85 }, //    bent by the wind, leaning all one way
-  stunted: { scale: .7, gnarl: .95 }, //    short and twisted (krummholz, bog and scrub trees)
-  ancient: { thick: 1.4, gnarl: 1, hollow: true }, // very old: a broad trunk, gnarled, hollowing
-  coppiced: { trunks: 5, thin: true }, // cut back long ago: many slim stems from one stool
-  pollard: { thick: 1.5, scale: .75 }, //   cut at head height: a thick short bole under a mop of new growth
-  mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
-  snowy: { snow: .85 }, //                  snow lying on its crown
-  burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
-  drowned: { dark: true, hang: .6, thick: 1.2 }, // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
-};
-/** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
-const withVariant = o => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
-/** An area main tree's key: its species, and its variant if it has one. */
-const treeKey = o => o ? o.type + (o.variant ? ":" + o.variant : "") : undefined;
 
 
 const RECIPE_LAYOUTS = {};
@@ -14357,7 +14359,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   // character (its main recipe's trunks, lean, thickness, gnarl, scale) and the recipe the area gives that species, if any
   const total = TREE_HEIGHT_CLASSES.reduce((a, c) => a + c.count, 0), pal = AREA_FLORA[id]?.palette, main0 = AREA_FLORA[id]?.species[0][0];
   // dealt by stature, so the classes still rise: each kind's height as a mature tree, the shortest kinds in the low classes, the tallest in the top ones
-  const stature = o => speciesStature(o.type, st) + (o.type === main0 ? .01 : 0);
+  const stature = o => speciesStature(o.type, st) * (o.scale ?? 1) + (o.type === main0 ? .01 : 0); // (a variant grown taller among the taller)
   const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
@@ -14370,7 +14372,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,
     // larches) stay narrow as they grow; wide kinds (oak, yew, sycamore, chestnut) spread more than they rise; small
     // kinds (hawthorn, rowan, hazel) stay small; dead trees grow into tall snags; saplings are slim
-    const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare, wide = g === "wide", small = g === "small";
+    const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare || o.narrow, wide = g === "wide", small = g === "small";
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
