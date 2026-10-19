@@ -2,7 +2,7 @@
 // be in phase order (earlier phases first)"): the order the outlines worker is asked for, by the chart (app/chartView.ts) and by the
 // night's warm job (app/chartWarm.ts), runs by phase, earliest first, and within a phase the nearest first.
 import { describe, expect, it } from "vitest";
-import { chartIslandIds, islandPhase, outlineOrder } from "./chartWarm";
+import { chartIslandIds, chartOrder, islandPhase, outlineOrder } from "./chartWarm";
 import { islandAt } from "./chartLayout";
 import { KIND_NAMES } from "../rules/rosters";
 
@@ -29,6 +29,15 @@ describe("the chart's islands made in phase order", () => {
     expect(outlineOrder(islands, { x: 0, y: 0 })).toEqual(["home", "near1", "far1", "near2", "far2", "near3"]);
     // chosen far out east: within each phase the one nearer it first, the phases still in order
     expect(outlineOrder(islands, { x: 95, y: 0 })).toEqual(["home", "far1", "near1", "far2", "near2", "near3"]);
+  });
+
+  it("the open chart's order (chartOrder): home, then the islands she can sail to nearest the chosen first, then the rest by phase", () => {
+    const islands = [
+      { id: "far2", x: 100, y: 0, phase: 2, sail: false }, { id: "near3", x: 1, y: 0, phase: 3, sail: true }, { id: "near2", x: 2, y: 0, phase: 2, sail: false },
+      { id: "far1", x: 90, y: 0, phase: 1, sail: true }, { id: "home", x: 0, y: 0, phase: 0, sail: true }, { id: "near1", x: 3, y: 0, phase: 1, sail: false },
+    ];
+    expect(chartOrder(islands, { x: 0, y: 0 })).toEqual(["home", "near3", "far1", "near1", "near2", "far2"]);
+    expect(chartOrder(islands, { x: 95, y: 0 })).toEqual(["home", "far1", "near3", "near1", "far2", "near2"]);
   });
 
   it("the chart's real islands: the order asked for is sorted by phase", () => {
