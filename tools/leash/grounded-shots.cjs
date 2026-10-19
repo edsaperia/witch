@@ -32,11 +32,13 @@ const AT = [0, 0.1, 0.2, 0.35, 0.6]; // seconds after the press
         g.leash.stack = [];
         g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
         const pool = g.creatures.filter(c => !c.gone && !c.boss && !c.leashed && c.level >= 1 && c.level < 3 && ["wolf", "fox", "badger", "boar", "hare"].includes(c.species));
-        const got = levels.map((lv, i) => { const c = pool[i], px = x - 4 + i * 4, pz = z - 5; Object.assign(c, { level: lv, x: px, z: pz, tx: px, tz: pz, leashed: true, state: "leashed", enraged: false, siege: undefined, fight: undefined }); g.leash.stack.push(c.id); return `${c.species}${lv}`; });
+        const got = levels.map((lv, i) => { const c = pool[i], px = x - 7 + i * 7, pz = z - 9; Object.assign(c, { level: lv, x: px, z: pz, tx: px, tz: pz, leashed: true, state: "leashed", enraged: false, siege: undefined, fight: undefined }); g.leash.stack.push(c.id); return `${c.species}${lv}`; });
         g.byArea = null;
         return got.join(" ");
       }, levels));
       for (let i = 0; i < 4 / (1 / 60); i++) await step({}); // (settled, past any landing's cooldown)
+      await page.evaluate(() => { const g = window.witch.game, { x, z } = g.witch; g.leash.stack.forEach((id, i) => { const c = g.creatures[id], px = x - 8 + i * 8, pz = z - 9; Object.assign(c, { x: px, z: pz, tx: px, tz: pz }); }); }); // (spread out behind her again, so their leashes show)
+      for (let i = 0; i < 3; i++) await step({});
       await step({ toggleMode: true });
       if (process.env.DEBUG) console.log("  after press", await page.evaluate(() => { const g = window.witch.game; return JSON.stringify({ mode: g.witch.mode, ev: g.leashEvents.map(e => e.kind), stack: g.leash.stack.map(id => g.creatures[id].level), groundedAt: (window.witch.view || {}).groundedAt }); }));
       let t = 0;
