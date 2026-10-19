@@ -55,6 +55,7 @@ import { ArrivalFlight } from "./app/arrive";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { readArrival } from "./app/arrival";
 import { prepUsed, takeMapPrep } from "./app/mapPrep";
+import { newForestHref } from "./app/newForest";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
@@ -249,12 +250,12 @@ creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveL
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
-// and closing it goes back to the night where she was; the bed, E held, ends the night as the afterparty's Play again does.
+// and closing it goes back to the night where she was; the bed, E held, ends the night as the afterparty's "A new forest" does.
 creator.onExit = g => { newHatFromRoom(game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { if (on) { zooPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 const useHouse = (obj: string): void => {
-  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); location.reload(); return; } // (the sea chart: played, as the afterparty records it)
+  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); location.href = newForestHref(location.href); return; } // (the sea chart: played, as the afterparty records it; and a new forest, as its button: app/newForest.ts)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "creator") { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(o.use); }
@@ -469,7 +470,7 @@ document.getElementById("won-sail")?.addEventListener("click", () => { location.
 document.getElementById("again")?.addEventListener("click", () => location.reload());
 document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
-document.getElementById("fresh")?.addEventListener("click", () => { const u = new URL(location.href); u.searchParams.set("seed", String(Math.floor(Math.random() * 1e6))); location.href = u.toString(); });
+document.getElementById("fresh")?.addEventListener("click", () => { location.href = newForestHref(location.href); });
 /** Controls with nothing pressed or held (the aim left where it is). */
 const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
 function frame(now: number): void {
