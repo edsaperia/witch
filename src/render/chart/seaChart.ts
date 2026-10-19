@@ -821,11 +821,12 @@ export async function prepareSeaChart(tuning: ChartTuning): Promise<void> {
   const chart = takeSeaChart(tuning), mine = pooled!;
   mine.prep = true;
   try {
-    chart.resize(innerWidth * 0.92, innerHeight * 0.92); // (about the size it opens at over the game, ui/chartOverlay.ts: not made again as it opens)
+    chart.resize(innerWidth * 0.92 - 4, innerHeight * 0.92 - 4); // (the size it opens at over the game, ui/chartOverlay.ts: 4vw and 4vh in, inside a 2 px border; so not made again as it opens)
     chart.set([standIn("home", 0), standIn("standIn", 0.2)], [{ from: "home", to: "standIn" }]);
-    await chart.renderer.compileAsync((chart as unknown as { scene: THREE.Scene }).scene, chart.camera).catch(() => { /* (linked on first use, below) */ });
+    const scenes = chart as unknown as { scene: THREE.Scene; hScene: THREE.Scene };
+    await Promise.all([scenes.scene, scenes.hScene].map(sc => chart.renderer.compileAsync(sc, chart.camera))).catch(() => { /* (linked on first use, below) */ });
     if (!mine.prep) return; // (opened meanwhile: the chart's its now)
-    chart.frame(1 / 60, 0);
+    chart.frame(1 / 60, 0); chart.frame(1 / 60, 3); // (the second once the moon's height map is due: its program too)
     for (const p of (chart.renderer.info as unknown as { programs?: { getUniforms(): unknown }[] }).programs ?? []) p.getUniforms(); // (each program's link waited for now, not on the chart's first frame)
   } finally {
     if (mine.prep) { mine.prep = false; releaseSeaChart(chart); performance.mark("witch:chart-prepared"); }
