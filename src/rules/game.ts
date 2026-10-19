@@ -49,6 +49,7 @@ import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type 
 import { coolReady, coolRefund, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
 import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
+import type { HouseState } from "./houseRooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
@@ -88,6 +89,8 @@ export interface Witch {
   slowMult?: number;
   /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
   landedAt?: number;
+  /** Her business in the treehouse's rooms (rules/houseRooms.ts): the bed's hold, the hats on the hats' floor. */
+  house?: HouseState;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
