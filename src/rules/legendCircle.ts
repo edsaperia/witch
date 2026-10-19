@@ -1,8 +1,7 @@
 // The legend circle's explainer (Ed, 2026-10-06: "when you go into a legend circle, text appears on the screen to the side of the
-// circle explaining mechanics to do with legends. Something like: "This is a slumbering elder. If you bring a [sigil] and place it
-// in this circle, it will grant you a boon. If you bring a [relic sigil] and place it in this circle, you will gain a powerful
-// ally. It becomes angered if none of its kin are nearby."" ("kin", not "children": Ed, 2026-10-06)): which legend's clearing she stands in (any state), what the
-// panel says for its state, and how far it has faded in. No drawing here (render/leash.ts draws it).
+// circle explaining mechanics to do with legends"; its words rewritten to today's rules, Ed 2026-10-19): which legend's clearing
+// she stands in (any state), what the panel says for its state, and how far it has faded in. No drawing here (render/leash.ts
+// draws it).
 import { LEGEND_BUFFS } from "./buffs";
 import type { Creature } from "./creatures";
 import type { Game } from "./game";
@@ -69,20 +68,29 @@ export function kindWords(species: string): string {
   return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
 }
 
-/** What the panel says for a legend in its state (keeping Ed's words where they hold; party tone). The dream is named in words
- *  beside its sigil (Ed's playtest, 2026-10-07: a look-alike kind was easy to bring). Ed, 2026-10-18: a dream asks for a kind,
- *  any age; done, the legend fights for her and shows her its island (found tonight, kept if the night is won); no boons, and
- *  flasks no longer wake legends; once the party's over, no quest is taken (its dream closed: c.questOpen false while it sleeps). */
+/** A kind's name: "hare", "stag beetle". */
+const nameOf = (species: string): string => NAMES[species] ?? species;
+/** A kind's sigil in words: "a hare's sigil"; `bare`, only "a hare's" (Ed, 2026-10-19: "you put down a fox's"). */
+export function sigilWords(species: string, bare = false): string {
+  const w = nameOf(species);
+  return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}'s${bare ? "" : " sigil"}`;
+}
+
+/** What the panel says for a legend in its state (Ed, 2026-10-19: "We need to rewrite the helper text": short, plain, one idea a
+ *  line, the action said exactly). A dream asks for a kind's sigil put down inside the circle, any age (Ed, 2026-10-18), named in
+ *  words beside its icon (Ed's playtest, 2026-10-07: a look-alike kind was easy to bring); only the drop does it (Ed, 2026-10-19).
+ *  Done, the legend fights for her and shows her its island (found tonight, kept if the night is won). Once the party's over no
+ *  quest is taken (its dream closed: c.questOpen false while it sleeps). */
 export function circleLines(c: Creature): CircleLine[] {
-  const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined;
-  const found: CircleLine = { text: "Its island is found tonight: win the night to keep it on your chart.", done: true };
-  const ask: CircleLine | null = q && !done ? { text: `If you bring {sigil} ${kindWords(q.species)}, any age, into this circle, it will wake and fight for you, and show you its island.` } : null;
-  if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It fights for you, and guards its area and anyone partying in it." }, ...(done ? [found] : [])];
-  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }];
-  const closed = !!q && c.questOpen === false && !done; // (the party's over: Ed, 2026-10-18, no quest taken then)
-  const sleeping = closed ? [{ text: "The party's over: it sleeps on, and takes no quest tonight." }] : ask ? [ask] : [];
-  if (st === "restless") return [{ text: "This elder is restless." }, ...sleeping, { text: "Bring one of its kin back here to calm it." }];
-  return [{ text: `This is a slumbering elder ${NAMES[c.species] ?? c.species}.` }, ...sleeping, { text: "It becomes angered if none of its kin are nearby." }];
+  const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined, name = nameOf(c.species);
+  const found: CircleLine = { text: "Its island is found: win the night to keep it.", done: true };
+  if (st === "happy") return [{ text: `Your ally: the ${name}.` }, { text: "It fights for you and guards its area." }, ...(done ? [found] : [])];
+  if (st === "angry") return [{ text: `An angry legend: the ${name}!` }, { text: "Wear it down, or bring one of its kind back to its area, and it will settle." }];
+  const head: CircleLine = { text: st === "restless" ? `A restless legend: the ${name}.` : `A sleeping legend: the ${name}.` };
+  if (q && !done && c.questOpen === false) return [head, { text: "The party's over: it sleeps on." }]; // (Ed, 2026-10-18: no quest taken then)
+  const ask: CircleLine[] = q && !done ? [{ text: `Put down {sigil} ${sigilWords(q.species)}, any age, inside this circle.` }, { text: "It will wake, fight for you and show you its island." }] : [];
+  if (st === "restless") return [head, ...ask, { text: "Bring one of its kind back to its area to calm it." }];
+  return [head, ...ask, { text: "Leave none of its kind in its area and it grows restless." }];
 }
 
 /** The panel's fade: towards 1 inside a circle and 0 outside, over `fade` seconds. */
@@ -91,23 +99,20 @@ export function circleShown(prev: number, inside: boolean, dt: number, fade = 0.
   return inside ? Math.min(1, prev + step) : Math.max(0, prev - step);
 }
 
-/** Her sigils put down in this legend's circle, and her animals standing in it, that aren't what it dreams of (Ed's playtest, 2026-10-07: "I brought a quest
- *  animal into the legend circle and I wasn't granted the buff"): a line saying so, naming both, so a look-alike kind or the
- *  wrong age reads at once; null when none of hers is in it, or its quest is done or gone. The right one finishes the quest by
- *  standing there (rules/sigilButton.ts questsFromStanding), so never lingers to be named. */
+/** Her sigils put down in this legend's circle that aren't of the kind it dreams of: a line saying so, naming both (Ed, 2026-10-19:
+ *  "Not this one: it wants a hare's sigil, and you put down a fox's"), so a look-alike kind reads at once; null when there are
+ *  none, or its quest is done or gone. Only a sigil put down counts (Ed, 2026-10-19: the reward comes with the drop, not when the
+ *  animal walks in); the right one finishes the quest as it's put down (rules/sigilButton.ts questsFromPlaced), so never lingers. */
 export function broughtLine(g: Game, near: { legend: Creature; x: number; z: number; r: number }): CircleLine | null {
   const q = near.legend.quest, st = near.legend.legendState ?? "asleep";
   if (!q || q.done !== undefined || (st !== "asleep" && st !== "restless")) return null;
-  const wrong = new Set<string>(), inside = (x: number, z: number) => Math.hypot(x - near.x, z - near.z) <= near.r;
-  const check = (id: number, sigilIn = false) => {
-    const c = g.creatures[id];
-    if (!c || c.gone || c.boss || !(sigilIn || inside(c.x, c.z))) return;
-    if (c.species !== q.species) wrong.add(creatureWords(c.species, c.level));
-  };
-  // her animals standing in it, and (Ed, 2026-10-07: the drop is the moment) her sigils put down in it, their animals anywhere
-  for (const id of g.leash.stack) check(id);
-  for (const p of g.leash.placed) check(p.id, inside(p.x, p.z));
+  const wrong = new Set<string>();
+  for (const p of g.leash.placed) {
+    const c = g.creatures[p.id];
+    if (!c || c.gone || c.boss || Math.hypot(p.x - near.x, p.z - near.z) > near.r) continue;
+    if (c.species !== q.species) wrong.add(sigilWords(c.species, true));
+  }
   if (!wrong.size) return null;
-  const list = [...wrong].sort(), brought = list.length > 2 ? `${list.slice(0, 2).join(", ")} and others` : list.join(" and ");
-  return { text: `Not this one: it dreams of ${kindWords(q.species)}, and you've brought ${brought}.` };
+  const list = [...wrong].sort(), put = list.length > 2 ? `${list.slice(0, 2).join(", ")} and others` : list.join(" and ");
+  return { text: `Not this one: it wants ${sigilWords(q.species)}, and you put down ${put}.` };
 }
