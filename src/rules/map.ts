@@ -266,6 +266,11 @@ export function prepOf(map: ForestMap): MapPrep {
   return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null };
 }
 
+/** A map from its ready parts (a worker's prep: app/mapPrep.ts): the map generateMap(seed, tuning) makes, without their work
+ *  (src/rules/mapPrep.test.ts). The seam a night started in place takes (docs/plans/sail-without-reload.md, startNight; or
+ *  newGame's prep). */
+export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestMap => generateMap(seed, tuning, undefined, prep);
+
 export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }, prep?: MapPrep): ForestMap {
   const A = tuning.areaSize * tuning.areaScale;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of

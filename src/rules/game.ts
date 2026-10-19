@@ -24,7 +24,7 @@ import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
-import { AREA_TYPES, generateMap, type ForestMap, type MapPrep } from "./map";
+import { AREA_TYPES, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
@@ -240,7 +240,7 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1, prep?: MapPrep): Game {
-  const map = generateMap(seed, tuning, undefined, prep); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
+  const map = prep ? hydrateMap(seed, tuning, prep) : generateMap(seed, tuning); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the

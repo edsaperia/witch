@@ -3,7 +3,7 @@
 // same, its closures answering the same, and a game on it playing the same, for several seeds and islands, home's among them.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { generateMap, prepOf, type ForestMap, type MapPrep } from "./map";
+import { generateMap, hydrateMap, prepOf, type ForestMap, type MapPrep } from "./map";
 import { routeOf } from "./party";
 import { KIND_NAMES, KINDS, playableIsland } from "./rosters";
 import { newGame, stepGame, STEP, type Controls } from "./game";
@@ -52,7 +52,7 @@ describe("a map made from its prep (rules/map.ts MapPrep; app/mapPrep.ts)", () =
       const t = islandTuning(island, world), prep = prepFor(seed, t);
       expect(prep.land, `${island} has land`).not.toBeNull();
       expect(prep.route, `${island}'s route`).not.toBeNull();
-      expect(snapshot(generateMap(seed, t, undefined, prep)), `${island}, seed ${seed}, world ${world}`).toBe(snapshot(generateMap(seed, t)));
+      expect(snapshot(hydrateMap(seed, t, prep)), `${island}, seed ${seed}, world ${world}`).toBe(snapshot(generateMap(seed, t)));
     }
   }, 600000);
   it("plays the same game: its moving state after a few seconds' play", () => {
