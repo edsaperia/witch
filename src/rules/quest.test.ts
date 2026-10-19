@@ -18,25 +18,46 @@ function demo(): { g: Game; L: Game["creatures"][number]; gift: Game["creatures"
 }
 
 describe("the first quest (Ed, 2026-10-04)", () => {
-  it("gives every sleeping legend a dream: a creature of the map, not its own kind, as a baby, young or adult, from the seed", () => {
+  it("gives every sleeping legend a dream: a kind of the map, not its own, any age (Ed, 2026-10-18), from the seed", () => {
     const map = generateMap(123, TUNING), kinds = new Set(map.cells.map(([x, y]) => AREA_TYPES[map.typeOf(x, y)].creature));
     const legends = spawnCreatures(map).filter(c => c.boss), again = spawnCreatures(generateMap(123, TUNING)).filter(c => c.boss);
     for (const L of legends) {
       if (L.legendState === "happy") { expect(L.quest).toBeUndefined(); continue; } // (home's)
       expect(kinds.has(L.quest!.species)).toBe(true);
       expect(L.quest!.species).not.toBe(L.species);
-      expect([0, 1, 2]).toContain(L.quest!.level);
+      expect(L.quest).not.toHaveProperty("level");
     }
     expect(again.map(c => c.quest)).toEqual(legends.map(c => c.quest));
-    expect(new Set(legends.map(c => c.quest?.level)).size).toBeGreaterThan(2); // (a mix)
   });
 
-  it("isn't done by the wrong creature, or out of the legend's area", () => {
+  it("isn't done by the wrong kind", () => {
     const { g, L, gift } = demo();
-    gift.level = ((gift.level + 1) % 3) as typeof gift.level;
+    gift.species = L.quest!.species === "elk" ? "stag" : "elk";
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.legendState).toBe("asleep");
     expect(g.friendly.size).toBe(0);
+    expect(g.islandsTonight).toEqual([]);
+  }, 60000);
+
+  for (const level of [0, 1, 2] as const) it(`is done by its kind at any age (${["a baby", "a young one", "an adult"][level]}): the legend happy at once, fighting for her, its island found tonight, no boon (Ed, 2026-10-18)`, () => {
+    const { g, L, gift } = demo();
+    gift.level = level;
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(L.quest!.done).toBeDefined();
+    expect(L.legendState).toBe("happy");
+    expect(L.buffed).toBeFalsy();
+    expect(g.islandsTonight).toEqual([L.species]);
+    expect(g.buffs.active.length).toBe(0);
+  }, 60000);
+
+  it("isn't taken once the party's over (Ed, 2026-10-18: permanent unlocks only while the party is on)", async () => {
+    const { endParty } = await import("./partyOver");
+    const { g, L } = demo();
+    endParty(g);
+    run(g, 0.2, { ...idle, sigil: true });
+    expect(L.quest!.done).toBeUndefined();
+    expect(L.questOpen).toBe(false);
+    expect(g.islandsTonight).toEqual([]);
   }, 60000);
 
   it("wakes an area whose quest isn't done angry: its creatures go for the nearest party animal or soundsystem", () => {
@@ -73,13 +94,14 @@ describe("the first quest (Ed, 2026-10-04)", () => {
     expect(g.witches[0].health.hp).toBe(hp);
   }, 60000);
 
-  it("can still be done after the area's wave, while its legend sleeps: the buff, but not a friendly area (Ed, 2026-10-06)", () => {
+  it("can still be done after the area's wave, while its legend sleeps: happy, its island found, but not a friendly area (Ed, 2026-10-06)", () => {
     const { g, L } = demo(), key = cellKey(L.cell);
     g.party.areas.set(key, { cell: L.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.quest!.done).toBeDefined();
-    expect(L.buffed).toBe(true);
-    expect(g.friendly.has(key)).toBe(false); // (its wave has come and gone: the buff alone)
+    expect(L.legendState).toBe("happy");
+    expect(g.islandsTonight).toContain(L.species);
+    expect(g.friendly.has(key)).toBe(false); // (its wave has come and gone)
     expect(g.party.leyDone?.has(key) ?? false).toBe(false); // (and the ley line doesn't move for it: it moved on at the wave)
   }, 60000);
 });

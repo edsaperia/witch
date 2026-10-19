@@ -73,18 +73,15 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(mods()).toEqual(noMods());
   });
 
-  it("is on while a legend gives it (happy, its quest done, or in the party), gained and lost; ?buffs= forces some on", () => {
-    const map = generateMap(123, t), cs = spawnCreatures(map), s = newBuffs(t), [a, b, wild] = cs;
-    Object.assign(a, { leashed: false, level: LEGEND, legendState: "happy", species: "snake" }); Object.assign(b, { leashed: true, level: 2 }); Object.assign(wild, { leashed: false, level: LEGEND, legendState: "asleep" });
-    stepBuffs(s, cs, [a.id, b.id, wild.id], t);
+  it("is on while a legend in her party gives it, gained and lost; a happy or quest-done legend gives none (Ed, 2026-10-18); ?buffs= forces some on", () => {
+    const map = generateMap(123, t), cs = spawnCreatures(map), s = newBuffs(t), [a, happy, done] = cs;
+    Object.assign(a, { leashed: true, level: LEGEND, species: "snake" }); Object.assign(happy, { leashed: false, level: LEGEND, legendState: "happy" }); Object.assign(done, { leashed: false, level: LEGEND, legendState: "asleep", buffed: true });
+    stepBuffs(s, cs, [a.id, happy.id, done.id], t);
     expect(s.active.map(x => x.id)).toEqual([a.id]);
     expect(s.events).toEqual([{ kind: "gained", id: a.id, species: "snake", label: B.species.snake.label }]);
     expect(s.tuning.invites.speed).toBeGreaterThan(t.invites.speed);
-    wild.buffed = true; // (its quest done)
-    stepBuffs(s, cs, [a.id, wild.id], t);
-    expect(s.active.map(x => x.id)).toEqual([a.id, wild.id]);
-    a.legendState = "asleep";
-    stepBuffs(s, cs, [a.id, wild.id], t);
+    a.leashed = false;
+    stepBuffs(s, cs, [a.id, happy.id, done.id], t);
     expect(s.events.map(e => e.kind)).toEqual(["lost"]);
     const f = newBuffs(t, ["fox", "toad", "stag"]);
     stepBuffs(f, cs, [], t);
@@ -296,15 +293,12 @@ describe("buff strength (legends.buffPower; Ed, 2026-10-06, on quests: \"Bigger 
     expect(modsOf([S.fox], LEGEND_BUFFS, 3).charm).toBe(1); // (a one-off behaviour stays one)
   });
 
-  it("gives every done quest's buff at one strength, legends.questRoll, near or far; a relic's as written", () => {
-    expect(t.legends.questRoll).toBeGreaterThan(1);
-    const map = generateMap(123, t), cs = spawnCreatures(map), [near, far, relic] = cs;
-    for (const c of [near, far, relic]) Object.assign(c, { leashed: false, level: LEGEND, legendState: "asleep", species: "snake", buffed: true });
-    near.quest = { species: "wolf", level: 0, done: 1, far: 0 }; far.quest = { species: "wolf", level: 0, done: 1, far: 1 }; relic.quest = { species: "wolf", level: 0, far: 1 };
+  it("gives no buff for a done quest or a happy legend (Ed, 2026-10-18: \"Finishing quests no longer gives boons\")", () => {
+    const map = generateMap(123, t), cs = spawnCreatures(map), [done, happy] = cs;
+    for (const c of [done, happy]) Object.assign(c, { leashed: false, level: LEGEND, legendState: "asleep", species: "snake" });
+    done.quest = { species: "wolf", done: 1, far: 0 }; happy.legendState = "happy";
     const speed = (c: Creature) => { const s = newBuffs(t); stepBuffs(s, cs, [c.id], t); return s.tuning.invites.speed / t.invites.speed - 1; };
-    const lim = B.limits["invites.speed"][1] / t.invites.speed - 1, base = Math.min(lim, S.snake.scale!["invites.speed"] - 1);
-    expect(speed(relic)).toBeCloseTo(base, 6); // (made happy some other way: as written)
-    expect(speed(near)).toBeCloseTo(Math.min(lim, base * t.legends.questRoll), 6);
-    expect(speed(far)).toBeCloseTo(speed(near), 6); // (the distance no longer matters)
+    expect(speed(done)).toBe(0);
+    expect(speed(happy)).toBe(0);
   });
 });

@@ -15,7 +15,7 @@ Backlog (Ed, 2026-10-09); **Ed's go 2026-10-11, being built** (rules/spells.ts; 
 
 ## Rules for spells
 
-- **Hats and brooms change verbs; quest buffs change numbers** (proposed). Quest buffs already cover numbers (hare: 3 blink charges; mole: fast rise and land; raven: faster treetops; fox: homing 💌s). A hat or broom changes *what* she can do.
+- **Hats and brooms change verbs; quest buffs change numbers** (proposed, 2026-10-11). *Out of date:* quests no longer give buffs (Ed, 2026-10-18; being built). The movement buffs (hare: blink charges; mole: fast rise and land; raven: faster treetops) belong with the broom garage's components, and the 💌 buffs (fox: homing, and the rest) with the bags (below).
 - Spells support the basics (speed, attacks, healing, movement). They never fix the failure cascade (soundsystems, bpm, creatures that ran off).
 
 ## Hats
@@ -43,7 +43,7 @@ Suggested:
 
 ## Other powers
 
-- **Welcome mend** (Ed, 2026-10-13): each time she successfully invites a creature, she heals to full hp. Slot (hat, broom or quest buff) to decide.
+- **Welcome mend** (Ed, 2026-10-13): each time she successfully invites a creature, she heals to full hp. Slot (hat, bag or broom part) to decide; quest buffs are gone (Ed, 2026-10-18).
 
 ## Brooms
 
@@ -51,7 +51,7 @@ Ed's:
 
 - **Speed** (active): today's boost, now an unlock.
 - **Battering broom:** blinks hit creatures in the way.
-- **Long broom:** blinks twice as long. By the verbs rule this is a number, so it may suit a quest buff better, or the two stack (open).
+- **Long broom:** blinks twice as long. By the verbs rule this is a number; with quest buffs gone (2026-10-18), a broom component is its natural home (the broom garage, below).
 
 Suggested:
 
@@ -79,6 +79,33 @@ Ed's idea, superseding the achievements rule below for hats (kept for the record
 - **The first hat with a spell** could sit at a tutorial shrine on home, so a new player meets the loop on the first island.
 
 Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
+
+## Bags: weapons, found like hats (Ed, 2026-10-18)
+
+**Not built; don't build without Ed's go.** "There will be bags that give you different 'weapons', which are found like hats."
+
+- **A bag sets how she throws 💌s:** a shooting style (a shotgun spread, a sniper's long slow shot, and so on). She carries one at a time, so a bag is a deliberate choice of build. Easier to balance than the old legend boons, which stacked at random.
+- **Found like hats:** at a shrine themed on its power, picked up as a game object, by the same rules as hats (above).
+- **Where the old boons go** (proposed): the 💌 boons (Charm homing, Pierce, Spawn, Howl's ring...) are the first bags' behaviours; the movement boons (Hare's blink charges, Mole's fast rise, Raven's treetop speed) are broom components (the broom garage, below). Quests no longer give boons (Ed, 2026-10-18; being built).
+- Open: the first set of bags; whether bags share the hat shrines or have their own; where spare bags hang in the treehouse.
+
+## The crystal ball: where an upgrade lies (Ed, 2026-10-18)
+
+**Not built; don't build without Ed's go.** "We should have a crystal ball that tells you a permanent upgrade and on what island it can be found. It only shows you upgrades on islands you've already unlocked. Perhaps only appears when you've finished the second phase (home plus the ones after that)."
+
+- **What it shows:** one permanent upgrade (a hat, a bag or a broom part) and **the island** where it can be found. Never where on the island: finding it there is still the game (the garage's pegboard only says a piece is on tonight's island).
+- **Only islands she has unlocked**, so it points somewhere she can sail tonight.
+- **Appears late:** perhaps only once she has finished the second phase, home and the islands after it (Ed). Until then it isn't in the house.
+- **Where:** the treehouse's hub already has a crystal ball in the plan (treehouse.md: the run history); this gives it a job.
+- Open: what "finished" means for a phase (every island won, or found); whether it shows one upgrade at a time (and when it changes: each night, or once that one is found); whether it also keeps the run history.
+
+## Permanent unlocks only while the party is on (Ed, 2026-10-18)
+
+**Not built** (legends' part being built: quests aren't accepted after a lost party). "All permanent unlock items disappear from the map after a party is lost. You should keep them if you find them earlier even if you lose the night though."
+
+- Hats, bags, broom parts and legends' quests can only be claimed **while the party is on**. When the party is lost (the party's over, the afterparty), the unclaimed ones vanish from the map.
+- **Whatever she found before the loss is hers to keep**, even though the night is lost. **Islands are the exception** (Ed, 2026-10-18): a quest done during the night finds its island for tonight, but the island is kept only if the night is won.
+- Open: what "found" means for a hat, bag or broom part: picked up (or hitched) is enough, or brought home to the balcony or the garage as written above. This rule loosens "carried to the balcony mid-night" and "tow it after the party" (the broom garage), so those two need settling with it.
 
 ## The broom garage (Ed, 2026-10-16)
 
@@ -148,7 +175,7 @@ Ed's design, from a conversation on 2026-10-16. **Not built; don't build without
 - Final hat and broom lists; which brooms are passive and which active.
 - Which achievement unlocks which item.
 - Cooldowns and durations.
-- Long broom: broom, quest buff, or both stacking?
+- Long broom: a broom component now that quest buffs are gone (2026-10-18).
 - Earlier hat ideas from before hats were placed (Berry patch, Mend, Second wind): drop, or rework as placed hats? (Harvest already covers berries.)
 
 ## Decisions (Ed, 2026-10-11)

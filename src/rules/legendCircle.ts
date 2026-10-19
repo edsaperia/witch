@@ -63,18 +63,26 @@ export function creatureWords(species: string, level: number): string {
   return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
 }
 
+/** A kind in words, no age (a legend's dream, Ed 2026-10-18: any age will do): "a badger", "an otter". */
+export function kindWords(species: string): string {
+  const w = NAMES[species] ?? species;
+  return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
+}
+
 /** What the panel says for a legend in its state (keeping Ed's words where they hold; party tone). The dream is named in words
- *  beside its sigil (Ed's playtest, 2026-10-07: a look-alike kind or the wrong age was easy to bring). */
+ *  beside its sigil (Ed's playtest, 2026-10-07: a look-alike kind was easy to bring). Ed, 2026-10-18: a dream asks for a kind,
+ *  any age; done, the legend fights for her and shows her its island (found tonight, kept if the night is won); no boons, and
+ *  flasks no longer wake legends; once the party's over, no quest is taken (its dream closed: c.questOpen false while it sleeps). */
 export function circleLines(c: Creature): CircleLine[] {
   const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined;
-  const words = boonWords(c.species), wants = q ? creatureWords(q.species, q.level) : "";
-  const boon: CircleLine | null = q ? (done ? { text: words ? `Its boon is yours: {boon} ${words}.` : "Its boon is yours.", done: true }
-    : { text: words ? `If you bring {sigil} ${wants} into this circle, it will grant you its boon for the rest of the night: {boon} ${words}.` : `If you bring {sigil} ${wants} into this circle, it will grant you a boon.` }) : null;
-  const ally: CircleLine = { text: "If you bring a {relic} and place it in this circle, you will gain a powerful ally." };
-  if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It guards its area and anyone partying in it." }, ...(boon?.done ? [boon] : [])];
-  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }, ...(boon?.done ? [boon] : [])];
-  if (st === "restless") return [{ text: "This elder is restless." }, ...(boon ? [boon] : []), ally, { text: "Bring one of its kin back here to calm it." }];
-  return [{ text: `This is a slumbering elder ${NAMES[c.species] ?? c.species}.` }, ...(boon ? [boon] : []), ally, { text: "It becomes angered if none of its kin are nearby." }];
+  const found: CircleLine = { text: "Its island is found tonight: win the night to keep it on your chart.", done: true };
+  const ask: CircleLine | null = q && !done ? { text: `If you bring {sigil} ${kindWords(q.species)}, any age, into this circle, it will wake and fight for you, and show you its island.` } : null;
+  if (st === "happy") return [{ text: "This elder is your ally now." }, { text: "It fights for you, and guards its area and anyone partying in it." }, ...(done ? [found] : [])];
+  if (st === "angry") return [{ text: "This elder is angry!" }, { text: "Wear it out, or bring one of its kin back, and it will settle back to sleep." }];
+  const closed = !!q && c.questOpen === false && !done; // (the party's over: Ed, 2026-10-18, no quest taken then)
+  const sleeping = closed ? [{ text: "The party's over: it sleeps on, and takes no quest tonight." }] : ask ? [ask] : [];
+  if (st === "restless") return [{ text: "This elder is restless." }, ...sleeping, { text: "Bring one of its kin back here to calm it." }];
+  return [{ text: `This is a slumbering elder ${NAMES[c.species] ?? c.species}.` }, ...sleeping, { text: "It becomes angered if none of its kin are nearby." }];
 }
 
 /** The panel's fade: towards 1 inside a circle and 0 outside, over `fade` seconds. */
@@ -94,12 +102,12 @@ export function broughtLine(g: Game, near: { legend: Creature; x: number; z: num
   const check = (id: number, sigilIn = false) => {
     const c = g.creatures[id];
     if (!c || c.gone || c.boss || !(sigilIn || inside(c.x, c.z))) return;
-    if (c.species !== q.species || c.level !== q.level) wrong.add(creatureWords(c.species, c.level));
+    if (c.species !== q.species) wrong.add(creatureWords(c.species, c.level));
   };
   // her animals standing in it, and (Ed, 2026-10-07: the drop is the moment) her sigils put down in it, their animals anywhere
   for (const id of g.leash.stack) check(id);
   for (const p of g.leash.placed) check(p.id, inside(p.x, p.z));
   if (!wrong.size) return null;
   const list = [...wrong].sort(), brought = list.length > 2 ? `${list.slice(0, 2).join(", ")} and others` : list.join(" and ");
-  return { text: `Not this one: it dreams of ${creatureWords(q.species, q.level)}, and you've brought ${brought}.` };
+  return { text: `Not this one: it dreams of ${kindWords(q.species)}, and you've brought ${brought}.` };
 }

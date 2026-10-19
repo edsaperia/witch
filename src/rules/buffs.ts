@@ -76,12 +76,12 @@ export function newBuffs(t: Tuning, forced: string[] = []): BuffState {
   return { active: [], mods: noMods(), tuning: t, events: [], base: t, forced };
 }
 
-/** The legends giving their buffs now: happy area legends (Ed, 2026-10-04), any whose buff she's
- *  earned (its quest done, or a relic: kept for good, #87), and any legend in
- *  the party (following her or at a sigil: none since legends stopped evolving, kept for later). */
+/** The legends giving their buffs now: only a legend in the party (following her or at a sigil: none since legends stopped
+ *  evolving, kept for later). A happy legend, a done quest and a flask give none (Ed, 2026-10-18: "Finishing quests no longer
+ *  gives boons"); config/legend-buffs.json stays for whatever grants them next. */
 export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<number>): Creature[] {
   const out: Creature[] = [];
-  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && (c.leashed || c.legendState === "happy" || c.buffed)) out.push(c); } // (#87: a buff once earned, by its quest or a relic, is kept)
+  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && c.leashed) out.push(c); }
   return out;
 }
 

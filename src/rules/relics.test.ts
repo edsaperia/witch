@@ -44,19 +44,28 @@ describe("legend relics on the map", () => {
     }
   }, 240000);
 
-  it("are picked up by standing on their sigil and pressing the button, like any sigil; not from beside the relic itself", () => {
+  it("are drunk by standing on their sigil and pressing the button (Ed, 2026-10-18): every animal following her an adult at once; not from beside the flask itself, and nothing with no one to grow", () => {
     const g = newGame(123, TUNING), r = g.relics[0], C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
     g.clock.paused = false;
     const at = (x: number, z: number) => { g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; };
-    // Beside the relic (on it, and a step off), but not on its sigil: nothing.
+    // Her followers: a baby and a young one following her, an adult following her, and a young one parked at a sigil.
+    const free = g.creatures.filter(c => !c.boss && !c.gone).slice(-4), [baby, young, adult, parked] = free;
+    for (const [c, level] of [[baby, 0], [young, 1], [adult, 2], [parked, 1]] as const) Object.assign(c, { level, leashed: true, x: r.sx + 2, z: r.sz + 2, tx: r.sx + 2, tz: r.sz + 2 });
+    // Beside the flask (on it, and a step off), but not on its sigil: nothing.
     for (const [x, z] of [[r.x, r.z], [r.x + 1.5, r.z - 1]]) { at(x, z); stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60); }
     expect(r.state).toBe("lying");
-    expect(g.leash.relics).toEqual([]);
-    // On its sigil: picked up, carried.
+    // On its sigil, nobody following: nothing, and it stays.
     at(r.sx, r.sz);
-    stepGame(g, { ...C, place: true }, 1 / 60);
-    expect(r.state).toBe("carried");
-    expect(g.leash.relics).toEqual([r.id]);
+    stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60);
+    expect(r.state).toBe("lying");
+    expect(g.leash.relics).toEqual([]);
+    // Now with three following her and one parked: drunk, the young ones adults at once (the next step), the parked one not.
+    g.leash.stack.push(baby.id, young.id, adult.id);
+    g.leash.placed.push({ id: parked.id, x: r.sx + 30, z: r.sz, at: g.clock.time });
+    stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60);
+    expect(r.state).toBe("used");
+    expect(g.leash.relics).toEqual([]);
+    expect([baby.level, young.level, adult.level, parked.level]).toEqual([2, 2, 2, 1]);
   }, 60000);
 
   it("one per relics.perAreas areas on the islands (Ed, 2026-10-11): 1 on 10, 2 on 20, 5 on 50, 6 on 64, no kind twice", () => {

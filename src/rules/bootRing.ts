@@ -7,7 +7,7 @@
 // One path: from the treehouse's front down to the ring's top (due north of the floor, under the treehouse), then round
 // the ring clockwise as seen from the default camera (north up: north, east, south, west) back to the top. The pulse sets
 // off from the treehouse as she leaves her decks and runs along it at the ley pulse's own speed (Ed, 2026-10-09: "Pure
-// constant speed", leyLines.pulseSpeed, boot included), the boot ending as it comes round to where it came on to the ring,
+// constant speed"; its own speed since Ed set the waves' to 1 m/s, 2026-10-18: boot.speed, 4), the boot ending as it comes round to where it came on to the ring,
 // where the first ley line's pulse takes over; each stone turns into a speaker as it passes. The line runs ahead of it at `reveal` times its pace,
 // drawing the whole ring in the first part of the boot. Measures are metres along the path (render/leylines.ts draws it
 // by the same arc length).
@@ -16,10 +16,10 @@ import type { PartyState } from "./party";
 import { ringApproach, speakerCircle } from "./departure";
 
 type P2 = [number, number];
-type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { leyLines?: { pulseSpeed?: number } } };
+type Floor = Pick<ForestMap, "dancefloor" | "treehouseFront"> & { tuning: { boot?: { speed?: number } } };
 
-/** The pulse's speed in the boot (m/s): the ley pulse's, at the base tempo. */
-const bootSpeed = (map: Floor): number => Math.max(0, map.tuning.leyLines?.pulseSpeed ?? 4);
+/** The pulse's speed in the boot (m/s): its own (boot.speed, 4), so the waves' slower pulse doesn't make the boot crawl. */
+const bootSpeed = (map: Floor): number => Math.max(0, map.tuning.boot?.speed ?? 4);
 /** How long the boot takes (s): the whole boot path at the pulse's speed (179 m at 4 m/s: about 45 s); 0 with no speed. */
 export const bootSeconds = (map: Floor): number => { const v = bootSpeed(map); return v > 0 ? bootPath(map).length / v : 0; };
 

@@ -17,7 +17,7 @@ describe("quests point to later areas (legends.questLater)", () => {
     for (const L of spawnCreatures(map).filter(c => c.boss && c.quest)) {
       const key = cellKey(L.cell), i = order.indexOf(key), q = L.quest!;
       expect(q.species).not.toBe(L.species);
-      if (early?.host === key) { expect(q).toMatchObject({ species: early.wants, level: 0 }); continue; } // (kept exactly as it was)
+      if (early?.host === key) { expect(q).toMatchObject({ species: early.wants }); continue; } // (kept exactly as it was)
       const laterKinds = new Set(order.slice(i + 1).map(kindAt).filter(sp => sp !== L.species));
       if (!laterKinds.size) continue; // (the last areas: any kind, as before)
       expect(laterKinds.has(q.species)).toBe(true);

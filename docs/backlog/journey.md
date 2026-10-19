@@ -9,7 +9,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
 - **The first island is home** (the Ent's island): small (about 10 areas), round, and not too hard to win.
 - **Winning an island** means surviving every wave on its route *and* leaving no enraged creature standing. (Today the pulse simply stops after the last stone and nothing ends the run but losing; this is the missing win state.)
 - **Losing:** she goes to bed, and can play the same island again.
-- **Winning:** every legend on the island wakes and joins the party. Each legend tells of a different island: these are the next maps, unlocked on the sea chart.
+- **Winning:** every legend on the island wakes and joins the party. *Changed (Ed, 2026-10-18; being built):* islands are found by **legends' quests** ("bring me a badger": any age), not by the win. A quest done makes its legend happy (it fights for her) and finds its island for tonight; the island is **kept only if the night is won**, and can't be sailed to before then. Winning alone finds no islands.
 - **Phases** (Ed, 2026-10-10): how far an island is from home, and so how hard, is its *phase*: phase 1 is the islands home's legends tell of, phase 2 the islands theirs tell of, and so on: **home plus five phases**. The moon: full at home, waning phase by phase to new at phase 5.
 - **The archipelago** (Ed, 2026-10-10): **each kind of legend tells of its own island**, always the same one: **about 64 islands**, one per legend kind (so about 64 creature kinds; 32 today). More kinds can come later as expansions without changing any rule. Rarer legends live further out, so the stories lead outward.
   - **Home plus five phases** (Ed, 2026-10-10: small enough to clear them all): phase islands are **10 / 20 / 30 / 40 / 50 areas** (2 / 4 / 6 / 8 / 10 legends); home grows from about 10 areas to 64 and is the endgame. The moon wanes outward (home full; then gibbous to new across the phases). About 1 minute of route per area at 4 m/s, so 10 to 50 minute nights, less on faster records.
@@ -18,7 +18,7 @@ Where this overrides older notes: the record crate no longer picks the map's see
   - **Legends decide the creatures** (Ed): a kind of creature lives in a phase only if its legend does. A kind first appears in the phase before its own island's, and stays in every phase after (so home starts with about 10 kinds: an easy start with few to learn).
   - **One rule for every island** (Ed, 2026-10-10): an island is a **size** and a **roster** of kinds; its areas are filled from the roster, kinds repeating when there are more areas than kinds. Legends are **1 in 5 areas everywhere, dealt at random each night** from the kinds on the island (no two of one kind).
     - **Home** (the Ent's island, round, full moon): one area per kind she knows (about 10 at first, 64 at the end); roster = every kind she knows. A short tutorial at first (2 legends a night), the complete gallery and **the endgame challenge** at the end.
-    - Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 over a few short nights.
+    - *(Out of date, 2026-10-18: islands now come from quests done on a won night.)* Winning home opens the islands of the legends dealt that night; **replaying home deals different legends**, opening the rest of phase 1 over a few short nights.
     - **Phase islands:** fixed size by phase (10 / 20 / 30 / 40 / 50), roster from that phase's kinds (below).
   - **Rosters** (proposed, 2026-10-10). A kind of creature *is* an area type (each area type has its species), so a roster is an island's mix of area types. Each kind gets two hand-set facts: its **biome** (temperate = today's 32; north/cold, south/hot, east/rocky, west/jungle; blends on the diagonals) and the **phase it's introduced in** (home 10, phase 1 10, phase 2 12, phase 3 14, phase 4 18). Its own island lies one phase later, in its biome's direction. For kind K's island (phase p), from the island's seed:
     1. Eligible: kinds introduced in phase p or earlier.
@@ -122,7 +122,7 @@ A third axis of progress, separate from the other two:
 
 - She starts with two records: **Slow** and **Normal**.
 - **An island's record** (its genre, matching its biome) is earned by completing **every legend quest dealt that night, in a single run** (Ed, 2026-10-11). A player can win an island first and come back another night for its record.
-- **Tempo = difficulty.** The record's bpm drives the music *and* the pulse's speed (pulse speed = 4 m/s × bpm / 120; replaces today's separate Waves menu). Knockdowns still add 5 bpm.
+- **Tempo = difficulty.** The record's bpm drives the music *and* the pulse's speed (pulse speed = 4 m/s × bpm / 120; replaces today's separate Waves menu). Knockdowns still add 5 bpm. **Open (2026-10-18):** Ed set the wave speed to 1 m/s by default, on a pause-page slider (being built), for slow early nights; how a record's tempo and the wave speed relate is to decide.
 - **Records from further islands are faster.** A fast record played on an easy island makes a hard night: difficulty becomes a choice.
 - Keep the first island's quests gentle enough that a new player can finish them (the early easy quest helps).
 
