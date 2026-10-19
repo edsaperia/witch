@@ -61,6 +61,8 @@ export interface Letter {
  *  hat catches her 💌s that fly within `catch` of it, holds them circling it (`radius` out) `hold` seconds, then flings each at
  *  the nearest invitable creature within `fire` of it (at most `max` held at once; one with none to fly at keeps circling,
  *  and goes after `hold` × 4). */
+/** Something that takes a 💌 in its way and is gone (the raven's mirage images, rules/combat/packs.ts). */
+export interface Decoy { x: number; z: number; r: number; hit: () => void }
 export interface HatLetters {
   sentry: { x: number; z: number; range: number; every: number }[];
   sling: { x: number; z: number; catch: number; fire: number; hold: number; radius: number; max: number }[];
@@ -154,7 +156,7 @@ export function dropCache(s: Invites, x: number, z: number, time: number, t: Tun
 
 /** One step: start or carry on a burst, fly the letters, and land them. `canFire`: on the ground,
  *  off her seat, not knocked out. `M`: the buffs' behaviours on now (rules/buffs.ts). */
-export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, M: BuffMods = NO_MODS, H: BuffHow = LEGEND_BUFFS.how, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters): void {
+export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z: number; facing: number; vx?: number; vz?: number }, canFire: boolean, creatures: Creature[], A: Affection, time: number, dt: number, t: Tuning, M: BuffMods = NO_MODS, H: BuffHow = LEGEND_BUFFS.how, leaves?: (x0: number, z0: number, x1: number, z1: number) => boolean, hat?: HatLetters, decoys?: readonly Decoy[]): void {
   const I = t.invites;
   const ax = c.aimX ?? 0, az = c.aimZ ?? 0, al = Math.hypot(ax, az);
   const mainLeft = () => s.queue.filter(q => !q.echo).length;
@@ -317,6 +319,11 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
       if (Math.hypot(px + dx * f - k.x, pz + dz * f - k.z) > hitR || f >= ft) continue;
       if (!blocks(L, k) && !A.invitable(k)) continue;
       first = k; ft = f;
+    }
+    // A decoy in its way first (pack combat: the raven's mirage images, rules/combat/packs.ts): it takes the 💌 and bursts.
+    if (decoys?.length) for (const q of decoys) {
+      const dx = L.x - px, dz = L.z - pz, len2 = dx * dx + dz * dz, f = len2 > 0 ? Math.max(0, Math.min(1, ((q.x - px) * dx + (q.z - pz) * dz) / len2)) : 0;
+      if (f < ft && Math.hypot(px + dx * f - q.x, pz + dz * f - q.z) <= L.r + q.r) { q.hit(); s.events.push({ kind: "fizzled", x: q.x, z: q.z, at: time, n: L.n }); return false; }
     }
     if (first) {
       if (blocks(L, first)) { s.events.push({ kind: "blocked", x: L.x, z: L.z, at: time, id: first.id, n: L.n, vx: L.vx, vz: L.vz }); return false; }

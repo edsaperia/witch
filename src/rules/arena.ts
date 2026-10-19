@@ -44,7 +44,7 @@ export const ARENA_PRESETS: Record<string, string> = {
 // Pack combat (rules/combat/packs.ts; turn combat.packs.on on, on the pause page): ?arena=pack-fox, a wild pack of the kind, three
 // young and two adults, coming for her (hers a baby of the same kind, which no fox fights); ?arena=hers-fox, four adults of hers
 // combo-ing on three young wolves. One of each for every kind in config/packs.json.
-for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,wolf*3@1`; }
+for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,${k === "wolf" ? "fox" : "wolf"}*3@1`; } // (her wolves on wild foxes: a kind never fights its own)
 
 export function setupArena(g: Game, spec: string): void {
   const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec);

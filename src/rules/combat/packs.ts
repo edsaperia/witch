@@ -5,6 +5,10 @@
 // holds instead), and again. Roles come from position every step; how many may wind up or strike at her at once is the kind's
 // pressure. A new kind is a data entry (its moves, special, retreat, rhythm, pressure), not new code. The director runs once a step
 // before the fight loop (rules/combat.ts) and hands each member a directive; the loop reads it. No drawing here.
+// Phase 1's kinds (Echo, 2026-10-19: wolf, boar, bat, raven, newt, moth, heron, beetle, woodlouse, otter, toad) add two specials
+// (mirage, sync), a kind's own variant of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes,
+// the toad's cloud comes down from a leap, the beetle's cover locks two shells), a ranged move on a kind's own attack (the raven's
+// spit and barb) or a lob that leaves a patch (the toad's spores), and retreats (flanks, backLine, branches, water, huddle, arcs, swirl).
 import raw from "../../../config/packs.json";
 import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
@@ -15,27 +19,36 @@ import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
 export type Phase = "approach" | "tell" | "combo" | "lull";
-export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover";
+export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync";
+/** A special's numbers (packs.json specials), and a kind's own variant over them (its `specialWith`). */
+export interface SpecialData { time?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number;
+  /** confusion: her movement turned, not her aim (the bat's screech) */ move?: boolean; /** cloud: a flash inside it confuses her aim (the moth's) */ flash?: boolean; /** cloud: its thrower leaps and it comes down where it lands (the toad's) */ leap?: boolean;
+  /** cover: the coverer and its packmate both dig in, shells locked (the beetle's) */ both?: boolean; /** mirage: images by level [young, adult] */ images?: number[]; /** sync: how many blink with her */ count?: number }
 export type Move = "melee" | "ranged";
 type Rhythm = { tell: number; gap: number; lull: number; perMember: number; timeout: number };
 export interface PackKind {
   melee: { attacks?: (string | null)[]; knockback?: number } | null;
-  ranged: { name: string; range: number; shots: number[]; spread?: number; size?: number[]; speed?: number; tint: string; mound?: boolean } | null;
-  special: SpecialKind; retreat: string; rhythm: string; pressure: number; call: string; tells: Record<string, string>;
+  ranged: { name: string; range: number; shots: number[]; spread?: number; size?: number[]; speed?: number; tint: string; mound?: boolean;
+    /** its own attack by level as the base, not the magic bolt (the raven's spit and barb "as today") */ attacks?: (string | null)[];
+    /** "lob": thrown to land, hitting all round where it lands (the toad's spores); its flight seconds */ delivery?: "shot" | "lob"; flight?: number;
+    /** a lob's landing leaves a patch slowing the other side (radius m, slow, time s) */ patch?: { radius: number; slow: number; time: number } } | null;
+  special: SpecialKind; /** its own variant of the special (over packs.json specials) */ specialWith?: Partial<SpecialData>; retreat: string; rhythm: string; pressure: number; call: string; tells: Record<string, string>;
 }
 export interface PacksData {
   rhythms: Record<string, Rhythm>;
   young: { windup: number; speed: number; range: number; special: number; lull: number };
   limits: { combo: number; lanes: number; lines: number; shots: number; hurt: number; engage: number; split: number };
   bolt: Attack;
-  specials: Record<SpecialKind, { time?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number }>;
-  retreats: Record<string, { out: number; hide?: boolean; still?: boolean }>;
+  specials: Record<SpecialKind, SpecialData>;
+  retreats: Record<string, { out: number; hide?: boolean | "half"; still?: boolean }>;
   kinds: Record<string, PackKind>;
   hers: { hold: number; stun: number };
 }
 export const PACKS = raw as unknown as PacksData;
 /** A kind's pack entry, or null (it fights as before). */
 export const packKindOf = (species: string, data: PacksData = PACKS): PackKind | null => data.kinds[species] ?? null;
+/** A kind's special's numbers: the special's, with the kind's own variant over them. */
+export const specialOf = (K: PackKind, data: PacksData = PACKS): SpecialData => ({ ...data.specials[K.special], ...K.specialWith });
 /** Whether the switch is on (the tuning's combat.packs.on). */
 export const packsOn = (t: { combat: { packs?: { on?: boolean } } }): boolean => !!t.combat.packs?.on;
 
@@ -51,6 +64,8 @@ export interface PackState {
   callUntil?: number; feintUntil?: number; feintBy?: number; answered?: number; split?: number;
   /** The lull after a loss (the rest scatter): its pattern. */
   lost?: boolean;
+  /** The heron's sync: blinking where she blinks till then, from her blinks after syncFrom. The toad's leap: its cloud comes down then, where it lands. */
+  syncUntil?: number; syncFrom?: number; cloudAt?: { id: number; at: number };
   seed: number;
   /** This step's strikers at her (winding up or lunging), by slot, and how many may be at once (packGate; markStrike counts each new one). */
   live?: { all: number; lanes: number; lines: number; cap: number; calling: boolean };
@@ -93,7 +108,7 @@ export function packAttack(species: string, level: Level, move: Move, data: Pack
   const shots = Math.max(1, R.shots[level] ?? 1), name = `pack:${species}:ranged:${level}`;
   let A = COMBAT.attacks[name];
   if (!A) {
-    const B = data.bolt;
+    const own = R.attacks?.[level], B: Attack = own && COMBAT.attacks[own] ? COMBAT.attacks[own] : R.delivery === "lob" ? { ...data.bolt, delivery: "lob", flight: R.flight ?? 1.1 } : data.bolt;
     A = { ...B, range: R.range * (young?.range ?? 1), speed: (B.speed ?? 20) * (R.speed ?? 1) * (young?.speed ?? 1), windup: B.windup * (young?.windup ?? 1), radius: (B.radius ?? 0.6) * (R.size?.[level] ?? 1) };
     COMBAT.attacks[name] = A;
   }
@@ -150,8 +165,8 @@ export interface PackWorld {
   dash?: (id: number) => { at: number; x: number; z: number } | null;
   /** Whether one of her 💌s reached this creature just now. */
   lettered?: (id: number) => boolean;
-  /** Her aim turns up to `drift` radians, wavering, till then (the stoat's war dance). */
-  confuse?: (id: number, until: number, drift: number) => void;
+  /** Her aim turns up to `drift` radians, wavering, till then (the stoat's war dance); `move`: her movement instead (the bat's screech). */
+  confuse?: (id: number, until: number, drift: number, move?: boolean) => void;
 }
 
 /** One step of every pack: group the fighters of pack kinds, run each pack's phases and specials, and give each member its directive.
@@ -171,7 +186,9 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   for (const c of w.active) {
     if (c.packHide && time >= c.packHide.until) { if (c.packHide.tx !== undefined) { c.x = c.packHide.tx; c.z = c.packHide.tz!; } c.packHide = undefined; }
     if (c.packShell !== undefined && time >= c.packShell) c.packShell = undefined;
+    if (c.packSync !== undefined && time >= c.packSync) c.packSync = undefined;
   }
+  if (s.mirages?.length) s.mirages = s.mirages.filter(m => time < m.until);
   for (const k of [...states.keys()]) if (!groups.has(k)) states.delete(k);
   for (const [key, members] of groups) {
     members.sort((a, b) => a.id - b.id);
@@ -189,6 +206,25 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     const near = healthy.length ? Math.min(...healthy.map(m => Math.hypot(m.x - p.x, m.z - p.z) - reachOf(m))) : Infinity;
     const enter = (ph: Phase, until = Infinity) => { st!.phase = ph; st!.at = time; st!.until = until; };
     if (lostOne && !st.hers && (st.phase === "combo" || st.phase === "tell")) { st.lost = true; enter("lull", time + lullOf(K, members.length, young, data)); }
+    // The toad's cloud comes down where its thrower lands from its leap.
+    if (st.cloudAt && time >= st.cloudAt.at) { const b = w.creatures[st.cloudAt.id]; st.cloudAt = undefined; if (b && !b.gone) cloud(s, w, pw, K, b, tg, young, data); }
+    // The heron's sync: while it lasts, a blink of hers since it began brings `count` of the pack blinking in round where it put her.
+    if (st.syncUntil !== undefined && time < st.syncUntil && tg.kind === "witch" && pw.dash) {
+      const dsh = pw.dash(tg.id);
+      if (dsh && dsh.at > (st.syncFrom ?? Infinity)) {
+        st.syncFrom = dsh.at;
+        const sp = specialOf(K, data), S = FIGHT.scale, ring = (sp.ring ?? 2.5) * S;
+        const who = members.filter(m => roles.get(m.id) !== "hurt" && !m.packHide && !(m.fight && (m.fight.windupUntil > 0 || m.fight.lunge))).sort((a, b) => Math.hypot(a.x - dsh.x, a.z - dsh.z) - Math.hypot(b.x - dsh.x, b.z - dsh.z)).slice(0, Math.max(1, sp.count ?? 1));
+        for (const m of who) {
+          const a = Math.atan2(m.z - dsh.z, m.x - dsh.x);
+          s.events.push({ kind: "packSync", x: m.x, z: m.z, at: time, id: m.id });
+          m.x = dsh.x + Math.cos(a) * ring; m.z = dsh.z + Math.sin(a) * ring; m.vx = 0; m.vz = 0; m.charge = undefined;
+          m.packSync = time + 1.5; st.struck = st.struck.filter((id: number) => id !== m.id);
+          if (m.fight) m.fight.readyAt = Math.min(m.fight.readyAt, time);
+          s.events.push({ kind: "packSync", x: m.x, z: m.z, at: time, id: m.id });
+        }
+      }
+    }
     switch (st.phase) {
       case "approach": if (near <= data.limits.engage * FIGHT.scale) { enter("tell", time + R.tell); for (const m of members) { m.packGlow = time + R.tell; s.events.push({ kind: "packTell", x: m.x, z: m.z, at: time, id: m.id }); } } break;
       case "tell": if (time >= st.until) { enter("combo", time + R.timeout); st.combo++; st.feintUntil = undefined; st.feintBy = undefined; st.struck = []; st.step = 0; st.stepAt = time; st.specialDone = false; st.callUntil = undefined; st.answered = undefined; st.split = undefined; st.lost = undefined;
@@ -245,7 +281,10 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       const own = m.fight?.packMove;
       const move: Move = own && m.fight && (m.fight.windupUntil > 0 || m.fight.lunge) ? own : role === "lunger" ? (K.melee ? "melee" : "ranged") : K.ranged ? "ranged" : "melee";
       const d: Directive = { role, phase: st!.phase, state: st!, may: false, move };
-      if (role === "hurt" && !st!.hers) {
+      if (m.packSync !== undefined && time < m.packSync) {
+        // Blinked in where she blinked (the heron's sync): it strikes at once, whatever the pack's phase.
+        d.may = true;
+      } else if (role === "hurt" && !st!.hers) {
         // Hurt members run while the healthy attack (Ed): out of reach, on its own bearing from her.
         const a = Math.atan2(m.z - p.z, m.x - p.x), out2 = 18 * FIGHT.scale;
         d.slot = { x: p.x + Math.cos(a) * out2, z: p.z + Math.sin(a) * out2 };
@@ -254,7 +293,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         d.slot = retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
         d.still = !!R2.still;
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
-        if (R2.hide && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }
+        if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }
         if (K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2); // (the snail: into its shell, untouchable 2 s)
         if (K.retreat === "hold" && (m.dug === undefined || time >= m.dug)) m.dug = st!.until; // (the badger: digs in and waits)
       } else if (st!.phase === "combo") {
@@ -280,6 +319,7 @@ export function packGate(d: Directive, data: PacksData = PACKS): boolean {
 /** A member has begun a wind-up (rules/combat.ts): it strikes once a combo, with this move, and counts against the pressure. */
 export function markStrike(d: Directive, c: Creature): void {
   if (!d.state.struck.includes(c.id)) d.state.struck.push(c.id);
+  c.packSync = undefined; // (the heron's synced strike begun)
   if (c.fight) c.fight.packMove = d.move;
   const L = d.state.live;
   if (L) { L.all++; if (d.move === "melee") L.lanes++; else L.lines++; }
@@ -303,13 +343,19 @@ export function retreatSlot(pattern: string, st: { seed: number; at: number }, R
     case "splitBack": { const side = i % 2 ? 1 : -1; return at(base + Math.PI + side * (0.6 + k * 0.6), out); } // (two groups, round to her back)
     case "leapfrog": return at(from, (i % 2 ? out : out * 0.5)); // (half falls back behind the other half)
     case "zigzagApart": { const a = base + (i / n) * Math.PI * 2 + Math.sin(time * 4 + i) * 0.35; return at(a, out); } // (different ways, zigzagging)
-    default: return at(base + (i / n) * Math.PI * 2, out); // rollApart, trees, burrowApart, freeze: all different ways
+    // Phase 1's (Echo, 2026-10-19):
+    case "flanks": { const side = i % 2 ? 1 : -1; return at(base + side * (Math.PI / 2) + side * k * 0.4, out); } // (the wolves: split in two, circling to her flanks)
+    case "backLine": { const ux = Math.cos(base), uz = Math.sin(base), off = (i - (n - 1) / 2) * 3 * S, r = out * (0.4 + 0.6 * k); return { x: p.x + ux * r - uz * off, z: p.z + uz * r + ux * off }; } // (the boars: backing off slowly in a line, facing her)
+    case "huddle": { const a = (i / n) * Math.PI * 2; return { x: p.x + Math.cos(base) * out + Math.cos(a) * 1.6 * S, z: p.z + Math.sin(base) * out + Math.sin(a) * 1.6 * S }; } // (the beetles: plodding back into a huddle)
+    case "arcs": return at(base + (i / n) * Math.PI * 2 + Math.sin(k * Math.PI) * 0.8 * (i % 2 ? 1 : -1), out); // (the toads: hopping off apart in arcs)
+    case "swirl": return at(base + (i / n) * Math.PI * 2 + k * Math.PI * 3, out); // (the moths: a swirl round her, quicker than a circle)
+    default: return at(base + (i / n) * Math.PI * 2, out); // rollApart, trees, burrowApart, freeze, branches, water: all different ways
   }
 }
 
 /** A pack's special (Ed: 13c, 19), by the member whose role it is (or `hit`, the one a 💌 reached, for cover). */
 function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K: PackKind, members: Creature[], roles: Map<number, Role>, tg: Target, p: { x: number; z: number; r: number }, young: boolean, data: PacksData, hit?: Creature): void {
-  const time = w.time, S = FIGHT.scale, sp = data.specials[K.special], scale = young ? data.young.special : 1;
+  const time = w.time, S = FIGHT.scale, sp = specialOf(K, data), scale = young ? data.young.special : 1;
   const byId = [...roles].find(([, r]) => r === "special")?.[0] ?? [...roles].find(([, r]) => r === "lunger")?.[0];
   const by = byId !== undefined ? w.creatures[byId] : members[0], side = sideOf(by);
   const healthy = members.filter(m => roles.get(m.id) !== "hurt");
@@ -322,11 +368,31 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
     case "call": st.callUntil = time + T; st.struck = []; break;
     case "feint": break; // (it feints at the combo's start: stepPacks)
     case "confusion": {
-      if (tg.kind === "witch" && huntsWitch(side)) { const v = w.witches[tg.id]; if (v && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(tg.id, time + T, ((sp.drift ?? 35) * Math.PI) / 180); }
+      if (tg.kind === "witch" && huntsWitch(side)) { const v = w.witches[tg.id]; if (v && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(tg.id, time + T, ((sp.drift ?? 35) * Math.PI) / 180, !!sp.move); }
       else for (const o of w.active) if (o !== by && targetable(o) && foes(sideOf(o), side) && Math.hypot(o.x - by.x, o.z - by.z) <= Rr) o.slowUntil = Math.max(o.slowUntil ?? 0, time + T); // (hers on the wild: they're slowed)
       break;
     }
-    case "cloud": (s.clouds ??= []).push({ x: by.x, z: by.z, r: Rr, until: time + T, side, from: by.id }); break;
+    case "cloud": {
+      // The toad's: it leaps at her and the cloud comes down where it lands (stepPacks); else at the thrower, now.
+      if (sp.leap && !by.leap && !by.charge) {
+        const d = Math.hypot(p.x - by.x, p.z - by.z) || 1, short = Math.min(d, 2 * S), fly = 0.9 / FIGHT.speed;
+        by.leap = { fx: by.x, fz: by.z, tx: p.x + ((by.x - p.x) / d) * short, tz: p.z + ((by.z - p.z) / d) * short, at: time, lands: time + fly, height: 6 * S };
+        by.facing = p.x >= by.x ? 1 : -1;
+        st.cloudAt = { id: by.id, at: time + fly };
+        s.events.push({ kind: "leapt", x: by.x, z: by.z, at: time, id: by.id });
+      } else cloud(s, w, pw, K, by, tg, young, data);
+      break;
+    }
+    case "mirage": {
+      // Images of the flock round her (the raven's black shimmers): each takes a 💌 meant for the flock and bursts (rules/invites.ts).
+      const n = Math.max(1, sp.images?.[young ? 0 : 1] ?? 3), r = Math.max(6 * S, (sp.ring ?? 1) * 8 * S);
+      for (let k = 0; k < n; k++) {
+        const a = st.seed * Math.PI * 2 + time + (k / n) * Math.PI * 2, rr = r * (0.75 + 0.5 * hash2(by.id, k + Math.floor(time), 61));
+        (s.mirages ??= []).push({ id: s.nextShot++, x: p.x + Math.cos(a) * rr, z: p.z + Math.sin(a) * rr, until: time + T, species: by.species, level: by.level, side, from: by.id });
+      }
+      break;
+    }
+    case "sync": st.syncUntil = time + T; st.syncFrom = time; break; // (blinking where she blinks: stepPacks)
     case "wall": {
       // Across her path: her heading, else the way from the pack to her.
       const v = tg.kind === "witch" ? w.witches[tg.id] : null, hv = Math.hypot(v?.vx ?? 0, v?.vz ?? 0);
@@ -341,9 +407,34 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       const ward = members.find(m => roles.get(m.id) === "hurt") ?? hit ?? null, coverer = ward ? healthy.filter(m => m !== ward).sort((a, b) => Math.hypot(a.x - ward.x, a.z - ward.z) - Math.hypot(b.x - ward.x, b.z - ward.z))[0] ?? by : by;
       if (ward && coverer !== ward) { const a = Math.atan2(p.z - ward.z, p.x - ward.x), r = 1.2 * S; coverer.x = ward.x + Math.cos(a) * r; coverer.z = ward.z + Math.sin(a) * r; ward.coverBy = { id: coverer.id, until: time + T }; }
       coverer.dug = time + T; s.events.push({ kind: "dug", x: coverer.x, z: coverer.z, at: time, id: coverer.id });
+      // The beetles lock shells: its packmate (the one it covers, else the nearest) digs in beside it too, both armoured.
+      if (sp.both) {
+        const mate = ward && ward !== coverer ? ward : healthy.filter(m => m !== coverer).sort((a, b) => Math.hypot(a.x - coverer.x, a.z - coverer.z) - Math.hypot(b.x - coverer.x, b.z - coverer.z))[0];
+        if (mate) { mate.dug = time + T; s.events.push({ kind: "dug", x: mate.x, z: mate.z, at: time, id: mate.id }); }
+      }
       break;
     }
   }
+}
+
+/** A pack's cloud at its thrower (the mole's dust, the moth's, the toad's spores): it hides the tells inside it; a flashing one (the
+ *  moth's) confuses her aim if she's in it. */
+function cloud(s: CombatState, w: CombatWorld, pw: PackWorld, K: PackKind, by: Creature, tg: Target, young: boolean, data: PacksData): void {
+  const time = w.time, sp = specialOf(K, data), scale = young ? data.young.special : 1, side = sideOf(by);
+  const T = (sp.time ?? 2) * scale, Rr = (sp.radius ?? 6) * FIGHT.scale * scale;
+  (s.clouds ??= []).push({ x: by.x, z: by.z, r: Rr, until: time + T, side, from: by.id, ...(sp.flash ? { flash: time } : {}) });
+  if (sp.flash && tg.kind === "witch" && huntsWitch(side)) {
+    const v = w.witches[tg.id], C = data.specials.confusion;
+    if (v && Math.hypot(v.x - by.x, v.z - by.z) <= Rr) pw.confuse?.(tg.id, time + (C.time ?? 2.5) * scale, ((C.drift ?? 35) * Math.PI) / 180);
+  }
+}
+
+/** A 💌 of hers reached a mirage image: it bursts (the raven's mirage). */
+export function burstMirage(s: CombatState, id: number, time: number): void {
+  const m = s.mirages?.find(q => q.id === id);
+  if (!m) return;
+  s.mirages = s.mirages!.filter(q => q !== m);
+  s.events.push({ kind: "mirageBurst", x: m.x, z: m.z, at: time, id: m.from });
 }
 
 /** A blow on `o` lands on whoever covers it (the badger dug in beside it), if it's still there. */
@@ -368,4 +459,6 @@ export function dodgeAim(v: { x: number; z: number; vx?: number; vz?: number }, 
 }
 
 /** Pack combat's own state in the fight (CombatState). */
-export interface Cloud { x: number; z: number; r: number; until: number; side: string; from: number }
+export interface Cloud { x: number; z: number; r: number; until: number; side: string; from: number; /** a flashing cloud's flash (the moth's) */ flash?: number }
+/** A mirage image (the raven's): where it stands round her, till when, whose image, and who threw it. */
+export interface Mirage { id: number; x: number; z: number; until: number; species: string; level: Level; side: string; from: number }

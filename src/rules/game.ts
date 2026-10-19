@@ -16,7 +16,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, stepLegendStates, type Relic } from "./legends";
-import { befriend, danceAt, invitableNow, stateOf, STATES } from "./creatureStates";
+import { befriend, danceAt, huntsWitch, invitableNow, stateOf, STATES, type State } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
 import { feedNearest, newBerries, stepBerries, type BerryState } from "./berries";
@@ -41,7 +41,8 @@ import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./ha
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
-import { dropCache, newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
+import { dropCache, newInvites, stepInvites, type Affection, type Decoy, type InviteControls, type Invites } from "./invites";
+import { burstMirage } from "./combat/packs";
 import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
@@ -79,7 +80,7 @@ export interface Witch {
   /** Her hat (rules/hat.ts): on her head, or lying where she was knocked out. */
   hat: HatState;
   /** Her aim confused till then, turning up to drift radians (pack combat: the stoat's war dance, rules/combat/packs.ts). */
-  confused?: { until: number; drift: number };
+  confused?: { until: number; drift: number; /** her movement turned, not her aim (the bat's screech) */ move?: boolean };
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
   pinned?: Pinned | null;
   /** Slowed (a snail's slime, a flash) until then: her speeds times slowMult. */
@@ -478,6 +479,8 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
   else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
+  // Her movement turned (pack combat: the bat's screech, rules/combat/packs.ts): her steering swung, wavering, as her aim is by the stoat's dance.
+  else if (W.confused?.move && ht < W.confused.until && W.body.mode === "ground") { const a = W.confused.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a); c = { ...c, moveX: c.moveX * cs - c.moveZ * sn, moveZ: c.moveX * sn + c.moveZ * cs }; }
   // Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; "you try and fly
   // but get pulled down"; rules/leashWeight.ts groundedBy, leash.grounded): the press keeps her on the ground, dropped before the
   // cooldown's (so it spends none), and is said, the "grounded" leash event: the view draws her lifting off and yanked back down
@@ -565,7 +568,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t));
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length ? mirageDecoys(g, g.clock.time) : undefined);
   if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
@@ -639,10 +642,15 @@ function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
   return m;
 }
 
+/** The raven's mirage images (rules/combat/packs.ts) her 💌s can meet: each takes one and bursts. */
+function mirageDecoys(g: Game, time: number): Decoy[] {
+  return (g.combat.mirages ?? []).filter(m => time < m.until && huntsWitch(m.side as State)).map(m => ({ x: m.x, z: m.z, r: 0.9, hit: () => burstMirage(g.combat, m.id, time) }));
+}
+
 /** Her aim, turned while she's confused (pack combat: the stoat's war dance, its drift wavering; rules/combat/packs.ts). */
 function confusedAim(W: Witch, c: Controls, ht: number): Controls {
   const C = W.confused;
-  if (!C || ht >= C.until || c.aimX === undefined || c.aimZ === undefined) return c;
+  if (!C || C.move || ht >= C.until || c.aimX === undefined || c.aimZ === undefined) return c;
   const a = C.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a);
   return { ...c, aimX: c.aimX * cs - c.aimZ * sn, aimZ: c.aimX * sn + c.aimZ * cs };
 }
@@ -700,7 +708,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     packWorld: {
       dash: id => { const W = g.witches[id]; return W && W.dash.at > -Infinity ? { at: W.dash.at, x: W.dash.toX, z: W.dash.toZ } : null; },
       lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
-      confuse: (id, until, drift) => { const W = g.witches[id]; if (W) W.confused = { until, drift }; },
+      confuse: (id, until, drift, move) => { const W = g.witches[id]; if (W) W.confused = { until, drift, ...(move ? { move: true } : {}) }; },
     },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),

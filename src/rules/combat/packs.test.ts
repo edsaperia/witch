@@ -136,6 +136,18 @@ describe("pack combat in play (the switch on)", () => {
     snail: g => g.combat.trails.length > 2,
     dormouse: g => fresh(g).some(e => e.kind === "packSpecial"),
     badger: g => g.creatures.some(c => c.dug !== undefined && c.dug > g.clock.time),
+    // Phase 1's (Echo, 2026-10-19).
+    wolf: g => !!wildPack(g)?.callUntil,
+    boar: g => g.creatures.some(c => !!c.charge),
+    bat: g => !!g.witches[0].confused?.move,
+    raven: g => (g.combat.mirages?.length ?? 0) > 0,
+    newt: g => g.combat.trails.length > 2,
+    moth: g => (g.combat.clouds ?? []).some(k => k.flash !== undefined),
+    heron: g => wildPack(g)?.syncUntil !== undefined,
+    beetle: g => g.creatures.filter(c => c.dug !== undefined && c.dug > g.clock.time).length >= 2,
+    woodlouse: g => g.creatures.some(c => !!c.charge?.curl),
+    otter: g => fresh(g).some(e => e.kind === "packSpecial"),
+    toad: g => (g.combat.clouds?.length ?? 0) > 0,
   };
   for (const k of Object.keys(PACKS.kinds)) it(`${k}: combos, its special, its lull, nothing NaN`, () => {
     let seen = false, combos = 0, lulls = 0;
@@ -148,5 +160,62 @@ describe("pack combat in play (the switch on)", () => {
     expect(combos).toBeGreaterThanOrEqual(2);
     expect(lulls).toBeGreaterThanOrEqual(2);
     expect(g.creatures.every(c => Number.isFinite(c.x) && Number.isFinite(c.z))).toBe(true);
+  }, 60000);
+});
+
+// Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the flyers on the ground, the toad's spores, the
+// bat's screech turning her movement.
+describe("pack combat, Phase 1's pieces", () => {
+  it("the heron's sync: a blink of hers while it lasts brings one of the pack blinking in beside where it put her, striking", () => {
+    let synced = 0, blinkAt = -1, near = Infinity;
+    arena("pack-heron", 40, g => {
+      for (const e of fresh(g)) if (e.kind === "packSync") {
+        synced++;
+        const w = g.witches[0].body; near = Math.min(near, Math.hypot(g.creatures[e.id!].x - w.x, g.creatures[e.id!].z - w.z));
+      }
+      const st = wildPack(g);
+      // (while it lasts she blinks east, pressing till it goes: a blow's stagger holds a blink back)
+      if (st?.syncUntil !== undefined && g.clock.time < st.syncUntil && !(g.witches[0].dash.at > (st.syncFrom ?? Infinity))) { blinkAt = g.clock.time; stepGame(g, { ...idle, moveX: 1, dash: true }, STEP); }
+    });
+    expect(blinkAt).toBeGreaterThan(0);
+    expect(synced).toBeGreaterThanOrEqual(2); // (out of where it was, into where she went)
+    expect(near).toBeLessThan(8);
+  }, 60000);
+
+  it("the raven's mirage: a 💌 flying through an image bursts it and goes no further", () => {
+    let burst = false, aimed = false;
+    arena("pack-raven", 30, g => {
+      burst ||= fresh(g).some(e => e.kind === "mirageBurst");
+      const m = g.combat.mirages?.[0], w = g.witches[0].body;
+      if (m && !aimed) aimed = true;
+      if (m && !burst) { stepGame(g, { ...idle, fire: true, aimX: m.x - w.x, aimZ: m.z - w.z }, STEP); burst ||= fresh(g).some(e => e.kind === "mirageBurst"); }
+    });
+    expect(aimed).toBe(true);
+    expect(burst).toBe(true);
+  }, 60000);
+
+  it("the flyers fight on the ground in a pack (no swoop till the flyers' step), and the toad's spores leave a slowing patch", () => {
+    for (const k of ["bat", "raven"]) {
+      let up = 0;
+      arena(`pack-${k}`, 20, g => { up += g.creatures.filter(c => c.species === k && !!c.swoop).length; });
+      expect(up, k).toBe(0);
+    }
+    let patch = false;
+    arena("pack-toad", 30, g => { patch ||= g.combat.trails.some(tr => g.creatures[tr.from]?.species === "toad"); });
+    expect(patch).toBe(true);
+  }, 60000);
+
+  it("the bat's screech turns her movement, not her aim", () => {
+    const g = newGame(5, ON);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "pack-bat");
+    for (let i = 0; i < 20; i++) stepGame(g, idle, STEP);
+    const W = g.witches[0];
+    W.confused = { until: g.clock.time + 5, drift: Math.PI / 3, move: true };
+    const x0 = W.body.x, z0 = W.body.z;
+    for (let i = 0; i < 30; i++) { W.health.hp = 1e6; stepGame(g, { ...idle, moveX: 1 }, STEP); }
+    const dx = W.body.x - x0, dz = W.body.z - z0;
+    expect(Math.hypot(dx, dz)).toBeGreaterThan(0.5);
+    expect(Math.abs(dz) / Math.hypot(dx, dz)).toBeGreaterThan(0.05); // (steering east, she drifts off north or south)
   }, 60000);
 });

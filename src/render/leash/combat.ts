@@ -88,6 +88,9 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     if (e.kind === "packTell" && c && close(e.x, e.z)) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 1, g: 1, b: 1, seed: 0, size: 2.6, n: 22, dot: 0.6 });
     if (e.kind === "packSpecial" && c && close(e.x, e.z)) { const col = packTint(c.species), R = (PACKS.specials[packKindOf(c.species)?.special ?? "call"]?.radius ?? 5) * FIGHT.scale; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.8, ...col, seed: 0, size: R, n: Math.round(R * 7), dot: 0.9 }); lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.6, ...col, seed: e.at * 71 + e.id!, size: 2.5 }); }
     if (e.kind === "packSplit" && close(e.x, e.z)) lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.5, r: 1, g: 1, b: 1, seed: e.at * 73, size: 1.6 });
+    // Phase 1's (Echo): the heron blinking where she blinked, a white flash out and in; a mirage image bursting, a violet pop.
+    if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 1, g: 1, b: 1, seed: 0, size: 1.8, n: 14, dot: 0.6 }); }
+    if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, ...PACK_TINTS.violet, seed: 0, size: 1.6, n: 14, dot: 0.6 }); }
     if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
     if (e.kind === "fled" && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
     if (e.kind === "lost" && c) { const col = neon(c.species); lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
@@ -214,6 +217,15 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     if (time >= k.until || !close(k.x, k.z)) continue;
     const left = Math.min(1, (k.until - time) / 1.5);
     for (let i = 0; i < 18; i++) { const a = hash2(k.from, i, 51) * Math.PI * 2 + time * 0.2, q = Math.sqrt(hash2(k.from, i, 53)) * k.r; lv.solid.add(k.x + Math.cos(a) * q, 0.6 + hash2(k.from, i, 57) * 1.6, k.z + Math.sin(a) * q * 0.8, 2.2, dot, 0.5, 0.42, 0.33, 0.5 * left); }
+    // A flashing cloud (the moth's): a violet-white burst through it as it flashes.
+    if (k.flash !== undefined && time - k.flash < 0.5) { const f = 1 - (time - k.flash) / 0.5; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, q = k.r * (0.3 + 0.7 * (1 - f)); lv.standing.add(k.x + Math.cos(a) * q, 1.2, k.z + Math.sin(a) * q * 0.8, 0.5, dot, 0.95, 0.85, 1, f); } }
+  }
+  // The raven's mirage (placeholder till the art step's shimmer): each image a dark violet column of motes over a ring, flickering.
+  for (const m of g.combat.mirages ?? []) {
+    if (time >= m.until || !close(m.x, m.z)) continue;
+    const left = Math.min(1, (m.until - time) / 1), fl = 0.6 + 0.4 * Math.sin(time * 9 + m.id);
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2, 0, m.z + Math.sin(a) * 0.9, 0.45, dot, 0.75, 0.45, 1, 0.9 * left); }
+    for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35, 0.6, dot, 0.6, 0.35, 0.95, 0.9 * fl * left * (1 - ph * 0.5)); }
   }
   // Her aim confused (the stoat's war dance): a violet swirl round her head.
   if (W.confused && time < W.confused.until) for (let i = 0; i < 6; i++) { const a = time * 5 + (i / 6) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.6, 2 + Math.sin(a * 2) * 0.12, w.z + Math.sin(a) * 0.45, 0.22, dot, 0.78, 0.45, 1, 0.9); }

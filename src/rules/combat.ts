@@ -46,6 +46,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       const from = w.creatures[sh.from] ?? null, a = attackNamed(sh.attack, data);
       s.events.push({ kind: "landed", x: L.tx, z: L.tz, at: time, id: sh.from });
       area(w, s, from, sh.side, sh.species, L.tx, L.tz, sh.radius, sh.damage, a, grid);
+      if (sh.patch) s.trails.push({ x: L.tx, z: L.tz, r: sh.patch.r, until: time + sh.patch.time, side: sh.side, slow: sh.patch.slow, from: sh.from }); // (the toad's spores: a slow patch where it lands)
       if (sh.sound) { const h = s.sounds.get(sh.sound.key); if (h && h.hp > 0 && Math.hypot(h.x - L.tx, h.z - L.tz) <= sh.radius + h.radius) land(w, s, from, { kind: "sound", key: sh.sound.key }, sh.sound.damage, a, L.tx, L.tz); }
       return false;
     }
@@ -287,7 +288,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
     // A pack member falling back in its lull, a hurt one keeping away (rules/combat/packs.ts); dug in (the badger's cover, its hold), it
     // stands, biting what comes in reach when its pack lets it.
-    if (pd && f.windupUntil === 0 && !c.charge) {
+    if (pd && f.windupUntil === 0 && !c.charge && !c.leap) {
       if (pd.slot) { if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } else moveToward(c, pd.slot.x, pd.slot.z, 0.5, speed, dt); continue; }
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
@@ -325,7 +326,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
-      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound") { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
+      if (pd && c.swoop) landSwoop(c, time); // (in a pack a flyer fights on the ground: rules/combat/packs.ts, Phase 1's bat and raven, until the flyers' step)
+      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound" && !pd) { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
         // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
         // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
@@ -350,10 +352,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           continue;
         }
       }
-      if (P.move?.kind === "leap") {
+      if (P.move?.kind === "leap" && (!pd || c.leap)) { // (in a pack: only its cloud's leap, rules/combat/packs.ts, which lands harmless)
         // The toad: a leap in an arc at its target (a ring shows where it'll land), slamming down: its attack.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
-        const r = stepLeap(c, P.move, p.x, p.z, time >= f.readyAt, time, tv?.vx ?? 0, tv?.vz ?? 0);
+        const r = stepLeap(c, P.move, p.x, p.z, !pd && time >= f.readyAt, time, tv?.vx ?? 0, tv?.vz ?? 0);
+        if (pd && r === "landed") { s.events.push({ kind: "slammed", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         if (r === "leapt") s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id });
         // A low pounce (the lynx's, a strike) hurts every foe it touches in the air (fight.leap.contact); a high leap's slam is its landing.
         if (r === "air" && P.move.strike && t.fight.leap?.contact && c.leap) touch(w, s, c, atk.damage, A, grid, (c.leap.hit ??= []));
@@ -487,7 +490,8 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     } else if (A.delivery === "lob") {
       const fl = A.flight ?? 1.2, hv = velOf(f.target), at = DB && f.target.kind === "witch"; // (dodge.b: where she'll be when it lands)
       const tx = at ? p.x + hv.vx * fl * DB.lobLead : f.aimX, tz = at ? p.z + hv.vz * fl * DB.lobLead : f.aimZ;
-      s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + fl + 1, from: c.id, side: sideOf(c), species: c.species, damage: dmg, radius: A.radius ?? 1.8, attack: atk.name, lob: { fx: c.x, fz: c.z, tx, tz, at: time, lands: time + fl } });
+      const pt = pd ? packKindOf(c.species)?.ranged?.patch : undefined; // (a pack lob that leaves a patch: the toad's spores)
+      s.shots.push({ id: s.nextShot++, x: c.x, z: c.z, vx: 0, vz: 0, until: time + fl + 1, from: c.id, side: sideOf(c), species: c.species, damage: dmg, radius: A.radius ?? 1.8, attack: atk.name, lob: { fx: c.x, fz: c.z, tx, tz, at: time, lands: time + fl }, ...(pt ? { patch: { r: pt.radius * FIGHT.scale, slow: pt.slow, time: pt.time } } : {}) });
       s.events.push({ kind: "shot", x: c.x, z: c.z, at: time, id: c.id });
     } else if (A.delivery === "beam") {
       const dur = A.duration ?? 0.8, tick = A.tick ?? 0.2, ticks = Math.max(1, Math.round(dur / tick));
