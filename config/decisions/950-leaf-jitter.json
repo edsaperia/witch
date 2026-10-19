@@ -20,6 +20,23 @@
       }
     },
     {
+      "id": "leafJitterHue",
+      "pr": 950,
+      "group": "Leaf jitter",
+      "label": "Leaf hue jitter (degrees)",
+      "note": "Each tree's leaves' hue turned up to this many degrees either way, by a seed of its own, on the lit colour (so these are degrees on screen; Ed's v3893 playtest: \"no visible effect\" when it was turned before the night's moonlight squeezed it). Up to 180 so any hue (Ed, 2026-10-19: \"stretch the slider\"); past about 30 trees read as other seasons. 0: none. Live: no rebake.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 180,
+        "step": 1
+      },
+      "default": 8,
+      "apply": {
+        "knob": "leafJitter.hue"
+      }
+    },
+    {
       "id": "leafJitterValue",
       "pr": 950,
       "group": "Leaf jitter",

@@ -1951,11 +1951,17 @@
         "value": {
           "type": "number",
           "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180
         }
       },
       "required": [
         "autumn",
-        "value"
+        "value",
+        "hue"
       ],
       "additionalProperties": false
     },
