@@ -736,7 +736,14 @@ export class Ground {
     this.filled[j * this.tilesX + i] = 1;
   }
 
-  dispose(): void { this.texture.dispose(); this.landTex?.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  /** Let go of all of it: the area texture, the land's, the floors, the carvings, the dancefloor's looks and tiles and the lakes'
+   *  map (the height field's texture is the HeightField's own, left alone). */
+  dispose(): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
+    for (const k of ["uDiscoBase", "uDiscoLit", "uLakes"]) (u[k]?.value as THREE.Texture | null)?.dispose();
+    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.discoTiles.dispose();
+    this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose();
+  }
 }
 
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */

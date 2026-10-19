@@ -13,6 +13,7 @@ export const MODIFIERS = ["none", "knockback", "slow"] as const;
 export const BEHAVIOURS = ["arrive", "keepRange", "orbit", "strafe", "slot", "separation", "cohesion", "wander", "dodge", "light"] as const;
 export const TACTICS = ["surround", "pincer", "hitAndRun", "volley", "swarm", "flank", "none"] as const;
 export const MOVES = ["charge", "ambush", "burrow", "leap", "dig", "block", "trail", "flash", "swoop"] as const;
+export const HOUSE_USES = ["creator", "hats", "bed", "zoo", "say"] as const;
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
 export const _check: [Same<(typeof DELIVERIES)[number], Delivery>, Same<(typeof MODIFIERS)[number], Modifier>, Same<(typeof BEHAVIOURS)[number], BehaviourKind>, Same<(typeof TACTICS)[number], TacticKind>, Same<(typeof MOVES)[number], Move["kind"]>] = [true, true, true, true, true];
 
@@ -32,4 +33,5 @@ export const CONFIGS: readonly ConfigSchema[] = [
   { name: "travel", file: "config/travel.json", schema: "config/schema/travel.schema.json", records: [], over: {} },
   { name: "area-types", file: "config/area-types.json", schema: "config/schema/area-types.schema.json", records: ["types"], over: {} },
   { name: "legend-buffs", file: "config/legend-buffs.json", schema: "config/schema/legend-buffs.schema.json", records: ["limits", "species"], over: {} },
+  { name: "house", file: "config/house.json", schema: "config/schema/house.schema.json", records: [], over: { "objects[].use.kind": { enum: HOUSE_USES } } },
 ];

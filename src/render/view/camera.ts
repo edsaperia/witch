@@ -35,6 +35,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
+  if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
   {

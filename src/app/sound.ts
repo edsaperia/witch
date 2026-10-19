@@ -37,8 +37,26 @@ export class Sound {
   /** The safety valve (shed.ts): the sound shed a step at a time while the audio thread under-runs; `?audio=lite|full`. */
   readonly valve = new ShedValve(audioParam());
 
-  constructor(private readonly tuning: Tuning, private readonly style: MusicStyle, private readonly seed: number) {
+  constructor(private tuning: Tuning, private style: MusicStyle, private seed: number) {
   }
+
+  /** A new night on the same page (docs/plans/sail-without-reload.md, A4 and B6; nothing calls it yet): its tuning, seed and
+   *  style for everything made from here on (the watchdog's rebuilds too), the music's timeline anchored afresh at its game
+   *  time 0, the effects re-pointed at its knobs and given fresh cues, and the safety valve's grace again. The same context. */
+  setNight(tuning: Tuning, seed: number, style: MusicStyle = this.style): void {
+    this.tuning = tuning; this.seed = seed; this.style = style;
+    this.night = null; // (the night's set's style given to the engine on the next frame)
+    const engine = this.music?.engine;
+    if (engine) { engine.seed = seed; engine.newTimeline(); }
+    if (this.sfx) {
+      this.sfx.retune(tuning.sfx); this.sfxVol = -1;
+      this.sfxCues?.dispose(); this.sfxCues = this.cues(this.sfx);
+    }
+    if (this.begun) this.valve.begin(performance.now() / 1000);
+  }
+
+  /** The cues for a night's game (per-game state: creatures by id, game times, areas by cell). */
+  private cues(sfx: Sfx): SfxCues { return new SfxCues(sfx, (by, sec) => this.music?.duck(by, sec)); }
   /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
   private night: MusicStyle | null = null;
   /** The pause page's Music Lab (app/musicLab.ts; Ed, 2026-10-15), once opened: its settings over the night's style and cue,
@@ -50,7 +68,7 @@ export class Sound {
   /** The sound effects, once there's an AudioContext (the creator's first click, or the start). */
   ensureSfx(): void {
     const { tuning } = this;
-    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24); this.sfxVol = tuning.sfx.volume; this.sfxCues = new SfxCues(this.sfx, (by, sec) => this.music?.duck(by, sec)); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
+    if (this.audio && !this.sfx && tuning.sfx.on) { this.sfx = new Sfx(this.audio, SFX_BASE * this.level, tuning.sfx, this.style.root + 24); this.sfxVol = tuning.sfx.volume; this.sfxCues = this.cues(this.sfx); const sfx = this.sfx; (window.requestIdleCallback ?? ((f: () => void) => setTimeout(f, 300)))(() => sfx.prewarm()); } // (its slow parts built while the start screen idles)
   }
 
   /** The context, with the tuning's output buffer (music.buffer, seconds; else its latencyHint category, music.latency; ?latency= a

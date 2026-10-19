@@ -117,7 +117,7 @@ export class BeachEdgeView {
 
   /** Let go (she's left the beach). */
   dispose(): void {
-    if (this.batch) { this.scene.remove(...this.batch.meshes); this.batch.mesh.geometry.dispose(); }
+    if (this.batch) { this.scene.remove(...this.batch.meshes); this.batch.release(); } // (its materials and see-through pass too, the atlas being the art's)
     if (this.shadows) { this.scene.remove(...this.shadows.meshes); this.shadows.dispose(); }
     this.shadows = null;
     this.batch = null; this.atlas = null; this.at.x = NaN;

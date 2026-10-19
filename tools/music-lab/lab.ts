@@ -273,6 +273,45 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
 }
 (window as unknown as { musicLabCheck: typeof musicLabCheck }).musicLabCheck = musicLabCheck;
 
+/** A sail between islands without reloading the page (docs/plans/sail-without-reload.md, C5), driven frame by frame as the game
+ *  drives the music (Music.update at 30 frames a second, the offline context suspended at each): `aSec` of night A at wave 2
+ *  from game time 300, `gapSec` with nothing scheduled (the sail; its sea and flight cue comes with a later change), then night B
+ *  from game time 0 booting up: the engine's timeline anchored afresh (`fresh`: newTimeline), its seed and style changed (as
+ *  app/sound.ts setNight and the next frame's style do). Gives the level and peak of each stretch, and how far each of B's
+ *  sixteenths was scheduled from when its game time comes (ms; + late, - early), by B's game time. */
+async function musicLabSail(fresh = true, aSec = 12, gapSec = 3, bSec = 14): Promise<{ a: { rms: number; peak: number }; gapEnd: { rms: number; peak: number }; b: { rms: number; peak: number }; whole: { rms: number; peak: number }; offsets: { game: number; ms: number }[] }> {
+  const rate = 22050, fps = 30, total = aSec + gapSec + bSec, M = TUNING.music;
+  const oc = new OfflineAudioContext(2, Math.ceil(rate * total), rate);
+  const m = new Music(oc, 1, style, 7), e = m.engine!, mix = mixAt(M, 1, 0, 0);
+  // night A: two waves in, its tempo wave 2's; night B: the home speakers booting, one turning every half bar
+  const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t: number) => barAt(clockA, t);
+  const cueA: MusicCue = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
+  const styleB: MusicStyle = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };
+  const clockB = newBeatClock(style.bpm, waveTempo(beatTuning(), 0)), barB = (t: number) => barAt(clockB, t);
+  const cueB: MusicCue = { waves: [], nextAt: barB(90), bootUntil: barB(30), knockedOut: false, siege: 0, speakers: 12, speakerBars: Array.from({ length: 12 }, (_, i) => i * 0.5) };
+  let night: "a" | "gap" | "b" = "a", bStart = NaN, gameA = 300;
+  const steps: { s: number; t: number }[] = [];
+  const E = e as unknown as { step: (cue: MusicCue, s: number, t: number, sps: number) => void }, inner = E.step.bind(e);
+  E.step = (c, s, t, sps) => { if (night === "b") steps.push({ s, t }); inner(c, s, t, sps); };
+  const frame = () => {
+    const now = oc.currentTime;
+    if (now < aSec) { gameA = 300 + now; m.update(mix, cueA, gameA, clockA, true, M); return; }
+    if (now < aSec + gapSec) { night = "gap"; m.update(mix, cueA, gameA, clockA, false, M); return; }
+    if (night !== "b") { night = "b"; bStart = now; if (fresh) e.newTimeline(); e.seed = 99; e.setStyle(styleB); }
+    m.update(mix, cueB, now - bStart, clockB, true, M);
+  };
+  for (let i = 1; i < total * fps; i++) void oc.suspend(i / fps).then(() => { frame(); return oc.resume(); });
+  const buf = await oc.startRendering();
+  const stretch = (from: number, to: number) => {
+    let sum = 0, peak = 0, n = 0;
+    for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = Math.floor(from * rate); i < Math.min(d.length, Math.floor(to * rate)); i++) { const v = d[i]; sum += v * v; n++; if (!(Math.abs(v) <= peak)) peak = Math.abs(v); } }
+    return { rms: Math.sqrt(sum / Math.max(1, n)), peak };
+  };
+  const offsets = steps.map(({ s, t }) => { const g = timeAt(clockB, s / 4); return { game: g, ms: (t - (bStart + g)) * 1000 }; });
+  return { a: stretch(1, aSec), gapEnd: stretch(aSec + gapSec - 0.5, aSec + gapSec), b: stretch(aSec + gapSec + 2, total), whole: stretch(0, total), offsets };
+}
+(window as unknown as { musicLabSail: typeof musicLabSail }).musicLabSail = musicLabSail;
+
 /** How loud a render is as a laptop plays it (dB): the rms above about 200 Hz (a second-order high-pass), both channels. */
 function heardDb(buf: AudioBuffer): number {
   const w = (2 * Math.PI * 200) / buf.sampleRate, cs = Math.cos(w), al = Math.sin(w) / (2 * 0.707), a0 = 1 + al;

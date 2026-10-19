@@ -741,15 +741,19 @@ export class SpriteBatch {
     return max === undefined || !this.mesh.visible ? 0 : Math.max(0, this.count - max);
   }
 
-  /** Let go of its own buffers and material, leaving its atlas (shared) alone. */
+  /** Let go of its own buffers and materials (the see-through pass's off the frame's list too), leaving its atlas (shared) alone. */
   release(): void {
     this.geo.dispose();
-    for (const m of this.meshes) (m.material as THREE.Material).dispose();
+    for (const m of this.meshes) {
+      (m.material as THREE.Material).dispose();
+      const i = FADE_MESHES.indexOf(m);
+      if (i >= 0) { FADE_MESHES.splice(i, 1); FADE_MATERIALS.splice(FADE_MATERIALS.indexOf(m.material as THREE.ShaderMaterial), 1); }
+    }
   }
 
+  /** Let go of it all, its atlas too. */
   dispose(): void {
-    this.geo.dispose();
-    (this.mesh.material as THREE.Material).dispose();
+    this.release();
     this.atlas.albedo.dispose();
     this.atlas.normal.dispose();
   }
