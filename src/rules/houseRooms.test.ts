@@ -113,6 +113,13 @@ describe("the treehouse's rooms", () => {
     expect(slept).toBe(1);
   });
 
+  it("standing still in a room, she stays in the house: she never idles into the party on the floor below", () => {
+    const g = inHouse(-3, -16); // (the kitchen)
+    for (let i = 0; i < (g.tuning.partyWitches.idleAfter + 4) / STEP; i++) stepGame(g, idle, STEP);
+    expect(g.witches[0].body.perch).toBe(true);
+    expect(g.partyWitches.players?.[0]?.activity ?? null).toBeNull();
+  });
+
   it("every object stands on its room's floor, and every room is reached by a corridor", () => {
     const g = newGame(7, TUNING), d = deck(g);
     for (const o of HOUSE_ROOMS.objects) {

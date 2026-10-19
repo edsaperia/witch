@@ -73,10 +73,10 @@ function hatQuads(x: number, z: number, i: number): Quad[] {
   ];
 }
 
-/** North of this (m, the hub's centre 0), a quad is behind the Ent's tree and the hub: drawn before them, they over it where solid. */
+/** North of this (m, the hub's centre 0), a quad is behind the hub: drawn first. */
 const BEHIND = -3;
 
-/** One of the two halves of the rooms' drawing: behind the Ent (drawn before it) or in front of it (after). */
+/** One of the two halves of the rooms' drawing: behind the hub (drawn first) or in front of it. */
 class Part {
   readonly geo = new THREE.BufferGeometry();
   readonly mesh: THREE.Mesh;
@@ -96,9 +96,12 @@ class Part {
 }
 
 export class HouseRoomsView {
-  /** Its meshes, for the scene: behind the Ent's tree and the hub, and in front. */
+  /** Its meshes, for the scene: behind the hub, and in front. */
   readonly meshes: THREE.Mesh[];
-  private readonly mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  // (a placeholder's floor plan over the picture: in the see-through pass (three.js draws every solid thing first), after the
+  // trees' see-through passes, 11 and 19.9, before her, 19.95 in a room (render/view/witch.ts), so the trees round the house never
+  // hide it nor it her; no depth, their own quads in order, the far ones first, floors, walls, then the objects)
+  private readonly mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, depthWrite: false, depthTest: false });
   private readonly parts: [Part, Part];
   private quads: Quad[] = [];
   private hub = -1;
@@ -110,7 +113,7 @@ export class HouseRoomsView {
   private said: { obj: HouseObject; at: number } | null = null;
 
   constructor() {
-    this.parts = [new Part(this.mat, -0.5), new Part(this.mat, 1)]; // (after the ground, -1; the Ent's batch, 0, between)
+    this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.94)];
     this.meshes = this.parts.map(p => p.mesh);
     this.box = document.createElement("div");
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
