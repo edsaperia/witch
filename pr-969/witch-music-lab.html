@@ -11133,6 +11133,36 @@ label.check input { accent-color: var(--accent); }
     }
   };
 
+  // src/rules/spells.ts
+  var HAT_SPELLS = [
+    { id: "none", name: "Plain hat", how: "placed", line: "No spell.", built: true },
+    { id: "helmet", name: "Helmet", how: "worn", line: "An extra hit: the first blow knocks it off instead. Pick it up to wear it again.", built: true },
+    { id: "healing", name: "Healing ring", how: "placed", line: "Put it down: standing near it, she heals a hit every few seconds.", built: true },
+    { id: "harvest", name: "Harvest", how: "onPlace", line: "Put it down: a ring of six berries grows round it.", built: true },
+    // (Ed, 2026-10-11)
+    { id: "dowsing", name: "Dowsing", how: "onPlace", line: "Put it down: a pointer leads to the nearest relic for a minute.", built: true },
+    { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws \u{1F48C}s at wild creatures within 33 m.", built: true },
+    // (Ed, 2026-10-11: "larger ranges")
+    { id: "bramble", name: "Bramble", how: "placed", line: "Put it down: wild creatures within 30 m of it are slowed.", built: true },
+    // (Ed, 2026-10-11: "Bramble should have 30m range")
+    { id: "slingshot", name: "Slingshot", how: "placed", line: "Put it down: \u{1F48C}s that pass within 10 m circle it, then fly at a creature up to 40 m off.", built: true },
+    { id: "gathering", name: "Gathering", how: "placed", line: "Put it down, then pick it up: every sigil of hers within 100 m comes back to her stack.", built: true },
+    // (Ed, 2026-10-11: "all sigils in range")
+    { id: "mine", name: "Mine", how: "onPlace", line: "Put it down: it bursts, stunning wild creatures within 15 m.", built: true },
+    { id: "lullaby", name: "Lullaby", how: "onPlace", line: "Put it down: wild creatures within 15 m fall asleep; a \u{1F48C} wakes one.", built: true },
+    // (Ed, 2026-10-12: "wake up when hit with an invitation")
+    { id: "cyclone", name: "Cyclone", how: "placed", line: "Put it down: a whirlwind sweeps creatures near it round, lifts them and flings them out.", built: true },
+    // (Ed, 2026-10-12, instead of the Decoy)
+    { id: "nursing", name: "Nursing", how: "placed", line: "Put it down: her creatures near it heal.", built: true },
+    { id: "edgeseer", name: "Edge-seer", how: "worn", line: "Worn: she sees the areas' edges glow.", built: true },
+    // (Ed, 2026-10-15: "shows the area edges"; "only the player wearing the hat sees the things")
+    { id: "routeseer", name: "Route-seer", how: "worn", line: "Worn: she sees the whole ley line, and every runestone's beacon.", built: true }
+    // (Ed, 2026-10-15: "a 'see the entire route' hat power as well")
+  ];
+
+  // src/rules/houseRooms.ts
+  var HAT_FLOOR = HAT_SPELLS.filter((s) => s.built && s.id !== "none").map((s) => s.id);
+
   // src/rules/treehouse.ts
   var DEG = Math.PI / 180;
 
@@ -16053,10 +16083,6 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
       this.setStyle(style2);
       if (Object.values(style2.patches).some((p) => p.kind === "fof") && style2.form?.sung && style2.patches[style2.form.sung.patch]?.kind === "fof") void fofReady(ctx2);
-      {
-        const sung = style2.form?.sung, p = sung && style2.patches[sung.patch];
-        if (sung && p) this.channel(sung.part, p);
-      }
     }
     ctx;
     style;
@@ -16159,6 +16185,13 @@ registerProcessor("witch-fof", WitchFof);
         ch.fx?.dispose();
       }
       this.channels.clear();
+      this.warmSung();
+    }
+    /** The sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
+     *  from here on (VoiceFx.warm, in update): the stall hunt, 2026-10-13: that first note was a 190 ms frame. */
+    warmSung() {
+      const sung = this.style.form?.sung, p = sung && this.style.patches[sung.patch];
+      if (sung && p) this.channel(sung.part, p);
     }
     /** The FOF voice's worklet loaded on a context (tools rendering offline wait for it; the game starts it with the music). */
     static fofReady = fofReady;
@@ -16324,6 +16357,25 @@ registerProcessor("witch-fof", WitchFof);
       this.nextStep = -1;
       this.lastStep = -Infinity;
       this.conductor.reset();
+    }
+    /** A new night on the same page (docs/plans/sail-without-reload.md, A4): its game time starts again from 0, so the timeline
+     *  is anchored afresh at its first frame (not eased back from 6 s ahead), its knockdowns counted from none and the gate open.
+     *  What belongs to the page (the stats, the lead, a stall's look-ahead, the shed level, the channels) stays. */
+    newTimeline() {
+      this.reset();
+      this.g0 = NaN;
+      this.a0 = 0;
+      this.rate = 1;
+      this.heardTo = -1;
+      this.lastNow = -1;
+      this.cNext = -1;
+      this.cAt = 0;
+      this.knocksHeard = 0;
+      this.current = null;
+      const now = this.ctx.currentTime;
+      this.gate.gain.cancelScheduledValues(now);
+      this.gate.gain.setValueAtTime(1, now);
+      this.gated = false;
     }
     /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
     step(cue2, step2, t, sps) {
@@ -17550,6 +17602,68 @@ registerProcessor("witch-fof", WitchFof);
     return { ok: errors.length === 0, errors, results };
   }
   window.musicLabCheck = musicLabCheck;
+  async function musicLabSail(fresh = true, aSec = 12, gapSec = 3, bSec = 14) {
+    const rate = 22050, fps = 30, total = aSec + gapSec + bSec, M2 = TUNING.music;
+    const oc = new OfflineAudioContext(2, Math.ceil(rate * total), rate);
+    const m = new Music(oc, 1, style, 7), e = m.engine, mix = mixAt(M2, 1, 0, 0);
+    const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t) => barAt(clockA, t);
+    const cueA = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
+    const styleB = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };
+    const clockB = newBeatClock(style.bpm, waveTempo(beatTuning(), 0)), barB = (t) => barAt(clockB, t);
+    const cueB = { waves: [], nextAt: barB(90), bootUntil: barB(30), knockedOut: false, siege: 0, speakers: 12, speakerBars: Array.from({ length: 12 }, (_, i) => i * 0.5) };
+    let night = "a", bStart = NaN, gameA = 300;
+    const steps = [];
+    const E2 = e, inner = E2.step.bind(e);
+    E2.step = (c, s, t, sps) => {
+      if (night === "b") steps.push({ s, t });
+      inner(c, s, t, sps);
+    };
+    const frame = () => {
+      const now = oc.currentTime;
+      if (now < aSec) {
+        gameA = 300 + now;
+        m.update(mix, cueA, gameA, clockA, true, M2);
+        return;
+      }
+      if (now < aSec + gapSec) {
+        night = "gap";
+        m.update(mix, cueA, gameA, clockA, false, M2);
+        return;
+      }
+      if (night !== "b") {
+        night = "b";
+        bStart = now;
+        if (fresh) e.newTimeline();
+        e.seed = 99;
+        e.setStyle(styleB);
+      }
+      m.update(mix, cueB, now - bStart, clockB, true, M2);
+    };
+    for (let i = 1; i < total * fps; i++) void oc.suspend(i / fps).then(() => {
+      frame();
+      return oc.resume();
+    });
+    const buf = await oc.startRendering();
+    const stretch = (from, to) => {
+      let sum = 0, peak = 0, n = 0;
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = Math.floor(from * rate); i < Math.min(d.length, Math.floor(to * rate)); i++) {
+          const v = d[i];
+          sum += v * v;
+          n++;
+          if (!(Math.abs(v) <= peak)) peak = Math.abs(v);
+        }
+      }
+      return { rms: Math.sqrt(sum / Math.max(1, n)), peak };
+    };
+    const offsets = steps.map(({ s, t }) => {
+      const g = timeAt(clockB, s / 4);
+      return { game: g, ms: (t - (bStart + g)) * 1e3 };
+    });
+    return { a: stretch(1, aSec), gapEnd: stretch(aSec + gapSec - 0.5, aSec + gapSec), b: stretch(aSec + gapSec + 2, total), whole: stretch(0, total), offsets };
+  }
+  window.musicLabSail = musicLabSail;
   function heardDb(buf) {
     const w = 2 * Math.PI * 200 / buf.sampleRate, cs = Math.cos(w), al = Math.sin(w) / (2 * 0.707), a0 = 1 + al;
     const b0 = (1 + cs) / 2 / a0, b1 = -(1 + cs) / a0, b2 = b0, a1 = -2 * cs / a0, a2 = (1 - al) / a0;
