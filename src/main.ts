@@ -1,6 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { chartOpen, openChart } from "./ui/chartOverlay";
+import { chartOpen, openChart, prepareChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -176,6 +176,9 @@ const warmWhenSettled = warmOn ? setInterval(() => {
 requestAnimationFrame(() => setTimeout(async () => {
   await view.prepare();
   ready = true;
+  // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
+  // table then opens it without seconds of waiting. Not under automation (the smoke and bench runs), unless ?prepChart=1.
+  if (params.get("prepChart") === "1" || (params.get("prepChart") !== "0" && !navigator.webdriver)) setTimeout(() => void prepareChart().catch(e => console.warn("sea chart: not made ahead", e)), 300);
   loadTimes.ready = performance.now();
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
