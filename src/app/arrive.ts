@@ -18,6 +18,8 @@ export class ArrivalFlight {
   private skipped = false;
   /** Landed: the flight over (or skipped), the game's camera its own again. */
   done = false;
+  /** The last moment the island isn't seen: the still about to fade, or a skip straight to her decks (main.ts revealArt). */
+  onReveal: () => void = () => {};
 
   constructor(readonly rec: Arrival, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null) {
     const img = still;
@@ -58,6 +60,7 @@ export class ArrivalFlight {
   get warming(): boolean { return !this.done && (!this.plan || this.clock.phase === "warm"); }
 
   private fadeStill(): void {
+    this.onReveal();
     performance.mark("witch:landed"); // (the still going: the wait over)
     const img = this.still;
     if (!img) return;
@@ -69,6 +72,8 @@ export class ArrivalFlight {
 
   private land(v?: View): void {
     if (this.done) return;
+    this.onReveal(); // (skipped before the still faded: now, still unseen)
+    performance.mark("game:arrived");
     this.done = true;
     if (v) v.fly = null;
     this.still?.remove();
