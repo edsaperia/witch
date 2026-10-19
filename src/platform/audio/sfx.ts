@@ -75,6 +75,8 @@ export class Sfx {
   prewarm(): void { this.k.space(); }
   dispose(): void { try { this.k.final.disconnect(); } catch { /* gone */ } }
   setVolume(v: number): void { this.k.setVolume(v); }
+  /** A new night's tuning (sfxKit.ts retune): every effect reads its sfx knobs from then on. */
+  retune(T: SfxTuning): void { this.k.retune(T); }
 
   // ——— 💌 ———
   letter(pan = 0, near = 1): void { this.babble.letter(pan, near); }
