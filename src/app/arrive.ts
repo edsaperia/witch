@@ -9,7 +9,6 @@ import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
 import { arrivePlan, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
-import { mark } from "./timing";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
 
@@ -74,7 +73,7 @@ export class ArrivalFlight {
   private land(v?: View): void {
     if (this.done) return;
     this.onReveal(); // (skipped before the still faded: now, still unseen)
-    mark("game:arrived");
+    performance.mark("game:arrived");
     this.done = true;
     if (v) v.fly = null;
     this.still?.remove();
