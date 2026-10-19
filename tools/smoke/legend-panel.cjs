@@ -51,13 +51,15 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
         const info = await page.evaluate(apply, [id, state, false]);
         await settle(1500);
         await page.evaluate(apply, [id, state, true]); // (held there for the shot)
+        await page.evaluate(() => { const w = window.witch; w.manual = true; for (let i = 0; i < 3; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60); w.manual = false; }); // (drawn as it now stands: a paused game's panel is only redrawn with a frame)
         const want = ["wrong", "over"].includes(state) ? "asleep" : state;
         await page.waitForFunction(([want, done]) => { const el = document.querySelector(".legend-panel"); return el && el.dataset.state === want && !!el.querySelector("p.done") === done && +el.style.opacity > .9; }, [want, state === "happy"], { timeout: 120000, polling: 200 }).catch(() => {});
         await settle(1500);
         const shown = await page.evaluate(() => { const el = document.querySelector(".legend-panel"); return el && el.style.display !== "none" ? { text: el.textContent, opacity: el.style.opacity } : null; });
         console.log(info.species, state, JSON.stringify(shown));
+        if (!shown) console.log("not shown:", await page.evaluate(id => { const g = window.witch.game, c = g.creatures[id], el = document.querySelector(".legend-panel"); return JSON.stringify({ w: [Math.round(g.witch.x), Math.round(g.witch.z), g.witch.mode], c: [Math.round(c.x), Math.round(c.z), c.legendState], el: el ? [el.style.display, el.style.opacity, el.dataset.state] : null, paused: g.clock.paused, t: g.clock.time }); }, id));
         if (!shown || !(+shown.opacity > 0.9)) errors.push(`${info.species} ${state}: no panel`);
-        await page.screenshot({ path: path.join(outDir, `${info.species}-${state}.png`) });
+        await page.screenshot({ path: path.join(outDir, `${info.species}-${state}.png`), timeout: 600000 });
       }
     }
     // just outside the last circle: the panel fades out
@@ -66,7 +68,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const after = await page.evaluate(() => { const el = document.querySelector(".legend-panel"), g = window.witch.game; return el ? `${el.style.display}|${el.style.opacity}|witch ${Math.round(g.witch.x)},${Math.round(g.witch.z)} ${g.witch.mode} paused ${g.clock.paused}` : "absent"; });
     console.log("outside", after);
     if (!after.startsWith("none") && after !== "absent") errors.push("panel still shown outside the circle");
-    await page.screenshot({ path: path.join(outDir, "outside.png") });
+    await page.screenshot({ path: path.join(outDir, "outside.png"), timeout: 600000 });
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
 })().catch(e => { console.error(e); process.exit(1); });
