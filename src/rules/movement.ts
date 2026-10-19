@@ -56,6 +56,11 @@ export const glideOf = (species: string): Profile["glide"] => MOVEMENT.profiles[
  *  brake: how hard it slows) and fight.leap (reach: how far off it leaps from, through: metres past
  *  its target it lands; less than 0, short of it). Set from the tuning each step (rules/combat.ts). */
 export const FIGHT: { scale: number; speed: number; momentum: number; charge: { reach: number; turn: number; brake: number; chase?: number; miss?: number }; leap: { reach: number; through: number; lead?: number }; walk: number } = { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 };
+/** FIGHT as a page starts, put back by newGame, so a night begun after another starts as a fresh
+ *  page's does (the first steps run before stepCombat sets it: docs/plans/sail-without-reload.md). */
+export function resetFight(): void {
+  Object.assign(FIGHT, { scale: 1, speed: 1, momentum: 1, charge: { reach: 1, turn: 1, brake: 1 }, leap: { reach: 1, through: -1.5 }, walk: 0 });
+}
 
 export const profileOf = (species: string, data: MovementData = MOVEMENT): Profile | null => data.profiles[species] ?? null;
 export const legendSetOf = (species: string, data: MovementData = MOVEMENT): LegendSet => data.legends.bySpecies[species] ?? data.legends;

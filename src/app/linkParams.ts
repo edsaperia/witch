@@ -46,11 +46,10 @@ export function worldFromLink(params: URLSearchParams, defaults = { areaSize: TU
 export function tuningFromLink(params: URLSearchParams) {
   // Variants as switches in the link: ?tilt=off, ?bloom=off, ?shadows=off,
   // ?canopy=off (the canopy shadow layer), ?mist=off.
-  const tuning = {
-    ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
-    shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
-    party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
-  };
+  // A whole copy of the tuning file (2026-10-19): what this load's knobs, settings and sliders change is this load's alone, never
+  // the file's own objects, so a night made after another in the same page starts from the file as a fresh page does (only what
+  // is carried on purpose carries: app/settings.ts carryKnobs; docs/plans/sail-without-reload.md).
+  const tuning = structuredClone(TUNING);
   // ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
   // styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
   { const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }

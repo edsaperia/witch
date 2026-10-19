@@ -668,7 +668,7 @@ export class View {
   /** A party animal's gear for its rig page (as its party bake wears it), kept per creature and look. */
   private rigGears = new Map<string, RigGear>();
   rigGear(c: Creature, leashed: boolean): RigGear {
-    const k = `${c.id}|${leashed ? 1 : 0}`;
+    const k = `${c.species}|${c.id}|${leashed ? 1 : 0}`; // (its species too: an id is a creature only within one map)
     let g = this.rigGears.get(k);
     if (!g) { if (this.rigGears.size > 2000) this.rigGears.clear(); this.rigGears.set(k, (g = partyGearOf(c.id, leashed ? sigilColour(c.species) : null))); }
     return g;
