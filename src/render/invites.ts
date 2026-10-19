@@ -19,6 +19,7 @@ import type { Creature } from "../rules/creatures";
 import { RingModel, ringOf } from "./inviteRing";
 import { beachOf } from "../rules/mapShape";
 import { tiltFilter } from "./overlayTilt";
+import type { OcclusionProbes } from "./occlusion";
 
 const HERS = ["💌", "🎉", "🥳", "💃", "🎈", "😘", "🎶", "✨"];
 // Replies by how full its meter is: unsure, warming, nearly, won over; and stung (blocked).
@@ -156,6 +157,9 @@ export class InviteView {
     b.el.classList.add("on");
   }
 
+  /** What hides the 💌s and rings as the animals are hidden (render/occlusion.ts; Ed, 2026-10-19): set by the view. */
+  probes?: OcclusionProbes;
+
   /** A 💌 gone out of a calm circle at (x, z): the view's sparkle (render/slowtime.ts). */
   onVanished?: (x: number, z: number) => void;
 
@@ -183,7 +187,8 @@ export class InviteView {
   }
 
   update(time: number, camera: THREE.Camera, width: number, height: number, tops: Map<number, number>, heads?: Map<number, { x: number; z: number }>): void {
-    const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch;
+    const g = this.game, W = g.witches[0], I = W.invites, t = g.tuning, w = g.witch, P = this.probes;
+    P?.update(time);
     // (Pixel art (the 💌s, hearts and pops) on whole art pixels, each k CSS pixels: on the grid as it moves.)
     const kp = t.pixelSize * t.bubbles.scale;
     const place = (el: HTMLElement, x: number, y: number, z: number, grid = el.tagName === "IMG") => {
@@ -195,6 +200,15 @@ export class InviteView {
       el.style.top = `${sy}px`;
       el.style.visibility = vis ? "visible" : "hidden";
       if (vis) tiltFilter(el, sy); // (blurred as the world is there: render/overlayTilt.ts)
+    };
+    // Hidden as the animals are (Ed, 2026-10-19: "envelopes are hidden by scenery (smoke also counts)"): a probe where it is
+    // (render/occlusion.ts), its answer taken off the opacity it would have had; gone altogether once all but hidden.
+    const hide = (el: HTMLElement, key: string, x: number, y: number, z: number, base = 1, half = 1) => {
+      if (!P) return;
+      P.probe(key, x, y, z, half);
+      const k = P.shown(key);
+      el.style.opacity = (base * k).toFixed(3);
+      if (k < 0.03) el.style.visibility = "hidden";
     };
     const head = (id: number) => (tops.get(id) ?? 1.2 + g.creatures[id].level * 0.8) + 0.3;
     const pick = (list: string[], a: number, b: number) => list[Math.floor(hash2(a, b, 17) * list.length) % list.length];
@@ -253,6 +267,7 @@ export class InviteView {
         const f = u / CRUMPLE, j = hash2(q.seed, Math.floor(u * 40), 9) - 0.5;
         place(q.el, q.x, q.y, q.z);
         showTurned(q.el, "💌", bn, 1 - 0.5 * f + 0.15 * j, 1 - 0.4 * f - 0.15 * j, j * 60, kp);
+        hide(q.el, `c${q.seed}:${q.at}`, q.x, q.y, q.z);
         return true;
       }
       if (q.landed < 0) {
@@ -265,6 +280,7 @@ export class InviteView {
       const flying = (q.landed < 0 ? u : q.landed - q.at) - CRUMPLE;
       showTurned(q.el, BALL, bn, 0.8, 0.8, flying * 540 + q.seed * 50, kp);
       q.el.style.opacity = rest > BALL_REST - BALL_FADE ? ((BALL_REST - rest) / BALL_FADE).toFixed(2) : "1";
+      hide(q.el, `c${q.seed}:${q.at}`, q.x, q.y, q.z, Number(q.el.style.opacity));
       return true;
     });
     // Hers follows her; theirs follow them.
@@ -296,8 +312,10 @@ export class InviteView {
         im.style.display = "block";
         const bob = r.sea ? Math.sin(time * 2.1 + r.tilt) : 0; // (floating on the sea, rocking gently)
         place(im, r.x, 0.08 + bob * 0.07, r.z);
-        im.style.opacity = String(Math.min(0.9, Math.max(0, (r.life - (time - r.at)) / r.fade) * 0.9));
+        const op = Math.min(0.9, Math.max(0, (r.life - (time - r.at)) / r.fade) * 0.9);
+        im.style.opacity = String(op);
         showTurned(im, "💌", n, 0.9, 0.9 * flat, r.tilt + bob * 8, k); // (turned, then laid flat, in art pixels)
+        hide(im, `r${r.at}:${r.x}:${r.z}`, r.x, 0.15, r.z, op);
       });
     }
     // The letters in flight: a spinning pixel 💌 each.
@@ -322,6 +340,7 @@ export class InviteView {
       const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
       if (!L.kind) this.spins.set(L.n, deg);
       showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
+      hide(im, `l${L.n}`, L.x, y, L.z);
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
     // Paw prints (Wildcat): little glowing hearts where the letters flew, fading out.
@@ -375,6 +394,10 @@ export class InviteView {
       const now = this.ringModel.rings.get(id), c = g.creatures[id];
       if (!now || !c) { for (const el of [...r.imgs, ...r.dots]) el.remove(); this.rings.delete(id); continue; }
       const sz = envSize(now.slots);
+      // (its ring hidden exactly when its animal is (Ed, 2026-10-19): one probe at the animal's middle, brought out of its own body
+      // towards the camera, so the animal never hides its own ring but whatever stands in front of it does)
+      const cx = camera.position.x - c.x, cz = camera.position.z - c.z, cd = Math.hypot(cx, cz) || 1, out = bodyRadius(c) + 0.3;
+      const rx = c.x + (cx / cd) * out, ry = Math.max(0.5, head(id) * 0.5), rz = c.z + (cz / cd) * out, rkey = `ring${id}`;
       while (r.imgs.length < now.slots) { const im = img("💌", n); im.style.display = "none"; r.imgs.push(im); }
       while (r.dots.length < now.slots) {
         const d = document.createElement("div");
@@ -389,10 +412,11 @@ export class InviteView {
         const p = ringAt(c, s, now.slots);
         if (on) {
           place(im, p.x, p.y, p.z);
+          hide(im, rkey, rx, ry, rz);
           const pop = Math.min(1, (time - (r.joined[s] ?? -9)) / 0.25), grow = pop < 1 ? 1.4 - 0.4 * pop : 1; // (joining: a little pop)
           const deg = ((Math.round((time * t.invites.spin * 0.5 + s * 0.13) * 16) / 16) % 1) * 360;
           showTurned(im, "💌", n, sz * grow, sz * grow * flat, deg, k);
-        } else place(d, p.x, p.y, p.z);
+        } else { place(d, p.x, p.y, p.z); hide(d, rkey, rx, ry, rz); }
       }
     }
     // Falling out of orbit (0.45 s), then resting where it came down with the other resting 💌s.
@@ -405,6 +429,7 @@ export class InviteView {
       }
       place(f.el, f.x, f.y * (1 - u * u), f.z);
       showTurned(f.el, "💌", n, 0.7, 0.7 * flat, f.tilt + u * 200, k);
+      hide(f.el, `f${f.at}:${f.tilt}`, f.x, f.y * (1 - u * u), f.z);
       return true;
     });
     // The hearts: rising a metre and a half over a second, fading.
