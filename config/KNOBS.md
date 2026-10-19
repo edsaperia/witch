@@ -435,12 +435,13 @@ treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns
 
 ### `leafJitter`
 
-Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform; small enough that no tree reads as a different season from its neighbours"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each), and its leaves are drawn with their hue turned by hue degrees times the first and their value scaled by 1 + value times the second (render/sprites.ts, on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike; the baked art unchanged, so it changes live). 0 and 0: every tree of a variant the same colour, as before. Small on purpose: an area's ten baked variants already differ by the style's leafVariety (up to about 38 degrees either way), so 8 degrees a tree reads as the same wood, just not ten identical sprites; measured (tools/flora/leaf-jitter-shots.cjs, 2026-10-18) at 5 degrees and 8% the night's dark crowns moved by about 2 degrees and 2/255 on average, too little to see, so 8 and 12%.
+Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each). value: its leaves' brightness scaled by 1 + value times the second seed (on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike). autumn (Ed, 2026-10-19: "Why don't I see reds and oranges and purples from the jitter, only blue?", then of the two ways offered, a drift toward autumn colours over a plain hue turn): each tree's lit leaf colour drifts toward its own autumn colour (gold, orange, red, crimson or purple, by its first seed) by up to autumn of the way (its own share of it, some trees barely at all), kept at the brightness the night's moonlight gave it, so a red tree is as dark as its neighbours. hue: its lit leaf colour's hue turned either way by up to hue degrees times the first seed (Ed, 2026-10-19: "And also stretch the slider": 0 to 180, so any hue). Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, "bigger range"); no rebake. 0 and 0: every tree of a variant the same colour, as before.
 
 | knob | type | range |
 |---|---|---|
-| `leafJitter.hue` | number | 0 to … |
+| `leafJitter.autumn` | number | 0 to 1 |
 | `leafJitter.value` | number | 0 to … |
+| `leafJitter.hue` | number | 0 to 180 |
 
 ### `wind`
 
