@@ -98,6 +98,8 @@ export class LeashView {
   stackY = new Map<number, number>();
   chain: { x: number; z: number; vx: number; vz: number }[] = [];
   lastTime = 0;
+  /** Her last take-off the leashes wouldn't allow (the "grounded" leash event), on her clock: their tug (render/leash/stack.ts drawBond). */
+  tugAt = -9;
   /** The load she carries as the art reads it (render/load.ts; the view sets it each frame), and where her broom's bristles are. */
   load: LoadView = newLoadView();
   bristle = { x: 0, y: 0, z: 0, on: false };

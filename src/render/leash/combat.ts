@@ -13,6 +13,12 @@ import { SQ } from "./glyphs";
 import type { LeashView } from "../leash";
 import type { Creature } from "../../rules/creatures";
 import { drawSlashes } from "./bubbles";
+import { PACKS, clouded, packKindOf, packMoveOf } from "../../rules/combat/packs";
+
+/** Pack combat's placeholder tints (combat.md: colour says the effect: red hurts, blue slows, yellow stuns, violet confuses, green
+ *  heals, white the pack tell), till the art step's own (build step 2). */
+const PACK_TINTS: Record<string, { r: number; g: number; b: number }> = { red: { r: 1, g: 0.3, b: 0.3 }, white: { r: 1, g: 1, b: 1 }, violet: { r: 0.78, g: 0.45, b: 1 }, grey: { r: 0.72, g: 0.66, b: 0.58 }, blue: { r: 0.45, g: 0.65, b: 1 }, green: { r: 0.45, g: 1, b: 0.55 }, yellow: { r: 1, g: 0.9, b: 0.3 } };
+const packTint = (species: string) => PACK_TINTS[PACKS.specials[packKindOf(species)?.special ?? "call"]?.tint ?? "white"] ?? PACK_TINTS.white;
 
 /** Each trait's mark over a fighting creature (placeholders until the art lands): flier sky blue,
  *  armoured a steel square, swarm violet, heavy a brown square, nimble green, burrower earth. */
@@ -77,6 +83,14 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
       lv.fx.push({ kind: "dust", x: e.x, y: 0.2, z: e.z, at: time, life: 0.5, r: 0.5, g: 0.45, b: 0.38, seed: e.at * 59 + (e.id ?? 0), size: 0.7 * big });
       lv.fx.push({ kind: "bits", x: e.x, y: Math.min(3, top * 0.6), z: e.z, at: time, life: 0.8, r: col.r, g: col.g, b: col.b, seed: e.at * 61 + (e.id ?? 0), size: big, n: bits === HIT_BITS.confetti ? 12 : 8 });
     }
+    // Pack combat (rules/combat/packs.ts): its tell, a white ring at each member's feet (they glow, below); its special, a ring in its
+    // effect's tint (placeholders till the art step); her party animal splitting it, a white spark.
+    if (e.kind === "packTell" && c && close(e.x, e.z)) lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.6, r: 1, g: 1, b: 1, seed: 0, size: 2.6, n: 22, dot: 0.6 });
+    if (e.kind === "packSpecial" && c && close(e.x, e.z)) { const col = packTint(c.species), R = (PACKS.specials[packKindOf(c.species)?.special ?? "call"]?.radius ?? 5) * FIGHT.scale; lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.8, ...col, seed: 0, size: R, n: Math.round(R * 7), dot: 0.9 }); lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.6, ...col, seed: e.at * 71 + e.id!, size: 2.5 }); }
+    if (e.kind === "packSplit" && close(e.x, e.z)) lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.5, r: 1, g: 1, b: 1, seed: e.at * 73, size: 1.6 });
+    // Phase 1's (Echo): the heron blinking where she blinked, a white flash out and in; a mirage image bursting, a violet pop.
+    if (e.kind === "packSync" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1.2, z: e.z, at: time, life: 0.45, r: 1, g: 1, b: 1, seed: e.at * 79 + (e.id ?? 0), size: 2.2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.4, r: 1, g: 1, b: 1, seed: 0, size: 1.8, n: 14, dot: 0.6 }); }
+    if (e.kind === "mirageBurst" && close(e.x, e.z)) { lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 0.6, ...PACK_TINTS.violet, seed: e.at * 83 + (e.id ?? 0), size: 2 }); lv.fx.push({ kind: "ring", x: e.x, y: 0, z: e.z, at: time, life: 0.5, ...PACK_TINTS.violet, seed: 0, size: 1.6, n: 14, dot: 0.6 }); }
     if (e.kind === "witchHit") { lv.fx.push({ kind: "spark", x: e.x, y: 1.4, z: e.z, at: time, life: 0.5, r: 1, g: 0.25, b: 0.35, seed: e.at * 31, size: 1.6 }); lv.fx.push({ kind: "flash", x: e.x, y: 1.3, z: e.z, at: time, life: 0.18, r: 1, g: 0.9, b: 0.92, seed: e.at * 67, size: 1.1 }); }
     if (e.kind === "fled" && close(e.x, e.z)) lv.fx.push({ kind: "puff", x: e.x, y: 0.5, z: e.z, at: time, life: 0.8, r: 0.8, g: 0.75, b: 0.7, seed: e.at * 13 });
     if (e.kind === "lost" && c) { const col = neon(c.species); lv.fx.push({ kind: "spark", x: e.x, y: 1, z: e.z, at: time, life: 1.2, r: col.r, g: col.g, b: col.b, seed: e.at * 7, size: 2.5 }); }
@@ -198,8 +212,30 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     for (let i = 0; i < 14; i++) { const a = (i / 14) * Math.PI * 2; lv.flat.add(tr.x + Math.cos(a) * tr.r, 0, tr.z + Math.sin(a) * tr.r * 0.8, 0.45, dot, sr, sg, sb, 0.7 * left); }
     for (let i = 0; i < 3; i++) { const tw = 0.5 + 0.5 * Math.sin(time * 5 + i * 2.1 + tr.from), a = hash2(tr.from, sd + i, 43) * Math.PI * 2, q = hash2(tr.from, sd + i, 47) * tr.r * 0.7; lv.standing.add(tr.x + Math.cos(a) * q, 0.12, tr.z + Math.sin(a) * q * 0.8, 0.35, dot, 1, 1, 0.9, tw * left); }
   }
+  // A pack's dust cloud (the mole's: it hides the tells inside it): a drifting brown haze, fading as it settles.
+  for (const k of g.combat.clouds ?? []) {
+    if (time >= k.until || !close(k.x, k.z)) continue;
+    const left = Math.min(1, (k.until - time) / 1.5);
+    for (let i = 0; i < 18; i++) { const a = hash2(k.from, i, 51) * Math.PI * 2 + time * 0.2, q = Math.sqrt(hash2(k.from, i, 53)) * k.r; lv.solid.add(k.x + Math.cos(a) * q, 0.6 + hash2(k.from, i, 57) * 1.6, k.z + Math.sin(a) * q * 0.8, 2.2, dot, 0.5, 0.42, 0.33, 0.5 * left); }
+    // A flashing cloud (the moth's): a violet-white burst through it as it flashes.
+    if (k.flash !== undefined && time - k.flash < 0.5) { const f = 1 - (time - k.flash) / 0.5; for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2, q = k.r * (0.3 + 0.7 * (1 - f)); lv.standing.add(k.x + Math.cos(a) * q, 1.2, k.z + Math.sin(a) * q * 0.8, 0.5, dot, 0.95, 0.85, 1, f); } }
+  }
+  // The raven's mirage (placeholder till the art step's shimmer): each image a dark violet column of motes over a ring, flickering.
+  for (const m of g.combat.mirages ?? []) {
+    if (time >= m.until || !close(m.x, m.z)) continue;
+    const left = Math.min(1, (m.until - time) / 1), fl = 0.6 + 0.4 * Math.sin(time * 9 + m.id);
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2, 0, m.z + Math.sin(a) * 0.9, 0.45, dot, 0.75, 0.45, 1, 0.9 * left); }
+    for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35, 0.6, dot, 0.6, 0.35, 0.95, 0.9 * fl * left * (1 - ph * 0.5)); }
+  }
+  // Her aim confused (the stoat's war dance): a violet swirl round her head.
+  if (W.confused && time < W.confused.until) for (let i = 0; i < 6; i++) { const a = time * 5 + (i / 6) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.6, 2 + Math.sin(a * 2) * 0.12, w.z + Math.sin(a) * 0.45, 0.22, dot, 0.78, 0.45, 1, 0.9); }
   for (const c of g.creatures) {
     if (c.gone || !close(c.x, c.z, c.level === 3 ? far : near)) continue;
+    // In a pack (rules/combat/packs.ts): glowing for its tell, white motes rising round it; faking a lunge (the fox's feint), a red ring
+    // tightening as a real one's would; in its shell (the snail), a steel ring.
+    if (c.packGlow !== undefined && time < c.packGlow) { const top = lv.tops.get(c.id) ?? 1.2; for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2 + time * 3, ph = (time * 2 + i / 8) % 1; lv.standing.add(c.x + Math.cos(a) * 0.7, 0.2 + ph * top, c.z + Math.sin(a) * 0.5, 0.25, dot, 1, 1, 1, 0.9 * (1 - ph)); } }
+    if (c.feintUntil !== undefined && time < c.feintUntil) { const k = 1 - (c.feintUntil - time) / 0.45, R = 1.8 - 0.9 * Math.max(0, Math.min(1, k)); for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * R, 0, c.z + Math.sin(a) * R * 0.8, 0.35, dot, 1, 0.3, 0.3, 0.4 + 0.5 * k); } }
+    if (c.packShell !== undefined) for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(c.x + Math.cos(a) * 1.2, 0, c.z + Math.sin(a) * 0.9, 0.4, dot, 0.75, 0.8, 0.9, 0.8); }
     // Dug in (the badger): a ring of thrown-up earth round its feet.
     if (c.dug !== undefined && time < c.dug) { // (bigger and brighter: Ed, 2026-10-05)
       for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.standing.add(c.x + Math.cos(a) * 1.4, 0.15 + hash2(c.id, i, 41) * 0.25, c.z + Math.sin(a) * 0.95, 0.6, dot, 0.95, 0.62, 0.32, 0.95); }
@@ -255,7 +291,7 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
     // Slowed (a barb, a web): a cold drift of motes round its feet while it lasts.
     if (c.slowUntil !== undefined && time < c.slowUntil) for (let i = 0; i < 6; i++) { const a = time * 1.5 + (i / 6) * Math.PI * 2; lv.standing.add(c.x + Math.cos(a) * 0.8, 0.15 + 0.15 * Math.sin(time * 3 + i), c.z + Math.sin(a) * 0.55, 0.18, dot, 0.55, 0.75, 1, 0.75); }
     // Telegraphs: winding up, a ring tightens at its feet; a shot shows its line; the quake its reach.
-    const f = c.fight, longRange = !!(f && f.windupUntil > 0 && c.aims?.length && !f.move), atk = f && f.windupUntil > 0 && !longRange ? attackOf(c.species, c.level) : null;
+    const f = c.fight, longRange = !!(f && f.windupUntil > 0 && c.aims?.length && !f.move), atk = f && f.windupUntil > 0 && !longRange && !(g.combat.clouds?.length && clouded(g.combat, c.x, c.z, time)) ? packMoveOf(c) ?? attackOf(c.species, c.level) : null; // (a pack member's: its role's move; none inside a pack's dust cloud, which hides the tells: combat.md)
     if (longRange && f) {
       // A legend's long-range throw or beam winding up (stepLegendAttack): a ring closing in round it and, at each it aims
       // at, a line on the ground filling in from it and a target ring tightening there (a beam's lane its own width), all
