@@ -3,14 +3,21 @@
   "group": "Leaf jitter",
   "decisions": [
     {
-      "id": "leafJitterHue",
+      "id": "leafJitterAutumn",
       "pr": 950,
       "group": "Leaf jitter",
-      "label": "Leaf hue jitter (degrees)",
-      "note": "Each tree's leaves turned up to this many degrees of hue either way from its baked variant's, by a seed of its own (Ed, 2026-10-16: \"a small amount of per-tree colour jitter\"). 0: every tree of a variant the same, as before. Turned on the lit colour since Ed's v3893 playtest (\"no visible effect\": the night's moonlight had squeezed it to a third), so these are degrees on screen; the range goes well past sense (Ed: \"bigger range\"): past about 30 trees read as other seasons. Live: no rebake.",
-      "control": { "type": "slider", "min": 0, "max": 90, "step": 1 },
-      "default": 8,
-      "apply": { "knob": "leafJitter.hue" }
+      "label": "Leaf autumn jitter",
+      "note": "How far each tree's leaves drift toward its own autumn colour (gold, orange, red, crimson or purple, by a seed of its own; some trees barely at all), kept as dark as the night makes them (Ed, 2026-10-19: \"Why don't I see reds and oranges and purples from the jitter, only blue?\"; it replaces the hue turn, which had no visible effect at night). 0: every tree of a variant the same, as before; 1: some trees fully autumn-coloured, well past sense. Live: no rebake.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+      },
+      "default": 0.25,
+      "apply": {
+        "knob": "leafJitter.autumn"
+      }
     },
     {
       "id": "leafJitterValue",
@@ -18,9 +25,16 @@
       "group": "Leaf jitter",
       "label": "Leaf brightness jitter",
       "note": "Each tree's leaves brightened or darkened by up to this share, by a seed of its own. 0: none. The range goes well past sense (Ed: \"bigger range\"): past about 0.3 the darkest trees go near black. Live: no rebake.",
-      "control": { "type": "slider", "min": 0, "max": 0.6, "step": 0.01 },
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 0.6,
+        "step": 0.01
+      },
       "default": 0.12,
-      "apply": { "knob": "leafJitter.value" }
+      "apply": {
+        "knob": "leafJitter.value"
+      }
     }
   ]
 }

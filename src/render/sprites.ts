@@ -78,7 +78,7 @@ export const SPRITE_UNIFORMS = {
   uDebugTrunks: { value: 0 },
   /** The wind (Ed, v171): sway at the top of a crown (metres), the gusts' speed (m/s) and size (m), and the time. */
   uWind: { value: new THREE.Vector4(0, 0, 1, 0) },
-  /** Per-tree leaf-colour jitter (Ed, 2026-10-16; the tuning's leafJitter): hue in turns and value share at a seed of 1 (render/view/frameUniforms.ts). */
+  /** Per-tree leaf-colour jitter (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter): the autumn share and the value share (render/view/frameUniforms.ts). */
   uLeafJitter: { value: new THREE.Vector2(0, 0) },
   /** The trees watching her (Ed, 2026-10-07): where she was a beat ago (x, z), how near (m) a leafy thing must stand to lean
    *  her way, and how far its tip leans (m). */
@@ -260,7 +260,7 @@ varying float vSwayM; // metres its leafiest pixels move this frame (masked spri
 varying vec4 vFrame;  // its frame in the atlas (u0, v0, u1, v1), to keep the sway inside it
 varying float vFront;
 varying vec2 vJitter;
-uniform vec2 uLeafJitter; // per-tree leaf-colour jitter (Ed, 2026-10-16; the tuning's leafJitter): hue in turns and value share at a seed of 1
+uniform vec2 uLeafJitter; // per-tree leaf-colour jitter (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter): the autumn share and the value share
 // A hue rotation about the grey axis (Rodrigues), a in radians: cheap, and the pixel's value and saturation kept.
 vec3 hueRotate(vec3 c, float a) { const vec3 k = vec3(0.57735027); float ca = cos(a), sa = sin(a); return c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca); }
 varying float vHole, vOverHer, vCrownD;
@@ -308,7 +308,15 @@ float cutNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0
 // the texel's own, so outlines stay crisp. Scenery only.
 vec2 uvDx, uvDy, areaH;
 bool areaOn = false;
-float leafTurn = 0.0; // a tree's own leaf hue turn (radians): its leaves' lit colour turned by it (the tuning's leafJitter.hue)
+float leafAutumn = 0.0; vec3 leafTone = vec3(0.0); // a tree's own drift toward its autumn colour (0 to 1) and that colour (the tuning's leafJitter.autumn)
+// The autumn colours a tree drifts toward (Ed, 2026-10-19: "Why don't I see reds and oranges and purples from the jitter, only blue?"
+// and, of the two ways offered, the second: each tree toward a warm palette rather than a plain hue turn): gold, orange, red,
+// crimson, purple, by its seed.
+vec3 autumnTone(float t) {
+  t = clamp(t, 0.0, 1.0) * 4.0;
+  vec3 g = vec3(0.95, 0.74, 0.18), o = vec3(0.96, 0.44, 0.1), r = vec3(0.86, 0.16, 0.1), c = vec3(0.7, 0.1, 0.32), p = vec3(0.52, 0.2, 0.68);
+  return t < 1.0 ? mix(g, o, t) : t < 2.0 ? mix(o, r, t - 1.0) : t < 3.0 ? mix(r, c, t - 2.0) : mix(c, p, t - 3.0);
+}
 vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
   vec3 sum = c.rgb; float w = 1.0;
   for (int i = 0; i < 4; i++) {
@@ -353,10 +361,13 @@ void shade() {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
     if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
     // Each tree's own leaf colour (Ed, 2026-10-16: "a small amount of per-tree colour jitter", docs/ART-GUIDE.md section 3): its
-    // leaves' value scaled by its seed times the tuning's leafJitter here, their hue turned once lit (below); its wood (sway code 0) untouched.
+    // leaves' value scaled by its seed times the tuning's leafJitter here, and once lit (below) drifted toward its own autumn colour; its
+    // wood (sway code 0) untouched.
     if ((vJitter.x != 0.0 || vJitter.y != 0.0) && (uLeafJitter.x != 0.0 || uLeafJitter.y != 0.0) && texture2D(uNormal, uvS).a * 255.0 >= 0.5) {
       a.rgb = clamp(a.rgb * (1.0 + vJitter.y * uLeafJitter.y), 0.0, 1.0);
-      leafTurn = vJitter.x * uLeafJitter.x * 6.2831853;
+      // (its colour by its hue seed; how far it goes, its own share of the knob, a second number from the same seeds: some trees barely turn)
+      leafTone = autumnTone(0.5 + 0.5 * vJitter.x);
+      leafAutumn = uLeafJitter.x * fract(abs(vJitter.x) * 7.31 + abs(vJitter.y) * 3.17);
     }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
@@ -451,10 +462,10 @@ void shade() {
   vec3 castK = uLies > 0.5 || vFlags.y > 0.5 ? vec3(1.0) : castShadow(vGround);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld) * castK, alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
-  // The leaf jitter's hue (Ed's v3893 playtest: "leafJitter.hue has no visible effect"): turned on the lit colour, not the albedo. The
-  // night's coloured moonlight squeezed an albedo's turn to about a third on screen (measured: 20 degrees moved the crowns 4.9 on average,
-  // less than the value jitter's 0.12 did); turned here, the knob's degrees are the screen's.
-  if (leafTurn != 0.0) col = clamp(hueRotate(col, leafTurn), 0.0, 1.0);
+  // The leaf jitter's colour, on the lit colour, not the albedo (Ed's v3893 playtest: "leafJitter.hue has no visible effect": the night's
+  // coloured moonlight had squeezed a hue turn on the albedo to about a third on screen, 20 degrees moving the crowns 4.9 on average):
+  // toward its autumn colour at the brightness the moonlight gave it, so a gold or red tree stays as dark as the night makes it.
+  if (leafAutumn > 0.0) { float l = dot(col, vec3(0.3, 0.55, 0.15)), lt = dot(leafTone, vec3(0.3, 0.55, 0.15)); col = clamp(mix(col, leafTone * (l / lt), leafAutumn), 0.0, 1.0); }
   // Scenery in her pool takes her light's own colour as the ground does (lighting.ts glowPool), so her light on green
   // crowns from the treetops reads amber, not lime (the art director via golf, #237). Characters keep their colours.
   if (uIsScenery > 0.5) col = glowPool(col, vWorld);
