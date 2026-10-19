@@ -118,7 +118,7 @@ if (params.get("playtest") === "download") setTimeout(() => playtest.download(),
 // for the pause page's sliders and the decisions panel (by the link's param).
 const knobLive = setupKnobs(tuning, game, world, WORLD_DEFAULT, params, playtest);
 
-// Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): 1 or T, or a click
+// Auto-talk (Ed's playtest, 2026-10-04: a new player wanted to turn it off): T, or a click
 // on its slot, turns it on or off (remembered on this browser); off, she talks while Shift is held.
 let autoTalk = true;
 try { if (localStorage.getItem("witch.autotalk") === "off") autoTalk = false; } catch { /* storage blocked: on */ }
@@ -234,8 +234,9 @@ function arrived(): void {
   if (!gestured) soundNote(); else sound.wake();
 }
 
-// The character creator (Ed, 2026-10-05): at every load (and from the start screen's button);
-// ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
+// The character creator (Ed, 2026-10-05; "dressing up" to the player, the house's Bedroom being the room with the bed): at every
+// load but a sail's arrival (&arrive=1 lands at her decks), from the hidden start card's button, and mid-night from the treehouse's
+// stations (below); ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
 const creator = new Creator(style, savedLook, tuning.pixelSize);
