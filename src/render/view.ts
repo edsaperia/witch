@@ -9,6 +9,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import { MapTable } from "./mapTable";
+import { HouseRoomsView } from "./houseRooms";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -178,6 +179,8 @@ export class View {
   treehouseBatch: SpriteBatch;
   /** Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot this frame, in place of the game's camera; null otherwise. */
   fly: Shot | null = null;
+  /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
+  houseRooms: HouseRoomsView | null = null;
   /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
   mapTable: MapTable | null = null;
   markerArt: MarkerArt;
@@ -431,6 +434,8 @@ export class View {
       this.scene.add(...this.treehouseBatch.meshes);
       // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       if (deckOn && !deckOn.house) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); } // (the house's map is a drawing: Ed, 2026-10-14)
+      // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
+      if (deckOn?.house?.rooms.length) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     this.minimap = new Minimap(document.body, game.map);
@@ -1001,6 +1006,7 @@ export class View {
     this.mist?.follow(pose.tx, pose.tz);
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
+    this.houseRooms?.update(this, onTreehouse, ht);
     this.time("witch");
     refresh(this);
     this.time("refresh");

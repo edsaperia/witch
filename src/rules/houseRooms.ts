@@ -75,8 +75,13 @@ export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
  *  she wears and any lying elsewhere. */
 export function floorHats(W: Witch): string[] {
   const H = (W.house ??= {});
-  if (!H.hats) { const out = new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]); H.hats = HAT_FLOOR.map(s => (out.has(s) ? "" : s)); }
-  return H.hats;
+  return (H.hats ??= hatsOnFloor(W));
+}
+/** The hats on the hats' floor as they are, or as they'd be laid out, without laying them (for the view). */
+export function hatsOnFloor(W: Witch): string[] {
+  if (W.house?.hats) return W.house.hats;
+  const out = new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
+  return HAT_FLOOR.map(s => (out.has(s) ? "" : s));
 }
 
 /** E at the hats' floor (Ed, 2026-10-19: "there's no hat rack per se - just an area to put down hats, which are just game objects
