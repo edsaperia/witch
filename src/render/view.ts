@@ -9,6 +9,7 @@ import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import type { MapTable } from "./mapTable";
+import { islandArtSeed } from "./artCache";
 import { HouseRoomsView } from "./houseRooms";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
@@ -390,6 +391,7 @@ export class View {
     const deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
     const carrier = deckOn ? carrierOf(game.map, t) : null; // (the island's legend carrying it: art/carrier.js)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `${deckOn.house ? "house" : "ent"}:${deckOn.h}:${deckOn.r}${carrier ? `:${carrier}` : ""}` : "home"); // (the house, art/ent.js HOUSE, or the deck on the Ent)
+    this.assets.typeSeed = islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"); // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
     // (Each island layer made at its old place among the View's own: three.js breaks draw-order ties by creation order.)
@@ -523,6 +525,11 @@ export class View {
 
   /** Make the art and ground round the start before the first frame. */
   async prepare(): Promise<void> {
+    { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
+      const m = this.game.map, types = new Set<number>();
+      for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
+      this.assets.tonight(types);
+    }
     this.render(0, false);
     drawCreatures(this);
     this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
@@ -574,6 +581,20 @@ export class View {
     for (const sp of own) this.assets.creatureArt(sp);
   }
 
+  /** Area types whose art was swapped (tonight's trees for the island's: AssetLibrary.swapTonight, main.ts revealArt): their
+   *  batches let go, made again from the new art on the next frame, with no fade (she can't see it happen). */
+  retype(types: number[]): void {
+    for (const t of types) {
+      const b = this.typeBatches.get(t);
+      if (b) { this.scene.remove(...b.meshes); b.release(); b.atlas.albedo.dispose(); b.atlas.normal.dispose(); this.typeBatches.delete(t); } // (the island's art let go: tonight's is the type's now)
+      const s = this.trunkShadowBatches.get(t);
+      if (s) { this.scene.remove(...s.meshes); s.dispose(); this.trunkShadowBatches.delete(t); }
+      this.noFade.add(t);
+    }
+  }
+  /** Types made again unseen (retype): their batches come back without the fade-in. */
+  private noFade = new Set<unknown>();
+
   batchFor<K>(map: Map<K, SpriteBatch>, key: K, atlas: () => SpriteBatch | undefined): SpriteBatch | undefined {
     let b = map.get(key);
     if (!b) {
@@ -583,7 +604,7 @@ export class View {
         b.name(`${map === this.typeBatches ? "type" : map === this.creatureBatches ? "creature" : "decor"} ${String(key)}`); // (the probes' draw-call names: tools/bench/gpu.cjs)
         // A set drawn after the start (flying toward an area whose art was still being drawn)
         // fades in rather than popping in.
-        if (this.prepared) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
+        if (this.prepared && !(map === this.typeBatches && this.noFade.delete(key))) { b.appearU.value = 0; this.appearing.set(b, performance.now()); }
       }
     }
     return b;
