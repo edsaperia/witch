@@ -29,8 +29,8 @@ Nothing is built; this is the mock to say go or change. All files are in `previe
 | **Bedroom** | the dressing room, north | the **bed** (E ends the night, after a confirm); the **telephone** (placeholder). Through the dressing room, as treehouse.md has it |
 | **Bags & invitations** | the dressing room, south | **bags** (bag, backpack, bum bag); the **invitations desk** (placeholder) |
 | **Garage** | the hub, west, by the balcony | the **broom stand** (E: the brooms); the **pegboard**, the broom-parts wall (placeholder) |
-| **Tea room** | the garage, south | the **tea table** (placeholder) |
-| **Card room** | the tea room, south | the **card table**, the tarot game to come (placeholder) |
+| **Tea room** | the kitchen, north | the **tea table** (placeholder) |
+| **Card room** | the tea room, east | the **card table**, the tarot game to come (placeholder) |
 | **Studio** | the hub, west | the **record shelf** (placeholder) |
 | **Bestiary** | the hub, north-east | the **bestiary book** (E: the zoo, which exists today as `?zoo`); **skeletons and skulls** (placeholder) |
 | **Kitchen** | the hub, north | the **cauldron** (placeholder) |

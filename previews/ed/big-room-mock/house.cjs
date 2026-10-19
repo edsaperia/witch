@@ -13,7 +13,7 @@ const roomOf = id => H.rooms.find(r => r.id === id);
 
 // ---- the plan ----
 function plan() {
-  const S = 22, W = 1400, Hh = 1160, cx = 660, cy = 560, X = x => cx + x * S, Y = z => cy + z * S;
+  const S = 22, W = 1400, Hh = 1140, cx = 660, cy = 720, X = x => cx + x * S, Y = z => cy + z * S;
   let s = "";
   // the Ent's branches under the corridors, a hint of where they run
   for (const c of H.corridors) { const [a, b] = c.pts; s += `<line x1="${X(a[0])}" y1="${Y(a[1])}" x2="${X(b[0])}" y2="${Y(b[1])}" stroke="#2c3a22" stroke-width="${(H.w + 1.6) * S}" stroke-linecap="round" opacity=".7"/>`; }
@@ -46,14 +46,14 @@ function plan() {
     hats: [17.0, -1.6, "middle", 34], bags: [19.0, 9.0, "start", 5, 0.8], invites: [14.2, 9.2, "end", 5, -0.9],
     bed: [17.6, -16.0, "middle", -34], telephone: [21.0, -15.0, "start", 5, 0.8], broomStand: [-13.6, 1.0, "start", -14, 0.2], pegboard: [-20.2, 4.2, "end", 5, -0.5],
     recordShelf: [-16.0, -9.6, "middle", -16], cauldron: [0, -16.4, "middle", -22],
-    book: [7.5, -11.0, "middle", 26], specimens: [7.5, -13.6, "middle", -12], telescope: [-10.8, -17.0, "middle", -20], cardTable: [-16.0, 20.0, "middle", -24], teaTable: [-17.6, 13.0, "middle", -22],
+    book: [7.5, -11.0, "middle", 26], specimens: [7.5, -13.6, "middle", -12], telescope: [-10.8, -17.0, "middle", -20], cardTable: [9.2, -23.8, "middle", -24], teaTable: [-1.5, -23.6, "middle", -22],
   };
   for (const o of H.objects) { const p = place[o.id]; if (!p) continue; s += lab(o.label, X(p[0] + (p[4] || 0)), Y(p[1]) + p[3], o.id === "mapTable" ? "#fff" : COL[o.kind], p[2], 14); }
   // the way in
   s += `<defs><marker id="ar" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#fff"/></marker></defs>`;
   s += `<path d="M ${X(-6.5)} ${Y(BO + 8)} Q ${X(-4.5)} ${Y(BO + 4)} ${X(-1.8)} ${Y(BO + 1.6)}" fill="none" stroke="#fff" stroke-width="3" marker-end="url(#ar)"/>` + lab("fly in onto the balcony", X(-6.5), Y(BO + 8.8), "#fff");
   s += `<path d="M ${X(2.4)} ${Y(BO + 1.6)} Q ${X(4.6)} ${Y(BO + 4)} ${X(6.5)} ${Y(BO + 8)}" fill="none" stroke="#fff" stroke-width="3" marker-end="url(#ar)"/>` + lab("walk off the rim to fly", X(6.5), Y(BO + 8.8), "#fff");
-  const legend = [["works", "works (E uses it)"], ["now", "as today"], ["bed", "the bed: E ends the night"], ["soon", "placeholder (soon)"]].map(([k, t], i) => `<rect x="${W - 320}" y="${Hh - 170 + i * 26}" width="18" height="14" rx="3" fill="${COL[k]}"/><text x="${W - 294}" y="${Hh - 158 + i * 26}" fill="#eee" font-size="15">${t}</text>`).join("");
+  const legend = [["works", "works (E uses it)"], ["now", "as today"], ["bed", "the bed: E ends the night"], ["soon", "placeholder (soon)"]].map(([k, t], i) => `<rect x="40" y="${Hh - 200 + i * 26}" width="18" height="14" rx="3" fill="${COL[k]}"/><text x="66" y="${Hh - 188 + i * 26}" fill="#eee" font-size="15">${t}</text>`).join("");
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${Hh}" font-family="system-ui"><rect width="100%" height="100%" fill="${INK}"/>
 <text x="30" y="40" fill="#f0dca0" font-size="24" font-weight="700">The treehouse as placeholder rooms and corridors (mock), from above</text>
 <text x="30" y="66" fill="#bbb" font-size="15">Today's hub and balcony stay as they are; each sub-area is a room of its own, off the hub on a corridor along one of the Ent's branches.</text>
@@ -64,7 +64,7 @@ ${s}${legend}<line x1="40" y1="${Hh - 40}" x2="${40 + 5 * S}" y2="${Hh - 40}" st
 
 // ---- the view at the game camera's angle: looking north and down, front (south) walls cut away ----
 function view() {
-  const S = 24, W = 1600, Hh = 1120, P = 52 * Math.PI / 180, cx = 740, cy = 610, WH = 2.6;
+  const S = 24, W = 1600, Hh = 1000, P = 52 * Math.PI / 180, cx = 740, cy = 700, WH = 2.6;
   const pr = (x, y, z) => [cx + x * S, cy + (z * Math.sin(P) - y * Math.cos(P)) * S];
   const poly = (pts, fill, stroke = "none", sw = 0, op = 1) => `<polygon points="${pts.map(p => pr(...p).join(",")).join(" ")}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" fill-opacity="${op}"/>`;
   const parts = []; // [depth (z of its back), svg]
