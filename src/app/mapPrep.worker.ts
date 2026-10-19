@@ -11,7 +11,7 @@ self.onmessage = async (e: MessageEvent<PrepAsk>) => {
   try {
     const arch = worldOf(tuning.map?.world ?? 0), map = generateMap(seed, tuning);
     routeOf(map); // (the ley line's route, worked out with the map: the page's party asks for it first thing)
-    ok = await putPrep({ key, prep: prepOf(map), arch, ms: performance.now() - t0 });
+    ok = await putPrep({ key, prep: prepOf(map), arch, ms: performance.now() - t0, tuning });
   } catch (err) { console.warn("map prep failed", err); }
   (self as unknown as Worker).postMessage({ ok });
 };

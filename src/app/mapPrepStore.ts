@@ -5,7 +5,7 @@ import type { MapPrep } from "../rules/map";
 import type { Tuning } from "../rules/tuning";
 
 /** What the worker keeps: the map's prep and the world's archipelago, under the night's key (mapPrep.ts prepKey). */
-export interface PrepRecord { key: string; prep: MapPrep; arch: Archipelago; ms: number }
+export interface PrepRecord { key: string; prep: MapPrep; arch: Archipelago; ms: number; /** the tuning it was made with (a stale one's differences logged: mapPrep.ts) */ tuning: Tuning }
 /** What the page asks the worker: make the map for this key's night. */
 export interface PrepAsk { key: string; seed: number; tuning: Tuning }
 

@@ -50,6 +50,7 @@ export function tuningFromLink(params: URLSearchParams) {
     ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
     shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
     party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
+    partyObjects: { ...TUNING.partyObjects }, // (styleFromLink sets its generated: this load's, not the file's for every load after it on the page, as the chart's landing bake and its map's worker both make one: app/mapPrep.ts)
   };
   // ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
   // styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).

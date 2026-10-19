@@ -24,7 +24,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 async function once(port) {
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const page = await browser.newPage({ viewport: { width: W, height: H } });
-  const errors = []; page.on("pageerror", e => errors.push(String(e)));
+  const errors = [], notes = []; page.on("pageerror", e => errors.push(String(e))); page.on("console", m => { if (/map prep/.test(m.text())) notes.push(m.text()); });
   await page.addInitScript(() => {
     try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch {}
     window.__long = [];
@@ -39,7 +39,7 @@ async function once(port) {
   if (THROTTLE > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: THROTTLE });
   const nav = page.waitForURL(u => /arrive=1/.test(String(u)), { timeout: 300000 });
   const sailed = Date.now();
-  await page.click("#sail");
+  await page.click(".sail");
   await nav;
   const flew = Date.now() - sailed;
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 900000, polling: 500 });
@@ -49,7 +49,7 @@ async function once(port) {
     return { marks: m, mapPrep: window.witch.loadTimes.mapPrep ?? null, long: { count: long.length, total: long.reduce((t, e) => t + e.ms, 0), max: Math.max(0, ...long.map(e => e.ms)), top: [...long].sort((a, b) => b.ms - a.ms).slice(0, 6) } };
   });
   await browser.close();
-  return { island: ISLAND, world: WORLD, throttle: THROTTLE, flightMs: flew, ...r, errors };
+  return { island: ISLAND, world: WORLD, throttle: THROTTLE, flightMs: flew, ...r, notes, errors };
 }
 
 (async () => {

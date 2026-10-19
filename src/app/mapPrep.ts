@@ -39,7 +39,12 @@ export async function takeMapPrep(seed: number, tuning: Tuning, ms = 1500): Prom
   const key = prepKey(seed, tuning);
   const rec = await Promise.race([getPrep(), new Promise<null>(res => setTimeout(() => res(null), ms))]);
   if (!rec) return null;
-  if (rec.key !== key) { prepUsed = "stale"; return null; }
+  if (rec.key !== key) {
+    prepUsed = "stale";
+    // (which of the tuning's groups differ, if it was this seed's: a sailing whose tuning the chart didn't foresee)
+    if (rec.key.split("|")[1] === String(seed) && rec.tuning) console.info("map prep: another tuning's", Object.keys(tuning).filter(k => JSON.stringify((tuning as unknown as Record<string, unknown>)[k]) !== JSON.stringify((rec.tuning as unknown as Record<string, unknown>)[k])));
+    return null;
+  }
   rememberWorld(rec.arch);
   prepUsed = "worker";
   return rec.prep;
