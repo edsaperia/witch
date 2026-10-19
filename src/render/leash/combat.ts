@@ -224,8 +224,8 @@ export function drawCombat(lv: LeashView, time: number, camera: THREE.Camera, wi
   for (const m of g.combat.mirages ?? []) {
     if (time >= m.until || !close(m.x, m.z)) continue;
     const left = Math.min(1, (m.until - time) / 1), fl = 0.6 + 0.4 * Math.sin(time * 9 + m.id);
-    for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 0.9, 0, m.z + Math.sin(a) * 0.7, 0.35, dot, 0.55, 0.3, 0.8, 0.8 * left); }
-    for (let i = 0; i < 10; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 10) % 1; lv.standing.add(m.x + Math.cos(a) * 0.4, 0.2 + ph * 1.6, m.z + Math.sin(a) * 0.3, 0.45, dot, 0.25, 0.15, 0.4, 0.85 * fl * left * (1 - ph * 0.5)); }
+    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; lv.flat.add(m.x + Math.cos(a) * 1.2, 0, m.z + Math.sin(a) * 0.9, 0.45, dot, 0.75, 0.45, 1, 0.9 * left); }
+    for (let i = 0; i < 16; i++) { const a = hash2(m.id, i, 61) * Math.PI * 2, ph = (time * 0.8 + i / 16) % 1; lv.standing.add(m.x + Math.cos(a) * 0.5, 0.2 + ph * 2, m.z + Math.sin(a) * 0.35, 0.6, dot, 0.6, 0.35, 0.95, 0.9 * fl * left * (1 - ph * 0.5)); }
   }
   // Her aim confused (the stoat's war dance): a violet swirl round her head.
   if (W.confused && time < W.confused.until) for (let i = 0; i < 6; i++) { const a = time * 5 + (i / 6) * Math.PI * 2; lv.standing.add(w.x + Math.cos(a) * 0.6, 2 + Math.sin(a * 2) * 0.12, w.z + Math.sin(a) * 0.45, 0.22, dot, 0.78, 0.45, 1, 0.9); }
