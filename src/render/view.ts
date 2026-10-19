@@ -8,7 +8,7 @@ import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
 import { carrierOf, deckOf } from "../rules/treehouse";
-import { MapTable } from "./mapTable";
+import type { MapTable } from "./mapTable";
 import { HouseRoomsView } from "./houseRooms";
 import { warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
@@ -21,7 +21,8 @@ import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "..
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
-import { Ground } from "./ground";
+import type { Ground } from "./ground";
+import { IslandLayers } from "./island";
 import { Sky } from "./sky";
 import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
@@ -29,8 +30,7 @@ import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
 import { OcclusionProbes } from "./occlusion";
 import { Ride } from "./ride";
-import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, useHeightField } from "./height";
-import { PathView } from "./paths";
+import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, type HeightField } from "./height";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { AreaMoods, hsvInto, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
@@ -44,9 +44,9 @@ import { LOAD_DEFAULT, loadView } from "./load";
 import { InviteView } from "./invites";
 import { StateMarks } from "./looks";
 import { BuffHud } from "./buffhud";
-import { Dancefloor } from "./dancefloor";
+import type { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerArt, MarkerFx, type Mote } from "./markers";
+import { MarkerFx, type MarkerArt, type Mote } from "./markers";
 import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
@@ -63,7 +63,7 @@ import { StoneIndicator } from "./indicator";
 import type { AlarmIndicators } from "./alarm";
 import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
-import { Minimap } from "./minimap";
+import type { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
@@ -73,7 +73,7 @@ import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { LeyLines, leyReveal, shaderPulse } from "./leylines";
+import { leyReveal, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -138,9 +138,12 @@ export class View {
   /** The far haze as it was, while the circle-bug suspects have it off (tuning suspects.haze; render/view/frameUniforms.ts). */
   hazeKept: THREE.Vector2 | null = null;
   holeAt = 0;
-  ground: Ground;
+  /** The island's own layers (render/island.ts): the ground, the hills, the paths, the ley lines, the runestones, the
+   *  dancefloor, the treehouse, the minimap and the map table; the View's names for them below are its. */
+  readonly island: IslandLayers;
+  get ground(): Ground { return this.island.ground; }
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
-  heights: HeightField;
+  get heights(): HeightField { return this.island.heights; }
   /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
   bendTo = 0;
   /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
@@ -176,15 +179,16 @@ export class View {
   camRide = new Ride();
   rideOff = 0;
   rideTime = NaN;
-  treehouseBatch: SpriteBatch;
+  get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot this frame, in place of the game's camera; null otherwise. */
   fly: Shot | null = null;
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
   /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
-  mapTable: MapTable | null = null;
-  markerArt: MarkerArt;
-  markerBatch: SpriteBatch;
+  get mapTable(): MapTable | null { return this.island.mapTable; }
+  set mapTable(m: MapTable | null) { this.island.mapTable = m; } // (the bench lets it go: tools/bench/frames.cjs)
+  get markerArt(): MarkerArt { return this.island.markerArt; }
+  get markerBatch(): SpriteBatch { return this.island.markerBatch; }
   markerFx = new MarkerFx();
   markerCache = { wave: -1, n: -1, list: [] as SpawnMarker[] };
   /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
@@ -221,7 +225,7 @@ export class View {
   /** The cast shadows from above, for what stands in them (render/castShadows.ts). */
   private castMap: CastShadowMap;
   private castOn = false;
-  private dancefloor: Dancefloor;
+  private get dancefloor(): Dancefloor { return this.island.dancefloor; }
   propBatch: SpriteBatch;
   private partyView: PartyView;
   private strings: StringLightsView;
@@ -232,7 +236,7 @@ export class View {
   /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
   readonly fireworks: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
-  ley: LeyLines;
+  get ley(): LeyLines { return this.island.ley; }
   /** The sleeping legends' clearings: their twilight and rising motes. */
   private glades: Glades;
   /** Will-o'-the-wisps drifting through the wild areas (render/wisps.ts). */
@@ -287,7 +291,7 @@ export class View {
   alarmCues: AlarmIndicators | null = null;
   /** The knockdowns' BPM bonus the wave pointer last pulsed for (render/view/hud.ts). */
   pointerBonus = 0;
-  readonly minimap: Minimap;
+  get minimap(): Minimap { return this.island.minimap; }
   /** Metre rulers and a ground grid (G). */
   readonly rulers = new Rulers(document.body);
   /** Show debug readouts (the debug overlay is on). */
@@ -388,14 +392,9 @@ export class View {
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, deckOn ? `${deckOn.house ? "house" : "ent"}:${deckOn.h}:${deckOn.r}${carrier ? `:${carrier}` : ""}` : "home"); // (the house, art/ent.js HOUSE, or the deck on the Ent)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
-    {
-      // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
-      const C = t.camera, pitch = Math.min(C.ground.angleIn, C.ground.angleOut, C.treetop.angleIn, C.treetop.angleOut);
-      this.heights = new HeightField(game.map, game.forest, { ...t.ground.hills, maxSlope: Math.tan((pitch * Math.PI) / 180) });
-    }
-    useHeightField(this.heights);
-    this.heights.follow(game.witch.x, game.witch.z);
-    this.ground = new Ground(game.map, game.forest, style, this.mpp, this.renderer.capabilities.maxTextureSize);
+    // (Each island layer made at its old place among the View's own: three.js breaks draw-order ties by creation order.)
+    this.island = new IslandLayers(this.scene, { game, style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOn });
+    this.island.buildGround();
     this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
@@ -419,9 +418,7 @@ export class View {
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
-    this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
-    this.scene.add(this.ground.mesh);
-    this.scene.add(new PathView(game.map, style, this.mpp, t.pathFade.metres).group);
+    this.island.buildPaths();
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
@@ -432,18 +429,14 @@ export class View {
     // foot on its spot. It fades like other tall things when she's behind it.
     {
       // (Placed each frame by placeTreehouse: where it stands depends on the camera's angle.)
-      this.treehouseBatch = new SpriteBatch(this.assets.treehouse.atlas, this.mpp, { fade: true }).name("treehouse");
-      this.scene.add(...this.treehouseBatch.meshes);
-      // The deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
-      if (deckOn && !deckOn.house) { this.mapTable = new MapTable(deckOn.table.r); this.scene.add(this.mapTable.mesh); } // (the house's map is a drawing: Ed, 2026-10-14)
+      // With the deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
+      this.island.buildTreehouse();
       // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
       if (deckOn?.house?.rooms.length) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
-    this.minimap = new Minimap(document.body, game.map);
-    this.markerArt = new MarkerArt(style, t, game.map);
-    this.markerBatch = new SpriteBatch(this.markerArt.atlas, this.mpp, { solid: true }).name("markers");
-    this.scene.add(...this.markerBatch.meshes, this.markerFx.group, this.waveNumbers.mesh);
+    this.island.buildMarkers();
+    this.scene.add(this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     this.scene.add(this.grass.mesh);
@@ -467,12 +460,10 @@ export class View {
     this.scene.add(this.holograms.group);
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
-    this.ley = new LeyLines(t.leyLines, (x, z) => this.heights.sourceAt(x, z), game.map);
+    this.island.buildLey();
     this.leyBase = M?.leyBright ?? 1;
     this.ley.scale(this.leyBase);
     this.leyRgb = M?.leyRgb ? new THREE.Vector3(...[1, 3, 5].map(i => parseInt(M.leyRgb!.slice(i, i + 2), 16) / 255)) : null;
-    this.scene.add(...this.ley.meshes);
-    this.ley.addMeshes = m => this.scene.add(...m); // (the victory lap's outward sparkler, made as it's first needed)
     this.glades = new Glades(t.glades);
     this.scene.add(this.glades.points);
     if (t.wisps?.on) { this.wisps = new Wisps(t.wisps); this.scene.add(this.wisps.points); }
@@ -492,8 +483,7 @@ export class View {
     this.borders = new BorderView(this.scene, game);
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true }).name("soundsystems");
     this.scene.add(...this.soundBatch.meshes);
-    this.dancefloor = new Dancefloor(game.map, t, SPRITE_UNIFORMS, this.mpp);
-    this.scene.add(this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes);
+    this.island.buildDancefloor();
 
     // A shadow under the witch, so her height reads: soft (multiplied over the ground).
     const sm = new THREE.ShaderMaterial({

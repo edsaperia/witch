@@ -5,6 +5,7 @@
 // tarmac, railways old track, with gaps where the line is broken. Dead ends taper away, and every
 // end of a drawn stretch frays out in a dithered fade (Ed, v149).
 import * as THREE from "three";
+import { freeObjects } from "./free";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import { floorClearing } from "../rules/speakers";
@@ -217,5 +218,11 @@ export class PathView {
       mesh.renderOrder = 0.5;     // on the floor, under the contact shadows
       this.group.add(mesh);
     }
+  }
+
+  /** Let go of its meshes' geometries and materials and the strips' textures. */
+  dispose(): void {
+    for (const o of this.group.children) ((o as THREE.Mesh).material as THREE.ShaderMaterial).uniforms.uStrip?.value?.dispose();
+    freeObjects([this.group]);
   }
 }
