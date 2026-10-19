@@ -1,7 +1,7 @@
-// A refused take-off (Ed, 2026-10-18: "One adult stops you taking off. Three young do."; rules/leashWeight.ts groundedBy, the
-// "grounded" leash event): the built game (DIST, default dist/) at 1280×720 on a seed; on home's open ground she stands with
-// animals following her (their sigils in her stack), presses rise once, and frames are shot across the next half second (her
-// shake, the 🚫 beside her head). Cases: one adult; three young; and two young, who don't ground her (she takes off).
+// A take-off pulled back down (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; rules/leashWeight.ts
+// groundedBy, the "grounded" leash event): the built game (DIST, default dist/) at 1280×720 on a seed; on home's open ground she
+// stands with animals following her (their sigils in her stack), presses rise once, and frames are shot across the next 0.6 s
+// (her hop yanked back down, the leashes taut and bright). Cases: one adult; three young; and two young, too light (she takes off).
 //   npm run build && node tools/leash/grounded-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -38,7 +38,7 @@ const AT = [0, 0.1, 0.2, 0.35, 0.6]; // seconds after the press
       }, levels));
       for (let i = 0; i < 4 / (1 / 60); i++) await step({}); // (settled, past any landing's cooldown)
       await step({ toggleMode: true });
-      if (process.env.DEBUG) console.log("  after press", await page.evaluate(() => { const g = window.witch.game; return JSON.stringify({ mode: g.witch.mode, ev: g.leashEvents.map(e => e.kind), stack: g.leash.stack.map(id => g.creatures[id].level), anchors: [...document.images].filter(i => (i.dataset.px || "").includes("🚫")).map(i => [i.style.left, i.style.top, i.style.visibility, i.style.opacity, i.isConnected]), imgs: document.images.length, groundedAt: (window.witch.view || {}).groundedAt }); }));
+      if (process.env.DEBUG) console.log("  after press", await page.evaluate(() => { const g = window.witch.game; return JSON.stringify({ mode: g.witch.mode, ev: g.leashEvents.map(e => e.kind), stack: g.leash.stack.map(id => g.creatures[id].level), groundedAt: (window.witch.view || {}).groundedAt }); }));
       let t = 0;
       for (const at of AT) {
         while (t < at - 1e-6) { await step({}); t += 1 / 60; }
