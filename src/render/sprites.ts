@@ -308,6 +308,7 @@ float cutNoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0
 // the texel's own, so outlines stay crisp. Scenery only.
 vec2 uvDx, uvDy, areaH;
 bool areaOn = false;
+float leafTurn = 0.0; // a tree's own leaf hue turn (radians): its leaves' lit colour turned by it (the tuning's leafJitter.hue)
 vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
   vec3 sum = c.rgb; float w = 1.0;
   for (int i = 0; i < 4; i++) {
@@ -352,9 +353,10 @@ void shade() {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
     if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
     // Each tree's own leaf colour (Ed, 2026-10-16: "a small amount of per-tree colour jitter", docs/ART-GUIDE.md section 3): its
-    // leaves' hue turned and value scaled by its seeds times the tuning's leafJitter; its wood (sway code 0) untouched.
+    // leaves' value scaled by its seed times the tuning's leafJitter here, their hue turned once lit (below); its wood (sway code 0) untouched.
     if ((vJitter.x != 0.0 || vJitter.y != 0.0) && (uLeafJitter.x != 0.0 || uLeafJitter.y != 0.0) && texture2D(uNormal, uvS).a * 255.0 >= 0.5) {
-      a.rgb = clamp(hueRotate(a.rgb, vJitter.x * uLeafJitter.x * 6.2831853) * (1.0 + vJitter.y * uLeafJitter.y), 0.0, 1.0);
+      a.rgb = clamp(a.rgb * (1.0 + vJitter.y * uLeafJitter.y), 0.0, 1.0);
+      leafTurn = vJitter.x * uLeafJitter.x * 6.2831853;
     }
   }
   // The witch's see-through silhouette: where she is hidden, a flat tint in her glow colour.
@@ -449,6 +451,10 @@ void shade() {
   vec3 castK = uLies > 0.5 || vFlags.y > 0.5 ? vec3(1.0) : castShadow(vGround);
   if (uWitchLight.x > 0.5) { gl_FragColor = vec4(witchShade(a.rgb, N, uFacing, vWorld) * castK, alpha); return; }
   vec3 col = min(vec3(1.0), a.rgb * nightLight(N, vWorld) * 1.25);
+  // The leaf jitter's hue (Ed's v3893 playtest: "leafJitter.hue has no visible effect"): turned on the lit colour, not the albedo. The
+  // night's coloured moonlight squeezed an albedo's turn to about a third on screen (measured: 20 degrees moved the crowns 4.9 on average,
+  // less than the value jitter's 0.12 did); turned here, the knob's degrees are the screen's.
+  if (leafTurn != 0.0) col = clamp(hueRotate(col, leafTurn), 0.0, 1.0);
   // Scenery in her pool takes her light's own colour as the ground does (lighting.ts glowPool), so her light on green
   // crowns from the treetops reads amber, not lime (the art director via golf, #237). Characters keep their colours.
   if (uIsScenery > 0.5) col = glowPool(col, vWorld);

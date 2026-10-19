@@ -7,8 +7,8 @@
       "pr": 950,
       "group": "Leaf jitter",
       "label": "Leaf hue jitter (degrees)",
-      "note": "Each tree's leaves turned up to this many degrees of hue either way from its baked variant's, by a seed of its own (Ed, 2026-10-16: \"a small amount of per-tree colour jitter\"). 0: every tree of a variant the same, as before; 5 was measured too faint to see at night; past about 12 a tree can start to read as another season.",
-      "control": { "type": "slider", "min": 0, "max": 20, "step": 0.5 },
+      "note": "Each tree's leaves turned up to this many degrees of hue either way from its baked variant's, by a seed of its own (Ed, 2026-10-16: \"a small amount of per-tree colour jitter\"). 0: every tree of a variant the same, as before. Turned on the lit colour since Ed's v3893 playtest (\"no visible effect\": the night's moonlight had squeezed it to a third), so these are degrees on screen; the range goes well past sense (Ed: \"bigger range\"): past about 30 trees read as other seasons. Live: no rebake.",
+      "control": { "type": "slider", "min": 0, "max": 90, "step": 1 },
       "default": 8,
       "apply": { "knob": "leafJitter.hue" }
     },
@@ -17,8 +17,8 @@
       "pr": 950,
       "group": "Leaf jitter",
       "label": "Leaf brightness jitter",
-      "note": "Each tree's leaves brightened or darkened by up to this share, by a seed of its own. 0: none.",
-      "control": { "type": "slider", "min": 0, "max": 0.3, "step": 0.01 },
+      "note": "Each tree's leaves brightened or darkened by up to this share, by a seed of its own. 0: none. The range goes well past sense (Ed: \"bigger range\"): past about 0.3 the darkest trees go near black. Live: no rebake.",
+      "control": { "type": "slider", "min": 0, "max": 0.6, "step": 0.01 },
       "default": 0.12,
       "apply": { "knob": "leafJitter.value" }
     }
