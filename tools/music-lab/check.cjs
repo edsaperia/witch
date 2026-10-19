@@ -4,7 +4,11 @@
 // 2. opens it in headless Chromium with every request outside the page refused: no script errors;
 // 3. renders every section of the style offline (OfflineAudioContext), a build into a wave under
 //    siege, and the game's mix far off and damaged: none silent, NaN or clipping;
-// 4. plays it live for a few seconds: the engine schedules and the sections show.
+// 4. a sail without reloading the page (docs/plans/sail-without-reload.md, C5), frame by frame offline: night A at wave 2,
+//    a quiet gap, then the engine's timeline anchored afresh and night B's seed and style booting up: no NaN or clipping,
+//    A gone before B's first note, B not silent, and B's beat within 50 ms of its game time after 10 s (and, without
+//    newTimeline, far out: the measure works);
+// 5. plays it live for a few seconds: the engine schedules and the sections show.
 const { execFileSync } = require("child_process");
 const path = require("path");
 let playwright;
@@ -32,6 +36,19 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
   for (const x of r.results) console.log(`     ${x.name.padEnd(40)} rms ${x.rms.toFixed(3)}  peak ${x.peak.toFixed(2)}`);
   ok(r.ok, `every section renders offline, none silent, NaN or clipping${r.ok ? "" : ": " + r.errors.join("; ")}`);
   ok(r.results.length >= 10, `${r.results.length} renders`);
+  {
+    const ts = Date.now(), [sail, stale] = await page.evaluate(() => Promise.all([window.musicLabSail(true), window.musicLabSail(false)]));
+    console.log(`     (sailed in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);
+    const f = x => `rms ${x.rms.toFixed(3)}  peak ${x.peak.toFixed(2)}`;
+    for (const k of ["a", "gapEnd", "b", "whole"]) console.log(`     sail: ${k.padEnd(34)} ${f(sail[k])}`);
+    const late = o => o.offsets.filter(x => x.game >= 10), worst = o => Math.max(0, ...late(o).map(x => Math.abs(x.ms)));
+    ok(Number.isFinite(sail.whole.peak) && Number.isFinite(sail.whole.rms) && sail.whole.peak <= 1.2, `the sail renders no NaN or clipping (peak ${sail.whole.peak.toFixed(2)})`);
+    ok(sail.a.rms > 0.003, `night A plays before the sail (rms ${sail.a.rms.toFixed(3)})`);
+    ok(sail.gapEnd.peak < 1e-3, `night A's music is gone before night B's first note (peak ${sail.gapEnd.peak.toExponential(1)})`);
+    ok(sail.b.rms > 0.003, `night B's boot is heard (rms ${sail.b.rms.toFixed(3)})`);
+    ok(late(sail).length > 0 && worst(sail) < 50, `night B's beat within 50 ms of its game time after 10 s (worst ${worst(sail).toFixed(1)} ms over ${late(sail).length} sixteenths)`);
+    ok(worst(stale) > 1000, `without newTimeline it would be far out (${(worst(stale) / 1000).toFixed(1)} s): the measure works`);
+  }
   // live: play for a few seconds, jump to a wave, check what's playing changes on a block line
   // (each waits only until it shows, up to its old fixed wait)
   await page.click("#play");
