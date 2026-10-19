@@ -3,7 +3,8 @@ import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
-import { MOVEMENT } from "./movement";
+import { MOVEMENT, resetFight } from "./movement";
+import { useData } from "./combat/hits";
 import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -243,6 +244,7 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1, prep?: MapPrep): Game {
+  resetFight(); useData(COMBAT); // (the last night's fight settings out: a night starts as a fresh page's)
   const map = prep ? hydrateMap(seed, tuning, prep) : generateMap(seed, tuning); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);

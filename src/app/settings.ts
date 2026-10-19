@@ -2,7 +2,7 @@
 // music and sfx volume separately"): the pause page's entries flagged `persist` (config/decisions/*.json, the pinned Volume group)
 // keep their last value in localStorage witch.settings and take it again as the game loads, their tuning knob set before the
 // sound is built (main.ts), so a volume chosen once holds every night. The built default is kept as no entry at all.
-import { DECISION_LIST, setKnob, type Decision } from "../ui/decisions";
+import { DECISION_LIST, knobAt, setKnob, type Decision } from "../ui/decisions";
 
 const KEY = "witch.settings";
 export type Saved = Record<string, string | number | boolean>;
@@ -30,4 +30,19 @@ export function applySavedSettings(tuning: object, list: readonly Decision[] = D
     setKnob(tuning, d.apply.knob, v); applied.push(d.id);
   }
   return applied;
+}
+
+/** Every pause-page knob's value in one night's tuning on to the next's (Ed, 2026-10-19: all the sliders carry to the next island,
+ *  the game's knobs too: docs/plans/sail-without-reload.md decision 5), on purpose, the next made from a whole copy of the file;
+ *  but for the knobs in `skip` (the next night's link's own). The ids carried. */
+export function carryKnobs(from: object, to: object, list: readonly Decision[] = DECISION_LIST, skip: ReadonlySet<string> = new Set()): string[] {
+  const carried: string[] = [];
+  for (const d of list) {
+    const k = d.apply.knob;
+    if (!k || skip.has(k)) continue;
+    const v = knobAt(from, k);
+    if (v === undefined || knobAt(to, k) === undefined || Object.is(v, knobAt(to, k))) continue;
+    setKnob(to, k, v); carried.push(d.id);
+  }
+  return carried;
 }
