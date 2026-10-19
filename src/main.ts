@@ -53,6 +53,7 @@ import { wonText } from "./app/wonCard";
 import { ArrivalFlight } from "./app/arrive";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { readArrival } from "./app/arrival";
+import { prepUsed, takeMapPrep } from "./app/mapPrep";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
@@ -73,7 +74,10 @@ const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tun
 // the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
 applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
 let musicCueNow = linkMusicCue;
-const game = newGame(seed, tuning);
+// Sailed here (&arrive=1): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
+const mapPrep = params.get("arrive") ? await takeMapPrep(seed, tuning) : null;
+performance.mark("witch:prep");
+const game = newGame(seed, tuning, 1, mapPrep ?? undefined);
 if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(game); });
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
@@ -84,7 +88,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, tuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
-const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
+const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : 0 }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1)
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 /** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */

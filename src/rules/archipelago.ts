@@ -76,6 +76,9 @@ const probed = (s: Site): Site => {
 const SLACK = 1e-6;
 
 const made = new Map<string, Archipelago>();
+/** An archipelago made elsewhere for the same world and kinds (a worker's, carried to the game's page: app/mapPrep.ts), remembered
+ *  as if made here (unless one already is). */
+export function rememberArchipelago(a: Archipelago, kinds: number): void { const key = `${a.world}|${kinds}`; if (!made.has(key)) made.set(key, a); }
 /** The archipelago of a world: `kinds` every island's kind with its phase (its kind's + 1), table bearing (degrees from north,
  *  clockwise) and seed (its shape's), home besides. Made once a world. */
 export function archipelago(world: number, kinds: readonly { id: string; phase: number; bearing: number; seed: number }[], homeSeed = 1): Archipelago {

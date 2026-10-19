@@ -17,7 +17,8 @@ export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.
 import { PathNetwork } from "./paths";
 import { routeOf } from "./party";
 import { beachOf, isInside, makeCoast, type Bounds } from "./mapShape";
-import { makeLand, type LandMap } from "./land";
+import { landOf, makeLand, type LandData, type LandMap } from "./land";
+import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
@@ -253,7 +254,24 @@ export function islandLand(island: Island, tuning: Tuning, step = 16): { land: L
   return generateMap(island.seed, tuning, { landStep: step, island }) as unknown as { land: LandMap; lakes?: LandMap; home: { x: number; z: number }; areaSize: number; cells: string[] };
 }
 
-export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }): ForestMap {
+/** The heavy, pure parts of a map's making as plain data (Ed, 2026-10-19, the sailing's option 4: app/mapPrep.ts makes them in a
+ *  worker while the chart flies and carries them to the game's page): which areas touch which (in their order: the map's own
+ *  iteration order), the land and lakes maps, and the ley line's route (rules/leyroute.ts). generateMap given them makes the same map, without their work. */
+export interface MapPrep { neighbours: [string, string[]][]; land: LandData | null; lakes: LandData | null; route: LeyRoute | null }
+
+const landData = (L: LandMap | undefined): LandData | null => (L ? { x0: L.x0, z0: L.z0, step: L.step, cols: L.cols, rows: L.rows, dist: L.dist, seg: L.seg, loops: L.loops, segLoop: L.segLoop, segAt: L.segAt, box: L.box } : null);
+/** A map's prep (see MapPrep): to make the same map again quickly, on another thread or page. */
+export function prepOf(map: ForestMap): MapPrep {
+  const b = map.bounds;
+  return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null };
+}
+
+/** A map from its ready parts (a worker's prep: app/mapPrep.ts): the map generateMap(seed, tuning) makes, without their work
+ *  (src/rules/mapPrep.test.ts). The seam a night started in place takes (docs/plans/sail-without-reload.md, startNight; or
+ *  newGame's prep). */
+export const hydrateMap = (seed: number, tuning: Tuning, prep: MapPrep): ForestMap => generateMap(seed, tuning, undefined, prep);
+
+export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: number; island: Island }, prep?: MapPrep): ForestMap {
   const A = tuning.areaSize * tuning.areaScale;
   // The circular map (Ed, 2026-10-06): playable areas those whose centres lie within radius areas of
   // home's; past them a buffer ring buffer areas deep, then the edge of her flight (from the
@@ -339,7 +357,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (circular: the extent a square round the flight circle, edge areas past it; the cells it covers, and one more for the warp)
   const ext = round ? { minX: homeWorld[0] - flightR * most - edgeK * A, maxX: homeWorld[0] + flightR * most + edgeK * A, minZ: homeWorld[1] - flightR * most - edgeK * A, maxZ: homeWorld[1] + flightR * most + edgeK * A } : null;
   const lo = ext ? Math.floor(Math.min(ext.minX, ext.minZ) / A) - 1 : -margin, hi = ext ? Math.ceil(Math.max(ext.maxX, ext.maxZ) / A) + 1 : n + margin;
-  const neighbours = findNeighbours(partition, lo, hi, 6);
+  const neighbours = prep ? new Map(prep.neighbours.map(([k, v]) => [k, new Set(v)])) : findNeighbours(partition, lo, hi, 6);
 
   // Area types: random, never the same as a touching area nor any area within two cells.
   const types = new Map<string, number>();
@@ -506,14 +524,14 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       return true;
     };
     const isLand = (x: number, z: number) => { if (!inStrait(x, z)) return false; const [u, v] = toPart(x, z), c = partition.partition(u, v); return landCells.has(cellKey(c[0], c[1])); };
-    land = makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, only?.landStep ?? LAND_STEP, 64, (A * 0.5) ** 2, only ? 1 : 2, true); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed; ponds filled: no lakes but those meant)
+    land = prep?.land ? landOf(prep.land) : makeLand(isLand, { minX: x0 - A, maxX: x1 + A, minZ: z0 - A, maxZ: z1 + A }, only?.landStep ?? LAND_STEP, 64, (A * 0.5) ** 2, only ? 1 : 2, true); // (crumbs under a quarter of an area's square taken as what's round them; slivers under about 16 m smoothed; ponds filled: no lakes but those meant)
     // The lakes' own map (the same kind, its "land" the lakes' water: + in a lake, - ashore), over the lakes' areas alone; the
     // island's land above has them as land (her flight's edge, the beach and the sea are the sea's alone).
     if (lakeCells.size) {
       let lx0 = Infinity, lx1 = -Infinity, lz0 = Infinity, lz1 = -Infinity;
       for (const k of lakeCells) { const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy); lx0 = Math.min(lx0, s.x); lx1 = Math.max(lx1, s.x); lz0 = Math.min(lz0, s.z); lz1 = Math.max(lz1, s.z); }
       const isLakeAt = (x: number, z: number) => { const [u, v] = toPart(x, z), c = partition.partition(u, v); return lakeCells.has(cellKey(c[0], c[1])); };
-      lakes = makeLand(isLakeAt, { minX: lx0 - A, maxX: lx1 + A, minZ: lz0 - A, maxZ: lz1 + A }, only?.landStep ?? LAND_STEP, 32, (A * 0.5) ** 2, only ? 1 : 2, true);
+      lakes = prep ? (prep.lakes ? landOf(prep.lakes) : undefined) : makeLand(isLakeAt, { minX: lx0 - A, maxX: lx1 + A, minZ: lz0 - A, maxZ: lz1 + A }, only?.landStep ?? LAND_STEP, 32, (A * 0.5) ** 2, only ? 1 : 2, true);
     }
     if (only) return { land, lakes, home: centre, areaSize: A, cells: cells.map(c => cellKey(c[0], c[1])) } as unknown as ForestMap; // (islandLand: the land alone)
   }
@@ -684,6 +702,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
     paths: null as unknown as PathNetwork,
   };
+  if (prep?.route) rememberRoute(map as unknown as ForestMap, prep.route); // (its route, already worked out: rules/leyroute.ts)
   // The paths first (their lines need only the areas), so soundsystems, set pieces and the
   // grounds can keep off them; then the grounds; then the paths' pieces, clear of all of those.
   map.paths = new PathNetwork(map);
