@@ -8,6 +8,7 @@ import { bodyRadius } from "../spacing";
 import { FIGHT } from "../movement";
 import { type Attack, type CombatData, COMBAT, counterOf, type Target, type CombatState, creatureMaxHp, type CombatWorld } from "./data";
 import { targetable, sideOf, truce, guardOf, sheltered, inviting, Grid } from "./targeting";
+import { coverOf } from "./packs";
 
 let D: CombatData = COMBAT; // (the data stepCombat was given, for land)
 /** stepCombat hands land the data it was given. */
@@ -61,6 +62,8 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
   }
   const o = w.creatures[tg.id];
   if (!o || o.gone || o.level === 0) return; // babies can't be hurt
+  const cover = o.coverBy ? coverOf(w, o) : null; // (a packmate dug in beside it takes the blow: the badger's cover, rules/combat/packs.ts)
+  if (cover) { land(w, s, from, { kind: "creature", id: cover.id }, damage, a, fx, fz); return; }
   if (from && inviting(w, from, o)) return; // (her party's shots and area hits pass the one she's inviting by)
   // Its traits against this kind of blow (Stage 5): shown as strong or resisted.
   const k = counterOf(o.species, a.delivery, D), gd = guardOf(o, a.delivery, time), mult = k.damage * gd.damage;

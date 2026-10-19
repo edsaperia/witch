@@ -67,6 +67,9 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   const Fd = t.find; // finding wild creatures in the dark (Ed, v244)
   SPRITE_UNIFORMS.uFindLook.value.set(Fd.lightFloor, Fd.rim, Fd.eyeshine.strength, Fd.eyeshine.blink);
   SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
+  // Each tree's own leaf colour (Ed, 2026-10-16; the tuning's leafJitter: hue degrees and value share at a seed of 1; render/sprites.ts).
+  const LJ = t.leafJitter;
+  SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.hue / 360 : 0, LJ ? LJ.value : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);

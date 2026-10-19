@@ -10,6 +10,6 @@
 - [combat.md](combat.md): pack combat: packs that combo their moves (a lunge, crossfire, a smoke bomb), three moves per animal (melee, ranged, special) from young, lulls and retreats, flyers that take off only to attack, sieges shelled from the trees (Ed, 2026-10-15).
 - [gameplay.md](gameplay.md): smaller changes: babies, flasks, tempo, flying cooldown, enraged marches, controller.
 - [music.md](music.md): a witchier sound, open samples, a better vocalise, and a palette of genres for the records.
-- [platform.md](platform.md): Steam and consoles, the Godot port, online co-op, and the cleanup before it.
+- [platform.md](platform.md): Steam and consoles, the Godot port (or BRUTAL, to investigate), online co-op, and the cleanup before it.
 - [creatures.md](creatures.md): one body-graph creature generator to replace the quadruped builder and the one-off builders.
 - [look.md](look.md): the look of the world: softer planting across area borders, and trying the world without the glowing area edges.

@@ -36,11 +36,11 @@ describe("sleeping legends (Ed, 2026-10-04)", () => {
     expect(L.legendState).toBe("asleep");
   }, 60000);
 
-  it("turn happy (debug O, for now): at peace, and their buff is on", () => {
+  it("turn happy (debug O, for now): at peace, and no buff (Ed, 2026-10-18: happy legends grant nothing)", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
-    expect(g.buffs.active.map(b => b.id)).toContain(L.id);
+    expect(g.buffs.active).toEqual([]);
   }, 60000);
 
   it("leave home without a legend, so she starts with no buff (Ed, 2026-10-05)", () => {

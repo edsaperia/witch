@@ -19,8 +19,8 @@ export function polyLength(line: readonly P2[]): number {
   return L;
 }
 
-/** The pulse's speed (m/s) before the tempo: leyLines.pulseSpeed; 0 or less, no waves (the bedroom's "off"). */
-export const pulseSpeed = (map: Pick<ForestMap, "tuning">): number => Math.max(0, map.tuning.leyLines?.pulseSpeed ?? 4);
+/** The pulse's speed (m/s) before the tempo: leyLines.pulseSpeed; 0 or less, no waves (the pause page's Waves slider at 0). */
+export const pulseSpeed = (map: Pick<ForestMap, "tuning">): number => Math.max(0, map.tuning.leyLines?.pulseSpeed ?? 1);
 
 /** The first link (the treehouse's front out to the first stone, rules/departure.ts) from where it comes on to the boot ring:
  *  the boot's pulse runs down to the ring and round it (rules/bootRing.ts), and the wave's takes over there. Its share of the

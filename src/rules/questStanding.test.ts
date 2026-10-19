@@ -4,7 +4,7 @@
 // the correct sigil in the circle, not when the animal itself arrives there") the drop itself finishes it, its animal anywhere.
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { broughtLine, creatureWords, legendCircleNear } from "./legendCircle";
+import { broughtLine, creatureWords, kindWords, legendCircleNear } from "./legendCircle";
 import { setupQuestDemo } from "./quest";
 import { TUNING, withTuning } from "./tuning";
 
@@ -27,7 +27,7 @@ describe("a quest animal standing in its legend's circle", () => {
     let joined = -1;
     for (let i = 0; i < 12 && L.quest!.done === undefined; i++) { stepGame(g, idle, STEP); for (const e of g.questEvents) if (e.kind === "done" && e.id === L.id) joined = e.joined; }
     expect(L.quest!.done).toBeDefined();
-    expect(L.buffed).toBe(true);
+    expect(L.legendState).toBe("happy");
     expect(joined).toBe(gift.id);
     expect(gift.leashed).toBe(true); // (still hers)
   }, 60000);
@@ -39,24 +39,23 @@ describe("a quest animal standing in its legend's circle", () => {
     Object.assign(gift, { x: ring.x + ring.r - 2, z: ring.z, tx: ring.x + ring.r - 2, tz: ring.z }); // (it, inside)
     run(g, 0.2);
     expect(L.quest!.done).toBeDefined();
-    expect(L.buffed).toBe(true);
+    expect(L.legendState).toBe("happy");
   }, 60000);
 
-  it("doesn't for the wrong age or kind, and the circle's panel names both", () => {
+  it("doesn't for the wrong kind, and the circle's panel names both; any age of the right kind does (Ed, 2026-10-18)", () => {
     const { g, L, gift } = demo();
-    const want = { ...L.quest! };
-    gift.level = ((gift.level + 1) % 3) as typeof gift.level;
+    const want = { ...L.quest! }, level = gift.level;
+    gift.species = want.species === "elk" ? "stag" : "elk"; // (a look-alike kind)
     run(g, 0.2);
     expect(L.quest!.done).toBeUndefined();
     const near = legendCircleNear(g, g.witch)!;
     expect(near.legend.id).toBe(L.id);
     const line = broughtLine(g, near)!;
-    expect(line.text).toContain(`it dreams of ${creatureWords(want.species, want.level)}`);
+    expect(line.text).toContain(`it dreams of ${kindWords(want.species)}`);
     expect(line.text).toContain(creatureWords(gift.species, gift.level));
-    gift.species = want.species === "elk" ? "stag" : "elk"; gift.level = want.level; // (a look-alike kind at the right age)
+    gift.species = want.species; gift.level = ((level + 1) % 3) as typeof gift.level; // (the right kind, another age)
     run(g, 0.2);
-    expect(L.quest!.done).toBeUndefined();
-    expect(broughtLine(g, near)!.text).toContain(creatureWords(gift.species, gift.level));
+    expect(L.quest!.done).toBeDefined();
   }, 60000);
 
   it("says nothing once the quest is done, or with none of hers in the circle", () => {
@@ -68,13 +67,13 @@ describe("a quest animal standing in its legend's circle", () => {
     expect(creatureWords("otter", 2)).toBe("an adult otter");
     expect(creatureWords("cat", 0)).toBe("a baby wildcat");
   }, 60000);
-  it("Ed's own case (seed 162218 on his 196-area map): the twiggy forest's legend dreams of a young one of a kind; his parked adults of it are named, a young one finishes it", () => {
+  it("Ed's own case (seed 162218 on his 196-area map): the twiggy forest's legend dreams of a kind; his parked adults of it finish it (Ed, 2026-10-18: any age)", () => {
     const T = withTuning({ mapAreas: 14, map: { ...TUNING.map, radius: 14 / Math.sqrt(Math.PI) } } as never), g = newGame(162218, T);
     g.clock.paused = false; g.party.paused = true; g.witches[0].health.hp = 1e6;
     const L = g.creatures.filter(c => c.boss).sort((a, b) => Math.hypot(a.x - 2566, a.z - 1923) - Math.hypot(b.x - 2566, b.z - 1923))[0];
     // (a wolf dreaming of a young stag on his map; since home's forest mammals, 2026-10-12, the twiggy forest's squirrel dreaming of a young stoat)
     expect(L.species).toBe("squirrel");
-    expect(L.quest).toMatchObject({ species: "stoat", level: 1 });
+    expect(L.quest).toMatchObject({ species: "stoat" });
     const kind = L.quest!.species;
     const ring = g.map.legendClearing(L.cell[0], L.cell[1])!;
     g.witch = { ...g.witch, x: ring.x, z: ring.z + ring.r * 0.4, mode: "ground", lift: 0, seated: false };
@@ -88,14 +87,8 @@ describe("a quest animal standing in its legend's circle", () => {
     });
     g.byArea = null;
     run(g, 0.2);
-    expect(L.quest!.done).toBeUndefined();
-    const near = legendCircleNear(g, g.witch)!;
-    expect(broughtLine(g, near)!.text).toBe("Not this one: it dreams of a young stoat, and you've brought an adult stoat.");
-    // a young one walks into the circle: done
-    Object.assign(spare[2], { x: ring.x, z: ring.z - 2, tx: ring.x, tz: ring.z - 2 });
-    run(g, 0.2);
-    expect(L.quest!.done).toBeDefined();
-    expect(L.buffed).toBe(true);
+    expect(L.quest!.done).toBeDefined(); // (adults of its kind standing in it: done)
+    expect(L.legendState).toBe("happy");
   }, 120000);
   it("completes on the very step its sigil is put down in the circle, its animal still far away (Ed: the drop is the moment)", () => {
     const { g, L, gift, ring } = demo();
@@ -103,7 +96,7 @@ describe("a quest animal standing in its legend's circle", () => {
     expect(g.leash.stack[g.leash.stack.length - 1]).toBe(gift.id);
     stepGame(g, { ...idle, sigil: true }, STEP);
     expect(L.quest!.done).toBeDefined();
-    expect(L.buffed).toBe(true);
+    expect(L.legendState).toBe("happy");
     expect(g.questEvents.some(e => e.kind === "done" && e.id === L.id && e.joined === gift.id)).toBe(true);
     expect(Math.hypot(gift.x - ring.x, gift.z - ring.z)).toBeGreaterThan(150); // (it hasn't arrived: it travels to its sigil after)
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
@@ -112,12 +105,12 @@ describe("a quest animal standing in its legend's circle", () => {
   it("names a wrong sigil the moment it's dropped in the circle, its animal far away", () => {
     const { g, L, gift, ring } = demo();
     const want = { ...L.quest! };
-    gift.level = ((want.level + 1) % 3) as typeof gift.level;
+    gift.species = want.species === "elk" ? "stag" : "elk";
     Object.assign(gift, { x: ring.x + 200, z: ring.z, tx: ring.x + 200, tz: ring.z });
     stepGame(g, { ...idle, sigil: true }, STEP);
     expect(L.quest!.done).toBeUndefined();
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
     const near = legendCircleNear(g, g.witch)!;
-    expect(broughtLine(g, near)!.text).toBe(`Not this one: it dreams of ${creatureWords(want.species, want.level)}, and you've brought ${creatureWords(gift.species, gift.level)}.`);
+    expect(broughtLine(g, near)!.text).toBe(`Not this one: it dreams of ${kindWords(want.species)}, and you've brought ${creatureWords(gift.species, gift.level)}.`);
   }, 60000);
 });

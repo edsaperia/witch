@@ -1,6 +1,6 @@
 // The sea chart's save (wave 2, part C; Ed, 2026-10-10/11, docs/backlog/journey.md "The world and the sea chart"): what she's
-// found, kept in this browser. Islands appear on the chart as their legends are woken (a night won with that legend among its
-// dealt ones: rules/win.ts found; an enraged legend's island stays hidden), each found from the island she set out from (a
+// found, kept in this browser. An island appears on the chart when its legend's quest is done in a night that's then won (Ed,
+// 2026-10-18: g.islandsTonight, rules/win.ts found; winning alone finds none, and a lost night keeps none), each found from the island she set out from (a
 // voyage, a line on the chart); won islands are marked; every island is drawn, a sigil only on those she can travel to. Losing loses nothing (Ed,
 // 2026-10-11): the night's island is only played. Every storage access is try/caught: blocked storage plays with nothing saved.
 import { isPlaceholder, KINDS, playableIsland, REAL_KINDS } from "../rules/rosters";
@@ -70,7 +70,7 @@ export function newCampaign(world: number, storage?: Store | null): ChartSave {
 }
 
 /** The night's end on `island` ("home" or a kind; anything else isn't an island of the chart and records nothing): played; if
- *  won, marked won, and the islands of the legends it woke (`found`: rules/win.ts) found from it, each with its voyage (an
+ *  won, marked won, and the islands found tonight by quests (`found`: rules/win.ts) found from it, each with its voyage (an
  *  island already found keeps its first voyage). A new save; the old one unchanged. */
 /** Sailing off from the treehouse deck's map table (Ed, 2026-10-11: "Sail anytime"; ui/chartOverlay.ts): with the night still on
  *  (not won, the party not over, nothing yet recorded), it ends unwon, as a loss: played, nothing found, no legends woken; otherwise

@@ -1,6 +1,6 @@
 # Pack combat and three moves per animal
 
-Backlog (Ed, 2026-10-15, from an interview with Juliet). **Not built yet; don't build without Ed's go.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
+Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on`; and Phase 1's eleven (Echo, 2026-10-19, the same switch; the flyers on the ground till step 3); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
 
 Ed's words: "Maybe they should all have three [melee, ranged, special]. The place where this game should shine is animals fighting in packs (where they combo all their attacks differently) and animals feeling different from each other. If one lunges while two lay down crossfire and the last throws a smoke bomb, that would be exciting."
 
@@ -107,6 +107,8 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 
 ### Phase 1
 
+**Built** (Echo, 2026-10-19; `config/packs.json`, behind `combat.packs.on`): all eleven, with two new specials (mirage, sync), kinds' own variants of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes, the toad's cloud comes from a leap, the beetle's cover locks two shells), the raven's ranged move on its own spit and barb, the toad's lob leaving a slow patch, and seven new retreats. The bat and raven fight on the ground in a pack (no hop-swoop until step 3); "into the water" hides like a burrow (no water map yet).
+
 | Kind | Melee (tell) | Ranged (tell) | Special: pack move (tell) | Retreat | Rhythm |
 |---|---|---|---|---|---|
 | wolf | lunge bite (crouch) | frost breath, a short cone 10 m (head low) | **call**: a howl, the pack strikes together; cuts off her retreat (the howl) | split in two, circling to her flanks | tight |
@@ -184,11 +186,11 @@ A besieging pack does the same at a soundsystem, its shooters at the clearing's 
 
 ## Build order (proposed)
 
-1. **A prototype on the home island behind a switch** (`combat.packs.on`, a pause-page toggle; off by default): **all ten home kinds** (Ed: 21c) with their three moves from the table, the pack tell, roles by position, the combo with its reactive answers, the lull with each kind's retreat pattern, pressure by kind, and her own pack using the combos without retreats. Magic bolts as one tinted projectile; the specials with placeholder art (today's rings and lines, tinted by effect) until the art lands. A debug arena preset a kind (`?arena=`) and a shot sheet.
+1. **Built (2026-10-19, behind the switch, off by default; `rules/combat/packs.ts`, `config/packs.json`, docs/HOW-THE-GAME-WORKS.md section 5).** **A prototype on the home island behind a switch** (`combat.packs.on`, a pause-page toggle; off by default): **all ten home kinds** (Ed: 21c) with their three moves from the table, the pack tell, roles by position, the combo with its reactive answers, the lull with each kind's retreat pattern, pressure by kind, and her own pack using the combos without retreats. Magic bolts as one tinted projectile; the specials with placeholder art (today's rings and lines, tinted by effect) until the art lands. A debug arena preset a kind (`?arena=`) and a shot sheet.
 2. **The tells and the art**: the shapes by slot (lane, line, circle, ring, bar), colours by effect, the pack tell's own art per kind (a howl's rings, a drum's dust), the specials' art (cloud, wall, mirage, pull line, confusion swirl, control glyph, sync flash, stampede lane) in `art/effects.js`'s families, and the moves' poses where the rig needs one (a rear-up, a wings-spread take-off).
 3. **Flyers on the ground**: take-off only to attack (young hop-swoop, adults the dive once), half a pack's flyers grounded, the owl, raven and bat first.
 4. **Sieges**: shellers at the clearing's edge, defenders going out beyond the leash range and back.
-5. **Phase 1 and 2 kinds** from the table, a few kinds a PR, each with its arena preset and shot sheet; then phases 3 and 4.
+5. **Phase 1 and 2 kinds** from the table, a few kinds a PR, each with its arena preset and shot sheet; then phases 3 and 4. **Phase 1 built** (Echo, 2026-10-19).
 6. **Tuning up the master curve**: rhythm, pressure and lulls by wave (`population.swarm`'s share), the balance tools (`tools/balance/fightbot.mjs`, `fight.mjs`) extended to play packs, and the switch becomes the default.
 
 ## Open questions

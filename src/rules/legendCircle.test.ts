@@ -59,10 +59,13 @@ describe("the legend circle's explainer", () => {
     const { g, L } = setup(), at = { x: L.x, z: L.z, mode: "ground" };
     const words = () => circleLines(L).map(l => l.text).join(" ");
     expect(words()).toMatch(/^This is a slumbering elder [a-z -]+\./);
-    expect(words()).toContain("{sigil}"); expect(words()).toContain("{relic}"); expect(words()).toContain("none of its kin are nearby");
-    L.quest!.done = 10;
-    expect(circleLines(L).find(l => l.done)?.text).toMatch(/^Its boon is yours/);
-    L.legendState = "restless";
+    expect(words()).toContain("{sigil}"); expect(words()).toContain("any age"); expect(words()).not.toContain("{relic}"); expect(words()).not.toContain("{boon}"); expect(words()).toContain("none of its kin are nearby");
+    L.questOpen = false; // (the party's over: Ed, 2026-10-18, no quest taken)
+    expect(words()).toContain("takes no quest"); expect(words()).not.toContain("{sigil}");
+    L.questOpen = true;
+    L.quest!.done = 10; L.legendState = "happy";
+    expect(circleLines(L).find(l => l.done)?.text).toMatch(/^Its island is found tonight/);
+    L.legendState = "restless"; L.quest!.done = undefined;
     expect(legendCircleNear(g, at)?.legend).toBe(L);
     expect(words()).toMatch(/^This elder is restless\./); expect(words()).toContain("Bring one of its kin back");
     L.legendState = "angry";
@@ -74,12 +77,13 @@ describe("the legend circle's explainer", () => {
     for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; expect(words()).not.toMatch(/kill|die|dead/i); }
   });
 
-  it("names the legend's own boon, from the buff it gives (Ed, 2026-10-06)", () => {
-    const { L } = setup(), def = LEGEND_BUFFS.species[L.species];
+  it("asks for its kind with no age and names no boon (Ed, 2026-10-18); boonWords still words the buffs", () => {
+    const { L } = setup();
     L.quest!.done = undefined; L.legendState = "asleep";
     const line = circleLines(L).find(l => l.text.includes("{sigil}"))!.text;
-    expect(line).toContain("{boon}");
-    if (def) { expect(line).toContain(def.name); expect(line).toContain(boonWords(L.species)!); }
+    expect(line).not.toContain("{boon}");
+    expect(line).toMatch(/any age/);
+    expect(line).not.toMatch(/\b(baby|young|adult)\b/);
     for (const sp of Object.keys(LEGEND_BUFFS.species)) {
       const w = boonWords(sp)!;
       expect(w.length).toBeGreaterThan(5);

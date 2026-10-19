@@ -166,6 +166,21 @@ function berryFor(s: BerryState, x: number, z: number, lp: { x: number; z: numbe
 }
 
 /** Let go of a creature's claim (pulled away, or no longer a party animal). */
+/** A growth spurt (a flask drunk, Ed 2026-10-18: "all creatures following you become adults"): each of these party animals
+ *  younger than an adult becomes one at once (the evolving's flash and burst on the next step, as a berry's evolving ends);
+ *  any berry it had is let go. Returns how many grow. */
+export function growthSpurt(s: BerryState, creatures: Creature[], ids: readonly number[], time: number): number {
+  let n = 0;
+  for (const id of ids) {
+    const c = creatures[id];
+    if (!c || c.gone || c.boss || c.level >= 2) continue;
+    release(s, id); s.fed.set(id, 0);
+    s.evolving.set(id, { from: c.level, to: 2 as Level, at: time, since: time });
+    n++;
+  }
+  return n;
+}
+
 function release(s: BerryState, id: number): void {
   const f = s.feeding.get(id);
   if (f) { const b = s.berries[f.berry]; if (b.claimedBy === id) b.claimedBy = null; s.feeding.delete(id); }

@@ -628,10 +628,10 @@ describe("the party", () => {
     }
     expect(besideLast).toBeLessThan(couldAvoid * 0.5);
   });
-  it("boots the home speakers up first, one by one, at the ley pulse's speed, then the pulse sets off for the first wave (Ed, 2026-10-04; the first speaker about 3 s off the decks, 2026-10-06; the pulse's speed, 2026-10-09)", () => {
-    const p = newParty(map), v = TUNING.leyLines.pulseSpeed, P = bootPath(map), B = bootSeconds(map), n = map.dancefloor.speakers.length;
-    const F = P.stoneAt[P.order[0]] / v, last = P.stoneAt[P.order[n - 1]] / v;
-    expect(v).toBe(4); expect(P.length).toBeCloseTo(179, 0); expect(B).toBeCloseTo(P.length / v, 9); // (179 m at 4 m/s: about 45 s)
+  it("boots the home speakers up first, one by one, at the boot's own speed, then the pulse sets off for the first wave (Ed, 2026-10-04; the first speaker about 3 s off the decks, 2026-10-06; the pulse's speed, 2026-10-09; the boot's own, 2026-10-18)", () => {
+    const p = newParty(map), v = TUNING.leyLines.pulseSpeed, vb = TUNING.boot.speed!, P = bootPath(map), B = bootSeconds(map), n = map.dancefloor.speakers.length;
+    const F = P.stoneAt[P.order[0]] / vb, last = P.stoneAt[P.order[n - 1]] / vb;
+    expect(vb).toBe(4); expect(P.length).toBeCloseTo(179, 0); expect(B).toBeCloseTo(P.length / vb, 9); // (179 m at 4 m/s: about 45 s)
     expect(F).toBeGreaterThan(2.5); expect(F).toBeLessThan(3.5); // (about three seconds off the decks)
     stepParty(p, map, 0, 0); // (off the decks at once)
     expect(p.bootFrom).toBe(0); expect(p.bootUntil).toBeCloseTo(B, 9);
@@ -649,8 +649,8 @@ describe("the party", () => {
     // Pausing during the boot holds it too.
     p.paused = true; stepParty(p, map, B / 2, 5); expect(p.bootUntil).toBeCloseTo(B + 5, 9);
   });
-  it("waits for her to get up from the decks: the first speaker about 3 s after her first step, the boot at the pulse's speed (Ed, 2026-10-09)", () => {
-    const P = bootPath(map), v = TUNING.leyLines.pulseSpeed, p = newParty(map), B = bootSeconds(map), F = P.stoneAt[P.order[0]] / v, due = p.nextAt, n = map.dancefloor.speakers.length;
+  it("waits for her to get up from the decks: the first speaker about 3 s after her first step, the boot at its own speed (Ed, 2026-10-09; 2026-10-18)", () => {
+    const P = bootPath(map), p = newParty(map), B = bootSeconds(map), F = P.stoneAt[P.order[0]] / TUNING.boot.speed!, due = p.nextAt, n = map.dancefloor.speakers.length;
     for (let s = 0; s < 40; s++) stepParty(p, map, s, 1, true); // (40 s sitting behind the decks)
     expect(p.bootFrom).toBeUndefined(); expect(speakersOn(p, map, 40, n)).toBe(0);
     expect(p.bootUntil).toBeCloseTo(B + 40, 9); expect(p.nextAt).toBeCloseTo(due + 40, 9);

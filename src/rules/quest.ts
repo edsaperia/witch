@@ -1,19 +1,19 @@
 // The first quest (Ed, 2026-10-04; DESIGN.md, "The first quest"). Each sleeping legend dreams of a
-// creature (a thought bubble over it): a species found on the map, not its own, at a level (baby,
-// young or adult), chosen from the seed. Put that creature's sigil down in the legend's clearing, in its
-// area while the area is still wild, and the legend is happy, its area friendly (its creatures
-// leave her and her party be), and the creature placed joins the area. Since the legends redesign
-// (DESIGN.md, "Legends, redesigned") a quest gives its legend's buff; no area's creatures become
-// guards (Ed, 2026-10-06: "There are no more guards."). No drawing here.
+// kind of creature (a thought bubble over it): a species found on the map, not its own, chosen from the seed; any age will do
+// (Ed, 2026-10-18: "Legends accept any level animal for their quest, at which point they fight for you and unlock their
+// island"). Put one of that kind's sigil down in the legend's clearing (or have it stand there) while the party is on, and the
+// legend is happy at once (it fights for her: rules/legends.ts cheer), its area friendly while wild, and its island found
+// tonight (g.islandsTonight: kept on the sea chart only if the night is won, Ed's correction, 2026-10-18). A quest gives no boon
+// (Ed, 2026-10-18: "Finishing quests no longer gives boons"). No drawing here.
 import { AREA_TYPES, inLegendClearing, type ForestMap } from "./map";
-import { LEGENDS } from "./legends";
-import type { Creature, Level } from "./creatures";
+import { LEGENDS, cheer } from "./legends";
+import type { Creature } from "./creatures";
 import { cellKey, routeOf } from "./party";
 import { rng } from "./random";
 
-export interface Quest { species: string; level: Level; /** game time it was done */ done?: number;
+export interface Quest { /** the kind it dreams of (any age) */ species: string; /** game time it was done */ done?: number;
   /** How far its creature lives: its nearest (later) area's distance over the cap (legends.questCap areas, else the map's
-   *  farthest), 0 to 1. For telling only: every quest's buff is the same strength (legends.questRoll). */
+   *  farthest), 0 to 1. For telling only. */
   far?: number }
 
 /** The early easy quest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants
@@ -40,8 +40,8 @@ export function earlyQuest(map: ForestMap): EarlyQuest | null {
   return out;
 }
 
-/** A legend's quest: a species on the map that isn't its own, and a level (baby, young or adult), from the seed; `want`, that
- *  species' baby (the early easy quest, earlyQuest). */
+/** A legend's quest: a species on the map that isn't its own, from the seed (any age of it will do); `want`, that species
+ *  (the early easy quest, earlyQuest). */
 export function questFor(map: ForestMap, cell: [number, number], own: string, want?: string): Quest | undefined {
   // A gamble (Ed, 2026-10-06: "you don't know how hard the quest will be before you go off to try and find the
   // creature"); only the truly far go (balance, 2026-10-06: a kind whose nearest area lies over legends.questCap areas
@@ -67,11 +67,11 @@ export function questFor(map: ForestMap, cell: [number, number], own: string, wa
   const kinds = latIn.length ? latIn : lat.length ? [lat.reduce((a, b) => (nearestLater.get(b)! < nearestLater.get(a)! ? b : a))] : inReach.length ? inReach : all;
   if (!kinds.length) return undefined;
   const r = rng(map.seed * 6151 + cell[0] * 389 + cell[1] * 1031 + 17);
-  let species = kinds[Math.floor(r() * kinds.length)], level = Math.floor(r() * 3) as Level;
-  if (want && nearest.has(want)) { species = want; level = 0; }
+  let species = kinds[Math.floor(r() * kinds.length)];
+  if (want && nearest.has(want)) species = want;
   const d = (want === species ? nearest : dist).get(species)!;
   const far = Math.min(1, d / (cap > 0 ? cap : Math.max(...all.map(sp => nearest.get(sp)!))));
-  return { species, level, far };
+  return { species, far };
 }
 
 export interface QuestEvent { kind: "done"; id: number; joined: number; /** the area's cell and key */ cell: [number, number]; key: string; x: number; z: number; at: number }
@@ -82,15 +82,15 @@ export const legendOf = (creatures: Creature[], ids: number[], key: string): Cre
   return null;
 };
 
-/** The legend whose open quest a sigil put down at (x, z) answers (its creature what it dreams of), in its area; or null.
- *  Open while the legend sleeps (Ed, 2026-10-06: "you should be able to get the buffs at any time the legend is sleeping,
- *  not just before the soundsystem is made"). */
+/** The legend whose open quest a sigil put down at (x, z) answers (its creature the kind it dreams of, any age), in its area;
+ *  or null. Open while the legend sleeps (Ed, 2026-10-06), and only while the party is on (Ed, 2026-10-18: permanent unlocks
+ *  happen only then: the caller doesn't ask once it's over). */
 function questFor_(map: ForestMap, creatures: Creature[], legendIds: number[], _partified: (key: string) => boolean, id: number, x: number, z: number): Creature | null {
   const c = creatures[id], cell = map.cellSafe(x, z).cell as [number, number], key = cellKey(cell);
   if (!c) return null;
   const L = legendOf(creatures, legendIds, key), q = L?.quest;
   if (!L || !q || q.done !== undefined || (L.legendState !== "asleep" && L.legendState !== "restless")) return null;
-  return c.species === q.species && c.level === q.level ? L : null;
+  return c.species === q.species && !c.boss ? L : null;
 }
 
 /** A sigil was put down at (x, z), outside its legend's clearing, that would have done its quest
@@ -100,19 +100,18 @@ export function questOutside(map: ForestMap, creatures: Creature[], legendIds: n
   return L && !inLegendClearing(map, L.cell, x, z, L, LEGENDS.placeRadius) ? L : null;
 }
 
-/** A sigil was put down at (x, z): if its creature is what the legend of that area dreams of, it
+/** A sigil was put down at (x, z): if its creature is the kind the legend of that area dreams of, it
  *  lies in the legend's clearing (Ed, 2026-10-06: "Quest sigils and relics need to be placed in the
- *  circle to have their effect"), and its quest is still open (while it sleeps), the quest is done: she gets the legend's
- *  buff, for good, and it sleeps on (#87). The creature stays hers, parked there. Done while the area is still wild,
- *  `done` (the set of areas whose quest is done: friendly while wild) gains it; once the party has reached the area it's
- *  the buff alone. Returns the legend, or null. */
+ *  circle to have their effect"), and its quest is still open (while it sleeps), the quest is done: the legend wakes happy and
+ *  fights for her (Ed, 2026-10-18; rules/legends.ts cheer). The creature stays hers, parked there. Done while the area is still
+ *  wild, `done` (the set of areas whose quest is done: friendly while wild) gains it. Returns the legend, or null. */
 export function questPlaced(map: ForestMap, creatures: Creature[], legendIds: number[], done: Set<string>, partified: (key: string) => boolean, id: number, x: number, z: number, time: number): Creature | null {
   const L = questFor_(map, creatures, legendIds, partified, id, x, z), q = L?.quest;
   if (!L || !q || !inLegendClearing(map, L.cell, x, z, L, LEGENDS.placeRadius)) return null;
   const key = cellKey(L.cell);
   q.done = time;
-  L.buffed = true; L.questOpen = false;
-  if (!partified(key)) done.add(key); // (friendly while wild; after its wave, the buff alone)
+  cheer(L, time);
+  if (!partified(key)) done.add(key); // (friendly while wild)
   return L;
 }
 
@@ -127,7 +126,7 @@ export function setupQuestDemo(g: { creatures: Creature[]; map: ForestMap; witch
   const x = lc ? lc.x : L.x + ((site.x - L.x) / d) * 8, z = lc ? lc.z + lc.r * 0.35 : L.z + ((site.z - L.z) / d) * 8;
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - x, c.z - z) > 250).sort((a, b) => b.id - a.id)[0];
   if (!spare) return null;
-  Object.assign(spare, { circle: undefined, species: L.quest!.species, level: L.quest!.level, x: x - 1.5, z: z + 1, tx: x - 1.5, tz: z + 1, leashed: true, hp: undefined, siege: undefined, enraged: false, fight: undefined, fleeUntil: undefined, wanderTo: undefined });
+  Object.assign(spare, { circle: undefined, species: L.quest!.species, level: 1, x: x - 1.5, z: z + 1, tx: x - 1.5, tz: z + 1, leashed: true, hp: undefined, siege: undefined, enraged: false, fight: undefined, fleeUntil: undefined, wanderTo: undefined });
   g.leash.stack.push(spare.id);
   g.byArea = null;
   place(x, z);

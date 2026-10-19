@@ -1940,6 +1940,24 @@
       "type": "number",
       "minimum": 0
     },
+    "leafJitter": {
+      "type": "object",
+      "properties": {
+        "hue": {
+          "type": "number",
+          "minimum": 0
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "hue",
+        "value"
+      ],
+      "additionalProperties": false
+    },
     "wind": {
       "type": "object",
       "properties": {
@@ -3714,6 +3732,19 @@
           ],
           "additionalProperties": false
         },
+        "grounded": {
+          "type": "object",
+          "properties": {
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "weight"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -3833,6 +3864,7 @@
         "hex",
         "runs",
         "runePull",
+        "grounded",
         "weight",
         "babies"
       ],
@@ -4033,6 +4065,18 @@
     "combat": {
       "type": "object",
       "properties": {
+        "packs": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "on"
+          ],
+          "additionalProperties": false
+        },
         "aggro": {
           "type": "number",
           "minimum": 0
@@ -4125,6 +4169,7 @@
         }
       },
       "required": [
+        "packs",
         "aggro",
         "witchLose",
         "leaveArea",
@@ -7370,12 +7415,17 @@
     "boot": {
       "type": "object",
       "properties": {
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
         "transform": {
           "type": "number",
           "minimum": 0
         }
       },
       "required": [
+        "speed",
         "transform"
       ],
       "additionalProperties": false
@@ -10886,6 +10936,7 @@
     "reserveMargin",
     "treeMarginFromSoundsystem",
     "treeDensity",
+    "leafJitter",
     "wind",
     "groundCover",
     "density",

@@ -133,9 +133,10 @@ describe("the end of the route (rules/win.ts)", () => {
     expect(winLit(g)).toBe(out[out.length - 1].links);
   }, 60000);
 
-  it("the win: the dealt legends woken and home (an enraged one lulled, its island lost), everyone else in the conga, her leash let go, nothing fighting; then the card", () => {
+  it("the win: the dealt legends woken and home (an enraged one lulled), everyone else in the conga, her leash let go, nothing fighting; the islands found only tonight's quests' (Ed, 2026-10-18); then the card", () => {
     const { g } = toTheEnd();
     const legends = g.creatures.filter(c => c.boss && !c.gone), angry = legends[0];
+    g.islandsTonight = ["otter"]; // (a quest done tonight: its island, and only it, found)
     // (kept angry till the win: left to itself, a legend whose kin are about calms of its own accord, rules/legends.ts)
     const keepAngry = () => { if (g.win?.phase !== "won" && angry.legendState !== "angry") anger(angry, g.clock.time); };
     anger(angry, g.clock.time);
@@ -151,7 +152,7 @@ describe("the end of the route (rules/win.ts)", () => {
     const lit = composeFloor({ ...newFloor(), on: 0 }, floorInputs(g), g.tuning);
     expect([...lit.rgbi].some((v, i) => i % 4 === 3 && v > 0)).toBe(true);
     expect(w.lost).toEqual([angry.species]);
-    expect(w.found.sort()).toEqual(legends.filter(c => c !== angry).map(c => c.species).sort());
+    expect(w.found).toEqual(["otter"]); // (winning itself finds none: Ed, 2026-10-18)
     expect(angry.legendState).toBe("asleep");
     expect(angry.partyLegend).toBeFalsy();
     for (const c of legends) if (c !== angry) { expect(c.partyLegend).toBe(true); expect(c.finale!).toBeLessThan(0); }

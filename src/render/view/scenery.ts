@@ -10,6 +10,17 @@ import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
 import type { Atlas } from "../atlas";
 import type { TypeArt } from "../assets";
 import { hash2 } from "../../rules/random";
+
+/** A tree's own leaf-colour jitter seeds, -1 to 1 for hue and for value, from where it stands (Ed, 2026-10-16: "a small amount of
+ *  per-tree colour jitter"; the amount is the tuning's leafJitter, applied to its leaves in the sprite shader). One pair a tree,
+ *  the same every frame and every load. */
+const JITTERS = new Map<number, [number, number]>();
+export function leafJitterOf(p: { x: number; z: number }): [number, number] {
+  const xi = Math.round(p.x * 4) | 0, zi = Math.round(p.z * 4) | 0, key = xi * 131071 + zi;
+  let j = JITTERS.get(key);
+  if (!j) { j = [hash2(xi, zi, 7101) * 2 - 1, hash2(xi, zi, 7103) * 2 - 1]; if (JITTERS.size > 20000) JITTERS.clear(); JITTERS.set(key, j); }
+  return j;
+}
 import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
 import { focusOf, inView, viewRect } from "./culling";
@@ -140,12 +151,13 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy }: N
     const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost;
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
     const at = stand(p.x, p.z, f[big.bot], mpp * scale);
-    if (!near) { add(p.type, { ...at, frame: f[big.top!], flip: p.flip, top: true, fresh, scale, sway: 1 }); nt++; if (sliceDone()) { yield; resume(); } continue; } // (past the scenery's radius, in the treetops: its crown alone)
+    const jitter = leafJitterOf(p); // (its own leaf colour, both halves alike: Ed, 2026-10-16)
+    if (!near) { add(p.type, { ...at, frame: f[big.top!], flip: p.flip, top: true, fresh, scale, sway: 1, jitter }); nt++; if (sliceDone()) { yield; resume(); } continue; } // (past the scenery's radius, in the treetops: its crown alone)
     // A tree's two halves share one box and sway alike (from its foot), so crown and trunk stay together.
     const sway = big.top !== null ? 1 : 0;
-    add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway });
+    add(p.type, { ...at, frame: f[big.bot], flip: p.flip, fresh, scale, cut: big.top !== null ? art.cut.get(big.bot) : undefined, sway, jitter });
     if (big.top !== null || f[big.bot].h > f[big.bot].w * 1.5) { let l = trunks.get(p.type); if (!l) trunks.set(p.type, (l = [])); l.push({ x: p.x, z: p.z, w: f[big.bot].w * mpp * scale, h: f[big.bot].h * mpp * scale, frame: f[big.bot], flip: p.flip }); }
-    if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway });
+    if (big.top !== null) add(p.type, { ...at, frame: f[big.top], flip: p.flip, top: true, fresh, scale, sway, jitter });
     const w = whole.w * mpp, h = whole.h * mpp * (big.top === null ? 0.2 : 0.6);
     if (t.shadows.trees) shadows.push({ x: p.x + sx * h, z: p.z + sz * h, w: w * 0.8, d: w * 0.45, scenery: true });
     nt++;

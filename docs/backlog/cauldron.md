@@ -63,7 +63,7 @@ Agreed one by one with Ed (2026-10-09). Not yet assigned to recipes, apart from 
 28. **Left Hook** (Ed): unlimited dodges, but they always veer left.
 29. **Tall Tales** (Ed): every animal looks very tall.
 30. **Thick Canopy** (Ed): the canopy see-through effect is off, so the ground can't be seen.
-31. **The Whole Route** (Ed): the entire route is shown.
+31. **The Whole Route** (Ed): the entire route is shown. (Also the Route-seer hat's power, built in #942; a trip may want something else.)
 32. **Dreamseer** (Ed): the area a legend's dream points to is easier to see.
 33. **Paper Theatre:** everything becomes flat, wobbling cardboard cutouts.
 34. **Woodcut:** black-and-white engraving, crosshatched shadows.

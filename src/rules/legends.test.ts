@@ -170,43 +170,19 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.fleeUntil).toBeUndefined();
   }), 60000);
 
-  it("lie relics about the map, one per ten areas; she picks one up with the sigil button and puts it down by a sleeping legend: happy, and its buff hers for good", () => {
+  it("lie relics (flasks) about the map, one per ten areas; drunk on their sigil they grow her followers and wake no legend (Ed, 2026-10-18)", () => {
     const { g, L } = beside();
     expect(g.relics.length).toBe(Math.max(1, Math.round((g.map.cells.length - 1) / LEGENDS.relics.perAreas!))); // (one per perAreas areas; where: relics.test.ts)
-    const r = g.relics[1], back = { x: g.witch.x, z: g.witch.z };
+    const r = g.relics[1], pup = g.creatures.find(c => !c.boss && !c.gone && !c.leashed && Math.hypot(c.x - L.x, c.z - L.z) > 300)!;
+    Object.assign(pup, { level: 0, leashed: true, x: r.sx + 2, z: r.sz, tx: r.sx + 2, tz: r.sz });
+    g.leash.stack.push(pup.id);
     g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil, south of it)
     run(g, 0.2, { ...idle, sigil: true });
-    expect(r.state).toBe("carried");
-    expect(g.leash.relics).toEqual([r.id]);
-    g.witch = { ...g.witch, x: back.x, z: back.z };
-    run(g, 0.2, { ...idle, sigil: true });
-    expect(L.legendState).toBe("happy");
-    expect(L.buffed).toBe(true);
     expect(r.state).toBe("used");
     expect(g.leash.relics).toEqual([]);
-    expect(g.buffs.active.map(b => b.id)).toContain(L.id);
-  }, 60000);
-
-  // Ed (2026-10-06): "Quest sigils and relics need to be placed in the circle to have their effect."
-  it("take a relic only inside their clearing: put down outside it, nothing happens but a cue (the circle flashes)", () => {
-    const { g, L } = beside(), lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
-    expect(lc).not.toBeNull();
-    const r = g.relics[0];
-    g.witch = { ...g.witch, x: r.sx, z: r.sz }; // (on its sigil)
-    run(g, 0.2, { ...idle, sigil: true });
-    expect(g.leash.relics).toEqual([r.id]);
-    // just outside the ring, on its open (south) side
-    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r + 3 };
-    let cued = false;
-    run(g, 0.2, { ...idle, sigil: true }, () => { cued ||= g.leashEvents.some(e => e.kind === "outsideCircle" && e.id === L.id); });
+    expect(pup.level).toBe(2);
     expect(L.legendState).not.toBe("happy");
-    expect(g.leash.relics).toEqual([r.id]);
-    expect(cued).toBe(true);
-    // inside it
-    g.witch = { ...g.witch, x: lc.x, z: lc.z + lc.r * 0.5 };
-    run(g, 0.2, { ...idle, sigil: true });
-    expect(L.legendState).toBe("happy");
-    expect(r.state).toBe("used");
+    expect(g.buffs.active).toEqual([]);
   }, 60000);
 
   it("take a quest sigil only inside their clearing: the right creature put down elsewhere in its area does nothing but cue", () => {
@@ -235,7 +211,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     }
   }, 60000);
 
-  it("when happy, shoot the enraged from afar; worn down by them, sleep again, her buff kept", () => {
+  it("when happy, shoot the enraged from afar; worn down by them, sleep again", () => {
     const { g, L } = beside();
     run(g, 0.2, { ...idle, happyNearest: true });
     expect(L.legendState).toBe("happy");
@@ -251,11 +227,10 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     const near = put(g, L.species === "boar" ? "wolf" : "boar", 2, L.x + 1.5, L.z, L.cell); near.enraged = true; near.state = "enraged";
     run(g, 10);
     expect(L.legendState).toBe("asleep");
-    expect(L.buffed).toBe(true);
-    expect(g.buffs.active.map(b => b.id)).toContain(L.id);
+    expect(g.buffs.active).toEqual([]); // (no buff from legends: Ed, 2026-10-18)
   }, 60000);
 
-  it("has the dream quest give her its buff (it sleeps on, the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
+  it("has the dream quest wake it happy, fighting for her, no buff (Ed, 2026-10-18; the creature stays hers), and stay open while it sleeps, soundsystem on or not (Ed, 2026-10-06)", () => {
     const g = newGame(123, NO_SLOW);
     g.clock.paused = false; g.party.paused = true;
     const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
@@ -266,12 +241,12 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(L.questOpen).toBe(true);
     run(g, 0.2, { ...idle, sigil: true });
     expect(L.quest!.done).toBeDefined();
-    expect(L.legendState).not.toBe("happy");
-    expect(L.buffed).toBe(true);
+    expect(L.legendState).toBe("happy");
     expect(L.questOpen).toBe(false);
     expect(gift.leashed).toBe(true); // hers, parked there
     expect(g.leash.placed.map(p => p.id)).toContain(gift.id);
-    expect(g.buffs.active.map(b => b.id)).toContain(L.id);
+    expect(g.buffs.active).toEqual([]);
+    expect(g.islandsTonight).toEqual([L.species]);
     // Another legend: its area's soundsystem on, its quest stays open while it sleeps; awake (angry), it's closed.
     const M = g.creatures.find(c => c.boss && c !== L && c.legendState === "asleep" && c.quest)!;
     g.party.areas.set(cellKey(M.cell), { cell: M.cell, wave: 1, at: g.clock.time, from: null, soundsystem: null });
@@ -323,7 +298,7 @@ describe("charging legends' long charge (Ed, 2026-10-05; legends.json charge)", 
     const hits = new Map<number, number>(); let witchHits = 0, x0 = 0, z0 = 0, t0 = 0, thrown = -1, ran = false, done = false;
     run(g, 30, idle, () => {
       if (L.run?.phase === "home" && ran && !done) { done = true; witchHits = L.run.hit.filter(h => h === -1).length; } // (its first charge over; her as -1 in whom it hit)
-      for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined }); // (they stand in its lane, not fighting it, till they're hit)
+      for (const [c, x] of pins) if (!hits.has(c.id)) Object.assign(c, { x, z: c.anchorZ, fight: undefined, asleep: undefined, asleepAt: undefined, napUntil: undefined }); // (they stand in its lane, awake (a nap would let it pass over them), not fighting it, till they're hit)
       if (!done) for (const e of g.combat.events) if (e.at === g.clock.time) {
         if (e.kind === "hit" && e.id !== undefined && e.big) hits.set(e.id, (hits.get(e.id) ?? 0) + 1); // (only the legend's own hits: the trampled wild may go for its target after, and the parked wolf guards its whole area now (Ed, 2026-10-15), so it goes for the wild in the lane too)
         if (e.kind === "witchHit" && L.run?.hit.includes(-1) && !x0) { x0 = g.witch.x; z0 = g.witch.z; t0 = g.clock.time; }
