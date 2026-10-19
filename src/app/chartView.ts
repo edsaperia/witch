@@ -131,17 +131,30 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
   // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
   let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
+  // (the transition review, 2026-10-19: it starts as the chart opens, for the island she's likeliest to sail to, and follows what she
+  // chooses; each island keeps its night's seed for the chart's whole visit, so what was drawn for it before a change of mind is
+  // still hers when she comes back to it)
+  const seeds = new Map<string, number>();
+  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = Math.floor(Math.random() * 1000000); seeds.set(id, s); } return s; };
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
     if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
-    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null);
+    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
     bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
+  };
+  /** Where she'll likely sail: her last voyage's island, else the nearest she's found, else home (her first game). */
+  const likely = (): string => {
+    const last = save.voyages.at(-1)?.to, can = (id: string | undefined) => !!id && !!islands.find(i => i.id === id)?.sail;
+    if (can(last)) return last!;
+    const home = islands.find(i => i.id === "home"), found = islands.filter(i => i.id !== "home" && save.found.includes(i.id) && i.sail);
+    found.sort((a, b) => Math.hypot(a.x - (home?.x ?? 0), a.y - (home?.y ?? 0)) - Math.hypot(b.x - (home?.x ?? 0), b.y - (home?.y ?? 0)));
+    return found[0]?.id ?? "home";
   };
   const go = async (id: string) => {
     performance.mark("chart:flown");
-    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
+    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
     await b?.settle(); // (what's drawn, written before the page goes)
     // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
     const m = bake?.island === id ? await bake.map : null;
@@ -232,9 +245,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   }
 
   /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
-  function choose(id: string | null, instant = false): void {
+  function choose(id: string | null, instant = false, aim = true): void {
     chart.select(id, instant); ranked();
-    bakeFor(id);
+    if (aim) bakeFor(id); // (her choice: drawn ahead; the chart's own first selection isn't hers, likely() is)
     if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
     if (id && !mini && !((waiting.get(id) ?? islands.find(i => i.id === id)?.outline) as OutlineDone | undefined)?.detail) detail(id);
@@ -337,7 +350,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   setTimeout(() => {
     if (disposed) return;
     build();
-    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true);
+    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true, false);
+    bakeFor(likely()); // (the next island's trees drawn ahead from the moment the chart opens: app/landingBake.ts)
   }, 50);
 
   return {

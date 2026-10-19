@@ -13,6 +13,7 @@ self.onmessage = async (e: MessageEvent<ArtJob & CacheHint>) => {
   const job = e.data, key = job.cacheKey ?? null;
   try {
     if (key) { const hit = await cacheGet(key); if (hit?.px) { post({ job, result: hit, ms: 0, cached: true }, transferables(hit)); return; } }
+    if (job.cacheOnly) { post({ job, miss: true }); return; } // (only if it's kept: render/assets.ts tonight)
     const t0 = performance.now(), result = runJob(job, mk), ms = performance.now() - t0;
     if (key) await cachePut(key, result); // (copied as it's put, before its buffers are sent on)
     post({ job, result, ms }, transferables(result));

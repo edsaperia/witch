@@ -232,6 +232,20 @@ const soundNote = () => {
   addEventListener("keydown", go); addEventListener("pointerdown", go);
 };
 if (arrival) for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; if (!arrival.done) arrival.skip(); }, { capture: true });
+/** The swap point (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom sequence"):
+ *  the island's trees were drawn at once from what's kept (its own seed, render/artCache.ts islandArtSeed); here, the last moment
+ *  she can't see them change (the landing still about to fade; else play starting from behind the bedroom), tonight's own (drawn
+ *  ahead by the chart, app/landingBake.ts) take their place where they're ready, and the rest stay the island's all night (never
+ *  swapped in play). The one hook: the wake-up sequence takes it over when it comes. */
+let artRevealed = false;
+function revealArt(): void {
+  if (artRevealed) return;
+  artRevealed = true;
+  const swapped = view.assets.swapTonight();
+  if (swapped.length) view.retype(swapped);
+  mark("game:reveal");
+}
+if (arrival) arrival.onReveal = revealArt;
 /** It's landed at her decks: the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
   logTiming(); clearCarried(); // (?timing=1: the whole sail, from the chart to her decks)
@@ -313,6 +327,7 @@ function start(): boolean {
   if (!ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
   sound.start(); // (browsers keep sound off until the player presses something: the start is that press)
+  if (!arrival) revealArt(); // (play starting from behind the bedroom or the start screen: the island not seen till now)
   game.clock.paused = false;
   startEl.style.display = "none";
   input.clearPresses();

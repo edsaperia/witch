@@ -6,7 +6,17 @@
 import type { ArtJob, ArtResult } from "./artBuild";
 
 /** A job's cache key, carried with it to the art worker, which keeps the cache (render/artWorker.ts); null: not kept. */
-export interface CacheHint { cacheKey?: string | null }
+export interface CacheHint { cacheKey?: string | null; /** Only if it's kept: a set not kept comes back `miss`, not drawn. */ cacheOnly?: boolean }
+
+/** An island's own tree seed (the transition review, 2026-10-19; Ed: "revisits can draw instantly then redraw during the bedroom
+ *  sequence"): its area types' trees drawn under it are the same every night and session, so they're kept (the art cache) and a
+ *  revisit draws them at once; the night's own (the night's seed, as before) are drawn ahead and swapped in unseen (main.ts
+ *  revealArt). Art only: the rules never see it. */
+export function islandArtSeed(world: number, island: string): number {
+  let h = 2166136261;
+  for (const c of `art|${world}|${island}`) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); }
+  return (h >>> 0) % 1000000;
+}
 
 declare const __ART_HASH__: string;
 export const ART_HASH = typeof __ART_HASH__ === "string" ? __ART_HASH__ : "dev";
