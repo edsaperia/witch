@@ -91,6 +91,11 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, dz);
     wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
   }
+  // A take-off the leashes won't allow (Ed, 2026-10-18: "you try and fly but get pulled down"; the "grounded" leash event,
+  // rules/game.ts): drawn only, the rules keep her on the ground. She lifts off, slowing, to GROUNDED_HOP metres, is yanked
+  // straight back down by her taut leashes (render/leash/stack.ts) and lands with a little bounce.
+  for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
+  wyy += groundedHop(ht - v.groundedAt);
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
   // Her decks: on the treehouse deck (rules/treehouse.ts), where she stands, the opening shot just over her; else the old studio's seat.
@@ -263,4 +268,14 @@ function drawLeftHats(v: View): { x: number; z: number; w: number }[] {
   }
   for (const [k, b] of v.decorBatches) if (k.startsWith("lyingHat:")) b.set(by.get(k) ?? []);
   return out;
+}
+
+/** Her failed take-off's height (metres) `s` seconds after the press: up to GROUNDED_HOP easing out by 0.3 s, yanked back down
+ *  by 0.42 s, a small bounce till 0.6 s, then nothing. */
+export const GROUNDED_HOP = 1.6;
+export function groundedHop(s: number): number {
+  if (!(s >= 0) || s >= 0.6) return 0;
+  if (s < 0.3) return GROUNDED_HOP * Math.sin((s / 0.3) * Math.PI / 2);
+  if (s < 0.42) { const k = (s - 0.3) / 0.12; return GROUNDED_HOP * (1 - k * k); }
+  return 0.18 * Math.sin(((s - 0.42) / 0.18) * Math.PI);
 }

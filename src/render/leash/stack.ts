@@ -4,6 +4,7 @@ import * as THREE from "three";
 import { leashPoint, stackOrder } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
 import { LOAD_DEFAULT } from "../load";
+import { groundedBy } from "../../rules/leashWeight";
 import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
 import { DISC } from "./glyphs";
@@ -76,10 +77,21 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
 
 /** The bond: each leashed creature's glow at its feet, its sparks flowing back to its leash point, its travel route as a
  *  dotted line, and the thread under strain (and under a load, sooner, taut and brighter: render/load.ts). */
+/** How strongly her leashes show while the creatures following her keep her on the ground (0 to 1, as a load). */
+const GROUND_SHOW = 0.5;
+
 export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE.Vector3>, dot: number[]): void {
   const g = lv.game, s = g.leash, t = g.tuning, w = g.witch, B = t.bond, L = t.leash;
   const leashed = [...s.stack, ...s.placed.map(p => p.id)];
+  // Her weight shown by the leashes themselves (Ed, 2026-10-18: "The indication of the weight should be the leashes themselves
+  // being emphasised"): while the creatures following her weigh enough to keep her on the ground (rules/leashWeight.ts
+  // groundedBy), their leashes always show, taut and brighter (GROUND_SHOW); and when she tries to take off anyway (the
+  // "grounded" leash event) they snap tight and blaze as they pull her back down, fading over TUG seconds.
+  for (const e of g.leashEvents) if (e.kind === "grounded") lv.tugAt = e.at;
+  const TUG = 0.8, ts = time - lv.tugAt, tug = ts >= 0 && ts < TUG ? Math.min(1, (TUG - ts) / 0.3) : 0;
+  const held = w.mode === "ground" && groundedBy(s.stack, g.creatures, t).grounded ? GROUND_SHOW : 0, emph = Math.max(held, tug);
   for (const id of leashed) {
+
     const c = g.creatures[id], col = lv.colours.get(c.species);
     if (!col || c.level === 0) continue; // (no leash drawn for a baby: Ed, 2026-10-11)
     const lp = leashPoint(s, id, w.x, w.z)!;
@@ -118,9 +130,10 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
     }
     const d = Math.hypot(c.x - lp.x, c.z - lp.z);
     // (under a load, carried leashes show sooner, taut and brighter: render/load.ts)
-    const ld = s.stack.includes(id) ? lv.load.load : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
-    if (B.thread && d > L.length * from0) {
-      const strain = Math.min(1, (d - L.length * from0) / L.length + ld * 0.5), n = Math.min(60, Math.floor(d / 1.2)), lit = 1 + LT2.threadBright * ld;
+    const carried = s.stack.includes(id), em = carried ? emph : 0, tg = carried ? tug : 0;
+    const ld = carried ? Math.max(lv.load.load, em) : 0, LT2 = t.load ?? LOAD_DEFAULT, from0 = 0.85 - (0.85 - LT2.threadFrom) * ld;
+    if (B.thread && (d > L.length * from0 || em > 0)) {
+      const strain = Math.max(em, Math.min(1, (d - L.length * from0) / L.length + ld * 0.5)), n = Math.min(60, Math.max(8, Math.floor(Math.hypot(d, from.y) / 1.2))), lit = 1 + LT2.threadBright * ld + 1.6 * tg;
       // An upward bow (Ed: "arc upwards a little"), high while it's slack and flattening to a near-straight line as it
       // goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"), and the dots march from
       // the creature to the leash point.
@@ -128,7 +141,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
       for (let i = 1; i < n; i++) {
         const k = (i + 1 - (time * 2) % 1) / n;
         if (k >= 1) continue;
-        lv.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22 * (1 + 0.6 * ld), dot, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), Math.min(1, 0.25 + 0.75 * strain));
+        lv.standing.add(from.x + (c.x - from.x) * k, from.y + (0.5 - from.y) * k + Math.sin(k * Math.PI) * arc, from.z + (c.z - from.z) * k, 0.22 * (1 + 0.6 * ld + 0.9 * tg), dot, Math.min(1, col.r * lit), Math.min(1, col.g * lit), Math.min(1, col.b * lit), Math.min(1, 0.25 + 0.75 * strain));
       }
     }
   }
