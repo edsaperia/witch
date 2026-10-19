@@ -219,3 +219,42 @@ describe("pack combat, Phase 1's pieces", () => {
     expect(Math.abs(dz) / Math.hypot(dx, dz)).toBeGreaterThan(0.05); // (steering east, she drifts off north or south)
   }, 60000);
 });
+
+// Ed's playtest, v3893 (2026-10-19): "Pouncing/melee animals seem to fall short again and so are easy to evade ... they miss me",
+// hares, pack combat on. Its shooters aimed half a blink ahead of her whatever their bolt's flight, so walking away she was 10 m on
+// when they arrived; and only the nearest of a pack round her lunged a combo. A hare pack in its own area, her walking away at her
+// speed, turning now and then: its lunges land, its bolts hit, and it hurts her about as often as the plain fight does.
+describe("a pack against her walking away (Ed's playtest, v3893)", () => {
+  function chase(packs: boolean) {
+    const g = newGame(123, withTuning({ combat: { ...TUNING.combat, packs: { on: packs } } }));
+    g.clock.paused = false; g.party.paused = true;
+    const h = g.creatures.filter(c => c.species === "hare" && c.level > 0 && !c.gone)[0];
+    g.witch = { ...g.witch, seated: false, mode: "ground", lift: 0, x: h.x + 6, z: h.z };
+    let lunges = 0, landed = 0, hits = 0, fired = 0, shotHits = 0;
+    const lunging = new Map<number, boolean>(), mine = new Set<number>();
+    for (let i = 0; i < 40 / STEP; i++) {
+      g.witches[0].health.hp = 99;
+      const T = i * STEP, a = Math.floor(T / 4) * 2.1, c: Controls = { ...idle, moveX: T < 2 ? 0 : Math.cos(a), moveZ: T < 2 ? 0 : Math.sin(a) };
+      const before = new Map(g.combat.shots.filter(s => !s.lob).map(s => [s.id, s]));
+      stepGame(g, c, STEP);
+      const w = g.witch, now = new Set(g.combat.shots.map(s => s.id)), hit = g.combat.events.some(e => e.kind === "witchHit" && e.at === g.clock.time);
+      if (hit) hits++;
+      for (const s of g.combat.shots) if (!mine.has(s.id) && g.creatures[s.from]?.species === "hare") { mine.add(s.id); fired++; }
+      for (const [id, s] of before) if (mine.has(id) && !now.has(id) && g.clock.time < s.until - 1e-6 && Math.hypot(w.x - s.x, w.z - s.z) < 3) shotHits++;
+      for (const k of g.creatures) {
+        if (k.species !== "hare" || k.leashed) continue;
+        const on = !!k.fight?.lunge;
+        if (lunging.get(k.id) && !on && k.fight?.target?.kind === "witch") { lunges++; if (hit) landed++; }
+        lunging.set(k.id, on);
+      }
+    }
+    return { lunges, landed, hits, fired, shotHits };
+  }
+  it("lands its lunges and bolts, and hits her about as often as without packs", () => {
+    const plain = chase(false), packs = chase(true);
+    expect(packs.lunges).toBeGreaterThanOrEqual(5);
+    expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.7); // (a lunge that starts reaches her)
+    expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
+    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.6); // (9 to 17 of plain's 24 to 30 before)
+  }, 60000);
+});

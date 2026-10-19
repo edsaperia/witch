@@ -480,7 +480,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       let tx = f.aimX, tz = f.aimZ;
       if (at) { const hv = velOf(f.target); tx = p.x; tz = p.z; for (let k = 0; k < 2; k++) { const tt = Math.hypot(tx - c.x, tz - c.z) / v; tx = p.x + hv.vx * tt * DB.lead; tz = p.z + hv.vz * tt * DB.lead; } }
       // A pack's shooter at her aims where a dodge would go (Ed: 3c: "the crossfire aims where the blink went"), and may fire a volley.
-      if (pd && f.target.kind === "witch") { const v0 = w.witches[f.target.id], q = dodgeAim(v0, w.packWorld?.dash?.(f.target.id) ?? null, time, t.dash.distance ?? 8); tx = q.x; tz = q.z; }
+      if (pd && f.target.kind === "witch") { const q = dodgeAim(w.packWorld?.dash?.(f.target.id) ?? null, time); if (q) { tx = q.x; tz = q.z; } }
       const ax = tx - c.x, az = tz - c.z, n = pd && "shots" in atk ? (atk.shots as number) : 1, spread = pd && "spread" in atk ? (atk.spread as number) : 0, a0 = Math.atan2(az, ax);
       for (let k = 0; k < n; k++) {
         const a = n > 1 ? a0 + (k / (n - 1) - 0.5) * spread : a0;
