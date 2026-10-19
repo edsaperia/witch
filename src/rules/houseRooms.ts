@@ -112,9 +112,9 @@ export function useHats(W: Witch, at: At, x: number, z: number, time: number, ra
  *  `hold` seconds of it and she sleeps, ending the night (the "house" event with obj "slept", once: `slept`). Let go, or away from the bed,
  *  and it starts again. Returns how full the ring is (0 to 1), for the view. */
 export function stepBed(W: Witch, atBed: boolean, held: boolean, time: number, hold = HOUSE_ROOMS.bed.hold): { fill: number; slept: boolean } {
+  if (W.house?.slept) return { fill: 1, slept: false };
+  if (!atBed || !held) { if (W.house?.bedFrom !== undefined) delete W.house.bedFrom; return { fill: 0, slept: false }; } // (her state untouched away from the bed)
   const H = (W.house ??= {});
-  if (H.slept) return { fill: 1, slept: false };
-  if (!atBed || !held) { delete H.bedFrom; return { fill: 0, slept: false }; }
   H.bedFrom ??= time;
   const fill = Math.min(1, (time - H.bedFrom) / Math.max(1e-6, hold));
   if (fill >= 1) H.slept = true;
