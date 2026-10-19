@@ -4051,6 +4051,18 @@
     "combat": {
       "type": "object",
       "properties": {
+        "packs": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "on"
+          ],
+          "additionalProperties": false
+        },
         "aggro": {
           "type": "number",
           "minimum": 0
@@ -4143,6 +4155,7 @@
         }
       },
       "required": [
+        "packs",
         "aggro",
         "witchLose",
         "leaveArea",

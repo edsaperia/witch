@@ -3,13 +3,14 @@
 // see and judge how kinds fight one another. `wolf*4@2` sets the level (default young); hers at @3
 // are happy legends, and a wild group ending "!" besieges home's soundsystem.
 // Presets for each pattern: ?arena=surround, pincer, hitandrun, charge, volley, kite, swarm, lob,
-// beam, ambush, burrow, leap, armour, legend, siege (ARENA_PRESETS). It's set
+// beam, ambush, burrow, leap, armour, legend, siege, and pack-<kind> and hers-<kind> for pack combat (ARENA_PRESETS). It's set
 // below the dancefloor, hers on the left, the wild on the right, and she stands behind hers. Creatures are borrowed from the far
 // edge of the map. No drawing here.
 import { LEGEND, speedFactor, wanderRange, type Level } from "./creatures";
 import { newCamera } from "./camera";
 import type { Game } from "./game";
 import { witchHeight } from "./witch";
+import { PACKS } from "./combat/packs";
 
 export interface ArenaGroup { species: string; count: number; level: Level; /** (wild) besieging home's soundsystem */ siege?: boolean }
 
@@ -40,6 +41,10 @@ export const ARENA_PRESETS: Record<string, string> = {
   dart: "beetle*2@2,dormouse*5@2", roll: "wolf*3@2,hedgehog*3@2", slime: "wolf*3@2,snail*3@2", woodlouse: "wolf*3@2,woodlouse*3@2",
   strike: "wolf*3@2,snake*3@2", moth: "moth*6@2", cat: "cat*4@2",
 };
+// Pack combat (rules/combat/packs.ts; turn combat.packs.on on, on the pause page): ?arena=pack-fox, a wild pack of the kind, three
+// young and two adults, coming for her (hers a baby of the same kind, which no fox fights); ?arena=hers-fox, four adults of hers
+// combo-ing on three young wolves. One of each for every kind in config/packs.json.
+for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,wolf*3@1`; }
 
 export function setupArena(g: Game, spec: string): void {
   const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec);

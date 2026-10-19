@@ -135,7 +135,7 @@ export function drawCreatures(v: View, time = 0): void {
   for (let i = 0; i < g.creatures.length; i++) { // (by index: no iterator object a creature)
     const c = g.creatures[i];
     if (c.gone || Math.abs(c.x - g.witch.x) > R || Math.abs(c.z - g.witch.z) > R) continue;
-    if (c.burrow) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view)
+    if (c.burrow || c.packHide) continue; // under the ground (Stage 5: the mole), a mound shows where (leash view); up the trees or underground in a pack's lull (rules/combat/packs.ts)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
     // Happy ones (issue #87) in party clothes without the collar; legends never dressed up (render/looks.ts).
     const look = lookOf(c), party = look === "leashed" && !c.boss ? v.assets.partyArt(c.species, c.id, sigilColour(c.species)) : look === "happy" ? v.assets.happyArt(c.species, c.id) : undefined;
