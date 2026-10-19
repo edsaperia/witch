@@ -24,7 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const legend = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch, near = g.creatures.filter(c => c.boss && c.legendState === "asleep" && c.quest && c.quest.done === undefined).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z))[0];
       if (!near) return null;
-      g.witch = { ...g.witch, x: near.x + 8, z: near.z + 22, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
+      g.witch = { ...g.witch, x: near.x + 10, z: near.z - 14, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
       return { id: near.id, species: near.species, wants: near.quest.species };
     });
     if (!legend) throw new Error("no dreaming legend");

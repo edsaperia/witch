@@ -46,10 +46,24 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
       return { id: L.id, species: L.species, wants: L.quest.species, k };
     });
     console.log("legend", L.species, "dreams of", L.wants);
+    // 0. Its dream bubble, from further back (just north of it: the camera looks north, so its head and the bubble over it come to the middle of the screen), zoomed out if need be.
+    await page.evaluate(id => { const g = window.witch.game, c = g.creatures[id]; g.witch = { ...g.witch, x: c.x + 10, z: c.z - 14, vx: 0, vz: 0 }; }, L.id);
+    await steps(60);
+    await page.waitForTimeout(8000);
+    const bubble = () => page.evaluate(() => { const e = document.querySelector(".thought.dream"); if (!e || e.style.display === "none") return null; const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, w: r.width, h: r.height }; });
+    let dream = null;
+    for (let z = 0; z < 4 && !(dream = (await steps(20), await bubble())); z++) await step({ zoom: 1 });
+    console.log("dream bubble", JSON.stringify(dream));
+    if (!dream) console.log("why:", await page.evaluate(id => { const lv = window.witch.view.leashView, g = window.witch.game, c = g.creatures[id]; const els = [...document.querySelectorAll(".thought")].map(e => e.className + ":" + e.style.display); return JSON.stringify({ dreams: (lv.dreams || []).map(c => c.id), host: !!lv.bubbleWitch?.parentElement, mode: g.witch.mode, lift: g.witch.lift, d: Math.hypot(c.x - g.witch.x, c.z - g.witch.z), qo: c.questOpen, st: c.legendState, els }); }, L.id));
+    if (!dream) errors.push("no dream bubble");
+    for (let i = 0; i < 30 && dream; i++) { const sym = await page.evaluate(() => { const e = document.querySelector(".thought.dream canvas.sigil"); return e && e.style.display !== "none" && parseFloat(e.style.opacity) > 0.9; }); if (sym) break; await steps(5); }
+    await page.screenshot({ path: path.join(outDir, "dream.png"), timeout: 600000 });
+    if (process.env.ONLY === "dream") throw new Error("ONLY=dream: stopping");
+    await page.evaluate(k => { const g = window.witch.game; g.witch = { ...g.witch, x: k.x + k.r * 0.15, z: k.z + k.r * 0.5, vx: 0, vz: 0 }; }, L.k);
     await steps(60);
     await page.waitForTimeout(8000); // (the art round her in)
     await steps(20);
-    await page.screenshot({ path: path.join(outDir, "quest-before.png") });
+    await page.screenshot({ path: path.join(outDir, "quest-before.png"), timeout: 600000 });
     const [gift] = await follow([[L.wants, 0]]);
     await page.evaluate(([gift, k]) => { const c = window.witch.game.creatures[gift]; Object.assign(c, { x: k.x - 2, z: k.z + k.r * 0.4, tx: k.x - 2, tz: k.z + k.r * 0.4 }); }, [gift, L.k]);
     await steps(30);
@@ -58,7 +72,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     if (after.state !== "happy") errors.push(`quest: the legend is ${after.state}, not happy`);
     if (!after.tonight.includes(L.species)) errors.push("quest: its island isn't found tonight");
     await steps(40);
-    await page.screenshot({ path: path.join(outDir, "quest-done.png") });
+    await page.screenshot({ path: path.join(outDir, "quest-done.png"), timeout: 600000 });
 
     // 2. A flask drunk: on the nearest flask's sigil, with a baby, a young one and an adult following; E drinks it.
     const r = await page.evaluate(() => {
@@ -74,16 +88,16 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.evaluate(([r]) => { const g = window.witch.game; g.witch = { ...g.witch, x: g.relics[r.id].sx, z: g.relics[r.id].sz }; }, [r]);
     await steps(30);
     console.log("before:", await levels(mine));
-    await page.screenshot({ path: path.join(outDir, "flask-before.png") });
+    await page.screenshot({ path: path.join(outDir, "flask-before.png"), timeout: 600000 });
     await step({ place: true });
     await steps(4);
-    await page.screenshot({ path: path.join(outDir, "flask-drinking.png") });
+    await page.screenshot({ path: path.join(outDir, "flask-drinking.png"), timeout: 600000 });
     await steps(60);
     const lv = await levels(mine), state = await page.evaluate(id => window.witch.game.relics[id].state, r.id);
     console.log("after:", lv, "flask", state);
     if (state !== "used") errors.push(`flask: ${state}, not drunk`);
     if (!lv.split(" ").every(s => s.endsWith("2"))) errors.push(`flask: followers ${lv}, not all adults`);
-    await page.screenshot({ path: path.join(outDir, "flask-after.png") });
+    await page.screenshot({ path: path.join(outDir, "flask-after.png"), timeout: 600000 });
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
   console.log("ok");
