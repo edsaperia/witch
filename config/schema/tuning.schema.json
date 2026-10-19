@@ -3732,6 +3732,19 @@
           ],
           "additionalProperties": false
         },
+        "grounded": {
+          "type": "object",
+          "properties": {
+            "weight": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "weight"
+          ],
+          "additionalProperties": false
+        },
         "weight": {
           "type": "object",
           "properties": {
@@ -3851,6 +3864,7 @@
         "hex",
         "runs",
         "runePull",
+        "grounded",
         "weight",
         "babies"
       ],

@@ -38,7 +38,7 @@ import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
-import { loadOf, type LeashLoad } from "./leashWeight";
+import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
 import { hurt, knockOut, newHealth, nextStreak, repair, stepKnockout, stepWanderers, type Health, type Knockout, type KnockoutEvent } from "./knockout";
 import { dropCache, newInvites, stepInvites, type Affection, type InviteControls, type Invites } from "./invites";
@@ -476,6 +476,16 @@ function fixedStep(g: Game, controls: Controls): void {
   if (W.ko) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   // Staggered by a blow (rules/knock.ts): no moving, rising, blinking or 💌s for a moment.
   else if (stunned(W.knock, ht)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom, sigil: c.sigil, place: c.place, cycle: c.cycle };
+  // Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; "you try and fly
+  // but get pulled down"; rules/leashWeight.ts groundedBy, leash.grounded): the press keeps her on the ground, dropped before the
+  // cooldown's (so it spends none), and is said, the "grounded" leash event: the view draws her lifting off and yanked back down
+  // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
+  // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
+  // in the treetops, or coming down, she flies on as before.
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && groundedBy(W.leash.stack, g.creatures, t).grounded) {
+    c = { ...c, toggleMode: false };
+    g.leashEvents.push({ kind: "grounded", id: 0, x: W.body.x, z: W.body.z, at: ht });
+  }
   // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
   // dodging"; rising takes her out of ground mode at once).
   if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, (t.cooldown?.rise ?? 0) * plainK, room) : ht < (W.landedAt ?? -Infinity) + riseCooldownOf(W.spells, t))) c = { ...c, toggleMode: false }; // (the plain broom's shorter: rules/spells.ts; shared: the counter must have room for the take-off)
