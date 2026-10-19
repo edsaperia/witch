@@ -10,9 +10,10 @@
 //     cue). The waves stop as the lap sets off.
 //   The win, as the lap reaches home: the island's sigil (islandSigil), the night's legends woken (Ed, 2026-10-11: not in the
 //     conga, but they come home and dance there as party legends) save any still enraged, which calm and go back to sleep in
-//     their clearing, their islands not found; every other animal on the island a party animal in one giant conga line round
+//     their clearing; every other animal on the island a party animal in one giant conga line round
 //     the dancefloor; fireworks from every standing soundsystem. Nothing fights after; the waves are over.
-//   Then the "Night won" card (card), listing the islands found (found; lost: the enraged legends' kinds).
+//   Then the "Night won" card (card), listing the islands found tonight by quests (found: g.islandsTonight; Ed, 2026-10-18: the
+//     win itself finds none, and only a won night keeps them).
 // The losing still comes first: home's speakers down before the win, the party's over as ever (rules/partyOver.ts). No drawing.
 import type { Game } from "./game";
 import type { Creature } from "./creatures";
@@ -50,8 +51,8 @@ export interface WinState {
   firedOut?: number;
   /** The island's sigil (islandSigil: a kind's island its kind's, home the World Tree's). */
   sigil: string;
-  /** The night's dealt legends won (woken, their islands found: the card's, and the sea chart's), and those still enraged at the
-   *  end (calmed, back to sleep; their islands not found), by kind (species). */
+  /** The islands found tonight by quests (Ed, 2026-10-18: "Just winning an island does not unlock more islands"; g.islandsTonight:
+   *  the card's, and the sea chart's), and the night's dealt legends still enraged at the end (calmed, back to sleep), by kind. */
   found: string[];
   lost: string[];
   /** The "Night won" card is up (win.cardAfter seconds after the win). */
@@ -224,11 +225,12 @@ function win(g: Game, time: number): void {
   // Her leash let go: every one of them dances in the line now.
   for (const W of g.witches) { for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) g.creatures[id].leashed = false; W.leash.stack = []; W.leash.placed = []; W.leash.talk = null; }
   g.combat.busy.clear();
-  // The night's legends: the enraged ones calm and sleep again (their islands not found); the rest wake and come home to dance.
+  // The night's legends: the enraged ones calm and sleep again; the rest wake and come home to dance.
   const legends = dealtLegends(g), woken: Creature[] = [];
+  w.found = [...(g.islandsTonight ?? [])]; // (only the quests done tonight find islands: Ed, 2026-10-18)
   for (const c of legends) {
     if (c.legendState === "angry" || c.enraged) { lull(c, time); w.lost.push(c.species); continue; }
-    woken.push(c); w.found.push(c.species);
+    woken.push(c);
   }
   // Every other animal: a party animal, in the line.
   w.lead = Math.atan2(g.witch.z - d0.z, g.witch.x - d0.x);

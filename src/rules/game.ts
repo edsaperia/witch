@@ -133,6 +133,9 @@ export interface Game {
   hunts?: Set<number>;
   /** Quests done in this frame's steps (for the view). */
   questEvents: QuestEvent[];
+  /** The islands found tonight (Ed, 2026-10-18): each legend's kind whose quest she did this night, in order. Saved to the sea
+   *  chart only if the night is won (rules/win.ts found, app/chartSave.ts); lost, they're not kept. */
+  islandsTonight: string[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
   relics: Relic[];
   /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
@@ -250,7 +253,7 @@ export function newGame(seed: number, tuning: Tuning, players = 1): Game {
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
   // Home is its ring of speakers, each its own soundsystem in the fight (Ed, 2026-10-08; rules/speakers.ts).
@@ -544,7 +547,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (was.falling !== undefined && W.body.falling === undefined) W.leash.events.push({ kind: "fell", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (off the balcony with no broom: back at the circle)
   // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
   // Stealth (rules/brooms.ts): throwing 💌s, or putting down or picking up anything, gives her away for a moment.
-  if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);
+  if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "flaskDrunk" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);
   for (const e of W.leash.events.slice()) if (e.at === ht && e.id === W.id) {
     if (e.kind === "hatPut" && W.hat.down) onHatPut(g, W, W.hat.down.x, W.hat.down.z, ht, t);
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
@@ -845,7 +848,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined,
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
     areaOf: c => { if (c.leashed) { const p = g.leash.placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,

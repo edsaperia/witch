@@ -1,7 +1,7 @@
 // The sleeping legends' dream bubbles (render/leash/bubbles.ts drawDreams, render/thoughtCloud.ts; Ed, 2026-10-08: pixel thought
 // bubbles, small clouds rising to a large one, one symbol at a time): the built game (DIST, default dist/) at 1280×720 on a seed;
 // the witch set down on the ground beside the nearest dreaming legend, a crop of its bubble showing each symbol (its face, the
-// sigil it dreams of, the flask), and one as a nightmare. Fails on a page error or a symbol that never shows. Writes previews/dreams/.
+// kind it dreams of, any age: no flask since 2026-10-18), and one as a nightmare. Fails on a page error or a symbol that never shows. Writes previews/dreams/.
 //   npm run build && node tools/smoke/dreams.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -24,7 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const legend = await page.evaluate(() => {
       const g = window.witch.game, w = g.witch, near = g.creatures.filter(c => c.boss && c.legendState === "asleep" && c.quest && c.quest.done === undefined).sort((a, b) => Math.hypot(a.x - w.x, a.z - w.z) - Math.hypot(b.x - w.x, b.z - w.z))[0];
       if (!near) return null;
-      g.witch = { ...g.witch, x: near.x + 8, z: near.z + 22, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
+      g.witch = { ...g.witch, x: near.x + 10, z: near.z - 14, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 };
       return { id: near.id, species: near.species, wants: near.quest.species };
     });
     if (!legend) throw new Error("no dreaming legend");
@@ -56,7 +56,6 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     };
     await shoot("emoji", "emoji");
     await shoot("sigil", "sigil");
-    await shoot("flask", "flask");
     await page.screenshot({ path: path.join(outDir, "screen.png") });
     await page.evaluate(id => { window.witch.game.creatures[id].restlessness = 0.75; }, legend.id);
     await shoot("nightmare-emoji", "emoji");

@@ -426,7 +426,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         // clearing (Ed, 2026-10-06: quest sigils count only in its circle), on its open floor.
         const L = LO.get(key), q = L !== undefined ? g.creatures[L].quest : null;
         const st = w.leash.stack;
-        const qi = q && L !== undefined && g.creatures[L].questOpen ? st.findIndex(id => g.creatures[id].species === q.species && g.creatures[id].level === q.level) : -1;
+        const qi = q && L !== undefined && g.creatures[L].questOpen ? st.findIndex(id => g.creatures[id].species === q.species) : -1;
         const lc = qi >= 0 ? map.legendClearing(cell[0], cell[1]) : null, at = lc ? { x: lc.x, z: lc.z + lc.r * 0.35 } : s;
         bot.doing = there(at.x, at.z) ? `defending wave ${wave}` : `flying to defend wave ${wave}`;
         if (goTo(at.x, at.z, true)) {
@@ -440,14 +440,19 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           for (const c of g.creatures) if (c.enraged && !c.gone && Math.hypot(c.x - b.x, c.z - b.z) < K.kite) { const d = Math.hypot(c.x - b.x, c.z - b.z) || 1; mx = (b.x - c.x) / d; mz = (b.z - c.z) / d; dash = d < K.dashAt; bot.doing = `dodging ${article(c.species)} at wave ${wave}`; break; }
         }
       } else if (o.relics && careful && (rjob || (time >= relicAgain && relicCount < (o.relicMax ?? Infinity) && relicTries < (o.relicMax ?? Infinity) * 3 && g.relics.some(r => r.state === "lying")))) {
-        // A lucky find: to the nearest lying relic, pick it up (the sigil button by it), then to the nearest sleeping
-        // legend and put it down beside it: a powerful ally.
+        // A lucky find: to the nearest lying flask, and drink it on its sigil (the sigil button there: Ed, 2026-10-18, a growth
+        // spurt, every animal following her an adult). It waits till some of hers following her are under age.
         if (!rjob) {
           if (w.leash.relics.length) rjob = { phase: "place", since: now, n: w.leash.relics.length };
           else { const r = g.relics.filter(r => r.state === "lying").sort((a, c) => Math.hypot(a.x - c.x, a.z - c.z) - Math.hypot(c.x - c.x, c.z - c.z) || Math.hypot(a.x - b.x, a.z - b.z) - Math.hypot(c.x - b.x, c.z - b.z))[0]; rjob = r ? { phase: "pick", r, since: now } : null; if (rjob) relicTries++; if (!rjob) relicAgain = time + 60; }
         }
-        bot.doing = rjob?.phase === "place" ? "bringing a relic to a legend" : "fetching a relic";
-        if (rjob?.phase === "pick") { if (goTo(rjob.r!.sx ?? rjob.r!.x, rjob.r!.sz ?? rjob.r!.z, true, 2)) { /* (standing on its sigil, a little south of it: #279) */ sigil = true; if (w.leash.relics.length) rjob = { phase: "place", since: now, n: w.leash.relics.length }; } if (rjob && now - rjob.since > 120) { rjob = null; relicAgain = time + 60; } }
+        bot.doing = "fetching a flask";
+        if (rjob?.phase === "pick") {
+          const young = w.leash.stack.some(id => g.creatures[id].level < 2);
+          if (!young) { rjob = null; relicAgain = time + 30; } // (nothing to grow: later)
+          else if (goTo(rjob.r!.sx ?? rjob.r!.x, rjob.r!.sz ?? rjob.r!.z, true, 2)) { /* (standing on its sigil, a little south of it: #279) */ sigil = true; if (rjob.r!.state === "used") { bot.done.relics.push({ at: time, id: g.relics.findIndex(r => r === rjob!.r) }); relicCount++; rjob = null; relicAgain = time + 30; } }
+          if (rjob && now - rjob.since > 120) { rjob = null; relicAgain = time + 60; }
+        }
         else if (rjob?.phase === "place") {
           const P = o.relicPolicy ?? "nearest", d0 = map.dancefloor, next = new Set((g.party.next ?? []).map(c => cellKey(c)));
           const score = (c: Creature) => P === "home" ? Math.hypot(c.x - d0.x, c.z - d0.z) : P === "far" ? -Math.hypot(c.x - d0.x, c.z - d0.z) : P === "front" ? (next.has(cellKey(c.cell)) ? Math.hypot(c.x - b.x, c.z - b.z) : 1e6 + Math.hypot(c.x - d0.x, c.z - d0.z)) : Math.hypot(c.x - b.x, c.z - b.z);
@@ -464,9 +469,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
           for (const id of LO.values()) {
             const L = g.creatures[id], q = L.quest;
             if (L.gone || !L.questOpen || !q) continue;
-            const onStack = w.leash.stack.find(i => g.creatures[i].species === q.species && g.creatures[i].level === q.level);
+            const onStack = w.leash.stack.find(i => g.creatures[i].species === q.species);
             let want: Creature | null = onStack !== undefined ? g.creatures[onStack] : null, wd = 0;
-            if (!want) { let md = Infinity; for (const c of g.creatures) { if (c.gone || c.leashed || c.boss || c.enraged || c.species !== q.species || c.level !== q.level || c.fleeUntil !== undefined) continue; const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < md && d < 700) { md = d; want = c; } } wd = md; }
+            if (!want) { let md = Infinity; for (const c of g.creatures) { if (c.gone || c.leashed || c.boss || c.enraged || c.species !== q.species || c.fleeUntil !== undefined) continue; const d = Math.hypot(c.x - b.x, c.z - b.z); if (d < md && d < 700) { md = d; want = c; } } wd = md; }
             if (!want) continue;
             const sc = wd + Math.hypot(L.x - want.x, L.z - want.z);
             if (sc < bs) { bs = sc; best = { L, want, phase: want.leashed ? "deliver" : "fetch", since: now }; }
