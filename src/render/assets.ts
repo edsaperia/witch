@@ -160,8 +160,12 @@ export class AssetLibrary {
    *  and the GPU's keep a core among them (Ed's log, 2026-10-14: the device under-ran in bursts, seconds of the audio clock lost
    *  at a time, while the workers baked on every core but the page's). What the view needs now (an urgent ask) takes them all. */
   playing = false;
+  /** Held (the sea chart open over the night, main.ts; the transition review, 2026-10-19): no new set handed to the workers,
+   *  those already drawing finishing, so the cores go to the chart and to drawing the next island ahead (app/landingBake.ts). */
+  private held = false;
+  hold(on: boolean): void { this.held = on; if (!on) this.dispatch(); }
   private dispatch(): void {
-    if (!this.useWorkers) return;
+    if (!this.useWorkers || this.held) return;
     const n = this.workers.length, ahead = this.playing ? Math.max(1, Math.floor(n / 2)) : n;
     for (const slot of this.workers) {
       if (slot.busy || !this.queue.length) continue;
@@ -442,7 +446,7 @@ export class AssetLibrary {
 
   /** Without workers: draw waiting sets on the page until `budgetMs` has passed (at least one). */
   work(budgetMs: number): void {
-    if (this.useWorkers) return;
+    if (this.useWorkers || this.held) return;
     const t0 = performance.now();
     let made = 0;
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {

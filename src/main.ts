@@ -1,6 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
 import { chartOpen, openChart } from "./ui/chartOverlay";
+import { clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -56,6 +57,11 @@ import { readArrival } from "./app/arrival";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
+// ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
+const TIMING = timingOn(params);
+if (TIMING) watchLongTasks();
+/** The transition so far into the L log (?timing=1). */
+const logTiming = (): void => { if (TIMING) playtest.timing(transitionTiming()); };
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
 // (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
@@ -220,6 +226,7 @@ const soundNote = () => {
 if (arrival) for (const ev of ["keydown", "pointerdown"]) addEventListener(ev, () => { gestured = true; if (!arrival.done) arrival.skip(); }, { capture: true });
 /** It's landed at her decks: the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
+  logTiming(); clearCarried(); // (?timing=1: the whole sail, from the chart to her decks)
   landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   if (start()) queueCast();
@@ -444,6 +451,8 @@ playtest.frameState = () => {
   return { ms: pct(r.frames, 0.5) ?? 0, p95: pct(r.frames, 0.95) ?? 0, cpu: pct(r.cpu, 0.5) ?? 0, cpu95: pct(r.cpu, 0.95) ?? 0, gpu: pct(r.gpu, 0.5), gpu95: pct(r.gpu, 0.95), over20: r.frames.length ? Math.round((100 * r.frames.filter(x => x > 20).length) / r.frames.length) : 0, draws: S.drawCalls ?? 0, trees: S.trees, bushes: S.bushes, creatures: S.creatures, mode: w.mode, zoom: game.camera.zoomStep };
 };
 const micWanted = params.get("micCheck") === "1";
+let frame1 = false; // (the first frame drawn once ready: app/timing.ts)
+let chartHeld = false, chartWasPaused = false; // (the sea chart open: the night held behind it)
 let lastShedS = -1; // (the sound's safety valve, checked once a second: platform/audio/shed.ts)
 const SLOW_AUDIO = 150; let slowAudioLogged = 0; // (ms: a frame's audio work worth a line in the playtest log)
 /** Driven from outside (the perf check, tools/smoke): the loop below stands still, and
@@ -462,6 +471,7 @@ const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.e
 function frame(now: number): void {
   requestAnimationFrame(frame);
   if (loop.manual) return;
+  if (ready && !frame1) { frame1 = true; mark("game:frame1"); if (!arrival) { logTiming(); clearCarried(); } }
   const dt = last ? (now - last) / 1000 : 0;
   last = now;
   const work0 = performance.now();
@@ -469,6 +479,11 @@ function frame(now: number): void {
   freeze.pollPad();
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   const human = chartOpen() || creator.visiting ? stillControls(input.read()) : input.read(); // (her room open mid-night: she stands still on the deck)
+  // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
+  // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
+  // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
+  const charting = chartOpen();
+  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -543,6 +558,7 @@ function frame(now: number): void {
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
   const flying = !!arrival && !landed && ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
+  if (chartHeld) return; // (the sea chart over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).

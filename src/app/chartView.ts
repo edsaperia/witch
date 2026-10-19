@@ -22,6 +22,7 @@ import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
+import { carryTiming, mark } from "./timing";
 import { islandPhase, OUTLINE_STEP, outlineOrder } from "./chartWarm";
 
 export type ChartMode = "look" | "sail" | "miniature";
@@ -132,14 +133,17 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     bake = id && islands.find(i => i.id === id)?.sail ? { island: id, job: import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null) } : null;
   };
   const go = async (id: string) => {
+    mark("chart:flown");
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
     await b?.settle(); // (what's drawn, written before the page goes)
+    mark("chart:go"); carryTiming(); // (?timing=1: this page's steps carried to the next, app/timing.ts)
     if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || !isl?.sail || chart.flying) return;
     const w = worldNow();
+    mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
     if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!); })) { void go(id!); return; }
     root.classList.add("flying");
@@ -159,6 +163,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (!isl || o.world !== worldNow()) return;
     if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
     isl.outline = o; chart.reshape(o.id, o);
+    { const n = islands.filter(i => i.outline).length; if (n === 1) mark("chart:island1"); if (n === islands.length) mark("chart:islands"); } // (app/timing.ts)
   };
   const make = (): Worker | null => {
     if (!worker) {
