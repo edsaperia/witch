@@ -1,0 +1,72 @@
+{
+  "spot": {
+    "x": 2997.3697287686523,
+    "z": 2572.333517852378,
+    "type": 5
+  },
+  "out": {
+    "treetop hue 0 value 0": {
+      "colouredPixels": 799647,
+      "meanSat": 0.559,
+      "meanVal": 0.286,
+      "hueStd": 27.19,
+      "pixelsDiffering": 0,
+      "meanAbsDiff": 0,
+      "meanHueShiftDeg": null
+    },
+    "treetop hue 8 value 0": {
+      "colouredPixels": 799442,
+      "meanSat": 0.556,
+      "meanVal": 0.286,
+      "hueStd": 27.43,
+      "pixelsDiffering": 208067,
+      "meanAbsDiff": 9.93,
+      "meanHueShiftDeg": 3.43
+    },
+    "treetop hue 20 value 0": {
+      "colouredPixels": 798776,
+      "meanSat": 0.551,
+      "meanVal": 0.285,
+      "hueStd": 27.91,
+      "pixelsDiffering": 376666,
+      "meanAbsDiff": 11.682,
+      "meanHueShiftDeg": 4.87
+    },
+    "treetop hue 40 value 0": {
+      "colouredPixels": 797566,
+      "meanSat": 0.541,
+      "meanVal": 0.283,
+      "hueStd": 28.88,
+      "pixelsDiffering": 473333,
+      "meanAbsDiff": 14.794,
+      "meanHueShiftDeg": 7.22
+    },
+    "treetop hue 60 value 0": {
+      "colouredPixels": 795718,
+      "meanSat": 0.528,
+      "meanVal": 0.282,
+      "hueStd": 29.86,
+      "pixelsDiffering": 512508,
+      "meanAbsDiff": 17.944,
+      "meanHueShiftDeg": 9.31
+    },
+    "treetop hue 0 value 0.12": {
+      "colouredPixels": 799975,
+      "meanSat": 0.556,
+      "meanVal": 0.285,
+      "hueStd": 25.48,
+      "pixelsDiffering": 466098,
+      "meanAbsDiff": 15.171,
+      "meanHueShiftDeg": 4.46
+    },
+    "treetop hue 0 value 0.3": {
+      "colouredPixels": 797980,
+      "meanSat": 0.554,
+      "meanVal": 0.288,
+      "hueStd": 23.72,
+      "pixelsDiffering": 548961,
+      "meanAbsDiff": 25.129,
+      "meanHueShiftDeg": 7.29
+    }
+  }
+}
