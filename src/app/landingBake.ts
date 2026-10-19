@@ -5,7 +5,7 @@
 // the art cache (render/artCache.ts), under the keys the game's own art asks for (render/assets.ts); the game, loaded with that
 // seed (&seed=), finds them kept. What isn't done by the time she lands the game draws as before.
 import type { ArtJob, ArtResult } from "../render/artBuild";
-import { artCacheKey, hashText } from "../render/artCache";
+import { artCacheKey, hashText, islandArtSeed } from "../render/artCache";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
 import { loadSave } from "./chartSave";
@@ -38,11 +38,19 @@ export interface LandingBake {
   settle(ms?: number): Promise<void>;
 }
 
+/** The sets drawn ahead for a landing on `island` for night `seed`: its area types (landingTypes) under the island's own seed first
+ *  (kept for every night: what the game draws at once, render/artCache.ts islandArtSeed), then under the night's (swapped in
+ *  unseen as she lands, main.ts revealArt). */
+export function landingJobs(island: string, world: number, seed: number, style: ArtJob["style"], K: number): ArtJob[] {
+  const types = landingTypes(island, world), own = islandArtSeed(world, island);
+  return [...types.map(t => ({ kind: "type", id: t, style, seed: own, K }) as ArtJob), ...types.map(t => ({ kind: "type", id: t, style, seed, K }) as ArtJob)];
+}
+
 /** Draw island `island`'s area types for night `seed` (world `world`, or the save's) ahead, in workers, into the art cache. */
 export function bakeLanding(island: string, world: number | undefined, seed = nightSeed()): LandingBake {
   const params = linkFor(island, world, seed), tuning = tuningFromLink(params).tuning, w = world ?? loadSave().world;
   const style = gameStyle(styleFromLink(params, tuning), tuning), styleHash = hashText(JSON.stringify(style)), K = 2 / tuning.pixelSize;
-  const jobs: ArtJob[] = landingTypes(island, w).map(t => ({ kind: "type", id: t, style, seed, K }));
+  const jobs = landingJobs(island, w, seed, style, K); // (a set kept before comes back at once)
   let stopped = false;
   const workers: Worker[] = [];
   const state = {
