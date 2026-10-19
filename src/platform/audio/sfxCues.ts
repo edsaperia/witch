@@ -567,6 +567,10 @@ export class SfxCues {
   private aggroK: number | null = null;
   private aggroDanger = 0;
 
+  /** Done with (a new night's cues take over: app/sound.ts setNight): the one lasting sound it holds on, a watch's warning, let
+   *  fall. It has no nodes or listeners of its own; the beds are set afresh by the next cues' first frame. */
+  dispose(): void { if (this.aggroK !== null) { this.aggroK = null; this.sfx.aggro(null); } }
+
   /** By a picnic in a partified area (not home's: its meadow has its own): its murmur and cups. */
   private picnic({ g, pan }: Here): void {
     const P = g.tuning.sfx.picnic, w = g.witch, cell = g.map.areaAt(w.x, w.z).cell, key = cellKey(cell);

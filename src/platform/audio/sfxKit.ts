@@ -15,7 +15,8 @@ export class SfxKit {
   /** The legends' big space (a long generated reverb), built when one first sings. */
   private ocean: GainNode | null = null;
 
-  constructor(readonly ctx: AudioContext | OfflineAudioContext, public volume: number, readonly T: SfxTuning, readonly root: number, dest?: AudioNode) {
+  /** `T`: the tuning's sfx, read live by every effect (a new night re-points it: retune). */
+  constructor(readonly ctx: AudioContext | OfflineAudioContext, public volume: number, public T: SfxTuning, readonly root: number, dest?: AudioNode) {
     const c = ctx;
     this.out = c.createGain(); this.out.gain.value = volume * T.volume;
     const limit = c.createDynamicsCompressor();
@@ -25,6 +26,9 @@ export class SfxKit {
   }
 
   setVolume(v: number): void { this.volume = v; this.out.gain.setTargetAtTime(v * this.T.volume, this.ctx.currentTime, 0.05); }
+
+  /** A new night's tuning (docs/plans/sail-without-reload.md, A4): its sfx knobs from now on, its volume eased to. */
+  retune(T: SfxTuning): void { if (T === this.T) return; this.T = T; this.setVolume(this.volume); }
 
   /** Rate limiting: true (and remembered) if `key` last sounded at least `gap` seconds ago. */
   ready(key: string, gap: number): boolean {
