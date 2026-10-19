@@ -37,7 +37,7 @@ export interface PackKind {
 export interface PacksData {
   rhythms: Record<string, Rhythm>;
   young: { windup: number; speed: number; range: number; special: number; lull: number };
-  limits: { combo: number; lanes: number; lines: number; shots: number; hurt: number; engage: number; split: number };
+  limits: { combo: number; lanes: number; lines: number; shots: number; hurt: number; engage: number; split: number; close?: number };
   bolt: Attack;
   specials: Record<SpecialKind, SpecialData>;
   retreats: Record<string, { out: number; hide?: boolean | "half"; still?: boolean }>;
@@ -126,8 +126,8 @@ export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null
 /** Whether a member is hurt (under limits.hurt of its health): it leaves the combo and keeps away. */
 export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.hp ?? Infinity) < creatureMaxHp(c) * data.limits.hurt;
 
-/** Roles by position (Ed: 2b): the nearest healthy member lunges, the one behind her (else the furthest) throws the special, the
- *  rest at range fire; the hurt keep away; past limits.combo the furthest hold back. `heading`: which way she's going (her back is
+/** Roles by position (Ed: 2b): the nearest healthy member lunges (and any other within limits.close of her), the one behind her
+ *  (else the furthest) throws the special, the rest at range fire; the hurt keep away; past limits.combo the furthest hold back. `heading`: which way she's going (her back is
  *  the other way). Pure, for the tests. */
 export function assignRoles(members: readonly Creature[], p: { x: number; z: number }, heading: { x: number; z: number } | null, data: PacksData = PACKS): Map<number, Role> {
   const out = new Map<number, Role>(), dist = (c: Creature) => Math.hypot(c.x - p.x, c.z - p.z);
@@ -144,7 +144,9 @@ export function assignRoles(members: readonly Creature[], p: { x: number; z: num
       let best = 0.3;
       for (const c of rest) { const dx = c.x - p.x, dz = c.z - p.z, d = Math.hypot(dx, dz) || 1, back = -(dx * heading.x + dz * heading.z) / d; if (back > best) { best = back; sp = c; } }
     }
-    for (const c of rest) out.set(c.id, c === sp ? "special" : "shooter");
+    // (the ones at range fire; the ones right on her, within limits.close, lunge too: Ed's playtest, v3893, "they miss me")
+    const close = (data.limits.close ?? 0) * FIGHT.scale;
+    for (const c of rest) out.set(c.id, c === sp ? "special" : dist(c) <= close ? "lunger" : "shooter");
   }
   return out;
 }
@@ -449,13 +451,12 @@ export function coverOf(w: CombatWorld, o: Creature): Creature | null {
 /** Whether a dust cloud hides (x, z) now (the mole's: the tells inside it don't show; the bodies do, and 💌s still land). */
 export const clouded = (s: CombatState, x: number, z: number, time: number): boolean => !!s.clouds?.some(k => time < k.until && Math.hypot(k.x - x, k.z - z) <= k.r);
 
-/** Where a shooter at her aims (Ed: "the crossfire aims where the blink went"): just after a blink, where it put her; else ahead of
- *  her by a share of a blink, where a dodge would go. */
-export function dodgeAim(v: { x: number; z: number; vx?: number; vz?: number }, dash: { at: number; x: number; z: number } | null, time: number, blink: number): { x: number; z: number } {
-  if (dash && time - dash.at < 0.8) return { x: dash.x, z: dash.z };
-  const vx = v.vx ?? 0, vz = v.vz ?? 0, m = Math.hypot(vx, vz);
-  if (m < 1) return { x: v.x, z: v.z };
-  return { x: v.x + (vx / m) * blink * 0.5, z: v.z + (vz / m) * blink * 0.5 };
+/** Where a shooter at her aims (Ed: "the crossfire aims where the blink went"): just after a blink, where it put her; else null, and
+ *  the shot leads her as anyone's does (rules/combat.ts: where she'll be when it gets there). (It aimed half a blink ahead of where
+ *  she stood, whatever the shot's flight: at her walk she's 10 m on by the time a bolt from 12 m arrives, so it landed behind her and a
+ *  pack missed her walking away: Ed's playtest, v3893, "they miss me".) */
+export function dodgeAim(dash: { at: number; x: number; z: number } | null, time: number): { x: number; z: number } | null {
+  return dash && time - dash.at < 0.8 ? { x: dash.x, z: dash.z } : null;
 }
 
 /** Pack combat's own state in the fight (CombatState). */
