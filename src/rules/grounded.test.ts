@@ -76,6 +76,16 @@ describe("grounded by who follows her", () => {
     expect(press(g).up).toBe(true);
   });
 
+  it("a take-off pulled back down is input: she stops idling into the party", () => {
+    const g = onGround(), W = g.witches[0], D = g.map.dancefloor;
+    W.body = { ...W.body, x: D.x + D.radius * 0.5, z: D.z + D.radius * 0.5 }; follow(g, [2]);
+    for (let i = 0; i < (TUNING.partyWitches.idleAfter + 2) / STEP; i++) stepGame(g, idle, STEP);
+    const I = () => g.partyWitches.players[0];
+    expect(I()?.activity ?? null).not.toBeNull();
+    expect(press(g).grounded).toBe(true);
+    expect(I()?.activity ?? null).toBeNull();
+  });
+
   it("the weight is a knob (leash.grounded.weight), 0 turning it off", () => {
     const off = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 0 } } })); follow(off, [2, 1, 1, 1]);
     expect(press(off).up).toBe(true);

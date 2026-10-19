@@ -95,7 +95,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // rules/game.ts): drawn only, the rules keep her on the ground. She lifts off, slowing, to GROUNDED_HOP metres, is yanked
   // straight back down by her taut leashes (render/leash/stack.ts) and lands with a little bounce.
   for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
-  wyy += groundedHop(ht - v.groundedAt);
+  const hop = groundedHop(ht - v.groundedAt);
+  wyy += hop;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
   // Her decks: on the treehouse deck (rules/treehouse.ts), where she stands, the opening shot just over her; else the old studio's seat.
@@ -222,7 +223,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     const px = (x: number, y: number, z: number) => { const p = placed(v.v3.set(x, y, z)).project(v.camera); return [(p.x + 1) / 2 * v.width, (p.y + 1) / 2 * v.height]; };
     const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * v.mpp / 2, wyy, wz);
     SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, v.seatK > 0 ? wyy : h + v.rideOff, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
+    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, v.seatK > 0 ? wyy : h + v.rideOff + hop, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
     // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
     // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
     // feet and its half-widths across and up the screen, out to half her light's reach.
