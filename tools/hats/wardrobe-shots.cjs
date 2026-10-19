@@ -1,9 +1,9 @@
-// Back to her room mid-night from the treehouse deck (Ed's answer 4; main.ts toBedroom, ui/creator.ts visit): the built game
-// (DIST, default dist/) at 1600×900; she's put on the deck mid-night, the Bedroom button shows, F opens her room with "Back to the
-// island" where the party scroll would be, the Hat box's power is changed, and the way out brings her back on the deck with it.
-// Her Helmet lies on the ground beside her meanwhile: it stays there (Ed, 2026-10-12), drawn, and she wears the new one.
-// Shots: deck (the button), room (the way out), back. Fails on a page error, a missing button, the swap not taking, or the
-// helmet not left where it lay.
+// Her hats and her broom from the treehouse's rooms (Ed, 2026-10-19: rules/houseRooms.ts, config/house.json; the Bedroom button and
+// F are gone): the built game (DIST, default dist/) at 1600×900. She's put in the house mid-night with her Helmet lying in the hub
+// (it stays there, drawn: Ed, 2026-10-12); E on the hats' floor (no rack: hats are objects there) puts another hat on her; E at the
+// broom stand opens her room at only the broom's choices, its power is changed, and the way out brings her back with it.
+// Shots: hats (the hats' floor), room (the broom stand's choices), back. Fails on a page error, a hat not taken, the helmet not
+// left where it lay, the room not opening or showing other boxes, or the broom's power not taking.
 //   npm run build && node tools/hats/wardrobe-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -23,23 +23,32 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 4, null, { timeout: 600000, polling: 500 });
-    // onto the deck: landed there, off her decks
+    // into the house: landed in the hub, off her decks, her Helmet lying by the map
+    const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), at = id => H.objects.find(o => o.id === id);
+    const stand = (o, dz) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [o.x, o.z + dz]);
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + 3, z: T.z - 2, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; g.witches[0].hat.down = { x: T.x + 1, z: T.z - 2, at: g.clock.time }; });
-    await page.waitForFunction(() => getComputedStyle(document.getElementById("bedroom-btn")).display !== "none", null, { timeout: 60000, polling: 200 });
     await page.waitForTimeout(1500);
-    await page.screenshot({ path: path.join(outDir, "deck.png") });
-    await page.keyboard.press("KeyF");
+    const hats = at("hats");
+    await stand(hats, 0);
+    await page.waitForTimeout(1500);
+    await page.keyboard.press("KeyE");
+    await page.waitForTimeout(800);
+    Object.assign(out, await page.evaluate(() => ({ hat: window.witch.game.spells.hat, wearing: !window.witch.game.witches[0].hat.down, left: window.witch.game.witches[0].hat.left.map(q => q.spell) })));
+    await page.screenshot({ path: path.join(outDir, "hats.png") });
+    await stand(at("broomStand"), 0.8);
+    await page.waitForTimeout(1500);
+    await page.keyboard.press("KeyE");
     await page.waitForSelector('#creator button[data-exit]', { state: "visible", timeout: 60000 });
-    await page.click('#creator [data-tab="hat"]', { timeout: 120000 });
-    await page.selectOption('#creator select[data-spell="hat"]', "healing");
+    out.tabs = await page.evaluate(() => [...document.querySelectorAll("#creator [data-tab]")].map(b => b.dataset.tab));
+    await page.selectOption('#creator select[data-spell="broom"]', "speed");
     out.timeScale = await page.evaluate(() => window.witch.game.timeScale);
     await page.waitForTimeout(800);
     await page.screenshot({ path: path.join(outDir, "room.png") });
     await page.click('#creator button[data-exit]');
     await page.waitForTimeout(1500);
-    Object.assign(out, await page.evaluate(() => ({ hat: window.witch.game.spells.hat, open: document.getElementById("creator").style.display, perch: !!window.witch.game.witch.perch, wearing: !window.witch.game.witches[0].hat.down, left: window.witch.game.witches[0].hat.left.map(q => q.spell) })));
+    Object.assign(out, await page.evaluate(() => ({ broom: window.witch.game.spells.broom, open: document.getElementById("creator").style.display, perch: !!window.witch.game.witch.perch })));
     await page.screenshot({ path: path.join(outDir, "back.png") });
   } finally { await browser.close(); server.close(); }
   console.log(JSON.stringify({ ...out, errors }));
-  if (errors.length || out.hat !== "healing" || out.open !== "none" || !out.wearing || out.left.join() !== "helmet") process.exit(1);
+  if (errors.length || out.hat === "helmet" || !out.wearing || out.left.join() !== "helmet" || out.tabs.join() !== "broom" || out.broom !== "speed" || out.open !== "none") process.exit(1);
 })();

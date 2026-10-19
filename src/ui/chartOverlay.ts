@@ -4,6 +4,8 @@
 // pad's B or Close shuts it; while it's open the game's own controls are held still (main.ts, chartOpen).
 import { mountChart, type ChartView } from "../app/chartView";
 import { stopWarmChart } from "../app/chartWarm";
+import { prepareSeaChart } from "../render/chart/seaChart";
+import { TUNING } from "../rules/tuning";
 
 let open: { wrap: HTMLDivElement; view: ChartView; raf: number } | null = null;
 
@@ -28,6 +30,10 @@ export function openChart(onSail: (href: string) => void, world?: number): void 
   (window as unknown as { chart: unknown }).chart = { chart: view.chart, choose: view.choose, islands: view.islands, view }; // (as chart.html's: for the screenshots and timings)
   addEventListener("resize", fit);
 }
+
+/** Make the chart's renderer and link its shaders ahead (render/chart/seaChart.ts prepareSeaChart), so E at the map table opens
+ *  it without the wait: a new WebGL context and its programs were seconds of it. */
+export const prepareChart = (): Promise<void> => prepareSeaChart(TUNING as unknown as Parameters<typeof prepareSeaChart>[0]);
 
 const fit = () => open?.view.resize();
 

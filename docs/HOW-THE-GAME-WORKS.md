@@ -77,7 +77,7 @@ Home's speakers are each a soundsystem in the fight: animals marching on home go
 
 Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So you can't just drag a huge army everywhere.
 
-**Grounded by her followers** (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative: "if creatures are light or heavy you can extrapolate"). When the animals *following* her (their sigils in her stack) **weigh an adult's worth or more** together, she **can't take off** (`leash.grounded.weight`, 2: one adult of normal strength; three young weigh 2.4, two 1.6; each counts its level's weight times its species' strength, so a light species' adult may not ground her and a heavy one's young counts for more; 0 turns it off). Put their sigils down (parked) and she's free to go; babies never count. Press rise anyway and **she tries**: she lifts a metre and a half off the ground and her leashes snap taut and blaze as they **pull her straight back down**, with a thud as she lands. Her weight shows in the leashes themselves: while she's that heavily followed, their leashes always show, taut and brighter, so you can see it before you try. The hop is drawn only: she never leaves the ground, so it's no dodge, and it spends none of the shared cooldown. It's a weight, not a pull: it holds however close they stand, and apart from the sigil weight above (which still slows a take-off it allows). **Up in the treetops she stays up**: if a young grows up while she flies, or she's coming down, nothing pulls her out of the sky; the rule only stops her next take-off from the ground.
+**Grounded by her followers** (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative: "if creatures are light or heavy you can extrapolate"). When the animals *following* her (their sigils in her stack) **weigh an adult's worth or more** together, she **can't take off** (`leash.grounded.weight`, 2: one adult of normal strength; three young weigh 2.4, two 1.6; each counts its level's weight times its species' strength, so a light species' adult may not ground her and a heavy one's young counts for more; 0 turns it off). Put their sigils down (parked) and she's free to go; babies never count. Press rise anyway and **she tries**: she lifts a metre and a half off the ground and is **pulled straight back down**, with a thud as she lands, while **the leashes of the followers weighing her down flash from dotted to solid lines** (taut, twice in about half a second, then dotted again; Ed's playtest, v3893). Babies' and parked animals' leashes don't flash. The hop is drawn only: she never leaves the ground, so it's no dodge, and it spends none of the shared cooldown. It's a weight, not a pull: it holds however close they stand, and apart from the sigil weight above (which still slows a take-off it allows). **Up in the treetops she stays up**: if a young grows up while she flies, or she's coming down, nothing pulls her out of the sky; the rule only stops her next take-off from the ground.
 
 **Knocked out.** At zero hits she collapses.
 - Her carried sigils come off one a second, bottom first (`knockout.releaseEach`). **Each is put down where its animal stands, so they stay hers** as a parked group.
@@ -103,6 +103,7 @@ Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So 
 | Debug overlay | ~ | Back/Select | three-finger tap |
 
 - **Cast the party spell**: the on-screen scroll, or Enter, or the spell key.
+- **In the treehouse**, E uses the thing she's standing at (the same button as placing a sigil; held at the bed). The stations there are the only way back into the character creator mid-night: there's no Bedroom button or F key any more (Ed, 2026-10-19).
 - **Playtest keys**: N next wave now, P pause the wave timer, B feed the nearest party animal a berry, O make the nearest legend happy, I invite the nearest animal, K cycle the speakers' damage, J reset the debug arena.
 
 ---
@@ -209,10 +210,16 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 
 **Dreams and quests** (Ed, 2026-10-18: "Legends accept any level animal for their quest, at which point they fight for you and unlock their island"). Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other **kind**, any age (its bare sigil, no age frame). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
 - **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the kind of another of those three (`legends.earlyQuest`).
-- **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. One of yours of that kind standing inside the circle counts too, following you or parked. The animal stays yours.
+- **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. **Only putting the sigil down does it** (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not when the animal enters the circle"): one of yours of that kind walking into the circle, following you or parked, does nothing. The animal stays yours.
 - **The legend wakes happy at once and fights for you** (below), and **its island is found tonight**. The island is kept on the sea chart **only if the night is won** (Ed, 2026-10-18: "The island is only kept if the night is won"); lose the night and tonight's islands are not kept.
 - **No boon** (Ed, 2026-10-18: "Finishing quests no longer gives boons").
-- The circle's panel names the dream in words beside its sigil ("a badger, any age"). Drop the wrong kind in the circle, or bring one in, and it says so at once: "Not this one: it dreams of an elk, and you've brought a young stag."
+- **The circle's panel** (Ed, 2026-10-19: short and plain, one idea a line, the action said exactly; `rules/legendCircle.ts` `circleLines`):
+  - sleeping: "A sleeping legend: the hare." / "Put down [sigil] a fox's sigil, any age, inside this circle." / "It will wake, fight for you and show you its island." / "Leave none of its kind in its area and it grows restless.";
+  - restless: "A restless legend: the hare.", the same ask, then "Bring one of its kind back to its area to calm it.";
+  - angry: "An angry legend: the hare!" / "Wear it down, or bring one of its kind back to its area, and it will settle.";
+  - happy: "Your ally: the hare." / "It fights for you and guards its area." / (its quest done) "Its island is found: win the night to keep it.";
+  - a wrong kind's sigil put down inside: "Not this one: it wants a fox's sigil, and you put down an elk's.";
+  - once the party's over: "A sleeping legend: the hare." / "The party's over: it sleeps on."
 - If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**.
 - Drop the sigil just outside the circle and the circle flashes as a hint.
 - **Once the party's over, no legend takes a quest** (Ed, 2026-10-18: permanent unlocks only happen while the party is on): its dream closes and the panel says it sleeps on.
@@ -273,6 +280,15 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 ---
 
 ## 11. Other things worth knowing
+
+- **The treehouse's rooms** (Ed, 2026-10-19; `config/house.json`): placeholder plank rooms joined by corridors off the hub, walked in and out of during the party. She flies onto the balcony as before, walks into the hub, and on along the corridors; she leaves by walking off the balcony's open rim. Time runs at a tenth in all of it and nothing reaches her, as in the hub. Walk up to a thing (it lights, and its name shows with E) and press E:
+  - **Dressing room** (east of the hub): the **mirror** (face, hair, earrings), the **wardrobe** (jacket, top, trousers), the **cloak pegs** (cloak, scarf) and the **shoe rack** each open the character creator showing only their own choices. The **hats' floor** has her hats lying on it as objects: E by one wears it and puts the one she had down in its place; E with none near puts hers down at her feet, and E on it picks it back up.
+  - **Bedroom** (through the dressing room): **hold E at the bed** and a ring fills (`bed.hold`, 1.5 s); full, she sleeps and the night ends (recorded on the sea chart as played, then a new night, as the afterparty's Play again). Let go early and it starts again. The **telephone** is a placeholder.
+  - **Bags & invitations** (off the dressing room): the **bags** open the creator at the bag, backpack and bum bag. The invitations desk is a placeholder.
+  - **Garage** (west, by the balcony): the **broom stand** opens the creator at the broom's choices and its power. The pegboard is a placeholder.
+  - **Bestiary** (north-east): E on the **book** opens the zoo over the night, which waits paused underneath; closing the zoo (its × or Esc) goes back to the night where she was.
+  - **Placeholders** (the crystal ball in the hub, the record shelf in the studio, the cauldron in the kitchen, the tea table in the tea room, the card table in the card room, the telescope in the crow's nest, the skeletons and skulls in the bestiary, the telephone, the pegboard, the invitations desk): E shows a one-line bubble, e.g. "The cauldron is cold. Brewing comes later."
+  - Accessories other than earrings aren't at any station yet (Ed will review them).
 
 - **Party witches**: one extra witch flies in to dance on the dancefloor for every soundsystem playing.
 - **Home's relic**: one relic always lies just inside the edge of home, so a new player stumbles on it.

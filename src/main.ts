@@ -1,6 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { chartOpen, openChart } from "./ui/chartOverlay";
+import { chartOpen, openChart, prepareChart } from "./ui/chartOverlay";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -30,7 +30,8 @@ import { tuningFromLink } from "./app/linkParams";
 import { saveLoadout } from "./app/loadout";
 import { castable } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
-import { onTreehouse } from "./rules/treehouse";
+import { HOUSE_ROOMS } from "./rules/houseRooms";
+import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { warmChart } from "./app/chartWarm";
 import { Hud, powerLines } from "./app/hud";
@@ -53,6 +54,7 @@ import { wonText } from "./app/wonCard";
 import { ArrivalFlight } from "./app/arrive";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { readArrival } from "./app/arrival";
+import { prepUsed, takeMapPrep } from "./app/mapPrep";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
@@ -73,7 +75,10 @@ const { tuning, musicStyle, musicCue: linkMusicCue, world, WORLD_DEFAULT } = tun
 // the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
 applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
 let musicCueNow = linkMusicCue;
-const game = newGame(seed, tuning);
+// Sailed here (&arrive=1): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
+const mapPrep = params.get("arrive") ? await takeMapPrep(seed, tuning) : null;
+performance.mark("witch:prep");
+const game = newGame(seed, tuning, 1, mapPrep ?? undefined);
 if (game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(game); });
 performance.mark("witch:game");
 // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).
@@ -84,7 +89,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, tuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
-const loadTimes = { viewStart: performance.now(), view: 0, ready: 0 };
+const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : 0 }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1)
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 /** Whether her look has a hat to lose on a knockout (rules/hat.ts; Ed, 2026-10-06: "If she chooses no hat in character creation, then she simply doesn't have this mechanic"). */
@@ -176,6 +181,9 @@ const warmWhenSettled = warmOn ? setInterval(() => {
 requestAnimationFrame(() => setTimeout(async () => {
   await view.prepare();
   ready = true;
+  // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
+  // table then opens it without seconds of waiting. Not under automation (the smoke and bench runs), unless ?prepChart=1.
+  if (params.get("prepChart") === "1" || (params.get("prepChart") !== "0" && !navigator.webdriver)) setTimeout(() => void prepareChart().catch(e => console.warn("sea chart: not made ahead", e)), 300);
   loadTimes.ready = performance.now();
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
@@ -237,16 +245,21 @@ let lookNow = JSON.stringify(savedLook);
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
 creator.loadout = { hat: game.spells.hat, broom: game.spells.broom };
 creator.onLoadout = l => { changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(lookNow ? JSON.parse(lookNow) : savedLook); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
-// Back to her room mid-night from the treehouse deck (Ed, 2026-10-11, answer 4: "fly at treetop level to the treehouse to go back
-// to bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): on the deck
-// (rules/treehouse.ts onTreehouse), the Bedroom button or F opens her room, the world running on at the deck's tenth; its way out
-// brings her back, standing on the deck, in her new look, hat and broom: a new hat on her head, any lying about staying where
-// they lie (Ed, 2026-10-12).
+// Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
+// stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
+// her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
+// ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
+// and closing it goes back to the night where she was; the bed, E held, ends the night as the afterparty's Play again does.
 creator.onExit = g => { newHatFromRoom(game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
-const bedroomBtn = document.getElementById("bedroom-btn");
-const toBedroom = () => { if (!bot && onTreehouse(game) && !creator.open && !game.witches[0].ko) { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(); } };
-if (bedroomBtn) { for (const ev of ["pointerdown", "pointerup", "touchstart"]) bedroomBtn.addEventListener(ev, e => e.stopPropagation()); bedroomBtn.addEventListener("click", toBedroom); }
-window.addEventListener("keydown", e => { if (e.code === "KeyF" && !e.repeat && !creator.open) toBedroom(); });
+let zooPaused = false;
+const zoo = new ZooOverlay(domZooHost(on => { if (on) { zooPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
+const useHouse = (obj: string): void => {
+  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); location.reload(); return; } // (the sea chart: played, as the afterparty records it)
+  const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
+  if (!o || creator.open || game.witches[0].ko) return;
+  if (o.use.kind === "creator") { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(o.use); }
+  else if (o.use.kind === "zoo") zoo.open();
+};
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready }; };
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
@@ -485,6 +498,7 @@ function frame(now: number): void {
   const stepMs = performance.now() - step0;
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
+  if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart(href => {
     const W = tuning.map?.world ?? 0, save = loadSave();
     if (save.world === W) storeSave(sailNight(save, tuning.map?.island ?? "", !wavesOver(game) && !chartRecorded && !overShown)); // (in the campaign's world only, as nightOver)
@@ -502,7 +516,6 @@ function frame(now: number): void {
   if (game.win?.card && !chartRecorded) { chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
-  { const want = !bot && onTreehouse(game) && !creator.open && !game.witches[0].ko ? "block" : "none"; if (bedroomBtn && bedroomBtn.style.display !== want) bedroomBtn.style.display = want; } // (on the treehouse deck: back to her room)
   newBuild.update(creator.open || freeze.frozen || menuGone); // (a newer build is out: in the bedroom and on the pause page)
   if (game.partyOver && game.partyOver.ease >= 1 && !overShown) {
     overShown = true;

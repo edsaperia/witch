@@ -24,7 +24,7 @@ import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
-import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { AREA_TYPES, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
@@ -36,7 +36,7 @@ import { LEGEND_BUFFS, newBuffs, stepBuffs, type BuffState } from "./buffs";
 import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, startSiege, stepCombat, type CombatState } from "./combat";
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
-import { questsFromPlaced, questsFromStanding, stepSigilButton } from "./sigilButton";
+import { questsFromPlaced, stepSigilButton } from "./sigilButton";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
@@ -49,6 +49,7 @@ import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type 
 import { coolReady, coolRefund, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
 import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
+import type { HouseState } from "./houseRooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
@@ -88,6 +89,8 @@ export interface Witch {
   slowMult?: number;
   /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
   landedAt?: number;
+  /** Her business in the treehouse's rooms (rules/houseRooms.ts): the bed's hold, the hats on the hats' floor. */
+  house?: HouseState;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -239,8 +242,8 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
   return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
-export function newGame(seed: number, tuning: Tuning, players = 1): Game {
-  const map = generateMap(seed, tuning);
+export function newGame(seed: number, tuning: Tuning, players = 1, prep?: MapPrep): Game {
+  const map = prep ? hydrateMap(seed, tuning, prep) : generateMap(seed, tuning); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
@@ -573,7 +576,6 @@ function fixedStep(g: Game, controls: Controls): void {
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
   questsFromPlaced(g, ht);
-  questsFromStanding(g);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
   stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; });
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
@@ -800,11 +802,12 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   areas.sort((a, b) => a.at - b.at);
   // Debug (?witches=N): N more, as if from soundsystems round the floor.
   for (let i = 0; i < t.partyWitches.debugExtra; i++) areas.push({ key: `debug-${i}`, x: d.x + Math.cos(i * 2.4) * 100, z: d.z + Math.sin(i * 2.4) * 100, at: 0 });
-  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell);
+  const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell) || g.leashEvents.some(e => e.kind === "grounded"); // (a take-off pulled back down is input too: its press was taken off c above)
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
-  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11).
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
+  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11). Up in the treehouse
+  // (perched: its rooms, rules/houseRooms.ts) she's not by the floor, so never idles into the party from there.
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated && !w.perch, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
     { ruined: g.party.ruined, over: !!g.partyOver });
 }
 

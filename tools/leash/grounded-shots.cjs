@@ -1,7 +1,7 @@
 // A take-off pulled back down (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", by weight; rules/leashWeight.ts
 // groundedBy, the "grounded" leash event): the built game (DIST, default dist/) at 1280×720 on a seed; on home's open ground she
 // stands with animals following her (their sigils in her stack), presses rise once, and frames are shot across the next 0.6 s
-// (her hop yanked back down, the leashes taut and bright). Cases: one adult; three young; and two young, too light (she takes off).
+// (her hop yanked back down, the counted leashes flashing solid). Cases: one adult; three young; and two young, too light (she takes off).
 //   npm run build && node tools/leash/grounded-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -9,7 +9,7 @@ const [outDir = "previews/grounded", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm" };
 const CASES = [["adult", [2]], ["three-young", [1, 1, 1]], ["two-young", [1, 1]]].filter(([n]) => !process.env.ONLY || process.env.ONLY.split(",").includes(n));
-const AT = [0, 0.1, 0.2, 0.35, 0.6]; // seconds after the press
+const AT = [0, 0.1, 0.27, 0.45, 0.7]; // seconds after the press (render/leash/stack.ts GROUNDED_FLASH: solid, solid, the gap, solid again, dotted)
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });

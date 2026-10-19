@@ -20,7 +20,7 @@ npm run build && node tools/hats/hats-out-shots.cjs <out dir> [seed]
 
 ## `wardrobe-shots.cjs`
 
-Back to her room mid-night from the treehouse deck: the built game at 1600×900; she's put on the deck mid-night, the Bedroom button shows, F opens her room with "Back to the island" where the party scroll would be, the Hat box's power is changed, and the…
+Her hats and her broom from the treehouse's rooms (rules/houseRooms.ts, config/house.json; the Bedroom button and F are gone): the built game at 1600×900; she's put in the house mid-night with her Helmet lying in the hub; E on the hats' floor puts another hat on her and the Helmet stays where it lay; E at the broom stand opens her room at only the broom's choices, its power is changed, and the way out brings her back with it. Shots: hats, room, back.
 
 ```
 npm run build && node tools/hats/wardrobe-shots.cjs <out dir> [seed]

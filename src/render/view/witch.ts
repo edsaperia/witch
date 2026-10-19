@@ -2,6 +2,7 @@
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
 import { deckOf } from "../../rules/treehouse";
+import { onRoomFloor } from "../../rules/houseRooms";
 import type { View } from "../view";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
@@ -85,17 +86,26 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
+  const inRoom = !!(T.ent && deck?.house?.rooms.length && w.perch && Math.hypot(w.x - deck.x, w.z - deck.z) > deck.r && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the hub, rules/houseRooms.ts)
+  v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
     const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
     const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky), g0 = groundHeight(deck.x, deck.z);
-    const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, dz);
+    // (in a room off the hub, rules/houseRooms.ts: in the plane through the hub's middle, the same pixels, never out over the forest
+    // behind it, where the bend and the fade round her lose her; drawn over everything there, below)
+    const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, inRoom ? 0 : dz);
     wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
+    // Off the hub, the camera (render/view/camera.ts, next frame) follows where she's drawn, not her place in the rules: far from the
+    // hub the art's floor runs away from the world's. Eased in over the first metres past the hub's wall.
+    const k = deck.house?.rooms.length ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) * m : 0;
+    if (k > 0) { const q0 = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, 0); v.houseCam.x = (q0.x - w.x) * k; v.houseCam.y = (q0.y - g0 - deck.h) * k; v.houseCam.z = (q0.z - w.z) * k; }
   }
   // A take-off the leashes won't allow (Ed, 2026-10-18: "you try and fly but get pulled down"; the "grounded" leash event,
   // rules/game.ts): drawn only, the rules keep her on the ground. She lifts off, slowing, to GROUNDED_HOP metres, is yanked
   // straight back down by her taut leashes (render/leash/stack.ts) and lands with a little bounce.
   for (const e of g.leashEvents) if (e.kind === "grounded") v.groundedAt = e.at;
-  wyy += groundedHop(ht - v.groundedAt);
+  const hop = groundedHop(ht - v.groundedAt);
+  wyy += hop;
   // Staggered by a blow (rules/knock.ts): a wobble side to side, fading as it wears off.
   { const K = g.witches[0].knock; if (stunned(K, ht)) { const left = (K!.stunUntil - ht) / Math.max(0.1, K!.stunUntil - K!.at); wx += Math.sin(ht * 34) * 0.18 * Math.min(1, left * 2); } }
   // Her decks: on the treehouse deck (rules/treehouse.ts), where she stands, the opening shot just over her; else the old studio's seat.
@@ -182,7 +192,15 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.bristle.on = flying && !hidden;
   }
   v.witchBatch.set(bare ? [] : her);
-  v.witchBatch.silhouette = djUpper < 0; if (v.bareBatch) v.bareBatch.silhouette = djUpper < 0;
+  // In a room off the hub: the rooms are drawn over the Ent's tree and tower and the forest round the house, which they lie behind,
+  // in the see-through pass (render/houseRooms.ts), so she's drawn after them there (her batch put in that pass while she's in
+  // one), over everything, and needs no silhouette.
+  for (const b of [v.witchBatch, v.bareBatch]) if (b) {
+    const m = b.mesh.material as { depthTest: boolean; transparent: boolean; needsUpdate: boolean };
+    if (m.transparent !== inRoom) { m.transparent = inRoom; m.needsUpdate = true; }
+    m.depthTest = !inRoom; b.mesh.renderOrder = inRoom ? 19.95 : 10;
+    b.silhouette = djUpper < 0 && !inRoom;
+  }
   // Knocked off, her hat floats down (Ed, 2026-10-07: "the hat slowly floats to the floor over about 4 seconds"): from her head
   // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
@@ -222,7 +240,9 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     const px = (x: number, y: number, z: number) => { const p = placed(v.v3.set(x, y, z)).project(v.camera); return [(p.x + 1) / 2 * v.width, (p.y + 1) / 2 * v.height]; };
     const base = px(wx, wyy, wz), top = px(wx, hatTop, wz), side = px(wx + wframe.w * v.mpp / 2, wyy, wz);
     SPRITE_UNIFORMS.uWitch.value.set((base[0] + top[0]) / 2, (base[1] + top[1]) / 2, Math.abs(side[0] - base[0]) + 1, Math.abs(top[1] - base[1]) / 2 + 1);
-    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, v.seatK > 0 ? wyy : h + v.rideOff, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
+    // (in a room off the hub, at her feet as drawn: from her flight's height her own sprite stood in front of her there, and the
+    // fade round her cut her out)
+    SPRITE_UNIFORMS.uWitchDepth.value = -placed(v.v3.set(wx, v.seatK > 0 || inRoom ? wyy : h + v.rideOff + hop, wz)).applyMatrix4(v.camera.matrixWorldInverse).z;
     // Her pool on screen, for the grade to spare (render/post.ts: on a dark floor her light sits among the tones the
     // spooky grade drains to blue, and it vanished: the art director's round 3, the fern forest): its centre under her
     // feet and its half-widths across and up the screen, out to half her light's reach.

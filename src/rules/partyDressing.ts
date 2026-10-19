@@ -32,7 +32,7 @@ export interface Dressing {
   loose: Placed[];
   /** An escaped balloon caught up in a crown near here (the view hangs it from the nearest tree). */
   caught: Placed | null;
-  /** Lanterns, a jar, fairy lights or a mirror ball hanging from the trees near here (the view
+  /** Lanterns, a jar or a mirror ball hanging from the trees near here (the view
    *  hangs each from a branch point in the nearest tree's crown by its hang anchor). */
   hanging: Placed[];
   /** The pieces whose light is real (campfires and lanterns: at most partyObjects.lightsPerArea), by their ref and place. */

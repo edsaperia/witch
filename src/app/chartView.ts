@@ -3,7 +3,7 @@
 // 2026-10-11: "show the map screen in the same way you show the island: pixellated, camera seeing it in 3D, your view moves
 // around as you select islands"): home in the middle, every island at its kind's bearing on its phase's ring (chartLayout.ts
 // islandAt) in its real outline (hotel, rules/islandShape.ts islandOutline: the land each grows to; made off the page's thread by
-// chartOutlines.worker.ts, the chosen and nearest first, its round coast, islandCoast, shown till it comes), a sigil only on
+// chartOutlines.worker.ts, in phase order and the nearest the chosen first within a phase, its round coast, islandCoast, shown till it comes), a sigil only on
 // those she can travel to (Ed: "You can always see all the islands - you only see sigils on the ones that you can travel to"),
 // big enough to read (Ed: "large enough that the animal sigils show clearly on the islands"); her voyages as glowing lines on
 // the water; won islands ringed in gold.
@@ -16,13 +16,13 @@ import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
-import { CHART_PIXEL, SeaChart, type ChartIsland } from "../render/chart/seaChart";
+import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland } from "../render/chart/seaChart";
 import { loadSave, newCampaign, unlocked, worldSeed, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
-import { OUTLINE_STEP } from "./chartWarm";
+import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -108,7 +108,12 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const root = document.createElement("div");
   root.className = "chart-view"; root.innerHTML = HTML; host.append(root);
   const $ = <T extends HTMLElement = HTMLElement>(c: string) => root.querySelector(`.${c}`) as T;
-  const canvas = root.querySelector("canvas")!;
+  // The full chart draws on the page's one prepared SeaChart (render/chart/seaChart.ts takeSeaChart: no new context or shaders to
+  // wait for as it opens); the map table's miniature on its own.
+  const chart = mini ? new SeaChart(root.querySelector("canvas")!, TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]) : takeSeaChart(TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]);
+  const canvas = chart.canvas;
+  if (!mini) { canvas.setAttribute("aria-label", "The sea chart"); root.querySelector("canvas")!.replaceWith(canvas); }
+  const listening = new AbortController(), on = { signal: listening.signal }; // (the canvas outlives this view: its listeners go with it)
   if (mini) { $("top").hidden = true; $("bottom").hidden = true; }
   $("sail").hidden = true;
   ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose;
@@ -116,7 +121,6 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
 
-  const chart = new SeaChart(canvas, TUNING as unknown as ConstructorParameters<typeof SeaChart>[1]);
   if (mini) chart.orbit = 0.12;
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
   let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
@@ -125,15 +129,22 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
-  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null> } | null = null;
+  // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
+  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
-    bake = id && islands.find(i => i.id === id)?.sail ? { island: id, job: import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null) } : null;
+    void bake?.map.then(m => m?.stop());
+    if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
+    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null);
+    bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
   const go = async (id: string) => {
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
     await b?.settle(); // (what's drawn, written before the page goes)
+    // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
+    const m = bake?.island === id ? await bake.map : null;
+    if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
@@ -149,17 +160,33 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   // The real islands (seconds each for the big ones to make, about a minute for them all; their meshes made with them,
   // render/chart/islandMesh.ts, so the page only wraps what comes): the worker sends those this browser keeps (app/chartCache.ts:
-  // made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, the chosen island and those nearest it
-  // first, then makes the rest, each rising out of the sea as it comes (nothing stands in for one till then: Ed, 2026-10-13). The
+  // made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, by phase, earliest first, and within a
+  // phase the chosen island and those nearest it first (Ed, 2026-10-19), then makes the rest, each rising out of the sea as it comes (nothing stands in for one till then: Ed, 2026-10-13). The
   // map table's miniature asks only for what's kept (nothing is ever made while she's at the deck) and asks again every few
   // seconds while any is missing, as the night's warm fills the cache.
+  // What comes is held (`waiting`) and wrapped on the page one island a frame, the one she needs most first (rank: chartOrder), so
+  // the chart moves smoothly as they rise (the chart meshes job, 2026-10-19: a warm open had all 65 wrapped back to back, a frame
+  // of 20 s and more on a software renderer).
   let worker: Worker | null = null, poll: ReturnType<typeof setInterval> | null = null;
+  const waiting = new Map<string, OutlineDone>();
+  let rank = new Map<string, number>();
+  const ranked = () => { const from = islands.find(i => i.id === (chart.selected ?? "home")) ?? islands[0]; rank = new Map(chartOrder(islands, from ?? { x: 0, y: 0 }).map((id, n) => [id, n])); };
   const apply = (o: OutlineDone) => {
     const isl = islands.find(i => i.id === o.id);
     if (!isl || o.world !== worldNow()) return;
-    if ((isl.outline as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
-    isl.outline = o; chart.reshape(o.id, o);
+    if (((waiting.get(o.id) ?? isl.outline) as OutlineDone | undefined)?.detail && !o.detail) return; // (the close-up's fine grid stays)
+    waiting.set(o.id, o);
   };
+  /** This frame's island: the waiting one ranked first (the chosen island's close-up before anything), wrapped. */
+  function wrapOne(): void {
+    if (!waiting.size) return;
+    let best: OutlineDone | null = null, bestN = Infinity;
+    for (const o of waiting.values()) { const n = o.id === chart.selected && o.detail ? -1 : rank.get(o.id) ?? 1e9; if (n < bestN) { bestN = n; best = o; } }
+    waiting.delete(best!.id);
+    const isl = islands.find(i => i.id === best!.id);
+    if (!isl || best!.world !== worldNow()) return;
+    isl.outline = best!; chart.reshape(best!.id, best!);
+  }
   const make = (): Worker | null => {
     if (!worker) {
       try { worker = new Worker(new URL("./chartOutlines.worker.ts", import.meta.url), { type: "module" }); } catch { return null; }
@@ -176,7 +203,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function outlines(): void {
     const w = worldNow(), found = [...save.found];
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
-    const ids = [...islands].filter(i => !i.outline).sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
+    const ids = chartOrder(islands.filter(i => !i.outline && !waiting.has(i.id)), from); // (home and hers first, then by phase, earliest first, the nearest the chosen first within one: Ed, 2026-10-19)
     if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
     make()?.postMessage({ world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk);
     if (mini && !poll) poll = setInterval(outlines, 4000);
@@ -187,11 +214,12 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow();
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-      return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+      return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
     };
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
+    waiting.clear(); ranked();
     outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
     $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
@@ -201,11 +229,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
   function choose(id: string | null, instant = false): void {
-    chart.select(id, instant);
+    chart.select(id, instant); ranked();
     bakeFor(id);
-    if (id && worker && !islands.find(i => i.id === id)?.outline) worker.postMessage({ first: id } satisfies OutlineAsk);
+    if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
-    if (id && !mini && !(islands.find(i => i.id === id)?.outline as OutlineDone | undefined)?.detail) detail(id);
+    if (id && !mini && !((waiting.get(id) ?? islands.find(i => i.id === id)?.outline) as OutlineDone | undefined)?.detail) detail(id);
     const isl = islands.find(i => i.id === id), card = $("card"), sail = $<HTMLAnchorElement>("sail");
     if (!isl || mini) { card.hidden = true; return; }
     card.hidden = false;
@@ -224,12 +252,12 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch = 0, downAt: { x: number; y: number } | null = null;
   if (!mini) {
-    canvas.addEventListener("pointerdown", e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } });
+    canvas.addEventListener("pointerdown", e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } }, on);
     canvas.addEventListener("pointermove", e => {
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 2) { const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && d > 0) chart.zoom(pinch / d); pinch = d; downAt = null; }
-    });
+    }, on);
     canvas.addEventListener("pointerup", e => {
       if (chart.flying) { pointers.delete(e.pointerId); chart.skipFlight(); return; }
       const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
@@ -237,9 +265,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       if (!tap) return;
       const id = chart.pick(e.clientX, e.clientY);
       if (id && id === chart.selected) sailTo(id); else if (id) choose(id);
-    });
-    canvas.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); pinch = 0; });
-    canvas.addEventListener("wheel", e => { e.preventDefault(); chart.zoom(Math.exp(e.deltaY * 0.0015)); }, { passive: false });
+    }, on);
+    canvas.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); pinch = 0; }, on);
+    canvas.addEventListener("wheel", e => { e.preventDefault(); chart.zoom(Math.exp(e.deltaY * 0.0015)); }, { passive: false, ...on });
     $("zoom-in").addEventListener("click", () => chart.zoom(0.75));
     $("zoom-out").addEventListener("click", () => chart.zoom(1.33));
   }
@@ -311,14 +339,15 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); chart.frame(dt, time); },
+    update(dt, time) { if (!mini) pad(dt); wrapOne(); chart.frame(dt, time); },
     resize, choose,
     dispose() {
-      disposed = true;
+      disposed = true; waiting.clear();
       removeEventListener("keydown", onKey);
       if (poll) { clearInterval(poll); poll = null; }
       worker?.terminate(); worker = null;
-      chart.dispose();
+      listening.abort();
+      if (mini) chart.dispose(); else releaseSeaChart(chart); // (the full chart kept for the next opening)
       root.remove();
     },
   };

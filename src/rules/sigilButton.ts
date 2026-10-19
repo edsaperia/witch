@@ -4,6 +4,7 @@
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { atMapTable, deckOf } from "./treehouse";
+import { objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
@@ -53,9 +54,16 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
   const perched = !!g.witch.perch, deck = perched ? deckOf(g.map, t) : null;
   if (perched) {
-    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, g.witch.x, g.witch.z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    const inHouse = !!deck?.house?.rooms.length && g.witch.mode === "ground" && !g.witch.seated && !W.ko, x = g.witch.x, z = g.witch.z;
+    // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
+    // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
+    const at = inHouse ? objectAt(deck!, x, z) : null;
+    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
+    else if ((sigil || place) && at && at.use.kind !== "bed") relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
+    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
-  }
+  } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
   const onFoot = g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko;
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
@@ -99,7 +107,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   if (g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko) pullRune(g, t, step);
 }
 
-/** A sigil put down this step in a sleeping legend's clearing finishes its quest. */
+/** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
+ *  be given when the sigil is placed, not when the animal enters the circle"; her animal of its kind walking in does nothing). */
 export function questsFromPlaced(g: Game, ht: number): void {
   if (g.partyOver) return; // (no quests once the party's over: Ed, 2026-10-18)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
@@ -109,24 +118,6 @@ export function questsFromPlaced(g: Game, ht: number): void {
     if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
     if (L) questDone(g, L, e.id);
   }
-}
-
-/** Her animals standing in a sleeping legend's clearing finish its quest as putting the sigil down there does (Ed's playtest,
- *  2026-10-07, via the coordinator: "I brought a quest animal into the legend circle and I wasn't granted the buff"): any of
- *  hers, following her (on her stack) or parked by its sigil wherever that lies, of the kind and age the legend dreams of,
- *  standing inside its circle. Every step; cheap (her animals, each against its own area's legend). */
-export function questsFromStanding(g: Game): void {
-  const s = g.leash;
-  if (g.partyOver || (!s.stack.length && !s.placed.length)) return; // (no quests once the party's over: Ed, 2026-10-18)
-  const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), partified = (k: string) => g.party.areas.has(k);
-  const check = (id: number) => {
-    const c = g.creatures[id];
-    if (!c || c.gone || c.boss) return;
-    const L = questPlaced(g.map, g.creatures, ids, g.friendly, partified, id, c.x, c.z, g.clock.time);
-    if (L) questDone(g, L, id);
-  };
-  for (const id of s.stack) check(id);
-  for (const p of s.placed) check(p.id);
 }
 
 /** A legend's quest just done (questPlaced has made it happy): the event, the ley line, the area friendly while wild, and its

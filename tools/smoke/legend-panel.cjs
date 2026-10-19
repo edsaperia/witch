@@ -1,6 +1,7 @@
 // The legend circle's explainer (render/leash.ts drawCirclePanel; Ed, 2026-10-06): the built game (DIST, default dist/) at
-// 1600×900 on a seed, the witch on the ground inside two legends' clearings in turn, each asleep (its quest open), its boon
-// already hers, restless, angry and happy (the game paused for each shot), and once just outside (no panel). Writes
+// 1600×900 on a seed, the witch on the ground inside two legends' clearings in turn, each asleep (its quest open), restless, angry,
+// happy, with a wrong kind's sigil put down inside, and once the party's over (the game paused for each shot), and once just outside
+// (no panel). Writes
 // <out dir>/<species>-<state>.png and outside.png.
 //   npm run build && node tools/smoke/legend-panel.cjs [out dir] [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -31,23 +32,34 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     });
     const settle = s => page.waitForTimeout(s);
     for (const id of picks) {
-      for (const state of ["asleep", "boon", "restless", "angry", "happy"]) {
-        const info = await page.evaluate(([id, state]) => {
+      for (const state of ["asleep", "restless", "angry", "happy", "wrong", "over"]) {
+        // (each state as the rules hold it: wrong, a sigil of another kind put down inside; over, the party's over and its dream closed)
+        const apply = ([id, state, pause]) => {
           const g = window.witch.game, c = g.creatures[id], k = g.map.legendClearings.find(q => Math.hypot(q.legend.x - c.x, q.legend.z - c.z) <= q.r);
-          c.legendState = state === "boon" ? "asleep" : state; c.quest.done = state === "boon" || state === "happy" ? 1 : undefined;
-          g.witch = { ...g.witch, x: k.x + k.r * 0.15, z: k.z + k.r * 0.45, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 };
-          g.clock.paused = false;
+          c.legendState = ["wrong", "over"].includes(state) ? "asleep" : state; c.quest.done = state === "happy" ? 1 : undefined; c.questOpen = state !== "over";
+          g.leash.placed = g.leash.placed.filter(p => !g.creatures[p.id].wrongShot);
+          if (state === "wrong") {
+            const o = g.creatures.find(o => !o.gone && !o.boss && !o.leashed && o.level > 0 && Math.hypot(o.x - k.x, o.z - k.z) > 300);
+            const sp = c.quest.species === "fox" ? "badger" : "fox", x = k.x - 2, z = k.z + k.r * 0.25;
+            Object.assign(o, { species: sp, leashed: true, circle: undefined, siege: undefined, enraged: false, fight: undefined, x: x + 1, z, tx: x + 1, tz: z, wrongShot: true });
+            g.leash.placed.push({ id: o.id, x, z, at: g.clock.time });
+          }
+          if (!pause) g.witch = { ...g.witch, x: k.x + k.r * 0.15, z: k.z + k.r * 0.45, seated: false, mode: "ground", lift: 0, vx: 0, vz: 0 };
+          g.clock.paused = !!pause;
           return { species: c.species, r: Math.round(k.r) };
-        }, [id, state]);
+        };
+        const info = await page.evaluate(apply, [id, state, false]);
         await settle(1500);
-        await page.evaluate(([id, state]) => { const g = window.witch.game, c = g.creatures[id]; c.legendState = state === "boon" ? "asleep" : state; c.quest.done = state === "boon" || state === "happy" ? 1 : undefined; g.clock.paused = true; }, [id, state]); // (held there for the shot)
-        const want = state === "boon" ? "asleep" : state;
-        await page.waitForFunction(([want, done]) => { const el = document.querySelector(".legend-panel"); return el && el.dataset.state === want && !!el.querySelector("p.done") === done && +el.style.opacity > .9; }, [want, state === "boon" || state === "happy"], { timeout: 120000, polling: 200 }).catch(() => {});
+        await page.evaluate(apply, [id, state, true]); // (held there for the shot)
+        await page.evaluate(() => { const w = window.witch; w.manual = true; for (let i = 0; i < 3; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60); w.manual = false; }); // (drawn as it now stands: a paused game's panel is only redrawn with a frame)
+        const want = ["wrong", "over"].includes(state) ? "asleep" : state;
+        await page.waitForFunction(([want, done]) => { const el = document.querySelector(".legend-panel"); return el && el.dataset.state === want && !!el.querySelector("p.done") === done && +el.style.opacity > .9; }, [want, state === "happy"], { timeout: 120000, polling: 200 }).catch(() => {});
         await settle(1500);
         const shown = await page.evaluate(() => { const el = document.querySelector(".legend-panel"); return el && el.style.display !== "none" ? { text: el.textContent, opacity: el.style.opacity } : null; });
         console.log(info.species, state, JSON.stringify(shown));
+        if (!shown) console.log("not shown:", await page.evaluate(id => { const g = window.witch.game, c = g.creatures[id], el = document.querySelector(".legend-panel"); return JSON.stringify({ w: [Math.round(g.witch.x), Math.round(g.witch.z), g.witch.mode], c: [Math.round(c.x), Math.round(c.z), c.legendState], el: el ? [el.style.display, el.style.opacity, el.dataset.state] : null, paused: g.clock.paused, t: g.clock.time }); }, id));
         if (!shown || !(+shown.opacity > 0.9)) errors.push(`${info.species} ${state}: no panel`);
-        await page.screenshot({ path: path.join(outDir, `${info.species}-${state}.png`) });
+        await page.screenshot({ path: path.join(outDir, `${info.species}-${state}.png`), timeout: 600000 });
       }
     }
     // just outside the last circle: the panel fades out
@@ -56,7 +68,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const after = await page.evaluate(() => { const el = document.querySelector(".legend-panel"), g = window.witch.game; return el ? `${el.style.display}|${el.style.opacity}|witch ${Math.round(g.witch.x)},${Math.round(g.witch.z)} ${g.witch.mode} paused ${g.clock.paused}` : "absent"; });
     console.log("outside", after);
     if (!after.startsWith("none") && after !== "absent") errors.push("panel still shown outside the circle");
-    await page.screenshot({ path: path.join(outDir, "outside.png") });
+    await page.screenshot({ path: path.join(outDir, "outside.png"), timeout: 600000 });
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
 })().catch(e => { console.error(e); process.exit(1); });
