@@ -3,7 +3,7 @@
 // 2026-10-11: "show the map screen in the same way you show the island: pixellated, camera seeing it in 3D, your view moves
 // around as you select islands"): home in the middle, every island at its kind's bearing on its phase's ring (chartLayout.ts
 // islandAt) in its real outline (hotel, rules/islandShape.ts islandOutline: the land each grows to; made off the page's thread by
-// chartOutlines.worker.ts, the chosen and nearest first, its round coast, islandCoast, shown till it comes), a sigil only on
+// chartOutlines.worker.ts, in phase order and the nearest the chosen first within a phase, its round coast, islandCoast, shown till it comes), a sigil only on
 // those she can travel to (Ed: "You can always see all the islands - you only see sigils on the ones that you can travel to"),
 // big enough to read (Ed: "large enough that the animal sigils show clearly on the islands"); her voyages as glowing lines on
 // the water; won islands ringed in gold.
@@ -22,7 +22,7 @@ import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
-import { OUTLINE_STEP } from "./chartWarm";
+import { islandPhase, OUTLINE_STEP, outlineOrder } from "./chartWarm";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -125,15 +125,22 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
-  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null> } | null = null;
+  // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
+  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
-    bake = id && islands.find(i => i.id === id)?.sail ? { island: id, job: import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null) } : null;
+    void bake?.map.then(m => m?.stop());
+    if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
+    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null);
+    bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
   const go = async (id: string) => {
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
     await b?.settle(); // (what's drawn, written before the page goes)
+    // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
+    const m = bake?.island === id ? await bake.map : null;
+    if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
@@ -149,8 +156,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   // The real islands (seconds each for the big ones to make, about a minute for them all; their meshes made with them,
   // render/chart/islandMesh.ts, so the page only wraps what comes): the worker sends those this browser keeps (app/chartCache.ts:
-  // made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, the chosen island and those nearest it
-  // first, then makes the rest, each rising out of the sea as it comes (nothing stands in for one till then: Ed, 2026-10-13). The
+  // made ahead in the night, app/chartWarm.ts, or on an earlier visit) straight away, by phase, earliest first, and within a
+  // phase the chosen island and those nearest it first (Ed, 2026-10-19), then makes the rest, each rising out of the sea as it comes (nothing stands in for one till then: Ed, 2026-10-13). The
   // map table's miniature asks only for what's kept (nothing is ever made while she's at the deck) and asks again every few
   // seconds while any is missing, as the night's warm fills the cache.
   let worker: Worker | null = null, poll: ReturnType<typeof setInterval> | null = null;
@@ -176,7 +183,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function outlines(): void {
     const w = worldNow(), found = [...save.found];
     const from = islands.find(i => i.id === (chart.selected ?? save.voyages.at(-1)?.to ?? "home")) ?? islands[0];
-    const ids = [...islands].filter(i => !i.outline).sort((a, b) => Math.hypot(a.x - from.x, a.y - from.y) - Math.hypot(b.x - from.x, b.y - from.y)).map(i => i.id);
+    const ids = outlineOrder(islands.filter(i => !i.outline), from); // (by phase, earliest first, the nearest the chosen first within one: Ed, 2026-10-19)
     if (!ids.length) { if (poll) { clearInterval(poll); poll = null; } return; }
     make()?.postMessage({ world: w, found, ids, step: OUTLINE_STEP, cacheOnly: mini } satisfies OutlineAsk);
     if (mini && !poll) poll = setInterval(outlines, 4000);
@@ -187,7 +194,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const open = new Set(sailAny ? ["home", ...REAL_KINDS] : unlocked(save)), won = new Set(save.won), w = worldNow();
     const one = (id: string, radii: ArrayLike<number>, sigil: string): ChartIsland => {
       const at = islandAt(id, w)!, unknown = isPlaceholder(id);
-      return { id, x: at.x, y: at.y, phase: id === "home" ? 0 : islandOf(id, w)?.phase ?? 1, radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
+      return { id, x: at.x, y: at.y, phase: islandPhase(id, w), radii, sail: open.has(id) && !unknown, unknown, won: won.has(id), sigil };
     };
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));

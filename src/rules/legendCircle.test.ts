@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { newGame } from "./game";
 import { TUNING } from "./tuning";
-import { boonWords, circleLines, circleShown, circleReach, legendCircleNear } from "./legendCircle";
+import { boonWords, circleLines, circleShown, circleReach, legendCircleNear, sigilWords } from "./legendCircle";
 import { legendCircleAt } from "./musicPlan";
 import { LEGEND_BUFFS } from "./buffs";
 
@@ -55,26 +55,24 @@ describe("the legend circle's explainer", () => {
     expect(shown).toBe(0);
   });
 
-  it("shows for a legend in any state, and says what its state means", () => {
+  it("shows for a legend in any state, and says what its state means, in Ed's plain words (2026-10-19)", () => {
     const { g, L } = setup(), at = { x: L.x, z: L.z, mode: "ground" };
-    const words = () => circleLines(L).map(l => l.text).join(" ");
-    expect(words()).toMatch(/^This is a slumbering elder [a-z -]+\./);
-    expect(words()).toContain("{sigil}"); expect(words()).toContain("any age"); expect(words()).not.toContain("{relic}"); expect(words()).not.toContain("{boon}"); expect(words()).toContain("none of its kin are nearby");
+    const words = () => circleLines(L).map(l => l.text);
+    const name = L.species === "beetle" ? "stag beetle" : L.species === "cat" ? "wildcat" : L.species;
+    expect(words()).toEqual([`A sleeping legend: the ${name}.`, `Put down {sigil} ${sigilWords(L.quest!.species)}, any age, inside this circle.`, "It will wake, fight for you and show you its island.", "Leave none of its kind in its area and it grows restless."]);
     L.questOpen = false; // (the party's over: Ed, 2026-10-18, no quest taken)
-    expect(words()).toContain("takes no quest"); expect(words()).not.toContain("{sigil}");
+    expect(words()).toEqual([`A sleeping legend: the ${name}.`, "The party's over: it sleeps on."]);
     L.questOpen = true;
-    L.quest!.done = 10; L.legendState = "happy";
-    expect(circleLines(L).find(l => l.done)?.text).toMatch(/^Its island is found tonight/);
-    L.legendState = "restless"; L.quest!.done = undefined;
+    L.legendState = "restless";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
-    expect(words()).toMatch(/^This elder is restless\./); expect(words()).toContain("Bring one of its kin back");
+    expect(words()[0]).toBe(`A restless legend: the ${name}.`); expect(words()[1]).toContain("{sigil}"); expect(words().at(-1)).toBe("Bring one of its kind back to its area to calm it.");
     L.legendState = "angry";
     expect(legendCircleNear(g, at)?.legend).toBe(L);
-    expect(words()).toMatch(/^This elder is angry/); expect(words()).not.toContain("{relic}");
-    expect(words()).toContain("bring one of its kin back"); // (it settles once one of its kind is back in its area, too: rules/legends.ts)
-    L.legendState = "happy";
-    expect(words()).toMatch(/^This elder is your ally now\./);
-    for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; expect(words()).not.toMatch(/kill|die|dead/i); }
+    expect(words()).toEqual([`An angry legend: the ${name}!`, "Wear it down, or bring one of its kind back to its area, and it will settle."]);
+    L.quest!.done = 10; L.legendState = "happy";
+    expect(words()).toEqual([`Your ally: the ${name}.`, "It fights for you and guards its area.", "Its island is found: win the night to keep it."]);
+    expect(circleLines(L).at(-1)!.done).toBe(true);
+    for (const s of ["asleep", "restless", "angry", "happy"] as const) { L.legendState = s; for (const w of words()) { expect(w).not.toMatch(/kill|die|dead|elder|kin\b|slumber|boon|bring .* into/i); expect(w.length).toBeLessThan(90); } }
   });
 
   it("asks for its kind with no age and names no boon (Ed, 2026-10-18); boonWords still words the buffs", () => {
@@ -83,6 +81,7 @@ describe("the legend circle's explainer", () => {
     const line = circleLines(L).find(l => l.text.includes("{sigil}"))!.text;
     expect(line).not.toContain("{boon}");
     expect(line).toMatch(/any age/);
+    expect(line).toMatch(/^Put down \{sigil\} an? [a-z ]+'s sigil, any age, inside this circle\.$/);
     expect(line).not.toMatch(/\b(baby|young|adult)\b/);
     for (const sp of Object.keys(LEGEND_BUFFS.species)) {
       const w = boonWords(sp)!;

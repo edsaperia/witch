@@ -3,17 +3,27 @@
 // and its forest is grown, a worker of its own makes every island the chart will show, one at a time and off the page's thread,
 // and keeps each (app/chartCache.ts); the map table, and chart.html in this browser, then open on them at once. What's kept is
 // kept across visits, so later nights only check it (home again when what she's found grows: its size).
-import { KIND_NAMES } from "../rules/rosters";
+import { islandOf, KIND_NAMES } from "../rules/rosters";
 import { islandAt } from "./chartLayout";
 import type { OutlineAsk, WarmNote } from "./chartOutlines.worker";
 
 /** The outlines' land sampled every so many metres: the chart's pixels are far coarser. */
 export const OUTLINE_STEP = 32;
 
-/** Every island the chart shows, home and the nearest first. */
+/** An island's phase on the chart: home 0, a kind's island its own (rules/rosters.ts). */
+export const islandPhase = (id: string, world: number): number => (id === "home" ? 0 : islandOf(id, world)?.phase ?? 1);
+
+/** The order the outlines are made in (Ed, 2026-10-19: "it should be in phase order (earlier phases first)"): by phase, and within a
+ *  phase the nearest to `from` first. */
+export function outlineOrder<T extends { id: string; x: number; y: number; phase: number }>(islands: readonly T[], from: { x: number; y: number }): string[] {
+  const d = (i: T) => Math.hypot(i.x - from.x, i.y - from.y);
+  return [...islands].sort((a, b) => a.phase - b.phase || d(a) - d(b)).map(i => i.id);
+}
+
+/** Every island the chart shows, in phase order (home first), the nearest first within a phase. */
 export function chartIslandIds(world: number): string[] {
-  const d = (id: string) => { const a = islandAt(id, world); return a ? Math.hypot(a.x, a.y) : 9; };
-  return ["home", ...[...KIND_NAMES].sort((a, b) => d(a) - d(b))];
+  const all = ["home", ...KIND_NAMES].map(id => { const a = islandAt(id, world); return { id, x: a?.x ?? 9, y: a?.y ?? 0, phase: islandPhase(id, world) }; });
+  return outlineOrder(all, { x: 0, y: 0 });
 }
 
 let running: Worker | null = null;

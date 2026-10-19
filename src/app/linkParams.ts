@@ -1,7 +1,7 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
-import { islandOf, playableIsland } from "../rules/rosters";
+import { playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
@@ -50,6 +50,7 @@ export function tuningFromLink(params: URLSearchParams) {
     ...TUNING, bloom: { ...TUNING.bloom }, tiltShift: { ...TUNING.tiltShift, treetop: { ...TUNING.tiltShift.treetop } },
     shadows: { ...TUNING.shadows }, canopyShadow: { ...TUNING.canopyShadow }, mist: { ...TUNING.mist },
     party: { ...TUNING.party }, fight: { ...TUNING.fight }, // (the fight's scale and speed change live: its own copy)
+    partyObjects: { ...TUNING.partyObjects }, // (styleFromLink sets its generated: this load's, not the file's for every load after it on the page, as the chart's landing bake and its map's worker both make one: app/mapPrep.ts)
   };
   // ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
   // styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
@@ -184,7 +185,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // many areas of random types.
   {
     const v = params.get("island");
-    if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
+    if (v && v !== "home" && playableIsland(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
     else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
     // ?phase=0 to 5 (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island of that phase's shape, of
     // random types (10 areas a phase, home's 10 for 0) unless ?island= gives a number; a kind's island keeps its own.

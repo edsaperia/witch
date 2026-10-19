@@ -210,10 +210,16 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 
 **Dreams and quests** (Ed, 2026-10-18: "Legends accept any level animal for their quest, at which point they fight for you and unlock their island"). Stand within 60 m on the ground (`dreams.range`) and you see what a sleeping legend dreams of: one other **kind**, any age (its bare sigil, no age frame). The dream points **deeper in**: a kind that lives in an area **later on the route** than the legend's own, within 6 areas (`legends.questCap`; `legends.questLater`). If none of those is in reach, it's the kind of the nearest later area; a legend with no later area dreams of any kind. The gamble is how hard that later area is to reach and fight through.
 - **The early easy quest** is the exception: one legend among the first three areas the waves reach dreams of the kind of another of those three (`legends.earlyQuest`).
-- **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. One of yours of that kind standing inside the circle counts too, following you or parked. The animal stays yours.
+- **Put down the sigil of an animal of that kind, any age, inside its circle**, while the legend sleeps (or is restless), and the quest is done **on the spot**, wherever the animal is; it walks over to its sigil afterwards. **Only putting the sigil down does it** (Ed, 2026-10-19: "The reward should be given when the sigil is placed, not when the animal enters the circle"): one of yours of that kind walking into the circle, following you or parked, does nothing. The animal stays yours.
 - **The legend wakes happy at once and fights for you** (below), and **its island is found tonight**. The island is kept on the sea chart **only if the night is won** (Ed, 2026-10-18: "The island is only kept if the night is won"); lose the night and tonight's islands are not kept.
 - **No boon** (Ed, 2026-10-18: "Finishing quests no longer gives boons").
-- The circle's panel names the dream in words beside its sigil ("a badger, any age"). Drop the wrong kind in the circle, or bring one in, and it says so at once: "Not this one: it dreams of an elk, and you've brought a young stag."
+- **The circle's panel** (Ed, 2026-10-19: short and plain, one idea a line, the action said exactly; `rules/legendCircle.ts` `circleLines`):
+  - sleeping: "A sleeping legend: the hare." / "Put down [sigil] a fox's sigil, any age, inside this circle." / "It will wake, fight for you and show you its island." / "Leave none of its kind in its area and it grows restless.";
+  - restless: "A restless legend: the hare.", the same ask, then "Bring one of its kind back to its area to calm it.";
+  - angry: "An angry legend: the hare!" / "Wear it down, or bring one of its kind back to its area, and it will settle.";
+  - happy: "Your ally: the hare." / "It fights for you and guards its area." / (its quest done) "Its island is found: win the night to keep it.";
+  - a wrong kind's sigil put down inside: "Not this one: it wants a fox's sigil, and you put down an elk's.";
+  - once the party's over: "A sleeping legend: the hare." / "The party's over: it sleeps on."
 - If the area's wave hasn't come yet, the ley line also moves on from it early, and the area counts as **friendly**.
 - Drop the sigil just outside the circle and the circle flashes as a hint.
 - **Once the party's over, no legend takes a quest** (Ed, 2026-10-18: permanent unlocks only happen while the party is on): its dream closes and the panel says it sleeps on.

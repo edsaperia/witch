@@ -107,7 +107,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   if (g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko) pullRune(g, t, step);
 }
 
-/** A sigil put down this step in a sleeping legend's clearing finishes its quest. */
+/** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
+ *  be given when the sigil is placed, not when the animal enters the circle"; her animal of its kind walking in does nothing). */
 export function questsFromPlaced(g: Game, ht: number): void {
   if (g.partyOver) return; // (no quests once the party's over: Ed, 2026-10-18)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
@@ -117,24 +118,6 @@ export function questsFromPlaced(g: Game, ht: number): void {
     if (!L) { const O = questOutside(g.map, g.creatures, ids, k => g.party.areas.has(k), e.id, e.x, e.z); if (O) g.leash.events.push(outsideCircle(g, O)); }
     if (L) questDone(g, L, e.id);
   }
-}
-
-/** Her animals standing in a sleeping legend's clearing finish its quest as putting the sigil down there does (Ed's playtest,
- *  2026-10-07, via the coordinator: "I brought a quest animal into the legend circle and I wasn't granted the buff"): any of
- *  hers, following her (on her stack) or parked by its sigil wherever that lies, of the kind and age the legend dreams of,
- *  standing inside its circle. Every step; cheap (her animals, each against its own area's legend). */
-export function questsFromStanding(g: Game): void {
-  const s = g.leash;
-  if (g.partyOver || (!s.stack.length && !s.placed.length)) return; // (no quests once the party's over: Ed, 2026-10-18)
-  const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), partified = (k: string) => g.party.areas.has(k);
-  const check = (id: number) => {
-    const c = g.creatures[id];
-    if (!c || c.gone || c.boss) return;
-    const L = questPlaced(g.map, g.creatures, ids, g.friendly, partified, id, c.x, c.z, g.clock.time);
-    if (L) questDone(g, L, id);
-  };
-  for (const id of s.stack) check(id);
-  for (const p of s.placed) check(p.id);
 }
 
 /** A legend's quest just done (questPlaced has made it happy): the event, the ley line, the area friendly while wild, and its

@@ -192,7 +192,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
       const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
       g.witches[0].health.hp = 1e6;
       const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
-      // (the gift starts out of the circle: standing in it would finish the quest by itself, rules/sigilButton.ts questsFromStanding)
+      // (the gift starts out of the circle; only its sigil put down inside finishes the quest: Ed, 2026-10-19)
       const gift = g.creatures[g.leash.stack[g.leash.stack.length - 1]];
       Object.assign(gift, { x: lc.x + lc.r + 30, z: lc.z, tx: lc.x + lc.r + 30, tz: lc.z });
       if (!inside) {
