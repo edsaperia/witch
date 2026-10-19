@@ -9912,7 +9912,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_GRASSLAND = { species: [["flat", 0.3], ["hawthorn", 0.25], ["crabApple", 0.2], ["weepingBirch", 0.15], ["whitebeam", 0.1]], palette: { sat: 1, val: 1.1 } };
 
   // art/areas/hazel-forest/flora.js
-  var AREA_FLORA_HAZEL_FOREST = { species: [["hazel", 0.45], ["oak", 0.2], ["elder", 0.2], ["glowcap", 0.15]], palette: { sat: 1.05, val: 1 } };
+  var AREA_FLORA_HAZEL_FOREST = { species: [["hazel", 0.45], ["oak", 0.2], ["elder", 0.2], ["hazel", 0.15, { variant: "tall" }]], palette: { sat: 1.05, val: 1 } };
 
   // art/areas/heath/flora.js
   var AREA_FLORA_HEATH = { species: [["birch", 0.4], ["pine", 0.25], ["hawthorn", 0.2], ["rowan", 0.15]], palette: { sat: 0.9, val: 0.95 } };
@@ -10038,23 +10038,6 @@ label.check input { accent-color: var(--accent); }
     { "kind": "polarbear", "slot": 63, "phase": 4, "bearing": 345, "dir": "NNW", "biome": "cold" }
   ];
 
-  // art/flora/areas.js
-  var AREA_FLORA = {
-    ...AREA_FOLDER_FLORA
-  };
-
-  // art/recipes.js
-  var AREA_RECIPES = [...AREA_FOLDER_RECIPES];
-  function recipeProblems(R4) {
-    const out = [];
-    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R4[k] == null) out.push(k);
-    if (!Number.isInteger(R4.slot) || R4.slot < 0) out.push("slot");
-    if (R4.floor && (!Array.isArray(R4.floor) || R4.floor.length !== 4)) out.push("floor");
-    if (!R4.set && !R4.setPiece) out.push("set or setPiece");
-    if (!R4.big?.length) out.push("big");
-    return out;
-  }
-
   // art/flora/variants.js
   var TREE_VARIANTS = {
     windbent: { lean: 0.45, gnarl: 0.85 },
@@ -10073,10 +10056,29 @@ label.check input { accent-color: var(--accent); }
     //                  snow lying on its crown
     burnt: { dark: true, gnarl: 1 },
     //       scorched: its crown dark, its limbs twisted
+    tall: { scale: 1.45, trunks: 3, thin: true, narrow: true, gnarl: 0.35 },
+    // grown up from a coppice stool and left: taller, a few straight slim stems, its crown narrow (the hazel forest's second hazel: Ed, 2026-10-19)
     drowned: { dark: true, hang: 0.6, thick: 1.2 }
     // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
   };
   var withVariant = (o) => o?.variant && TREE_VARIANTS[o.variant] ? { ...o, ...TREE_VARIANTS[o.variant] } : o;
+
+  // art/flora/areas.js
+  var AREA_FLORA = {
+    ...AREA_FOLDER_FLORA
+  };
+
+  // art/recipes.js
+  var AREA_RECIPES = [...AREA_FOLDER_RECIPES];
+  function recipeProblems(R4) {
+    const out = [];
+    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R4[k] == null) out.push(k);
+    if (!Number.isInteger(R4.slot) || R4.slot < 0) out.push("slot");
+    if (R4.floor && (!Array.isArray(R4.floor) || R4.floor.length !== 4)) out.push("floor");
+    if (!R4.set && !R4.setPiece) out.push("set or setPiece");
+    if (!R4.big?.length) out.push("big");
+    return out;
+  }
 
   // art/props/genomes.js
   var PROP_GENOMES = {
@@ -11130,6 +11132,36 @@ label.check input { accent-color: var(--accent); }
       "honeysuckle-tangle": { treeDensity: 1, groundCover: { density: 0.6, kinds: ["blades", "fern"] } }
     }
   };
+
+  // src/rules/spells.ts
+  var HAT_SPELLS = [
+    { id: "none", name: "Plain hat", how: "placed", line: "No spell.", built: true },
+    { id: "helmet", name: "Helmet", how: "worn", line: "An extra hit: the first blow knocks it off instead. Pick it up to wear it again.", built: true },
+    { id: "healing", name: "Healing ring", how: "placed", line: "Put it down: standing near it, she heals a hit every few seconds.", built: true },
+    { id: "harvest", name: "Harvest", how: "onPlace", line: "Put it down: a ring of six berries grows round it.", built: true },
+    // (Ed, 2026-10-11)
+    { id: "dowsing", name: "Dowsing", how: "onPlace", line: "Put it down: a pointer leads to the nearest relic for a minute.", built: true },
+    { id: "sentry", name: "Sentry", how: "placed", line: "Put it down: it throws \u{1F48C}s at wild creatures within 33 m.", built: true },
+    // (Ed, 2026-10-11: "larger ranges")
+    { id: "bramble", name: "Bramble", how: "placed", line: "Put it down: wild creatures within 30 m of it are slowed.", built: true },
+    // (Ed, 2026-10-11: "Bramble should have 30m range")
+    { id: "slingshot", name: "Slingshot", how: "placed", line: "Put it down: \u{1F48C}s that pass within 10 m circle it, then fly at a creature up to 40 m off.", built: true },
+    { id: "gathering", name: "Gathering", how: "placed", line: "Put it down, then pick it up: every sigil of hers within 100 m comes back to her stack.", built: true },
+    // (Ed, 2026-10-11: "all sigils in range")
+    { id: "mine", name: "Mine", how: "onPlace", line: "Put it down: it bursts, stunning wild creatures within 15 m.", built: true },
+    { id: "lullaby", name: "Lullaby", how: "onPlace", line: "Put it down: wild creatures within 15 m fall asleep; a \u{1F48C} wakes one.", built: true },
+    // (Ed, 2026-10-12: "wake up when hit with an invitation")
+    { id: "cyclone", name: "Cyclone", how: "placed", line: "Put it down: a whirlwind sweeps creatures near it round, lifts them and flings them out.", built: true },
+    // (Ed, 2026-10-12, instead of the Decoy)
+    { id: "nursing", name: "Nursing", how: "placed", line: "Put it down: her creatures near it heal.", built: true },
+    { id: "edgeseer", name: "Edge-seer", how: "worn", line: "Worn: she sees the areas' edges glow.", built: true },
+    // (Ed, 2026-10-15: "shows the area edges"; "only the player wearing the hat sees the things")
+    { id: "routeseer", name: "Route-seer", how: "worn", line: "Worn: she sees the whole ley line, and every runestone's beacon.", built: true }
+    // (Ed, 2026-10-15: "a 'see the entire route' hat power as well")
+  ];
+
+  // src/rules/houseRooms.ts
+  var HAT_FLOOR = HAT_SPELLS.filter((s) => s.built && s.id !== "none").map((s) => s.id);
 
   // src/rules/treehouse.ts
   var DEG = Math.PI / 180;
@@ -12797,25 +12829,6 @@ label.check input { accent-color: var(--accent); }
       m.chain(pts.map((p) => [...p, 5e-3]), M.NOSE, { group: 2 });
       [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -0.12, 0]), [0.09, 0.1, 0.09], k % 2 ? M.RUNE : M.GLOW, { group: 3 + k }));
     } },
-    "fairy-bush": { cls: "small", desc: "a bush draped in warm fairy lights, a few bulbs in neon", glow: true, light: "warm", bob: [0.015, 3.6], build(m) {
-      for (const [x, y, z, r] of [[0, 0.3, 0, 0.38], [-0.25, 0.22, 0.1, 0.25], [0.25, 0.24, -0.05, 0.26]]) m.ell([x, y, z], [r, r * 0.85, r], M.LEAF, { group: 1, rough: 0.03, paint: (p) => ctCell(p, 10, 2) < 0.3 ? M.LEAF3 : void 0 });
-      const pts = [];
-      for (let i = 0; i <= 16; i++) {
-        const a = i / 16 * Math.PI * 2.4 - 1, y = 0.12 + i * 0.032;
-        pts.push([Math.cos(a) * 0.5, y, Math.sin(a) * 0.42]);
-      }
-      pString(m, pts, 12, 3);
-    } },
-    "fairy-branch": { cls: "small", desc: "a fallen bough propped up, wound with fairy lights", glow: true, light: "warm", bob: [0.02, 3.4], build(m) {
-      m.chain([[-0.7, 0, 0, 0.06], [-0.3, 0.45, 0, 0.05], [0.2, 0.6, 0.05, 0.04], [0.6, 0.4, 0.05, 0.03]], M.TRUNK, { group: 1, rough: 0.01 });
-      m.seg([-0.3, 0.45, 0], [-0.4, 0, 0.1], 0.03, 0.03, M.TRUNK, { group: 1 });
-      const pts = [];
-      for (let i = 0; i <= 18; i++) {
-        const t = i / 18, b = t < 0.33 ? v3.lerp([-0.7, 0, 0], [-0.3, 0.45, 0], t * 3) : t < 0.66 ? v3.lerp([-0.3, 0.45, 0], [0.2, 0.6, 0.05], (t - 0.33) * 3) : v3.lerp([0.2, 0.6, 0.05], [0.6, 0.4, 0.05], (t - 0.66) * 3);
-        pts.push(v3.add(b, [0, Math.sin(i * 1.7) * 0.06, Math.cos(i * 1.7) * 0.06]));
-      }
-      pString(m, pts, 10, 2);
-    } },
     "tiki-torch": { cls: "small", desc: "a bamboo tiki torch, its flame burning", glow: true, light: "warm", build(m) {
       m.seg([0, 0, 0], [0, 1.25, 0], 0.025, 0.03, M.STRAW, { group: 1, paint: (p) => p[1] * 6 % 1 < 0.08 ? M.WOOD : void 0 });
       m.seg([0, 1.2, 0], [0, 1.38, 0], 0.06, 0.05, M.STRAW, { group: 2, paint: (p) => ctCell(p, 30) < 0.3 ? M.WOOD : void 0 });
@@ -12835,30 +12848,6 @@ label.check input { accent-color: var(--accent); }
         return Math.abs(s) > half ? null : Math.abs(s) < half * 0.45 && u < 0.6 ? M.RUNE : M.GLOW;
       }, { group: 4 + i, bend: 0.2 }));
     } },
-    "led-cube": { cls: "small", desc: "a glowing LED cube seat, lit from within in a neon", glow: true, light: "neon", build(m) {
-      m.box([0, 0.2, 0], [0.2, 0.2, 0.2], M.MAGIC, { round: 0.03, group: 1, paint: (p) => p[1] > 0.38 || ctCell(p, 8) < 0.15 ? M.MAGIC2 : void 0 });
-    } },
-    "mirror-ball": { cls: "small", desc: "a little mirror ball hanging from a crooked branch stand, throwing sparkles", glow: true, light: "neon", bob: [0.03, 4], build(m) {
-      m.chain([[0, 0, 0, 0.03], [0.02, 0.9, 0, 0.025], [0.2, 1.25, 0, 0.02], [0.45, 1.32, 0, 0.015]], M.TRUNK, { group: 1, rough: 6e-3 });
-      m.seg([0.45, 1.32, 0], [0.45, 1.12, 0], 4e-3, 4e-3, M.NOSE, { group: 2 });
-      m.ell([0.45, 1, 0], [0.12, 0.12, 0.12], M.FRAME, { group: 3, paint: (p) => {
-        const a = Math.atan2(p[2], p[0] - 0.45), b = p[1];
-        return (Math.floor(a * 5) + Math.floor(b * 30)) % 2 ? M.SHADES : ctCell(p, 30) < 0.25 ? M.MAGIC2 : void 0;
-      } });
-      for (let i = 0; i < 4; i++) ctGlow(m, [0.45 + Math.cos(i * 1.6) * 0.35, 0.55 + ctHash(i) * 0.5, Math.sin(i * 1.6) * 0.3], 0.018, 4 + i, M.MAGIC2);
-    } },
-    "uv-rock": { cls: "small", desc: "a mossy rock splashed with ultraviolet paint, glowing", glow: true, light: "neon", build(m) {
-      m.ell([0, 0.2, 0], [0.4, 0.25, 0.3], M.STONE, { group: 1, rough: 0.03, paint: (p) => {
-        const n = ctCell(p, 9, 2), s = Math.hypot(p[0] - 0.1, p[1] - 0.3) < 0.12 || Math.hypot(p[0] + 0.2, p[2] - 0.2) < 0.08;
-        return s || n < 0.08 ? M.MAGIC : n > 0.85 ? M.MOSS : void 0;
-      } });
-    } },
-    "uv-stump": { cls: "small", desc: "a stump daubed with glowing ultraviolet spirals", glow: true, light: "neon", build(m) {
-      ctCyl(m, [0, 0, 0], [0, 0.35, 0], 0.22, M.TRUNK, 1, { paint: (p) => {
-        const a = Math.atan2(p[2], p[0]);
-        return Math.abs(Math.sin(a * 2 + p[1] * 18)) > 0.9 && p[2] > 0 ? M.MAGIC : ctCell(p, 12) < 0.15 ? M.BARKD : void 0;
-      }, end: (p) => Math.hypot(p[0], p[2]) * 30 % 1 < 0.2 ? M.MAGIC : M.STRAW });
-    } },
     // ---- hanging from real branches (Ed: hang them from real branch points; the pole versions stay for open ground). Each hangs from its
     // `hang` anchor (the top attach point, pixels from the sprite's top-left), which the prototype puts on a branch point; `bob` swings it ----
     "lantern-hanging": { cls: "small", desc: "a paper lantern hanging on its cord from a branch, glowing warm amber", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [0.05, 2.8], pointLight: { rgb: [255, 186, 96], radius: 3.5, height: 1.2 }, build(m) {
@@ -12877,14 +12866,6 @@ label.check input { accent-color: var(--accent); }
       m.chain([[-0.07, 1.1, 0, 5e-3], [0, 1.15, 0, 5e-3], [0.07, 1.1, 0, 5e-3]], M.FRAME, { group: 1 });
       ctCyl(m, [0, 0.92, 0], [0, 1.1, 0], 0.07, M.SHADES, 2, { paint: (p) => p[2] > 0.04 && p[1] > 0.95 && p[1] < 1.07 ? M.GLOW : void 0, end: M.FRAME });
       m.ell([0, 1, 0], [0.03, 0.05, 0.03], M.RUNE, { group: 3, extra: true });
-    } },
-    "fairy-lights-hanging": { cls: "small", desc: "a strand of warm fairy lights hanging in loops from a branch", glow: true, light: "warm", hang: true, anchors: { hang: [0, 1.6, 0] }, bob: [0.02, 3.3], build(m) {
-      const pts = [];
-      for (let i = 0; i <= 20; i++) {
-        const t = i / 20;
-        pts.push([Math.sin(t * Math.PI * 3) * 0.3, 1.6 - Math.sin(t * Math.PI) * 0.9 - t * 0.2, Math.cos(t * Math.PI * 3) * 0.08]);
-      }
-      pString(m, pts, 12, 1);
     } },
     "mirror-ball-hanging": { cls: "small", desc: "a little mirror ball hanging on a cord from a branch, throwing sparkles", glow: true, light: "neon", hang: true, anchors: { hang: [0, 1.5, 0] }, bob: [0.03, 4], build(m) {
       m.seg([0, 1.5, 0], [0, 1.2, 0], 4e-3, 4e-3, M.NOSE, { group: 1 });
@@ -12963,10 +12944,6 @@ label.check input { accent-color: var(--accent); }
       const c = [[-0.8, 1.55, -0.8], [0.8, 1.55, -0.8], [0.8, 1.55, 0.8], [-0.8, 1.55, 0.8]];
       for (let i = 0; i < 4; i++) pString(m, pSag(c[i], c[(i + 1) % 4], 0.12, 6), 6, 3 + i * 2);
     } },
-    "party-tent": { cls: "furniture", desc: "a little dome tent, a lantern glowing inside it", glow: true, light: "warm", build(m) {
-      m.ell([0, 0, 0], [0.75, 0.62, 0.6], M.HAT2, { group: 1, paint: (p) => p[2] > 0.35 && Math.abs(p[0]) < 0.2 && p[1] < 0.45 ? M.GLOW : Math.abs(Math.sin(Math.atan2(p[2], p[0]) * 2)) > 0.97 ? M.BODY3 : void 0 });
-      m.box([0, -0.5, 0], [1, 0.5, 1], M.NOSE, { group: 1, cut: true });
-    } },
     // ---- set dressing: rarer ----
     "dj-booth": { cls: "set", desc: "a small DJ booth: decks on a trestle table, a speaker beside it, lights on the decks", glow: true, light: "neon", build(m) {
       m.box([0, 0.7, 0], [0.6, 0.03, 0.3], M.WOOD, { round: 0.02, group: 1, paint: ctPlank(7, 0) });
@@ -12986,12 +12963,6 @@ label.check input { accent-color: var(--accent); }
       m.seg([0.68, 1.12, 0], [0.8, 1, 0], 0.035, 0.02, M.BELLY, { group: 2, paint: (p) => p[1] < 1.04 ? M.NOSE : void 0 });
       m.ell([0.6, 1.15, 0.06], [0.015, 0.015, 0.015], M.NOSE, { group: 3 });
       m.ell([-0.4, 0.4, 0], [0.15, 0.1, 0.2], M.BODY, { group: 1 });
-    } },
-    "inflatable-ring": { cls: "set", desc: "an inflatable unicorn ring left on the grass, its horn gold", build(m) {
-      m.ell([0, 0.12, 0], [0.55, 0.14, 0.5], M.BELLY, { group: 1, paint: (p) => Math.floor((Math.atan2(p[2], p[0]) + 4) * 2) % 2 ? M.TOP : void 0 });
-      m.ell([0, 0.12, 0], [0.28, 0.3, 0.24], M.NOSE, { group: 1, cut: true });
-      m.chain([[0.5, 0.2, 0, 0.1], [0.65, 0.45, 0, 0.08], [0.75, 0.55, 0, 0.08]], M.BELLY, { group: 2 });
-      m.seg([0.78, 0.62, 0], [0.85, 0.85, 0], 0.03, 6e-3, M.POM, { group: 3 });
     } },
     "crate-bar": { cls: "set", desc: "a bar built of stacked crates, bottles on top, fairy lights along its front", glow: true, light: "warm", build(m) {
       for (const [x, y] of [[-0.55, 0.18], [0, 0.18], [0.55, 0.18], [-0.55, 0.54], [0, 0.54], [0.55, 0.54]]) m.box([x, y, 0], [0.26, 0.17, 0.2], M.WOOD, { round: 0.015, group: 1 + (y > 0.3 ? 1 : 0), paint: (p) => (p[1] + 5) * 9 % 1 < 0.22 ? M.NOSE : ctPlank(7, 0)(p) });
@@ -13259,15 +13230,6 @@ label.check input { accent-color: var(--accent); }
         m.seg([x, 0.27, z], [x, 0.3, z], 0.045, 0.01, M.BODY3, { group: 6 });
       }
     } },
-    "speaker-stack": { desc: "a small stack of speaker cabinets, their cone rims glowing in a neon", glow: true, light: "neon", build(m) {
-      for (const [y, w, h, g] of [[0.32, 0.28, 0.32, 1], [0.84, 0.24, 0.2, 3]]) {
-        m.box([0, y, 0], [w, h, 0.22], M.BODY3, { round: 0.025, group: g });
-        const cones = h > 0.25 ? [[0, y - 0.1, 0.14], [0, y + 0.14, 0.07]] : [[-0.1, y, 0.06], [0.1, y, 0.06]];
-        for (const [cx, cy, r] of cones) {
-          m.ell([cx, cy, 0.23], [r, r, 0.045], M.NOSE, { group: g + 1, paint: (p) => Math.hypot(p[0] - cx, p[1] - cy) > r * 0.72 ? M.MAGIC : void 0 });
-        }
-      }
-    } },
     "crate-stack": { desc: "wooden crates stacked by the path, one full of records", build(m) {
       const crate = (c, g) => m.box(c, [0.24, 0.17, 0.19], M.WOOD, { round: 0.015, group: g, paint: (p) => (p[1] - c[1] + 1) * 9 % 1 < 0.2 && Math.abs(p[1] - c[1]) < 0.14 ? M.NOSE : ctPlank(7, 0.1)(p) });
       crate([0, 0.17, 0], 1);
@@ -13473,11 +13435,11 @@ label.check input { accent-color: var(--accent); }
     "glowstick-scatter": { desc: "glowsticks in mixed neons, stuck in the ground and strewn about", pieces: [["glowsticks-stuck", 0, 0, void 0, "pink"], ["glowsticks-strewn", 0.7, 0.3, void 0, "cyan"], ["glowstick-crushed", -0.6, 0.4, void 0, "acid"], ["glowsticks-stuck", -0.4, -0.5, "left", "lemon"], ["glowstick-crushed", 0.5, -0.4, void 0, "violet"]] },
     "chill-corner": { desc: "deck chairs and a cool box under a paper lantern", pieces: [["deck-chair", -0.5, 0], ["deck-chair", 0.5, 0.1, "left"], ["cool-box", 0, 0.7], ["lantern-pole", -1, -0.6, void 0, "cyan"], ["can", 0.3, 1.1]] },
     "bar-corner": { desc: "a crate bar between two tiki torches, cups and cans in front", pieces: [["crate-bar", 0, 0], ["tiki-torch", -1.2, 0.1], ["tiki-torch", 1.2, 0.1, "left"], ["cups", -0.3, 0.8], ["cans", 0.4, 0.9], ["bottle-fallen", 0.9, 0.7]] },
-    "dj-corner": { desc: "a little DJ booth with a neon star and glowsticks round it", pieces: [["dj-booth", 0, 0, void 0, "magenta"], ["neon-star", -1.3, -0.3, void 0, "cyan"], ["glowsticks-strewn", 0.2, 0.9, void 0, "acid"], ["cups", -0.6, 0.8], ["led-cube", 1.5, 0.7, void 0, "pink"]] },
+    "dj-corner": { desc: "a little DJ booth with a neon star and glowsticks round it", pieces: [["dj-booth", 0, 0, void 0, "magenta"], ["neon-star", -1.3, -0.3, void 0, "cyan"], ["glowsticks-strewn", 0.2, 0.9, void 0, "acid"], ["cups", -0.6, 0.8]] },
     "campfire-circle": { desc: "a campfire with a kettle on, camping chairs and a hay seat round it", pieces: [["campfire-kettle", 0, 0], ["camping-chair", -0.9, -0.2], ["camping-chair", 0.9, -0.3, "left"], ["hay-seat", 0, 0.9], ["cans", 0.6, 0.7], ["party-hat", -0.5, 0.7]] },
     "balloon-spot": { desc: "balloons on a stake, a stray, a deflated one, confetti and a fallen party hat", pieces: [["confetti", 0, 0], ["balloons-stake", 0.1, -0.2], ["balloon-single", 0.9, -0.5], ["party-hat", -0.3, 0.2], ["balloon-deflated", 0.4, 0.3], ["streamers", -0.2, -0.4]] },
     "home-path": { desc: "a stretch of the home path's edge: stepping stones, path lights, flower pots, a lantern post", pieces: [["stepping-stones", 0, 0], ["path-lights", 0.3, 0.7], ["flower-pots", -1.4, 0.5], ["lantern-post", 1.5, -0.4], ["mushroom-ring", -0.6, -0.8]] },
-    "home-corner": { desc: "a corner by the home soundsystem: a speaker stack on crates' side, a signpost, a fairy ring", pieces: [["speaker-stack", 0, 0, void 0, "cyan"], ["crate-stack", 1, 0.3], ["signpost", -1.1, 0.2, void 0, "pink"], ["mushroom-ring", 0.2, 1.1, void 0, "acid"]] },
+    "home-corner": { desc: "a corner by the home soundsystem: crates stacked by the path, a signpost, a fairy ring", pieces: [["crate-stack", 1, 0.3], ["signpost", -1.1, 0.2, void 0, "pink"], ["mushroom-ring", 0.2, 1.1, void 0, "acid"]] },
     "fireside": { desc: "a campfire with log seats, camping chairs, cups, a rug, and balloons tied nearby", pieces: [["campfire-logs", 0, 0], ["camping-chair", 1.5, 0.9, "left"], ["picnic-rug", -1.4, 0.9], ["cups", 0.4, 1.4], ["balloons-post", -1.6, -1.1], ["balloon-half", 0.9, 1.6]] },
     "bonfire-night": { desc: "a bonfire with hay seats round it, cans, glowsticks and a bunch of balloons on a post", pieces: [["bonfire", 0, 0], ["hay-seat", -1.6, 0.6], ["hay-seat", 1.5, 0.8, "left"], ["cans", 0.3, 1.4], ["glowsticks-strewn", -0.6, 1.5, void 0, "acid"], ["balloons-post", 2, -0.9, "left"]] }
   };
@@ -15003,8 +14965,8 @@ label.check input { accent-color: var(--accent); }
     __forest: "The forest: trees, bushes, ground cover and the wind in them.",
     _trees: "treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns widen with treeHeight too, crownWidth is the total). treeDensity (0-1): the chance of a tree on each spot outside the clearings; clearingSize (0-1): how far out from an area's centre the ground stays fully open; clearingFalloff (0-1): over how much of the way to the border trees thicken to full density (small: crisp clearing edges); gladeAmount (0-1) of the woods is open in random glades about gladeScale metres across; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
     treeDensity: 1,
-    _leafJitter: `Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform; small enough that no tree reads as a different season from its neighbours"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each), and its leaves are drawn with their hue turned by hue degrees times the first and their value scaled by 1 + value times the second (render/sprites.ts, on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike; the baked art unchanged, so it changes live). 0 and 0: every tree of a variant the same colour, as before. Small on purpose: an area's ten baked variants already differ by the style's leafVariety (up to about 38 degrees either way), so 8 degrees a tree reads as the same wood, just not ten identical sprites; measured (tools/flora/leaf-jitter-shots.cjs, 2026-10-18) at 5 degrees and 8% the night's dark crowns moved by about 2 degrees and 2/255 on average, too little to see, so 8 and 12%.`,
-    leafJitter: { hue: 8, value: 0.12 },
+    _leafJitter: `Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each). value: its leaves' brightness scaled by 1 + value times the second seed (on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike). autumn (Ed, 2026-10-19: "Why don't I see reds and oranges and purples from the jitter, only blue?", then of the two ways offered, a drift toward autumn colours over a plain hue turn): each tree's lit leaf colour drifts toward its own autumn colour (gold, orange, red, crimson or purple, by its first seed) by up to autumn of the way (its own share of it, some trees barely at all), kept at the brightness the night's moonlight gave it, so a red tree is as dark as its neighbours. hue: its lit leaf colour's hue turned either way by up to hue degrees times the first seed (Ed, 2026-10-19: "And also stretch the slider": 0 to 180, so any hue). Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, "bigger range"); no rebake. 0 and 0: every tree of a variant the same colour, as before.`,
+    leafJitter: { autumn: 0.25, value: 0.12, hue: 8 },
     _wind: "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.",
     wind: { on: true, strength: 0.25, speed: 6, gustScale: 40, treetop: 0.6 },
     _groundCover: "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges.",
@@ -15122,8 +15084,8 @@ label.check input { accent-color: var(--accent); }
     _lasers: "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.",
     _speakerLasers: "The dancefloor ring's lasers (Ed, 2026-10-04: none from the disco ball; one on top of each ring speaker): a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.",
     _partyWitches: `Party witches (Ed, 2026-10-04; and 2026-10-06: "Party witches should wander within 40m of the centre of the dancefloor, but mildly prefer being closer to the centre. They don't drink, rest, chat, or hold hands on the dancefloor. They have a new move, \\"swoop\\", which is rising to treetop and coming down again. They do this more when you're in treetop mode (so you can see the party from afar). I think the number of party witches should be unlimited."): one per playing soundsystem (not the dancefloor's), however many, flying in from its side (from flyFrom metres out, at flyHeight, over arriveTime seconds) to land within roam metres of the dancefloor's middle (each new spot at roam \xD7 u^centreBias from it: the mean roam / (1 + centreBias), so the floor stays busiest), clear of trees, the speakers and the treehouse, and off again if it stops. Drinking, resting, chatting and holding hands happen only off the floor (on it she runs off first). A swoop (weight swoop; times treetopBoost while a player is over the treetops) rises to swoopHeight (the treetops) times a random swoopMin to swoopMax (Ed, 2026-10-06: "random heights, taller and shorter than normal treetop") and back down over swoopTime seconds. Only visual (Ed: "it only needs to be animated when you are near it"): stepped only while a player is within simRange metres of the floor (simRangeTreetop over the treetops, so the swoops show from afar); out of range they stand as they were, and coming back each picks something new at once. gaze: stargazing (Ed, 2026-10-11: "when a soundsystem is destroyed its party witch doesn't leave; she leaves the dancefloor and lies down to stargaze ... outside the speaker ring, in pairs and threes where possible. At the end of the night everyone lies there looking up. She can interact with them like the beach witches"): beds from to to metres out past the speakers' ring, places side by side one behind another gap metres apart (lying along x, length metres long), each stagger metres along from the last, threes that share of beds (the rest pairs), apart metres between beds; a player keeping still within meet metres of one has the beach's turns with her (a chat, holding hands, a hug, lying side by side), turn seconds each.`,
-    _partyObjects: `Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object). generated: the prop generator's seeded bunting, balloon bunches and paper lanterns (art/party.js gen-*) in place of the hand-made ones they replace (the game turns it on: app/viewParams.ts).`,
-    partyObjects: { on: true, clusters: [2, 4], loose: [20, 40], setChance: 0.6, caughtChance: 0.6, hanging: [1, 3], lightsPerArea: 3, lanternReach: 5, arch: "branch-arch", home: { clusters: [6, 9], loose: [80, 110], weights: { home: 0.3, small: 0.2, balloon: 0.18, picnic: 0.16, litter: 0.14, furniture: 0.14, set: 0.06 }, gap: 3, reach: 0.9, lights: 6 }, exclude: ["led-cube"], generated: false },
+    _partyObjects: `Party objects (Ed, 2026-10-04; art/party.js): each partified area gets clusters [min, max] of the art's clusters, loose [min, max] loose pieces (litter, small lights, balloons; neon and balloon colours random per placement), set dressing at setChance, and at caughtChance an escaped balloon caught in a tree; hanging [min, max] lanterns, jars, fairy lights or mirror balls hung from branches in nearby crowns. They appear as the party arrives. Real point lights only from campfires and lanterns (lanternReach metres, warm), at most lightsPerArea an area; everything else glows without lighting. Home (Ed, 2026-10-05: "It has party decorations instead of trees; ... scattered around the whole home area, excluding the dancefloor"): its meadow strewn all over with home.loose [min, max] pieces picked by class (home.weights: the home set, small lights, balloons, litter, furniture, set dressing; nothing that hangs, as home has no trees) at least home.gap metres apart, and home.clusters [min, max] clusters (the home ones, home-path and home-corner, among the rest), out to home.reach of an area past its circle, off the dancefloor's clearing, the paths, the treehouse and her seat; an arch piece over each path where it leaves the floor's clearing; at most home.lights real lights. exclude: pieces never placed, loose or in clusters (Ed, v271: the glowing LED cube looked too much like a game object; empty since the cube itself was cut from the game with nine others in Ed's scenery review, 2026-10-19). generated: the prop generator's seeded bunting, balloon bunches and paper lanterns (art/party.js gen-*) in place of the hand-made ones they replace (the game turns it on: app/viewParams.ts).`,
+    partyObjects: { on: true, clusters: [2, 4], loose: [20, 40], setChance: 0.6, caughtChance: 0.6, hanging: [1, 3], lightsPerArea: 3, lanternReach: 5, arch: "branch-arch", home: { clusters: [6, 9], loose: [80, 110], weights: { home: 0.3, small: 0.2, balloon: 0.18, picnic: 0.16, litter: 0.14, furniture: 0.14, set: 0.06 }, gap: 3, reach: 0.9, lights: 6 }, exclude: [], generated: false },
     partyWitches: { roam: 40, centreBias: 1.6, swoopTime: 4, swoopHeight: 24, swoopMin: 0.6, swoopMax: 1.8, treetopBoost: 6, simRange: 90, simRangeTreetop: 320, idleAfter: 6, idleReach: 1.4, activityMin: 4, activityMax: 16, weights: { dance: 4, pair: 2.2, chat: 1.2, drink: 1, run: 0.8, rest: 0.6, fly: 0.4, swoop: 0.3 }, arriveTime: 4, flyFrom: 40, flyHeight: 7, runSpeed: 3, walkSpeed: 1, lapSpeed: 0.6, pairRange: 7, pairGap: 0.75, limboPass: 5, floorShare: 0.8, debugExtra: 0, gaze: { from: 3, to: 9, gap: 1.3, stagger: 0.7, length: 2.2, threes: 0.5, apart: 2.5, meet: 4, turn: 6 } },
     speakerLasers: { on: true, tilt: 24, sweep: 14, sweepBeats: 8, length: 300, opacity: 0.4 },
     lasers: { on: true, maxCount: 9, length: 420, spread: 100, maxTilt: 55, sweep: 22, sweepBeats: 36, openBars: 18, opacity: 0.6, duty: 0.35, blockBars: 4, fadeIn: 0.12, fadeOut: 0.4, fadeNear: 140, fadeFar: 480 },
@@ -16121,10 +16083,6 @@ registerProcessor("witch-fof", WitchFof);
       for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
       this.setStyle(style2);
       if (Object.values(style2.patches).some((p) => p.kind === "fof") && style2.form?.sung && style2.patches[style2.form.sung.patch]?.kind === "fof") void fofReady(ctx2);
-      {
-        const sung = style2.form?.sung, p = sung && style2.patches[sung.patch];
-        if (sung && p) this.channel(sung.part, p);
-      }
     }
     ctx;
     style;
@@ -16227,6 +16185,13 @@ registerProcessor("witch-fof", WitchFof);
         ch.fx?.dispose();
       }
       this.channels.clear();
+      this.warmSung();
+    }
+    /** The sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
+     *  from here on (VoiceFx.warm, in update): the stall hunt, 2026-10-13: that first note was a 190 ms frame. */
+    warmSung() {
+      const sung = this.style.form?.sung, p = sung && this.style.patches[sung.patch];
+      if (sung && p) this.channel(sung.part, p);
     }
     /** The FOF voice's worklet loaded on a context (tools rendering offline wait for it; the game starts it with the music). */
     static fofReady = fofReady;
@@ -16392,6 +16357,25 @@ registerProcessor("witch-fof", WitchFof);
       this.nextStep = -1;
       this.lastStep = -Infinity;
       this.conductor.reset();
+    }
+    /** A new night on the same page (docs/plans/sail-without-reload.md, A4): its game time starts again from 0, so the timeline
+     *  is anchored afresh at its first frame (not eased back from 6 s ahead), its knockdowns counted from none and the gate open.
+     *  What belongs to the page (the stats, the lead, a stall's look-ahead, the shed level, the channels) stays. */
+    newTimeline() {
+      this.reset();
+      this.g0 = NaN;
+      this.a0 = 0;
+      this.rate = 1;
+      this.heardTo = -1;
+      this.lastNow = -1;
+      this.cNext = -1;
+      this.cAt = 0;
+      this.knocksHeard = 0;
+      this.current = null;
+      const now = this.ctx.currentTime;
+      this.gate.gain.cancelScheduledValues(now);
+      this.gate.gain.setValueAtTime(1, now);
+      this.gated = false;
     }
     /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
     step(cue2, step2, t, sps) {
@@ -17618,6 +17602,68 @@ registerProcessor("witch-fof", WitchFof);
     return { ok: errors.length === 0, errors, results };
   }
   window.musicLabCheck = musicLabCheck;
+  async function musicLabSail(fresh = true, aSec = 12, gapSec = 3, bSec = 14) {
+    const rate = 22050, fps = 30, total = aSec + gapSec + bSec, M2 = TUNING.music;
+    const oc = new OfflineAudioContext(2, Math.ceil(rate * total), rate);
+    const m = new Music(oc, 1, style, 7), e = m.engine, mix = mixAt(M2, 1, 0, 0);
+    const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t) => barAt(clockA, t);
+    const cueA = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
+    const styleB = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };
+    const clockB = newBeatClock(style.bpm, waveTempo(beatTuning(), 0)), barB = (t) => barAt(clockB, t);
+    const cueB = { waves: [], nextAt: barB(90), bootUntil: barB(30), knockedOut: false, siege: 0, speakers: 12, speakerBars: Array.from({ length: 12 }, (_, i) => i * 0.5) };
+    let night = "a", bStart = NaN, gameA = 300;
+    const steps = [];
+    const E2 = e, inner = E2.step.bind(e);
+    E2.step = (c, s, t, sps) => {
+      if (night === "b") steps.push({ s, t });
+      inner(c, s, t, sps);
+    };
+    const frame = () => {
+      const now = oc.currentTime;
+      if (now < aSec) {
+        gameA = 300 + now;
+        m.update(mix, cueA, gameA, clockA, true, M2);
+        return;
+      }
+      if (now < aSec + gapSec) {
+        night = "gap";
+        m.update(mix, cueA, gameA, clockA, false, M2);
+        return;
+      }
+      if (night !== "b") {
+        night = "b";
+        bStart = now;
+        if (fresh) e.newTimeline();
+        e.seed = 99;
+        e.setStyle(styleB);
+      }
+      m.update(mix, cueB, now - bStart, clockB, true, M2);
+    };
+    for (let i = 1; i < total * fps; i++) void oc.suspend(i / fps).then(() => {
+      frame();
+      return oc.resume();
+    });
+    const buf = await oc.startRendering();
+    const stretch = (from, to) => {
+      let sum = 0, peak = 0, n = 0;
+      for (let ch = 0; ch < buf.numberOfChannels; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = Math.floor(from * rate); i < Math.min(d.length, Math.floor(to * rate)); i++) {
+          const v = d[i];
+          sum += v * v;
+          n++;
+          if (!(Math.abs(v) <= peak)) peak = Math.abs(v);
+        }
+      }
+      return { rms: Math.sqrt(sum / Math.max(1, n)), peak };
+    };
+    const offsets = steps.map(({ s, t }) => {
+      const g = timeAt(clockB, s / 4);
+      return { game: g, ms: (t - (bStart + g)) * 1e3 };
+    });
+    return { a: stretch(1, aSec), gapEnd: stretch(aSec + gapSec - 0.5, aSec + gapSec), b: stretch(aSec + gapSec + 2, total), whole: stretch(0, total), offsets };
+  }
+  window.musicLabSail = musicLabSail;
   function heardDb(buf) {
     const w = 2 * Math.PI * 200 / buf.sampleRate, cs = Math.cos(w), al = Math.sin(w) / (2 * 0.707), a0 = 1 + al;
     const b0 = (1 + cs) / 2 / a0, b1 = -(1 + cs) / a0, b2 = b0, a1 = -2 * cs / a0, a2 = (1 - al) / a0;
