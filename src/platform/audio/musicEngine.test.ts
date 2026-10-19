@@ -169,3 +169,51 @@ describe("the world slowed in a legend's circle (Ed, 2026-10-06: \"the music and
     expect(sixteenths(slowed, false)).toBeLessThan(sixteenths(atFull, false) * 0.3);
   });
 });
+
+describe("a new night on the same page (docs/plans/sail-without-reload.md, A4)", () => {
+  const cue: MusicCue = { waves: [], nextAt: Infinity, bootUntil: 0, knockedOut: false, siege: 0 };
+  /** Night A from game time 300 for 5 s, a 2 s sail with nothing scheduled, then night B from game time 0 (`fresh`: with
+   *  newTimeline between); how far ahead of B's game time the music runs, and the first sixteenth scheduled for B. */
+  function sail(fresh: boolean) {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7), clock = newBeatClock(style.bpm);
+    const steps: number[] = [];
+    const E = e as unknown as { step: (...a: unknown[]) => void; g0: number; a0: number; rate: number };
+    const inner = E.step.bind(e);
+    E.step = (c, s, ...rest) => { steps.push(s as number); inner(c, s, ...rest); };
+    let game = 300;
+    for (let f = 0; f < 5 * 60; f++) { ctx.currentTime += 1 / 60; game += 1 / 60; e.update(cue, game, clock, true); }
+    for (let f = 0; f < 2 * 60; f++) { ctx.currentTime += 1 / 60; e.update(cue, game, clock, false); }
+    if (fresh) e.newTimeline();
+    steps.length = 0; game = 0;
+    for (let f = 0; f < 3 * 60; f++) { ctx.currentTime += 1 / 60; game += 1 / 60; e.update(cue, game, clock, true); }
+    return { ahead: E.g0 + (ctx.currentTime - E.a0) * E.rate - game, first: steps[0], resyncs: e.stats.resyncs };
+  }
+
+  it("re-anchors the timeline at the new night's game time 0, not 6 s ahead of it", () => {
+    const stale = sail(false);
+    expect(stale.ahead).toBeGreaterThan(5); // (what newTimeline is for: game time jumping back is read as a slow game)
+    const s = sail(true);
+    expect(Math.abs(s.ahead)).toBeLessThan(0.01);
+    expect(s.first).toBeLessThanOrEqual(1);
+  });
+
+  it("opens the knockdown's gate and counts knockdowns from none", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7), clock = newBeatClock(style.bpm);
+    // knocked down in bar 1, back on bar 40: the gate shut
+    const down: MusicCue = { ...cue, knockdowns: [{ at: 1, back: 40 }] };
+    for (let f = 0; f < 4 * 60; f++) { ctx.currentTime += 1 / 60; e.update(down, ctx.currentTime, clock, true); }
+    expect(e.gated).toBe(true);
+    e.newTimeline();
+    expect(e.gated).toBe(false);
+    expect((e as unknown as { knocksHeard: number }).knocksHeard).toBe(0);
+  });
+
+  it("builds the sung part's channel again after a new style (its first note no stall)", () => {
+    const ctx = fakeContext(), e = new MusicEngine(ctx, (ctx as unknown as { destination: AudioNode }).destination, style, 7);
+    const channels = () => (e as unknown as { channels: Map<string, unknown> }).channels;
+    const sung = style.form!.sung.part;
+    expect(channels().has(sung)).toBe(true);
+    e.setStyle({ ...style });
+    expect([...channels().keys()]).toEqual([sung]);
+  });
+});

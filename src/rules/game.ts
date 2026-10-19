@@ -3,7 +3,8 @@ import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
-import { MOVEMENT } from "./movement";
+import { MOVEMENT, resetFight } from "./movement";
+import { useData } from "./combat/hits";
 import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -24,7 +25,7 @@ import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
-import { AREA_TYPES, generateMap, type ForestMap } from "./map";
+import { AREA_TYPES, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
@@ -49,6 +50,7 @@ import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type 
 import { coolReady, coolRefund, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
 import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
+import type { HouseState } from "./houseRooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
@@ -88,6 +90,8 @@ export interface Witch {
   slowMult?: number;
   /** Her time she last landed (from the treetops): she can't rise again till riseCooldown seconds after it. */
   landedAt?: number;
+  /** Her business in the treehouse's rooms (rules/houseRooms.ts): the bed's hold, the hats on the hats' floor. */
+  house?: HouseState;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -239,8 +243,9 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
   return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
-export function newGame(seed: number, tuning: Tuning, players = 1): Game {
-  const map = generateMap(seed, tuning);
+export function newGame(seed: number, tuning: Tuning, players = 1, prep?: MapPrep): Game {
+  resetFight(); useData(COMBAT); // (the last night's fight settings out: a night starts as a fresh page's)
+  const map = prep ? hydrateMap(seed, tuning, prep) : generateMap(seed, tuning); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
@@ -802,8 +807,9 @@ function stepWitchParty(g: Game, c: Controls, dt: number): void {
   const w = g.witch, moving = Math.hypot(c.moveX, c.moveZ) > 0.05 || Math.hypot(w.vx, w.vz) > 0.3 || !!(c.toggleMode || c.sigil || c.place || c.cycle || c.spell) || g.leashEvents.some(e => e.kind === "grounded"); // (a take-off pulled back down is input too: its press was taken off c above)
   // Round the floor they keep clear of trees, rocks, the speakers and the treehouse and its clearing (Ed, 2026-10-06).
   const th = g.map.treehouse, clear = (x: number, z: number) => blinkClear(g, x, z) && Math.hypot(x - th.x, z - th.z) > t.treehouse.clear;
-  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11).
-  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
+  // Her soundsystem ruined, or the party over, she lies down to stargaze out past the speakers (Ed, 2026-10-11). Up in the treehouse
+  // (perched: its rooms, rules/houseRooms.ts) she's not by the floor, so never idles into the party from there.
+  stepPartyWitches(g.partyWitches, areas, { x: d.x, z: d.z, radius: d.radius, clear, ring: speakerRadius(t) + t.dancefloor.speakers.footprint }, [{ x: w.x, z: w.z, onFoot: w.mode === "ground" && !w.seated && !w.perch, moving, treetop: w.mode === "treetop" }], g.clock.time, dt, t,
     { ruined: g.party.ruined, over: !!g.partyOver });
 }
 

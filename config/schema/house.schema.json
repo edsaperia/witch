@@ -1,0 +1,195 @@
+{
+  "type": "object",
+  "properties": {
+    "on": {
+      "type": "boolean"
+    },
+    "wall": {
+      "type": "number",
+      "minimum": 0
+    },
+    "reach": {
+      "type": "number",
+      "minimum": 0
+    },
+    "rooms": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "x0": {
+            "type": "number"
+          },
+          "x1": {
+            "type": "number"
+          },
+          "z0": {
+            "type": "number"
+          },
+          "z1": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "x0",
+          "x1",
+          "z0",
+          "z1"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "corridors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "x0": {
+            "type": "number"
+          },
+          "x1": {
+            "type": "number"
+          },
+          "z0": {
+            "type": "number"
+          },
+          "z1": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "x0",
+          "x1",
+          "z0",
+          "z1"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "room": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "z": {
+            "type": "number"
+          },
+          "w": {
+            "type": "number",
+            "minimum": 0
+          },
+          "d": {
+            "type": "number",
+            "minimum": 0
+          },
+          "h": {
+            "type": "number",
+            "minimum": 0
+          },
+          "use": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "creator",
+                  "hats",
+                  "bed",
+                  "zoo",
+                  "say"
+                ]
+              },
+              "line": {
+                "type": "string"
+              },
+              "axes": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "wear": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "parts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "spell": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "room",
+          "label",
+          "x",
+          "z",
+          "w",
+          "d",
+          "h",
+          "use"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "bed": {
+      "type": "object",
+      "properties": {
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "hold"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "on",
+    "wall",
+    "reach",
+    "rooms",
+    "corridors",
+    "objects",
+    "bed"
+  ],
+  "additionalProperties": false
+}

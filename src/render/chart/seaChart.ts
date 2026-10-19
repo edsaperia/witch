@@ -179,17 +179,18 @@ void main() {
 
 // The islands' ground (island(): each its own material, with its tile): its colour relief-shaded as a painted map is (Ed, 2026-10-12, his close-up reference: the
 // hills lit from the north-west, dark on their far sides) under the moon, the heights a little paler, a cool fill in the shadow.
+// Its colours come as the worker's bytes, dimmed here (uDim) for how it stands: nothing made on the page as it arrives.
 const GROUND_VERT = /* glsl */ `
 varying vec3 vN; varying vec3 vC; varying float vY; varying vec3 vL;
 void main() { vN = normalize(mat3(modelMatrix) * normal); vC = color; vY = position.y; vL = position; gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); }`;
 const GROUND_FRAG = /* glsl */ `
-uniform vec3 uMoon; uniform vec3 uShade; uniform float uRise; varying vec3 vN; varying vec3 vC; varying float vY; varying vec3 vL;
+uniform vec3 uMoon; uniform vec3 uShade; uniform float uRise, uDim; varying vec3 vN; varying vec3 vC; varying float vY; varying vec3 vL;
 ${SHADOW_TILE}
 void main() {
   vec3 n = normalize(vN);
   float lit = max(0.0, dot(n, uMoon)), hill = clamp(dot(n, uShade), -1.0, 1.0);
   float up = clamp(vY / uRise, 0.0, 1.0);
-  vec3 c = vC * (0.66 + 0.5 * lit) * (0.8 + 0.34 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
+  vec3 c = vC * uDim * (0.66 + 0.5 * lit) * (0.8 + 0.34 * hill) + vec3(0.05, 0.05, 0.06) * up * up;
   c += vec3(0.015, 0.025, 0.05) * (1.0 - lit);
   float sh = moonLit(vL, 1.0 / uYScale); c = c * sh + vec3(0.006, 0.01, 0.024) * (1.0 - sh); // (in a hill shadow: darker, a little bluer)
   gl_FragColor = vec4(c, 1.0);
@@ -356,13 +357,6 @@ function islandLoops(d: ChartIsland): { loops: Loop[]; k: number; cx: number; cz
   const far = Math.max(...raw.map(p => p.length())), k = want / far;
   return { loops: [{ pts: raw.map(p => p.multiplyScalar(k)), sea: true }], k: 0, cx: 0, cz: 0, reach: want };
 }
-/** An island's samples' colours for its state (`dim`): each byte to a float, times dim (a function of its own: the first island in
- *  is home, the biggest, and a loop that long cold in the builder was most of its wrap). */
-function tinted(rgb: ArrayLike<number>, dim: number): Float32Array {
-  const n = rgb.length, out = new Float32Array(n);
-  for (let i = 0; i < n; i++) out[i] = (rgb[i] / 255) * dim;
-  return out;
-}
 const tmp = new THREE.Vector3();
 const col = (c: readonly number[], k = 1) => new THREE.Color((c[0] / 255) * k, (c[1] / 255) * k, (c[2] / 255) * k);
 
@@ -425,9 +419,11 @@ export class SeaChart {
 
   /** An island's land out of the height map. */
   private unheight(g: THREE.Group): void { const hb = g.userData.hb as THREE.Mesh | undefined; if (!hb) return; this.hScene.remove(hb); this.hBodies = this.hBodies.filter(e => e.hb !== hb); this.markHeights(); }
-  /** The chart's heights changed (an island's land came or went): the moon's shadow map drawn again, a quarter second on, so a
-   *  burst of islands arriving draws it once (a 2048-square render each). */
-  private markHeights(): void { if (!this.hDirty) this.hDue = this.now + 0.25; this.hDirty = true; }
+  /** The chart's heights changed (an island's land came or went): the moon's shadow map drawn again once they stop coming for
+   *  half a second, or two seconds after the first change at most (a 2048-square render each: islands now come one a frame, and
+   *  drawing it a quarter second after each was a quarter second a time on a software renderer). */
+  private markHeights(): void { if (!this.hDirty) this.hSince = this.now; this.hDirty = true; this.hDue = Math.min(this.hSince + 2, this.now + 0.5); }
+  private hSince = 0;
   /** The last frame's time (s). */
   private now = 0;
   private hDue = 0;
@@ -469,14 +465,14 @@ export class SeaChart {
     if (!G || !(k > 0)) return { d, group: g, x, z, top: 1, reach };
     // Its real ground: a heightfield, each sample its height and colour, lit by the moon; its meshes made with it off the page
     // (render/chart/islandMesh.ts, in app/chartOutlines.worker.ts; here only wrapped), the colours its own by how it stands.
-    const { cols, rows, step } = G, M = d.outline!.mesh ?? buildIslandMesh(G, k), colour = tinted(G.rgb, dim);
+    const { cols, rows, step } = G, M = d.outline!.mesh ?? buildIslandMesh(G, k), colour = G.rgb instanceof Uint8Array ? G.rgb : Uint8Array.from(G.rgb);
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute("position", new THREE.BufferAttribute(M.pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(colour, 3)); geo.setAttribute("normal", new THREE.BufferAttribute(M.normal, 3)); geo.setIndex(new THREE.BufferAttribute(M.idx, 1));
+    geo.setAttribute("position", new THREE.BufferAttribute(M.pos, 3)); geo.setAttribute("color", new THREE.BufferAttribute(colour, 3, true)); geo.setAttribute("normal", new THREE.BufferAttribute(M.normal, 3)); geo.setIndex(new THREE.BufferAttribute(M.idx, 1));
     // its own heights as a tile, for its shadows close in (SHADOW_TILE): each sample's height over the water, a byte of its highest
     const tex = new THREE.DataTexture(M.tile, cols, rows, THREE.RedFormat, THREE.UnsignedByteType);
     tex.unpackAlignment = 1; tex.minFilter = tex.magFilter = THREE.LinearFilter; tex.needsUpdate = true;
     const tileU: Isle["tileU"] = { uTile: { value: tex }, uTileB: { value: new THREE.Vector4(G.x0 * k, G.z0 * k, 1 / (step * k), 0) }, uTileN: { value: new THREE.Vector2(cols, rows) }, uTileMax: { value: M.tmax }, uYScale: { value: 1 } };
-    const body = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: GROUND_VERT, fragmentShader: GROUND_FRAG, uniforms: { ...this.groundU, ...tileU }, vertexColors: true }));
+    const body = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: GROUND_VERT, fragmentShader: GROUND_FRAG, uniforms: { ...this.groundU, ...tileU, uDim: { value: dim } }, vertexColors: true }));
     const top = M.top;
     // the shallows: the water over every sample within reach of the shore, flat on the sea, by its depth
     const wg = new THREE.BufferGeometry();
@@ -620,6 +616,14 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     return m;
   }
 
+  /** Back to as it was made, for the next opening (takeSeaChart): no islands or voyages, nothing chosen, no flight, the camera
+   *  where it opens, the moon to rise again. What it has compiled stays: the islands' materials are taken out, not disposed. */
+  reset(): void {
+    this.set([], []);
+    this.selected = null; this.flight = null; this.orbit = 0; this.yaw = 0; this.pitch = 0.95;
+    this.focus.set(0, 0, 0); this.aim.set(0, 0, 0); this.sized = false; this.moonLast = undefined; this.stillMoon = null;
+  }
+
   /** Let go of everything it holds on the GPU (its meshes, materials, textures, render targets and the context). */
   dispose(): void {
     this.scene.traverse(o => {
@@ -712,12 +716,16 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height };
   }
 
+  /** The size the canvas and the post pass were last made at (art pixels). */
+  private made = { w: 0, h: 0 };
   /** Fit the canvas (CSS pixels): the scene at low resolution, scaled up with whole pixels. */
   resize(cssW: number, cssH: number): void {
-    const p = CHART_PIXEL;
-    this.w = Math.max(1, Math.ceil(cssW / p)); this.h = Math.max(1, Math.ceil(cssH / p));
-    this.renderer.setSize(this.w, this.h, false);
-    this.post.resize(this.w, this.h, this.w, this.h);
+    const p = CHART_PIXEL, w = Math.max(1, Math.ceil(cssW / p)), h = Math.max(1, Math.ceil(cssH / p));
+    if (this.sized && w === this.w && h === this.h) return;
+    this.w = w; this.h = h;
+    // (the canvas and the post pass's targets only when their size changes: sized again, they're made again, seconds on a software
+    // renderer, and the chart kept between openings opens at the size it was made at)
+    if (this.made.w !== w || this.made.h !== h) { this.renderer.setSize(w, h, false); this.post.resize(w, h, w, h); this.made = { w, h }; }
     this.canvas.style.width = `${this.w * p}px`; this.canvas.style.height = `${this.h * p}px`;
     this.camera.aspect = this.w / this.h; this.camera.updateProjectionMatrix();
     (this.skyU.uRes.value as THREE.Vector2).set(this.w, this.h);
@@ -778,5 +786,52 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       this.flight = null;
       f.done({ cam: { x: (p.x - i.x) / K, z: (p.z - i.z) / K, height: p.y / K, pitch: this.pitch, fov: this.camera.fov, speed: f.speed }, still: this.canvas.toDataURL("image/jpeg", 0.88) });
     }
+  }
+}
+
+// The full chart's renderer, made once a page (the chart meshes job, 2026-10-19): a new WebGL context and the chart's shaders
+// compiled were most of the wait between E at the map table and the chart showing (getContext, getExtension and the programs'
+// links: 2 to 4 s on the cloud's software renderer, every time it opened). So the chart over the game and chart.html share one
+// SeaChart, prepared ahead (prepareSeaChart: while the start screen shows) with a stand-in island of each kind drawn once, so
+// every program it needs is linked; each opening takes it (takeSeaChart) and gives it back reset (releaseSeaChart). The map
+// table's miniature keeps its own.
+let pooled: { chart: SeaChart; busy: boolean; /** being prepared (taken meanwhile: the opening has it, the preparing stops) */ prep?: boolean } | null = null;
+/** The page's full chart: its own canvas, taken until given back (a second while it's out: one of its own, disposed after). */
+export function takeSeaChart(tuning: ChartTuning): SeaChart {
+  if (pooled?.prep) { pooled.prep = false; return pooled.chart; } // (still busy: now the opening's)
+  if (pooled && !pooled.busy) { pooled.busy = true; return pooled.chart; }
+  if (pooled) return new SeaChart(document.createElement("canvas"), tuning);
+  pooled = { chart: new SeaChart(document.createElement("canvas"), tuning), busy: true };
+  return pooled.chart;
+}
+/** Give the chart back for the next opening (reset), or dispose it if it was a spare. */
+export function releaseSeaChart(chart: SeaChart): void {
+  if (pooled?.chart !== chart) { chart.dispose(); return; }
+  chart.reset(); pooled.busy = false;
+}
+/** A stand-in island (a small heightfield with a lake of each look, sailable, won): its materials, drawn once, link the islands' programs. */
+function standIn(id: string, x: number): ChartIsland {
+  const cols = 9, rows = 9, n = cols * rows, h = new Float32Array(n), water = new Uint8Array(n), level = new Float32Array(n), looks = new Uint8Array(n), rgb = new Uint8Array(n * 3).fill(120);
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const i = r * cols + c, d = Math.hypot(c - 4, r - 4); h[i] = d < 3.5 ? 40 - d * 8 : -20; if (d < 1.2) { water[i] = 2; level[i] = h[i] + 2; looks[i] = 1; } else if (h[i] <= 0) water[i] = 1; }
+  const ground = { x0: -400, z0: -400, step: 100, cols, rows, h, rgb, water, level, looks };
+  const loop = new Float32Array([-300, 0, 0, -300, 300, 0, 0, 300]);
+  return { id, x, y: 0, phase: 1, radii: [1, 1, 1, 1], sail: true, unknown: false, won: true, sigil: "home", outline: { loops: [{ pts: loop, sea: true }], box: { minX: -300, maxX: 300, minZ: -300, maxZ: 300 }, ground, mesh: buildIslandMesh(ground, K) } };
+}
+/** Make the page's full chart ahead, and link its programs: drawn once, small, with two stand-in islands and a voyage between.
+ *  In the background where the browser can (compileAsync), then one frame for the rest (the post pass, the moon's height map). */
+export async function prepareSeaChart(tuning: ChartTuning): Promise<void> {
+  if (pooled) return;
+  const chart = takeSeaChart(tuning), mine = pooled!;
+  mine.prep = true;
+  try {
+    chart.resize(innerWidth * 0.92 - 4, innerHeight * 0.92 - 4); // (the size it opens at over the game, ui/chartOverlay.ts: 4vw and 4vh in, inside a 2 px border; so not made again as it opens)
+    chart.set([standIn("home", 0), standIn("standIn", 0.2)], [{ from: "home", to: "standIn" }]);
+    const scenes = chart as unknown as { scene: THREE.Scene; hScene: THREE.Scene };
+    await Promise.all([scenes.scene, scenes.hScene].map(sc => chart.renderer.compileAsync(sc, chart.camera))).catch(() => { /* (linked on first use, below) */ });
+    if (!mine.prep) return; // (opened meanwhile: the chart's its now)
+    chart.frame(1 / 60, 0); chart.frame(1 / 60, 3); // (the second once the moon's height map is due: its program too)
+    for (const p of (chart.renderer.info as unknown as { programs?: { getUniforms(): unknown }[] }).programs ?? []) p.getUniforms(); // (each program's link waited for now, not on the chart's first frame)
+  } finally {
+    if (mine.prep) { mine.prep = false; releaseSeaChart(chart); performance.mark("witch:chart-prepared"); }
   }
 }

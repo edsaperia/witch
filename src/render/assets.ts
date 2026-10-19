@@ -337,7 +337,7 @@ export class AssetLibrary {
   /** A creature asleep (art/naps.js: lying down, eyes shut, curled, tucked, coiled or flat by species; each level in 2 breathing
    *  frames), or undefined (and asked for). */
   napArt(species: string, dressed?: { id: number; colour: number[] | null }): CreatureArt | undefined { // dressed: a party (or happy) animal's own gear, worn asleep
-    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k);
+    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${species}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map, and the art is kept on this browser)
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, ...(dressed ? { dressed: { seed: dressed.id, colour: dressed.colour } } : {}) });
     return a;
   }
@@ -368,13 +368,13 @@ export class AssetLibrary {
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
-    const k = `party-${id}`, a = this.creatures.get(k);
+    const k = `party-${species}-${id}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map)
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
   happyArt(species: string, id: number): CreatureArt | undefined {
-    const k = `happy-${id}`, a = this.creatures.get(k);
+    const k = `happy-${species}-${id}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
     return a;
   }

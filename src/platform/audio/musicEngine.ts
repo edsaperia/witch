@@ -173,9 +173,6 @@ export class MusicEngine {
     for (let i = 0; i < m.length; i++) m[i] /= peak || 1;
     this.setStyle(style);
     if (Object.values(style.patches).some(p => p.kind === "fof") && style.form?.sung && style.patches[style.form.sung.patch]?.kind === "fof") void fofReady(ctx); // (the FOF voice loading ahead of its first note, when it sings)
-    // (the sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
-    // from here on (VoiceFx.warm, in step): the stall hunt, 2026-10-13: that first note was a 190 ms frame)
-    { const sung = style.form?.sung, p = sung && style.patches[sung.patch]; if (sung && p) this.channel(sung.part, p); }
   }
 
   /** A new or edited style: takes effect from the next block. */
@@ -188,6 +185,14 @@ export class MusicEngine {
       ch.fof?.dispose(); ch.swell?.voices.dispose(); ch.fx?.dispose();
     }
     this.channels.clear();
+    this.warmSung();
+  }
+
+  /** The sung part's channel and its effects built now, not at its first note, their convolvers' impulses a frame at a time
+   *  from here on (VoiceFx.warm, in update): the stall hunt, 2026-10-13: that first note was a 190 ms frame. */
+  private warmSung(): void {
+    const sung = this.style.form?.sung, p = sung && this.style.patches[sung.patch];
+    if (sung && p) this.channel(sung.part, p);
   }
 
   /** The FOF voice's worklet loaded on a context (tools rendering offline wait for it; the game starts it with the music). */
@@ -314,6 +319,20 @@ export class MusicEngine {
 
   /** Stop scheduling and forget the plans (a jump in the timeline). */
   reset(): void { this.nextStep = -1; this.lastStep = -Infinity; this.conductor.reset(); }
+
+  /** A new night on the same page (docs/plans/sail-without-reload.md, A4): its game time starts again from 0, so the timeline
+   *  is anchored afresh at its first frame (not eased back from 6 s ahead), its knockdowns counted from none and the gate open.
+   *  What belongs to the page (the stats, the lead, a stall's look-ahead, the shed level, the channels) stays. */
+  newTimeline(): void {
+    this.reset();
+    this.g0 = NaN; this.a0 = 0; this.rate = 1;
+    this.heardTo = -1; this.lastNow = -1;
+    this.cNext = -1; this.cAt = 0;
+    this.knocksHeard = 0;
+    this.current = null;
+    const now = this.ctx.currentTime;
+    this.gate.gain.cancelScheduledValues(now); this.gate.gain.setValueAtTime(1, now); this.gated = false;
+  }
 
   /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
   private step(cue: MusicCue, step: number, t: number, sps: number): void {

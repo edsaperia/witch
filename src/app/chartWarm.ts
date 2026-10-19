@@ -20,6 +20,14 @@ export function outlineOrder<T extends { id: string; x: number; y: number; phase
   return [...islands].sort((a, b) => a.phase - b.phase || d(a) - d(b)).map(i => i.id);
 }
 
+/** The order the open chart wants its islands in (the chart meshes job, 2026-10-19: what she needs first): home and the islands
+ *  she can sail to, the nearest the chosen first; then the rest in phase order (outlineOrder). */
+export function chartOrder<T extends { id: string; x: number; y: number; phase: number; sail: boolean }>(islands: readonly T[], from: { x: number; y: number }): string[] {
+  const d = (i: T) => Math.hypot(i.x - from.x, i.y - from.y);
+  const mine = islands.filter(i => i.id === "home" || i.sail).sort((a, b) => (a.id === "home" ? -1 : b.id === "home" ? 1 : d(a) - d(b)));
+  return [...mine.map(i => i.id), ...outlineOrder(islands.filter(i => !mine.includes(i)), from)];
+}
+
 /** Every island the chart shows, in phase order (home first), the nearest first within a phase. */
 export function chartIslandIds(world: number): string[] {
   const all = ["home", ...KIND_NAMES].map(id => { const a = islandAt(id, world); return { id, x: a?.x ?? 9, y: a?.y ?? 0, phase: islandPhase(id, world) }; });

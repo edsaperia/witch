@@ -4,6 +4,7 @@
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { atMapTable, deckOf } from "./treehouse";
+import { objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
@@ -53,9 +54,16 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
   const perched = !!g.witch.perch, deck = perched ? deckOf(g.map, t) : null;
   if (perched) {
-    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, g.witch.x, g.witch.z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    const inHouse = !!deck?.house?.rooms.length && g.witch.mode === "ground" && !g.witch.seated && !W.ko, x = g.witch.x, z = g.witch.z;
+    // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
+    // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
+    const at = inHouse ? objectAt(deck!, x, z) : null;
+    if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
+    else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
+    else if ((sigil || place) && at && at.use.kind !== "bed") relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
+    if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
-  }
+  } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
   const onFoot = g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko;
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.

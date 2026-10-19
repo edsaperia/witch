@@ -32,6 +32,10 @@ export interface LeyRoute {
 }
 
 const ROUTES = new WeakMap<ForestMap, LeyRoute>();
+/** The map's route if it's been worked out (rules/map.ts prepOf), and a route worked out elsewhere for it (a worker's, for the
+ *  same seed and tuning: app/mapPrep.ts), remembered as if worked out here. */
+export const knownRoute = (map: ForestMap): LeyRoute | undefined => ROUTES.get(map);
+export const rememberRoute = (map: ForestMap, r: LeyRoute): void => { ROUTES.set(map, r); };
 
 /** The map's route, worked out once: from `initial`, the order the waves would wake the areas in
  *  without it (the noisy picker's: its lobes and wanderings, so every map's differs), untangled;
