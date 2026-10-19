@@ -142,6 +142,30 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 - Idle wild animals sometimes nap: 30% chance at each pause, for 20–60 s (`naps`). Landing on the ground in their area wakes them, with a 1.2 s yawn first. **Letters wake them too** (Ed, 2026-10-11): a 💌 that reaches a napping wild animal rouses it at once, wherever you are (the next area over, or the treetops' edge), and lands as an ordinary invitation, waking its area as any 💌 does. (Before, letters flew straight through a sleeper until you landed in its area.) The party's-over sleep at the end of a run is untouched.
 - Curious kinds' babies come up to look at you, and skittish ones keep about 12 m off (`notice`).
 
+**Pack combat (a prototype behind a switch, off by default)** (Ed, 2026-10-15 and 2026-10-19; `docs/backlog/combat.md` build step 1; `rules/combat/packs.ts`, the kinds as data in `config/packs.json`). The pause page's *Pack combat* toggle (the tuning's `combat.packs.on`, or `?set=combat.packs.on=true`) turns it on; with it off, fights go exactly as described above. So far it covers home's ten kinds (hedgehog, squirrel, hare, fox, marten, stoat, mole, snail, dormouse, badger); a kind not in `config/packs.json` fights as before. With it on, a pack (one kind, one side, one target, young and adults) fights in phases:
+- **Approach.** It closes in as before, till one of it is within 6 m of its reach (`limits.engage`).
+- **The pack tell.** Every member glows white and its call plays (a placeholder: white motes and a ring) for its rhythm's `tell` (0.5 s tight, 0.75 s steady, 1 s slow).
+- **The combo.** Roles come from position, every step: the nearest healthy member is the **lunger** (its melee, a lane), the one behind her (else the furthest) throws the **special**, the rest are **shooters** (a magic bolt in its kind's own reach; a young one fires one small, slow bolt, an adult a volley of up to 3). The lunger goes first; the shots go as it commits, **aimed where a dodge would go** (just after a blink, where it put her; else ahead of her by half a blink); the special lands last, a gap later, and only once one of them has struck. Each member strikes once a combo. At most its kind's **pressure** may wind up or strike at her at once (1 for the badger, 2 for the small fast kinds, 3 for the light swarms), and never more than one lane and two lines.
+- **The lull.** It falls back by its kind's **retreat pattern** (below) for its rhythm's lull, longer for a bigger pack (`perMember`) and for a young one (`young.lull`): 2.6 s for five of a tight kind, about 4.8 s for five slow ones. It strikes nothing then. Her own pack never retreats: it holds where it is for `hers.hold` (1.2 s) and goes again.
+- **Again**, from the tell, until the pack is beaten, invited or she's gone.
+
+**Answers to what she does:** a 💌 reaching one of them brings its special onto her at once, or, for a covering kind, a packmate digs in beside the one she's inviting; running away brings the cut-off (`dodge.c`, every pack kind); one of her party animals going for a member splits the pack, the half nearest it turning on it. **Hurt members** (under half health) leave the combo and keep 18 m off; **a loss** (one knocked down, invited or run off) sends the rest into a scattering lull at once.
+
+| Kind | Melee | Ranged (reach, adult shots) | Special | Retreat | Rhythm, pressure |
+|---|---|---|---|---|---|
+| hedgehog | nip | spine fan (12 m, 3 in a cone) | **stampede**: they curl and roll at her together, armoured | roll off apart | slow, 3 |
+| squirrel | nip | acorn bolts (14 m, 3) | **scatter**: up out of sight 0.6 s, then drop round her | up the trees, out of sight, down from another side | tight, 2 |
+| hare | kick, knockback | moon-dust bolt (12 m, 1 bigger) | **call**: for 2 s they all strike together | zigzagging apart | tight, 2 |
+| fox | bite | fox-fire (15 m, 2) | **feint**: one fakes the lunge's tell first, then the real lunge lands | split in two, round to her back | steady, 2 |
+| marten | bite | ember bolt (12 m, 2) | **call** | leapfrog: half behind the other half | tight, 2 |
+| stoat | bite | dart of light (10 m, 2, fast) | **confusion**: within 6 m, her 💌s' aim wavers up to 35° for 2.5 s | a circle round her, all one way | tight, 2 |
+| mole | claw | earth bolt (15 m, 1 bigger) | **cloud**: a dust cloud 6 m across for 4 s that hides the tells inside it (not the bodies: 💌s still land) | underground, out of sight, up apart | steady, 3 |
+| snail | rasp | none | **wall**: a line of slime 10 m long across her path, 4 m ahead, slowing her for 4 s | into its shell where it stands: untouchable 2 s | slow, 3 |
+| dormouse | nibble | nut bolt (12 m, 2) | **rally**: those within 12 m heal a hit and shake off slows | into the undergrowth, freezing | steady, 3 |
+| badger | maul, knockback | stone shard (14 m, 1 bigger) | **cover**: digs in beside a hurt packmate (else the one she's inviting), rooted and armoured, and takes its hits for 3 s | it doesn't run: it digs in and waits | slow, 1 |
+
+The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bolts 0.8 times as fast and 0.85 times the reach, specials 0.7 times the size and time), and every move is on its level's power budget (`config/combat.json` `levels`: a move's damage is the level's damage a second times its cooldown, split over its shots). The specials draw as placeholders tinted by effect (red hurts, blue slows, violet confuses, green heals, white the pack tell, grey the cloud) until the art step. The debug arena has a preset a kind: `?arena=pack-fox` (three young and two adults coming for her) and `?arena=hers-fox` (four of hers combo-ing on three wild wolves). `node tools/smoke/packs.cjs` shoots each kind's tell, combo, special and lull; `node tools/balance/fight.mjs --mixes fox --set combat.packs.on=1` measures how often a pack hits her.
+
 ---
 
 ## 6. Inviting with 💌s

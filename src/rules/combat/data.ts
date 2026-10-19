@@ -121,6 +121,8 @@ export interface Fight {
   /** When it noticed its target (it reacts combat.reaction seconds later), and a melee lunge under way: its way, and the metres left. */
   seenAt?: number;
   lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number };
+  /** In a pack (rules/combat/packs.ts): the move its wind-up or lunge uses. */
+  packMove?: "melee" | "ranged";
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -148,7 +150,7 @@ export interface Shot {
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
-export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped";
+export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped" | /** pack combat (rules/combat/packs.ts): its tell, its special, her party animal splitting it */ "packTell" | "packSpecial" | "packSplit";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
 export type SoundEventKind = "soundHit" | "soundDestroyed";
 export interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
@@ -172,6 +174,9 @@ export interface CombatState {
   beams: Beam[];
   /** A snail's slime (Ed's species pass): a patch of ground slowing whatever of the other side crosses it, till it dries. */
   trails: Trail[];
+  /** Pack combat (rules/combat/packs.ts, behind combat.packs.on): each pack's state by its key, and the dust clouds hiding tells. */
+  packs?: Map<string, import("./packs").PackState>;
+  clouds?: import("./packs").Cloud[];
 }
 export interface Trail { x: number; z: number; r: number; until: number; side: State; slow: number; from: number }
 
@@ -259,6 +264,8 @@ export interface CombatWorld {
   hitWitch: (id: number, time: number, blow?: { x: number; z: number; knockback: number; rams: boolean }) => void;
   /** A party animal is lost for the run. */
   loseParty: (id: number) => void;
+  /** Pack combat's view of her (rules/combat/packs.ts): her last blink, her 💌s landing, her aim confused. */
+  packWorld?: import("./packs").PackWorld;
   /** A witch is slowed (a snail's slime, a flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
 }

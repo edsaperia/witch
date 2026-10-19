@@ -78,6 +78,8 @@ export interface Witch {
   koStreak?: { n: number; at: number };
   /** Her hat (rules/hat.ts): on her head, or lying where she was knocked out. */
   hat: HatState;
+  /** Her aim confused till then, turning up to drift radians (pack combat: the stoat's war dance, rules/combat/packs.ts). */
+  confused?: { until: number; drift: number };
   /** Up against a party legend's leash (rules/partyLegend.ts, the Easter egg): which, and since when; for the view. */
   pinned?: Pinned | null;
   /** Slowed (a snail's slime, a flash) until then: her speeds times slowMult. */
@@ -563,7 +565,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : c, { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t));
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t));
   if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
@@ -637,6 +639,14 @@ function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
   return m;
 }
 
+/** Her aim, turned while she's confused (pack combat: the stoat's war dance, its drift wavering; rules/combat/packs.ts). */
+function confusedAim(W: Witch, c: Controls, ht: number): Controls {
+  const C = W.confused;
+  if (!C || ht >= C.until || c.aimX === undefined || c.aimZ === undefined) return c;
+  const a = C.drift * Math.sin(ht * 2.3), cs = Math.cos(a), sn = Math.sin(a);
+  return { ...c, aimX: c.aimX * cs - c.aimZ * sn, aimZ: c.aimX * sn + c.aimZ * cs };
+}
+
 /** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
  *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
  *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
@@ -687,6 +697,11 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     areaAt: (x, z) => areaOf(g.map, g.map.cellSafe(x, z).cell), // (a parked animal guards its sigil's whole area: Ed, 2026-10-15)
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
     inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
+    packWorld: {
+      dash: id => { const W = g.witches[id]; return W && W.dash.at > -Infinity ? { at: W.dash.at, x: W.dash.toX, z: W.dash.toZ } : null; },
+      lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
+      confuse: (id, until, drift) => { const W = g.witches[id]; if (W) W.confused = { until, drift }; },
+    },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),
     loseParty: id => {

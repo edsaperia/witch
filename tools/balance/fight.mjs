@@ -35,7 +35,7 @@ function measure(seed, mix, n, level, move) {
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - site.x, c.z - site.z) > 300);
   const ids = [];
   for (let i = 0; i < n; i++) {
-    const c = spare[i], sp = MIX[mix][i % MIX[mix].length], a = (i / n) * Math.PI * 2, x = site.x + Math.cos(a) * 25, z = site.z + Math.sin(a) * 25;
+    const c = spare[i], sp = (MIX[mix] ?? [mix])[i % (MIX[mix] ?? [mix]).length], a = (i / n) * Math.PI * 2, x = site.x + Math.cos(a) * 25, z = site.z + Math.sin(a) * 25;
     Object.assign(c, { species: sp, level, x, z, tx: x, tz: z, cell, homeX: site.x, homeZ: site.z, anchorX: x, anchorZ: z, range: wanderRange(g.map), speed: t.creatureSpeed * speedFactor(sp, level, t), gone: false, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, enraged: false, friendly: false, rest: 0, fight: undefined, fleeUntil: undefined, wanderTo: undefined, charge: undefined, vx: 0, vz: 0 });
     ids.push(c.id);
   }

@@ -936,6 +936,7 @@ How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better
 | `attackFx.turnFrom` | number | 0 to … |
 | `attackFx.turnTo` | number | 0 to … |
 | `attackFx.legendFlash` | number | 0 to 1 |
+| `combat.packs.on` | boolean |  |
 | `combat.aggro` | number | 0 to … |
 | `combat.witchLose` | number | 0 to … |
 | `combat.leaveArea` | number | 0 to … |
