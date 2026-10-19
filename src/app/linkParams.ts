@@ -1,7 +1,7 @@
 // The link's switches (?px=, ?tilt=, ?music=, ?hills=, ?shape=, ...): the tuning for this load, made from the tuning file
 // and the page's query parameters (and the world's knobs kept on this browser). Called once, before the game is made.
 import { TUNING } from "../rules/tuning";
-import { islandOf, playableIsland } from "../rules/rosters";
+import { playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
@@ -49,7 +49,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // A whole copy of the tuning file (2026-10-19): what this load's knobs, settings and sliders change is this load's alone, never
   // the file's own objects, so a night made after another in the same page starts from the file as a fresh page does (only what
   // is carried on purpose carries: app/settings.ts carryKnobs; docs/plans/sail-without-reload.md).
-  const tuning = structuredClone(TUNING);
+  const tuning = structuredClone(TUNING); // (styleFromLink's partyObjects.generated among them: the chart's landing bake and its map's worker each make one, app/mapPrep.ts)
   // ?px=3|4|5: the art pixel (screen pixels per art pixel; the tuning's pixelSize), per load, to compare the pixel-art
   // styles in play (docs/ART-GUIDE.md section 0: Ed picks between bold and ref at 4 or 5 in playtesting).
   { const px = Number(params.get("px")); if ([2, 3, 4, 5, 6].includes(px)) tuning.pixelSize = px; }
@@ -183,7 +183,7 @@ export function tuningFromLink(params: URLSearchParams) {
   // many areas of random types.
   {
     const v = params.get("island");
-    if (v && v !== "home" && playableIsland(v) && islandOf(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
+    if (v && v !== "home" && playableIsland(v) && tuning.map) tuning.map = { ...tuning.map, island: v }; // (a placeholder's island isn't played)
     else { const n = islandFromLink(v, tuning.map?.islandAreas ?? 0); if (n !== null && tuning.map) tuning.map = { ...tuning.map, islandAreas: n, island: v === "home" ? "home" : "" }; }
     // ?phase=0 to 5 (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island of that phase's shape, of
     // random types (10 areas a phase, home's 10 for 0) unless ?island= gives a number; a kind's island keeps its own.

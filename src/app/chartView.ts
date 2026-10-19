@@ -125,15 +125,22 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
-  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null> } | null = null;
+  // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
+  let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
-    bake = id && islands.find(i => i.id === id)?.sail ? { island: id, job: import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null) } : null;
+    void bake?.map.then(m => m?.stop());
+    if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
+    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null);
+    bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
   const go = async (id: string) => {
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
     await b?.settle(); // (what's drawn, written before the page goes)
+    // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
+    const m = bake?.island === id ? await bake.map : null;
+    if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
