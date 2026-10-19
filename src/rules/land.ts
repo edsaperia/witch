@@ -253,6 +253,27 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
   }
   const dist = new Float32Array(N);
   for (let k = 0; k < N; k++) dist[k] = (land[k] ? 1 : -1) * (seg[k] >= 0 ? Math.sqrt(d2[k]) : 1e4);
+  let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
+  for (const L of loops) for (let q = 0; q < L.pts.length; q += 2) { bx0 = Math.min(bx0, L.pts[q]); bx1 = Math.max(bx1, L.pts[q]); bz0 = Math.min(bz0, L.pts[q + 1]); bz1 = Math.max(bz1, L.pts[q + 1]); }
+  return landOf({ x0, z0, step, cols, rows, dist, seg, loops, segLoop, segAt, box: loops.length ? { minX: bx0, maxX: bx1, minZ: bz0, maxZ: bz1 } : { ...box } });
+}
+
+/** A land map's data alone (plain data and typed arrays: what landOf needs), to carry it between threads and pages (app/mapPrep.ts). */
+export type LandData = Pick<LandMap, "x0" | "z0" | "step" | "cols" | "rows" | "dist" | "seg" | "loops" | "segLoop" | "segAt" | "box">;
+
+/** The land map of its data (makeLand's, or carried from a worker: app/mapPrep.ts): its queries made over the same numbers. */
+export function landOf(d: LandData): LandMap {
+  const { x0, z0, step, cols, rows, dist, seg, loops, segLoop, segAt } = d, S = segLoop.length;
+  const segX0 = new Float64Array(S), segZ0 = new Float64Array(S), segX1 = new Float64Array(S), segZ1 = new Float64Array(S);
+  for (let s = 0; s < S; s++) {
+    const L = loops[segLoop[s]], q = segAt[s], r = (q + 1) % (L.pts.length / 2);
+    segX0[s] = L.pts[q * 2]; segZ0[s] = L.pts[q * 2 + 1]; segX1[s] = L.pts[r * 2]; segZ1[s] = L.pts[r * 2 + 1];
+  }
+  const segDist2 = (s: number, x: number, z: number) => {
+    const ax = segX0[s], az = segZ0[s], dx = segX1[s] - ax, dz = segZ1[s] - az, l2 = dx * dx + dz * dz;
+    const u = l2 > 0 ? Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2)) : 0, px = ax + dx * u - x, pz = az + dz * u - z;
+    return px * px + pz * pz;
+  };
 
   const distAt = (x: number, z: number): number => {
     const u = (x - x0) / step, v = (z - z0) / step;
@@ -322,11 +343,8 @@ export function makeLand(isLand: (x: number, z: number) => boolean, box: { minX:
     const nn = normalAt(loop, q); out.nx = nn[0]; out.nz = nn[1];
     return out;
   };
-  let bx0 = Infinity, bx1 = -Infinity, bz0 = Infinity, bz1 = -Infinity;
-  for (const L of loops) for (let q = 0; q < L.pts.length; q += 2) { bx0 = Math.min(bx0, L.pts[q]); bx1 = Math.max(bx1, L.pts[q]); bz0 = Math.min(bz0, L.pts[q + 1]); bz1 = Math.max(bz1, L.pts[q + 1]); }
   return {
-    x0, z0, step, cols, rows, dist, seg, loops, segLoop, segAt,
-    box: loops.length ? { minX: bx0, maxX: bx1, minZ: bz0, maxZ: bz1 } : { ...box },
+    x0, z0, step, cols, rows, dist, seg, loops, segLoop, segAt, box: d.box,
     distAt, inside: (x, z, pad = 0) => distAt(x, z) > pad, inward, shore, along,
     roughDistAt: (x, z) => { let i = Math.round((x - x0) / step), j = Math.round((z - z0) / step); i = i < 0 ? 0 : i >= cols ? cols - 1 : i; j = j < 0 ? 0 : j >= rows ? rows - 1 : j; return dist[j * cols + i]; },
   };

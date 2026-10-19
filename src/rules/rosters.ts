@@ -5,7 +5,7 @@
 // 1 area in 6), 1-3 kinds new to phase p from nearby on the chart, the rest by weight (nearby bearings strongly, opposite ones
 // almost never, recently introduced kinds favoured), about a third as many kinds as areas. Each night's legends (1 in 5 areas)
 // are dealt from the roster, favouring kinds whose islands aren't found yet, never K. Home: one area per kind she knows.
-import { archipelago } from "./archipelago";
+import { archipelago, rememberArchipelago, type Archipelago } from "./archipelago";
 import { KINDS_TABLE, type KindInfo } from "./kinds";
 export type { KindInfo };
 import { AREAS } from "../../art/areas.js";
@@ -58,6 +58,9 @@ export function islandOf(kind: string, world = 0): Island | null {
   const phase = info.phase + 1, size = sizeOfPhase(phase), bearing = bearingOf(kind, world), seed = islandSeed(phase, bearing, world);
   return { kind, phase, bearing, size, seed, roster: rosterOf(kind, phase, bearing, size, seed), patch: worldOf(world).islands.get(kind)?.patch, turn: worldOf(world).islands.get(kind)?.turn };
 }
+
+/** A world's archipelago made elsewhere (a worker's: app/mapPrep.ts), taken as worldOf's. */
+export const rememberWorld = (a: Archipelago): void => rememberArchipelago(a, KIND_NAMES.length);
 
 /** The world's archipelago (rules/archipelago.ts): every island's place on the chart and its patch. */
 export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { const phase = KINDS[k].phase + 1, bearing = bearingOf(k, world); return { id: k, phase, bearing, seed: islandSeed(phase, bearing, world) }; }), islandSeed(0, 0, world));
