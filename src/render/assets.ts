@@ -27,10 +27,17 @@ export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
 /** How many rig pages (a species at a level each) are kept at once. */
 const RIG_PAGES = 48;
 
-type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean };
+type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
+  /** The night's own area-type sets (the night's seed), found kept (app/landingBake.ts drew them ahead), waiting to be swapped in
+   *  unseen (swapTonight); and whether that moment has passed (then none is taken). */
+  private tonightTypes = new Map<number, TypeArt>();
+  private tonightShut = false;
+  /** The seed the area types' trees are drawn under: the island's own (islandArtSeed, so a revisit finds them kept), or the
+   *  night's (the default; the view sets it). */
+  typeSeed: number;
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
@@ -101,6 +108,7 @@ export class AssetLibrary {
 
   constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
     this.K = 2 / pixelSize;
+    this.typeSeed = seed;
     this.styleHash = hashText(JSON.stringify(style));
     // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
     // workers, ahead of everything else (fast start (b): drawn on the page here it was most of the time before anything showed).
@@ -130,7 +138,7 @@ export class AssetLibrary {
     this.ask(this.witchJob(witchGenome, false), true);
   }
 
-  private key = (j: ArtJob) => j.kind + ":" + j.id;
+  private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
   /** Where a set is kept between visits (render/artCache.ts). */
   private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
@@ -178,6 +186,7 @@ export class AssetLibrary {
     }
   }
   private receive(r: Reply): void {
+    if (r.miss) { this.inFlight.delete(this.key(r.job)); return; } // (asked only if kept: not kept)
     if (!r.result) { // a worker could not draw it: draw it here instead
       console.warn("art worker failed, drawing on the page:", r.error);
       this.useWorkers = false;
@@ -236,8 +245,8 @@ export class AssetLibrary {
         const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
         if (c !== undefined) cut.set(p.bot, c);
       }
-      this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
-      if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
+      if (r.job.seed !== this.typeSeed) { if (!this.tonightShut) this.tonightTypes.set(r.job.id, { atlas, layout: r.result.layout!, cut }); } // (tonight's: swapped in unseen, swapTonight)
+      else { this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut }); if (r.result.floor) this.onFloor(r.job.id, r.result.floor); }
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
@@ -250,7 +259,7 @@ export class AssetLibrary {
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
-    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }, true);
     return a;
   }
   /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
@@ -440,7 +449,24 @@ export class AssetLibrary {
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
-  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }); }
+  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }); }
+  /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
+   *  asked for only if kept, so nothing is drawn now; those found wait for swapTonight. Nothing with the trees drawn under the
+   *  night's seed already. */
+  tonight(types: Iterable<number>): void {
+    if (this.typeSeed === this.seed || this.tonightShut) return;
+    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
+  }
+  /** The moment she can't see the trees change (main.ts revealArt): tonight's sets found by now take the place of the island's;
+   *  the rest keep the island's for the whole night (nothing swapped later: no trees changing in play). The types swapped. */
+  swapTonight(): number[] {
+    this.tonightShut = true;
+    const swapped = [...this.tonightTypes.keys()];
+    for (const [t, a] of this.tonightTypes) this.types.set(t, a);
+    this.tonightTypes.clear();
+    if (swapped.length) this.version++;
+    return swapped;
+  }
 
   get pending(): number { return this.inFlight.size; }
 
@@ -451,6 +477,7 @@ export class AssetLibrary {
     let made = 0;
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
       const job = this.queue.shift()!;
+      if ((job as ArtJob & CacheHint).cacheOnly) { this.receive({ job, miss: true }); continue; } // (asked only if kept: the page keeps nothing of its own to read)
       const t1 = performance.now(), result = runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; });
       { const ck = this.cacheKey(job); if (ck) void cachePut(ck, result); } // (drawn on the page: kept from here)
       this.receive({ job, result, ms: performance.now() - t1 });
