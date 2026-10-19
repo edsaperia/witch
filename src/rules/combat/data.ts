@@ -145,12 +145,14 @@ export interface Shot {
   lob?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number };
   /** A legend's bombardment (legends.json attack.bombard): the soundsystem it was thrown at, and the damage it does that one if it lands on it. */
   sound?: { key: string; damage: number };
+  /** A pack lob that leaves a patch where it lands (the toad's spores: rules/combat/packs.ts), slowing the other side to `slow` for `time` s. */
+  patch?: { r: number; slow: number; time: number };
 }
 
 /** A beam burning (Stage 5): from its creature toward an angle, sweeping toward its target. */
 export interface Beam { /** A legend's bombardment: the soundsystem it burns, and the damage a tick. */ sound?: { key: string; damage: number }; /** A legend's spin (radians a second), and when each thing it swept was last hit. */ spin?: number; last?: Record<string, number>; id: number; from: number; angle: number; length: number; width: number; until: number; nextTick: number; tick: number; damage: number; side: State; species: string; attack: string; target: Target }
 
-export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped" | /** pack combat (rules/combat/packs.ts): its tell, its special, her party animal splitting it */ "packTell" | "packSpecial" | "packSplit";
+export type CombatEventKind = /** one of her posse drew it off her (rules/combat/hits.ts) */ "taunted" | "hit" | "windup" | "shot" | "quake" | "landed" | "beam" | "charged" | "sprung" | "stunned" | "pulse" | "burrowed" | "surfaced" | "leapt" | "slammed" | "nova" | "rush" | "phase" | "slept" | "fled" | "lost" | "witchHit" | "soundHit" | "soundDestroyed" | "dug" | "braced" | "blocked" | "flash" | "dazed" | "swooped" | /** pack combat (rules/combat/packs.ts): its tell, its special, her party animal splitting it */ "packTell" | "packSpecial" | "packSplit" | /** Phase 1's (Echo): a mirage image taking a 💌 and bursting, a heron blinking where she blinked */ "mirageBurst" | "packSync";
 /** A soundsystem's events carry its key; every other combat event its creature's id (witchHit: the witch's). */
 export type SoundEventKind = "soundHit" | "soundDestroyed";
 export interface CombatEventAt { x: number; z: number; at: number; big?: boolean; /** A hit: strong against its target's traits (1), resisted (-1). */ counter?: number }
@@ -177,6 +179,8 @@ export interface CombatState {
   /** Pack combat (rules/combat/packs.ts, behind combat.packs.on): each pack's state by its key, and the dust clouds hiding tells. */
   packs?: Map<string, import("./packs").PackState>;
   clouds?: import("./packs").Cloud[];
+  /** The raven's mirage (rules/combat/packs.ts): images of the flock round her that take a 💌 and burst. */
+  mirages?: import("./packs").Mirage[];
 }
 export interface Trail { x: number; z: number; r: number; until: number; side: State; slow: number; from: number }
 
