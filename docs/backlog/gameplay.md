@@ -32,7 +32,7 @@ Backlog (Ed, 2026-10-09 to 10-10). **Not built unless marked built; don't build 
 
 ## Ed's notes, 2026-10-16
 
-- **Envelopes go behind scenery as animals do.** A 💌 in flight should be hidden by trees and scenery the way animals are, not drawn over everything.
+- **Built (2026-10-19): envelopes go behind scenery as animals do.** A 💌 in flight should be hidden by trees and scenery the way animals are, not drawn over everything. Ed added: smoke counts too, and so do the invite rings. Each 💌 and each ring now asks the scene's depth, at the point animals are drawn, whether it is seen (`render/occlusion.ts`), and the smoke veils it. See HOW-THE-GAME-WORKS §6.
 
 ## Open questions
 

@@ -26,6 +26,7 @@ import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
+import { OcclusionProbes } from "./occlusion";
 import { Ride } from "./ride";
 import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, HeightField, useHeightField } from "./height";
 import { PathView } from "./paths";
@@ -257,6 +258,8 @@ export class View {
   swoopTrails: SwoopTrails;
   /** The 💌s, their bubbles and rings (render/invites.ts). */
   inviteView: InviteView;
+  /** What hides the 💌s and invite rings (render/occlusion.ts). */
+  occlusion!: OcclusionProbes;
   /** Angry brows and daze stars over the creatures (render/looks.ts). */
   stateMarks: StateMarks;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
@@ -470,6 +473,11 @@ export class View {
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
+    // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
+    // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
+    this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera, this.smoke);
+    this.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
+    this.inviteView.probes = this.occlusion;
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     this.stateMarks = new StateMarks(this.scene, this.mpp);
     this.borders = new BorderView(this.scene, game);
@@ -1015,6 +1023,7 @@ export class View {
     if (t.bare) this.hideForBare();
     this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.post.render(this.scene, this.camera);
+    this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.

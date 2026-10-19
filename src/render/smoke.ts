@@ -14,36 +14,48 @@ import { SPRITE_UNIFORMS } from "./sprites";
 
 export interface SmokeTuning { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; pixel: boolean; perFire: number; maxFires: number; range: number }
 
-const VERT = /* glsl */ `
-uniform vec3 uRight, uUp;
+/** A puff, worked out from its fire and its number alone (and the time): where its middle is, how big, how strongly it shows,
+ *  how far through its life and its own randomness. Shared with the 💌s' smoke check (render/occlusion.ts), so both agree on
+ *  every puff to the last float. Needs uSmoke, uSmoke2 and uPuffs. */
+export const SMOKE_PUFF_GLSL = /* glsl */ `
 uniform vec4 uSmoke;  // time, life (s), rise (m), the rise curve's power
 uniform vec4 uSmoke2; // size (m), grow (times at the top), drift x, drift z (m/s)
 uniform float uPuffs; // puffs a fire
+float h1(float n) { return fract(sin(n) * 43758.5453); }
+// fire: x, ground y, z, strength (its size and the range fade; 0 for an unused slot); k: which of its puffs
+void smokePuff(vec4 fire, float k, out vec3 c, out float size, out float alpha, out float t, out float s) {
+  float life = uSmoke.y, f = fire.w;
+  // each fire's own phase, so neighbouring fires don't puff in step
+  float fh = h1(fire.x * 12.9898 + fire.z * 78.233);
+  float clock = uSmoke.x + (k + h1(k * 3.7 + fh * 91.0) * 0.6) / uPuffs * life + fh * life;
+  float cyc = floor(clock / life), age = clock - cyc * life;
+  t = age / life;
+  s = h1(cyc * 17.13 + k * 5.31 + fh * 31.7); // this puff's own randomness, new each time round
+  float y = uSmoke.z * (1.0 - pow(1.0 - t, uSmoke.w)) * (0.8 + 0.4 * s) * mix(0.6, 1.0, min(1.0, f));
+  vec2 wob = vec2(sin(age * 0.6 + s * 6.28), cos(age * 0.45 + s * 4.0)) * (0.4 + 2.2 * t);
+  c = vec3(fire.x, fire.y + 0.8 + y, fire.z) + vec3(uSmoke2.z * age + wob.x, 0.0, uSmoke2.w * age + wob.y);
+  size = uSmoke2.x * (0.6 + 0.4 * min(1.5, f)) * (1.0 + uSmoke2.y * t) * (0.8 + 0.4 * s);
+  // in quickly, full a while, then thinning out to nothing; fainter as it rises
+  alpha = f > 0.0 ? smoothstep(0.0, 0.06, t) * (1.0 - smoothstep(0.45, 1.0, t)) * (1.0 - 0.35 * t) * min(1.0, f) : 0.0;
+}
+`;
+
+const VERT = /* glsl */ `
+uniform vec3 uRight, uUp;
 attribute vec4 iFire; // the fire: x, ground y, z, strength (its size and the range fade; 0 for an unused slot)
 attribute float iK;   // which of its fire's puffs this is
 varying vec2 vUv;
 varying float vT, vA, vSeed;
 varying vec3 vP;
-float h1(float n) { return fract(sin(n) * 43758.5453); }
+${SMOKE_PUFF_GLSL}
 ${HEIGHT_VERT_GLSL}
 void main() {
   vUv = uv;
-  float life = uSmoke.y, f = iFire.w;
-  // each fire's own phase, so neighbouring fires don't puff in step
-  float fh = h1(iFire.x * 12.9898 + iFire.z * 78.233);
-  float clock = uSmoke.x + (iK + h1(iK * 3.7 + fh * 91.0) * 0.6) / uPuffs * life + fh * life;
-  float cyc = floor(clock / life), age = clock - cyc * life, t = age / life;
-  float s = h1(cyc * 17.13 + iK * 5.31 + fh * 31.7); // this puff's own randomness, new each time round
-  vSeed = s; vT = t;
-  float y = uSmoke.z * (1.0 - pow(1.0 - t, uSmoke.w)) * (0.8 + 0.4 * s) * mix(0.6, 1.0, min(1.0, f));
-  vec2 wob = vec2(sin(age * 0.6 + s * 6.28), cos(age * 0.45 + s * 4.0)) * (0.4 + 2.2 * t);
-  vec3 c = vec3(iFire.x, iFire.y + 0.8 + y, iFire.z) + vec3(uSmoke2.z * age + wob.x, 0.0, uSmoke2.w * age + wob.y);
-  float size = uSmoke2.x * (0.6 + 0.4 * min(1.5, f)) * (1.0 + uSmoke2.y * t) * (0.8 + 0.4 * s);
-  // in quickly, full a while, then thinning out to nothing; fainter as it rises
-  vA = f > 0.0 ? smoothstep(0.0, 0.06, t) * (1.0 - smoothstep(0.45, 1.0, t)) * (1.0 - 0.35 * t) * min(1.0, f) : 0.0;
+  vec3 c; float size;
+  smokePuff(iFire, iK, c, size, vA, vT, vSeed);
   vec3 w = c + uRight * (position.x * size) + uUp * (position.y * size);
   vP = w;
-  gl_Position = f > 0.0 ? clipOf(w) : vec4(2.0, 2.0, 2.0, 1.0);
+  gl_Position = iFire.w > 0.0 ? clipOf(w) : vec4(2.0, 2.0, 2.0, 1.0);
 }`;
 
 const FRAG = /* glsl */ `
@@ -123,6 +135,11 @@ export class Smoke {
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 9.4; // with the clouds: over the sky, depth-tested against the forest
   }
+
+  /** Its uniforms (the 💌s' smoke check shares them: render/occlusion.ts). */
+  get uniforms(): Record<string, THREE.IUniform> { return this.u; }
+  /** The fires drawn this frame, as the shader has them (x, ground y, z, strength), every `stride` floats. */
+  drawnFires(): { a: Float32Array; n: number; stride: number } { return { a: this.fire.array as Float32Array, n: this.mesh.visible ? Math.round(this.geo.instanceCount / this.perFire) : 0, stride: this.perFire * 4 }; }
 
   /** Start a frame's list of fires. */
   begin(): void { this.count = 0; }

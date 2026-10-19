@@ -149,6 +149,7 @@ No animal ever fights its own kind. Nobody dies: they "run off".
 - **The meter.** Each 💌 that lands adds one to the animal's ring. A full ring takes **4 hits for a baby, 9 for a young, 18 for an adult** (`invites.hits`). Every hit counts, with no per-animal cooldown, so how fast you invite is just how fast you fire. That's roughly 2 s, 5 s and 10 s of steady hits. If you stop, the ring starts draining after 1.5 s at 8% of a full ring a second (that drain is set in `config/states.json`).
 - **Winning over.** A full ring makes a wild animal **happy** (hearts), and its **rune** pops out at its feet straight away. Stand within 5.6 m of it (`leash.runeRadius`) and press **E** to leash it. Within 8 m it even trots over to you (`leash.runePull`).
 - **Getting hit doesn't set an invite back.** The hit is the cost.
+- **Seen as the animals are** (Ed, 2026-10-19). A 💌 in flight, one resting on the ground and an animal's ring are hidden by whatever stands in front of them, as the animal is: trunks, crowns, rocks and scenery, and they show through her see-through cut-away where an animal does. A ring goes exactly when its animal does. Smoke veils them as it veils an animal. Her speech bubbles, the animals' replies and the hearts stay on top. (`render/occlusion.ts`; `?occlusion=off` draws them over everything, as before.)
 
 ---
 
