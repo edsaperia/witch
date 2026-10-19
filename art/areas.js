@@ -475,7 +475,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
   // character (its main recipe's trunks, lean, thickness, gnarl, scale) and the recipe the area gives that species, if any
   const total = TREE_HEIGHT_CLASSES.reduce((a, c) => a + c.count, 0), pal = AREA_FLORA[id]?.palette, main0 = AREA_FLORA[id]?.species[0][0];
   // dealt by stature, so the classes still rise: each kind's height as a mature tree, the shortest kinds in the low classes, the tallest in the top ones
-  const stature = o => speciesStature(o.type, st) + (o.type === main0 ? .01 : 0);
+  const stature = o => speciesStature(o.type, st) * (o.scale ?? 1) + (o.type === main0 ? .01 : 0); // (a variant grown taller among the taller)
   const slots = flora?.length ? null : floraSlots(id, total)?.map((o, i) => [o, i]).sort((a, b) => stature(a[0]) - stature(b[0]) || a[1] - b[1]).map(([o]) => o);
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
@@ -488,7 +488,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
     // its character (the species' grow): willows widen rather than grow; narrow kinds (firs, pines, birches, alders,
     // larches) stay narrow as they grow; wide kinds (oak, yew, sycamore, chestnut) spread more than they rise; small
     // kinds (hawthorn, rowan, hazel) stay small; dead trees grow into tall snags; saplings are slim
-    const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare, wide = g === "wide", small = g === "small";
+    const g = S.grow, willow = g === "willow", narrow = g === "narrow" || o.bare || o.narrow, wide = g === "wide", small = g === "small";
     const scale = willow ? 1 + (h - 1) * .45 : small ? 1 + (h - 1) * .5 : wide ? 1 + (h - 1) * .75 : h;
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),

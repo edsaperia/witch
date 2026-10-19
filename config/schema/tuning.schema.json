@@ -1943,18 +1943,25 @@
     "leafJitter": {
       "type": "object",
       "properties": {
-        "hue": {
+        "autumn": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "maximum": 1
         },
         "value": {
           "type": "number",
           "minimum": 0
+        },
+        "hue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 180
         }
       },
       "required": [
-        "hue",
-        "value"
+        "autumn",
+        "value",
+        "hue"
       ],
       "additionalProperties": false
     },

@@ -257,7 +257,7 @@ export interface Tuning {
   bushClump: number;
   treeHeight: number;
   /** Each tree's own leaf colour (Ed, 2026-10-16; render/sprites.ts): its leaves' hue turned up to hue degrees and value scaled up to value either way, by its own seeds. */
-  leafJitter?: { hue: number; value: number };
+  leafJitter?: { /** how far each tree's leaves drift toward its own autumn colour, 0 to 1 (Ed, 2026-10-19) */ autumn: number; value: number; /** each tree's leaves' hue turned either way by up to this many degrees (0 to 180), on the lit colour */ hue?: number };
   crownWidth: number;
   treeSpacingX: number;
   treeSpacingZ: number;

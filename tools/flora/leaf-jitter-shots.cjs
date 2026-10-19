@@ -45,7 +45,7 @@ const DENSE = 0.75, THIN = 0.3;
     const list = [{ name: "home", ...spots.home }, { name: `dense-${dense.id}`, ...dense }, { name: `thin-${thin.id}`, ...thin }];
     console.log("spots:", list.map(s => `${s.name} (${Math.round(s.x)}, ${Math.round(s.z)})`).join("; "));
     const defaults = await page.evaluate(() => ({ ...window.witch.game.tuning.leafJitter }));
-    const setJ = (hue, value) => page.evaluate(([h, v]) => { const L = window.witch.game.tuning.leafJitter; L.hue = h; L.value = v; }, [hue, value]);
+    const setJ = (autumn, value) => page.evaluate(([a, v]) => { const L = window.witch.game.tuning.leafJitter; L.autumn = a; L.value = v; }, [autumn, value]); // (the autumn drift since 2026-10-19, in place of the hue turn)
     const step = (o, dt = 1 / 30) => page.evaluate(([o, dt]) => { const w = window.witch, C = o => ({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }); w.manual = true; w.frame(C(o), dt); }, [o, dt]);
     const shot = name => page.screenshot({ path: path.join(outDir, `${name}.png`), timeout: 300000 });
     // Every tree drawn: its leaves' mean hue before (its variant's own) and with its jitter (per-tree, from the batches' instances and the atlases' pixels).
@@ -66,7 +66,7 @@ const DENSE = 0.75, THIN = 0.3;
             m = n ? { hue: (Math.atan2(sy, sx) * 180 / Math.PI + 360) % 360, val: sv / n, n } : null;
             hueOf.set(key, m);
           }
-          if (m) out.push({ x: Math.round(it.x * 10) / 10, z: Math.round(it.z * 10) / 10, hue: m.hue, val: m.val, sh: it.jitter[0], sv: it.jitter[1], jh: it.jitter[0] * L.hue, jv: it.jitter[1] * L.value }); // (sh, sv: its seeds, so the spread with the jitter can be worked out on the very trees of the off capture)
+          if (m) out.push({ x: Math.round(it.x * 10) / 10, z: Math.round(it.z * 10) / 10, hue: m.hue, val: m.val, sh: it.jitter[0], sv: it.jitter[1], jh: it.jitter[0] * L.autumn, jv: it.jitter[1] * L.value }); // (sh, sv: its seeds, so the spread with the jitter can be worked out on the very trees of the off capture)
         }
       }
       return out;
@@ -97,17 +97,17 @@ const DENSE = 0.75, THIN = 0.3;
         const name = `${s.name}-${mode}`, off = path.join(outDir, `${name}-off.png`), on = path.join(outDir, `${name}-on.png`), x2 = path.join(outDir, `${name}-x2.png`);
         await shot(`${name}-off`);
         const trees = await perTree();
-        await setJ(defaults.hue, defaults.value); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-on`);
-        await setJ(defaults.hue * 2, defaults.value * 2); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-x2`);
+        await setJ(defaults.autumn, defaults.value); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-on`);
+        await setJ(Math.min(1, defaults.autumn * 2), defaults.value * 2); for (let i = 0; i < 2; i++) await step({}); await shot(`${name}-x2`);
         // (one entry a tree: its crown, in the batches drawn at this spot; the same trees before and with the jitter, by their seeds)
-        const before = spread(trees.map(t => t.hue)), after = spread(trees.map(t => t.hue + t.sh * defaults.hue)), x2s = spread(trees.map(t => t.hue + 2 * t.sh * defaults.hue));
-        const deltas = trees.map(t => Math.abs(t.sh * defaults.hue)), maxDelta = deltas.length ? +Math.max(...deltas).toFixed(2) : 0;
+        // (the baked variants' own hue spread; the autumn drift is on the lit colour, so its effect is measured on the screenshots below)
+        const before = spread(trees.map(t => t.hue)), after = null, x2s = null, maxDelta = null;
         const px = { off: await pixels(off), on: await pixels(on, off), x2: await pixels(x2, off) };
         measure[name] = { spot: { x: Math.round(s.x), z: Math.round(s.z) }, trees: trees.length, perTreeHue: { before, after, x2: x2s, maxHueShiftDeg: maxDelta, maxValueScale: trees.length ? +Math.max(...trees.map(t => Math.abs(t.sv * defaults.value))).toFixed(3) : 0 }, pixels: px };
         console.log(name, JSON.stringify(measure[name]));
       }
     }
-    await setJ(defaults.hue, defaults.value);
+    await setJ(defaults.autumn, defaults.value);
     await page.evaluate(() => { window.witch.game.tuning.wind.on = true; });
     fs.writeFileSync(path.join(outDir, "measure.json"), JSON.stringify({ seed, defaults, spots: list, measure }, null, 2));
   } finally { await browser.close(); server.close(); }
