@@ -1,7 +1,7 @@
 // Tree variants (Ed, 2026-10-13: "we should have a 'different' main tree in each area, even if they're only slightly different
 // (e.g. snowy vs not snowy)"): a species drawn another way, named, as data. An area's tree recipe names one with `variant`
 // (["tree", { type: "fir", variant: "windbent" }]); its knobs are the tree builders' own (art/areas.js areaTreeVariants: lean, gnarl,
-// scale, thick, hollow, trunks, thin, dark, snow, hang), laid over the recipe's, so the variant always shows. An area's main
+// scale, thick, hollow, trunks, thin, narrow, dark, snow, hang), laid over the recipe's, so the variant always shows. An area's main
 // tree is its species and variant together, and no two areas share one (art/check.mjs, tree species).
 export const TREE_VARIANTS = {
   windbent: { lean: .45, gnarl: .85 }, //    bent by the wind, leaning all one way
@@ -12,6 +12,7 @@ export const TREE_VARIANTS = {
   mossy: { hang: .85 }, //                  hung with moss and lichen from its crown and boughs
   snowy: { snow: .85 }, //                  snow lying on its crown
   burnt: { dark: true, gnarl: 1 }, //       scorched: its crown dark, its limbs twisted
+  tall: { scale: 1.45, trunks: 3, thin: true, narrow: true, gnarl: .35 }, // grown up from a coppice stool and left: taller, a few straight slim stems, its crown narrow (the hazel forest's second hazel: Ed, 2026-10-19)
   drowned: { dark: true, hang: .6, thick: 1.2 }, // standing in deep water: a swollen bole, its crown dark and dying, hung with weed and moss
 };
 /** A tree recipe with its variant's knobs laid over it (the variant's name kept). */
