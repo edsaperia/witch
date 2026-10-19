@@ -69,6 +69,7 @@ export class ArrivalFlight {
 
   private land(v?: View): void {
     if (this.done) return;
+    performance.mark("game:arrived");
     this.done = true;
     if (v) v.fly = null;
     this.still?.remove();
