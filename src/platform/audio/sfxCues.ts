@@ -52,6 +52,8 @@ const happyNow = (c: Creature) => !c.leashed && !c.gone && (!!c.friendly || (!!c
 interface Here { g: Game; time: number; near: (x: number, z: number) => number; pan: (x: number) => number }
 
 export class SfxCues {
+  /** Her failed take-off's landing, due at `at` (the "grounded" leash event): the thud as her leashes pull her down. */
+  private yank: { at: number; pan: number } | null = null;
   /** Taken note of on the first frame, so nothing already so sounds as though it just turned. */
   private primed = false;
   private enraged = new Set<number>();
@@ -102,6 +104,7 @@ export class SfxCues {
     const w = g.witch, hear = Math.max(1, g.tuning.sfx.hear);
     const h: Here = { g, time, near: (x, z) => Math.max(0, 1 - Math.hypot(x - w.x, z - w.z) / hear), pan: x => (x - w.x) / 30 };
     this.invites(h);
+    if (this.yank && time >= this.yank.at) { this.sfx.land(this.yank.pan, 1); this.yank = null; }
     // (the legends gathered once a frame for the four that look only at them: not four passes over every creature)
     this.bosses.length = 0;
     for (const c of g.creatures) if (c.boss) this.bosses.push(c);
@@ -152,7 +155,7 @@ export class SfxCues {
     }
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
       else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)
-      else if (e.kind === "grounded") S.nope(pan(e.x)); // (a take-off refused, too many following her: the same "uh-uh", Ed, 2026-10-18)
+      else if (e.kind === "grounded") this.yank = { at: time + 0.38, pan: pan(e.x) }; // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }
 

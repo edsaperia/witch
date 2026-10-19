@@ -1,10 +1,12 @@
-// Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do."; rules/leashWeight.ts
-// groundedBy, leash.grounded): with an adult (or a legend) or three young following her, their sigils in her stack, a press to
-// rise is refused and said (the "grounded" leash event) and spends no cooldown; parked animals and babies don't count; once up
+// Grounded by who follows her (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative, by
+// weight; rules/leashWeight.ts groundedBy, leash.grounded.weight): with the creatures following her, their sigils in her stack,
+// weighing an adult's worth or more, she stays on the ground at a press to rise (the view draws her pulled back down: the
+// "grounded" leash event) and spends no cooldown; parked animals and babies don't count; heavier species count for more; once up
 // she stays up.
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning, type Tuning } from "./tuning";
-import { groundedBy } from "./leashWeight";
+import { creatureWeight, groundedBy } from "./leashWeight";
+import { strengthOf } from "./combat";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import type { Creature } from "./creatures";
 
@@ -21,7 +23,7 @@ function onGround(t: Tuning = TUNING): Game {
 }
 /** `levels` of creatures following her, beside her: their sigils in her stack. */
 function follow(g: Game, levels: number[]): Creature[] {
-  const W = g.witches[0], pool = g.creatures.filter(c => !c.boss && !c.gone && !c.leashed);
+  const W = g.witches[0], pool = g.creatures.filter(c => !c.boss && !c.gone && !c.leashed && strengthOf(c.species, 1) === 1); // (of normal strength: the indicative numbers)
   return levels.map((level, i) => {
     const c = pool[i];
     c.level = level as Creature["level"]; c.leashed = true; c.x = W.body.x + 2 + i; c.z = W.body.z;
@@ -32,15 +34,27 @@ function follow(g: Game, levels: number[]): Creature[] {
 const press = (g: Game) => { const was = g.witches[0].cool.left; stepGame(g, { ...idle, toggleMode: true }, STEP); return { up: g.witches[0].body.mode !== "ground", grounded: g.leashEvents.some(e => e.kind === "grounded"), spent: g.witches[0].cool.left > was }; };
 
 describe("grounded by who follows her", () => {
-  it("counts the stack by level: an adult or a legend as an adult, babies and the gone not at all", () => {
-    const cs = [crit(0, 0), crit(1, 1), crit(2, 2), crit(3, 3), crit(4, 1, true)];
-    expect(groundedBy([0, 1], cs, TUNING)).toEqual({ adults: 0, young: 1, grounded: false });
+  it("weighs the stack: each creature at creatureWeight, babies and the gone not at all", () => {
+    const cs = [crit(0, 0), crit(1, 1), crit(2, 2), crit(3, 3), crit(4, 1, true)], W = TUNING.leash.weight.levels;
+    expect(groundedBy([0, 1], cs, TUNING).weight).toBeCloseTo(creatureWeight(cs[1], TUNING), 9);
     expect(groundedBy([2], cs, TUNING).grounded).toBe(true);
-    expect(groundedBy([3], cs, TUNING)).toEqual({ adults: 1, young: 0, grounded: true });
-    expect(groundedBy([1, 4], cs, TUNING).young).toBe(1);
+    expect(groundedBy([3], cs, TUNING).grounded).toBe(true);
+    expect(groundedBy([1, 4], cs, TUNING).weight).toBeCloseTo(creatureWeight(cs[1], TUNING), 9);
+    // the indicative numbers, at normal strength: one adult, or three young, but not two
+    expect(TUNING.leash.grounded!.weight).toBeLessThanOrEqual(W[2]);
+    expect(3 * W[1]).toBeGreaterThanOrEqual(TUNING.leash.grounded!.weight);
+    expect(2 * W[1]).toBeLessThan(TUNING.leash.grounded!.weight);
   });
 
-  it("one adult, or three young, stop her taking off: refused, said, and no cooldown spent", () => {
+  it("light and heavy species extrapolate: weight is level weight times strength", () => {
+    const g = newGame(7, TUNING), byStrength = (f: (k: number) => boolean) => g.creatures.find(c => !c.boss && f(strengthOf(c.species, 2)));
+    const light = byStrength(k => k * TUNING.leash.weight.levels[2] < TUNING.leash.grounded!.weight), heavy = byStrength(k => k > 1);
+    if (light) expect(groundedBy([light.id], g.creatures.map(c => (c.id === light.id ? ({ ...c, level: 2 } as Creature) : c)), TUNING).grounded).toBe(false); // (a light adult: not enough)
+    if (heavy) expect(creatureWeight({ species: heavy.species, level: 1 }, TUNING)).toBeGreaterThan(TUNING.leash.weight.levels[1]); // (a heavy young weighs more than a young)
+    expect(light || heavy).toBeTruthy();
+  });
+
+  it("one adult, or three young, keep her on the ground: said, and no cooldown spent", () => {
     const a = onGround(); follow(a, [2]);
     expect(press(a)).toEqual({ up: false, grounded: true, spent: false });
     const y = onGround(); follow(y, [1, 1, 1]);
@@ -62,11 +76,11 @@ describe("grounded by who follows her", () => {
     expect(press(g).up).toBe(true);
   });
 
-  it("the counts are knobs (leash.grounded), 0 turning a half off", () => {
-    const off = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { adults: 0, young: 0 } } })); follow(off, [2, 1, 1, 1]);
+  it("the weight is a knob (leash.grounded.weight), 0 turning it off", () => {
+    const off = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 0 } } })); follow(off, [2, 1, 1, 1]);
     expect(press(off).up).toBe(true);
-    const two = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { adults: 2, young: 3 } } })); follow(two, [2]);
-    expect(press(two).up).toBe(true);
+    const more = onGround(withTuning({ leash: { ...TUNING.leash, grounded: { weight: 10 } } })); follow(more, [2]);
+    expect(press(more).up).toBe(true);
   });
 
   it("up in the treetops when the count is reached, she stays up: it only stops the next take-off", () => {

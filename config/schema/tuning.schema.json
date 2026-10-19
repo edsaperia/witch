@@ -3735,18 +3735,13 @@
         "grounded": {
           "type": "object",
           "properties": {
-            "adults": {
-              "type": "number",
-              "minimum": 0
-            },
-            "young": {
+            "weight": {
               "type": "number",
               "minimum": 0
             }
           },
           "required": [
-            "adults",
-            "young"
+            "weight"
           ],
           "additionalProperties": false
         },
