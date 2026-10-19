@@ -103,6 +103,7 @@ Babies weigh 0.3, young 0.8, adults 2 and legends 3 (`leash.weight.levels`). So 
 | Debug overlay | ~ | Back/Select | three-finger tap |
 
 - **Cast the party spell**: the on-screen scroll, or Enter, or the spell key.
+- **In the treehouse**, E uses the thing she's standing at (the same button as placing a sigil; held at the bed). The stations there are the only way back into the character creator mid-night: there's no Bedroom button or F key any more (Ed, 2026-10-19).
 - **Playtest keys**: N next wave now, P pause the wave timer, B feed the nearest party animal a berry, O make the nearest legend happy, I invite the nearest animal, K cycle the speakers' damage, J reset the debug arena.
 
 ---
@@ -279,6 +280,15 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 ---
 
 ## 11. Other things worth knowing
+
+- **The treehouse's rooms** (Ed, 2026-10-19; `config/house.json`): placeholder plank rooms joined by corridors off the hub, walked in and out of during the party. She flies onto the balcony as before, walks into the hub, and on along the corridors; she leaves by walking off the balcony's open rim. Time runs at a tenth in all of it and nothing reaches her, as in the hub. Walk up to a thing (it lights, and its name shows with E) and press E:
+  - **Dressing room** (east of the hub): the **mirror** (face, hair, earrings), the **wardrobe** (jacket, top, trousers), the **cloak pegs** (cloak, scarf) and the **shoe rack** each open the character creator showing only their own choices. The **hats' floor** has her hats lying on it as objects: E by one wears it and puts the one she had down in its place; E with none near puts hers down at her feet, and E on it picks it back up.
+  - **Bedroom** (through the dressing room): **hold E at the bed** and a ring fills (`bed.hold`, 1.5 s); full, she sleeps and the night ends (recorded on the sea chart as played, then a new night, as the afterparty's Play again). Let go early and it starts again. The **telephone** is a placeholder.
+  - **Bags & invitations** (off the dressing room): the **bags** open the creator at the bag, backpack and bum bag. The invitations desk is a placeholder.
+  - **Garage** (west, by the balcony): the **broom stand** opens the creator at the broom's choices and its power. The pegboard is a placeholder.
+  - **Bestiary** (north-east): E on the **book** opens the zoo over the night, which waits paused underneath; closing the zoo (its × or Esc) goes back to the night where she was.
+  - **Placeholders** (the crystal ball in the hub, the record shelf in the studio, the cauldron in the kitchen, the tea table in the tea room, the card table in the card room, the telescope in the crow's nest, the skeletons and skulls in the bestiary, the telephone, the pegboard, the invitations desk): E shows a one-line bubble, e.g. "The cauldron is cold. Brewing comes later."
+  - Accessories other than earrings aren't at any station yet (Ed will review them).
 
 - **Party witches**: one extra witch flies in to dance on the dancefloor for every soundsystem playing.
 - **Home's relic**: one relic always lies just inside the edge of home, so a new player stumbles on it.
