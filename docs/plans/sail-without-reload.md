@@ -33,13 +33,22 @@ The aim is to keep the page and swap only what belongs to the island: the night'
 - **We would build it in 7 PRs.**
   - Each one is safe and shippable on its own.
   - The first four change nothing you can see. They fix two existing bugs and add tests that would catch a leak.
-  - The switch itself comes in PR 5, behind a link switch. The reload stays as the fallback, and is used automatically if anything goes wrong.
+  - The switch comes in PR 5, on by default once its tests pass. The reload stays as the fallback, used automatically if anything goes wrong, and `?sail=reload` forces it.
 - **The tests that make it safe** (section C):
   - Two nights played in one page must give exactly the same state and the same picture as a fresh page.
   - Ten sails in a row must not grow memory, textures, listeners or workers.
 - **It is the floor your planned arrival stands on.** The chart zooming into the bedroom window and her waking up while the island builds both need this (section E).
 
-The detail follows. The questions for you are at the end (section F), as multiple choice.
+**Your decisions** (Ed, 2026-10-19; section F has them in full):
+- Back after a sail opens the pause menu.
+- A failed sail reloads quietly.
+- The music fades to a quiet sea and flight cue, then the new night's start.
+- The new way is on as soon as the tests pass.
+- Every pause-page slider carries to the next island, game knobs included.
+- Only this island's art is kept in memory.
+- chart.html stays, as a link that opens the game on the chart.
+
+The detail follows.
 
 ---
 
@@ -203,7 +212,7 @@ Everything keyed by the map object (WeakMaps in markers, soundsystemGen, scenery
 | movement.ts:58 (written combat.ts:34-37) | **`FIGHT`**: scale, speed, momentum, charge, leap and walk carry over from night 1. `travel.updateModes` (game.ts:542) reads it before the first `stepFights`, and `charge`/`leap` are only written when set | reset in `newGame` (PR 1) |
 | combat/hits.ts:13 | `D`, the last combat data | reset with FIGHT |
 | combat/data.ts:205, 223 | `SCALED`, `LAST_SCALED`, keyed by FIGHT's values | follow FIGHT; fine once it's reset |
-| linkParams.ts:49 | `tuningFromLink` copies `TUNING` one level deep. Saved settings (`setKnob`, decisions.ts:25), `gameParams.ts:47` (`leyLines.pulseSpeed`) and `viewParams.ts:10` (`partyObjects.generated`) **write into the shared config itself**. A second night inherits them, and `BUILT` (main.ts:82) is already changed | build each night's tuning from a pristine deep copy; re-apply the player's settings on purpose (PR 1) |
+| linkParams.ts:49 | `tuningFromLink` copies `TUNING` one level deep. Saved settings (`setKnob`, decisions.ts:25), `gameParams.ts:47` (`leyLines.pulseSpeed`) and `viewParams.ts:10` (`partyObjects.generated`) **write into the shared config itself**. A second night inherits them, and `BUILT` (main.ts:82) is already changed | build each night's tuning from a pristine deep copy; re-apply every pause-page slider on purpose, game knobs included (decision 5; PR 1) |
 | islandShape.ts:41, archipelago.ts:78, partyGuests.ts:28, musicScore.ts:492 | string-keyed caches whose key leaves out the tuning or style | harmless with one tuning per world; add the tuning hash to the key if knobs may change between nights |
 
 **newGame** takes `(seed, tuning, players)`. The island comes in through `tuning.map`.
@@ -237,7 +246,7 @@ Everything keyed by the map object (WeakMaps in markers, soundsystemGen, scenery
 | sound.ts:40, 76, 113 | `Sound.seed` and `tuning` are private readonly. The watchdog's rebuild would bring back night 1's seed | `Sound.setNight(tuning, seed)`, which also sets `engine.seed` (public) |
 | sfxCues.ts:56-98, 484-568 | per-game state keyed by **creature id**, **game time** and area cell: picnic murmurs at old spots, stale clears and fireworks firing once the new clock reaches them | a **new `SfxCues` each night** (cheap) |
 | musicEngine.ts:182-191 | the new night's style triggers `setStyle`, which tears down every channel and doesn't pre-build the sung channel (about 190 ms on its first note) | warm the sung channel after `setStyle`, while the sail is quiet |
-| sfxKit.ts | holds `tuning.sfx` from construction | fine if volumes are the player's (F5); else re-point |
+| sfxKit.ts | holds `tuning.sfx` from construction | re-point to the new night's tuning (its sliders carry over anyway: decision 5) |
 | shed.ts | the safety valve's grace runs once a page | re-arm it at each arrival |
 | input.ts | page | KEEP; `clearPresses()` at arrival |
 
@@ -266,14 +275,14 @@ interface Night {
 /** Everything kept across nights. main.ts makes it once. */
 interface Page { view: View; sound: Sound; input: Input; creator: Creator; freeze: Freeze; shake: ScreenShake; perfHud: PerfHud; night: Night | null; }
 
-function nightTuning(spec: NightSpec, params: URLSearchParams): Tuning;   // from a pristine deep copy of config + witch.chart + the player's settings
+function nightTuning(spec: NightSpec, params: URLSearchParams): Tuning;   // from a pristine deep copy of config + witch.chart + every slider set this session (decision 5)
 async function startNight(page: Page, spec: NightSpec): Promise<Night>;   // build, then swap, then dispose the old
 function endNight(page: Page): void;                                     // record to the chart, stop per-night timers, clear DOM
 ```
 
 **What `startNight` does, in order:**
 
-1. `history.pushState` the night's URL. Rebuild `params` and the tuning (`nightTuning`).
+1. `history.pushState` the night's URL, plus a guard entry for Back (decision 1). Rebuild `params` and the tuning (`nightTuning`).
 2. `newGame(seed, tuning)`, then `gameFromLink` and the hat and loadout, exactly as at boot. `newGame` resets `FIGHT` and the combat data.
 3. `view.island.build(game)` builds the new island layers **off-scene**:
    - heights, ground, paths, ley lines, markers, dancefloor, minimap, map table, treehouse, the type batches;
@@ -283,10 +292,12 @@ function endNight(page: Page): void;                                     // reco
    - add the new island root, remove the old one;
    - `useHeightField(new)`.
 5. **Dispose** the old island root (every GPU resource listed in A2). This is the step after the new materials have compiled.
-6. **Sound**:
-   - `sound.setNight(tuning, seed)` then `engine.newTimeline()`;
-   - a new `SfxCues`;
-   - `valve.begin()`.
+   - Then evict the old island's art from memory: its type art, type and trunk-shadow batches, treehouse and soundsystem sets (decision 6: this island only).
+   - Revisiting an island redraws them. The IndexedDB art cache keeps that quick.
+6. **Sound** (decision 3: no crossfade from the old night):
+   - **At the sail** (`endNight`): the old night's music fades out over about 1.5 s, and a quiet sea and flight cue fades in. That cue is the `Sea` bed (`platform/audio/places.ts`) with a soft wind, played by a new `sound.sailing(level)`.
+   - **While the island builds**, only the cue plays. The music engine schedules nothing, so a long map build can't make it stutter.
+   - **At landing**: `sound.setNight(tuning, seed)` then `engine.newTimeline()`, a new `SfxCues` and `valve.begin()`. The new night's start (the boot's intro) comes in as the cue fades.
 7. A new PlaytestLog run, `hud.reset(game)`, `freeze.retarget(game, seed)`, `resetDom()`, a new ArrivalFlight (if `spec.arrival`), then `prepare` and `begin`.
 8. `page.night = night`. The frame loop, `window.witch` (getters) and every listener read `page.night` from here on.
 
@@ -295,9 +306,17 @@ function endNight(page: Page): void;                                     // reco
 - The View is split into its page part (`View`) and its island part (`View.island: IslandLayers`, a new `render/island.ts` with one `THREE.Group` root and a `dispose()`).
 - The rules don't change, besides resetting `FIGHT` in `newGame`.
 
-**The fallback.**
-- `startNight` is wrapped. On any throw, or if the switch is off, it does what happens today: `location.href = url`.
-- `?sail=reload` forces the reload, and `?sail=inplace` forces the new way. The tuning's `sail.inPlace` is the default.
+**The fallback** (decision 2).
+- `startNight` is wrapped. On any throw it reloads quietly, as today: `location.href = url`, with no message.
+- `?sail=reload` forces the reload, and `?sail=inplace` forces the new way.
+- The tuning's `sail.inPlace` is the default. It is on from PR 5, once the tests pass (decision 4).
+
+**Back** (decision 1).
+- After a sail in place, Back opens the pause menu and nothing is lost.
+- Each in-place night pushes its URL and then one guard entry with the same URL.
+- On `popstate`, the game pushes the guard again and opens the pause menu.
+- A first page load (no sail yet) leaves Back alone, as today.
+- Forward is never offered.
 
 ---
 
@@ -306,6 +325,7 @@ function endNight(page: Page): void;                                     // reco
 1. **Two nights equal a fresh page: the rules** (vitest, `src/rules/twoNights.test.ts`, and in CI).
    - Seed B is played fresh for 1800 steps with the bench's fixed path, and its fingerprint taken (`tools/bench/fingerprint.ts`).
    - Then seed A on another island with other fight knobs, then seed B again, through `nightTuning` and `newGame`. The fingerprints must be **exactly** equal.
+   - The sliders carry over (decision 5), so the test sets the same sliders before both runs of B. A second case changes a game knob during night A and checks that night B equals a fresh page started with that knob.
    - It fails today, because of `FIGHT`. PR 1 makes it pass.
    - A bench variant runs `--seeds=B` and `--seeds=A,B` in separate processes and compares the B fingerprints.
 2. **Two nights equal a fresh page: the picture** (bench, `tools/bench/frames.cjs`, a new quick scene `second-night`).
@@ -322,7 +342,7 @@ function endNight(page: Page): void;                                     // reco
      - live workers (CDP target count);
      - AudioNode count (a counting wrapper under `?debug=sail`).
    - **Pass:**
-     - from sail 2 on, textures, geometries, programs, listeners, workers and DOM are **equal** at each return to the same island;
+     - from sail 2 on, programs, listeners, workers and DOM are **equal** after every sail. Textures and geometries are equal at each return to the same island, since only this island's art is kept (decision 6);
      - the heap stays within 5 % of sail 2.
    - It also asserts that the old game object is never stepped after the swap: `stepGame` throws on a game marked `disposed` under `?debug=sail`.
    - It runs in CI as a slow job from PR 5 on (about 10 minutes in the cloud).
@@ -330,27 +350,32 @@ function endNight(page: Page): void;                                     // reco
    - The quick smoke test runs one sail in place and one with `?sail=reload`.
    - A unit test forces `startNight` to throw and checks that the reload URL is the one the old path would have used.
 5. **Audio.**
-   - `node tools/music-lab/check.cjs` gets a sail case: play wave 2 of night A, then `newTimeline()` and `setNight(B)`.
-   - It must render no gap, NaN or clipping, and the music's beat must stay within 50 ms of the game's after 10 s.
+   - `node tools/music-lab/check.cjs` gets a sail case: play wave 2 of night A, then the sail (the fade to the sea and flight cue, 5 s of cue alone), then `newTimeline()`, `setNight(B)` and the boot.
+   - It must render no NaN or clipping, and no silence: the cue covers the gap.
+   - The old night's music must be fully gone before the new night's first note (decision 3).
+   - The music's beat must stay within 50 ms of the game's after 10 s.
+6. **Back.**
+   - The quick smoke test sails in place, then presses Back (`page.goBack()`).
+   - The pause menu must be open, the island and night unchanged, and the URL still the night's.
 
 ---
 
 ## D. PRs, in a safe order
 
-Each is shippable. Nothing a player sees changes until PR 5's switch, and PR 5 ships with the switch off.
+Each is shippable. Nothing a player sees changes until PR 5, which turns the new way on once its tests pass (decision 4).
 
 | # | PR | What | Size | Visible? | Bench |
 |---|---|---|---|---|---|
-| 1 | **Night hygiene and bugs** | `FIGHT`/`D` reset in `newGame`; `nightTuning` from a pristine deep copy (settings re-applied on purpose); the creature-id art keys fixed (`party-`, `happy-`, `nap-`, also in IndexedDB: fixes today's bug); `FADE_MATERIALS` pruned on release; Ground's missing disposes; test C1 | ~250 lines | no (the nap fix can change a napping animal's colour to the right one) | rules same; frames may differ only if a nap shows |
+| 1 | **Night hygiene and bugs** | `FIGHT`/`D` reset in `newGame`; `nightTuning` from a pristine deep copy, every slider re-applied on purpose (decision 5); the creature-id art keys fixed (`party-`, `happy-`, `nap-`, also in IndexedDB: fixes today's bug); `FADE_MATERIALS` pruned on release; Ground's missing disposes; test C1 | ~250 lines | no (the nap fix can change a napping animal's colour to the right one) | rules same; frames may differ only if a nap shows |
 | 2 | **The page and the night** | `app/night.ts` with `Night` and `Page`; main.ts reads `page.night` everywhere; `window.witch` as getters; the per-night flags into `Night`; `resetDom`; Hud/Freeze/Shake/PerfHud/Decide re-pointable; boot goes through `startNight({how:"boot"})`. Still reloads to sail | ~500, mostly mechanical | no | same game |
-| 3 | **Sound across nights** | `Sound.setNight`, `MusicEngine.newTimeline`, a new `SfxCues` per night, the sung channel warmed after `setStyle`, the valve re-armed; test C5 | ~150 | no | same |
+| 3 | **Sound across nights** | `Sound.setNight`, `MusicEngine.newTimeline`, a new `SfxCues` per night, the sung channel warmed after `setStyle`, the valve re-armed; the sail's fade-out and the sea and flight cue (`sound.sailing`, decision 3); test C5 | ~200 | no | same |
 | 4a | **The island layers** | `render/island.ts` with one root group; HeightField, Ground, PathView, LeyLines, MarkerArt, Dancefloor, Minimap, MapTable, treehouse and type batches moved under it, each with a `dispose`; the View builds its island through it once. Nothing is swapped yet | ~700 | no | pixel-identical |
-| 4b | **Resetting the View** | `View.setGame`; per-night fields and module caches reset; `assets.reseat` with a generation token; in-flight jobs dropped; `scenery.cancel` | ~400 | no | same |
-| 5 | **The switch** | the map table's sail calls `startNight`, behind `sail.inPlace` (off) and `?sail=inplace`; the arrival re-armed in memory; `pushState`; the fallback; tests C2, C3, C4 | ~400 | **yes, with the switch** | new `second-night` scene |
-| 6 | **Every other way to a new night, and switching it on** | `#won-sail`/`#chart-open` open the overlay in place; Play again, a fresh seed, the bot's exit and #966's bed go through `startNight`; `sail.inPlace` on by default once you've played it | ~200 | yes | — |
-| 7 | **On top** (with Golf and Foxtrot) | first load on the chart (a Page with no night); the wake-up in the bedroom while the island builds | separate plan | yes | — |
+| 4b | **Resetting the View** | `View.setGame`; per-night fields and module caches reset; `assets.reseat` with a generation token; in-flight jobs dropped; `scenery.cancel`; the old island's art evicted after the swap (decision 6) | ~400 | no | same |
+| 5 | **The switch** | the map table's sail calls `startNight`, with `sail.inPlace` **on** once C2–C4 and C6 pass (decision 4) and `?sail=reload` to force the old way; the arrival re-armed in memory; `pushState` and Back to the pause menu (decision 1); the quiet fallback (decision 2); tests C2, C3, C4, C6 | ~450 | **yes** | new `second-night` scene |
+| 6 | **Every other way to a new night** | `#won-sail`/`#chart-open` open the overlay in place; Play again, a fresh seed, the bot's exit and #966's bed go through `startNight`; each covered by C3's sails and the smoke test | ~200 | yes | — |
+| 7 | **On top** (with Golf and Foxtrot) | first load on the chart (a Page with no night), chart.html kept as a link that opens the game on the chart (decision 7); the wake-up in the bedroom while the island builds | separate plan | yes | — |
 
-**Roughly 2,600 lines over 7 PRs.**
+**Roughly 2,700 lines over 7 PRs.**
 - PRs 1 and 3 can go in parallel with anything.
 - PR 2 touches most of `main.ts`, so it should land in a quiet moment, between other `main.ts` work (#966 and #968 first).
 - PRs 4a and 4b are the big ones in render.
@@ -366,7 +391,7 @@ Each is shippable. Nothing a player sees changes until PR 5's switch, and PR 5 s
      - Better: the bake runs on the page's own art pool (`assets.ask`), not six extra workers, so the art lands straight in memory and no workers compete.
      - `dispose()` must stop the bake if another island is chosen.
    - **Tree seeds by island.**
-     - If the type art is seeded by the island rather than the night, `types` can be keyed by island, and revisiting an island reuses its trees for free.
+     - If the type art is seeded by the island rather than the night, `types` can be keyed by island. Revisiting an island then finds its trees in the IndexedDB art cache (only this island's stay in memory: decision 6).
      - `assets.reseat` then takes the island's seed; the generation token is still needed.
      - Worth agreeing with Foxtrot before PR 4b.
 2. **Delta (the chart meshes).**
@@ -398,44 +423,33 @@ Each is shippable. Nothing a player sees changes until PR 5's switch, and PR 5 s
 
 ---
 
-## F. Risks and questions for Ed
+## F. Risks, and Ed's decisions
 
 **Risks**
 
 - **One missed reader drives the old night.** Twenty-odd pieces hold the game today.
   - *Mitigation:* the `Night` holder, `window.witch` getters, the `disposed` assertion in `stepGame`, and the listener count in C3.
-- **A long map build stalls the music during the flight.** The engine schedules at most 2 s ahead.
-  - *Mitigation:* Alpha's worker, or building in slices; raise `maxAhead` while building.
+- **A long map build blocks the main thread during the flight.** The music is safe: by decision 3 only the sea and flight cue plays then, and it is audio nodes that need nothing from the main thread. But the chart's flight and the bedroom's animation would still stutter.
+  - *Mitigation:* Alpha's worker, or building in slices.
 - **Leaking GPU memory a little per sail**, which shows only after many sails.
   - *Mitigation:* C3, and building before disposing.
 - **A lost WebGL context** still reloads (view.ts:345). Unchanged, and fine.
-- **Saved and debug state.** The repro link keys and pause-slider tweaks must not leak into the next island by accident (F5).
+- **Debug state.** The repro link keys (`wave`, `at`, `cleared`…) must not carry to the next island. The URL pushed for each night drops them. The sliders do carry, on purpose (decision 5).
+- **Sliders and the tests.** Since game knobs carry over, "night 2 equals a fresh page" holds only for a fresh page given the same sliders. C1 tests exactly that.
 
-**Questions** (letters to pick; my recommendation first):
+**Ed's decisions** (2026-10-19, through the coordinator)
 
-1. **The browser's Back button after a sail:**
-   - (a) **goes back to the island before** (a page load of its URL);
-   - (b) does nothing special: it leaves the game;
-   - (c) opens the sea chart.
-2. **If the sail in place fails:**
-   - (a) **reload quietly, as today**;
-   - (b) show "Something went wrong, reloading…" first.
-3. **The music across a sail:**
-   - (a) **the old night's music carries on through the flight and crossfades into the new night's boot**;
-   - (b) fade to a quiet sea or flight cue, then the boot;
-   - (c) silence, then the boot, as today but quicker.
-4. **When the new way becomes the default:**
-   - (a) **behind `?sail=inplace` until you've done 10 sails on your laptop, then on**;
-   - (b) on as soon as the tests pass;
-   - (c) on for desktop first, phones later.
-5. **Settings changed in the pause sliders during a night, on the next island:**
-   - (a) **keep the player's own (volumes, shake, autotalk); reset the game knobs**;
-   - (b) keep all of them;
-   - (c) reset all of them.
-6. **How much island art to keep in memory:**
-   - (a) **this island and the last one** (sailing back is instant);
-   - (b) only this island (least memory);
-   - (c) every island visited this session.
-7. **chart.html** once the first load starts on the chart:
-   - (a) **keep it as a link that opens the game on the chart**;
-   - (b) remove it.
+1. **Back after a sail opens the pause menu.**
+   - The game captures Back so nothing is lost by accident (section B, "Back"; PR 5; test C6).
+2. **A failed sail reloads quietly, as today.**
+   - There is no message (section B, "The fallback").
+3. **The music fades to a quiet sea and flight cue, then the new night's start.**
+   - There is no crossfade from the old night (section B step 6; PR 3; test C5).
+4. **The new way is on as soon as the tests pass.**
+   - PR 5 turns `sail.inPlace` on. `?sail=reload` keeps the old way for comparison.
+5. **Every pause-page slider carries to the next island, game knobs included.**
+   - `nightTuning` re-applies them on purpose to a pristine copy, rather than inheriting them by accident through the shared config (A3; PR 1; test C1).
+6. **Only this island's art is kept in memory.**
+   - After the swap, the old island's art is evicted (section B step 5; PR 4b).
+   - Sailing back redraws it from the IndexedDB art cache.
+7. **chart.html stays, as a link that opens the game on the chart** (PR 7).
