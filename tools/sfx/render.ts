@@ -59,6 +59,7 @@ const SOUNDS: [string, number, Play][] = [
   ["shoes", 3, () => {}],
   ["pond", 12, () => {}],
   ["sea", 16, () => {}],
+  ["sailing", 12, () => {}],
   ...(["pine", "wood", "wet", "stream", "meadow", "open", "home"] as const).map(k => [`night-${k}`, 16, () => {}] as [string, number, Play]),
   ["night-crossfade", 16, () => {}],
   ["snores", 9, () => {}],
@@ -153,6 +154,9 @@ async function render(name: string, seconds: number, play: Play) {
   } else if (name === "sea") {
     // walking down the beach to the water (two waves or so), then away up it until it's let go
     for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1, L = sec < 2 ? sec / 2 : sec < 11 ? 1 : Math.max(0, 1 - (sec - 11) / 2); void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sea(L, 0.3); return oc.resume(); }); }
+  } else if (name === "sailing") {
+    // a sail in place (app/sound.ts sailing): the sea and the wind in as she sails, held while the island is made, out at 8 s as she lands
+    for (let k = 0; k * 0.1 < seconds - 0.2; k++) { const sec = k * 0.1; void oc.suspend(Math.round(sec * rate) / rate).then(() => { s.sailing(sec < 8 ? 1 : 0); return oc.resume(); }); }
   } else if (name === "aggro-hit" || name === "aggro-off") {
     // a wild watch over 5.5 s in a dangerous area that ends in their attack; or a mild one she breaks off at 3 s
     const hit = name === "aggro-hit", T = 5.5;
