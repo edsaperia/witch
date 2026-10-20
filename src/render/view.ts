@@ -11,7 +11,7 @@ import { carrierOf, deckOf } from "../rules/treehouse";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { HouseRoomsView } from "./houseRooms";
-import { warmCarvings } from "./legendCarving";
+import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
 import { blinkCharges, poseOf } from "../rules/game";
@@ -22,7 +22,7 @@ import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "..
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
-import type { Ground } from "./ground";
+import { discoJob, type Ground } from "./ground";
 import { IslandLayers } from "./island";
 import { Sky } from "./sky";
 import { slowAmount, slowest } from "./slowtime";
@@ -47,7 +47,7 @@ import { StateMarks } from "./looks";
 import { BuffHud } from "./buffhud";
 import type { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
-import { MarkerFx, type MarkerArt, type Mote } from "./markers";
+import { MarkerArt, MarkerFx, type Mote } from "./markers";
 import type { SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
@@ -81,6 +81,7 @@ import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
+import { nextFrame, runSliced, runSync, type Steps } from "./slices";
 import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
 import type { Tuning } from "../rules/tuning";
@@ -91,7 +92,7 @@ import type { SleepTrack } from "./legendSleep";
 // pieces (markers, speakers, treehouse), and the lights. Its fields they share aren't private.
 import { inView, overBulge, viewRect } from "./view/culling";
 import { checkPops, drawGhosts } from "./view/pops";
-import { cancelRefresh, refresh } from "./view/scenery";
+import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse } from "./view/home";
@@ -299,26 +300,26 @@ export class View {
   hazeKept: THREE.Vector2 | null = null;
   /** The island's own layers (render/island.ts): the ground, the hills, the paths, the ley lines, the runestones, the
    *  dancefloor, the treehouse, the minimap and the map table; the View's names for them below are its. */
-  island: IslandLayers;
+  island!: IslandLayers;
   get ground(): Ground { return this.island.ground; }
   /** The rolling ground (height.ts): drawn only, the rules stay flat. */
   get heights(): HeightField { return this.island.heights; }
   /** The night sky that shows over the bend, in treetop mode. */
-  sky: Sky;
+  sky!: Sky;
   /** The moonlight as the style and mood set it, before the moon's colour tints it (rules/moon.ts). */
   private moonBase = new THREE.Vector3();
   private moonUpBase = new THREE.Vector3();
   /** Seconds added to game time for the moon only (previews: a time-lapse of its phases, way and colours). */
   moonShift = 0;
   /** Real clouds over the bend, with lightning. */
-  clouds: Clouds;
+  clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
-  private smoke: Smoke;
+  private smoke!: Smoke;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
   creatureBatches = new Map<string, SpriteBatch>();
-  witchBatch: SpriteBatch;
+  witchBatch!: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
   bareBatch: SpriteBatch | null = null;
   bareAsked = false;
@@ -332,13 +333,13 @@ export class View {
   get markerBatch(): SpriteBatch { return this.island.markerBatch; }
   markerFx = new MarkerFx();
   speakerBatch: SpriteBatch | null = null;
-  readonly grass: GrassView;
+  grass!: GrassView;
   spellFx = new SpellFx();
   /** Her flight trail: a ribbon of glow in the colour of the area she's over (render/trail.ts). */
-  private trail: WitchTrail;
+  private trail!: WitchTrail;
   private trailRgb = new THREE.Vector3();
   private buffHud = new BuffHud(document.body);
-  shadow: THREE.Mesh;
+  shadow!: THREE.Mesh;
   mpp: number; // metres per art pixel
   /** ?scenery=<metres>: a fixed scenery radius instead of the adaptive one. */
   sceneryFixed: number | null = null;
@@ -347,23 +348,23 @@ export class View {
   private castMap: CastShadowMap;
   private castOn = false;
   private get dancefloor(): Dancefloor { return this.island.dancefloor; }
-  propBatch: SpriteBatch;
-  private partyView: PartyView;
-  private strings: StringLightsView;
-  leashView: LeashView;
-  private lasers: Lasers;
+  propBatch!: SpriteBatch;
+  private partyView!: PartyView;
+  private strings!: StringLightsView;
+  leashView!: LeashView;
+  private lasers!: Lasers;
   /** The soundsystems' sky sigils (render/hologram.ts), in place of their laser shows (Ed, 2026-10-08). */
-  private holograms: SigilHolograms;
+  private holograms!: SigilHolograms;
   /** The wave's celebrations: fireworks over a soundsystem already cleared (render/fireworks.ts). */
-  readonly fireworks: Fireworks;
+  fireworks!: Fireworks;
   /** The ley lines through the runestones in wave order (Ed, 2026-10-04). */
   get ley(): LeyLines { return this.island.ley; }
   /** The sleeping legends' clearings: their twilight and rising motes. */
-  private glades: Glades;
+  private glades!: Glades;
   /** Will-o'-the-wisps drifting through the wild areas (render/wisps.ts). */
   private wisps: Wisps | null = null;
   /** The ley line's colour by the mood (leyRgb), or null for each area's own. */
-  private leyRgb: THREE.Vector3 | null;
+  private leyRgb!: THREE.Vector3 | null;
   /** The ley line's brightness (the decisions panel's), and the last scale given it (the party's over fades it). */
   private leyBase = 1;
   private overDebug: number | null = (() => { const v = new URLSearchParams(globalThis.location?.search ?? "").get("partyover"); return v === null ? null : Number(v) || 0; })();
@@ -374,22 +375,22 @@ export class View {
     return this.markerArt.colour.get(AREA_TYPES[this.game.map.typeOf(s.cell[0], s.cell[1])].creature) ?? this.leyHome;
   };
   /** The party witches on the dancefloor, and our witch when she idles into the party. */
-  partyWitchView: PartyWitchView;
+  partyWitchView!: PartyWitchView;
   /** The beach round the circular map: nothing made until she's near it. */
-  beachView: BeachView;
+  beachView!: BeachView;
   /** The party witches' rainbow swoop trails (render/swoopTrails.ts). */
-  swoopTrails: SwoopTrails;
+  swoopTrails!: SwoopTrails;
   /** The 💌s, their bubbles and rings (render/invites.ts). */
-  inviteView: InviteView;
+  inviteView!: InviteView;
   /** What hides the 💌s and invite rings (render/occlusion.ts). */
   occlusion!: OcclusionProbes;
   /** Angry brows and daze stars over the creatures (render/looks.ts). */
-  stateMarks: StateMarks;
+  stateMarks!: StateMarks;
   /** The smoke test sets this to draw trunks flat magenta for a frame, to count them on screen. */
   debugTrunks = false;
   /** The party objects strewn over partified areas (#38). */
-  partyObjects: PartyObjectsView;
-  private borders: BorderView;
+  partyObjects!: PartyObjectsView;
+  private borders!: BorderView;
   nextStones: StoneIndicator[] = [];
   /** The pointers to her hats lying in the world (rules/hat.ts: knocked off, put down, or left when she took a new one): 🎩 in a
    *  whole ring, one a hat, each 🎩 in that hat's colour from the character creator (render/view/hatLooks.ts). */
@@ -404,14 +405,14 @@ export class View {
   readonly rulers = new Rulers(document.body);
   /** Show debug readouts (the debug overlay is on). */
   debugReadouts = false;
-  private soundBatch: SpriteBatch;
+  private soundBatch!: SpriteBatch;
   /** The lights the trunks' shadows are thrown from this frame (render/trunkShadows.ts uFires), the list kept. */
   private shadowLights: { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; k: number }[] = [];
   /** Her light dimmer in the wild, back up in a fight (render/combatLight.ts). */
   readonly combatLight = new CombatLight();
-  shadows: ShadowBatch;
+  shadows!: ShadowBatch;
   /** The live rig (#79 stage 5, ?rig=1): creatures put together from parts each frame. */
-  readonly rig: RigView | null;
+  rig!: RigView | null;
   /** The camera's snap this frame, in the picture's pixels (x right, y down): what main.ts shifts the canvas by. */
   readonly subpixel = { x: 0, y: 0 };
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
@@ -439,7 +440,8 @@ export class View {
   areaMoods: AreaMoods | null = null;
   stats: ViewStats = { berries: 0, forestMs: 0, forestMissing: 0, sceneryRadius: 0, fps: 0, gameplay: 0, scenery: 0, dropped: 0, trees: 0, bushes: 0, creatures: 0, batches: 0, drawCalls: 0, pendingArt: 0, pendingGround: 0, lights: 0 };
 
-  constructor(readonly canvas: HTMLCanvasElement, public game: Game, readonly style: Style, witchGenome: unknown = null) {
+  /** `sliced` (View.create): the island's build left to its caller, a frame's budget at a time; else it's built here, as ever. */
+  constructor(readonly canvas: HTMLCanvasElement, public game: Game, readonly style: Style, witchGenome: unknown = null, sliced = false) {
     const t = game.tuning;
     Object.assign(this, nightState(t));
     this.castMap = new CastShadowMap(160, t.shadows.castRes ?? 1024);
@@ -485,14 +487,34 @@ export class View {
       LIGHT_UNIFORMS.uGlowPower.value = 0;
     }
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
-    const deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
-    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, treehouseArtId(game));
+    // (sliced: the island build's own art workers' drawings asked ahead of the start's own, so the build doesn't wait behind them)
+    this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, treehouseArtId(game), sliced ? [discoJob(style), MarkerArt.stoneJob(style, t, game.map).job] : []);
     this.assets.typeSeed = islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"); // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
+    if (!sliced) runSync(this.build());
+  }
+
+  /** A View whose island is built a frame's budget at a time (render/slices.ts; Ed's laptop, 2026-10-20: the build was one 10 s
+   *  task, the bedroom's alarm, its music and every animation stopped): the same steps in the same order as `new View`, the page
+   *  given its frames between them. Nothing is drawn until it's whole (the caller waits for it). */
+  static async create(canvas: HTMLCanvasElement, game: Game, style: Style, witchGenome: unknown = null, budgetMs = 8): Promise<View> {
+    await nextFrame(); // (a turn of its own: the renderer and the light made apart from whatever came before, the night's map)
+    const v = new View(canvas, game, style, witchGenome, true);
+    await runSliced(v.build(), "view", budgetMs);
+    return v;
+  }
+
+  /** Everything of the View's from the island on, in steps (render/slices.ts): each `yield` a point where the page may have a
+   *  frame, each named one a stage (a ?timing=1 mark, witch:build-<stage>). Made in the order the constructor always made them
+   *  (three.js breaks draw-order ties by creation order). */
+  private *build(): Steps {
+    const game = this.game, t = game.tuning, style = this.style, M = moodOf(t), deckOn = deckOf(game.map, t); // (the treehouse Ent holding the deck, rules/treehouse.ts; else the old treehouse)
+    yield "island";
     // (Each island layer made at its old place among the View's own: three.js breaks draw-order ties by creation order.)
     this.island = new IslandLayers(this.scene, { game, style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOn });
-    this.island.buildGround();
+    yield* this.island.groundSteps();
+    yield "sky";
     this.sky = new Sky(t.sky, t.moon.disc);
     this.scene.add(this.sky.mesh);
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
@@ -516,7 +538,9 @@ export class View {
     }
     // (no haze in the bare view; the mood's fog comes nearer than the culling's far edge, which stays t.haze.far)
     LIGHT_UNIFORMS.uHazeRange.value.set(t.bare ? 1e5 : M?.hazeNear ?? t.haze.near, t.bare ? 2e5 : M?.hazeFar ?? t.haze.far);
-    this.island.buildPaths();
+    yield "paths";
+    yield* this.island.pathSteps();
+    yield "witch";
 
     // The witch is depth-tested like everything else, drawn after it; where something still hides
     // her, a silhouette in her glow colour shows through, and tall things in front of her fade.
@@ -533,10 +557,14 @@ export class View {
       if (deckOn?.house?.rooms.length) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
-    this.island.buildMarkers();
+    yield* this.island.markerSteps();
+    yield "grass";
     this.scene.add(this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms);
+    const tufts = yield* GrassView.tufts(style);
+    yield;
+    this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms, tufts);
+    yield "parts";
     this.scene.add(this.grass.mesh);
     this.scene.add(this.spellFx.trail);
     this.trail = new WitchTrail(game.tuning.trail ?? TRAIL_DEFAULT);
@@ -549,15 +577,21 @@ export class View {
     this.berryBatch = new SpriteBatch(packAtlas([berrySprite(t.berries.colour)], 64), this.mpp, { unlit: true });
     this.scene.add(...this.berryBatch.meshes);
     this.scene.add(...this.propBatch.meshes);
+    yield "party";
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera, this.trunkShadowBatches));
     this.strings = new StringLightsView(this.scene, game);
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
-    this.holograms = new SigilHolograms(t.holograms);
+    yield "holograms";
+    const glyphs = yield* SigilHolograms.glyphs();
+    yield;
+    this.holograms = new SigilHolograms(t.holograms, glyphs);
     this.scene.add(this.holograms.group);
+    yield "fireworks";
     this.fireworks = new Fireworks(SPRITE_UNIFORMS.uRes, this.mpp);
     this.scene.add(this.fireworks.mesh);
+    yield "ley";
     this.island.buildLey();
     this.leyBase = M?.leyBright ?? 1;
     this.ley.scale(this.leyBase);
@@ -565,6 +599,7 @@ export class View {
     this.glades = new Glades(t.glades);
     this.scene.add(this.glades.points);
     if (t.wisps?.on) { this.wisps = new Wisps(t.wisps); this.scene.add(this.wisps.points); }
+    yield "partyObjects";
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.beachView = new BeachView(this.scene, this.assets, this.ground, this.mpp, t.witch);
@@ -573,15 +608,21 @@ export class View {
     this.inviteView = new InviteView(game);
     // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
     // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
+    yield "occlusion";
     this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera, this.smoke);
     this.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
     this.inviteView.probes = this.occlusion;
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
+    yield "stateMarks";
     this.stateMarks = new StateMarks(this.scene, this.mpp);
+    yield "borders";
     this.borders = new BorderView(this.scene, game);
+    yield;
     this.soundBatch = new SpriteBatch(this.assets.soundsystems, this.mpp, { solid: true }).name("soundsystems");
     this.scene.add(...this.soundBatch.meshes);
+    yield "dancefloor";
     this.island.buildDancefloor();
+    yield* this.island.finishSteps();
 
     // A shadow under the witch, so her height reads: soft (multiplied over the ground).
     const sm = new THREE.ShaderMaterial({
@@ -626,16 +667,18 @@ export class View {
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
       this.assets.tonight(types);
     }
+    await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
     this.render(0, false);
     drawCreatures(this);
-    this.ground.fill(this.renderer, viewRect(this, this.game.tuning.haze.near, 20), this.game.witch.x, this.game.witch.z, Infinity);
+    { const rect = viewRect(this, this.game.tuning.haze.near, 20), w = this.game.witch; // (the ground round the start, a few tiles a frame: render/slices.ts)
+      while (this.ground.fill(this.renderer, rect, w.x, w.z, 6) > 0) await nextFrame(); }
     performance.mark("witch:prep-ground");
     await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     performance.mark("witch:prep-home");
     await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
-    refresh(this, true);
+    await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
     // Every area type the map has, drawn in the background now so the forest ahead is ready however fast she flies; the
     // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
     // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for above), not its type's trees.
@@ -648,6 +691,18 @@ export class View {
     this.prepared = true;
     await this.compileAll();
     this.askIsland(near);
+  }
+
+  /** What the start's first frame would make the first time it's asked for, made ahead in steps (render/slices.ts; Ed's laptop,
+   *  2026-10-20): the forest round her (the scenery's rebuild) and round the party's areas (their string lights), and the legends'
+   *  carvings (their floors). The same things, made the same way, only sooner (each is kept: the forest's chunks, the carvings). */
+  private *warmSteps(): Steps {
+    const g = this.game, w = g.witch, far = g.tuning.haze.far + 64;
+    yield "forest";
+    while (g.forest.prefetch(w.x, w.z, far, 4) > 0) yield;
+    for (const [, a] of g.party.areas) { const s = g.map.siteOf(a.cell[0], a.cell[1]); while (g.forest.prefetch(s.x, s.z, g.map.areaSize * 1.3, 4) > 0) yield; }
+    yield "carvings";
+    for (const c of g.map.legendClearings) { carvingMask(AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature); yield; }
   }
 
   /** The island built (the new opening's curtains wait on it, rules/wakeUp.ts): the start's art made and every area type the map
@@ -683,7 +738,8 @@ export class View {
     performance.mark("witch:prep-compiled");
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
-    for (const p of this.renderer.info.programs ?? []) p.getUniforms();
+    const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
+    await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
   }
 
   /** The island's own asked for ahead of need (prepare: each island's): its legends' carvings, its area types by `near` (the
@@ -707,7 +763,14 @@ export class View {
    *  a new generation, the last island's sets dropped and freed), the new island's layers built off the scene, then swapped in
    *  and only then the old ones let go (built before freed: the shader programs both use are never freed and compiled again),
    *  and every part of the view that keeps something of a night re-pointed or reset. The caller runs prepare() for its start. */
-  setGame(game: Game): void {
+  setGame(game: Game): void { runSync(this.setGameSteps(game)); }
+  /** setGame a frame's budget at a time (render/slices.ts): the new island built off the scene in steps, the page's frames between
+   *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. */
+  setGameSliced(game: Game, budgetMs = 8): Promise<void> {
+    this.assets.early(MarkerArt.stoneJob(this.style, game.tuning, game.map).job); // (the new island's stones asked first, from the art workers)
+    return runSliced(this.setGameSteps(game), "setGame", budgetMs);
+  }
+  private *setGameSteps(game: Game): Steps {
     const t = game.tuning, old = this.island;
     // The last night's: the scenery's rebuild under way, the creatures' caches, the candles; its area types' batches and their
     // shadows, and its soundsystems' (their atlases the art's: freed once, by reseat).
@@ -725,7 +788,9 @@ export class View {
     this.areaMoods = M ? new AreaMoods(M) : null;
     // The new island, off the scene.
     const island = new IslandLayers(this.scene, { game, style: this.style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOf(game.map, t) }, false);
-    island.buildGround(); island.buildPaths(); island.buildTreehouse(); island.buildMarkers(); island.buildLey(); island.buildDancefloor();
+    yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
+    yield* island.finishSteps();
+    yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
     island.ley.scale(this.leyBase);
@@ -809,7 +874,7 @@ export class View {
   trackPops = false;
 
 
-  berryBatch: SpriteBatch;
+  berryBatch!: SpriteBatch;
   rigGear(c: Creature, leashed: boolean): RigGear {
     const k = `${c.species}|${c.id}|${leashed ? 1 : 0}`; // (its species too: an id is a creature only within one map)
     let g = this.rigGears.get(k);

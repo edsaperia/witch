@@ -11,7 +11,8 @@ import type { Game } from "../rules/game";
 import type { Deck } from "../rules/treehouse";
 import type { AssetLibrary } from "./assets";
 import { Dancefloor } from "./dancefloor";
-import { Ground } from "./ground";
+import { discoArt, discoSettle, Ground } from "./ground";
+import type { DiscoDrawn } from "./islandArt";
 import { HeightField, useHeightField } from "./height";
 import { LeyLines } from "./leylines";
 import { MapTable } from "./mapTable";
@@ -19,6 +20,7 @@ import { MarkerArt } from "./markers";
 import { Minimap } from "./minimap";
 import { PathView } from "./paths";
 import { SPRITE_UNIFORMS, SpriteBatch } from "./sprites";
+import { runSync, type Later, type Steps } from "./slices";
 import type { Style } from "./style";
 import { TrunkShadowBatch } from "./trunkShadows";
 
@@ -66,22 +68,40 @@ export class IslandLayers {
   }
 
   /** The rolling ground, made the field in use and centred on her, and the ground under it. */
-  buildGround(): void {
+  buildGround(): void { runSync(this.groundSteps()); }
+  /** buildGround in steps (render/slices.ts): the hills' first fill a few rows at a time, the dancefloor's looks a bake at a time. */
+  *groundSteps(): Steps {
     const { game, style, mpp, maxTexture } = this.src, t = game.tuning;
     // The steepest the hills may be: the camera's shallowest pitch at any zoom, ground or treetop (Ed, v289).
     const C = t.camera, pitch = Math.min(C.ground.angleIn, C.ground.angleOut, C.treetop.angleIn, C.treetop.angleOut);
     this.heights = new HeightField(game.map, game.forest, { ...t.ground.hills, maxSlope: Math.tan((pitch * Math.PI) / 180) });
     useHeightField(this.heights);
-    this.heights.follow(game.witch.x, game.witch.z);
-    this.ground = new Ground(game.map, game.forest, style, mpp, maxTexture);
+    yield "heights";
+    yield* this.heights.fillSteps(game.witch.x, game.witch.z);
+    yield "ground";
+    const disco = yield* discoArt(style, game.map.dancefloor.radius, job => this.src.assets.oneOff(job)); // (by an art worker, sliced)
+    yield;
+    this.ground = new Ground(game.map, game.forest, style, mpp, maxTexture, disco.art);
+    this.discoLater = disco.later;
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.root.add(this.ground.mesh);
   }
 
+  /** The dancefloor's pictures being drawn by an art worker (groundSteps), put in by finishSteps. */
+  private discoLater: Later<DiscoDrawn> | null = null;
+  /** The build's last step: what was drawn elsewhere while it went on put in its place (the page has its frames till it's in). */
+  *finishSteps(): Steps {
+    if (this.discoLater) { yield "finish"; yield* discoSettle(this.src.style, this.ground, this.discoLater); this.discoLater = null; }
+  }
+
   /** The paths, roads, railways and streams. */
-  buildPaths(): void {
+  buildPaths(): void { runSync(this.pathSteps()); }
+  /** buildPaths in steps (render/slices.ts): the lines a few at a time, the strips' textures a bake at a time. */
+  *pathSteps(): Steps {
     const { game, style, mpp } = this.src;
-    this.paths = new PathView(game.map, style, mpp, game.tuning.pathFade.metres);
+    const made = yield* PathView.prep(game.map, style);
+    yield;
+    this.paths = new PathView(game.map, style, mpp, game.tuning.pathFade.metres, made);
     this.root.add(this.paths.group);
   }
 
@@ -95,10 +115,15 @@ export class IslandLayers {
   }
 
   /** The debug minimap and the runestones (gameplay: always drawn in range, never budget-culled). */
-  buildMarkers(): void {
+  buildMarkers(): void { runSync(this.markerSteps()); }
+  /** buildMarkers in steps (render/slices.ts): the stones drawn a stone at a time. */
+  *markerSteps(): Steps {
     const { game, style, mpp } = this.src;
     this.minimap = new Minimap(document.body, game.map);
-    this.markerArt = new MarkerArt(style, game.tuning, game.map);
+    yield "markers";
+    const stones = yield* MarkerArt.stones(style, game.tuning, game.map, job => this.src.assets.oneOff(job)); // (by an art worker, sliced)
+    yield;
+    this.markerArt = new MarkerArt(style, game.tuning, game.map, stones);
     this.markerBatch = new SpriteBatch(this.markerArt.atlas, mpp, { solid: true }).name("markers");
     this.root.add(...this.markerBatch.meshes);
   }

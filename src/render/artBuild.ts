@@ -8,6 +8,8 @@ import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
 import { overrideFor, poseName, type Override } from "./overrides";
 import { entTreehouseSprites, propSprites, soundsystemGenSprites, soundsystemSprites, treehouseSprites, witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
+import { runSync, type Steps } from "./slices";
+import { canvasPixels, discoDrawn, seaSprites, stoneSprites, type CanvasPixels, type StoneSpec } from "./islandArt";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
 export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A wild creature's eye pixels (1), for eyeshine (Ed, v244). */ eyes?: Uint8Array; /** Its sway mask (#34: grey, 0 rigid to 255 the leafy tips), packed into the normal map's alpha. */ S?: AnyCanvas; /** A creature's head (art pixels from its top left): bubbles point their tails at it (headPoint). */ head?: [number, number] }
@@ -208,7 +210,10 @@ function pixels(c: AnyCanvas, w: number, h: number): Uint8ClampedArray {
 }
 
 /** Shelf-pack the sprites; row 0 is the top of the image. */
-export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
+export const packPixels = (sprites: Baked[], width = 2048): AtlasPixels => runSync(packSteps(sprites, width));
+
+/** packPixels as steps (render/slices.ts): a step every few sprites. */
+export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
   const pad = 1, place: { x: number; y: number }[] = [];
   let x = 0, y = 0, rowH = 0, W = 1;
   for (const s of sprites) {
@@ -218,7 +223,10 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
   }
   const H = Math.max(1, y + rowH);
   const albedo = new Uint8Array(W * H * 4), normal = new Uint8Array(W * H * 4);
-  const frames: Frame[] = sprites.map((s, i) => {
+  const frames: Frame[] = [];
+  for (let i = 0; i < sprites.length; i++) {
+    if (i && i % 4 === 0) yield;
+    const s = sprites[i];
     const p = place[i], pa = pixels(s.A, s.w, s.h), pn = pixels(s.N, s.w, s.h);
     const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4 + 1])) : null; // G: the pixel-wind code (art/sway.js swayCode)
     for (let row = 0; row < s.h; row++) {
@@ -231,8 +239,8 @@ export function packPixels(sprites: Baked[], width = 2048): AtlasPixels {
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
     bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    return { uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) };
-  });
+    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
+  }
   return { albedo, normal, width: W, height: H, frames };
 }
 
@@ -271,6 +279,12 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "scenes"; id: string; style: Style }
   /** A party witch (#37): her look from partyWitch(seed) (or, seed null, our witch's own), in every party pose. */
   | { kind: "partyWitch"; id: string; seed: number | null; style: Style; /** our witch's genome (art/witchGenome.js), for seed null; else the classic witch */ genome?: unknown }
+  /** The dancefloor's looks (render/islandArt.ts discoDrawn), for the ground. */
+  | { kind: "disco"; id: string; style: Style }
+  /** The sea's creatures (render/islandArt.ts seaSprites): the kraken or the dolphins. */
+  | { kind: "sea"; id: "kraken" | "dolphins"; style: Style }
+  /** An island's runestones (render/islandArt.ts stoneSprites; id: their list's key), each at every glow level. */
+  | { kind: "stones"; id: string; style: Style; stones: StoneSpec[]; levels: number[]; scale: number }
   /** One area's generated soundsystem (art/soundsystemGen.js): its genome at its yaw (degrees) and size. */
   | { kind: "soundsystem"; id: string; style: Style; genome: unknown; yaw: number; size: number; /** "play" (its 3 playing frames) or "damage" (its damage stages and rubble) */ part: "play" | "damage" }
   /** Every party object (#38) in each neon and balloon palette a placement can pick (campfires in their three frames), and the clusters' layouts. */
@@ -323,7 +337,7 @@ export interface DecorPiece { id: string; family: string; bot: number; top: numb
 
 /** A floor tile's pixels: albedo and normal map, w x h. */
 export interface TilePixels { albedo: Uint8Array; normal: Uint8Array; w: number; h: number }
-export interface ArtResult { /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt }
+export interface ArtResult { /** The dancefloor's looks (kind disco). */ disco?: { base: CanvasPixels; lit: CanvasPixels; pitch: number; size: number; gridOrigin: number; rimOuter: number; radius: number }; /** The runestones' heights, in order (kind stones). */ stones?: number[]; /** The sea creatures' frames' origins (kind sea). */ sea?: { x: number; y: number }[]; /** The beach's edge of the woods: its palms' frames (crown, trunk) and its shrubs' and grass clumps'. */ beachEdge?: BeachEdgeArt; /** A sleeping legend's ground line in each frame: rows from its top (the art's origin). */ ground?: number[]; /** And how far its body's middle (the origin) lies right of the frame's middle, pixels. */ centre?: number[]; /** The live rig's parts (#79): their joints and pieces. */ rig?: RigMeta; px: AtlasPixels; layout?: TypeLayout; floor?: TilePixels; decor?: DecorPiece[]; pieces?: PathPieceArt[]; relics?: RelicArt[]; beach?: BeachArt; layouts?: RelicLayouts; speakers?: SpeakerArt; scenes?: SceneArt; witch?: PartyWitchArt; party?: PartyArt; /** Our witch's poses (render/homeArt.ts). */ ours?: WitchArt; /** The treehouse's anchors. */ treehouse?: TreehouseArt; /** A generated soundsystem's origins and projector tops. */ ss?: SoundsystemGenArt }
 
 /** The Harvest hat's sprouts (art/country.js scene pieces), one under each of its berries by its place in the ring. */
 export const HARVEST_SPROUTS = ["harvest-sprout-1", "harvest-sprout-2", "harvest-sprout-3"];
@@ -543,6 +557,9 @@ export function partyGearOf(seed: number, colour: number[] | null): RigGear {
 }
 
 export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
+  if (job.kind === "disco") { const d = discoDrawn(job.style, mk); return { px: packPixels([], 16), disco: { ...d, base: canvasPixels(d.base), lit: canvasPixels(d.lit) } }; }
+  if (job.kind === "sea") { const { sprites, origins } = seaSprites(job.id, job.style, mk); return { px: packPixels(sprites, job.id === "kraken" ? 1024 : 512), sea: origins }; }
+  if (job.kind === "stones") { const { sprites, heights } = stoneSprites(job.style, job.stones, job.levels, job.scale, mk); return { px: packPixels(sprites, 2048), stones: heights }; }
   if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
   if (job.kind === "hat") {
     const mine = witchLookOf(job.style, job.genome), hat = (Art.witchHatSprite as (st: Style, o: object) => unknown)(job.style, { look: mine.look });
@@ -606,4 +623,4 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
 
 /** The buffers a result can hand over to the page without copying. */
 export const transferables = (r: ArtResult): ArrayBuffer[] =>
-  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : [])] as ArrayBuffer[];
+  [r.px.albedo.buffer, r.px.normal.buffer, ...(r.floor ? [r.floor.albedo.buffer, r.floor.normal.buffer] : []), ...(r.disco ? [r.disco.base.px.buffer, r.disco.lit.px.buffer] : [])] as ArrayBuffer[];

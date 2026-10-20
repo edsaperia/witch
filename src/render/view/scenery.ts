@@ -23,6 +23,7 @@ export function leafJitterOf(p: { x: number; z: number }): [number, number] {
 }
 import { poseOf, type Game } from "../../rules/game";
 import type { View } from "../view";
+import type { Steps } from "../slices";
 import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
@@ -74,6 +75,15 @@ export function refresh(v: View, force = false): void {
   const run = rebuild(v, d ?? due(v, true)!, force);
   if (whole) { while (!run.next().done); return; }
   if (!run.next().done) jobs.set(v, { run, frames: 1 });
+}
+
+/** refresh(v, true) in steps (render/slices.ts: the start's, View.prepare): the rebuild under way finished, then a whole one, a
+ *  slice of it at a time (nothing is drawn meanwhile: the start's frames wait for it). */
+export function* refreshSteps(v: View): Steps {
+  const job = jobs.get(v);
+  if (job) { while (!job.run.next().done) yield; jobs.delete(v); }
+  const run = rebuild(v, due(v) ?? due(v, true)!, true);
+  while (!run.next().done) yield;
 }
 
 const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
