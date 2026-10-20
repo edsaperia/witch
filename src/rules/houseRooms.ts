@@ -16,7 +16,7 @@ export interface Rect { x0: number; x1: number; z0: number; z1: number }
 /** What E does at an object (config/house.json `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "say"; line: string };
+  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "say"; line: string };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
 export interface HouseConfig {
   on: boolean; wall: number; reach: number;

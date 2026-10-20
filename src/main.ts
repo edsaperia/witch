@@ -3,6 +3,8 @@ import { wavesOver } from "./rules/win";
 import { chartOpen, chartWarmsNight, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { divesHome, opensOnChart } from "./app/opening";
 import { bedside, wakeInBedroom } from "./rules/opening";
+import { startWake, waking } from "./rules/wakeUp";
+import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
@@ -154,7 +156,7 @@ const startEl = document.getElementById("start")!;
 // Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
-const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party)) n.flags.castWanted = true; };
+const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !waking(n.game)) n.flags.castWanted = true; }; // (waking in her bedroom: the curtains cast it, rules/wakeUp.ts)
 window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
@@ -253,7 +255,8 @@ function arrived(): void {
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
-  if (start()) queueCast();
+  if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
+  if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
 }
 
@@ -417,6 +420,8 @@ window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.prevent
 document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
 
 let lastDraw = 0;
+/** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
+let wakeCard: WakeCard | null = null;
 const frameStats = new FrameStats(view.renderer.getContext());
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
@@ -549,6 +554,7 @@ function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean
 function diveHome(to: Sailed): boolean {
   const n = N(), A = n.tuning.arrive;
   if (!to.end || !A || !wakeInBedroom(n.game)) return false;
+  startWake(n.game, n.game.herTime); // (in bed, the alarm to ring as the dive lands: rules/wakeUp.ts)
   mark("opening:dive");
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
@@ -685,6 +691,14 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
+  // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
+  // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
+  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
+  if (game.wake) {
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); }
+    if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
+    else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
+  } else wakeCard?.hide();
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart((href, to) => void sailFromChart(href, to), chartWorldArg());
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.

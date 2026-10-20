@@ -229,6 +229,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** Her phone's alarm in the new opening's wake-up (chimes.ts alarm): a ring at most every gap seconds. */
+    alarm?: { volume: number; gap: number };
     /** A 💌 refused by an enraged animal (Ed, 2026-10-12): its angry whine (chimes.ts refused). */
     refused: { volume: number; gap: number };
     /** An area cleared early (chimes.ts cleared, sfxCues.ts cleared): its sting's level, heard within range metres (at least floor of it). */
@@ -386,7 +388,7 @@ export interface Tuning {
    *  way to a new night), or the page loaded anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
   sail?: { inPlace: boolean };
   /** The new opening (app/opening.ts): chart, a plain first load opening on the sea chart in place of the bedroom; ?opening=chart|old for one load. */
-  opening?: { chart: boolean };
+  opening?: { chart: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
