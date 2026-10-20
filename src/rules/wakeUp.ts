@@ -3,9 +3,12 @@
 // as often as she likes; moving (WASD, a rise) gets her up: she stretches, then stands beside the bed and walks (WASD, taught in
 // a safe room). The first time she comes to the dressing table its mirror opens by itself (her skin, hair and earrings). The
 // curtains stay shut until the island's ready (the night's art drawn: main.ts says so through `ready`); E at them before then
-// says "not yet", after opens them, and the party spell's cast. Until they're open she stays in the bedroom (its door kept
-// shut), so nothing she does gets ahead of the build. Rules only: the alarm's sound, the dark and the cards are the page's
-// (render/wakeUp.ts), reading `g.wake`.
+// says "not yet", after opens them. Until they're open she stays in the bedroom (its door kept shut), so nothing she does gets
+// ahead of the build. Then out through the house to her decks, where E starts the party (Ed, 2026-10-20: "The DJ intro replaces
+// the party spell before the party has started"): she's seated behind them and the spell's cast there, its needle-drop routine
+// (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up (`short`: later loads and after the bed, Ed's
+// decisions 4 and 10) has any key or move get her straight up, and the mirror waits to be used; never past the build all the
+// same. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
@@ -14,7 +17,7 @@ import { bedside } from "./opening";
 
 export type WakeBeat = "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
-export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "notYet" | "curtains";
+export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "notYet" | "curtains" | "decks";
 
 export interface WakeState {
   beat: WakeBeat;
@@ -24,8 +27,10 @@ export interface WakeState {
   snoozes: number;
   /** The curtains opened (the island's ready, and she's seen it): the wake-up's over, the door open. */
   open: boolean;
-  /** The dressing table's mirror opened by itself already. */
+  /** The dressing table's mirror opened by itself already (or, short, never by itself). */
   mirror: boolean;
+  /** The shorter wake-up: any key or move gets her up at once (later loads, after the bed). */
+  short?: boolean;
   /** This frame's happenings, for the page (cleared as each frame's steps begin: rules/game.ts stepGame). */
   events: WakeEvent[];
 }
@@ -47,14 +52,14 @@ function inBed(g: Game): { x: number; z: number } | null {
   return bed ? { x: th.x + bed.x, z: th.z + bed.z - bed.d * 0.15 } : null;
 }
 
-/** Start the wake-up (the dive's landing, rules/opening.ts wakeInBedroom having put her in the bedroom): in bed, the alarm ringing.
- *  False without the house's bedroom. */
-export function startWake(g: Game, ht: number): boolean {
+/** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
+ *  in bed, the alarm ringing; `short`, the shorter one. False without the house's bedroom. */
+export function startWake(g: Game, ht: number, short = false): boolean {
   const at = inBed(g);
   if (!at || !bedroomRect(g)) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
-  g.wake = { beat: "alarm", at: ht, snoozes: 0, open: false, mirror: false, events: [] };
+  g.wake = { beat: "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], ...(short ? { short } : {}) };
   return true;
 }
 
@@ -68,10 +73,13 @@ export const waking = (g: { wake?: WakeState }): boolean => !!g.wake && !g.wake.
 export function stepWake(g: Game, c: Controls, ht: number, ready: boolean, K: WakeTuning): Controls {
   const w = g.wake;
   if (!w) return c;
-  if (w.open) return c;
   const moving = Math.hypot(c.moveX, c.moveZ) > 0.1 || !!c.toggleMode, press = !!(c.place || c.sigil);
+  if (w.open) return g.party.spellAt === null ? toDecks(g, c, press) : c;
   const held: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const to = (beat: WakeBeat, e: WakeEvent) => { w.beat = beat; w.at = ht; w.events.push(e); };
+  const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } to("up", "up"); };
+  // (shorter: any key or move, ringing or snoozing, and she's up)
+  if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || press || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
   if (w.beat === "alarm") {
     if (moving) to("stretch", "stretch");
     else if (press && ht - w.at >= K.alarmMin) { w.snoozes++; to("snooze", "snooze"); }
@@ -83,11 +91,7 @@ export function stepWake(g: Game, c: Controls, ht: number, ready: boolean, K: Wa
     return held;
   }
   if (w.beat === "stretch") {
-    if (ht - w.at >= K.stretch) {
-      const at = bedside(g);
-      if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; }
-      to("up", "up");
-    }
+    if (ht - w.at >= K.stretch) up();
     return held;
   }
   // Up: walking the bedroom. The dressing table's mirror the first time she's at it; E at the curtains.
@@ -95,11 +99,31 @@ export function stepWake(g: Game, c: Controls, ht: number, ready: boolean, K: Wa
   if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
   if (here?.use.kind === "bed") return { ...c, toggleMode: false, place: false, sigil: false, sigilHeld: false, castParty: false, spell: false }; // (no sleeping the night away before it's begun)
   if (press && here?.use.kind === "curtains") {
-    if (ready) { w.open = true; w.events.push("curtains"); castPartySpell(g.party, g.map, g.clock.time); }
+    if (ready) { w.open = true; w.events.push("curtains"); }
     else w.events.push("notYet");
     return { ...c, toggleMode: false, place: false, sigil: false, castParty: false, spell: false }; // (the press is the curtains', nothing else's)
   }
-  return { ...c, toggleMode: false, castParty: false, spell: false }; // (no rising out of the bedroom; the spell's the curtains')
+  return { ...c, toggleMode: false, castParty: false, spell: false }; // (no rising out of the bedroom; the spell's the decks')
+}
+
+/** How near her seat behind the decks E starts the party (m). */
+const DECKS_REACH = 1.6;
+/** Standing at her decks (behind them, by her seat on the balcony). */
+export function atDecks(g: Game): boolean {
+  const d = deckOf(g.map, g.tuning), b = g.witches[0].body;
+  return !!d && b.mode === "ground" && Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= DECKS_REACH;
+}
+/** The curtains open, the party not started: out to her decks, where E seats her and casts the spell (its routine the DJ intro);
+ *  no other key casts it meanwhile. */
+function toDecks(g: Game, c: Controls, press: boolean): Controls {
+  if (press && atDecks(g)) {
+    const d = deckOf(g.map, g.tuning)!, W = g.witches[0];
+    W.body = { ...W.body, x: d.seat.x, z: d.seat.z, vx: 0, vz: 0, seated: true, facing: 1, away: false, heading: "side" };
+    castPartySpell(g.party, g.map, g.clock.time);
+    g.wake!.events.push("decks");
+    return { ...c, place: false, sigil: false, castParty: false, spell: false };
+  }
+  return { ...c, castParty: false, spell: false };
 }
 
 /** After her step: the bedroom's door shut till the curtains open (she's kept on its floor). */

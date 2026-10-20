@@ -6,7 +6,9 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
-import { startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { deckOf } from "./treehouse";
+import { heldByRoutine } from "./djSet";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const K = WAKE_DEFAULT;
@@ -127,7 +129,7 @@ describe("never past the build", () => {
     expect(g.party.spellAt).toBeNull();
   });
 
-  it("once it's ready, E opens the curtains: the spell cast, the door open", () => {
+  it("once it's ready, E opens the curtains and the door; the spell waits for her decks", () => {
     const g = up(false);
     standAt(g, "curtains", 0.5);
     press(g);
@@ -135,9 +137,80 @@ describe("never past the build", () => {
     run(g, K.alarmMin);
     expect(press(g)).toContain("curtains");
     expect(g.wake!.open).toBe(true);
-    expect(g.party.spellAt).not.toBeNull();
+    expect(g.party.spellAt).toBeNull();
     const th = g.map.treehouse; g.witches[0].body = { ...g.witches[0].body, x: th.x + 17, z: th.z + room.z1 - 1 }; // (by the door)
     run(g, 6, { moveZ: 1 });
     expect(inRoom(g)).toBe(false);
+  });
+});
+
+/** Up, the curtains open: free to walk the house, the party not started. */
+function curtainsOpen(): Game {
+  const g = up(true);
+  standAt(g, "curtains", 0.5);
+  press(g);
+  expect(g.wake!.open).toBe(true);
+  return g;
+}
+const toSeat = (g: Game, dz = 0.6) => { const d = deckOf(g.map, g.tuning)!; g.witches[0].body = { ...g.witches[0].body, x: d.seat.x, z: d.seat.z - dz, vx: 0, vz: 0 }; };
+
+describe("the DJ intro at her decks (in place of the party spell)", () => {
+  it("no key casts the spell on her way out, nor E anywhere but her decks", () => {
+    const g = curtainsOpen();
+    run(g, 0.5, { castParty: true, spell: true });
+    standAt(g, "bed", 0.4); press(g);
+    expect(g.party.spellAt).toBeNull();
+  });
+
+  it("E at her decks seats her behind them and casts it: its routine holds her there, then the party's on", () => {
+    const g = curtainsOpen();
+    toSeat(g);
+    expect(atDecks(g)).toBe(true);
+    expect(press(g)).toContain("decks");
+    expect(g.witch.seated).toBe(true);
+    expect(g.party.spellAt).not.toBeNull();
+    const d = deckOf(g.map, g.tuning)!;
+    run(g, 1, { moveZ: -1 });
+    expect(Math.hypot(g.witch.x - d.seat.x, g.witch.z - d.seat.z)).toBeLessThan(0.05); // (held: the cast, then the needle-drop routine)
+    expect(heldByRoutine(g, g.clock.time) || g.clock.time < g.party.spellAt! + 2).toBe(true);
+    run(g, 10); // (the routine over)
+    expect(heldByRoutine(g, g.clock.time)).toBe(false);
+    run(g, 1, { moveZ: -1 });
+    expect(g.witch.seated).toBeFalsy(); // (off her decks: the party's on, its boot set off as she leaves them)
+    run(g, 0.5);
+    expect(g.party.bootFrom).toBeDefined();
+  });
+});
+
+describe("the shorter wake-up (later loads, after the bed)", () => {
+  function short(ready = false): Game {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false; g.islandReady = ready;
+    wakeInBedroom(g); startWake(g, g.herTime, true);
+    return g;
+  }
+  for (const [what, c] of [["E", { place: true, sigil: true }], ["a move", { moveX: 1 }], ["R", { spell: true }]] as const) it(`any key (${what}) gets her straight up, no stretch`, () => {
+    const g = short();
+    run(g, K.alarmMin);
+    expect(run(g, STEP, c)).toContain("up");
+    expect(g.wake!.beat).toBe("up");
+    expect(g.party.spellAt).toBeNull();
+  });
+
+  it("the mirror waits to be used", () => {
+    const g = short();
+    run(g, K.alarmMin); press(g);
+    standAt(g, "dressingTable", 0.3);
+    expect(run(g, 0.5)).not.toContain("mirror");
+  });
+
+  it("and never past the build: the curtains and the door wait all the same", () => {
+    const g = short(false);
+    run(g, K.alarmMin); press(g);
+    standAt(g, "curtains", 0.5);
+    expect(press(g)).toContain("notYet");
+    run(g, 20, { moveZ: 1 });
+    expect(inRoom(g)).toBe(true);
+    expect(g.party.spellAt).toBeNull();
   });
 });

@@ -2,7 +2,7 @@
 // dark while she's in bed, lit as she gets up; a card at the foot of the screen saying what each beat takes (her phone's alarm and
 // E to snooze it, the snoozes counted and the next ring, WASD to get up and walk, E at the curtains), the curtains' "not yet"
 // (with how far the island's build has got) and her phone ringing (platform/audio/chimes.ts alarm). Her own poses in bed are
-// render/view/witch.ts's. Gone once the curtains open.
+// render/view/witch.ts's. Once the curtains open, a last line sends her out to her decks; gone once the party starts there.
 import type { Game } from "../rules/game";
 import type { WakeState } from "../rules/wakeUp";
 
@@ -28,13 +28,19 @@ export class WakeCard {
     document.body.append(this.veil, this.card);
   }
 
+  /** Asleep (after the bed, while the next island's made): the room dark, her snoring on the card, till the next night's wake-up. */
+  sleep(): void {
+    this.dark = 1; this.veil.style.display = "block"; this.veil.style.opacity = "1";
+    this.html = "💤 … zzz …"; this.card.innerHTML = this.html; this.card.style.display = "block";
+  }
   /** Off (no wake-up tonight, or it's over). */
   hide(): void { this.veil.style.display = "none"; this.card.style.display = "none"; }
 
   /** A frame: `ht` her clock, `dt` the frame's seconds; `build` the island's art so far; `ring` plays her phone's ring. */
   update(g: Game, ht: number, dt: number, build: { done: number; total: number }, ring: () => void): void {
     const w = g.wake;
-    if (!w || (w.open && this.dark < 0.01)) { this.hide(); return; }
+    const toDecks = !!w?.open && g.party.spellAt === null; // (the curtains open, out to her decks: E there starts the party)
+    if (!w || (w.open && this.dark < 0.01 && !toDecks)) { this.hide(); return; }
     if (w.events.includes("notYet")) this.notYetAt = ht;
     // the dark: in bed, then lit as she stretches; the curtains opening let the night in
     const want = w.open ? 0 : w.beat === "alarm" || w.beat === "snooze" ? 1 : w.beat === "stretch" ? 1 - Math.min(1, (ht - w.at) / 1.5) * 0.75 : 0.25;
@@ -42,7 +48,7 @@ export class WakeCard {
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
     if (w.beat === "alarm") ring();
-    const html = w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
+    const html = toDecks ? `🎧 Out through the house to your decks: ${k("E")} behind them starts the party` : w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
     if (html !== this.html) { this.html = html; this.card.innerHTML = html; }
     this.card.style.display = html ? "block" : "none";
   }
@@ -50,7 +56,7 @@ export class WakeCard {
   private text(w: WakeState, ht: number, build: { done: number; total: number }, snooze: number): string {
     if (ht - this.notYetAt < NOT_YET_FOR) return `🪟 Not yet: the island's still being made${build.total ? ` (${build.done} of ${build.total})` : ""}…`;
     switch (w.beat) {
-      case "alarm": return `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
+      case "alarm": return w.short ? `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>any key: up` : `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "snooze": return `💤 five more minutes…${w.snoozes > 1 ? ` (snoozed ×${w.snoozes})` : ""} · rings again in ${Math.max(1, Math.ceil(snooze - (ht - w.at)))} s<br>${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "stretch": return "*yaaawn* … *stretch*";
       case "up": return `${k("W")}${k("A")}${k("S")}${k("D")} walk · the curtains: ${k("E")} to open them`;
