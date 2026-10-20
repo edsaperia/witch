@@ -21,7 +21,13 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
    - The chart's corner holds **What's new**, **Options** and the **Zoo**.
    - Home's night is made under the chart, and its art is drawn meanwhile.
    - **Choosing home** goes on into that night, not a new one. The chart's flight carries on over the forest, up to frame the treehouse, and in to her **bedroom**, where she wakes beside her bed (`rules/opening.ts`). Any key skips the flight.
-   - For now, the party spell is cast as she lands and she walks out to the decks. The wake-up's beats (the alarm, the snoozes, the mirror, the curtains) come next.
+   - **The wake-up** (`rules/wakeUp.ts`, the page's card and dark in `render/wakeUp.ts`). She lands in bed in the dark, with her phone's alarm ringing:
+     - **E** snoozes it for 5 s, as often as you like; the card counts the snoozes and when it rings again.
+     - **WASD** (or a rise) gets her up: she stretches (3 s), the room lights, and she stands beside the bed. WASD walks.
+     - The first time she comes to the **dressing table**, its mirror opens by itself (skin, hair and earrings).
+     - The **curtains** stay shut until the island is ready (its art drawn). E there says "not yet" until then; after that, E opens them and casts the party spell.
+     - Until the curtains open she can't leave the bedroom, the bed doesn't end the night, and no key casts the spell. Nothing gets her ahead of the build.
+   - For now she then walks out to the decks; the DJ intro starting the party in place of the spell comes next.
    - Any other island (on a later game) starts its night in place, as a sail does. Nothing is recorded on the chart, since the boot's night under it was never played.
 1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.

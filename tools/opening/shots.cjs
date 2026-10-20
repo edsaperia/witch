@@ -1,8 +1,9 @@
 // The new opening in the built game (app/opening.ts; Ed, 2026-10-20, previews/ed/opening-mock/ on claude/ed-shots), a shot per beat
 // into <out dir>: the first load on the sea chart (?opening=chart: only home unlocked on a first game, a fresh profile), its corner's
 // What's new and Options, home chosen (Sail home: the boot's own night, app/opening.ts divesHome), the chart's
-// dive on into the treehouse and her bedroom, where she wakes. Fails on a page error, the creator's bedroom shown, no sail, or her
-// anywhere but her bedroom.
+// dive on into the treehouse and her bedroom, where she wakes, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
+// mirror, the curtains). Fails on a page error, the creator's bedroom shown, no sail, her anywhere but her bedroom, or a beat that
+// doesn't come. SKIP=1 skips the dive with a key.
 // Run `npm run build` first. Playwright from the machine's global install.
 //   node tools/opening/shots.cjs [out dir] (default previews/opening/)
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -46,18 +47,56 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("the chart flew in and closed");
     await page.waitForTimeout(1500);
     await shot("04-dive.png");
-    // the dive on into her bedroom, unskipped: a shot every few seconds of the flight's own time, then landed
+    // the dive on into her bedroom: unskipped (a shot every few seconds of the flight's own time), or SKIP=1 a key skips it
     let k = 0;
+    if (process.env.SKIP === "1") await page.keyboard.press("Space");
     while (await page.evaluate(() => document.body.classList.contains("arriving")) && k < 6) {
       await page.waitForTimeout(8000);
       if (await page.evaluate(() => performance.getEntriesByName("witch:landed").length > 0)) await shot(`05-dive-${++k}.png`);
     }
     await page.waitForFunction(() => !document.body.classList.contains("arriving"), null, { timeout: 1200000, polling: 1000 });
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(3000);
     const w = await page.evaluate(() => { const g = window.witch?.game; const b = g?.witch; return b ? { x: b.x - g.map.treehouse.x, z: b.z - g.map.treehouse.z, seated: !!b.seated, house: g.camera.house } : null; });
     log("she's at", JSON.stringify(w));
     if (!w || w.seated || w.z > -9) fail("she didn't wake in her bedroom");
-    await shot("06-bedroom.png");
+    // the wake-up (rules/wakeUp.ts): each beat's shot, driven by its own input, waiting on her clock
+    const wake = () => page.evaluate(() => { const W = window.witch.game.wake; return W ? { beat: W.beat, snoozes: W.snoozes, open: W.open, mirror: W.mirror, ready: !!window.witch.game.islandReady, age: window.witch.game.herTime - W.at } : null; });
+    const until = async (f, what) => { for (let i = 0; i < 600; i++) { const s = await wake(); if (s && f(s)) return s; await page.waitForTimeout(500); } fail(`the wake-up never got to ${what}`); };
+    if ((await wake())?.beat !== "alarm") fail("no alarm as she landed");
+    await until(s => s.age > 1, "a second of ringing");
+    await shot("06-alarm.png");
+    await page.keyboard.press("KeyE");
+    await until(s => s.beat === "snooze", "the snooze");
+    await page.waitForTimeout(800);
+    await shot("07-snooze.png");
+    await until(s => s.beat === "alarm" && s.age > 1, "the alarm ringing again"); // (past alarmMin on her clock: a press as it starts ringing doesn't count)
+    await page.keyboard.press("KeyE");
+    await until(s => s.snoozes === 2, "a second snooze");
+    await page.keyboard.down("KeyD"); await until(s => s.beat === "stretch", "the stretch"); await page.keyboard.up("KeyD"); // (held till a frame sees it: this machine's frames are slow)
+    await page.waitForTimeout(600);
+    await shot("08-stretch.png");
+    await until(s => s.beat === "up", "her up");
+    await page.waitForTimeout(1500);
+    await shot("09-up.png");
+    // to the dressing table (put by it: the walk itself is the rules' tests'): its mirror opens by itself
+    const goTo = (id, dz) => page.evaluate(([id, dz]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0], o = { dressingTable: [13.3, -13.6, 1.4], curtains: [20.4, -17.3, 0.3] }[id]; W.body = { ...W.body, x: th.x + o[0] + 0.9, z: th.z + o[1] + o[2] / 2 + dz, vx: 0, vz: 0 }; }, [id, dz]);
+    await goTo("dressingTable", -0.6);
+    await page.keyboard.down("KeyA"); await until(s => s.mirror, "the mirror"); await page.keyboard.up("KeyA");
+    await page.waitForTimeout(2500);
+    await shot("10-mirror.png");
+    if (!(await page.evaluate(() => window.__creator?.open))) fail("the mirror didn't open the creator");
+    await page.keyboard.press("Escape"); await page.waitForTimeout(800);
+    if (await page.evaluate(() => window.__creator?.open)) { await page.evaluate(() => window.__creator.hide()); await page.waitForTimeout(500); }
+    await goTo("curtains", 0.5);
+    await page.waitForTimeout(800);
+    const before = await wake();
+    await shot("11-curtains.png");
+    await page.keyboard.press("KeyE");
+    await page.waitForTimeout(1200);
+    if (!before.ready) { await shot("11b-not-yet.png"); await until(s => s.ready, "the island ready"); await page.keyboard.press("KeyE"); }
+    await until(s => s.open, "the curtains open");
+    await page.waitForTimeout(2500);
+    await shot("12-curtains-open.png");
     const marks = await page.evaluate(() => performance.getEntriesByType("mark").filter(m => /^(opening|chart|game):/.test(m.name)).map(m => `${m.name} ${(m.startTime / 1000).toFixed(1)} s`));
     log("marks:\n  " + marks.join("\n  "));
     fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ corner, unlocked, marks }, null, 1));
