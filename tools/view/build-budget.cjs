@@ -41,7 +41,7 @@ srv.listen(0, "127.0.0.1", async () => {
       await window.witch.debugSwap(Number(seed), island || undefined);
       const t1 = performance.now(), built = performance.getEntriesByName("witch:build-swap").at(-1)?.startTime ?? t1;
       const tasks = window.__lt.filter(([s]) => s >= t0), set = tasks.filter(([s, d]) => s + d <= built).map(([, d]) => Math.round(d)), prep = tasks.filter(([s]) => s >= built).map(([, d]) => Math.round(d));
-      return { setGame: Math.round(built - t0), total: Math.round(t1 - t0), setTasks: set, prepTasks: prep, slices: window.witch.slices.filter(x => x.what === "setGame").at(-1) ?? null };
+      return { setGame: Math.round(built - t0), total: Math.round(t1 - t0), setTasks: set, prepTasks: prep, slices: (window.witch.slices ?? []).filter(x => x.what === "setGame").at(-1) ?? null };
     }, [seed, island ?? ""]);
   }
   await b.close(); srv.close();
