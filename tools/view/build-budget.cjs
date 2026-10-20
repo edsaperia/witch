@@ -16,7 +16,7 @@ const srv = http.createServer((q, r) => { let f = path.join(root, decodeURICompo
 srv.listen(0, "127.0.0.1", async () => {
   const b = await pw.chromium.launch({ executablePath: process.env.CHROMIUM ?? (fs.existsSync("/opt/pw-browsers/chromium") ? "/opt/pw-browsers/chromium" : undefined), args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
-  await p.addInitScript(() => { window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch {} window.__frames = 0; const f = () => { window.__frames++; requestAnimationFrame(f); }; requestAnimationFrame(f); });
+  await p.addInitScript(() => { window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch {} window.__frames = 0; window.__gaps = []; let last = 0; const f = t => { window.__frames++; if (last) window.__gaps.push([last, t - last]); last = t; requestAnimationFrame(f); }; requestAnimationFrame(f); });
   const errors = []; p.on("pageerror", e => errors.push(e.message));
   if (Number(thr) > 1) { const cdp = await p.context().newCDPSession(p); await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(thr) }); }
   await p.goto(`http://127.0.0.1:${srv.address().port}/?${query}`);
@@ -28,7 +28,9 @@ srv.listen(0, "127.0.0.1", async () => {
     // (the View's own: wholly inside its build; the one it ends in runs on into the page's own start, main.ts after witch:view)
     const within = (a, z) => window.__lt.filter(([s, d]) => s >= a && s + d <= z).map(([s, d]) => Math.round(d));
     const stages = performance.getEntriesByType("mark").filter(e => e.name.startsWith("witch:build-")).map(e => [e.name.slice(12), Math.round(e.startTime - g)]);
-    return { view: Math.round(v - g), toGround: Math.round(pg - v), viewTasks: within(g, v), straddle: window.__lt.filter(([s, d]) => s < v && s + d > v).map(([s, d]) => [Math.round(v - s), Math.round(s + d - v)]), prepTasks: inside(v, pg), frames: window.__frames, framesBuild: null, stages, slices: window.witch?.slices ?? null };
+    // (the page's frames meanwhile: the gaps between them, the longest and how many passed 100 ms, in the build and in its start)
+    const gaps = (a, z) => { const in_ = window.__gaps.filter(([t]) => t >= a && t < z).map(([, d]) => d); return { frames: in_.length, longest: Math.round(Math.max(0, ...in_)), over100: in_.filter(d => d > 100).length }; };
+    return { buildFrames: gaps(g, v), prepFrames: gaps(v, pg), view: Math.round(v - g), toGround: Math.round(pg - v), viewTasks: within(g, v), straddle: window.__lt.filter(([s, d]) => s < v && s + d > v).map(([s, d]) => [Math.round(v - s), Math.round(s + d - v)]), prepTasks: inside(v, pg), frames: window.__frames, framesBuild: null, stages, slices: window.witch?.slices ?? null };
   });
   // SWAP=<seed>[,island]: then a new night in place (?debug=sail's swap: the sail's path, View.setGame), its own long tasks.
   if (process.env.SWAP) {
@@ -46,6 +48,7 @@ srv.listen(0, "127.0.0.1", async () => {
   const own = (r.slices ?? []).find(x => x.what === "view"), longest = own ? Math.round(own.longest) : Math.max(0, ...r.viewTasks); // (the build's own longest step: the page's other tasks meanwhile, a worker's reply and the like, are reported, not the build's)
   console.log(`throttle ${thr}x: the View built in ${r.view} ms; its longest step ${longest} ms (limit ${LIMIT}); the page's long tasks meanwhile (${r.viewTasks.length}): ${r.viewTasks.join(" ")}; the one it ends in (ms before witch:view, after): ${JSON.stringify(r.straddle)}`);
   const prepLongest = Math.max(0, ...r.prepTasks);
+  console.log(`  the page's frames: in the build ${JSON.stringify(r.buildFrames)}; in its start ${JSON.stringify(r.prepFrames)} (frames, the longest gap ms, gaps over 100 ms)`);
   console.log(`  then its start (prepare, to its shaders compiled): ${r.toGround} ms, its longest task ${prepLongest} ms; long tasks ${r.prepTasks.join(" ")}`);
   console.log(`  stages (ms from witch:game): ${r.stages.map(([n, t]) => `${n} ${t}`).join(", ")}`);
   if (r.slices) console.log(`  sliced builds: ${JSON.stringify(r.slices)}`);

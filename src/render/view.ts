@@ -738,7 +738,8 @@ export class View {
     performance.mark("witch:prep-compiled");
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
-    for (const p of this.renderer.info.programs ?? []) p.getUniforms();
+    const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
+    await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
   }
 
   /** The island's own asked for ahead of need (prepare: each island's): its legends' carvings, its area types by `near` (the
