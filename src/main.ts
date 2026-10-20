@@ -154,7 +154,7 @@ const startEl = document.getElementById("start")!;
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
 const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party)) n.flags.castWanted = true; };
-window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open) queueCast(); });
+window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
@@ -337,7 +337,7 @@ function start(): boolean {
   input.clearPresses();
   return true;
 }
-input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
+input.onAny = () => (chartWarmsNight() || (N().arrival && !N().flags.landed) ? true : start()); // (the first load's chart up: its keys are the chart's, the night under it not started; arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden, () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
