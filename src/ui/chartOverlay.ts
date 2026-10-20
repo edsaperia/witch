@@ -18,7 +18,7 @@ export interface Sailed { island: string; seed: number; world?: number; end?: Fl
  *  when she sails; `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
  *  already open. `o.opening`: the first load's chart (app/opening.ts): the whole screen, no Close (there's no night to go back to
  *  yet), the night's art warming under it (chartWarmsNight), and `o.corner`'s buttons in its top right corner. */
-export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { opening?: boolean; corner?: ChartViewOptions["corner"] } = {}): void {
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { opening?: boolean; corner?: ChartViewOptions["corner"]; noBake?: ChartViewOptions["noBake"] } = {}): void {
   if (open) return;
   performance.mark("chart:open");
   stopWarmChart(); // (the chart's own worker makes what isn't kept yet)
@@ -32,6 +32,7 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; }, // (the flight fills the screen)
     onClose: o.opening ? undefined : closeChart,
     corner: o.corner,
+    noBake: o.noBake,
   });
   let last = performance.now();
   const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); open.raf = requestAnimationFrame(loop); };

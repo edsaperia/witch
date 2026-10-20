@@ -51,6 +51,8 @@ export interface ChartViewOptions {
   countUncharted?: boolean;
   /** Buttons in the top right corner (the first load's chart: What's new, Options and the zoo; app/opening.ts). */
   corner?: { label: string; title?: string; onClick: () => void }[];
+  /** Islands not to draw or map ahead (app/landingBake.ts, app/mapPrep.ts): the first load's home, whose night is already made under the chart (app/opening.ts divesHome), the work would be thrown away and its workers would starve the night's own art. */
+  noBake?: (island: string) => boolean;
 }
 export interface ChartView {
   /** Its canvas (for a miniature: draw it as a texture, THREE.CanvasTexture). */
@@ -146,7 +148,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
-    if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
+    if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id)) { bake = null; return; }
     const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
     bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
