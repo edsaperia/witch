@@ -27,7 +27,7 @@ Ed's words: "Maybe they should all have three [melee, ranged, special]. The plac
   - **her party animal engaging**: the pack splits, some turn on it.
   - Not her rising to the treetops: the flyers don't follow her up.
 - **A shared pack tell** before a combo (Ed: 4a), **plus each move's own tell**: a howl, a stamp, a chirr, a shared glow on every member, so the player learns the cue.
-- **How many strike at once varies by creature** (Ed: 5): each kind has its own **pressure**, the number of its pack that may be winding up or striking at her at once (today's token, by species): a wolf pack 1 lunge plus any shots, a bat swarm 3, a bear 1.
+- **How many strike at once varies by creature** (Ed: 5): each kind has its own **pressure**, the number of its pack that may be winding up or striking at her at once (today's token, by species): a wolf pack 1 lunge plus any shots, a bat swarm 3, a bear 1. Built, the dodge's tokens (`dodge.a`, one at a time) still cap it at her, the call included (Ed, 2026-10-20: twelve wolves had ten winding up at her at once).
 
 ### The rhythm of a fight: lulls, retreats, chases
 
@@ -35,7 +35,7 @@ Ed: "(some) groups retreating/regrouping/scattering between attacks will make fi
 
 - **Lulls of all three kinds** (Ed: 7d): **after every combo** the pack pulls back out of reach, re-slots and comes again (a rhythm the player learns); **after a loss** (one of them knocked down or invited) the rest scatter and regroup; and **by species**: hit-and-run kinds always pull back, heavies never, swarms scatter and reform.
 - **Lulls are longer for bigger packs** (Ed: 8c): a pair comes back in a second, a pack of eight takes a few.
-- **Hurt members run while the healthy attack** (Ed): a creature under half health leaves the combo and keeps its distance (it comes back healed by a berry if it finds one; it's still invitable); the healthy ones carry the fight.
+- **Hurt members run while the healthy attack** (Ed): a creature under half health leaves the combo and keeps its distance (it comes back healed by a berry if it finds one; it's still invitable); the healthy ones carry the fight. With no healthy packmate (alone, or all of them hurt) it fights on, so a fight always ends (Ed, 2026-10-20: a boar at 1 hp kept off her parked wolf for good).
 - **Each species has its own retreat pattern** (Ed: 20): run in a circle round her; all in different directions; into the trees and freeze, hard to see; split into two groups; and so on (the table below gives each kind one).
 - **A chase is sometimes right** (Ed: "sometimes a chase is interesting and makes fights more varied"), **but never the norm**: the challenge is "how quickly you can clear an area so that you're ahead of the pulse", so a pack that has run comes back by itself within its lull, and a retreat that hides (the trees) ends with the pack coming in again from another side. Nothing runs off for good but a beaten animal, as today.
 
@@ -182,7 +182,7 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 4. **The lull**: the pack falls back by its kind's retreat pattern (a circle, a scatter, the trees, a split), longer for a bigger pack; the hurt keep their distance; a lost member makes the rest scatter and regroup.
 5. **Again**, from step 2, until the pack is beaten, invited or she's gone.
 
-A besieging pack does the same at a soundsystem, its shooters at the clearing's edge; her parked pack goes out to them and back.
+A besieging pack does the same at a soundsystem, its shooters at the clearing's edge; her parked pack goes out to them and back. (Until step 4, at a soundsystem or speaker a creature fights as before packs, its own attack at its full rate: Ed, 2026-10-20, packs pacing there dealt under half.)
 
 ## Build order (proposed)
 
