@@ -2,8 +2,9 @@
 // (the view, the sound, the input, the creator, the freeze, the screen shake...); a night is made per island (its link, tuning,
 // game, playtest run, HUD, arrival and flags). main.ts holds the night in one place, `page.night`, and everything that needs the
 // game reads it there, so a second night would be picked up everywhere. This is the only place a night begins or ends: the boot
-// starts one, a sail in place (the plan's PR 5: main.ts sailFromChart, app/sail.ts; ?sail=inplace while the tuning's sail.inPlace
-// is off) another, the view taking it (View.setGame, render/view.ts), and so does ?debug=sail's window.witch.debugSwap.
+// starts one, and every later one starts in place (the plan's PRs 5 and 6: main.ts sailFromChart and newNight, app/sail.ts; the
+// tuning's sail.inPlace, ?sail=reload the old way): a sail, Play again, a new forest, the bed and the bot game's exit, the view
+// taking it (View.setGame, render/view.ts), and so does ?debug=sail's window.witch.debugSwap.
 import { newGame, type Game } from "../rules/game";
 import type { MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
@@ -25,8 +26,8 @@ import type { ScreenShake } from "./shake";
 import type { PerfHud } from "./perfHud";
 import type { Sound } from "./sound";
 
-/** What a night is made from: the island, the seed, the world, how it came (the boot today; a sail, Play again, a fresh seed, the
- *  bed or the bot game's in place later), the chart's flight end when sailing in place, and the link it's read from. */
+/** What a night is made from: the island, the seed, the world, how it came (the boot; in place, a sail, Play again, a new forest,
+ *  the bed, the bot game's exit or ?debug=sail's swap), the chart's flight end when sailing in place, and the link it's read from. */
 export interface NightSpec {
   island: string;
   seed: number;
@@ -113,10 +114,9 @@ const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugT
  *  chart's map prep if it's this night's), the link's switches for the game, her hat, a new playtest run, the knobs' start, the HUD
  *  and the arrival. The page's pieces already made are re-pointed at it; then it's `page.night`. */
 export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
-  // (a second night in the same page only as a sail in place or ?debug=sail's swap, View.setGame taking it; the others, Play again,
-  // a fresh seed, the bed and the bot game's, still load the page anew: the plan's PR 6)
+  // (the boot's is a page's first night only; every later one comes in place, View.setGame taking it)
   const old = page.night ?? page.last ?? null;
-  if (old && page.view && spec.how !== "debug" && spec.how !== "sail") throw new Error("startNight: a second night in the same page is a sail's or ?debug=sail's only (sail-without-reload PR 6)");
+  if (old && spec.how === "boot") throw new Error("startNight: the boot's night is the page's first only");
   if (page.night) closeNight(page.night);
   const { params, seed } = spec;
   // The link's switches and the tuning for this night (app/linkParams.ts).

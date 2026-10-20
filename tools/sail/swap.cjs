@@ -6,7 +6,7 @@
 // game's resolution: none of the HTML over it, the debug overlay's timings among them); then compares the two
 // pixel by pixel (the differing pixels' count, box and a 12 by 6 grid; a diff picture). Also logs the renderer's live textures,
 // geometries and programs after each step, and after swapping A to B to A to B, so the counts can be seen to come back.
-// SAIL=1 (test C2, PR 5): the same through the real sail path instead, as the map table's chart sails (?sail=inplace;
+// SAIL=1 (test C2, PR 5): the same through the real sail path instead, as the map table's chart sails (in place by default, the tuning's sail.inPlace;
 // window.witch.sail: main.ts sailFromChart, the night recorded on the chart, its link pushed, the night made and started as a
 // sail's is when the chart gives no flight end), A on ISLAND_A (home) and B on ISLAND_B (fox), the fresh page of B with the same
 // switches; its files sail-*.png and sail.json.
@@ -130,7 +130,7 @@ async function main() {
     await page.addInitScript(CLOCK);
     page.on("pageerror", e => errors.push(`seed ${seed}: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`seed ${seed} console: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?${island ? `island=${island}&` : ""}seed=${seed}&quick=1&creator=0&debug=sail${SAIL ? "&sail=inplace" : ""}`);
+    await page.goto(`http://127.0.0.1:${port}/?${island ? `island=${island}&` : ""}seed=${seed}&quick=1&creator=0&debug=sail`);
     await ready(page);
     await steady(page);
     await page.keyboard.press("Enter");
