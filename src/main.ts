@@ -50,9 +50,8 @@ import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { prepUsed } from "./app/mapPrep";
-import { newForestHref } from "./app/newForest";
-import { endNight, startNight, wearHat as wear, type Night, type Page } from "./app/night";
-import { BackGuard, sailHref, sailOrReload, sailParams, sailWay } from "./app/sail";
+import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
+import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
@@ -268,13 +267,13 @@ let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 const useHouse = (obj: string): void => {
   const { game, tuning, flags: { chartRecorded, overShown } } = N();
-  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); location.href = newForestHref(location.href); return; } // (the sea chart: played, as the afterparty records it; and a new forest, as its button: app/newForest.ts)
+  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; and a new forest, as its button: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "creator") { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(o.use); }
   else if (o.use.kind === "zoo") zoo.open();
 };
-creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: N().flags.ready }; };
+creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
 creator.onGesture = () => sound.wake();
 creator.onStart = g => {
@@ -297,7 +296,7 @@ function botGame(kind: BotKind): void {
   if (creator.open) creator.hide();
   void Promise.all([import("./rules/bot"), import("./ui/botGame")]).then(([{ BOT_GAME, newBot }, { BotTag }]) => {
     bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
-    botTag = new BotTag(kind, () => { const u = new URL(location.href); u.searchParams.delete("bot"); location.href = u.toString(); });
+    botTag = new BotTag(kind, () => newNight("bot")); // (back to the start: a night in place on this link without ?bot)
     if (N().flags.ready) start(); // (else the forest's ready starts it)
   });
 }
@@ -317,6 +316,7 @@ if (botBtn) {
   botBtn.addEventListener("click", () => { if (!N().game.clock.paused) return; botGame("skilled"); }); // (it starts as soon as it and the forest are ready)
 }
 function start(): boolean {
+  if (sailing) return false; // (the next night being made in place)
   const { game, flags, arrival } = N();
   if (!flags.ready || !game.clock.paused || freeze.frozen) return false;
   if (creator.open) return true;
@@ -377,14 +377,20 @@ const shake = page.shake = new ScreenShake(N().game, bootTuning, view, canvas, p
 // the bedroom?"): with the character creator the page opens straight into it, and the card's contents live in its tabs
 // (❔ Controls, also the ? key; 📜 What's new; ⚙ Options: the screen shake; the waves' pace is the top right's dropdown). The card itself shows only for a
 // run without the creator (?creator=0: the tools and smoke runs, "press any key") or a bot game while the forest grows.
-if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (params.get("creator") !== "0" && !botKind) {
+/** The creator's tabs and its Zoo button, once a page (at the boot, or a night in place that opens the bedroom after a load that didn't). */
+let dressed = false;
+function dressCreator(): void {
+  if (dressed) return;
+  dressed = true;
   const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
   if (keys) creator.addTab("controls", "❔ Controls", [keys]);
   if (news) creator.addTab("news", "📜 What's new", [news]);
   if (shakeEl) creator.addTab("options", "⚙ Options", [shakeEl]);
   // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
   creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
-} else startEl.style.display = "";
+}
+if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (params.get("creator") !== "0" && !botKind) dressCreator();
+else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
 // (ui/decisions.ts, app/linkParams.ts).
@@ -480,11 +486,19 @@ const SLOW_AUDIO = 150; let slowAudioLogged = 0; // (ms: a frame's audio work wo
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return N().flags.ready; } };
 const spellButton = document.getElementById("spell");
 document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
-document.getElementById("won-sail")?.addEventListener("click", () => { location.href = "chart.html"; }); // (on to the sea chart, its islands found now lit: app/chartPage.ts)
-document.getElementById("again")?.addEventListener("click", () => location.reload());
-document.getElementById("chart-open")?.addEventListener("click", () => { location.href = "chart.html"; }); // (the sea chart: Ed, 2026-10-11: after a loss, replay the island or pick another)
+/** The cards' Sea chart (Ed, 2026-10-11: after a loss, replay the island or pick another) and Sail on (its islands found now lit):
+ *  the map table's chart over the game, so its sail is in place (the plan's PR 6); the old way (?sail=reload, a bot game), or
+ *  anything going wrong, chart.html as before (app/chartPage.ts). */
+function chartFromCard(): void {
+  const n = N(), toPage = (h: string) => { location.href = h; };
+  if (botKind || sailing || sailWay(n.params, n.tuning) === "reload") { toPage("chart.html"); return; }
+  void sailOrReload(async () => openChart((href, to) => void sailFromChart(href, to), chartWorldArg()), "chart.html", toPage, e => console.error("sea chart: it couldn't open over the game, so chart.html loads instead", e));
+}
+document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
+document.getElementById("again")?.addEventListener("click", () => newNight("again"));
+document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
-document.getElementById("fresh")?.addEventListener("click", () => { location.href = newForestHref(location.href); });
+document.getElementById("fresh")?.addEventListener("click", () => newNight("fresh"));
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
 const chartWorldArg = (): number | undefined => (new URLSearchParams(location.search).has("world") ? N().tuning.map?.world : undefined);
 /** Sailing from the map table's sea chart (ui/chartOverlay.ts, and window.witch.sail under it): the night recorded on the chart,
@@ -501,7 +515,7 @@ function sailFromChart(href: string, to: Sailed): Promise<boolean> {
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
 }
-/** The next island being made after a sail in place (or ?debug=sail's swap): the frame loop holds still. */
+/** The next night being made in place (a sail, another way to a new night, or ?debug=sail's swap): the frame loop holds still. */
 let sailing = false;
 /** Back after a sail in place opens the pause menu (Ed's decision 1; app/sail.ts): armed by the first sail (a first load leaves
  *  Back alone); while the next island is made it only keeps the guard. */
@@ -535,6 +549,56 @@ async function sailInPlace(to: Sailed): Promise<void> {
   sailing = false;
   if (n.arrival) n.arrival.begin(n.game); // (the camera takes over from the chart's still; it lands as a sail's does: arrived)
   else arrived(); // (no flight: the chart couldn't fly)
+}
+/** Another way to a new night (the plan's PR 6: Play again, a new forest, the bed, the bot game's exit): in place as a sail is
+ *  (the tuning's sail.inPlace, ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going
+ *  wrong, the link loaded as before (Play again reloading the page, the others app/sail.ts nightHref's), quietly. */
+function newNight(how: NightWay): void {
+  if (sailing) return;
+  const n = N(), href = nightHref(how, location.href);
+  const reload = how === "again" ? () => location.reload() : (h: string) => { location.href = h; };
+  if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
+  void sailOrReload(() => nightInPlace(nightFromHref(how, href), href), href, reload, e => {
+    console.error(`a new night in place (${how}): it went wrong, so the page loads instead`, e);
+    N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
+  });
+}
+/** A new night in place by one of those ways (docs/plans/sail-without-reload.md B), starting as a fresh load of its link would: the
+ *  old night's music faded and the night ended, the link pushed (and Back's guard), the bedroom open as the loading screen (the
+ *  start card under ?creator=0), the night made (startNight: the view taking it, the sliders carried), its start's art made;
+ *  no flight in. The bot game's exit leaves the bot and her seeded look first. */
+async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
+  if (sailFail) throw new Error("?debug=sail: the night in place made to fail");
+  if (freeze.frozen) freeze.toggle(); // (a fresh page isn't paused: the bot game's Esc out pauses it too, the freeze's key first)
+  sailing = true;
+  sound.music?.fadeOut(N().tuning.sfx.sail?.fade ?? 1.5); // (a fresh page's music is silent till the home speakers boot)
+  chartHeld = false; view.assets.hold(false);
+  endNight(page, params.get("debug") === "sail");
+  if (spec.how === "bot") leaveBot();
+  const u = new URL(href);
+  backGuard.sailed(u.search + u.hash);
+  armBack();
+  const room = spec.params.get("creator") !== "0";
+  startEl.classList.add("loading");
+  startEl.style.display = room ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
+  if (room) { dressCreator(); creator.show(); }
+  const n = await startNight(page, spec);
+  seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
+  creator.loadout = { hat: n.game.spells.hat, broom: n.game.spells.broom };
+  lastDraw = 0;
+  await view.prepare();
+  n.flags.ready = true;
+  startEl.classList.remove("loading");
+  input.clearPresses();
+  sailing = false;
+}
+/** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
+function leaveBot(): void {
+  botTag?.dispose();
+  bot = null; botTag = null; botKind = null;
+  const look = loadGenome();
+  lookNow = JSON.stringify(look);
+  view.setWitch(look);
 }
 /** ?debug=sail's test of the fallback: window.witch.sail(island, seed, { fail: true }). */
 let sailFail = false;
@@ -670,7 +734,7 @@ requestAnimationFrame(frame);
 installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop });
 // ?debug=sail (docs/plans/sail-without-reload.md, PR 4b): another night in place, made as a sail will make one (app/night.ts
 // startNight, the view taking it: View.setGame), its start's art made and play started as the start screen's would; for
-// tools/sail/swap.cjs. The sail itself still loads the page anew (PR 5).
+// tools/sail/swap.cjs.
 if (params.get("debug") === "sail") (window as unknown as { witch: Record<string, unknown> }).witch.debugSwap = async (seed: number, island?: string): Promise<number> => {
   const p = new URLSearchParams(params), was = N().spec;
   p.set("seed", String(seed));
