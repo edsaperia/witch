@@ -475,8 +475,9 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.wake) c = stepWake(g, c, ht, !!g.islandReady, t.opening?.wake ?? WAKE_DEFAULT);
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
-  // (Woken in her bedroom, the curtains cast it as she walks: neither holds her there, the house's slow time making them minutes.)
-  if (!g.wake && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // (Woken in her bedroom, waiting for her to reach her decks: neither holds her on the way, the house's slow time making them
+  // minutes; seated there, E having cast it, both hold her as ever.)
+  if ((!g.wake || g.witch.seated) && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const W = g.witches[0];
   // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
   if (c.spell && !W.ko && castSpell(g.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {

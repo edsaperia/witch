@@ -25,9 +25,13 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
      - **E** snoozes it for 5 s, as often as you like; the card counts the snoozes and when it rings again.
      - **WASD** (or a rise) gets her up: she stretches (3 s), the room lights, and she stands beside the bed. WASD walks.
      - The first time she comes to the **dressing table**, its mirror opens by itself (skin, hair and earrings).
-     - The **curtains** stay shut until the island is ready (its art drawn). E there says "not yet" until then; after that, E opens them and casts the party spell.
+     - The **curtains** stay shut until the island is ready (its art drawn once). E there says "not yet" until then; after that, E opens them.
      - Until the curtains open she can't leave the bedroom, the bed doesn't end the night, and no key casts the spell. Nothing gets her ahead of the build.
-   - For now she then walks out to the decks; the DJ intro starting the party in place of the spell comes next.
+   - **The DJ intro** (Ed's decision 2) replaces the party spell before the party has started. Out through the house to her decks, she presses **E** behind them: she's seated, the spell is cast there, and its 6.5 s needle-drop routine plays. As she steps off the decks the party is on. After a knockout, everything is as it was.
+   - **Later loads** (once she's been through it all on this browser): the shorter wake-up. Any key or move gets her straight up, no stretch, and the mirror waits to be used. The curtains still wait on the build.
+   - **After the bed:** she sleeps in the dark while the next island is made, then wakes in her bedroom with the shorter wake-up, the curtains waiting on that island's build.
+   - **Controls** live on the pause page (a ❔ Controls button while paused). What's new and Options are in the chart's corner, and the zoo is reached through the bestiary's book or the chart's button.
+   - Rooms are all lit alike; no path is lit to the decks.
    - Any other island (on a later game) starts its night in place, as a sail does. Nothing is recorded on the chart, since the boot's night under it was never played.
 1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.
