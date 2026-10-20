@@ -44,6 +44,14 @@ async function settle(page, file) {
     let t = 1e7;
     for (let k = 0; k < 80; k++) { window.__benchClock(t += 100); window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); if (k % 10 === 9) await new Promise(r => setTimeout(r, 30)); }
   });
+  // Unlike the bench (two runs of one page, its art arriving alike), the page swapped in place already holds much of the art a fresh
+  // one is still waiting for (the species', the page's own): so the art asked for is all let in, and the scenery listed again where
+  // she is, before the shot (else what differs could be when the art came, not what the swap left behind).
+  for (let round = 0; round < 10; round++) {
+    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 500 });
+    const asked = await page.evaluate(async () => { window.witch.view.lastBuild.version = -1; for (let k = 0; k < 8; k++) { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); await new Promise(r => setTimeout(r, 30)); } return window.witch.view.assets.pending; });
+    if (!asked) break;
+  }
   // (the game's canvas's own pixels, as drawn: none of the page's HTML over it, the debug overlay's timings among them)
   const shoot = async () => Buffer.from((await page.evaluate(() => document.getElementById("game").toDataURL("image/png"))).split(",")[1], "base64");
   let prev = null, same = 0, settled = false, tries = 0;

@@ -64,8 +64,10 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(page.night).toBe(a);
     let undone = 0;
     a.cleanups.push(() => undone++);
+    a.tuning.partyObjects.generated = true; // (as the boot's styleFromLink sets it, main.ts)
     const b = await startNight(page, { ...spec(6), how: "debug" });
     expect(given).toEqual([b.game]); // (the view takes the new night's game)
+    expect(b.tuning.partyObjects.generated).toBe(true); // (the page's switch, carried)
     expect(undone).toBe(1); // (the last night's listeners undone)
     expect(page.night).toBe(b);
   });

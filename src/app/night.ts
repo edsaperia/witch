@@ -140,6 +140,9 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   page.shake?.retarget(game, tuning);
   page.perfHud?.retarget(game);
   if (old) page.sound?.setNight(tuning, seed, musicStyle);
+  // The page's own switch the boot puts on its night's tuning once the night is made (main.ts styleFromLink: the prop generator's
+  // party pieces, which the rules' party places and the view's dressings read), on each later night's at the same point.
+  if (old) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
   if (old) page.view?.setGame(game); // (the view's island and records, tonight's: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
   return night;
