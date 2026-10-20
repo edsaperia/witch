@@ -29,6 +29,17 @@ const RIG_PAGES = 48;
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
 
+/** The sets drawn from one island (its map's trees under its seed, its treehouse, its soundsystems): let go when another island
+ *  takes the page (reseat). The rest are by species or the page's own, right on any island. */
+const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
+/** A job, or a waiting job's key ("kind:id..."), of the island's own. */
+export const islandBound = (j: ArtJob | string): boolean => ISLAND_KINDS.has(typeof j === "string" ? j.slice(0, j.indexOf(":")) : j.kind);
+/** A job as asked: the art's generation it was asked in (reseat). */
+type Stamped = ArtJob & { gen?: number };
+
+/** The treehouse's stand-in till its art arrives. */
+const noTreehouse = () => ({ atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 }, candle0: 0, candleRed: 0, candleLevels: 0, candleFlicker: 1, candleRow: [] });
+
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
   /** The night's own area-type sets (the night's seed), found kept (app/landingBake.ts drew them ahead), waiting to be swapped in
@@ -80,7 +91,7 @@ export class AssetLibrary {
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
-    candle0: number; candleRed: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] } = { atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 }, candle0: 0, candleRed: 0, candleLevels: 0, candleFlicker: 1, candleRow: [] };
+    candle0: number; candleRed: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] } = noTreehouse();
   /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
   readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
   get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
@@ -106,7 +117,16 @@ export class AssetLibrary {
   /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
   stoneScale = 2.25;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
+  /** The night's seed (its own trees, tonight); a new night's by reseat. */
+  seed: number;
+  /** Which treehouse is drawn (the old one, "home", or the Ent holding the deck: "ent:<height>:<radius>..."). */
+  private treehouseId: string;
+  /** The island the sets are for, by number: bumped by reseat, so an island's set asked before lands to nothing (receive). */
+  gen = 0;
+
+  constructor(readonly style: Style, seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
+    this.seed = seed;
+    this.treehouseId = treehouse;
     this.K = 2 / pixelSize;
     this.typeSeed = seed;
     this.styleHash = hashText(JSON.stringify(style));
@@ -161,6 +181,7 @@ export class AssetLibrary {
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
+    (job as Stamped).gen = this.gen;
     if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job);
     this.dispatch();
   }
@@ -186,6 +207,8 @@ export class AssetLibrary {
     }
   }
   private receive(r: Reply): void {
+    // (an island's set asked before the page took another (reseat): not this island's; its key may be asked again since, so it's left be)
+    if (islandBound(r.job) && (r.job as Stamped).gen !== this.gen) return;
     if (r.miss) { this.inFlight.delete(this.key(r.job)); return; } // (asked only if kept: not kept)
     if (!r.result) { // a worker could not draw it: draw it here instead
       console.warn("art worker failed, drawing on the page:", r.error);
@@ -469,6 +492,36 @@ export class AssetLibrary {
   }
 
   get pending(): number { return this.inFlight.size; }
+
+  /** Another island takes the page (View.setGame; docs/plans/sail-without-reload.md B 3-5, decision 6: only this island's art in
+   *  memory): a new generation, so the last island's sets waiting are dropped and those being drawn land to nothing; its sets let
+   *  go (its trees, tonight's, its soundsystems; its treehouse if this one's is another), each atlas freed here, once (the view
+   *  lets go of its batches on them first, never their atlases); and the new island's seeds and treehouse. Its sets are asked for
+   *  afresh as they're wanted (from the browser's store, if drawn before). */
+  reseat(o: { seed: number; typeSeed: number; treehouse: string }): void {
+    this.gen++;
+    this.queue = this.queue.filter(j => !islandBound(j));
+    for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); }
+    const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
+    for (const a of this.types.values()) free(a.atlas);
+    for (const a of this.tonightTypes.values()) free(a.atlas);
+    for (const a of this.soundsystemsGen.values()) free(a.atlas);
+    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear();
+    this.tonightShut = false;
+    this.seed = o.seed; this.typeSeed = o.typeSeed;
+    if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)
+      this.treehouseId = o.treehouse;
+      if (this.home.treehouse) free(this.treehouse.atlas);
+      this.treehouse = noTreehouse();
+      this.home.treehouse = false;
+      this.ask({ kind: "treehouse", id: o.treehouse, style: this.style }, true);
+    }
+    this.version++;
+  }
+  /** The sets held now, by kind (for the checks: tools/sail/swap.cjs, the tests). */
+  sets(): Record<string, number> {
+    return { types: this.types.size, tonight: this.tonightTypes.size, soundsystems: this.soundsystemsGen.size, creatures: this.creatures.size, rigs: this.rigs.size, queued: this.queue.length, pending: this.inFlight.size };
+  }
 
   /** Without workers: draw waiting sets on the page until `budgetMs` has passed (at least one). */
   work(budgetMs: number): void {

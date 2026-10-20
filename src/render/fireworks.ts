@@ -126,6 +126,18 @@ export class Fireworks {
 
   private rand(): number { this.seed = (this.seed * 16807) % 2147483647; return this.seed / 2147483647; }
 
+  /** Another night (View.setGame): every streak long out and the shows forgotten, its sparks seeded as at the start. */
+  reset(): void {
+    for (const a of this.arr) a.fill(0);
+    for (let i = 0; i < POOL; i++) { this.arr[0][i * 4 + 3] = -1e4; this.arr[1][i * 4 + 3] = 1; }
+    for (const a of this.attrs) { a.clearUpdateRanges(); a.needsUpdate = true; }
+    this.dirty = [new Dirty(), new Dirty(), new Dirty()];
+    this.next = 0; this.liveTill = -Infinity; this.seed = 11; this.nextBurst = 0;
+    for (const b of this.bursts) { b.t = -1e9; b.x = 0; b.z = 0; b.rgb.set(0, 0, 0); }
+    this.celebrated.clear(); this.burstFor.clear(); this.lightsOut.length = 0;
+    this.mesh.visible = false;
+  }
+
   /** One streak (TRAIL pixels) into the pool: from (x, y, z) at t0, velocity, life, colour, motion. */
   private put(x: number, y: number, z: number, t0: number, vx: number, vy: number, vz: number, life: number, r: number, g: number, b: number, mode: number): void {
     const [F, V, L] = this.arr, i0 = this.next;

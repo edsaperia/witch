@@ -75,6 +75,13 @@ export class BorderView {
     scene.add(this.mesh);
   }
 
+  /** Another night's game (View.setGame): the last one's borders, and those being worked out, forgotten; the line empty. */
+  setGame(game: Game): void {
+    this.game = game; this.areas.clear(); this.jobs = []; this.stamp = "";
+    for (const k of ["position", "aColour", "aColour2", "aSpark"]) this.geo.deleteAttribute(k);
+    this.geo.dispose(); // (its buffers on the GPU let go: made again as the new night's line is)
+  }
+
   update(): void {
     const g = this.game, B = g.tuning.borders;
     // Drawn with the tuning's borders.on (the pause page's "Area edges"), or while an Edge-seer hat is in play (rules/hatSpells.ts).

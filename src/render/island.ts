@@ -1,6 +1,6 @@
 // The island's own layers (docs/plans/sail-without-reload.md, A2 and PR 4a): everything the View builds from one island's map,
-// gathered under one root group so the island can be let go of whole (dispose) and, later, another built in its place. Today
-// the View builds its one island through it, once, as it's made.
+// gathered under one root group so the island can be let go of whole (dispose) and another built in its place: the View builds
+// its first island through it as it's made, and each night after's off the scene, swapped in before the last is let go (setGame).
 //
 // Built in stages, each called by the View where it made that layer before: three.js breaks ties in its draw order by
 // material and object id, which is creation order, so each layer is made at its old place among the View's own. Under one
@@ -52,9 +52,17 @@ export class IslandLayers {
   ley!: LeyLines;
   dancefloor!: Dancefloor;
 
-  constructor(readonly scene: THREE.Scene, private src: IslandSource) {
+  /** `attach` false: built off the scene, to be swapped in (attach) once whole (View.setGame: the next island built before the
+   *  last is let go, so the shader programs both use are never freed and made again). */
+  constructor(readonly scene: THREE.Scene, private src: IslandSource, attach = true) {
     this.root.name = "island";
-    scene.add(this.root);
+    if (attach) scene.add(this.root);
+  }
+
+  /** Into the scene (an island built off it): the field in use its hills'. */
+  attach(): void {
+    useHeightField(this.heights);
+    this.scene.add(this.root);
   }
 
   /** The rolling ground, made the field in use and centred on her, and the ground under it. */

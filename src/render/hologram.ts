@@ -192,6 +192,9 @@ export class SigilHolograms {
     this.group.add(this.cones, this.glyphs);
   }
 
+  /** Another night (View.setGame): the last one's projectors forgotten (their sigils' atlas, by species, stays). */
+  reset(): void { this.seen.clear(); for (const geo of this.geos) geo.instanceCount = 0; }
+
   /** A frame: the standing soundsystems' projectors, the game time, and where she is (they fade out far from her). */
   update(projectors: readonly Projector[], time: number, wx: number, wz: number): void {
     const T = this.T;

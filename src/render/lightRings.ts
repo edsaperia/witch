@@ -95,6 +95,9 @@ export class LightRings {
   readonly mesh: THREE.Mesh;
   private mat: THREE.ShaderMaterial;
 
+  /** Another island's seed (View.setGame). */
+  reseed(seed: number): void { (this.mat.uniforms.uRings2.value as THREE.Vector4).w = (seed % 997) * 0.731; }
+
   constructor(private T: LightRingsTuning, depth: THREE.Texture | null, seed: number) {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,

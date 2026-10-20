@@ -609,3 +609,17 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop });
+// ?debug=sail (docs/plans/sail-without-reload.md, PR 4b): another night in place, made as a sail will make one (app/night.ts
+// startNight, the view taking it: View.setGame), its start's art made and play started as the start screen's would; for
+// tools/sail/swap.cjs. The sail itself still loads the page anew (PR 5).
+if (params.get("debug") === "sail") (window as unknown as { witch: Record<string, unknown> }).witch.debugSwap = async (seed: number, island?: string): Promise<number> => {
+  const p = new URLSearchParams(params), was = N().spec;
+  p.set("seed", String(seed));
+  if (island !== undefined) p.set("island", island);
+  const n = await startNight(page, { how: "debug", island: island ?? was.island, seed, world: was.world, params: p });
+  seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
+  await view.prepare();
+  n.flags.ready = true;
+  start();
+  return n.seed;
+};

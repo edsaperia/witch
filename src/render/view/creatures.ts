@@ -63,6 +63,10 @@ const RING_OF = new Map<number, ReturnType<typeof legendRings>[number]>();
 const SHADOWS: ShadowInstance[] = [], SHADOW_POOL: ShadowInstance[] = [], INST_POOL: SpriteInstance[] = [], BERRY_ITEMS: SpriteInstance[] = [], BERRY_POOL: SpriteInstance[] = [];
 const emptyList = (l: SpriteInstance[]): void => { l.length = 0; };
 let LAST_VIEW: View | null = null; // (the maps are the view's: another view starts them afresh; within one they're only ever written over, never cleared, as clearing a Map makes a new table each frame)
+/** Another night in the same view (View.setGame): its batches' lists, art, legends' keys and circles, kept by creature, all forgotten. */
+export function resetCreatureCaches(): void { PER.clear(); ARTS.clear(); LEGEND_KEYS.clear(); RING_OF.clear(); LAST_VIEW = null; }
+/** How many records the caches hold (the test's). */
+export const creatureCacheSizes = (): number[] => [PER.size, ARTS.size, LEGEND_KEYS.size, RING_OF.size];
 /** A sprite instance from a pool, every field written (so one from a past frame carries nothing over). */
 function inst(pool: SpriteInstance[], i: number, x: number, y: number, z: number, frame: SpriteInstance["frame"], flip: boolean, fresh: boolean | undefined, glow: number | undefined, scale: number | undefined, sx: number | undefined, sy: number | undefined): SpriteInstance {
   let o = pool[i];

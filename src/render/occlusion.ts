@@ -113,6 +113,12 @@ export class OcclusionProbes {
     p.mesh.visible = true;
   }
 
+  /** Another night (View.setGame): every probe let go of its key (those waiting on a query are taken again once it's answered). */
+  reset(): void {
+    for (const p of this.pool) { p.key = ""; p.mesh.visible = false; p.shown = 1; p.answer = 1; p.veil = 0; p.heard = false; }
+    this.byKey.clear(); this.lastTime = -1;
+  }
+
   /** Whether every probe in use has had an answer back (for the checks: tools/occlusion). */
   get settled(): boolean { return this.pool.every(p => !p.key || p.heard); }
 

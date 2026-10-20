@@ -45,6 +45,8 @@ function pickWeighted(w: number[], seed: number): number {
 
 /** A rebuild under way, for each view: the rest of it, a part each frame. */
 const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: number }>();
+/** Another night in the view (View.setGame): a rebuild under way dropped (it lists the last night's island). */
+export function cancelRefresh(v: View): void { jobs.delete(v); }
 
 /** Rebuild the batches for what the camera sees, once it has moved, turned or zoomed: a slice of
  *  at most SLICE_MS a frame (the trees, then the undergrowth, walls, set pieces and the rest, then

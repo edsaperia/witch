@@ -53,13 +53,23 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(b.hud.debugOn).toBe(true);
   });
 
-  it("re-points the page's pieces at the new night, and won't take a second night while the View can't", async () => {
+  it("re-points the page's pieces at the new night, and takes a second night with a View only as ?debug=sail's swap", async () => {
     const told: unknown[] = [];
     const page: Page = { night: null, build: "test", look: () => null, freeze: { retarget: (_g: unknown, s: number) => told.push(["freeze", s]) } as never, shake: { retarget: () => told.push("shake") } as never };
-    await startNight(page, spec(5));
+    const a = await startNight(page, spec(5));
     expect(told).toEqual([["freeze", 5], "shake"]);
-    page.view = {} as never;
-    await expect(startNight(page, spec(6))).rejects.toThrow(/View.setGame/);
+    const given: unknown[] = [];
+    page.view = { setGame: (g: unknown) => given.push(g) } as never;
+    await expect(startNight(page, spec(6))).rejects.toThrow(/debug=sail/);
+    expect(page.night).toBe(a);
+    let undone = 0;
+    a.cleanups.push(() => undone++);
+    a.tuning.partyObjects.generated = true; // (as the boot's styleFromLink sets it, main.ts)
+    const b = await startNight(page, { ...spec(6), how: "debug" });
+    expect(given).toEqual([b.game]); // (the view takes the new night's game)
+    expect(b.tuning.partyObjects.generated).toBe(true); // (the page's switch, carried)
+    expect(undone).toBe(1); // (the last night's listeners undone)
+    expect(page.night).toBe(b);
   });
 
   it("endNight undoes the night's listeners and lets it go", async () => {

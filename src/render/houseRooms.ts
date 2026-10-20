@@ -125,6 +125,14 @@ export class HouseRoomsView {
     document.body.append(this.box);
   }
 
+  /** Another night at a house with rooms (View.setGame): its plan made afresh, nothing said. */
+  reset(): void {
+    this.hub = -1; this.quads = []; this.hatsKey = ""; this.said = null; this.box.style.display = "none";
+    for (const p of this.parts) p.mesh.visible = false;
+  }
+  /** Off the page (an island whose treehouse has no rooms): its meshes' geometry and material let go, its labels taken off. */
+  dispose(): void { for (const p of this.parts) p.geo.dispose(); this.mat.dispose(); this.box.remove(); }
+
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);

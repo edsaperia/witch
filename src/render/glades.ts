@@ -118,6 +118,9 @@ export class Glades {
     this.glowBase = LIGHT_UNIFORMS.uGlowPower.value;
   }
 
+  /** Another night (View.setGame): its clearings found afresh, their edges and her inside one eased from the start again. */
+  reset(): void { this.list = []; this.near = []; this.edges.clear(); this.inside = 0; this.twilight = 1; }
+
   /** The nearest clearings to (wx, wz) into the light's uniforms. Its edge brightens, eased, with the witch inside it, with
    *  the map's own `edge` for it, or with `extraEdge` (art builder 1's hook: a quest sigil or relic put down in it, 0 to 1
    *  by gladeKey). No allocation: the list's objects are reused and the nearest kept by insertion. */

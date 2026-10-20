@@ -141,6 +141,8 @@ export class WitchTrail {
 
   /** Forgets her path (a blink, a teleport home): the trail starts again from where she is. */
   reset(): void { this.count = 0; this.head = -1; this.len = 0; }
+  /** Another night (View.setGame): no path, and its colour taken afresh. */
+  newNight(): void { this.reset(); this.rgb.set(-1, 0, 0); this.lastBlink = -Infinity; this.n = 0; this.geo.setDrawRange(0, 0); }
 
   /** A point added to her path. */
   private point(x: number, y: number, z: number): void {

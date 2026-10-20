@@ -140,7 +140,7 @@ export class LeashView {
   /** When she last hit a party legend's edge (its boing played). */
   boingAt = -Infinity;
 
-  constructor(scene: THREE.Scene, readonly game: Game) {
+  constructor(scene: THREE.Scene, public game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!;
     const dot = g.createRadialGradient(SLOT / 2, SLOT / 2, 0, SLOT / 2, SLOT / 2, SLOT / 2);
@@ -178,6 +178,20 @@ export class LeashView {
     scene.add(this.standing.mesh, this.flat.mesh, this.through.mesh, this.over.mesh, this.solid.mesh, this.blood.mesh, this.backing.mesh, this.ink.mesh, this.stackBack.mesh, this.stackGlyphs.mesh);
     const hex = game.tuning.berries.colour.replace("#", "");
     this.berryRgb = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
+  }
+
+  /** Another night's game (View.setGame): what it kept of the last one's creatures, effects and marks forgotten, as at the start.
+   *  (The sigils' atlas, its slots and colours, by species, and the pooled bubbles stay: the page's.) */
+  setGame(game: Game): void {
+    this.game = game;
+    this.seatAt = null; this.bloodPool = null;
+    for (const m of [this.ruts, this.evolved, this.cycledAt, this.joined, this.stackY, this.lastSlots, this.travelling, this.routes, this.tops, this.halfW, this.heads, this.dreamStones]) m.clear();
+    this.bursts = []; this.chain = []; this.fx = []; this.ringGlows = []; this.dreams = []; this.snoreNear = []; this.projected = [];
+    this.lastTime = 0; this.tugAt = -9; this.load = newLoadView(); this.bristle = { x: 0, y: 0, z: 0, on: false };
+    this.shakeAt = -Infinity; this.shakeAmp = 0; this.boingAt = -Infinity; this.partyOverEase = 0; this.lettersSeen = -Infinity;
+    this.bodyY = 0.8; this.hatTop = 1.6; this.feetY = 0; this.frameH = 0;
+    this.deckBonus = 0; this.circleFade = 0; this.circleAt = 0; this.circleLast = null;
+    this.zooPlates?.dispose(); this.zooPlates = undefined;
   }
 
   /** A sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's): Bravo's o3, which Ed took (2026-10-12: "a

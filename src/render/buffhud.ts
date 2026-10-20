@@ -45,6 +45,12 @@ export class BuffHud {
     el.animate([{ filter: "brightness(3)", transform: "scale(1.5)" }, { filter: "brightness(1)", transform: "scale(1)" }], { duration: 900, easing: "ease-out" });
   }
 
+  /** Another night (View.setGame): its row empty and its line out at once (the last night's buffs aren't lost, they're gone). */
+  reset(): void {
+    for (const ic of this.icons.values()) ic.el.remove();
+    this.icons.clear(); this.lineUntil = 0; this.line.style.opacity = "0"; this.line.textContent = "";
+  }
+
   /** Match the row to the buffs on now (it compares itself, so a paused step can't repeat a flash). */
   update(g: Game, time: number): void {
     const on = new Map(g.buffs.active.map(a => [a.id, a]));

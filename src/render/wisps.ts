@@ -88,6 +88,9 @@ export class Wisps {
     this.points.frustumCulled = false; this.points.renderOrder = 12;
   }
 
+  /** Another night (View.setGame): its wisps found afresh. */
+  reset(): void { this.nextAt = -1; this.partySites = []; this.partyCount = -1; this.u.uWispCount.value = 0; this.points.visible = false; }
+
   /** The wisps round (wx, wz), refreshed four times a second (on her clock, ht): every square of ground within reach that
    *  isn't the party's own, by its seeded chance, the nearest first. */
   update(g: Game, wx: number, wz: number, ht: number): void {
