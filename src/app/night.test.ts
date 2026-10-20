@@ -61,7 +61,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     const a = await startNight(page, spec(5));
     expect(told).toEqual([["freeze", 5], "shake"]);
     const given: unknown[] = [];
-    page.view = { setGame: (g: unknown) => given.push(g) } as never;
+    page.view = { setGameSliced: async (g: unknown) => { given.push(g); } } as never; // (startNight builds the new island a frame's budget at a time: View.setGameSliced)
     await expect(startNight(page, spec(6))).rejects.toThrow(/first only/);
     expect(page.night).toBe(a);
     let undone = 0;

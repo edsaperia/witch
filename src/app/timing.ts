@@ -1,9 +1,12 @@
 // The transition's timings in the playtest log (Ed, 2026-10-19, the transition review: "?timing=1, so one run on Ed's laptop
 // gives real numbers"): each step of treehouse → sea chart → sail → new island → her decks is a performance mark (witch:*, and
-// these: chart:open, chart:mounted, chart:island1, chart:islands, chart:sail, chart:flown, chart:go, game:frame1, game:arrived);
+// these: chart:open, chart:mounted, chart:island1, chart:islands, chart:sail, chart:flown, chart:go, game:frame1, game:arrived;
+// and each stage of the View's island build, witch:build-<stage>: render/slices.ts);
 // with ?timing=1 (kept for the tab, so it follows the sail's new page), the marks and the main thread's long tasks are carried
 // across the page's reload and written into the new page's run of the L log (`timing`), in wall-clock milliseconds from the
 // first mark, with each step's own time.
+import { sliceLog } from "../render/slices";
+
 const KEY = "witch.timing", ON = "witch.timing.on";
 
 const store = (): Storage | null => { try { return sessionStorage; } catch { return null; } };
@@ -20,7 +23,7 @@ export function timingOn(params: URLSearchParams): boolean {
 export function mark(name: string): void { try { performance.mark(name); } catch { /* no performance timeline */ } }
 
 export interface TimingLine { name: string; at: number; page: number; ms?: number }
-export interface Timing { steps: TimingLine[]; longTasks: { at: number; ms: number }[] }
+export interface Timing { steps: TimingLine[]; longTasks: { at: number; ms: number }[]; /** The sliced builds on this page (render/slices.ts): each one's slices, its longest step and the stage it was in (witch:build-<stage>). */ builds?: { what: string; ms: number; slices: number; longest: number; longestAt: string }[] }
 
 const longTasks: { at: number; ms: number }[] = [];
 let observing = false;
@@ -52,7 +55,7 @@ export function transitionTiming(): Timing {
   const now = thisPage(1), steps = [...before.steps, ...now.steps].sort((a, b) => a.at - b.at), t0 = steps[0]?.at ?? 0;
   const out = steps.map((s, i) => ({ ...s, at: s.at - t0, ms: i ? s.at - steps[i - 1].at : 0 }));
   const longs = [...before.longTasks, ...now.longTasks].map(l => ({ at: l.at - t0, ms: l.ms })).filter(l => l.at >= 0);
-  return { steps: out, longTasks: longs };
+  return { steps: out, longTasks: longs, builds: sliceLog.map(b => ({ what: b.what, ms: Math.round(b.ms), slices: b.slices, longest: Math.round(b.longest), longestAt: b.longestAt })) };
 }
 
 /** Done with what's carried (written into the log). */

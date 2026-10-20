@@ -20,6 +20,7 @@ import type { OutputMeter } from "../platform/audio/outputMeter";
 import type { Hud } from "./hud";
 import type { Sound } from "./sound";
 import type { ScreenShake } from "./shake";
+import { sliceLog } from "../render/slices";
 
 /** What the hooks read of the night: the one on now (app/night.ts page.night), read at every use, so a new night is the one driven. */
 export interface HookNight { game: Game; tuning: Tuning; hud: Hud }
@@ -36,7 +37,8 @@ export interface HookDeps {
 export function installHooks({ night, view, sound, meter, shake, frameStats, loadTimes, loop }: HookDeps): void {
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
-  (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, sound, arena: (spec: string) => setupArena(night().game, spec), // (a debug hook: another arena without reloading)
+  (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)
+    arena: (spec: string) => setupArena(night().game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
     guest: (id: number) => { const { game } = night(), c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */

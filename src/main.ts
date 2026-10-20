@@ -13,6 +13,7 @@ import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
+import { prewarmArtWorkers } from "./render/assets";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
@@ -57,6 +58,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
+prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
 const TIMING = timingOn(params);
@@ -100,7 +102,7 @@ const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : 0 }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1)
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
-const view = page.view = new View(canvas, N().game, gameStyle(style, bootTuning), savedLook);
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 loadTimes.view = performance.now();
 performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
