@@ -4,7 +4,9 @@
 import { describe, expect, it } from "vitest";
 import { setupArena } from "./arena";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, type Tuning } from "./tuning";
+// Pack combat is on by default (Ed, 2026-10-20); these check the kinds' own moves, as they fight with it off (combat.packs.on false), packs.test.ts the packs.
+const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } });
 import { targetable } from "./combat";
 import { invitableNow } from "./creatureStates";
 import { MOVEMENT, stepSwoop, swoopHeight, swoopStriking } from "./movement";
@@ -13,7 +15,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 
 /** Her against one wild flyer (or a few) in the arena, nothing of hers there. */
 function arena(spec: string): { g: Game; ids: number[] } {
-  const g = newGame(5, TUNING);
+  const g = newGame(5, packsOff(TUNING));
   g.clock.paused = false; g.party.paused = true;
   setupArena(g, `hare*1@1,${spec}`);
   const [hare, ...ids] = g.arena!.ids;
@@ -120,7 +122,7 @@ describe("wild flyers swoop (owl, bat, raven)", () => {
   }, 60000);
 
   it("hers don't swoop: a leashed owl fights on the ground as before", () => {
-    const g = newGame(5, TUNING);
+    const g = newGame(5, packsOff(TUNING));
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "owl*1@2,wolf*2@2");
     const owl = g.creatures[g.arena!.ids[0]];

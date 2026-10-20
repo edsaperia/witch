@@ -63,9 +63,10 @@ describe("pack combat's roles by position (Ed: 2b)", () => {
 });
 
 describe("pack combat in play (the switch on)", () => {
-  it("off by default: no pack forms and fights go as before", () => {
-    expect(TUNING.combat.packs?.on).toBe(false);
-    const g = arena("pack-fox", 8, undefined, TUNING);
+  it("on by default (Ed, 2026-10-20); switched off, no pack forms and fights go as before", () => {
+    expect(TUNING.combat.packs?.on).toBe(true);
+    expect(arena("pack-fox", 8, undefined, TUNING).combat.packs?.size ?? 0).toBeGreaterThan(0);
+    const g = arena("pack-fox", 8, undefined, withTuning({ combat: { ...TUNING.combat, packs: { on: false } } }));
     expect(g.combat.packs?.size ?? 0).toBe(0);
   }, 60000);
 
