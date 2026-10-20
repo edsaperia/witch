@@ -33,6 +33,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await shot("01-chart.png");
     const corner = await page.$$eval("#chart-overlay .corner button", bs => bs.map(b => b.textContent));
     log("corner:", corner.join(" · "));
+    if (corner.some(t => /Zoo/.test(t)) || corner.length !== 2) fail(`the chart's corner should hold only What's new and Options: ${corner.join(", ")}`); // (Ed, 2026-10-20: the zoo's through the bestiary)
     for (const [label, name] of [["What's new", "02-whats-new.png"], ["Options", "03-options.png"]]) {
       await page.click(`#chart-overlay .corner button:has-text("${label}")`);
       await page.waitForSelector("#chart-overlay .corner-panel");

@@ -534,7 +534,8 @@ document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => newNight("fresh"));
 /** The first load's sea chart (app/opening.ts): over the boot's night, its art drawn on under it (ui/chartOverlay.ts chartWarmsNight),
- *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts) and the zoo; no Close.
+ *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts); no Close. (No Zoo: Ed,
+ *  2026-10-20, "the zoo is now accessed via the bestiary": the book in the treehouse's bestiary.)
  *  Choosing an island starts its night in place as a sail does, the boot's own never played, so nothing's recorded on the chart. */
 function openingChart(): void {
   mark("opening:chart");
@@ -543,7 +544,6 @@ function openingChart(): void {
   openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, noBake: dives, corner: [
     ...(news ? [{ label: "📜 What's new", onClick: () => toggleCornerPanel(host(), "news", "WHAT'S NEW", [news]) }] : []),
     ...(shakeEl ? [{ label: "⚙ Options", onClick: () => toggleCornerPanel(host(), "options", "OPTIONS", [shakeEl]) }] : []),
-    { label: "🐾 Zoo", title: "Every creature, out of a run", onClick: () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); } },
   ] });
 }
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
