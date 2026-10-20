@@ -84,6 +84,9 @@ let lookNow = JSON.stringify(savedLook);
 const page: Page = { night: null, build: BUILD, look: () => (lookNow ? JSON.parse(lookNow) : savedLook) };
 /** The night on now (while the next is made after a sail in place, the one just ended: app/night.ts endNight). */
 const N = (): Night => (page.night ?? page.last)!;
+/** The next night being made in place (a sail, another way to a new night, or ?debug=sail's swap): the frame loop holds still. (Up
+ *  here: the bedroom's progress reads it from the boot on.) */
+let sailing = false;
 // The boot's night: the link's tuning, the game, the link's switches, her hat, the playtest run, the knobs' start, the HUD.
 await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params });
 const { tuning: bootTuning } = N();
@@ -515,8 +518,6 @@ function sailFromChart(href: string, to: Sailed): Promise<boolean> {
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
 }
-/** The next night being made in place (a sail, another way to a new night, or ?debug=sail's swap): the frame loop holds still. */
-let sailing = false;
 /** Back after a sail in place opens the pause menu (Ed's decision 1; app/sail.ts): armed by the first sail (a first load leaves
  *  Back alone); while the next island is made it only keeps the guard. */
 const backGuard = new BackGuard(history, () => { if (!sailing && !freeze.frozen) freeze.toggle(); });
