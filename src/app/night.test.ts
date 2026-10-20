@@ -1,0 +1,92 @@
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { endNight, startNight, type Page } from "./night";
+import { installHooks, type HookDeps } from "./hooks";
+import type { Hud } from "./hud";
+
+/** A stand-in element: any property a function that hands back another, classList and style taking anything. */
+function fakeEl(): unknown {
+  const o: Record<string | symbol, unknown> = { classList: { add() {}, remove() {}, toggle() {} }, style: {}, textContent: "", remove() {} };
+  return new Proxy(o, { get: (t, k) => (k in t ? t[k] : k === "then" ? undefined : () => fakeEl()) });
+}
+
+const G = globalThis as unknown as Record<string, unknown>;
+const had = { document: "document" in G, window: "window" in G };
+beforeAll(() => {
+  if (!had.document) G.document = { getElementById: () => fakeEl(), body: fakeEl(), querySelectorAll: () => [] };
+  if (!had.window) G.window = {};
+});
+afterAll(() => {
+  if (!had.document) delete G.document;
+  if (!had.window) delete G.window;
+});
+
+const spec = (seed: number) => ({ how: "boot" as const, island: "home", seed, params: new URLSearchParams({ island: "home", seed: String(seed), creator: "0" }) });
+
+describe("startNight (docs/plans/sail-without-reload.md B)", () => {
+  it("makes a night from its spec: its seed, island and tuning, fresh flags, held in page.night", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const n = await startNight(page, spec(4321));
+    expect(page.night).toBe(n);
+    expect(n.seed).toBe(4321);
+    expect(n.game.seed).toBe(4321);
+    expect(n.game.tuning).toBe(n.tuning);
+    expect(n.tuning.map?.island).toBe("home");
+    expect(n.flags).toEqual({ ready: false, landed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
+    expect(n.arrival).toBeNull();
+  });
+
+  it("a second night gets fresh flags, its own game, tuning and playtest run, the log's hooks and the overlay carried", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const a = await startNight(page, spec(11));
+    a.flags.ready = a.flags.chartRecorded = a.flags.overShown = true;
+    a.hud.debugOn = true;
+    const hook = () => [];
+    a.playtest.stalls = hook;
+    const b = await startNight(page, { ...spec(22), how: "sail" });
+    expect(page.night).toBe(b);
+    expect(b.flags.ready || b.flags.chartRecorded || b.flags.overShown).toBe(false);
+    expect(b.game).not.toBe(a.game);
+    expect(b.tuning).not.toBe(a.tuning);
+    expect(b.playtest).not.toBe(a.playtest);
+    expect(b.game.seed).toBe(22);
+    expect(b.playtest.stalls).toBe(hook);
+    expect(b.hud.debugOn).toBe(true);
+  });
+
+  it("re-points the page's pieces at the new night, and won't take a second night while the View can't", async () => {
+    const told: unknown[] = [];
+    const page: Page = { night: null, build: "test", look: () => null, freeze: { retarget: (_g: unknown, s: number) => told.push(["freeze", s]) } as never, shake: { retarget: () => told.push("shake") } as never };
+    await startNight(page, spec(5));
+    expect(told).toEqual([["freeze", 5], "shake"]);
+    page.view = {} as never;
+    await expect(startNight(page, spec(6))).rejects.toThrow(/View.setGame/);
+  });
+
+  it("endNight undoes the night's listeners and lets it go", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const n = await startNight(page, spec(7));
+    let undone = 0;
+    n.cleanups.push(() => undone++);
+    endNight(page);
+    expect(undone).toBe(1);
+    expect(page.night).toBeNull();
+  });
+});
+
+describe("window.witch (app/hooks.ts)", () => {
+  it("reads the night on now: its game and tuning, and drives that one", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const a = await startNight(page, spec(31));
+    const night = () => ({ game: page.night!.game, tuning: page.night!.tuning, hud: page.night!.hud as Hud });
+    installHooks({ night, view: {} as never, sound: {} as never, meter: {} as never, shake: {} as never, frameStats: {} as never, loadTimes: {}, loop: { manual: false, bot: null, botTag: null, ready: true } } as HookDeps);
+    const W = (G.window as { witch: { game: unknown; tuning: unknown; hit: () => boolean } }).witch;
+    expect(W.game).toBe(a.game);
+    const b = await startNight(page, spec(32));
+    expect(W.game).toBe(b.game);
+    expect(W.tuning).toBe(b.tuning);
+    const hp = b.game.witches[0].health.hp, hpA = a.game.witches[0].health.hp;
+    W.hit();
+    expect(b.game.witches[0].health.hp).toBeLessThan(hp);
+    expect(a.game.witches[0].health.hp).toBe(hpA);
+  });
+});
