@@ -69,8 +69,8 @@ export const worldOf = (world = 0) => archipelago(world, KIND_NAMES.map(k => { c
  *  a kind designed before its area would wait for it). */
 export const AREA_KINDS: ReadonlySet<string> = new Set((AREAS as unknown as { creature: string }[]).map(a => a.creature));
 
-/** The kinds she knows (Ed, 2026-10-10, journey.md "Home's size"): home's 10, then each kind whose island she's found (its legend
- *  woken: app/chartSave.ts found), in the order found; designed kinds with an area type only, none twice. */
+/** The kinds she knows (Ed, 2026-10-10, journey.md "Home's size"): home's 10, then each kind whose island she's found (its legend's
+ *  quest done in a night she then won: app/chartSave.ts found), in the order found; designed kinds with an area type only, none twice. */
 export function knownKinds(found: readonly string[] = []): string[] {
   const known = homeKinds();
   for (const k of found) if (KINDS[k] && !isPlaceholder(k) && AREA_KINDS.has(k) && !known.includes(k)) known.push(k);

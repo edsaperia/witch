@@ -239,7 +239,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     waiting.clear(); ranked();
     outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
-    $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
+    $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "do a legend's quest and win the night to find its island"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
     $("world").textContent = `World seed: ${w}${opts.world != null && opts.world !== save.world ? " (from the link)" : ""}`;
     ($("home") as HTMLAnchorElement).href = sailHref("home");
   }
@@ -257,7 +257,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
-    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
+    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it";
     sail.hidden = !sailing || !isl.sail;
     sail.href = sailHref(id!);
   }
