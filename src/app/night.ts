@@ -1,9 +1,9 @@
 // The page and the night (docs/plans/sail-without-reload.md, section B): the two lifetimes, made explicit. The page is made once
 // (the view, the sound, the input, the creator, the freeze, the screen shake...); a night is made per island (its link, tuning,
 // game, playtest run, HUD, arrival and flags). main.ts holds the night in one place, `page.night`, and everything that needs the
-// game reads it there, so a second night would be picked up everywhere. This is the only place a night begins or ends; today
-// only the boot starts one (sailing still loads the page anew: the plan's PR 5 calls startNight again in place), and ?debug=sail's
-// window.witch.debugSwap (main.ts) a second in place, through View.setGame (render/view.ts), for tools/sail/swap.cjs.
+// game reads it there, so a second night would be picked up everywhere. This is the only place a night begins or ends: the boot
+// starts one, a sail in place (the plan's PR 5: main.ts sailFromChart, app/sail.ts; ?sail=inplace while the tuning's sail.inPlace
+// is off) another, the view taking it (View.setGame, render/view.ts), and so does ?debug=sail's window.witch.debugSwap.
 import { newGame, type Game } from "../rules/game";
 import type { MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
@@ -12,7 +12,9 @@ import { PlaytestLog } from "../platform/playtestLog";
 import type { Freeze } from "../platform/freeze";
 import type { View } from "../render/view";
 import { tuningFromLink } from "./linkParams";
-import { applySavedSettings } from "./settings";
+import { applySavedSettings, carryKnobs } from "./settings";
+import { linkKnobs } from "./sail";
+import { DECISION_LIST } from "../ui/decisions";
 import { takeMapPrep } from "./mapPrep";
 import { gameFromLink } from "./gameParams";
 import { startKnobs, type World } from "./knobs";
@@ -83,6 +85,9 @@ export interface Night {
  *  filled in after it, and re-pointed by each later night. */
 export interface Page {
   night: Night | null;
+  /** The night just ended (endNight) while the next one is made: what the page's pieces read meanwhile, and what the next
+   *  carries on from (its sliders, the log's hooks, the overlay); let go once the next is on. */
+  last?: Night;
   build: string;
   /** Her look now (the creator's), for whether she has a hat to lose. */
   look: () => unknown;
@@ -108,8 +113,10 @@ const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugT
  *  chart's map prep if it's this night's), the link's switches for the game, her hat, a new playtest run, the knobs' start, the HUD
  *  and the arrival. The page's pieces already made are re-pointed at it; then it's `page.night`. */
 export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
-  // (a second night in the same page only as ?debug=sail's swap, View.setGame taking it, till the sail in place: the plan's PR 5)
-  if (page.night && page.view && spec.how !== "debug") throw new Error("startNight: a second night in the same page is ?debug=sail's only (sail-without-reload PR 5)");
+  // (a second night in the same page only as a sail in place or ?debug=sail's swap, View.setGame taking it; the others, Play again,
+  // a fresh seed, the bed and the bot game's, still load the page anew: the plan's PR 6)
+  const old = page.night ?? page.last ?? null;
+  if (old && page.view && spec.how !== "debug" && spec.how !== "sail") throw new Error("startNight: a second night in the same page is a sail's or ?debug=sail's only (sail-without-reload PR 6)");
   if (page.night) closeNight(page.night);
   const { params, seed } = spec;
   // The link's switches and the tuning for this night (app/linkParams.ts).
@@ -117,8 +124,11 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // The settings this browser remembers (the volumes, the waves' speed: app/settings.ts), on to their knobs before the game and
   // the sound are made; a knob the link's ?set= gives keeps the link's (a repro link), and ?pulse= is over the waves' (app/gameParams.ts).
   applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
-  // Sailed here (&arrive=1): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
-  const mapPrep = params.get("arrive") ? await takeMapPrep(seed, tuning) : null;
+  // A night after another on this page: every pause-page slider as it was set (Ed's decision 5: the game's knobs too), on purpose,
+  // but for those this night's link sets itself.
+  if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
+  // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
+  const mapPrep = params.get("arrive") || spec.how === "sail" ? await takeMapPrep(seed, tuning) : null;
   performance.mark("witch:prep");
   const game = newGame(seed, tuning, 1, mapPrep ?? undefined);
   performance.mark("witch:game");
@@ -128,7 +138,6 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   wearHat(game, page.look());
   // The playtest log (Ed, 2026-10-04): a new run each night, or the nights would merge under the first's seed.
   const playtest = new PlaytestLog(game, page.build);
-  const old = page.night as Night | null;
   if (old) for (const k of LOG_HOOKS) (playtest as unknown as Record<string, unknown>)[k] = old.playtest[k];
   // The debug knobs' start for this night: the link's fight and treetop speed (app/knobs.ts).
   startKnobs({ tuning, game, world, playtest }, WORLD_DEFAULT, params);
@@ -145,6 +154,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   if (old) tuning.partyObjects.generated = old.tuning.partyObjects.generated;
   if (old) page.view?.setGame(game); // (the view's island and records, tonight's: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
+  page.last = undefined;
   return night;
 }
 
@@ -157,12 +167,15 @@ function nightArrival(spec: NightSpec, tuning: Tuning): ArrivalFlight | null {
   return new ArrivalFlight(r, tuning.arrive, stillEl);
 }
 
-/** The night over (nothing calls it yet: a sail still loads the page anew; the sea chart is recorded where the night ends, in
- *  main.ts): its own listeners undone and the page's per-night DOM put back. */
-export function endNight(page: Page): void {
+/** The night over (a sail in place, before the next is made; the sea chart is recorded where the night ends, in main.ts): its own
+ *  listeners undone and the page's per-night DOM put back; kept as `page.last` till the next is on. `strict` (?debug=sail): its game
+ *  marked disposed, so a reader left on it that steps it throws (rules/game.ts stepGame). */
+export function endNight(page: Page, strict = false): void {
   const n = page.night;
   if (!n) return;
   closeNight(n);
+  if (strict) n.game.disposed = true;
+  page.last = n;
   page.night = null;
 }
 

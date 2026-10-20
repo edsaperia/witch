@@ -1,5 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { endNight, startNight, type Page } from "./night";
+import { stepGame } from "../rules/game";
+import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
 import { installHooks, type HookDeps } from "./hooks";
 import type { Hud } from "./hud";
 
@@ -70,6 +72,24 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(b.tuning.partyObjects.generated).toBe(true); // (the page's switch, carried)
     expect(undone).toBe(1); // (the last night's listeners undone)
     expect(page.night).toBe(b);
+  });
+
+  it("a sail after endNight: the ended night kept as page.last meanwhile, then carried on from (its sliders but its link's own), and let go", async () => {
+    const page: Page = { night: null, build: "test", look: () => null };
+    const a = await startNight(page, spec(41));
+    const flash = DECISION_LIST.find(d => d.id === "legendFlash")!, grace = DECISION_LIST.find(d => d.id === "grace")!;
+    setKnob(a.tuning, flash.apply.knob!, 0.123); setKnob(a.tuning, grace.apply.knob!, 0.9); // (two sliders moved on the pause page)
+    endNight(page, true);
+    expect(page.night).toBeNull();
+    expect(page.last).toBe(a);
+    expect(a.game.disposed).toBe(true);
+    expect(() => stepGame(a.game, {} as never, 1 / 60)).toThrow(/ended/); // (?debug=sail: a reader left on the old night is caught)
+    const b = await startNight(page, { ...spec(42), how: "sail", params: new URLSearchParams({ island: "home", seed: "42", creator: "0", d_grace: "0.3" }) });
+    expect(page.night).toBe(b);
+    expect(page.last).toBeUndefined();
+    expect(knobAt(b.tuning, flash.apply.knob!)).toBe(0.123);
+    expect(knobAt(b.tuning, grace.apply.knob!)).toBe(0.3);
+    expect(b.game.disposed).toBeUndefined();
   });
 
   it("endNight undoes the night's listeners and lets it go", async () => {

@@ -150,6 +150,9 @@ export interface Game {
   waveEvents: WaveEvent[];
   /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
   leashEvents: LeashEvent[];
+  /** The night over and another on in its place (app/night.ts endNight, marked only under ?debug=sail): stepping it means a reader
+   *  was left on the old night, and throws. */
+  disposed?: boolean;
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** Game time of the last look for cleared areas (rules/clear.ts; game.ts stepClear). */
@@ -280,6 +283,7 @@ const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "spell", "castParty",
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
  *  one-shot press on the first step that comes. */
 export function stepGame(g: Game, c: Controls, realDt: number): void {
+  if (g.disposed) throw new Error("stepGame: a night that has ended (a reader left on the old night)");
   if (c.cycleSpeakers) g.speakers = g.speakers.map(nextSpeakerState); // a debug key: even while paused
   const P = g.pending as Record<string, unknown>;
   for (const k of ONE_SHOT) if (c[k]) P[k] = true;

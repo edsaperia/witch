@@ -3,15 +3,21 @@
 // time (Ed: "Sail anytime"): its sail asks `onSail` (the game records the night, unwon if it's still on, then sails). Esc, the
 // pad's B or Close shuts it; while it's open the game's own controls are held still (main.ts, chartOpen).
 import { mountChart, type ChartView } from "../app/chartView";
+import { sailHref } from "../app/sail";
+import type { FlightEnd } from "../render/chart/seaChart";
 import { stopWarmChart } from "../app/chartWarm";
 import { prepareSeaChart } from "../render/chart/seaChart";
 import { TUNING } from "../rules/tuning";
 
 let open: { wrap: HTMLDivElement; view: ChartView; raf: number } | null = null;
 
-/** Open the chart over the game; `onSail` with the island's link when she sails; `world`, a world the game's link gave (?world=),
- *  carried on as chart.html's links do. Does nothing if it's already open. */
-export function openChart(onSail: (href: string) => void, world?: number): void {
+/** What she sailed to: the island, the night's seed, the world the link gave, and the chart's flight end (none if it couldn't fly). */
+export interface Sailed { island: string; seed: number; world?: number; end?: FlightEnd }
+
+/** Open the chart over the game; `onSail` with the island's link (to load) and what she sailed to (a night in place: app/sail.ts)
+ *  when she sails; `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
+ *  already open. */
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number): void {
   if (open) return;
   performance.mark("chart:open");
   stopWarmChart(); // (the chart's own worker makes what isn't kept yet)
@@ -21,7 +27,7 @@ export function openChart(onSail: (href: string) => void, world?: number): void 
   document.body.append(wrap);
   const view = mountChart(wrap, {
     mode: "sail", world,
-    onSail: (island, seed) => { closeChart(); onSail(new URL(`./?island=${island}&seed=${seed}&arrive=1${world != null ? `&world=${world}` : ""}`, location.href).href); },
+    onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
     onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; }, // (the flight fills the screen)
     onClose: closeChart,
   });

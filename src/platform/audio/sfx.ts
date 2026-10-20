@@ -13,7 +13,7 @@
 //  - places.ts: a pond, a picnic in a partified area, the creator's room;
 //  - power.ts: a runestone crackling into life as a speaker or soundsystem.
 import { Charge, Meadow, impact, knock, roar, taps } from "./ambience";
-import { Picnic, Pond, Room, Sea } from "./places";
+import { Picnic, Pond, Room, Sailing, Sea } from "./places";
 import { Night, type NightKind } from "./night";
 import { powerUp } from "./power";
 import { Spell } from "./spell";
@@ -43,6 +43,8 @@ export class Sfx {
   private spellFx: Spell;
   /** The sea on the beach: made the first time she comes near it (most runs never do). */
   private seaBed: Sea | null = null;
+  /** The sea and the wind while she sails in place (places.ts Sailing): made the first time she does. */
+  private sailBed: Sailing | null = null;
   /** The ley pulse's sparkler fizz: made the first time she comes near its tip. */
   private fizz: Sparkler | null = null;
   /** The wild watch's warning: made the first time a watch starts. */
@@ -173,6 +175,11 @@ export class Sfx {
   }
   /** By the sea on the beach (0-1 by how near the water): nothing made until she first comes near. */
   sea(level: number, pan = 0): void { level *= this.beds; if (level > 0.001 || this.seaBed) (this.seaBed ??= new Sea(this.k)).update(level, pan); }
+  /** Sailing between islands in place (0-1): the sea and the wind; nothing made until she first does. Never shed (it's all
+   *  there is to hear then). */
+  sailing(level: number): void { if (level > 0.001 || this.sailBed) (this.sailBed ??= new Sailing(this.k)).update(level); }
+  /** Whether the sail's cue is made (it keeps being updated as it fades). */
+  get sailingBuilt(): boolean { return !!this.sailBed?.built; }
   /** Whether the sea's sounds are built (none in an ordinary run). */
   /** By the ley line's pulse, the sparkler's burning tip (#491): its fizz, by how near (0-1). */
   sparkler(level: number, pan = 0): void { if (level > 0.001 || this.fizz) (this.fizz ??= new Sparkler(this.k)).update(level, pan); }

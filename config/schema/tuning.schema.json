@@ -7049,6 +7049,34 @@
           ],
           "additionalProperties": false
         },
+        "sail": {
+          "type": "object",
+          "properties": {
+            "volume": {
+              "type": "number",
+              "minimum": 0
+            },
+            "sea": {
+              "type": "number",
+              "minimum": 0
+            },
+            "wind": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fade": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "volume",
+            "sea",
+            "wind",
+            "fade"
+          ],
+          "additionalProperties": false
+        },
         "ambience": {
           "type": "object",
           "properties": {
@@ -7220,6 +7248,7 @@
         "meadow",
         "whale",
         "waves",
+        "sail",
         "ambience",
         "sadTrumpet",
         "night"
@@ -8039,6 +8068,18 @@
         "ease",
         "leyFloor",
         "walk"
+      ],
+      "additionalProperties": false
+    },
+    "sail": {
+      "type": "object",
+      "properties": {
+        "inPlace": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "inPlace"
       ],
       "additionalProperties": false
     },
@@ -11025,6 +11066,7 @@
     "waveNumbers",
     "dancefloor",
     "partyOver",
+    "sail",
     "arrive",
     "camera",
     "pixelSize",

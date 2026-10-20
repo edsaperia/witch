@@ -16,7 +16,7 @@ import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
-import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland } from "../render/chart/seaChart";
+import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd } from "../render/chart/seaChart";
 import { loadSave, newCampaign, unlocked, worldSeed, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
@@ -34,8 +34,9 @@ export interface ChartViewOptions {
   /** The world to show, if not the save's own (a shared link's ?world=): sailing carries it on (&world=). */
   world?: number;
   /** Sail mode: sail to an island, once the chart has flown in to it (default: to ?island=<kind>&arrive=1, with &world= when
-   *  `world` is given). The flight's end is in sessionStorage for the game to carry on from (app/arrival.ts). */
-  onSail?: (island: string, seed: number) => void;
+   *  `world` is given). The flight's end is in sessionStorage for the game to carry on from (app/arrival.ts), and given here
+   *  too (`end`, none if the chart couldn't fly) for a night started in place (app/sail.ts). */
+  onSail?: (island: string, seed: number, end?: FlightEnd) => void;
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
   /** Look and sail modes: a Close button and Esc. */
@@ -152,7 +153,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     found.sort((a, b) => Math.hypot(a.x - (home?.x ?? 0), a.y - (home?.y ?? 0)) - Math.hypot(b.x - (home?.x ?? 0), b.y - (home?.y ?? 0)));
     return found[0]?.id ?? "home";
   };
-  const go = async (id: string) => {
+  const go = async (id: string, end?: FlightEnd) => {
     performance.mark("chart:flown");
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
     await b?.settle(); // (what's drawn, written before the page goes)
@@ -160,7 +161,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const m = bake?.island === id ? await bake.map : null;
     if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
     performance.mark("chart:go"); // (?timing=1: main.ts carries this page's steps to the next as it sails, app/timing.ts)
-    if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
+    if (opts.onSail) opts.onSail(id, seed, end); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
@@ -168,7 +169,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const w = worldNow();
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
-    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!); })) { void go(id!); return; }
+    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); })) { void go(id!); return; }
     root.classList.add("flying");
     opts.onFly?.();
     requestAnimationFrame(() => resize());
