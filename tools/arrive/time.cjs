@@ -4,12 +4,12 @@
 // the time from the old page leaving (the new one's navigation start) to each of its steps (witch:main, :prep, :game, :view,
 // :ready, performance marks in main.ts), whether its map came from the worker (loadTimes.mapPrep 1), and its long tasks (count,
 // total, the longest). THROTTLE=4 slows the CPU fourfold (CDP) from the Sail on. RUNS times each, a fresh browser each.
-//   node tools/arrive/time.cjs [out.json]   DIST=dist ISLAND=fox WORLD=7 LOOK=4 THROTTLE=1 RUNS=1 SIZE=960x540
+//   node tools/arrive/time.cjs [out.json]   DIST=dist ISLAND=fox WORLD=7 SEED= LOOK=4 THROTTLE=1 RUNS=1 SIZE=960x540
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist")), outFile = process.argv[2];
-const ISLAND = env("ISLAND", "fox"), WORLD = env("WORLD", "7"), LOOK = Number(env("LOOK", 4)), THROTTLE = Number(env("THROTTLE", 1)), RUNS = Number(env("RUNS", 1));
+const SEED = Number(env("SEED", 0)), ISLAND = env("ISLAND", "fox"), WORLD = env("WORLD", "7"), LOOK = Number(env("LOOK", 4)), THROTTLE = Number(env("THROTTLE", 1)), RUNS = Number(env("RUNS", 1));
 const [W, H] = env("SIZE", "960x540").split("x").map(Number);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".woff2": "font/woff2", ".webp": "image/webp", ".ogg": "audio/ogg", ".wasm": "application/wasm" };
 function serve() {
@@ -34,7 +34,8 @@ async function once(port) {
   await page.goto(`http://127.0.0.1:${port}/chart.html?world=${WORLD}`);
   await page.waitForFunction(() => window.chart?.chart, null, { timeout: 180000 });
   await wait(2000);
-  await page.evaluate(id => window.chart.choose(id), ISLAND);
+  // (SEED: the night's seed the chart picks, landingBake.ts nightSeed's Math.random held for the choosing)
+  await page.evaluate(([id, seed]) => { const r = Math.random; if (seed) Math.random = () => (seed + 0.5) / 1000000; window.chart.choose(id); if (seed) setTimeout(() => { Math.random = r; }, 3000); }, [ISLAND, SEED]);
   await wait(LOOK * 1000);
   if (THROTTLE > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: THROTTLE });
   const nav = page.waitForURL(u => /arrive=1/.test(String(u)), { timeout: 300000 });
@@ -49,7 +50,7 @@ async function once(port) {
     return { marks: m, mapPrep: window.witch.loadTimes.mapPrep ?? null, long: { count: long.length, total: long.reduce((t, e) => t + e.ms, 0), max: Math.max(0, ...long.map(e => e.ms)), top: [...long].sort((a, b) => b.ms - a.ms).slice(0, 6) } };
   });
   await browser.close();
-  return { island: ISLAND, world: WORLD, throttle: THROTTLE, flightMs: flew, ...r, notes, errors };
+  return { island: ISLAND, world: WORLD, seed: new URL(page.url()).searchParams.get("seed"), throttle: THROTTLE, flightMs: flew, ...r, notes, errors };
 }
 
 (async () => {

@@ -266,6 +266,29 @@ export function prepOf(map: ForestMap): MapPrep {
   return { neighbours: [...map.neighbours].map(([k, v]) => [k, [...v]]), land: landData(b.land), lakes: landData(b.lakes), route: knownRoute(map) ?? null };
 }
 
+/** What's wrong with a prep, if anything (a record from another build's code, cut short, or not a prep at all): its shapes checked
+ *  against each other, so a bad one is never hydrated (app/mapPrep.ts readyMap makes the map afresh instead). Null if sound. */
+export function prepProblem(p: unknown): string | null {
+  const q = p as Partial<MapPrep> | null;
+  if (!q || typeof q !== "object") return "no prep";
+  if (!Array.isArray(q.neighbours) || !q.neighbours.every(e => Array.isArray(e) && typeof e[0] === "string" && Array.isArray(e[1]))) return "neighbours";
+  const land = (L: LandData | null | undefined, what: string): string | null => {
+    if (L == null) return null;
+    const n = L.cols * L.rows;
+    if (!(Number.isInteger(L.cols) && Number.isInteger(L.rows) && n > 0 && L.step > 0)) return what + " grid";
+    if (!(L.dist instanceof Float32Array && L.dist.length === n && L.seg instanceof Int32Array && L.seg.length === n)) return what + " samples";
+    if (!(L.segLoop instanceof Int32Array && L.segAt instanceof Int32Array && L.segLoop.length === L.segAt.length && Array.isArray(L.loops))) return what + " stretches";
+    if (!L.loops.every(l => l.pts instanceof Float64Array && l.at instanceof Float64Array && l.pts.length === l.at.length * 2)) return what + " loops";
+    for (let s = 0; s < L.segLoop.length; s++) { const l = L.loops[L.segLoop[s]]; if (!l || L.segAt[s] < 0 || L.segAt[s] * 2 >= l.pts.length) return what + " stretch " + s; }
+    return null;
+  };
+  if (q.land === undefined || q.lakes === undefined || q.route === undefined) return "parts missing";
+  const bad = land(q.land, "land") ?? land(q.lakes, "lakes");
+  if (bad) return bad;
+  if (q.route && !(Array.isArray(q.route.order) && Array.isArray(q.route.stones) && Array.isArray(q.route.links) && q.route.order.length === q.route.stones.length)) return "route";
+  return null;
+}
+
 /** A map from its ready parts (a worker's prep: app/mapPrep.ts): the map generateMap(seed, tuning) makes, without their work
  *  (src/rules/mapPrep.test.ts). The seam a night started in place takes (docs/plans/sail-without-reload.md, startNight; or
  *  newGame's prep). */
