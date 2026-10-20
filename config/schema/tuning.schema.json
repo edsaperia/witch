@@ -8071,6 +8071,18 @@
       ],
       "additionalProperties": false
     },
+    "sail": {
+      "type": "object",
+      "properties": {
+        "inPlace": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "inPlace"
+      ],
+      "additionalProperties": false
+    },
     "arrive": {
       "type": "object",
       "properties": {
@@ -8178,18 +8190,6 @@
         "frame",
         "rise",
         "settle"
-      ],
-      "additionalProperties": false
-    },
-    "sail": {
-      "type": "object",
-      "properties": {
-        "inPlace": {
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "inPlace"
       ],
       "additionalProperties": false
     },
@@ -11066,8 +11066,8 @@
     "waveNumbers",
     "dancefloor",
     "partyOver",
-    "arrive",
     "sail",
+    "arrive",
     "camera",
     "pixelSize",
     "spriteTilt",
