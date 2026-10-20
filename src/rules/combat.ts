@@ -17,7 +17,7 @@ import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attac
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
-import { stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, type Directive } from "./combat/packs";
+import { stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
@@ -131,18 +131,15 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     onHer.set(tg.id, (onHer.get(tg.id) ?? 0) + 1);
     // (winding up, lunging, or let go within the last dodge.a.gap seconds: so strikes at her come no faster than a dodge can answer)
     const f = o.fight!, cd = ((PO && f.packMove && packAttack(o.species, o.level, f.packMove)) || attackOf(o.species, o.level, data))?.attack.cooldown ?? 0; // (a pack member's own move's: a bolt's cooldown isn't its bite's)
-    if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
+    // (a pack kind's own move too, its charge or its leap: in a pack it's a strike that takes a token, rules/combat/packs.ts)
+    if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || (PO && packKindOf(o.species) && strikingNow(o)) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
   }
   /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
    *  well as its pack's turn and pressure, its call too (Ed, 2026-10-20: the dodge's limit holds inside a pack; fights between
    *  creatures as before). */
-  const token = (tg: Target): boolean => {
-    if (!DA || tg.kind !== "witch") return true;
-    const n = striking.get(tg.id) ?? 0;
-    if (n >= ((onHer.get(tg.id) ?? 0) >= DA.swarm ? DA.swarmTokens : DA.tokens)) return false;
-    striking.set(tg.id, n + 1);
-    return true;
-  };
+  const free = (tg: Target): boolean => !DA || tg.kind !== "witch" || (striking.get(tg.id) ?? 0) < ((onHer.get(tg.id) ?? 0) >= DA.swarm ? DA.swarmTokens : DA.tokens);
+  const take = (tg: Target): void => { if (DA && tg.kind === "witch") striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); };
+  const token = (tg: Target): boolean => { if (!free(tg)) return false; take(tg); return true; };
   /** Its windup: a shot or lob at her winds up at most dodge.b.windup (a beam as before: a sweep a blink can't outrun needs its warning). */
   const windupOf = (A: Attack, tg: Target) => (DB && tg.kind === "witch" && (A.delivery === "shot" || A.delivery === "lob") ? Math.min(A.windup, DB.windup) : A.windup);
   /** A shot or lob at her reaches dodge.b.range times as far (Ed, 2026-10-09: "I think shooters should have longer range"). */
@@ -175,6 +172,16 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (pd) pd.state.held = time;
     return false;
   };
+  /** A pack member's own move (its charge, leap or burrow: config/movement.json) as its strike: may it set off now (its turn, its
+   *  pack's pressure, a dodge token free: asked, not taken; the token's taken as it sets off, `ownStruck`)? Out of a pack, always. */
+  const ownMay = (pd: Directive | undefined, tg: Target): boolean => {
+    if (!pd) return true;
+    if (pd.move !== "melee" || !packGate(pd)) return false;
+    if (free(tg)) return true;
+    pd.state.held = time;
+    return false;
+  };
+  const ownStruck = (pd: Directive | undefined, c: Creature, tg: Target): void => { if (pd) { take(tg); markStrike(pd, c); } };
   for (const c of w.active) {
     stepKnock(c, dt);
     if (c.gone) continue;
@@ -272,7 +279,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (!p) { f.target = null; f.windupUntil = 0; continue; } // (it fell this very step)
     const d = Math.hypot(p.x - c.x, p.z - c.z), A = reachOf(atk.attack, f.target), K = data.kite, kites = A.delivery === "shot" && K.species.includes(c.species);
     // (a shooter keeps its usual distance, A0's, however far it may now fire at her: so she can still reach it with her 💌s)
-    const A0 = atk.attack, want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A0.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    const A0 = atk.attack;
+    let want = A.delivery === "shot" || A.delivery === "lob" || A.delivery === "beam" ? A0.range * (kites ? K.far : 0.8) : A.delivery === "pulse" ? Math.max(0.8, (A.radius ?? 2) * 0.6) : A.range + p.r + (A.lunge ?? 0) * 0.85 - 0.3;
+    // A pack member whose strike is its own move (a charge, a leap, a burrow: config/movement.json), the move ready, waits its turn
+    // where that move sets off from, not on top of her: where it stands, if that's in the move's reach (so its turn come it charges,
+    // leaps or goes under from there: rules/combat/packs.ts).
+    const om = pd && pd.move === "melee" && f.target.kind !== "sound" && time >= (c.moveReadyAt ?? 0) ? ownStrike(c.species) : null;
+    const ownFrom = om && om.kind !== "swoop" ? (om.from ?? 10) * 1.4 * FIGHT.scale : 0, ownTo = om?.to ? om.to * 0.8 * (om.kind === "leap" ? FIGHT.leap.reach : 1) * FIGHT.scale : ownFrom;
+    if (ownFrom) want = Math.max(want, ownFrom, Math.min(d, ownTo));
     // Its lunge under way: a dash-strike down the line it wound up on; at its end the blow lands, if it's still there.
     if (f.lunge) {
       // (At a creature it homes in: creatures can't read a telegraph; but not at a flier, which flits up out of its way.
@@ -298,7 +312,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
     // A pack member falling back in its lull, a hurt one keeping away (rules/combat/packs.ts); dug in (the badger's cover, its hold), it
     // stands, biting what comes in reach when its pack lets it.
-    if (pd && f.windupUntil === 0 && !c.charge && !c.leap) {
+    if (pd && f.windupUntil === 0 && !c.charge && !c.leap && !c.burrow && !swoops(c)) { // (a flyer in a pack circles aloft through its lull: below)
       if (pd.slot) { if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } else moveToward(c, pd.slot.x, pd.slot.z, 0.5, speed, dt); continue; }
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
@@ -312,8 +326,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     if (f.windupUntil === 0 && P && !marching) {
       // A movement profile (Stage 5): its signature move, then its behaviours and its pack's tactic.
       const run = speed;
-      if (P.move?.kind === "charge" && f.target.kind !== "sound" && (!pd || !!c.charge)) { // (in a pack, only its stampede: rules/combat/packs.ts) // (at a soundsystem its ordinary attack, not one blow a charge: Ed, 2026-10-11)
+      if (P.move?.kind === "charge" && f.target.kind !== "sound" && (!!c.charge || ownMay(pd, f.target))) { // (in a pack, its strike when its turn comes, and its stampede: rules/combat/packs.ts) // (at a soundsystem its ordinary attack, not one blow a charge: Ed, 2026-10-11)
         const was = c.charge, r = stepCharge(c, P.move, p.x, p.z, A.range + p.r + 0.3, time, dt, run);
+        if (!was && c.charge) ownStruck(pd, c, f.target);
         // Predictive aim (dodge.b): a charge at her runs down the lane to where she'll be when it gets there.
         if (DB && !was && c.charge && f.target.kind === "witch") {
           const { vx, vz } = velOf(f.target), ch = c.charge, arrive = Math.max(0, (ch.from ?? time) - time) + Math.hypot(p.x - c.x, p.z - c.z) / Math.max(1, ch.speed);
@@ -336,38 +351,41 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (r === "charging" && t.fight.charge?.contact && c.charge && !c.charge.braking && !(c.charge.from !== undefined && time < c.charge.from)) touch(w, s, c, atk.damage, ram, grid, (c.charge.hit ??= []));
         if (r === "charging") continue;
       }
-      if (pd && c.swoop) landSwoop(c, time); // (in a pack a flyer fights on the ground: rules/combat/packs.ts, Phase 1's bat and raven, until the flyers' step)
-      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound" && !pd) { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
+      if (P.move?.kind === "swoop" && swoops(c) && f.target.kind !== "sound") { // (at a soundsystem it lands and attacks as usual: Ed, 2026-10-11)
         // A wild flyer (the owl, the bat, the raven: hotel's phase-3 flyer table): it circles out of reach, telegraphs, dives along a
         // line at where its target will be and pulls back up; only in the dive and at its bottom can it be hit or invited.
         const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
-        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, tv?.vx ?? 0, tv?.vz ?? 0, () => token(f.target!), f.target.kind === "witch" && DA ? DA.commit : 0); // (each dive takes a strike's token at her: dodge.a)
+        // (in a pack, a bout's first dive is its strike, on its pack's turn and pressure as a lunge, a lane: docs/backlog/combat.md; it
+        // circles aloft meanwhile, its lull too; the bout's other dives each a token as before)
+        const dv: Directive | undefined = pd && { ...pd, move: "melee" }, tg = f.target;
+        const mayDive = () => { if (!dv || c.swoop?.left) return token(tg); if (!strikeNow(dv, tg)) return false; markStrike(dv, c); return true; };
+        const r = stepSwoop(c, P.move, p.x, p.z, time >= f.readyAt, time, dt, tv?.vx ?? 0, tv?.vz ?? 0, mayDive, f.target.kind === "witch" && DA ? DA.commit : 0); // (each dive takes a strike's token at her: dodge.a)
         if (r === "tele") { f.readyAt = time + A.cooldown; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         if (r === "dive") s.events.push({ kind: "swooped", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "low" && c.swoop?.hit) {
           // Its dive touches every foe it passes (once each). (A soundsystem it never swoops at: above.)
           const dive: Attack = { ...A, delivery: "melee", range: 2.5 * S, ...(P.move.knockback ? { modifier: "knockback" as const, knockback: P.move.knockback * S } : {}) };
-          touch(w, s, c, atk.damage, dive, grid, c.swoop.hit);
+          touch(w, s, c, (pd && packAttack(c.species, c.level, "melee"))?.damage ?? atk.damage, dive, grid, c.swoop.hit); // (a pack's dive on its melee's budget)
         }
         continue;
       }
-      if (P.move?.kind === "burrow" && !pd) { // (in a pack: its earth bolt and its cloud instead)
+      if (P.move?.kind === "burrow" && (!!c.burrow || !pd || (pd.move === "melee" && packGate(pd)))) { // (in a pack, its way in when its turn comes; it strikes as it surfaces, a token then)
         // The mole: under the ground (untouchable, a moving mound) to its target, then up, striking at once.
         const r = stepBurrow(c, P.move, p.x, p.z, run, time, dt);
         if (r === "burrowed") s.events.push({ kind: "burrowed", x: c.x, z: c.z, at: time, id: c.id });
         if (r === "under" || r === "burrowed") continue;
         if (r === "surfaced") {
           s.events.push({ kind: "surfaced", x: c.x, z: c.z, at: time, id: c.id });
-          if (time >= f.readyAt) { f.windupUntil = time + Math.min(A.windup, 0.35); f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
+          if (time >= f.readyAt && (!pd || strikeNow(pd, f.target))) { if (pd) markStrike(pd, c); f.windupUntil = time + Math.min(A.windup, 0.35); f.aimX = p.x; f.aimZ = p.z; s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
           continue;
         }
       }
-      if (P.move?.kind === "leap" && (!pd || c.leap)) { // (in a pack: only its cloud's leap, rules/combat/packs.ts, which lands harmless)
+      if (P.move?.kind === "leap" && (!pd || c.leap || pd.move === "melee")) { // (in a pack, its strike when its turn comes; its cloud's leap, rules/combat/packs.ts, lands harmless)
         // The toad: a leap in an arc at its target (a ring shows where it'll land), slamming down: its attack.
-        const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null;
-        const r = stepLeap(c, P.move, p.x, p.z, !pd && time >= f.readyAt, time, tv?.vx ?? 0, tv?.vz ?? 0);
-        if (pd && r === "landed") { s.events.push({ kind: "slammed", x: c.x, z: c.z, at: time, id: c.id }); continue; }
-        if (r === "leapt") s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id });
+        const tv = f.target.kind === "witch" ? w.witches[f.target.id] : f.target.kind === "creature" ? w.creatures[f.target.id] : null, cloudLeap = !!c.leap?.cloud;
+        const r = stepLeap(c, P.move, p.x, p.z, !c.leap && time >= f.readyAt && ownMay(pd, f.target), time, tv?.vx ?? 0, tv?.vz ?? 0);
+        if (cloudLeap && r === "landed") { s.events.push({ kind: "slammed", x: c.x, z: c.z, at: time, id: c.id }); continue; }
+        if (r === "leapt") { ownStruck(pd, c, f.target); s.events.push({ kind: "leapt", x: c.x, z: c.z, at: time, id: c.id }); }
         // A low pounce (the lynx's, a strike) hurts every foe it touches in the air (fight.leap.contact); a high leap's slam is its landing.
         if (r === "air" && P.move.strike && t.fight.leap?.contact && c.leap) touch(w, s, c, atk.damage, A, grid, (c.leap.hit ??= []));
         const pounced = c.leap?.hit;
@@ -413,7 +431,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
           if (threat) { c.brace = time + (P.move.time ?? 1.2); s.events.push({ kind: "braced", x: c.x, z: c.z, at: time, id: c.id }); continue; }
         }
       }
-      if (P.move?.kind === "trail" && !pd && c.moving && time >= (c.moveReadyAt ?? 0)) { // (in a pack: its wall instead)
+      if (P.move?.kind === "trail" && c.moving && time >= (c.moveReadyAt ?? 0)) { // (in a pack too: its wall besides, rules/combat/packs.ts)
         // The snail leaves slime as it goes: a patch every `every` seconds, slowing the other side, drying after `time`.
         s.trails.push({ x: c.x, z: c.z, r: (P.move.radius ?? 2.5) * S, until: time + (P.move.time ?? 6), side: sideOf(c), slow: P.move.slow ?? 0.5, from: c.id });
         c.moveReadyAt = time + (P.move.every ?? 0.5);
@@ -435,8 +453,11 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         const { vx, vz } = velOf(f.target), her = Math.hypot(vx, vz), i = pk.members.indexOf(c);
         if (her > DC.moving * FIGHT.walk * FIGHT.speed && Math.floor((i + 1) * DC.share) > Math.floor(i * DC.share)) cutoff = { ahead: her * DC.ahead, angle: DC.angle, reach: DC.reach };
       }
-      // (a pack member steers by its role, rules/combat/packs.ts, not the old tactic's slots, which held it off waiting for its place)
-      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: p.x, pz: p.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? null : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" ? A.range + p.r : undefined });
+      // (a pack member steers by its role, rules/combat/packs.ts; its kind's tactic, config/movement.json, places it (the wolves'
+      // surround, the pincer, the flank), a shooter firing from its place, but the one whose lunge it is goes straight in (a slot held
+      // it off waiting for its place); a volley keeps its line and its beat throughout. Hit and run is the pack's lull.)
+      const tactic = pd && pk && (pk.tactic === "volley" || (!(pd.move === "melee" && packGate(pd) && free(f.target)) && (pk.tactic === "surround" || pk.tactic === "pincer" || pk.tactic === "flank"))) ? pk : null;
+      const may = steer(c, heavy ? heavyOf(c, P) : P, { px: p.x, pz: p.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? tactic : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" && !ownFrom ? A.range + p.r : undefined });
       if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)

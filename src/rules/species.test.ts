@@ -3,7 +3,6 @@ import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
 import { TUNING, type Tuning } from "./tuning";
-const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } }); // (pack combat off: Ed, 2026-10-20, made it the default)
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
@@ -147,8 +146,8 @@ describe("fight profiles for every species (Ed's species pass)", () => {
     expect(blocked).toBeGreaterThan(0);
   }, 120000);
 
-  it("has a snail leave a slime trail that slows her (pack combat off: in a pack its moves are config/packs.json's)", () => {
-    const g = quiet(77, packsOff(TUNING)), W = g.witches[0];
+  it("has a snail leave a slime trail that slows her", () => {
+    const g = quiet(77, TUNING), W = g.witches[0];
     pick(g, "snail", 2, 12, 0);
     let trails = 0;
     run(g, 8, () => { trails = Math.max(trails, g.combat.trails.length); });

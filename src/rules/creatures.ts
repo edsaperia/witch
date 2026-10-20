@@ -76,7 +76,7 @@ export interface Creature {
   /** Burrowed (the mole, Stage 5): under the ground until, untouchable. */
   burrow?: { until: number };
   /** Leaping (the toad, Stage 5): from, to, when it took off and lands, how high. */
-  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number; /** whom a pounce has touched on the way (fight.leap.contact) */ hit?: number[] };
+  leap?: { fx: number; fz: number; tx: number; tz: number; at: number; lands: number; height: number; /** whom a pounce has touched on the way (fight.leap.contact) */ hit?: number[]; /** the toad pack's cloud leap: it lands harmless, its cloud coming down (rules/combat/packs.ts) */ cloud?: boolean };
   /** A wild flyer's swoop (the owl, the bat, the raven: rules/movement.ts stepSwoop): circling out of reach, telegraphing, diving at
    *  her and pulling back up. `up` while it's out of reach (no 💌, blow or talk reaches it). */
   swoop?: import("./movement").Swoop;
