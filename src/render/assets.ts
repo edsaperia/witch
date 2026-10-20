@@ -152,10 +152,12 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-    this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
-    this.ask({ kind: "soundsystems", id: "home", style }, true);
-    this.ask({ kind: "props", id: "home", style }, true);
-    this.ask(this.witchJob(witchGenome, false), true);
+    // (the start's own, `home`: ahead of every other ask, urgent or not, so her frames never wait behind the area types the first
+    // frame asks for; the first-load hunt, 2026-10-20: hers came last, 30 s in on the cloud, and play waited for them)
+    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
+    this.ask(this.witchJob(witchGenome, false), true, true);
+    this.ask({ kind: "soundsystems", id: "home", style }, true, true);
+    this.ask({ kind: "props", id: "home", style }, true, true);
   }
 
   private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
@@ -165,24 +167,30 @@ export class AssetLibrary {
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   /** Waiting jobs already moved to the front of the queue by an urgent ask. */
   private promoted = new Set<string>();
-  private ask(job: ArtJob, urgent = false): void {
+  /** Urgent sets still to come (prepare waits for these, not the scenery and creatures asked ahead of need). */
+  private urgentKeys = new Set<string>();
+  /** Where an urgent job goes in the queue: after the start's own (`home`) still waiting, ahead of the rest. */
+  private get front(): number { const i = this.queue.findIndex(q => !(q as ArtJob & { home?: boolean }).home); return i < 0 ? this.queue.length : i; }
+  private ask(job: ArtJob, urgent = false, home = false): void {
     const k = this.key(job);
     if (this.inFlight.has(k)) {
       // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
       // the queue each time cost creatures x queue while new art was baking)
       if (!urgent || this.promoted.has(k)) return;
-      this.promoted.add(k);
+      this.promoted.add(k); this.urgentKeys.add(k);
       const i = this.queue.findIndex(q => this.key(q) === k);
-      if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
+      if (i > this.front) { const [q] = this.queue.splice(i, 1); this.queue.splice(this.front, 0, q); }
       return;
     }
     this.inFlight.add(k);
+    if (urgent) this.urgentKeys.add(k);
+    if (home) (job as ArtJob & { home?: boolean }).home = true;
     // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
     (job as Stamped).gen = this.gen;
-    if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job);
+    if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
   /** The night is playing (the party spell cast): the art drawn ahead of need keeps to half the workers, so the audio thread
@@ -209,7 +217,7 @@ export class AssetLibrary {
   private receive(r: Reply): void {
     // (an island's set asked before the page took another (reseat): not this island's; its key may be asked again since, so it's left be)
     if (islandBound(r.job) && (r.job as Stamped).gen !== this.gen) return;
-    if (r.miss) { this.inFlight.delete(this.key(r.job)); return; } // (asked only if kept: not kept)
+    if (r.miss) { this.inFlight.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job)); return; } // (asked only if kept: not kept)
     if (!r.result) { // a worker could not draw it: draw it here instead
       console.warn("art worker failed, drawing on the page:", r.error);
       this.useWorkers = false;
@@ -275,7 +283,7 @@ export class AssetLibrary {
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
-    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
+    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
     this.version++;
   }
 
@@ -501,7 +509,7 @@ export class AssetLibrary {
   reseat(o: { seed: number; typeSeed: number; treehouse: string }): void {
     this.gen++;
     this.queue = this.queue.filter(j => !islandBound(j));
-    for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); }
+    for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
     const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
     for (const a of this.types.values()) free(a.atlas);
     for (const a of this.tonightTypes.values()) free(a.atlas);
@@ -514,7 +522,7 @@ export class AssetLibrary {
       if (this.home.treehouse) free(this.treehouse.atlas);
       this.treehouse = noTreehouse();
       this.home.treehouse = false;
-      this.ask({ kind: "treehouse", id: o.treehouse, style: this.style }, true);
+      this.ask({ kind: "treehouse", id: o.treehouse, style: this.style }, true, true);
     }
     this.version++;
   }
@@ -538,10 +546,11 @@ export class AssetLibrary {
     }
   }
 
-  /** Resolves once nothing is waiting to be drawn. */
-  whenIdle(): Promise<void> {
+  /** Resolves once nothing is waiting to be drawn (`urgentOnly`: nothing the view asked for as needed now; the scenery kits and
+   *  creatures asked ahead of need draw on, and fade in as they come: prepare). */
+  whenIdle(urgentOnly = false): Promise<void> {
     return new Promise(resolve => {
-      const check = () => { this.work(50); if (!this.pending) resolve(); else setTimeout(check, 30); };
+      const check = () => { this.work(50); if (!(urgentOnly ? this.urgentKeys.size : this.pending)) resolve(); else setTimeout(check, 30); };
       check();
     });
   }

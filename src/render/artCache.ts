@@ -51,9 +51,11 @@ export async function cacheGet(key: string): Promise<ArtResult | null> {
     if (!db) return null;
     return await new Promise<ArtResult | null>(resolve => {
       try {
-        const q = db.transaction(STORE, "readonly").objectStore(STORE).get(key);
-        q.onsuccess = () => resolve((q.result as ArtResult | undefined) ?? null);
-        q.onerror = () => resolve(null);
+        // (settled once its transaction has finished, not on the read: the worker draws straight after, and a transaction left
+        // open through the drawing held every other worker's write behind it, so the workers' sets landed three at a time)
+        const tx = db.transaction(STORE, "readonly"), q = tx.objectStore(STORE).get(key);
+        tx.oncomplete = () => resolve((q.result as ArtResult | undefined) ?? null);
+        tx.onerror = tx.onabort = () => resolve(null);
       } catch { resolve(null); }
     });
   } catch { return null; }
