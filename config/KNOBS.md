@@ -1721,6 +1721,14 @@ Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/s
 |---|---|---|
 | `sail.inPlace` | boolean |  |
 
+### `opening`
+
+The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new, Options and the zoo in its corner, choosing an island starting its night in place as a sail does. Off till the whole opening is in; ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover).
+
+| knob | type | range |
+|---|---|---|
+| `opening.chart` | boolean |  |
+
 ### `arrive`, `camera`
 
 Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).
