@@ -1,18 +1,19 @@
-// Ten sails in place without growing (docs/plans/sail-without-reload.md, test C3; PR 5): serves the built game (dist/), loads
-// island A with ?sail=inplace&quick=1&creator=0&debug=sail, starts it, then sails A→B→C→A… ten times through the real sail path
+// Sails in place without growing (docs/plans/sail-without-reload.md, test C3; PR 5): serves the built game (dist/), loads
+// island A with ?sail=inplace&quick=1&creator=0&debug=sail, starts it, then sails A→B→C→A… fifteen times through the real sail path
 // (window.witch.sail: main.ts sailFromChart, as the map table's chart sails, its flight end given and its flight skipped), each
 // landing, its art let in, then a few drawn frames and about 5 s of play stepped; after each landing it records the renderer's live
 // textures, geometries and programs, the JS heap after a forced GC (CDP), the DOM's nodes, the listeners on window and document
 // (CDP DOMDebugger), the page's workers, and the scene's objects. Passes when, from sail 2 on, listeners, workers and DOM nodes are
 // the same after every sail, programs the same at each return to an island (an island's own materials: fox has a program fewer
-// than home and wolf), and the heap within 5% of sail 2's; and, once the page's kept art has warmed (from sail WARM on, default
-// two rounds of the islands), textures, geometries and the scene's objects the same at each return to an island. (The page keeps
-// every species' creature art, rig pages and their batches it has seen, whichever island: docs/plans/sail-without-reload.md A2;
-// so those grow over the first rounds, by the islands' species, and then hold.) And no page error (under ?debug=sail a reader left on an old night that steps it throws: rules/game.ts stepGame). Then Back (C6): the
+// than home and wolf), and the heap within 5% of sail 2's; and, once the page's kept art has warmed (after sail WARM, default
+// three rounds of the islands), no island's textures, geometries or scene objects ever more than on its earlier visits (a leak
+// is a new high at every return). (The page keeps every species' creature art, rig pages and their batches it has seen,
+// whichever island: docs/plans/sail-without-reload.md A2; so those grow over the first rounds, by the islands' species, and then
+// hold, give or take a few by what the art workers had drawn when the shot was taken.) And no page error (under ?debug=sail a reader left on an old night that steps it throws: rules/game.ts stepGame). Then Back (C6): the
 // pause menu open, the island and seed unchanged, the URL the night's; and the fallback (C4): a sail made to fail loads the
 // island's link as the old way does. Writes previews/sail/leak.json.
 // Run `npm run build` first. Playwright from the machine's global install.
-//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=10 WARM=6 DIAG=1 (each landing's scene objects listed)
+//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=15 WARM=9 DIAG=1 (each landing's scene objects listed)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -21,9 +22,9 @@ try { playwright = require("playwright"); } catch { playwright = require("/opt/n
 
 const root = path.resolve(__dirname, "../../dist");
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/sail"));
-const ISLANDS = (process.env.ISLANDS || "home,fox,wolf").split(","), SEEDS = (process.env.SEEDS || "123,4242,777").split(",").map(Number), SAILS = Number(process.env.SAILS || 10);
+const ISLANDS = (process.env.ISLANDS || "home,fox,wolf").split(","), SEEDS = (process.env.SEEDS || "123,4242,777").split(",").map(Number), SAILS = Number(process.env.SAILS || 5 * ISLANDS.length);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
-const WARM = Number(process.env.WARM || 2 * ISLANDS.length), DIAG = !!process.env.DIAG; // (each landing's scene's children listed in leak.json: what a count that grows is)
+const WARM = Number(process.env.WARM || 3 * ISLANDS.length), DIAG = !!process.env.DIAG; // (each landing's scene's children listed in leak.json: what a count that grows is)
 const DT = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
@@ -103,7 +104,11 @@ async function main() {
   for (const island of ISLANDS) {
     const same = (list, keys, when) => { for (const k of keys) { const vals = [...new Set(list.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} on ${island} differ between visits ${when}: ${list.map(r => `${r[k]} (sail ${r.sail})`).join(", ")}`); } };
     same(from.filter(r => r.island === island), ["programs"], "from sail 2");
-    same(rows.filter(r => r.sail >= WARM && r.island === island), ["textures", "geometries", "scene"], `from sail ${WARM}`);
+    const at = rows.filter(r => r.island === island);
+    for (const r of at.filter(r => r.sail > WARM)) for (const k of ["textures", "geometries", "scene"]) {
+      const high = Math.max(...at.filter(q => q.sail < r.sail).map(q => q[k]));
+      if (r[k] > high) fails.push(`${k} on ${island} at sail ${r.sail}, ${r[k]}, more than on any visit before (${at.filter(q => q.sail < r.sail).map(q => q[k]).join(", ")})`);
+    }
   }
   for (const r of from) if (r.heapMB > r2.heapMB * 1.05) fails.push(`heap at sail ${r.sail} ${r.heapMB} MB, over 5% above sail 2's ${r2.heapMB} MB`);
 
