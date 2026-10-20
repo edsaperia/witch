@@ -675,7 +675,7 @@ export class View {
     performance.mark("witch:prep-ground");
     await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     performance.mark("witch:prep-home");
-    await this.assets.whenIdle();
+    await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
