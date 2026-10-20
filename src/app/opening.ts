@@ -1,8 +1,8 @@
 // The new opening (Ed, 2026-10-20; previews/ed/opening-mock/NOTES.md on claude/ed-shots): the first load starts on the sea chart, only
-// home unlocked in a first game (app/chartSave.ts unlocked: home and what she's found), its corner holding What's new, Options and the
-// zoo; choosing home dives on into the boot's own night (made under the chart) and into her bedroom in the treehouse, where she
-// wakes (rules/opening.ts); another island starts its night in place (app/night.ts startNight, as a sail does). The wake-up's
-// beats and the rest come in later PRs. Until the whole opening is proven it's off by default (the tuning's opening.chart);
+// home unlocked in a first game (app/chartSave.ts unlocked: home and what she's found), its corner holding What's new and Options (the
+// zoo's through the bestiary's book); choosing home dives on into the boot's own night (made under the chart) and into her bedroom
+// in the treehouse, where she wakes (rules/wakeUp.ts: the wake-up, the curtains, the DJ intro at her decks); another island starts
+// its night in place (app/night.ts startNight, as a sail does). Until the whole opening is proven it's off by default (the tuning's opening.chart);
 // ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover), and ?sail=reload still
 // loads the island's page as before.
 export type OpeningWay = "chart" | "old";

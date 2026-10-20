@@ -29,6 +29,15 @@ const RIG_PAGES = 48;
 
 type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
 
+/** The art workers, started ahead of the View (prewarmArtWorkers), for its AssetLibrary to take: they load their code (most of a
+ *  second each, more in the cloud) while the page makes the night, not while the View's build waits for its first drawings. */
+let prewarmed: Worker[] = [];
+export function prewarmArtWorkers(): void {
+  if (prewarmed.length || typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return;
+  const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
+  try { for (let i = 0; i < n; i++) prewarmed.push(new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" })); } catch { for (const w of prewarmed) w.terminate(); prewarmed = []; }
+}
+
 /** The sets drawn from one island (its map's trees under its seed, its treehouse, its soundsystems): let go when another island
  *  takes the page (reseat). The rest are by species or the page's own, right on any island. */
 const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
@@ -124,7 +133,9 @@ export class AssetLibrary {
   /** The island the sets are for, by number: bumped by reseat, so an island's set asked before lands to nothing (receive). */
   gen = 0;
 
-  constructor(readonly style: Style, seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
+  /** `first`: one-off drawings asked ahead of everything else, the start's own art too (oneOff takes them: the island build's,
+   *  render/view.ts View.create). */
+  constructor(readonly style: Style, seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home", first: ArtJob[] = []) {
     this.seed = seed;
     this.treehouseId = treehouse;
     this.K = 2 / pixelSize;
@@ -140,7 +151,7 @@ export class AssetLibrary {
       const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
       try {
         for (let i = 0; i < n; i++) {
-          const w = new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" });
+          const w = prewarmed.shift() ?? new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" }); // (one started ahead, if it was: prewarmArtWorkers)
           const slot: { w: Worker; busy: boolean; job?: ArtJob } = { w, busy: false };
           w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
           w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
@@ -152,6 +163,7 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
+    for (const job of first) this.early(job);
     this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
     this.ask({ kind: "soundsystems", id: "home", style }, true);
     this.ask({ kind: "props", id: "home", style }, true);
@@ -206,7 +218,37 @@ export class AssetLibrary {
       slot.w.postMessage(slot.job);
     }
   }
+  /** One-off asks (oneOff), by their key: what each is waiting for. */
+  private once = new Map<string, { res: (r: ArtResult) => void; rej: (e: Error) => void }>();
+  /** One-offs asked ahead (early), by their key: kept for the oneOff that takes each. */
+  private kept = new Map<string, Promise<ArtResult>>();
+  /** Ask for a one-off now, ahead of what's queued, for a oneOff to take later. */
+  early(job: ArtJob): void {
+    const k = this.key(job);
+    if (this.kept.has(k) || !this.useWorkers) return;
+    const p = this.oneOff(job);
+    p.catch(() => {}); // (a refusal is the taker's: it draws it on the page)
+    this.kept.set(k, p);
+  }
+  /** A drawing the page wants once, from the art workers (or the browser's store, if drawn before): the island build's own (render/
+   *  islandArt.ts: the dancefloor's looks, the runestones), asked ahead of everything else. No workers: refused (drawn on the page). */
+  oneOff(job: ArtJob): Promise<ArtResult> {
+    const k = this.key(job), kept = this.kept.get(k);
+    if (kept) { this.kept.delete(k); return kept; }
+    if (!this.useWorkers) return Promise.reject(new Error("no art workers"));
+    return new Promise((res, rej) => {
+      const was = this.once.get(k);
+      this.once.set(k, { res: r => { was?.res(r); res(r); }, rej: e => { was?.rej(e); rej(e); } });
+      this.ask(job, true);
+    });
+  }
   private receive(r: Reply): void {
+    const once = this.once.get(this.key(r.job));
+    if (once) { // (a one-off: its asker's, whichever island the page is on)
+      this.once.delete(this.key(r.job)); this.inFlight.delete(this.key(r.job));
+      if (r.result) once.res(r.result); else once.rej(new Error(r.error ?? "not drawn"));
+      return;
+    }
     // (an island's set asked before the page took another (reseat): not this island's; its key may be asked again since, so it's left be)
     if (islandBound(r.job) && (r.job as Stamped).gen !== this.gen) return;
     if (r.miss) { this.inFlight.delete(this.key(r.job)); return; } // (asked only if kept: not kept)

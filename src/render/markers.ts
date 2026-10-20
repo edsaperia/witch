@@ -11,7 +11,10 @@ import * as Art from "../../art/generator.js";
 import { AREA_TYPES, type ForestMap } from "../rules/map";
 import { dealRunestones, type Runestone } from "../rules/runestones";
 import type { Tuning } from "../rules/tuning";
-import { packAtlas, type Atlas, type Baked } from "./atlas";
+import { atlasFromPixels, type Atlas } from "./atlas";
+import { runJob, type ArtJob, type ArtResult, type AtlasPixels, type MakeCanvas } from "./artBuild";
+import type { StoneSpec } from "./islandArt";
+import { awaitOr, runSync, type Steps } from "./slices";
 import type { Style } from "./style";
 
 /** Frames per species: dormant, then the awake levels (brighter and brighter). */
@@ -28,34 +31,49 @@ export function runestoneOf(map: ForestMap, cx: number, cy: number, t: Tuning): 
   return d.get(`${cx},${cy}`) ?? null;
 }
 
+/** A map's runestones drawn and packed (MarkerArt.stones), for its MarkerArt. */
+export interface MarkerStones { index: Map<string, number>; stoneOf: Map<string, string>; heights: Map<string, number>; pixels: AtlasPixels }
+
 export class MarkerArt {
   readonly atlas: Atlas;
-  private index = new Map<string, number>();
+  private index: Map<string, number>;
   /** Each area's stone (by its cell's key, "cx,cy"): its baked stone's key. */
-  private stoneOf = new Map<string, string>();
+  private stoneOf: Map<string, string>;
   readonly colour = new Map<string, THREE.Vector3>();
   /** Per baked stone: how many art pixels the stone stands above its frame's bottom (to its topmost drawn row). */
-  private heights = new Map<string, number>();
+  private heights: Map<string, number>;
   /** The scale the stones are baked at (runeMarkers.scale): drawn at runeMarkers.scale / this, so 1 (docs/STYLE.md §1). */
   readonly scale: number;
 
-  constructor(style: Style, t: Tuning, map: ForestMap) {
-    const R = t.runeMarkers, sprites: Baked[] = [];
-    this.scale = R.scale;
+  constructor(style: Style, t: Tuning, map: ForestMap, made: MarkerStones = runSync(MarkerArt.stones(style, t, map))) {
+    this.scale = t.runeMarkers.scale;
     for (const a of AREA_TYPES) { const c = Art.sigilColour(a.creature) as number[]; this.colour.set(a.creature, new THREE.Vector3(c[0] / 255, c[1] / 255, c[2] / 255)); }
+    this.index = made.index; this.stoneOf = made.stoneOf; this.heights = made.heights;
+    this.atlas = atlasFromPixels(made.pixels);
+  }
+
+  /** The art job for the stones this map stands (one an area: its species' sigil on its form), and where each area's is in it. */
+  static stoneJob(style: Style, t: Tuning, map: ForestMap): { job: ArtJob; index: Map<string, number>; stoneOf: Map<string, string>; keys: string[] } {
+    const R = t.runeMarkers, index = new Map<string, number>(), stoneOf = new Map<string, string>(), stones: StoneSpec[] = [], keys: string[] = [];
     const levels = [R.dormant.glow, ...Array.from({ length: MARKER_LEVELS - 1 }, (_, i) => R.awake.glow[0] + ((R.awake.glow[1] - R.awake.glow[0]) * i) / (MARKER_LEVELS - 2))];
-    // Only the stones this map stands (one an area: its species' sigil on its form).
     for (const [cx, cy] of map.cells) {
       const sp = AREA_TYPES[map.typeOf(cx, cy)].creature, v = runestoneOf(map, cx, cy, t), key = v ? `${sp}|${v.form}|${v.flip ? 1 : 0}` : sp;
-      this.stoneOf.set(`${cx},${cy}`, key);
-      if (this.index.has(key)) continue;
-      const base = (Art.runeStone as unknown as (st: Style, o: { glow: string; sigil: string; scale: number; form?: number; flip?: boolean }) => Baked & { A: HTMLCanvasElement })(style, { glow: "cyan", sigil: sp, scale: R.scale, ...(v ?? {}) });
-      const c = Art.sigilColour(sp) as number[];
-      this.index.set(key, sprites.length);
-      this.heights.set(key, drawnHeight(base.A));
-      for (const k of levels) sprites.push(recolour(base, c, k));
+      stoneOf.set(`${cx},${cy}`, key);
+      if (index.has(key)) continue;
+      index.set(key, stones.length * levels.length); keys.push(key);
+      stones.push(v ? { sigil: sp, form: v.form, flip: v.flip } : { sigil: sp });
     }
-    this.atlas = packAtlas(sprites, 2048);
+    return { job: { kind: "stones", id: keys.join(";"), style, stones, levels, scale: R.scale }, index, stoneOf, keys };
+  }
+
+  /** The stones this map stands, drawn and packed: by an art worker, the page going on meanwhile (`art`, sliced: render/slices.ts,
+   *  View.build's runestones), else here. */
+  static *stones(style: Style, t: Tuning, map: ForestMap, art?: (job: ArtJob) => Promise<ArtResult>): Steps<MarkerStones> {
+    const { job, index, stoneOf, keys } = MarkerArt.stoneJob(style, t, map), heights = new Map<string, number>();
+    yield "stones";
+    const made = yield* awaitOr(() => art ? art(job) : Promise.reject(new Error("here")), () => runJob(job, Art.defaultCanvas as MakeCanvas));
+    keys.forEach((k, i) => heights.set(k, made.stones![i]));
+    return { index, stoneOf, heights, pixels: made.px };
   }
   /** Let go of the stones' atlas. */
   dispose(): void { this.atlas.albedo.dispose(); this.atlas.normal.dispose(); }
@@ -63,30 +81,6 @@ export class MarkerArt {
   frame(cell: readonly [number, number], level: number): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
   /** How many art pixels an area's stone stands (its frame's drawn rows). */
   height(cell: readonly [number, number]): number { return this.heights.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0; }
-}
-
-// Rows from the topmost drawn pixel to the lowest (sprites stand on their lowest drawn pixel).
-function drawnHeight(c: HTMLCanvasElement): number {
-  const d = c.getContext("2d", { willReadFrequently: true })!.getImageData(0, 0, c.width, c.height).data;
-  let top = -1, bottom = -1;
-  for (let i = 3; i < d.length; i += 4) if (d[i] > 0) { const y = Math.floor((i >> 2) / c.width); if (top < 0) top = y; bottom = y; }
-  return top < 0 ? 0 : bottom - top + 1;
-}
-
-// The rune's glowing pixels (alpha 254) in the sigil's colour, by their brightness, times k.
-function recolour(b: Baked & { A: HTMLCanvasElement }, rgb: number[], k: number): Baked {
-  const c = document.createElement("canvas");
-  c.width = b.w; c.height = b.h;
-  const g = c.getContext("2d", { willReadFrequently: true })!;
-  g.drawImage(b.A, 0, 0);
-  const img = g.getImageData(0, 0, b.w, b.h), d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] !== 254) continue;
-    const lum = Math.max(d[i], d[i + 1], d[i + 2]) / 255, white = Math.max(0, lum - 0.75) * 2.4;
-    for (let j = 0; j < 3; j++) d[i + j] = Math.min(255, (rgb[j] * (1 - white) + 255 * white) * lum * k);
-  }
-  g.putImageData(img, 0, 0);
-  return { ...b, A: c };
 }
 
 const BEAM_VERT = /* glsl */ `

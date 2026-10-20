@@ -1,9 +1,9 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
 import { chartOpen, chartWarmsNight, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { divesHome, opensOnChart } from "./app/opening";
+import { divesHome, openingWay, opensOnChart } from "./app/opening";
 import { bedside, wakeInBedroom } from "./rules/opening";
-import { startWake, waking } from "./rules/wakeUp";
+import { startWake } from "./rules/wakeUp";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
@@ -18,6 +18,7 @@ import { awaitingSpell } from "./rules/leypulse";
 import { parseSeed } from "./rules/map";
 import { Input } from "./platform/input";
 import { View } from "./render/view";
+import { prewarmArtWorkers } from "./render/assets";
 import { CHANGELOG_VERSIONS } from "./changelog";
 import { setupStartScreen, startOnGesture } from "./ui/startScreen";
 import { AimHud } from "./render/aimhud";
@@ -62,6 +63,7 @@ import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
+prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
 const bootLink = new URLSearchParams(location.search);
@@ -110,7 +112,7 @@ const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : prepUsed === "unsound" ? -2 : prepUsed === "failed" ? -3 : 0, mapPrepMs: Math.round(hydrateMs) }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1; unsound, -2; failed to hydrate, -3. mapPrepMs: the hydrate's own time)
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
-const view = page.view = new View(canvas, N().game, gameStyle(style, bootTuning), savedLook);
+const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 loadTimes.view = performance.now();
 performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
@@ -156,7 +158,7 @@ const startEl = document.getElementById("start")!;
 // Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
-const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !waking(n.game)) n.flags.castWanted = true; }; // (waking in her bedroom: the curtains cast it, rules/wakeUp.ts)
+const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !n.game.wake) n.flags.castWanted = true; }; // (a night woken in her bedroom: E at her decks casts it, rules/wakeUp.ts)
 window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
@@ -206,7 +208,7 @@ const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
-freeze.started = () => startEl.style.display === "none" || creator.open; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
+freeze.started = () => (startEl.style.display === "none" || creator.open) && !chartWarmsNight(); // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?"; not under the first load's chart: its Esc is the chart's)
 
 // Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
 // the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party
@@ -366,8 +368,25 @@ freeze.onStamp = text => pauseSliders?.setStamp(text);
 // bedroom and on the pause page, and when a menu's code has been replaced under it.
 const newBuild = new NewBuildNotice(BUILD, document.getElementById("new-build"));
 let menuGone = false;
+/** Controls on the pause page (the new opening, Ed's decision 3: "Controls are taught in the bedroom and kept in the pause menu"):
+ *  where the creator's tabs (its ❔ Controls among them) were never set up, a button while paused shows the start card's keys
+ *  (ui/cornerPanel.ts, borrowed and put back). */
+let controlsBtn: HTMLButtonElement | null = null;
+function pauseControls(on: boolean): void {
+  const keys = startEl.querySelector<HTMLElement>(".keys");
+  if (!on || dressed || !keys) { if (controlsBtn) controlsBtn.style.display = "none"; closeCornerPanel(); return; }
+  if (!controlsBtn) {
+    controlsBtn = document.createElement("button");
+    controlsBtn.type = "button"; controlsBtn.textContent = "❔ Controls";
+    controlsBtn.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.86);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;cursor:pointer";
+    controlsBtn.addEventListener("click", () => toggleCornerPanel(document.body, "controls", "CONTROLS", [keys]));
+    document.body.append(controlsBtn);
+  }
+  controlsBtn.style.display = "";
+}
 freeze.onToggle = on => {
   sound.freeze(on);
+  pauseControls(on);
   musicLabPanel?.frozen(on);
   creator.frozen = on; // (paused in her room: its keys and clicks wait, Esc resumes; the sliders backed over its panel)
   if (on) void newBuild.check();
@@ -517,7 +536,8 @@ document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => newNight("fresh"));
 /** The first load's sea chart (app/opening.ts): over the boot's night, its art drawn on under it (ui/chartOverlay.ts chartWarmsNight),
- *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts) and the zoo; no Close.
+ *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts); no Close. (No Zoo: Ed,
+ *  2026-10-20, "the zoo is now accessed via the bestiary": the book in the treehouse's bestiary.)
  *  Choosing an island starts its night in place as a sail does, the boot's own never played, so nothing's recorded on the chart. */
 function openingChart(): void {
   mark("opening:chart");
@@ -526,7 +546,6 @@ function openingChart(): void {
   openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, noBake: dives, corner: [
     ...(news ? [{ label: "📜 What's new", onClick: () => toggleCornerPanel(host(), "news", "WHAT'S NEW", [news]) }] : []),
     ...(shakeEl ? [{ label: "⚙ Options", onClick: () => toggleCornerPanel(host(), "options", "OPTIONS", [shakeEl]) }] : []),
-    { label: "🐾 Zoo", title: "Every creature, out of a run", onClick: () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); } },
   ] });
 }
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
@@ -547,6 +566,11 @@ function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
 }
+/** Whether she's been through the whole wake-up on this browser before (Ed's decision 4: the first game plays it all, later loads
+ *  the shorter one); set as the curtains first open. */
+const WOKEN_KEY = "witch.woken";
+const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
+const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: the whole wake-up again next time */ } };
 /** The new opening's dive (app/opening.ts divesHome): the first load's chart sailing home, the boot's own night, made under it: no
  *  new night; she wakes in her bedroom in the treehouse (rules/opening.ts) and the chart's flight carries on into it, landing as a
  *  sail's does (the HUD faded in, the night started). False if it can't (no flight's end, no arrival knobs, no rooms): sailed in
@@ -554,7 +578,7 @@ function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean
 function diveHome(to: Sailed): boolean {
   const n = N(), A = n.tuning.arrive;
   if (!to.end || !A || !wakeInBedroom(n.game)) return false;
-  startWake(n.game, n.game.herTime); // (in bed, the alarm to ring as the dive lands: rules/wakeUp.ts)
+  startWake(n.game, n.game.herTime, wokenBefore()); // (in bed, the alarm to ring as the dive lands: rules/wakeUp.ts; the shorter one after the first game's)
   mark("opening:dive");
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
@@ -629,10 +653,14 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const u = new URL(href);
   backGuard.sailed(u.search + u.hash);
   armBack();
-  const room = spec.params.get("creator") !== "0";
+  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the shorter wake-up
+  // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
+  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "chart";
+  const room = !wakes && spec.params.get("creator") !== "0";
   startEl.classList.add("loading");
-  startEl.style.display = room ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
+  startEl.style.display = room || wakes ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
   if (room) { dressCreator(); creator.show(); }
+  if (wakes) (wakeCard ??= new WakeCard()).sleep();
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   creator.loadout = { hat: n.game.spells.hat, broom: n.game.spells.broom };
@@ -642,6 +670,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true)) { mark("opening:bed"); start(); }
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -695,10 +724,10 @@ function frame(now: number): void {
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
   if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); }
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); if (e === "curtains") woke(); }
     if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
-  } else wakeCard?.hide();
+  } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart((href, to) => void sailFromChart(href, to), chartWorldArg());
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.

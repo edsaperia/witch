@@ -20,6 +20,7 @@ import { floorClearing } from "../rules/speakers";
 import { beachOf, type Beach } from "../rules/mapShape";
 import { smoothstep } from "../rules/random";
 import { SLOPE_SCALE, terrainAt, type HillsTuning } from "../rules/terrain";
+import type { Steps } from "./slices";
 
 // The hills' noise and the layout's rises and hollows are the rules' (rules/terrain.ts: the trees grow by them too).
 export { hillsAt, SLOPE_SCALE, type HillsTuning } from "../rules/terrain";
@@ -487,6 +488,20 @@ export class HeightField {
     this.texture.needsUpdate = true;
     HEIGHT_UNIFORMS.uHeightWin.value.set(this.H.on ? RES : 0, N, ci * RES, cj * RES);
     return true;
+  }
+
+  /** The window's first fill round (x, z), as follow makes it, in steps (render/slices.ts: View.build's ground): its samples
+   *  worked out a few rows at a time (the same values a row or the whole window at once: limitedBlock), then stored a few rows
+   *  at a time. Filled already: follow as ever. */
+  *fillSteps(x: number, z: number): Steps {
+    if (this.filled || !this.H.on) { this.follow(x, z); return; }
+    const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP, h = N / 2, i0 = ci - h, j0 = cj - h, CH = 8;
+    const ahead = (i: number, j: number, v: number) => { const k = sampleKey(i, j); if (!this.ahead.has(k)) this.ahead.set(k, v); };
+    for (let j = j0; j < j0 + N; j += CH) { yield; this.limitedBlock(i0, i0 + N, j, Math.min(j + CH, j0 + N), ahead); }
+    for (let j = j0; j < j0 + N; j += CH) { yield; for (let jj = j; jj < Math.min(j + CH, j0 + N); jj++) for (let i = i0; i < i0 + N; i++) this.put(i, jj); }
+    this.ci = ci; this.cj = cj; this.filled = true;
+    this.texture.needsUpdate = true;
+    HEIGHT_UNIFORMS.uHeightWin.value.set(RES, N, ci * RES, cj * RES);
   }
 
   /** Work out, within budgetMs, the samples the window will take in when it next moves on along
