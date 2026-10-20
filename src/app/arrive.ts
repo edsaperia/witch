@@ -21,7 +21,8 @@ export class ArrivalFlight {
   /** The last moment the island isn't seen: the still about to fade, or a skip straight to her decks (main.ts revealArt). */
   onReveal: () => void = () => {};
 
-  constructor(readonly rec: Arrival, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null) {
+  /** `frameAt`: where the rise frames before the last shot (rules/arrive.ts arrivePlan): the new opening's bedroom (app/opening.ts). */
+  constructor(readonly rec: Arrival, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null, private readonly frameAt?: { x: number; z: number }) {
     const img = still;
     if (!img) return;
     if (!img.src && rec.still) img.src = rec.still; // (no still, too big for the storage: a plain dark screen instead)
@@ -37,7 +38,7 @@ export class ArrivalFlight {
   /** The start's art is ready: the camera takes over at the chart's behind the still (from the next frame). */
   begin(g: Game): void {
     if (this.plan || this.done) return;
-    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g));
+    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
     if (this.skipped) this.land();
   }
 

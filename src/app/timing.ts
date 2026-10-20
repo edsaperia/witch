@@ -1,6 +1,7 @@
 // The transition's timings in the playtest log (Ed, 2026-10-19, the transition review: "?timing=1, so one run on Ed's laptop
 // gives real numbers"): each step of treehouse → sea chart → sail → new island → her decks is a performance mark (witch:*, and
-// these: chart:open, chart:mounted, chart:island1, chart:islands, chart:sail, chart:flown, chart:go, game:frame1, game:arrived);
+// these: chart:open, chart:mounted, chart:island1, chart:islands, chart:sail, chart:flown, chart:go, game:frame1, game:arrived; and the
+// new opening's beats, opening:*, app/opening.ts);
 // with ?timing=1 (kept for the tab, so it follows the sail's new page), the marks and the main thread's long tasks are carried
 // across the page's reload and written into the new page's run of the L log (`timing`), in wall-clock milliseconds from the
 // first mark, with each step's own time.
@@ -33,7 +34,7 @@ export function watchLongTasks(): void {
 
 /** This page's marks and long tasks, in wall-clock ms. */
 function thisPage(page: number): Timing {
-  const steps = performance.getEntriesByType("mark").filter(m => /^(witch|chart|game):/.test(m.name)).map(m => ({ name: m.name, at: Math.round(performance.timeOrigin + m.startTime), page }));
+  const steps = performance.getEntriesByType("mark").filter(m => /^(witch|chart|game|opening):/.test(m.name)).map(m => ({ name: m.name, at: Math.round(performance.timeOrigin + m.startTime), page }));
   return { steps, longTasks: longTasks.slice() };
 }
 

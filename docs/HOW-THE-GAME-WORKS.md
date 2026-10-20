@@ -16,6 +16,19 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
 
 ## 2. How a run plays out
 
+0. **The new opening (being built; off by default).** With `?opening=chart` (or the tuning's `opening.chart`), a plain first load (its link naming no seed or island) opens on the **sea chart** instead of the creator (Ed, 2026-10-20; `app/opening.ts`, the storyboard at previews/ed/opening-mock/ on claude/ed-shots).
+   - A first game has only home to sail to: what's unlocked is home and what she's found.
+   - The chart's corner holds **What's new**, **Options** and the **Zoo**.
+   - Home's night is made under the chart, and its art is drawn meanwhile.
+   - **Choosing home** goes on into that night, not a new one. The chart's flight carries on over the forest, up to frame the treehouse, and in to her **bedroom**, where she wakes beside her bed (`rules/opening.ts`). Any key skips the flight.
+   - **The wake-up** (`rules/wakeUp.ts`, the page's card and dark in `render/wakeUp.ts`). She lands in bed in the dark, with her phone's alarm ringing:
+     - **E** snoozes it for 5 s, as often as you like; the card counts the snoozes and when it rings again.
+     - **WASD** (or a rise) gets her up: she stretches (3 s), the room lights, and she stands beside the bed. WASD walks.
+     - The first time she comes to the **dressing table**, its mirror opens by itself (skin, hair and earrings).
+     - The **curtains** stay shut until the island is ready (its art drawn). E there says "not yet" until then; after that, E opens them and casts the party spell.
+     - Until the curtains open she can't leave the bedroom, the bed doesn't end the night, and no key casts the spell. Nothing gets her ahead of the build.
+   - For now she then walks out to the decks; the DJ intro starting the party in place of the spell comes next.
+   - Any other island (on a later game) starts its night in place, as a sail does. Nothing is recorded on the chart, since the boot's night under it was never played.
 1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.
 3. **Boot-up.** When she leaves the decks a pulse runs from the treehouse down to the home ring and round it at 4 m/s (`boot.speed`: the ley pulse's speed till Ed slowed the waves to 1 m/s on 2026-10-18, the boot kept as it was), turning each little runestone into a speaker as it passes: the first about 3 s in, the whole 179 m path in **about 45 s**. The animals still attack during it, but no waves come.
