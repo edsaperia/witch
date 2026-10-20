@@ -22,20 +22,20 @@ Ed: the first load starts on the sea chart, with only home unlocked in a first g
 | 1 | `01-chart.png` | The sea chart, only home open | the player | Click home: **Wake up at home**. Pan and zoom; locked islands say what opens them | The page with no night yet (Hotel's plan E5: a Page with `night = null`); the chart's islands; home's map in a worker and its art warming |
 | 2a | `02-zoom.png` | The chart's camera dives onto home | 2–3 s | nothing | `startNight` begins: the seed, the game, then the island's layers in slices (steps 1–3) |
 | 2b | `03-window-in.png` | …and into her lit bedroom window | 2–3 s | nothing | the build goes on; the bedroom (island-independent) is ready at once |
-| 3a | `04-alarm.png` | Dark; the alarm goes off | 2 s | **E** snoozes | the build |
-| 3b | `05-snooze.png` | Snooze: "five more minutes…" | 2–3 s | E slaps it quiet, or it rings again louder | the build |
+| 3a | `04-alarm.png` | Dark; her phone alarm goes off | 2 s | **E** snoozes | the build |
+| 3b | `05-snooze.png` | Snooze: "five more minutes…" | 5 s a snooze, unlimited | E snoozes again; WASD gets her up | the build |
 | 3c | `06-stretch.png` | The lamp on; she gets up, yawns, stretches | ~3 s | nothing | the build |
-| 3d | `07-up.png` | Out of bed: her first steps | ~2 s, then the player | **WASD**, taught in a safe room | the build; the window shows mist |
+| 3d | `07-up.png` | Out of bed: her first steps | ~2 s, then the player | **WASD**, taught in a safe room | the build; the curtains shut |
 | 4 | `08-mirror.png` | The mirror: skin, hair, hair style, face, earrings | the player | the mirror's station opens by itself the first time | the build finishes, and **the swap (step 4)** happens here |
-| 5a | `09-window.png` | The window: the island | ~3 s | E looks out (the camera goes through it) | ready; if not, mist, and she waits at the sill |
-| 5b | `10-walk.png` | Out through the rooms to the decks | the player | walk; every station works | nothing |
-| 5c | `11-party.png` | At her decks: the party spell | 6.5 s + the boot | cast the spell | nothing |
-| ★ | `12-later.png` | A returning player's later load | ~10 s to the decks if skipped | any key skips the zoom and the wake-up; the mirror optional | the same build: the skips go no faster than it |
+| 5a | `09-window.png` | The window: curtains shut until the island is ready | until ready, then E | E opens the curtains once it's ready ("not yet" before) | the curtains wait on the build |
+| 5b | `10-walk.png` | Out through the rooms to the decks | the player | walk; every station works; all rooms alike | nothing |
+| 5c | `11-party.png` | At her decks: the DJ intro starts the party | 6.5 s + the boot | E at the decks: the scratch routine (no party spell) | nothing |
+| ★ | `12-later.png` | A returning player's later load (open) | ~10 s to the decks if skipped | proposal: any key skips the zoom and the wake-up; the mirror optional | the same build: the skips go no faster than it |
 
 **Timings.** The beats are Foxtrot's:
 - the zoom to the window 2–3 s;
 - dark plus the alarm 2 s;
-- snooze 2–3 s;
+- snooze 5 s a time (Ed), as often as she likes;
 - wake and stretch 3 s;
 - out of bed 2 s;
 - the mirror at the player's pace;
@@ -47,7 +47,7 @@ They add up to about 15 s before the mirror, plus the mirror, plus the walk.
 - The chart: mounted in ~4 s, the first islands at ~18 s, all 65 at ~90 s cold, or 5 s from the cache on a revisit.
 - Building an island: 15–25 s.
 
-So the wake-up, plus a typical minute at the mirror, covers the build even here. **The only thing that waits is the window:** if the island isn't ready when she reaches it, it shows mist and she waits at the sill.
+So the wake-up, plus a typical minute at the mirror, covers the build even here. **The only thing that waits is the window:** if the island isn't ready when she reaches it, the curtains stay shut until it is.
 
 **What it replaces.** Today the page opens on the creator screen, which doubles as the loading cover: the fairy lights fill, then the 🎶 scroll unrolls. Casting it puts her at her decks for the 6.5 s scratch routine, then the speakers boot. There's no tutorial.
 
@@ -55,67 +55,48 @@ In this opening:
 - the wake-up is the loading cover;
 - the bedroom teaches walking and E;
 - the mirror is the creator's first, smaller step;
-- the party spell moves to the decks.
+- the DJ intro at the decks starts the party, in place of the party spell (Ed).
 
-## A returning player (frame ★)
+## A returning player (frame ★): open
 
-**Recommended: the same beats, skippable and shorter.**
+Ed is sending laptop timings first. **The proposal: the same beats, skippable and shorter.**
 1. The chart opens on the island they last played, with every island they've opened lit.
 2. Choosing one zooms to its treehouse window (~3 s). Any key skips the zoom and the wake-up: she's already up.
 3. The mirror is optional (walk past it, or E to change).
-4. The window waits as before if the island isn't ready.
+4. The curtains wait as before if the island isn't ready.
 5. The DJ intro is skippable.
 
-That makes about 10 s to the decks when skipped, never shorter than the island's own build. See Q4.
+That makes about 10 s to the decks when skipped, never shorter than the island's own build.
 
-## Open questions for Ed (recommendation first)
+## Ed's decisions (2026-10-20)
 
-1. **The alarm's sound.**
-   - **a) A wind-up bell clock, synthesised in the music's key like every other sound effect,** its bells on the intro's first chord, so the snooze cuts it on the beat. (recommended)
-   - b) Her familiar as the alarm (the crow cawing, the cat on her chest).
-   - c) The intro itself as the alarm: a music box on the bedside table plays its first layer.
-   - d) A plain modern phone alarm, for the joke.
-2. **The 6.5 s DJ intro at the decks.**
-   - **a) Keep it, skippable with any key**: it's the moment the party starts. (recommended)
-   - b) Keep it only on a first game.
-   - c) Cut it: the spell goes straight to the speakers' boot.
-   - d) Move a shorter version into the morning: she checks the decks from the window.
-3. **What replaces the creator screen's tabs (❔ Controls, 📜 What's new, ⚙ Options, and the zoo).**
-   - **a) Each to its natural home** (recommended):
-     - What's new and Options as corner buttons on the chart, which is the first screen now;
-     - Controls taught by prompts in the bedroom (WASD out of bed, E at things) and kept in the pause menu;
-     - the zoo through the bestiary's book and a button on the chart.
-   - b) All of them in the pause menu only.
-   - c) As objects in the bedroom: a noticeboard for What's new, a book of controls, a clock for options.
-   - d) Keep a small start screen before the chart, with those tabs.
-4. **Skipping for returning players.**
-   - **a) Skippable and shorter on later loads** (frame ★); the first game plays it all. (recommended)
-   - b) The same every time, unskippable: it's the island's loading time anyway.
-   - c) Skippable on every load, the first game included.
-   - d) Later loads skip the wake-up entirely and land at the decks; the wake-up only on a first game and after sleeping in the bed.
-5. **The creator's choices on a first game.**
-   - **a) The mirror only (skin, hair, hair style, face, earrings).** The rest is the classic look until she visits the dressing room and the garage, in play. (recommended)
-   - b) The whole of today's creator at the mirror on a first game.
-   - c) No mirror on a first game; she goes straight to the window.
-   - d) The mirror with a Randomise button, for players who don't want to choose.
-6. **The way out on a first game.**
-   - **a) The rooms on her way out (dressing room, hub, balcony) lit, the rest dim**, so the path to the decks is plain. (recommended)
-   - b) All rooms alike.
-   - c) Her familiar leads the way.
-7. **Which mirror.**
-   - **a) A dressing table in the bedroom,** so the whole wake-up stays in one room until the window. (recommended)
-   - b) The dressing room's mirror: she walks through first, and the window comes after.
-8. **The snooze.**
-   - **a) One snooze, costing nothing** (about 2 s more of the build). (recommended)
-   - b) Unlimited snoozes, each a little longer, as long as the island is still building.
-   - c) No snooze: any key gets her up.
-9. **If the island isn't ready at the window.**
-   - **a) Mist outside, she waits at the sill, the music rising; it clears when ready.** (recommended)
-   - b) She can walk on through the rooms (their windows misted), and only the balcony door waits.
-   - c) Show a progress hint (a small fill on the window sill).
-10. **After the bed (ending a night).**
-    - **a) The next night starts with the wake-up again (the shorter one).** (recommended)
-    - b) Back to the chart first, then the wake-up.
+Every frame is redrawn to match (the changes: 1, 3a, 3b, 5a, 5b, 5c, ★; the curtains in every bedroom frame). The mist is gone from every frame: the curtains stay shut until 5a.
+
+1. **The alarm:** a plain modern phone alarm, "for the joke". Her phone lies lit and buzzing on the bedside table (3a).
+2. **The DJ intro:** "The DJ intro replaces the party spell before the party has started. After a knockout it remains the same."
+   - At the start of the night, E at the decks plays her 6.5 s scratch routine, and that starts the party; there's no party spell (5c).
+   - After a knockout, everything stays as it is today.
+3. **The creator screen's tabs:** each goes to its natural home.
+   - What's new and Options are buttons in the chart's corner, beside a Zoo button (1).
+   - Controls are taught in the bedroom (WASD out of bed, E at things) and kept in the pause menu.
+   - The zoo is reached through the bestiary's book and the chart's button.
+4. **Skipping for returning players: still open.**
+   - Ed asked whether the wake-up really is the loading time. It depends on the machine.
+   - He's sending real laptop numbers from `?timing=1` first.
+   - Whatever's chosen, a skip never goes past the build. Frame ★ shows the proposal, marked open.
+5. **The creator's choices on a first game:** the mirror only (skin, hair, hair style, face, earrings). The rest stays the classic look until the dressing room and the garage, in play.
+6. **The way out:** all rooms alike; the path isn't lit (5b).
+7. **Which mirror:** a dressing table in the bedroom (4).
+8. **The snooze:** unlimited, each one 5 s (3b).
+   - E snoozes again; a small count shows how many times and that it rings again in 5 s.
+   - WASD, or any move, gets her up.
+   - The timeline draws one snooze.
+9. **The island not ready at the window:** "Curtains are shut."
+   - The curtains stay closed until the island is ready; E at them meanwhile says "not yet".
+   - Once it's ready, E opens them onto the island (5a). There's no mist.
+10. **After the bed:** the next night starts with the shorter wake-up.
+
+**Not built yet:** the build depends on Hotel's sail-without-reload PRs 5 and 6, which give a Page with no night.
 
 ## Files
 

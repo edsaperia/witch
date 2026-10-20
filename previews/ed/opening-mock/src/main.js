@@ -18,19 +18,19 @@ function witch(pose, frame = 0, facing = "towards") {
 // ---- the timeline (seconds; "you" beats are paced by the player, drawn at a typical length) ----
 const BEATS = [
   ["chart", "1 Chart (you)", 0, 10, "#6fb4f0", true], ["zoom", "2a Zoom", 10, 12.5, "#6fb4f0"], ["window-in", "2b In", 12.5, 15, "#6fb4f0"],
-  ["alarm", "3a Alarm", 15, 17, "#f2c25c"], ["snooze", "3b Snooze", 17, 19.5, "#f2c25c"], ["stretch", "3c Stretch", 19.5, 22.5, "#f2c25c"], ["up", "3d Up", 22.5, 24.5, "#f2c25c"],
-  ["mirror", "4 Mirror (you)", 24.5, 39.5, "#5fd99a", true], ["window", "5a Window", 39.5, 42.5, "#b99be8"], ["walk", "5b To the decks (you)", 42.5, 50, "#5fd99a", true], ["party", "5c Party spell, speakers boot", 50, 60, "#ef7fb0"],
+  ["alarm", "3a Alarm", 15, 17, "#f2c25c"], ["snooze", "3b Snooze (5 s each)", 17, 22, "#f2c25c"], ["stretch", "3c Stretch", 22, 25, "#f2c25c"], ["up", "3d Up", 25, 27, "#f2c25c"],
+  ["mirror", "4 Mirror (you)", 27, 40, "#5fd99a", true], ["window", "5a Curtains", 40, 43, "#b99be8"], ["walk", "5b To the decks (you)", 43, 50, "#5fd99a", true], ["party", "5c DJ intro starts the party", 50, 60, "#ef7fb0"],
 ];
 const LOADS = [
   ["Page, chart", 0, 4, "#8d86a6"], ["Home's map + art warming", 4, 10, "#a99fc4"],
-  ["startNight steps 1–3: home built in slices behind the room (cloud 15–25 s; a real GPU far less)", 10, 37, "#f2c25c"], ["Swap", 37, 39.5, "#e8a43c"], ["Ready: the window shows the island", 39.5, 60, "#5fd99a"],
+  ["startNight steps 1–3: home built in slices behind the room (cloud 15–25 s; a real GPU far less)", 10, 37, "#f2c25c"], ["Swap", 37, 39.5, "#e8a43c"], ["Ready: the curtains can open", 39.5, 60, "#5fd99a"],
 ];
 function footer(now) {
   const X0 = 130, W = 1422, S = W / 60, seg = (t0, t1, c, txt, on) => `<div class="seg${on ? " now" : ""}" style="left:${X0 + t0 * S}px;width:${(t1 - t0) * S - 3}px;background:${c}">${txt}</div>`;
   let h = `<div class="lane"><div class="lab">Her / the player</div>${BEATS.map(([id, n, a, b, c]) => seg(a, b, c, n, id === now)).join("")}</div>`;
   h += `<div class="lane"><div class="lab">Loading</div>${LOADS.map(([n, a, b, c]) => seg(a, b, c, n, false)).join("")}</div>`;
   h += `<div class="axis">${[0, 10, 20, 30, 40, 50, 60].map(t => `<span style="left:${X0 + t * S}px">${t} s</span>`).join("")}</div>`;
-  h += `<div class="note" style="margin-top:6px;color:#5fd99a">"(you)": as long as the player likes, drawn at a typical length. If the island isn't ready when she reaches the window, it waits there (09).</div>`;
+  h += `<div class="note" style="margin-top:6px;color:#5fd99a">"(you)": as long as the player likes, drawn at a typical length. If the island isn't ready when she reaches the window, the curtains stay shut till it is (09).</div>`;
   h += `<div class="note" style="margin-top:4px">First game, typical pacing. Loading times are this cloud's software renderer (Foxtrot's REPORT, Hotel's plan E5); on a real GPU each is far shorter (not measured here).</div>`;
   return h;
 }
@@ -58,6 +58,8 @@ function bedroom(o) {
   R(g, "#2b1b11", 116, 10, 52, 48); g.fillStyle = "#2b1b11"; g.beginPath(); g.arc(142, 14, 26, Math.PI, 0); g.fill();
   R(g, "#1a2440", 121, 14, 42, 40); g.fillStyle = "#1a2440"; g.beginPath(); g.arc(142, 15, 21, Math.PI, 0); g.fill();
   R(g, "#5c3d28", 114, 56, 56, 4); // sill
+  if (o.curtains !== "open") { for (const [x0, x1] of [[114, 142], [142, 170]]) { R(g, "#7a2e3a", x0, 4, x1 - x0, 54); for (let x = x0 + 2; x < x1; x += 5) R(g, "#5e2230", x, 4, 2, 54); } R(g, "#3d271a", 112, 2, 60, 3); }
+  else { R(g, "#3d271a", 104, 2, 76, 3); for (const x0 of [104, 166]) { R(g, "#7a2e3a", x0, 4, 14, 56); for (let x = x0 + 2; x < x0 + 14; x += 5) R(g, "#5e2230", x, 4, 2, 56); } }
   // door through to the dressing room
   R(g, "#1b120c", 240, 16, 24, 50); R(g, "#5c3d28", 238, 14, 28, 3); R(g, "#5c3d28", 238, 14, 3, 52); R(g, "#5c3d28", 263, 14, 3, 52);
   // dressing table and mirror
@@ -72,9 +74,8 @@ function bedroom(o) {
   R(g, "#5b4a9a", 22, 76, 72, 36); for (let x = 26; x < 92; x += 8) R(g, "#6c5bb0", x, 78, 4, 32); R(g, "#3d271a", 18, 112, 80, 4);
   // bedside table and the alarm clock
   R(g, "#5a3a24", 100, 58, 18, 18); R(g, "#3d271a", 101, 76, 3, 8); R(g, "#3d271a", 114, 76, 3, 8);
-  const sh = o.ring ? 1 : 0;
-  R(g, "#c0392b", 104 + sh, 48, 10, 10); R(g, "#f3e8d0", 106 + sh, 50, 6, 6); R(g, "#1a1426", 108 + sh, 51, 1, 3); R(g, "#1a1426", 109 + sh, 53, 2, 1);
-  R(g, "#d4a017", 103 + sh, 45, 4, 3); R(g, "#d4a017", 111 + sh, 45, 4, 3);
+  const sh = o.ring ? 1 : 0; // (her phone, lying on the table: lit and buzzing while it rings)
+  R(g, "#1a1426", 102 + sh, 53, 14, 6); R(g, o.ring ? "#9fe0ff" : "#2a3550", 103 + sh, 54, 12, 4); if (o.ring) R(g, "#ffffff", 107 + sh, 55, 4, 2);
   // her
   if (o.her) { const [s, x, y] = o.her; g.drawImage(s, Math.round(x - s.width / 2), Math.round(y - s.height)); }
   if (o.herOver) o.herOver(g); // (a quilt over her legs, in bed)
@@ -90,7 +91,7 @@ function bedroom(o) {
   if (o.lampOn) { g.globalCompositeOperation = "lighter"; const gr = g.createRadialGradient(225, 40, 0, 225, 40, 90); gr.addColorStop(0, "rgba(255,190,90,.22)"); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(0, 0, GW, GH); g.globalCompositeOperation = "source-over"; }
   // up to the screen
   const out = document.createElement("canvas"); out.width = GW * P; out.height = 630; const q = out.getContext("2d"); q.imageSmoothingEnabled = false; q.drawImage(c, 0, 0, GW * P, GH * P);
-  return { canvas: out, win: [121 * P, 0 * P, 42 * P, 54 * P] };
+  return { canvas: out, win: [121 * P, 0 * P, 42 * P, 54 * P], q };
 }
 
 /** What shows through the window: the night sky, the island not yet ready (mist), or the island (the decks from above). */
@@ -133,6 +134,7 @@ const SCENES = {
     q.fillStyle = "rgba(6,8,20,.95)"; q.fillRect(0, 0, 1120, 64); label(q, 560, 26, "THE SEA CHART", "#fff3d6", 22); label(q, 560, 50, "your first night: only home is open", "#b9b0cf", 15);
     q.fillStyle = "rgba(6,8,20,.95)"; q.fillRect(0, 420, 1120, 210);
     card(q, 360, 432, 400, 186, ["The Ent's island, the middle of the world.", "Your treehouse is here."], { title: "Home", buttons: [["Wake up at home", true]] });
+    let bx = 1108; for (const b of ["🐾 Zoo", "⚙ Options", "📜 What's new"]) { q.font = `700 15px "DejaVu Sans", sans-serif`; const w = q.measureText(b).width + 22; bx -= w + 8; q.fillStyle = "rgba(255,255,255,.12)"; q.beginPath(); q.roundRect(bx, 14, w, 34, 8); q.fill(); q.strokeStyle = "rgba(111,180,240,.6)"; q.lineWidth = 1.5; q.stroke(); q.fillStyle = "#e9e2f6"; q.textAlign = "left"; q.textBaseline = "middle"; q.fillText(b, bx + 11, 32); }
     label(q, 160, 470, "music: the intro, low", "#8fc3f5", 15); label(q, 960, 470, "locked islands: their legends", "#8d86a6", 15); label(q, 960, 492, "wake as you play", "#8d86a6", 15);
   },
   zoom(q) {
@@ -160,32 +162,34 @@ const SCENES = {
   },
   alarm(q) {
     const B = bedroom({ light: "night", ring: true, her: [witch("stargaze", 0), 58, 92], herOver: g => { R(g, "#5b4a9a", 48, 84, 42, 26); for (let x = 50; x < 90; x += 8) R(g, "#6c5bb0", x, 86, 4, 24); } });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "night");
-    label(q, 460, 120, "BRRRRING!", "#ffd27a", 36); for (let i = 0; i < 3; i++) { q.strokeStyle = "#ffd27a"; q.lineWidth = 4; q.beginPath(); q.arc(436, 212, 34 + i * 14, -2.6, -0.5); q.stroke(); }
+    q.drawImage(B.canvas, 0, 0);
+    label(q, 470, 130, "♪ the phone's alarm ♪", "#9fe0ff", 30); for (let i = 0; i < 3; i++) { q.strokeStyle = "#9fe0ff"; q.lineWidth = 4; q.beginPath(); q.arc(436, 222, 30 + i * 14, -2.6, -0.5); q.stroke(); }
+    label(q, 470, 170, "(a plain phone ringtone, buzzing on the table)", "#cfc6e6", 16);
     label(q, 230, 270, "z", "#cfc6e6", 26);
-    prompt(q, 560, 590, "E", "snooze");
+    prompt(q, 560, 590, "E", "snooze (5 s)");
   },
   snooze(q) {
     const B = bedroom({ light: "night", her: [witch("placeSigil", 1), 96, 104] });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "night");
-    label(q, 440, 150, "*click*", "#cfc6e6", 30); bubble(q, 380, 330, "five more minutes…");
-    label(q, 560, 590, "or leave it: it rings again after 2 s, louder, and she gets up anyway", "#cfc6e6", 18);
+    q.drawImage(B.canvas, 0, 0);
+    label(q, 440, 150, "*tap*", "#cfc6e6", 30); bubble(q, 380, 330, "five more minutes…");
+    q.fillStyle = "rgba(14,12,24,.88)"; q.beginPath(); q.roundRect(640, 300, 300, 74, 10); q.fill(); label(q, 790, 324, "snoozed ×3", "#9fe0ff", 20); label(q, 790, 354, "it rings again in 5 s", "#cfc6e6", 16);
+    prompt(q, 330, 590, "E", "snooze again (+5 s)"); prompt(q, 800, 590, "WASD", "get up");
   },
   stretch(q) {
     const B = bedroom({ light: "dawn", lampOn: true, her: [witch("liftSigil", 2), 132, 120] });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "night");
+    q.drawImage(B.canvas, 0, 0);
     label(q, 520, 250, "~ yawn ~", "#fff3d6", 24);
     label(q, 560, 590, "the lamp comes on; she gets up, yawns and stretches (shown, ~3 s)", "#cfc6e6", 18);
   },
   up(q) {
     const B = bedroom({ light: "dawn", lampOn: true, her: [witch("stand", 0), 160, 128] });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "mist");
+    q.drawImage(B.canvas, 0, 0);
     prompt(q, 560, 590, "WASD", "walk (her first steps: the controls, taught in the room)");
     arrow(q, 700, 470, 820, 330, "#5fd99a"); label(q, 840, 300, "the mirror", "#5fd99a", 20);
   },
   mirror(q) {
     const B = bedroom({ light: "dawn", lampOn: true, her: [witch("stand", 0, "away"), 212, 96] });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "mist");
+    q.drawImage(B.canvas, 0, 0);
     // the station's panel: only the mirror's choices
     q.fillStyle = "rgba(14,12,24,.93)"; q.beginPath(); q.roundRect(30, 60, 400, 500, 12); q.fill(); q.strokeStyle = "rgba(255,214,140,.6)"; q.lineWidth = 2; q.stroke();
     label(q, 230, 94, "The mirror", "#fff3d6", 24);
@@ -195,35 +199,38 @@ const SCENES = {
     label(q, 790, 590, "first game: here; later: walk past it, or E to change", "#cfc6e6", 17);
   },
   window(q) {
-    const B = bedroom({ light: "dawn", lampOn: true, her: [witch("stand", 0, "away"), 142, 100] });
-    q.drawImage(B.canvas, 0, 0); windowView(q, B.win, "island");
-    // what she sees: the view out, big (the camera goes through the window on E)
-    q.fillStyle = "rgba(14,12,24,.9)"; q.beginPath(); q.roundRect(616, 70, 480, 330, 12); q.fill(); q.drawImage(DECKS, 300, 60, 680, 440, 626, 80, 460, 297); q.strokeStyle = "#5fd99a"; q.lineWidth = 3; q.strokeRect(626, 80, 460, 297);
-    arrow(q, 610, 160, 700, 160, "#5fd99a"); label(q, 856, 420, "the view out (E): the dancefloor below", "#5fd99a", 17);
-    label(q, 560, 590, "if it isn't ready yet: mist outside, she waits at the sill, the music rising", "#cfc6e6", 18);
+    q.fillStyle = "#0d0c14"; q.fillRect(0, 0, 1120, 630);
+    const shut = bedroom({ light: "dawn", lampOn: true, curtains: "shut", her: [witch("stand", 0, "away"), 142, 100] });
+    const open = bedroom({ light: "dawn", lampOn: true, curtains: "open", her: [witch("stand", 0, "away"), 142, 100] }); windowView(open.q ?? open.canvas.getContext("2d"), open.win, "island");
+    q.drawImage(shut.canvas, 0, 0, 1120, 630, 12, 46, 540, 304); q.drawImage(open.canvas, 0, 0, 1120, 630, 568, 46, 540, 304);
+    label(q, 282, 24, "until the island is ready: the curtains stay shut", "#e8a43c", 18); label(q, 838, 24, "ready: E opens them", "#5fd99a", 18);
+    arrow(q, 520, 200, 600, 200, "#5fd99a");
+    q.drawImage(DECKS, 300, 60, 680, 440, 330, 370, 460, 230); q.strokeStyle = "#5fd99a"; q.lineWidth = 3; q.strokeRect(330, 370, 460, 230);
+    label(q, 560, 616, "the view out, curtains open: the dancefloor below", "#5fd99a", 16); label(q, 160, 480, "no mist: shut is shut", "#cfc6e6", 16); label(q, 960, 480, "E at the shut curtains: \"not yet\"", "#cfc6e6", 15);
   },
   walk(q) {
     q.drawImage(ROOMS, 0, 0, 1600, 900, 0, 0, 1120, 630);
     arrow(q, 640, 120, 600, 360, "#5fd99a"); arrow(q, 560, 380, 300, 520, "#5fd99a");
     label(q, 760, 110, "out of the bedroom, through the dressing room", "#5fd99a", 18); label(q, 330, 560, "the hub, then the decks on the balcony", "#5fd99a", 18);
-    label(q, 900, 590, "(today's rooms, in game: #966)", "#cfc6e6", 15);
+    label(q, 900, 590, "(today's rooms, in game: #966; all alike, no path lit)", "#cfc6e6", 15);
   },
   party(q) {
     q.drawImage(DECKS, 0, 0, 1280, 720, 0, 0, 1120, 630);
-    q.fillStyle = "rgba(14,12,24,.9)"; q.beginPath(); q.roundRect(360, 520, 400, 64, 12); q.fill(); q.strokeStyle = "#ef7fb0"; q.lineWidth = 2; q.stroke(); label(q, 560, 552, "🎶 CAST THE PARTY SPELL", "#ffd2e6", 22);
-    label(q, 560, 40, "at her decks: the spell, the 6.5 s scratch routine (or not: see NOTES), then the speakers boot", "#fff3d6", 18);
+    q.fillStyle = "rgba(14,12,24,.9)"; q.beginPath(); q.roundRect(300, 512, 520, 80, 12); q.fill(); q.strokeStyle = "#ef7fb0"; q.lineWidth = 2; q.stroke();
+    label(q, 560, 538, "🎛 the scratch routine (6.5 s): the party starts", "#ffd2e6", 20); label(q, 560, 570, "no party spell: the DJ intro is the start", "#cfc6e6", 15);
+    prompt(q, 560, 40, "E", "at the decks: start the set");
   },
   later(q) {
     q.fillStyle = "#0d0c14"; q.fillRect(0, 0, 1120, 630);
     const col = (x, title, rows, c) => { label(q, x + 250, 34, title, c, 22); rows.forEach(([n, t], i) => { const y = 70 + i * 54; q.fillStyle = "rgba(255,255,255,.05)"; q.beginPath(); q.roundRect(x, y, 500, 46, 8); q.fill(); label(q, x + 14, y + 16, n, "#e9e2f6", 16, "left"); label(q, x + 14, y + 35, t, "#a99fc4", 13, "left"); }); };
     col(20, "First game", [["Chart, only home open", "chosen by the player"], ["Zoom to home, into the window", "~5 s, unskippable (a first load: the page is still warming)"], ["Alarm, snooze, stretch", "~7 s, shown; E to snooze"], ["Out of bed", "WASD taught here"], ["The mirror", "skin, hair, face, earrings"], ["The window", "waits for the island if it isn't ready"], ["Out to the decks", "the rooms on the way"], ["The party spell", "and the DJ intro"], ["~55 s on a fast machine", "most of it the player's own pace"]], "#f2c25c");
-    col(580, "A later load (recommended)", [["Chart, every island they've opened", "last island played highlighted"], ["Zoom to that island's treehouse", "~3 s, any key skips to the room"], ["Alarm, snooze, stretch", "any key skips: she's already up"], ["Out of bed", "skipped with the rest"], ["The mirror", "optional: walk past, or E to change"], ["The window", "the same wait if the island isn't ready"], ["Out to the decks", "as in the first game"], ["The party spell", "the DJ intro skippable"], ["~10 s to the decks if skipped", "never shorter than the island's build"]], "#5fd99a");
+    col(580, "A later load (proposal; open)", [["Chart, every island they've opened", "last island played highlighted"], ["Zoom to that island's treehouse", "~3 s, any key skips to the room"], ["Alarm, snooze, stretch", "any key skips: she's already up"], ["Out of bed", "skipped with the rest"], ["The mirror", "optional: walk past, or E to change"], ["The window", "the same wait if the island isn't ready"], ["Out to the decks", "as in the first game"], ["The party spell", "the DJ intro skippable"], ["~10 s to the decks if skipped", "never shorter than the island's build"]], "#5fd99a");
   },
 };
 
 const FRAMES = {
   "01-chart": { beat: "chart", n: "1", title: "First load: the sea chart, only home open", time: "player-paced", scene: "chart",
-    play: ["Click home (or Enter / A): <b>Wake up at home</b>", "Pan and zoom the chart; locked islands show their legend and say what opens them", "The corner buttons that live on today's creator screen move here: Controls, What's new, Options, Zoo (see NOTES)"],
+    play: ["Click home (or Enter / A): <b>Wake up at home</b>", "Pan and zoom the chart; locked islands show their legend and say what opens them", "What's new, Options and the Zoo: buttons in the chart's corner (Ed: decided). Controls are taught in the bedroom and kept in the pause menu"],
     shown: ["The chart, 65 islands; only home unlocked, the rest veiled and locked", "The music's intro, quiet: the same intro the speakers' boot builds on"],
     load: ["The page with no night yet (Hotel's E5: a Page with <i>night = null</i>)", "The chart: mounted ~4 s, first islands ~18 s, all 65 ~90 s on this cloud (cold); 5 s from cache on a revisit", "Behind it, already: home's map in a worker (Alpha) and the art workers warming home's art"],
     note: "Today's first load instead opens on the creator screen, which is the loading cover; the scroll then puts her at her decks." },
@@ -237,16 +244,16 @@ const FRAMES = {
     shown: ["The treehouse from outside at night, one window lit", "The camera pushes into the window and fades to the dark room"],
     load: ["Island build continues (steps 1–3)", "The bedroom itself is drawn from house.json and her sprites: island-independent, ready in well under a second"],
     note: "Drawn for the mock; in the game this is the Ent's own art, lit." },
-  "04-alarm": { beat: "alarm", n: "3a", title: "Dark, and the alarm goes off", time: "2 s", scene: "alarm",
+  "04-alarm": { beat: "alarm", n: "3a", title: "Dark, and her phone alarm goes off", time: "2 s", scene: "alarm",
     play: ["<span class=key>E</span> snooze (the sigil button: E, the pad's X, touch)", "Nothing else yet: she's asleep"],
-    shown: ["The bedroom in the dark, the moon through the window", "Her asleep under the quilt (the stargaze pose, the lying-down pose the party witches use)", "The clock rattling on the bedside table"],
+    shown: ["The bedroom in the dark, the curtains shut", "Her asleep under the quilt (the stargaze pose, the lying-down pose the party witches use)", "Her phone lit and buzzing on the bedside table: a plain modern phone alarm (Ed: \"for the joke\")"],
     load: ["Island build (steps 1–3)"],
     note: "Foxtrot's beat: dark plus alarm, 2 s." },
-  "05-snooze": { beat: "snooze", n: "3b", title: "Snooze", time: "2–3 s", scene: "snooze",
-    play: ["E slaps the clock quiet: \"five more minutes…\" (the one choice here; it costs nothing)", "No press: it rings again, louder, and she gets up"],
-    shown: ["Her arm out to the clock (placeSigil's reach), the clock still"],
+  "05-snooze": { beat: "snooze", n: "3b", title: "Snooze, as often as she likes", time: "5 s a snooze", scene: "snooze",
+    play: ["E: snooze, 5 s each, as many times as the player likes (Ed: unlimited)", "WASD (or any move): she gets up", "No press: it rings on, and she gets up after a while"],
+    shown: ["Her arm out to the phone (placeSigil's reach), the phone dark", "A small count: snoozed ×3, rings again in 5 s"],
     load: ["Island build (steps 1–3)"],
-    note: "Snoozing buys ~2 s more of the build; that's its real job, and it's honest about it: there's no penalty." },
+    note: "Each snooze is 5 s more of the build. Past the build it only costs the player their own time." },
   "06-stretch": { beat: "stretch", n: "3c", title: "Wake up and stretch", time: "~3 s", scene: "stretch",
     play: ["Nothing (shown)"],
     shown: ["The lamp comes on", "She throws off the quilt, gets up, yawns and stretches (liftSigil's arms up)"],
@@ -254,7 +261,7 @@ const FRAMES = {
     note: "Foxtrot's beat: wake and stretch, 3 s." },
   "07-up": { beat: "up", n: "3d", title: "Out of bed: her first steps", time: "~2 s, then the player", scene: "up",
     play: ["<b>WASD</b> (stick, touch) to walk: the first control, taught in a safe room", "E at things lights them, as in the house's rooms"],
-    shown: ["Her standing by the bed", "The window's view: mist while the island isn't ready"],
+    shown: ["Her standing by the bed", "The curtains shut"],
     load: ["Island build (steps 1–3)"],
     note: "This is where today's \"WASD\" keycap hint on the creator screen lives now." },
   "08-mirror": { beat: "mirror", n: "4", title: "The mirror: skin, hair and the rest", time: "player-paced", scene: "mirror",
@@ -262,26 +269,26 @@ const FRAMES = {
     shown: ["The station's panel (today's creator at only its choices, as #966's mirror)", "Her at the dressing table, her back to us"],
     load: ["The build finishes and <b>the swap (step 4)</b> happens while she's at the mirror: the window shows the island when she turns back (Hotel's E5)"],
     note: "Hat, cloak, broom and the rest wait for the dressing room and the garage, in play; the first game gives her the classic look till then (NOTES Q5)." },
-  "09-window": { beat: "window", n: "5a", title: "The window: the island", time: "~3 s", scene: "window",
-    play: ["Walk up to the window (E looks out: the camera goes through it)"],
-    shown: ["Through the window: the island, the dancefloor and the speakers below", "If it isn't ready yet: mist, and she waits at the sill"],
-    load: ["Ready. From here on it's the night as today"],
-    note: "Ed: \"…before seeing out of the window.\" The only thing that waits for the island." },
+  "09-window": { beat: "window", n: "5a", title: "The window: curtains shut until the island is ready", time: "until ready, then E", scene: "window",
+    play: ["Until the island is ready: the curtains stay shut (E at them: \"not yet\")", "Ready: E opens the curtains, and the view out is the island"],
+    shown: ["Left: the curtains shut. Right: opened, the island below", "The view out: the dancefloor and the speakers"],
+    load: ["The island's build; the curtains wait on it. Once ready: the night as today"],
+    note: "Ed: \"Curtains are shut\": they stay closed until the island is ready, then she can open them. No mist." },
   "10-walk": { beat: "walk", n: "5b", title: "Out through the rooms to the decks", time: "player-paced", scene: "walk",
-    play: ["Walk: bedroom → dressing room → hub → balcony (the rooms of #966, every station working)", "E at the decks: the party spell"],
+    play: ["Walk: bedroom → dressing room → hub → balcony (the rooms of #966, every station working)", "E at the decks: the DJ intro (5c)"],
     shown: ["The treehouse rooms at the game camera's angle (today's game)"],
-    load: ["Nothing: the night is up; the boot waits for the spell"],
-    note: "A first game might light only the path out (the rest of the rooms dim) so the way is clear: NOTES Q6." },
-  "11-party": { beat: "party", n: "5c", title: "At her decks: the party starts", time: "6.5 s + the boot", scene: "party",
-    play: ["Cast the party spell (as today's 🎶 scroll, now at the decks)", "Then: the night as today"],
-    shown: ["Her at the decks; the scratch routine (6.5 s) if it stays; the speakers boot"],
+    load: ["Nothing: the night is up; the boot waits for her at the decks"],
+    note: "All rooms alike: no path lit (Ed)." },
+  "11-party": { beat: "party", n: "5c", title: "At her decks: the DJ intro starts the party", time: "6.5 s + the boot", scene: "party",
+    play: ["E at the decks: her scratch routine (6.5 s) starts the party, in place of the party spell", "After a knockout: as today (Ed)", "Then: the night as today"],
+    shown: ["Her at the decks scratching; then the speakers boot"],
     load: ["Nothing"],
-    note: "Real frame: her at the decks (Foxtrot's cold-6-decks)." },
+    note: "Ed: \"The DJ intro replaces the party spell before the party has started. After a knockout it remains the same.\" Real frame: her at the decks (Foxtrot's cold-6-decks)." },
   "12-later": { beat: "", n: "★", title: "A returning player's later load", time: "~10 s to the decks if skipped", scene: "later",
     play: ["The same beats, each skippable with any key (the zoom, the wake-up); the mirror optional"],
     shown: ["The chart opens on the island they last played, every opened island lit"],
     load: ["The same: the skips go no faster than the island's build; skipping to the window waits there"],
-    note: "Recommended: skippable and shorter, not the same every time. See NOTES Q4." },
+    note: "Still open (Ed): he's sending laptop timings from ?timing=1 first. Whatever's chosen, a skip never goes past the build." },
 };
 
 const id = decodeURIComponent(location.hash.slice(1)) || "01-chart", F = FRAMES[id];
