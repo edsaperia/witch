@@ -223,8 +223,8 @@ const SCENES = {
   later(q) {
     q.fillStyle = "#0d0c14"; q.fillRect(0, 0, 1120, 630);
     const col = (x, title, rows, c) => { label(q, x + 250, 34, title, c, 22); rows.forEach(([n, t], i) => { const y = 70 + i * 54; q.fillStyle = "rgba(255,255,255,.05)"; q.beginPath(); q.roundRect(x, y, 500, 46, 8); q.fill(); label(q, x + 14, y + 16, n, "#e9e2f6", 16, "left"); label(q, x + 14, y + 35, t, "#a99fc4", 13, "left"); }); };
-    col(20, "First game", [["Chart, only home open", "chosen by the player"], ["Zoom to home, into the window", "~5 s, unskippable (a first load: the page is still warming)"], ["Alarm, snooze, stretch", "~7 s, shown; E to snooze"], ["Out of bed", "WASD taught here"], ["The mirror", "skin, hair, face, earrings"], ["The window", "waits for the island if it isn't ready"], ["Out to the decks", "the rooms on the way"], ["The party spell", "and the DJ intro"], ["~55 s on a fast machine", "most of it the player's own pace"]], "#f2c25c");
-    col(580, "A later load (proposal; open)", [["Chart, every island they've opened", "last island played highlighted"], ["Zoom to that island's treehouse", "~3 s, any key skips to the room"], ["Alarm, snooze, stretch", "any key skips: she's already up"], ["Out of bed", "skipped with the rest"], ["The mirror", "optional: walk past, or E to change"], ["The window", "the same wait if the island isn't ready"], ["Out to the decks", "as in the first game"], ["The party spell", "the DJ intro skippable"], ["~10 s to the decks if skipped", "never shorter than the island's build"]], "#5fd99a");
+    col(20, "First game", [["Chart, only home open", "chosen by the player"], ["Zoom to home, into the window", "~5 s, unskippable (a first load: the page is still warming)"], ["Phone alarm, snooze, stretch", "~10 s, shown; E snoozes (5 s each, unlimited)"], ["Out of bed", "WASD taught here"], ["The mirror", "skin, hair, face, earrings"], ["The window", "curtains shut until the island is ready"], ["Out to the decks", "the rooms on the way"], ["The DJ intro", "starts the party at the decks"], ["~55 s on a fast machine", "most of it the player's own pace"]], "#f2c25c");
+    col(580, "A later load (Ed: skip)", [["Chart, every island they've opened", "last island played highlighted"], ["Zoom to that island's treehouse", "~3 s, any key skips to the room"], ["Phone alarm, snooze, stretch", "any key skips: she's already up"], ["Out of bed", "skipped with the rest"], ["The mirror", "optional: walk past, or E to change"], ["The window", "the same: curtains shut until it's ready"], ["Out to the decks", "as in the first game"], ["The DJ intro", "starts the party; skippable"], ["~10 s to the decks if skipped", "a skip never goes past the build"]], "#5fd99a");
   },
 };
 
@@ -287,8 +287,8 @@ const FRAMES = {
   "12-later": { beat: "", n: "★", title: "A returning player's later load", time: "~10 s to the decks if skipped", scene: "later",
     play: ["The same beats, each skippable with any key (the zoom, the wake-up); the mirror optional"],
     shown: ["The chart opens on the island they last played, every opened island lit"],
-    load: ["The same: the skips go no faster than the island's build; skipping to the window waits there"],
-    note: "Still open (Ed): he's sending laptop timings from ?timing=1 first. Whatever's chosen, a skip never goes past the build." },
+    load: ["The same: the skips go no faster than the island's build; skipped early, she waits at the shut curtains"],
+    note: "Ed (2026-10-20), from his laptop's ?timing=1: skip on later loads. The first game plays it all. The first-ever load was 35 s to ready (28 s of it home's art); revisits ~3 s once Alpha's map-prep fix lands." },
 };
 
 const id = decodeURIComponent(location.hash.slice(1)) || "01-chart", F = FRAMES[id];

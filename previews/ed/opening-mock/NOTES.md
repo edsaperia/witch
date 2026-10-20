@@ -30,7 +30,7 @@ Ed: the first load starts on the sea chart, with only home unlocked in a first g
 | 5a | `09-window.png` | The window: curtains shut until the island is ready | until ready, then E | E opens the curtains once it's ready ("not yet" before) | the curtains wait on the build |
 | 5b | `10-walk.png` | Out through the rooms to the decks | the player | walk; every station works; all rooms alike | nothing |
 | 5c | `11-party.png` | At her decks: the DJ intro starts the party | 6.5 s + the boot | E at the decks: the scratch routine (no party spell) | nothing |
-| ★ | `12-later.png` | A returning player's later load (open) | ~10 s to the decks if skipped | proposal: any key skips the zoom and the wake-up; the mirror optional | the same build: the skips go no faster than it |
+| ★ | `12-later.png` | A returning player's later load | ~10 s to the decks if skipped | any key skips the zoom and the wake-up; the mirror optional | the same build: the skips go no faster than it |
 
 **Timings.** The beats are Foxtrot's:
 - the zoom to the window 2–3 s;
@@ -57,9 +57,9 @@ In this opening:
 - the mirror is the creator's first, smaller step;
 - the DJ intro at the decks starts the party, in place of the party spell (Ed).
 
-## A returning player (frame ★): open
+## A returning player (frame ★): decided
 
-Ed is sending laptop timings first. **The proposal: the same beats, skippable and shorter.**
+**Ed (2026-10-20): skip on later loads.** The first game plays the whole wake-up; later loads are shorter, and any key skips, but a skip never goes past the build.
 1. The chart opens on the island they last played, with every island they've opened lit.
 2. Choosing one zooms to its treehouse window (~3 s). Any key skips the zoom and the wake-up: she's already up.
 3. The mirror is optional (walk past it, or E to change).
@@ -80,10 +80,14 @@ Every frame is redrawn to match (the changes: 1, 3a, 3b, 5a, 5b, 5c, ★; the cu
    - What's new and Options are buttons in the chart's corner, beside a Zoo button (1).
    - Controls are taught in the bedroom (WASD out of bed, E at things) and kept in the pause menu.
    - The zoo is reached through the bestiary's book and the chart's button.
-4. **Skipping for returning players: still open.**
-   - Ed asked whether the wake-up really is the loading time. It depends on the machine.
-   - He's sending real laptop numbers from `?timing=1` first.
-   - Whatever's chosen, a skip never goes past the build. Frame ★ shows the proposal, marked open.
+4. **Skipping for returning players: skip on later loads** (decided after Ed's laptop numbers).
+   - **The first game** plays the whole wake-up.
+   - **Later loads** are shorter, and any key skips, but a skip never goes past the build: skipped early, she waits at the shut curtains. Frame ★ shows it.
+   - **His numbers** (Intel UHD, Chrome on Windows, `?timing=1`):
+     - the first-ever load took 35 s to ready, 28 s of it home's art drawn cold;
+     - revisits should be ready in about 3 s once Alpha fixes a 10 s map-prep stall.
+   - So on a first game the wake-up really is the loading time; on later loads it mostly isn't, hence the skip.
+   - **The arrival flight** (13.7 s on his laptop) stays as it is for now; the wake-up replaces it later.
 5. **The creator's choices on a first game:** the mirror only (skin, hair, hair style, face, earrings). The rest stays the classic look until the dressing room and the garage, in play.
 6. **The way out:** all rooms alike; the path isn't lit (5b).
 7. **Which mirror:** a dressing table in the bedroom (4).
@@ -96,7 +100,7 @@ Every frame is redrawn to match (the changes: 1, 3a, 3b, 5a, 5b, 5c, ★; the cu
    - Once it's ready, E opens them onto the island (5a). There's no mist.
 10. **After the bed:** the next night starts with the shorter wake-up.
 
-**Not built yet:** the build depends on Hotel's sail-without-reload PRs 5 and 6, which give a Page with no night.
+**Not built yet:** the build waits for Hotel's sail-without-reload PR 6 (a Page with no night).
 
 ## Files
 
