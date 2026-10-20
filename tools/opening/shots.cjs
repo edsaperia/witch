@@ -62,7 +62,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("she's at", JSON.stringify(w));
     if (!w || w.seated || w.z > -9) fail("she didn't wake in her bedroom");
     // the wake-up (rules/wakeUp.ts): each beat's shot, driven by its own input, waiting on her clock
-    const wake = () => page.evaluate(() => { const W = window.witch.game.wake; return W ? { beat: W.beat, snoozes: W.snoozes, open: W.open, mirror: W.mirror, ready: !!window.witch.game.islandReady, pending: window.witch.view.assets.pending, age: window.witch.game.herTime - W.at } : null; });
+    const wake = () => page.evaluate(() => { const W = window.witch.game.wake; return W ? { beat: W.beat, snoozes: W.snoozes, open: W.open, mirror: W.mirror, ready: !!window.witch.game.islandReady, pending: window.witch.view.assets.pending, drawn: window.witch.view.islandDrawn(), age: window.witch.game.herTime - W.at } : null; });
     const until = async (f, what) => { for (let i = 0; i < 1800; i++) { const s = await wake(); if (s && f(s)) return s; await page.waitForTimeout(500); } fail(`the wake-up never got to ${what}`); };
     if ((await wake())?.beat !== "alarm") fail("no alarm as she landed");
     await until(s => s.age > 1, "a second of ringing");
