@@ -2,14 +2,12 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING, type Tuning } from "./tuning";
-// Pack combat is on by default (Ed, 2026-10-20); these check the kinds' own moves, as they fight with it off (combat.packs.on false), packs.test.ts the packs.
-const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } });
+import { TUNING } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out (to watch them move). */
 function quiet(): Game {
-  const g = newGame(77, packsOff(TUNING));
+  const g = newGame(77, TUNING);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };

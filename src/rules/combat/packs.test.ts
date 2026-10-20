@@ -5,7 +5,8 @@ import { setupArena } from "../arena";
 import { type Creature } from "../creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "../game";
 import { TUNING, withTuning } from "../tuning";
-import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot } from "./packs";
+import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot, strikingNow } from "./packs";
+import { profileOf } from "../movement";
 import { COMBAT } from "./data";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -164,8 +165,8 @@ describe("pack combat in play (the switch on)", () => {
   }, 60000);
 });
 
-// Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the flyers on the ground, the toad's spores, the
-// bat's screech turning her movement.
+// Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the toad's spores, the bat's screech turning her
+// movement. (The flyers fought on the ground in a pack till Ed, 2026-10-20: now they keep their dive, below.)
 describe("pack combat, Phase 1's pieces", () => {
   it("the heron's sync: a blink of hers while it lasts brings one of the pack blinking in beside where it put her, striking", () => {
     let synced = 0, blinkAt = -1, near = Infinity;
@@ -195,12 +196,7 @@ describe("pack combat, Phase 1's pieces", () => {
     expect(burst).toBe(true);
   }, 60000);
 
-  it("the flyers fight on the ground in a pack (no swoop till the flyers' step), and the toad's spores leave a slowing patch", () => {
-    for (const k of ["bat", "raven"]) {
-      let up = 0;
-      arena(`pack-${k}`, 20, g => { up += g.creatures.filter(c => c.species === k && !!c.swoop).length; });
-      expect(up, k).toBe(0);
-    }
+  it("the toad's spores leave a slowing patch", () => {
     let patch = false;
     arena("pack-toad", 30, g => { patch ||= g.combat.trails.some(tr => g.creatures[tr.from]?.species === "toad"); });
     expect(patch).toBe(true);
@@ -300,5 +296,90 @@ describe("pack combat's fixes (Ed, 2026-10-20)", () => {
     expect(called).toBe(true); // (the howl came, and still one at a time)
     expect(most).toBeGreaterThan(0);
     expect(most).toBeLessThanOrEqual(cap);
+  }, 60000);
+});
+
+// Kinds keep their own moves (config/movement.json) inside a pack (Ed, 2026-10-20: "Kinds keep their movement.json moves within pack
+// combat: charges, dives, burrowing, screeches, slime and the wolves surrounding her"). A pack of each, her standing, 30 s: each of
+// these would have caught the loss (in a pack only the boar's stampede charged, and the toad's cloud leapt).
+describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
+  /** The wild members of a kind's pack in the arena (hers a baby, gone), and `each` step with them. */
+  function wild(kind: string, spec: string, secs: number, each: (g: Game, them: Creature[]) => void): Game {
+    let ids: number[] | null = null;
+    return arena(spec, secs, g => {
+      ids ??= g.arena!.ids.filter(id => g.creatures[id].species === kind && !g.creatures[id].leashed);
+      each(g, ids.map(id => g.creatures[id]));
+    });
+  }
+  /** At most this many of them striking at her at once (winding up, lunging, charging, leaping, diving): the dodge's tokens. */
+  const cap = Math.max(TUNING.dodge!.a.tokens, TUNING.dodge!.a.swarmTokens);
+  const atHer = (them: Creature[]) => them.filter(c => c.fight?.target?.kind === "witch" && strikingNow(c)).length;
+
+  it("charges: a boar's strike is its charge, on its turn (before the special), and the toad's its leap; one at a time at her", () => {
+    let early = 0, leaps = 0, most = 0;
+    const was = new Map<number, boolean>();
+    wild("boar", "boar*1@0,boar*2@1,boar*2@2", 30, (g, them) => {
+      const st = wildPack(g);
+      for (const c of them) { if (c.charge && !was.get(c.id) && st?.phase === "combo" && st.step < 2) early++; was.set(c.id, !!c.charge); }
+      most = Math.max(most, atHer(them));
+    });
+    wild("toad", "toad*1@0,toad*2@1,toad*2@2", 30, (_g, them) => {
+      for (const c of them) { if (c.leap && !c.leap.cloud && !was.get(c.id)) leaps++; was.set(c.id, !!c.leap); }
+      most = Math.max(most, atHer(them));
+    });
+    expect(early).toBeGreaterThanOrEqual(2); // (its lunger's charge; before, only the stampede's, the combo's last step)
+    expect(leaps).toBeGreaterThanOrEqual(2); // (its own leap and slam; before, only its cloud's)
+    expect(most).toBeLessThanOrEqual(cap); // (the stampede too: one after another)
+  }, 60000);
+
+  it("dives: wild bats and ravens circle aloft and dive at her on their pack's turn, one at a time", () => {
+    for (const k of ["bat", "raven"]) {
+      let dives = 0, most = 0;
+      wild(k, `${k}*1@0,${k}*2@1,${k}*2@2`, 30, (g, them) => {
+        const ids = new Set(them.map(c => c.id));
+        dives += fresh(g).filter(e => e.kind === "swooped" && ids.has(e.id!)).length;
+        most = Math.max(most, them.filter(c => c.fight?.target?.kind === "witch" && strikingNow(c)).length);
+      });
+      expect(dives, k).toBeGreaterThanOrEqual(2);
+      expect(most, k).toBeLessThanOrEqual(cap);
+    }
+  }, 60000);
+
+  it("burrowing: a mole pack's lunger goes under to her and comes up striking", () => {
+    let under = 0, up = 0;
+    wild("mole", "mole*1@0,mole*2@1,mole*2@2", 30, (g, them) => {
+      const ids = new Set(them.map(c => c.id));
+      for (const e of fresh(g)) if (ids.has(e.id!)) { if (e.kind === "burrowed") under++; if (e.kind === "surfaced") up++; }
+    });
+    expect(under).toBeGreaterThanOrEqual(2);
+    expect(up).toBeGreaterThanOrEqual(1);
+  }, 60000);
+
+  it("screeches: her bats in a pack strike with their screech, a pulse all round them", () => {
+    let pulses = 0;
+    arena("hers-bat", 30, g => { pulses += fresh(g).filter(e => e.kind === "pulse" && g.creatures[e.id!]?.species === "bat").length; });
+    expect(pulses).toBeGreaterThanOrEqual(2);
+  }, 60000);
+
+  it("slime: a snail pack leaves its slime trail as it goes, besides its wall", () => {
+    const r = (profileOf("snail")!.move!.radius ?? 2.5) * TUNING.fight.scale, slime = new Set<object>();
+    wild("snail", "snail*1@0,snail*2@1,snail*2@2", 20, (g, them) => { const ids = new Set(them.map(c => c.id)); for (const tr of g.combat.trails) if (ids.has(tr.from) && Math.abs(tr.r - r) < 1e-6) slime.add(tr); });
+    expect(slime.size).toBeGreaterThan(10);
+  }, 60000);
+
+  it("the wolves surround her: waiting their turns (its approach and its tell) they go round her to their places, not straight in", () => {
+    let turn = 0, t = 0;
+    const last = new Map<number, number>();
+    wild("wolf", "wolf*1@0,wolf*6@2", 30, (g, them) => {
+      const st = wildPack(g), w = g.witches[0].body;
+      for (const c of them) {
+        const a = Math.atan2(c.z - w.z, c.x - w.x), was = last.get(c.id);
+        last.set(c.id, a);
+        if ((st?.phase !== "approach" && st?.phase !== "tell") || was === undefined || c.gone) continue;
+        turn += Math.abs(((a - was + Math.PI * 3) % (Math.PI * 2)) - Math.PI); t += STEP;
+      }
+    });
+    expect(t).toBeGreaterThan(5);
+    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(30); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came)
   }, 60000);
 });

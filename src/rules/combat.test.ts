@@ -19,7 +19,6 @@ const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.roun
 /** The proximity chat, as before the 💌s (invites.on false). */
 const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
 
-const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } }); // (pack combat off: Ed, 2026-10-20, made it the default; a hurt pack member keeps away, packs.test.ts)
 function quiet(t: Tuning = TUNING): Game {
   const g = newGame(77, t);
   g.clock.paused = false;
@@ -477,7 +476,7 @@ describe("Ed's Stage 4 rulings", () => {
   it("has kiting kinds (the raven) keep their distance while they shoot (hers: wild ravens swoop, swoop.test.ts)", () => {
     const P = MOVEMENT.profiles.raven, mv = P.move; P.move = undefined;
     try {
-    const g = quiet(packsOff(TUNING)), w = g.witch;
+    const g = quiet(TUNING), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
     run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
     const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;
