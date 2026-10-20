@@ -382,8 +382,8 @@ export interface Tuning {
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
   home: { margin: number; gap: number };
   /** Arriving on an island from the sea chart (rules/arrive.ts): the still's push-in and cross-fade, and the flight's legs. */
-  /** Sailing from the map table's sea chart (app/sail.ts): the next night started on the same page (inPlace), or the page loaded
-   *  anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
+  /** Sailing from the map table's sea chart (app/sail.ts): the next night started on the same page (inPlace, and so every other
+   *  way to a new night), or the page loaded anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
   sail?: { inPlace: boolean };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
