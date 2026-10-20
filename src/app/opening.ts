@@ -1,7 +1,8 @@
 // The new opening (Ed, 2026-10-20; previews/ed/opening-mock/NOTES.md on claude/ed-shots): the first load starts on the sea chart, only
 // home unlocked in a first game (app/chartSave.ts unlocked: home and what she's found), its corner holding What's new, Options and the
-// zoo; choosing an island starts its night in place (app/night.ts startNight, as a sail does). Then the zoom to home, the wake-up in
-// the bedroom and the rest come in later PRs. Until the whole opening is proven it's off by default (the tuning's opening.chart);
+// zoo; choosing home dives on into the boot's own night (made under the chart) and into her bedroom in the treehouse, where she
+// wakes (rules/opening.ts); another island starts its night in place (app/night.ts startNight, as a sail does). The wake-up's
+// beats and the rest come in later PRs. Until the whole opening is proven it's off by default (the tuning's opening.chart);
 // ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover), and ?sail=reload still
 // loads the island's page as before.
 export type OpeningWay = "chart" | "old";
@@ -21,4 +22,11 @@ export function opensOnChart(link: URLSearchParams, tuning: { opening?: { chart?
   if (openingWay(link, tuning) !== "chart") return false;
   for (const k of ["seed", "island", "arrive", "bot", "zoo"]) if (link.has(k)) return false;
   return link.get("creator") !== "0";
+}
+
+/** Whether the first load's chart, sailing to `island`, dives into the boot's own night rather than starting another: the boot's
+ *  is home's (no ?island in its link), made and its art drawn under the chart, and never played; so the dive goes on into her
+ *  bedroom there (rules/opening.ts wakeInBedroom) with no wait for a new island. Any other island sails in place as ever. */
+export function divesHome(island: string, boot: { how: string; island: string }, played: boolean): boolean {
+  return island === "home" && boot.how === "boot" && (boot.island === "" || boot.island === "home") && !played;
 }

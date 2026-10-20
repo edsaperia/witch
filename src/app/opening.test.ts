@@ -1,7 +1,7 @@
 // The new opening's first load (app/opening.ts; Ed, 2026-10-20): which loads open on the sea chart, and that a first game's chart has
 // only home to sail to.
 import { describe, expect, it } from "vitest";
-import { openingWay, opensOnChart } from "./opening";
+import { divesHome, openingWay, opensOnChart } from "./opening";
 import { emptySave, recordNight, unlocked } from "./chartSave";
 
 const on = { opening: { chart: true } }, off = { opening: { chart: false } };
@@ -28,5 +28,17 @@ describe("the first load on the sea chart", () => {
     expect(unlocked(emptySave())).toEqual(["home"]);
     const after = recordNight(emptySave(), "home", { won: true, found: ["marten"] });
     expect(unlocked(after)).toEqual(["home", "marten"]);
+  });
+});
+
+describe("choosing home on the first load's chart", () => {
+  it("dives into the boot's own night (home's, never played); anything else sails in place", () => {
+    const boot = { how: "boot", island: "" };
+    expect(divesHome("home", boot, false)).toBe(true);
+    expect(divesHome("home", { how: "boot", island: "home" }, false)).toBe(true);
+    expect(divesHome("marten", boot, false)).toBe(false); // (another island: a new night)
+    expect(divesHome("home", boot, true)).toBe(false); // (the boot's night played already)
+    expect(divesHome("home", { how: "boot", island: "marten" }, false)).toBe(false);
+    expect(divesHome("home", { how: "sail", island: "" }, false)).toBe(false);
   });
 });

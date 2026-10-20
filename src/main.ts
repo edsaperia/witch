@@ -1,7 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
 import { chartOpen, chartWarmsNight, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { opensOnChart } from "./app/opening";
+import { divesHome, opensOnChart } from "./app/opening";
+import { bedside, wakeInBedroom } from "./rules/opening";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
@@ -54,7 +55,7 @@ import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
-import { hudFade, showStill } from "./app/arrive";
+import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
 
@@ -516,7 +517,8 @@ document.getElementById("fresh")?.addEventListener("click", () => newNight("fres
 function openingChart(): void {
   mark("opening:chart");
   const host = () => document.getElementById("chart-overlay") ?? document.body, news = startEl.querySelector<HTMLElement>(".ss-body");
-  openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, corner: [
+  const dives = (id: string) => { const n = N(); return divesHome(id, n.spec, !n.game.clock.paused || n.game.clock.time > 0); };
+  openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, noBake: dives, corner: [
     ...(news ? [{ label: "📜 What's new", onClick: () => toggleCornerPanel(host(), "news", "WHAT'S NEW", [news]) }] : []),
     ...(shakeEl ? [{ label: "⚙ Options", onClick: () => toggleCornerPanel(host(), "options", "OPTIONS", [shakeEl]) }] : []),
     { label: "🐾 Zoo", title: "Every creature, out of a run", onClick: () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); } },
@@ -531,6 +533,7 @@ function chartWorldArg(): number | undefined { return new URLSearchParams(locati
 function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean> {
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
   if (!record) mark("opening:sail"); // (the first load's chart: the boot's night never played)
+  if (!record && divesHome(to.island, n.spec, !n.game.clock.paused || n.game.clock.time > 0) && diveHome(to)) return Promise.resolve(true);
   if (record && save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
   carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
   if (sailWay(n.params, n.tuning) === "reload") { location.href = href; return Promise.resolve(false); }
@@ -538,6 +541,26 @@ function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean
     console.error("sail in place: it went wrong, so the island's page loads instead", e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
+}
+/** The new opening's dive (app/opening.ts divesHome): the first load's chart sailing home, the boot's own night, made under it: no
+ *  new night; she wakes in her bedroom in the treehouse (rules/opening.ts) and the chart's flight carries on into it, landing as a
+ *  sail's does (the HUD faded in, the night started). False if it can't (no flight's end, no arrival knobs, no rooms): sailed in
+ *  place instead. */
+function diveHome(to: Sailed): boolean {
+  const n = N(), A = n.tuning.arrive;
+  if (!to.end || !A || !wakeInBedroom(n.game)) return false;
+  mark("opening:dive");
+  gestured = true; // (she's played: the sound's woken already)
+  sound.sailing(1);
+  forgetArrival();
+  chartHeld = false; view.assets.hold(false);
+  const rec: Arrival = { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end };
+  showStill(rec); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip();
+  n.arrival = new ArrivalFlight(rec, A, document.getElementById("arrive-still") as HTMLImageElement | null, bedside(n.game) ?? undefined);
+  n.arrival.onReveal = revealArt;
+  lastDraw = 0;
+  if (n.flags.ready) n.arrival.begin(n.game); // (else the boot's own ready begins it)
+  return true;
 }
 /** Back after a sail in place opens the pause menu (Ed's decision 1; app/sail.ts): armed by the first sail (a first load leaves
  *  Back alone); while the next island is made it only keeps the guard. */
