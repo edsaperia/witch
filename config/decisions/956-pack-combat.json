@@ -7,9 +7,9 @@
       "pr": 956,
       "group": "Pack combat",
       "label": "Pack combat",
-      "note": "Home's ten kinds fight in packs (docs/backlog/combat.md build step 1; Ed, 2026-10-19): every member glows before a combo, the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws its kind's special, then they fall back by their kind's retreat and come again; her own pack combos without retreating. Off as built. Live: try it with ?arena=pack-fox (any home kind) or ?arena=hers-fox.",
+      "note": "Home's ten kinds fight in packs (docs/backlog/combat.md build step 1; Ed, 2026-10-19): every member glows before a combo, the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws its kind's special, then they fall back by their kind's retreat and come again; her own pack combos without retreating. Off as built; on by default since 2026-10-20 (Ed: \"Turn pack combat on by default\"), the toggle kept to turn it off for testing. Live: try it with ?arena=pack-fox (any home kind) or ?arena=hers-fox.",
       "control": { "type": "toggle" },
-      "default": false,
+      "default": true,
       "apply": { "knob": "combat.packs.on" }
     }
   ]

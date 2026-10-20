@@ -705,6 +705,20 @@ export class View {
     for (const c of g.map.legendClearings) { carvingMask(AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature); yield; }
   }
 
+  /** The island built (the new opening's curtains wait on it, rules/wakeUp.ts): the start's art made and every area type the map
+   *  has drawn (askIsland's; home's own area is its meadow); under ?quick=1, which draws only what's needed as it's needed, the
+   *  start's alone. Not the art still in flight: creatures and rigs coming into view keep that from ever emptying. */
+  islandDrawn(): boolean {
+    if (!this.prepared) return false;
+    if (this.quick) return true;
+    const m = this.game.map;
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      if (!this.assets.hasType(m.typeOf(x, y))) return false;
+    }
+    return true;
+  }
+
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
   private async compileAll(): Promise<void> {
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten

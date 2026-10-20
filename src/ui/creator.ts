@@ -321,7 +321,7 @@ export class Creator {
     // the first press anywhere in her room unlocks the sound, silently (browsers want a gesture first; Ed, 2026-10-06: no start card)
     const unlock = () => { if (this.open && !this.unlocked) { this.unlocked = true; this.onGesture(); } };
     this.root.addEventListener("pointerdown", unlock, { capture: true }); window.addEventListener("keydown", unlock, { capture: true });
-    window.addEventListener("keyup", e => { if (!this.open) return; this.held.delete(e.code); if (WALK_KEYS.has(e.code)) e.stopPropagation(); }, { capture: true });
+    window.addEventListener("keyup", e => { if (this.open) this.held.delete(e.code); }, { capture: true }); // (on to the game too: a key held as a station opened, the mirror opening by itself as she walks up to it, is let go there, or she walks on after)
     window.addEventListener("blur", () => this.held.clear());
     this.build();
   }

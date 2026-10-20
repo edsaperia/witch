@@ -46,6 +46,7 @@ const SOUNDS: [string, number, Play][] = [
   ["enraged", 0.8, s => s.enraged(0)],
   ["enraged-crowd", 0.8, s => s.enraged(0, 1, 6)],
   ["refused", 0.6, s => s.refused(0)],
+  ["alarm", 1.2, s => s.alarm()],
   ["happy", 0.6, s => s.happy(0)],
   ["lob-landing", 2.8, () => {}],
   ["legend-roar", 2.8, s => s.roar()],

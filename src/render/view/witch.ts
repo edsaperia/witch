@@ -62,14 +62,18 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const actLen = v.footAct ? F[v.footAct.pose].towards.length / F[v.footAct.pose].fps : 0;
   const acting = !!v.footAct && ht - v.footAct.at < actLen + 0.3;
   const still = Math.hypot(w.vx, w.vz) < 0.6;
-  const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing) ? 1 : 0;
+  // Waking up in her bedroom (the new opening, rules/wakeUp.ts): sitting up in bed while the alarm rings and she snoozes, her arms
+  // up in a stretch as she gets up.
+  const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : null;
+  const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing || !!bedPose) ? 1 : 0;
   const fdt = Math.min(0.1, Math.max(0, ht - v.footTime)), prevFoot = v.foot;
   v.footTime = ht;
   v.foot += (wantFoot - v.foot) * Math.min(1, fdt * 8);
   if (Math.abs(wantFoot - v.foot) < 0.01) v.foot = wantFoot;
   const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
   if (v.foot > 0.6) {
-    if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
+    if (bedPose && wk) wf = bedPose === "sit" ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
+    else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
     else if (L.talk) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
     else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
   } else if (v.foot > 0.02) wf = v.foot >= prevFoot ? pick("land", Math.floor(v.foot * 3)) : pick("takeoff", Math.floor((1 - v.foot) * 3));

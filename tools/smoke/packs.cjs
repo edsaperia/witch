@@ -1,5 +1,5 @@
 // Pack combat's shot sheet (rules/combat/packs.ts; docs/backlog/combat.md build step 1): the built game (DIST, default dist/) at
-// 1280x720 on a seed, pack combat switched on (?set=combat.packs.on=true), and for each home kind its debug arena (?arena=pack-<kind>:
+// 1280x720 on a seed, pack combat on (the default since Ed, 2026-10-20; it was ?set=combat.packs.on=true), and for each kind its debug arena (?arena=pack-<kind>:
 // a wild pack of three young and two adults coming for her) played headless till each moment of its fight: the tell (every member
 // glowing), the combo (wind-ups and shots), its special, and the lull (its retreat). Fails on a page error or a moment that never
 // comes. Writes <out dir>/<kind>-<moment>.png.
@@ -20,7 +20,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (const kind of kinds) {
       const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
       page.on("pageerror", e => errors.push(`${kind}: ${e.message}`));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&arena=pack-${kind}&set=combat.packs.on=true`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&arena=pack-${kind}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
       await page.keyboard.press("Enter");
       await page.waitForFunction(() => window.witch.game.clock.time > 1, null, { timeout: 600000, polling: 500 });

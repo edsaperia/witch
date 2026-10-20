@@ -157,6 +157,23 @@ export function nope(K: SfxKit, pan = 0): void {
   }
 }
 
+/** Her phone's alarm (the new opening's wake-up, Ed 2026-10-20: "a plain modern phone alarm, for the joke"; rules/wakeUp.ts): one
+ *  ring, a bright marimba-ish run of six plucks up and down the key's triad and back (sine and a quiet octave, fast decay, a soft
+ *  click on each), about a second; the page rings it again every gap seconds while the alarm's ringing. The tuning's sfx.alarm. */
+export function alarm(K: SfxKit): void {
+  const A = K.T.alarm;
+  if (!A || !K.ready("alarm", A.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005, out = K.voice(0, 1);
+  const steps = [0, 4, 7, 12, 7, 4];
+  steps.forEach((st, i) => {
+    const t0 = at + i * 0.13, f = mtof(K.root + 12 + st);
+    for (const [r, l, type] of [[1, 1, "sine"], [2, 0.18, "sine"], [4, 0.05, "triangle"]] as const) {
+      const g = c.createGain(); g.connect(out); K.env(g, t0, A.volume * l, 0.003, 0.16);
+      K.osc(type, f * r, t0, 0.2, g);
+    }
+  });
+}
+
 /** A 💌 refused by an enraged animal (Ed, 2026-10-12: "an angry, whiny sound"; the rules' "blocked"): a nasal whine, two
  *  sawtooths a few cents apart through a vowel-like band-pass closing from "eh" to "uh", its pitch sagging a minor third (the
  *  key's fifth down to its third) under a quickening wobble, a little grit on it, and a short dry "tch" of noise as it starts:

@@ -534,6 +534,8 @@ export class AssetLibrary {
   }
 
   get pending(): number { return this.inFlight.size; }
+  /** Area type `t`'s art held (drawn, or kept and read back). */
+  hasType(t: number): boolean { return this.types.has(t); }
 
   /** Another island takes the page (View.setGame; docs/plans/sail-without-reload.md B 3-5, decision 6: only this island's art in
    *  memory): a new generation, so the last island's sets waiting are dropped and those being drawn land to nothing; its sets let
