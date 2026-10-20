@@ -117,24 +117,25 @@ export class Sound {
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
    *  resumed, and music gone silent (or anything non-finite in the music or the sound effects) is rebuilt afresh; each
    *  mend goes in the playtest log (L). (Before the first home speaker boots, the music is silent on purpose: not
-   *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up. */
-  watch(live: () => boolean, booted: () => boolean, playtest: PlaytestLog): void {
-    const { tuning } = this;
+   *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up; `log`:
+   *  the night's playtest log (or a way to it, read each time: a new night's own run). */
+  watch(live: () => boolean, booted: () => boolean, log: PlaytestLog | (() => PlaytestLog)): void {
+    const playtest = typeof log === "function" ? log : () => log;
     this.live = live; this.booted = booted;
-    this.note = what => playtest.audio(what);
+    this.note = what => playtest().audio(what);
     const watchdog = this.watchdog = new AudioWatchdog(
       () => ({ ctx: this.audio, music: this.music, sfx: this.sfx, wanted: !!this.audio && live(), musicExpected: this.musicExpected() }),
       what => {
-        playtest.audio(what);
+        playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
   }
 
   private live: () => boolean = () => false;
