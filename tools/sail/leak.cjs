@@ -3,13 +3,16 @@
 // (window.witch.sail: main.ts sailFromChart, as the map table's chart sails, its flight end given and its flight skipped), each
 // landing, its art let in, then a few drawn frames and about 5 s of play stepped; after each landing it records the renderer's live
 // textures, geometries and programs, the JS heap after a forced GC (CDP), the DOM's nodes, the listeners on window and document
-// (CDP DOMDebugger), and the page's workers. Passes when, from sail 2 on, programs, listeners, workers and DOM nodes are the same
-// after every sail, textures and geometries the same at each return to an island, and the heap within 5% of sail 2's; and no
-// page error (under ?debug=sail a reader left on an old night that steps it throws: rules/game.ts stepGame). Then Back (C6): the
+// (CDP DOMDebugger), the page's workers, and the scene's objects. Passes when, from sail 2 on, listeners, workers and DOM nodes are
+// the same after every sail, programs the same at each return to an island (an island's own materials: fox has a program fewer
+// than home and wolf), and the heap within 5% of sail 2's; and, once the page's kept art has warmed (from sail WARM on, default
+// two rounds of the islands), textures, geometries and the scene's objects the same at each return to an island. (The page keeps
+// every species' creature art, rig pages and their batches it has seen, whichever island: docs/plans/sail-without-reload.md A2;
+// so those grow over the first rounds, by the islands' species, and then hold.) And no page error (under ?debug=sail a reader left on an old night that steps it throws: rules/game.ts stepGame). Then Back (C6): the
 // pause menu open, the island and seed unchanged, the URL the night's; and the fallback (C4): a sail made to fail loads the
 // island's link as the old way does. Writes previews/sail/leak.json.
 // Run `npm run build` first. Playwright from the machine's global install.
-//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=10
+//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=10 WARM=6 DIAG=1 (each landing's scene objects listed)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -20,6 +23,7 @@ const root = path.resolve(__dirname, "../../dist");
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/sail"));
 const ISLANDS = (process.env.ISLANDS || "home,fox,wolf").split(","), SEEDS = (process.env.SEEDS || "123,4242,777").split(",").map(Number), SAILS = Number(process.env.SAILS || 10);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
+const WARM = Number(process.env.WARM || 2 * ISLANDS.length), DIAG = !!process.env.DIAG; // (each landing's scene's children listed in leak.json: what a count that grows is)
 const DT = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
@@ -51,10 +55,10 @@ async function measure(page, cdp) {
   await cdp.send("HeapProfiler.collectGarbage");
   const heap = await cdp.send("Runtime.getHeapUsage");
   const listeners = async expr => { const { result } = await cdp.send("Runtime.evaluate", { expression: expr }); const r = await cdp.send("DOMDebugger.getEventListeners", { objectId: result.objectId }); await cdp.send("Runtime.releaseObject", { objectId: result.objectId }); return r.listeners.length; };
-  const r = await page.evaluate(() => {
+  const r = await page.evaluate(DIAG => {
     const v = window.witch.view, i = v.renderer.info, g = window.witch.game;
-    return { textures: i.memory.textures, geometries: i.memory.geometries, programs: (i.programs ?? []).length, dom: document.getElementsByTagName("*").length, island: g.tuning.map?.island, seed: g.seed, url: location.search };
-  });
+    return { textures: i.memory.textures, geometries: i.memory.geometries, programs: (i.programs ?? []).length, dom: document.getElementsByTagName("*").length, island: g.tuning.map?.island, seed: g.seed, url: location.search, sets: v.assets.sets(), scene: v.scene.children.length, ...(DIAG ? { kids: v.scene.children.map(c => `${c.name || c.type}:${c.geometry?.type ?? ""}:${c.material?.type ?? ""}:${c.count ?? ""}:${c.visible ? 1 : 0}`) } : {}) };
+  }, DIAG);
   return { ...r, heapMB: +(heap.usedSize / 1048576).toFixed(1), winListeners: await listeners("window"), docListeners: await listeners("document"), workers: page.workers().length };
 }
 
@@ -95,10 +99,11 @@ async function main() {
 
   // The checks, from sail 2 on.
   const fails = [], from = rows.filter(r => r.sail >= 2), r2 = rows.find(r => r.sail === 2);
-  for (const k of ["programs", "winListeners", "docListeners", "workers", "dom"]) { const vals = [...new Set(from.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} differ from sail 2 on: ${from.map(r => r[k]).join(", ")}`); }
+  for (const k of ["winListeners", "docListeners", "workers", "dom"]) { const vals = [...new Set(from.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} differ from sail 2 on: ${from.map(r => r[k]).join(", ")}`); }
   for (const island of ISLANDS) {
-    const at = from.filter(r => r.island === island);
-    for (const k of ["textures", "geometries"]) { const vals = [...new Set(at.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} on ${island} differ between visits: ${at.map(r => r[k]).join(", ")}`); }
+    const same = (list, keys, when) => { for (const k of keys) { const vals = [...new Set(list.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} on ${island} differ between visits ${when}: ${list.map(r => `${r[k]} (sail ${r.sail})`).join(", ")}`); } };
+    same(from.filter(r => r.island === island), ["programs"], "from sail 2");
+    same(rows.filter(r => r.sail >= WARM && r.island === island), ["textures", "geometries", "scene"], `from sail ${WARM}`);
   }
   for (const r of from) if (r.heapMB > r2.heapMB * 1.05) fails.push(`heap at sail ${r.sail} ${r.heapMB} MB, over 5% above sail 2's ${r2.heapMB} MB`);
 
@@ -121,9 +126,9 @@ async function main() {
   if (!fallback.ok) fails.push(`fallback: went to ${went}, not ${want}`);
   const real = errors.filter(e => !/sail in place: it went wrong/.test(e)); // (the fallback's own console line)
 
-  fs.writeFileSync(path.join(out, "leak.json"), JSON.stringify({ islands: ISLANDS, seeds: SEEDS, rows, back, fallback, fails, errors: real }, null, 1));
+  fs.writeFileSync(path.join(out, "leak.json"), JSON.stringify({ islands: ISLANDS, seeds: SEEDS, warm: WARM, rows, back, fallback, fails, errors: real }, null, 1));
   await browser.close(); server.close();
-  const cols = ["sail", "island", "textures", "geometries", "programs", "heapMB", "dom", "winListeners", "docListeners", "workers", "ms"];
+  const cols = ["sail", "island", "textures", "geometries", "programs", "scene", "heapMB", "dom", "winListeners", "docListeners", "workers", "ms"];
   console.log("\n| " + cols.join(" | ") + " |\n|" + cols.map(() => "---").join("|") + "|");
   for (const r of rows) console.log("| " + cols.map(c => r[c]).join(" | ") + " |");
   if (real.length) console.error("errors:\n" + real.join("\n"));
