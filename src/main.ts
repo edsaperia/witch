@@ -693,7 +693,7 @@ function frame(now: number): void {
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
-  if (!game.islandReady && F.ready && F.artRevealed && !view.assets.pending) game.islandReady = true; // (latched: the island's art all drawn once; a later bake, her new look from the mirror, doesn't shut the curtains again)
+  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
   if (game.wake) {
     for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); }
     if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
