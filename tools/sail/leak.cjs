@@ -1,5 +1,5 @@
 // Sails in place without growing (docs/plans/sail-without-reload.md, test C3; PR 5): serves the built game (dist/), loads
-// island A with ?sail=inplace&quick=1&creator=0&debug=sail, starts it, then sails A→B→C→A… fifteen times through the real sail path
+// island A with ?quick=1&creator=0&debug=sail (the sail in place by default: the tuning's sail.inPlace), starts it, then sails A→B→C→A… fifteen times through the real sail path
 // (window.witch.sail: main.ts sailFromChart, as the map table's chart sails, its flight end given and its flight skipped), each
 // landing, its art let in, then a few drawn frames and about 5 s of play stepped; after each landing it records the renderer's live
 // textures, geometries and programs, the JS heap after a forced GC (CDP), the DOM's nodes, the listeners on window and document
@@ -110,7 +110,7 @@ async function main() {
   page.on("crash", () => { console.error("the page crashed"); process.exit(1); });
   const cdp = await context.newCDPSession(page);
   const base = `http://127.0.0.1:${port}/`;
-  await page.goto(`${base}?island=${ISLANDS[0]}&seed=${SEEDS[0]}&quick=1&creator=0&sail=inplace&debug=sail`);
+  await page.goto(`${base}?island=${ISLANDS[0]}&seed=${SEEDS[0]}&quick=1&creator=0&debug=sail`);
   log("loaded");
   await settled(page);
   log("ready");

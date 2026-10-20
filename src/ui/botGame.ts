@@ -31,11 +31,19 @@ export class BotTag {
     document.body.append(el);
     this.setSpeed(1);
     // Its keys: 1, 2, 4 the speed; Esc back to the start (before the freeze's own Esc).
-    window.addEventListener("keydown", e => {
-      if (e.code === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); this.onExit(); return; }
-      const s = { Digit1: 1, Digit2: 2, Digit4: 4, Numpad1: 1, Numpad2: 2, Numpad4: 4 }[e.code];
-      if (s) { e.preventDefault(); this.setSpeed(s); }
-    }, true);
+    window.addEventListener("keydown", this.keys, true);
+  }
+
+  private readonly keys = (e: KeyboardEvent): void => {
+    if (e.code === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); this.onExit(); return; }
+    const s = ({ Digit1: 1, Digit2: 2, Digit4: 4, Numpad1: 1, Numpad2: 2, Numpad4: 4 } as Record<string, number>)[e.code];
+    if (s) { e.preventDefault(); this.setSpeed(s); }
+  };
+
+  /** Gone (the bot game left in place, main.ts): its tag and its keys. */
+  dispose(): void {
+    window.removeEventListener("keydown", this.keys, true);
+    this.el.remove();
   }
 
   setSpeed(s: number): void {

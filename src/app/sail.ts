@@ -1,7 +1,10 @@
-// Sailing in place (docs/plans/sail-without-reload.md, PR 5): the map table's sea chart starts the next night on the same page
-// (app/night.ts startNight), not by loading it anew. Off by default till its tests pass in play (the tuning's sail.inPlace; PR 6
-// turns it on): ?sail=inplace forces it on, ?sail=reload the old way. Here, the pure parts main.ts's sail uses: which way, the
-// night's link, the knobs that link sets itself (kept from the carry), Back opening the pause menu, and the quiet fallback.
+// Sailing in place (docs/plans/sail-without-reload.md, PRs 5 and 6): the map table's sea chart starts the next night on the same
+// page (app/night.ts startNight), not by loading it anew, and so do Play again, a new forest, the bed and the bot game's exit. On
+// by default (the tuning's sail.inPlace): ?sail=reload the old way, ?sail=inplace forces it on. Here, the pure parts main.ts uses:
+// which way, the night's link, the knobs that link sets itself (kept from the carry), the other ways' links and nights, Back
+// opening the pause menu, and the quiet fallback.
+import { parseSeed } from "../rules/map";
+import { newForestHref } from "./newForest";
 
 /** The two ways to sail: the night started in place, or the page loaded anew on the island's link (as before). */
 export type SailWay = "inplace" | "reload";
@@ -39,6 +42,25 @@ export function linkKnobs(params: URLSearchParams, list: readonly { id: string; 
   const out = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
   for (const d of list) if (d.apply.knob && params.has(`d_${d.id}`)) out.add(d.apply.knob);
   return out;
+}
+
+/** The other ways to a new night (the plan's PR 6): Play again, a new forest (the afterparty's button), the bed, the bot game's exit. */
+export type NightWay = "again" | "fresh" | "bed" | "bot";
+
+/** The link each way loads as before (and falls back to): Play again the page's own (location.reload), a new forest and the bed
+ *  this link with a fresh seed (app/newForest.ts), the bot game's exit this link without ?bot. */
+export function nightHref(how: NightWay, href: string, random: () => number = Math.random): string {
+  if (how === "again") return href;
+  if (how === "bot") { const u = new URL(href); u.searchParams.delete("bot"); return u.toString(); }
+  return newForestHref(href, random);
+}
+
+/** The night a way's link starts, as a fresh load of it would: its island, seed and world, and the link's switches whole (Play
+ *  again keeps even the repro keys and ?arrive=1, as its reload did; nothing flies in, the chart's hand-off read once). */
+export function nightFromHref(how: NightWay, href: string): { how: NightWay; island: string; seed: number; world?: number; params: URLSearchParams } {
+  const params = new URL(href).searchParams, seed = parseSeed(params.get("seed"));
+  if (seed === null) throw new Error(`a new night in place: no seed in ${href}`); // (the boot always puts one in the link: loaded anew instead)
+  return { how, island: params.get("island") ?? "", seed, world: params.has("world") ? Number(params.get("world")) : undefined, params };
 }
 
 /** Back after a sail in place (Ed's decision 1): each night sailed to pushes its link and then a guard entry with the same link;

@@ -55,14 +55,14 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(b.hud.debugOn).toBe(true);
   });
 
-  it("re-points the page's pieces at the new night, and takes a second night with a View only as ?debug=sail's swap", async () => {
+  it("re-points the page's pieces at the new night, and never a second boot's night (the later ways come in place)", async () => {
     const told: unknown[] = [];
     const page: Page = { night: null, build: "test", look: () => null, freeze: { retarget: (_g: unknown, s: number) => told.push(["freeze", s]) } as never, shake: { retarget: () => told.push("shake") } as never };
     const a = await startNight(page, spec(5));
     expect(told).toEqual([["freeze", 5], "shake"]);
     const given: unknown[] = [];
     page.view = { setGame: (g: unknown) => given.push(g) } as never;
-    await expect(startNight(page, spec(6))).rejects.toThrow(/debug=sail/);
+    await expect(startNight(page, spec(6))).rejects.toThrow(/first only/);
     expect(page.night).toBe(a);
     let undone = 0;
     a.cleanups.push(() => undone++);
@@ -72,6 +72,14 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(b.tuning.partyObjects.generated).toBe(true); // (the page's switch, carried)
     expect(undone).toBe(1); // (the last night's listeners undone)
     expect(page.night).toBe(b);
+    // (and every other way to a new night in place, the plan's PR 6: each its own game on the view)
+    for (const [i, how] of (["again", "fresh", "bed", "bot", "sail"] as const).entries()) {
+      endNight(page);
+      const n = await startNight(page, { ...spec(60 + i), how });
+      expect(page.night).toBe(n);
+      expect(n.spec.how).toBe(how);
+      expect(given.at(-1)).toBe(n.game);
+    }
   });
 
   it("a sail after endNight: the ended night kept as page.last meanwhile, then carried on from (its sliders but its link's own), and let go", async () => {
@@ -111,7 +119,7 @@ describe("window.witch (app/hooks.ts)", () => {
     installHooks({ night, view: {} as never, sound: {} as never, meter: {} as never, shake: {} as never, frameStats: {} as never, loadTimes: {}, loop: { manual: false, bot: null, botTag: null, ready: true } } as HookDeps);
     const W = (G.window as { witch: { game: unknown; tuning: unknown; hit: () => boolean } }).witch;
     expect(W.game).toBe(a.game);
-    const b = await startNight(page, spec(32));
+    const b = await startNight(page, { ...spec(32), how: "again" });
     expect(W.game).toBe(b.game);
     expect(W.tuning).toBe(b.tuning);
     const hp = b.game.witches[0].health.hp, hpA = a.game.witches[0].health.hp;
