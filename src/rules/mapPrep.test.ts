@@ -3,7 +3,7 @@
 // same, its closures answering the same, and a game on it playing the same, for several seeds and islands, home's among them.
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
-import { generateMap, hydrateMap, prepOf, type ForestMap, type MapPrep } from "./map";
+import { generateMap, hydrateMap, prepOf, prepProblem, type ForestMap, type MapPrep } from "./map";
 import { routeOf } from "./party";
 import { KIND_NAMES, KINDS, playableIsland } from "./rosters";
 import { newGame, stepGame, STEP, type Controls } from "./game";
@@ -60,5 +60,27 @@ describe("a map made from its prep (rules/map.ts MapPrep; app/mapPrep.ts)", () =
       const t = islandTuning(island, 7);
       expect(play(55, t, prepFor(55, t)), island).toBe(play(55, t));
     }
+  }, 600000);
+  it("is never slower to make than the map itself (Ed's laptop, 2026-10-20): hydrating takes well under generating, home's island too", () => {
+    // (Ed's sail home was world 1268398697; each timed best of two, so a GC pause in one doesn't decide it)
+    const best = (f: () => unknown) => Math.min(...[0, 1].map(() => { const t0 = performance.now(); f(); return performance.now() - t0; }));
+    let gen = 0, hyd = 0;
+    for (const [island, seed, world] of [["home", 821186, 1268398697], ["home", 7, 7], [kinds[1], 123, 0], [kinds[kinds.length - 1], 904211, 31]] as const) {
+      const t = islandTuning(island, world), prep = prepFor(seed, t);
+      const g = best(() => generateMap(seed, t)), h = best(() => hydrateMap(seed, t, prep));
+      expect(h, `${island}, seed ${seed}: hydrate ${h.toFixed(0)} ms against generate ${g.toFixed(0)} ms`).toBeLessThan(g);
+      gen += g; hyd += h;
+    }
+    expect(hyd, `hydrate ${hyd.toFixed(0)} ms in all against generate ${gen.toFixed(0)} ms`).toBeLessThan(gen * 0.6);
+  }, 600000);
+  it("is only made from a sound prep: one cut short or from other code is caught (app/mapPrep.ts makes the map afresh)", () => {
+    const t = islandTuning("home", 7), p = prepFor(7, t);
+    expect(prepProblem(p)).toBeNull();
+    expect(prepProblem(null)).toBe("no prep");
+    expect(prepProblem({ ...p, neighbours: {} })).toBe("neighbours");
+    expect(prepProblem({ ...p, route: undefined })).toBe("parts missing");
+    expect(prepProblem({ ...p, land: { ...p.land!, dist: p.land!.dist.subarray(1) } })).toBe("land samples");
+    expect(prepProblem({ ...p, land: { ...p.land!, segAt: Int32Array.from(p.land!.segAt, (v, i) => (i === 3 ? 1e9 : v)) } })).toBe("land stretch 3");
+    expect(prepProblem({ ...p, route: { ...p.route!, order: [] } })).toBe("route");
   }, 600000);
 });

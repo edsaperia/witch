@@ -5,7 +5,7 @@
 // MapPrep: which areas touch which, the land and lakes maps, the ley line's route) and the archipelago, and keeps them in
 // IndexedDB under the build, the seed and the tuning. The page, landing (&arrive=1), takes them if they match and makes the map
 // from them (the same map: src/rules/mapPrep.test.ts); if none is ready, or it doesn't match, it makes the map as before.
-import type { MapPrep } from "../rules/map";
+import { generateMap, hydrateMap, prepProblem, type ForestMap, type MapPrep } from "../rules/map";
 import { rememberWorld } from "../rules/rosters";
 import type { Tuning } from "../rules/tuning";
 import { hashText } from "../render/artCache";
@@ -30,7 +30,10 @@ export function sailTuning(island: string, world: number | undefined, seed: numb
 }
 
 /** How the page's map was made, for the load's timings (main.ts loadTimes): from the worker's prep, or here as before. */
-export let prepUsed: "worker" | "none" | "stale" = "none";
+export let prepUsed: "worker" | "none" | "stale" | "unsound" | "failed" = "none";
+/** The worker's own time making it (ms), and the hydrate's here: one slower than the other is logged (?timing=1 has the step too). */
+let workerMs = 0;
+export let hydrateMs = 0;
 
 /** A ready map for this night (the worker's record, from IndexedDB or straight from the worker), checked: if it's this night's (the
  *  build, the seed and the whole tuning), its archipelago is taken as worldOf's and its prep returned, for newGame (or a night
@@ -43,9 +46,27 @@ export function useReadyMap(rec: PrepRecord | null, seed: number, tuning: Tuning
     if (rec.key.split("|")[1] === String(seed) && rec.tuning) console.info("map prep: another tuning's", Object.keys(tuning).filter(k => JSON.stringify((tuning as unknown as Record<string, unknown>)[k]) !== JSON.stringify((rec.tuning as unknown as Record<string, unknown>)[k])));
     return null;
   }
+  const bad = prepProblem(rec.prep);
+  if (bad) { prepUsed = "unsound"; console.warn("map prep: unsound, made afresh:", bad); return null; }
   rememberWorld(rec.arch);
-  prepUsed = "worker";
+  prepUsed = "worker"; workerMs = rec.ms;
   return rec.prep;
+}
+
+/** The night's map (Ed's laptop, 2026-10-20: the sail's new page must never be slower for the prep): from its prep if there is a
+ *  sound one, guarded (one that fails to hydrate is made afresh, and the map's made afresh if there's none), timed. */
+export function readyMap(seed: number, tuning: Tuning, prep: MapPrep | null): ForestMap {
+  const t0 = performance.now();
+  if (prep) {
+    try {
+      const map = hydrateMap(seed, tuning, prep);
+      hydrateMs = performance.now() - t0;
+      // (by construction a hydrate skips the work the worker did: one slower than the worker's whole making is a regression to see)
+      if (workerMs > 0 && hydrateMs > workerMs) console.warn(`map prep: hydrate ${Math.round(hydrateMs)} ms, slower than making it (${Math.round(workerMs)} ms in the worker)`);
+      return map;
+    } catch (err) { prepUsed = "failed"; console.warn("map prep: hydrate failed, made afresh:", err); }
+  }
+  return generateMap(seed, tuning);
 }
 
 /** The page's, after a reload: the ready map the worker kept for this night, if any (useReadyMap); never waits more than `ms`

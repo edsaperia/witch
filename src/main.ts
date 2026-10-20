@@ -49,7 +49,7 @@ import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
-import { prepUsed } from "./app/mapPrep";
+import { hydrateMs, prepUsed } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
@@ -97,7 +97,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
-const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : 0 }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1)
+const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : prepUsed === "unsound" ? -2 : prepUsed === "failed" ? -3 : 0, mapPrepMs: Math.round(hydrateMs) }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1; unsound, -2; failed to hydrate, -3. mapPrepMs: the hydrate's own time)
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
 const view = page.view = new View(canvas, N().game, gameStyle(style, bootTuning), savedLook);
