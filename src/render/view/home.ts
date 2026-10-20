@@ -288,6 +288,8 @@ export function alongRay(v: View, p: { x: number; y: number; z: number }, d: num
 
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
 const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
+/** Another night in the view (View.setGame): no candles burning down. */
+export function forgetCandles(v: View): void { candlesSeen.delete(v); }
 
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn

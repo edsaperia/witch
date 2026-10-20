@@ -45,6 +45,9 @@ export class Lasers {
     scene.add(this.mesh);
   }
 
+  /** Another night's game (View.setGame): nothing drawn till its ring is. */
+  setGame(game: Game): void { this.game = game; this.geo.setDrawRange(0, 0); }
+
   update(time: number, _wx: number, _wz: number, ring: RingSpeaker[] = [], centre = CENTRE0): void {
     const t = this.game.tuning, L = t.lasers;
     // The dancefloor's ring (Ed, 2026-10-04): one laser from the top of each speaker, mostly

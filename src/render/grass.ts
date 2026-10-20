@@ -182,6 +182,18 @@ export class GrassView {
     this.mesh.renderOrder = 0.25; // after the ground, with the scenery
   }
 
+  /** Another night's map (View.setGame): its tufts worked out afresh, every block emptied and free, and the canopy's and
+   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's.) */
+  setMap(map: ForestMap, forest: Forest | undefined, ground?: Record<string, THREE.IUniform>): void {
+    this.map = map; this.forest = forest;
+    this.cells.clear(); this.held.clear(); this.free = []; this.top = 0; this.lastCi = NaN; this.lastCj = NaN;
+    for (const a of [this.tuft, this.uvA, this.pxA, this.open]) { (a.array as Float32Array).fill(0); a.clearUpdateRanges(); a.needsUpdate = true; }
+    this.geo.instanceCount = 0;
+    this.stats = { tufts: 0, buildMs: 0 };
+    const u = this.mat.uniforms;
+    u.uCanopy = ground?.uCanopy ?? { value: new THREE.Vector4() }; u.uClearing = ground?.uClearing ?? { value: new THREE.Vector2(1, 1) };
+  }
+
   /** Bring the cover to the witch at (x, z): `shown` 0 in the treetops to 1 on the ground; `part`:
    *  where tufts part; `reach`: how far it shows (the canopy hole round her), up to groundCover.radius;
    *  `clear`: where no tufts grow (placed sigils' runes, the nearest eight). */

@@ -145,6 +145,14 @@ export class Clouds {
     this.bolt.visible = false;
   }
 
+  /** Another night's seed (View.setGame): its own clouds, and no storm under way. */
+  reseed(seed: number): void {
+    this.endFlash();
+    this.seedBase = seed; this.visible = []; this.storm = { next: -1, at: -1, cloud: -1, bolt: false, flashes: 3 };
+    this.geo.instanceCount = 0; this.count = 0; this.bolt.visible = false; this.boltU.value = 0;
+    const u = this.u.uCloud.value as THREE.Vector4; u.z = -1; u.w = 0;
+  }
+
   /** The cloud seeded in drift cell (i, j), if any, where it is now. */
   private cloud(i: number, j: number, dx: number, dz: number): Cloud | null {
     const s = this.seedBase + 7717;

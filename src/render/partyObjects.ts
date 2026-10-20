@@ -35,6 +35,12 @@ export class PartyObjectsView {
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private mpp: number) {}
 
+  /** Another night (View.setGame): its areas dressed afresh, nothing drawn till they are. */
+  reset(): void {
+    for (const m of [this.dressings, this.bounds, this.trees, this.neonRefs, this.fireSpots]) m.clear();
+    this.upright?.set([]); this.flat?.set([]); this.count = 0;
+  }
+
   /** Whether the art is in (the world's campfires are drawn here then, with the party campfire's frames). */
   get ready(): boolean { return !!this.assets.partyObjectArt(); }
 

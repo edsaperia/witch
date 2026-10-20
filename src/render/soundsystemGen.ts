@@ -129,6 +129,13 @@ export class SoundsystemGenView {
     return out;
   }
 
+  /** Another island (View.setGame): its batches and their shadows' let go (their atlases are the art's, freed as it's reseated). */
+  reset(): void {
+    for (const b of this.batches.values()) { this.scene.remove(...b.meshes); b.release(); }
+    this.batches.clear(); this.used.clear();
+    if (this.shadows) for (const [key, b] of this.shadows) if (typeof key === "string" && key.startsWith("ss:")) { this.scene.remove(...b.meshes); b.dispose(); this.shadows.delete(key); }
+  }
+
   get count(): number { let n = 0; for (const b of this.batches.values()) n += b.count; return n; }
   get dropped(): number { let n = 0; for (const b of this.batches.values()) n += b.dropped; return n; }
 }

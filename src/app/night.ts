@@ -2,7 +2,8 @@
 // (the view, the sound, the input, the creator, the freeze, the screen shake...); a night is made per island (its link, tuning,
 // game, playtest run, HUD, arrival and flags). main.ts holds the night in one place, `page.night`, and everything that needs the
 // game reads it there, so a second night would be picked up everywhere. This is the only place a night begins or ends; today
-// only the boot starts one (sailing still loads the page anew: the plan's PR 5 calls startNight again in place).
+// only the boot starts one (sailing still loads the page anew: the plan's PR 5 calls startNight again in place), and ?debug=sail's
+// window.witch.debugSwap (main.ts) a second in place, through View.setGame (render/view.ts), for tools/sail/swap.cjs.
 import { newGame, type Game } from "../rules/game";
 import type { MusicCue } from "../rules/musicPlan";
 import type { Tuning } from "../rules/tuning";
@@ -28,7 +29,7 @@ export interface NightSpec {
   island: string;
   seed: number;
   world?: number;
-  how: "boot" | "sail" | "again" | "fresh" | "bed" | "bot";
+  how: "boot" | "sail" | "again" | "fresh" | "bed" | "bot" | "debug";
   /** The flight's end from the chart, in memory (a sail in place); the boot reads ?arrive=1's from sessionStorage. */
   arrival?: Arrival;
   /** The night's link (the boot: the page's own). */
@@ -107,8 +108,9 @@ const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugT
  *  chart's map prep if it's this night's), the link's switches for the game, her hat, a new playtest run, the knobs' start, the HUD
  *  and the arrival. The page's pieces already made are re-pointed at it; then it's `page.night`. */
 export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
-  // (the View has no way yet to take another game: the plan's PR 4b, View.setGame; until then a night is made once a page)
-  if (page.night && page.view) throw new Error("startNight: a second night in the same page needs View.setGame (sail-without-reload PR 4b)");
+  // (a second night in the same page only as ?debug=sail's swap, View.setGame taking it, till the sail in place: the plan's PR 5)
+  if (page.night && page.view && spec.how !== "debug") throw new Error("startNight: a second night in the same page is ?debug=sail's only (sail-without-reload PR 5)");
+  if (page.night) closeNight(page.night);
   const { params, seed } = spec;
   // The link's switches and the tuning for this night (app/linkParams.ts).
   const { tuning, musicStyle, musicCue, world, WORLD_DEFAULT } = tuningFromLink(params);
@@ -138,6 +140,7 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   page.shake?.retarget(game, tuning);
   page.perfHud?.retarget(game);
   if (old) page.sound?.setNight(tuning, seed, musicStyle);
+  if (old) page.view?.setGame(game); // (the view's island and records, tonight's: render/view.ts; its start's art is the caller's, view.prepare)
   page.night = night;
   return night;
 }
@@ -156,10 +159,15 @@ function nightArrival(spec: NightSpec, tuning: Tuning): ArrivalFlight | null {
 export function endNight(page: Page): void {
   const n = page.night;
   if (!n) return;
+  closeNight(n);
+  page.night = null;
+}
+
+/** A night's own listeners undone and the page's per-night DOM put back (as it ends, or as the next one starts in its place). */
+function closeNight(n: Night): void {
   for (const f of n.cleanups) f();
   n.cleanups.length = 0;
   resetDom();
-  page.night = null;
 }
 
 /** The DOM a night leaves behind, back as a fresh page has it: the won and over cards, the clock's classes and pops, the arrival's

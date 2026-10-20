@@ -6,7 +6,7 @@ import * as THREE from "three";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { Dancefloor } from "./dancefloor";
-import { HEIGHT_UNIFORMS, HeightField } from "./height";
+import { groundHeight, HEIGHT_UNIFORMS, HeightField, useHeightField } from "./height";
 import { IslandLayers, type IslandSource } from "./island";
 import { LeyLines } from "./leylines";
 import { MapTable } from "./mapTable";
@@ -100,6 +100,18 @@ describe("the island layers' disposes", () => {
 });
 
 describe("the island layers", () => {
+  it("built off the scene, go in only as they're attached, their hills then the field in use", () => {
+    const scene = new THREE.Scene(), src = { game: g, style: {}, mpp: 0.1, maxTexture: 4096, assets: { treehouse: { atlas: atlas() } }, deck: null } as unknown as IslandSource;
+    const island = new IslandLayers(scene, src, false);
+    island.heights = { heightAt: () => 3 } as unknown as HeightField;
+    useHeightField(null);
+    expect(scene.children).not.toContain(island.root);
+    island.attach();
+    expect(scene.children).toContain(island.root);
+    expect(groundHeight(1, 1)).toBe(3);
+    useHeightField(null);
+  });
+
   it("are built under one root in the scene, and its dispose takes them all out and lets go of all of them", () => {
     const d = fakeDocument();
     const scene = new THREE.Scene(), house = atlas();
