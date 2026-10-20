@@ -13,7 +13,8 @@
 // pause menu open, the island and seed unchanged, the URL the night's; and the fallback (C4): a sail made to fail loads the
 // island's link as the old way does. Writes previews/sail/leak.json.
 // Run `npm run build` first. Playwright from the machine's global install.
-//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=15 WARM=9 DIAG=1 (each landing's scene objects listed)
+//   node tools/sail/leak.cjs [out dir]   ISLANDS=home,fox,wolf SEEDS=123,4242,777 SAILS=15 WARM=9 TOL=2 DIAG=1 (each landing's scene objects listed)
+//   CHECK=<leak.json> node tools/sail/leak.cjs   (a saved run checked again)
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
@@ -24,7 +25,7 @@ const root = path.resolve(__dirname, "../../dist");
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/sail"));
 const ISLANDS = (process.env.ISLANDS || "home,fox,wolf").split(","), SEEDS = (process.env.SEEDS || "123,4242,777").split(",").map(Number), SAILS = Number(process.env.SAILS || 5 * ISLANDS.length);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };
-const WARM = Number(process.env.WARM || 3 * ISLANDS.length), DIAG = !!process.env.DIAG; // (each landing's scene's children listed in leak.json: what a count that grows is)
+const WARM = Number(process.env.WARM || 3 * ISLANDS.length), TOL = Number(process.env.TOL ?? 2), DIAG = !!process.env.DIAG; // (each landing's scene's children listed in leak.json: what a count that grows is)
 const DT = 1 / 60, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
@@ -63,7 +64,42 @@ async function measure(page, cdp) {
   return { ...r, heapMB: +(heap.usedSize / 1048576).toFixed(1), winListeners: await listeners("window"), docListeners: await listeners("document"), workers: page.workers().length };
 }
 
+/** The checks on the rows (one a landing; 0 the boot): what fails. From sail 2 on, the listeners, workers and DOM nodes the same
+ *  after every sail and the programs the same at each return to an island; after sail WARM (the kept art warmed), no island's
+ *  textures, geometries or scene objects over TOL more than on any earlier visit, nor its last visit over TOL more than its first
+ *  after WARM (no drift); and the heap's mean over the last round of the islands within 5% of the second round's (an island's own
+ *  heap differs, and one reading by a few per cent with the collector's timing), none over 15% above sail 2's. */
+function checks(rows) {
+  const fails = [], from = rows.filter(r => r.sail >= 2), r2 = rows.find(r => r.sail === 2), N = ISLANDS.length;
+  for (const k of ["winListeners", "docListeners", "workers", "dom"]) { const vals = [...new Set(from.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} differ from sail 2 on: ${from.map(r => r[k]).join(", ")}`); }
+  for (const island of ISLANDS) {
+    const at = rows.filter(r => r.island === island), after = at.filter(r => r.sail > WARM);
+    const progs = [...new Set(at.filter(r => r.sail >= 2).map(r => r.programs))];
+    if (progs.length > 1) fails.push(`programs on ${island} differ between visits: ${at.map(r => `${r.programs} (sail ${r.sail})`).join(", ")}`);
+    for (const k of ["textures", "geometries", "scene"]) {
+      for (const r of after) { const high = Math.max(...at.filter(q => q.sail < r.sail).map(q => q[k])); if (r[k] > high + TOL) fails.push(`${k} on ${island} at sail ${r.sail}, ${r[k]}, over ${TOL} more than on any visit before (${at.filter(q => q.sail < r.sail).map(q => q[k]).join(", ")})`); }
+      if (after.length > 1 && after.at(-1)[k] > after[0][k] + TOL) fails.push(`${k} on ${island} drifting up after the warm-up: ${after.map(r => r[k]).join(", ")}`);
+    }
+  }
+  const mean = list => list.reduce((a, r) => a + r.heapMB, 0) / Math.max(1, list.length);
+  const second = rows.filter(r => r.sail > N && r.sail <= 2 * N), last = rows.slice(-N);
+  if (rows.length > 2 * N && mean(last) > mean(second) * 1.05) fails.push(`heap: the last round's mean ${mean(last).toFixed(1)} MB over 5% above the second round's ${mean(second).toFixed(1)} MB`);
+  for (const r of from) if (r.heapMB > r2.heapMB * 1.15) fails.push(`heap at sail ${r.sail} ${r.heapMB} MB, over 15% above sail 2's ${r2.heapMB} MB`);
+  return fails;
+}
+/** The rows' table, as markdown. */
+function table(rows) {
+  const cols = ["sail", "island", "textures", "geometries", "programs", "scene", "heapMB", "dom", "winListeners", "docListeners", "workers", "ms"];
+  return ["| " + cols.join(" | ") + " |", "|" + cols.map(() => "---").join("|") + "|", ...rows.map(r => "| " + cols.map(c => r[c]).join(" | ") + " |")].join("\n");
+}
+
 async function main() {
+  if (process.env.CHECK) { // (a saved run's leak.json checked again: CHECK=<leak.json>)
+    const j = JSON.parse(fs.readFileSync(process.env.CHECK, "utf8")), fails = checks(j.rows);
+    console.log(table(j.rows));
+    console.log(fails.length ? `\nFAIL\n${fails.join("\n")}` : "\nok: flat over the sails");
+    process.exit(fails.length ? 1 : 0);
+  }
   fs.mkdirSync(out, { recursive: true });
   const server = await serve(), port = server.address().port, errors = [], rows = [];
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
@@ -98,19 +134,7 @@ async function main() {
     if (row.island !== island || row.seed !== seed) errors.push(`sail ${s}: on ${row.island} ${row.seed}, not ${island} ${seed}`);
   }
 
-  // The checks, from sail 2 on.
-  const fails = [], from = rows.filter(r => r.sail >= 2), r2 = rows.find(r => r.sail === 2);
-  for (const k of ["winListeners", "docListeners", "workers", "dom"]) { const vals = [...new Set(from.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} differ from sail 2 on: ${from.map(r => r[k]).join(", ")}`); }
-  for (const island of ISLANDS) {
-    const same = (list, keys, when) => { for (const k of keys) { const vals = [...new Set(list.map(r => r[k]))]; if (vals.length > 1) fails.push(`${k} on ${island} differ between visits ${when}: ${list.map(r => `${r[k]} (sail ${r.sail})`).join(", ")}`); } };
-    same(from.filter(r => r.island === island), ["programs"], "from sail 2");
-    const at = rows.filter(r => r.island === island);
-    for (const r of at.filter(r => r.sail > WARM)) for (const k of ["textures", "geometries", "scene"]) {
-      const high = Math.max(...at.filter(q => q.sail < r.sail).map(q => q[k]));
-      if (r[k] > high) fails.push(`${k} on ${island} at sail ${r.sail}, ${r[k]}, more than on any visit before (${at.filter(q => q.sail < r.sail).map(q => q[k]).join(", ")})`);
-    }
-  }
-  for (const r of from) if (r.heapMB > r2.heapMB * 1.05) fails.push(`heap at sail ${r.sail} ${r.heapMB} MB, over 5% above sail 2's ${r2.heapMB} MB`);
+  const fails = checks(rows);
 
   // Back (C6): the pause menu, the night unchanged, its URL kept.
   const before = await page.evaluate(() => ({ url: location.search, seed: window.witch.game.seed, island: window.witch.game.tuning.map?.island }));
@@ -133,9 +157,7 @@ async function main() {
 
   fs.writeFileSync(path.join(out, "leak.json"), JSON.stringify({ islands: ISLANDS, seeds: SEEDS, warm: WARM, rows, back, fallback, fails, errors: real }, null, 1));
   await browser.close(); server.close();
-  const cols = ["sail", "island", "textures", "geometries", "programs", "scene", "heapMB", "dom", "winListeners", "docListeners", "workers", "ms"];
-  console.log("\n| " + cols.join(" | ") + " |\n|" + cols.map(() => "---").join("|") + "|");
-  for (const r of rows) console.log("| " + cols.map(c => r[c]).join(" | ") + " |");
+  console.log("\n" + table(rows));
   if (real.length) console.error("errors:\n" + real.join("\n"));
   console.log(fails.length ? `\nFAIL\n${fails.join("\n")}` : "\nok: flat over the sails");
   if (fails.length || real.length) process.exit(1);
