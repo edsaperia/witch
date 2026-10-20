@@ -16,7 +16,8 @@ import { tuningFromLink } from "./linkParams";
 import { applySavedSettings, carryKnobs } from "./settings";
 import { linkKnobs } from "./sail";
 import { DECISION_LIST } from "../ui/decisions";
-import { readyMap, takeMapPrep } from "./mapPrep";
+import { readyMap, takeMapPrep, useReadyMap } from "./mapPrep";
+import type { PrepRecord } from "./mapPrepStore";
 import { gameFromLink } from "./gameParams";
 import { startKnobs, type World } from "./knobs";
 import { Hud } from "./hud";
@@ -37,6 +38,8 @@ export interface NightSpec {
   arrival?: Arrival;
   /** The night's link (the boot: the page's own). */
   params: URLSearchParams;
+  /** The boot's map, made in a worker from the page's first moments (app/mapPrep.ts startBootMapPrep): taken if it's this night's. */
+  ready?: Promise<PrepRecord | null>;
 }
 
 /** The night's own flags, fresh each night (a second night left with the first's would never record to the chart or show its cards). */
@@ -128,7 +131,8 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // but for those this night's link sets itself.
   if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
-  const sailed = !!params.get("arrive") || spec.how === "sail", mapPrep = sailed ? await takeMapPrep(seed, tuning) : null;
+  // (the boot: its own map, if the worker it started at once has it: app/mapPrep.ts startBootMapPrep)
+  const sailed = !!params.get("arrive") || spec.how === "sail", mapPrep = sailed ? await takeMapPrep(seed, tuning) : spec.ready ? useReadyMap(await spec.ready, seed, tuning) : null;
   // (a task of its own from here: what follows, the game and the View, would otherwise run in IndexedDB's success callback and be
   // blamed on it, as Ed's laptop's stall log did, 2026-10-20)
   if (sailed) await new Promise(res => setTimeout(res, 0));
