@@ -19,7 +19,7 @@ Ed: the first load starts on the sea chart, with only home unlocked in a first g
 
 | # | Frame | Beat | How long | Playable | Loading behind it |
 |---|---|---|---|---|---|
-| 1 | `01-chart.png` | The sea chart, only home open | the player | Click home: **Wake up at home**. Pan and zoom; locked islands say what opens them | The page with no night yet (Hotel's plan E5: a Page with `night = null`); the chart's islands; home's map in a worker and its art warming |
+| 1 | `01-chart.png` | The sea chart, only home open | the player | Click home: **Wake up at home**. Pan and zoom; locked islands say what opens them. What's new and Options in its corner | The page with no night yet (Hotel's plan E5: a Page with `night = null`); the chart's islands; home's map in a worker and its art warming |
 | 2a | `02-zoom.png` | The chart's camera dives onto home | 2–3 s | nothing | `startNight` begins: the seed, the game, then the island's layers in slices (steps 1–3) |
 | 2b | `03-window-in.png` | …and into her lit bedroom window | 2–3 s | nothing | the build goes on; the bedroom (island-independent) is ready at once |
 | 3a | `04-alarm.png` | Dark; her phone alarm goes off | 2 s | **E** snoozes | the build |
@@ -77,9 +77,9 @@ Every frame is redrawn to match (the changes: 1, 3a, 3b, 5a, 5b, 5c, ★; the cu
    - At the start of the night, E at the decks plays her 6.5 s scratch routine, and that starts the party; there's no party spell (5c).
    - After a knockout, everything stays as it is today.
 3. **The creator screen's tabs:** each goes to its natural home.
-   - What's new and Options are buttons in the chart's corner, beside a Zoo button (1).
+   - What's new and Options are buttons in the chart's corner (1). (Ed, 2026-10-20: no Zoo button there, "the zoo is now accessed via the bestiary so doesn't need to be on this screen".)
    - Controls are taught in the bedroom (WASD out of bed, E at things) and kept in the pause menu.
-   - The zoo is reached through the bestiary's book and the chart's button.
+   - The zoo is reached through the bestiary's book in the treehouse.
 4. **Skipping for returning players: skip on later loads** (decided after Ed's laptop numbers).
    - **The first game** plays the whole wake-up.
    - **Later loads** are shorter, and any key skips, but a skip never goes past the build: skipped early, she waits at the shut curtains. Frame ★ shows it.
@@ -100,7 +100,7 @@ Every frame is redrawn to match (the changes: 1, 3a, 3b, 5a, 5b, 5c, ★; the cu
    - Once it's ready, E opens them onto the island (5a). There's no mist.
 10. **After the bed:** the next night starts with the shorter wake-up.
 
-**Not built yet:** the build waits for Hotel's sail-without-reload PR 6 (a Page with no night).
+**Built** (2026-10-20): #985, #986 and #987 are merged, and #990 is open. In-game shots of each beat are in `previews/ed/opening-build/`. The frame `01-chart.png` here still shows the Zoo button that's since been dropped.
 
 ## Files
 
