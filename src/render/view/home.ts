@@ -21,7 +21,7 @@ import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
-import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
+import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
@@ -117,7 +117,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   v.markerBatch.set(inst);
   if (casts || v.trunkShadowBatches.has("markers")) { // (a batch of their own: their atlas)
     let b = v.trunkShadowBatches.get("markers");
-    if (!b) { b = new TrunkShadowBatch(v.markerArt.atlas); v.trunkShadowBatches.set("markers", b); v.scene.add(...b.meshes); }
+    if (!b) { b = v.island.markerShadowBatch(); v.trunkShadowBatches.set("markers", b); }
     b.set(cast);
   }
   // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting

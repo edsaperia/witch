@@ -463,6 +463,10 @@ export class HeightField {
     this.data[s] = quantise(v);
   }
 
+  /** Let go of its texture. The shaders' uniform and the field in use (useHeightField) are left as they are: the next island's
+   *  field sets both as it's made, and this one may no longer be current. */
+  dispose(): void { this.texture.dispose(); }
+
   /** Keep the window centred on (x, z): fill the samples it moves over. Returns whether it moved. */
   follow(x: number, z: number): boolean {
     const ci = Math.round(x / RES / STEP) * STEP, cj = Math.round(z / RES / STEP) * STEP;
