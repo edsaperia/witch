@@ -67,11 +67,12 @@ describe("combat (Stage 4)", () => {
   });
 
   it("party animals and wild ones of other kinds fight until one side is beaten: the wild one runs off the map", () => {
-    const g = quiet(packsOff(TUNING)), w = g.witch;
+    const g = quiet(), w = g.witch;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
-    run(g, 40);
+    // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
+    for (let i = 0; i < 60 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
     expect(wild.fleeUntil).toBeTruthy(); // running for the map's edge (Ed: beaten creatures run off the map)
     const x0 = wild.x, z0 = wild.z; run(g, 3);
@@ -563,7 +564,7 @@ describe("Ed's playtest (2026-10-04)", () => {
   }, 60000);
 
   it("has a beaten creature run off, out of sight, and then it's gone for good", () => {
-    const g = quiet(packsOff(TUNING)), w = g.witch;
+    const g = quiet(), w = g.witch;
     const wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     wild.hp = 1;
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true);

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { affectionOf, newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING, type Tuning } from "./tuning";
-const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } }); // (pack combat off: Ed, 2026-10-20, made it the default; a hurt pack member keeps away, packs.test.ts)
 import { foes, stateOf, STATES, type State } from "./creatureStates";
 import { affection, blocksLetters, hit, hold, invitable } from "./affection";
 import { inviteCreature, newLeash } from "./leash";
@@ -77,14 +76,14 @@ describe("creature states (#87)", () => {
   }, 60000);
 
   it("dazes a knocked-down wild creature (nothing attacks it, it can still be invited), then it runs off", () => {
-    const g = quiet(packsOff(TUNING)), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
+    const g = quiet(), w = place(g, "boar", 1, 4, 0), l = place(g, "wolf", 2, 0, 0, "leashed");
     w.hp = 0.5;
     let dazedAt = -1;
     run(g, TUNING.combat.daze + 12, () => { if (dazedAt < 0 && w.dazed) dazedAt = g.clock.time; });
     expect(dazedAt).toBeGreaterThan(0);
     expect(w.fleeUntil).toBeTruthy(); // ran off once its daze was over
     // While dazed: untouched, and invitable.
-    const g2 = quiet(packsOff(TUNING)), w2 = place(g2, "boar", 1, 4, 0), l2 = place(g2, "wolf", 2, 0, 0, "leashed");
+    const g2 = quiet(), w2 = place(g2, "boar", 1, 4, 0), l2 = place(g2, "wolf", 2, 0, 0, "leashed");
     w2.hp = 0.5;
     for (let i = 0; i < 20 / STEP && !w2.dazed; i++) stepGame(g2, idle, STEP);
     expect(w2.dazed).toBe(true);
@@ -103,7 +102,7 @@ describe("creature states (#87)", () => {
   }, 60000);
 
   it("has happy, leashed and enraged ones simply run off when knocked down", () => {
-    const g = quiet(packsOff(TUNING)), e = place(g, "wolf", 2, 0, 0, "enraged"), h = place(g, "boar", 2, 5, 0, "happy");
+    const g = quiet(), e = place(g, "wolf", 2, 0, 0, "enraged"), h = place(g, "boar", 2, 5, 0, "happy");
     e.hp = 0.5;
     let dazed = false;
     run(g, 10, () => { if (e.dazed) dazed = true; });

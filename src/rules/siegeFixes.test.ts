@@ -4,9 +4,7 @@
 // swoop: each lands and uses its ordinary attack.
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, STEP, type Game } from "./game";
-import { TUNING, type Tuning } from "./tuning";
-// Pack combat is on by default (Ed, 2026-10-20); these check the kinds' own moves, as they fight with it off (combat.packs.on false), packs.test.ts the packs.
-const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } });
+import { TUNING } from "./tuning";
 import { speakerKey } from "./speakers";
 import { attackOf, marchSpeedOf, topSpeedOf } from "./combat";
 import { profileOf } from "./movement";
@@ -17,7 +15,7 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false }
 /** One creature of `species` at `level` besieging home's speaker 0 from `from` metres off (away from the dancefloor), alone, the
  *  witch far off over the treetops; the speaker can't fall. */
 function besieging(species: string, level: Level, from: number): { g: Game; c: Creature; h: { x: number; z: number; hp: number; max: number } } {
-  const g = newGame(123, packsOff(TUNING));
+  const g = newGame(123, TUNING);
   g.clock.paused = false; g.party.spellAt = undefined; g.party.paused = true;
   g.witch = { ...g.witch, seated: false, mode: "treetop", lift: 1, x: g.map.dancefloor.x + 2000, z: g.map.dancefloor.z };
   for (const o of g.creatures) if (!o.boss) o.gone = true;
