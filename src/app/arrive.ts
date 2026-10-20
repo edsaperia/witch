@@ -80,3 +80,32 @@ export class ArrivalFlight {
     document.getElementById("arrive-landing")?.remove();
   }
 }
+
+/** index.html's still, as its own script makes it for a sail that loads the page (its look and the push-in's and the "landing…"'s
+ *  CSS there by id). */
+const STILL_CSS = "display:none;position:fixed;inset:0;width:100%;height:100%;object-fit:cover;z-index:40;background:#05060e;image-rendering:pixelated;transform-origin:50% 55%;pointer-events:none";
+
+/** A sail in place (app/sail.ts): the chart's last frame and "landing…" put up over the game as index.html's script puts them up
+ *  for a sail that loads the page, made afresh each time (the last ones went as their flight landed); the night's ArrivalFlight
+ *  (app/night.ts) takes the still by its id. */
+export function showStill(rec: { still?: string }): void {
+  document.getElementById("arrive-still")?.remove();
+  document.getElementById("arrive-landing")?.remove();
+  const img = document.createElement("img");
+  img.id = "arrive-still"; img.alt = ""; img.style.cssText = STILL_CSS;
+  if (rec.still) img.src = rec.still;
+  img.style.display = "block";
+  const landing = document.createElement("div");
+  landing.id = "arrive-landing"; landing.textContent = "landing…"; landing.style.display = "block";
+  document.body.append(img, landing);
+}
+
+/** The HUD hidden through an arrival's flight and fading in as she settles at her decks (Ed, 2026-10-12): its rule, once a page
+ *  (body.arriving holds it hidden). */
+export function hudFade(ids: readonly string[]): void {
+  if (document.getElementById("arrive-hud")) return;
+  const st = document.createElement("style");
+  st.id = "arrive-hud";
+  st.textContent = `${ids.map(i => `#${i}`).join(",")} { transition: opacity 1.2s ease-out; } ${ids.map(i => `body.arriving #${i}`).join(",")} { opacity: 0 !important; pointer-events: none !important; }`;
+  document.head.append(st);
+}

@@ -55,6 +55,21 @@ export class Sound {
     if (this.begun) this.valve.begin(performance.now() / 1000);
   }
 
+  /** Sailing between islands in place (docs/plans/sail-without-reload.md B6; Ed's decision 3): 1 as she sails, the old night's
+   *  music fading out (the tuning's sfx.sail.fade seconds) and the sea and the wind fading in (places.ts Sailing), the music's
+   *  engine scheduling nothing while the next island is made (main.ts updates only this then: tickSail); 0 as the new night starts,
+   *  the cue fading as its music comes in. No crossfade from the old night: setNight's fresh timeline starts the new one's. */
+  sailing(level: number): void {
+    const was = this.sail;
+    this.sail = level;
+    if (level > 0 && !(was > 0)) this.music?.fadeOut(this.tuning.sfx.sail?.fade ?? 1.5);
+    this.tickSail();
+  }
+  /** The sail's cue as it is now: each frame while the island is made (the night's own update does it after). */
+  tickSail(): void { this.sfx?.sailing(this.sail); }
+  /** The sail's cue's level now (0 none). */
+  sail = 0;
+
   /** The cues for a night's game (per-game state: creatures by id, game times, areas by cell). */
   private cues(sfx: Sfx): SfxCues { return new SfxCues(sfx, (by, sec) => this.music?.duck(by, sec)); }
   /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
@@ -187,6 +202,7 @@ export class Sound {
     const t2 = performance.now();
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
+    if (this.sail > 0 || this.sfx?.sailingBuilt) this.tickSail();
     const t3 = performance.now();
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter

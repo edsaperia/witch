@@ -2,7 +2,8 @@
 // turned up and down by how near she is, with its odd event now and then: a pond (water lapping at
 // its edge, a frog now and then, a drip), a picnic in a partified area (party-goers' murmur and
 // their cups clinking), and the creator's room in the treehouse (a record's crackle, the room's
-// low hum, the timber creaking in the wind), and the sea on the beach round the circular map.
+// low hum, the timber creaking in the wind), the sea on the beach round the circular map, and the sea and the wind while she
+// sails between islands in place.
 import type { SfxKit } from "./sfxKit";
 import { clink } from "./ambience";
 
@@ -209,5 +210,45 @@ export class Sea {
     hp.type = "bandpass"; hp.frequency.value = 3600 + 1200 * r; hp.Q.value = 0.5;
     fg.gain.setValueAtTime(0.0001, at); fg.gain.setValueAtTime(0.0001, brk - 0.25); fg.gain.exponentialRampToValueAtTime(vol * 0.32, brk + 0.15); fg.gain.exponentialRampToValueAtTime(0.0001, brk + 2.4);
     loud(end - at + 0.1).connect(hp); hp.connect(fg); fg.connect(out);
+  }
+}
+
+/** Sailing between islands in place (docs/plans/sail-without-reload.md B6; Ed's decision 3: the old night's music fades to "a
+ *  quiet sea and flight cue, then the new night's start"): the beach's sea (its hush and a calm wave now and then) and a soft wind
+ *  over it, gusting slowly, faded in as she sails and out as the new night starts; `level` 0 to 1, the tuning's sfx.sail over it
+ *  (volume, and the sea's and the wind's shares). Noise only: nothing pitched, so nothing out of the music's key. Its nodes are
+ *  made when it's first wanted and let go a few seconds after it's faded. */
+export class Sailing {
+  private readonly sea: Sea;
+  private wind: { src: AudioBufferSourceNode; bp: BiquadFilterNode; gain: GainNode } | null = null;
+  private quietSince = -1;
+
+  constructor(private k: SfxKit) { this.sea = new Sea(k); }
+
+  /** Whether any of it is built. */
+  get built(): boolean { return !!this.wind || this.sea.built; }
+
+  update(level: number): void {
+    const K = this.k, P = K.T.sail, c = K.ctx, now = c.currentTime;
+    if (!P) return;
+    const L = Math.max(0, Math.min(1, level)) * P.volume;
+    this.sea.update(L * P.sea);
+    if (L <= 0.001) {
+      if (!this.wind) return;
+      if (this.quietSince < 0) { this.quietSince = now; this.wind.gain.gain.setTargetAtTime(0, now, P.fade / 3); }
+      else if (now - this.quietSince > P.fade + 4) { const w = this.wind; this.wind = null; try { w.src.stop(); } catch { /* stopped */ } w.gain.disconnect(); }
+      return;
+    }
+    this.quietSince = -1;
+    if (!this.wind) {
+      const src = K.loopNoise(0.35), bp = c.createBiquadFilter(), gain = c.createGain();
+      bp.type = "bandpass"; bp.frequency.value = 700; bp.Q.value = 0.8; gain.gain.value = 0;
+      src.connect(bp); bp.connect(gain); gain.connect(K.out); src.start(now);
+      this.wind = { src, bp, gain };
+    }
+    // a slow gust: two slow sines out of step, the wind rising and brightening with it
+    const w = this.wind, gust = 0.5 + 0.3 * Math.sin(now * 0.23 + 1) + 0.2 * Math.sin(now * 0.61);
+    w.gain.gain.setTargetAtTime(P.wind * L * (0.45 + 0.55 * gust), now, P.fade / 3);
+    w.bp.frequency.setTargetAtTime(450 + 700 * gust, now, 0.8);
   }
 }

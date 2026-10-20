@@ -206,6 +206,10 @@ export interface Tuning {
     pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
     /** The sea on the beach (Ed, 2026-10-06: "You can hear the sound of the waves"): a wave breaking every `every` seconds or so and the wash between, up within `range` metres of the water. */
     waves?: { volume: number; every: number; wash: number; range: number };
+    /** Sailing between islands in place (app/sail.ts; places.ts Sailing): the sea's hush and waves and a soft wind while the next
+     *  island is made, at volume, the sea's and the wind's shares, fading in and out over about fade seconds; and the old night's
+     *  music fading out over fade seconds as it comes in. */
+    sail?: { volume: number; sea: number; wind: number; fade: number };
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
@@ -378,6 +382,9 @@ export interface Tuning {
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
   home: { margin: number; gap: number };
   /** Arriving on an island from the sea chart (rules/arrive.ts): the still's push-in and cross-fade, and the flight's legs. */
+  /** Sailing from the map table's sea chart (app/sail.ts): the next night started on the same page (inPlace), or the page loaded
+   *  anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
+  sail?: { inPlace: boolean };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
