@@ -10,7 +10,7 @@ export const SAVE_KEY = "witch.chart";
 export interface ChartSave {
   /** The campaign's world seed (Ed, 2026-10-11; rules/rosters.ts): every island's shape. 0 (none saved) is the first world. */
   world: number;
-  /** The kinds whose islands she's found (their legends woken), oldest first. */
+  /** The kinds whose islands she's found (each legend's quest done in a night she then won: rules/win.ts found), oldest first. */
   found: string[];
   /** The islands she's won ("home" or a kind). */
   won: string[];
@@ -73,7 +73,7 @@ export function newCampaign(world: number, storage?: Store | null): ChartSave {
  *  won, marked won, and the islands found tonight by quests (`found`: rules/win.ts) found from it, each with its voyage (an
  *  island already found keeps its first voyage). A new save; the old one unchanged. */
 /** Sailing off from the treehouse deck's map table (Ed, 2026-10-11: "Sail anytime"; ui/chartOverlay.ts): with the night still on
- *  (not won, the party not over, nothing yet recorded), it ends unwon, as a loss: played, nothing found, no legends woken; otherwise
+ *  (not won, the party not over, nothing yet recorded), it ends unwon, as a loss: played, nothing found (its quests done tonight kept only by a won night); otherwise
  *  the night's already in the save as it ended. */
 export function sailNight(save: ChartSave, island: string, nightOn: boolean): ChartSave {
   return nightOn ? recordNight(save, island, { won: false }) : save;

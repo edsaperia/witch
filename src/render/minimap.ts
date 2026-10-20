@@ -17,6 +17,9 @@ export class Minimap {
     this.g = this.canvas.getContext("2d")!;
   }
 
+  /** Take its canvas off the page. */
+  dispose(): void { this.canvas.remove(); }
+
   update(p: PartyState, wx: number, wz: number): void {
     this.canvas.style.display = this.on ? "block" : "none";
     if (!this.on) return;

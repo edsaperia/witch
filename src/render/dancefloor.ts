@@ -4,6 +4,7 @@
 // round the floor (in the lighting); and magic particles drifting up off it, high into the sky,
 // wobbling as they fade, more of them as the party grows. Dark until the floor switches on.
 import * as THREE from "three";
+import { freeObjects } from "./free";
 import { hsv2rgb } from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import { composeFloor, GRID } from "../rules/dancefloor";
@@ -122,6 +123,9 @@ export class Dancefloor {
     s.uDiscoParams.value.set((d.spin / 60) * Math.PI * 2, d.specks, d.speckBrightness, d.speckReach);
     s.uDiscoColour.value.copy(tint);
   }
+
+  /** Let go of the ball's, the beam's and the motes' geometries and materials. */
+  dispose(): void { freeObjects([this.ball, this.beam, this.motes]); }
 
   /** Bring the show to `time` seconds; returns the floor's light for the light list. */
   /** off: the party's over (render/partyOver.ts), 0 playing to 1 switched off: its tiles go dark one by one (each at its

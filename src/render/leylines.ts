@@ -16,6 +16,7 @@ import type { PartyState } from "../rules/party";
 import { frontMetres, metresToLinks, pulseProgress, routeLengths } from "../rules/leypulse";
 import { bootPath, bootPulseAt, ringAlong, ringRadius } from "../rules/bootRing";
 import * as THREE from "three";
+import { freeObjects } from "./free";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { LeyTip } from "./leyHead";
 import { Sparkler } from "./sparkler";
@@ -313,6 +314,9 @@ export class LeyLines {
     this.mpp = mpp;
     this.meshes = [...this.cur.meshes, ...this.ringSet.meshes, ...this.sparkler.meshes, ...this.ringSparkler.meshes];
   }
+
+  /** Let go of its lines' and sparklers' geometries and materials (the victory lap's too, if made); a route being worked out is dropped. */
+  dispose(): void { freeObjects(this.meshes); this.pending = null; }
 
   /** The drawn route of the line's links (each from one stone to the next). */
   private routes: [number, number][][] = [];

@@ -57,6 +57,8 @@ export class MarkerArt {
     }
     this.atlas = packAtlas(sprites, 2048);
   }
+  /** Let go of the stones' atlas. */
+  dispose(): void { this.atlas.albedo.dispose(); this.atlas.normal.dispose(); }
   /** The frame for an area's stone (by its cell) at a level (0 dormant, 1.. awake). */
   frame(cell: readonly [number, number], level: number): number { return (this.index.get(this.stoneOf.get(`${cell[0]},${cell[1]}`) ?? "") ?? 0) + Math.max(0, Math.min(MARKER_LEVELS - 1, level)); }
   /** How many art pixels an area's stone stands (its frame's drawn rows). */

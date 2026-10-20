@@ -249,9 +249,9 @@ export class Creator {
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
   get open(): boolean { return this.root.style.display !== "none"; }
-  /** Back in her room mid-night from the treehouse deck (Ed, 2026-10-11: "fly at treetop level to the treehouse to go back to
-   *  bedroom where time slows 10x. click an exit button (where the party scroll usually is) to go back to the island"): no
-   *  party scroll, its place taken by the way out. */
+  /** Open mid-night from one of the treehouse's stations (Ed, 2026-10-19; rules/houseRooms.ts, config/house.json: the mirror,
+   *  the wardrobe, the bags, the broom stand...; the Bedroom button and F are gone), the world running on at the house's tenth:
+   *  no party scroll, its place taken by the way out ("Back to the island", Ed, 2026-10-11). */
   visiting = false;
   /** A station of the treehouse's (config/house.json; Ed, 2026-10-19): only these of its choices show (null: all of them). */
   private only: Station | null = null;
