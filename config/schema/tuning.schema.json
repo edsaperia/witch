@@ -8083,6 +8083,18 @@
       ],
       "additionalProperties": false
     },
+    "opening": {
+      "type": "object",
+      "properties": {
+        "chart": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "chart"
+      ],
+      "additionalProperties": false
+    },
     "arrive": {
       "type": "object",
       "properties": {
@@ -11067,6 +11079,7 @@
     "dancefloor",
     "partyOver",
     "sail",
+    "opening",
     "arrive",
     "camera",
     "pixelSize",

@@ -49,6 +49,8 @@ export interface ChartViewOptions {
   start?: string;
   /** Count the uncharted placeholders in the status line (chart.html's ?chart=all). */
   countUncharted?: boolean;
+  /** Buttons in the top right corner (the first load's chart: What's new, Options and the zoo; app/opening.ts). */
+  corner?: { label: string; title?: string; onClick: () => void }[];
 }
 export interface ChartView {
   /** Its canvas (for a miniature: draw it as a texture, THREE.CanvasTexture). */
@@ -88,11 +90,13 @@ const STYLE = `
 .chart-view [hidden] { display: none !important; }
 .chart-view .hint, .chart-view .world { color: var(--dim); font-size: 11px; text-align: center; }
 .chart-view .new-world { align-items: center; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 8px; padding: 8px 10px; }
+.chart-view .corner { position: absolute; right: 12px; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; z-index: 2; }
 .chart-view .new-seed { font: inherit; font-size: 13px; color: #e8e2f4; background: #14112a; border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px; width: 14em; max-width: 50vw; }`;
 
 const HTML = `
 <canvas aria-label="The sea chart"></canvas>
 <div class="top"><h1>THE SEA CHART</h1><div class="status"></div></div>
+<div class="corner"></div>
 <div class="bottom">
   <div class="card" hidden><div class="name"></div><div class="phase"></div><div class="state"></div><a class="btn sail" href="./?island=home">Sail there</a></div>
   <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="start-over">Start over</button><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
@@ -116,6 +120,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   if (!mini) { canvas.setAttribute("aria-label", "The sea chart"); root.querySelector("canvas")!.replaceWith(canvas); }
   const listening = new AbortController(), on = { signal: listening.signal }; // (the canvas outlives this view: its listeners go with it)
   if (mini) { $("top").hidden = true; $("bottom").hidden = true; }
+  for (const b of opts.corner ?? []) { const el = document.createElement("button"); el.textContent = b.label; if (b.title) el.title = b.title; el.addEventListener("click", () => b.onClick(), on); $("corner").append(el); }
   $("sail").hidden = true;
   ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose;
   $("hint").textContent = sailing

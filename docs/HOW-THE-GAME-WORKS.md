@@ -16,6 +16,12 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
 
 ## 2. How a run plays out
 
+0. **The new opening (being built; off by default).** With `?opening=chart` (or the tuning's `opening.chart`), a plain first load (its link naming no seed or island) opens on the **sea chart** instead of the creator (Ed, 2026-10-20; `app/opening.ts`, the storyboard at previews/ed/opening-mock/ on claude/ed-shots).
+   - A first game has only home to sail to: what's unlocked is home and what she's found.
+   - The chart's corner holds **What's new**, **Options** and the **Zoo**.
+   - Choosing an island starts its night in place, as a sail does. Nothing is recorded on the chart, since the boot's night under it was never played.
+   - Home's art is drawn under the chart meanwhile.
+   - For now she then flies in to her decks as a sail does. The zoom into her bedroom window and the wake-up there come next.
 1. **Dress her up.** The run opens in the character creator. When the scroll unrolls, click it (or press Enter) to **cast the party spell**. The cast takes 1.2 s, and she can't move until it's done.
 2. **At the decks.** She sits behind the decks in the treehouse until you first move or rise.
 3. **Boot-up.** When she leaves the decks a pulse runs from the treehouse down to the home ring and round it at 4 m/s (`boot.speed`: the ley pulse's speed till Ed slowed the waves to 1 m/s on 2026-10-18, the boot kept as it was), turning each little runestone into a speaker as it passes: the first about 3 s in, the whole 179 m path in **about 45 s**. The animals still attack during it, but no waves come.
