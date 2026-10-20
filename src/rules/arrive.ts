@@ -34,10 +34,10 @@ export function southCoast(map: ForestMap): number {
   return z;
 }
 
-/** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks): over the sea to the south coast and
+/** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks, or her in her bedroom): over the sea to the south coast and
  *  low over the forest north at `A.speed` m/s, then up to frame the dancefloor and the treehouse's spot (where the island's
  *  legend will carry the Ent) together, then down into `end`. `ground(x, z)`: the ground's height there. */
-export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot): ArrivePlan {
+export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }): ArrivePlan {
   const d = map.dancefloor, th = map.treehouse, fov = end.fov;
   // the hand-off: the chart's camera, its target where its line of sight meets the sea (or a long way out, near level)
   const p = Math.max(0.02, rec.cam.pitch), back = Math.min(1200, rec.cam.height / Math.sin(p));
@@ -48,8 +48,8 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   const coast = southCoast(map), kf = low((coast + A.low.offshore + d.z) / 2 + A.low.distance * 0.5);
   // (low over the sea first only if the hand-off is out at sea: the chart's own hands over above the coast, high)
   const lows = k0.tz > coast + A.low.offshore + 20 ? [low(coast + A.low.offshore), kf] : [kf];
-  // the frame: the dancefloor and the treehouse's spot together, from the south and up
-  const fx = (d.x + th.x) / 2, fz = (d.z + th.z) / 2;
+  // the frame: the dancefloor and the treehouse's spot together, from the south and up (or `frameAt`: the new opening's bedroom window)
+  const fx = frameAt?.x ?? (d.x + th.x) / 2, fz = frameAt?.z ?? (d.z + th.z) / 2;
   const k3: Shot = { tx: fx, ty: ground(fx, fz) + A.frame.lift, tz: fz, angle: A.frame.angle, distance: A.frame.distance, fov };
   const keys = [k0, ...lows, k3, end];
   // the times: the legs down to the forest by their length at A.speed (at least the chart's own pace), the rise and the

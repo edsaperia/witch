@@ -1,7 +1,8 @@
 // The new opening in the built game (app/opening.ts; Ed, 2026-10-20, previews/ed/opening-mock/ on claude/ed-shots), a shot per beat
 // into <out dir>: the first load on the sea chart (?opening=chart: only home unlocked on a first game, a fresh profile), its corner's
-// What's new and Options, home chosen (Sail home: its night started in place as a sail's, app/night.ts startNight), the chart's
-// flight in (skipped with a key, as a player can) and her at her decks. Fails on a page error, a bedroom shown, or no sail.
+// What's new and Options, home chosen (Sail home: the boot's own night, app/opening.ts divesHome), the chart's
+// dive on into the treehouse and her bedroom, where she wakes. Fails on a page error, the creator's bedroom shown, no sail, or her
+// anywhere but her bedroom.
 // Run `npm run build` first. Playwright from the machine's global install.
 //   node tools/opening/shots.cjs [out dir] (default previews/opening/)
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -44,11 +45,19 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.waitForFunction(() => !document.getElementById("chart-overlay"), null, { timeout: 1200000, polling: 1000 });
     log("the chart flew in and closed");
     await page.waitForTimeout(1500);
-    await shot("04-arriving.png");
-    await page.keyboard.press("Space"); // (skip the flight to her decks, as a player can)
+    await shot("04-dive.png");
+    // the dive on into her bedroom, unskipped: a shot every few seconds of the flight's own time, then landed
+    let k = 0;
+    while (await page.evaluate(() => document.body.classList.contains("arriving")) && k < 6) {
+      await page.waitForTimeout(8000);
+      if (await page.evaluate(() => performance.getEntriesByName("witch:landed").length > 0)) await shot(`05-dive-${++k}.png`);
+    }
     await page.waitForFunction(() => !document.body.classList.contains("arriving"), null, { timeout: 1200000, polling: 1000 });
     await page.waitForTimeout(4000);
-    await shot("05-decks.png");
+    const w = await page.evaluate(() => { const g = window.witch?.game; const b = g?.witch; return b ? { x: b.x - g.map.treehouse.x, z: b.z - g.map.treehouse.z, seated: !!b.seated, house: g.camera.house } : null; });
+    log("she's at", JSON.stringify(w));
+    if (!w || w.seated || w.z > -9) fail("she didn't wake in her bedroom");
+    await shot("06-bedroom.png");
     const marks = await page.evaluate(() => performance.getEntriesByType("mark").filter(m => /^(opening|chart|game):/.test(m.name)).map(m => `${m.name} ${(m.startTime / 1000).toFixed(1)} s`));
     log("marks:\n  " + marks.join("\n  "));
     fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ corner, unlocked, marks }, null, 1));
