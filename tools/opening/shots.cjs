@@ -3,7 +3,7 @@
 // What's new and Options, home chosen (Sail home: the boot's own night, app/opening.ts divesHome), the chart's
 // dive on into the treehouse and her bedroom, where she wakes, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
 // mirror, the curtains). Fails on a page error, the creator's bedroom shown, no sail, her anywhere but her bedroom, or a beat that
-// doesn't come. SKIP=1 skips the dive with a key; LATER=1 plays a later load (the shorter wake-up) and stops once she's up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
+// doesn't come. SKIP=1 skips the dive with a key; LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
 //   node tools/opening/shots.cjs [out dir] (default previews/opening/)
@@ -124,7 +124,25 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.waitForTimeout(1500);
     if (!(await page.$(".corner-panel"))) fail("no Controls on the pause page");
     await shot("15-pause-controls.png");
-    await page.keyboard.press("Escape"); await page.waitForTimeout(500); await page.keyboard.press("Escape"); await page.waitForTimeout(1500);
+    await page.keyboard.press("Escape"); await page.waitForTimeout(1500); // (closes the panel and resumes: one Esc)
+    if (await page.evaluate(() => window.witch.game.clock.paused)) fail("Esc didn't resume from the pause page");
+    if (process.env.BED === "1") { // after the bed (Ed's decision 10): asleep while the next island's made, then the shorter wake-up
+      const seed0 = await page.evaluate(() => window.witch.game.seed);
+      await page.evaluate(() => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + 17.6, z: th.z - 14.4, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0 }; });
+      await page.waitForTimeout(2000);
+      await page.keyboard.down("KeyE");
+      for (let i = 0; i < 900 && (await page.evaluate(() => window.witch.game.seed)) === seed0; i++) await page.waitForTimeout(1000); // (E held 1.5 s of her clock: minutes of this machine's)
+      await page.keyboard.up("KeyE");
+      if ((await page.evaluate(() => window.witch.game.seed)) === seed0) fail("the bed didn't end the night");
+      await page.waitForTimeout(1500);
+      await shot("17-asleep.png");
+      for (let i = 0; i < 900 && !(await page.evaluate(() => !!window.witch.game.wake)); i++) await page.waitForTimeout(1000);
+      const w2 = await page.evaluate(() => ({ short: window.witch.game.wake?.short, beat: window.witch.game.wake?.beat }));
+      log("after the bed:", JSON.stringify(w2));
+      if (!w2.short || w2.beat !== "alarm") fail("after the bed she didn't wake in her bedroom, the shorter wake-up");
+      await page.waitForTimeout(3000);
+      await shot("18-after-bed-alarm.png");
+    }
     const marks = await page.evaluate(() => performance.getEntriesByType("mark").filter(m => /^(opening|chart|game):/.test(m.name)).map(m => `${m.name} ${(m.startTime / 1000).toFixed(1)} s`));
     log("marks:\n  " + marks.join("\n  "));
     fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ corner, unlocked, marks }, null, 1));
