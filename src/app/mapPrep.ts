@@ -76,19 +76,39 @@ export async function takeMapPrep(seed: number, tuning: Tuning, ms = 1500): Prom
   return useReadyMap(await Promise.race([getPrep(), new Promise<null>(res => setTimeout(() => res(null), ms))]), seed, tuning);
 }
 
+/** Make night `seed`'s map's prep with `tuning` in a worker (mapPrep.worker.ts): `done` resolves when it's made (or failed, or
+ *  stopped: null), with the record itself if `send`, else whether it was kept in IndexedDB; `keep` false keeps it out of there. */
+function prepInWorker(seed: number, tuning: Tuning, send: boolean, keep = true): { done: Promise<PrepRecord | boolean | null>; stop(): void } {
+  let worker: Worker | null = null, finish: (r: PrepRecord | boolean | null) => void = () => {};
+  const done = new Promise<PrepRecord | boolean | null>(res => { finish = res; });
+  try {
+    if (typeof Worker === "undefined") { finish(null); return { done, stop() {} }; }
+    worker = new Worker(new URL("./mapPrep.worker.ts", import.meta.url), { type: "module" });
+    worker.onmessage = (e: MessageEvent<{ ok: boolean; rec?: PrepRecord }>) => { finish(e.data.rec ?? e.data.ok); worker?.terminate(); worker = null; };
+    worker.onerror = () => { finish(null); worker?.terminate(); worker = null; };
+    worker.postMessage({ key: prepKey(seed, tuning), seed, tuning, send, noKeep: !keep } satisfies PrepAsk);
+  } catch { finish(null); }
+  return { done, stop() { worker?.terminate(); worker = null; finish(null); } };
+}
+
 /** The chart's: start making night `seed`'s map on island `island` (world `world`, as the link will give it) in a worker, kept in
  *  IndexedDB for the page after the reload. `done` resolves when it's kept (or failed, or stopped: null), with the record itself
  *  if `send` (for a night started without a reload, which takes it with useReadyMap; otherwise only whether it was kept, so the
  *  page's thread doesn't take in megabytes it won't use). */
 export function startMapPrep(island: string, world: number | undefined, seed: number, send = false): { done: Promise<PrepRecord | boolean | null>; stop(): void } {
-  let worker: Worker | null = null, finish: (r: PrepRecord | boolean | null) => void = () => {};
-  const done = new Promise<PrepRecord | boolean | null>(res => { finish = res; });
+  return prepInWorker(seed, sailTuning(island, world, seed), send);
+}
+
+/** The boot's own map (Ed, 2026-10-20: the first load's home map, 1.6 s on the page in the cloud): made in a worker from the page's
+ *  first moments, with the tuning the boot's night will have (app/night.ts startNight: the link's, then this browser's settings
+ *  but those the link's ?set= gives), and sent straight back for useReadyMap. Null (the map made on the page, as before) with no
+ *  workers, if it fails, or if it isn't back within `ms`. */
+export function startBootMapPrep(seed: number, params: URLSearchParams, ms = 10000): Promise<PrepRecord | null> {
   try {
-    const tuning = sailTuning(island, world, seed);
-    worker = new Worker(new URL("./mapPrep.worker.ts", import.meta.url), { type: "module" });
-    worker.onmessage = (e: MessageEvent<{ ok: boolean; rec?: PrepRecord }>) => { finish(e.data.rec ?? e.data.ok); worker?.terminate(); worker = null; };
-    worker.onerror = () => { finish(null); worker?.terminate(); worker = null; };
-    worker.postMessage({ key: prepKey(seed, tuning), seed, tuning, send } satisfies PrepAsk);
-  } catch { finish(null); }
-  return { done, stop() { worker?.terminate(); worker = null; finish(null); } };
+    const { tuning } = tuningFromLink(params);
+    applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
+    const job = prepInWorker(seed, tuning, true, false);
+    const late = setTimeout(() => job.stop(), ms);
+    return job.done.then(r => { clearTimeout(late); return r && typeof r === "object" ? r : null; });
+  } catch { return Promise.resolve(null); }
 }

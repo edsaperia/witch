@@ -83,4 +83,12 @@ describe("a map made from its prep (rules/map.ts MapPrep; app/mapPrep.ts)", () =
     expect(prepProblem({ ...p, land: { ...p.land!, segAt: Int32Array.from(p.land!.segAt, (v, i) => (i === 3 ? 1e9 : v)) } })).toBe("land stretch 3");
     expect(prepProblem({ ...p, route: { ...p.route!, order: [] } })).toBe("route");
   }, 600000);
+  it("is the boot's own map too (app/mapPrep.ts startBootMapPrep): the tuning as the page has it, home grown by islands found, and the radius map", () => {
+    // (the boot's home on a world with islands found: home grows a kind each; and the plain tuning, the tests' radius map)
+    const grown: Tuning = { ...islandTuning("home", 1268398697), map: { ...islandTuning("home", 1268398697).map!, found: kinds.slice(1), islandAreas: 10 + kinds.length - 1 } };
+    for (const [t, seed] of [[grown, 821186], [TUNING, 3], [TUNING, 77]] as const) {
+      const prep = prepFor(seed, t);
+      expect(snapshot(hydrateMap(seed, t, prep)), `seed ${seed}`).toBe(snapshot(generateMap(seed, t)));
+    }
+  }, 600000);
 });

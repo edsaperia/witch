@@ -6,13 +6,13 @@ import { worldOf } from "../rules/rosters";
 import { putPrep, type PrepAsk, type PrepRecord } from "./mapPrepStore";
 
 self.onmessage = async (e: MessageEvent<PrepAsk>) => {
-  const { key, seed, tuning, send } = e.data, t0 = performance.now();
+  const { key, seed, tuning, send, noKeep } = e.data, t0 = performance.now();
   let ok = false, rec: PrepRecord | undefined;
   try {
     const arch = worldOf(tuning.map?.world ?? 0), map = generateMap(seed, tuning);
     routeOf(map); // (the ley line's route, worked out with the map: the page's party asks for it first thing)
     rec = { key, prep: prepOf(map), arch, ms: performance.now() - t0, tuning };
-    ok = await putPrep(rec);
+    ok = noKeep ? true : await putPrep(rec);
   } catch (err) { console.warn("map prep failed", err); }
   (self as unknown as Worker).postMessage(send && rec ? { ok, rec } : { ok });
 };

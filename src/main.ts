@@ -55,7 +55,7 @@ import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
-import { hydrateMs, prepUsed } from "./app/mapPrep";
+import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
 import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
@@ -83,6 +83,10 @@ if (bootSeed === null) {
   history.replaceState(null, "", "?" + params.toString() + location.hash);
 }
 
+// The boot's own map, made in a worker from here on (app/mapPrep.ts; Ed, 2026-10-20): the page's thread free while it's made (the
+// opening's chart, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
+const bootMap = params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
+
 declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
 // Her look (the character creator's, kept on this browser; else the classic witch).
@@ -97,7 +101,7 @@ const N = (): Night => (page.night ?? page.last)!;
  *  here: the bedroom's progress reads it from the boot on.) */
 let sailing = false;
 // The boot's night: the link's tuning, the game, the link's switches, her hat, the playtest run, the knobs' start, the HUD.
-await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params });
+await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params, ready: bootMap ?? undefined });
 const { tuning: bootTuning } = N();
 // The new opening (app/opening.ts; Ed, 2026-10-20): a plain first load opens on the sea chart over the boot's night (home's, made
 // and its art drawn under the chart), in place of the bedroom; off by default till the whole opening is in (?opening=chart).
