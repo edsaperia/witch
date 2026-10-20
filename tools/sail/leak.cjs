@@ -66,10 +66,13 @@ async function main() {
   const page = await context.newPage();
   page.on("pageerror", e => errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") errors.push(`console: ${m.text()}`); });
+  page.on("crash", () => { console.error("the page crashed"); process.exit(1); });
   const cdp = await context.newCDPSession(page);
   const base = `http://127.0.0.1:${port}/`;
   await page.goto(`${base}?island=${ISLANDS[0]}&seed=${SEEDS[0]}&quick=1&creator=0&sail=inplace&debug=sail`);
+  log("loaded");
   await settled(page);
+  log("ready");
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000 });
   await play(page);
