@@ -73,7 +73,7 @@ describe("dodging matters (Ed, 2026-10-08)", () => {
 
   it("no more strike at her at once than dodge.a lets (so a dodge can answer each), whatever the crowd", () => {
     let worst = 0;
-    backingOff(only("abc"), "wolf", 12, 20, g => {
+    backingOff(only("abc"), "wolf", 12, 20, g => { // (packs too: a pack's strikes and its call take the same tokens, rules/combat.ts)
       const n = g.creatures.filter(c => !c.gone && c.fight?.target?.kind === "witch" && (c.fight.windupUntil > 0 || c.fight.lunge)).length;
       worst = Math.max(worst, n);
     });

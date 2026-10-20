@@ -49,7 +49,7 @@ async function once(port) {
     return { marks: m, mapPrep: window.witch.loadTimes.mapPrep ?? null, long: { count: long.length, total: long.reduce((t, e) => t + e.ms, 0), max: Math.max(0, ...long.map(e => e.ms)), top: [...long].sort((a, b) => b.ms - a.ms).slice(0, 6) } };
   });
   await browser.close();
-  return { island: ISLAND, world: WORLD, throttle: THROTTLE, flightMs: flew, ...r, notes, errors };
+  return { island: ISLAND, world: WORLD, seed: new URL(page.url()).searchParams.get("seed"), throttle: THROTTLE, flightMs: flew, ...r, notes, errors };
 }
 
 (async () => {

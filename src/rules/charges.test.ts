@@ -13,8 +13,10 @@ const NO_DODGE = withTuning({ dodge: { a: { ...D.a, on: false }, b: { ...D.b, on
 const OLD = withTuning({ fight: { ...TUNING.fight, charge: { reach: 1, turn: 1, brake: 1, contact: false, chase: 0, miss: 0 }, leap: { reach: 1, through: -1.5, contact: false, lead: 0 } }, dodge: NO_DODGE.dodge });
 
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
+// Pack combat is on by default (Ed, 2026-10-20); these check the kinds' own moves, as they fight with it off (combat.packs.on false), packs.test.ts the packs.
+const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } }); 
 function quiet(t: Tuning = TUNING): Game {
-  const g = newGame(77, t);
+  const g = newGame(77, packsOff(t));
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };

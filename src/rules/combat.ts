@@ -17,7 +17,7 @@ import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attac
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
-import { stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim } from "./combat/packs";
+import { stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, type Directive } from "./combat/packs";
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
@@ -124,16 +124,18 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   // Dodging matters (Ed, 2026-10-08; tuning dodge): against the witch, committed strikes (a), predictive aim (b), packs
   // cutting off her retreat (c). Committed strikes' tokens: how many wind up or strike at each witch now, how many go for her.
   const DD = w.t.dodge, DA = DD?.a.on ? DD.a : null, DB = DD?.b.on ? DD.b : null, DC = DD?.c.on ? DD.c : null;
-  const striking = new Map<number, number>(), onHer = new Map<number, number>();
+  const striking = new Map<number, number>(), onHer = new Map<number, number>(), PO = packsOn(t);
   if (DA) for (const o of w.active) {
     const tg = o.fight?.target;
     if (tg?.kind !== "witch") continue;
     onHer.set(tg.id, (onHer.get(tg.id) ?? 0) + 1);
     // (winding up, lunging, or let go within the last dodge.a.gap seconds: so strikes at her come no faster than a dodge can answer)
-    const f = o.fight!, cd = attackOf(o.species, o.level, data)?.attack.cooldown ?? 0;
+    const f = o.fight!, cd = ((PO && f.packMove && packAttack(o.species, o.level, f.packMove)) || attackOf(o.species, o.level, data))?.attack.cooldown ?? 0; // (a pack member's own move's: a bolt's cooldown isn't its bite's)
     if (f.windupUntil > 0 || f.lunge || swoopStriking(o) || time - (f.readyAt - cd) < DA.gap) striking.set(tg.id, (striking.get(tg.id) ?? 0) + 1); // (a swoop telegraphing, diving or at its bottom too: rules/movement.ts)
   }
-  /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. */
+  /** May it start a strike at tg now (a token free; only her strikers are counted)? Takes the token if so. A pack member takes one as
+   *  well as its pack's turn and pressure, its call too (Ed, 2026-10-20: the dodge's limit holds inside a pack; fights between
+   *  creatures as before). */
   const token = (tg: Target): boolean => {
     if (!DA || tg.kind !== "witch") return true;
     const n = striking.get(tg.id) ?? 0;
@@ -165,6 +167,14 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
   const velOf = (tg: Target) => { const v = tg.kind === "witch" ? w.witches[tg.id] : undefined; return { vx: v?.vx ?? 0, vz: v?.vz ?? 0 }; };
   // Pack combat (rules/combat/packs.ts; Ed, 2026-10-15, behind combat.packs.on): each pack's phase and each member's role and move.
   const PK = packsOn(t) ? stepPacks(s, w, w.packWorld ?? {}) : null;
+  /** May it start a strike now: its pack's turn and pressure (if it's in one), and at her a dodge token. A pack member kept waiting
+   *  only by the token holds its combo open (packs.ts: held), so its pack's strikes at her come one after another, not all at once. */
+  const strikeNow = (pd: Directive | undefined, tg: Target): boolean => {
+    if (pd && !packGate(pd)) return false;
+    if (token(tg)) return true;
+    if (pd) pd.state.held = time;
+    return false;
+  };
   for (const c of w.active) {
     stepKnock(c, dt);
     if (c.gone) continue;
@@ -292,7 +302,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (pd.slot) { if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } else moveToward(c, pd.slot.x, pd.slot.z, 0.5, speed, dt); continue; }
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
-        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && packGate(pd)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
+        if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }
         continue;
       }
     }
@@ -427,7 +437,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       // (a pack member steers by its role, rules/combat/packs.ts, not the old tactic's slots, which held it off waiting for its place)
       const may = steer(c, heavy ? heavyOf(c, P) : P, { px: p.x, pz: p.z, pr: p.r, want, range: A0.range, fire: A.range, speed: cutoff ? Math.max(run * burst, DC!.sprint * FIGHT.speed) : run * burst, time, dt, pack: pd ? null : pk, neighbours: grid.near(c.x, c.z, 12 * S), threats: s.shots, side: sideOf(c), ready: time >= f.readyAt, beat: 60 / t.beat.bpm, heading, lights, cutoff, arriveAt: DA && A.delivery === "melee" && f.target.kind === "witch" ? A.range + p.r : undefined });
-      if (may && time >= f.readyAt && (pd ? packGate(pd) : token(f.target))) {
+      if (may && time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z; // (it glides to a stop as it winds up: below)
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });
@@ -440,7 +450,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       // A kiter backs off when its target comes too close, keeping its distance while it shoots.
       if (kites && d < A0.range * K.near && d > 0.01) { c.x -= ((p.x - c.x) / d) * speed * dt; c.z -= ((p.z - c.z) / d) * speed * dt; c.moving = true; c.walk += dt * 6; c.facing = p.x >= c.x ? 1 : -1; if (time < f.readyAt) continue; }
       c.moving = false; c.facing = p.x >= c.x ? 1 : -1;
-      if (time >= f.readyAt && (pd ? packGate(pd) : token(f.target))) {
+      if (time >= f.readyAt && strikeNow(pd, f.target)) {
         if (pd) markStrike(pd, c);
         f.windupUntil = time + windupOf(A, f.target); f.aimX = p.x; f.aimZ = p.z;
         s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id });

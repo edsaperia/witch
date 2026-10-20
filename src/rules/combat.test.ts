@@ -19,6 +19,7 @@ const run = (g: Game, secs: number, c = idle) => { for (let i = 0; i < Math.roun
 /** The proximity chat, as before the 💌s (invites.on false). */
 const CHAT = withTuning({ invites: { ...TUNING.invites, on: false } });
 
+const packsOff = (t: Tuning): Tuning => ({ ...t, combat: { ...t.combat, packs: { on: false } } }); // (pack combat off: Ed, 2026-10-20, made it the default; a hurt pack member keeps away, packs.test.ts)
 function quiet(t: Tuning = TUNING): Game {
   const g = newGame(77, t);
   g.clock.paused = false;
@@ -70,7 +71,8 @@ describe("combat (Stage 4)", () => {
     const mine = place(g, 0, "wolf", 2, w.x + 2, w.z, true), wild = place(g, 0, "boar", 1, w.x + 4, w.z);
     park(g, mine);
     g.witch = { ...g.witch, mode: "treetop", lift: 1 }; // (on the ground she'd chat the boar into her party)
-    run(g, 40);
+    // (in packs, each a pack of one: they fight in combos with lulls between, and the boar hurt fights on, alone; then its daze)
+    for (let i = 0; i < 60 / STEP && !wild.fleeUntil; i++) stepGame(g, idle, STEP);
     expect(mine.hp).toBeLessThan(maxHp(2)); // it was hit too
     expect(wild.fleeUntil).toBeTruthy(); // running for the map's edge (Ed: beaten creatures run off the map)
     const x0 = wild.x, z0 = wild.z; run(g, 3);
@@ -475,7 +477,7 @@ describe("Ed's Stage 4 rulings", () => {
   it("has kiting kinds (the raven) keep their distance while they shoot (hers: wild ravens swoop, swoop.test.ts)", () => {
     const P = MOVEMENT.profiles.raven, mv = P.move; P.move = undefined;
     try {
-    const g = quiet(), w = g.witch;
+    const g = quiet(packsOff(TUNING)), w = g.witch;
     const raven = place(g, 0, "raven", 1, w.x + 4, w.z);
     run(g, 10, { ...idle, autoTalk: false }); // (auto-talk off: she doesn't chat with it, so it shoots)
     const d = Math.hypot(raven.x - g.witch.x, raven.z - g.witch.z), R = attackOf("raven", 1)!.attack.range;

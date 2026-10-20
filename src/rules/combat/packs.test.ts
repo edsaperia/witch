@@ -63,9 +63,10 @@ describe("pack combat's roles by position (Ed: 2b)", () => {
 });
 
 describe("pack combat in play (the switch on)", () => {
-  it("off by default: no pack forms and fights go as before", () => {
-    expect(TUNING.combat.packs?.on).toBe(false);
-    const g = arena("pack-fox", 8, undefined, TUNING);
+  it("on by default (Ed, 2026-10-20); switched off, no pack forms and fights go as before", () => {
+    expect(TUNING.combat.packs?.on).toBe(true);
+    expect(arena("pack-fox", 8, undefined, TUNING).combat.packs?.size ?? 0).toBeGreaterThan(0);
+    const g = arena("pack-fox", 8, undefined, withTuning({ combat: { ...TUNING.combat, packs: { on: false } } }));
     expect(g.combat.packs?.size ?? 0).toBe(0);
   }, 60000);
 
@@ -255,6 +256,49 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
     expect(packs.lunges).toBeGreaterThanOrEqual(5);
     expect(packs.landed / packs.lunges).toBeGreaterThanOrEqual(0.7); // (a lunge that starts reaches her)
     expect(packs.shotHits / Math.max(1, packs.fired)).toBeGreaterThanOrEqual(0.35); // (13 to 26% before: aimed behind her)
-    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.6); // (9 to 17 of plain's 24 to 30 before)
+    expect(packs.hits).toBeGreaterThanOrEqual(plain.hits * 0.5); // (9 to 17 of plain's 24 to 30 before; and since Ed, 2026-10-20, a pack's strikes at her take the dodge's tokens, one at a time as the plain fight's do, with its lulls besides)
+  }, 60000);
+});
+
+// Ed, 2026-10-20 (pack combat on by default; its tests run with it on): three things the switch showed.
+describe("pack combat's fixes (Ed, 2026-10-20)", () => {
+  const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, hp }) as Creature;
+
+  it("a pack all hurt, or a lone hurt one, fights on (so a fight ends); one hurt beside a healthy packmate still keeps away", () => {
+    const her = { x: 0, z: 0 };
+    expect(assignRoles([at(1, 4, 0, 1)], her, null).get(1)).toBe("lunger"); // (alone at 1 hp: it fights on)
+    const both = assignRoles([at(1, 4, 0, 1), at(2, 9, 0, 1)], her, null);
+    expect([both.get(1), both.get(2)]).toEqual(["lunger", "special"]);
+    const one = assignRoles([at(1, 4, 0, 1), at(2, 9, 0)], her, null);
+    expect([one.get(1), one.get(2)]).toEqual(["hurt", "lunger"]);
+  });
+
+  it("a wild boar at 1 hp facing her parked wolf is knocked down (it kept off it for good)", () => {
+    const g = newGame(77, ON), d = g.map.dancefloor;
+    g.clock.paused = false; g.party.paused = true;
+    g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "treetop", lift: 1 };
+    for (const c of g.creatures) if (Math.hypot(c.x - g.witch.x, c.z - g.witch.z) < 60) c.gone = true;
+    const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - g.witch.x, c.z - g.witch.z) > 80);
+    const put = (c: Creature, species: string, level: 1 | 2, dx: number) => { const x = g.witch.x + dx, z = g.witch.z; Object.assign(c, { circle: undefined, species, level, x, z, tx: x, tz: z, homeX: x, homeZ: z, anchorX: x, anchorZ: z, safeR: undefined, seen: g.clock.time, hp: undefined, boss: false, siege: undefined, rest: 0 }); c.cell = g.map.cellSafe(x, z).cell as [number, number]; return c; };
+    const boar = put(spare[0], "boar", 1, 4), wolf = put(spare[1], "wolf", 2, 2);
+    boar.hp = 1;
+    wolf.leashed = true; g.leash.placed.push({ id: wolf.id, x: wolf.x, z: wolf.z, at: g.clock.time });
+    g.byArea = null;
+    let downAt = -1;
+    for (let i = 0; i < 20 / STEP && downAt < 0; i++) { stepGame(g, idle, STEP); if (boar.dazed || boar.fleeUntil) downAt = g.clock.time; }
+    expect(downAt).toBeGreaterThan(0);
+  }, 60000);
+
+  it("no more of a pack strike at her at once than the dodge's tokens let, its call too (fights between creatures as before)", () => {
+    const D = TUNING.dodge!.a, cap = Math.max(D.tokens, D.swarmTokens);
+    let most = 0, called = false;
+    arena("wolf*1@0,wolf*12@2", 30, g => { // (hers a baby wolf, which no wolf fights)
+      const st = wildPack(g);
+      if (st?.callUntil !== undefined && g.clock.time < st.callUntil) called = true;
+      most = Math.max(most, g.creatures.filter(c => !c.gone && c.fight?.target?.kind === "witch" && (c.fight.windupUntil > 0 || !!c.fight.lunge)).length);
+    });
+    expect(called).toBe(true); // (the howl came, and still one at a time)
+    expect(most).toBeGreaterThan(0);
+    expect(most).toBeLessThanOrEqual(cap);
   }, 60000);
 });

@@ -2,7 +2,7 @@ import { partySpots } from "./partyGuests";
 import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { affectionOf, newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, type Tuning } from "./tuning";
 import { foes, stateOf, STATES, type State } from "./creatureStates";
 import { affection, blocksLetters, hit, hold, invitable } from "./affection";
 import { inviteCreature, newLeash } from "./leash";
@@ -12,8 +12,8 @@ import { cellKey } from "./party";
 // Creature states (Ed, 2026-10-05; issue #87).
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, secs: number, each?: () => void) => { for (let i = 0; i < Math.round(secs / STEP); i++) { stepGame(g, idle, STEP); each?.(); } };
-function quiet(): Game {
-  const g = newGame(77, TUNING);
+function quiet(t: Tuning = TUNING): Game {
+  const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "treetop", lift: 1 }; // (out of every fight herself)

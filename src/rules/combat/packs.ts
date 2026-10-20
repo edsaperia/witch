@@ -3,7 +3,8 @@
 // its call plays (the tell), it combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her or the
 // furthest throws the special), then it falls back by its kind's retreat pattern (the lull, longer for a bigger pack; her own pack
 // holds instead), and again. Roles come from position every step; how many may wind up or strike at her at once is the kind's
-// pressure. A new kind is a data entry (its moves, special, retreat, rhythm, pressure), not new code. The director runs once a step
+// pressure, under the tuning's dodge.a tokens (rules/combat.ts; Ed, 2026-10-20). Against a soundsystem there's no pack: each fights
+// as before. A new kind is a data entry (its moves, special, retreat, rhythm, pressure), not new code. The director runs once a step
 // before the fight loop (rules/combat.ts) and hands each member a directive; the loop reads it. No drawing here.
 // Phase 1's kinds (Echo, 2026-10-19: wolf, boar, bat, raven, newt, moth, heron, beetle, woodlouse, otter, toad) add two specials
 // (mirage, sync), a kind's own variant of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes,
@@ -67,6 +68,9 @@ export interface PackState {
   /** The heron's sync: blinking where she blinks till then, from her blinks after syncFrom. The toad's leap: its cloud comes down then, where it lands. */
   syncUntil?: number; syncFrom?: number; cloudAt?: { id: number; at: number };
   seed: number;
+  /** When a member whose turn it was last waited only on her dodge token (rules/combat.ts, tuning dodge.a): the combo runs on while
+   *  they wait, so its strikes at her go one after another (Ed, 2026-10-20: the dodge's limit holds inside a pack). */
+  held?: number;
   /** This step's strikers at her (winding up or lunging), by slot, and how many may be at once (packGate; markStrike counts each new one). */
   live?: { all: number; lanes: number; lines: number; cap: number; calling: boolean };
 }
@@ -127,11 +131,15 @@ export const packMoveOf = (c: Creature): { attack: Attack; name: string } | null
 export const hurt = (c: Creature, data: PacksData = PACKS): boolean => (c.hp ?? Infinity) < creatureMaxHp(c) * data.limits.hurt;
 
 /** Roles by position (Ed: 2b): the nearest healthy member lunges (and any other within limits.close of her), the one behind her
- *  (else the furthest) throws the special, the rest at range fire; the hurt keep away; past limits.combo the furthest hold back. `heading`: which way she's going (her back is
+ *  (else the furthest) throws the special, the rest at range fire; the hurt keep away while a healthy one fights (all of them hurt,
+ *  they fight on as if whole); past limits.combo the furthest hold back. `heading`: which way she's going (her back is
  *  the other way). Pure, for the tests. */
 export function assignRoles(members: readonly Creature[], p: { x: number; z: number }, heading: { x: number; z: number } | null, data: PacksData = PACKS): Map<number, Role> {
   const out = new Map<number, Role>(), dist = (c: Creature) => Math.hypot(c.x - p.x, c.z - p.z);
-  const healthy = members.filter(c => { if (hurt(c, data)) { out.set(c.id, "hurt"); return false; } return true; }).sort((a, b) => dist(a) - dist(b) || a.id - b.id);
+  // (a hurt one keeps away only while a healthy packmate fights: a lone one, or a pack all hurt, fights on, so a fight comes to an
+  // end: Ed, 2026-10-20, a boar at 1 hp kept off her parked wolf for good)
+  const fightOn = members.every(c => hurt(c, data));
+  const healthy = members.filter(c => { if (!fightOn && hurt(c, data)) { out.set(c.id, "hurt"); return false; } return true; }).sort((a, b) => dist(a) - dist(b) || a.id - b.id);
   const inCombo = healthy.slice(0, data.limits.combo);
   for (const c of healthy.slice(data.limits.combo)) out.set(c.id, "hold");
   if (!inCombo.length) return out;
@@ -178,7 +186,9 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
   const groups = new Map<string, Creature[]>();
   for (const c of w.active) {
     const tg = c.fight?.target;
-    if (!tg || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
+    // (a soundsystem or speaker doesn't fight back or dodge: at one a creature fights as before packs, its own attack at full rate,
+    // no combo, lull or retreat: Ed, 2026-10-20, a lone boar dealt under half its damage a second to a home speaker)
+    if (!tg || tg.kind === "sound" || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
     const k = keyOf(c, tg);
     let l = groups.get(k);
     if (!l) groups.set(k, (l = []));
@@ -241,10 +251,14 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
         if (st.step === 0 && (time >= (st.feintUntil ?? -Infinity)) && ((lunger && (lunger.fight?.lunge || st.struck.includes(lunger.id))) || !lunger || time - st.stepAt > R.gap * 2 + (st.feintUntil ? (st.feintUntil - st.stepAt) : 0))) { st.step = 1; st.stepAt = time; }
         // Step 2 (the special) a gap after the shots.
         // (and only once one of them has struck: a special never opens a combo; a combo nobody could strike in ends without one)
-        if (st.step === 1 && time - st.stepAt >= R.gap && st.struck.length > 0) { st.step = 2; st.stepAt = time; }
+        // (with its shooters waiting their turns on her dodge token, once the first shot's gone too: the shots still before the special)
+        const waiting = st.held !== undefined && time - st.held <= R.gap;
+        const shot = st.struck.some((id: number) => w.creatures[id]?.fight?.packMove === "ranged") || !members.some(m => roles.get(m.id) === "shooter");
+        if (st.step === 1 && time - st.stepAt >= R.gap && st.struck.length > 0 && (shot || !waiting)) { st.step = 2; st.stepAt = time; }
         if (st.step === 2 && !st.specialDone) { if (time >= st.specialReadyAt) special(s, w, pw, st, K, members, roles, tg, p, young, data); st.specialDone = true; }
         // The end: the special thrown and a gap on with nobody mid-strike, or its time up.
-        if ((st.step === 2 && time - st.stepAt >= R.gap && !members.some(busy)) || time >= st.until) {
+        // (and nobody waiting its turn on her dodge token: they strike one after another till the combo's timeout)
+        if ((st.step === 2 && time - st.stepAt >= R.gap && !members.some(busy) && !waiting) || time >= st.until) {
           if (st.hers) enter("lull", time + data.hers.hold);
           else enter("lull", time + lullOf(K, members.length, young, data));
         }

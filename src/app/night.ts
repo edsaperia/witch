@@ -16,7 +16,7 @@ import { tuningFromLink } from "./linkParams";
 import { applySavedSettings, carryKnobs } from "./settings";
 import { linkKnobs } from "./sail";
 import { DECISION_LIST } from "../ui/decisions";
-import { takeMapPrep } from "./mapPrep";
+import { readyMap, takeMapPrep } from "./mapPrep";
 import { gameFromLink } from "./gameParams";
 import { startKnobs, type World } from "./knobs";
 import { Hud } from "./hud";
@@ -128,9 +128,15 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
   // but for those this night's link sets itself.
   if (old) carryKnobs(old.tuning, tuning, DECISION_LIST, linkKnobs(params, DECISION_LIST));
   // Sailed here (&arrive=1, or in place): the island's map made already, in a worker while the chart flew (app/mapPrep.ts), if it's this night's.
-  const mapPrep = params.get("arrive") || spec.how === "sail" ? await takeMapPrep(seed, tuning) : null;
+  const sailed = !!params.get("arrive") || spec.how === "sail", mapPrep = sailed ? await takeMapPrep(seed, tuning) : null;
+  // (a task of its own from here: what follows, the game and the View, would otherwise run in IndexedDB's success callback and be
+  // blamed on it, as Ed's laptop's stall log did, 2026-10-20)
+  if (sailed) await new Promise(res => setTimeout(res, 0));
   performance.mark("witch:prep");
-  const game = newGame(seed, tuning, 1, mapPrep ?? undefined);
+  // (the map: from the prep, guarded, or made as ever; ?timing=1 has its own step, witch:map-prep)
+  const map = mapPrep ? readyMap(seed, tuning, mapPrep) : undefined;
+  if (mapPrep) performance.mark("witch:map-prep");
+  const game = newGame(seed, tuning, 1, map);
   performance.mark("witch:game");
   const cleanups: (() => void)[] = [];
   // The link's switches for the game: the spell, buffs, quest, party's over, arena and waves (app/gameParams.ts).

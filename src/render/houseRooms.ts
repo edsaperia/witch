@@ -21,7 +21,7 @@ interface Quad { p: [number, number, number][]; rgb: [number, number, number]; o
 
 const PLANK: [number, number, number] = [0.36, 0.25, 0.16], PLANK2: [number, number, number] = [0.31, 0.21, 0.13], SEAM: [number, number, number] = [0.2, 0.13, 0.08];
 const WALL: [number, number, number] = [0.27, 0.18, 0.11], WALL_TOP: [number, number, number] = [0.42, 0.3, 0.19];
-const KIND: Record<string, [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56] };
+const KIND: Record<string, [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56] };
 const SKIRT = 0.35, PLANK_W = 0.5, STEP_X = 2;
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
@@ -174,7 +174,8 @@ export class HouseRoomsView {
       if (text !== undefined && el.textContent !== text) el.textContent = text;
     };
     this.box.style.display = "block";
-    place(this.tag, at && !this.said ? at : null, 0.5, at ? tagOf(at, W, D, w) : "");
+    const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
+    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) ? at : null, 0.5, at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {

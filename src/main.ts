@@ -1,6 +1,11 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { chartOpen, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { chartOpen, chartWarmsNight, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { divesHome, opensOnChart } from "./app/opening";
+import { bedside, wakeInBedroom } from "./rules/opening";
+import { startWake, waking } from "./rules/wakeUp";
+import { WakeCard } from "./render/wakeUp";
+import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
@@ -49,15 +54,17 @@ import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
-import { prepUsed } from "./app/mapPrep";
+import { hydrateMs, prepUsed } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
-import { hudFade, showStill } from "./app/arrive";
+import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 const params = new URLSearchParams(location.search);
+/** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
+const bootLink = new URLSearchParams(location.search);
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
 const TIMING = timingOn(params);
 if (TIMING) watchLongTasks();
@@ -90,6 +97,9 @@ let sailing = false;
 // The boot's night: the link's tuning, the game, the link's switches, her hat, the playtest run, the knobs' start, the HUD.
 await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params });
 const { tuning: bootTuning } = N();
+// The new opening (app/opening.ts; Ed, 2026-10-20): a plain first load opens on the sea chart over the boot's night (home's, made
+// and its art drawn under the chart), in place of the bedroom; off by default till the whole opening is in (?opening=chart).
+const onChart = opensOnChart(bootLink, bootTuning);
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -97,7 +107,7 @@ const canvas = document.getElementById("game") as HTMLCanvasElement;
 // The art is drawn for the pixel size the game renders at (the tuning file's), not the Lab's.
 const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 /** Load timings (ms since the page started): the view built (the page's own sprites drawn), ready to play. */
-const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : 0 }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1)
+const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : prepUsed === "unsound" ? -2 : prepUsed === "failed" ? -3 : 0, mapPrepMs: Math.round(hydrateMs) }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1; unsound, -2; failed to hydrate, -3. mapPrepMs: the hydrate's own time)
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
 const view = page.view = new View(canvas, N().game, gameStyle(style, bootTuning), savedLook);
@@ -146,8 +156,8 @@ const startEl = document.getElementById("start")!;
 // Wanted until it's cast (Ed's v3668, stuck at the decks: a press dropped on a frame too short for a step, or a start that found the
 // game frozen, left her held with no spell): pressed on every frame the clock runs, till the rules have it.
 // (the night's flags.castWanted)
-const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party)) n.flags.castWanted = true; };
-window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open) queueCast(); });
+const queueCast = () => { const n = N(); if (awaitingSpell(n.game.party) && !waking(n.game)) n.flags.castWanted = true; }; // (waking in her bedroom: the curtains cast it, rules/wakeUp.ts)
+window.addEventListener("keydown", e => { if (e.code === "Enter" && N().game.clock.time > 0.3 && !creator.open && !chartOpen()) queueCast(); }); // (Enter on the chart sails)
 // (the clock, its pops and the debug overlay: the night's HUD, app/hud.ts)
 
 const fit = () => view.resize(window.innerWidth, window.innerHeight);
@@ -245,7 +255,8 @@ function arrived(): void {
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
-  if (start()) queueCast();
+  if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
+  if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
 }
 
@@ -304,7 +315,7 @@ function botGame(kind: BotKind): void {
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
-else if (params.get("creator") !== "0" && !bootArrival) creator.show();
+else if (params.get("creator") !== "0" && !bootArrival && !onChart) creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
@@ -330,7 +341,7 @@ function start(): boolean {
   input.clearPresses();
   return true;
 }
-input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
+input.onAny = () => (chartWarmsNight() || (N().arrival && !N().flags.landed) ? true : start()); // (the first load's chart up: its keys are the chart's, the night under it not started; arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden, () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
@@ -392,7 +403,8 @@ function dressCreator(): void {
   // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
   creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 }
-if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (params.get("creator") !== "0" && !botKind) dressCreator();
+if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (onChart && !botKind) openingChart();
+else if (params.get("creator") !== "0" && !botKind) dressCreator();
 else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
 // only then (overnight phase 2: out of the game's bundle); its knobs' choices in the link are put on as the game starts
@@ -408,6 +420,8 @@ window.addEventListener("keydown", e => { if (e.code !== "F2") return; e.prevent
 document.addEventListener("visibilitychange", () => { if (document.hidden) N().flags.last = 0; });
 
 let lastDraw = 0;
+/** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
+let wakeCard: WakeCard | null = null;
 const frameStats = new FrameStats(view.renderer.getContext());
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
@@ -502,21 +516,57 @@ document.getElementById("again")?.addEventListener("click", () => newNight("agai
 document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 document.getElementById("fresh")?.addEventListener("click", () => newNight("fresh"));
+/** The first load's sea chart (app/opening.ts): over the boot's night, its art drawn on under it (ui/chartOverlay.ts chartWarmsNight),
+ *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts) and the zoo; no Close.
+ *  Choosing an island starts its night in place as a sail does, the boot's own never played, so nothing's recorded on the chart. */
+function openingChart(): void {
+  mark("opening:chart");
+  const host = () => document.getElementById("chart-overlay") ?? document.body, news = startEl.querySelector<HTMLElement>(".ss-body");
+  const dives = (id: string) => { const n = N(); return divesHome(id, n.spec, !n.game.clock.paused || n.game.clock.time > 0); };
+  openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, noBake: dives, corner: [
+    ...(news ? [{ label: "📜 What's new", onClick: () => toggleCornerPanel(host(), "news", "WHAT'S NEW", [news]) }] : []),
+    ...(shakeEl ? [{ label: "⚙ Options", onClick: () => toggleCornerPanel(host(), "options", "OPTIONS", [shakeEl]) }] : []),
+    { label: "🐾 Zoo", title: "Every creature, out of a run", onClick: () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); } },
+  ] });
+}
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
-const chartWorldArg = (): number | undefined => (new URLSearchParams(location.search).has("world") ? N().tuning.map?.world : undefined);
+function chartWorldArg(): number | undefined { return new URLSearchParams(location.search).has("world") ? N().tuning.map?.world : undefined; } // (a function: the first load's chart opens before this line runs)
 /** Sailing from the map table's sea chart (ui/chartOverlay.ts, and window.witch.sail under it): the night recorded on the chart,
  *  unwon if it's still on, then the next night started in place (app/sail.ts; the tuning's sail.inPlace, ?sail=inplace|reload)
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
-function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean> {
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
-  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
+  if (!record) mark("opening:sail"); // (the first load's chart: the boot's night never played)
+  if (!record && divesHome(to.island, n.spec, !n.game.clock.paused || n.game.clock.time > 0) && diveHome(to)) return Promise.resolve(true);
+  if (record && save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
   carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
   if (sailWay(n.params, n.tuning) === "reload") { location.href = href; return Promise.resolve(false); }
   return sailOrReload(() => sailInPlace(to), href, h => { location.href = h; }, e => {
     console.error("sail in place: it went wrong, so the island's page loads instead", e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
+}
+/** The new opening's dive (app/opening.ts divesHome): the first load's chart sailing home, the boot's own night, made under it: no
+ *  new night; she wakes in her bedroom in the treehouse (rules/opening.ts) and the chart's flight carries on into it, landing as a
+ *  sail's does (the HUD faded in, the night started). False if it can't (no flight's end, no arrival knobs, no rooms): sailed in
+ *  place instead. */
+function diveHome(to: Sailed): boolean {
+  const n = N(), A = n.tuning.arrive;
+  if (!to.end || !A || !wakeInBedroom(n.game)) return false;
+  startWake(n.game, n.game.herTime); // (in bed, the alarm to ring as the dive lands: rules/wakeUp.ts)
+  mark("opening:dive");
+  gestured = true; // (she's played: the sound's woken already)
+  sound.sailing(1);
+  forgetArrival();
+  chartHeld = false; view.assets.hold(false);
+  const rec: Arrival = { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end };
+  showStill(rec); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip();
+  n.arrival = new ArrivalFlight(rec, A, document.getElementById("arrive-still") as HTMLImageElement | null, bedside(n.game) ?? undefined);
+  n.arrival.onReveal = revealArt;
+  lastDraw = 0;
+  if (n.flags.ready) n.arrival.begin(n.game); // (else the boot's own ready begins it)
+  return true;
 }
 /** Back after a sail in place opens the pause menu (Ed's decision 1; app/sail.ts): armed by the first sail (a first load leaves
  *  Back alone); while the next island is made it only keeps the guard. */
@@ -623,7 +673,7 @@ function frame(now: number): void {
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
   const charting = chartOpen();
-  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
+  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting && !chartWarmsNight()); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -641,6 +691,14 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
+  // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
+  // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
+  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
+  if (game.wake) {
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); }
+    if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
+    else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
+  } else wakeCard?.hide();
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart((href, to) => void sailFromChart(href, to), chartWorldArg());
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
