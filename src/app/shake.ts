@@ -27,6 +27,9 @@ export class ScreenShake {
     });
   }
 
+  /** A new night on the same page (app/night.ts): its game and tuning from here on (the shake's own feel kept). */
+  retarget(game: Game, tuning: Tuning): void { this.game = game; this.tuning = tuning; }
+
   private showOption(): void {
     const on = this.shake.on;
     if (this.option) this.option.innerHTML = `screen shake <button type="button" data-v="1" class="${on ? "on" : ""}">on</button><button type="button" data-v="0" class="${on ? "" : "on"}">off</button>`;

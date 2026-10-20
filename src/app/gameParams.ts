@@ -11,7 +11,8 @@ import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { applyRepro } from "./repro";
 
-export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams) {
+/** Returns what undoes its listeners (the arena's J), for the night's end (app/night.ts). */
+export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams): () => void {
   // The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
   // tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
   if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait")) game.party.spellAt = null;
@@ -33,9 +34,12 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   // The debug overlay's repro link (app/repro.ts): ?wave=N, ?cleared=, ?at=x,z&mode=, ?zoom=.
   applyRepro(game, params);
   const arenaParam = params.get("arena");
+  let undo = () => {};
   if (arenaParam) {
     setupArena(game, arenaParam);
-    window.addEventListener("keydown", e => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); });
+    const again = (e: KeyboardEvent) => { if (e.code === "KeyJ" && !e.repeat) setupArena(game, arenaParam); };
+    window.addEventListener("keydown", again);
+    undo = () => window.removeEventListener("keydown", again);
   }
 
   // How fast the party spreads: the ley pulse's speed (leyLines.pulseSpeed m/s, 1 as built: Ed, 2026-10-18; a wave lands as it
@@ -46,5 +50,6 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   const linkSpeed = pulseParam === null ? null : pulseParam === "off" ? 0 : Math.max(0, +pulseParam || 0);
   if (linkSpeed) tuning.leyLines.pulseSpeed = linkSpeed;
   if (linkSpeed === 0 || arenaParam || game.map.zoo) game.party.paused = true;
+  return undo;
 }
 

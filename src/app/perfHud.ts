@@ -35,6 +35,9 @@ export class PerfHud {
     document.body.append(this.el);
   }
 
+  /** A new night on the same page (app/night.ts): its game from here on. */
+  retarget(game: Game): void { this.game = game; }
+
   /** After each frame the loop draws: its gap since the last (ms), the rules' step (ms); `playing` false behind the start
    *  screen or frozen (its slow frames aren't hitches). */
   frame(now: number, gapMs: number, stepMs: number, playing: boolean): void {
