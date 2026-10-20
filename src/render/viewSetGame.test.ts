@@ -30,7 +30,7 @@ function recorder(name: string, log: string[]): Record<string, (...a: unknown[])
 function standInBuilds(log: string[]): void {
   const P = IslandLayers.prototype, name = (i: IslandLayers) => (i as unknown as { tag: string }).tag;
   const part = (i: IslandLayers, what: string) => ({ dispose: () => log.push(`${name(i)}.${what}.dispose`), release: () => log.push(`${name(i)}.${what}.release`) });
-  vi.spyOn(P, "buildGround").mockImplementation(function (this: IslandLayers) {
+  vi.spyOn(P, "groundSteps").mockImplementation(function* (this: IslandLayers) { // (buildGround runs it straight through)
     const own = (this as unknown as { tag: string }).tag = `island${log.filter(l => l === "built").length}`;
     log.push("built");
     const h = Number(own.slice(6)) + 1;
@@ -39,9 +39,9 @@ function standInBuilds(log: string[]): void {
     this.ground = { mesh, setCanopyShadow: () => {}, dispose: () => log.push(`${own}.ground.dispose`) } as never;
     this.root.add(mesh);
   });
-  vi.spyOn(P, "buildPaths").mockImplementation(function (this: IslandLayers) { this.paths = part(this, "paths") as never; });
+  vi.spyOn(P, "pathSteps").mockImplementation(function* (this: IslandLayers) { this.paths = part(this, "paths") as never; });
   vi.spyOn(P, "buildTreehouse").mockImplementation(function (this: IslandLayers) { this.treehouseBatch = part(this, "treehouse") as never; });
-  vi.spyOn(P, "buildMarkers").mockImplementation(function (this: IslandLayers) { this.minimap = { on: true, ...part(this, "minimap") } as never; this.markerArt = part(this, "markerArt") as never; this.markerBatch = part(this, "markers") as never; });
+  vi.spyOn(P, "markerSteps").mockImplementation(function* (this: IslandLayers) { this.minimap = { on: true, ...part(this, "minimap") } as never; this.markerArt = part(this, "markerArt") as never; this.markerBatch = part(this, "markers") as never; });
   vi.spyOn(P, "buildLey").mockImplementation(function (this: IslandLayers) { this.ley = { scale: () => {}, ...part(this, "ley") } as never; });
   vi.spyOn(P, "buildDancefloor").mockImplementation(function (this: IslandLayers) { this.dancefloor = part(this, "dancefloor") as never; });
 }
