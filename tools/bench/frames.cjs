@@ -52,6 +52,20 @@ async function frames(page, n, c, timed = false) {
   const r = await page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
     const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [], A = w.view.assets;
     const L = (window.__benchLanded ??= { frame: 0, at: [] });
+    // While the frames step, the workers take only what the view needs now: with one worker (a 2-core runner) an urgent ask
+    // otherwise waited out the scenery bake it was on, a wait at each one (#1006's first runs passed the job's 40 minutes).
+    // The scenery asked meanwhile is drawn once the steps are done, and the settle waits for it (settle).
+    if (!A.__benchOnlyNow) {
+      const send = A.dispatch;
+      A.dispatch = function () {
+        if (!window.__benchOnlyNow) return send.call(this);
+        const all = this.queue, now = all.filter(j => j.home || this.urgentKeys.has(this.key(j)));
+        this.queue = now;
+        try { send.call(this); } finally { const left = new Set(this.queue); this.queue = all.filter(j => !now.includes(j) || left.has(j)); }
+      };
+      A.__benchOnlyNow = true;
+    }
+    window.__benchOnlyNow = true;
     for (let i = 0; i < n; i++) {
       const r = w.frame(f(i), DT, draw);
       if (timed) times.push({ step: r.step, render: r.render, ms: { ...r.ms } });
@@ -60,6 +74,8 @@ async function frames(page, n, c, timed = false) {
       L.frame++;
       if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (the page's other tasks their turn)
     }
+    window.__benchOnlyNow = false;
+    A.dispatch();
     return times;
   }, { n, c: typeof c === "function" ? c.toString() : c, DT, timed, fn: typeof c === "function", draw: !QUICK });
   return r;
@@ -74,6 +90,7 @@ async function frames(page, n, c, timed = false) {
 // from the same start until the work and fades are done, then held, so both runs take the same
 // moment. (Held, the view's time-budgeted work runs to the end of its queues: slower, but sure.)
 async function settle(page, file, frozen = false) {
+  await page.evaluate(() => window.witch.view?.assets?.whenIdle()); // (every set asked for in, the scenery the steps held back too: the same art in every run's shot)
   if (!frozen) await page.evaluate(async () => {
     let t = 1e7;
     for (let k = 0; k < 80; k++) { window.__benchClock(t += 100); window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); if (k % 10 === 9) await new Promise(r => setTimeout(r, 30)); }
