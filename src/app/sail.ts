@@ -4,6 +4,7 @@
 // which way, the night's link, the knobs that link sets itself (kept from the carry), the other ways' links and nights, Back
 // opening the pause menu, and the quiet fallback.
 import { parseSeed } from "../rules/map";
+import { playableIsland } from "../rules/rosters";
 import { newForestHref } from "./newForest";
 
 /** The two ways to sail: the night started in place, or the page loaded anew on the island's link (as before). */
@@ -96,4 +97,28 @@ export async function sailOrReload(inPlace: () => Promise<void>, href: string, r
     reload(href);
     return false;
   }
+}
+
+/** The island a night is on, as the chart names it (the night's map.island: "home" or a kind's), or null for a night on no chart
+ *  island (?island=20, ?phase=, the zoo). */
+export function chartIsland(mapIsland: string | undefined): string | null {
+  return mapIsland && playableIsland(mapIsland) ? mapIsland : null;
+}
+
+/** Where she is as the chart opens over a night (Ed, 2026-10-21: "choosing the same island after a night has ended shouldn't start a
+ *  new night - going to bed does that"): the night's island and world, and its button's words. */
+export interface ChartHere { island: string; world: number; label: string }
+
+/** How the night stands as the chart opens over it: still on, won (the conga dancing on), or the party's over (the afterparty). */
+export type NightState = "on" | "won" | "over";
+
+/** The current island's button on the chart, in place of "Sail home" or "Sail there". */
+export function stayLabel(state: NightState): string {
+  return state === "over" ? "Back to the afterparty" : "Back to the party";
+}
+
+/** Choosing an island on a chart over a night: the island she's on (in the same world) never starts a new night, from any chart: it
+ *  closes and she's back where she was ("stay"; only the treehouse's bed starts the same island again). Any other island sails. */
+export function chartChoice(here: { island: string; world: number } | null | undefined, chosen: string, world: number): "stay" | "sail" {
+  return here && here.island === chosen && here.world === world ? "stay" : "sail";
 }

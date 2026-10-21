@@ -5,7 +5,8 @@
 // rise or descend. Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
 // test (smoke.cjs) still covers pops, floating, big windows and the rest. Then it sails in place to another island (the tuning's
 // sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
-// checks the night is the island's, its link pushed and play running; Back opens the pause menu on the same night; and the
+// checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
+// the same night (no sail); Back opens the pause menu on the same night; and the
 // afterparty's Play again starts the night again in place (the same island, seed and link, a new game). QUICK_SAIL=0 skips those
 // (a few minutes in the cloud). tools/sail/leak.cjs and swap.cjs (SAIL=1) test the sail fully.
 // Run `npm run build` first, then `npm run smoke:quick`.
@@ -109,6 +110,21 @@ async function main() {
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const n = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused }));
       check(inPlace && n.island === "fox" && /^\?island=fox&seed=4242&/.test(n.url) && !n.paused, `sails in place to another island (${n.island}, ${n.url}, in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);
+      // The chart over the night (the map table's), its own island chosen (Ed, 2026-10-21): back to the night as it was, no sail.
+      const tc = Date.now();
+      await page.evaluate(() => { window.__nightGame = window.witch.game; window.__nightT = window.witch.game.clock.time; window.witch.chart(); });
+      await page.waitForFunction(() => !!window.chart && window.chart.islands().length > 0 && window.chart.chart.selected, null, { timeout: 180000, polling: 200 });
+      const ch = await page.evaluate(() => {
+        window.chart.choose("fox", true);
+        const o = document.getElementById("chart-overlay"), btn = o.querySelector("a.btn.sail");
+        const r = { label: btn.textContent, home: o.querySelector("a.btn.home").textContent, paused: window.witch.game.clock.paused };
+        btn.click();
+        return r;
+      });
+      await page.waitForFunction(() => !document.getElementById("chart-overlay") && window.witch.game.clock.time > window.__nightT, null, { timeout: 60000, polling: 200 }).catch(() => {});
+      const c2 = await page.evaluate(() => ({ open: !!document.getElementById("chart-overlay"), same: window.witch.game === window.__nightGame, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, t0: window.__nightT, paused: window.witch.game.clock.paused, arriving: document.body.classList.contains("arriving") }));
+      check(ch.label === "Back to the party" && ch.home === "Sail home" && ch.paused && !c2.open && c2.same && c2.seed === 4242 && c2.url === n.url && !c2.paused && !c2.arriving && c2.t > c2.t0,
+        `choosing her own island on the chart goes back to the night ("${ch.label}", home "${ch.home}"; paused under the chart ${ch.paused}, chart closed ${!c2.open}, the same night ${c2.same}, seed ${c2.seed}, ${c2.url}, game time ${c2.t0.toFixed(2)} → ${c2.t.toFixed(2)} s, running ${!c2.paused}, no flight ${!c2.arriving}, in ${((Date.now() - tc) / 1000).toFixed(0)} s)`);
       await page.goBack({ timeout: 5000 }).catch(() => {});
       await page.waitForFunction(() => document.getElementById("pause-sliders")?.classList.contains("open"), null, { timeout: 60000 }).catch(() => {});
       const b = await page.evaluate(() => ({ menu: !!document.getElementById("pause-sliders")?.classList.contains("open"), url: location.search, seed: window.witch.game.seed }));
