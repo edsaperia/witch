@@ -40,16 +40,26 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // drawing each; returns each frame's own work when `timed`.
 // (Quick: stepped without drawing, as the perf check does: the software renderer's frames are most of the time; the
 // settled shot draws.)
+// Art asked for in a frame is waited for before the next (the wave-fight flake, 2026-10-21: 927 px apart in one patch on #984,
+// #997 and #999, the state the same, passing again on a re-run): the workers draw in real time while the frames step in fixed
+// ones, so a creature's rig page landed a chunk of frames earlier or later by the runner's speed, and the rig's own state (its
+// gait's clock, its feet planted: render/rig/rig.ts RigBody, made when its page is first in) carried that into the shot. Waited
+// for, each set lands the frame after it's asked for, on any machine. Each frame a set landed on is kept (`landed`, by frame from
+// the scene's start: compare.cjs says when two runs' differ).
 async function frames(page, n, c, timed = false) {
-  return page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
-    const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [];
+  const r = await page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
+    const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [], A = w.view.assets;
+    const L = (window.__benchLanded ??= { frame: 0, at: [] });
     for (let i = 0; i < n; i++) {
       const r = w.frame(f(i), DT, draw);
       if (timed) times.push({ step: r.step, render: r.render, ms: { ...r.ms } });
-      if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (let the art workers' results in)
+      if (A.pending) { const had = A.timings.length; await A.whenIdle(); if (A.timings.length > had) L.at.push([L.frame, A.timings.length - had]); }
+      L.frame++;
+      if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (the page's other tasks their turn)
     }
     return times;
   }, { n, c: typeof c === "function" ? c.toString() : c, DT, timed, fn: typeof c === "function", draw: !QUICK });
+  return r;
 }
 
 // Draw the same moment again (no step) until two screenshots running are the same: the view's
@@ -156,7 +166,8 @@ async function main() {
     lap("stepped");
     const shot = await settle(page, path.join(out, `${s.name}.png`));
     const g = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { time: +g.clock.time.toFixed(4), x: +w.x.toFixed(3), z: +w.z.toFixed(3), mode: w.mode, seated: !!w.seated, wave: g.party.wave }; });
-    result.scenes[s.name] = { ...g, shot, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
+    const landed = await page.evaluate(() => window.__benchLanded?.at ?? []);
+    result.scenes[s.name] = { ...g, shot, landed, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
     console.log(s.name, JSON.stringify(result.scenes[s.name]));
     await page.close();
   }
