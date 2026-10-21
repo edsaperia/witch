@@ -1,7 +1,7 @@
 // The sail in place's own parts (app/sail.ts; docs/plans/sail-without-reload.md PR 5): which way it sails, the link it pushes,
 // the knobs that link keeps from the sliders' carry, Back opening the pause menu, and the quiet fallback to today's reload.
 import { describe, expect, it } from "vitest";
-import { BackGuard, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS } from "./sail";
+import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel } from "./sail";
 import { newForestHref } from "./newForest";
 import { carryKnobs } from "./settings";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
@@ -139,5 +139,35 @@ describe("a sail in place that goes wrong reloads quietly (Ed's decision 2)", ()
     const went: string[] = [];
     await sailOrReload(async () => { throw new Error("no"); }, "x", h => went.push(h), () => { throw new Error("log"); });
     expect(went).toEqual(["x"]);
+  });
+});
+
+describe("choosing the island she's on (Ed, 2026-10-21: \"going to bed does that\")", () => {
+  const home = { island: "home", world: 7 }, fox = { island: "fox", world: 7 };
+  it("never starts a new night, from any chart: home or any island, mid-night or after", () => {
+    expect(chartChoice(home, "home", 7)).toBe("stay");
+    expect(chartChoice(fox, "fox", 7)).toBe("stay");
+  });
+  it("sails to any other island, as now", () => {
+    expect(chartChoice(home, "fox", 7)).toBe("sail");
+    expect(chartChoice(fox, "home", 7)).toBe("sail");
+    expect(chartChoice(fox, "wolf", 7)).toBe("sail");
+  });
+  it("sails when the chart shows another world (a shared link's, or after starting over), or there's no night to go back to", () => {
+    expect(chartChoice(home, "home", 8)).toBe("sail");
+    expect(chartChoice(undefined, "home", 7)).toBe("sail"); // (chart.html, the first load's chart)
+    expect(chartChoice(null, "fox", 7)).toBe("sail");
+  });
+  it("knows the night's island by its map: home or a kind's; none for a sized, phased or zoo island, or a placeholder", () => {
+    expect(chartIsland("home")).toBe("home");
+    expect(chartIsland("fox")).toBe("fox");
+    expect(chartIsland("")).toBe(null);
+    expect(chartIsland(undefined)).toBe(null);
+    expect(chartIsland("nonsense")).toBe(null);
+  });
+  it("labels its button as going back: to the party, or to the afterparty once the party's over", () => {
+    expect(stayLabel("on")).toBe("Back to the party");
+    expect(stayLabel("won")).toBe("Back to the party");
+    expect(stayLabel("over")).toBe("Back to the afterparty");
   });
 });
