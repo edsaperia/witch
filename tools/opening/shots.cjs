@@ -107,6 +107,12 @@ function front(id, by) {
     // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
     if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail("the mirror didn't dock the creator's panel");
     if (await page.evaluate(() => window.__creator?.open || window.witch.game.clock.paused)) fail("the mirror's panel stopped play (it should dock over the running game)");
+    // the whole bedroom from the game's camera: her in its middle, the camera a zoom step out
+    { const b = HOUSE.rooms.find(r => r.id === "bedroom"), mid = plan((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2);
+      await page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, mid);
+      await page.keyboard.press("KeyX"); await page.waitForTimeout(4000);
+      await shot("10a-bedroom-whole.png");
+      await page.keyboard.press("KeyZ"); await page.waitForTimeout(1500); }
     // the rest of her dressing, in the bedroom before its door (Ed, 2026-10-21: "all of the customisation options (except for broom,
     // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it
     for (const [id, name] of [["wardrobe", "10b-wardrobe.png"], ["cloakPegs", "10c-cloak-pegs.png"], ["shoeRack", "10d-shoe-rack.png"]]) {
