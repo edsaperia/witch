@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS } from "./houseRooms";
+import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, stationAt, stationOf } from "./stations";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -12,8 +12,8 @@ const deck = (g: Game) => deckOf(g.map, g.tuning)!;
 const obj = (id: string) => HOUSE_ROOMS.objects.find(o => o.id === id)!;
 const STATIONS = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
 const at = { x: 0, z: 0 };
-/** A point `gap` metres off the front (south) edge of object `id`, the hub's centre at the origin. */
-const before = (id: string, gap: number) => { const o = obj(id); return { x: o.x, z: o.z + o.d / 2 + gap }; };
+/** A point `gap` metres off the near side of object `id`, the hub's centre at the origin (houseRooms.ts objectFrontAt). */
+const before = (id: string, gap: number) => objectFrontAt(obj(id), at, gap);
 
 /** In the house mid-night, off her decks, at (dx, dz) metres from the hub's centre. */
 function inHouse(dx: number, dz: number): Game {
@@ -61,7 +61,7 @@ describe("the dressing stations by nearness", () => {
   });
 
   it("in the game: walking up to the wardrobe opens it, walking away closes it", () => {
-    const o = obj("wardrobe"), g = inHouse(o.x, o.z + o.d / 2 + 0.5), W = g.witches[0];
+    const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), W = g.witches[0];
     let open = stationOf(g, null)?.id ?? null;
     expect(open).toBe("wardrobe");
     for (let i = 0; i < 3 / STEP && open; i++) { stepGame(g, { ...idle, moveZ: 1 }, STEP); open = stationOf(g, open)?.id ?? null; }
@@ -70,7 +70,7 @@ describe("the dressing stations by nearness", () => {
   });
 
   it("in the game: none once she is off her feet (rising)", () => {
-    const o = obj("mirror"), g = inHouse(o.x, o.z + o.d / 2 + 0.4);
+    const p = objectFrontAt(obj("mirror"), at, 0.4), g = inHouse(p.x, p.z);
     expect(stationOf(g, null)?.id).toBe("mirror");
     g.witch = { ...g.witch, mode: "rising" };
     expect(stationOf(g, "mirror")).toBeNull();
