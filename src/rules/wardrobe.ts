@@ -61,3 +61,7 @@ export function ownedOf(saved: readonly string[] | null, g: Genome | null): Set<
   return own;
 }
 
+
+/** The shelf an item is on, and the stations (house objects' ids) whose panels show that shelf, first first. */
+export const shelfOf = (id: string): Shelf | undefined => Object.values(SHELVES).find(s => s.items.some(i => i.id === id));
+export const stationsShowing = (shelf: string): string[] => Object.entries(RAW.stations).filter(([, ids]) => ids.includes(shelf)).map(([k]) => k);
