@@ -6,7 +6,7 @@
 // runs either "before" the pixels are scaled up (blurring whole art pixels, at low resolution)
 // or "after" (on the scaled-up image, at full resolution, so the pixel edges themselves blur).
 import * as THREE from "three";
-import { moodOf } from "./mood";
+import { gradeInto, moodOf } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
 
@@ -275,16 +275,18 @@ export class Post {
   /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */
   get gradeTint(): THREE.Vector3 { return this.mats.composite.uniforms.uGradeTint.value; }
 
-  /** The mood's grade (render/mood.ts) into the composite's uniforms; its tint worked out when the mood changes, not every frame. */
+  /** The mood's grade (render/mood.ts) into the composite's uniforms: its strength and the rest every frame (the pause page's
+   *  Spooky grade slider sets it in place), its tint worked out when the mood changes, not every frame. */
   private gradeOf: object | null | undefined;
   private setGrade(u: Record<string, THREE.IUniform>): void {
     const M = moodOf(this.tuning);
+    gradeInto(u.uGrade.value, M);
     if (M === this.gradeOf) return;
     this.gradeOf = M;
-    if (M?.grade) {
+    if (M) {
       // The tint, at the brightness it leaves: a colour of luma 1, so the grade shifts hue, not level.
       const [r, g, b] = hsv2rgb(M.gradeHue, M.gradeSat, 1).map((x: number) => x / 255), l = 0.3 * r + 0.55 * g + 0.15 * b;
-      u.uGrade.value.set(M.grade, M.gradeDesat, M.gradePivot, 0); u.uGradeTint.value.set(r / l, g / l, b / l);
-    } else u.uGrade.value.set(0, 0, 1, 0);
+      u.uGradeTint.value.set(r / l, g / l, b / l);
+    }
   }
 }
