@@ -1,12 +1,12 @@
 // What she can wear at the treehouse's dressing stations (Ed, 2026-10-21, the station menus; config/wardrobe.json says what each
 // field is): each station's shelves, the items on them, which of them she owns (a first game's starting set, and anything found
-// since: app/owned.ts keeps them), whether she's wearing one, putting one on, and where a silhouette's item lies. Only items are
+// since: app/owned.ts keeps them), whether she's wearing one, and putting one on. Only items are
 // found: every colour is hers from the start (Ed, "She starts with all the colour variants"). Pure: the genome in, a new one out.
 import WARDROBE from "../../config/wardrobe.json";
 
-/** A thing she can wear: what it sets on her genome (a dotted path for a part), whether it's hers in a first game, and where in
- *  the world it lies until she finds it (a compass way from home, or home). */
-export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean; where?: string }
+/** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
+ *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
+export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean }
 /** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES) or its power. */
 export interface Shelf { id: string; label: string; items: WardrobeItem[]; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; power?: "broom"; always?: boolean }
 type Genome = Record<string, unknown>;
@@ -61,8 +61,3 @@ export function ownedOf(saved: readonly string[] | null, g: Genome | null): Set<
   return own;
 }
 
-/** A silhouette's hint: where in the world its item lies (Ed, 2026-10-21: "Found in the world"). */
-export function hintOf(item: WardrobeItem): string {
-  const w = item.where;
-  return !w ? "Not found yet." : w === "home" ? "Lies somewhere on the home island." : `Lies somewhere on an island to the ${w}.`;
-}

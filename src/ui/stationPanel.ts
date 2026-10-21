@@ -1,13 +1,13 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
 // slides in from the left as she comes near a station and away as she walks off (main.ts, rules/stations.ts), over the live game.
-// Its shelves (rules/wardrobe.ts) hold the things she owns, with silhouettes for those still to find and where in the world they
-// lie, each shelf's colour grid (5 rows: every colour hers), its fit sliders and the broom's power. The mouse points and clicks;
+// Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
+// colour grid (5 rows: every colour hers), its fit sliders and the broom's power. The mouse points and clicks;
 // the d-pad or the arrow keys move through it, each owned item or colour landed on going on her at once (Ed: "landing on an item
 // wears it at once"); WASD and the left stick only ever walk her. Each change shows on her a beat later (onLook) and she turns to
 // show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
-import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, SKIN_COLS, hintOf, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
+import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import { BROOM_SPELLS } from "../rules/spells";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 
@@ -249,7 +249,7 @@ export class StationPanel {
     let title = "", text = "", locked = false;
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = s.items[at.col]; locked = !this.owned.has(it.id); title = (locked ? "🔒 " : "") + it.name; text = locked ? hintOf(it) : wears(this.g, it) ? "Wearing." : "Hers."; }
+      if (l.kind === "items") { const it = s.items[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? "" : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21)
       else if (l.kind === "power") { const p = this.powers()[at.col]; title = p.id === "none" ? "Plain broom" : p.name; text = p.line; }
       else if (l.kind === "parts") { title = `Colour: ${PART_NAMES[s.colour![at.col]] ?? s.colour![at.col]}`; text = "Every colour is hers."; }
       else if (l.kind === "grid") { title = `${s.label}: colour`; text = "Every colour is hers."; }
