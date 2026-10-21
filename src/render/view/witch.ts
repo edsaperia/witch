@@ -51,8 +51,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     if (w.braking) wf = Fl.brake[sideF][Math.floor(ht * Fl.brake.fps) % Fl.brake[sideF].length];
     else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(ht * Fl.fast.fps) % Fl.fast[sideF].length];
     // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
-    const showOff = ht < v.turnUntil && Math.hypot(w.vx, w.vz) < 0.6, heading = showOff ? "down" : w.heading; // (a change shown off at a dressing station)
-    const Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
+    const Hd = w.heading && w.heading !== "side" ? v.assets.witchHeading[w.heading] : null;
     if (Hd) wf = w.braking ? Hd.brake[Math.floor(ht * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(ht * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(ht * 4) % Hd.hover.length];
   }
   // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or
@@ -66,7 +65,11 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Waking up in her bedroom (the new opening, rules/wakeUp.ts): sitting up in bed while the alarm rings and she snoozes, her arms
   // up in a stretch as she gets up.
   const wk = g.wake, bedPose = wk && !wk.open && wk.beat !== "up" ? (wk.beat === "stretch" ? "liftSigil" : "sit") : null;
-  const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing || !!bedPose) ? 1 : 0;
+  // In the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony, and stop using it when she steps
+  // on"): landed on its floor she's on foot, standing (idle) or walking, no broom; stepping off the balcony's rim she takes off
+  // (the takeoff frames, as she rises), and coming down onto it she lands (the land frames) and walks.
+  const deckNow = deckOf(g.map, t), indoors = !!deckNow?.house && !!w.perch && w.mode === "ground" && !w.seated && w.falling === undefined;
+  const wantFoot = w.mode === "ground" && ((!!L.talk && still) || acting || !!w.stargazing || !!bedPose || indoors) ? 1 : 0;
   const fdt = Math.min(0.1, Math.max(0, ht - v.footTime)), prevFoot = v.foot;
   v.footTime = ht;
   v.foot += (wantFoot - v.foot) * Math.min(1, fdt * 8);
@@ -75,7 +78,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (v.foot > 0.6) {
     if (bedPose && wk) wf = bedPose === "sit" ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
     else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
-    else if (L.talk) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
+    else if (L.talk && still) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
+    else if (indoors && F.walk && F.idle) {
+      // walking: her six frames at a pace by her speed (F.walk.fps at the house's walk), side-on or, going straight up or down the
+      // screen, in that heading; standing, her idle
+      // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
+      const sp = Math.hypot(w.vx, w.vz), heading = still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
+      v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.walk);
+      const list = still ? (Hd?.idle?.length ? Hd.idle : F.idle[side]) : (Hd?.walk?.length ? Hd.walk : F.walk[side]);
+      wf = list[(still ? Math.floor(ht * F.idle.fps) : Math.floor(v.walkPhase)) % list.length];
+    }
     else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
   } else if (v.foot > 0.02) wf = v.foot >= prevFoot ? pick("land", Math.floor(v.foot * 3)) : pick("takeoff", Math.floor((1 - v.foot) * 3));
   // On the treehouse deck (rules/treehouse.ts) its floor is her ground.
@@ -91,7 +103,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
-  const inRoom = !!(T.ent && deck?.house?.rooms.length && w.perch && Math.hypot(w.x - deck.x, w.z - deck.z) > deck.r && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the hub, rules/houseRooms.ts)
+  const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && Math.hypot(w.x - deck.x, w.z - deck.z) > deck.r && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the hub, rules/houseRooms.ts)
   v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
     const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
@@ -102,7 +114,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     wx += (q.x - wx) * m; wz += (q.z - wz) * m; wyy += (q.y - groundHeight(q.x, q.z) + (wy - deck.h) - wyy) * m; herScale += (q.scale - 1) * m;
     // Off the hub, the camera (render/view/camera.ts, next frame) follows where she's drawn, not her place in the rules: far from the
     // hub the art's floor runs away from the world's. Eased in over the first metres past the hub's wall.
-    const k = deck.house?.rooms.length ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) * m : 0;
+    const k = deck.house?.rooms ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) * m : 0;
     if (k > 0) { const q0 = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, 0); v.houseCam.x = (q0.x - w.x) * k; v.houseCam.y = (q0.y - g0 - deck.h) * k; v.houseCam.z = (q0.z - w.z) * k; }
   }
   // A take-off the leashes won't allow (Ed, 2026-10-18: "you try and fly but get pulled down"; the "grounded" leash event,

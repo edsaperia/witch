@@ -82,6 +82,7 @@ import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
 import { nextFrame, runSliced, runSync, type Steps } from "./slices";
+import { holdDisposals, releaseDisposals } from "./retire";
 import { Fireworks } from "./fireworks";
 import type { Style } from "./style";
 import type { Tuning } from "../rules/tuning";
@@ -272,6 +273,8 @@ function nightState(t: Tuning) {
     /** Showing a change off at a dressing station (main.ts, ui/stationPanel.ts; Ed, 2026-10-21: "a beat on each change"): till this
      *  time of hers, standing still, she turns to face us. */
     turnUntil: 0,
+    /** On foot in the house, her walk's phase (frames: render/view/witch.ts). */
+    walkPhase: 0,
     /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
     speakerTops: [] as RingSpeaker[],
     /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
@@ -557,7 +560,7 @@ export class View {
       // With the deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       this.island.buildTreehouse();
       // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
-      if (deckOn?.house?.rooms.length) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
+      if (deckOn?.house?.rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     yield* this.island.markerSteps();
@@ -733,16 +736,61 @@ export class View {
     // shown for the call (its programs are made at once, as it's called) and hidden again before anything is drawn; then
     // play waits for them a few seconds at most, so on a GPU that compiles in parallel they're done in the Bedroom.
     const hidden: THREE.Object3D[] = [];
-    this.scene.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
-    const compiled = this.renderer.compileAsync(this.scene, this.camera).catch(() => { /* (drawn as before: compiled on first use) */ });
+    const fx = this.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
+    for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
+    const compiled = Promise.all([this.renderer.compileAsync(this.scene, this.camera), fx && this.renderer.compileAsync(fx, this.camera), this.post.compile()]).catch(() => { /* (drawn as before: compiled on first use) */ });
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
-    await Promise.race([compiled, new Promise(r => setTimeout(r, 4000))]);
+    // Waited for till every program is ready (three asks the driver without waiting, KHR_parallel_shader_compile, every 10 ms):
+    // a cap of 4 s (Ed's laptop, 2026-10-21: reached every time) left the rest compiling, and the program logs read next waited on
+    // them, one task, 5 s with the chart frozen. A program the driver never finishes mustn't hold the start for good: 60 s.
+    const t0 = performance.now(), capped = await Promise.race([compiled.then(() => false), new Promise<boolean>(r => setTimeout(() => r(true), 60000))]);
+    if (capped) console.warn(`view: the shaders weren't ready in ${Math.round(performance.now() - t0)} ms; play starts anyway`);
     performance.mark("witch:prep-compiled");
+    releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
     await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
+    // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
+    // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
+    // finds them on the GPU. The hidden too, as above.
+    const textures = new Set<THREE.Texture>();
+    this.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
+    const R = this.renderer;
+    await runSliced((function* () { for (const t of textures) { if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
+    await this.warmDraws();
+  }
+
+  /** The first frame drawn ahead, a pass a step, its targets a few pixels across (render/post.ts renderSteps): a GL's first draw
+   *  of each program and target does the driver's own work then (Ed's laptop, 2026-10-21: 5 s on the first load's first frame
+   *  and 2 s after a sail; the cloud's software renderer, 6 s of it in the first post pass), so play's first frame finds it done.
+   *  Its last pass goes into a target, not the canvas; the targets are their own size again after. */
+  private async warmDraws(): Promise<void> {
+    const w = this.width, h = this.height, k = Math.max(w, h) / 16, ww = Math.max(1, Math.round(w / k)), hh = Math.max(1, Math.round(h / k)), v = this;
+    this.post.resize(ww, hh, ww, hh);
+    await runSliced((function* () {
+      v.castMap.render(v.renderer, v.scene, v.game.witch.x, v.game.witch.z, v.castOn);
+      yield;
+      // The scene's things one at a time, one for each program and way of drawing it (a pipeline the driver makes on its first
+      // draw), everything else hidden, the hidden among them too (as compileAll compiles them); then as they were.
+      const R = v.renderer, seen = new Set<string>(), one: THREE.Object3D[] = [], was = new Map<THREE.Object3D, boolean>();
+      v.scene.traverse(o => {
+        was.set(o, o.visible);
+        const mats = ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? []);
+        for (const m of mats) {
+          const pr = (R.properties.get(m) as { currentProgram?: { id: number } }).currentProgram;
+          const key = `${pr?.id ?? m.uuid}|${(o as THREE.InstancedMesh).isInstancedMesh ? 1 : 0}|${m.blending}|${m.transparent}|${m.depthTest}|${m.depthWrite}|${m.side}|${m.stencilWrite}|${m.colorWrite}`;
+          if (!seen.has(key)) { seen.add(key); one.push(o); break; }
+        }
+      });
+      const show = (on: THREE.Object3D | null) => { for (const o of was.keys()) o.visible = !(o as THREE.Mesh).isMesh && !(o as THREE.Points).isPoints && !(o as THREE.Line).isLine && !(o as THREE.Sprite).isSprite; if (on) on.visible = true; };
+      for (const o of one) { show(o); R.setRenderTarget(v.post.sceneTarget); R.render(v.scene, v.camera); yield; }
+      for (const [o, vis] of was) o.visible = vis;
+      yield* v.post.renderSteps(v.scene, v.camera, false);
+    })(), "draws");
+    this.post.resize(this.width, this.height, this.width, this.height); // (its size now: the window may have changed meanwhile)
+    this.renderer.setRenderTarget(null);
   }
 
   /** The island's own asked for ahead of need (prepare: each island's): its legends' carvings, its area types by `near` (the
@@ -770,6 +818,7 @@ export class View {
   /** setGame a frame's budget at a time (render/slices.ts): the new island built off the scene in steps, the page's frames between
    *  (the frame loop draws nothing meanwhile: main.ts, sailing), then swapped in at once. */
   setGameSliced(game: Game, budgetMs = 8): Promise<void> {
+    holdDisposals(); // (the last night's materials kept till the new night's have their programs: render/retire.ts, compileAll)
     this.assets.early(MarkerArt.stoneJob(this.style, game.tuning, game.map).job); // (the new island's stones asked first, from the art workers)
     return runSliced(this.setGameSteps(game), "setGame", budgetMs);
   }
@@ -805,7 +854,7 @@ export class View {
     island.attach();
     old.dispose();
     // The house's rooms with this island's treehouse's (render/houseRooms.ts: the same rooms on any island, placed by its treehouse).
-    const rooms = !!deckOf(game.map, t)?.house?.rooms.length;
+    const rooms = !!deckOf(game.map, t)?.house?.rooms;
     if (rooms && this.houseRooms) this.houseRooms.reset();
     else if (rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     else if (this.houseRooms) { this.scene.remove(...this.houseRooms.meshes); this.houseRooms.dispose(); this.houseRooms = null; }

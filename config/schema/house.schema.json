@@ -4,6 +4,10 @@
     "on": {
       "type": "boolean"
     },
+    "turn": {
+      "type": "number",
+      "minimum": 0
+    },
     "wall": {
       "type": "number",
       "minimum": 0
@@ -185,6 +189,7 @@
   },
   "required": [
     "on",
+    "turn",
     "wall",
     "reach",
     "rooms",

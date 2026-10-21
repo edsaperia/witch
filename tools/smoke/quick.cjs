@@ -137,11 +137,14 @@ async function main() {
       const over = await page.evaluate(() => { window.witch.lose("home"); return true; });
       await page.waitForFunction(() => !!window.witch.game.partyOver, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const po = await page.evaluate(() => !!window.witch.game.partyOver);
-      await page.evaluate(() => {
-        const g = window.witch.game, W = g.witches[0], t = g.map.treehouse; // (config/house.json's bed: x 17.6, z -16, 2 deep, off the hub's centre)
+      // (config/house.json's bed, 0.4 m off its near side, on the house's plan turned about the hub: rules/houseRooms.ts fromPlan)
+      const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), bed = H.objects.find(o => o.use.kind === "bed");
+      const A = ((H.turn || 0) * Math.PI) / 180, u = bed.x, v = bed.z + bed.d / 2 + 0.4, by = [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)];
+      await page.evaluate(([bx, bz]) => {
+        const g = window.witch.game, W = g.witches[0], t = g.map.treehouse;
         window.__lastGame = g;
-        W.body = { ...W.body, x: t.x + 17.6, z: t.z - 16 + 1 + 0.4, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
-      });
+        W.body = { ...W.body, x: t.x + bx, z: t.z + bz, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
+      }, by);
       await page.keyboard.down("KeyE");
       await page.waitForFunction(() => window.witch.game !== window.__lastGame, null, { timeout: 600000, polling: 200 }).catch(() => {});
       await page.keyboard.up("KeyE");
