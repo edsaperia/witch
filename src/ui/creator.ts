@@ -20,6 +20,7 @@ import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixe
 import { button, h } from "./dom";
 import { BROOM_SPELLS, HAT_SPELLS } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
+import { runSliced, type Steps } from "../render/slices";
 
 type Genome = { hat: Record<string, number | string>; hair: string; top: string; cloak: string; broom: Record<string, number | string>; accessories: Record<string, boolean | string>; palette: Record<string, number[]> | null; scarfLength?: number; bagSize?: number; backpackSize?: number; [k: string]: unknown };
 
@@ -160,7 +161,8 @@ export class Creator {
   private walker: Walker | null = null;
   private lastT = 0;
   /** Her cut-outs (behind): her pool of light and her frame, hidden behind nearer things, each kept until what it was cut
-   *  from changes (the bedroom's first paint, overnight: cut each frame, it cost a second there). */
+   *  from changes (the bedroom's first paint, overnight: cut each frame, it cost a second there; and each cut read back from a
+   *  canvas, a second a cut under the game's frames: cut from pixels read once, now). */
   private cuts = new Map<string, { canvas: HTMLCanvasElement; key: unknown[] }>();
   /** The room's size (`?room=`: its floor across, in its units; art/bedroom.js ROOM.S otherwise). */
   private roomS = Number(new URLSearchParams(location.search).get("room")) || undefined;
@@ -326,7 +328,15 @@ export class Creator {
     this.build();
   }
 
-  show(): void { this.root.style.display = "block"; this.dirty = true; if (!this.room) this.room = buildRoom(this.st, this.roomS); this.walker ??= newWalker(this.room.walk); this.loop(); this.scroll.start(); }
+  show(): void { this.root.style.display = "block"; this.dirty = true; this.buildRoom(); this.loop(); this.scroll.start(); }
+  /** The room made once, a step a frame (render/slices.ts: its sprite, its bake, its light, its banner, its glows: the cloud's, 2026-10-21,
+   *  one task of seconds as the bedroom opened, the alarm's animation stopped); its panel shows meanwhile, the room as it's done. */
+  private building = false;
+  private buildRoom(): void {
+    if (this.room || this.building) return;
+    this.building = true;
+    void runSliced(roomSteps(this.st, this.roomS), "bedroom").then(r => { this.room = r; this.walker ??= newWalker(r.walk); this.dirty = true; this.laid = ""; });
+  }
   hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); if (this.visiting) { this.visiting = false; this.scroll.el.style.display = ""; this.exitBtn.style.display = "none"; } }
   /** Back in her room mid-night, from a station in the treehouse (rules/houseRooms.ts: the mirror, the wardrobe, the cloak pegs, the
    *  shoe rack, the bags, the broom stand): as at the start, but only that station's choices, and the way out in the party scroll's place. */
@@ -532,14 +542,18 @@ export class Creator {
     const room = this.room, at = room?.a.stand ?? [0, 0];
     const bake = (o: object) => {
       const sp = (Art.witchSprite as (st: Style, o: object) => { w: number; h: number })(st, { ...o, look: look.look });
-      const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline);
+      const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
       if (!room) return b.A;
       // her lights: the room's, moved to her sprite's corner as it stands on the rug
-      const ox = Math.round(at[0] - b.w / 2), oy = Math.round(at[1] - b.h), out = document.createElement("canvas");
-      out.width = b.w; out.height = b.h;
+      const ox = Math.round(at[0] - b.w / 2), oy = Math.round(at[1] - b.h), out = cpuCanvas(b.w, b.h);
       shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, out, herLight(st), room.lights.map(L => ({ ...L, x: L.x - ox, y: L.y - oy })), null);
-      // keep her outline's and glows' own pixels: lit where she's drawn, clear elsewhere
-      const o2 = out.getContext("2d")!; o2.globalCompositeOperation = "destination-in"; o2.drawImage(b.A, 0, 0);
+      // keep her outline's and glows' own pixels: lit where she's drawn, clear elsewhere (by hand, not a destination-in draw: both
+      // canvases only uploaded to, their pixels read back at once; a draw would leave the next read waiting on the GPU), and kept
+      // for her cut-outs (behind)
+      const o2 = out.getContext("2d")!, img = o2.getImageData(0, 0, b.w, b.h), d = img.data, A = b.A.getContext("2d")!.getImageData(0, 0, b.w, b.h).data;
+      for (let i = 3; i < d.length; i += 4) d[i] = Math.round((d[i] * A[i]) / 255);
+      o2.putImageData(img, 0, 0);
+      pixelCache.set(out, img);
       return out;
     };
     const stand = (Art.WITCH_FOOT_POSES as Record<string, { frames: number }>).stand?.frames ?? 1;
@@ -580,6 +594,7 @@ export class Creator {
   private loop = (): void => {
     if (!this.open) return;
     this.raf = requestAnimationFrame(this.loop);
+    if (!this.room) return; // (still being made: render/slices.ts)
     const changed = this.dirty;
     if (this.dirty) { this.dirty = false; this.redraw(); }
     // The world building behind: its progress on the bar.
@@ -625,40 +640,42 @@ export class Creator {
     if (!fr) return;
     const feet = [w.x, 0, w.z], [sx, sy] = room.walk.project(feet), feetT = room.walk.depthOf(feet), bob = this.flying ? Math.round(Math.sin(t * 2) * 1.5) - 6 : 0;
     const pw = this.frames.stand[0]?.width ?? fr.width; // (her pool as wide as she stands, whatever she's doing)
-    this.behind("pool", [pw], x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), Math.ceil(pw * 2.4), Math.ceil(pw * 1.2), sy, feetT, true, c => pool(c, pw * 1.2, pw * .6, pw), "lighter");
+    this.behind("pool", poolPixels(pw), false, x, room, Math.round(sx - pw * 1.2), Math.round(sy) - Math.ceil(pw * .6), sy, feetT, true, "lighter");
     const fx = Math.round(sx - fr.width / 2), fy = Math.round(sy - fr.height + bob);
     // the walking keys, on the floor in front of where she starts (under her, should she walk over them)
     const st0 = room.a.stand; this.keyHint.draw(x, Math.round(st0[0] - KeyHint.W / 2), Math.round(st0[1] + 6), this.held);
     if (this.flying) { x.fillStyle = "rgba(0,0,0,.35)"; x.fillRect(Math.round(sx - fr.width * .25), Math.round(sy) - 1, Math.round(fr.width * .5), 2); }
-    this.behind("her", [fr, now.flip], x, room, fx, fy, fr.width, fr.height, sy, feetT, false, c => { if (now.flip) { c.translate(fr.width, 0); c.scale(-1, 1); } c.drawImage(fr, 0, 0); });
+    this.behind("her", pixelsOf(fr), now.flip, x, room, fx, fy, sy, feetT, false);
   };
 
-  /** Draws something of hers (by `paint`, into a w × h box at ox, oy on the room) with every pixel the room has nearer the view
-   *  taken out: she's an upright card at her feet (feetY on the room's picture, feetT their depth), each row of her that much
-   *  higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). Cut once and kept (as `slot`) while what
-   *  it's painted from (`what`), the room and the box stay the same. */
-  private behind(slot: string, what: unknown[], x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, w: number, h: number, feetY: number, feetT: number, flat: boolean, paint: (c: CanvasRenderingContext2D) => void, op: GlobalCompositeOperation = "source-over"): void {
-    const key = [...what, room, ox, oy, w, h, feetY, feetT, flat], cut = this.cuts.get(slot);
+  /** Draws something of hers (its pixels `src`, `flip` turned round, at ox, oy on the room) with every pixel the room has nearer
+   *  the view taken out: she's an upright card at her feet (feetY on the room's picture, feetT their depth), each row of her that
+   *  much higher and nearer; `flat`, it lies on the floor at her feet (her pool of light). Cut once and kept (as `slot`) while what
+   *  it's cut from (`src`), the room and the box stay the same. The cut is made from pixels read once (pixelsOf) and put back
+   *  (putImageData, an upload): never read back from a canvas drawn into, which waits on the GPU's own frame (the cloud's, 2026-10-21:
+   *  a second each time her frame changed, every few frames, under the game's frames). */
+  private behind(slot: string, src: ImageData, flip: boolean, x: CanvasRenderingContext2D, room: Room, ox: number, oy: number, feetY: number, feetT: number, flat: boolean, op: GlobalCompositeOperation = "source-over"): void {
+    const w = src.width, h = src.height, key = [src, flip, room, ox, oy, feetY, feetT, flat], cut = this.cuts.get(slot);
     if (cut && cut.key.length === key.length && cut.key.every((v, i) => v === key[i])) { x.save(); x.globalCompositeOperation = op; x.drawImage(cut.canvas, 0, 0, w, h, ox, oy, w, h); x.restore(); return; }
     const c = cut?.canvas ?? document.createElement("canvas");
     this.cuts.set(slot, { canvas: c, key });
     if (c.width < w || c.height < h) { c.width = Math.max(c.width, w); c.height = Math.max(c.height, h); }
-    const k = c.getContext("2d", { willReadFrequently: true })!;
-    k.setTransform(1, 0, 0, 1, 0, 0); k.clearRect(0, 0, c.width, c.height); k.imageSmoothingEnabled = false;
-    k.save(); paint(k); k.restore();
-    const img = k.getImageData(0, 0, w, h), d = img.data, D = room.walk.depth, RW = room.lit.width, RH = room.lit.height;
+    const img = new ImageData(w, h), d = img.data, s = src.data, D = room.walk.depth, RW = room.lit.width, RH = room.lit.height;
     const up = Math.sin(room.walk.pitch) / (room.walk.s * Math.cos(room.walk.pitch)); // (a pixel higher on her: this much nearer)
     for (let j = 0; j < h; j++) {
       const ry = oy + j, me = flat ? feetT : feetT - Math.max(0, feetY - ry) * up;
       for (let i = 0; i < w; i++) {
-        const a = (j * w + i) * 4 + 3;
-        if (!d[a]) continue;
+        const o = (j * w + i) * 4, si = (j * w + (flip ? w - 1 - i : i)) * 4;
+        if (!s[si + 3]) continue;
         const rx = ox + i;
         if (rx < 0 || ry < 0 || rx >= RW || ry >= RH) continue;
         const z = D[ry * RW + rx];
-        if (z < me - OCCLUDE || (flat && z === Infinity)) d[a] = 0; // (her light only on the room, never on the night past its edge)
+        if (z < me - OCCLUDE || (flat && z === Infinity)) continue; // (her light only on the room, never on the night past its edge)
+        d[o] = s[si]; d[o + 1] = s[si + 1]; d[o + 2] = s[si + 2]; d[o + 3] = s[si + 3];
       }
     }
+    const k = c.getContext("2d")!;
+    k.clearRect(0, 0, c.width, c.height);
     k.putImageData(img, 0, 0);
     x.save(); x.globalCompositeOperation = op; x.drawImage(c, 0, 0, w, h, ox, oy, w, h); x.restore();
   }
@@ -737,22 +754,31 @@ const GLOWS: { mat: number; pulse: (t: number) => number }[] = [
   { mat: Art.M.COLLAR, pulse: t => Math.sin(t * 4) > 0 ? .45 : .1 },                                     // fairy lights, blinking
   { mat: Art.M.MAGIC2, pulse: t => Math.sin(t * 4) > 0 ? .1 : .4 },                                      // and their other half
 ];
-/** Bakes and lights the room once: its picture, a layer per glowing material, its anchors and its lights. */
+/** Bakes and lights the room once, in steps (a yield between, render/slices.ts): its picture, a layer per glowing material, its
+ *  anchors and its lights. */
 type Walkable = RoomFloor & { depth: Float32Array; depthOf: (p: number[]) => number; pitch: number; s: number };
 type Room = { lit: HTMLCanvasElement; banner: HTMLCanvasElement; glows: { mat: number; c: HTMLCanvasElement }[]; a: RoomAnchors; lights: Light[]; walk: Walkable; box: number[] };
-function buildRoom(st: Style, S?: number): Room {
+function* roomSteps(st: Style, S?: number): Steps<Room> {
+  yield "bedroom-sprite";
   const sp = (Art.bedroomSprite as unknown as (st: Style, o: { S?: number }) => { w: number; h: number; m: Uint8Array; anchors: RoomAnchors; scale: number; walk: Omit<Walkable, "s"> })(st, { S });
+  yield "bedroom-bake";
   const colours = (Art.bedroomColours as (st: Style) => Record<number, number[]>)(st);
-  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline); // (ref: its outline, not its interior lines, which turn the clutter to noise)
+  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas); // (ref: its outline, not its interior lines, which turn the clutter to noise)
   const a = sp.anchors, warm = [255, 176, 92], light = (p: [number, number], R: number, rgb: number[], power: number, z = 10): Light => ({ x: p[0], y: p[1], z, R, rgb, power });
   const lights: Light[] = [light(a.lantern, 56, warm, .75, 14), light(a.screen, 56, [150, 214, 255], 1.6, 12), light(a.decks, 30, [255, 110, 210], .9), light(a.potions, 34, [196, 120, 255], .9),
     ...a.flames.map(f => light(f, 26, warm, 1)), ...a.runes.map(r => light(r, 14, [110, 255, 196], .5, 6))];
-  const lit = document.createElement("canvas");
-  lit.width = b.w; lit.height = b.h;
-  shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), lights, null);
-  const l2 = lit.getContext("2d")!; l2.globalCompositeOperation = "destination-in"; l2.drawImage(b.A, 0, 0); // clear round the room
+  yield "bedroom-light";
+  const litCpu = cpuCanvas(b.w, b.h);
+  shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, litCpu, roomLight(st), lights, null);
+  // clear round the room (by hand, not a destination-in draw: both only uploaded to, read back at once; a draw would leave the
+  // read below waiting on the GPU's frame, seconds of it in the cloud)
+  const A = b.A.getContext("2d")!.getImageData(0, 0, b.w, b.h).data, litImg = litCpu.getContext("2d")!.getImageData(0, 0, b.w, b.h), LA = litImg.data;
+  for (let i = 3; i < LA.length; i += 4) LA[i] = Math.round((LA[i] * A[i]) / 255);
+  // (drawn every frame: uploaded once to a canvas of the page's own kind, not a CPU one sent again each draw)
+  const lit = document.createElement("canvas"); lit.width = b.w; lit.height = b.h; lit.getContext("2d")!.putImageData(litImg, 0, 0);
   // the banner (Ed: "PARTY TONIGHT"): a pennant a letter hanging from its string, its top along the wall, its letter upright in a
   // pixel font; on its own layer, drawn over the glows (so no fairy light shines through a letter) after any stylising
+  yield "bedroom-banner";
   const banner = document.createElement("canvas"); banner.width = b.w; banner.height = b.h;
   const bn = banner.getContext("2d")!;
   const F = Art.BANNER_FONT as Record<string, string[]>, flag = ["#ff6fbf", "#ffd65a", "#7ff0b0", "#8fd4ff", "#ffb36b", "#c49bff", "#ff7a7a"];
@@ -769,7 +795,7 @@ function buildRoom(st: Style, S?: number): Room {
   // the letters: dark on the pale pennants, below the lowest of their columns' tops (so the slope never cuts one)
   bn.fillStyle = "#24101c";
   for (const { ch, cx, topAt } of pennants) { const ly = Math.max(topAt(-1), topAt(0), topAt(1)) + 1; F[ch]?.forEach((row, y) => [...row].forEach((on, x) => { if (on === "1") bn.fillRect(cx - 1 + x, ly + y, 1, 1); })); }
-  const A = b.A.getContext("2d")!.getImageData(0, 0, b.w, b.h).data;
+  yield "bedroom-glows";
   const glows = GLOWS.map(({ mat }) => {
     const c = document.createElement("canvas"); c.width = b.w; c.height = b.h;
     const x = c.getContext("2d")!, img = x.createImageData(b.w, b.h);
@@ -777,9 +803,9 @@ function buildRoom(st: Style, S?: number): Room {
     x.putImageData(img, 0, 0);
     return { mat, c };
   });
+  yield "bedroom-box";
   // what of the picture is the room (its opaque pixels' box), to centre on screen
   let bx0 = b.w, by0 = b.h, bx1 = 0, by1 = 0;
-  const LA = l2.getImageData(0, 0, b.w, b.h).data;
   for (let y = 0; y < b.h; y++) for (let x = 0; x < b.w; x++) if (LA[(y * b.w + x) * 4 + 3]) { bx0 = Math.min(bx0, x); by0 = Math.min(by0, y); bx1 = Math.max(bx1, x + 1); by1 = Math.max(by1, y + 1); }
   return { lit, banner, glows, a, lights, walk: { ...sp.walk, s: sp.scale }, box: bx1 > bx0 ? [bx0, by0, bx1, by1] : [0, 0, b.w, b.h] };
 }
@@ -807,6 +833,28 @@ function fairyProgress(x: CanvasRenderingContext2D, room: Room, built: number, s
   if (sinceReady < 0 && lit > 0) halo(x, F[lit - 1], 3, [255, 120, 210], .3); // the newest one, brightest
   if (sinceReady >= 0 && sinceReady < 1.2 && Math.floor(sinceReady * 5) % 2 === 0) F.forEach(p => halo(x, p, 3, [255, 200, 240], .25));
   x.restore();
+}
+/** A canvas kept on the CPU (willReadFrequently): its pixels read back at once. A canvas of the page's own kind is drawn by the GPU,
+ *  and reading one back waits on the GPU's queue, the game's frames in it: a second or more each read in the cloud (2026-10-21),
+ *  which the bedroom's bakes, lighting and cut-outs did over and over while the island built. What's read is made on these. */
+function cpuCanvas(w: number, h: number): HTMLCanvasElement {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  c.getContext("2d", { willReadFrequently: true });
+  return c;
+}
+/** A canvas's pixels, read once and kept with it (her frames, baked once a look: creator.ts behind cuts from these). */
+const pixelCache = new WeakMap<HTMLCanvasElement, ImageData>();
+function pixelsOf(c: HTMLCanvasElement): ImageData {
+  let p = pixelCache.get(c);
+  if (!p) { p = c.getContext("2d")!.getImageData(0, 0, c.width, c.height); pixelCache.set(c, p); }
+  return p;
+}
+/** Her pool of light's pixels for her width `pw`, painted once (pool) on a CPU canvas, read back at once, and kept. */
+const pools = new Map<number, ImageData>();
+function poolPixels(pw: number): ImageData {
+  let p = pools.get(pw);
+  if (!p) { const c = cpuCanvas(Math.ceil(pw * 2.4), Math.ceil(pw * 1.2)); pool(c.getContext("2d")!, pw * 1.2, pw * .6, pw); p = pixelsOf(c); pools.set(pw, p); }
+  return p;
 }
 /** The pool of light on the rug where she stands: two hard-edged steps of warm light, an ellipse as the floor is seen. */
 function pool(x: CanvasRenderingContext2D, cx: number, cy: number, w: number): void {
