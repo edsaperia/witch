@@ -1,5 +1,5 @@
 // The sigil button (split from rules/game.ts, no change in behaviour): what E (the gamepad's and touch's sigil button) does
-// on the ground, in order: her dropped hat first (rules/hat.ts), then a flask whose sigil she stands on, drunk on the spot (a
+// on the ground, in order: her dropped hat first (rules/hat.ts), then tonight's travel trunk (rules/finds.ts), then a flask whose sigil she stands on, drunk on the spot (a
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
@@ -13,6 +13,7 @@ import { heldByCombat } from "./creatures";
 import { stepLeash, type LeashEvent } from "./leash";
 import { flaskUnder } from "./legends";
 import { growthSpurt } from "./berries";
+import { trunkAt } from "./finds";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
 import { hatButton, putHat, wearing } from "./hat";
@@ -79,6 +80,12 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   } else if (hatPress && wearing(W.hat)) {
     W.hat.down = { x: g.witch.x, z: g.witch.z, at: ht }; delete W.hat.hold;
     relicEvents.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
+  }
+  // Tonight's travel trunk (rules/finds.ts; Ed, 2026-10-21): E at it while the party's on takes what's in it, hers at once.
+  const trunk = (sigil || place) && onFoot && !g.partyOver ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null;
+  if (trunk) {
+    trunk.found = true; sigil = false; place = false;
+    relicEvents.push({ kind: "found", id: W.id, x: trunk.x, z: trunk.z, at: ht, obj: trunk.item! });
   }
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).

@@ -36,8 +36,10 @@ import { castable } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf } from "./rules/stations";
-import { shelvesAt } from "./rules/wardrobe";
-import { loadOwned } from "./app/owned";
+import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
+import { fillTrunk } from "./rules/finds";
+import { CrystalBall } from "./ui/crystalBall";
+import { loadOwned, saveOwned } from "./app/owned";
 import { StationPanel } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
@@ -297,6 +299,8 @@ const stations = new StationPanel(style, bootTuning.pixelSize);
 let owned: Set<string> | null = null, stillAt = 0;
 stations.onLook = g => { saveGenome(g as never); creator.adopt(g); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
+// The crystal ball (rules/finds.ts, ui/crystalBall.ts; Ed, 2026-10-21): E at it shows tonight's trunk's wearable and which way it lies.
+const ball = new CrystalBall(style, bootTuning.pixelSize);
 stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
@@ -306,6 +310,7 @@ const useHouse = (obj: string): void => {
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
+  else if (o.use.kind === "ball") { if (ball.open) ball.hide(); else ball.show(game.trunk, game.map.treehouse.x, game.map.treehouse.z, (page.look() ?? creator.genome()) as Record<string, unknown>); }
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -747,6 +752,14 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
+  // Tonight's trunk (rules/finds.ts): filled from what she owns once a night; taken, its wearable is hers for good (app/owned.ts).
+  if (game.trunk && game.trunk.item === null) fillTrunk(game, owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>));
+  for (const e of game.leashEvents) if (e.kind === "found" && e.obj) {
+    (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)).add(e.obj); saveOwned(owned);
+    const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
+    hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
+  }
+  if (ball.open && (c.moveX || c.moveZ || !game.witch.perch)) ball.hide(); // (walking off, or out of the house)
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.spells.broom, game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look, then walk to the curtains" : ""); }
