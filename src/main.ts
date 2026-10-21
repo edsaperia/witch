@@ -57,7 +57,7 @@ import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
-import { BackGuard, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, type NightWay } from "./app/sail";
+import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, type NightWay } from "./app/sail";
 import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
@@ -532,7 +532,15 @@ document.getElementById("won-close")?.addEventListener("click", () => document.g
 function chartFromCard(): void {
   const n = N(), toPage = (h: string) => { location.href = h; };
   if (botKind || sailing || sailWay(n.params, n.tuning) === "reload") { toPage("chart.html"); return; }
-  void sailOrReload(async () => openChart((href, to) => void sailFromChart(href, to), chartWorldArg()), "chart.html", toPage, e => console.error("sea chart: it couldn't open over the game, so chart.html loads instead", e));
+  void sailOrReload(async () => chartOverNight(), "chart.html", toPage, e => console.error("sea chart: it couldn't open over the game, so chart.html loads instead", e));
+}
+/** The sea chart over the night (the map table's, and the cards'): choosing the island she's on never starts a new night (Ed,
+ *  2026-10-21: "choosing the same island after a night has ended shouldn't start a new night - going to bed does that"): the chart
+ *  closes as Close does, nothing recorded, and the night (or its afterparty, its card up) goes on as it was; another sails. */
+function chartOverNight(): void {
+  const n = N(), island = chartIsland(n.tuning.map?.island);
+  const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
+  openChart((href, to) => void sailFromChart(href, to), chartWorldArg(), { here, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`) });
 }
 document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
 document.getElementById("again")?.addEventListener("click", () => newNight("again"));
@@ -732,7 +740,7 @@ function frame(now: number): void {
     if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
   } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) openChart((href, to) => void sailFromChart(href, to), chartWorldArg());
+  if (!bot && game.leashEvents.some(e => e.kind === "chart")) chartOverNight();
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
@@ -845,6 +853,8 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // on the chart, the way by sail.inPlace or ?sail=, in place the fallback), for tools/sail/leak.cjs and swap.cjs; `end` the
 // chart's flight end (a plain one out at sea south of the island if not given: its still a dark screen; null, none), `fail`
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
+// window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
+(window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   sailFail = !!o.fail && params.get("debug") === "sail";
   const world = chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };

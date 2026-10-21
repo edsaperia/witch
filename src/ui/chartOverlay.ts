@@ -17,8 +17,9 @@ export interface Sailed { island: string; seed: number; world?: number; end?: Fl
 /** Open the chart over the game; `onSail` with the island's link (to load) and what she sailed to (a night in place: app/sail.ts)
  *  when she sails; `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
  *  already open. `o.opening`: the first load's chart (app/opening.ts): the whole screen, no Close (there's no night to go back to
- *  yet), the night's art warming under it (chartWarmsNight), and `o.corner`'s buttons in its top right corner. */
-export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { opening?: boolean; corner?: ChartViewOptions["corner"]; noBake?: ChartViewOptions["noBake"] } = {}): void {
+ *  yet), the night's art warming under it (chartWarmsNight), and `o.corner`'s buttons in its top right corner. `o.here`: the
+ *  island she's on: choosing it closes the chart as Close does (then `o.onStay`), never a sail (app/sail.ts chartChoice). */
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { opening?: boolean; corner?: ChartViewOptions["corner"]; noBake?: ChartViewOptions["noBake"]; here?: ChartViewOptions["here"]; onStay?: () => void } = {}): void {
   if (open) return;
   performance.mark("chart:open");
   stopWarmChart(); // (the chart's own worker makes what isn't kept yet)
@@ -31,6 +32,8 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
     onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; }, // (the flight fills the screen)
     onClose: o.opening ? undefined : closeChart,
+    here: o.here,
+    onStay: () => { closeChart(); o.onStay?.(); }, // (as Close: the night held behind it goes on as it was, main.ts)
     corner: o.corner,
     noBake: o.noBake,
   });

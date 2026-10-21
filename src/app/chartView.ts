@@ -9,7 +9,8 @@
 // the water; won islands ringed in gold.
 //   Choose an island (tap or click it; arrow keys, the d-pad or the stick) and the camera glides to it and names it. Three modes:
 // "sail" (between nights): choose it again, press Enter or the pad's A, or the Sail button, to sail there; Start over (after an
-// are-you-sure) forgets it all. "look" (mid-night): the same, but no sailing and no starting over. "miniature" (the map table's
+// are-you-sure) forgets it all; over a night, the island she's on is "Back to the party" (or the afterparty): choosing it closes
+// the chart and the night goes on as it was, never a new one (Ed, 2026-10-21; app/sail.ts chartChoice). "look" (mid-night): the same, but no sailing and no starting over. "miniature" (the map table's
 // model): no card, no buttons, no keys, the camera slowly circling. The save and what's unlocked are chartSave.ts's: this is
 // the view. Its own canvas and renderer, inside `host`; the caller's loop calls update() (no requestAnimationFrame of its own).
 import { islandCoast } from "../rules/islandShape";
@@ -23,6 +24,7 @@ import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
+import { chartChoice, type ChartHere } from "./sail";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -41,6 +43,11 @@ export interface ChartViewOptions {
   onFly?: () => void;
   /** Look and sail modes: a Close button and Esc. */
   onClose?: () => void;
+  /** Sail mode over a night (the map table's, the cards'): the island she's on, and its button's words ("Back to the party"):
+   *  choosing it never sails (app/sail.ts chartChoice), but asks `onStay` (default onClose). */
+  here?: ChartHere;
+  /** The island she's on chosen: back to the night as it was. */
+  onStay?: () => void;
   /** Miniature: its render size in art pixels (default: the host's size). */
   size?: { w: number; h: number };
   /** A note after the status line (chart.html's "showing everything"). */
@@ -133,6 +140,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
   let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
+  /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
+  const isHere = (id: string | null) => !!id && chartChoice(opts.here, id, worldNow()) === "stay";
   const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
@@ -148,7 +157,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
-    if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id)) { bake = null; return; }
+    if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id) || isHere(id)) { bake = null; return; } // (the island she's on: never sailed to from here)
     const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
     bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
@@ -173,6 +182,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || !isl?.sail || chart.flying) return;
+    if (isHere(id)) { (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was)
     const w = worldNow();
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
@@ -250,6 +260,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "do a legend's quest and win the night to find its island"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
     $("world").textContent = `World seed: ${w}${opts.world != null && opts.world !== save.world ? " (from the link)" : ""}`;
     ($("home") as HTMLAnchorElement).href = sailHref("home");
+    $("home").textContent = isHere("home") ? opts.here!.label : "Sail home";
   }
 
   /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
@@ -265,9 +276,10 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
-    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it";
+    $("state").textContent = (isHere(id) ? "you're here · " : "") + (isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it");
     sail.hidden = !sailing || !isl.sail;
     sail.href = sailHref(id!);
+    sail.textContent = isHere(id) ? opts.here!.label : "Sail there";
   }
   $("sail").addEventListener("click", e => { e.preventDefault(); sailTo(chart.selected); });
   $("home").addEventListener("click", e => { e.preventDefault(); choose("home", true); sailTo("home"); });
