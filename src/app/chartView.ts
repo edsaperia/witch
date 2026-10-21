@@ -181,8 +181,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
-    if (!sailing || !isl?.sail || chart.flying) return;
-    if (isHere(id)) { (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was)
+    if (!sailing || chart.flying) return;
+    if (isHere(id)) { (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was; found or not, she's there)
+    if (!isl?.sail) return;
     const w = worldNow();
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
@@ -277,7 +278,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
     $("state").textContent = (isHere(id) ? "you're here · " : "") + (isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it");
-    sail.hidden = !sailing || !isl.sail;
+    sail.hidden = !sailing || !(isl.sail || isHere(id));
     sail.href = sailHref(id!);
     sail.textContent = isHere(id) ? opts.here!.label : "Sail there";
   }

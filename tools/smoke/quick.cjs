@@ -121,10 +121,10 @@ async function main() {
         btn.click();
         return r;
       });
-      await page.waitForTimeout(1500);
+      await page.waitForFunction(() => !document.getElementById("chart-overlay") && window.witch.game.clock.time > window.__nightT, null, { timeout: 60000, polling: 200 }).catch(() => {});
       const c2 = await page.evaluate(() => ({ open: !!document.getElementById("chart-overlay"), same: window.witch.game === window.__nightGame, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, t0: window.__nightT, paused: window.witch.game.clock.paused, arriving: document.body.classList.contains("arriving") }));
       check(ch.label === "Back to the party" && ch.home === "Sail home" && ch.paused && !c2.open && c2.same && c2.seed === 4242 && c2.url === n.url && !c2.paused && !c2.arriving && c2.t > c2.t0,
-        `choosing her own island on the chart goes back to the night ("${ch.label}"; the same night, seed ${c2.seed}, game time ${c2.t0.toFixed(1)} → ${c2.t.toFixed(1)} s, no flight, in ${((Date.now() - tc) / 1000).toFixed(0)} s)`);
+        `choosing her own island on the chart goes back to the night ("${ch.label}", home "${ch.home}"; paused under the chart ${ch.paused}, chart closed ${!c2.open}, the same night ${c2.same}, seed ${c2.seed}, ${c2.url}, game time ${c2.t0.toFixed(2)} → ${c2.t.toFixed(2)} s, running ${!c2.paused}, no flight ${!c2.arriving}, in ${((Date.now() - tc) / 1000).toFixed(0)} s)`);
       await page.goBack({ timeout: 5000 }).catch(() => {});
       await page.waitForFunction(() => document.getElementById("pause-sliders")?.classList.contains("open"), null, { timeout: 60000 }).catch(() => {});
       const b = await page.evaluate(() => ({ menu: !!document.getElementById("pause-sliders")?.classList.contains("open"), url: location.search, seed: window.witch.game.seed }));
