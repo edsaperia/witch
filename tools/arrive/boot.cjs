@@ -2,12 +2,13 @@
 // build (DIST, default dist/) fresh, as a first load (no link but QUERY's), the CPU slowed THROTTLE times from the start (CDP), and
 // reports when each step came (the witch:* marks, ms from the navigation's start), whether the boot's map came from the worker
 // (loadTimes.mapPrep 1), and the main thread's long tasks up to `witch:view` and a few seconds past it (count, total, longest).
-//   node tools/arrive/boot.cjs [out.json]   DIST=dist QUERY="opening=chart" THROTTLE=1 RUNS=1 SIZE=960x540 AFTER=5
+// QUERY defaults to opening=old, the old start (a plain link opens on the sea chart since 2026-10-21); QUERY=opening=chart for the new.
+//   node tools/arrive/boot.cjs [out.json]   DIST=dist QUERY=opening=old THROTTLE=1 RUNS=1 SIZE=960x540 AFTER=5
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist")), outFile = process.argv[2];
-const QUERY = env("QUERY", ""), THROTTLE = Number(env("THROTTLE", 1)), RUNS = Number(env("RUNS", 1)), AFTER = Number(env("AFTER", 5));
+const QUERY = env("QUERY", "opening=old"), THROTTLE = Number(env("THROTTLE", 1)), RUNS = Number(env("RUNS", 1)), AFTER = Number(env("AFTER", 5));
 const [W, H] = env("SIZE", "960x540").split("x").map(Number);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".woff2": "font/woff2", ".webp": "image/webp", ".ogg": "audio/ogg", ".wasm": "application/wasm" };
 function serve() {

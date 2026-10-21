@@ -96,10 +96,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.keyboard.down("KeyA"); await until(s => s.mirror, "the mirror"); await page.keyboard.up("KeyA");
     await page.waitForTimeout(2500);
     await shot("10-mirror.png");
-    if (!(await page.evaluate(() => window.__creator?.open))) fail("the mirror didn't open the creator");
-    await page.evaluate(() => document.querySelector("[data-exit]").click()); await page.waitForTimeout(800); // (Back to the island, as a player leaves it. Esc would pause the game)
-    if (await page.evaluate(() => window.__creator?.open || window.witch.game.clock.paused)) fail("Back to the island didn't take her back to play");
+    // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
+    if (!(await page.evaluate(() => !!window.__creator?.docked))) fail("the mirror didn't dock the creator's panel");
+    if (await page.evaluate(() => window.__creator?.open || window.witch.game.clock.paused)) fail("the mirror's panel stopped play (it should dock over the running game)");
     await goTo("curtains", 0.5);
+    for (let i = 0; i < 40 && (await page.evaluate(() => !!window.__creator?.docked)); i++) await page.waitForTimeout(250); // (walking away slides it out)
+    if (await page.evaluate(() => !!window.__creator?.docked)) fail("the mirror's panel didn't slide out as she walked away");
     await page.waitForTimeout(800);
     const before = await wake();
     await shot("11-curtains.png");

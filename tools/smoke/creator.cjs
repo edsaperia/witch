@@ -20,7 +20,7 @@ const looks = {
       const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
       page.on("pageerror", e => errors.push(`${name}: ${e.message}`));
       await page.addInitScript(s => localStorage.setItem("witch.genome", s), JSON.stringify(g));
-      await page.goto("http://localhost:4179/?quick=1", { waitUntil: "load" });
+      await page.goto("http://localhost:4179/?quick=1&opening=old", { waitUntil: "load" });
       await page.waitForSelector("#creator-start", { timeout: 60000 });
       await page.waitForTimeout(1500);
       await page.screenshot({ path: path.join(out, `${name}.png`) });
