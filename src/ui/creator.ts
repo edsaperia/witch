@@ -276,6 +276,7 @@ export class Creator {
     if (swap && this.lookTimer) this.lookNow();
     this.dockedAt = id; this.only = only; this.build();
     clearTimeout(this.slideTimer);
+    this.root.style.display = "block";
     this.dockLook(true);
     this.laid = ""; this.placeDocked();
     if (!swap) { this.sheet.style.transform = "translateX(-110%)"; void this.sheet.offsetWidth; } // (from off the left edge)
@@ -293,7 +294,6 @@ export class Creator {
   }
   /** The docked look (only the tapestry, over the game, the game's own clicks round it) or the room's (all of it). */
   private dockLook(on: boolean): void {
-    this.root.style.display = "block";
     Object.assign(this.root.style, { pointerEvents: on ? "none" : "" });
     for (const el of [this.night, this.preview, this.ver, this.title, this.extras]) el.style.display = on ? "none" : "";
     if (on) { this.scroll.stop(); this.scroll.el.style.display = "none"; this.exitBtn.style.display = "none"; }
