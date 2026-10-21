@@ -4,7 +4,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { HOUSE_ROOMS } from "./houseRooms";
+import { HOUSE_ROOMS, fromPlan, objectFront, toPlan } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
 import { atDecks, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { deckOf } from "./treehouse";
@@ -24,11 +24,11 @@ function woken(ready = false): Game {
 }
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { const seen: WakeEvent[] = []; for (let i = 0; i < Math.round(s / STEP); i++) { stepGame(g, { ...idle, ...c }, STEP); seen.push(...(g.wake?.events ?? [])); } return seen; };
 const press = (g: Game) => run(g, STEP, { place: true, sigil: true });
-const rel = (g: Game) => ({ x: g.witch.x - g.map.treehouse.x, z: g.witch.z - g.map.treehouse.z });
+const rel = (g: Game) => toPlan(g.map.treehouse, g.witch.x, g.witch.z); // (where she is on the house's plan)
 const inRoom = (g: Game) => { const p = rel(g); return p.x >= room.x0 - 1e-6 && p.x <= room.x1 + 1e-6 && p.z >= room.z0 - 1e-6 && p.z <= room.z1 + 1e-6; };
 /** Up and walking: snoozed out of bed by a step of WASD, the stretch over. */
 function up(ready = false): Game { const g = woken(ready); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); return g; }
-const standAt = (g: Game, id: string, dz = 0.6) => { const o = obj(id), th = g.map.treehouse; g.witches[0].body = { ...g.witches[0].body, x: th.x + o.x, z: th.z + o.z + o.d / 2 + dz, vx: 0, vz: 0 }; };
+const standAt = (g: Game, id: string, by = 0.6) => { const p = objectFront(obj(id), g.map.treehouse, by); g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z, vx: 0, vz: 0 }; };
 
 describe("the alarm", () => {
   it("rings with her in bed, held there, the night not started", () => {
@@ -78,9 +78,9 @@ describe("getting up", () => {
     expect(rel(g)).toEqual(inBed); // (stretching: no walking yet)
     expect(run(g, 0.3)).toContain("up");
     expect(rel(g).z).toBeGreaterThan(obj("bed").z + obj("bed").d / 2); // (in front of the bed)
-    const p = rel(g);
+    const x = g.witch.x;
     run(g, 1, { moveX: -1 });
-    expect(rel(g).x).toBeLessThan(p.x - 1); // (WASD walks her)
+    expect(g.witch.x).toBeLessThan(x - 1); // (WASD walks her)
   });
 
   it("a rise does too, but she doesn't fly", () => {
@@ -114,7 +114,7 @@ describe("never past the build", () => {
 
   it("and the bedroom's door with them, however long she walks at it", () => {
     const g = up(false);
-    run(g, 20, { moveZ: 1 }); // (south, out of the door to the dressing room)
+    run(g, 20, { moveX: -1, moveZ: 1 }); // (at the door to the dressing room, on the plan's x0 wall)
     expect(inRoom(g)).toBe(true);
     run(g, 10, { moveX: -1 }); run(g, 10, { moveZ: -1 }); run(g, 10, { moveX: 1 });
     expect(inRoom(g)).toBe(true);
@@ -138,8 +138,8 @@ describe("never past the build", () => {
     expect(press(g)).toContain("curtains");
     expect(g.wake!.open).toBe(true);
     expect(g.party.spellAt).toBeNull();
-    const th = g.map.treehouse; g.witches[0].body = { ...g.witches[0].body, x: th.x + 17, z: th.z + room.z1 - 1 }; // (by the door)
-    run(g, 6, { moveZ: 1 });
+    const door = fromPlan(g.map.treehouse, room.x0 + 1, 0); g.witches[0].body = { ...g.witches[0].body, ...door }; // (by the door, on the plan's x0 wall)
+    run(g, 6, { moveX: -1, moveZ: 1 }); // (out along the plan's -x: south-west on the screen)
     expect(inRoom(g)).toBe(false);
   });
 });
@@ -209,7 +209,7 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     run(g, K.alarmMin); press(g);
     standAt(g, "curtains", 0.5);
     expect(press(g)).toContain("notYet");
-    run(g, 20, { moveZ: 1 });
+    run(g, 20, { moveX: -1, moveZ: 1 });
     expect(inRoom(g)).toBe(true);
     expect(g.party.spellAt).toBeNull();
   });

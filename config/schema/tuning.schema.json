@@ -1326,6 +1326,10 @@
               "type": "number",
               "minimum": 0
             },
+            "walk": {
+              "type": "number",
+              "minimum": 0
+            },
             "fall": {
               "type": "object",
               "properties": {
@@ -1357,6 +1361,7 @@
             "seat",
             "circle",
             "landTime",
+            "walk",
             "fall"
           ],
           "additionalProperties": false

@@ -13,8 +13,9 @@ export interface WitchArt {
   foot: Poses;
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   fly: Poses;
-  /** Straight up the screen ("up": from behind) and straight down it ("down": coming at us): hover, lean, its cycle, fast, brake. */
-  heading: Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[] }>;
+  /** Straight up the screen ("up": from behind) and straight down it ("down": coming at us): hover, lean, its cycle, fast, brake;
+   *  and on foot, standing and walking (the treehouse's rooms). */
+  heading: Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; /** on foot, no broom */ idle: number[]; walk: number[] }>;
   /** Her lean as a four-frame loop, side-on. */
   lean: { towards: number[]; away: number[] };
   /** Behind the decks: each DJ frame and its upper layer (what shows over the DJ table). */
@@ -41,9 +42,10 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   };
   const sprites = [0, 1, 2].map(frame => wb({ frame })).concat([0, 1, 2].map(frame => wb({ frame, facing: "away" })), [wb({ lean: true }), wb({ lean: true, facing: "away" })],
     ...["rise", "descend"].flatMap(pose => ["towards", "away"].flatMap(facing => [0, 1].map(frame => wb({ pose, frame, facing })))));
-  // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one.
+  // On foot, from 16: standing, landing, taking off, talking, putting a sigil down, lifting one, sitting; standing and walking
+  // with no broom (the treehouse's rooms: Ed, 2026-10-21).
   const FOOT = Art.WITCH_FOOT_POSES as Record<string, { frames: number; fps: number }>;
-  for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit"]) {
+  for (const pose of ["stand", "land", "takeoff", "talk", "placeSigil", "liftSigil", "sit", "idle", "walk"]) {
     const n = FOOT[pose].frames, entry = { towards: [] as number[], away: [] as number[], fps: FOOT[pose].fps };
     for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < n; frame++) { entry[facing].push(sprites.length); sprites.push(wb({ pose, frame, facing })); }
     W.foot[pose] = entry;
@@ -65,7 +67,8 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   }
   for (const [h, heading] of [["up", "away"], ["down", "towards"]] as const) {
     const at = (o: object) => sprites.push(wb({ ...o, heading })) - 1;
-    W.heading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })) };
+    W.heading[h] = { hover: [0, 1, 2].map(frame => at({ frame })), lean: at({ lean: true }), leanCycle: [0, 1, 2, 3].map(frame => at({ pose: "lean", frame })), fast: [0, 1, 2].map(frame => at({ pose: "fast", frame })), brake: [0, 1].map(frame => at({ pose: "brake", frame })),
+      idle: [...Array(FOOT.idle.frames).keys()].map(frame => at({ pose: "idle", frame })), walk: [...Array(FOOT.walk.frames).keys()].map(frame => at({ pose: "walk", frame })) };
   }
   if (bare && !dry) {
     const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });

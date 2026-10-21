@@ -55,7 +55,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   // table opens the sea chart (Ed, 2026-10-11: "The world map is in the centre").
   const perched = !!g.witch.perch, deck = perched ? deckOf(g.map, t) : null;
   if (perched) {
-    const inHouse = !!deck?.house?.rooms.length && g.witch.mode === "ground" && !g.witch.seated && !W.ko, x = g.witch.x, z = g.witch.z;
+    const inHouse = !!deck?.house?.rooms && g.witch.mode === "ground" && !g.witch.seated && !W.ko, x = g.witch.x, z = g.witch.z;
     // In the house's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at an object uses it (main.ts opens what it opens); the hats'
     // floor's hats are picked up and put down; E held at the bed fills its ring, and full, she sleeps: the night's over.
     const at = inHouse ? objectAt(deck!, x, z) : null;

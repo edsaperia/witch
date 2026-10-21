@@ -4,13 +4,15 @@
 // start's (prepare, to witch:prep-compiled). Fails if any one step of the View's build passes LIMIT ms (100 by default, at 1x in
 // the cloud's software renderer); with SWAP=<seed>[,island] (and ?debug=sail in the query), then a new night in place too
 // (View.setGame, as a sail in place makes it), failing the same way. PREP=1 fails on the start's long tasks too (its renders:
-// frames, a GPU's in milliseconds, the software renderer's in hundreds).
-//   node tools/view/build-budget.cjs [dist] [query] [throttle]   (THROTTLE=, LIMIT=, SWAP=, PREP=1, OUT=<json>)
+// frames, a GPU's in milliseconds, the software renderer's in hundreds). It fails too on a task over FIRST ms (1000) on play's first
+// frame (game:frame1), the start's and the new night's (Ed's laptop, 2026-10-21: 5 s and 2 s; the cloud's 7 s: the GL's first draw
+// of each program and target, warmed in View.compileAll now), and says how many programs the new night compiled.
+//   node tools/view/build-budget.cjs [dist] [query] [throttle]   (THROTTLE=, LIMIT=, FIRST=, SWAP=, PREP=1, OUT=<json>)
 // The default query is Ed's case: world 1268398697, home, seed 821186, straight to the decks.
 const http = require("http"), fs = require("fs"), path = require("path");
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [dir = "dist", query = "world=1268398697&island=home&seed=821186&creator=0", thr = process.env.THROTTLE ?? "1"] = process.argv.slice(2);
-const LIMIT = Number(process.env.LIMIT ?? 100) * Number(thr), root = path.resolve(dir);
+const LIMIT = Number(process.env.LIMIT ?? 100) * Number(thr), FIRST = Number(process.env.FIRST ?? 1000) * Number(thr), root = path.resolve(dir);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".ogg": "audio/ogg", ".woff2": "font/woff2" };
 const srv = http.createServer((q, r) => { let f = path.join(root, decodeURIComponent(new URL(q.url, "http://x").pathname)); if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, "index.html"); if (!f.startsWith(root) || !fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(r); });
 srv.listen(0, "127.0.0.1", async () => {
@@ -32,16 +34,24 @@ srv.listen(0, "127.0.0.1", async () => {
     const gaps = (a, z) => { const in_ = window.__gaps.filter(([t]) => t >= a && t < z).map(([, d]) => d); return { frames: in_.length, longest: Math.round(Math.max(0, ...in_)), over100: in_.filter(d => d > 100).length }; };
     return { buildFrames: gaps(g, v), prepFrames: gaps(v, pg), view: Math.round(v - g), toGround: Math.round(pg - v), viewTasks: within(g, v), straddle: window.__lt.filter(([s, d]) => s < v && s + d > v).map(([s, d]) => [Math.round(v - s), Math.round(s + d - v)]), prepTasks: inside(v, pg), frames: window.__frames, framesBuild: null, stages, slices: window.witch?.slices ?? null };
   });
+  // The first frame after the start (game:frame1, play's own first render): its long tasks, the start's compile and uploads.
+  await p.waitForFunction(() => performance.getEntriesByName("game:frame1").length > 0, null, { timeout: 1800000, polling: 250 }).catch(() => {});
+  await p.waitForTimeout(2000);
+  r.firstFrame = await p.evaluate(() => { const m = n => performance.getEntriesByName(n)[0]?.startTime ?? NaN, a = m("witch:prep-compile0"), f = m("game:frame1"); return { compile: Math.round(m("witch:prep-compiled") - a), tasks: window.__lt.filter(([s]) => s >= f - 50 && s < f + 2000).map(([, d]) => Math.round(d)), compileTasks: window.__lt.filter(([s]) => s >= a && s < f - 50).map(([, d]) => Math.round(d)) }; });
   // SWAP=<seed>[,island]: then a new night in place (?debug=sail's swap: the sail's path, View.setGame), its own long tasks.
   if (process.env.SWAP) {
     const [seed, island] = process.env.SWAP.split(",");
     await p.waitForFunction(() => performance.getEntriesByName("witch:ready").length > 0, null, { timeout: 1800000, polling: 500 });
     r.swap = await p.evaluate(async ([seed, island]) => {
+      const keys = () => (window.witch.view?.renderer?.info?.programs ?? []).map(x => x.cacheKey), had = new Set(keys()); // (the programs it compiles: only what the new island alone uses)
       window.__lt.length = 0; const t0 = performance.now(); performance.mark("swap:start");
       await window.witch.debugSwap(Number(seed), island || undefined);
+      await new Promise(r => setTimeout(r, 2500)); // (its first frame: start() draws it)
+      const fm = performance.getEntriesByName("game:frame1").at(-1)?.startTime ?? NaN, c0 = performance.getEntriesByName("witch:prep-compile0").at(-1)?.startTime ?? NaN, c1 = performance.getEntriesByName("witch:prep-compiled").at(-1)?.startTime ?? NaN;
+      const first = { programs: keys().filter(k => !had.has(k)).length, compile: Math.round(c1 - c0), tasks: window.__lt.filter(([s]) => s >= fm - 50 && s < fm + 2000).map(([, d]) => Math.round(d)) };
       const t1 = performance.now(), built = performance.getEntriesByName("witch:build-swap").at(-1)?.startTime ?? t1;
       const tasks = window.__lt.filter(([s]) => s >= t0), set = tasks.filter(([s, d]) => s + d <= built).map(([, d]) => Math.round(d)), prep = tasks.filter(([s]) => s >= built).map(([, d]) => Math.round(d));
-      return { setGame: Math.round(built - t0), total: Math.round(t1 - t0), setTasks: set, prepTasks: prep, slices: (window.witch.slices ?? []).filter(x => x.what === "setGame").at(-1) ?? null };
+      return { first, setGame: Math.round(built - t0), total: Math.round(t1 - t0), setTasks: set, prepTasks: prep, slices: (window.witch.slices ?? []).filter(x => x.what === "setGame").at(-1) ?? null };
     }, [seed, island ?? ""]);
   }
   await b.close(); srv.close();
@@ -52,10 +62,14 @@ srv.listen(0, "127.0.0.1", async () => {
   console.log(`  then its start (prepare, to its shaders compiled): ${r.toGround} ms, its longest task ${prepLongest} ms; long tasks ${r.prepTasks.join(" ")}`);
   console.log(`  stages (ms from witch:game): ${r.stages.map(([n, t]) => `${n} ${t}`).join(", ")}`);
   if (r.slices) console.log(`  sliced builds: ${JSON.stringify(r.slices)}`);
+  if (r.firstFrame) console.log(`  its compile (prep-compile0 to prep-compiled) ${r.firstFrame.compile} ms, long tasks from there to the first frame ${r.firstFrame.compileTasks.join(" ")}; the first frame's long tasks ${r.firstFrame.tasks.join(" ")}`);
+  if (r.firstFrame && Math.max(0, ...r.firstFrame.tasks) > FIRST) { console.log(`FAIL: the first frame had a ${Math.max(...r.firstFrame.tasks)} ms task (over ${FIRST})`); process.exitCode = 1; }
   if (r.swap) {
     const sw = r.swap, own = sw.slices ? Math.round(sw.slices.longest) : Math.max(0, ...sw.setTasks);
     console.log(`  a new night in place (setGame): built in ${sw.setGame} ms, its longest step ${own} ms; the page's long tasks meanwhile ${sw.setTasks.join(" ")}; then its start (to ready) ${sw.total - sw.setGame} ms, long tasks ${sw.prepTasks.join(" ")}`);
     if (sw.slices) console.log(`    sliced: ${JSON.stringify(sw.slices)}`);
+    if (sw.first) console.log(`    its new programs ${sw.first.programs}, its compile ${sw.first.compile} ms; its first frame's long tasks ${sw.first.tasks.join(" ")}`);
+    if (sw.first && Math.max(0, ...sw.first.tasks) > FIRST) { console.log(`FAIL: its first frame had a ${Math.max(...sw.first.tasks)} ms task (over ${FIRST})`); process.exitCode = 1; }
     if (own > LIMIT) { console.log(`FAIL: a step of setGame's build took ${own} ms (over ${LIMIT})`); process.exitCode = 1; }
   }
   if (process.env.OUT) fs.writeFileSync(process.env.OUT, JSON.stringify({ throttle: Number(thr), query, ...r, longest }, null, 1));
