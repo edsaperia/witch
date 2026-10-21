@@ -2,9 +2,9 @@
 // home unlocked in a first game (app/chartSave.ts unlocked: home and what she's found), its corner holding What's new and Options (the
 // zoo's through the bestiary's book); choosing home dives on into the boot's own night (made under the chart) and into her bedroom
 // in the treehouse, where she wakes (rules/wakeUp.ts: the wake-up, the curtains, the DJ intro at her decks); another island starts
-// its night in place (app/night.ts startNight, as a sail does). Until the whole opening is proven it's off by default (the tuning's opening.chart);
-// ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover), and ?sail=reload still
-// loads the island's page as before.
+// its night in place (app/night.ts startNight, as a sail does). On by default (the tuning's opening.chart; Ed, 2026-10-21: "switch the
+// new opening on"); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart,
+// and ?sail=reload still loads the island's page as before.
 export type OpeningWay = "chart" | "old";
 
 /** The way this load opens: the link's ?opening=chart|old, else the tuning's opening.chart. */

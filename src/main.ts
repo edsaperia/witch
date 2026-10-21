@@ -110,7 +110,7 @@ let sailing = false;
 await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params, ready: bootMap ?? undefined });
 const { tuning: bootTuning } = N();
 // The new opening (app/opening.ts; Ed, 2026-10-20): a plain first load opens on the sea chart over the boot's night (home's, made
-// and its art drawn under the chart), in place of the bedroom; off by default till the whole opening is in (?opening=chart).
+// and its art drawn under the chart), in place of the bedroom; on by default (Ed, 2026-10-21), ?opening=old for today's start.
 const onChart = opensOnChart(bootLink, bootTuning);
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).

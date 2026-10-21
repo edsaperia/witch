@@ -3,6 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { divesHome, openingWay, opensOnChart } from "./opening";
 import { emptySave, recordNight, unlocked } from "./chartSave";
+import { TUNING } from "../rules/tuning";
 
 const on = { opening: { chart: true } }, off = { opening: { chart: false } };
 const link = (q: string) => new URLSearchParams(q);
@@ -14,6 +15,14 @@ describe("the first load on the sea chart", () => {
     expect(openingWay(link("opening=chart"), off)).toBe("chart");
     expect(openingWay(link("opening=old"), on)).toBe("old");
     expect(openingWay(link(""), {})).toBe("old");
+  });
+
+  it("is on by default (Ed, 2026-10-21): a plain first load opens on the chart, ?opening=old and the tools' links keep the old start", () => {
+    expect(TUNING.opening?.chart).toBe(true);
+    expect(opensOnChart(link(""), TUNING)).toBe(true);
+    expect(opensOnChart(link("quick=1"), TUNING)).toBe(true);
+    expect(opensOnChart(link("opening=old"), TUNING)).toBe(false);
+    for (const q of ["creator=0", "seed=123", "island=home", "arrive=1", "bot=skilled", "zoo"]) expect(opensOnChart(link(q), TUNING)).toBe(false);
   });
 
   it("opens on the chart only for a plain start of the game", () => {

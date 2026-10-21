@@ -1726,7 +1726,7 @@ Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/s
 
 ### `opening`
 
-The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. Off till the whole opening is in; ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover). wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
+The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
 
 | knob | type | range |
 |---|---|---|
