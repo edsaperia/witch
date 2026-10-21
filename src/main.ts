@@ -35,6 +35,7 @@ import { saveLoadout } from "./app/loadout";
 import { castable } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
+import { stationOf } from "./rules/stations";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { warmChart } from "./app/chartWarm";
@@ -283,6 +284,13 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night as the afterparty's "A new forest" does.
 creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
+// The stations' panels (Ed, 2026-10-21: "I should see the menu slide in from the left when I go near the relevant object, and slide
+// away when I walk away from it"; rules/stations.ts, ui/creator.ts dock): walking up to a station slides its choices in over the
+// game, walking away slides them out; no E, no room. Each change is on her as she stands there; walked away, a hat she swapped
+// leaves hers lying where it lay, as the room's way out did.
+const lookChanged = (g: unknown) => { if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } };
+creator.onLook = lookChanged;
+creator.onUndock = g => { newHatFromRoom(N().game.witches[0]); lookChanged(g); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 const useHouse = (obj: string): void => {
@@ -290,8 +298,7 @@ const useHouse = (obj: string): void => {
   if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; and a new forest, as its button: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
-  if (o.use.kind === "creator") { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.visit(o.use); }
-  else if (o.use.kind === "zoo") zoo.open();
+  if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -732,12 +739,16 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
+  // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
+  const station = bot || creator.open || charting ? null : stationOf(game, creator.docked);
+  if (station && station.use.kind === "creator" && station.id !== creator.docked) { creator.loadout = { hat: game.spells.hat, broom: game.spells.broom }; creator.dock(station.id, station.use); }
+  else if (!station && creator.docked) creator.undock();
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
   if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "mirror") useHouse("dressingTable"); if (e === "curtains") woke(); }
-    if (creator.open) wakeCard?.hide(); // (at the mirror: the creator over it)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); } // (the dressing table's mirror: its panel by nearness, as every station's)
+    if (creator.open || creator.docked) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
   } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) chartOverNight();

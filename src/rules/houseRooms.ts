@@ -49,11 +49,16 @@ export function nearestRoomFloor(rects: readonly Rect[], x: number, z: number): 
   return best;
 }
 
-/** How far (x, z) is from an object's footprint (0 on it). */
-const fromObject = (o: HouseObject, at: At, x: number, z: number) => {
+/** How far (x, z) is from an object's footprint (0 on it), the hub's centre at `at` (rules/stations.ts reads it too: the one place an
+ *  object's place in the world is worked out for nearness). */
+export const fromObject = (o: HouseObject, at: At, x: number, z: number) => {
   const dx = Math.max(0, Math.abs(x - (at.x + o.x)) - o.w / 2), dz = Math.max(0, Math.abs(z - (at.z + o.z)) - o.d / 2);
   return Math.hypot(dx, dz);
 };
+/** A spot `gap` metres off an object's near (south) side, the hub's centre at `at`: where she'd stand to use it (tests, tools). */
+export const objectFrontAt = (o: HouseObject, at: At, gap: number): { x: number; z: number } => ({ x: at.x + o.x, z: at.z + o.z + o.d / 2 + gap });
+/** Whether the deck is the house with its rooms (a floor to walk, objects to be at). */
+export const hasRooms = (d: { house?: { rooms: readonly Rect[] } } | null | undefined): boolean => !!d?.house?.rooms.length;
 /** The object she's at, standing at (x, z): the nearest within reach of its edge, or null. */
 export function objectAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseObject | null {
   let best: HouseObject | null = null, bd = H.reach;
