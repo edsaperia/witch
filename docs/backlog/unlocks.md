@@ -105,7 +105,7 @@ Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is
 
 - Hats, bags, broom parts and legends' quests can only be claimed **while the party is on**. When the party is lost (the party's over, the afterparty), the unclaimed ones vanish from the map.
 - **Whatever she found before the loss is hers to keep**, even though the night is lost. **Islands are the exception** (Ed, 2026-10-18): a quest done during the night finds its island for tonight, but the island is kept only if the night is won.
-- Open: what "found" means for a hat, bag or broom part: picked up (or hitched) is enough, or brought home to the balcony or the garage as written above. This rule loosens "carried to the balcony mid-night" and "tow it after the party" (the broom garage), so those two need settling with it.
+- **Picking it up is finding it** (Ed, 2026-10-21: "No more towing; you just find and pick them up"): a broom part, like a wearable in its trunk, is hers the moment she picks it up with E. Nothing is towed or carried home.
 
 ## The broom garage (Ed, 2026-10-16)
 
@@ -124,18 +124,17 @@ Ed's design, from a conversation on 2026-10-16. **Not built; don't build without
 - **Rare discoveries:** at most **one component on an island**, most islands with none, perhaps rarer still. A part lies at a **wreck**: an old witch's crashed broom, half buried like a relic, posed to tell its story (nose-down in a bog, through a trunk, hanging from a branch).
 - **A ground-mode find** (Ed): wrecks are **hard to see from the treetops**; if she's lucky the wreck is in an area with less canopy. Seeing rare collectibles is **a perk of being in ground mode**, beside inviting and placing.
 - **The game says there's a piece, not where** (Ed: "encourage exploration"): the garage's pegboard (below) shows that a piece is on tonight's island; nothing points to its area.
-- **Heavy. She tows it.** A find (a broom part, and later furniture for the bedroom: the same loop) is **hoisted under or behind her: a trailer**, hitched with E at the wreck, pulled along the ground like a heavy leashed animal (the leash weight rules; the chassis's haul stat sets how fast). **Towing is slow**, and **she can't take off with it**: taking off unhitches it where it stands, with its own pointer, and she can come back. A knockdown leaves it where she fell. A night ended with it still out leaves it at its wreck for next time; never lost, only left lying. **The party's end is when you haul** (Ed): the island is quiet then, and she can walk back to what she found. The tricky part is finding it.
-- Light finds (hats) stay carried, by the shrine rule above.
+- **Find it and pick it up** (Ed, 2026-10-21: "No more towing; you just find and pick them up"): E at the wreck and the part is hers at once, hung on its peg in the garage. No trailer, no towing, nothing to carry home. The tricky part is finding it. (This replaces the 2026-10-16 trailer: a part towed home slowly, unhitched by taking off.)
 
 ### The garage
 
-- **On the ground floor of the treehouse** (Ed), with a door between the Ent's roots, north of the dancefloor: she tows the trailer in. The balcony stays the flying door; the garage is the walking one. Time at a tenth inside, as in every room.
+- **On the ground floor of the treehouse** (Ed), with a door between the Ent's roots, north of the dancefloor. The balcony stays the flying door; the garage is the walking one. Time at a tenth inside, as in every room.
 - **Separate stations, taken in turn** (Ed: better that players take turns than three bays):
   - **The bay:** the broom up on a stand; she **lies on a mechanic's creeper and rolls under it**, **welding sparks** while a component goes in or out (the stargazing lying pose on a board; the hit-spark and fireworks families tinted white). Swapping is free.
   - **The lathe is the customiser** (Ed): the broom spins on it; the creator's broom look and width slider become turning it on the lathe, colour a paint tin on the bench. No panel where the things will do.
   - **The pegboard: spare parts on the wall, laid out like the world map** (Ed): **a 3 × 3 grid, the nine biomes** (the compass's eight directions round temperate in the middle), each cell a pegboard of outlines. A found part hangs on its peg; a missing one is an empty outline. When tonight's island is chosen at the map, **the outline of a piece lying on it glows** in its biome's cell: there's one out there.
 - **Repair: none.** Brooms don't wear or dent; the garage builds and customises only.
-- **Multiplayer** (Ed): **only the parts the host has unlocked are available**, and **each part can be used by only one witch** at a time: taken from its peg by whoever gets there first. Anyone can tow a find home.
+- **Multiplayer** (Ed): **only the parts the host has unlocked are available**, and **each part can be used by only one witch** at a time: taken from its peg by whoever gets there first.
 
 ### Ideas kept, not decided
 
