@@ -3,7 +3,7 @@
 // game, playtest run, HUD, arrival and flags). main.ts holds the night in one place, `page.night`, and everything that needs the
 // game reads it there, so a second night would be picked up everywhere. This is the only place a night begins or ends: the boot
 // starts one, and every later one starts in place (the plan's PRs 5 and 6: main.ts sailFromChart and newNight, app/sail.ts; the
-// tuning's sail.inPlace, ?sail=reload the old way): a sail, Play again, a new forest, the bed and the bot game's exit, the view
+// tuning's sail.inPlace, ?sail=reload the old way): a sail, the bed and the bot game's exit, the view
 // taking it (View.setGame, render/view.ts), and so does ?debug=sail's window.witch.debugSwap.
 import { newGame, type Game } from "../rules/game";
 import type { MusicCue } from "../rules/musicPlan";
@@ -27,13 +27,13 @@ import type { ScreenShake } from "./shake";
 import type { PerfHud } from "./perfHud";
 import type { Sound } from "./sound";
 
-/** What a night is made from: the island, the seed, the world, how it came (the boot; in place, a sail, Play again, a new forest,
- *  the bed, the bot game's exit or ?debug=sail's swap), the chart's flight end when sailing in place, and the link it's read from. */
+/** What a night is made from: the island, the seed, the world, how it came (the boot; in place, a sail, the bed,
+ *  the bot game's exit or ?debug=sail's swap), the chart's flight end when sailing in place, and the link it's read from. */
 export interface NightSpec {
   island: string;
   seed: number;
   world?: number;
-  how: "boot" | "sail" | "again" | "fresh" | "bed" | "bot" | "debug";
+  how: "boot" | "sail" | "bed" | "bot" | "debug";
   /** The flight's end from the chart, in memory (a sail in place); the boot reads ?arrive=1's from sessionStorage. */
   arrival?: Arrival;
   /** The night's link (the boot: the page's own). */

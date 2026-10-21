@@ -58,7 +58,7 @@ import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
-import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, type NightWay } from "./app/sail";
+import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, overBedLine, type NightWay } from "./app/sail";
 import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import type { FlightEnd } from "./render/chart/seaChart";
@@ -282,7 +282,8 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
-// and closing it goes back to the night where she was; the bed, E held, ends the night as the afterparty's "A new forest" does.
+// and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
+// seed (the only way to: Ed, 2026-10-21, the party's-over card points her here).
 creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
 // The stations' panels (Ed, 2026-10-21: "I should see the menu slide in from the left when I go near the relevant object, and slide
 // away when I walk away from it"; rules/stations.ts, ui/creator.ts dock): walking up to a station slides its choices in over the
@@ -295,7 +296,7 @@ let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 const useHouse = (obj: string): void => {
   const { game, tuning, flags: { chartRecorded, overShown } } = N();
-  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; and a new forest, as its button: app/newForest.ts; after this frame, in place)
+  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
@@ -550,10 +551,8 @@ function chartOverNight(): void {
   openChart((href, to) => void sailFromChart(href, to), chartWorldArg(), { here, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`) });
 }
 document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
-document.getElementById("again")?.addEventListener("click", () => newNight("again"));
 document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
-document.getElementById("fresh")?.addEventListener("click", () => newNight("fresh"));
 /** The first load's sea chart (app/opening.ts): over the boot's night, its art drawn on under it (ui/chartOverlay.ts chartWarmsNight),
  *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts); no Close. (No Zoo: Ed,
  *  2026-10-20, "the zoo is now accessed via the bestiary": the book in the treehouse's bestiary.)
@@ -644,13 +643,13 @@ async function sailInPlace(to: Sailed): Promise<void> {
   if (n.arrival) n.arrival.begin(n.game); // (the camera takes over from the chart's still; it lands as a sail's does: arrived)
   else arrived(); // (no flight: the chart couldn't fly)
 }
-/** Another way to a new night (the plan's PR 6: Play again, a new forest, the bed, the bot game's exit): in place as a sail is
- *  (the tuning's sail.inPlace, ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going
- *  wrong, the link loaded as before (Play again reloading the page, the others app/sail.ts nightHref's), quietly. */
+/** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
+ *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as
+ *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
   const n = N(), href = nightHref(how, location.href);
-  const reload = how === "again" ? () => location.reload() : (h: string) => { location.href = h; };
+  const reload = (h: string) => { location.href = h; };
   if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
   void sailOrReload(() => nightInPlace(nightFromHref(how, href), href), href, reload, e => {
     console.error(`a new night in place (${how}): it went wrong, so the page loads instead`, e);
@@ -768,6 +767,7 @@ function frame(now: number): void {
   if (game.partyOver && game.partyOver.ease >= 1 && !F.overShown) {
     F.overShown = true;
     nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)
+    document.getElementById("over-bed")!.textContent = overBedLine(!!botKind);
     document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
     document.getElementById("over")!.classList.add("on");
   }
