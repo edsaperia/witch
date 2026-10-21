@@ -357,8 +357,8 @@ export class AssetLibrary {
     return this.beach;
   }
   /** The scenes' pieces and layouts, or undefined (and asked for). */
-  sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {
-    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style });
+  sceneArt(urgent = false): (SceneArt & { atlas: Atlas }) | undefined { // (urgent: she's near something only it draws, tonight's trunk)
+    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style }, urgent);
     return this.scenes;
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
