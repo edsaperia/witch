@@ -135,7 +135,7 @@ describe("the treehouse's house", () => {
     for (const [mx, mz] of [[-1, 0], [0, -1], [1, 0], [0.7, -0.7]]) {
       run(g, 2, { moveX: mx, moveZ: mz });
       const r = Math.hypot(g.witch.x - d.x, g.witch.z - d.z);
-      if (r > d.r - d.rail + 1e-6) expect(onRoomFloor(d.house!.rooms, g.witch.x, g.witch.z, 1e-6)).toBe(true); // (out through a corridor's doorway: rules/houseRooms.ts)
+      if (r > d.r - d.rail + 1e-6) expect(onRoomFloor(d.house!.rooms!, g.witch.x, g.witch.z, 1e-6)).toBe(true); // (out through a corridor's doorway: rules/houseRooms.ts)
       expect(r).toBeGreaterThanOrEqual(d.table.r + 0.35 - 1e-6);
       expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
     }

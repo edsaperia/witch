@@ -269,6 +269,8 @@ function nightState(t: Tuning) {
     /** Her lean cycle's phase (frames) and the time it was last stepped. */
     leanPhase: 0,
     leanTime: 0,
+    /** On foot in the house, her walk's phase (frames: render/view/witch.ts). */
+    walkPhase: 0,
     /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
     speakerTops: [] as RingSpeaker[],
     /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
@@ -554,7 +556,7 @@ export class View {
       // With the deck's map table (rules/treehouse.ts): the sea chart's live miniature on its top (render/mapTable.ts).
       this.island.buildTreehouse();
       // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
-      if (deckOn?.house?.rooms.length) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
+      if (deckOn?.house?.rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     yield* this.island.markerSteps();
@@ -802,7 +804,7 @@ export class View {
     island.attach();
     old.dispose();
     // The house's rooms with this island's treehouse's (render/houseRooms.ts: the same rooms on any island, placed by its treehouse).
-    const rooms = !!deckOf(game.map, t)?.house?.rooms.length;
+    const rooms = !!deckOf(game.map, t)?.house?.rooms;
     if (rooms && this.houseRooms) this.houseRooms.reset();
     else if (rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     else if (this.houseRooms) { this.scene.remove(...this.houseRooms.meshes); this.houseRooms.dispose(); this.houseRooms = null; }

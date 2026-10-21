@@ -12,7 +12,7 @@
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS, objectAt, type Rect } from "./houseRooms";
+import { HOUSE_ROOMS, keepInRoom, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
 
 export type WakeBeat = "alarm" | "snooze" | "stretch" | "up";
@@ -40,23 +40,17 @@ export interface WakeState {
 export interface WakeTuning { snooze: number; stretch: number; alarmMin: number }
 export const WAKE_DEFAULT: WakeTuning = { snooze: 5, stretch: 3, alarmMin: 0.4 };
 
-/** The bedroom's floor (house.json's room), in the world. */
-function bedroomRect(g: Game): Rect | null {
-  const r = HOUSE_ROOMS.rooms.find(q => q.id === "bedroom"), th = g.map.treehouse;
-  return r ? { x0: th.x + r.x0, x1: th.x + r.x1, z0: th.z + r.z0, z1: th.z + r.z1 } : null;
-}
-
-/** Her in bed: the bed's middle, a little toward its head. */
+/** Her in bed: the bed's middle, a little toward its head (its far end, along the plan's x, against the back wall). */
 function inBed(g: Game): { x: number; z: number } | null {
-  const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed"), th = g.map.treehouse;
-  return bed ? { x: th.x + bed.x, z: th.z + bed.z - bed.d * 0.15 } : null;
+  const bed = HOUSE_ROOMS.objects.find(o => o.use.kind === "bed");
+  return bed ? objectWorld(bed, g.map.treehouse, bed.w * 0.15, 0) : null;
 }
 
 /** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
  *  in bed, the alarm ringing; `short`, the shorter one. False without the house's bedroom. */
 export function startWake(g: Game, ht: number, short = false): boolean {
   const at = inBed(g);
-  if (!at || !bedroomRect(g)) return false;
+  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === "bedroom")) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
   g.wake = { beat: "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], ...(short ? { short } : {}) };
@@ -129,7 +123,7 @@ function toDecks(g: Game, c: Controls, press: boolean): Controls {
 /** After her step: the bedroom's door shut till the curtains open (she's kept on its floor). */
 export function keepInBedroom(g: Game): void {
   if (!waking(g)) return;
-  const r = bedroomRect(g), W = g.witches[0], b = W.body;
-  if (!r || (b.x >= r.x0 && b.x <= r.x1 && b.z >= r.z0 && b.z <= r.z1)) return;
-  W.body = { ...b, x: Math.min(r.x1, Math.max(r.x0, b.x)), z: Math.min(r.z1, Math.max(r.z0, b.z)) };
+  const W = g.witches[0], b = W.body, k = keepInRoom(g.map.treehouse, "bedroom", b.x, b.z);
+  if (!k || k.inside) return;
+  W.body = { ...b, x: k.x, z: k.z };
 }

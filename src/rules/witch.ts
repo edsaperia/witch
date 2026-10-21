@@ -133,10 +133,13 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   let mx = intent.moveX, mz = intent.moveZ;
   const len = Math.hypot(mx, mz);
   if (len > 1) { mx /= len; mz /= len; }
-  const L = smoothstep(lift), max = lerp(t.groundSpeed, t.treetopSpeed, L);
+  // On foot in the house (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): she walks, at the house's
+  // walk, not her broom's ground speed.
+  const ground = perch && deck?.house ? deck.house.walk : t.groundSpeed;
+  const L = smoothstep(lift), max = lerp(ground, t.treetopSpeed, L);
   // On the ground: snappy, straight to the input's speed (Ed: "ground should feel snappy").
   const kg = 1 - Math.exp(-t.groundAcceleration * dt);
-  const gx = w.vx + (mx * t.groundSpeed - w.vx) * kg, gz = w.vz + (mz * t.groundSpeed - w.vz) * kg;
+  const gx = w.vx + (mx * ground - w.vx) * kg, gz = w.vz + (mz * ground - w.vz) * kg;
   // In the treetops: momentum (Ed: "a high top speed and more momentum"). See treetopFlight.
   const top = treetopFlight(w, mx, mz, dt, t);
   // Rising and descending blend the two, keeping her speed.
