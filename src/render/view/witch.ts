@@ -51,7 +51,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     if (w.braking) wf = Fl.brake[sideF][Math.floor(ht * Fl.brake.fps) % Fl.brake[sideF].length];
     else if ((w.boost ?? 0) > 0.7) wf = Fl.fast[sideF][Math.floor(ht * Fl.fast.fps) % Fl.fast[sideF].length];
     // Straight up or down the screen (#27): her heading frames, from behind or coming at us.
-    const Hd = w.heading && w.heading !== "side" ? v.assets.witchHeading[w.heading] : null;
+    const showOff = ht < v.turnUntil && Math.hypot(w.vx, w.vz) < 0.6, heading = showOff ? "down" : w.heading; // (a change shown off at a dressing station)
+    const Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
     if (Hd) wf = w.braking ? Hd.brake[Math.floor(ht * Fl.brake.fps) % Hd.brake.length] : (w.boost ?? 0) > 0.7 ? Hd.fast[Math.floor(ht * Fl.fast.fps) % Hd.fast.length] : w.lean ? Hd.leanCycle[leanK] ?? Hd.lean : Hd.hover[Math.floor(ht * 4) % Hd.hover.length];
   }
   // Handling a sigil, she lands first (Ed, 2026-10-03): down to the ground, then the placeSigil or

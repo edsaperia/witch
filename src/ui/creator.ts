@@ -120,7 +120,7 @@ export function snapPalette(p: Record<string, number[]> | null): Record<string, 
 }
 
 /** The colours the classic witch shows (the style's hues over her default outfit), as a palette to start editing from. */
-function classicPalette(st: Style): Record<string, number[]> {
+export function classicPalette(st: Style): Record<string, number[]> {
   const D = Art.DEFAULT_OUTFIT as Record<string, number[]>, S = st as unknown as Record<string, number | undefined>;
   const hue: Record<string, number | undefined> = { hair: S.hairHue, jacket: S.cloakHue, hat: S.hatHue, top: S.topHue, jeans: S.jeansHue, sneakers: S.shoeHue, headphones: S.phonesHue };
   return Object.fromEntries(Object.entries(D).map(([k, [h, s, v]]) => [k, [hue[k] ?? h, s, v]]));
@@ -189,10 +189,7 @@ export class Creator {
   private drawn = false;
   /** When the forest was ready (the fairy lights' all-on blink). */
   private readyAt = 0;
-  /** Her look changed and not drawn yet (the room redraws); docked, her look goes to the game too (onLook, a beat later). */
-  private _dirty = true;
-  private get dirty(): boolean { return this._dirty; }
-  private set dirty(v: boolean) { this._dirty = v; if (v && this.dockedAt) this.lookSoon(); }
+  private dirty = true;
   private raf = 0;
   /** The room's drawing, eased off while the forest grows on a struggling machine (art review round 2: with the creator
    *  open, a software-GL machine never got ready): when the frame after a draw comes slowly (`SLOW_FRAME` ms, eased),
@@ -253,65 +250,7 @@ export class Creator {
   /** The world building behind it (Ed: "the character creator also serves as a loading screen"):
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
-  /** Her room open, full screen (the bedroom at a load, the start card's button); not a station's panel docked over the game. */
-  get open(): boolean { return this.root.style.display !== "none" && !this.dockedAt; }
-  /** A station's panel (Ed, 2026-10-21: "I should see the menu slide in from the left when I go near the relevant object, and slide
-   *  away when I walk away from it"; rules/stations.ts): only the tapestry, slid in from the left over the game, which runs and
-   *  is seen behind it; its station's choices only, each change on her at once (onLook); her keys and the pad stay the game's, so
-   *  she walks away and it slides out. The station's id while docked, else null. One at a time: another station swaps it. */
-  private dockedAt: string | null = null;
-  get docked(): string | null { return this.dockedAt; }
-  /** Her look as it changes while docked (a beat after the last change: a slider dragged is one change, not one a pixel). */
-  onLook: (g: Genome) => void = () => {};
-  /** Docked and slid out again (walked away): her look as it is now. */
-  onUndock: (g: Genome) => void = () => {};
-  private lookTimer = 0;
-  private lookSoon(): void { clearTimeout(this.lookTimer); this.lookTimer = window.setTimeout(() => this.lookNow(), LOOK_AFTER); }
-  private lookNow(): void { clearTimeout(this.lookTimer); this.lookTimer = 0; saveGenome(this.g); this.onLook(this.genome()); }
-  private slideTimer = 0;
-  /** Slides station `id`'s panel in (its choices `only`), or swaps to it if another is in. Not over her room open full screen. */
-  dock(id: string, only: Station): void {
-    if (this.open || this.dockedAt === id) return;
-    const swap = !!this.dockedAt;
-    if (swap && this.lookTimer) this.lookNow();
-    this.dockedAt = id; this.only = only; this.build();
-    clearTimeout(this.slideTimer);
-    this.root.style.display = "block";
-    this.dockLook(true);
-    this.laid = ""; this.placeDocked();
-    if (!swap) { this.sheet.style.transform = "translateX(-110%)"; void this.sheet.offsetWidth; } // (from off the left edge)
-    this.sheet.style.transform = "translateX(0)";
-  }
-  /** Slides the station's panel out (she walked away): her look given to the game as it is. */
-  undock(): void {
-    if (!this.dockedAt) return;
-    if (this.lookTimer) this.lookNow();
-    this.dockedAt = null;
-    saveGenome(this.g);
-    this.sheet.style.transform = "translateX(-110%)";
-    this.slideTimer = window.setTimeout(() => { if (this.dockedAt) return; this.root.style.display = "none"; this.dockLook(false); this.only = null; this.build(); this.laid = ""; }, SLIDE_MS + 40);
-    this.onUndock(this.genome());
-  }
-  /** The docked look (only the tapestry, over the game, the game's own clicks round it) or the room's (all of it). */
-  private dockLook(on: boolean): void {
-    Object.assign(this.root.style, { pointerEvents: on ? "none" : "" });
-    for (const el of [this.night, this.preview, this.ver, this.title, this.extras]) { if (on) { el.dataset.shown ??= el.style.display; el.style.display = "none"; } else if (el.dataset.shown !== undefined) { el.style.display = el.dataset.shown; delete el.dataset.shown; } } // (each back to its own display: the buttons' row is a flex)
-    if (on) { this.scroll.stop(); this.scroll.el.style.display = "none"; this.exitBtn.style.display = "none"; }
-    else if (!this.visiting) this.scroll.el.style.display = "";
-    Object.assign(this.sheet.style, { pointerEvents: on ? "auto" : "", transition: on ? `transform ${SLIDE_MS}ms ease-out` : "", transform: on ? this.sheet.style.transform : "" });
-  }
-  /** The docked layout: the tapestry down the left edge, as wide as in her room, at a whole art-pixel scale that leaves most of the
-   *  screen to the game. */
-  private placeDocked(): void {
-    const dpr = window.devicePixelRatio || 1, vw = window.innerWidth, vh = window.innerHeight, key = `dock:${vw}x${vh}@${dpr}`;
-    if (key === this.laid) return;
-    this.laid = key;
-    const u = Math.max(1, Math.min(Math.floor((vw * dpr * DOCK_SHARE) / PANEL), Math.floor((vh * dpr) / DOCK_ROWS))), cu = u / dpr, px = (n: number) => `${n * cu}px`;
-    const SH = Math.floor(vh * dpr / u), pw = PANEL, sh = SH - 2 * MARGIN;
-    this.root.style.setProperty("--u", px(1));
-    Object.assign(this.sheet.style, { left: px(MARGIN), top: px(MARGIN), width: px(pw), height: px(sh), backgroundImage: `url(${tapestry(pw, sh)})` });
-    Object.assign(this.body.style, { left: "0", right: "0", top: px(8), bottom: px(8) });
-  }
+  get open(): boolean { return this.root.style.display !== "none"; }
   /** Open mid-night from one of the treehouse's stations (Ed, 2026-10-19; rules/houseRooms.ts, config/house.json: the mirror,
    *  the wardrobe, the bags, the broom stand...; the Bedroom button and F are gone), the world running on at the house's tenth:
    *  no party scroll, its place taken by the way out ("Back to the island", Ed, 2026-10-11). */
@@ -370,8 +309,6 @@ export class Creator {
     this.root.append(this.exitBtn);
     // While it's open, its keys are its own but the debug overlay's ` (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
-      // Docked (a station's panel over the game): every key is the game's; a slider just used gives up the walking keys to her.
-      if (this.dockedAt) { if (WALK_KEYS.has(e.code) && (e.target as HTMLElement)?.tagName === "INPUT") (e.target as HTMLElement).blur(); return; }
       if (!this.open || e.code === "Backquote") return; // (bar the debug overlay's key: the Player pick shows with it, app/playerPick.ts)
       // Paused in her room (Esc, the pause page; Ed, 2026-10-14): nothing of hers acts (the scroll's own Enter included) till it resumes;
       // Esc and the freeze's step key go on to it.
@@ -388,11 +325,10 @@ export class Creator {
     this.root.addEventListener("pointerdown", unlock, { capture: true }); window.addEventListener("keydown", unlock, { capture: true });
     window.addEventListener("keyup", e => { if (this.open) this.held.delete(e.code); }, { capture: true }); // (on to the game too: a key held as a station opened, the mirror opening by itself as she walks up to it, is let go there, or she walks on after)
     window.addEventListener("blur", () => this.held.clear());
-    window.addEventListener("resize", () => { if (this.dockedAt) this.placeDocked(); }); // (the room's own layout is redone each frame it draws)
     this.build();
   }
 
-  show(): void { if (this.dockedAt) { this.dockedAt = null; clearTimeout(this.lookTimer); this.lookTimer = 0; } clearTimeout(this.slideTimer); this.dockLook(false); this.root.style.display = "block"; this.dirty = true; this.buildRoom(); this.loop(); this.scroll.start(); }
+  show(): void { this.root.style.display = "block"; this.dirty = true; this.buildRoom(); this.loop(); this.scroll.start(); }
   /** The room made once, a step a frame (render/slices.ts: its sprite, its bake, its light, its banner, its glows: the cloud's, 2026-10-21,
    *  one task of seconds as the bedroom opened, the alarm's animation stopped); its panel shows meanwhile, the room as it's done. */
   private building = false;
@@ -414,6 +350,8 @@ export class Creator {
   /** Out of her room, back to the island (mid-night): her look saved as at the start. */
   private leave(): void { saveGenome(this.g); this.hide(); if (this.only) { this.only = null; this.build(); } this.onExit(this.genome()); }
   genome(): Genome { return clone(this.g); }
+  /** Her look as a station's panel changed it (ui/stationPanel.ts): this room shows it next time it opens. */
+  adopt(g: unknown): void { this.g = upgrade(clone(g)); this.build(); this.dirty = true; }
 
   private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour any swatch. */
@@ -791,9 +729,6 @@ export class Creator {
 
 /** The layout in art pixels: the tapestry's widest and narrowest, the margin round the screen, the gap to the room. */
 const PANEL = 196, PANEL_MIN = 184, MARGIN = 8, GAP = 10;
-/** Docked: the tapestry at most this share of the screen's width, and the screen at least this many art pixels tall (so it's
- *  drawn at a whole scale near the room's); the slide's length (ms); her look given to the game this long after the last change (ms). */
-const DOCK_SHARE = .34, DOCK_ROWS = 300, SLIDE_MS = 220, LOOK_AFTER = 160;
 
 /** A frame this slow after drawing the room (ms) means the machine is struggling; it's then drawn this seldom (ms) until ready
  *  (and this seldom while she walks). */
@@ -904,7 +839,7 @@ function fairyProgress(x: CanvasRenderingContext2D, room: Room, built: number, s
 /** A canvas kept on the CPU (willReadFrequently): its pixels read back at once. A canvas of the page's own kind is drawn by the GPU,
  *  and reading one back waits on the GPU's queue, the game's frames in it: a second or more each read in the cloud (2026-10-21),
  *  which the bedroom's bakes, lighting and cut-outs did over and over while the island built. What's read is made on these. */
-function cpuCanvas(w: number, h: number): HTMLCanvasElement {
+export function cpuCanvas(w: number, h: number): HTMLCanvasElement {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   c.getContext("2d", { willReadFrequently: true });
   return c;

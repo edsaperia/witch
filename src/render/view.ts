@@ -269,6 +269,9 @@ function nightState(t: Tuning) {
     /** Her lean cycle's phase (frames) and the time it was last stepped. */
     leanPhase: 0,
     leanTime: 0,
+    /** Showing a change off at a dressing station (main.ts, ui/stationPanel.ts; Ed, 2026-10-21: "a beat on each change"): till this
+     *  time of hers, standing still, she turns to face us. */
+    turnUntil: 0,
     /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
     speakerTops: [] as RingSpeaker[],
     /** Each dormant area's wave (wavePlan), worked out again when the party changes. */
