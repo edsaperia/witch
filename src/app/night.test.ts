@@ -73,7 +73,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(undone).toBe(1); // (the last night's listeners undone)
     expect(page.night).toBe(b);
     // (and every other way to a new night in place, the plan's PR 6: each its own game on the view)
-    for (const [i, how] of (["again", "fresh", "bed", "bot", "sail"] as const).entries()) {
+    for (const [i, how] of (["bed", "bot", "sail"] as const).entries()) {
       endNight(page);
       const n = await startNight(page, { ...spec(60 + i), how });
       expect(page.night).toBe(n);
@@ -119,7 +119,7 @@ describe("window.witch (app/hooks.ts)", () => {
     installHooks({ night, view: {} as never, sound: {} as never, meter: {} as never, shake: {} as never, frameStats: {} as never, loadTimes: {}, loop: { manual: false, bot: null, botTag: null, ready: true } } as HookDeps);
     const W = (G.window as { witch: { game: unknown; tuning: unknown; hit: () => boolean } }).witch;
     expect(W.game).toBe(a.game);
-    const b = await startNight(page, { ...spec(32), how: "again" });
+    const b = await startNight(page, { ...spec(32), how: "bed" });
     expect(W.game).toBe(b.game);
     expect(W.tuning).toBe(b.tuning);
     const hp = b.game.witches[0].health.hp, hpA = a.game.witches[0].health.hp;

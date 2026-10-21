@@ -6,6 +6,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf, keepInHouse } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectWorld, toPlan } from "./houseRooms";
 import { wearing } from "./hat";
+import { endParty } from "./partyOver";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
@@ -137,6 +138,28 @@ describe("the treehouse's rooms", () => {
     for (let i = 0; i < (HOUSE_ROOMS.bed.hold * 0.9) / STEP; i++) { stepGame(g, held, STEP); slept += g.leashEvents.filter(e => e.obj === "slept").length; }
     expect(slept).toBe(0); // (started again: not yet)
     for (let i = 0; i < (HOUSE_ROOMS.bed.hold * 0.5) / STEP; i++) { stepGame(g, held, STEP); slept += g.leashEvents.filter(e => e.obj === "slept").length; }
+    expect(slept).toBe(1);
+  });
+
+  it("the party's over: she still flies onto the balcony, and the bed still sleeps (the over card points her there: Ed, 2026-10-21)", () => {
+    const g = newGame(123, TUNING), W = g.witches[0], d = deck(g), b = d.house!.balcony;
+    g.clock.paused = false;
+    for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (off her seat)
+    endParty(g);
+    for (let i = 0; i < 0.5 / STEP; i++) stepGame(g, idle, STEP);
+    expect(g.partyOver).not.toBeNull();
+    W.body = { ...W.body, x: b.x, z: b.z + b.r + 8, vx: 0, vz: 0, perch: undefined, mode: "treetop", lift: 1, seated: false };
+    for (let i = 0; i < 6 / STEP && !(W.body.perch && W.body.mode === "ground"); i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (flying north onto it)
+    for (let i = 0; i < 2 / STEP && W.body.mode !== "ground"; i++) stepGame(g, idle, STEP);
+    expect(W.body.perch).toBe(true);
+    expect(W.body.mode).toBe("ground");
+    const o = obj("bed");
+    put(g, o.x, o.z + o.d / 2 + 0.4);
+    stepGame(g, idle, STEP);
+    const held = { ...idle, sigilHeld: true };
+    let slept = 0;
+    stepGame(g, { ...held, place: true }, STEP);
+    for (let i = 0; i < (HOUSE_ROOMS.bed.hold * 1.3) / STEP; i++) { stepGame(g, held, STEP); slept += g.leashEvents.filter(e => e.obj === "slept").length; }
     expect(slept).toBe(1);
   });
 

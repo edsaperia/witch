@@ -1,7 +1,8 @@
 // The sail in place's own parts (app/sail.ts; docs/plans/sail-without-reload.md PR 5): which way it sails, the link it pushes,
 // the knobs that link keeps from the sliders' carry, Back opening the pause menu, and the quiet fallback to today's reload.
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel } from "./sail";
+import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel, overBedLine } from "./sail";
 import { newForestHref } from "./newForest";
 import { carryKnobs } from "./settings";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
@@ -40,38 +41,44 @@ describe("the link a sail in place pushes", () => {
 describe("the other ways to a new night (PR 6)", () => {
   const href = "https://x.test/witch/pr-9/?seed=123&island=fox&world=7&creator=0&wave=4&arrive=1&bot=skilled&sail=inplace#h";
   const r = () => 0.4567891;
-  it("fall back to today's links: Play again the page's own (its reload), a new forest and the bed newForestHref's, the bot's exit without ?bot", () => {
-    expect(nightHref("again", href)).toBe(href);
-    expect(nightHref("fresh", href, r)).toBe(newForestHref(href, r));
+  it("fall back to today's links: the bed newForestHref's (a new seed, the same island), the bot's exit without ?bot", () => {
     expect(nightHref("bed", href, r)).toBe(newForestHref(href, r));
     const u = new URL(href); u.searchParams.delete("bot");
     expect(nightHref("bot", href)).toBe(u.toString());
     expect(nightHref("bot", href)).toBe("https://x.test/witch/pr-9/?seed=123&island=fox&world=7&creator=0&wave=4&arrive=1&sail=inplace#h");
   });
   it("each starts the night its link would on a fresh load: its island, seed, world and how, the link's switches whole", () => {
-    const again = nightFromHref("again", nightHref("again", href));
-    expect(again).toMatchObject({ how: "again", island: "fox", seed: 123, world: 7 });
-    expect(again.params.toString()).toBe(new URL(href).searchParams.toString());
-    const fresh = nightFromHref("fresh", nightHref("fresh", href, r));
-    expect(fresh).toMatchObject({ how: "fresh", island: "fox", seed: 456789, world: 7 });
-    expect(fresh.params.get("wave")).toBe("4"); // (as newForestHref's page kept it)
-    expect(nightFromHref("bed", nightHref("bed", href, r))).toMatchObject({ how: "bed", island: "fox", seed: 456789, world: 7 });
+    const bed = nightFromHref("bed", nightHref("bed", href, r));
+    expect(bed).toMatchObject({ how: "bed", island: "fox", seed: 456789, world: 7 });
+    expect(bed.params.get("wave")).toBe("4"); // (as newForestHref's page kept it)
     const bot = nightFromHref("bot", nightHref("bot", href));
     expect(bot).toMatchObject({ how: "bot", island: "fox", seed: 123, world: 7 });
     expect(bot.params.has("bot")).toBe(false);
-    const bare = nightFromHref("again", "http://localhost/?seed=5");
+    const bare = nightFromHref("bot", "http://localhost/?seed=5");
     expect(bare).toMatchObject({ island: "", seed: 5 });
     expect(bare.world).toBeUndefined();
   });
   it("a link with no seed isn't a night in place (it throws: the page loads it anew instead)", () => {
-    expect(() => nightFromHref("again", "http://localhost/?creator=0")).toThrow(/no seed/);
+    expect(() => nightFromHref("bed", "http://localhost/?creator=0")).toThrow(/no seed/);
   });
   it("one going wrong loads its link as before", async () => {
-    for (const how of ["again", "fresh", "bed", "bot"] as const) {
+    for (const how of ["bed", "bot"] as const) {
       const to = nightHref(how, href, r), went: string[] = [];
       expect(await sailOrReload(async () => { nightFromHref(how, to); throw new Error("no"); }, to, h => went.push(h))).toBe(false);
       expect(went).toEqual([to]);
     }
+  });
+});
+
+describe("the party's-over card (Ed, 2026-10-21: Play again and A new forest \"replace with the bed\")", () => {
+  const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8"), card = html.match(/<div id="over">[\s\S]*?<\/div><\/div>/)?.[0] ?? "";
+  it("has no Play again or A new forest, points her to the bed and keeps the Sea chart", () => {
+    expect(card).toContain("THE PARTY'S OVER");
+    expect(card).not.toMatch(/id="again"|id="fresh"|Play again|A new forest/);
+    expect(card).toContain('id="chart-open"');
+    expect(card).toContain(`<div id="over-bed">${overBedLine(false)}</div>`);
+    expect(overBedLine(false)).toMatch(/bed.*treehouse.*new night/);
+    expect(overBedLine(true)).toMatch(/Esc/); // (a bot game: its tag's way out)
   });
 });
 
