@@ -40,6 +40,7 @@ import { shelvesAt } from "./rules/wardrobe";
 import { loadOwned } from "./app/owned";
 import { StationPanel } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
+import { TelescopeView, integratedGpu } from "./app/telescope";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { warmChart } from "./app/chartWarm";
 import { powerLines } from "./app/hud";
@@ -300,12 +301,23 @@ stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime 
 stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
+// The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it, full screen,
+// the night running on at the house's tenth while she stands still; E or Esc leaves. On an integrated GPU (Ed's Intel UHD) its
+// picture is drawn at telescope.lowGpuResolution (?telescopeRes= sets it), scaled up square.
+const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
+telescope.onChange = on => {
+  const T = N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
+  view.pixelScale = on ? 1 / Math.max(0.25, Math.min(1, res)) : 1;
+  fit();
+  input.clearPresses();
+};
 const useHouse = (obj: string): void => {
   const { game, tuning, flags: { chartRecorded, overShown } } = N();
   if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
+  if (o.use.kind === "telescope" && tuning.telescope) telescope.open(game);
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -721,7 +733,10 @@ function frame(now: number): void {
   frameStats.frame(dt * 1000);
   freeze.pollPad();
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
-  const human = chartOpen() || creator.visiting ? stillControls(input.read()) : input.read(); // (her room open mid-night: she stands still on the deck)
+  // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
+  const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on ? stillControls(raw) : raw;
+  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
+  view.telescope = tuning.telescope ? telescope.look(tuning.telescope.eye, tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
@@ -877,6 +892,12 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// The telescope for the tools (tools/telescope/shots.cjs): look through it pointed at a bearing and zoom (0 wide, 1 close), or stop.
+(window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
+  look: (heading: number, zoom: number) => { const { game, tuning } = N(); if (!tuning.telescope) return false; telescope.open(game); telescope.point(heading, zoom, tuning.telescope); view.telescope = telescope.look(tuning.telescope.eye, tuning.telescope); return true; },
+  close: () => { telescope.close(); view.telescope = null; },
+  get on() { return telescope.on; },
+};
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   sailFail = !!o.fail && params.get("debug") === "sail";
   const world = chartWorldArg(), end = o.end === null ? undefined : o.end ?? { cam: { x: 0, z: 700, height: 260, pitch: 0.45, fov: 40, speed: 60 }, still: "" };

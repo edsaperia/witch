@@ -29,7 +29,8 @@ export function drawPointers(v: View, time: number): void {
     const cw = v.canvas.clientWidth || window.innerWidth, ch = v.canvas.clientHeight || window.innerHeight, cd = waveCountdown(g.party, g.map, time);
     // In slowed time (a sleeping legend's circle) they fade out with the slowing (Ed, 2026-10-10: "fade out edge indicators while
     // you're in slow time areas"; render/slowtime.ts).
-    const calm = 1 - slowAmount(g.timeScale, slowest(t));
+    // And none through the telescope (Ed, 2026-10-21: "nothing marked"; its view isn't hers, so the edges would point wrong).
+    const calm = (1 - slowAmount(g.timeScale, slowest(t))) * (v.telescope ? 0 : 1);
     const shown = pointerShown(g.party, g.map, time) * (1 - (g.partyOver?.ease ?? 0)) * calm; // (none once the party's over: rules/partyOver.ts)
     edgeLayout.reset(); // (no two edge cues on one another: render/indicator.ts)
     const cue = (list: StoneIndicator[], cells: readonly (readonly [number, number])[], make: () => StoneIndicator, fill: number, label?: string) => {

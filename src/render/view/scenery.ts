@@ -107,19 +107,22 @@ function due(v: View, force = false) {
   // trunk, shadow or undergrowth); on the ground, where her view doesn't reach the far crowns, as far as the rest.
   const canopy = Math.max(reach, v.canopyNow);
   const regrown = Math.abs(radius - v.lastBuild.radius) >= margin / 3 || Math.abs(canopy - (v.lastBuild.canopy ?? reach)) >= margin / 3;
-  const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift;
+  const tele = v.telescope ? 1 : 0; // (looking through the telescope, or no longer: render/view/camera.ts)
+  const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift || tele !== (lp.tele ?? 0);
   const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
   if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics) return null;
-  return { margin, pose, key, lift, radius, reach, canopy };
+  return { margin, pose, key, lift, radius, reach, canopy, tele };
 }
 
-function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy }: NonNullable<ReturnType<typeof due>>, force: boolean): Generator<void, void, void> {
+function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tele }: NonNullable<ReturnType<typeof due>>, force: boolean): Generator<void, void, void> {
   let t0 = performance.now();
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
   v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game) };
-  v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift };
-  const r = viewRect(v, reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
+  v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
+  // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
+  const round = (far: number) => { const f = focusOf(v); return { minX: f.x - far - margin, maxX: f.x + far + margin, minZ: f.z - far - margin, maxZ: f.z + far + margin }; };
+  const r = tele ? round(reach) : viewRect(v, reach, margin), cx = (r.minX + r.maxX) / 2, cz = (r.minZ + r.maxZ) / 2, half = Math.max(r.maxX - r.minX, r.maxZ - r.minZ) / 2;
   v.lastView = { x: cx, z: cz, half };
   const shadows: ShadowInstance[] = [];
   // Shadows fall away from the moon: from the upper left, so toward the lower right.
@@ -145,7 +148,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy }: N
   const U = SPRITE_UNIFORMS.uUp.value;
   const stand = (x: number, z: number, frame: Frame, m: number) => { const d = (frame.pad ?? 0) * m; return { x: x - U.x * d, y: -U.y * d, z: z - U.z * d }; };
   let nt = 0, nb = 0;
-  const rc = canopy > reach ? viewRect(v, canopy, margin) : r, ccx = (rc.minX + rc.maxX) / 2, ccz = (rc.minZ + rc.maxZ) / 2, chalf = Math.max(rc.maxX - rc.minX, rc.maxZ - rc.minZ) / 2;
+  const TS = t.telescope, eye = focusOf(v);
+  const rc = canopy > reach ? (tele ? round(canopy) : viewRect(v, canopy, margin)) : r, ccx = (rc.minX + rc.maxX) / 2, ccz = (rc.minZ + rc.maxZ) / 2, chalf = Math.max(rc.maxX - rc.minX, rc.maxZ - rc.minZ) / 2;
   for (const p of g.forest.treesNear(ccx, ccz, chalf)) {
     const art = v.assets.typeArt(p.type);
     if (!art || !art.layout.big.length) continue;
@@ -159,8 +163,11 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy }: N
     const boost = 1 + (GT.scale - 1) * gs * (0.75 + 0.5 * (((p.variant >> 5) % 97) / 96));
     const near = inView(v, p.x, p.z, whole.w * mpp * boost, whole.h * mpp * boost, margin, reach);
     if (!near && (big.top === null || canopy <= reach || !inView(v, p.x, p.z, whole.w * mpp * boost, whole.h * mpp * boost, margin, canopy))) continue;
+    // The telescope's far forest (Ed, 2026-10-21: "fewer, flatter crowns past 360 m"): past thinFrom, one crown in `thin`, bigger.
+    const thinned = tele && !near && TS && (p.x - eye.x) ** 2 + (p.z - eye.z) ** 2 > TS.thinFrom ** 2;
+    if (thinned && p.variant % TS.thin !== 0) continue;
     // Squeeze the tallest variants so they never bury her flight (treeCap); a grove's a little beyond.
-    const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost;
+    const tall = whole.h * mpp, C = t.treeCap, scale = (tall > C.from ? (C.from + (tall - C.from) * C.keep) / tall : 1) * boost * (thinned ? TS.thinGrow : 1);
     const fresh = mark(v, "tree", p.x, p.z, tall * scale);
     const at = stand(p.x, p.z, f[big.bot], mpp * scale);
     const jitter = leafJitterOf(p); // (its own leaf colour, both halves alike: Ed, 2026-10-16)

@@ -1960,6 +1960,32 @@ Finding wild creatures in the dark (Ed, v244: 'quite hard to see in the forest..
 
 Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.
 
+### `telescope`
+
+The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide, aimClose: how far out (m) the middle of the view looks, wide and close. pan: degrees a second panning wide (slower zoomed in, alike on screen); zoomRate: the stick's zoom a second (0 wide to 1 close); zoomStep: the wheel's a click. bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
+
+| knob | type | range |
+|---|---|---|
+| `telescope.eye` | number | 0 to … |
+| `telescope.fovWide` | number | 0 to … |
+| `telescope.fovClose` | number | 0 to … |
+| `telescope.aimWide` | number | 0 to … |
+| `telescope.aimClose` | number | 0 to … |
+| `telescope.pan` | number | 0 to … |
+| `telescope.zoomRate` | number | 0 to … |
+| `telescope.zoomStep` | number | 0 to … |
+| `telescope.bend` | number | 0 to … |
+| `telescope.reach` | number | 0 to … |
+| `telescope.hazeNear` | number | 0 to … |
+| `telescope.hazeFar` | number | 0 to … |
+| `telescope.thinFrom` | number | 0 to … |
+| `telescope.thin` | number | 0 to … |
+| `telescope.thinGrow` | number | 0 to … |
+| `telescope.moonSpread` | number | 0 to … |
+| `telescope.resolution` | number | 0 to … |
+| `telescope.lowGpuResolution` | number | 0 to … |
+| `telescope.vignette` | number | 0 to … |
+
 ### `smoke`, `sky`
 
 Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.
