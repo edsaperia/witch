@@ -8518,6 +8518,32 @@
             "ease"
           ],
           "additionalProperties": false
+        },
+        "station": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "side": {
+              "type": "number"
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "distance",
+            "side",
+            "ease"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8537,7 +8563,8 @@
         "follow",
         "intro",
         "circle",
-        "house"
+        "house",
+        "station"
       ],
       "additionalProperties": false
     },

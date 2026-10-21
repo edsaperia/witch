@@ -82,7 +82,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     else if (indoors && F.walk && F.idle) {
       // walking: her six frames at a pace by her speed (F.walk.fps at the house's walk), side-on or, going straight up or down the
       // screen, in that heading; standing, her idle
-      const sp = Math.hypot(w.vx, w.vz), Hd = w.heading && w.heading !== "side" ? v.assets.witchHeading[w.heading] : null;
+      // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
+      const sp = Math.hypot(w.vx, w.vz), heading = still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
       v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.walk);
       const list = still ? (Hd?.idle?.length ? Hd.idle : F.idle[side]) : (Hd?.walk?.length ? Hd.walk : F.walk[side]);
       wf = list[(still ? Math.floor(ht * F.idle.fps) : Math.floor(v.walkPhase)) % list.length];
