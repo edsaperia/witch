@@ -292,6 +292,8 @@ export class AssetLibrary {
       this.party = { atlas, ...r.result.party! };
     } else if (r.job.kind === "soundsystem") {
       this.soundsystemsGen.set(r.job.id, { atlas, ...r.result.ss! });
+    } else if (r.job.kind === "find") {
+      this.finds.set(r.job.id, { atlas, ...r.result.scenes! });
     } else if (r.job.kind === "hat") {
       this.hats.set(r.job.id, atlas);
     } else if (r.job.kind === "partyWitch") {
@@ -357,8 +359,8 @@ export class AssetLibrary {
     return this.beach;
   }
   /** The scenes' pieces and layouts, or undefined (and asked for). */
-  sceneArt(urgent = false): (SceneArt & { atlas: Atlas }) | undefined { // (urgent: she's near something only it draws, tonight's trunk)
-    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style }, urgent);
+  sceneArt(): (SceneArt & { atlas: Atlas }) | undefined {
+    if (!this.scenes) this.ask({ kind: "scenes", id: "all", style: this.style });
     return this.scenes;
   }
   /** The dancefloor's speakers, or undefined (and asked for, ahead of the scenery: they're gameplay). */
@@ -505,6 +507,14 @@ export class AssetLibrary {
     return a;
   }
   private hats = new Map<string, Atlas>();
+  /** A find's own art (render/view/finds.ts: tonight's travel trunk), its piece alone in an atlas of its own; undefined (and
+   *  asked for: urgent when she's near enough to see it) till it's drawn. */
+  findArt(id: string, urgent = false): (SceneArt & { atlas: Atlas }) | undefined {
+    const a = this.finds.get(id);
+    if (!a) this.ask({ kind: "find", id, style: this.style }, urgent);
+    return a;
+  }
+  private finds = new Map<string, SceneArt & { atlas: Atlas }>();
 
   /** A party witch's art (#37: her look from partyWitch(seed), or seed null for our witch's own),
    *  or undefined (and asked for). Looks repeat after a few, so there are only so many to draw. */
