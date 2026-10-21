@@ -153,8 +153,8 @@ describe("the treehouse's rooms", () => {
     for (let i = 0; i < 2 / STEP && W.body.mode !== "ground"; i++) stepGame(g, idle, STEP);
     expect(W.body.perch).toBe(true);
     expect(W.body.mode).toBe("ground");
-    const o = obj("bed");
-    put(g, o.x, o.z + o.d / 2 + 0.4);
+    const at = before(obj("bed")); // (on the house's turned plan)
+    put(g, at.x, at.z);
     stepGame(g, idle, STEP);
     const held = { ...idle, sigilHeld: true };
     let slept = 0;
