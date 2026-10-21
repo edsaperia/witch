@@ -52,6 +52,23 @@
       "apply": {
         "knob": "leafJitter.value"
       }
+    },
+    {
+      "id": "spookyGrade",
+      "pr": 950,
+      "group": "Leaf jitter",
+      "label": "Spooky colour grade",
+      "note": "The spooky mood's night grade, how strongly (Ed, 2026-10-21: \"Please put spooky colour grade as a slider in the leaf jitter section\"): it drains and tints blue every tone darker than its pivot (light.spooky gradeDesat, gradePivot, gradeHue, gradeSat; render/post.ts COMPOSITE), which is why the autumn jitter's oranges end near grey at night and its reds go mauve. 0: no grade, the leaves' own colours; 0.9: as built. Each area's own tint still eases in as she crosses (render/mood.ts AreaMoods). Live: no rebake.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01
+      },
+      "default": 0.9,
+      "apply": {
+        "knob": "light.spooky.grade"
+      }
     }
   ]
 }

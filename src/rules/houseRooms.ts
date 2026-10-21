@@ -83,16 +83,20 @@ export function objectFront(o: HouseObject, at: At, by = 0.5, H = HOUSE_ROOMS): 
   return Math.abs(dx) > Math.abs(dz) ? objectWorld(o, at, Math.sign(dx) * (o.w / 2 + by), 0, H) : objectWorld(o, at, 0, Math.sign(dz || 1) * (o.d / 2 + by), H);
 }
 
-/** How far (x, z) is from an object's footprint (0 on it), (x, z) on the plan. */
-const fromObject = (o: HouseObject, x: number, z: number) => {
-  const dx = Math.max(0, Math.abs(x - o.x) - o.w / 2), dz = Math.max(0, Math.abs(z - o.z) - o.d / 2);
+/** How far (x, z) in the world is from an object's footprint (0 on it), the hub's centre at `at`, measured on the house's plan
+ *  (rules/stations.ts reads it too: the one place an object's place in the world is worked out for nearness). */
+export const fromObject = (o: HouseObject, at: At, x: number, z: number, H = HOUSE_ROOMS) => {
+  const p = toPlan(at, x, z, H.turn ?? 0), dx = Math.max(0, Math.abs(p.x - o.x) - o.w / 2), dz = Math.max(0, Math.abs(p.z - o.z) - o.d / 2);
   return Math.hypot(dx, dz);
 };
+/** A spot `gap` metres in front of an object, the hub's centre at `at`: where she'd stand to use it (tests, tools; objectFront). */
+export const objectFrontAt = (o: HouseObject, at: At, gap: number): { x: number; z: number } => objectFront(o, at, gap);
+/** Whether the deck is the house with its rooms (a floor to walk, objects to be at). */
+export const hasRooms = (d: { house?: { rooms: RoomFloor | null } } | null | undefined): boolean => !!d?.house?.rooms?.rects.length;
 /** The object she's at, standing at (x, z) in the world: the nearest within reach of its edge, or null. */
 export function objectAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseObject | null {
-  const p = toPlan(at, x, z, H.turn ?? 0);
   let best: HouseObject | null = null, bd = H.reach;
-  for (const o of H.objects) { const d = fromObject(o, p.x, p.z); if (d <= bd) { bd = d; best = o; } }
+  for (const o of H.objects) { const d = fromObject(o, at, x, z, H); if (d <= bd) { bd = d; best = o; } }
   return best;
 }
 
