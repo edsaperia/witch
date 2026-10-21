@@ -362,7 +362,7 @@ function endNight(page: Page): void;                                     // reco
 
 ## D. PRs, in a safe order
 
-**Status (2026-10-20):** PRs 1, 2, 3, 4a, 4b, 5 and 6 are done: the sail in place is on by default (`sail.inPlace`), and Play again, a new forest, the bed, the bot game's exit and the cards' sea chart go in place too. PR 7 is still to come.
+**Status (2026-10-20):** PRs 1, 2, 3, 4a, 4b, 5 and 6 are done: the sail in place is on by default (`sail.inPlace`), and Play again, a new forest, the bed, the bot game's exit and the cards' sea chart go in place too. PR 7 is still to come. (2026-10-21: Ed took Play again and A new forest off the party's-over card, "replace with the bed": the bed is the only way to a new night on the same island, and `NightWay` is `"bed" | "bot"`.)
 
 Each is shippable. Nothing a player sees changes until PR 5, which turns the new way on once its tests pass (decision 4).
 
