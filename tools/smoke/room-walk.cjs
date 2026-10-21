@@ -18,6 +18,7 @@ const query = process.argv[2] || "";
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
     await page.goto(`http://localhost:4182/?quick=1&seed=123${query ? "&" + query : ""}`, { waitUntil: "load" });
     await page.waitForSelector("#creator-start", { timeout: 60000 });
+    await page.waitForFunction(() => !!window.__creator?.walker, null, { timeout: 120000, polling: 250 }); // (the room's made a step a frame)
     await page.waitForTimeout(4000); // (her walking frames bake once her look is still)
     await page.screenshot({ path: path.join(out, "screen.png") });
     const room = await page.$("#creator canvas[title]");
@@ -25,7 +26,7 @@ const query = process.argv[2] || "";
     let n = 0;
     // a frame: the room's own canvas, 3 screen pixels to its art pixel (read in the page: a screenshot is too slow while the forest grows)
     const shoot = async () => { const url = await page.evaluate(() => { const c = document.querySelector("#creator canvas[title]"), k = 3, z = document.createElement("canvas"); z.width = c.width * k; z.height = c.height * k; const x = z.getContext("2d"); x.imageSmoothingEnabled = false; x.fillStyle = "#14132c"; x.fillRect(0, 0, z.width, z.height); x.drawImage(c, 0, 0, z.width, z.height); return z.toDataURL(); }); fs.writeFileSync(path.join(frames, `f${String(n++).padStart(3, "0")}.png`), Buffer.from(url.split(",")[1], "base64")); };
-    const where = () => page.evaluate(() => { const c = window.__creator; return c ? { x: +c.walker.x.toFixed(2), z: +c.walker.z.toFixed(2) } : null; });
+    const where = () => page.evaluate(() => { const c = window.__creator; return c?.walker ? { x: +c.walker.x.toFixed(2), z: +c.walker.z.toFixed(2) } : null; }); // (null till the room is made: built a step a frame)
     const start = await where();
     console.log("start", JSON.stringify(start));
     // a walk: up (into the room), left, down, right, round the bed and behind it, then into a wall

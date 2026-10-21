@@ -114,7 +114,9 @@ export const noEmoji = (s: string) => s.replace(/^[^\p{L}\p{N}(]+\s*/u, "");
 /** The title, "Coven Rush", in Jacquard 24 at one art pixel to its pixel: lit gold, darker down its strokes, a dark rim and a
  *  drop shadow, at w × h art pixels. */
 export function pixelTitle(text: string): HTMLCanvasElement {
-  const pad = 3, m = document.createElement("canvas"), g = m.getContext("2d")!;
+  // (the text drawn on a canvas kept on the CPU, read back at once: a GPU canvas's read waits on the GPU's own frame, seconds under
+  // the game's in the cloud; and the result written as pixels, not a fillRect each)
+  const pad = 3, m = document.createElement("canvas"), g = m.getContext("2d", { willReadFrequently: true })!;
   g.font = '43px "Jacquard 24"';
   const w = Math.ceil(g.measureText(text).width) + pad * 2 + 2, h = 40;
   m.width = w; m.height = h;
@@ -123,14 +125,17 @@ export function pixelTitle(text: string): HTMLCanvasElement {
   let top = h, bot = 0;
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (on(i, j)) { top = Math.min(top, j); bot = Math.max(bot, j); }
   const out = document.createElement("canvas"); out.width = w; out.height = h; out.className = "px-title";
-  const x = out.getContext("2d")!;
+  const x = out.getContext("2d")!, img = x.createImageData(w, h), o = img.data;
+  const rgba = (hex: string, a = 255) => [parseInt(hex.slice(1, 3), 16), parseInt(hex.slice(3, 5), 16), parseInt(hex.slice(5, 7), 16), a];
+  const LIT = rgba("#fff3c8"), DEEP = rgba("#8a5420"), G1 = rgba("#f6d27a"), G2 = rgba("#e9ae4c"), G3 = rgba("#c07f30"), RIM = rgba("#2a140c"), SHADOW = rgba("#05030c", Math.round(.85 * 255));
   for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
-    let col = "";
-    if (on(i, j)) { const t = (j - top) / Math.max(1, bot - top); col = !on(i, j - 1) ? "#fff3c8" : !on(i, j + 1) ? "#8a5420" : t < .45 ? "#f6d27a" : t < .7 ? "#e9ae4c" : "#c07f30"; }
-    else if (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1)) col = "#2a140c";
-    else if (on(i - 1, j - 2) || on(i, j - 2)) col = "rgba(5,3,12,.85)";
-    if (col) { x.fillStyle = col; x.fillRect(i, j, 1, 1); }
+    let col: number[] | null = null;
+    if (on(i, j)) { const t = (j - top) / Math.max(1, bot - top); col = !on(i, j - 1) ? LIT : !on(i, j + 1) ? DEEP : t < .45 ? G1 : t < .7 ? G2 : G3; }
+    else if (on(i - 1, j) || on(i + 1, j) || on(i, j - 1) || on(i, j + 1)) col = RIM;
+    else if (on(i - 1, j - 2) || on(i, j - 2)) col = SHADOW;
+    if (col) o.set(col, (j * w + i) * 4);
   }
+  x.putImageData(img, 0, 0);
   return out;
 }
 
@@ -138,7 +143,7 @@ export function pixelTitle(text: string): HTMLCanvasElement {
  *  top and bottom edges, as a data URL (drawn pixelated, stretched to w × h × u). */
 export function tapestry(w: number, h: number): string {
   const c = document.createElement("canvas"); c.width = w; c.height = h;
-  const x = c.getContext("2d")!, R = 4, P = R * 2 + 1;
+  const x = c.getContext("2d", { willReadFrequently: true })!, R = 4, P = R * 2 + 1; // (kept on the CPU: its data URL is a read back, waiting on the GPU's frame otherwise)
   const inside = (i: number, j: number) => {
     // the scallops: a row of half-discs hanging off each edge, the cloth between them cut away
     if (j < R) { const cx = Math.floor(i / P) * P + R, dy = R - j; return (i - cx) ** 2 + dy * dy <= R * R + 1; }
@@ -154,11 +159,13 @@ export function tapestry(w: number, h: number): string {
     const c = edge ? ink : (j % 3 === 0 ? light : dark), o = (j * w + i) * 4;
     d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; d[o + 3] = 255;
   }
+  // the gold trim, two lines in from the sides, and along under the scallops; a fainter line inside the sides (blended as the
+  // GPU canvas this used to be blends it: premultiplied in bytes, so the picture's the same to the pixel)
+  const gold = rgb(GOLD_D), faint = [242, 196, 106].map(v => Math.round((v * 89) / 255));
+  const put = (i: number, j: number, c: number[]) => { const o = (j * w + i) * 4; d[o] = c[0]; d[o + 1] = c[1]; d[o + 2] = c[2]; };
+  for (let j = R + 2; j < h - R - 2; j++) { put(2, j, gold); put(w - 3, j, gold); }
+  for (let i = 2; i < w - 2; i++) { put(i, R + 2, gold); put(i, h - R - 3, gold); }
+  for (let j = R + 4; j < h - R - 4; j++) for (const i of [4, w - 5]) { const o = (j * w + i) * 4; for (let k = 0; k < 3; k++) d[o + k] = Math.round(faint[k] + (d[o + k] * 166) / 255); }
   x.putImageData(img, 0, 0);
-  // the gold trim, two lines in from the sides, and along under the scallops
-  x.fillStyle = GOLD_D;
-  x.fillRect(2, R + 2, 1, h - 2 * R - 4); x.fillRect(w - 3, R + 2, 1, h - 2 * R - 4); x.fillRect(2, R + 2, w - 4, 1); x.fillRect(2, h - R - 3, w - 4, 1);
-  x.fillStyle = "rgba(242,196,106,.35)";
-  x.fillRect(4, R + 4, 1, h - 2 * R - 8); x.fillRect(w - 5, R + 4, 1, h - 2 * R - 8);
   return c.toDataURL();
 }
