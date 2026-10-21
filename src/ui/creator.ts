@@ -295,7 +295,7 @@ export class Creator {
   /** The docked look (only the tapestry, over the game, the game's own clicks round it) or the room's (all of it). */
   private dockLook(on: boolean): void {
     Object.assign(this.root.style, { pointerEvents: on ? "none" : "" });
-    for (const el of [this.night, this.preview, this.ver, this.title, this.extras]) el.style.display = on ? "none" : "";
+    for (const el of [this.night, this.preview, this.ver, this.title, this.extras]) { if (on) { el.dataset.shown ??= el.style.display; el.style.display = "none"; } else if (el.dataset.shown !== undefined) { el.style.display = el.dataset.shown; delete el.dataset.shown; } } // (each back to its own display: the buttons' row is a flex)
     if (on) { this.scroll.stop(); this.scroll.el.style.display = "none"; this.exitBtn.style.display = "none"; }
     else if (!this.visiting) this.scroll.el.style.display = "";
     Object.assign(this.sheet.style, { pointerEvents: on ? "auto" : "", transition: on ? `transform ${SLIDE_MS}ms ease-out` : "", transform: on ? this.sheet.style.transform : "" });
