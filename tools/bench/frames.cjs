@@ -44,8 +44,10 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // #997 and #999, the state the same, passing again on a re-run): the workers draw in real time while the frames step in fixed
 // ones, so a creature's rig page landed a chunk of frames earlier or later by the runner's speed, and the rig's own state (its
 // gait's clock, its feet planted: render/rig/rig.ts RigBody, made when its page is first in) carried that into the shot. Waited
-// for, each set lands the frame after it's asked for, on any machine. Each frame a set landed on is kept (`landed`, by frame from
-// the scene's start: compare.cjs says when two runs' differ).
+// for, each set the view needs now (an urgent ask: render/assets.ts) lands the frame after it's asked for, on any machine; the
+// scenery drawn ahead isn't waited for (waiting for it too ran the Bench job past its 40 minutes; the settle redraws it anyway).
+// Each frame such sets landed on is kept with how many (`landed`, by frame from the scene's start: compare.cjs says when two
+// runs' differ).
 async function frames(page, n, c, timed = false) {
   const r = await page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
     const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [], A = w.view.assets;
@@ -53,7 +55,8 @@ async function frames(page, n, c, timed = false) {
     for (let i = 0; i < n; i++) {
       const r = w.frame(f(i), DT, draw);
       if (timed) times.push({ step: r.step, render: r.render, ms: { ...r.ms } });
-      if (A.pending) { const had = A.timings.length; await A.whenIdle(); if (A.timings.length > had) L.at.push([L.frame, A.timings.length - had]); }
+      const urgent = A.urgentKeys; // (what the view needs now: rig pages and creatures, asked urgent; the scenery drawn ahead isn't waited for)
+      if (urgent.size) { const was = urgent.size; await A.whenIdle(true); L.at.push([L.frame, was]); }
       L.frame++;
       if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (the page's other tasks their turn)
     }
