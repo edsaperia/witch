@@ -48,7 +48,7 @@ export class WakeCard {
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
     if (w.beat === "alarm") ring();
-    const html = toDecks ? `🎧 Out through the house to your decks: ${k("E")} behind them starts the party` : w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
+    const html = toDecks ? `👗 Get dressed here, then out through the house to your decks: ${k("E")} behind them starts the party` : w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
     if (html !== this.html) { this.html = html; this.card.innerHTML = html; }
     this.card.style.display = html ? "block" : "none";
   }

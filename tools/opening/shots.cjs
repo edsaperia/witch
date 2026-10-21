@@ -100,8 +100,10 @@ function front(id, by) {
     await shot("09-up.png");
     // to the dressing table (put by it: the walk itself is the rules' tests'): its mirror opens by itself
     const goTo = (id, by) => page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, front(id, by));
-    await goTo("dressingTable", 1.4);
-    await page.keyboard.down("KeyW"); await until(s => s.mirror, "the mirror"); await page.keyboard.up("KeyW");
+    await goTo("dressingTable", 0.5);
+    // (its panel by nearness, as every station's: rules/stations.ts; the wake-up's own `mirror` beat only fires while the curtains
+    // are still shut, which on a fast load they aren't by now)
+    for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
     await page.waitForTimeout(2500);
     await shot("10-mirror.png");
     // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
