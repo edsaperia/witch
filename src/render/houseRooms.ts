@@ -187,7 +187,7 @@ export class HouseRoomsView {
   }
 }
 
-/** What the tag over an object says: its name and what E does there (the hats' floor: the hat nearest her). */
+/** What the tag over an object says: its name and what E does there (the hats' floor: the hat nearest her; a dressing station, its name only). */
 function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): string {
   if (o.use.kind === "bed") return "Bed · hold E to sleep (ends the night)";
   if (o.use.kind === "zoo") return "Bestiary book · E: the zoo";
@@ -198,5 +198,6 @@ function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): 
     hats.forEach((s, i) => { const dd = Math.hypot(slots[i].x - w.x, slots[i].z - w.z); if (s && dd <= bd) { bd = dd; best = i; } });
     return best >= 0 ? `${hatSpell(hats[best])?.name ?? hats[best]} hat · E: wear it` : "Hats · E: put yours down";
   }
+  if (o.use.kind === "creator") return o.label; // (its choices are in by her being here: rules/stations.ts, no E)
   return `${o.label} · E`;
 }
