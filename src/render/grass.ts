@@ -14,7 +14,9 @@ import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
 import { tuftSpan, tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { hash2 } from "../rules/random";
-import { packAtlas, type Atlas, type Baked } from "./atlas";
+import { atlasFromPixels, type Atlas, type Baked } from "./atlas";
+import { packSteps, type AtlasPixels } from "./artBuild";
+import { runSync, type Steps } from "./slices";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
@@ -111,6 +113,9 @@ const CELL0 = 16384, CELLS = 32768;
 const BLOCK = 32;
 const cellKey = (ci: number, cj: number) => (ci + CELL0) * CELLS + (cj + CELL0);
 
+/** The tufts' art for every area type, drawn and packed (GrassView.tufts). */
+export interface TuftArt { kinds: { frame: number; upTo: number; sway: number }[][]; rushes: ({ frame: number; sway: number } | undefined)[]; pixels: AtlasPixels }
+
 export class GrassView {
   readonly mesh: THREE.Mesh;
   private geo: THREE.InstancedBufferGeometry;
@@ -136,28 +141,11 @@ export class GrassView {
   stats = { tufts: 0, buildMs: 0 };
 
   /** forest: for the tufts round trunks, rocks and ponds; ground: the ground material's uniforms, for its canopy shade. */
-  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object, private forest?: Forest, ground?: Record<string, THREE.IUniform>) {
-    const cap = t.groundCover.cap, sprites: Baked[] = [];
+  constructor(private map: ForestMap, private t: Tuning, metresPerPixel: number, style: object, private forest?: Forest, ground?: Record<string, THREE.IUniform>, made: TuftArt = runSync(GrassView.tufts(style))) {
+    const cap = t.groundCover.cap;
     this.maxBlocks = Math.floor(cap / BLOCK);
-    // The art's tufts for every area type (#34), with how much each sways: the mean of its sway
-    // mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
-    for (const type of LOOKS) { // (the area types and home's meadow)
-      const list = Art.bakeTufts(type.id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
-      let upTo = 0;
-      this.kinds.push(list.map(b => {
-        sprites.push({ A: b.A, N: b.N, w: b.w, h: b.h });
-        const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
-        let sum = 0, n = 0;
-        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
-        upTo += b.weight;
-        const k = { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
-        if (b.kind === "rushes") this.rushes[this.kinds.length] = k;
-        return k;
-      }));
-    }
-    const anyRushes = this.rushes.find(r => r);
-    for (let i = 0; i < LOOKS.length; i++) this.rushes[i] ??= anyRushes;
-    this.atlas = packAtlas(sprites, 512);
+    this.kinds = made.kinds; this.rushes = made.rushes;
+    this.atlas = atlasFromPixels(made.pixels);
     const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
     this.geo = new THREE.InstancedBufferGeometry();
     const quad = new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0);
@@ -180,6 +168,44 @@ export class GrassView {
     this.mesh = new THREE.Mesh(this.geo, this.mat);
     this.mesh.frustumCulled = false;
     this.mesh.renderOrder = 0.25; // after the ground, with the scenery
+  }
+
+  /** The art's tufts for every area type (#34), drawn and packed (render/slices.ts: a step an area type, View.build's grass), with
+   *  how much each sways: the mean of its sway mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes). */
+  static *tufts(style: object): Steps<TuftArt> {
+    const sprites: Baked[] = [], kinds: TuftArt["kinds"] = [], rushes: TuftArt["rushes"] = [];
+    yield "tufts";
+    for (const type of LOOKS) { // (the area types and home's meadow)
+      yield;
+      const list = Art.bakeTufts(type.id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+      let upTo = 0;
+      kinds.push(list.map(b => {
+        sprites.push({ A: b.A, N: b.N, w: b.w, h: b.h });
+        const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
+        let sum = 0, n = 0;
+        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
+        upTo += b.weight;
+        const k = { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
+        if (b.kind === "rushes") rushes[kinds.length] = k;
+        return k;
+      }));
+    }
+    const anyRushes = rushes.find(r => r);
+    for (let i = 0; i < LOOKS.length; i++) rushes[i] ??= anyRushes;
+    yield "tuftAtlas";
+    return { kinds, rushes, pixels: yield* packSteps(sprites, 512) };
+  }
+
+  /** Another night's map (View.setGame): its tufts worked out afresh, every block emptied and free, and the canopy's and
+   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's.) */
+  setMap(map: ForestMap, forest: Forest | undefined, ground?: Record<string, THREE.IUniform>): void {
+    this.map = map; this.forest = forest;
+    this.cells.clear(); this.held.clear(); this.free = []; this.top = 0; this.lastCi = NaN; this.lastCj = NaN;
+    for (const a of [this.tuft, this.uvA, this.pxA, this.open]) { (a.array as Float32Array).fill(0); a.clearUpdateRanges(); a.needsUpdate = true; }
+    this.geo.instanceCount = 0;
+    this.stats = { tufts: 0, buildMs: 0 };
+    const u = this.mat.uniforms;
+    u.uCanopy = ground?.uCanopy ?? { value: new THREE.Vector4() }; u.uClearing = ground?.uClearing ?? { value: new THREE.Vector2(1, 1) };
   }
 
   /** Bring the cover to the witch at (x, z): `shown` 0 in the treetops to 1 on the ground; `part`:

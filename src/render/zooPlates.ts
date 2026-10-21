@@ -18,6 +18,8 @@ export class ZooPlates {
   private plates = new Map<string, HTMLElement>();
   private v = new THREE.Vector3();
   constructor(private host: HTMLElement) {}
+  /** Its plates taken off the page (another night's map). */
+  dispose(): void { for (const el of this.plates.values()) el.remove(); this.plates.clear(); }
 
   private make(b: ZooBlock): HTMLElement {
     const el = document.createElement("div"), area = b.area ? AREA_TYPES.find(a => a.id === b.area) : undefined;

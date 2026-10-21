@@ -21,7 +21,7 @@ import type { ForestLight, View } from "../view";
 import { inView, overBulge } from "./culling";
 import { mark } from "./pops";
 import { ringStoneKey } from "../artBuild";
-import { TrunkShadowBatch, type TrunkShadow } from "../trunkShadows";
+import type { TrunkShadow } from "../trunkShadows";
 import type { RingSpeaker } from "../lasers";
 
 /** The wave numbers' colour over areas the party has reached (spent). */
@@ -117,7 +117,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   v.markerBatch.set(inst);
   if (casts || v.trunkShadowBatches.has("markers")) { // (a batch of their own: their atlas)
     let b = v.trunkShadowBatches.get("markers");
-    if (!b) { b = new TrunkShadowBatch(v.markerArt.atlas); v.trunkShadowBatches.set("markers", b); v.scene.add(...b.meshes); }
+    if (!b) { b = v.island.markerShadowBatch(); v.trunkShadowBatches.set("markers", b); }
     b.set(cast);
   }
   // A 💌 that left a slowed circle outward vanishes in a small sparkle at its edge (render/slowtime.ts): 8 motes bursting
@@ -288,6 +288,8 @@ export function alongRay(v: View, p: { x: number; y: number; z: number }, d: num
 
 /** The knockdown candles last shown, per view: their count, how many red, and (once she's free) when their smoke is done. */
 const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>();
+/** Another night in the view (View.setGame): no candles burning down. */
+export function forgetCandles(v: View): void { candlesSeen.delete(v); }
 
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn

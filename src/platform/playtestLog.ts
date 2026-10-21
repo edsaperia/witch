@@ -44,7 +44,7 @@ export interface PlaytestSample {
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }
 
-export interface PlaytestRun { seed: number; build: string; started: string; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[] }
+export interface PlaytestRun { seed: number; build: string; started: string; /** ?timing=1: the transition's steps, wall ms from the first, and the long tasks (app/timing.ts). */ timing?: unknown; /** The machine (app/repro.ts machineLines): GPU, WebGL, browser, OS, screen, canvas. */ machine?: string[]; /** Every setting changed from the build's (tuning path: value), as last sampled. */ changed?: Record<string, unknown>; /** The overlay's "copy debug info" text as the log was saved. */ debug?: string; /** The waves' pace: the ley pulse's speed (m/s, 0 off) since 2026-10-09; seconds between waves before. */ interval: number; samples: PlaytestSample[]; /** The fight's scale and speed whenever they were set (Ed's live knobs). */ fight?: { t: number; scale: number; speed: number; momentum?: number }[]; /** Area size (metres), treetop speed (m/s) and the map's areas a side whenever they were set (Ed, 2026-10-05). */ world?: { t: number; areaSize: number; treetopSpeed: number; mapAreas: number }[]; /** The audio watchdog's mends (round 13: the music stopping): what, at what game time. */ audio?: { t: number; what: string }[]; /** The last frames of 100 ms or more (platform/stallLog.ts), with what they spent it on. */ stalls?: Stall[]; /** The measured output silent while the music should be heard (platform/audio/outputMeter.ts), over 0.3 s each. */ silences?: OutputSilence[]; /** The mic check's episodes (?micCheck=1): dropouts after the game, and the mic hearing what the output didn't send. */ mic?: MicLogged[]; /** A sail in place that went wrong (app/sail.ts: the page loaded anew instead), what was thrown. */ sails?: { t: number; what: string }[] }
 
 const KEY = "witch.playtest", KEEP = 8, EVERY = 10;
 const round = (x: number) => Math.round(x * 10) / 10;
@@ -90,6 +90,8 @@ export class PlaytestLog {
     if (D) { this.run.machine = D.machine; this.run.changed = D.changed; this.run.samples[this.run.samples.length - 1].link = D.link; } // (each sample's link: where she was then)
     this.save();
   }
+  /** The transition's steps and long tasks (?timing=1: app/timing.ts), kept with the run. */
+  timing(t: unknown): void { this.run.timing = t; this.save(); }
   /** The stall log's stalls, kept with the run (main.ts sets it). */
   stalls: (() => Stall[]) | null = null;
   private save(): void {
@@ -114,6 +116,12 @@ export class PlaytestLog {
   audio(what: string): void {
     const a = (this.run.audio ??= []);
     if (a.length < 200) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
+    this.save();
+  }
+  /** A sail in place went wrong (app/sail.ts) and the page loads anew: what was thrown, kept before it goes. */
+  sail(what: string): void {
+    const a = (this.run.sails ??= []);
+    if (a.length < 20) a.push({ t: Math.round(this.game.clock.time * 10) / 10, what });
     this.save();
   }
   /** A measured silence while the music should be heard (main.ts fills it in). */

@@ -121,6 +121,12 @@ export class SwoopTrails {
     this.mesh.frustumCulled = false; this.mesh.renderOrder = 12;
   }
 
+  /** Another night (View.setGame): no trails. */
+  reset(): void {
+    for (const s of this.slots) Object.assign(s, { id: -1, head: -1, count: 0, hue: 0, live: false });
+    this.byId.clear(); this.drawn = 0; this.geo.setDrawRange(0, 0);
+  }
+
   private set(base: number, head: number, x: number, y: number, z: number, time: number, fade: number): void {
     const P = this.pts, q = (base + ((head + N) % N)) * 5;
     P[q] = x; P[q + 1] = y; P[q + 2] = z; P[q + 3] = time; P[q + 4] = fade;

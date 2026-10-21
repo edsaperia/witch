@@ -3,7 +3,12 @@
 // start needs), starts, hops off the treehouse deck, flies about 2.5 s on the ground, rises, flies about 2.5 s in the treetops
 // and descends: kept short, as the software renderer here takes 20 s or so a second of game time. Fails on any page or console error, a blank picture, or a witch that doesn't move,
 // rise or descend. Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
-// test (smoke.cjs) still covers pops, floating, big windows and the rest.
+// test (smoke.cjs) still covers pops, floating, big windows and the rest. Then it sails in place to another island (the tuning's
+// sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
+// checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
+// the same night (no sail); Back opens the pause menu on the same night; and, the party over, the treehouse's bed (E held at it,
+// as the over card tells her: Ed, 2026-10-21) starts the next night in place (the same island, a new seed, a new game). QUICK_SAIL=0 skips those
+// (a few minutes in the cloud). tools/sail/leak.cjs and swap.cjs (SAIL=1) test the sail fully.
 // Run `npm run build` first, then `npm run smoke:quick`.
 const http = require("http");
 const fs = require("fs");
@@ -37,7 +42,7 @@ async function main() {
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   try {
-    await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug${process.env.QUICK_QUERY ? "&" + process.env.QUICK_QUERY : ""}`); // (QUICK_QUERY=a=b&c=d: more of the link, e.g. set=combat.packs.on=true)
+    await page.goto(`http://127.0.0.1:${port}/?creator=0&seed=123&quick=1&debug${process.env.QUICK_QUERY ? "&" + process.env.QUICK_QUERY : ""}`); // (QUICK_QUERY=a=b&c=d: more of the link, e.g. set=combat.packs.on=false for pack combat off)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 240000, polling: 500 });
     log("start screen ready");
     const state = () => page.evaluate(() => { const g = window.witch.game; return { t: g.clock.time, x: g.witch.x, z: g.witch.z, mode: g.witch.mode, paused: g.clock.paused, trees: window.witch.view.stats.trees }; });
@@ -98,6 +103,58 @@ async function main() {
     await page.waitForFunction(z => Math.abs(window.witch.game.camera.zoom - z) > 0.01, z0, { timeout: 60000, polling: 100 }).catch(() => {});
     const z1 = await page.evaluate(() => window.witch.game.camera.zoom), scrolled = await page.evaluate(() => window.scrollY);
     check(Math.abs(z1 - z0) > 0.01 && scrolled === 0, `the mouse wheel zooms (${z0.toFixed(2)} → ${z1.toFixed(2)}), the page unscrolled`);
+    if (process.env.QUICK_SAIL !== "0") {
+      const ts = Date.now(), inPlace = await page.evaluate(() => window.witch.sail("fox", 4242));
+      await page.waitForFunction(() => window.witch.ready && window.witch.game.seed === 4242, null, { timeout: 600000, polling: 500 });
+      await page.keyboard.press("Shift"); // (skips the flight in, as any key does)
+      await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
+      const n = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused }));
+      check(inPlace && n.island === "fox" && /^\?island=fox&seed=4242&/.test(n.url) && !n.paused, `sails in place to another island (${n.island}, ${n.url}, in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);
+      // The chart over the night (the map table's), its own island chosen (Ed, 2026-10-21): back to the night as it was, no sail.
+      const tc = Date.now();
+      await page.evaluate(() => { window.__nightGame = window.witch.game; window.__nightT = window.witch.game.clock.time; window.witch.chart(); });
+      await page.waitForFunction(() => !!window.chart && window.chart.islands().length > 0 && window.chart.chart.selected, null, { timeout: 180000, polling: 200 });
+      const ch = await page.evaluate(() => {
+        window.chart.choose("fox", true);
+        const o = document.getElementById("chart-overlay"), btn = o.querySelector("a.btn.sail");
+        const r = { label: btn.textContent, home: o.querySelector("a.btn.home").textContent, paused: window.witch.game.clock.paused };
+        btn.click();
+        return r;
+      });
+      await page.waitForFunction(() => !document.getElementById("chart-overlay") && window.witch.game.clock.time > window.__nightT, null, { timeout: 60000, polling: 200 }).catch(() => {});
+      const c2 = await page.evaluate(() => ({ open: !!document.getElementById("chart-overlay"), same: window.witch.game === window.__nightGame, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, t0: window.__nightT, paused: window.witch.game.clock.paused, arriving: document.body.classList.contains("arriving") }));
+      check(ch.label === "Back to the party" && ch.home === "Sail home" && ch.paused && !c2.open && c2.same && c2.seed === 4242 && c2.url === n.url && !c2.paused && !c2.arriving && c2.t > c2.t0,
+        `choosing her own island on the chart goes back to the night ("${ch.label}", home "${ch.home}"; paused under the chart ${ch.paused}, chart closed ${!c2.open}, the same night ${c2.same}, seed ${c2.seed}, ${c2.url}, game time ${c2.t0.toFixed(2)} → ${c2.t.toFixed(2)} s, running ${!c2.paused}, no flight ${!c2.arriving}, in ${((Date.now() - tc) / 1000).toFixed(0)} s)`);
+      await page.goBack({ timeout: 5000 }).catch(() => {});
+      await page.waitForFunction(() => document.getElementById("pause-sliders")?.classList.contains("open"), null, { timeout: 60000 }).catch(() => {});
+      const b = await page.evaluate(() => ({ menu: !!document.getElementById("pause-sliders")?.classList.contains("open"), url: location.search, seed: window.witch.game.seed }));
+      check(b.menu && b.url === n.url && b.seed === 4242, `Back opens the pause menu on the same night (${b.url})`);
+      await page.keyboard.press("Escape");
+      await page.waitForFunction(() => !document.getElementById("pause-sliders")?.classList.contains("open"), null, { timeout: 60000 }).catch(() => {});
+      // The bed (main.ts useHouse "slept", newNight "bed"; the party's-over card points her there: Ed, 2026-10-21): the party
+      // over, she's put by the treehouse's bed and holds E; the next night on this island starts in place, a new seed, as a fresh load.
+      const ta = Date.now();
+      const over = await page.evaluate(() => { window.witch.lose("home"); return true; });
+      await page.waitForFunction(() => !!window.witch.game.partyOver, null, { timeout: 120000, polling: 100 }).catch(() => {});
+      const po = await page.evaluate(() => !!window.witch.game.partyOver);
+      // (config/house.json's bed, 0.4 m off its near side, on the house's plan turned about the hub: rules/houseRooms.ts fromPlan)
+      const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), bed = H.objects.find(o => o.use.kind === "bed");
+      const A = ((H.turn || 0) * Math.PI) / 180, u = bed.x, v = bed.z + bed.d / 2 + 0.4, by = [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)];
+      await page.evaluate(([bx, bz]) => {
+        const g = window.witch.game, W = g.witches[0], t = g.map.treehouse;
+        window.__lastGame = g;
+        W.body = { ...W.body, x: t.x + bx, z: t.z + bz, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false };
+      }, by);
+      await page.keyboard.down("KeyE");
+      await page.waitForFunction(() => window.witch.game !== window.__lastGame, null, { timeout: 600000, polling: 200 }).catch(() => {});
+      await page.keyboard.up("KeyE");
+      await page.waitForFunction(() => window.witch.game !== window.__lastGame && window.witch.ready, null, { timeout: 600000, polling: 500 });
+      await page.keyboard.press("Enter"); // (?creator=0: the start card's any key, as a fresh page's)
+      await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
+      const a2 = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused, over: !!window.witch.game.partyOver, card: !!document.getElementById("over")?.classList.contains("on") }));
+      check(over && po && a2.island === "fox" && a2.seed !== 4242 && new RegExp(`[?&]island=fox(&|$)`).test(a2.url) && new RegExp(`[?&]seed=${a2.seed}(&|$)`).test(a2.url) && !a2.paused && !a2.over && !a2.card && a2.t < 30,
+        `the party over, the bed starts the next night in place (${a2.island}, seed ${a2.seed}, ${a2.url}, game time ${a2.t.toFixed(1)} s, the party on again ${!a2.over}, in ${((Date.now() - ta) / 1000).toFixed(0)} s)`);
+    }
   } catch (e) {
     errors.push(`stopped: ${e.message}`);
     try { fs.mkdirSync(path.dirname(shotPath), { recursive: true }); await page.screenshot({ path: shotPath }); } catch { /* none */ }

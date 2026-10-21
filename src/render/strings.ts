@@ -210,6 +210,12 @@ export class StringLightsView {
     }
   }
 
-  /** Forget everything (a new game). */
-  clear(): void { for (const [, b] of this.built) this.scene.remove(b.group); this.built.clear(); this.warmed.clear(); }
+  /** Forget everything (a new game): each area's lines taken out and their geometry let go (the materials are shared, kept). */
+  clear(): void {
+    for (const [, b] of this.built) { this.scene.remove(b.group); b.group.traverse(o => (o as THREE.Mesh).geometry?.dispose()); }
+    this.built.clear(); this.warmed.clear();
+  }
+
+  /** Another night's game (View.setGame): the last one's lines gone. */
+  setGame(game: Game): void { this.clear(); this.game = game; }
 }

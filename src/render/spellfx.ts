@@ -41,6 +41,12 @@ export class SpellFx {
     for (let i = 0; i < MAX; i++) this.pool[i * F + 7] = 0; // (all spent: a life of 0)
   }
 
+  /** Another night (View.setGame): every mote spent, their scatter seeded as at the start. */
+  reset(): void {
+    this.pool.fill(0); this.pos.fill(0); this.col.fill(0); this.next = 0; this.rand = rng(9157); this.lastSpark = 0; this.lastBlink = -Infinity;
+    for (const k of ["position", "color"]) this.trail.geometry.getAttribute(k).needsUpdate = true;
+  }
+
   /** A mote into the pool's next slot (the oldest goes). */
   private mote(x: number, y: number, z: number, vx: number, vy: number, vz: number, at: number, life: number, a: number, c: number[]): void {
     const o = this.next * F, p = this.pool;

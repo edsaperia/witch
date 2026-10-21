@@ -5,9 +5,10 @@
 // 3. renders every section of the style offline (OfflineAudioContext), a build into a wave under
 //    siege, and the game's mix far off and damaged: none silent, NaN or clipping;
 // 4. a sail without reloading the page (docs/plans/sail-without-reload.md, C5), frame by frame offline: night A at wave 2,
-//    a quiet gap, then the engine's timeline anchored afresh and night B's seed and style booting up: no NaN or clipping,
-//    A gone before B's first note, B not silent, and B's beat within 50 ms of its game time after 10 s (and, without
-//    newTimeline, far out: the measure works);
+//    then the sail (A's music fading out, the sea and wind cue fading in, nothing scheduled), then the engine's timeline
+//    anchored afresh and night B's seed and style booting up as the cue fades: no NaN or clipping, no silence across the gap
+//    (the cue covers it), A gone before B's first note, B not silent, the cue gone again in B, and B's beat within 50 ms of its
+//    game time after 10 s (and, without newTimeline, far out: the measure works);
 // 5. plays it live for a few seconds: the engine schedules and the sections show.
 const { execFileSync } = require("child_process");
 const path = require("path");
@@ -40,12 +41,15 @@ const ok = (cond, what) => { console.log(`${cond ? "ok  " : "FAIL"} ${what}`); i
     const ts = Date.now(), [sail, stale] = await page.evaluate(() => Promise.all([window.musicLabSail(true), window.musicLabSail(false)]));
     console.log(`     (sailed in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);
     const f = x => `rms ${x.rms.toFixed(3)}  peak ${x.peak.toFixed(2)}`;
-    for (const k of ["a", "gapEnd", "b", "whole"]) console.log(`     sail: ${k.padEnd(34)} ${f(sail[k])}`);
+    for (const k of ["a", "gapEnd", "cueGap", "b", "cueEnd", "whole"]) console.log(`     sail: ${k.padEnd(34)} ${f(sail[k])}`);
     const late = o => o.offsets.filter(x => x.game >= 10), worst = o => Math.max(0, ...late(o).map(x => Math.abs(x.ms)));
-    ok(Number.isFinite(sail.whole.peak) && Number.isFinite(sail.whole.rms) && sail.whole.peak <= 1.2, `the sail renders no NaN or clipping (peak ${sail.whole.peak.toFixed(2)})`);
+    ok(Number.isFinite(sail.whole.peak) && Number.isFinite(sail.whole.rms) && sail.whole.peak <= 1.2, `the sail renders no NaN or clipping, the music and the cue together (peak ${sail.whole.peak.toFixed(2)})`);
     ok(sail.a.rms > 0.003, `night A plays before the sail (rms ${sail.a.rms.toFixed(3)})`);
+    ok(sail.gapMin > 1e-3, `no silence across the sail: the sea and wind cue covers the gap (its quietest half second rms ${sail.gapMin.toFixed(4)})`);
+    ok(sail.cueGap.rms > 0.002, `the sea and wind cue is heard while the island is made (rms ${sail.cueGap.rms.toFixed(3)})`);
     ok(sail.gapEnd.peak < 1e-3, `night A's music is gone before night B's first note (peak ${sail.gapEnd.peak.toExponential(1)})`);
     ok(sail.b.rms > 0.003, `night B's boot is heard (rms ${sail.b.rms.toFixed(3)})`);
+    ok(sail.cueEnd.rms < sail.cueGap.rms * 0.25, `the cue has faded as night B's music comes in (rms ${sail.cueEnd.rms.toFixed(4)})`);
     ok(late(sail).length > 0 && worst(sail) < 50, `night B's beat within 50 ms of its game time after 10 s (worst ${worst(sail).toFixed(1)} ms over ${late(sail).length} sixteenths)`);
     ok(worst(stale) > 1000, `without newTimeline it would be far out (${(worst(stale) / 1000).toFixed(1)} s): the measure works`);
   }

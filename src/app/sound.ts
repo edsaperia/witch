@@ -55,6 +55,21 @@ export class Sound {
     if (this.begun) this.valve.begin(performance.now() / 1000);
   }
 
+  /** Sailing between islands in place (docs/plans/sail-without-reload.md B6; Ed's decision 3): 1 as she sails, the old night's
+   *  music fading out (the tuning's sfx.sail.fade seconds) and the sea and the wind fading in (places.ts Sailing), the music's
+   *  engine scheduling nothing while the next island is made (main.ts updates only this then: tickSail); 0 as the new night starts,
+   *  the cue fading as its music comes in. No crossfade from the old night: setNight's fresh timeline starts the new one's. */
+  sailing(level: number): void {
+    const was = this.sail;
+    this.sail = level;
+    if (level > 0 && !(was > 0)) this.music?.fadeOut(this.tuning.sfx.sail?.fade ?? 1.5);
+    this.tickSail();
+  }
+  /** The sail's cue as it is now: each frame while the island is made (the night's own update does it after). */
+  tickSail(): void { this.sfx?.sailing(this.sail); }
+  /** The sail's cue's level now (0 none). */
+  sail = 0;
+
   /** The cues for a night's game (per-game state: creatures by id, game times, areas by cell). */
   private cues(sfx: Sfx): SfxCues { return new SfxCues(sfx, (by, sec) => this.music?.duck(by, sec)); }
   /** The night's style (rules/musicSet.ts: the style with the night's set as its arc), once a game's been seen. */
@@ -117,24 +132,25 @@ export class Sound {
   /** The audio watchdog (Ed, round 13: "the music stops after about two minutes"): once a second, a context suspended is
    *  resumed, and music gone silent (or anything non-finite in the music or the sound effects) is rebuilt afresh; each
    *  mend goes in the playtest log (L). (Before the first home speaker boots, the music is silent on purpose: not
-   *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up. */
-  watch(live: () => boolean, booted: () => boolean, playtest: PlaytestLog): void {
-    const { tuning } = this;
+   *  expected.) `live`: whether the game is being played now (not paused, frozen or hidden); `booted`: a home speaker up; `log`:
+   *  the night's playtest log (or a way to it, read each time: a new night's own run). */
+  watch(live: () => boolean, booted: () => boolean, log: PlaytestLog | (() => PlaytestLog)): void {
+    const playtest = typeof log === "function" ? log : () => log;
     this.live = live; this.booted = booted;
-    this.note = what => playtest.audio(what);
+    this.note = what => playtest().audio(what);
     const watchdog = this.watchdog = new AudioWatchdog(
       () => ({ ctx: this.audio, music: this.music, sfx: this.sfx, wanted: !!this.audio && live(), musicExpected: this.musicExpected() }),
       what => {
-        playtest.audio(what);
+        playtest().audio(what);
         console.warn(`audio watchdog: ${what}`);
         if (!this.audio) return;
-        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, tuning.music.volume * this.level, this.playing, this.seed, tuning.music.src); this.voices(); }
+        if ((what === "music-silent" || what === "music-nonfinite") && this.music) { this.music.dispose(); this.music = new Music(this.audio, this.tuning.music.volume * this.level, this.playing, this.seed, this.tuning.music.src); this.voices(); }
         if (what === "sfx-nonfinite" && this.sfx) { this.sfx.dispose(); this.sfx = null; this.sfxCues = null; this.ensureSfx(); }
       },
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest.audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
   }
 
   private live: () => boolean = () => false;
@@ -186,6 +202,7 @@ export class Sound {
     const t2 = performance.now();
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;
     if (!game.clock.paused) this.sfxCues?.update(game, game.clock.time);
+    if (this.sail > 0 || this.sfx?.sailingBuilt) this.tickSail();
     const t3 = performance.now();
     // the creator's room in the treehouse; and after the spell, at her decks with the home speakers not yet up, its record
     // crackling under her hands (quieter: room.decks) once her routine has dropped the needle (rules/djSet.ts; the room quieter

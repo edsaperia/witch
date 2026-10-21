@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { sigilColour, sigilGlyph } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import { GROUND_SEEN_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { runSync, type Steps } from "./slices";
 
 export interface HologramTuning {
   on: boolean;
@@ -135,6 +136,9 @@ void main() {
   gl_FragColor = vec4(vLook.rgb * k, 1.0);
 }`;
 
+/** Every area type's creature's sigil, once, into one small atlas (SigilHolograms.glyphs). */
+export interface HologramGlyphs { data: Uint8Array; W: number; H: number; cellOf: Map<string, number>; colourOf: Map<string, number[]> }
+
 export class SigilHolograms {
   readonly group = new THREE.Group();
   private glyphs: THREE.Mesh;
@@ -152,16 +156,22 @@ export class SigilHolograms {
   private atlasUniform: { value: THREE.DataTexture };
   private time = { value: 0 };
 
-  constructor(private T: HologramTuning) {
-    // Every area type's creature's sigil, once, into one small atlas.
+  /** Every area type's creature's sigil, once, into one small atlas: a step a sigil (render/slices.ts, View.build's). */
+  static *glyphs(): Steps<HologramGlyphs> {
     const species = [...new Set(AREA_TYPES.map(a => a.creature))], rows = Math.ceil(species.length / COLS);
-    const W = COLS * CELL, H = rows * CELL, data = new Uint8Array(W * H);
-    species.forEach((s, i) => {
-      const gm = sigilGlyph(s, GLYPH) as { w: number; m: Uint8Array }, cx = (i % COLS) * CELL + (CELL - GLYPH) / 2, cy = Math.floor(i / COLS) * CELL + (CELL - GLYPH) / 2;
+    const W = COLS * CELL, H = rows * CELL, data = new Uint8Array(W * H), cellOf = new Map<string, number>(), colourOf = new Map<string, number[]>();
+    for (let i = 0; i < species.length; i++) {
+      yield;
+      const s = species[i], gm = sigilGlyph(s, GLYPH) as { w: number; m: Uint8Array }, cx = (i % COLS) * CELL + (CELL - GLYPH) / 2, cy = Math.floor(i / COLS) * CELL + (CELL - GLYPH) / 2;
       for (let y = 0; y < gm.w && y < GLYPH; y++) for (let x = 0; x < gm.w && x < GLYPH; x++) if (gm.m[y * gm.w + x]) data[(cy + y) * W + cx + x] = 255;
-      this.cellOf.set(s, i);
-      this.colourOf.set(s, (sigilColour(s) as number[]).map(v => v / 255));
-    });
+      cellOf.set(s, i);
+      colourOf.set(s, (sigilColour(s) as number[]).map(v => v / 255));
+    }
+    return { data, W, H, cellOf, colourOf };
+  }
+  constructor(private T: HologramTuning, made: HologramGlyphs = runSync(SigilHolograms.glyphs())) {
+    const { data, W, H } = made;
+    this.cellOf = made.cellOf; this.colourOf = made.colourOf;
     const atlas = new THREE.DataTexture(data, W, H, THREE.RedFormat);
     atlas.magFilter = atlas.minFilter = THREE.NearestFilter; atlas.needsUpdate = true;
     this.atlasUniform = { value: atlas };
@@ -191,6 +201,9 @@ export class SigilHolograms {
     this.glyphs = mk(GLYPH_VERT, GLYPH_FRAG, this.look, { uAtlas: this.atlasUniform, uAtlasSize: { value: new THREE.Vector2(W, H) } });
     this.group.add(this.cones, this.glyphs);
   }
+
+  /** Another night (View.setGame): the last one's projectors forgotten (their sigils' atlas, by species, stays). */
+  reset(): void { this.seen.clear(); for (const geo of this.geos) geo.instanceCount = 0; }
 
   /** A frame: the standing soundsystems' projectors, the game time, and where she is (they fade out far from her). */
   update(projectors: readonly Projector[], time: number, wx: number, wz: number): void {

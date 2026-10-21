@@ -143,6 +143,16 @@ export class InviteView {
     this.hers = this.bubble(-1);
   }
 
+  /** Another night's game (View.setGame): every letter, ring, bubble, pop and resting 💌 of the last one gone, as at the start. */
+  setGame(game: Game): void {
+    this.game = game;
+    this.root.replaceChildren();
+    this.letters = []; this.lanterns = []; this.ringModel = new RingModel(); this.rings.clear(); this.falling = []; this.hearts = [];
+    this.replies.clear(); this.lastHers = -Infinity; this.pops = []; this.crumples = []; this.lastTime = -1; this.resting = [];
+    this.spins.clear(); this.restImgs = []; this.seen.clear();
+    this.hers = this.bubble(-1);
+  }
+
   private bubble(id: number): Bubble {
     const { el, img } = speechBubble(this.root);
     el.style.zIndex = "2";

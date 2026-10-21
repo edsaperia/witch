@@ -59,4 +59,7 @@ export class MapTable {
     this.mat.map = null; this.mat.needsUpdate = true;
     this.mesh.visible = false;
   }
+
+  /** Let go of all of it: the miniature (drop) and the disc's geometry and material. */
+  dispose(): void { this.drop(); this.mesh.geometry.dispose(); this.mat.dispose(); }
 }

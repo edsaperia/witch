@@ -5,6 +5,7 @@
 // tarmac, railways old track, with gaps where the line is broken. Dead ends taper away, and every
 // end of a drawn stretch frays out in a dithered fade (Ed, v149).
 import * as THREE from "three";
+import { freeObjects } from "./free";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import { floorClearing } from "../rules/speakers";
@@ -12,6 +13,7 @@ import { AREA_TYPES } from "../rules/map";
 import { hash2 } from "../rules/random";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { runSync, type Steps } from "./slices";
 import type { Style } from "./style";
 
 type Kind = { width: number; period: number };
@@ -105,10 +107,16 @@ void main() {
 }
 `;
 
+/** A map's paths worked out ahead of their meshes (PathView.prep): each strip texture's quads (by kind and variant), the railway
+ *  points' patches and each strip's texture, baked. */
+export interface PathPrep { quads: Map<string, { pos: number[]; uv: number[]; c: number[] }>; junctions: { pos: number[]; x: number; z: number; canvas: HTMLCanvasElement }[]; strips: Map<string, HTMLCanvasElement> }
+
 export class PathView {
   readonly group = new THREE.Group();
 
-  constructor(map: ForestMap, style: Style, mpp: number, fade = 6) {
+  /** What a map's paths are drawn from, worked out a step at a time (render/slices.ts, View.build's paths): each strip texture's
+   *  quads, and the bakes (the railway points' patches, each strip's texture), in the order they were always made. */
+  static *prep(map: ForestMap, style: Style): Steps<PathPrep> {
     const net = map.paths, seed = map.seed;
     const byArea = Art.areaPathKinds() as unknown as Record<string, string[]>;
     // A path's kind: one of the kinds the area it starts in suits, seeded per area, for its whole
@@ -126,7 +134,9 @@ export class PathView {
     };
     // One geometry per strip texture (kind and variant).
     const quads = new Map<string, { pos: number[]; uv: number[]; c: number[] }>();
-    net.lines.forEach((l, li) => {
+    for (let li = 0; li < net.lines.length; li++) {
+      if (li % 16 === 0) yield;
+      const l = net.lines[li];
       const variant = l.kind === "rail" ? Math.floor(hash2(li, 1, seed + 835) * 3) : 0;
       const lineKind = l.kind === "path" ? pathKind(l.area ?? map.areaAt(l.pts[0][0], l.pts[0][1])) : "dirt";
       const pts = l.pts, n = pts.length;
@@ -168,18 +178,34 @@ export class PathView {
         corner(i, -1); corner(i, 1); corner(i + 1, 1);
         corner(i, -1); corner(i + 1, 1); corner(i + 1, -1);
       }
-    });
-    const colours = Art.pathColours(style);
-    // The points where a branch line leaves a railway: the art's ground patch (a straight track
-    // and one curving off it), laid along the main line, curving to the branch's side.
+    }
+    const colours = Art.pathColours(style), junctions: PathPrep["junctions"] = [], strips = new Map<string, HTMLCanvasElement>();
     for (const j of net.junctions) {
+      yield;
       const sp = Art.railPoints({ variant: Math.floor(hash2(j.line, 1, seed + 835) * 3) }) as { w: number; h: number }, ppm = Art.PATH_PPM as number;
       const W = sp.w / ppm, H = sp.h / ppm, o = KINDS.railway.width / 2; // the straight's start and centreline, metres into the patch
       const nx = j.side > 0 ? -j.dz : j.dz, nz = j.side > 0 ? j.dx : -j.dx;
       const at = (u: number, v: number) => [j.x + j.dx * (u - o) + nx * (v - o), 0.03, j.z + j.dz * (u - o) + nz * (v - o)];
       const pos = [at(0, 0), at(W, 0), at(W, H), at(0, 0), at(W, H), at(0, H)].flat();
+      junctions.push({ pos, x: j.x, z: j.z, canvas: (Art.bake(sp, colours, style, "none") as { A: HTMLCanvasElement }).A });
+    }
+    for (const key of quads.keys()) {
+      const [kind, variant] = key.split(":");
+      if (kind === "stream") continue;
+      yield;
+      strips.set(key, (Art.bake(Art.pathTextures(kind, { variant: +variant }).strip, colours, style, "none") as { A: HTMLCanvasElement }).A);
+    }
+    return { quads, junctions, strips };
+  }
+
+  constructor(map: ForestMap, style: Style, mpp: number, fade = 6, made: PathPrep = runSync(PathView.prep(map, style))) {
+    const { quads, junctions, strips } = made;
+    // The points where a branch line leaves a railway: the art's ground patch (a straight track
+    // and one curving off it), laid along the main line, curving to the branch's side.
+    for (const j of junctions) {
+      const pos = j.pos;
       const uv = [0, 0, 1e3, 1, 0, 1e3, 1, 1, 1e3, 0, 0, 1e3, 1, 1, 1e3, 0, 1, 1e3];
-      const t = new THREE.CanvasTexture((Art.bake(sp, colours, style, "none") as { A: HTMLCanvasElement }).A);
+      const t = new THREE.CanvasTexture(j.canvas);
       t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false; t.colorSpace = THREE.NoColorSpace;
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
@@ -190,7 +216,7 @@ export class PathView {
       this.group.add(mesh);
     }
     for (const [key, q] of quads) {
-      const [kind, variant] = key.split(":");
+      const [kind] = key.split(":");
       const g = new THREE.BufferGeometry();
       g.setAttribute("position", new THREE.Float32BufferAttribute(q.pos, 3));
       g.setAttribute("uvw", new THREE.Float32BufferAttribute(q.uv, 3));
@@ -202,9 +228,7 @@ export class PathView {
         this.group.add(mesh);
         continue;
       }
-      const tex = Art.pathTextures(kind, { variant: +variant }).strip;
-      const baked = Art.bake(tex, colours, style, "none") as { A: HTMLCanvasElement };
-      const t = new THREE.CanvasTexture(baked.A);
+      const t = new THREE.CanvasTexture(strips.get(key)!);
       t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false;
       t.wrapT = THREE.RepeatWrapping; t.colorSpace = THREE.NoColorSpace;
       const m = new THREE.ShaderMaterial({
@@ -217,5 +241,11 @@ export class PathView {
       mesh.renderOrder = 0.5;     // on the floor, under the contact shadows
       this.group.add(mesh);
     }
+  }
+
+  /** Let go of its meshes' geometries and materials and the strips' textures. */
+  dispose(): void {
+    for (const o of this.group.children) ((o as THREE.Mesh).material as THREE.ShaderMaterial).uniforms.uStrip?.value?.dispose();
+    freeObjects([this.group]);
   }
 }

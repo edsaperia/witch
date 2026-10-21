@@ -1,0 +1,1 @@
+{ "version": 4030, "items": ["The start of a night no longer freezes for seconds on its first frame, and sailing to a new night doesn't compile the game's shaders all over again"] }

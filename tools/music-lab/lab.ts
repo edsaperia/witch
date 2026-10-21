@@ -5,6 +5,7 @@
 // tools/music-lab/build.mjs; window.musicLabCheck() renders every section offline (tools/music-lab/check.mjs).
 import styleJson from "../../config/music-style.json";
 import { Music } from "../../src/platform/audio/music";
+import { Sfx } from "../../src/platform/audio/sfx";
 import { MusicEngine } from "../../src/platform/audio/musicEngine";
 import { mixAt, nearness } from "../../src/rules/music";
 import { beatAt, bpmAt, knockdownTempo, newBeatClock, rampTo, timeAt, waveArrived, waveTempo, type BeatClock } from "../../src/rules/beat";
@@ -275,40 +276,61 @@ async function musicLabCheck(bars = 2): Promise<{ ok: boolean; errors: string[];
 
 /** A sail between islands without reloading the page (docs/plans/sail-without-reload.md, C5), driven frame by frame as the game
  *  drives the music (Music.update at 30 frames a second, the offline context suspended at each): `aSec` of night A at wave 2
- *  from game time 300, `gapSec` with nothing scheduled (the sail; its sea and flight cue comes with a later change), then night B
- *  from game time 0 booting up: the engine's timeline anchored afresh (`fresh`: newTimeline), its seed and style changed (as
- *  app/sound.ts setNight and the next frame's style do). Gives the level and peak of each stretch, and how far each of B's
- *  sixteenths was scheduled from when its game time comes (ms; + late, - early), by B's game time. */
-async function musicLabSail(fresh = true, aSec = 12, gapSec = 3, bSec = 14): Promise<{ a: { rms: number; peak: number }; gapEnd: { rms: number; peak: number }; b: { rms: number; peak: number }; whole: { rms: number; peak: number }; offsets: { game: number; ms: number }[] }> {
+ *  from game time 300, then the sail (app/sound.ts sailing): A's music faded out over the tuning's sfx.sail.fade and the sea and
+ *  wind cue faded in (places.ts Sailing, through the game's own Sfx), `gapSec` of it: nothing given to the music while the island
+ *  is made, then its last 1.5 s the new night's flight in, its clock held (the engine's timeline anchored afresh, `fresh`:
+ *  newTimeline, and its seed and style changed, as app/sound.ts setNight and the next frame's style do); then night B from game
+ *  time 0 booting up as the cue fades. The music and the cue are rendered apart (channels 0-1 and
+ *  2-3). Gives the level and peak of each stretch (the music's, the cue's, both), the quietest half second of the gap, and how
+ *  far each of B's sixteenths was scheduled from when its game time comes (ms; + late, - early), by B's game time. */
+async function musicLabSail(fresh = true, aSec = 12, gapSec = 5, bSec = 14) {
   const rate = 22050, fps = 30, total = aSec + gapSec + bSec, M = TUNING.music;
-  const oc = new OfflineAudioContext(2, Math.ceil(rate * total), rate);
+  const oc = new OfflineAudioContext(4, Math.ceil(rate * total), rate);
+  // the music on channels 0-1 (a stereo source up-mixed to four speakers leaves the back two silent), the cue on 2-3
   const m = new Music(oc, 1, style, 7), e = m.engine!, mix = mixAt(M, 1, 0, 0);
+  const split = oc.createChannelSplitter(2), merge = oc.createChannelMerger(4);
+  split.connect(merge, 0, 2); split.connect(merge, 1, 3); merge.connect(oc.destination);
+  const sfx = new Sfx(oc, 0.5, TUNING.sfx, style.root + 24, split);
   // night A: two waves in, its tempo wave 2's; night B: the home speakers booting, one turning every half bar
   const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t: number) => barAt(clockA, t);
   const cueA: MusicCue = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
   const styleB: MusicStyle = { ...style, arc: [...style.arc.slice(1), style.arc[0]] };
   const clockB = newBeatClock(style.bpm, waveTempo(beatTuning(), 0)), barB = (t: number) => barAt(clockB, t);
   const cueB: MusicCue = { waves: [], nextAt: barB(90), bootUntil: barB(30), knockedOut: false, siege: 0, speakers: 12, speakerBars: Array.from({ length: 12 }, (_, i) => i * 0.5) };
-  let night: "a" | "gap" | "b" = "a", bStart = NaN, gameA = 300;
-  const steps: { s: number; t: number }[] = [];
+  let night: "a" | "gap" | "fly" | "b" = "a", bStart = NaN, gameA = 300;
+  const steps: { s: number; t: number }[] = [], flySec = 1.5;
   const E = e as unknown as { step: (cue: MusicCue, s: number, t: number, sps: number) => void }, inner = E.step.bind(e);
   E.step = (c, s, t, sps) => { if (night === "b") steps.push({ s, t }); inner(c, s, t, sps); };
   const frame = () => {
     const now = oc.currentTime;
     if (now < aSec) { gameA = 300 + now; m.update(mix, cueA, gameA, clockA, true, M); return; }
-    if (now < aSec + gapSec) { night = "gap"; m.update(mix, cueA, gameA, clockA, false, M); return; }
-    if (night !== "b") { night = "b"; bStart = now; if (fresh) e.newTimeline(); e.seed = 99; e.setStyle(styleB); }
+    if (now < aSec + gapSec - flySec) { if (night === "a") { night = "gap"; m.fadeOut(TUNING.sfx.sail?.fade ?? 1.5); } sfx.sailing(1); return; } // (the engine given nothing: main.ts holds the loop)
+    // B made (setNight: the timeline afresh, its seed, its style on the next frame), its flight in with its clock still held
+    if (night === "gap") { night = "fly"; if (fresh) e.newTimeline(); e.seed = 99; e.setStyle(styleB); }
+    if (now < aSec + gapSec) { sfx.sailing(1); m.update(mix, cueB, 0, clockB, false, M); return; }
+    if (night !== "b") { night = "b"; bStart = now; }
+    sfx.sailing(0); // (landed: the cue fading as B starts)
     m.update(mix, cueB, now - bStart, clockB, true, M);
   };
   for (let i = 1; i < total * fps; i++) void oc.suspend(i / fps).then(() => { frame(); return oc.resume(); });
   const buf = await oc.startRendering();
-  const stretch = (from: number, to: number) => {
+  const ch = [0, 1, 2, 3].map(c => buf.getChannelData(c));
+  /** rms and peak over [from, to) seconds of `which`: the music, the cue, or both as the speakers sum them. */
+  const stretch = (from: number, to: number, which: "music" | "cue" | "both" = "music") => {
     let sum = 0, peak = 0, n = 0;
-    for (let ch = 0; ch < buf.numberOfChannels; ch++) { const d = buf.getChannelData(ch); for (let i = Math.floor(from * rate); i < Math.min(d.length, Math.floor(to * rate)); i++) { const v = d[i]; sum += v * v; n++; if (!(Math.abs(v) <= peak)) peak = Math.abs(v); } }
+    for (let i = Math.floor(from * rate); i < Math.min(ch[0].length, Math.floor(to * rate)); i++) for (const side of [0, 1]) {
+      const v = which === "music" ? ch[side][i] : which === "cue" ? ch[side + 2][i] : ch[side][i] + ch[side + 2][i];
+      sum += v * v; n++; if (!(Math.abs(v) <= peak)) peak = Math.abs(v);
+    }
     return { rms: Math.sqrt(sum / Math.max(1, n)), peak };
   };
+  let gapMin = Infinity;
+  for (let t = aSec; t + 0.5 <= aSec + gapSec + 1e-9; t += 0.25) gapMin = Math.min(gapMin, stretch(t, t + 0.5, "both").rms);
   const offsets = steps.map(({ s, t }) => { const g = timeAt(clockB, s / 4); return { game: g, ms: (t - (bStart + g)) * 1000 }; });
-  return { a: stretch(1, aSec), gapEnd: stretch(aSec + gapSec - 0.5, aSec + gapSec), b: stretch(aSec + gapSec + 2, total), whole: stretch(0, total), offsets };
+  return {
+    a: stretch(1, aSec), gapEnd: stretch(aSec + gapSec - 0.5, aSec + gapSec), cueGap: stretch(aSec + 1, aSec + gapSec, "cue"), gapMin,
+    b: stretch(aSec + gapSec + 2, total), cueEnd: stretch(total - 3, total, "cue"), whole: stretch(0, total, "both"), offsets,
+  };
 }
 (window as unknown as { musicLabSail: typeof musicLabSail }).musicLabSail = musicLabSail;
 

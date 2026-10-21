@@ -20,9 +20,13 @@ import type { OutputMeter } from "../platform/audio/outputMeter";
 import type { Hud } from "./hud";
 import type { Sound } from "./sound";
 import type { ScreenShake } from "./shake";
+import { sliceLog } from "../render/slices";
+
+/** What the hooks read of the night: the one on now (app/night.ts page.night), read at every use, so a new night is the one driven. */
+export interface HookNight { game: Game; tuning: Tuning; hud: Hud }
 
 export interface HookDeps {
-  game: Game; view: View; tuning: Tuning; hud: Hud; sound: Sound; meter: OutputMeter; shake: ScreenShake;
+  night: () => HookNight; view: View; sound: Sound; meter: OutputMeter; shake: ScreenShake;
   /** The frames' own stats (the overlay's fps, cpu and gpu lines), for the probes. */
   frameStats: FrameStats;
   loadTimes: Record<string, number>;
@@ -30,16 +34,17 @@ export interface HookDeps {
   loop: { manual: boolean; readonly bot: Bot | null; readonly botTag: BotTag | null; readonly ready: boolean };
 }
 
-export function installHooks({ game, view, tuning, hud, sound, meter, shake, frameStats, loadTimes, loop }: HookDeps): void {
+export function installHooks({ night, view, sound, meter, shake, frameStats, loadTimes, loop }: HookDeps): void {
   let soundCue: MusicCue | undefined; // (the audit's own: the loop keeps its own cue)
   const applyShake = () => shake.apply();
-  (window as unknown as { witch: unknown }).witch = { game, view, tuning, frameStats, sound, arena: (spec: string) => setupArena(game, spec), // (a debug hook: another arena without reloading)
+  (window as unknown as { witch: unknown }).witch = { get game() { return night().game; }, view, get tuning() { return night().tuning; }, frameStats, sound, slices: sliceLog, // (the sliced builds' longest steps: render/slices.ts, tools/view/build-budget.cjs)
+    arena: (spec: string) => setupArena(night().game, spec), // (a debug hook: another arena without reloading)
     /** A debug hook (screenshots of the party's life): creature `id` joins its area's party, happy, at its spot (rules/partyGuests.ts); home's round the dancefloor. */
-    guest: (id: number) => { const c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
+    guest: (id: number) => { const { game } = night(), c = game.creatures[id], a = game.party.areas.get(cellKey(c.cell)); if (!c || !a) return false; c.state = "happy"; c.enraged = false; c.siege = undefined; joinParty(game, c, a.soundsystem ?? game.map.dancefloor, a.cell); return true; },
     /** A debug hook: lose a soundsystem now (its key, "home" the dancefloor's whole ring, "home:<i>" one speaker), as if destroyed. */
-    lose: (key = "home") => { const s = game.combat.sounds.get(key); if (s) s.hp = 0; if (key === "home") for (const [k, h] of game.combat.sounds) if (isHomeKey(k)) h.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
+    lose: (key = "home") => { const { game, hud } = night(), s = game.combat.sounds.get(key); if (s) s.hp = 0; if (key === "home") for (const [k, h] of game.combat.sounds) if (isHomeKey(k)) h.hp = 0; loseSoundsystem(game, key, s?.x ?? 0, s?.z ?? 0); const e = game.waveEvents[game.waveEvents.length - 1]; if (e?.kind === "soundsystemLost") hud.showLoss(e); return e; },
     /** A debug hook (the dropped hat's previews): a hit on her now, as a creature's would be (her last one knocks her out). */
-    hit: () => { hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
+    hit: () => { const { game } = night(); hitWitch(game, 0, game.clock.time); return !!game.witches[0].ko; },
     get manual() { return loop.manual; }, set manual(on: boolean) { loop.manual = on; },
     /** The bot game's bot and its tag (rules/bot.ts, ui/botGame.ts), null in a game of her own: tools drive it a frame at a time. */
     get bot() { return loop.bot; }, get botTag() { return loop.botTag; },
@@ -47,13 +52,13 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, fra
     get audio() { return { ctx: sound.audio, music: sound.music, sfx: sound.sfx, cues: sound.sfxCues, mends: sound.watchdog?.mends ?? [], meter }; },
     /** A debug hook (tools/sfx/audit.cjs): the sound's own work for one frame as the real loop does it (the music's cue,
      *  the mix, the music and the cues), for a tool driving the rules a frame at a time (manual) with no picture. */
-    soundFrame: () => { soundCue = musicCue(game, soundCue); sound.update(game, soundCue, false); },
+    soundFrame: () => { const { game } = night(); soundCue = musicCue(game, soundCue); sound.update(game, soundCue, false); },
     /** A debug hook for frame feel (tools/feel/trace.cjs): one frame as the real loop runs it (the
      *  fixed steps, the render eased between the last two, the camera's sub-pixel glide), then where
      *  things landed on screen, in screen pixels as drawn (the art-pixel snap and the canvas's shift):
      *  the witch, ground points (probes, metres) and creatures (ids). */
     frameLive: (c: Parameters<typeof stepGame>[1], dt: number, probes: { x: number; z: number }[] = [], ids: number[] = []) => {
-      const t0 = game.clock.time;
+      const { game, tuning } = night(), t0 = game.clock.time;
       stepGame(game, c, dt);
       const steps = Math.round((game.clock.time - t0) / STEP), alpha = game.alpha, P = tuning.pixelSize;
       const v = new Vector3(), ndc = (x: number, y: number, z: number) => { placed(v.set(x, y, z)).project(view.camera); return v; };
@@ -70,5 +75,5 @@ export function installHooks({ game, view, tuning, hud, sound, meter, shake, fra
       const add = (q: number[] | null) => (q ? [q[0] + gx, q[1] + gy] : null);
       return { steps, alpha, gx, gy, time: game.clock.time, witch: add(at.witch), witchWorld: at.witchWorld, probes: at.probes.map(add), creatures: at.creatures.map(add) };
     },
-    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(game), coastFacing: (bearing: number) => (game.map.bounds.land ? coastFacing(game.map.bounds.land, bearing, 0.15) : null), areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
+    frame: (c: Parameters<typeof stepGame>[1], dt: number, draw = true) => { const { game } = night(), t0 = performance.now(); stepGame(game, c, dt); const t1 = performance.now(); view.render(game.clock.time, draw); applyShake(); return { step: t1 - t0, render: performance.now() - t1, ms: view.ms }; }, areaUnderWitch: () => areaUnderWitch(night().game), coastFacing: (bearing: number) => { const { game } = night(); return game.map.bounds.land ? coastFacing(game.map.bounds.land, bearing, 0.15) : null; }, areaTypeId: (i: number) => AREA_TYPES[i].id, lightUniforms: LIGHT_UNIFORMS, spriteUp: () => SPRITE_UNIFORMS.uUp.value, spriteRight: () => SPRITE_UNIFORMS.uRight.value, groundHeight, loadTimes, get ready() { return loop.ready; } };
 }

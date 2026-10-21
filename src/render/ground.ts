@@ -19,6 +19,9 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
+import { later, runSync, settle, type Later, type Steps } from "./slices";
+import { discoDrawn, pixelCanvas, type DiscoDrawn } from "./islandArt";
+import type { ArtJob, ArtResult } from "./artBuild";
 
 /** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
 const BEACH_POOL = 2.2;
@@ -540,7 +543,7 @@ export class Ground {
   private carveSlots: (string | null)[] = new Array(6).fill(null);
 
   /** maxTexture: the GPU's largest texture side (renderer.capabilities.maxTextureSize), held to AREA_TEXTURE_MAX. */
-  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = AREA_TEXTURE_MAX) {
+  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = AREA_TEXTURE_MAX, made: DiscoArt = runSync(discoArt(st, map.dancefloor.radius)).art) {
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
     const tpm = (this.tpm = areaTexelsPerMetre(Math.max(w, d), Math.min(maxTexture, AREA_TEXTURE_MAX)));
     const W = Math.ceil((w * tpm) / TILE) * TILE, H = Math.ceil((d * tpm) / TILE) * TILE;
@@ -553,7 +556,7 @@ export class Ground {
     this.texture.source.dataReady = false;
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
-    const disco = discoLooks(st, map.dancefloor.radius);
+    const disco = discoLooks(made);
     const mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: {
@@ -697,6 +700,12 @@ export class Ground {
 
   /** Fill the area tiles over a rectangle of ground, nearest (x, z) first, for up to `budgetMs`.
    *  Returns how many there are still missing. */
+  /** The dancefloor's pictures in its textures (drawn by an art worker while the build went on: discoSettle), before it's drawn. */
+  setDisco(base: HTMLCanvasElement, lit: HTMLCanvasElement): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
+    for (const [t, c] of [[u.uDiscoBase.value, base], [u.uDiscoLit.value, lit]] as [THREE.CanvasTexture, HTMLCanvasElement][]) { t.image = c; t.needsUpdate = true; }
+  }
+
   fill(renderer: THREE.WebGLRenderer, rect: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number, budgetMs: number): number {
     if (!this.initialised) { renderer.initTexture(this.texture); renderer.initTexture(this.floors); this.initialised = true; }
     if (this.pendingFloors.length) this.placeFloors(renderer);
@@ -736,7 +745,14 @@ export class Ground {
     this.filled[j * this.tilesX + i] = 1;
   }
 
-  dispose(): void { this.texture.dispose(); this.landTex?.dispose(); this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  /** Let go of all of it: the area texture, the land's, the floors, the carvings, the dancefloor's looks and tiles and the lakes'
+   *  map (the height field's texture is the HeightField's own, left alone). */
+  dispose(): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
+    for (const k of ["uDiscoBase", "uDiscoLit", "uLakes"]) (u[k]?.value as THREE.Texture | null)?.dispose();
+    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.discoTiles.dispose();
+    this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose();
+  }
 }
 
 /** The plaza round the floor (tuning dancefloor.paving), in the rim's stone (art/dancefloor.js DISCO_LOOK). */
@@ -752,16 +768,40 @@ function paving(map: ForestMap, disco: { tileM: number; pitch: number; rimOuter:
 
 // The dancefloor's looks from the art (art/dancefloor.js): the unlit floor with its rim, and the lit
 // tile at its three intensities, white for the shader to tint; the tile grid sized to the floor's radius.
-function discoLooks(st: Style, radius: number) {
+function discoLooks(art: DiscoArt) {
   const tex = (c: HTMLCanvasElement) => { const t = new THREE.CanvasTexture(c); t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.flipY = false; t.colorSpace = THREE.NoColorSpace; return t; };
-  const fb = Art.discoFloorBase() as { sp: unknown; size: number; pitch: number; gridOrigin: number; rimOuter: number };
-  const base = (Art.bake(fb.sp, { ...Art.discoColours(3), ...Art.discoRimColours() }, st, "none") as { A: HTMLCanvasElement }).A;
-  const lit = document.createElement("canvas");
-  lit.width = 42; lit.height = 14;
-  const g = lit.getContext("2d")!;
-  for (let k = 1; k <= 3; k++) g.drawImage((Art.bake(Art.discoTileSprite("lit", { level: k }), Art.discoColours(k), st, "none") as { A: HTMLCanvasElement }).A, (k - 1) * 14, 0);
-  return { base: tex(base), lit: tex(lit), tileM: radius / (Art.DISCO_RADIUS as number), pitch: fb.pitch, size: fb.size, gridOrigin: fb.gridOrigin, rimOuter: fb.rimOuter };
+  return { base: tex(art.base), lit: tex(art.lit), tileM: art.tileM, pitch: art.pitch, size: art.size, gridOrigin: art.gridOrigin, rimOuter: art.rimOuter };
 }
+
+/** The dancefloor's looks drawn (discoLooks), for a Ground. */
+export interface DiscoArt { base: HTMLCanvasElement; lit: HTMLCanvasElement; tileM: number; pitch: number; size: number; gridOrigin: number; rimOuter: number }
+
+/** The dancefloor's looks, by style (the same on every island: the page's, a later island's ground takes them as they are). */
+const DISCO = new WeakMap<Style, DiscoDrawn>();
+/** The art job for them. */
+export const discoJob = (st: Style): ArtJob => ({ kind: "disco", id: "floor", style: st });
+
+/** The dancefloor's looks for a Ground (discoArt): their grid now; their pictures now if they're kept or drawn here, else (sliced)
+ *  drawn by an art worker while the build goes on, put in by the build's last step (`later`: Ground.setDisco). */
+export function* discoArt(st: Style, radius: number, art?: (job: ArtJob) => Promise<ArtResult>): Steps<{ art: DiscoArt; later: Later<DiscoDrawn> | null }> {
+  yield "disco";
+  const kept = DISCO.get(st);
+  if (kept) return { art: discoOf(kept, radius), later: null };
+  const l = yield* later<DiscoDrawn>(
+    () => art ? art(discoJob(st)).then(r => ({ ...r.disco!, base: pixelCanvas(r.disco!.base), lit: pixelCanvas(r.disco!.lit) })) : Promise.reject(new Error("here")),
+    () => discoDrawn(st));
+  if (l.got) { DISCO.set(st, l.value!); return { art: discoOf(l.value!, radius), later: null }; }
+  // (meanwhile: blank pictures in the textures the drawn ones go into; nothing's drawn before they're in)
+  const fb = Art.discoFloorBase() as { size: number; pitch: number; gridOrigin: number; rimOuter: number }, blank = () => { const c = document.createElement("canvas"); c.width = c.height = 1; return c; };
+  return { art: discoOf({ base: blank(), lit: blank(), pitch: fb.pitch, size: fb.size, gridOrigin: fb.gridOrigin, rimOuter: fb.rimOuter, radius: Art.DISCO_RADIUS as number }, radius), later: l };
+}
+/** The worker's drawing in its place (discoArt's `later`), kept for the page. */
+export function* discoSettle(st: Style, ground: Ground, l: Later<DiscoDrawn>): Steps {
+  const d = yield* settle(l);
+  DISCO.set(st, d);
+  ground.setDisco(d.base as HTMLCanvasElement, d.lit as HTMLCanvasElement);
+}
+const discoOf = (d: DiscoDrawn, radius: number): DiscoArt => ({ base: d.base as HTMLCanvasElement, lit: d.lit as HTMLCanvasElement, tileM: radius / d.radius, pitch: d.pitch, size: d.size, gridOrigin: d.gridOrigin, rimOuter: d.rimOuter });
 
 /** The lakes' map (rules/lakes.ts) for the ground shader: how far into a lake, as a half-float texture eased between its samples;
  *  and their koi. */

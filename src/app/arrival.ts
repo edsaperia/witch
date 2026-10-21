@@ -30,3 +30,6 @@ export function readArrival(island: string, store: Store | null = session(), now
   if (!a || a.v !== 1 || a.island !== island || !(now - a.at >= 0 && now - a.at < ARRIVE_FRESH) || !a.cam) return null;
   return a;
 }
+
+/** Forget the flight's end kept for a page about to load (a sail in place took it in memory: a reload later doesn't fly again). */
+export function forgetArrival(store: Store | null = session()): void { try { store?.removeItem(ARRIVE_KEY); } catch { /* storage blocked */ } }

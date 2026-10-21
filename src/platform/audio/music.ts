@@ -66,6 +66,7 @@ export class Music {
    *  `over`: the party's-over ease (0 to 1), winding it down. */
   update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1, over = 0): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
+    if (now < this.fadeEnd) on = false; // (fading out for a sail: silent till it's done)
     // The party's over (Ed, 2026-10-06: "the dance music stops"): over the first `over.stop` of the ease the music winds down
     // like a tape stopping, its tempo and pitch falling together to nothing; its sound goes over the last of that; then nothing.
     const stop = over > 0 ? Math.min(1, over / Math.max(0.05, M?.over?.stop ?? 0.6)) : 0;
@@ -101,6 +102,15 @@ export class Music {
 
   /** The engine's continuity (tools/music-lab/flight.cjs). */
   get stats() { return this.engine?.stats ?? { resyncs: 0, late: 0, gap: 0, ahead: 0 }; }
+
+  /** Faded out over `sec` seconds from now (a sail in place: the old night's music going as the sea comes in; app/sound.ts sailing),
+   *  scheduling nothing meanwhile if it's updated; after that, the next update brings it back as its mix says. */
+  fadeOut(sec: number): void {
+    const now = this.ctx.currentTime;
+    for (const g of [this.master.gain, this.circleGain.gain]) { g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(0, now + sec); }
+    this.fadeEnd = now + sec;
+  }
+  private fadeEnd = -1;
 
   /** What reaches the speakers (the audio watchdog and the output meter tap it). */
   get output(): AudioNode { return this.master; }

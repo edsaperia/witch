@@ -24,7 +24,7 @@ export class Freeze {
   quiet = false;
   onStamp: (text: string) => void = () => {};
 
-  constructor(private readonly game: Game, private readonly seed: number, private readonly build: string) {
+  constructor(private game: Game, private seed: number, private readonly build: string) {
     const panel = { position: "fixed", zIndex: "6", background: "rgba(14,11,28,.72)", color: "#e8e2f4", font: "12px ui-monospace, Menlo, Consolas, monospace", borderRadius: "6px", pointerEvents: "none" };
     Object.assign(this.marker.style, panel, { top: "10px", left: "50%", transform: "translateX(-50%)", padding: "4px 12px", fontSize: "16px", display: "none" });
     this.marker.textContent = "❚❚ paused · Esc resumes · . steps (Shift+. ten)";
@@ -40,6 +40,9 @@ export class Freeze {
       else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopPropagation(); this.step(e.shiftKey ? 10 : 1); }
     }, { capture: true });
   }
+
+  /** A new night on the same page (app/night.ts): its game and seed from here on. */
+  retarget(game: Game, seed: number): void { this.game = game; this.seed = seed; }
 
   toggle(): void {
     if (!this.frozen && !this.started()) return;

@@ -45,7 +45,7 @@ The aim is to keep the page and swap only what belongs to the island: the night'
 - The music fades to a quiet sea and flight cue, then the new night's start.
 - The new way is on as soon as the tests pass.
 - Every pause-page slider carries to the next island, game knobs included.
-- Only this island's art is kept in memory.
+- Only this island's own art (its trees, treehouse and soundsystems) is kept in memory; the creatures' art stays for the whole page.
 - chart.html stays, as a link that opens the game on the chart.
 
 The detail follows.
@@ -292,7 +292,7 @@ function endNight(page: Page): void;                                     // reco
    - add the new island root, remove the old one;
    - `useHeightField(new)`.
 5. **Dispose** the old island root (every GPU resource listed in A2). This is the step after the new materials have compiled.
-   - Then evict the old island's art from memory: its type art, type and trunk-shadow batches, treehouse and soundsystem sets (decision 6: this island only).
+   - Then evict the old island's art from memory: its type art, type and trunk-shadow batches, treehouse and soundsystem sets (decision 6: this island only; the creature species' art stays page-wide).
    - Revisiting an island redraws them. The IndexedDB art cache keeps that quick.
 6. **Sound** (decision 3: no crossfade from the old night):
    - **At the sail** (`endNight`): the old night's music fades out over about 1.5 s, and a quiet sea and flight cue fades in. That cue is the `Sea` bed (`platform/audio/places.ts`) with a soft wind, played by a new `sound.sailing(level)`.
@@ -342,7 +342,7 @@ function endNight(page: Page): void;                                     // reco
      - live workers (CDP target count);
      - AudioNode count (a counting wrapper under `?debug=sail`).
    - **Pass:**
-     - from sail 2 on, programs, listeners, workers and DOM are **equal** after every sail. Textures and geometries are equal at each return to the same island, since only this island's art is kept (decision 6);
+     - from sail 2 on, programs, listeners, workers and DOM are **equal** after every sail. Textures and geometries are equal at each return to the same island, since only this island's own art is kept (decision 6). The creature species' art stays page-wide (decision 6), so it grows over the first rounds of the islands by their species and then holds: the leak test's warm-up (`WARM`) is expected;
      - the heap stays within 5 % of sail 2.
    - It also asserts that the old game object is never stepped after the swap: `stepGame` throws on a game marked `disposed` under `?debug=sail`.
    - It runs in CI as a slow job from PR 5 on (about 10 minutes in the cloud).
@@ -361,6 +361,8 @@ function endNight(page: Page): void;                                     // reco
 ---
 
 ## D. PRs, in a safe order
+
+**Status (2026-10-20):** PRs 1, 2, 3, 4a, 4b, 5 and 6 are done: the sail in place is on by default (`sail.inPlace`), and Play again, a new forest, the bed, the bot game's exit and the cards' sea chart go in place too. PR 7 is still to come. (2026-10-21: Ed took Play again and A new forest off the party's-over card, "replace with the bed": the bed is the only way to a new night on the same island, and `NightWay` is `"bed" | "bot"`.)
 
 Each is shippable. Nothing a player sees changes until PR 5, which turns the new way on once its tests pass (decision 4).
 
@@ -449,7 +451,8 @@ Each is shippable. Nothing a player sees changes until PR 5, which turns the new
    - PR 5 turns `sail.inPlace` on. `?sail=reload` keeps the old way for comparison.
 5. **Every pause-page slider carries to the next island, game knobs included.**
    - `nightTuning` re-applies them on purpose to a pristine copy, rather than inheriting them by accident through the shared config (A3; PR 1; test C1).
-6. **Only this island's art is kept in memory.**
-   - After the swap, the old island's art is evicted (section B step 5; PR 4b).
+6. **Only this island's own art is kept in memory.**
+   - After the swap, the old island's own art (its area types and trees, treehouse and soundsystem sets) is evicted (section B step 5; PR 4b).
    - Sailing back redraws it from the IndexedDB art cache.
+   - The creature species' art stays page-wide, as it is now (Ed, 2026-10-20): it isn't evicted per island, so the leak test (C3) lets it warm up over the first rounds.
 7. **chart.html stays, as a link that opens the game on the chart** (PR 7).

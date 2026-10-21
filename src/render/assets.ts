@@ -27,10 +27,37 @@ export interface RigArt { atlas: Atlas; meta: RigMeta; used: number }
 /** How many rig pages (a species at a level each) are kept at once. */
 const RIG_PAGES = 48;
 
-type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean };
+type Reply = { job: ArtJob; result?: ArtResult; error?: string; ms?: number; cached?: boolean; /** Asked only if kept, and not kept. */ miss?: boolean };
+
+/** The art workers, started ahead of the View (prewarmArtWorkers), for its AssetLibrary to take: they load their code (most of a
+ *  second each, more in the cloud) while the page makes the night, not while the View's build waits for its first drawings. */
+let prewarmed: Worker[] = [];
+export function prewarmArtWorkers(): void {
+  if (prewarmed.length || typeof Worker === "undefined" || typeof OffscreenCanvas === "undefined") return;
+  const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
+  try { for (let i = 0; i < n; i++) prewarmed.push(new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" })); } catch { for (const w of prewarmed) w.terminate(); prewarmed = []; }
+}
+
+/** The sets drawn from one island (its map's trees under its seed, its treehouse, its soundsystems): let go when another island
+ *  takes the page (reseat). The rest are by species or the page's own, right on any island. */
+const ISLAND_KINDS = new Set<string>(["type", "treehouse", "soundsystem"]);
+/** A job, or a waiting job's key ("kind:id..."), of the island's own. */
+export const islandBound = (j: ArtJob | string): boolean => ISLAND_KINDS.has(typeof j === "string" ? j.slice(0, j.indexOf(":")) : j.kind);
+/** A job as asked: the art's generation it was asked in (reseat). */
+type Stamped = ArtJob & { gen?: number };
+
+/** The treehouse's stand-in till its art arrives. */
+const noTreehouse = () => ({ atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 }, candle0: 0, candleRed: 0, candleLevels: 0, candleFlicker: 1, candleRow: [] });
 
 export class AssetLibrary {
   private types = new Map<number, TypeArt>();
+  /** The night's own area-type sets (the night's seed), found kept (app/landingBake.ts drew them ahead), waiting to be swapped in
+   *  unseen (swapTonight); and whether that moment has passed (then none is taken). */
+  private tonightTypes = new Map<number, TypeArt>();
+  private tonightShut = false;
+  /** The seed the area types' trees are drawn under: the island's own (islandArtSeed, so a revisit finds them kept), or the
+   *  night's (the default; the view sets it). */
+  typeSeed: number;
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
@@ -58,7 +85,7 @@ export class AssetLibrary {
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[] }>;
   /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
   readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */
@@ -73,7 +100,7 @@ export class AssetLibrary {
     /** The DJ table's frames (2 on: the platters turning, the LEDs chasing), cropped to the box whose top-left is foreBox in the base's pixels. */
     foreFrames: number; foreBox: { x: number; y: number };
     /** The knockdown candles (Art.candleSprite: white then red from candleRed on, level × flicker, from frame candle0) and their row along the desk's front (its ends, in the base's pixels). */
-    candle0: number; candleRed: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] } = { atlas: placeholderAtlas(8), base: { x: 0, y: 1 }, seat: { x: 0, y: 0 }, camera: { x: 0, y: 0 }, hasFore: false, lights: [], foreFrames: 0, foreBox: { x: 0, y: 0 }, candle0: 0, candleRed: 0, candleLevels: 0, candleFlicker: 1, candleRow: [] };
+    candle0: number; candleRed: number; candleLevels: number; candleFlicker: number; candleRow: { x: number; y: number }[] } = noTreehouse();
   /** The start's own art (fast start (b)): which of it has arrived from the art workers. Play waits for it (prepare's whenIdle). */
   readonly home = { witch: false, props: false, soundsystems: false, treehouse: false };
   get homeReady(): boolean { const h = this.home; return h.witch && h.props && h.soundsystems && h.treehouse; }
@@ -99,8 +126,20 @@ export class AssetLibrary {
   /** The areas' rune stones' bake scale (tuning runeMarkers.scale; the view sets it): the dancefloor ring's stones are baked at it. */
   stoneScale = 2.25;
 
-  constructor(readonly style: Style, readonly seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home") {
+  /** The night's seed (its own trees, tonight); a new night's by reseat. */
+  seed: number;
+  /** Which treehouse is drawn (the old one, "home", or the Ent holding the deck: "ent:<height>:<radius>..."). */
+  private treehouseId: string;
+  /** The island the sets are for, by number: bumped by reseat, so an island's set asked before lands to nothing (receive). */
+  gen = 0;
+
+  /** `first`: one-off drawings asked ahead of everything else, the start's own art too (oneOff takes them: the island build's,
+   *  render/view.ts View.create). */
+  constructor(readonly style: Style, seed: number, pixelSize: number, witchGenome: unknown = null, treehouse = "home", first: ArtJob[] = []) {
+    this.seed = seed;
+    this.treehouseId = treehouse;
     this.K = 2 / pixelSize;
+    this.typeSeed = seed;
     this.styleHash = hashText(JSON.stringify(style));
     // Where her poses' frames will be, at once (a dry run: nothing drawn), and the stand-ins above; the art itself from the
     // workers, ahead of everything else (fast start (b): drawn on the page here it was most of the time before anything showed).
@@ -112,7 +151,7 @@ export class AssetLibrary {
       const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
       try {
         for (let i = 0; i < n; i++) {
-          const w = new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" });
+          const w = prewarmed.shift() ?? new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" }); // (one started ahead, if it was: prewarmArtWorkers)
           const slot: { w: Worker; busy: boolean; job?: ArtJob } = { w, busy: false };
           w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
           w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
@@ -124,44 +163,59 @@ export class AssetLibrary {
         }
       } catch { this.useWorkers = false; }
     }
-    this.ask({ kind: "treehouse", id: treehouse, style }, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
-    this.ask({ kind: "soundsystems", id: "home", style }, true);
-    this.ask({ kind: "props", id: "home", style }, true);
-    this.ask(this.witchJob(witchGenome, false), true);
+    // (the island build's one-offs first (they hold the View's build), then the start's own, `home`: ahead of every other ask, urgent
+    // or not, so her frames never wait behind the area types the first frame asks for; the first-load hunt, 2026-10-20: hers came
+    // last, 30 s in on the cloud, and play waited for them)
+    for (const job of first) this.early(job);
+    this.ask({ kind: "treehouse", id: treehouse, style }, true, true); // (the old treehouse, or the Ent holding the deck: "ent:<height>:<radius>")
+    this.ask(this.witchJob(witchGenome, false), true, true);
+    this.ask({ kind: "soundsystems", id: "home", style }, true, true);
+    this.ask({ kind: "props", id: "home", style }, true, true);
   }
 
-  private key = (j: ArtJob) => j.kind + ":" + j.id;
+  private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
   /** Where a set is kept between visits (render/artCache.ts). */
   private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
   /** Ask for a set: from the browser's store if it was drawn before, else drawn by a worker. An
    *  urgent ask (the view needs it now) goes ahead of the sets drawn ahead of need. */
   /** Waiting jobs already moved to the front of the queue by an urgent ask. */
   private promoted = new Set<string>();
-  private ask(job: ArtJob, urgent = false): void {
+  /** Urgent sets still to come (prepare waits for these, not the scenery and creatures asked ahead of need). */
+  private urgentKeys = new Set<string>();
+  /** Where an urgent job goes in the queue: after the start's own (`home`) still waiting, ahead of the rest. */
+  private get front(): number { const i = this.queue.findIndex(q => !(q as ArtJob & { home?: boolean }).home); return i < 0 ? this.queue.length : i; }
+  private ask(job: ArtJob, urgent = false, home = false): void {
     const k = this.key(job);
     if (this.inFlight.has(k)) {
       // (an urgent job asked for again while waiting is moved to the front once: asked for every creature every frame, searching
       // the queue each time cost creatures x queue while new art was baking)
       if (!urgent || this.promoted.has(k)) return;
-      this.promoted.add(k);
+      this.promoted.add(k); this.urgentKeys.add(k);
       const i = this.queue.findIndex(q => this.key(q) === k);
-      if (i > 0) this.queue.unshift(...this.queue.splice(i, 1));
+      if (i > this.front) { const [q] = this.queue.splice(i, 1); this.queue.splice(this.front, 0, q); }
       return;
     }
     this.inFlight.add(k);
+    if (urgent) this.urgentKeys.add(k);
+    if (home) (job as ArtJob & { home?: boolean }).home = true;
     // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
     (job as ArtJob & CacheHint).cacheKey = this.cacheKey(job);
     (job as ArtJob & { urgent?: boolean }).urgent = urgent;
-    if (urgent || this.promoted.has(k)) this.queue.unshift(job); else this.queue.push(job);
+    (job as Stamped).gen = this.gen;
+    if (home || urgent || this.promoted.has(k)) this.queue.splice(this.front, 0, job); else this.queue.push(job);
     this.dispatch();
   }
   /** The night is playing (the party spell cast): the art drawn ahead of need keeps to half the workers, so the audio thread
    *  and the GPU's keep a core among them (Ed's log, 2026-10-14: the device under-ran in bursts, seconds of the audio clock lost
    *  at a time, while the workers baked on every core but the page's). What the view needs now (an urgent ask) takes them all. */
   playing = false;
+  /** Held (the sea chart open over the night, main.ts; the transition review, 2026-10-19): no new set handed to the workers,
+   *  those already drawing finishing, so the cores go to the chart and to drawing the next island ahead (app/landingBake.ts). */
+  private held = false;
+  hold(on: boolean): void { this.held = on; if (!on) this.dispatch(); }
   private dispatch(): void {
-    if (!this.useWorkers) return;
+    if (!this.useWorkers || this.held) return;
     const n = this.workers.length, ahead = this.playing ? Math.max(1, Math.floor(n / 2)) : n;
     for (const slot of this.workers) {
       if (slot.busy || !this.queue.length) continue;
@@ -173,7 +227,40 @@ export class AssetLibrary {
       slot.w.postMessage(slot.job);
     }
   }
+  /** One-off asks (oneOff), by their key: what each is waiting for. */
+  private once = new Map<string, { res: (r: ArtResult) => void; rej: (e: Error) => void }>();
+  /** One-offs asked ahead (early), by their key: kept for the oneOff that takes each. */
+  private kept = new Map<string, Promise<ArtResult>>();
+  /** Ask for a one-off now, ahead of what's queued, for a oneOff to take later. */
+  early(job: ArtJob): void {
+    const k = this.key(job);
+    if (this.kept.has(k) || !this.useWorkers) return;
+    const p = this.oneOff(job);
+    p.catch(() => {}); // (a refusal is the taker's: it draws it on the page)
+    this.kept.set(k, p);
+  }
+  /** A drawing the page wants once, from the art workers (or the browser's store, if drawn before): the island build's own (render/
+   *  islandArt.ts: the dancefloor's looks, the runestones), asked ahead of everything else. No workers: refused (drawn on the page). */
+  oneOff(job: ArtJob): Promise<ArtResult> {
+    const k = this.key(job), kept = this.kept.get(k);
+    if (kept) { this.kept.delete(k); return kept; }
+    if (!this.useWorkers) return Promise.reject(new Error("no art workers"));
+    return new Promise((res, rej) => {
+      const was = this.once.get(k);
+      this.once.set(k, { res: r => { was?.res(r); res(r); }, rej: e => { was?.rej(e); rej(e); } });
+      this.ask(job, true, true); // (with the start's own: something on the page is waiting for it now)
+    });
+  }
   private receive(r: Reply): void {
+    const once = this.once.get(this.key(r.job));
+    if (once) { // (a one-off: its asker's, whichever island the page is on)
+      this.once.delete(this.key(r.job)); this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
+      if (r.result) once.res(r.result); else once.rej(new Error(r.error ?? "not drawn"));
+      return;
+    }
+    // (an island's set asked before the page took another (reseat): not this island's; its key may be asked again since, so it's left be)
+    if (islandBound(r.job) && (r.job as Stamped).gen !== this.gen) return;
+    if (r.miss) { this.inFlight.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job)); return; } // (asked only if kept: not kept)
     if (!r.result) { // a worker could not draw it: draw it here instead
       console.warn("art worker failed, drawing on the page:", r.error);
       this.useWorkers = false;
@@ -232,21 +319,21 @@ export class AssetLibrary {
         const c = trunkCut(counts(p.top), counts(p.bot), share); // (never above the trunk's own top: trunkCut.ts)
         if (c !== undefined) cut.set(p.bot, c);
       }
-      this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut });
-      if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
+      if (r.job.seed !== this.typeSeed) { if (!this.tonightShut) this.tonightTypes.set(r.job.id, { atlas, layout: r.result.layout!, cut }); } // (tonight's: swapped in unseen, swapTonight)
+      else { this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut }); if (r.result.floor) this.onFloor(r.job.id, r.result.floor); }
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
-    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job));
+    this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
     this.version++;
   }
 
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
-    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }, true);
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }, true);
     return a;
   }
   /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
@@ -333,7 +420,7 @@ export class AssetLibrary {
   /** A creature asleep (art/naps.js: lying down, eyes shut, curled, tucked, coiled or flat by species; each level in 2 breathing
    *  frames), or undefined (and asked for). */
   napArt(species: string, dressed?: { id: number; colour: number[] | null }): CreatureArt | undefined { // dressed: a party (or happy) animal's own gear, worn asleep
-    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k);
+    const k = dressed ? `nap-${dressed.colour ? "party" : "happy"}-${species}-${dressed.id}` : `nap-${species}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map, and the art is kept on this browser)
     if (!a) this.ask({ kind: "nap", id: k, species, style: this.style, ...(dressed ? { dressed: { seed: dressed.id, colour: dressed.colour } } : {}) });
     return a;
   }
@@ -364,13 +451,13 @@ export class AssetLibrary {
   }
   /** An invited creature's party look (its gear seeded by its id), or undefined (and asked for). */
   partyArt(species: string, id: number, colour: number[]): CreatureArt | undefined {
-    const k = `party-${id}`, a = this.creatures.get(k);
+    const k = `party-${species}-${id}`, a = this.creatures.get(k); // (the species in the key: an id is a creature only within one map)
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour, style: this.style });
     return a;
   }
   /** A happy creature's look (issue #87): party clothes, no glowing collar; or undefined (and asked for). */
   happyArt(species: string, id: number): CreatureArt | undefined {
-    const k = `happy-${id}`, a = this.creatures.get(k);
+    const k = `happy-${species}-${id}`, a = this.creatures.get(k);
     if (!a) this.ask({ kind: "party", id: k, species, seed: id, colour: null, style: this.style });
     return a;
   }
@@ -436,17 +523,67 @@ export class AssetLibrary {
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
-  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.seed, K: this.K }); }
+  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }); }
+  /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
+   *  asked for only if kept, so nothing is drawn now; those found wait for swapTonight. Nothing with the trees drawn under the
+   *  night's seed already. */
+  tonight(types: Iterable<number>): void {
+    if (this.typeSeed === this.seed || this.tonightShut) return;
+    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
+  }
+  /** The moment she can't see the trees change (main.ts revealArt): tonight's sets found by now take the place of the island's;
+   *  the rest keep the island's for the whole night (nothing swapped later: no trees changing in play). The types swapped. */
+  swapTonight(): number[] {
+    this.tonightShut = true;
+    const swapped = [...this.tonightTypes.keys()];
+    for (const [t, a] of this.tonightTypes) this.types.set(t, a);
+    this.tonightTypes.clear();
+    if (swapped.length) this.version++;
+    return swapped;
+  }
 
   get pending(): number { return this.inFlight.size; }
+  /** Area type `t`'s art held (drawn, or kept and read back). */
+  hasType(t: number): boolean { return this.types.has(t); }
+
+  /** Another island takes the page (View.setGame; docs/plans/sail-without-reload.md B 3-5, decision 6: only this island's art in
+   *  memory): a new generation, so the last island's sets waiting are dropped and those being drawn land to nothing; its sets let
+   *  go (its trees, tonight's, its soundsystems; its treehouse if this one's is another), each atlas freed here, once (the view
+   *  lets go of its batches on them first, never their atlases); and the new island's seeds and treehouse. Its sets are asked for
+   *  afresh as they're wanted (from the browser's store, if drawn before). */
+  reseat(o: { seed: number; typeSeed: number; treehouse: string }): void {
+    this.gen++;
+    this.queue = this.queue.filter(j => !islandBound(j));
+    for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
+    const free = (a: Atlas) => { a.albedo.dispose(); a.normal.dispose(); };
+    for (const a of this.types.values()) free(a.atlas);
+    for (const a of this.tonightTypes.values()) free(a.atlas);
+    for (const a of this.soundsystemsGen.values()) free(a.atlas);
+    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear();
+    this.tonightShut = false;
+    this.seed = o.seed; this.typeSeed = o.typeSeed;
+    if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)
+      this.treehouseId = o.treehouse;
+      if (this.home.treehouse) free(this.treehouse.atlas);
+      this.treehouse = noTreehouse();
+      this.home.treehouse = false;
+      this.ask({ kind: "treehouse", id: o.treehouse, style: this.style }, true, true);
+    }
+    this.version++;
+  }
+  /** The sets held now, by kind (for the checks: tools/sail/swap.cjs, the tests). */
+  sets(): Record<string, number> {
+    return { types: this.types.size, tonight: this.tonightTypes.size, soundsystems: this.soundsystemsGen.size, creatures: this.creatures.size, rigs: this.rigs.size, queued: this.queue.length, pending: this.inFlight.size };
+  }
 
   /** Without workers: draw waiting sets on the page until `budgetMs` has passed (at least one). */
   work(budgetMs: number): void {
-    if (this.useWorkers) return;
+    if (this.useWorkers || this.held) return;
     const t0 = performance.now();
     let made = 0;
     while (this.queue.length && (made === 0 || performance.now() - t0 < budgetMs)) {
       const job = this.queue.shift()!;
+      if ((job as ArtJob & CacheHint).cacheOnly) { this.receive({ job, miss: true }); continue; } // (asked only if kept: the page keeps nothing of its own to read)
       const t1 = performance.now(), result = runJob(job, (w, h) => { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; });
       { const ck = this.cacheKey(job); if (ck) void cachePut(ck, result); } // (drawn on the page: kept from here)
       this.receive({ job, result, ms: performance.now() - t1 });
@@ -454,10 +591,11 @@ export class AssetLibrary {
     }
   }
 
-  /** Resolves once nothing is waiting to be drawn. */
-  whenIdle(): Promise<void> {
+  /** Resolves once nothing is waiting to be drawn (`urgentOnly`: nothing the view asked for as needed now; the scenery kits and
+   *  creatures asked ahead of need draw on, and fade in as they come: prepare). */
+  whenIdle(urgentOnly = false): Promise<void> {
     return new Promise(resolve => {
-      const check = () => { this.work(50); if (!this.pending) resolve(); else setTimeout(check, 30); };
+      const check = () => { this.work(50); if (!(urgentOnly ? this.urgentKeys.size : this.pending)) resolve(); else setTimeout(check, 30); };
       check();
     });
   }

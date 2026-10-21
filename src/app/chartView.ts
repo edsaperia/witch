@@ -9,20 +9,22 @@
 // the water; won islands ringed in gold.
 //   Choose an island (tap or click it; arrow keys, the d-pad or the stick) and the camera glides to it and names it. Three modes:
 // "sail" (between nights): choose it again, press Enter or the pad's A, or the Sail button, to sail there; Start over (after an
-// are-you-sure) forgets it all. "look" (mid-night): the same, but no sailing and no starting over. "miniature" (the map table's
+// are-you-sure) forgets it all; over a night, the island she's on is "Back to the party" (or the afterparty): choosing it closes
+// the chart and the night goes on as it was, never a new one (Ed, 2026-10-21; app/sail.ts chartChoice). "look" (mid-night): the same, but no sailing and no starting over. "miniature" (the map table's
 // model): no card, no buttons, no keys, the camera slowly circling. The save and what's unlocked are chartSave.ts's: this is
 // the view. Its own canvas and renderer, inside `host`; the caller's loop calls update() (no requestAnimationFrame of its own).
 import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
-import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland } from "../render/chart/seaChart";
+import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd } from "../render/chart/seaChart";
 import { loadSave, newCampaign, unlocked, worldSeed, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
 import { writeArrival } from "./arrival";
 import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
+import { chartChoice, type ChartHere } from "./sail";
 
 export type ChartMode = "look" | "sail" | "miniature";
 /** The testing toggle's key (this browser): sail to any island with a creature. */
@@ -34,12 +36,18 @@ export interface ChartViewOptions {
   /** The world to show, if not the save's own (a shared link's ?world=): sailing carries it on (&world=). */
   world?: number;
   /** Sail mode: sail to an island, once the chart has flown in to it (default: to ?island=<kind>&arrive=1, with &world= when
-   *  `world` is given). The flight's end is in sessionStorage for the game to carry on from (app/arrival.ts). */
-  onSail?: (island: string, seed: number) => void;
+   *  `world` is given). The flight's end is in sessionStorage for the game to carry on from (app/arrival.ts), and given here
+   *  too (`end`, none if the chart couldn't fly) for a night started in place (app/sail.ts). */
+  onSail?: (island: string, seed: number, end?: FlightEnd) => void;
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
   /** Look and sail modes: a Close button and Esc. */
   onClose?: () => void;
+  /** Sail mode over a night (the map table's, the cards'): the island she's on, and its button's words ("Back to the party"):
+   *  choosing it never sails (app/sail.ts chartChoice), but asks `onStay` (default onClose). */
+  here?: ChartHere;
+  /** The island she's on chosen: back to the night as it was. */
+  onStay?: () => void;
   /** Miniature: its render size in art pixels (default: the host's size). */
   size?: { w: number; h: number };
   /** A note after the status line (chart.html's "showing everything"). */
@@ -48,6 +56,10 @@ export interface ChartViewOptions {
   start?: string;
   /** Count the uncharted placeholders in the status line (chart.html's ?chart=all). */
   countUncharted?: boolean;
+  /** Buttons in the top right corner (the first load's chart: What's new, Options and the zoo; app/opening.ts). */
+  corner?: { label: string; title?: string; onClick: () => void }[];
+  /** Islands not to draw or map ahead (app/landingBake.ts, app/mapPrep.ts): the first load's home, whose night is already made under the chart (app/opening.ts divesHome), the work would be thrown away and its workers would starve the night's own art. */
+  noBake?: (island: string) => boolean;
 }
 export interface ChartView {
   /** Its canvas (for a miniature: draw it as a texture, THREE.CanvasTexture). */
@@ -87,11 +99,13 @@ const STYLE = `
 .chart-view [hidden] { display: none !important; }
 .chart-view .hint, .chart-view .world { color: var(--dim); font-size: 11px; text-align: center; }
 .chart-view .new-world { align-items: center; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 8px; padding: 8px 10px; }
+.chart-view .corner { position: absolute; right: 12px; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; z-index: 2; }
 .chart-view .new-seed { font: inherit; font-size: 13px; color: #e8e2f4; background: #14112a; border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px; width: 14em; max-width: 50vw; }`;
 
 const HTML = `
 <canvas aria-label="The sea chart"></canvas>
 <div class="top"><h1>THE SEA CHART</h1><div class="status"></div></div>
+<div class="corner"></div>
 <div class="bottom">
   <div class="card" hidden><div class="name"></div><div class="phase"></div><div class="state"></div><a class="btn sail" href="./?island=home">Sail there</a></div>
   <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="start-over">Start over</button><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
@@ -115,6 +129,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   if (!mini) { canvas.setAttribute("aria-label", "The sea chart"); root.querySelector("canvas")!.replaceWith(canvas); }
   const listening = new AbortController(), on = { signal: listening.signal }; // (the canvas outlives this view: its listeners go with it)
   if (mini) { $("top").hidden = true; $("bottom").hidden = true; }
+  for (const b of opts.corner ?? []) { const el = document.createElement("button"); el.textContent = b.label; if (b.title) el.title = b.title; el.addEventListener("click", () => b.onClick(), on); $("corner").append(el); }
   $("sail").hidden = true;
   ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose;
   $("hint").textContent = sailing
@@ -125,34 +140,54 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
   let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
+  /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
+  const isHere = (id: string | null) => !!id && chartChoice(opts.here, id, worldNow()) === "stay";
   const sailHref = (island: string) => `./?island=${island}${opts.world != null ? `&world=${worldNow()}` : ""}`;
   // Sailing: the chart flies in to the island (Ed, 2026-10-12: "you zoom into the map into the island you chose"), then sails,
   // its flight's end kept for the game to carry on from (app/arrival.ts); any key or tap skips to the end.
   // The night's seed is chosen as the island is (app/landingBake.ts): its area types drawn ahead while she looks and flies in.
   // And its map (Ed, 2026-10-19, option 4: app/mapPrep.ts): made in a worker with that seed while she flies, for the page to take.
   let bake: { island: string; job: Promise<import("./landingBake").LandingBake | null>; map: Promise<{ done: Promise<unknown>; stop(): void } | null> } | null = null;
+  // (the transition review, 2026-10-19: it starts as the chart opens, for the island she's likeliest to sail to, and follows what she
+  // chooses; each island keeps its night's seed for the chart's whole visit, so what was drawn for it before a change of mind is
+  // still hers when she comes back to it)
+  const seeds = new Map<string, number>();
+  const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = Math.floor(Math.random() * 1000000); seeds.set(id, s); } return s; };
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
     void bake?.job.then(b => b?.stop());
     void bake?.map.then(m => m?.stop());
-    if (!id || !islands.find(i => i.id === id)?.sail) { bake = null; return; }
-    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world)).catch(() => null);
+    if (!id || !islands.find(i => i.id === id)?.sail || opts.noBake?.(id) || isHere(id)) { bake = null; return; } // (the island she's on: never sailed to from here)
+    const job = import("./landingBake").then(m => m.bakeLanding(id, opts.world, seedOf(id))).catch(() => null);
     bake = { island: id, job, map: job.then(b => (b ? import("./mapPrep").then(m => m.startMapPrep(id, opts.world, b.seed)) : null)).catch(() => null) };
   };
-  const go = async (id: string) => {
-    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? Math.floor(Math.random() * 1000000);
+  /** Where she'll likely sail: her last voyage's island, else the nearest she's found, else home (her first game). */
+  const likely = (): string => {
+    const last = save.voyages.at(-1)?.to, can = (id: string | undefined) => !!id && !!islands.find(i => i.id === id)?.sail;
+    if (can(last)) return last!;
+    const home = islands.find(i => i.id === "home"), found = islands.filter(i => i.id !== "home" && save.found.includes(i.id) && i.sail);
+    found.sort((a, b) => Math.hypot(a.x - (home?.x ?? 0), a.y - (home?.y ?? 0)) - Math.hypot(b.x - (home?.x ?? 0), b.y - (home?.y ?? 0)));
+    return found[0]?.id ?? "home";
+  };
+  const go = async (id: string, end?: FlightEnd) => {
+    performance.mark("chart:flown");
+    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
     await b?.settle(); // (what's drawn, written before the page goes)
     // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
     const m = bake?.island === id ? await bake.map : null;
     if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
-    if (opts.onSail) opts.onSail(id, seed); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
+    performance.mark("chart:go"); // (?timing=1: main.ts carries this page's steps to the next as it sails, app/timing.ts)
+    if (opts.onSail) opts.onSail(id, seed, end); else location.href = `${sailHref(id)}&seed=${seed}&arrive=1`;
   };
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
-    if (!sailing || !isl?.sail || chart.flying) return;
+    if (!sailing || chart.flying) return;
+    if (isHere(id)) { (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was; found or not, she's there)
+    if (!isl?.sail) return;
     const w = worldNow();
+    performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
-    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!); })) { void go(id!); return; }
+    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); })) { void go(id!); return; }
     root.classList.add("flying");
     opts.onFly?.();
     requestAnimationFrame(() => resize());
@@ -186,6 +221,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const isl = islands.find(i => i.id === best!.id);
     if (!isl || best!.world !== worldNow()) return;
     isl.outline = best!; chart.reshape(best!.id, best!);
+    { const n = islands.filter(i => i.outline).length; if (n === 1) performance.mark("chart:island1"); if (n === islands.length) performance.mark("chart:islands"); } // (app/timing.ts)
   }
   const make = (): Worker | null => {
     if (!worker) {
@@ -222,15 +258,16 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     waiting.clear(); ranked();
     outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
-    $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "wake legends at home to find their islands"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
+    $("status").textContent = `${n ? `${n} of ${REAL_KINDS.length} islands found${opts.countUncharted ? ` (and ${KIND_NAMES.length - REAL_KINDS.length} not yet charted)` : ""}` : "do a legend's quest and win the night to find its island"}${save.won.length ? ` · ${save.won.length} won` : ""}${opts.note ? ` · ${opts.note}` : ""}`;
     $("world").textContent = `World seed: ${w}${opts.world != null && opts.world !== save.world ? " (from the link)" : ""}`;
     ($("home") as HTMLAnchorElement).href = sailHref("home");
+    $("home").textContent = isHere("home") ? opts.here!.label : "Sail home";
   }
 
   /** The chosen island's card: its name, phase and how it stands; the Sail button if she can go. */
-  function choose(id: string | null, instant = false): void {
+  function choose(id: string | null, instant = false, aim = true): void {
     chart.select(id, instant); ranked();
-    bakeFor(id);
+    if (aim) bakeFor(id); // (her choice: drawn ahead; the chart's own first selection isn't hers, likely() is)
     if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
     if (id && !mini && !((waiting.get(id) ?? islands.find(i => i.id === id)?.outline) as OutlineDone | undefined)?.detail) detail(id);
@@ -240,9 +277,10 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const phase = id === "home" ? 0 : islandOf(id!, worldNow())?.phase ?? 0;
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
-    $("state").textContent = isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "wake its legend to find it";
-    sail.hidden = !sailing || !isl.sail;
+    $("state").textContent = (isHere(id) ? "you're here · " : "") + (isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it");
+    sail.hidden = !sailing || !(isl.sail || isHere(id));
     sail.href = sailHref(id!);
+    sail.textContent = isHere(id) ? opts.here!.label : "Sail there";
   }
   $("sail").addEventListener("click", e => { e.preventDefault(); sailTo(chart.selected); });
   $("home").addEventListener("click", e => { e.preventDefault(); choose("home", true); sailTo("home"); });
@@ -333,7 +371,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   setTimeout(() => {
     if (disposed) return;
     build();
-    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true);
+    choose(opts.start ?? save.voyages.at(-1)?.to ?? "home", true, false);
+    bakeFor(likely()); // (the next island's trees drawn ahead from the moment the chart opens: app/landingBake.ts)
   }, 50);
 
   return {

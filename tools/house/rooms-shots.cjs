@@ -1,6 +1,6 @@
 // The treehouse's placeholder rooms (Ed, 2026-10-19; rules/houseRooms.ts, render/houseRooms.ts, config/house.json) in the built game
-// (DIST, default dist/) at 1600×900: she's put in the house mid-night and stood in each room (shot `<room>.png`, beside the object
-// she's at so its tag shows), then walked along the corridor from the hub to the dressing room (`corridor-<n>.png`). Fails on a
+// (DIST, default dist/) at 1600×900: she's put in the house mid-night and stood in each room (shot `<room>.png`, in front of its
+// object, on the house's turned plan), then walked along the corridor from the hub to the dressing room (`corridor-<n>.png`). Fails on a
 // page error. ONLY=dressing,bedroom shoots only those rooms.
 //   npm run build && node tools/house/rooms-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -10,6 +10,8 @@ const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
+// (the house's plan is turned about the hub: rules/houseRooms.ts fromPlan)
+const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
@@ -28,17 +30,19 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
     for (const r of H.rooms) {
       if (ONLY && !ONLY.includes(r.id)) continue;
       const o = H.objects.find(q => q.room === r.id && q.use.kind !== "hats") || null;
-      const x = o ? o.x : (r.x0 + r.x1) / 2, z = o ? Math.min(r.z1 - 0.6, o.z + o.d / 2 + 0.6) : (r.z0 + r.z1) / 2;
-      await stand(x, z);
+      // in front of its object, on the side facing the room's middle (rules/houseRooms.ts objectFront), a step or two back
+      const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, dx = o ? cx - o.x : 0, dz = o ? cz - o.z : 0, side = Math.abs(dx) > Math.abs(dz);
+      const px = o ? (side ? o.x + Math.sign(dx) * (o.w / 2 + 1.6) : o.x) : cx, pz = o ? (side ? o.z : o.z + Math.sign(dz || 1) * (o.d / 2 + 1.6)) : cz;
+      await stand(...plan(px, pz));
       await step({}, 90); // (the camera follows her in)
       await page.screenshot({ path: path.join(outDir, `${r.id}.png`), timeout: 300000 });
       console.log("shot", r.id);
     }
     if (!ONLY || ONLY.includes("corridor")) {
-      const c = H.corridors.find(q => q.id === "hub-dressing");
-      await stand(c.x0 + 0.8, (c.z0 + c.z1) / 2);
+      const c = H.corridors.find(q => q.id === "hub-dressing"), [ex, ez] = plan(1, 0);
+      await stand(...plan(c.x0 + 0.8, (c.z0 + c.z1) / 2));
       await step({}, 60);
-      for (let i = 0; i < 3; i++) { await step({ moveX: 1 }, 40); await page.screenshot({ path: path.join(outDir, `corridor-${i + 1}.png`), timeout: 300000 }); }
+      for (let i = 0; i < 3; i++) { await step({ moveX: ex, moveZ: ez }, 40); await page.screenshot({ path: path.join(outDir, `corridor-${i + 1}.png`), timeout: 300000 }); }
       console.log("shot corridor");
     }
   } finally { await browser.close(); server.close(); }

@@ -128,6 +128,12 @@ export class RigView {
     this.stats.instances += this.out.n;
   }
 
+  /** Another night (View.setGame): no bodies, nothing drawn (the pages' batches, by species, stay). */
+  reset(): void {
+    this.bodies.clear(); this.seen.clear(); this.heads.clear(); this.time = 0; this.dt = 0;
+    for (const [k, b] of this.batches) { const p = this.pool.get(k); if (p) p.length = 0; this.used.set(k, 0); b.set([]); }
+  }
+
   /** Hands every batch its instances; forgets creatures no longer drawn. */
   end(): void {
     for (const [k, b] of this.batches) { const pool = this.pool.get(k) ?? [], n = this.used.get(k) ?? 0; if (pool.length > n) pool.length = n; b.set(pool); } // (trimmed to this frame's: the batch draws them all)

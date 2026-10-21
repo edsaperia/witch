@@ -206,6 +206,10 @@ export interface Tuning {
     pond: { volume: number; lap: number; frogs: number; frogEvery: number; drips: number; dripEvery: number; range: number };
     /** The sea on the beach (Ed, 2026-10-06: "You can hear the sound of the waves"): a wave breaking every `every` seconds or so and the wash between, up within `range` metres of the water. */
     waves?: { volume: number; every: number; wash: number; range: number };
+    /** Sailing between islands in place (app/sail.ts; places.ts Sailing): the sea's hush and waves and a soft wind while the next
+     *  island is made, at volume, the sea's and the wind's shares, fading in and out over about fade seconds; and the old night's
+     *  music fading out over fade seconds as it comes in. */
+    sail?: { volume: number; sea: number; wind: number; fade: number };
     /** The afterparty's night (Ed, 2026-10-06: "nice environmental music and sounds that match each area"; platform/audio/night.ts): its volume, the bed's (pad and bells), the noise bed's and the night sounds' shares, when it comes in (from `from` of the party-over ease), and the sleeping animals' snores (volume, the gap between them, heard within range metres, at most max at once). */
     night?: { volume: number; bed: number; noise: number; sounds: number; from: number; snore: { volume: number; gap: number; range: number; max: number } };
     ambience?: { volume: number; bed: number; noise: number; sounds: number; quiet: number };
@@ -225,6 +229,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** Her phone's alarm in the new opening's wake-up (chimes.ts alarm): a ring at most every gap seconds. */
+    alarm?: { volume: number; gap: number };
     /** A 💌 refused by an enraged animal (Ed, 2026-10-12): its angry whine (chimes.ts refused). */
     refused: { volume: number; gap: number };
     /** An area cleared early (chimes.ts cleared, sfxCues.ts cleared): its sting's level, heard within range metres (at least floor of it). */
@@ -378,12 +384,17 @@ export interface Tuning {
   /** Home's area, settled first: its circle reaches margin metres past the treehouse's footprint; other areas' centres stay gap (areas) beyond it. */
   home: { margin: number; gap: number };
   /** Arriving on an island from the sea chart (rules/arrive.ts): the still's push-in and cross-fade, and the flight's legs. */
+  /** Sailing from the map table's sea chart (app/sail.ts): the next night started on the same page (inPlace, and so every other
+   *  way to a new night), or the page loaded anew on the island's link as before; ?sail=inplace or ?sail=reload for one page. */
+  sail?: { inPlace: boolean };
+  /** The new opening (app/opening.ts): chart, a plain first load opening on the sea chart in place of the bedroom; ?opening=chart|old for one load. */
+  opening?: { chart: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
     /** The house on the Ent (rules/treehouse.ts, docs/backlog/treehouse.md step 1; on: in place of the deck): the hub's radius and floor height (m), the landing grace, the wall's keep-in, the map's radius and reach; the balcony (its centre `out` m south of the hub's, its radius), the decks' desk round the balcony's centre (inner, outer m; from, to degrees, 90 south) and her seat behind them (m from the balcony's centre); the magic circle (`out` m south of the hub's centre, its radius); landTime: seconds to come down onto the balcony flying onto it; fall: with no broom she falls off the balcony's open rim (on: for now a switch, the brooms as objects to come; time: seconds till she's back at the circle). */
-    house?: { on: boolean; hub: number; height: number; grace: number; rail: number; table: number; tableUse: number; balcony: { out: number; r: number }; decks: { inner: number; outer: number; from: number; to: number }; seat: number; circle: { out: number; r: number }; landTime: number; fall: { on: boolean; time: number } };
+    house?: { on: boolean; hub: number; height: number; grace: number; rail: number; table: number; tableUse: number; balcony: { out: number; r: number }; decks: { inner: number; outer: number; from: number; to: number }; seat: number; circle: { out: number; r: number }; landTime: number; /** on foot in the house: her walking speed (m/s) */ walk: number; fall: { on: boolean; time: number } };
     /** Who carries the Ent (drawing only; art/carrier.js): "island" the island's own kind's legend (none at home), a kind's id that kind's, "none" no one. */
     carrier?: string };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; /** each family's share times this (1 as authored; 0 none) */ mix?: { ruins?: number; rocks?: number; freak?: number }; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };

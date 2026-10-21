@@ -1,6 +1,6 @@
 # Pack combat and three moves per animal
 
-Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on`; and Phase 1's eleven (Echo, 2026-10-19, the same switch; the flyers on the ground till step 3); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
+Backlog (Ed, 2026-10-15, from an interview with Juliet). **Build step 1 built (Ed's go, 2026-10-19): home's ten, behind `combat.packs.on` (on by default since Ed, 2026-10-20); and Phase 1's eleven (Echo, 2026-10-19, the same switch); kinds keep their own moves inside a pack (Ed, 2026-10-20: below, "Kinds keep their own moves"); the rest not built yet.** This page is the plan for fights: animals fighting in packs that combo their moves, and every animal with three moves (melee, ranged, special) so kinds feel different from each other. It overrides DESIGN.md's "Level-ups" line (young one attack, adults two, legends one) for every level but the legends'. **Legends are not part of this work** (Ed): they keep their long-range attack and their own moves.
 
 Ed's words: "Maybe they should all have three [melee, ranged, special]. The place where this game should shine is animals fighting in packs (where they combo all their attacks differently) and animals feeling different from each other. If one lunges while two lay down crossfire and the last throws a smoke bomb, that would be exciting."
 
@@ -27,7 +27,7 @@ Ed's words: "Maybe they should all have three [melee, ranged, special]. The plac
   - **her party animal engaging**: the pack splits, some turn on it.
   - Not her rising to the treetops: the flyers don't follow her up.
 - **A shared pack tell** before a combo (Ed: 4a), **plus each move's own tell**: a howl, a stamp, a chirr, a shared glow on every member, so the player learns the cue.
-- **How many strike at once varies by creature** (Ed: 5): each kind has its own **pressure**, the number of its pack that may be winding up or striking at her at once (today's token, by species): a wolf pack 1 lunge plus any shots, a bat swarm 3, a bear 1.
+- **How many strike at once varies by creature** (Ed: 5): each kind has its own **pressure**, the number of its pack that may be winding up or striking at her at once (today's token, by species): a wolf pack 1 lunge plus any shots, a bat swarm 3, a bear 1. Built, the dodge's tokens (`dodge.a`, one at a time) still cap it at her, the call included (Ed, 2026-10-20: twelve wolves had ten winding up at her at once).
 
 ### The rhythm of a fight: lulls, retreats, chases
 
@@ -35,7 +35,7 @@ Ed: "(some) groups retreating/regrouping/scattering between attacks will make fi
 
 - **Lulls of all three kinds** (Ed: 7d): **after every combo** the pack pulls back out of reach, re-slots and comes again (a rhythm the player learns); **after a loss** (one of them knocked down or invited) the rest scatter and regroup; and **by species**: hit-and-run kinds always pull back, heavies never, swarms scatter and reform.
 - **Lulls are longer for bigger packs** (Ed: 8c): a pair comes back in a second, a pack of eight takes a few.
-- **Hurt members run while the healthy attack** (Ed): a creature under half health leaves the combo and keeps its distance (it comes back healed by a berry if it finds one; it's still invitable); the healthy ones carry the fight.
+- **Hurt members run while the healthy attack** (Ed): a creature under half health leaves the combo and keeps its distance (it comes back healed by a berry if it finds one; it's still invitable); the healthy ones carry the fight. With no healthy packmate (alone, or all of them hurt) it fights on, so a fight always ends (Ed, 2026-10-20: a boar at 1 hp kept off her parked wolf for good).
 - **Each species has its own retreat pattern** (Ed: 20): run in a circle round her; all in different directions; into the trees and freeze, hard to see; split into two groups; and so on (the table below gives each kind one).
 - **A chase is sometimes right** (Ed: "sometimes a chase is interesting and makes fights more varied"), **but never the norm**: the challenge is "how quickly you can clear an area so that you're ahead of the pulse", so a pack that has run comes back by itself within its lull, and a retreat that hides (the trees) ends with the pack coming in again from another side. Nothing runs off for good but a beaten animal, as today.
 
@@ -70,6 +70,7 @@ Ed: "flying animals are not fun to fight right now ... they should only take off
 - **Flyers fight on the ground** like anyone (they walk and hop; their melee a peck, a bite, a buffet) and **take off only to attack** (Ed: 10c): **young hop-swoop**, a short low swoop like a pounce (its tell the wings spread, half a second), landing where she was; **adults add the circling dive**, today's swoop, but once and down again, on a cooldown.
 - **In a pack, at least half its flyers are on the ground at any time** (Ed: 10d): a pack rule, so there is always something to invite or dodge while the others are up.
 - The owl, the raven and the bat (the moth, the dragonfly, the heron and the griffin after them); their ranged moves stay what they are (the owl's lob, the raven's long spit and barb) or become magic like the rest.
+- **Until step 3 (Ed, 2026-10-20: kinds keep their moves in a pack):** a wild flyer in a pack keeps today's swoop. It circles out of reach through the pack's approach, tell and lull, and its **dive is its strike**: a bout's first dive goes on its pack's turn (its lunge's, a lane) under its pressure and a dodge token, the rest of its bout each a token as before, so a pack of them dives at her one at a time; the pack tell and its special (the bat's confusion, the raven's mirage) are the pack's as for any kind. Why not keep flyers out of packs till step 3 instead: that loses the pack's tell, turns, lulls and specials Phase 1 built for them, and the dive already is "take off to attack, then come back up"; step 3 changes where they wait (on the ground, half of them) and adds the young's hop-swoop, not how a dive takes its turn. (Before this, a flyer in a pack landed and fought on the ground: no dive at all.)
 
 ### Sieges
 
@@ -85,6 +86,16 @@ Ed: "flying animals are not fun to fight right now ... they should only take off
 - **Combos everywhere** (Ed: 15c), on home from the first night, their speed and overlap tuned up the **master curve** (journey.md): home's packs young, small and slow, so combos come rarely and loosely; the later islands' tight and fast.
 - **Readability** at the game's pixel size: tells as shapes by slot and colours by effect (above); a pack tell every member shares (a glow, and the call's own art: a howl's rings, a stamp's dust); never more than one lane and two lines at her at once.
 - **Performance** (Ed: 17a): a pack's combo takes at most 8 members (the rest hold back and slot), at most 6 shots in the air a pack, the pack planning once a step for packs within the creature simulation radius only, and the retreat patterns steered by the same behaviours as today (nothing a frame per creature beyond a slot).
+
+### Kinds keep their own moves (Ed, 2026-10-20)
+
+Ed: "Kinds keep their movement.json moves within pack combat: charges, dives, burrowing, screeches, slime and the wolves surrounding her." Built (`rules/combat.ts`, `rules/combat/packs.ts`: `ownStrike`, `strikingNow`, `lungeMove`). A pack still decides **when** each member strikes (its turn, its pressure, the dodge's tokens); the kind decides **how**:
+
+- **A strike is the kind's own move where it has one** (`config/movement.json` `move`): a charger (boar, hedgehog, woodlouse, heron) charges as its lunge; the toad leaps and slams; the mole burrows in on its turn and strikes as it surfaces; a wild flyer dives (above, Flyers). Each takes the pack's turn and a dodge token like a lunge: its charge (till it brakes), its leap (not the toad's harmless cloud leap) and its dive count as **striking at her** for the pressure and the tokens, so at most `dodge.a.tokens` strike at her at once (the stampede included: at her it makes every member's turn to charge, one after another as the tokens free; her pack's on the wild charges all at once). Waiting its turn, a member whose move is ready holds where that move sets off from (in its reach), and its pack engages from that move's reach.
+- **A kiter's strike is its shot**: the raven never takes the lunge.
+- **Its kind's own attack where it's the identity**: the bat's melee is its screech, a pulse all round it.
+- **Continuous moves keep running**: the snail's slime trail as it goes (its wall besides).
+- **Its kind's tactic places it while it waits** (the wolves' surround and pincer, the fox's and marten's flank, the raven's volley line and beat); only the member whose lunge it is goes straight in. Hit and run is the pack's own lull, so it isn't added.
 
 ## The three moves, kind by kind (a draft; Ed edits)
 
@@ -107,7 +118,7 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 
 ### Phase 1
 
-**Built** (Echo, 2026-10-19; `config/packs.json`, behind `combat.packs.on`): all eleven, with two new specials (mirage, sync), kinds' own variants of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes, the toad's cloud comes from a leap, the beetle's cover locks two shells), the raven's ranged move on its own spit and barb, the toad's lob leaving a slow patch, and seven new retreats. The bat and raven fight on the ground in a pack (no hop-swoop until step 3); "into the water" hides like a burrow (no water map yet).
+**Built** (Echo, 2026-10-19; `config/packs.json`, behind `combat.packs.on`): all eleven, with two new specials (mirage, sync), kinds' own variants of a special (`specialWith`: the bat's confusion turns her movement, the moth's cloud flashes, the toad's cloud comes from a leap, the beetle's cover locks two shells), the raven's ranged move on its own spit and barb, the toad's lob leaving a slow patch, and seven new retreats. The bat and raven fought on the ground in a pack until Ed, 2026-10-20: wild ones now keep their dive as their strike (above, Flyers); "into the water" hides like a burrow (no water map yet).
 
 | Kind | Melee (tell) | Ranged (tell) | Special: pack move (tell) | Retreat | Rhythm |
 |---|---|---|---|---|---|
@@ -182,16 +193,16 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 4. **The lull**: the pack falls back by its kind's retreat pattern (a circle, a scatter, the trees, a split), longer for a bigger pack; the hurt keep their distance; a lost member makes the rest scatter and regroup.
 5. **Again**, from step 2, until the pack is beaten, invited or she's gone.
 
-A besieging pack does the same at a soundsystem, its shooters at the clearing's edge; her parked pack goes out to them and back.
+A besieging pack does the same at a soundsystem, its shooters at the clearing's edge; her parked pack goes out to them and back. (Until step 4, at a soundsystem or speaker a creature fights as before packs, its own attack at its full rate: Ed, 2026-10-20, packs pacing there dealt under half.)
 
 ## Build order (proposed)
 
-1. **Built (2026-10-19, behind the switch, off by default; `rules/combat/packs.ts`, `config/packs.json`, docs/HOW-THE-GAME-WORKS.md section 5).** **A prototype on the home island behind a switch** (`combat.packs.on`, a pause-page toggle; off by default): **all ten home kinds** (Ed: 21c) with their three moves from the table, the pack tell, roles by position, the combo with its reactive answers, the lull with each kind's retreat pattern, pressure by kind, and her own pack using the combos without retreats. Magic bolts as one tinted projectile; the specials with placeholder art (today's rings and lines, tinted by effect) until the art lands. A debug arena preset a kind (`?arena=`) and a shot sheet.
+1. **Built (2026-10-19, behind the switch; on by default since 2026-10-20, Ed: "Turn pack combat on by default"; `rules/combat/packs.ts`, `config/packs.json`, docs/HOW-THE-GAME-WORKS.md section 5).** **A prototype on the home island behind a switch** (`combat.packs.on`, a pause-page toggle; on by default since 2026-10-20): **all ten home kinds** (Ed: 21c) with their three moves from the table, the pack tell, roles by position, the combo with its reactive answers, the lull with each kind's retreat pattern, pressure by kind, and her own pack using the combos without retreats. Magic bolts as one tinted projectile; the specials with placeholder art (today's rings and lines, tinted by effect) until the art lands. A debug arena preset a kind (`?arena=`) and a shot sheet.
 2. **The tells and the art**: the shapes by slot (lane, line, circle, ring, bar), colours by effect, the pack tell's own art per kind (a howl's rings, a drum's dust), the specials' art (cloud, wall, mirage, pull line, confusion swirl, control glyph, sync flash, stampede lane) in `art/effects.js`'s families, and the moves' poses where the rig needs one (a rear-up, a wings-spread take-off).
-3. **Flyers on the ground**: take-off only to attack (young hop-swoop, adults the dive once), half a pack's flyers grounded, the owl, raven and bat first.
+3. **Flyers on the ground** (until then a wild flyer in a pack keeps its swoop, its dive its strike: Ed, 2026-10-20): take-off only to attack (young hop-swoop, adults the dive once), half a pack's flyers grounded, the owl, raven and bat first.
 4. **Sieges**: shellers at the clearing's edge, defenders going out beyond the leash range and back.
 5. **Phase 1 and 2 kinds** from the table, a few kinds a PR, each with its arena preset and shot sheet; then phases 3 and 4. **Phase 1 built** (Echo, 2026-10-19).
-6. **Tuning up the master curve**: rhythm, pressure and lulls by wave (`population.swarm`'s share), the balance tools (`tools/balance/fightbot.mjs`, `fight.mjs`) extended to play packs, and the switch becomes the default.
+6. **Tuning up the master curve**: rhythm, pressure and lulls by wave (`population.swarm`'s share), the balance tools (`tools/balance/fightbot.mjs`, `fight.mjs`) extended to play packs, and the switch becomes the default (the default already, Ed's call, 2026-10-20; the tuning still to come).
 
 ## Open questions
 

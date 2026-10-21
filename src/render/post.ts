@@ -6,7 +6,8 @@
 // runs either "before" the pixels are scaled up (blurring whole art pixels, at low resolution)
 // or "after" (on the scaled-up image, at full resolution, so the pixel edges themselves blur).
 import * as THREE from "three";
-import { moodOf } from "./mood";
+import { gradeInto, moodOf } from "./mood";
+import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
 
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
@@ -167,6 +168,8 @@ export class Post {
   /** How much the screen dims round her while she's knocked down with her hat floating off (0 none: render/view/witch.ts). */
   set koDim(k: number) { this.mats.composite.uniforms.uKoDim.value = k; }
 
+  /** The scene's own target (View.warmDraws draws into it ahead). */
+  get sceneTarget(): THREE.WebGLRenderTarget { return this.scene; }
   /** lowW x lowH: the scene; outW x outH: the canvas. */
   /** The low resolution, shared with shaders that read the scene's depth. */
   get lowSize(): THREE.Vector2 { return this.low; }
@@ -197,25 +200,40 @@ export class Post {
     this.renderer.render(this.quad, this.cam);
   }
 
+  /** Its passes' programs made now, in the background where the GL can (KHR_parallel_shader_compile): they're on a quad of their own,
+   *  not in the scene, so the scene's compile never made them, and the first frame's first pass waited on its link (the cloud's
+   *  software renderer, 2026-10-21: 3.4 s in the composite's logs). */
+  compile(): Promise<unknown> {
+    const s = new THREE.Scene();
+    for (const m of Object.values(this.mats)) { const q = new THREE.Mesh(this.quad.geometry, m); q.frustumCulled = false; s.add(q); }
+    return this.renderer.compileAsync(s, this.cam);
+  }
+
   /** The last frame's scene render on the CPU (ms): three.js walking the scene, its uploads and GL calls; the rest of the
    *  view's "draw" part is these passes after it (the ?perf=1 HUD: app/perfHud.ts). */
   sceneMs = 0;
 
-  render(scene: THREE.Scene, camera: THREE.Camera): void {
+  render(scene: THREE.Scene, camera: THREE.Camera): void { runSync(this.renderSteps(scene, camera)); }
+  /** render as steps (render/slices.ts): a pass a step, for the start's first frame drawn ahead (View.warmDraws). */
+  *renderSteps(scene: THREE.Scene, camera: THREE.Camera, toCanvas = true): Steps {
+    const out = toCanvas ? null : this.b; // (drawn ahead: its last pass into a target, never the canvas, whose picture stays as it was)
     const r = this.renderer, t = this.tuning;
     r.setRenderTarget(this.scene);
     const t0 = performance.now();
     r.render(scene, camera);
     this.sceneMs = performance.now() - t0;
+    yield;
 
     // Bloom: the bright parts, at half resolution, blurred twice each way.
     const bloomOn = t.bloom.on && t.bloom.strength > 0;
     if (bloomOn) {
       const bw = this.bright.width, bh = this.bright.height;
       this.pass("bright", this.bright, u => { u.uScene.value = this.scene.texture; u.uThreshold.value = t.bloom.threshold; });
+      yield;
       for (let i = 0; i < 2; i++) {
         this.pass("blur", this.bloomB, u => { u.uSrc.value = this.bright.texture; u.uStep.value.set(1 / bw, 0); });
         this.pass("blur", this.bright, u => { u.uSrc.value = this.bloomB.texture; u.uStep.value.set(0, 1 / bh); });
+        yield;
       }
     }
     // The smooth effects layer, over a clear background, then a small blur each way.
@@ -227,18 +245,21 @@ export class Post {
       r.clear();
       r.render(this.fxScene, camera);
       r.setClearColor(col, alpha);
+      yield;
       const lw = this.low.x, lh = this.low.y; // (its blur as wide on screen as before, at the scene's resolution)
       this.pass("blur", this.fxB, u => { u.uSrc.value = this.fx.texture; u.uStep.value.set(0.6 / lw, 0); });
       this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / lh); });
+      yield;
     }
     const tilt = t.tiltShift.on && t.tiltShift.strength > 0;
-    this.pass("composite", tilt ? this.a : null, u => {
+    this.pass("composite", tilt ? this.a : out, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
       u.uFx.value = this.fx.texture; u.uFxOn.value = fxOn ? 1 : 0; u.uBroken.value = t.suspects.showBroken ? 1 : 0;
       this.setGrade(u);
     });
     if (!tilt) return;
+    yield;
     // The blur at the low resolution, before the browser scales the picture up.
     const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
@@ -247,22 +268,25 @@ export class Post {
       u.uSkyBlur.value = T.skyBlur ?? 1;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
-    this.pass("tilt", null, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
+    yield;
+    this.pass("tilt", out === this.b ? this.a : out, u => { common(u); u.uSrc.value = this.b.texture; u.uDir.value.set(0, 1); });
   }
 
   /** The grade's tint (a colour of luma 1), for the area moods to ease (render/mood.ts AreaMoods). */
   get gradeTint(): THREE.Vector3 { return this.mats.composite.uniforms.uGradeTint.value; }
 
-  /** The mood's grade (render/mood.ts) into the composite's uniforms; its tint worked out when the mood changes, not every frame. */
+  /** The mood's grade (render/mood.ts) into the composite's uniforms: its strength and the rest every frame (the pause page's
+   *  Spooky grade slider sets it in place), its tint worked out when the mood changes, not every frame. */
   private gradeOf: object | null | undefined;
   private setGrade(u: Record<string, THREE.IUniform>): void {
     const M = moodOf(this.tuning);
+    gradeInto(u.uGrade.value, M);
     if (M === this.gradeOf) return;
     this.gradeOf = M;
-    if (M?.grade) {
+    if (M) {
       // The tint, at the brightness it leaves: a colour of luma 1, so the grade shifts hue, not level.
       const [r, g, b] = hsv2rgb(M.gradeHue, M.gradeSat, 1).map((x: number) => x / 255), l = 0.3 * r + 0.55 * g + 0.15 * b;
-      u.uGrade.value.set(M.grade, M.gradeDesat, M.gradePivot, 0); u.uGradeTint.value.set(r / l, g / l, b / l);
-    } else u.uGrade.value.set(0, 0, 1, 0);
+      u.uGradeTint.value.set(r / l, g / l, b / l);
+    }
   }
 }

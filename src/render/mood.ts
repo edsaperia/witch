@@ -14,6 +14,13 @@ export function moodOf(t: Pick<Tuning, "light">): Mood | null {
   return L && L.mood === "spooky" ? L.spooky : null;
 }
 
+/** The mood's grade into the composite's uGrade (render/post.ts COMPOSITE): its strength, how far it drains colour, the luma
+ *  it fades out at; none (0, 0, 1) for the plain light or a grade of 0. Read every frame, as the pause page's Spooky grade slider
+ *  sets light.spooky.grade in place (Ed, 2026-10-21). The area moods ease only its tint (AreaMoods), never this. */
+export function gradeInto(out: { set(x: number, y: number, z: number, w: number): unknown }, M: Mood | null): void {
+  if (M?.grade) out.set(M.grade, M.gradeDesat, M.gradePivot, 0); else out.set(0, 0, 1, 0);
+}
+
 /** h, s, v (0 to 1) into rgb 0 to 1, as art/core.js hsv2rgb (its rounding to whole 255ths), times k, with no allocation. */
 export function hsvInto(out: { set(r: number, g: number, b: number): unknown }, h: number, s: number, v: number, k = 1): void {
   h = ((h % 1) + 1) % 1; s = Math.max(0, Math.min(1, s)); v = Math.max(0, Math.min(1, v));

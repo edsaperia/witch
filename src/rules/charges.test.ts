@@ -62,16 +62,18 @@ describe("charges and leaps go further (Ed, 2026-10-06)", () => {
   it("hurts whoever it touches on the way, once each: a party animal in its lane, and her once a charge", () => {
     const t = TUNING, g = quiet(t), boar = pick(g, "boar", 2, 25, 0), mate = pick(g, "hare", 1, 8, 0.5, true), W = g.witches[0], hp0 = W.health.hp;
     mate.anchorX = mate.x; mate.anchorZ = mate.z;
-    let hits = 0, last = W.health.hp, charging = false, firstEnd = -1;
-    run(g, 6, () => {
+    // (a pack's charge comes after its pack's tell, by when her hare may have run in at it, the lane missing her: so till its second)
+    let hits = 0, most = 0, last = W.health.hp, charging = false, was = false;
+    run(g, 10, () => {
       if (boar.charge && boar.charge.from !== undefined && g.clock.time >= boar.charge.from) charging = true;
-      if (charging && !boar.charge && firstEnd < 0) firstEnd = g.clock.time;
-      if (firstEnd < 0 && W.health.hp < last) hits++;
+      if (boar.charge && !was) hits = 0;
+      was = !!boar.charge;
+      if (boar.charge && W.health.hp < last) most = Math.max(most, ++hits);
       last = W.health.hp;
     });
     expect(charging).toBe(true);
     expect(mate.hp ?? Infinity).toBeLessThan(1e9); // (struck: its health set below its whole)
-    expect(hits).toBeLessThanOrEqual(1); // (one charge, one hit: the grace, #197)
+    expect(most).toBeLessThanOrEqual(1); // (one charge, one hit: the grace, #197)
     expect(W.health.hp).toBeLessThan(hp0);
   }, 60000);
 

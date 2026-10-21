@@ -85,6 +85,9 @@ export class BeachView {
 
   constructor(private scene: THREE.Scene, private assets: AssetLibrary, private ground: Ground, private mpp: number, private light: { lightFloor: number; lightTint: number; lightRim: number }) { this.edge = new BeachEdgeView(scene, mpp); }
 
+  /** Another night's ground (View.setGame): gone from the last one's beach, the new island's found as she nears it. */
+  setGround(ground: Ground): void { this.leave(); this.gazing = false; this.at = null; this.decor = null; this.items = []; this.nextHeart = 0; this.turn = 0; this.ground = ground; }
+
   /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. */
   update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number): boolean {
     if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: beachOf(g.map.bounds, g.tuning) }; this.decor = null; }
@@ -95,8 +98,8 @@ export class BeachView {
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
     this.drawDecor(g, b, visible, camera);
-    (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style, this.light)).update(g, b, time); // (off the east coast: render/dolphins.ts)
-    (this.kraken ??= new KrakenView(this.scene, this.mpp, this.assets.style, this.light)).update(g, b, time); // (off the west coast: render/kraken.ts)
+    (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style, this.light, job => this.assets.oneOff(job))).update(g, b, time); // (off the east coast: render/dolphins.ts)
+    (this.kraken ??= new KrakenView(this.scene, this.mpp, this.assets.style, this.light, job => this.assets.oneOff(job))).update(g, b, time); // (off the west coast: render/kraken.ts)
     // The spot she's nearest (they're kilometres apart round the coast, so only ever one in view).
     let spot = null as NonNullable<Game["beach"]>[number] | null, sd = Infinity;
     for (const s of g.beach ?? []) { const d = (s.x - w.x) ** 2 + (s.z - w.z) ** 2; if (d < sd) { sd = d; spot = s; } }

@@ -24,6 +24,9 @@ export class CombatLight {
   private areaAt = -Infinity;
   private wildNow = 0;
 
+  /** Another night (View.setGame): eased from the start again. */
+  reset(): void { this.wild = 0; this.fight = 0; this.lastFight = -Infinity; this.at = -1; this.areaAt = -Infinity; this.wildNow = 0; }
+
   /** Advance by the game's clock (seconds of play: paused with it, the same frame by frame in a test). */
   update(g: Game, C: CombatLightTuning, ht: number): void {
     const dt = this.at < 0 ? 0 : Math.min(0.25, Math.max(0, ht - this.at));

@@ -3,7 +3,8 @@ import { creaturesAshore, lakeKnobs, onLake, roundLakes } from "./lakes";
 import { stepWildWatch, type WildEntry } from "./wildWatch";
 import { stepHunts } from "./hunt";
 import { wakeOnInvites } from "./inviteWakes";
-import { MOVEMENT } from "./movement";
+import { MOVEMENT, resetFight } from "./movement";
+import { useData } from "./combat/hits";
 import { nightFor, type NightSet } from "./musicSet";
 import { bodyRadius, spaceOut } from "./spacing";
 import { type QuestEvent } from "./quest";
@@ -37,6 +38,7 @@ import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, star
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, stepSigilButton } from "./sigilButton";
+import { keepInBedroom, stepWake, WAKE_DEFAULT, type WakeState } from "./wakeUp";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
@@ -149,6 +151,9 @@ export interface Game {
   waveEvents: WaveEvent[];
   /** This frame's leash events (several steps' worth, or none), for the view: `leash.events` holds only the last step's. */
   leashEvents: LeashEvent[];
+  /** The night over and another on in its place (app/night.ts endNight, marked only under ?debug=sail): stepping it means a reader
+   *  was left on the old night, and throws. */
+  disposed?: boolean;
   /** The creatures by home area (rebuilt when one settles somewhere new). */
   byArea?: Map<string, Creature[]> | null;
   /** Game time of the last look for cleared areas (rules/clear.ts; game.ts stepClear). */
@@ -196,6 +201,10 @@ export interface Game {
   tally: { berries: number; invites: number; evolved: number; /** soundsystems a legend stamped on as it turned angry (legends.stomp) */ stomps?: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
+  /** The new opening's wake-up in her bedroom (rules/wakeUp.ts): set as the chart's dive lands, the curtains' state kept after. */
+  wake?: WakeState;
+  /** The island's built (the night's art drawn; main.ts sets it): what the wake-up's curtains wait on. */
+  islandReady?: boolean;
 }
 
 /** A soundsystem destroyed ("home" for the dancefloor's ring): the next wave `cut` seconds sooner,
@@ -242,8 +251,10 @@ export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Wit
   return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
-export function newGame(seed: number, tuning: Tuning, players = 1, prep?: MapPrep): Game {
-  const map = prep ? hydrateMap(seed, tuning, prep) : generateMap(seed, tuning); // (prep: its heavy parts made already, in a worker while the chart flew: app/mapPrep.ts)
+export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPrep | ForestMap): Game {
+  resetFight(); useData(COMBAT); // (the last night's fight settings out: a night starts as a fresh page's)
+  // (ready: the map made already for this seed and tuning (app/mapPrep.ts readyMap), or its heavy parts, made in a worker while the chart flew)
+  const map = !ready ? generateMap(seed, tuning) : Array.isArray((ready as MapPrep).neighbours) ? hydrateMap(seed, tuning, ready as MapPrep) : (ready as ForestMap);
   const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
@@ -278,6 +289,7 @@ const ONE_SHOT = ["toggleMode", "sigil", "place", "cycle", "spell", "castParty",
  *  (at most a few, so a hitch doesn't run away), with the held controls each step and each
  *  one-shot press on the first step that comes. */
 export function stepGame(g: Game, c: Controls, realDt: number): void {
+  if (g.disposed) throw new Error("stepGame: a night that has ended (a reader left on the old night)");
   if (c.cycleSpeakers) g.speakers = g.speakers.map(nextSpeakerState); // a debug key: even while paused
   const P = g.pending as Record<string, unknown>;
   for (const k of ONE_SHOT) if (c[k]) P[k] = true;
@@ -286,6 +298,7 @@ export function stepGame(g: Game, c: Controls, realDt: number): void {
   // This frame's combat and knockout events (several steps' worth, or none), for the view.
   g.combat.events = []; g.koEvents = []; g.questEvents = []; g.waveEvents = []; g.leashEvents = [];
   for (const w of g.witches) w.invites.events = [];
+  if (g.wake) g.wake.events = [];
   g.acc = Math.min(g.acc + Math.min(realDt, MAX_STEP), MAX_STEP + STEP);
   while (g.acc >= STEP - 1e-9) {
     g.acc -= STEP;
@@ -458,9 +471,14 @@ function fixedStep(g: Game, controls: Controls): void {
   // The party spell (Ed, 2026-10-06): until it's cast, and while she casts it, she stands behind the decks: no moving,
   // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
   // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
+  // Waking up in her bedroom (the new opening, rules/wakeUp.ts): the alarm, the snoozes, the stretch, then walking the bedroom
+  // with the spell not yet cast (the curtains cast it, once the island's ready).
+  if (g.wake) c = stepWake(g, c, ht, !!g.islandReady, t.opening?.wake ?? WAKE_DEFAULT);
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
-  if (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time)) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
+  // (Woken in her bedroom, waiting for her to reach her decks: neither holds her on the way, the house's slow time making them
+  // minutes; seated there, E having cast it, both hold her as ever.)
+  if ((!g.wake || g.witch.seated) && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const W = g.witches[0];
   // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
   if (c.spell && !W.ko && castSpell(g.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
@@ -510,6 +528,7 @@ function fixedStep(g: Game, controls: Controls): void {
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
   W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells, t)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  if (g.wake) keepInBedroom(g); // (the bedroom's door shut till the curtains open: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, riseCooldownOf(W.spells, t), room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
   if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, (t.cooldown?.rise ?? 0) * plainK, room); // (taken off: its share; not her first step off the decks)

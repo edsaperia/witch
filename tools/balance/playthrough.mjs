@@ -9,7 +9,7 @@
 // to stdout (and --json out.json).
 //   node tools/balance/playthrough.mjs [--seed 123] [--minutes 15] [--carry 4] [--stuck 30] [--json out.json]
 //   The summary's timing: the rules' milliseconds a step (mean, p50, p99, p999, the worst, how many over 8 ms);
-//   --slow 1 prints each step over 30 ms as it happens; --packs 1 plays it with pack combat on (combat.packs.on, rules/combat/packs.ts).
+//   --slow 1 prints each step over 30 ms as it happens; --packs 0 plays it with pack combat off (combat.packs.on, rules/combat/packs.ts; on by default since Ed, 2026-10-20).
 //   Looking into one: --watch 316,613 [--from 590] prints those creatures each second (position, siege,
 //   target, timers); --inspect 356 prints their state at the end. ~5 s of wall time a game minute.
 import { openRules, arg } from "./lib.mjs";
@@ -22,7 +22,7 @@ const { newGame, stepGame, STEP, affectionOf } = await load("/src/rules/game.ts"
 const { cellKey } = await load("/src/rules/party.ts");
 const { runeNear } = await load("/src/rules/creatureStates.ts");
 
-const g = newGame(SEED, arg("packs") ? withTuning({ combat: { ...TUNING.combat, packs: { on: true } } }) : TUNING), // (--packs 1: pack combat on, rules/combat/packs.ts)
+const g = newGame(SEED, arg("packs") === "0" ? withTuning({ combat: { ...TUNING.combat, packs: { on: false } } }) : TUNING), // (--packs 0: pack combat off, rules/combat/packs.ts)
   W = g.witches[0], A = () => affectionOf(g);
 g.clock.paused = false;
 const odd = [], seen = new Set(), note = (key, text) => { if (seen.has(key)) return; seen.add(key); odd.push({ at: +g.clock.time.toFixed(1), text }); };

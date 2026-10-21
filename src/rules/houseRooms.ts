@@ -11,15 +11,16 @@ import { hatButton, leaveHat, wearing } from "./hat";
 import type { Witch } from "./game";
 import type { LeashEvent } from "./leash";
 
-/** A rectangle of floor, metres from the hub's centre (x east, z south). */
+/** A rectangle of floor on the house's plan (config/house.json): metres from the hub's centre along the plan's axes (x, z: east and
+ *  south, turned by the plan's `turn`: fromPlan). */
 export interface Rect { x0: number; x1: number; z0: number; z1: number }
 /** What E does at an object (config/house.json `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "say"; line: string };
+  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "say"; line: string };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
 export interface HouseConfig {
-  on: boolean; wall: number; reach: number;
+  on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;
   rooms: (Rect & { id: string; label: string })[]; corridors: (Rect & { id: string })[];
   objects: HouseObject[]; bed: { hold: number };
 }
@@ -32,43 +33,81 @@ export interface HouseState { bedFrom?: number; hats?: string[]; /** she's slept
 /** The hub's centre in the world, for the rooms' metres. */
 interface At { x: number; z: number }
 
-/** The rooms' and corridors' floor in the world, each pulled in by `inset` metres (her rail's keep-in). */
-export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): Rect[] {
-  return [...H.rooms, ...H.corridors].map(r => ({ x0: at.x + r.x0 + inset, x1: at.x + r.x1 - inset, z0: at.z + r.z0 + inset, z1: at.z + r.z1 - inset }));
+/** The house's plan turned (Ed, 2026-10-21: "more of an isometric view"): the rooms, corridors and objects are laid out square on
+ *  a plan turned `turn` degrees about the hub's centre (house.json; 45: each room's floor a diamond on the screen, two of its walls
+ *  behind it, as the creator's bedroom), while the hub and balcony, and her place and her keys, stay the world's. Plan to world:
+ *  the plan's x runs north-east and its z south-east at 45. */
+export function fromPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {
+  const a = (turn * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+  return { x: at.x + x * c + z * s, z: at.z - x * s + z * c };
 }
-const inRect = (r: Rect, x: number, z: number, pad = 0) => x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad;
-/** On a room's or a corridor's floor (`pad` metres past its edges). */
-export const onRoomFloor = (rects: readonly Rect[], x: number, z: number, pad = 0): boolean => rects.some(r => inRect(r, x, z, pad));
-/** The nearest point to (x, z) on any of the rooms' and corridors' floors, and how far it is. */
-export function nearestRoomFloor(rects: readonly Rect[], x: number, z: number): { x: number; z: number; d: number } | null {
-  let best: { x: number; z: number; d: number } | null = null;
-  for (const r of rects) {
-    const px = Math.min(r.x1, Math.max(r.x0, x)), pz = Math.min(r.z1, Math.max(r.z0, z)), d = Math.hypot(px - x, pz - z);
-    if (!best || d < best.d) best = { x: px, z: pz, d };
-  }
-  return best;
+/** World to plan: (x, z) in the world as metres on the house's plan from the hub's centre. */
+export function toPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 0): { x: number; z: number } {
+  const a = (turn * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a), dx = x - at.x, dz = z - at.z;
+  return { x: dx * c - dz * s, z: dx * s + dz * c };
 }
 
-/** How far (x, z) is from an object's footprint (0 on it). */
-const fromObject = (o: HouseObject, at: At, x: number, z: number) => {
-  const dx = Math.max(0, Math.abs(x - (at.x + o.x)) - o.w / 2), dz = Math.max(0, Math.abs(z - (at.z + o.z)) - o.d / 2);
+/** The rooms' and corridors' floor: the hub's centre in the world, the plan's turn, and each rectangle on the plan. */
+export interface RoomFloor { at: At; turn: number; rects: Rect[] }
+/** The rooms' and corridors' floor at a hub, each rectangle pulled in by `inset` metres (her rail's keep-in). */
+export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
+  return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, rects: [...H.rooms, ...H.corridors].map(r => ({ x0: r.x0 + inset, x1: r.x1 - inset, z0: r.z0 + inset, z1: r.z1 - inset })) };
+}
+const inRect = (r: Rect, x: number, z: number, pad = 0) => x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad;
+/** On a room's or a corridor's floor (`pad` metres past its edges), standing at (x, z) in the world. */
+export const onRoomFloor = (f: RoomFloor, x: number, z: number, pad = 0): boolean => { const p = toPlan(f.at, x, z, f.turn); return f.rects.some(r => inRect(r, p.x, p.z, pad)); };
+/** The nearest point to (x, z) on any of the rooms' and corridors' floors (in the world), and how far it is. */
+export function nearestRoomFloor(f: RoomFloor, x: number, z: number): { x: number; z: number; d: number } | null {
+  const p = toPlan(f.at, x, z, f.turn);
+  let best: { x: number; z: number; d: number } | null = null;
+  for (const r of f.rects) {
+    const px = Math.min(r.x1, Math.max(r.x0, p.x)), pz = Math.min(r.z1, Math.max(r.z0, p.z)), d = Math.hypot(px - p.x, pz - p.z);
+    if (!best || d < best.d) best = { x: px, z: pz, d };
+  }
+  return best && { ...fromPlan(f.at, best.x, best.z, f.turn), d: best.d };
+}
+/** A room's floor (house.json's room by id), kept to it: (x, z) in the world, put back inside its walls `inset` metres in; null without it. */
+export function keepInRoom(at: At, room: string, x: number, z: number, inset = 0, H = HOUSE_ROOMS): { x: number; z: number; inside: boolean } | null {
+  const r = H.rooms.find(q => q.id === room);
+  if (!r) return null;
+  const p = toPlan(at, x, z, H.turn ?? 0), px = Math.min(r.x1 - inset, Math.max(r.x0 + inset, p.x)), pz = Math.min(r.z1 - inset, Math.max(r.z0 + inset, p.z));
+  return px === p.x && pz === p.z ? { x, z, inside: true } : { ...fromPlan(at, px, pz, H.turn ?? 0), inside: false };
+}
+/** Where on the plan's (x, z) an object's middle is, in the world (or any point given on the plan relative to it: dx along its w, dz along its d). */
+export const objectWorld = (o: HouseObject, at: At, dx = 0, dz = 0, H = HOUSE_ROOMS): { x: number; z: number } => fromPlan(at, o.x + dx, o.z + dz, H.turn ?? 0);
+
+/** A spot `by` metres in front of an object, in the world: off the side of it that faces into its room (towards the room's middle,
+ *  along the plan's nearer axis: a wall's piece faces out from its wall), where she stands to use it. */
+export function objectFront(o: HouseObject, at: At, by = 0.5, H = HOUSE_ROOMS): { x: number; z: number } {
+  const r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : -o.x, dz = r ? (r.z0 + r.z1) / 2 - o.z : -o.z;
+  return Math.abs(dx) > Math.abs(dz) ? objectWorld(o, at, Math.sign(dx) * (o.w / 2 + by), 0, H) : objectWorld(o, at, 0, Math.sign(dz || 1) * (o.d / 2 + by), H);
+}
+
+/** How far (x, z) in the world is from an object's footprint (0 on it), the hub's centre at `at`, measured on the house's plan
+ *  (rules/stations.ts reads it too: the one place an object's place in the world is worked out for nearness). */
+export const fromObject = (o: HouseObject, at: At, x: number, z: number, H = HOUSE_ROOMS) => {
+  const p = toPlan(at, x, z, H.turn ?? 0), dx = Math.max(0, Math.abs(p.x - o.x) - o.w / 2), dz = Math.max(0, Math.abs(p.z - o.z) - o.d / 2);
   return Math.hypot(dx, dz);
 };
-/** The object she's at, standing at (x, z): the nearest within reach of its edge, or null. */
+/** A spot `gap` metres in front of an object, the hub's centre at `at`: where she'd stand to use it (tests, tools; objectFront). */
+export const objectFrontAt = (o: HouseObject, at: At, gap: number): { x: number; z: number } => objectFront(o, at, gap);
+/** Whether the deck is the house with its rooms (a floor to walk, objects to be at). */
+export const hasRooms = (d: { house?: { rooms: RoomFloor | null } } | null | undefined): boolean => !!d?.house?.rooms?.rects.length;
+/** The object she's at, standing at (x, z) in the world: the nearest within reach of its edge, or null. */
 export function objectAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseObject | null {
   let best: HouseObject | null = null, bd = H.reach;
-  for (const o of H.objects) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
+  for (const o of H.objects) { const d = fromObject(o, at, x, z, H); if (d <= bd) { bd = d; best = o; } }
   return best;
 }
 
 /** The hats' floor's spells, in slot order: every built hat but "none" (rules/spells.ts). */
 export const HAT_FLOOR = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id as string);
-/** The hats' floor's slots in the world: its spells laid in two rows across it. */
+/** The hats' floor's slots in the world: its spells laid in two rows across it (on the plan). */
 export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
   const o = H.objects.find(q => q.use.kind === "hats");
   if (!o) return [];
   const n = HAT_FLOOR.length, per = Math.ceil(n / 2), out: { x: number; z: number }[] = [];
-  for (let i = 0; i < n; i++) { const row = i < per ? 0 : 1, col = row ? i - per : i, cols = row ? n - per : per; out.push({ x: at.x + o.x - o.w / 2 + (o.w * (col + 0.5)) / cols, z: at.z + o.z + (row ? 0.45 : -0.45) * o.d }); }
+  for (let i = 0; i < n; i++) { const row = i < per ? 0 : 1, col = row ? i - per : i, cols = row ? n - per : per; out.push(fromPlan(at, o.x - o.w / 2 + (o.w * (col + 0.5)) / cols, o.z + (row ? 0.45 : -0.45) * o.d, H.turn ?? 0)); }
   return out;
 }
 /** The hats lying on the hats' floor (each slot's spell, "" when empty), laid out the first time: every one of hers but the one

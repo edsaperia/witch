@@ -74,3 +74,15 @@ describe("the link's world (src/app/linkParams.ts)", () => {
     expect(on("dodge=0")).toBe("");
   });
 });
+
+describe("each load's tuning is its own (docs/plans/sail-without-reload.md)", () => {
+  it("a whole copy: what one night's knobs change, deep in it, reaches neither the file nor the next night's", () => {
+    g.localStorage = fakeStorage({}).store;
+    const pulse = TUNING.leyLines.pulseSpeed, vol = TUNING.music.volume;
+    const a = tuningFromLink(new URLSearchParams("")).tuning;
+    a.leyLines.pulseSpeed = 7; a.music.volume = 0.123; a.partyObjects.generated = !TUNING.partyObjects.generated;
+    expect(TUNING.leyLines.pulseSpeed).toBe(pulse); expect(TUNING.music.volume).toBe(vol);
+    const b = tuningFromLink(new URLSearchParams("")).tuning;
+    expect(b.leyLines.pulseSpeed).toBe(pulse); expect(b.music.volume).toBe(vol); expect(b.partyObjects.generated).toBe(TUNING.partyObjects.generated);
+  });
+});

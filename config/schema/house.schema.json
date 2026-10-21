@@ -4,6 +4,10 @@
     "on": {
       "type": "boolean"
     },
+    "turn": {
+      "type": "number",
+      "minimum": 0
+    },
     "wall": {
       "type": "number",
       "minimum": 0
@@ -119,6 +123,7 @@
                   "creator",
                   "hats",
                   "bed",
+                  "curtains",
                   "zoo",
                   "say"
                 ]
@@ -184,6 +189,7 @@
   },
   "required": [
     "on",
+    "turn",
     "wall",
     "reach",
     "rooms",

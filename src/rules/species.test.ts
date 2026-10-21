@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING } from "./tuning";
+import { TUNING, type Tuning } from "./tuning";
 import { attackOf, guardOf } from "./combat";
 import { ARENA_PRESETS, setupArena } from "./arena";
 import type { Creature } from "./creatures";
@@ -10,8 +10,8 @@ import type { Creature } from "./creatures";
 // Ed's species pass (2026-10-05): a fight profile for every species, and the new signature moves.
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out. */
-function quiet(seed = 77): Game {
-  const g = newGame(seed, TUNING);
+function quiet(seed = 77, t: Tuning = TUNING): Game {
+  const g = newGame(seed, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -147,7 +147,7 @@ describe("fight profiles for every species (Ed's species pass)", () => {
   }, 120000);
 
   it("has a snail leave a slime trail that slows her", () => {
-    const g = quiet(), W = g.witches[0];
+    const g = quiet(77, TUNING), W = g.witches[0];
     pick(g, "snail", 2, 12, 0);
     let trails = 0;
     run(g, 8, () => { trails = Math.max(trails, g.combat.trails.length); });
