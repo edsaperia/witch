@@ -2910,6 +2910,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 //   laugh        social: leaning back laughing, doubled over, a slap of the thigh
 //   drink        social: a cup in her hand; a sip; chatting; raised in a toast (to clink a partner's)
 //   run          running about on foot, her broom in her far hand
+// On foot indoors, no broom: idle (standing still, breathing) and walk (a six-frame walk), drawn in her headings too.
 //   sitGround    resting: sitting on the ground, leaning back on her hands, her broom lying beside her
 //   stargaze     resting: lying back, hands behind her head, knees up, a foot tapping
 //   conga        paired: hands on the shoulders of the witch ahead, kicking out to the sides
@@ -2920,7 +2921,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
 // (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 const WITCH_FOOT_POSES = {
-  stand: { frames: 3, fps: 3 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
+  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
   headbang: { frames: 2, fps: 4, party: "dance" }, jump: { frames: 3, fps: 5, party: "dance" },
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
@@ -2957,6 +2958,15 @@ const Q = Math.PI / 2;
 const LIMBO_BAR = .82;
 const FOOT_FRAMES = {
   stand: [0, 1, 2].map(f => ({ breathe: [0, .006, .012][f], sway: [0, .02, .035][f], free: [.04, .5 + [0, .006, .012][f], .18], hand: "rest", broom: UPRIGHT })),
+  // on foot indoors (Ed, 2026-10-21: "we can give her standing and walking art"; the treehouse's rooms, render/view/witch.ts): no
+  // broom, her hands loose at her sides; idle breathing, and a walk of six frames, each foot in turn planted and swung through,
+  // her arms swinging against her legs and her body dipping a little at each step
+  idle: [0, 1, 2].map(f => ({ broom: null, breathe: [0, .006, .012][f], sway: [0, .015, .03][f], tilt: [0, .05, .1][f],
+    feet: [[-.01, .07, -.09], [.04, .07, .09]], free: [.03, .43 + [0, .006, .012][f], .17], hand: "rest", far: [.01, .43 + [0, .006, .012][f], -.17], farHand: "rest" })),
+  walk: [0, 1, 2, 3, 4, 5].map(f => { const p = f / 6 * 2 * Math.PI, c = Math.cos(p), lift = q => .07 + Math.max(0, -Math.sin(q)) * .1;
+    return { broom: null, bend: .06, crouch: .05 * Math.abs(c), roll: .05 * Math.sin(p), tilt: .12 * Math.sin(p), sway: .02 + .015 * Math.abs(Math.sin(p)), look: -.02,
+      feet: [[.02 - .15 * c, lift(p + Math.PI), -.09], [.02 + .15 * c, lift(p), .09]],
+      free: [.03 - .13 * c, .45, .17], hand: "rest", far: [.03 + .13 * c, .45, -.17], farHand: "rest" }; }),
   land: [
     { crouch: .2, hop: .01, broom: { astride: true }, sway: .05 },                                                 // astride the dipped broom, feet touching down
     { crouch: .1, bend: .1, broom: { binding: [-.28, .26, -.08], dir: [.6, .5, -.06] }, legUp: [.18, .24, .12], sway: .03, free: [.2, .58, .2], hand: "rest" }, // swinging a leg over
@@ -3349,6 +3359,7 @@ function liftShadow(sp, model, project) {
   if (!sh) return;
   const [cx, , cz] = sh.c, rx = sh.r[0], rz = sh.r[2], pts = [[cx - rx, cz], [cx + rx, cz], [cx, cz - rz], [cx, cz + rz], [cx - rx, cz - rz], [cx + rx, cz + rz], [cx - rx, cz + rz], [cx + rx, cz - rz]].map(([x, z]) => project([x, .005, z]));
   const x0 = Math.floor(Math.min(...pts.map(p => p[0]))) - 1, x1 = Math.ceil(Math.max(...pts.map(p => p[0]))) + 1, y0 = Math.floor(Math.min(...pts.map(p => p[1]))) - 1, y1 = Math.ceil(Math.max(...pts.map(p => p[1]))) + 1;
+  for (let y = Math.max(0, y0 - 2); y <= Math.min(sp.h - 1, y1 + 2); y++) for (let x = Math.max(0, x0 - 2); x <= Math.min(sp.w - 1, x1 + 2); x++) if (sp.m[y * sp.w + x] === M.NOSE && y > project([cx, .2, cz])[1]) sp.m[y * sp.w + x] = 0; // (turned up or down the screen, a sliver of it fell outside its box; only below her knees, so never her mouth)
   for (let y = Math.max(0, y0); y <= Math.min(sp.h - 1, y1); y++) for (let x = Math.max(0, x0); x <= Math.min(sp.w - 1, x1); x++) if (sp.m[y * sp.w + x] === M.NOSE) sp.m[y * sp.w + x] = 0;
   sp.anchors = { ...(sp.anchors ?? {}), ground: project([cx, 0, cz]), shadow: [x1 - x0 - 2, y1 - y0 - 2] };
 }
