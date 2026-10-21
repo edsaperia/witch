@@ -11,7 +11,7 @@ const root = path.join(__dirname, "../..");
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto("http://localhost:4183/?quick=1", { waitUntil: "load" });
+    await page.goto("http://localhost:4183/?quick=1&opening=old", { waitUntil: "load" });
     await page.waitForSelector("#creator-start", { timeout: 60000 });
     await page.waitForTimeout(1200);
     const shots = [];

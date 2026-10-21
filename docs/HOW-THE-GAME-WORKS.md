@@ -16,7 +16,7 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
 
 ## 2. How a run plays out
 
-0. **The new opening (being built; off by default).** With `?opening=chart` (or the tuning's `opening.chart`), a plain first load (its link naming no seed or island) opens on the **sea chart** instead of the creator (Ed, 2026-10-20; `app/opening.ts`, the storyboard at previews/ed/opening-mock/ on claude/ed-shots).
+0. **The new opening (on by default since 2026-10-21; `?opening=old` keeps the old start).** A plain first load (its link naming no seed or island) opens on the **sea chart** instead of the creator (Ed, 2026-10-20; `app/opening.ts`, the storyboard at previews/ed/opening-mock/ on claude/ed-shots).
    - A first game has only home to sail to: what's unlocked is home and what she's found.
    - The chart's corner holds **What's new** and **Options**. The zoo is reached through the bestiary's book in the treehouse.
    - Home's night is made under the chart, and its art is drawn meanwhile.
