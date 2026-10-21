@@ -10,7 +10,7 @@ const version = process.env.WITCH_VERSION ? `v${process.env.WITCH_VERSION}` : "d
 const sha = (process.env.WITCH_SHA ?? "").slice(0, 7);
 // What the drawn sprite sets depend on (the art code, how sets are packed, the area types' own
 // numbers): browsers keep drawn sets under this hash, so a build that changes none of it reuses them.
-const artFiles = [...readdirSync("art").filter(f => f.endsWith(".js")).map(f => `art/${f}`), "src/render/artBuild.ts", "src/rules/map.ts", "src/rules/random.ts", "config/area-types.json"];
+const artFiles = [...readdirSync("art").filter(f => f.endsWith(".js")).map(f => `art/${f}`), "src/render/artBuild.ts", "src/render/homeArt.ts", "src/rules/map.ts", "src/rules/random.ts", "config/area-types.json"];
 // Hand-drawn sprites (art/overrides/<species>/<pose>.png, src/render/overrides.ts): read here, given to the game as
 // virtual:art-overrides (each one's size and RGBA pixels), and part of the art's hash.
 const OVERRIDES = "art/overrides";

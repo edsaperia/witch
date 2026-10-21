@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, poseOf, type Controls } from "./game";
 import { deckOf, onFloor, onTreehouse } from "./treehouse";
-import { HOUSE_ROOMS } from "./houseRooms";
+import { HOUSE_ROOMS, toPlan } from "./houseRooms";
 import { bedside, wakeInBedroom } from "./opening";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -12,10 +12,10 @@ const bedroom = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
 
 describe("waking in her bedroom", () => {
   it("is beside her bed, in the bedroom, on the house's floor", () => {
-    const g = newGame(123, TUNING), at = bedside(g)!, th = g.map.treehouse;
+    const g = newGame(123, TUNING), at = bedside(g)!, p = toPlan(g.map.treehouse, at.x, at.z); // (on the house's turned plan)
     expect(at).not.toBeNull();
-    expect(at.x - th.x).toBeGreaterThan(bedroom.x0); expect(at.x - th.x).toBeLessThan(bedroom.x1);
-    expect(at.z - th.z).toBeGreaterThan(bedroom.z0); expect(at.z - th.z).toBeLessThan(bedroom.z1);
+    expect(p.x).toBeGreaterThan(bedroom.x0); expect(p.x).toBeLessThan(bedroom.x1);
+    expect(p.z).toBeGreaterThan(bedroom.z0); expect(p.z).toBeLessThan(bedroom.z1);
     expect(onFloor(deckOf(g.map, g.tuning)!, at.x, at.z)).toBe(true);
   });
 
@@ -37,8 +37,9 @@ describe("waking in her bedroom", () => {
     const x0 = g.witch.x;
     for (let i = 0; i < 1 / STEP; i++) stepGame(g, { ...idle, moveX: -1 }, STEP);
     expect(g.witch.x).toBeLessThan(x0 - 1);
-    for (let i = 0; i < 4 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (into the bedroom's back wall)
-    expect(g.witch.z - g.map.treehouse.z).toBeGreaterThan(bedroom.z0 - 0.01);
+    for (let i = 0; i < 4 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (up the screen: into the bedroom's back corner)
+    const p = toPlan(g.map.treehouse, g.witch.x, g.witch.z);
+    expect(p.z).toBeGreaterThan(bedroom.z0 - 0.01); expect(p.x).toBeLessThan(bedroom.x1 + 0.01);
     expect(onTreehouse(g)).toBe(true);
   });
 });

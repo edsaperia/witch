@@ -17,7 +17,7 @@
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
-import { floorRects, HOUSE_ROOMS, nearestRoomFloor, onRoomFloor, type Rect } from "./houseRooms";
+import { floorRects, HOUSE_ROOMS, nearestRoomFloor, onRoomFloor, type RoomFloor } from "./houseRooms";
 
 /** The deck in the world: its middle (x, z), radius, floor height (m over the ground there), the rail's keep-in, the map table, the decks' arc and her seat. */
 export interface Deck {
@@ -28,9 +28,10 @@ export interface Deck {
   seat: { x: number; z: number };
   /** The house (treehouse.house.on): the balcony hung off the hub's south side (its centre and radius), the magic circle on the hub's
    *  floor, how long the landing onto the balcony takes, and the fall off its open rim (on: with no broom; time: seconds to the ground). */
-  house?: { balcony: { x: number; z: number; r: number }; circle: { x: number; z: number; r: number }; landTime: number; fall: { on: boolean; time: number };
-    /** The placeholder rooms' and corridors' floor (rules/houseRooms.ts, config/house.json; Ed, 2026-10-19), inside their walls; none with them off. */
-    rooms: Rect[] };
+  house?: { balcony: { x: number; z: number; r: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; fall: { on: boolean; time: number };
+    /** The placeholder rooms' and corridors' floor (rules/houseRooms.ts, config/house.json; Ed, 2026-10-19), inside their walls, on
+     *  the house's turned plan; null with them off. */
+    rooms: RoomFloor | null };
 }
 
 const DEG = Math.PI / 180;
@@ -39,7 +40,7 @@ const DEG = Math.PI / 180;
 export function deckOf(map: { treehouse: { x: number; z: number } }, t: Tuning): Deck | null {
   const { x, z } = map.treehouse, H = t.treehouse.house, D = t.treehouse.deck;
   if (H?.on) return { x, z, r: H.hub, h: H.height, grace: H.grace, rail: H.rail, table: { r: H.table, use: H.tableUse }, decks: { ...H.decks },
-    seat: { x, z: z + H.balcony.out + H.seat }, house: { balcony: { x, z: z + H.balcony.out, r: H.balcony.r }, circle: { x, z: z + H.circle.out, r: H.circle.r }, landTime: H.landTime, fall: { on: !!H.fall.on, time: H.fall.time }, rooms: HOUSE_ROOMS.on ? floorRects({ x, z }, H.rail) : [] } };
+    seat: { x, z: z + H.balcony.out + H.seat }, house: { balcony: { x, z: z + H.balcony.out, r: H.balcony.r }, circle: { x, z: z + H.circle.out, r: H.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, fall: { on: !!H.fall.on, time: H.fall.time }, rooms: HOUSE_ROOMS.on ? floorRects({ x, z }, H.rail) : null } };
   if (!D?.on) return null;
   return { x, z, r: D.radius, h: D.height, grace: D.grace, rail: D.rail, table: { r: D.table, use: D.tableUse }, decks: { ...D.decks }, seat: { x, z: z + D.seat } };
 }
@@ -54,7 +55,7 @@ export function onBalcony(d: Deck, x: number, z: number, pad = 0): boolean {
 }
 
 /** The whole floor of the house (the hub, the balcony and the rooms and corridors off it), `pad` metres past its edges; or the deck's disc. */
-export const onFloor = (d: Deck, x: number, z: number, pad = 0): boolean => Math.hypot(x - d.x, z - d.z) <= d.r + pad || onBalcony(d, x, z, pad) || (!!d.house?.rooms.length && onRoomFloor(d.house.rooms, x, z, pad + d.rail));
+export const onFloor = (d: Deck, x: number, z: number, pad = 0): boolean => Math.hypot(x - d.x, z - d.z) <= d.r + pad || onBalcony(d, x, z, pad) || (!!d.house?.rooms && onRoomFloor(d.house.rooms, x, z, pad + d.rail));
 
 /** Flying at treetop height over the balcony: she lands on it (Ed, 2026-10-14: "to enter the treehouse you fly directly onto a balcony"). */
 export const flyOnto = (d: Deck, x: number, z: number): boolean => onBalcony(d, x, z);
@@ -126,7 +127,7 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
   // In the rooms and corridors off the hub (rules/houseRooms.ts): their walls keep her in, and the hub's wall lets her through
   // where a corridor meets it.
   const rooms = d.house!.rooms;
-  if (!inHub && !inBal && rooms.length && onRoomFloor(rooms, x, z)) return { x, z, off: false };
+  if (!inHub && !inBal && rooms && onRoomFloor(rooms, x, z)) return { x, z, off: false };
   if (inHub || inBal) {
     let px = x, pz = z;
     if (rh < inn) { const a = rh < 1e-6 ? Math.PI / 2 : Math.atan2(z - d.z, x - d.x); px = d.x + Math.cos(a) * inn; pz = d.z + Math.sin(a) * inn; } // (clear of the map's pedestal: the grating round it is walked on)
@@ -134,7 +135,7 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
   }
   // outside both: the nearer edge, the hub's wall or the balcony's rim
   const ah = rh < 1e-6 ? Math.PI / 2 : Math.atan2(z - d.z, x - d.x), hub = { x: d.x + Math.cos(ah) * hubOut, z: d.z + Math.sin(ah) * hubOut };
-  const room = rooms.length ? nearestRoomFloor(rooms, x, z) : null;
+  const room = rooms ? nearestRoomFloor(rooms, x, z) : null;
   if (room && room.d <= Math.hypot(hub.x - x, hub.z - z) && (dz < -JOIN || room.d <= Math.hypot(x - b.x, dz) - balOut)) return { x: room.x, z: room.z, off: false };
   if (dz < -JOIN) return { ...hub, off: false };
   const ab = Math.atan2(dz, x - b.x), bal = { x: b.x + Math.cos(ab) * balOut, z: b.z + Math.sin(ab) * balOut };

@@ -25,7 +25,9 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForFunction(() => window.witch.game.clock.time > 4, null, { timeout: 600000, polling: 500 });
     // into the house: landed in the hub, off her decks, her Helmet lying by the map
     const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), at = id => H.objects.find(o => o.id === id);
-    const stand = (o, dz) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [o.x, o.z + dz]);
+    // (on the house's turned plan: rules/houseRooms.ts fromPlan)
+    const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
+    const stand = (o, dz) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, plan(o.x, o.z + dz));
     await page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + 3, z: T.z - 2, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; g.witches[0].hat.down = { x: T.x + 1, z: T.z - 2, at: g.clock.time }; });
     await page.waitForTimeout(1500);
     const hats = at("hats");
