@@ -1,0 +1,126 @@
+{
+ "seed": "123",
+ "res": "0.5",
+ "shots": [
+  {
+   "name": "n-wide",
+   "heading": 0,
+   "zoom": 0,
+   "renderMs": 787.5,
+   "calls": 168,
+   "triangles": 389573,
+   "picture": "214×134",
+   "top": [
+    "draw 784.4",
+    "creatures 0.8",
+    "grass+lights 0.6",
+    "witch 0.3",
+    "hud 0.3"
+   ]
+  },
+  {
+   "name": "e-wide",
+   "heading": 90,
+   "zoom": 0,
+   "renderMs": 901,
+   "calls": 157,
+   "triangles": 436975,
+   "picture": "214×134",
+   "top": [
+    "draw 897.6",
+    "creatures 1.0",
+    "grass+lights 0.6",
+    "leash 0.4",
+    "hud 0.4"
+   ]
+  },
+  {
+   "name": "s-wide",
+   "heading": 180,
+   "zoom": 0,
+   "renderMs": 854.4,
+   "calls": 208,
+   "triangles": 438401,
+   "picture": "214×134",
+   "top": [
+    "draw 851.6",
+    "grass+lights 0.7",
+    "creatures 0.7",
+    "hud 0.3",
+    "witch 0.3"
+   ]
+  },
+  {
+   "name": "w-wide",
+   "heading": 270,
+   "zoom": 0,
+   "renderMs": 654.9,
+   "calls": 195,
+   "triangles": 327815,
+   "picture": "214×134",
+   "top": [
+    "draw 652.1",
+    "grass+lights 0.7",
+    "creatures 0.6",
+    "witch 0.3",
+    "hud 0.3"
+   ]
+  },
+  {
+   "name": "n-zoom",
+   "heading": 0,
+   "zoom": 0.7,
+   "renderMs": 1159.2,
+   "calls": 153,
+   "triangles": 330183,
+   "picture": "214×134",
+   "top": [
+    "draw 1156.7",
+    "grass+lights 0.5",
+    "creatures 0.3",
+    "leash 0.3",
+    "markers 0.3"
+   ]
+  },
+  {
+   "name": "s-zoom",
+   "heading": 180,
+   "zoom": 0.55,
+   "renderMs": 869.7,
+   "calls": 159,
+   "triangles": 328523,
+   "picture": "214×134",
+   "top": [
+    "draw 867.0",
+    "grass+lights 0.7",
+    "creatures 0.4",
+    "hud 0.4",
+    "leash 0.3"
+   ]
+  }
+ ],
+ "game": {
+  "renderMs": 334.2,
+  "calls": 91,
+  "triangles": 118518,
+  "picture": "427×267",
+  "top": [
+   "draw 332.1",
+   "grass+lights 0.5",
+   "markers 0.3",
+   "hud 0.3",
+   "witch 0.2"
+  ]
+ },
+ "after": {
+  "on": false,
+  "right": {
+   "x": 1,
+   "y": 0,
+   "z": 0
+  },
+  "picture": "427×267",
+  "far": 900
+ },
+ "errors": []
+}
