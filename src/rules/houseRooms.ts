@@ -17,12 +17,16 @@ export interface Rect { x0: number; x1: number; z0: number; z1: number }
 /** What E does at an object (config/house.json `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string };
+  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
+  /** The crystal ball (Ed, 2026-10-21): what tonight's trunk holds and which way it lies (rules/finds.ts, ui/crystalBall.ts). */
+  | { kind: "ball" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
 export interface HouseConfig {
   on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;
   rooms: (Rect & { id: string; label: string })[]; corridors: (Rect & { id: string })[];
   objects: HouseObject[]; bed: { hold: number };
+  /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
+  reserved?: (Rect & { id: string; label: string; door: Rect })[];
 }
 export const HOUSE_ROOMS = HOUSE as unknown as HouseConfig;
 

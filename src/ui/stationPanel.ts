@@ -282,18 +282,23 @@ export class StationPanel {
     }
     if (this.queue.length) this.raf = requestAnimationFrame(() => this.bakeSome());
   }
-  private bake(it: WardrobeItem, s: Shelf): HTMLCanvasElement {
-    const st = this.st, look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(wear(this.g, it));
-    const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
-    const broom = s.id === "broom";
-    const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" });
-    const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
-    const [y0, y1] = broom ? [0, 1] : CROP[s.id] ?? [0, 1];
-    const sy = Math.floor(b.h * y0), sh = Math.max(1, Math.ceil(b.h * y1) - sy), sw = broom ? b.w : Math.min(b.w, Math.ceil(b.w * .62));
-    const out = document.createElement("canvas"); out.width = sw; out.height = sh;
-    out.getContext("2d")!.drawImage(b.A, 0, sy, sw, sh, 0, 0, sw, sh);
-    return out;
-  }
+  private bake(it: WardrobeItem, s: Shelf): HTMLCanvasElement { return wearPicture(this.st, this.g, it, s.id); }
+
+}
+
+/** A picture of her (genome `g`) wearing `it`, cut to the part it's worn on (its shelf `shelf`'s; a broom, her whole flying
+ *  frame): the panel's cards, and the crystal ball's silhouette (ui/crystalBall.ts). */
+export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeItem, shelf: string): HTMLCanvasElement {
+  const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(wear(g, it));
+  const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
+  const broom = shelf === "broom";
+  const sp = (Art.witchSprite as (st: Style, o: object) => unknown)(st, broom ? { look: look.look, frame: 0 } : { look: look.look, pose: "stand", frame: 0, heading: "towards" });
+  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof cpuCanvas) => Sprite)(sp, colours, st, (st as unknown as { cOutline: unknown }).cOutline, cpuCanvas);
+  const [y0, y1] = broom ? [0, 1] : CROP[shelf] ?? [0, 1];
+  const sy = Math.floor(b.h * y0), sh = Math.max(1, Math.ceil(b.h * y1) - sy), sw = broom ? b.w : Math.min(b.w, Math.ceil(b.w * .62));
+  const out = document.createElement("canvas"); out.width = sw; out.height = sh;
+  out.getContext("2d")!.drawImage(b.A, 0, sy, sw, sh, 0, 0, sw, sh);
+  return out;
 }
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };

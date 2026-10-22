@@ -82,6 +82,70 @@
         "additionalProperties": false
       }
     },
+    "reserved": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "x0": {
+            "type": "number",
+            "minimum": 0
+          },
+          "x1": {
+            "type": "number",
+            "minimum": 0
+          },
+          "z0": {
+            "type": "number"
+          },
+          "z1": {
+            "type": "number"
+          },
+          "door": {
+            "type": "object",
+            "properties": {
+              "x0": {
+                "type": "number",
+                "minimum": 0
+              },
+              "x1": {
+                "type": "number",
+                "minimum": 0
+              },
+              "z0": {
+                "type": "number"
+              },
+              "z1": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "x0",
+              "x1",
+              "z0",
+              "z1"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "x0",
+          "x1",
+          "z0",
+          "z1",
+          "door"
+        ],
+        "additionalProperties": false
+      }
+    },
     "objects": {
       "type": "array",
       "items": {
@@ -126,7 +190,8 @@
                   "curtains",
                   "zoo",
                   "telescope",
-                  "say"
+                  "say",
+                  "ball"
                 ]
               },
               "line": {
@@ -195,6 +260,7 @@
     "reach",
     "rooms",
     "corridors",
+    "reserved",
     "objects",
     "bed"
   ],
