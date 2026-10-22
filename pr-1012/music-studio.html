@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Witch Music Studio</title>
+<meta name="description" content="Design the game's synth patches with its own engine, and hear a MIDI file from Logic played on them.">
+<style>
+/* The Music Studio (Ed, 2026-10-22): the patch designer on the left, the keyboard and the MIDI player on the right; one
+   column on a phone. Dark like the other labs. */
+:root {
+  --bg: #0f0d16; --panel: #18151f; --line: #2b2636; --fg: #e6e1ee; --muted: #9b93ab;
+  --accent: #ff5fc8; --accent-2: #4fe0ff; --good: #7dff8a; --warn: #ffb35f;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--bg); color: var(--fg); margin: 0; }
+body { font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; padding: 0 16px 64px; -webkit-text-size-adjust: 100%; }
+h1 { font: 600 20px var(--mono); letter-spacing: .04em; margin: 0; }
+h2 { font: 600 13px var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin: 0; }
+h3 { font: 600 12px var(--mono); color: var(--accent-2); text-transform: uppercase; letter-spacing: .1em; margin: 6px 0 0; }
+p { margin: 0; color: var(--muted); }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 14px; padding-top: 14px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
+@media (min-width: 980px) { .cols { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; } }
+.col { display: grid; gap: 14px; min-width: 0; }
+.card { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 12px 14px; display: grid; gap: 10px; min-width: 0; }
+select, input[type=number], input[type=text], textarea { font: 14px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px; min-height: 38px; width: 100%; }
+textarea { min-height: 110px; font-size: 12px; resize: vertical; }
+button { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; min-height: 38px; padding: 0 12px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button.primary { background: var(--accent-2); color: #08151a; border-color: var(--accent-2); font-weight: 700; }
+button.on { background: var(--accent); border-color: var(--accent); color: #1a0a14; font-weight: 700; }
+button[disabled] { opacity: .4; cursor: default; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.row > label { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--muted); }
+.note { font-size: 12px; color: var(--muted); }
+.ok { color: var(--good); font-size: 13px; min-height: 1.2em; }
+.err { color: var(--warn); font-size: 13px; min-height: 1.2em; }
+#patch-list { min-height: 220px; }
+.knob { display: grid; grid-template-columns: 150px minmax(0, 1fr) 84px 30px; gap: 6px; align-items: center; padding: 2px 0; }
+.knob .name { font-size: 13px; }
+.knob .name small { display: block; color: var(--muted); font-size: 11px; line-height: 1.2; }
+.knob input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; }
+.knob input[type=number], .knob input[type=text], .knob select { min-height: 30px; padding: 4px 6px; font-size: 12px; }
+.knob .wide { grid-column: 2 / 4; }
+.knob .reset { min-height: 28px; padding: 0; font-size: 13px; color: var(--muted); }
+.knob.unset .name { color: var(--muted); }
+.knob.unset .reset { visibility: hidden; }
+@media (max-width: 560px) { .knob { grid-template-columns: 1fr 72px 30px; } .knob .name { grid-column: 1 / -1; } .knob .wide { grid-column: 1 / 3; } }
+.keys { position: relative; height: 120px; user-select: none; touch-action: none; }
+.keys div { position: absolute; top: 0; border: 1px solid #000; border-radius: 0 0 5px 5px; cursor: pointer; }
+.keys .w { background: #e9e4f2; height: 120px; z-index: 1; }
+.keys .b { background: #221d2b; height: 74px; z-index: 2; }
+.keys .down { background: var(--accent) !important; }
+.keys span { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; font: 10px var(--mono); color: #6b6378; pointer-events: none; }
+#drop { border: 2px dashed var(--line); border-radius: 8px; padding: 14px; text-align: center; color: var(--muted); }
+#drop.over { border-color: var(--accent-2); color: var(--fg); }
+#pos { width: 100%; accent-color: var(--accent-2); }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+td, th { padding: 4px 4px; border-top: 1px solid var(--line); text-align: left; vertical-align: middle; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; }
+td select { min-height: 30px; padding: 2px 4px; font-size: 12px; }
+td input[type=range] { width: 80px; accent-color: var(--accent); }
+td button { min-height: 28px; padding: 0 8px; font: 700 12px var(--mono); }
+td button.m.on { background: var(--warn); border-color: var(--warn); color: #1d1205; }
+td button.s.on { background: var(--good); border-color: var(--good); color: #0b1a0d; }
+.mono { font-family: var(--mono); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="card">
+    <h1>Witch Music Studio</h1>
+    <p>The game's own synth engine. Design a patch on the left and play it on the keyboard (or your computer keys: A W S E D F T G Y H U J K, Z and X for octaves). Drop a MIDI file from Logic on the right and every track plays on the patch you pick for it, through the game's mix. <b>Copy for the builders</b> gives your new and changed patches as text to paste in a message. Nothing here changes the game; your work is kept in this browser.</p>
+  </header>
+  <div class="cols">
+    <div class="col">
+      <section class="card">
+        <h2>Patches</h2>
+        <select id="patch-list" size="12"></select>
+        <div class="row">
+          <select id="new-kind" style="width:auto"><option value="synth">Synth</option><option value="kick">Kick</option><option value="noise">Noise (hats, claps)</option><option value="snare">Snare</option><option value="bell">Bell</option></select>
+          <button id="new">New</button><button id="dup">Duplicate</button><button id="rename">Rename</button><button id="revert">Revert</button>
+        </div>
+        <p class="note" id="patch-note"></p>
+      </section>
+      <section class="card" id="editor"></section>
+    </div>
+    <div class="col">
+      <section class="card">
+        <h2>Keyboard</h2>
+        <div class="keys" id="keys"></div>
+        <div class="row">
+          <button id="oct-down">◀ Octave</button><span class="mono" id="oct"></span><button id="oct-up">Octave ▶</button>
+          <label>Velocity <input id="vel" type="range" min="0.05" max="1" step="0.01" value="0.8"></label>
+        </div>
+        <div class="row">
+          <label>Loop a phrase <select id="phrase" style="width:auto"></select></label>
+          <span class="note">on the patch being edited, so you can turn knobs while it plays</span>
+        </div>
+      </section>
+      <section class="card">
+        <h2>MIDI player</h2>
+        <div id="drop">Drop a .mid file here, or <label style="color:var(--accent-2);cursor:pointer;text-decoration:underline">choose one<input id="file" type="file" accept=".mid,.midi,audio/midi" hidden></label>, or <button id="demo" style="min-height:30px">load the demo</button></div>
+        <p class="note">From Logic: File ▸ Export ▸ Selection as MIDI File (or the whole project). Name a track after a patch (say "pad" or "houseBass") and it picks that patch.</p>
+        <div class="row">
+          <button id="play" class="primary">▶ Play</button>
+          <label><input id="loop" type="checkbox" checked> Loop</label>
+          <label>Tempo <input id="bpm" type="number" min="40" max="240" step="1" style="width:80px"></label>
+          <button id="bpm-file">File's tempo</button>
+          <label>Transpose <input id="transpose" type="number" min="-24" max="24" step="1" value="0" style="width:70px"></label>
+        </div>
+        <input id="pos" type="range" min="0" max="1000" value="0">
+        <div class="row mono"><span id="clock">0:00.0</span><span id="marker"></span><span id="song" class="note"></span></div>
+        <table id="tracks"></table>
+        <p class="err" id="midi-err"></p>
+      </section>
+      <section class="card">
+        <h2>Copy for the builders</h2>
+        <div class="row"><button id="copy" class="primary">Copy for the builders</button><button id="reset-all">Reset everything</button></div>
+        <p class="ok" id="copied"></p>
+        <textarea id="out" readonly placeholder="Your new and changed patches, and the song's track choices, appear here."></textarea>
+        <h3>Paste patches</h3>
+        <textarea id="paste" placeholder='{"patches": {"myPad": {"kind": "synth", ...}}}'></textarea>
+        <div class="row"><button id="apply">Add these patches</button></div>
+        <p class="err" id="paste-err"></p>
+      </section>
+    </div>
+  </div>
+</div>
+<script type="module" src="music-studio/studio.js"></script>
+</body>
+</html>
