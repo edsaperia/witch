@@ -40,16 +40,45 @@ const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 // drawing each; returns each frame's own work when `timed`.
 // (Quick: stepped without drawing, as the perf check does: the software renderer's frames are most of the time; the
 // settled shot draws.)
+// Art asked for in a frame is waited for before the next (the wave-fight flake, 2026-10-21: 927 px apart in one patch on #984,
+// #997 and #999, the state the same, passing again on a re-run): the workers draw in real time while the frames step in fixed
+// ones, so a creature's rig page landed a chunk of frames earlier or later by the runner's speed, and the rig's own state (its
+// gait's clock, its feet planted: render/rig/rig.ts RigBody, made when its page is first in) carried that into the shot. Waited
+// for, each set the view needs now (an urgent ask: render/assets.ts) lands the frame after it's asked for, on any machine; the
+// scenery drawn ahead isn't waited for (waiting for it too ran the Bench job past its 40 minutes; the settle redraws it anyway).
+// Each frame such sets landed on is kept with how many (`landed`, by frame from the scene's start: compare.cjs says when two
+// runs' differ).
 async function frames(page, n, c, timed = false) {
-  return page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
-    const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [];
+  const r = await page.evaluate(async ({ n, c, DT, timed, fn, draw }) => {
+    const w = window.witch, f = fn ? new Function("i", `return (${c})(i)`) : () => c, times = [], A = w.view.assets;
+    const L = (window.__benchLanded ??= { frame: 0, at: [] });
+    // While the frames step, the workers take only what the view needs now: with one worker (a 2-core runner) an urgent ask
+    // otherwise waited out the scenery bake it was on, a wait at each one (#1006's first runs passed the job's 40 minutes).
+    // The scenery asked meanwhile is drawn once the steps are done, and the settle waits for it (settle).
+    if (!A.__benchOnlyNow) {
+      const send = A.dispatch;
+      A.dispatch = function () {
+        if (!window.__benchOnlyNow) return send.call(this);
+        const all = this.queue, now = all.filter(j => j.home || this.urgentKeys.has(this.key(j)));
+        this.queue = now;
+        try { send.call(this); } finally { const left = new Set(this.queue); this.queue = all.filter(j => !now.includes(j) || left.has(j)); }
+      };
+      A.__benchOnlyNow = true;
+    }
+    window.__benchOnlyNow = true;
     for (let i = 0; i < n; i++) {
       const r = w.frame(f(i), DT, draw);
       if (timed) times.push({ step: r.step, render: r.render, ms: { ...r.ms } });
-      if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (let the art workers' results in)
+      const urgent = A.urgentKeys; // (what the view needs now: rig pages and creatures, asked urgent; the scenery drawn ahead isn't waited for)
+      if (urgent.size) { const was = urgent.size; await A.whenIdle(true); L.at.push([L.frame, was]); }
+      L.frame++;
+      if (i % 30 === 29) await new Promise(r => setTimeout(r, 0)); // (the page's other tasks their turn)
     }
+    window.__benchOnlyNow = false;
+    A.dispatch();
     return times;
   }, { n, c: typeof c === "function" ? c.toString() : c, DT, timed, fn: typeof c === "function", draw: !QUICK });
+  return r;
 }
 
 // Draw the same moment again (no step) until two screenshots running are the same: the view's
@@ -61,6 +90,7 @@ async function frames(page, n, c, timed = false) {
 // from the same start until the work and fades are done, then held, so both runs take the same
 // moment. (Held, the view's time-budgeted work runs to the end of its queues: slower, but sure.)
 async function settle(page, file, frozen = false) {
+  await page.evaluate(() => window.witch.view?.assets?.whenIdle()); // (every set asked for in, the scenery the steps held back too: the same art in every run's shot)
   if (!frozen) await page.evaluate(async () => {
     let t = 1e7;
     for (let k = 0; k < 80; k++) { window.__benchClock(t += 100); window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); if (k % 10 === 9) await new Promise(r => setTimeout(r, 30)); }
@@ -77,6 +107,14 @@ async function settle(page, file, frozen = false) {
   if (!frozen) await page.evaluate(() => window.__benchClock(null));
   return out;
 }
+
+// The art workers (render/assets.ts: one a core but the page's, hardwareConcurrency - 1): the bench tells the page of one core
+// more than it has, so the pool takes every core. The page only waits while the art is drawn (its frames stand still), and a
+// 2-vCPU runner's one worker made the art the scenes wait for most of a run past the Bench job's 40 minutes (#1007, #1008,
+// 2026-10-21: boot 972 s against 139 s on a 4-vCPU one). The pool's size changes when sets land, never what's drawn: the
+// scenes wait for all of it (pending, then the steps' urgent waits, then the settle). BENCH_CORES=<n> to try another.
+const ARTCORES = Number(process.env.BENCH_CORES || require("os").availableParallelism() + 1);
+const WORKERS = n => { const real = navigator.hardwareConcurrency; Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { get: () => n, configurable: true }); window.__benchCores = { real, told: n }; };
 
 // The page's clock, which the bench can hold (settle): performance.now as ever until it's set.
 const CLOCK = `(() => { const real = performance.now.bind(performance); let held = null; performance.now = () => (held === null ? real() : held); window.__benchClock = v => { held = v; }; })();`;
@@ -125,6 +163,7 @@ async function main() {
     if (only && !only.includes(s.name)) continue;
     const page = await context.newPage();
     await page.addInitScript(CLOCK);
+    await page.addInitScript(WORKERS, ARTCORES);
     if (s.frozen) await page.addInitScript("window.__benchClock(1e7);");
     page.on("pageerror", e => errors.push(`${s.name}: ${e.message}`));
     const t0 = Date.now();
@@ -132,6 +171,7 @@ async function main() {
     const lap = what => { if (process.env.BENCH_LAPS) console.log(`  ${s.name} ${what} ${Math.round((Date.now() - t0) / 1000)} s`); };
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");
+    if (process.env.BENCH_LAPS) { const c = await page.evaluate(() => window.__benchCores); console.log(`  ${s.name} cores: the machine's ${require("os").availableParallelism()}, the page's ${c?.real}, told ${c?.told}`); }
     await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
     lap("art");
     if (s.creator) {
@@ -156,7 +196,8 @@ async function main() {
     lap("stepped");
     const shot = await settle(page, path.join(out, `${s.name}.png`));
     const g = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { time: +g.clock.time.toFixed(4), x: +w.x.toFixed(3), z: +w.z.toFixed(3), mode: w.mode, seated: !!w.seated, wave: g.party.wave }; });
-    result.scenes[s.name] = { ...g, shot, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
+    const landed = await page.evaluate(() => window.__benchLanded?.at ?? []);
+    result.scenes[s.name] = { ...g, shot, landed, secs: Math.round((Date.now() - t0) / 1000), ...(times && times.length ? { work: summarise(times) } : {}) };
     console.log(s.name, JSON.stringify(result.scenes[s.name]));
     await page.close();
   }

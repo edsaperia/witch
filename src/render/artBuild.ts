@@ -264,6 +264,9 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** Her hat alone, as it lies on the ground, in the look of a genome (id: its hash): a hat she left lying keeps the look it had
    *  (render/view/witch.ts), whatever she's wearing since. */
   | { kind: "hat"; id: string; style: Style; genome: unknown }
+  /** One find's own art alone (id: its art/country.js scene piece: tonight's travel trunk, rules/finds.ts), a small job of its
+   *  own so it lands in a moment on any machine, never behind the whole scenes kit. */
+  | { kind: "find"; id: string; style: Style }
   | { kind: "props"; id: string; style: Style }
   | { kind: "soundsystems"; id: string; style: Style }
   /** (id "home" the old treehouse; "ent:<deck height>:<radius>" the treehouse Ent holding the deck: rules/treehouse.ts;
@@ -564,6 +567,10 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "hat") {
     const mine = witchLookOf(job.style, job.genome), hat = (Art.witchHatSprite as (st: Style, o: object) => unknown)(job.style, { look: mine.look });
     return { px: packPixels(hat ? [Art.bake(hat, mine.colours, job.style, job.style.cOutline, mk) as Baked] : [], 256) };
+  }
+  if (job.kind === "find") {
+    const piece = Art.scenePiece(job.id, job.style) as { sprite: { whole: unknown; origin: { x: number; y: number } }; colours: unknown };
+    return { px: packPixels([Art.bake(piece.sprite.whole, piece.colours, job.style, "none", mk) as Baked], 512), scenes: { pieces: { [job.id]: { frame: 0, originX: piece.sprite.origin.x, originY: piece.sprite.origin.y, decal: false } }, layouts: {} } };
   }
   if (job.kind === "props") return { px: packPixels(propSprites(job.style, mk), 1024) };
   if (job.kind === "soundsystems") return { px: packPixels(soundsystemSprites(job.style, mk), 2048) };

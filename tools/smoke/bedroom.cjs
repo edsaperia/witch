@@ -15,7 +15,7 @@ const looks = (process.argv[2] || "now/3").split(",");
     for (const lk of looks) {
       const [style, px] = lk.split("/"), page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
       page.on("pageerror", e => errors.push(`${lk}: ${e.message}`));
-      await page.goto(`http://localhost:4181/?quick=1&style=${style}&px=${px}${process.env.CROP ? "&" + process.env.CROP : ""}`, { waitUntil: "load" });
+      await page.goto(`http://localhost:4181/?quick=1&opening=old&style=${style}&px=${px}${process.env.CROP ? "&" + process.env.CROP : ""}`, { waitUntil: "load" });
       await page.waitForSelector("#creator-start", { timeout: 60000 });
       await page.waitForTimeout(2000);
       const name = `${style}-px${px}`;

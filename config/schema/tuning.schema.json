@@ -8518,6 +8518,32 @@
             "ease"
           ],
           "additionalProperties": false
+        },
+        "station": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "distance": {
+              "type": "number",
+              "minimum": 0
+            },
+            "side": {
+              "type": "number"
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "distance",
+            "side",
+            "ease"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8537,7 +8563,8 @@
         "follow",
         "intro",
         "circle",
-        "house"
+        "house",
+        "station"
       ],
       "additionalProperties": false
     },
@@ -9066,6 +9093,129 @@
         "ambient",
         "moonHue",
         "moonSat"
+      ],
+      "additionalProperties": false
+    },
+    "telescope": {
+      "type": "object",
+      "properties": {
+        "eye": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fovWide": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fovClose": {
+          "type": "number",
+          "minimum": 0
+        },
+        "aimWide": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pan": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tilt": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tiltMax": {
+          "type": "number",
+          "minimum": 0
+        },
+        "zoomStep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bend": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hazeNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hazeFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thinFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thinGrow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wedge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moonSpread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "consHold": {
+          "type": "number",
+          "minimum": 0
+        },
+        "consLines": {
+          "type": "number",
+          "minimum": 0
+        },
+        "consBright": {
+          "type": "number",
+          "minimum": 0
+        },
+        "resolution": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lowGpuResolution": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "eye",
+        "fovWide",
+        "fovClose",
+        "aimWide",
+        "pan",
+        "tilt",
+        "tiltMax",
+        "zoomStep",
+        "bend",
+        "reach",
+        "hazeNear",
+        "hazeFar",
+        "thinFrom",
+        "thin",
+        "thinGrow",
+        "wedge",
+        "moonSpread",
+        "consHold",
+        "consLines",
+        "consBright",
+        "resolution",
+        "lowGpuResolution",
+        "vignette"
       ],
       "additionalProperties": false
     },
@@ -11144,6 +11294,7 @@
     "load",
     "canopyCutout",
     "find",
+    "telescope",
     "smoke",
     "sky",
     "moon",

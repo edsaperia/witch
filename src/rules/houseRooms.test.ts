@@ -179,6 +179,19 @@ describe("the treehouse's rooms", () => {
     }
   });
 
+  it("leave room for the guests' two bedrooms (Ed, 2026-10-21: \"We will have three bedrooms, one for each witch\"): each the host's size, either side of it along the landing, its floor and door clear of everything built", () => {
+    const R = HOUSE_ROOMS.reserved ?? [], host = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!, landing = HOUSE_ROOMS.corridors.find(c => c.id === "landing")!;
+    const over = (a: { x0: number; x1: number; z0: number; z1: number }, b: typeof a) => a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
+    expect(R.length).toBe(2);
+    for (const r of R) {
+      expect([r.x1 - r.x0, r.z1 - r.z0], r.id).toEqual([host.x1 - host.x0, host.z1 - host.z0]);
+      expect(r.x0, r.id).toBe(host.x0); // (along the landing, as the host's)
+      for (const q of [...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors]) { expect(over(r, q), `${r.id} and ${q.id}`).toBe(false); if (q.id !== "landing") expect(over(r.door, q), `${r.id}'s door and ${q.id}`).toBe(false); }
+      expect(r.door.x0 < landing.x1 && r.door.x1 > r.x0, `${r.id}'s door from the landing's line into it`).toBe(true);
+    }
+    expect(over(R[0], R[1])).toBe(false);
+  });
+
   it("every object stands on its room's floor, and every room is reached by a corridor", () => {
     const g = newGame(7, TUNING), d = deck(g);
     for (const o of HOUSE_ROOMS.objects) {

@@ -129,13 +129,13 @@ describe("never past the build", () => {
     expect(g.party.spellAt).toBeNull();
   });
 
-  it("once it's ready, E opens the curtains and the door; the spell waits for her decks", () => {
+  it("once it's ready, the curtains open by themselves (Ed, 2026-10-21: \"as soon as they've loaded\"), and the door with them; the spell waits for her decks", () => {
     const g = up(false);
     standAt(g, "curtains", 0.5);
     press(g);
+    expect(g.wake!.open).toBe(false);
     g.islandReady = true;
-    run(g, K.alarmMin);
-    expect(press(g)).toContain("curtains");
+    expect(run(g, STEP)).toContain("curtains"); // (no press)
     expect(g.wake!.open).toBe(true);
     expect(g.party.spellAt).toBeNull();
     const door = fromPlan(g.map.treehouse, room.x0 + 1, 0); g.witches[0].body = { ...g.witches[0].body, ...door }; // (by the door, on the plan's x0 wall)
@@ -147,11 +147,26 @@ describe("never past the build", () => {
 /** Up, the curtains open: free to walk the house, the party not started. */
 function curtainsOpen(): Game {
   const g = up(true);
-  standAt(g, "curtains", 0.5);
-  press(g);
-  expect(g.wake!.open).toBe(true);
+  expect(g.wake!.open).toBe(true); // (the island ready, they opened by themselves as she got up)
   return g;
 }
+
+describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
+  it("every dressing station but the hat's mirror, the bags and the broom stand is in the bedroom", () => {
+    const st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
+    expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["cloakPegs", "dressingTable", "shoeRack", "wardrobe"]);
+    expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "broomStand", "mirror"]);
+  });
+
+  it("the island ready before she's up, the curtains open as she gets up, not while she's in bed", () => {
+    const g = woken(true);
+    run(g, 1);
+    expect(g.wake!.open).toBe(false); // (still ringing)
+    run(g, 0.1, { moveX: 1 }); run(g, K.stretch - 0.2);
+    expect(g.wake!.open).toBe(false); // (stretching)
+    expect(run(g, 0.4)).toContain("curtains");
+  });
+});
 const toSeat = (g: Game, dz = 0.6) => { const d = deckOf(g.map, g.tuning)!; g.witches[0].body = { ...g.witches[0].body, x: d.seat.x, z: d.seat.z - dz, vx: 0, vz: 0 }; };
 
 describe("the DJ intro at her decks (in place of the party spell)", () => {

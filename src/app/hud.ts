@@ -52,6 +52,15 @@ export class Hud {
     }
   }
 
+  /** A wearable found in tonight's trunk (rules/finds.ts): a word under the clock, as the speakers' coming up has. */
+  found(text: string): void {
+    const pop = document.createElement("div");
+    pop.className = "boot-pop";
+    pop.textContent = text;
+    this.clockEl.append(pop);
+    setTimeout(() => pop.remove(), 4000);
+  }
+
   /** Every soundsystem lost since the last shown. */
   losses(): void { for (const e of this.game.waveEvents) if (e.kind === "soundsystemLost" && e.at > this.lossShown) this.showLoss(e); }
 

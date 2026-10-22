@@ -96,6 +96,7 @@ import { checkPops, drawGhosts } from "./view/pops";
 import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
+import { drawFinds } from "./view/finds";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse } from "./view/home";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
@@ -166,6 +167,15 @@ function nightState(t: Tuning) {
     rideTime: NaN,
     /** Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot this frame, in place of the game's camera; null otherwise. */
     fly: null as Shot | null,
+    /** Looking through the telescope in the crow's nest (rules/telescope.ts; main.ts sets it each frame): its bearing (degrees from
+     *  north), its field of view and its pitch down (degrees); the view's own camera in place of hers (render/view/camera.ts). */
+    telescope: null as { heading: number; fov: number; pitch: number } | null,
+    /** Tonight's constellation through the telescope (render/view/camera.ts lookAtConstellation): how long (real seconds) she's held
+     *  the view on it, its lines' fade (0 to 1), the last frame's real time (ms) and its stars, made once. */
+    consHold: 0,
+    consLines: 0,
+    consAt: 0,
+    consStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
     markerCache: { wave: -1, n: -1, list: [] as SpawnMarker[] },
     /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
     seatK: 1,
@@ -240,7 +250,7 @@ function nightState(t: Tuning) {
     footAct: null as { pose: string; at: number } | null,
     /** Where the last rebuild looked: the middle and half-size of its square (for the prefetch). */
     lastView: null as { x: number; z: number; half: number } | null,
-    lastPose: { distance: 0, angle: 0, zoomStep: -1, lift: -1 },
+    lastPose: { distance: 0, angle: 0, zoomStep: -1, lift: -1, tele: 0 },
     /** When each berry last grew again (game time), so it grows in rather than appearing. */
     regrewAt: new Map<number, number>(),
     /** Berries just eaten: where, and when (game time), for the nibble's sparkle. */
@@ -270,6 +280,9 @@ function nightState(t: Tuning) {
     /** Her lean cycle's phase (frames) and the time it was last stepped. */
     leanPhase: 0,
     leanTime: 0,
+    /** Showing a change off at a dressing station (main.ts, ui/stationPanel.ts; Ed, 2026-10-21: "a beat on each change"): till this
+     *  time of hers, standing still, she turns to face us. */
+    turnUntil: 0,
     /** On foot in the house, her walk's phase (frames: render/view/witch.ts). */
     walkPhase: 0,
     /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
@@ -648,9 +661,13 @@ export class View {
     for (const m of [this.shadow.material, this.shadows.mesh.material] as THREE.Material[]) { m.blending = THREE.NormalBlending; m.transparent = true; m.needsUpdate = true; }
   }
 
+  /** The haze's range before the telescope widened it (restored as she looks away). */
+  private hazeBeforeTelescope: THREE.Vector2 | null = null;
+  /** The picture's pixels this many times the pixel size (the telescope at half resolution on a weak GPU: 2; main.ts resizes). */
+  pixelScale = 1;
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
-    const p = this.game.tuning.pixelSize;
+    const p = this.game.tuning.pixelSize * this.pixelScale;
     this.width = Math.max(1, Math.ceil(cssW / p));
     this.height = Math.max(1, Math.ceil(cssH / p));
     // The canvas holds the low-resolution picture, which the browser scales up with nearest-neighbour.
@@ -1072,7 +1089,10 @@ export class View {
     if (this.sceneryFixed !== null) this.budget.radius = Math.min(t.haze.far, Math.max(1, this.sceneryFixed));
     LIGHT_UNIFORMS.uScenery.value.set(this.budget.radius, Math.max(1, t.scenery.fade));
     // In the air, the crowns' reach (render/view/scenery.ts), eased in and out over half a second or so (no far crowns popping as she lands).
-    const canopyTo = g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
+    // Through the telescope (rules/telescope.ts), crowns out to the island's far side, and its own, further haze; back as it was after.
+    const TL = this.telescope && t.telescope, haze = LIGHT_UNIFORMS.uHazeRange.value;
+    if (TL) { this.hazeBeforeTelescope ??= haze.clone(); haze.set(TL.hazeNear, TL.hazeFar); } else if (this.hazeBeforeTelescope) { haze.copy(this.hazeBeforeTelescope); this.hazeBeforeTelescope = null; }
+    const canopyTo = TL ? TL.reach : g.witch.mode !== "ground" ? Math.min(t.haze.far, t.scenery.canopyReach ?? 0) : 0;
     this.canopyNow += (canopyTo - this.canopyNow) * (Math.abs(canopyTo - this.canopyNow) < 1 ? 1 : 0.08);
     LIGHT_UNIFORMS.uCanopyReach.value = this.canopyNow;
     const up = placeCamera(this, time, pose);
@@ -1237,6 +1257,7 @@ export class View {
     drawCreatures(this, time);
     drawBerries(this, time);
     drawHatArt(this); // (the Harvest hat's sprouts, the Cyclone's whirlwind: render/view/hatArt.ts)
+    drawFinds(this); // (tonight's travel trunk: render/view/finds.ts)
     checkPops(this, "moving");
     this.time("creatures");
     this.rulers.update(this.camera, this.canvas.clientWidth || window.innerWidth, this.canvas.clientHeight || window.innerHeight, w.x, w.z);

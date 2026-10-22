@@ -37,6 +37,9 @@ interface Channel {
   presence?: BiquadFilterNode; sung?: number;
 }
 
+/** Held synth notes (the Music Studio's keyboard): what letting go of them releases. */
+type Held = { gain: GainNode; filter: BiquadFilterNode | null; fBase: number; fRelease: number; release: number; sources: AudioScheduledSourceNode[] }[];
+
 /** Vowels for the synthesised voice: three formants each (Hz) and their levels. */
 const VOWELS: Record<string, [number, number][]> = {
   ah: [[800, 1], [1150, 0.6], [2900, 0.25]],
@@ -408,6 +411,49 @@ export class MusicEngine {
     }
   }
 
+  /** One note outside the score, at audio time `t`, `dur` seconds long, on part `part`'s channel with patch `patch` (the
+   *  Music Studio's MIDI player and keyboard, tools/music-studio: Ed, 2026-10-22). `midi` null for a drum. */
+  note(part: string, patch: string, midi: number | null, vel: number, t: number, dur: number): void {
+    this.play({ part, patch, midi, vel, step: 0, offset: 0, dur: 0 }, t, dur, 60 / 120 / 4);
+  }
+
+  /** The Studio's tempo (it plays without a beat clock): the echoes' time and the voice effects' beat. */
+  tempo(bpm: number): void {
+    this.bpmNow = bpm;
+    this.delay.delayTime.setTargetAtTime(Math.min(4, (this.style.mix.delayBeats * 60) / Math.max(20, bpm)), this.ctx.currentTime, 0.05);
+  }
+
+  /** A part's channel let go, made afresh at its next note (the Studio: its patch's high-pass, pan, sends or wobble changed);
+   *  what's still sounding on the old one gets a few seconds to ring out. */
+  resetPart(part: string): void {
+    const ch = this.channels.get(part);
+    if (!ch) return;
+    this.channels.delete(part);
+    setTimeout(() => {
+      for (const n of [ch.lfo?.osc, ...(ch.running ?? [])]) if (n) try { n.stop(); } catch { /* stopped */ }
+      ch.fof?.dispose(); ch.swell?.voices.dispose(); ch.fx?.dispose();
+      try { ch.in.disconnect(); } catch { /* gone */ }
+    }, 6000);
+  }
+
+  /** A synth note held from audio time `t` till the function it gives back is called with the time to let go (the Studio's
+   *  keyboard); any other kind of patch plays a short note and the function does nothing. */
+  hold(part: string, patch: string, midi: number, vel: number, t: number): (at: number) => void {
+    const p = this.style.patches[patch];
+    if (!p) return () => { /* none */ };
+    if (p.kind !== "synth") { this.note(part, patch, midi, vel, t, 0.4); return () => { /* one shot */ }; }
+    const held: Held = [], ch = this.channel(part, p);
+    this.notePitch = 1;
+    this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
+    return at => {
+      for (const h of held) {
+        h.gain.gain.setTargetAtTime(0, at, h.release / 3);
+        h.filter?.frequency.setTargetAtTime(h.fBase, at, h.fRelease / 3);
+        for (const s of h.sources) try { s.stop(at + 2 * Math.max(h.release, h.fRelease) + 0.05); } catch { /* stopped */ }
+      }
+    };
+  }
+
   private play(e: NoteEvent, t: number, dur: number, sps: number, chord: number[] = []): void {
     const p = this.style.patches[e.patch];
     if (!p || (this.solo && !this.solo.has(e.part))) return;
@@ -534,37 +580,60 @@ export class MusicEngine {
     for (const k of [1, p.ratio ?? 1.48]) { const o = c.createOscillator(); o.type = "square"; o.frequency.value = freq * k; o.connect(f); o.start(t); o.stop(t + decay + 0.05); }
   }
 
-  private synth(t: number, p: Patch, peak: number, freqOrChord: number | number[], dur: number, ch: Channel): void {
+  /** A synth note. Every knob past the original ones (levels, semis, custom harmonics, sub, noise, FM, the filter's own
+   *  envelope, a second filter, vibrato, tremolo, the filter wobble's wave: the Music Studio's, 2026-10-22) is optional, and a
+   *  patch without them plays exactly as it did. `held`: the note isn't released; its release is the caller's (the Studio's
+   *  keyboard, `hold`). */
+  private synth(t: number, p: Patch, peak: number, freqOrChord: number | number[], dur: number, ch: Channel, held?: Held): void {
     const freqs = Array.isArray(freqOrChord) ? freqOrChord : [freqOrChord], freq = freqs[freqs.length - 1];
     const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
     const c = this.ctx, attack = Math.max(0.002, p.attack ?? 0.005), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-    const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02; // (its gain's fall has time constant release / 3: 2 releases is -52 dB, under everything)
+    const end = held ? Infinity : t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02; // (its gain's fall has time constant release / 3: 2 releases is -52 dB, under everything)
     const g = c.createGain();
     g.gain.setValueAtTime(0, t);
     g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
     if (end > t + attack) g.gain.setTargetAtTime((peak / Math.sqrt(n)) * sustain, t + attack, decay / 3);
-    g.gain.setTargetAtTime(0, end, release / 3);
-    const nodes: AudioNode[] = [];
-    let lfoOf: GainNode | null = null, wobbled: BiquadFilterNode | null = null;
+    if (!held) g.gain.setTargetAtTime(0, end, release / 3);
+    const nodes: AudioNode[] = [], sources: AudioScheduledSourceNode[] = [];
+    let lfoOf: GainNode | null = null, wobbled: BiquadFilterNode | null = null, filter: BiquadFilterNode | null = null, fBase = 0;
+    const fEnv = p.fAttack !== undefined || p.fDecay !== undefined || p.fSustain !== undefined || p.fRelease !== undefined;
     if (p.filter) {
       const f = c.createBiquadFilter(); f.type = p.filter; f.Q.value = p.q ?? 0.7; kRate(f.frequency);
       const base = p.cutoff ?? 2000, top = Math.min(18000, base + (p.envAmt ?? 0) * peak / Math.max(0.001, p.gain));
-      f.frequency.setValueAtTime(top, t);
-      if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+      if (fEnv) {
+        // its own envelope: up to the top over fAttack, down to fSustain of the way over fDecay, back to the cutoff over fRelease
+        const fa = Math.max(0, p.fAttack ?? 0), fd = Math.max(0.01, p.fDecay ?? attack + decay), fr = Math.max(0.01, p.fRelease ?? release);
+        f.frequency.setValueAtTime(fa > 0.002 ? base : top, t);
+        if (fa > 0.002 && top > base) f.frequency.exponentialRampToValueAtTime(top, t + fa);
+        f.frequency.setTargetAtTime(base + (top - base) * Math.max(0, Math.min(1, p.fSustain ?? 0)), t + fa, fd / 3);
+        if (!held) f.frequency.setTargetAtTime(base, end, fr / 3);
+        filter = f; fBase = base;
+      } else {
+        f.frequency.setValueAtTime(top, t);
+        if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+      }
       // a slow wobble of the filter: pads breathe (one wobble a part, shared by its notes and let go of each as it ends:
       // a wobble a note was a fifth of the pads' cost; foxtrot's measure, #523)
       if (p.lfoRate && p.lfoDepth) {
         if (!ch.lfo) {
           const osc = c.createOscillator(), depth = c.createGain();
+          if (p.lfoWave) osc.type = p.lfoWave;
           osc.frequency.value = p.lfoRate; depth.gain.value = p.lfoDepth;
           osc.connect(depth); osc.start(); ch.lfo = { osc, depth };
         }
         lfoOf = ch.lfo.depth; lfoOf.connect(f.frequency); wobbled = f;
       }
       nodes.push(f);
+      if (p.filter2) { const f2 = c.createBiquadFilter(); f2.type = p.filter2; f2.frequency.value = p.cutoff2 ?? 400; f2.Q.value = p.q2 ?? 0.7; nodes.push(f2); }
     }
     if (p.drive) nodes.push(this.shaper(p.drive));
     nodes.push(g);
+    // a tremolo: the note's level wobbling by tremDepth (0-1) at tremRate Hz
+    if (p.tremRate && p.tremDepth) {
+      const tg = c.createGain(), lo = c.createOscillator(), ld = c.createGain(), d = Math.max(0, Math.min(1, p.tremDepth));
+      tg.gain.value = 1 - d / 2; lo.frequency.value = p.tremRate; ld.gain.value = d / 2;
+      lo.connect(ld); ld.connect(tg.gain); lo.start(t); sources.push(lo); nodes.push(tg);
+    }
     this.chain(nodes, ch.in);
     // every wave as `unison` voices, detuned across ±detune cents and spread across ±width in the
     // stereo field (outer voices widest), each starting at its own point in the cycle
@@ -581,19 +650,68 @@ export class MusicEngine {
     const left = side(-1), right = side(1);
     // a middle voice among spread ones as a centred panner had it: -3 dB a side (a mono input alone would be copied whole to both)
     const mid = (left || right) && pans.some(q => q === 0) ? (() => { const m = c.createGain(); m.gain.value = Math.SQRT1_2; m.connect(nodes[0]); return m; })() : nodes[0];
+    // a vibrato, one a note into every oscillator's detune: vibDepth cents at vibRate Hz, creeping in after vibDelay seconds
+    let vib: GainNode | null = null;
+    if (p.vibRate && p.vibDepth) {
+      const lo = c.createOscillator(); vib = c.createGain(); lo.frequency.value = p.vibRate;
+      const at = t + Math.max(0, p.vibDelay ?? 0);
+      vib.gain.setValueAtTime(0, t); vib.gain.setValueAtTime(0, at); vib.gain.linearRampToValueAtTime(p.vibDepth, at + 0.25);
+      lo.connect(vib); lo.start(t); sources.push(lo);
+    }
     let last: OscillatorNode | null = null;
-    for (const freq of freqs) { let v = 0; for (const w of waves) for (let u = 0; u < U; u++, v++) {
-      const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
-      o.type = w;
-      o.detune.value = (p.detune ?? 0) * x;
-      if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq, t); o.frequency.exponentialRampToValueAtTime(freq, t + p.glide); }
-      else if (p.bend) { o.frequency.setValueAtTime(freq * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(freq, t + (p.bendTime ?? 0.08)); }
-      else o.frequency.value = freq;
-      o.connect(pans[v] < 0 ? left! : pans[v] > 0 ? right! : mid); o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); o.stop(stop);
-      last = o;
-    } }
+    for (const freq of freqs) {
+      let v = 0;
+      for (let wi = 0; wi < waves.length; wi++) {
+        const w = waves[wi], wf = freq * Math.pow(2, (p.semis?.[wi] ?? 0) / 12), lvl = p.levels?.[wi] ?? 1;
+        for (let u = 0; u < U; u++, v++) {
+          const o = c.createOscillator(), x = n > 1 ? (2 * v) / (n - 1) - 1 : 0;
+          if (w === "custom") o.setPeriodicWave(this.periodic(p.harmonics ?? [1]));
+          else o.type = w;
+          o.detune.value = (p.detune ?? 0) * x;
+          if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq) { o.frequency.setValueAtTime(ch.lastFreq * (wf / freq), t); o.frequency.exponentialRampToValueAtTime(wf, t + p.glide); }
+          else if (p.bend) { o.frequency.setValueAtTime(wf * Math.pow(2, p.bend / 12), t); o.frequency.exponentialRampToValueAtTime(wf, t + (p.bendTime ?? 0.08)); }
+          else o.frequency.value = wf;
+          if (vib) vib.connect(o.detune);
+          // FM: a sine at fmRatio times the note bending this oscillator by fmIndex times the note, falling to fmSustain of that over fmDecay
+          if (p.fmRatio && p.fmIndex) {
+            const m = c.createOscillator(), mg = c.createGain(), dev = wf * p.fmIndex;
+            m.frequency.value = wf * p.fmRatio;
+            mg.gain.setValueAtTime(dev, t);
+            if (p.fmDecay) mg.gain.setTargetAtTime(dev * Math.max(0, p.fmSustain ?? 0), t, p.fmDecay / 3);
+            m.connect(mg); mg.connect(o.frequency); m.start(t); sources.push(m);
+          }
+          const to = pans[v] < 0 ? left! : pans[v] > 0 ? right! : mid;
+          if (lvl !== 1) { const lg = c.createGain(); lg.gain.value = lvl; o.connect(lg); lg.connect(to); } else o.connect(to);
+          o.start(t + (U > 1 ? (u * 0.0007) % 0.004 : 0)); sources.push(o);
+          last = o;
+        }
+      }
+      // a sine an octave under the note, centred
+      if (p.sub) {
+        const o = c.createOscillator(), sg = c.createGain(); o.frequency.value = freq / 2; sg.gain.value = p.sub;
+        if (vib) vib.connect(o.detune);
+        o.connect(sg); sg.connect(nodes[0]); o.start(t); sources.push(o);
+      }
+    }
+    // noise into the filter beside the oscillators
+    if (p.noise) { const ng = c.createGain(); ng.gain.value = p.noise; const s = this.noiseSource(t, held ? 3600 : stop - t); s.connect(ng); ng.connect(nodes[0]); if (held) sources.push(s); }
+    if (!held) for (const s of sources) s.stop(stop);
+    else held.push({ gain: g, filter, fBase, fRelease: Math.max(0.01, p.fRelease ?? release), release, sources });
     if (lfoOf && wobbled && last) { const l = lfoOf, f = wobbled; last.onended = () => { try { l.disconnect(f.frequency); } catch { /* gone */ } }; }
     ch.lastFreq = freq;
+  }
+
+  /** A custom wave from its harmonics' levels (the first the fundamental), made once a set. */
+  private periodics = new Map<string, PeriodicWave>();
+  private periodic(h: number[]): PeriodicWave {
+    const key = h.join(",");
+    let w = this.periodics.get(key);
+    if (!w) {
+      const real = new Float32Array(h.length + 1), imag = new Float32Array(h.length + 1);
+      h.forEach((a, i) => { imag[i + 1] = a; });
+      this.periodics.set(key, w = this.ctx.createPeriodicWave(real, imag));
+    }
+    return w;
   }
 
   /** A sung note on the FOF voice (Ed, 2026-10-11): its pool of voices on the part's channel, the vowel morphing to the next

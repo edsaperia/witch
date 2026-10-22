@@ -134,6 +134,16 @@ Three slices, each a PR Ed can hear before the next.
 4. **The A/B is heard live in the Music Lab**: a Vocalise picker with both voices and both chains, sliders, and "Copy my settings"; no mp3s needed.
 5. **Build order** (Ed, the same day): the cheap fixes go **straight into the game first** (the alto, the chorus and octave double off, the stepwise melody), then the A/B in the Music Lab. The alto's range is **G3 to G4**. The breakdown's multitracked wash is **three voices** (the alto, a fifth and an octave up at half the level, each a little late and a few cents apart). Breath: **a slider in the lab's Vocalise card**, Ed sets it.
 
+## The musician (Ed, 2026-10-22)
+
+Ed is starting to work with a musician: "we can keep the current music and start separate parallel branch" (`claude/music-musician`; the current music stays the game's default). Decided:
+
+- **The musician works in Logic.** Notes come in as MIDI (Logic: File ▸ Export ▸ Selection as MIDI File); sounds can't come over from Logic's synths.
+- **Instruments: our engine's synths, tuned live**, not samples bounced from Logic.
+- **First tools: a patch designer, and a MIDI player** to hear their patches played together: the Music Studio (`music-studio.html`, CLAUDE.md's glossary).
+- **The synth grows** (Ed: "today's synth + new features"): per-wave levels and pitch, a custom wave, sub and noise, FM, the filter's own envelope, a second filter, vibrato and tremolo.
+- **Open:** whether their melodies and structures play as written, feed the generator as material, or both by record.
+
 ## Open questions
 
 - (2026-10-14) Answered in part by the proposal above: voices in breakdowns, builds, legend circles and the dark; the first genres by Ed's mapping, one record at a time.

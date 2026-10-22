@@ -44,6 +44,8 @@ export class Input {
   /** The 💌's aim from the cursor: the world direction from her to the ground under (clientX, clientY). */
   aimFrom: ((clientX: number, clientY: number) => { x: number; z: number } | null) | null = null;
   private pointer: { x: number; y: number } | null = null;
+  /** At a dressing station: the d-pad moves through its panel (ui/stationPanel.ts), not her; the left stick still walks her. */
+  dpadMenu = false;
   /** Where the mouse is (client pixels), or null before it has moved: for the aim reticle. */
   get cursor(): { x: number; y: number } | null { return this.pointer; }
   /** The ground under the cursor from her at the last read (metres), or null. */
@@ -138,8 +140,10 @@ export class Input {
       let sx = pad.axes[0] ?? 0, sy = pad.axes[1] ?? 0;
       const mag = Math.hypot(sx, sy), dead = 0.18;
       if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
-      sx += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
-      sy += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
+      if (!this.dpadMenu) { // (at a dressing station the d-pad is its panel's: ui/stationPanel.ts)
+        sx += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
+        sy += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
+      }
       moveX += sx; moveZ += sy;
       const any = (a: readonly number[]) => a.some(edge);
       if (any(PAD.rise)) toggleMode = true;

@@ -25,7 +25,7 @@ interface Quad { p: [number, number, number][]; rgb: [number, number, number]; o
 
 const PLANK: [number, number, number] = [0.36, 0.25, 0.16], PLANK2: [number, number, number] = [0.31, 0.21, 0.13], SEAM: [number, number, number] = [0.2, 0.13, 0.08];
 const WALL: [number, number, number] = [0.3, 0.2, 0.12], WALL_R: [number, number, number] = [0.22, 0.145, 0.085], WALL_TOP: [number, number, number] = [0.42, 0.3, 0.19];
-const KIND: Record<string, [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56] };
 const SKIRT = 0.35, PLANK_W = 0.5, STEP_X = 2;
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
@@ -208,6 +208,7 @@ export class HouseRoomsView {
 function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): string {
   if (o.use.kind === "bed") return "Bed · hold E to sleep (ends the night)";
   if (o.use.kind === "zoo") return "Bestiary book · E: the zoo";
+  if (o.use.kind === "telescope") return "Telescope · E: look";
   if (o.use.kind === "say") return `${o.label} · E`;
   if (o.use.kind === "hats") {
     const hats = hatsOnFloor(W), slots = hatSlots(D);

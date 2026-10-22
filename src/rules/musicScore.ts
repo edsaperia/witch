@@ -43,6 +43,25 @@ export interface Patch {
   /** synth: a slow filter wobble, lfoRate Hz by lfoDepth Hz. */
   lfoRate?: number;
   lfoDepth?: number;
+  /** synth (the Music Studio's knobs, 2026-10-22; each optional, a patch without them as before): each wave's level (0-1) and
+   *  semitones above the note; a "custom" wave's harmonics (each one's level, the fundamental first); a sine an octave down
+   *  and white noise beside the oscillators (levels); FM, a sine at fmRatio times the note bending each oscillator by fmIndex
+   *  times the note, falling to fmSustain of that over fmDecay seconds (none: steady). */
+  levels?: number[];
+  semis?: number[];
+  harmonics?: number[];
+  sub?: number;
+  noise?: number;
+  fmRatio?: number; fmIndex?: number; fmDecay?: number; fmSustain?: number;
+  /** synth: the filter's own envelope (any of them set): up from cutoff to cutoff + envAmt over fAttack, down to fSustain (0-1)
+   *  of the way over fDecay, back over fRelease once the note ends; and a second filter after it, fixed (filter2 at cutoff2, q2). */
+  fAttack?: number; fDecay?: number; fSustain?: number; fRelease?: number;
+  filter2?: BiquadFilterType; cutoff2?: number; q2?: number;
+  /** synth: the filter wobble's wave (sine by default); a vibrato (vibDepth cents at vibRate Hz, in after vibDelay s); a
+   *  tremolo (tremDepth 0-1 at tremRate Hz). */
+  lfoWave?: OscillatorType;
+  vibRate?: number; vibDepth?: number; vibDelay?: number;
+  tremRate?: number; tremDepth?: number;
   /** voice: the vowels it sings in turn (ah, oh, oo, eh, ee), their formants scaled by formantShift,
    *  vibrato depth in cents, and how much breath (noise). */
   vowels?: string[];

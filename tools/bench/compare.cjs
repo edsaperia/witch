@@ -63,6 +63,8 @@ async function main() {
       }, { a: fs.readFileSync(pa).toString("base64"), b: fs.readFileSync(pb).toString("base64") });
       if (r.diff) fs.writeFileSync(path.join(B, `diff-${name}.png`), Buffer.from(r.diff, "base64"));
       if (r.n !== 0) bad.push(`frames ${name}: ${r.n < 0 ? "a different size" : `${r.n} pixels differ (most by ${r.most}), see diff-${name}.png; within x ${r.box[0]}..${r.box[2]}, y ${r.box[1]}..${r.box[3]} of ${fa.viewport ?? "the picture"}; by a 12 by 6 grid:\n    ${r.grid.join("\n    ")}`}`);
+      // (the frames art landed on, frames.cjs `landed`: told apart, a picture that differs may be the art's timing, not the change)
+      if (r.n !== 0 && sa.landed && sb.landed && JSON.stringify(sa.landed) !== JSON.stringify(sb.landed)) bad.push(`frames ${name}: its art landed on other frames (before ${JSON.stringify(sa.landed)}, after ${JSON.stringify(sb.landed)}): a change in what's asked for, or the bench's art wait broken (frames.cjs frames)`);
       const w = s => s.work ? s.work.total : null, f = k => (w(sa) ? `${w(sa)[k]} → ${w(sb)[k]}` : "");
       row(name, where, r.n < 0 ? "size differs" : r.n === 0 ? "0" : `**${r.n}** (${(100 * r.n / r.total).toFixed(2)}%)`, f("median"), f("p99"), f("worst"));
     }

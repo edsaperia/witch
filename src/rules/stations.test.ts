@@ -6,6 +6,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, stationAt, stationOf } from "./stations";
+import { cameraPose } from "./camera";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
@@ -28,6 +29,13 @@ function inHouse(dx: number, dz: number): Game {
 describe("the dressing stations by nearness", () => {
   it("are the creator's stations, and there are some", () => {
     expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomStand", "dressingTable"]));
+  });
+
+  it("in the game, each bedroom station (dressed before the door: Ed, 2026-10-21) opens with her standing at it", () => {
+    for (const o of STATIONS.filter(q => q.room === "bedroom")) {
+      const p = before(o.id, 0.5), g = inHouse(p.x, p.z);
+      expect(stationOf(g, null)?.id, o.id).toBe(o.id);
+    }
   });
 
   it("open near: within reach of a station's edge, that station", () => {
@@ -75,4 +83,26 @@ describe("the dressing stations by nearness", () => {
     g.witch = { ...g.witch, mode: "rising" };
     expect(stationOf(g, "mirror")).toBeNull();
   });
+
+  it("choosing there, the camera eases in on her and aside from the panel; walking off, back out", () => {
+    const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+    const pose = () => cameraPose(g.camera, g.witch.lift, g.tuning);
+    for (let i = 0; i < 4 / STEP; i++) stepGame(g, idle, STEP); // (the house's own view settled)
+    const before = pose();
+    for (let i = 0; i < 3 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true }, STEP);
+    const choosing = pose();
+    expect(choosing.distance).toBeLessThan(before.distance * (S.distance + 0.05));
+    expect(choosing.tx - g.camera.tx).toBeCloseTo(S.side * choosing.distance, 1); // (west of her: she stands right of the panel)
+    for (let i = 0; i < 3 * S.ease / STEP; i++) stepGame(g, idle, STEP);
+    expect(pose().distance).toBeCloseTo(before.distance, 0);
+    expect(g.camera.station).toBeLessThan(0.01);
+  });
+
+  it("never eases in away from the house, framing or not", () => {
+    const g = newGame(123, TUNING);
+    g.clock.paused = false;
+    for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, framing: true }, STEP);
+    expect(g.camera.station ?? 0).toBe(0);
+  });
 });
+

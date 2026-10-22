@@ -16,7 +16,7 @@ srv.listen(0, "127.0.0.1", async () => {
   const errors = []; p.on("pageerror", e => errors.push(e.message));
   if (Number(thr) > 1) { const cdp = await p.context().newCDPSession(p); await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(thr) }); }
   const T = Number(thr), t0 = Date.now();
-  await p.goto(`http://127.0.0.1:${srv.address().port}/?quick=1&timing=1${opening ? "&opening=chart" : ""}`);
+  await p.goto(`http://127.0.0.1:${srv.address().port}/?quick=1&timing=1${opening ? "&opening=chart" : "&opening=old"}`);
   let mirrorAt = null;
   if (opening) {
     await p.waitForSelector("#chart-overlay .home", { timeout: 600000 * T });
