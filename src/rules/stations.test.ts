@@ -31,6 +31,13 @@ describe("the dressing stations by nearness", () => {
     expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomStand", "dressingTable"]));
   });
 
+  it("in the game, each bedroom station (dressed before the door: Ed, 2026-10-21) opens with her standing at it", () => {
+    for (const o of STATIONS.filter(q => q.room === "bedroom")) {
+      const p = before(o.id, 0.5), g = inHouse(p.x, p.z);
+      expect(stationOf(g, null)?.id, o.id).toBe(o.id);
+    }
+  });
+
   it("open near: within reach of a station's edge, that station", () => {
     for (const o of STATIONS) { const p = before(o.id, HOUSE_ROOMS.reach * 0.6); expect(stationAt(at, p.x, p.z, null)?.id, o.id).toBe(o.id); }
   });

@@ -2,7 +2,7 @@
 // into <out dir>: the first load on the sea chart (?opening=chart: only home unlocked on a first game, a fresh profile), its corner's
 // What's new and Options, home chosen (Sail home: the boot's own night, app/opening.ts divesHome), the chart's
 // dive on into the treehouse and her bedroom, where she wakes, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
-// mirror, the curtains). Fails on a page error, the creator's bedroom shown, no sail, her anywhere but her bedroom, or a beat that
+// mirror, the wardrobe, cloak pegs and shoe rack in the bedroom, the curtains opening by themselves, out of its door). Fails on a page error, the creator's bedroom shown, no sail, her anywhere but her bedroom, or a beat that
 // doesn't come. SKIP=1 skips the dive with a key; LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
@@ -13,6 +13,14 @@ const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/opening"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
+// The house's objects, on its plan turned about the hub (config/house.json; rules/houseRooms.ts fromPlan, objectFront): where she
+// stands `by` metres in front of one, on the side facing its room's middle, in metres from the hub's centre in the world.
+const HOUSE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), TURN = ((HOUSE.turn || 0) * Math.PI) / 180;
+const plan = (x, z) => [x * Math.cos(TURN) + z * Math.sin(TURN), -x * Math.sin(TURN) + z * Math.cos(TURN)];
+function front(id, by) {
+  const o = HOUSE.objects.find(q => q.id === id), r = HOUSE.rooms.find(q => q.id === o.room), dx = (r.x0 + r.x1) / 2 - o.x, dz = (r.z0 + r.z1) / 2 - o.z;
+  return Math.abs(dx) > Math.abs(dz) ? plan(o.x + Math.sign(dx) * (o.w / 2 + by), o.z) : plan(o.x, o.z + Math.sign(dz || 1) * (o.d / 2 + by));
+}
 (async () => {
   fs.mkdirSync(out, { recursive: true });
   const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
@@ -91,26 +99,52 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.waitForTimeout(1500);
     await shot("09-up.png");
     // to the dressing table (put by it: the walk itself is the rules' tests'): its mirror opens by itself
-    const goTo = (id, dz) => page.evaluate(([id, dz]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0], o = { dressingTable: [13.3, -13.6, 1.4], curtains: [20.4, -17.3, 0.3] }[id]; W.body = { ...W.body, x: th.x + o[0] + 0.9, z: th.z + o[1] + o[2] / 2 + dz, vx: 0, vz: 0 }; }, [id, dz]);
-    await goTo("dressingTable", -0.6);
-    await page.keyboard.down("KeyA"); await until(s => s.mirror, "the mirror"); await page.keyboard.up("KeyA");
+    const goTo = (id, by) => page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, front(id, by));
+    await goTo("dressingTable", 0.5);
+    // (its panel by nearness, as every station's: rules/stations.ts; the wake-up's own `mirror` beat only fires while the curtains
+    // are still shut, which on a fast load they aren't by now)
+    for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
     await page.waitForTimeout(2500);
     await shot("10-mirror.png");
     // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
-    if (!(await page.evaluate(() => !!window.__creator?.docked))) fail("the mirror didn't dock the creator's panel");
+    if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail("the mirror didn't dock the creator's panel");
     if (await page.evaluate(() => window.__creator?.open || window.witch.game.clock.paused)) fail("the mirror's panel stopped play (it should dock over the running game)");
-    await goTo("curtains", 0.5);
-    for (let i = 0; i < 40 && (await page.evaluate(() => !!window.__creator?.docked)); i++) await page.waitForTimeout(250); // (walking away slides it out)
-    if (await page.evaluate(() => !!window.__creator?.docked)) fail("the mirror's panel didn't slide out as she walked away");
+    // the whole bedroom from the game's camera: her in its middle, the camera a zoom step out
+    { const b = HOUSE.rooms.find(r => r.id === "bedroom"), mid = plan((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2);
+      await page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, mid);
+      await page.keyboard.press("KeyX"); await page.waitForTimeout(4000);
+      await shot("10a-bedroom-whole.png");
+      await page.keyboard.press("KeyZ"); await page.waitForTimeout(1500); }
+    // the rest of her dressing, in the bedroom before its door (Ed, 2026-10-21: "all of the customisation options (except for broom,
+    // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it
+    for (const [id, name] of [["wardrobe", "10b-wardrobe.png"], ["cloakPegs", "10c-cloak-pegs.png"], ["shoeRack", "10d-shoe-rack.png"]]) {
+      await goTo(id, 0.5);
+      for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
+      await page.waitForTimeout(1500);
+      if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail(`the ${id}'s panel didn't dock`);
+      await shot(name);
+    }
+    // the curtains open by themselves once the island's ready (Ed: "The curtains should open as soon as they've loaded"), no E
+    await goTo("curtains", 1.5);
+    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250); // (walking away slides it out)
+    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("the shoe rack's panel didn't slide out as she walked away");
     await page.waitForTimeout(800);
     const before = await wake();
     await shot("11-curtains.png");
     log("at the curtains:", JSON.stringify(before));
-    if (!before.ready) { await page.keyboard.press("KeyE"); await page.waitForTimeout(3000); await shot("11b-not-yet.png"); await until(s => s.ready, "the island ready"); }
-    for (let i = 0; i < 60 && !(await wake()).open; i++) { if (i % 10 === 0) await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); } // (pressed again now and then: a frame here is seconds)
-    await until(s => s.open, "the curtains open");
+    if (!before.open && !before.ready) { await goTo("curtains", 0.5); await page.keyboard.press("KeyE"); await page.waitForTimeout(3000); await shot("11b-not-yet.png"); }
+    await until(s => s.open, "the curtains open by themselves");
     await page.waitForTimeout(2500);
     await shot("12-curtains-open.png");
+    // and the door lets her out: from by it, out along the plan's -x into the dressing room
+    const bed = HOUSE.rooms.find(r => r.id === "bedroom"), door = plan(bed.x0 + 1.2, 0), [ox, oz] = plan(-1, 0);
+    await page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, door);
+    await page.keyboard.down(ox < 0 ? "KeyA" : "KeyD"); await page.keyboard.down(oz > 0 ? "KeyS" : "KeyW");
+    const left = () => page.evaluate(([x0, A]) => { const g = window.witch.game, th = g.map.treehouse, dx = g.witch.x - th.x, dz = g.witch.z - th.z; return dx * Math.cos(A) - dz * Math.sin(A) < x0; }, [bed.x0, TURN]); // (past the bedroom's door wall, on the plan)
+    for (let i = 0; i < 120 && !(await left()); i++) await page.waitForTimeout(500);
+    await page.keyboard.up(ox < 0 ? "KeyA" : "KeyD"); await page.keyboard.up(oz > 0 ? "KeyS" : "KeyW");
+    if (!(await left())) fail("the door didn't let her out of the bedroom once the curtains opened");
+    await shot("12b-out-of-the-door.png");
     // out to her decks: E there seats her and casts the party spell, its needle-drop routine the DJ intro (Ed's decision 2)
     const spell = () => page.evaluate(() => window.witch.game.party.spellAt);
     if ((await spell()) !== null) fail("the party started before her decks");
@@ -131,7 +165,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     if (await page.evaluate(() => window.witch.game.clock.paused)) fail("Esc didn't resume from the pause page");
     if (process.env.BED === "1") { // after the bed (Ed's decision 10): asleep while the next island's made, then the shorter wake-up
       const seed0 = await page.evaluate(() => window.witch.game.seed);
-      await page.evaluate(() => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + 17.6, z: th.z - 14.4, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0 }; });
+      await page.evaluate(by => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + by[0], z: th.z + by[1], vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0 }; }, (() => { const o = HOUSE.objects.find(q => q.id === "bed"); return plan(o.x, o.z + o.d / 2 + 0.4); })());
       await page.waitForTimeout(2000);
       await page.keyboard.down("KeyE");
       for (let i = 0; i < 900 && (await page.evaluate(() => window.witch.game.seed)) === seed0; i++) await page.waitForTimeout(1000); // (E held 1.5 s of her clock: minutes of this machine's)

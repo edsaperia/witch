@@ -1,6 +1,6 @@
 // The wake-up on the page (the new opening, rules/wakeUp.ts; Ed, 2026-10-20, previews/ed/opening-mock/ beats 3a–5a): the bedroom
 // dark while she's in bed, lit as she gets up; a card at the foot of the screen saying what each beat takes (her phone's alarm and
-// E to snooze it, the snoozes counted and the next ring, WASD to get up and walk, E at the curtains), the curtains' "not yet"
+// E to snooze it, the snoozes counted and the next ring, WASD to get up and walk and dress while the island's made; the curtains open by themselves once it's ready), the curtains' "not yet"
 // (with how far the island's build has got) and her phone ringing (platform/audio/chimes.ts alarm). Her own poses in bed are
 // render/view/witch.ts's. Once the curtains open, a last line sends her out to her decks; gone once the party starts there.
 import type { Game } from "../rules/game";
@@ -48,7 +48,7 @@ export class WakeCard {
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
     if (w.beat === "alarm") ring();
-    const html = toDecks ? `🎧 Out through the house to your decks: ${k("E")} behind them starts the party` : w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
+    const html = toDecks ? `👗 Get dressed here, then out through the house to your decks: ${k("E")} behind them starts the party` : w.open ? "" : this.text(w, ht, build, g.tuning.opening?.wake?.snooze ?? 5);
     if (html !== this.html) { this.html = html; this.card.innerHTML = html; }
     this.card.style.display = html ? "block" : "none";
   }
@@ -59,7 +59,7 @@ export class WakeCard {
       case "alarm": return w.short ? `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>any key: up` : `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "snooze": return `💤 five more minutes…${w.snoozes > 1 ? ` (snoozed ×${w.snoozes})` : ""} · rings again in ${Math.max(1, Math.ceil(snooze - (ht - w.at)))} s<br>${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "stretch": return "*yaaawn* … *stretch*";
-      case "up": return `${k("W")}${k("A")}${k("S")}${k("D")} walk · the curtains: ${k("E")} to open them`;
+      case "up": return `${k("W")}${k("A")}${k("S")}${k("D")} walk · get dressed: the curtains open when the island's ready${build.total ? ` (${build.done} of ${build.total})` : ""}`;
     }
   }
 }

@@ -25,6 +25,8 @@ export interface HouseConfig {
   on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;
   rooms: (Rect & { id: string; label: string })[]; corridors: (Rect & { id: string })[];
   objects: HouseObject[]; bed: { hold: number };
+  /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
+  reserved?: (Rect & { id: string; label: string; door: Rect })[];
 }
 export const HOUSE_ROOMS = HOUSE as unknown as HouseConfig;
 

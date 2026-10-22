@@ -1,8 +1,8 @@
 // The treehouse v2 (Ed, 2026-10-21: "the treehouse is too small for the witch to move inside"; "she shouldn't use her broom until she
 // steps off the balcony, and stop using it when she steps on"; "more of an isometric view") in the built game (DIST, default dist/) at
 // 1600×900: walking in each room (`walk-<room>.png`: put by its object on the house's turned plan, a second's walk towards it),
-// standing still in the bedroom (`stand-bedroom.png`), stepping off the balcony's open rim onto her broom (`off-<n>.png`) and flying
-// back onto it, landing and walking (`on-<n>.png`). Fails on a page error. ONLY=walk,stand,off,on shoots only those.
+// standing still in the bedroom (`stand-bedroom.png`), the whole bedroom from the game's camera zoomed out (`bedroom-whole.png`), stepping off the balcony's open rim onto her broom (`off-<n>.png`) and flying
+// back onto it, landing and walking (`on-<n>.png`). Fails on a page error. ONLY=walk,whole,stand,off,on shoots only those.
 //   npm run build && node tools/house/v2-shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -40,6 +40,16 @@ const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z
       await step({}, 60); // (the camera follows her in)
       await step({ moveX: mx, moveZ: mz }, 30);
       await shot(`walk-${r.id}`);
+    }
+    if (want("whole")) {
+      // the whole bedroom from the game's camera (Ed, 2026-10-21: "bedrooms should be larger to fit everything"): her in its middle,
+      // the camera zoomed out a step at a time (WHOLE_STEPS, default 3; the game's own zoom, X)
+      const b = H.rooms.find(r => r.id === "bedroom");
+      await put(...plan((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2));
+      await step({}, 60);
+      for (let i = 0; i < Number(process.env.WHOLE_STEPS || 3); i++) await step({ zoom: 1 }, 1), await step({}, 40);
+      await step({}, 90);
+      await shot("bedroom-whole");
     }
     if (want("stand")) {
       const bed = H.objects.find(q => q.id === "bed");
