@@ -108,6 +108,14 @@ async function settle(page, file, frozen = false) {
   return out;
 }
 
+// The art workers (render/assets.ts: one a core but the page's, hardwareConcurrency - 1): the bench tells the page of one core
+// more than it has, so the pool takes every core. The page only waits while the art is drawn (its frames stand still), and a
+// 2-vCPU runner's one worker made the art the scenes wait for most of a run past the Bench job's 40 minutes (#1007, #1008,
+// 2026-10-21: boot 972 s against 139 s on a 4-vCPU one). The pool's size changes when sets land, never what's drawn: the
+// scenes wait for all of it (pending, then the steps' urgent waits, then the settle). BENCH_CORES=<n> to try another.
+const ARTCORES = Number(process.env.BENCH_CORES || require("os").availableParallelism() + 1);
+const WORKERS = n => { const real = navigator.hardwareConcurrency; Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { get: () => n, configurable: true }); window.__benchCores = { real, told: n }; };
+
 // The page's clock, which the bench can hold (settle): performance.now as ever until it's set.
 const CLOCK = `(() => { const real = performance.now.bind(performance); let held = null; performance.now = () => (held === null ? real() : held); window.__benchClock = v => { held = v; }; })();`;
 
@@ -155,6 +163,7 @@ async function main() {
     if (only && !only.includes(s.name)) continue;
     const page = await context.newPage();
     await page.addInitScript(CLOCK);
+    await page.addInitScript(WORKERS, ARTCORES);
     if (s.frozen) await page.addInitScript("window.__benchClock(1e7);");
     page.on("pageerror", e => errors.push(`${s.name}: ${e.message}`));
     const t0 = Date.now();
@@ -162,6 +171,7 @@ async function main() {
     const lap = what => { if (process.env.BENCH_LAPS) console.log(`  ${s.name} ${what} ${Math.round((Date.now() - t0) / 1000)} s`); };
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");
+    if (process.env.BENCH_LAPS) { const c = await page.evaluate(() => window.__benchCores); console.log(`  ${s.name} cores: the machine's ${require("os").availableParallelism()}, the page's ${c?.real}, told ${c?.told}`); }
     await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
     lap("art");
     if (s.creator) {
