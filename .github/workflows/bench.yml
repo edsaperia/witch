@@ -19,6 +19,7 @@ jobs:
     timeout-minutes: 40
     env:
       PLAYWRIGHT_VERSION: 1.56.1
+      BENCH_LAPS: "1" # (each scene's load, art and step times, and the cores the art pool was given: frames.cjs)
     steps:
       - uses: actions/checkout@v4
         with:
