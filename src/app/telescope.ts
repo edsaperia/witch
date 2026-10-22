@@ -1,9 +1,9 @@
 // The telescope in the crow's nest (Ed, 2026-10-21; rules/telescope.ts): E at it looks through it, full screen, with a soft
-// vignette and a small readout of its bearing and zoom and the keys (his answer to the mock: "full screen with a soft vignette,
+// vignette and a small readout of its bearing, its tilt and zoom and the keys (his answer to the mock: "full screen with a soft vignette,
 // not the brass lens"); E or Esc leaves. While she looks she stands still (main.ts holds her controls) and the night runs on at
 // the house's tenth round her; the view draws from the crow's nest (render/view/camera.ts placeTelescope), at half resolution on
 // an integrated GPU (Ed's Intel UHD).
-import { compassPoint, newTelescope, stepTelescope, telescopeAim, telescopeFov, telescopeMagnification, telescopePitch, type Telescope, type TelescopeTuning } from "../rules/telescope";
+import { compassPoint, newTelescope, stepTelescope, telescopeFov, telescopeMagnification, type Telescope, type TelescopeTuning } from "../rules/telescope";
 
 export class TelescopeView {
   private aim: Telescope | null = null;
@@ -34,9 +34,9 @@ export class TelescopeView {
 
   get on(): boolean { return this.aim !== null; }
 
-  open(night: unknown): void {
+  open(night: unknown, T: TelescopeTuning): void {
     if (this.aim) return;
-    this.aim = newTelescope();
+    this.aim = newTelescope(T);
     this.night = night;
     this.el.style.display = "";
     this.onChange(true);
@@ -49,10 +49,14 @@ export class TelescopeView {
     this.onChange(false);
   }
 
-  /** Point it (the tools' shots: tools/telescope/shots.cjs). */
-  point(heading: number, zoom: number, T: TelescopeTuning): void { if (this.aim) { this.aim = { heading, zoom }; this.show(T); } }
+  /** Point it (the tools' shots: tools/telescope/shots.cjs, tools/stars/shots.cjs): its bearing, zoom and elevation (its lowest if
+   *  not given). */
+  point(heading: number, zoom: number, T: TelescopeTuning, elevation?: number): void { if (this.aim) { this.aim = { heading, zoom, elevation: elevation ?? newTelescope(T).elevation }; this.show(T); } }
 
-  /** A frame (real seconds): her stick or keys pan and zoom it, the wheel zooms, E leaves. */
+  /** Where it points (its bearing, elevation and zoom), or null when she isn't looking. */
+  get aiming(): Telescope | null { return this.aim; }
+
+  /** A frame (real seconds): her stick or keys pan and tilt it, the wheel, Z and X and the shoulder buttons zoom it, E leaves. */
   step(c: { moveX: number; moveZ: number; zoom?: number; sigil?: boolean }, dt: number, T: TelescopeTuning): void {
     if (!this.aim) return;
     if (c.sigil) { this.close(); return; }
@@ -64,13 +68,14 @@ export class TelescopeView {
   private show(T: TelescopeTuning): void {
     if (!this.aim) return;
     const h = Math.round(this.aim.heading) % 360;
-    this.readout.textContent = `${compassPoint(h)} ${String(h).padStart(3, " ")}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\n◀ ▶ look round   ▲ ▼ zoom   E leave`;
+    const up = Math.round(this.aim.elevation);
+    this.readout.textContent = `${compassPoint(h)} ${String(h).padStart(3, " ")}°  ·  ${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\n◀ ▶ look round   ▲ ▼ tilt   Z X zoom   E leave`;
   }
 
   /** Where the view looks this frame (render/view.ts telescope), or null when she isn't looking. */
-  look(eye: number, T: TelescopeTuning): { heading: number; fov: number; pitch: number } | null {
+  look(T: TelescopeTuning): { heading: number; fov: number; pitch: number } | null {
     if (!this.aim) return null;
-    return { heading: this.aim.heading, fov: telescopeFov(T, this.aim.zoom), pitch: telescopePitch(eye, telescopeAim(T, this.aim.zoom), T.bend) };
+    return { heading: this.aim.heading, fov: telescopeFov(T, this.aim.zoom), pitch: -this.aim.elevation };
   }
 }
 

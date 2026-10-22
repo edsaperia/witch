@@ -116,7 +116,7 @@ export interface Tuning {
   bare?: number;
   smoke: { on: boolean; rate: number; life: number; rise: number; speed: number; size: number; grow: number; drift: number; opacity: number; warm: number; pixel: boolean; perFire: number; maxFires: number; range: number };
   /** The telescope in the crow's nest (rules/telescope.ts, render/view/camera.ts; Ed, 2026-10-21). */
-  telescope?: { eye: number; fovWide: number; fovClose: number; aimWide: number; aimClose: number; pan: number; zoomRate: number; zoomStep: number; bend: number; reach: number; hazeNear: number; hazeFar: number; thinFrom: number; thin: number; thinGrow: number; wedge: number; moonSpread: number; resolution: number; lowGpuResolution: number; vignette: number };
+  telescope?: { eye: number; fovWide: number; fovClose: number; aimWide: number; pan: number; tilt: number; tiltMax: number; zoomStep: number; bend: number; reach: number; hazeNear: number; hazeFar: number; thinFrom: number; thin: number; thinGrow: number; wedge: number; moonSpread: number; consHold: number; consLines: number; consBright: number; resolution: number; lowGpuResolution: number; vignette: number };
   sky: { on: boolean; stars: number; moon: number;
     /** Real clouds over the forest (render/clouds.ts): how many (about, per screenful of sky), altitude (m over the ground), speed (m/s drift), opacity, partyGlow (their undersides in the party's colours). */
     clouds: { count: number; altitude: number; speed: number; opacity: number; partyGlow: number };
