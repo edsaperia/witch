@@ -287,7 +287,7 @@ export class StationPanel {
 }
 
 /** A picture of her (genome `g`) wearing `it`, cut to the part it's worn on (its shelf `shelf`'s; a broom, her whole flying
- *  frame): the panel's cards, and the crystal ball's silhouette (ui/crystalBall.ts). */
+ *  frame): the panel's cards. */
 export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeItem, shelf: string): HTMLCanvasElement {
   const look = (Art.genomeLook as (g: unknown) => { look: object; outfit: object | null })(wear(g, it));
   const colours = (Art.witchColours as (st: Style, o?: object, x?: object) => object)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);

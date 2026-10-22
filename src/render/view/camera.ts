@@ -7,6 +7,7 @@ import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
 import { deckOf } from "../../rules/treehouse";
 import { moonInView } from "../../rules/telescope";
+import { constellationTonight } from "../../rules/constellations";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
@@ -64,6 +65,9 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
     const far = t.haze.far;
     moonNow = v.updateMoon(g);
+    // (the game's sky: the stars as if looking north just over the horizon; tonight's constellation only through the telescope)
+    v.sky.look(0, -12, fov, v.width, v.height);
+    v.sky.constellation(NO_STARS, NO_LINES, 0, 0);
     v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
       2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
     v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
@@ -117,9 +121,29 @@ function placeTelescope(v: View, look: { heading: number; fov: number; pitch: nu
   // The moon by its bearing, and the stars a screen's width along for each field of view turned (sky.ts drifts them by uCam.x / 50).
   const fovX = (2 * Math.atan(Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height)) * 180) / Math.PI;
   const mx = moonInView(moon.x, look.heading, fovX, T.moonSpread), shown = { ...moon, x: mx > -0.2 && mx < 1.2 ? mx : -2 };
+  v.sky.look(look.heading, look.pitch, look.fov, v.width, v.height);
+  lookAtConstellation(v, look, fovX);
   v.sky.update(T.bend, ex + (look.heading / fovX) * v.width * 50, ez, T.hazeFar, 2 * T.hazeFar * Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height), shown);
   v.ground.moonRoad(shown.x, v.width, shown.lit > 0.02 && shown.x > -1);
   v.subpixel.x = 0; v.subpixel.y = 0;
   updateFrustum(v);
   return new THREE.Vector3(s * Math.sin(p), Math.cos(p), -c * Math.sin(p));
+}
+
+const NO_STARS: { bearing: number; elevation: number; b: number }[] = [], NO_LINES: [number, number][] = [];
+
+/** Tonight's constellation through the telescope (rules/constellations.ts; Ed, 2026-10-22): its stars a little brighter than their
+ *  neighbours, its faint dotted lines fading in once she's held the view on it telescope.consHold seconds (real time: the house's
+ *  tenth would make it ten), out again as she looks away. None tonight, or found: no stars. */
+function lookAtConstellation(v: View, look: { heading: number; fov: number; pitch: number }, fovX: number): void {
+  const g = v.game, T = g.tuning.telescope!, C = constellationTonight(g.trunk, g.map.treehouse.x, g.map.treehouse.z);
+  const now = performance.now(), dt = v.consAt ? Math.min(0.1, (now - v.consAt) / 1000) : 0;
+  v.consAt = now;
+  if (!C) { v.consHold = 0; v.consLines = 0; v.sky.constellation(NO_STARS, NO_LINES, 0, 0); return; }
+  const off = Math.abs(((C.bearing - look.heading + 540) % 360) - 180) * Math.cos((C.elevation * Math.PI) / 180), up = Math.abs(C.elevation + look.pitch);
+  const inView = off < fovX * 0.4 && up < look.fov * 0.4;
+  v.consHold = inView ? v.consHold + dt : 0;
+  v.consLines += ((v.consHold >= T.consHold ? 1 : 0) - v.consLines) * Math.min(1, dt * 2.5);
+  if (v.consStars?.key !== C.item + C.bearing) v.consStars = { key: C.item + C.bearing, stars: C.stars.map(s => ({ ...s, b: T.consBright })) };
+  v.sky.constellation(v.consStars.stars, C.lines, T.consLines * v.consLines, 1);
 }

@@ -38,7 +38,6 @@ import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { fillTrunk } from "./rules/finds";
-import { CrystalBall } from "./ui/crystalBall";
 import { loadOwned, saveOwned } from "./app/owned";
 import { StationPanel } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
@@ -300,8 +299,6 @@ const stations = new StationPanel(style, bootTuning.pixelSize);
 let owned: Set<string> | null = null, stillAt = 0;
 stations.onLook = g => { saveGenome(g as never); creator.adopt(g); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
-// The crystal ball (rules/finds.ts, ui/crystalBall.ts; Ed, 2026-10-21): E at it shows tonight's trunk's wearable and which way it lies.
-const ball = new CrystalBall(style, bootTuning.pixelSize);
 stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
@@ -321,8 +318,7 @@ const useHouse = (obj: string): void => {
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
-  else if (o.use.kind === "ball") { if (ball.open) ball.hide(); else ball.show(game.trunk, game.map.treehouse.x, game.map.treehouse.z, (page.look() ?? creator.genome()) as Record<string, unknown>); }
-  else if (o.use.kind === "telescope" && tuning.telescope) telescope.open(game);
+  else if (o.use.kind === "telescope" && tuning.telescope) telescope.open(game, tuning.telescope);
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -741,7 +737,7 @@ function frame(now: number): void {
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
-  view.telescope = tuning.telescope ? telescope.look(tuning.telescope.eye, tuning.telescope) : null;
+  view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
@@ -774,7 +770,6 @@ function frame(now: number): void {
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
   }
-  if (ball.open && (c.moveX || c.moveZ || !game.witch.perch)) ball.hide(); // (walking off, or out of the house)
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.spells.broom, game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : ""); }
@@ -905,9 +900,10 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
-// The telescope for the tools (tools/telescope/shots.cjs): look through it pointed at a bearing and zoom (0 wide, 1 close), or stop.
+// The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
+// wide, 1 close) and an elevation (degrees up; its lowest if not given), or stop.
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
-  look: (heading: number, zoom: number) => { const { game, tuning } = N(); if (!tuning.telescope) return false; telescope.open(game); telescope.point(heading, zoom, tuning.telescope); view.telescope = telescope.look(tuning.telescope.eye, tuning.telescope); return true; },
+  look: (heading: number, zoom: number, elevation?: number) => { const { game, tuning } = N(); if (!tuning.telescope) return false; telescope.open(game, tuning.telescope); telescope.point(heading, zoom, tuning.telescope, elevation); view.telescope = telescope.look(tuning.telescope); return true; },
   close: () => { telescope.close(); view.telescope = null; },
   get on() { return telescope.on; },
 };

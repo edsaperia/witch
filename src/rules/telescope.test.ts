@@ -1,37 +1,46 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { compassPoint, moonInView, newTelescope, stepTelescope, telescopeAim, telescopeFov, telescopeMagnification, telescopePitch, wrapBearing } from "./telescope";
+import { compassPoint, moonInView, newTelescope, stepTelescope, telescopeFloor, telescopeFov, telescopeMagnification, telescopePitch, wrapBearing } from "./telescope";
 
 const T = TUNING.telescope!;
 
 describe("the telescope (rules/telescope.ts)", () => {
   it("starts north and wide, the game's own way", () => {
-    expect(newTelescope()).toEqual({ heading: 0, zoom: 0 });
+    expect(newTelescope(T)).toEqual({ heading: 0, elevation: telescopeFloor(T), zoom: 0 });
+    expect(telescopeFloor(T)).toBeLessThan(0); // (down at the forest)
     expect(telescopeFov(T, 0)).toBeCloseTo(T.fovWide);
     expect(telescopeFov(T, 1)).toBeCloseTo(T.fovClose);
     expect(telescopeMagnification(T, 1)).toBeCloseTo(T.fovWide / T.fovClose);
   });
   it("pans all the way round, either way, and wraps", () => {
-    let s = newTelescope();
+    let s = newTelescope(T);
     for (let i = 0; i < 600; i++) s = stepTelescope(s, { moveX: 1, moveZ: 0 }, 1 / 60, T);
     expect(s.heading).toBeCloseTo(wrapBearing(T.pan * 10));
-    s = stepTelescope(newTelescope(), { moveX: -1, moveZ: 0 }, 1, T);
+    s = stepTelescope(newTelescope(T), { moveX: -1, moveZ: 0 }, 1, T);
     expect(s.heading).toBeCloseTo(wrapBearing(-T.pan));
     expect(s.heading).toBeGreaterThanOrEqual(0);
   });
   it("pans slower zoomed in, so the view moves alike on screen", () => {
-    const wide = stepTelescope({ heading: 0, zoom: 0 }, { moveX: 1, moveZ: 0 }, 0.1, T).heading;
-    const close = stepTelescope({ heading: 0, zoom: 1 }, { moveX: 1, moveZ: 0 }, 0.1, T).heading;
+    const wide = stepTelescope({ heading: 0, elevation: 0, zoom: 0 }, { moveX: 1, moveZ: 0 }, 0.1, T).heading;
+    const close = stepTelescope({ heading: 0, elevation: 0, zoom: 1 }, { moveX: 1, moveZ: 0 }, 0.1, T).heading;
     expect(close / wide).toBeCloseTo(T.fovClose / T.fovWide);
   });
-  it("zooms in up the stick and with the wheel, and stays within wide and close", () => {
-    expect(stepTelescope(newTelescope(), { moveX: 0, moveZ: -1 }, 0.1, T).zoom).toBeGreaterThan(0);
-    expect(stepTelescope(newTelescope(), { moveX: 0, moveZ: 1 }, 0.1, T).zoom).toBe(0);
-    expect(stepTelescope({ heading: 0, zoom: 1 }, { moveX: 0, moveZ: -1 }, 1, T).zoom).toBe(1);
-    expect(stepTelescope(newTelescope(), { moveX: 0, moveZ: 0, zoom: -1 }, 0, T).zoom).toBeCloseTo(T.zoomStep); // (the controls' zoom: negative in)
+  it("tilts up the stick from the forest to tiltMax, and no further either way (Ed, 2026-10-22: to look at the stars)", () => {
+    const up = stepTelescope(newTelescope(T), { moveX: 0, moveZ: -1 }, 0.5, T);
+    expect(up.elevation).toBeCloseTo(telescopeFloor(T) + T.tilt * 0.5);
+    expect(up.zoom).toBe(0); // (the stick tilts; it no longer zooms)
+    expect(stepTelescope(newTelescope(T), { moveX: 0, moveZ: 1 }, 1, T).elevation).toBeCloseTo(telescopeFloor(T));
+    let s = newTelescope(T);
+    for (let i = 0; i < 60 * 10; i++) s = stepTelescope(s, { moveX: 0, moveZ: -1 }, 1 / 60, T);
+    expect(s.elevation).toBe(T.tiltMax);
   });
-  it("aims further out zoomed in, and tilts down to it over the bend", () => {
-    expect(telescopeAim(T, 1)).toBeGreaterThan(telescopeAim(T, 0));
+  it("zooms with the wheel, the zoom keys and the shoulder buttons, within wide and close", () => {
+    expect(stepTelescope(newTelescope(T), { moveX: 0, moveZ: 0, zoom: -1 }, 0, T).zoom).toBeCloseTo(T.zoomStep); // (the controls' zoom: negative in)
+    expect(stepTelescope(newTelescope(T), { moveX: 0, moveZ: 0, zoom: 1 }, 0, T).zoom).toBe(0);
+    expect(stepTelescope({ heading: 0, elevation: 0, zoom: 1 }, { moveX: 0, moveZ: 0, zoom: -1 }, 0, T).zoom).toBe(1);
+  });
+  it("looks down to the forest over the bend at its lowest", () => {
+    expect(telescopeFloor(T)).toBeCloseTo(-telescopePitch(T.eye, T.aimWide, T.bend));
     const flat = telescopePitch(50, 300, 0), bent = telescopePitch(50, 300, T.bend);
     expect(flat).toBeCloseTo((Math.atan(50 / 300) * 180) / Math.PI);
     expect(bent).toBeGreaterThan(flat);

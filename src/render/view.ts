@@ -170,6 +170,12 @@ function nightState(t: Tuning) {
     /** Looking through the telescope in the crow's nest (rules/telescope.ts; main.ts sets it each frame): its bearing (degrees from
      *  north), its field of view and its pitch down (degrees); the view's own camera in place of hers (render/view/camera.ts). */
     telescope: null as { heading: number; fov: number; pitch: number } | null,
+    /** Tonight's constellation through the telescope (render/view/camera.ts lookAtConstellation): how long (real seconds) she's held
+     *  the view on it, its lines' fade (0 to 1), the last frame's real time (ms) and its stars, made once. */
+    consHold: 0,
+    consLines: 0,
+    consAt: 0,
+    consStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
     markerCache: { wave: -1, n: -1, list: [] as SpawnMarker[] },
     /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
     seatK: 1,

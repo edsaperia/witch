@@ -1962,7 +1962,7 @@ Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, th
 
 ### `telescope`
 
-The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide, aimClose: how far out (m) the middle of the view looks, wide and close. pan: degrees a second panning wide (slower zoomed in, alike on screen); zoomRate: the stick's zoom a second (0 wide to 1 close); zoomStep: the wheel's a click. bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
+The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -1970,9 +1970,9 @@ The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the isl
 | `telescope.fovWide` | number | 0 to … |
 | `telescope.fovClose` | number | 0 to … |
 | `telescope.aimWide` | number | 0 to … |
-| `telescope.aimClose` | number | 0 to … |
 | `telescope.pan` | number | 0 to … |
-| `telescope.zoomRate` | number | 0 to … |
+| `telescope.tilt` | number | 0 to … |
+| `telescope.tiltMax` | number | 0 to … |
 | `telescope.zoomStep` | number | 0 to … |
 | `telescope.bend` | number | 0 to … |
 | `telescope.reach` | number | 0 to … |
@@ -1983,6 +1983,9 @@ The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the isl
 | `telescope.thinGrow` | number | 0 to … |
 | `telescope.wedge` | number | 0 to … |
 | `telescope.moonSpread` | number | 0 to … |
+| `telescope.consHold` | number | 0 to … |
+| `telescope.consLines` | number | 0 to … |
+| `telescope.consBright` | number | 0 to … |
 | `telescope.resolution` | number | 0 to … |
 | `telescope.lowGpuResolution` | number | 0 to … |
 | `telescope.vignette` | number | 0 to … |

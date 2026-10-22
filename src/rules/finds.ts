@@ -3,8 +3,9 @@
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
 // come from the garage's parts, docs/backlog/unlocks.md), in an old travel trunk half-sunk in a wild area's woods, under the
 // canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers at once (the
-// "found" leash event; app/owned.ts keeps it, even if the night's then lost). The crystal ball in the treehouse's hub says what
-// it is and which way it lies, never how far (ui/crystalBall.ts). Where the trunk stands is the night's (map.seed); what's in it
+// "found" leash event; app/owned.ts keeps it, even if the night's then lost). Its hint is written in the stars (Ed, 2026-10-22):
+// the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
+// (rules/constellations.ts; the crystal ball's vision is gone, the ball a placeholder again). Where the trunk stands is the night's (map.seed); what's in it
 // is the page's to say (what she owns is this browser's), so the rules place it empty and the page fills it (fillTrunk).
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
@@ -71,7 +72,7 @@ export function trunkAt(trunk: Trunk | null, x: number, z: number): Trunk | null
 /** The eight compass points' names, from north clockwise. */
 const POINTS = ["north", "north-east", "east", "south-east", "south", "south-west", "west", "north-west"];
 /** Which way (x, z) lies from (fromX, fromZ), as a compass point (north is -z: up the screen), and its bearing in radians
- *  clockwise from north: the crystal ball's way, never a distance (Ed). */
+ *  clockwise from north: the constellation's way (rules/constellations.ts), never a distance (Ed). */
 export function wayTo(fromX: number, fromZ: number, x: number, z: number): { point: string; bearing: number } {
   const bearing = (Math.atan2(x - fromX, -(z - fromZ)) + Math.PI * 2) % (Math.PI * 2);
   return { point: POINTS[Math.round(bearing / (Math.PI / 4)) % 8], bearing };

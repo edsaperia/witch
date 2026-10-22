@@ -77,7 +77,7 @@ describe("tonight's travel trunk", () => {
   });
 });
 
-describe("the crystal ball's way (never how far)", () => {
+describe("the way to the trunk (never how far)", () => {
   it("names the compass point from the treehouse to the trunk, north up the screen", () => {
     expect(wayTo(0, 0, 0, -100).point).toBe("north");
     expect(wayTo(0, 0, 100, 0).point).toBe("east");
