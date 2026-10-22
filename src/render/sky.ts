@@ -109,13 +109,13 @@ void main() {
     for (int i = 0; i < 12; i++) {
       if (float(i) >= uConsOn.x) break;
       float ang = length(cross(d, uCons[i].xyz));
-      if (dot(d, uCons[i].xyz) > 0.0 && ang < uSkyTan.z * 1.1) col += vec3(1.0, 0.97, 0.88) * uCons[i].w * uConsOn.w * (ang < uSkyTan.z * 0.6 ? 1.0 : 0.5);
+      if (dot(d, uCons[i].xyz) > 0.0 && ang < uSkyTan.z * 1.5) col += vec3(1.0, 0.97, 0.88) * uCons[i].w * uConsOn.w * (ang < uSkyTan.z * 0.8 ? 1.0 : 0.45);
     }
     for (int i = 0; i < 16; i++) {
       if (float(i) >= uConsOn.y) break;
       vec3 a = uCons[int(uPairs[i].x)].xyz, b = uCons[int(uPairs[i].y)].xyz, n = normalize(cross(a, b));
-      if (abs(dot(d, n)) < uSkyTan.z * 0.5 && dot(cross(a, d), n) > 0.0 && dot(cross(d, b), n) > 0.0 && mod(px.x + px.y, 3.0) < 1.0)
-        col += vec3(0.7, 0.75, 0.95) * uConsOn.z;
+      if (abs(dot(d, n)) < uSkyTan.z * 0.5 && dot(cross(a, d), n) > 0.0 && dot(cross(d, b), n) > 0.0 && mod(px.x + px.y, 2.0) < 1.0)
+        col = mix(col, vec3(0.75, 0.8, 1.0), uConsOn.z); // (over the stars behind: legible in the Milky Way too)
     }
   }
   // The moon (rules/moon.ts), on its way across the sky band: a pixel disc with dark seas and a halo,

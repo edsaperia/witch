@@ -44,7 +44,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await step(4);
     await shot("game-sky");
     const look = (h, z, e) => page.evaluate(([h, z, e]) => window.witch.telescope.look(h, z, e), [h, z, e]);
-    const hold = async ms => { await page.waitForTimeout(ms); await step(6); }; // (the constellation's lines fade in on real time held)
+    // (the constellation's lines fade in on real time held, a frame's step at most 0.1 s: frames drawn all the while)
+    const hold = async ms => { const t0 = Date.now(); while (Date.now() - t0 < ms) await step(1); await step(3); };
     await look(30, 0, 8); await step(90); await shot("tele-horizon", { bearing: 30, up: 8 });
     await look(310, 0, 45); await step(30); await shot("tele-milky-way", { bearing: 310, up: 45 });
     await look(310, 0.86, 45); await step(30); await shot("tele-milky-way-zoom", { bearing: 310, up: 45, zoom: 0.86 });
