@@ -12065,7 +12065,21 @@ label.check input { accent-color: var(--accent); }
     }
     m.ell([r(9) * 0.04, 0.52, 0], [0.07, 0.05, 0.06], M.LEAF2, { group: 7 });
   }
+  function travelTrunk(m) {
+    m.ell([0, 0.03, 0], [0.6, 0.08, 0.42], M.STONED, { group: 1, rough: 0.03, paint: (p) => ctCell(p, 12, 2) < 0.3 ? M.MOSS : void 0 });
+    m.box([0, 0.14, 0], [0.42, 0.13, 0.26], M.WOOD, { round: 0.02, group: 2, paint: ctPlank(9, 0.12) });
+    for (const x of [-0.29, 0.29]) m.box([x, 0.15, 0], [0.035, 0.135, 0.275], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
+    m.box([0, 0.44, -0.3], [0.43, 0.2, 0.04], M.WOOD, { round: 0.02, group: 4, paint: ctPlank(9, 0.2) });
+    for (const x of [-0.29, 0.29]) m.box([x, 0.44, -0.27], [0.035, 0.2, 0.02], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
+    m.ell([0.04, 0.28, 0.02], [0.3, 0.06, 0.2], M.TOP, { group: 5, rough: 0.02 });
+    m.ell([0.2, 0.2, 0.27], [0.08, 0.12, 0.03], M.TOP, { group: 5 });
+    m.ell([-0.17, 0.31, -0.04], [0.14, 0.05, 0.1], M.ACCENT, { group: 6, rough: 0.02 });
+    ctTufts(m, 9, 0.75, 7, 41);
+  }
   var SCENE_PIECES = {
+    "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) {
+      travelTrunk(m);
+    } },
     "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) {
       harvestSprout(m, 0);
     } },
