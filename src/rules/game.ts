@@ -17,6 +17,7 @@ import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
 import { buffing, cheer, LEGENDS, placeRelics, stepLegendStates, type Relic } from "./legends";
+import { placeTrunk, type Trunk } from "./finds";
 import { befriend, danceAt, huntsWitch, invitableNow, stateOf, STATES, type State } from "./creatureStates";
 import { GUEST_DEPTH, guestGap, guestSlot, guestSpot, partySpots, ROW_OFFSETS, SLOT_RANGE, SPOT_RANGE } from "./partyGuests";
 import type { Cell } from "./partition";
@@ -146,6 +147,9 @@ export interface Game {
   islandsTonight: string[];
   /** The map's relics (rules/legends.ts): lying half buried, carried, or put down by a legend. */
   relics: Relic[];
+  /** Tonight's travel trunk, a wearable to find in it (rules/finds.ts; Ed, 2026-10-21), or null: none on this map, or nothing
+   *  she lacks (filled by the page from what she owns: fillTrunk). */
+  trunk: Trunk | null;
   /** This frame's wave events (several steps' worth, or none): a soundsystem lost brings the next
    *  wave sooner (Ed, 2026-10-05), with the countdown it leaves, for the HUD and the music. */
   waveEvents: WaveEvent[];
@@ -272,9 +276,10 @@ export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPr
     speakerBoot: map.dancefloor.speakers.map(() => null),
     beat: newBeatClock(tuning.beat.bpm, waveTempo(tuning, 0)), knockdowns: [] as { at: number; back: number }[], musicSet: set,
     floor: newFloor(), buffs: newBuffs(tuning), partyWitches: newPartyWitches(seed), beach: newBeachWitches(seed, map.bounds, tuning),
-    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
+    combat: newCombat(), koEvents: [] as KnockoutEvent[], friendly: new Set<string>(), wildEntry: new Map(), questEvents: [] as QuestEvent[], islandsTonight: [] as string[], waveEvents: [] as WaveEvent[], leashEvents: [] as LeashEvent[], relics: placeRelics(map, forest), trunk: null as Trunk | null, tally: { berries: 0, invites: 0, evolved: 0 }, growth: newGrowth(), partyOver: null as PartyOver | null, win: null as WinState | null,
     acc: 0, alpha: 1, timeScale: 1, herTime: 0, pending: {}, prev: { witches: [], creatures: new Float64Array(creatures.length * 2), camera: null },
   };
+  g.trunk = placeTrunk(map, forest, g.relics);
   // Home is its ring of speakers, each its own soundsystem in the fight (Ed, 2026-10-08; rules/speakers.ts).
   const C = tuning.combat;
   map.dancefloor.speakers.forEach((p, i) => g.combat.sounds.set(speakerKey(i), { hp: C.speakerHealth, max: C.speakerHealth, x: p.x, z: p.z, radius: C.speakerRadius }));
