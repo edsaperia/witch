@@ -12065,7 +12065,21 @@ label.check input { accent-color: var(--accent); }
     }
     m.ell([r(9) * 0.04, 0.52, 0], [0.07, 0.05, 0.06], M.LEAF2, { group: 7 });
   }
+  function travelTrunk(m) {
+    m.ell([0, 0.03, 0], [0.6, 0.08, 0.42], M.STONED, { group: 1, rough: 0.03, paint: (p) => ctCell(p, 12, 2) < 0.3 ? M.MOSS : void 0 });
+    m.box([0, 0.14, 0], [0.42, 0.13, 0.26], M.WOOD, { round: 0.02, group: 2, paint: ctPlank(9, 0.12) });
+    for (const x of [-0.29, 0.29]) m.box([x, 0.15, 0], [0.035, 0.135, 0.275], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
+    m.box([0, 0.44, -0.3], [0.43, 0.2, 0.04], M.WOOD, { round: 0.02, group: 4, paint: ctPlank(9, 0.2) });
+    for (const x of [-0.29, 0.29]) m.box([x, 0.44, -0.27], [0.035, 0.2, 0.02], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
+    m.ell([0.04, 0.28, 0.02], [0.3, 0.06, 0.2], M.TOP, { group: 5, rough: 0.02 });
+    m.ell([0.2, 0.2, 0.27], [0.08, 0.12, 0.03], M.TOP, { group: 5 });
+    m.ell([-0.17, 0.31, -0.04], [0.14, 0.05, 0.1], M.ACCENT, { group: 6, rough: 0.02 });
+    ctTufts(m, 9, 0.75, 7, 41);
+  }
   var SCENE_PIECES = {
+    "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) {
+      travelTrunk(m);
+    } },
     "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) {
       harvestSprout(m, 0);
     } },
@@ -15170,11 +15184,11 @@ label.check input { accent-color: var(--accent); }
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once the home ring's speakers are all down (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just switch off (sound and lights)"), the afterparty, any soundsystem still standing switched off: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once (home's speakers down).`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
     __view: "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
-    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance.`,
+    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves.`,
     _sail: "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
     sail: { inPlace: true },
-    _opening: "The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. Off till the whole opening is in; ?opening=chart turns it on for a load, ?opening=old keeps today's start (the bedroom as the loading cover). wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
-    opening: { chart: false, wake: { snooze: 5, stretch: 3, alarmMin: 0.4 } },
+    _opening: "The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
+    opening: { chart: true, wake: { snooze: 5, stretch: 3, alarmMin: 0.4 } },
     _arrive: "Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).",
     arrive: { warm: { frames: 3, ms: 120, max: 8 }, maxStep: 0.05, fade: 0.6, speed: 110, minLeg: 1.5, low: { angle: 20, distance: 110, offshore: 60 }, frame: { angle: 34, distance: 170, lift: 8 }, rise: 3.5, settle: 3 },
     camera: {
@@ -15194,7 +15208,8 @@ label.check input { accent-color: var(--accent); }
       follow: 8,
       intro: { distance: 34, angle: 22, ease: 1.3 },
       circle: { on: true, angle: 20, distance: 0.75, ease: 1.2, frame: 0.35, look: 1.5 },
-      house: { on: true, angle: 24, distance: 0.62, ease: 1 }
+      house: { on: true, angle: 24, distance: 0.62, ease: 1 },
+      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5 }
     },
     _look: `Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (3, Ed 2026-10-07 after playtesting 5 and 4: "the large pixels look cute but it's impossible to see what's going on"; ?px=4|5 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach \xD7 glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.`,
     pixelSize: 3,
@@ -15224,6 +15239,8 @@ label.check input { accent-color: var(--accent); }
     find: { eyeshine: { range: 45, strength: 1.2, blink: 0.08 }, lightFloor: 0.45, rim: 0.5, ambient: 0.28, moonHue: 0.5, moonSat: 0.5 },
     __light: "Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.",
     _hills: `The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her (Ed, v289: "so that you never go behind a bump"): the hills are made at least 4.3 \xD7 amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30\xB0), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch (Ed, v297: "bumps are fine, it's cliffs that really show"): a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off (Ed, v276: "remove the slope shading"): the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top.`,
+    _telescope: "The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).",
+    telescope: { eye: 50, fovWide: 40, fovClose: 8, aimWide: 260, pan: 50, tilt: 35, tiltMax: 80, zoomStep: 0.125, bend: 3e-4, reach: 900, hazeNear: 320, hazeFar: 1e3, thinFrom: 360, thin: 2, thinGrow: 1.25, wedge: 20, moonSpread: 60, consHold: 1, consLines: 0.7, consBright: 1.35, resolution: 1, lowGpuResolution: 0.5, vignette: 0.6 },
     _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).",
     _smoke: "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.",
     smoke: { on: true, rate: 0.6, life: 14, rise: 46, speed: 5, size: 2.6, grow: 4, drift: 0.9, opacity: 0.62, warm: 1, pixel: true, perFire: 12, maxFires: 24, range: 280 },
@@ -16523,6 +16540,61 @@ registerProcessor("witch-fof", WitchFof);
         this.play(e, at2(e), e.dur * sps, sps);
       }
     }
+    /** One note outside the score, at audio time `t`, `dur` seconds long, on part `part`'s channel with patch `patch` (the
+     *  Music Studio's MIDI player and keyboard, tools/music-studio: Ed, 2026-10-22). `midi` null for a drum. */
+    note(part, patch, midi, vel, t, dur) {
+      this.play({ part, patch, midi, vel, step: 0, offset: 0, dur: 0 }, t, dur, 60 / 120 / 4);
+    }
+    /** The Studio's tempo (it plays without a beat clock): the echoes' time and the voice effects' beat. */
+    tempo(bpm) {
+      this.bpmNow = bpm;
+      this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / Math.max(20, bpm)), this.ctx.currentTime, 0.05);
+    }
+    /** A part's channel let go, made afresh at its next note (the Studio: its patch's high-pass, pan, sends or wobble changed);
+     *  what's still sounding on the old one gets a few seconds to ring out. */
+    resetPart(part) {
+      const ch = this.channels.get(part);
+      if (!ch) return;
+      this.channels.delete(part);
+      setTimeout(() => {
+        for (const n of [ch.lfo?.osc, ...ch.running ?? []]) if (n) try {
+          n.stop();
+        } catch {
+        }
+        ch.fof?.dispose();
+        ch.swell?.voices.dispose();
+        ch.fx?.dispose();
+        try {
+          ch.in.disconnect();
+        } catch {
+        }
+      }, 6e3);
+    }
+    /** A synth note held from audio time `t` till the function it gives back is called with the time to let go (the Studio's
+     *  keyboard); any other kind of patch plays a short note and the function does nothing. */
+    hold(part, patch, midi, vel, t) {
+      const p = this.style.patches[patch];
+      if (!p) return () => {
+      };
+      if (p.kind !== "synth") {
+        this.note(part, patch, midi, vel, t, 0.4);
+        return () => {
+        };
+      }
+      const held = [], ch = this.channel(part, p);
+      this.notePitch = 1;
+      this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
+      return (at2) => {
+        for (const h of held) {
+          h.gain.gain.setTargetAtTime(0, at2, h.release / 3);
+          h.filter?.frequency.setTargetAtTime(h.fBase, at2, h.fRelease / 3);
+          for (const s of h.sources) try {
+            s.stop(at2 + 2 * Math.max(h.release, h.fRelease) + 0.05);
+          } catch {
+          }
+        }
+      };
+    }
     play(e, t, dur, sps, chord = []) {
       const p = this.style.patches[e.patch];
       if (!p || this.solo && !this.solo.has(e.part)) return;
@@ -16703,29 +16775,45 @@ registerProcessor("witch-fof", WitchFof);
         o.stop(t + decay + 0.05);
       }
     }
-    synth(t, p, peak, freqOrChord, dur, ch) {
+    /** A synth note. Every knob past the original ones (levels, semis, custom harmonics, sub, noise, FM, the filter's own
+     *  envelope, a second filter, vibrato, tremolo, the filter wobble's wave: the Music Studio's, 2026-10-22) is optional, and a
+     *  patch without them plays exactly as it did. `held`: the note isn't released; its release is the caller's (the Studio's
+     *  keyboard, `hold`). */
+    synth(t, p, peak, freqOrChord, dur, ch, held) {
       const freqs = Array.isArray(freqOrChord) ? freqOrChord : [freqOrChord], freq = freqs[freqs.length - 1];
       const lite = this.shedLevel >= 2, all = p.waves ?? ["sawtooth"], waves = lite ? all.slice(0, 1) : all, U = lite ? 1 : Math.max(1, Math.round(p.unison ?? 1)), n = waves.length * U;
       const c = this.ctx, attack = Math.max(2e-3, p.attack ?? 5e-3), decay = Math.max(0.01, p.decay ?? 0.2), sustain = p.sustain ?? 0.5, release = Math.max(0.01, p.release ?? 0.1);
-      const end = t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02;
+      const end = held ? Infinity : t + Math.max(dur, attack), stop = end + release * (lite ? 1.5 : 2) + 0.02;
       const g = c.createGain();
       g.gain.setValueAtTime(0, t);
       g.gain.linearRampToValueAtTime(peak / Math.sqrt(n), t + attack);
       if (end > t + attack) g.gain.setTargetAtTime(peak / Math.sqrt(n) * sustain, t + attack, decay / 3);
-      g.gain.setTargetAtTime(0, end, release / 3);
-      const nodes = [];
-      let lfoOf = null, wobbled = null;
+      if (!held) g.gain.setTargetAtTime(0, end, release / 3);
+      const nodes = [], sources = [];
+      let lfoOf = null, wobbled = null, filter = null, fBase = 0;
+      const fEnv = p.fAttack !== void 0 || p.fDecay !== void 0 || p.fSustain !== void 0 || p.fRelease !== void 0;
       if (p.filter) {
         const f = c.createBiquadFilter();
         f.type = p.filter;
         f.Q.value = p.q ?? 0.7;
         kRate(f.frequency);
         const base = p.cutoff ?? 2e3, top = Math.min(18e3, base + (p.envAmt ?? 0) * peak / Math.max(1e-3, p.gain));
-        f.frequency.setValueAtTime(top, t);
-        if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+        if (fEnv) {
+          const fa = Math.max(0, p.fAttack ?? 0), fd = Math.max(0.01, p.fDecay ?? attack + decay), fr = Math.max(0.01, p.fRelease ?? release);
+          f.frequency.setValueAtTime(fa > 2e-3 ? base : top, t);
+          if (fa > 2e-3 && top > base) f.frequency.exponentialRampToValueAtTime(top, t + fa);
+          f.frequency.setTargetAtTime(base + (top - base) * Math.max(0, Math.min(1, p.fSustain ?? 0)), t + fa, fd / 3);
+          if (!held) f.frequency.setTargetAtTime(base, end, fr / 3);
+          filter = f;
+          fBase = base;
+        } else {
+          f.frequency.setValueAtTime(top, t);
+          if (top > base) f.frequency.exponentialRampToValueAtTime(base, t + attack + decay);
+        }
         if (p.lfoRate && p.lfoDepth) {
           if (!ch.lfo) {
             const osc = c.createOscillator(), depth = c.createGain();
+            if (p.lfoWave) osc.type = p.lfoWave;
             osc.frequency.value = p.lfoRate;
             depth.gain.value = p.lfoDepth;
             osc.connect(depth);
@@ -16737,9 +16825,27 @@ registerProcessor("witch-fof", WitchFof);
           wobbled = f;
         }
         nodes.push(f);
+        if (p.filter2) {
+          const f2 = c.createBiquadFilter();
+          f2.type = p.filter2;
+          f2.frequency.value = p.cutoff2 ?? 400;
+          f2.Q.value = p.q2 ?? 0.7;
+          nodes.push(f2);
+        }
       }
       if (p.drive) nodes.push(this.shaper(p.drive));
       nodes.push(g);
+      if (p.tremRate && p.tremDepth) {
+        const tg = c.createGain(), lo = c.createOscillator(), ld = c.createGain(), d = Math.max(0, Math.min(1, p.tremDepth));
+        tg.gain.value = 1 - d / 2;
+        lo.frequency.value = p.tremRate;
+        ld.gain.value = d / 2;
+        lo.connect(ld);
+        ld.connect(tg.gain);
+        lo.start(t);
+        sources.push(lo);
+        nodes.push(tg);
+      }
       this.chain(nodes, ch.in);
       const pans = [];
       for (let v = 0; v < n; v++) {
@@ -16761,26 +16867,80 @@ registerProcessor("witch-fof", WitchFof);
         m.connect(nodes[0]);
         return m;
       })() : nodes[0];
+      let vib = null;
+      if (p.vibRate && p.vibDepth) {
+        const lo = c.createOscillator();
+        vib = c.createGain();
+        lo.frequency.value = p.vibRate;
+        const at2 = t + Math.max(0, p.vibDelay ?? 0);
+        vib.gain.setValueAtTime(0, t);
+        vib.gain.setValueAtTime(0, at2);
+        vib.gain.linearRampToValueAtTime(p.vibDepth, at2 + 0.25);
+        lo.connect(vib);
+        lo.start(t);
+        sources.push(lo);
+      }
       let last = null;
       for (const freq2 of freqs) {
         let v = 0;
-        for (const w of waves) for (let u = 0; u < U; u++, v++) {
-          const o = c.createOscillator(), x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
-          o.type = w;
-          o.detune.value = (p.detune ?? 0) * x;
-          if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq2) {
-            o.frequency.setValueAtTime(ch.lastFreq, t);
-            o.frequency.exponentialRampToValueAtTime(freq2, t + p.glide);
-          } else if (p.bend) {
-            o.frequency.setValueAtTime(freq2 * Math.pow(2, p.bend / 12), t);
-            o.frequency.exponentialRampToValueAtTime(freq2, t + (p.bendTime ?? 0.08));
-          } else o.frequency.value = freq2;
-          o.connect(pans[v] < 0 ? left : pans[v] > 0 ? right : mid);
-          o.start(t + (U > 1 ? u * 7e-4 % 4e-3 : 0));
-          o.stop(stop);
-          last = o;
+        for (let wi = 0; wi < waves.length; wi++) {
+          const w = waves[wi], wf = freq2 * Math.pow(2, (p.semis?.[wi] ?? 0) / 12), lvl = p.levels?.[wi] ?? 1;
+          for (let u = 0; u < U; u++, v++) {
+            const o = c.createOscillator(), x = n > 1 ? 2 * v / (n - 1) - 1 : 0;
+            if (w === "custom") o.setPeriodicWave(this.periodic(p.harmonics ?? [1]));
+            else o.type = w;
+            o.detune.value = (p.detune ?? 0) * x;
+            if (p.glide && freqs.length === 1 && ch.lastFreq > 0 && ch.lastFreq !== freq2) {
+              o.frequency.setValueAtTime(ch.lastFreq * (wf / freq2), t);
+              o.frequency.exponentialRampToValueAtTime(wf, t + p.glide);
+            } else if (p.bend) {
+              o.frequency.setValueAtTime(wf * Math.pow(2, p.bend / 12), t);
+              o.frequency.exponentialRampToValueAtTime(wf, t + (p.bendTime ?? 0.08));
+            } else o.frequency.value = wf;
+            if (vib) vib.connect(o.detune);
+            if (p.fmRatio && p.fmIndex) {
+              const m = c.createOscillator(), mg = c.createGain(), dev = wf * p.fmIndex;
+              m.frequency.value = wf * p.fmRatio;
+              mg.gain.setValueAtTime(dev, t);
+              if (p.fmDecay) mg.gain.setTargetAtTime(dev * Math.max(0, p.fmSustain ?? 0), t, p.fmDecay / 3);
+              m.connect(mg);
+              mg.connect(o.frequency);
+              m.start(t);
+              sources.push(m);
+            }
+            const to = pans[v] < 0 ? left : pans[v] > 0 ? right : mid;
+            if (lvl !== 1) {
+              const lg = c.createGain();
+              lg.gain.value = lvl;
+              o.connect(lg);
+              lg.connect(to);
+            } else o.connect(to);
+            o.start(t + (U > 1 ? u * 7e-4 % 4e-3 : 0));
+            sources.push(o);
+            last = o;
+          }
+        }
+        if (p.sub) {
+          const o = c.createOscillator(), sg = c.createGain();
+          o.frequency.value = freq2 / 2;
+          sg.gain.value = p.sub;
+          if (vib) vib.connect(o.detune);
+          o.connect(sg);
+          sg.connect(nodes[0]);
+          o.start(t);
+          sources.push(o);
         }
       }
+      if (p.noise) {
+        const ng = c.createGain();
+        ng.gain.value = p.noise;
+        const s = this.noiseSource(t, held ? 3600 : stop - t);
+        s.connect(ng);
+        ng.connect(nodes[0]);
+        if (held) sources.push(s);
+      }
+      if (!held) for (const s of sources) s.stop(stop);
+      else held.push({ gain: g, filter, fBase, fRelease: Math.max(0.01, p.fRelease ?? release), release, sources });
       if (lfoOf && wobbled && last) {
         const l = lfoOf, f = wobbled;
         last.onended = () => {
@@ -16791,6 +16951,20 @@ registerProcessor("witch-fof", WitchFof);
         };
       }
       ch.lastFreq = freq;
+    }
+    /** A custom wave from its harmonics' levels (the first the fundamental), made once a set. */
+    periodics = /* @__PURE__ */ new Map();
+    periodic(h) {
+      const key = h.join(",");
+      let w = this.periodics.get(key);
+      if (!w) {
+        const real = new Float32Array(h.length + 1), imag = new Float32Array(h.length + 1);
+        h.forEach((a, i) => {
+          imag[i + 1] = a;
+        });
+        this.periodics.set(key, w = this.ctx.createPeriodicWave(real, imag));
+      }
+      return w;
     }
     /** A sung note on the FOF voice (Ed, 2026-10-11): its pool of voices on the part's channel, the vowel morphing to the next
      *  through it; a phrase (after a rest of a beat or more) swelling in and the last one's end frozen, as the voice effects
