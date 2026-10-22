@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { FINDABLE, type Trunk } from "./finds";
-import { CONSTELLATION_UP, OUTLINES, constellationTonight } from "./constellations";
+import { FINDABLE, nightFind, type Trunk } from "./finds";
+import { CONSTELLATION_UP, OUTLINES, constellationFor } from "./constellations";
 
 describe("the constellations (rules/constellations.ts)", () => {
   it("give every findable wearable an outline of 7 to 10 stars, within the sky's limits (render/sky.ts: 12 stars, 16 lines)", () => {
@@ -18,17 +18,21 @@ describe("the constellations (rules/constellations.ts)", () => {
   });
   it("stand at the trunk's bearing from the treehouse, about 35° up, and go once it's found", () => {
     const trunk: Trunk = { x: 100, z: 0, cell: [0, 0], item: "top-cape", found: false };
-    const c = constellationTonight(trunk, 0, 0)!;
+    const c = constellationFor(nightFind({ trunk }, 0, 0))!;
     expect(c.bearing).toBeCloseTo(90); // (due east: north is -z)
     expect(c.elevation).toBe(CONSTELLATION_UP);
     const mid = c.stars.reduce((a, s) => a + s.bearing, 0) / c.stars.length;
     expect(Math.abs(mid - 90)).toBeLessThan(2);
-    expect(constellationTonight({ ...trunk, found: true }, 0, 0)).toBeNull();
-    expect(constellationTonight({ ...trunk, item: null }, 0, 0)).toBeNull();
-    expect(constellationTonight(null, 0, 0)).toBeNull();
+    expect(constellationFor(nightFind({ trunk: { ...trunk, found: true } }, 0, 0))).toBeNull();
+    expect(constellationFor(nightFind({ trunk: { ...trunk, item: null } }, 0, 0))).toBeNull();
+    expect(constellationFor(nightFind({ trunk: null }, 0, 0))).toBeNull();
+  });
+  it("take the night's one find from one source, any kind, an outline by its item id (Ed, 2026-10-22: one permanent upgrade a night)", () => {
+    expect(nightFind({ trunk: { x: 0, z: 50, cell: [0, 0], item: "bumbag", found: false } }, 0, 0)).toEqual({ kind: "wearable", item: "bumbag", bearing: 180 });
+    expect(constellationFor({ kind: "wearable", item: "no-such-item", bearing: 0 })).toBeNull();
   });
   it("wrap round north", () => {
-    const c = constellationTonight({ x: -1, z: -100, cell: [0, 0], item: "shades", found: false }, 0, 0)!;
+    const c = constellationFor(nightFind({ trunk: { x: -1, z: -100, cell: [0, 0], item: "shades", found: false } }, 0, 0))!;
     for (const s of c.stars) { expect(s.bearing).toBeGreaterThanOrEqual(0); expect(s.bearing).toBeLessThan(360); }
   });
 });

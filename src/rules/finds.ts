@@ -77,3 +77,14 @@ export function wayTo(fromX: number, fromZ: number, x: number, z: number): { poi
   const bearing = (Math.atan2(x - fromX, -(z - fromZ)) + Math.PI * 2) % (Math.PI * 2);
   return { point: POINTS[Math.round(bearing / (Math.PI / 4)) % 8], bearing };
 }
+
+/** The night's one permanent upgrade to find (Ed, 2026-10-22: "With all permanent upgrades, there's one per night, and it's
+ *  hinted through the telescope"): what kind it is, its item id and its bearing (degrees clockwise from north) from (fromX, fromZ),
+ *  the treehouse. Never two at once. Today a wearable, in the trunk (broom parts, hats and bags to come, each its own kind); null
+ *  with none to find tonight, or once it's found. The constellation's one source (rules/constellations.ts). */
+export interface NightFind { kind: "wearable"; item: string; bearing: number }
+export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: number): NightFind | null {
+  const t = g.trunk;
+  if (!t || !t.item || t.found) return null;
+  return { kind: "wearable", item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+}

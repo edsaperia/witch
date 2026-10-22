@@ -7,7 +7,8 @@ import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
 import { deckOf } from "../../rules/treehouse";
 import { moonInView } from "../../rules/telescope";
-import { constellationTonight } from "../../rules/constellations";
+import { constellationFor } from "../../rules/constellations";
+import { nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
@@ -136,7 +137,7 @@ const NO_STARS: { bearing: number; elevation: number; b: number }[] = [], NO_LIN
  *  neighbours, its faint dotted lines fading in once she's held the view on it telescope.consHold seconds (real time: the house's
  *  tenth would make it ten), out again as she looks away. None tonight, or found: no stars. */
 function lookAtConstellation(v: View, look: { heading: number; fov: number; pitch: number }, fovX: number): void {
-  const g = v.game, T = g.tuning.telescope!, C = constellationTonight(g.trunk, g.map.treehouse.x, g.map.treehouse.z);
+  const g = v.game, T = g.tuning.telescope!, C = constellationFor(nightFind(g, g.map.treehouse.x, g.map.treehouse.z));
   const now = performance.now(), dt = v.consAt ? Math.min(0.1, (now - v.consAt) / 1000) : 0;
   v.consAt = now;
   if (!C) { v.consHold = 0; v.consLines = 0; v.sky.constellation(NO_STARS, NO_LINES, 0, 0); return; }
