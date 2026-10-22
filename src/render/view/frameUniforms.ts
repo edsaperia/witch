@@ -17,6 +17,9 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   const g = v.game, t = g.tuning;
   // Sprites face the camera, tilted back toward it by spriteTilt.
   const tilt = t.spriteTilt;
+  // Across the screen: east, as the game's camera always looks north; the telescope's own way as it turns (render/view/camera.ts).
+  const look = v.telescope, bearing = look ? (look.heading * Math.PI) / 180 : 0;
+  SPRITE_UNIFORMS.uRight.value.set(Math.cos(bearing), 0, Math.sin(bearing));
   SPRITE_UNIFORMS.uUp.value.set(0, 1, 0).lerp(up, tilt).normalize();
   SPRITE_UNIFORMS.uFacing.value.crossVectors(SPRITE_UNIFORMS.uRight.value, SPRITE_UNIFORMS.uUp.value).normalize();
   // The canopy is always drawn; round the witch a hole is cut, sized to the view, which shrinks

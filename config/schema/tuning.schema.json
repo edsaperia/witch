@@ -9096,6 +9096,114 @@
       ],
       "additionalProperties": false
     },
+    "telescope": {
+      "type": "object",
+      "properties": {
+        "eye": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fovWide": {
+          "type": "number",
+          "minimum": 0
+        },
+        "fovClose": {
+          "type": "number",
+          "minimum": 0
+        },
+        "aimWide": {
+          "type": "number",
+          "minimum": 0
+        },
+        "aimClose": {
+          "type": "number",
+          "minimum": 0
+        },
+        "pan": {
+          "type": "number",
+          "minimum": 0
+        },
+        "zoomRate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "zoomStep": {
+          "type": "number",
+          "minimum": 0
+        },
+        "bend": {
+          "type": "number",
+          "minimum": 0
+        },
+        "reach": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hazeNear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "hazeFar": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thinFrom": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thin": {
+          "type": "number",
+          "minimum": 0
+        },
+        "thinGrow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "wedge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "moonSpread": {
+          "type": "number",
+          "minimum": 0
+        },
+        "resolution": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lowGpuResolution": {
+          "type": "number",
+          "minimum": 0
+        },
+        "vignette": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "eye",
+        "fovWide",
+        "fovClose",
+        "aimWide",
+        "aimClose",
+        "pan",
+        "zoomRate",
+        "zoomStep",
+        "bend",
+        "reach",
+        "hazeNear",
+        "hazeFar",
+        "thinFrom",
+        "thin",
+        "thinGrow",
+        "wedge",
+        "moonSpread",
+        "resolution",
+        "lowGpuResolution",
+        "vignette"
+      ],
+      "additionalProperties": false
+    },
     "smoke": {
       "type": "object",
       "properties": {
@@ -11171,6 +11279,7 @@
     "load",
     "canopyCutout",
     "find",
+    "telescope",
     "smoke",
     "sky",
     "moon",

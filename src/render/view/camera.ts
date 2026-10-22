@@ -5,6 +5,8 @@ import type { View } from "../view";
 import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
+import { deckOf } from "../../rules/treehouse";
+import { moonInView } from "../../rules/telescope";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
@@ -17,7 +19,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   // Arriving from the sea chart (rules/arrive.ts, app/arrive.ts): the flight's shot in place of hers, its field of view
   // easing from the chart's to the game's, the ground and the heights following its aim (not her, at her decks).
   const F = v.fly, fov = F ? F.fov : t.camera.fov;
-  if (v.camera.fov !== fov) { v.camera.fov = fov; v.camera.updateProjectionMatrix(); }
+  if (v.camera.fov !== fov || v.camera.far !== 900) { v.camera.fov = fov; v.camera.far = 900; v.camera.updateProjectionMatrix(); } // (900: as made; the telescope's reaches further)
   const wpp = (2 * pose.distance * Math.tan((fov * Math.PI) / 360)) / v.height;
   const up = new THREE.Vector3(0, Math.cos(a), -Math.sin(a));
   // The rolling ground: its window follows her, and the camera rides over its height.
@@ -38,6 +40,7 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
+  let moonNow!: ReturnType<View["updateMoon"]>;
   {
     const C = t.camera.curve, m = Math.min(1, Math.max(0, g.witch.lift));
     // Lying on the beach to stargaze (Ed, 2026-10-06: "the bend shader applies so that you can see the sky"): the bend eased up
@@ -60,12 +63,13 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     v.bendTo = Math.max(0, g.witch.mode === "rising" || g.witch.mode === "treetop" ? C.treetop : C.ground, gk, v.beachView.gazing ? C.treetop * (B?.stargazeCurve ?? 0) * seaKeep : 0);
     HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
     const far = t.haze.far;
-    const moonNow = v.updateMoon(g);
+    moonNow = v.updateMoon(g);
     v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
       2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
     v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
   }
   v.time("sky");
+  if (v.telescope && !F) return placeTelescope(v, v.telescope, moonNow);
   const u = target.dot(up), r = target.x, eu = Math.round(u / wpp) * wpp - u, er = Math.round(r / wpp) * wpp - r;
   target.addScaledVector(up, eu);
   target.x += er;
@@ -93,4 +97,29 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   if (shake > 0) v.camera.position.add(v.v3.set(Math.sin(time * 61) * shake, Math.sin(time * 47 + 1) * shake * 0.6, 0));
   updateFrustum(v);
   return up;
+}
+
+/** Looking through the telescope (rules/telescope.ts; Ed, 2026-10-21): a view of its own from the crow's nest, over the hub's roof,
+ *  turned to its bearing and tilted down to its aim; the game's camera itself never turns. The sprites face it (uRight, set in
+ *  setFrameUniforms), the world bends gently away along its bearing (telescope.bend, so the island's far side stays in view), the
+ *  moon stands at its bearing round north and the stars pan with it. Returns the camera's up, as placeCamera does. */
+function placeTelescope(v: View, look: { heading: number; fov: number; pitch: number }, moon: ReturnType<View["updateMoon"]>): THREE.Vector3 {
+  const g = v.game, t = g.tuning, T = t.telescope!, D = deckOf(g.map, t) ?? g.witch;
+  const h = (look.heading * Math.PI) / 180, p = (look.pitch * Math.PI) / 180, s = Math.sin(h), c = Math.cos(h);
+  const ex = D.x, ez = D.z, ey = groundHeight(ex, ez) + T.eye, cam = v.camera, far = Math.max(900, T.hazeFar + 100);
+  if (cam.fov !== look.fov || cam.far !== far) { cam.fov = look.fov; cam.far = far; cam.updateProjectionMatrix(); }
+  cam.position.set(ex, ey, ez);
+  cam.up.set(0, 1, 0);
+  cam.lookAt(ex + s * Math.cos(p) * 100, ey - Math.sin(p) * 100, ez - c * Math.cos(p) * 100);
+  HEIGHT_UNIFORMS.uBend.value.set(T.bend, ex, ez, t.ground.hills.on ? t.ground.hills.amplitude : 0);
+  HEIGHT_UNIFORMS.uBendFwd.value.set(s, -c);
+  v.bendTo = T.bend;
+  // The moon by its bearing, and the stars a screen's width along for each field of view turned (sky.ts drifts them by uCam.x / 50).
+  const fovX = (2 * Math.atan(Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height)) * 180) / Math.PI;
+  const mx = moonInView(moon.x, look.heading, fovX, T.moonSpread), shown = { ...moon, x: mx > -0.2 && mx < 1.2 ? mx : -2 };
+  v.sky.update(T.bend, ex + (look.heading / fovX) * v.width * 50, ez, T.hazeFar, 2 * T.hazeFar * Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height), shown);
+  v.ground.moonRoad(shown.x, v.width, shown.lit > 0.02 && shown.x > -1);
+  v.subpixel.x = 0; v.subpixel.y = 0;
+  updateFrustum(v);
+  return new THREE.Vector3(s * Math.sin(p), Math.cos(p), -c * Math.sin(p));
 }
