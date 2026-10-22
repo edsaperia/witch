@@ -107,7 +107,8 @@ function due(v: View, force = false) {
   // trunk, shadow or undergrowth); on the ground, where her view doesn't reach the far crowns, as far as the rest.
   const canopy = Math.max(reach, v.canopyNow);
   const regrown = Math.abs(radius - v.lastBuild.radius) >= margin / 3 || Math.abs(canopy - (v.lastBuild.canopy ?? reach)) >= margin / 3;
-  const tele = v.telescope ? 1 : 0; // (looking through the telescope, or no longer: render/view/camera.ts)
+  // Looking through the telescope (render/view/camera.ts): listed again each half of its wedge it pans, or as it zooms; or no longer.
+  const TW = t.telescope, tele = v.telescope && TW ? 1 + Math.round(v.telescope.heading / Math.max(1, TW.wedge / 2)) * 1000 + Math.round(v.telescope.fov) : 0;
   const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift || tele !== (lp.tele ?? 0);
   const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
   if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics) return null;

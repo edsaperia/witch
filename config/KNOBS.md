@@ -1962,7 +1962,7 @@ Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, th
 
 ### `telescope`
 
-The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide, aimClose: how far out (m) the middle of the view looks, wide and close. pan: degrees a second panning wide (slower zoomed in, alike on screen); zoomRate: the stick's zoom a second (0 wide to 1 close); zoomStep: the wheel's a click. bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
+The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide, aimClose: how far out (m) the middle of the view looks, wide and close. pan: degrees a second panning wide (slower zoomed in, alike on screen); zoomRate: the stick's zoom a second (0 wide to 1 close); zoomStep: the wheel's a click. bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -1981,6 +1981,7 @@ The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the isl
 | `telescope.thinFrom` | number | 0 to … |
 | `telescope.thin` | number | 0 to … |
 | `telescope.thinGrow` | number | 0 to … |
+| `telescope.wedge` | number | 0 to … |
 | `telescope.moonSpread` | number | 0 to … |
 | `telescope.resolution` | number | 0 to … |
 | `telescope.lowGpuResolution` | number | 0 to … |

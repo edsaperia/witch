@@ -9159,6 +9159,10 @@
           "type": "number",
           "minimum": 0
         },
+        "wedge": {
+          "type": "number",
+          "minimum": 0
+        },
         "moonSpread": {
           "type": "number",
           "minimum": 0
@@ -9192,6 +9196,7 @@
         "thinFrom",
         "thin",
         "thinGrow",
+        "wedge",
         "moonSpread",
         "resolution",
         "lowGpuResolution",

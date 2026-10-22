@@ -61,6 +61,21 @@ export function viewRect(v: View, far: number, margin: number) {
   return { minX: minX - margin, maxX: maxX + margin, minZ: minZ - margin, maxZ: maxZ + margin };
 }
 
+/** Whether (x, z), w wide, lies within the telescope's wedge: its bearing, its view's half width and telescope.wedge degrees either
+ *  side (or within a few metres of the eye, below its view). */
+export function inWedge(v: View, x: number, z: number, w = 0): boolean {
+  const T = v.telescope, W = v.game.tuning.telescope;
+  if (!T || !W) return true;
+  const e = v.camera.position, dx = x - e.x, dz = z - e.z, d = Math.hypot(dx, dz);
+  if (d < 30 + w) return true;
+  const half = telescopeHalfWidth(T.fov, v.width / v.height) + W.wedge + (Math.atan2(w, d) * 180) / Math.PI;
+  const bearing = (Math.atan2(dx, -dz) * 180) / Math.PI, off = Math.abs(((bearing - T.heading + 540) % 360) - 180);
+  return off <= half;
+}
+
+/** Half the telescope's view's width (degrees) at its field of view `fov` (vertical, degrees) and the screen's `aspect`. */
+export const telescopeHalfWidth = (fov: number, aspect: number): number => (Math.atan(Math.tan((fov * Math.PI) / 360) * aspect) * 180) / Math.PI;
+
 /** How far (m) a point lies ahead of the bend's focus along its forward (north, but for the telescope's own bearing), 0 behind. */
 function aheadOf(x: number, z: number): number {
   const B = HEIGHT_UNIFORMS.uBend.value, F = HEIGHT_UNIFORMS.uBendFwd.value;
@@ -84,8 +99,9 @@ export function inView(v: View, x: number, z: number, w: number, h: number, marg
   // pop in at the horizon. #222's map: a baby wolf and a young fox 258 m ahead over the treetops.)
   const near = Math.max(0, ahead - horizonLead(v.camStep));
   if (ahead > 0 && !overHorizon(v, near, g + h + 2, B.x) && !overHorizon(v, near, g + h + 2, v.bendTo)) return false;
-  // (through the telescope everything round it within reach: it pans without the scenery being listed again, render/view/scenery.ts)
-  if (v.telescope) return true;
+  // (through the telescope, what lies within its wedge: its view's width and telescope.wedge degrees either side, so it pans a
+  // while before the scenery is listed again: render/view/scenery.ts)
+  if (v.telescope) return inWedge(v, x, z, w);
   v.box.min.set(x - w / 2 - margin, g - Math.max(d1, d2) - margin, z - h - margin);
   v.box.max.set(x + w / 2 + margin, g - Math.min(d1, d2) + h + margin, z + margin);
   return v.frustum.intersectsBox(v.box) || v.frustumTo.intersectsBox(v.box);
