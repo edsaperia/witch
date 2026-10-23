@@ -78,12 +78,17 @@ describe("the treehouse's rooms", () => {
   });
 
   it("she can't rise in the rooms or on the branches, only on the Terrace (Ed, 2026-10-23: \"She shouldn't be able to rise while in the treehouse, except on the terrace\")", () => {
-    const rise = (dx: number, dz: number) => { const g = inHouse(dx, dz), W = g.witches[0]; stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, idle, STEP); return W.body.mode; };
+    const g = inHouse(0, 0), W = g.witches[0], d = deck(g); // (one night, she's put at each spot in turn)
+    const rise = (dx: number, dz: number) => {
+      W.body = { ...W.body, x: d.x + dx, z: d.z + dz, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
+      stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.2 / STEP; i++) stepGame(g, idle, STEP);
+      return W.body.mode;
+    };
     for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked)) { const R = room(r.id), p = plan(R.cx, R.cz); expect(rise(p.x, p.z), r.id).toBe("ground"); }
     for (const c of HOUSE_ROOMS.corridors.filter(q => q.pts && q.pts.length >= 2)) { // (each branch halfway along, off the Terrace)
-      const pts = c.pts!, [ax, az] = pts[0], [bx, bz] = pts[pts.length - 1], p = plan((ax + bx) / 2, (az + bz) / 2), d = deck(inHouse(0, 0));
+      const pts = c.pts!, [ax, az] = pts[0], [bx, bz] = pts[pts.length - 1], p = plan((ax + bx) / 2, (az + bz) / 2);
       if (Math.hypot(p.x, p.z) <= d.r + 1) continue;
-      expect(rise(p.x, p.z), "a branch").toBe("ground");
+      expect(rise(p.x, p.z), c.id).toBe("ground");
     }
     expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle)
   });
