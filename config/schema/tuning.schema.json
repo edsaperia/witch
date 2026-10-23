@@ -8555,16 +8555,19 @@
               "type": "number",
               "minimum": 0
             },
+            "aim": {
+              "type": "number",
+              "minimum": 0
+            },
             "parts": {
               "type": "object",
               "properties": {
                 "head": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8572,7 +8575,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8580,10 +8583,9 @@
                 "hat": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8591,7 +8593,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8599,10 +8601,9 @@
                 "top": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8610,7 +8611,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8618,10 +8619,9 @@
                 "legs": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8629,7 +8629,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8637,10 +8637,9 @@
                 "feet": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8648,7 +8647,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8708,6 +8707,7 @@
             "distance",
             "side",
             "ease",
+            "aim",
             "parts"
           ],
           "additionalProperties": false
@@ -9893,6 +9893,24 @@
     "lights": {
       "type": "object",
       "properties": {
+        "find": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        },
         "campfire": {
           "type": "object",
           "properties": {
@@ -9939,6 +9957,7 @@
         }
       },
       "required": [
+        "find",
         "campfire",
         "stone",
         "knee",

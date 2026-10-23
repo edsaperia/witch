@@ -3,8 +3,8 @@
 // compass strip along its top (Ed: "Telescope view has a compass at the top") and a soft
 // vignette and a small readout of its bearing, its tilt and zoom and the keys (his answer to the mock: "full screen with a soft vignette,
 // not the brass lens"); E or Esc leaves. While she looks she stands still (main.ts holds her controls) and the night runs on at
-// the house's tenth round her; the view draws from the crow's nest (render/view/camera.ts placeTelescope), at half resolution on
-// an integrated GPU (Ed's Intel UHD).
+// the house's tenth round her; the view draws from the crow's nest (render/view/camera.ts placeTelescope), at telescope.resolution
+// (lowGpuResolution on an integrated GPU, Ed's Intel UHD).
 import { newTelescope, stepTelescope, telescopeFov, telescopeMagnification, turnTelescope, wrapBearing, type Telescope, type TelescopeTuning } from "../rules/telescope";
 
 /** The arrow keys, while she looks: the telescope's (taken before the game's input sees them, as a station's panel takes them). */

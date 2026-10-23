@@ -1810,15 +1810,16 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |
-| `camera.station.parts.head.look` | number | -5 to 5 |
+| `camera.station.aim` | number | 0 to … |
+| `camera.station.parts.head.aim` | number | 0 to … |
 | `camera.station.parts.head.distance` | number | 0 to … |
-| `camera.station.parts.hat.look` | number | -5 to 5 |
+| `camera.station.parts.hat.aim` | number | 0 to … |
 | `camera.station.parts.hat.distance` | number | 0 to … |
-| `camera.station.parts.top.look` | number | -5 to 5 |
+| `camera.station.parts.top.aim` | number | 0 to … |
 | `camera.station.parts.top.distance` | number | 0 to … |
-| `camera.station.parts.legs.look` | number | -5 to 5 |
+| `camera.station.parts.legs.aim` | number | 0 to … |
 | `camera.station.parts.legs.distance` | number | 0 to … |
-| `camera.station.parts.feet.look` | number | -5 to 5 |
+| `camera.station.parts.feet.aim` | number | 0 to … |
 | `camera.station.parts.feet.distance` | number | 0 to … |
 | `camera.station.parts.broom.look` | number | -5 to 5 |
 | `camera.station.parts.broom.distance` | number | 0 to … |
@@ -1984,7 +1985,7 @@ Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, th
 
 ### `telescope`
 
-The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): walking up to it looks through it full screen (Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys": the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves), the night running on at the house's tenth, a compass strip along its top. eye: the eye's height (m over the ground at the hub, above its roof; Ed, 2026-10-23: "the telescope view should be 'higher'", 50 to 100). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).
+The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): walking up to it looks through it full screen (Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys": the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves), the night running on at the house's tenth, a compass strip along its top. eye: the eye's height (m over the ground at the hub, above its roof; Ed, 2026-10-23: "the telescope view should be 'higher'", 50 to 100). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's pixels, 2 twice as fine, 0.5 twice as coarse; up to 3); lowGpuResolution: on an integrated GPU (Intel), instead (1, the game's: Ed, 2026-10-23, "telescope view is too pixellated" at 0.5). vignette: how dark its edges (0 none).
 
 | knob | type | range |
 |---|---|---|
@@ -2128,10 +2129,12 @@ Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for
 
 ### `lights`, `glowPower`
 
-How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
+How far (reach, metres) and how strongly each kind of light lights its surroundings. find: tonight's find's own pale gold-white light (the finds style guide, docs/art-guide/FINDS.md: the brightest and whitest thing on its patch, brighter than her lantern; out once it's taken). glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
 
 | knob | type | range |
 |---|---|---|
+| `lights.find.reach` | number | 0 to … |
+| `lights.find.strength` | number | 0 to … |
 | `lights.campfire.reach` | number | 0 to … |
 | `lights.campfire.strength` | number | 0 to … |
 | `lights.stone.reach` | number | 0 to … |

@@ -18,8 +18,10 @@
 //
 // Hats and bags (Ed, 2026-10-23, the mock previews/ed/hat-bag-finds: "Own objects each - all permanent upgrades will have their
 // own look"): every spell hat is a find (only the plain hat is hers at first), lying where its spell would put it (art/country.js
-// hatfind-<spell>: the Helmet on a cairn, the Harvest hat among berry bushes...), taken onto the Parlour's hats' floor; the bum
-// bag and the backpack each its own (bagfind-<bag>), no longer in the trunk. Taken, the piece stands on without it (its `empty`).
+// a pointed hat), taken onto the Parlour's hats' floor; the bum bag and the backpack each its own, no longer in the trunk.
+// How every find looks (Ed, 2026-10-23, the finds style guide, docs/art-guide/FINDS.md): one flask-sized object, no setting
+// round it, on a clear patch in its own pale gold-white light (render/view/finds.ts); clothes a folded bundle, a bag a little bag,
+// a hat a pointed hat, a broom part the part itself (art/country.js's find pieces). Taken, it's gone, its patch and light too.
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
@@ -52,14 +54,14 @@ export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !
 /** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
  *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
  *  keeps it for good, app/owned.ts and app/broomSave.ts, from the "found" event). */
-export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; /** the piece once she's taken it (absent: the same) */ empty?(item: string): string; claim?(s: SpellState, item: string): void }
+export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; claim?(s: SpellState, item: string): void }
 export const FIND_KINDS: readonly FindKind[] = [
-  { id: "wearable", name: "trunk", items: FINDABLE.map(i => i.id), piece: () => "travel-trunk" },
+  { id: "wearable", name: "bundle", items: FINDABLE.map(i => i.id), piece: () => "find-bundle" },
   // (a hat found is hers: onto the hats' floor, rules/houseRooms.ts addFloorHat)
-  { id: "hat", name: "hat", items: HAT_FINDS, piece: id => `hatfind-${id}`, empty: id => `hatfind-${id}-empty`, claim(s, id) { if (s.hats && !s.hats.includes(id)) s.hats.push(id); } },
-  { id: "bag", name: "bag", items: BAG_ITEMS, piece: id => `bagfind-${id}`, empty: id => `bagfind-${id}-empty` },
+  { id: "hat", name: "hat", items: HAT_FINDS, piece: () => "find-hat", claim(s, id) { if (s.hats && !s.hats.includes(id)) s.hats.push(id); } },
+  { id: "bag", name: "bag", items: BAG_ITEMS, piece: () => "find-bag" },
   // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
-  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}` },
+  { id: "part", name: "broom part", items: PART_IDS, piece: id => `find-part-${id}` },
 ];
 export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
 /** What she has found (or owns) of each kind; a kind left out counts as none found. */
@@ -107,7 +109,7 @@ export function fillTrunk(g: { trunk: Trunk | null; map: ForestMap }, found: Fou
   if (pick) { g.trunk.kind = pick.kind; g.trunk.item = pick.item; } else g.trunk = null;
 }
 /** The art piece tonight's find is drawn as (the trunk, or the part's wreck). */
-export const findPiece = (t: Trunk): string => { const k = findKind(t.kind); return t.found && k.empty ? k.empty(t.item ?? "") : k.piece(t.item ?? ""); };
+export const findPiece = (t: Trunk): string => findKind(t.kind).piece(t.item ?? "");
 
 /** The trunk she stands at to open (on the ground, within its reach, still full), else null. */
 export function trunkAt(trunk: Trunk | null, x: number, z: number): Trunk | null {

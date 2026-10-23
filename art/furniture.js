@@ -13,6 +13,7 @@
 //   - A piece with states (the curtains, open or shut) takes `state` and is drawn once for each.
 import { M, Sprite, hsv2rgb, hash2 } from "./core.js";
 import { Model, render } from "./model3d.js";
+import { SHEETED_PIECES, SHEETED_COLOURS } from "./sheeted.js";
 
 /** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
@@ -754,6 +755,8 @@ const PIECES = {
     for (let i = 0; i < 8; i++) { const a = -1.9 + i * .45, b = a + .45; m.seg([Math.cos(a) * .14, h + .3 + Math.sin(a) * .14, z + .05], [Math.cos(b) * .14, h + .3 + Math.sin(b) * .14, z + .05], .018, .018, neon, { group: 8, extra: true }); }
     light(m, [0, h + .3, z + .2], k ? FAIRY : MAGICL, 10, .3);
   },
+  // the two locked bedrooms' placeholders, under dust sheets (art/sheeted.js)
+  ...SHEETED_PIECES,
 };
 
 /** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
@@ -795,6 +798,7 @@ const ROOM_COLOURS = {
   bestiary: { [M.CLOTH]: [70, 84, 56], [M.ACCENT]: [120, 40, 40], [M.BODY3]: [40, 50, 40] }, // moss and dried blood
   crowsNest: { [M.CLOTH]: [40, 74, 110], [M.ACCENT]: [200, 84, 56] }, // sea blue and a buoy's red
   atrium: { [M.CLOTH]: [92, 62, 40], [M.ACCENT]: [186, 60, 52] }, // bark and a wax seal's red
+  ...SHEETED_COLOURS, // the two locked bedrooms: dull dust sheets (art/sheeted.js)
 };
 /** A piece's own colours over its room's (the biome board's frames). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */

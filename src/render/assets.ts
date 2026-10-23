@@ -277,7 +277,9 @@ export class AssetLibrary {
     const atlas = atlasFromPixels(r.result.px);
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "witch") {
-      if (r.job.bare) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; }
+      // (her hat-off frames only for the look she has now: a job for a look she's since changed from, at a station where she's drawn
+      // from them, would put the old look back on her, the new one never showing: Ed's playtest, 2026-10-23, "I can't select them")
+      if (r.job.bare) { if (JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null)) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; } }
       else {
         const look = { atlas: { ...atlas, grounds: r.result.ours!.grounds }, art: r.result.ours! }, k = JSON.stringify(r.job.genome ?? null);
         this.witchLooks.delete(k); this.witchLooks.set(k, look);
@@ -531,7 +533,7 @@ export class AssetLibrary {
   }
   private bare: Atlas | null = null;
   private bareAsked = false;
-  /** Her frames without her hat are in (not the stand-in). */
+  /** Her frames without her hat are in (not the stand-in): always her look now (onResult drops one for a look she's left). */
   get bareReady(): boolean { return !!this.bare; }
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */

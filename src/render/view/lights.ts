@@ -14,6 +14,7 @@ import { mark } from "./pops";
 import * as Art from "../../../art/generator.js";
 import { LEGENDS } from "../../rules/legends";
 import { beachFires } from "../beach";
+import { findLight } from "./finds";
 
 const SOURCE_ITEMS: SpriteInstance[] = []; // (the sources' sprites: one list, emptied each frame)
 
@@ -60,6 +61,7 @@ export function updateSources(v: View, time: number): void {
     const fr = f[Math.floor(time * 8 + k * 10) % 3];
     if (inView(v, c.x, c.z, fr.w * v.mpp, fr.h * v.mpp, 4)) items.push({ x: c.x, y: 0, z: c.z, frame: fr, flip: c.flip, fresh: mark(v, "prop", c.x, c.z, 2) });
   }
+  { const L = findLight(v, time); if (L) lights.push(L); } // (tonight's find, until it's taken: render/view/finds.ts)
   v.propBatch.set(items);
 }
 
