@@ -1,6 +1,6 @@
 // The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, art/furniture.js) in the built game (DIST, default
 // dist/) at 1600×900: she's put in each room of the house (config/house.json) a little south of its middle and the camera zoomed
-// out ZOOM steps (default 1), a shot each (`<room>.png`), then by the bedroom's curtains while they're shut (`curtains-shut.png`).
+// out ZOOM steps (default 1), a shot each (`<room>.png`).
 // QUERY adds to the link (QUERY=furniture=0: the plain boxes, to compare). ONLY=bedroom,boudoir shoots only those. Fails on a page
 // error.
 //   npm run build && node tools/house/furniture-shots.cjs <out dir> [seed]
@@ -37,11 +37,6 @@ const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z
       await put(...plan(cx, cz + (r.r ?? 4) * 0.35));
       await step({}, 50);
       await shot(r.id);
-    }
-    if (want("curtains")) {
-      const o = H.objects.find(q => q.id === "curtains");
-      await page.evaluate(() => { const g = window.witch.game; g.wake = { beat: "up", at: 0, snoozes: 0, open: false, mirror: true, events: [] }; });
-      await put(...plan(o.x, o.z + 3)); await step({}, 50); await shot("curtains-shut");
     }
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); process.exit(1); }
