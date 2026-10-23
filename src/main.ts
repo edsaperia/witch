@@ -41,9 +41,11 @@ import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { fillTrunk } from "./rules/finds";
-import { loadBroom, migrateBroom, partFound } from "./app/broomSave";
+import { loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
-import { loadOwned, saveOwned } from "./app/owned";
+import { loadOwned } from "./app/owned";
+import { keepFound, type FindsCtx } from "./app/finds";
+import { FindsPanel } from "./ui/findsPanel";
 import { StationPanel } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { TelescopeView, integratedGpu } from "./app/telescope";
@@ -315,6 +317,8 @@ creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
 let owned: Set<string> | null = null, stillAt = 0;
+/** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
+const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)) });
 stations.onLook = g => {
   saveGenome(g as never); creator.adopt(g);
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
@@ -533,6 +537,10 @@ const repro = (() => {
   ]);
   return { link, machine: mach, changed, full, line: () => reproLine(reproState(N().game, changed()), changed().length) };
 })();
+// The finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23): from the debug overlay's buttons, or ?dev=finds.
+const findsPanel = new FindsPanel(findsCtx);
+document.getElementById("finds-dev-btn")?.addEventListener("click", () => findsPanel.toggle());
+if (new URLSearchParams(location.search).get("dev") === "finds") findsPanel.toggle(true);
 document.getElementById("copy-debug")?.addEventListener("click", e => {
   const b = e.currentTarget as HTMLButtonElement, text = repro.full();
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
@@ -812,10 +820,10 @@ function frame(now: number): void {
   // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
   if (game.trunk && game.trunk.item === null) fillTrunk(game, { wearable: owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), part: new Set(loadBroom().found) });
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
-    partFound(e.obj, game.spells.parts);
+    keepFound(findsCtx(), "part", e.obj);
     hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj}${game.spells.parts[partById(e.obj)?.slot ?? "tip"] === e.obj ? " · on her broom" : ""}`);
   } else if (e.kind === "found" && e.obj) {
-    (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)).add(e.obj); saveOwned(owned);
+    keepFound(findsCtx(), "wearable", e.obj);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
   }
