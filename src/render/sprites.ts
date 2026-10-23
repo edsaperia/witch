@@ -2,6 +2,7 @@
 // Each sprite stands on the ground at its base, faces the camera (tilted back toward it by
 // spriteTilt), and is lit per pixel from its normal map. Tree tops carry a flag so the canopy
 // can dither in and out as the witch rises and descends.
+import { HIZ_GLSL, HIZ_UNIFORMS } from "./hiz";
 import * as THREE from "three";
 import { PIXEL_SNAP_GLSL, WIND_GUST_GLSL } from "./shaders";
 import type { Atlas, Frame } from "./atlas";
@@ -124,7 +125,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround; // its ground spot under this pixel: its foot, across its width (the cast shadows: render/castShadows.ts)
 ${HEIGHT_VERT_GLSL}
-${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}
+${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -208,6 +209,9 @@ void main() {
   // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
   float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
   vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  // Behind the treehouse's own solid pixels, every pixel of it (render/hiz.ts: the perf pass, 2026-10-23): its nearest point (its
+  // foot or its top: across, it's square to the camera) farther than the farthest occluder pixel its rectangle could touch.
+  if (uIsScenery > 0.5 && uHizOn > 0.5 && hizHidden(cc - halfPx, cc + halfPx, min(c0.z / c0.w, c1.z / c1.w) * 0.5 + 0.5)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   // A crown wholly inside the hole (every pixel of it cut away, in either pass): its farthest corner still within the hole's inner edge.
   if (iFlags.y > 0.5 && uTopFade < 0.004) {
     vec2 far = abs(uCutout.xy - cc) + halfPx;
@@ -621,7 +625,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
