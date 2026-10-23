@@ -18,7 +18,7 @@ import { SlideIn } from "./slideIn";
 const TABLE_FADE = { top: 72, side: 40 };
 const tableMask = `linear-gradient(to bottom, transparent, #000 ${TABLE_FADE.top}px), linear-gradient(to right, transparent, #000 ${TABLE_FADE.side}px, #000 calc(100% - ${TABLE_FADE.side}px), transparent)`;
 
-let open: { wrap: HTMLDivElement; view: ChartView; raf: number; opening: boolean; slide?: SlideIn } | null = null;
+let open: { wrap: HTMLDivElement; view: ChartView; raf: number; opening: boolean; slide?: SlideIn; moon?: HTMLCanvasElement } | null = null;
 /** A table's chart sliding away (closeChart): gone once it's out, or at once if another opens meanwhile. */
 let leaving: (() => void) | null = null;
 
@@ -38,15 +38,25 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
   const wrap = document.createElement("div");
   wrap.id = "chart-overlay";
   wrap.style.cssText = o.opening ? "position:fixed;inset:0;z-index:50;overflow:hidden;background:#05060e"
-    : o.table ? `position:fixed;inset:0;z-index:50;overflow:hidden;-webkit-mask-image:${tableMask};-webkit-mask-composite:source-in;mask-image:${tableMask};mask-composite:intersect`
+    : o.table ? "position:fixed;inset:0;z-index:50;overflow:hidden"
     : "position:fixed;inset:4vh 4vw;z-index:50;border:2px solid #3a2f5c;border-radius:8px;overflow:hidden;background:#05060e;box-shadow:0 0 0 100vmax rgba(5,6,14,.55)";
   document.body.append(wrap);
   const slide = o.table ? new SlideIn(wrap, "bottom") : undefined;
+  // At a table, the chart in a layer of its own with the soft edge, and the moon drawn again over it, unfaded (Ed, 2026-10-23:
+  // "The chart has an orbiting moon; this is exempt from the fading out"): its disc copied from the chart's picture each frame.
+  let host: HTMLDivElement = wrap, moon: HTMLCanvasElement | undefined;
+  if (o.table) {
+    host = document.createElement("div");
+    host.style.cssText = `position:absolute;inset:0;-webkit-mask-image:${tableMask};-webkit-mask-composite:source-in;mask-image:${tableMask};mask-composite:intersect`;
+    moon = document.createElement("canvas");
+    moon.style.cssText = "position:absolute;left:0;top:0;pointer-events:none;z-index:4;display:none";
+    wrap.append(host, moon);
+  }
   if (o.table) document.getElementById("house-tags")?.style.setProperty("visibility", "hidden"); // (the room's labels: not through its soft edge)
-  const view = mountChart(wrap, {
+  const view = mountChart(host, {
     mode: "sail", world,
     onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
-    onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; wrap.style.maskImage = wrap.style.webkitMaskImage = "none"; }, // (the flight fills the screen, edge to edge)
+    onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; host.style.maskImage = host.style.webkitMaskImage = "none"; if (moon) moon.style.display = "none"; }, // (the flight fills the screen, edge to edge)
     onClose: o.opening ? undefined : closeChart,
     here: o.here,
     onStay: () => { closeChart(); o.onStay?.(); }, // (as Close: the night held behind it goes on as it was, main.ts)
@@ -55,12 +65,27 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     table: o.table,
   });
   let last = performance.now();
-  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); open.raf = requestAnimationFrame(loop); };
-  open = { wrap, view, raf: requestAnimationFrame(loop), opening: !!o.opening, slide };
+  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); };
+  open = { wrap, view, raf: requestAnimationFrame(loop), opening: !!o.opening, slide, moon };
   slide?.in();
   performance.mark("chart:mounted");
   (window as unknown as { chart: unknown }).chart = { chart: view.chart, choose: view.choose, islands: view.islands, view }; // (as chart.html's: for the screenshots and timings)
   addEventListener("resize", fit);
+}
+
+/** The chart's moon over its soft edge: its disc (and a hair round it) copied from the chart's picture (kept: preserveDrawingBuffer)
+ *  into `c`, clipped round, where the sky draws it; nothing when it isn't drawn. */
+function drawMoon(c: HTMLCanvasElement, view: ChartView, wrap: HTMLElement): void {
+  const d = view.chart.moonDisc(), src = view.canvas;
+  if (!d || !src.width) { c.style.display = "none"; return; }
+  const box = wrap.getBoundingClientRect(), sr = src.getBoundingClientRect(), k = src.width / Math.max(1, sr.width), r = d.r + 1.5, s = Math.ceil(r * 2);
+  if (c.width !== s) { c.width = s; c.height = s; c.style.width = c.style.height = `${s}px`; }
+  c.style.display = ""; c.style.left = `${d.x - r - box.left}px`; c.style.top = `${d.y - r - box.top}px`;
+  const g = c.getContext("2d")!;
+  g.clearRect(0, 0, s, s); g.save(); g.beginPath(); g.arc(r, r, r, 0, Math.PI * 2); g.clip();
+  g.imageSmoothingEnabled = false;
+  g.drawImage(src, (d.x - r - sr.left) * k, (d.y - r - sr.top) * k, s * k, s * k, 0, 0, s, s);
+  g.restore();
 }
 
 /** Make the chart's renderer and link its shaders ahead (render/chart/seaChart.ts prepareSeaChart), so E at the map table opens

@@ -710,6 +710,15 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
   }
 
   /** Where each island is on the screen (CSS pixels from the canvas's top left), for labels. */
+  /** The moon's disc on screen (client pixels: its middle and radius), or null when it isn't drawn (behind the world, or no
+   *  disc). As the sky shader draws it (SKY_FRAG: R = 0.045 of the height); for the map table's chart, which draws it again
+   *  over its soft edge (Ed, 2026-10-23: "The chart has an orbiting moon; this is exempt from the fading out"). */
+  moonDisc(): { x: number; y: number; r: number } | null {
+    const d = this.skyU.uMoon.value as THREE.Vector2;
+    if (d.x < 0 || d.x > 1 || d.y < 0 || d.y > 1) return null;
+    const r = this.canvas.getBoundingClientRect();
+    return { x: r.left + d.x * r.width, y: r.top + (1 - d.y) * r.height, r: 0.045 * r.height };
+  }
   screenOf(id: string): { x: number; y: number } | null {
     const i = this.isles.get(id); if (!i) return null;
     const v = new THREE.Vector3(i.x, i.top, i.z).project(this.camera), r = this.canvas.getBoundingClientRect();

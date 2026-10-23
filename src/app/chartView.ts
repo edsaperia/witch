@@ -104,6 +104,7 @@ const STYLE = `
 .chart-view a.btn.sail { border-color: var(--accent); color: var(--accent); margin-top: 6px; display: inline-block; }
 .chart-view [hidden] { display: none !important; }
 .chart-view .hint, .chart-view .world { color: var(--dim); font-size: 11px; text-align: center; }
+.chart-view .hold-ring { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; pointer-events: none; z-index: 3; box-shadow: 0 0 0 3px rgba(20,14,32,.7) inset; -webkit-mask: radial-gradient(circle, transparent 21px, #000 22px); mask: radial-gradient(circle, transparent 21px, #000 22px); }
 .chart-view .corner { position: absolute; right: 12px; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; z-index: 2; }
 `;
 
@@ -111,6 +112,7 @@ const HTML = `
 <canvas aria-label="The sea chart"></canvas>
 <div class="top"><h1>THE SEA CHART</h1><div class="status"></div></div>
 <div class="corner"></div>
+<div class="hold-ring" hidden></div>
 <div class="bottom">
   <div class="card" hidden><div class="name"></div><div class="phase"></div><div class="state"></div><a class="btn sail" href="./?island=home">Sail there</a></div>
   <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
@@ -137,11 +139,31 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   $("sail").hidden = true;
   const table = sailing ? opts.table : undefined;
   let left = false; // (at a table, put away: it slides off and takes no more input meanwhile)
-  const leave = () => { if (left) return; left = true; table!.onLeave(); };
+  const leave = () => { if (left) return; left = true; holdEnd(); table!.onLeave(); };
+  // Sailing from a table is a hold (Ed, 2026-10-23: "You have to hold the button to select a new island to sail to (ring
+  // fills)"): the use button (E, Enter, Space, the pad's square) or the mouse held on an island, its ring filling (the bed's,
+  // render/houseRooms.ts) over the tuning's chart.sailHold seconds; let go early and nothing happens. A click only chooses.
+  const HOLD_S = (TUNING as unknown as { chart?: { sailHold?: number } }).chart?.sailHold ?? 1.2;
+  let hold: { id: string; from: number; at: { x: number; y: number } | null; by: "pointer" | "key" | "pad" } | null = null;
+  const sailable = (id: string | null) => !!id && !isHere(id) && !!islands.find(i => i.id === id)?.sail;
+  const holdStart = (id: string | null, by: "pointer" | "key" | "pad", at: { x: number; y: number } | null = null) => {
+    if (!table || left || hold || !sailable(id) || chart.flying) return;
+    hold = { id: id!, from: performance.now(), at, by };
+  };
+  function holdEnd(by?: "pointer" | "key" | "pad"): void { if (hold && (!by || hold.by === by)) { hold = null; $("hold-ring").hidden = true; } }
+  function holdFrame(): void {
+    if (!hold) return;
+    if (hold.id !== chart.selected) { holdEnd(); return; } // (chosen another meanwhile: start again)
+    const f = Math.min(1, (performance.now() - hold.from) / 1000 / Math.max(0.05, HOLD_S)), ring = $("hold-ring"), r = root.getBoundingClientRect();
+    const at = hold.at ?? chart.screenOf(hold.id) ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    ring.hidden = false; ring.style.left = `${at.x - r.left}px`; ring.style.top = `${at.y - r.top}px`;
+    ring.style.background = `conic-gradient(rgba(255,214,140,.95) ${f * 360}deg, rgba(20,14,32,.6) 0deg)`;
+    if (f >= 1) { const id = hold.id; holdEnd(); sailTo(id); }
+  }
   ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
   if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
   $("hint").textContent = table
-    ? "point, or the arrows / d-pad / right stick, to choose · click, E or Enter (□ on a pad) to sail · walk away to put it down · sigils: islands you can sail to · gold rings: won"
+    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, E or Enter (□ on a pad) on an island to sail · walk away to put it down · sigils: islands you can sail to · gold rings: won"
     : sailing
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
@@ -290,9 +312,14 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     $("state").textContent = (isHere(id) ? "you're here · " : "") + (isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it");
     sail.hidden = !sailing || !(isl.sail || isHere(id)) || (!!table && isHere(id)); // (at a table: she's there, nothing to do: the bed starts the next night)
     sail.href = sailHref(id!);
-    sail.textContent = isHere(id) ? opts.here!.label : "Sail there";
+    sail.textContent = isHere(id) ? opts.here!.label : table ? "Hold to sail" : "Sail there";
   }
-  $("sail").addEventListener("click", e => { e.preventDefault(); sailTo(chart.selected); });
+  $("sail").addEventListener("click", e => { e.preventDefault(); if (!table) sailTo(chart.selected); }); // (at a table it's held: below)
+  if (table) { // (its button held, the ring on it, as the use button: touch has no other way)
+    const btn = $("sail");
+    btn.addEventListener("pointerdown", e => { e.preventDefault(); const r = btn.getBoundingClientRect(); holdStart(chart.selected, "pointer", { x: r.left + r.width / 2, y: r.top + r.height / 2 }); }, on);
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) btn.addEventListener(ev, () => holdEnd("pointer"), on);
+  }
   $("home").addEventListener("click", e => { e.preventDefault(); choose("home", true); sailTo("home"); });
   $("close").addEventListener("click", () => opts.onClose?.());
 
@@ -300,22 +327,26 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch = 0, downAt: { x: number; y: number } | null = null;
   if (!mini) {
-    canvas.addEventListener("pointerdown", e => { pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } }, on);
+    canvas.addEventListener("pointerdown", e => {
+      if (table && !left && !chart.flying && e.isPrimary) { const id = chart.pick(e.clientX, e.clientY); if (id) { if (id !== chart.selected) choose(id); holdStart(id, "pointer", { x: e.clientX, y: e.clientY }); } } pointers.set(e.pointerId, { x: e.clientX, y: e.clientY }); downAt = { x: e.clientX, y: e.clientY }; if (pointers.size === 2) { const [a, b] = [...pointers.values()]; pinch = Math.hypot(a.x - b.x, a.y - b.y); } }, on);
     canvas.addEventListener("pointermove", e => {
+      if (hold?.by === "pointer" && hold.at && Math.hypot(e.clientX - hold.at.x, e.clientY - hold.at.y) > 12) holdEnd("pointer"); // (a drag, not a hold)
       if (!pointers.has(e.pointerId)) return;
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pointers.size === 2) { const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && d > 0) chart.zoom(pinch / d); pinch = d; downAt = null; }
     }, on);
     canvas.addEventListener("pointerup", e => {
+      holdEnd("pointer");
       if (left) return;
       if (chart.flying) { pointers.delete(e.pointerId); chart.skipFlight(); return; }
       const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
       pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0;
       if (!tap) return;
       const id = chart.pick(e.clientX, e.clientY);
+      if (table) return; // (at a table a click only chooses, on the way down; sailing is the hold)
       if (id && id === chart.selected) sailTo(id); else if (id) choose(id);
     }, on);
-    canvas.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); pinch = 0; }, on);
+    canvas.addEventListener("pointercancel", e => { pointers.delete(e.pointerId); pinch = 0; holdEnd("pointer"); }, on);
     canvas.addEventListener("wheel", e => { e.preventDefault(); chart.zoom(Math.exp(e.deltaY * 0.0015)); }, { passive: false, ...on });
     $("zoom-in").addEventListener("click", () => chart.zoom(0.75));
     $("zoom-out").addEventListener("click", () => chart.zoom(1.33));
@@ -331,12 +362,15 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (left) return;
     if (table && (["KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code) || e.key === "Escape")) { e.preventDefault(); if (!e.repeat) leave(); return; } // (she walks: it's put away; not a key still held from walking up to it)
     if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
-    else if (e.key === "Enter" || e.key === " " || (table && e.code === "KeyE")) { e.preventDefault(); sailTo(chart.selected); }
+    else if (table && (e.key === "Enter" || e.key === " " || e.code === "KeyE")) { e.preventDefault(); if (!e.repeat) holdStart(chart.selected, "key"); }
+    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sailTo(chart.selected); }
     else if (e.key === "+" || e.key === "=") chart.zoom(0.8);
     else if (e.key === "-" || e.key === "_") chart.zoom(1.25);
     else if (e.key === "Escape" && opts.onClose) { e.preventDefault(); opts.onClose(); }
   };
   if (!mini) addEventListener("keydown", onKey);
+  const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " " || e.code === "KeyE")) holdEnd("key"); };
+  if (table) addEventListener("keyup", onKeyUp);
 
   // A gamepad: the d-pad or the left stick steps (repeating while held), A sails, B closes, the shoulders zoom.
   let padWait = 0, stickBack = false;
@@ -353,7 +387,8 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const ax = p.axes[table ? 2 : 0] ?? 0, ay = p.axes[table ? 3 : 1] ?? 0;
     const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
     if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
-    if (b(table ? 2 : 0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; } // (at a table the use button, square: cross rises in the game)
+    if (table) { if (b(2)) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table the use button, square, held: cross rises in the game)
+    else if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
     if (b(1) && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
     if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
   }
@@ -388,11 +423,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); wrapOne(); chart.frame(dt, time); },
+    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); },
     resize, choose,
     dispose() {
       disposed = true; waiting.clear();
-      removeEventListener("keydown", onKey);
+      removeEventListener("keydown", onKey); removeEventListener("keyup", onKeyUp);
       if (poll) { clearInterval(poll); poll = null; }
       worker?.terminate(); worker = null;
       listening.abort();

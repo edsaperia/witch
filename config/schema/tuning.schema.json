@@ -236,11 +236,16 @@
         "edgeBand": {
           "type": "number",
           "minimum": 0
+        },
+        "sailHold": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "moon",
-        "edgeBand"
+        "edgeBand",
+        "sailHold"
       ],
       "additionalProperties": false
     },
