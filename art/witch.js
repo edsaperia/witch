@@ -467,7 +467,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
 // (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 export const WITCH_FOOT_POSES = {
-  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
+  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
   headbang: { frames: 2, fps: 4, party: "dance" }, jump: { frames: 3, fps: 5, party: "dance" },
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
@@ -499,6 +499,8 @@ export const WITCH_SEAT_HEIGHT = .34;
 // direction; held: through her far hand, that far from the binding; null: put down), a leg swung up, a talking or
 // laughing mouth, shut eyes, a cup, a turn (spinning, about the vertical), lie (lying back), and the pair anchor.
 const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
+// her broom carried upright in her far hand (idleBroom, walkBroom): its binding that far below the hand
+const CARRIED = { held: .2, dir: [.04, 1, -.04] };
 const Q = Math.PI / 2;
 // the broom limbo's bar: how high the holders hold the broom (model units; her limbo's top passes just under it)
 export const LIMBO_BAR = .82;
@@ -513,6 +515,14 @@ const FOOT_FRAMES = {
     return { broom: null, bend: .06, crouch: .05 * Math.abs(c), roll: .05 * Math.sin(p), tilt: .12 * Math.sin(p), sway: .02 + .015 * Math.abs(Math.sin(p)), look: -.02,
       feet: [[.02 - .15 * c, lift(p + Math.PI), -.09], [.02 + .15 * c, lift(p), .09]],
       free: [.03 - .13 * c, .45, .17], hand: "rest", far: [.03 + .13 * c, .45, -.17], farHand: "rest" }; }),
+  // and the same carrying her broom (Ed, 2026-10-23: "she holds it when she's on the terrace"): upright in her far hand like a staff,
+  // its bristles just off the floor, that hand swinging only a little as she walks (render/view/witch.ts, rules/stations.ts broomWhere)
+  idleBroom: [0, 1, 2].map(f => ({ broom: CARRIED, breathe: [0, .006, .012][f], sway: [0, .015, .03][f], tilt: [0, .05, .1][f],
+    feet: [[-.01, .07, -.09], [.04, .07, .09]], free: [.03, .43 + [0, .006, .012][f], .17], hand: "rest", far: [.06, .5 + [0, .006, .012][f], -.18] })),
+  walkBroom: [0, 1, 2, 3, 4, 5].map(f => { const p = f / 6 * 2 * Math.PI, c = Math.cos(p), lift = q => .07 + Math.max(0, -Math.sin(q)) * .1;
+    return { broom: CARRIED, bend: .06, crouch: .05 * Math.abs(c), roll: .05 * Math.sin(p), tilt: .12 * Math.sin(p), sway: .02 + .015 * Math.abs(Math.sin(p)), look: -.02,
+      feet: [[.02 - .15 * c, lift(p + Math.PI), -.09], [.02 + .15 * c, lift(p), .09]],
+      free: [.03 - .13 * c, .45, .17], hand: "rest", far: [.06 + .04 * c, .5, -.18] }; }),
   land: [
     { crouch: .2, hop: .01, broom: { astride: true }, sway: .05 },                                                 // astride the dipped broom, feet touching down
     { crouch: .1, bend: .1, broom: { binding: [-.28, .26, -.08], dir: [.6, .5, -.06] }, legUp: [.18, .24, .12], sway: .03, free: [.2, .58, .2], hand: "rest" }, // swinging a leg over

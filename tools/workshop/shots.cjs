@@ -3,7 +3,8 @@
 // tonight's find made a part she hasn't found (TONIGHT, default the Curled tip), then she's stood at each of the Workshop's stations
 // in turn, its menu in (`bay.png`, `lathe.png`, `pegboard.png`; the bay's with a card chosen: `bay-fit.png`, the Ladder in the
 // chassis, the Pile driver whole), and in the room's middle, the menus away, her broom on the bay and the parts on the pegboard (`room.png`), then
-// closer to each (`pegboard-near.png`, `bay-near.png`).
+// closer to each (`pegboard-near.png`, `bay-near.png`: no broom on the bay, she's not at it), and on the Terrace carrying her
+// broom (`terrace.png`, `terrace-walk.png`).
 // Fails on a page error, or a station whose menu doesn't come in.
 //   npm run build && node tools/workshop/shots.cjs <out dir> [seed]
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -69,6 +70,13 @@ const front = (id, gap = 0.7) => {
       await page.waitForTimeout(8000);
       await shot(name);
     }
+    // on the Terrace (the hub's floor) she carries her broom (Ed, 2026-10-23: "she holds it when she's on the terrace"), standing and
+    // walking a step
+    await put([0, 3]); await settle();
+    await page.waitForTimeout(6000);
+    await shot("terrace");
+    await page.evaluate(() => { const w = window.witch; w.manual = true; for (let i = 0; i < 25; i++) w.frame({ moveX: 1, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, i === 24); w.manual = false; });
+    await shot("terrace-walk");
   } finally { await browser.close(); server.close(); }
   console.log(JSON.stringify(out));
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); process.exit(1); }

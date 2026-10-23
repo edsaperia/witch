@@ -5,7 +5,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
-import { STATION_SLACK, stationAt, stationOf, tableOf } from "./stations";
+import { STATION_SLACK, broomWhere, stationAt, stationOf, tableOf } from "./stations";
 import { cameraPose } from "./camera";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -132,5 +132,26 @@ describe("the dressing stations by nearness", () => {
     const r = before("mapTable", HOUSE_ROOMS.reach + STATION_SLACK / 2), edge = inHouse(r.x, r.z);
     expect(tableOf(edge, "mapTable")?.id).toBe("mapTable"); // (within the slack, open: it stays)
     expect(tableOf(edge, null)).toBeNull(); // (but isn't opened from there)
+  });
+});
+
+describe("where her broom is on foot in the house (Ed, 2026-10-23: \"only while she's at the bay. otherwise she holds it when she's on the terrace\")", () => {
+  const where = (g: Game) => broomWhere(g, stationOf(g, null)?.id ?? null);
+  it("resting on the bay while she stands at the bay, on the lathe while she's at the lathe", () => {
+    for (const [id, want] of [["broomBay", "bay"], ["lathe", "lathe"]] as const) { const p = before(id, 0.5), g = inHouse(p.x, p.z); expect(stationOf(g, null)?.id, id).toBe(id); expect(where(g), id).toBe(want); }
+  });
+  it("in her hand on the Terrace (the hub's floor)", () => {
+    const d = deck(newGame(123, TUNING)), g = inHouse(0, d.r * 0.3);
+    expect(where(g)).toBe("held");
+  });
+  it("nowhere drawn elsewhere in the rooms: the Workshop away from the bay and the lathe, the pegboard, another room", () => {
+    const ws = HOUSE_ROOMS.rooms.find(r => r.id === "workshop")!, mid = inHouse((ws.x0 + ws.x1) / 2, (ws.z0 + ws.z1) / 2 + 2);
+    expect(where(mid)).toBe("none");
+    const pb = before("pegboard", 0.5); expect(where(inHouse(pb.x, pb.z))).toBe("none");
+    const at = HOUSE_ROOMS.rooms.find(r => r.id === "atrium")!; expect(where(inHouse((at.x0 + at.x1) / 2, (at.z0 + at.z1) / 2 + 1))).toBe("none");
+  });
+  it("and off the house's floor (flying), none: she's on it", () => {
+    const g = inHouse(0, 0); g.witches[0].body = { ...g.witches[0].body, mode: "treetop", perch: false };
+    expect(where(g)).toBe("none");
   });
 });

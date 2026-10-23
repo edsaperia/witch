@@ -20,6 +20,7 @@ import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./
 import { nearestIn } from "../rules/houseRooms";
 import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
+import { broomWhere, stationOf } from "../rules/stations";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
 
 type V3 = { x: number; y: number; z: number };
@@ -320,12 +321,13 @@ export class HouseRoomsView {
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
     }
-    // the Workshop's (render/workshopArt.ts): her broom resting on the bay (on the lathe while she's at it), her parts on the pegboard;
+    // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
+    // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
     // only in or near the Workshop (its pieces baked: they're baked as she nears them)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     if (piece("broomBay") || piece("pegboard") || piece("lathe")) {
-      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null;
-      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: lit === "lathe" ? "lathe" : "bay", genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
+      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
+      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
         id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },
         (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
         id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
