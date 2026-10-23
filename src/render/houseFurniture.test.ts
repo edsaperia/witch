@@ -31,6 +31,23 @@ describe("the treehouse's furniture", () => {
       }
     }
   });
+  it("draws the Studio's instruments (Ed, 2026-10-23: a glam-rock drum kit, a retro wall of synths, the mic under its spot lamp) at their planned footprints, the lamp marked for the view's light", () => {
+    for (const [id, foot] of [["drumKit", { w: 4.4, d: 4, h: 2.6 }], ["synthRack", { w: 4.8, d: 1.4, h: 3.8 }], ["microphone", { w: 1, d: 1, h: 3.4 }]] as const) {
+      const d = furnitureSprite(id, foot, {}, { ppm: PPM, yaw: 0, curve: id === "synthRack" ? 6.5 : 0 }) as Drawn & { marks: Record<string, { x: number; y: number }> };
+      expect(d.sp.m.filter(Boolean).length, id).toBeGreaterThan(120);
+      expect(d.lights.length, `${id}: lit`).toBeGreaterThan(0);
+      if (id === "microphone") { const s = d.marks.spot; expect(s.y, "the spot lamp over the mic").toBeLessThan(d.origin.y - 20); expect(s.x).toBeGreaterThan(0); expect(s.x).toBeLessThan(d.sp.w); }
+    }
+  });
+  it("draws the Workshop's pieces (Hotel's, Ed's OK 2026-10-23) with their marks for Hotel's broom and parts: the bay's and the lathe's rest, the biome board's nine cells in rows from the top left", () => {
+    for (const id of ["broomBay", "lathe", "pegboard"]) {
+      const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, { yaw, foot, curve } = standing(o);
+      const d = furnitureSprite(id, foot, {}, { ppm: PPM, yaw, curve }) as Drawn & { marks: Record<string, { x: number; y: number }> };
+      const want = id === "pegboard" ? [...Array(9).keys()].map(i => `cell${i}`) : ["rest"];
+      for (const k of want) { const q = d.marks[k]; expect(q, `${id}.${k}`).toBeDefined(); expect(q.x).toBeGreaterThan(0); expect(q.x).toBeLessThan(d.sp.w); expect(q.y).toBeGreaterThan(0); expect(q.y).toBeLessThan(d.origin.y); }
+      if (id === "pegboard") { const c = d.marks; expect(c.cell0.y, "rows from the top").toBeLessThan(c.cell3.y); expect(c.cell3.y).toBeLessThan(c.cell6.y); }
+    }
+  });
   it("draws its states differently (the curtains open and shut)", () => {
     const o = HOUSE_ROOMS.objects.find(q => q.id === "curtains")!, { yaw, foot } = standing(o);
     const [a, b] = ["open", "shut"].map(state => (furnitureSprite("curtains", foot, {}, { ppm: PPM, yaw, state }) as Drawn).sp.m.join());
@@ -39,10 +56,10 @@ describe("the treehouse's furniture", () => {
   it("faces into its room, towards its middle, and never shows its back to the camera; its footprint as the art's, along its wall", () => {
     for (const o of HOUSE_ROOMS.objects) {
       if (!FURNITURE_IDS.includes(o.id)) continue;
-      const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room)!, { yaw, foot } = standing(o), f = [-Math.sin(yaw), Math.cos(yaw)];
+      const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room), { yaw, foot } = standing(o), f = [-Math.sin(yaw), Math.cos(yaw)];
       expect(f[1], `${o.id}: faces the camera's way`).toBeGreaterThanOrEqual(-1e-9);
-      const dx = (r.x0 + r.x1) / 2 - o.x, dz = (r.z0 + r.z1) / 2 - o.z;
-      if (Math.hypot(dx, dz) > 1.2 && dz > 0) expect(f[0] * dx + f[1] * dz, `${o.id}: faces its room's middle`).toBeGreaterThan(0);
+      const dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0; // (on the Terrace, in no room: it faces the camera)
+      if (r && Math.hypot(dx, dz) > 1.2 && dz > 0) expect(f[0] * dx + f[1] * dz, `${o.id}: faces its room's middle`).toBeGreaterThan(0);
       expect([foot.w, foot.d].sort().join(), o.id).toBe([o.w, o.d].sort().join());
     }
   });

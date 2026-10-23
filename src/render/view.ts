@@ -10,6 +10,7 @@ import * as THREE from "three";
 import { carrierOf, deckOf } from "../rules/treehouse";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
+import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
@@ -30,6 +31,7 @@ import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
 import { lakeLooksOf, steamVents } from "./lakeLooks";
+import { LakeShoreView } from "./lakeShore";
 import { lakeKnobs } from "../rules/lakes";
 import type { ForestMap } from "../rules/map";
 import { OcclusionProbes } from "./occlusion";
@@ -336,6 +338,8 @@ export class View {
   private smoke!: Smoke;
   /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
   private steam!: Smoke;
+  /** The biome lakes' shore dressing and the lava's light (render/lakeShore.ts). */
+  private lakeShore!: LakeShoreView;
   private steamFor: { map: ForestMap; vents: Float32Array } | null = null;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
@@ -345,6 +349,8 @@ export class View {
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
   bareBatch: SpriteBatch | null = null;
   bareAsked = false;
+  /** Drawn without her hat while a station for her head and face is open (main.ts, ui/stationPanel.ts bareHead). */
+  hatOff = false;
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
@@ -511,7 +517,8 @@ export class View {
     this.moonBase.copy(LIGHT_UNIFORMS.uMoon.value); { const U = LIGHT_UNIFORMS.uMoonUp.value; this.moonUpBase.set(U.x, U.y, U.z); } // (the moonlight before the moon's own colour: updateMoon)
     // (sliced: the island build's own art workers' drawings asked ahead of the start's own, so the build doesn't wait behind them)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, treehouseArtId(game), sliced ? [discoJob(style), MarkerArt.stoneJob(style, t, game.map).job] : []);
-    this.assets.typeSeed = islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"); // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
+    this.assets.typeSeed = islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home");
+    this.assets.typeBiome = biomeKey(t.map?.island ?? "home", t.map?.world ?? 0); // (the island's biome: its forests' look, art/flora/biomes.js) // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
     if (!sliced) runSync(this.build());
@@ -626,6 +633,7 @@ export class View {
     this.partyObjects = new PartyObjectsView(this.scene, this.assets, this.mpp);
     this.partyWitchView = new PartyWitchView(this.scene, this.assets, this.mpp, t.witch);
     this.beachView = new BeachView(this.scene, this.assets, this.ground, this.mpp, t.witch);
+    this.lakeShore = new LakeShoreView(this.scene, this.mpp);
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
@@ -854,7 +862,7 @@ export class View {
     this.trunkShadowBatches.delete("markers"); // (the old island's runestones': let go with it)
     this.partyView.gen?.reset();
     for (const b of this.appearing.keys()) b.appearU.value = 1; // (a kept batch caught fading in shows whole)
-    this.assets.reseat({ seed: game.seed, typeSeed: islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"), treehouse: treehouseArtId(game) });
+    this.assets.reseat({ seed: game.seed, typeSeed: islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"), typeBiome: biomeKey(t.map?.island ?? "home", t.map?.world ?? 0), treehouse: treehouseArtId(game) });
     this.game = game;
     Object.assign(this, nightState(t));
     const M = moodOf(t);
@@ -1237,10 +1245,11 @@ export class View {
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
     this.updateSteam(g, time);
+    this.lakeShore.update(g, this.assets, w.x, w.z);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     SHADOW_TINT.value = t.shadows.tint ?? 0; // (every shadow's colour: render/shadows.ts, trunkShadows.ts)
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;

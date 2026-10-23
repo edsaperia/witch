@@ -9,9 +9,9 @@ const K = lakeKnobs(TUNING);
 describe("biome lakes (rules/lakeLooks.ts)", () => {
   it("blends the two compass biomes a bearing lies between", () => {
     expect(blendAt(0)).toEqual({ a: "cold", b: "mountains and glaciers", w: 1 });
-    expect(blendAt(90)).toMatchObject({ a: "rocky", w: 1 });
+    expect(blendAt(90)).toMatchObject({ a: "volcanic", w: 1 });
     const b = blendAt(100);
-    expect(b.a).toBe("rocky"); expect(b.b).toBe("badlands"); expect(b.w).toBeGreaterThan(0.5);
+    expect(b.a).toBe("volcanic"); expect(b.b).toBe("badlands"); expect(b.w).toBeGreaterThan(0.5);
   });
 
   it("keeps home's lakes and the inner phases' plain, half the first special phase's, all further out", () => {
@@ -21,10 +21,14 @@ describe("biome lakes (rules/lakeLooks.ts)", () => {
     expect(islandBiome("ibex", 0, K.biomeFrom + 1, K).lakeShare).toBe(1);
   });
 
-  it("gives an island of its own tag (the volcanic) its own lakes", () => {
+  it("blends the volcanic east with its neighbours like every compass point (no island a biome alone)", () => {
     const b = islandBiome("stegosaurus", 0, 5, K);
-    expect(b.lakeBlend).toEqual({ a: "volcanic", b: "volcanic", w: 1 });
-    expect(lookOfLoop(3, 7, b)).toBe("lava");
+    expect(b.blend.a).toBe("volcanic");
+    expect(["mountains and glaciers", "badlands"]).toContain(b.blend.b);
+    expect(b.lakeBlend).toEqual(b.blend);
+    const looks = new Set(Array.from({ length: 40 }, (_, i) => lookOfLoop(3, i, b)));
+    expect(looks.has("lava")).toBe(true);
+    for (const l of looks) expect(["lava", LAKE_LOOKS[b.blend.b]]).toContain(l);
   });
 
   it("deals each lake one of its island's two looks, the same every time", () => {

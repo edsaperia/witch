@@ -79,9 +79,17 @@ function bendModel(m, R, D) {
   }
   m.flats = flats.map(f => { const a = f.c[0] / R; return { ...f, c: to(f.c), u: turn(f.u, a), v: turn(f.v, a) }; });
   for (const Lt of m.lights ?? []) Lt.c = to(Lt.c);
+  for (const k of Object.keys(m.marks ?? {})) m.marks[k] = to(m.marks[k]);
 }
+/** The biome board's nine frame colours (Hotel, 2026-10-23: each biome's chart palette, row by row from the top left, north up):
+ *  cold rainforest, cold, mountains and glaciers; jungle, temperate (home), volcanic; mangrove swamp, hot, badlands. Drawn in
+ *  materials the board uses for nothing else, coloured for it alone (PIECE_COLOURS). */
+export const BIOMES = ["#2f6b5e", "#9fc4d8", "#7f93a3", "#2e8b3e", "#7aa04a", "#c8442a", "#6f7a3a", "#d9a441", "#b0603a"];
+const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.NIGHT2, M.MOUTH];
+const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+
 /** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
+export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -416,29 +424,78 @@ const PIECES = {
     sprig(m, [-W / 2 + .05, H * .78, zb], 6, .12, 42);
   },
 
-  // The pegboard: a board of holes on the wall with her tools hung on it (a saw, a wrench, a hammer, bundles of bristles, a coil of rope),
-  // a neon lightning bolt glowing at its top, a workbench lamp clamped to its side.
+  // The pegboard (Hotel's Workshop, Ed's OK, 2026-10-23): the 3 × 3 biome board her broom's parts hang on, laid out as the islands'
+  // biome map with north up: a board of holes in a wooden frame, its nine cells each framed in its biome's colour (BIOMES), a brass
+  // compass rose over it; a sprig sprouting from a corner. Each cell's middle is a mark (`cell0` to `cell8`, row by row from the top
+  // left) for the parts Hotel hangs on it, which glow on tonight's cell.
   pegboard(m, { W, D, H }) {
-    const zb = -D / 2 + .02, y0 = .7, y1 = H - .05, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2;
-    m.box([0, cy, zb], [W / 2, hh, .02], M.STRAW, { group: 1, paint: p => (Math.abs(((p[0] * 10) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 10) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
-    m.box([0, cy, zb - .01], [W / 2 + .03, hh + .03, .015], M.WOOD, { group: 2 });
-    const zf = zb + .04;
-    // a saw: its blade and handle
-    m.flat([-W * .33, cy + .1, zf], X, Y, .3, .08, (s, t) => (t > .4 - s * .3 ? undefined : t < -.7 && Math.abs(((s * 12) % 1 + 1) % 1 - .5) > .25 ? undefined : M.FRAME), { group: 10, bend: 0 });
-    m.box([-W * .33 + .33, cy + .1, zf], [.06, .07, .02], M.ACCENT, { round: .02, group: 11 });
-    // a wrench and a hammer
-    m.seg([-W * .08, cy + .3, zf], [-W * .08, cy - .15, zf], .025, .025, M.FRAME, { group: 12 });
-    m.ell([-W * .08, cy + .33, zf], [.06, .05, .02], M.FRAME, { group: 12 });
-    m.seg([W * .06, cy + .25, zf], [W * .06, cy - .2, zf], .025, .025, M.WOOD, { group: 13 });
-    m.box([W * .06, cy + .27, zf], [.1, .04, .03], M.SHADES, { round: .01, group: 13 });
-    // bristle bundles, tied; a coil of rope
-    for (let i = 0; i < 2; i++) { const x = W * .22 + i * .18; m.seg([x, cy + .2, zf], [x, cy - .15, zf + .02], .04, .08, M.STRAW, { group: 14 + i, paint: p => (Math.abs(p[1] - (cy + .12)) < .02 ? M.ACCENT : undefined) }); }
-    for (let k = 0; k < 3; k++) m.ell([W * .38, cy - .32 + k * .02, zf + .02], [.13 - k * .02, .13 - k * .02, .025], M.STRAW, { group: 18, paint: p => (Math.hypot(p[0] - W * .38, p[1] - cy + .32) < .06 ? undefined : M.STRAW) });
-    // the neon bolt
-    const bolt = [[-.12, .14], [.03, .02], [-.04, .0], [.12, -.14], [-.02, -.02], [.05, 0]];
-    for (let i = 0; i + 1 < bolt.length; i++) m.seg([W * .05 + bolt[i][0], y1 + .15 + bolt[i][1], zf], [W * .05 + bolt[i + 1][0], y1 + .15 + bolt[i + 1][1], zf], .022, .022, M.COLLAR, { group: 20, extra: true });
-    light(m, [W * .05, y1 + .15, zf + .1], FAIRY, 14, .4);
-    sprig(m, [-W / 2, y1, zb + .05], 5, .13, 21);
+    const zb = -D / 2 + .02, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
+    m.box([0, cy, zb], [W / 2, hh, .02], M.STRAW, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
+    m.box([0, cy, zb - .012], [W / 2 + .05, hh + .05, .015], M.WOOD, { round: .01, group: 2 });
+    // the nine cells' frames, each in its biome's colour (BIOMES' materials), a gap of board between them
+    const cw = (W - .12) / 3, ch = (2 * hh - .12) / 3;
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) {
+      const x = -W / 2 + .06 + cw * (c + .5), y = y1 - .06 - ch * (r + .5), mat = BIOME_MATS[r * 3 + c], fw = .025;
+      for (const sy of [-1, 1]) m.box([x, y + sy * (ch / 2 - .03), zf], [cw / 2 - .04, fw, .012], mat, { group: 10 + r * 3 + c });
+      for (const sx of [-1, 1]) m.box([x + sx * (cw / 2 - .04), y, zf], [fw, ch / 2 - .03, .012], mat, { group: 10 + r * 3 + c });
+      (m.marks ??= {})[`cell${r * 3 + c}`] = [x, y, zf + .03];
+    }
+    // the compass rose over it: a brass disc, its four points, north up and red
+    const rc = [0, y1 + .2, zf - .01];
+    m.ell(rc, [.16, .16, .02], M.FLOWER, { group: 30 });
+    for (const [dx, dy, mat] of [[0, 1, M.ACCENT], [0, -1, M.BARKD], [1, 0, M.BARKD], [-1, 0, M.BARKD]]) m.seg([rc[0], rc[1], rc[2] + .02], [rc[0] + dx * .2, rc[1] + dy * .2, rc[2] + .02], .035, .005, mat, { group: 31 });
+    sprig(m, [-W / 2, y1 + .05, zb + .05], 5, .12, 32);
+    sprig(m, [W / 2 - .05, y0, zb + .05], 4, .1, 33, .2);
+  },
+
+  // The broom bay (Hotel's Workshop): two trestles that hold her broom across them at waist height (the mark `rest`: Hotel draws her
+  // broom there), a mechanic's creeper on the floor in front, a red tool chest at one end, an inspection lamp clamped to a trestle;
+  // ivy up a trestle's leg.
+  broomBay(m, { W, D, H }) {
+    const rest = H * .82, xs = [-W * .28, W * .18];
+    for (const [i, x] of xs.entries()) {
+      for (const s of [-1, 1]) for (const zz of [-1, 1]) m.seg([x + s * .05, rest - .05, 0], [x + s * .22, 0, zz * D * .2], .03, .03, M.WOOD, { group: 1 + i });
+      m.box([x, rest - .05, 0], [.06, .04, D * .22], M.WOOD, { round: .01, group: 1 + i });
+      m.ell([x, rest - .01, 0], [.07, .04, .12], M.ACCENT, { group: 3 + i }); // (a padded cradle)
+    }
+    (m.marks ??= {}).rest = [(xs[0] + xs[1]) / 2, rest + .04, 0];
+    ivy(m, xs[0] - .2, D * .2, .05, rest * .8, 5, .05);
+    // the creeper: a low board on castors, a padded headrest
+    m.box([-W * .05, .07, D * .32], [.45, .025, .17], M.BARKD, { round: .02, group: 10, paint: p => (p[0] < -W * .05 - .3 ? M.ACCENT : undefined) });
+    for (const [dx, dz] of [[-.38, -.12], [.38, -.12], [-.38, .12], [.38, .12]]) m.ell([-W * .05 + dx, .03, D * .32 + dz], [.03, .03, .03], M.SHADES, { group: 11 });
+    // the tool chest: red drawers, chrome handles, a spanner and a can on top
+    const tx = W / 2 - .22;
+    m.box([tx, .45, -D * .1], [.2, .43, .18], M.ACCENT, { round: .02, group: 20, paint: p => (Math.abs(((p[1] / .14) % 1 + 1) % 1 - .5) > .45 ? M.BARKD : undefined) });
+    for (let i = 0; i < 6; i++) m.box([tx, .14 + i * .14, -D * .1 + .19], [.08, .01, .01], M.FRAME, { group: 21 });
+    m.seg([tx - .1, .9, -D * .1], [tx + .08, .9, -D * .1 + .06], .015, .015, M.FRAME, { group: 22 });
+    can(m, tx + .08, -D * .1 - .05, .88, 1, .045, M.FLOWER, { group: 23 });
+    // the inspection lamp, clamped to the right trestle, glowing
+    m.seg([xs[1] + .1, rest - .05, -.05], [xs[1] + .25, rest + .35, -.1], .012, .012, M.SHADES, { group: 30 });
+    m.seg([xs[1] + .25, rest + .35, -.1], [xs[1] + .2, rest + .25, .05], .05, .08, M.SHADES, { group: 31 });
+    bulb(m, [xs[1] + .2, rest + .24, .07], .035, M.WOKEN, 32, [WARM, 14, .4]);
+  },
+
+  // The lathe (Hotel's Workshop): a sturdy bench, the lathe on it (a headstock, its bed, a tailstock: her broom lies between them,
+  // the mark `rest`), a row of paint tins with drips down their sides, brushes in a jar, a rag; shavings curling on the floor.
+  lathe(m, { W, D, H }) {
+    const top = H * .45;
+    m.box([0, top, 0], [W / 2, .04, D / 2], M.WOOD, { round: .015, group: 1, paint: planks(.3) });
+    for (const x of [-W / 2 + .08, W / 2 - .08]) for (const z of [-D / 2 + .06, D / 2 - .06]) m.seg([x, 0, z], [x, top, z], .04, .04, M.WOOD, { group: 2 });
+    m.box([0, top * .25, 0], [W / 2 - .1, .02, D / 2 - .08], M.WOOD, { group: 3 });
+    // the lathe: its bed rails, headstock (with its motor) and tailstock
+    const sit = top + .04, lx = -W * .08, len = W * .55;
+    for (const z of [-.05, .05]) m.seg([lx - len / 2, sit + .05, z], [lx + len / 2, sit + .05, z], .02, .02, M.FRAME, { group: 10 });
+    m.box([lx - len / 2, sit + .16, 0], [.09, .14, .1], M.HAT1, { round: .02, group: 11 });
+    m.ell([lx - len / 2 - .05, sit + .32, 0], [.07, .07, .07], M.SHADES, { group: 12 });
+    m.box([lx + len / 2 - .05, sit + .12, 0], [.06, .1, .08], M.HAT1, { round: .02, group: 13 });
+    (m.marks ??= {}).rest = [lx, sit + .22, 0];
+    // paint tins, their drips; brushes in a jar; a rag
+    const tins = [M.ACCENT, M.IRIS, M.FLOWER, M.POM, M.LEAF2];
+    tins.forEach((mat, i) => { const x = W * .26 + (i % 3) * .14, z = -D * .2 + Math.floor(i / 3) * .2; can(m, x, z, sit, sit + .12, .055, M.FRAME, { group: 20 + i, paint: p => (p[1] > sit + .09 || (p[1] > sit + .03 && Math.sin(Math.atan2(p[2] - z, p[0] - x) * 5) > .7) ? mat : undefined) }); });
+    can(m, W * .42, D * .2, sit, sit + .12, .05, M.CRYSTAL, { group: 30 });
+    for (let i = 0; i < 3; i++) m.seg([W * .42 + (i - 1) * .02, sit + .08, D * .2], [W * .42 + (i - 1) * .05, sit + .3, D * .2], .01, .016, i ? M.WOOD : M.STRAW, { group: 31 + i });
+    m.ell([W * .1, sit + .02, D * .25], [.12, .025, .08], M.BELLY, { group: 35, rough: .01, paint: p => (hash2(Math.round(p[0] * 40), Math.round(p[2] * 40), 4) > .7 ? M.ACCENT : undefined) });
+    for (let i = 0; i < 6; i++) { const a = i * 1.1; m.ell([lx + Math.cos(a) * .3, .015, D * .35 + Math.sin(a) * .15], [.05, .012, .03], M.STRAW, { group: 40, dir: [Math.cos(a), 0, Math.sin(a)] }); }
   },
 
   // The record shelf: a tall shelf of records, their spines every colour, a turntable on top with a record on it, a crate of vinyl at its
@@ -607,6 +664,93 @@ const PIECES = {
     can(m, R * .5, -R * .4, top, top + .1, .05, M.ACCENT, { group: 13 });
   },
 
+  // The Studio's drum kit (Ed's pick, 2026-10-23: glam rock): glitter-wrapped shells, a kick drum with a neon star on its head, two
+  // rack toms and a floor tom, a snare, the hi-hat and two brass cymbals on chrome stands, a throne with a hoodie over it, sticks.
+  // Its kick faces the room, the throne behind.
+  drumKit(m, { W, D }) {
+    const glitter = g => p => (hash2(Math.round(p[0] * 40), Math.round(p[1] * 40) + Math.round(p[2] * 40), g) > .72 ? M.BELLY : undefined);
+    const zk = D * .12, R = Math.min(.32, W * .15);
+    // the kick, on its side, its front head facing the room with a neon star; its hoops
+    m.seg([0, R + .02, zk - .25], [0, R + .02, zk + .2], R, R, M.POM, { group: 1, paint: glitter(1) });
+    m.flat([0, R + .02, zk + .23], X, Y, R * .92, R * .92, (s, t) => { if (Math.hypot(s, t) > 1) return undefined; const a = Math.atan2(t, s), k = Math.hypot(s, t), star = .32 + .18 * Math.cos(a * 5); return k < star ? M.COLLAR : M.SHADES; }, { group: 2, bend: 0 });
+    light(m, [0, R, zk + .4], FAIRY, 12, .35);
+    for (const z of [zk - .25, zk + .2]) m.ell([0, R + .02, z], [R + .02, R + .02, .015], M.FRAME, { group: 3 });
+    // toms on the kick, a floor tom, a snare: each a shell (glitter), a pale head, a chrome hoop
+    const drum = (c, r, h, g, tilt = 0) => { m.seg(c, [c[0], c[1] + h, c[2] + tilt], r, r, M.POM, { group: g, paint: glitter(g) }); m.ell([c[0], c[1] + h + .01, c[2] + tilt], [r * .96, .012, r * .96], M.BELLY, { group: g + 1 }); };
+    drum([-.15, R * 2 + .1, zk - .05], .13, .14, 10, -.05); drum([.17, R * 2 + .1, zk - .05], .15, .15, 12, -.05);
+    drum([W * .33, .02, zk - .1], .19, .42, 14);
+    for (const s of [-1, 1]) m.seg([W * .33 + s * .15, 0, zk - .1], [W * .33 + s * .16, .12, zk - .1], .015, .015, M.FRAME, { group: 16 });
+    m.seg([-W * .22, 0, zk - .2], [-W * .22, .5, zk - .2], .015, .015, M.FRAME, { group: 17 }); drum([-W * .22, .5, zk - .2], .16, .1, 18);
+    // the hi-hat, the crash and the ride: chrome stands, brass cymbals tilted to the room
+    const cymbal = (x, z, h, r, g) => { m.seg([x, 0, z], [x, h, z], .014, .012, M.FRAME, { group: g }); for (const a of [0, 2.1, 4.2]) m.seg([x, .03, z], [x + Math.cos(a) * .14, 0, z + Math.sin(a) * .14], .01, .01, M.FRAME, { group: g }); m.ell([x, h + .02, z], [r, .012, r], M.FLOWER, { group: g + 1, dir: [1, .25, 0], up: [0, 1, .3] }); };
+    cymbal(-W * .38, zk - .3, .78, .17, 20); m.ell([-W * .38, .82, zk - .3], [.17, .012, .17], M.FLOWER, { group: 22 });
+    cymbal(-W * .2, zk - .45, 1.2, .23, 23); cymbal(W * .3, zk - .5, 1.1, .26, 25);
+    // the throne behind, a hoodie flung over it; sticks on the snare
+    const zt = -D * .38;
+    m.seg([0, 0, zt], [0, .45, zt], .03, .03, M.FRAME, { group: 30 });
+    m.ell([0, .5, zt], [.17, .06, .17], M.SHADES, { group: 31 });
+    m.ell([.05, .55, zt + .02], [.18, .08, .16], M.HAT1, { group: 32, rough: .01 });
+    m.seg([.15, .52, zt + .1], [.22, .2, zt + .18], .06, .05, M.HAT1, { group: 32 });
+    for (const s of [-1, 1]) m.seg([-W * .22 + s * .03, .62, zk - .3], [-W * .22 + s * .05 + .1, .63, zk - .02], .012, .01, M.WOOD, { group: 33 });
+    // a neon lightning bolt sign on a little stand behind, and a plant (cottage creeping in)
+    m.seg([W * .42, 0, -D * .45], [W * .42, .9, -D * .45], .015, .015, M.FRAME, { group: 40 });
+    for (let i = 0; i < 5; i++) { const a = i * 1.26 - Math.PI / 2, b = a + 1.26; m.seg([W * .42 + Math.cos(a) * .14, 1.05 + Math.sin(a) * .14, -D * .45], [W * .42 + Math.cos(b) * .14, 1.05 + Math.sin(b) * .14, -D * .45], .016, .016, M.MAGIC, { group: 41, extra: true }); }
+    light(m, [W * .42, 1.05, -D * .35], MAGICL, 10, .3);
+    can(m, -W * .44, -D * .4, 0, .2, .1, M.BODY2, { group: 42 }); sprig(m, [-W * .44, .26, -D * .4], 6, .12, 43, .7);
+  },
+
+  // The synth rack (Ed's pick, 2026-10-23: a retro tech wall): metal shelving stacked with vintage synths, two keyboards, a modular
+  // case of blinking lights and patch cables, a reel-to-reel and a little glowing screen; cables tangling down the front; a fern on top.
+  synthRack(m, { W, D, H }) {
+    const sh = [.08, H * .32, H * .62, H * .93], zf = D / 2 - .04;
+    for (const y of sh) m.box([0, y, 0], [W / 2, .02, D / 2 - .02], M.FRAME, { group: 1 });
+    for (const x of [-W / 2 + .02, W / 2 - .02]) for (const z of [-D / 2 + .04, D / 2 - .04]) m.seg([x, 0, z], [x, H, z], .02, .02, M.FRAME, { group: 2 });
+    // the bottom: the reel-to-reel (two reels, a deck) and a speaker cab
+    m.box([-W * .22, sh[0] + .2, 0], [.28, .2, D / 2 - .08], M.SHADES, { round: .02, group: 10 });
+    for (const s of [-1, 1]) { m.ell([-W * .22 + s * .13, sh[0] + .26, zf - .02], [.1, .1, .015], M.FRAME, { group: 11, paint: p => (Math.hypot(p[0] - (-W * .22 + s * .13), p[1] - (sh[0] + .26)) < .03 ? M.SHADES : Math.sin(Math.atan2(p[1] - (sh[0] + .26), p[0] - (-W * .22 + s * .13)) * 3) > .7 ? M.SHADES : undefined) }); }
+    m.box([W * .25, sh[0] + .22, 0], [.24, .22, D / 2 - .08], M.WOOD, { round: .02, group: 12 });
+    m.ell([W * .25, sh[0] + .22, zf - .03], [.15, .15, .02], M.SHADES, { group: 13, paint: p => (Math.hypot(p[0] - W * .25, p[1] - (sh[0] + .22)) < .05 ? M.FRAME : undefined) });
+    // the middle: two keyboards stacked, their keys facing out, knobs over them
+    const keys = (y, g, body) => {
+      m.box([0, y + .07, .02], [W / 2 - .12, .06, D / 2 - .1], body, { round: .02, group: g });
+      m.box([0, y + .1, zf - .08], [W / 2 - .2, .02, .08], M.BELLY, { group: g + 1, paint: p => (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .1 ? M.SHADES : (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .3 && p[2] < zf - .1 ? M.SHADES : undefined)) });
+      for (let i = 0; i < 9; i++) bulb(m, [-W / 2 + .25 + i * (W - .5) / 8, y + .14, -.02], .018, [M.GLINT, M.WOKEN, M.COLLAR][i % 3], g + 2, i === 4 ? [SCREEN, 8, .2] : null);
+    };
+    keys(sh[1], 20, M.ACCENT); keys(sh[1] + .17, 24, M.BELLY);
+    // the top shelf: the modular case, rows of blinking lights and patch cables looping down; the little screen glowing
+    m.box([-W * .1, sh[2] + .26, -.02], [W * .34, .25, D / 2 - .08], M.SHADES, { round: .02, group: 30, paint: p => (Math.abs(((p[1] - sh[2]) / .1) % 1 - .5) < .06 ? M.FRAME : undefined) });
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 9; i++) if (hash2(r, i, 3) > .35) bulb(m, [-W * .1 - W * .3 + i * W * .075, sh[2] + .1 + r * .11, zf - .06], .017, [M.COLLAR, M.GLINT, M.WOKEN, M.MAGIC][(r + i) % 4], 31, r === 2 && i === 3 ? [FAIRY, 10, .3] : null);
+    const cols = [M.COLLAR, M.HAT1, M.FLOWER, M.IRIS, M.ACCENT];
+    for (let i = 0; i < 6; i++) { const x0 = -W * .38 + i * W * .12, x1 = x0 + (hash2(i, 1, 5) - .5) * .4; m.chain([[x0, sh[2] + .3, zf - .02, .012], [(x0 + x1) / 2, sh[2] + .02 - hash2(i, 2, 5) * .25, zf + .03, .012], [x1, sh[2] + .15, zf - .02, .012]], cols[i % cols.length], { group: 35 + i }); }
+    m.box([W * .36, sh[2] + .2, 0], [.13, .19, .14], M.FRAME, { round: .03, group: 42 });
+    m.flat([W * .36, sh[2] + .21, .145], X, Y, .09, .12, (s, t) => (Math.abs(t - Math.sin(s * 6) * .4) < .18 ? M.MAGIC2 : M.GLINT), { group: 43, bend: 0 });
+    light(m, [W * .36, sh[2] + .2, .3], SCREEN, 10, .3);
+    // cables tangling down to the floor, a fern on top, a disco ball hanging off the top shelf's corner
+    for (let i = 0; i < 3; i++) m.chain([[-W * .3 + i * .3, sh[1], zf, .014], [-W * .25 + i * .32, sh[1] * .5, zf + .06, .014], [-W * .2 + i * .25, .01, zf + .2, .014]], [M.SHADES, M.ACCENT, M.HAT1][i], { group: 50 + i });
+    can(m, W * .3, 0, sh[3] + .02, sh[3] + .18, .09, M.BODY2, { group: 60 }); sprig(m, [W * .3, sh[3] + .25, 0], 7, .13, 61, .6);
+    m.seg([-W / 2 + .08, sh[3], zf], [-W / 2 + .08, sh[3] - .2, zf + .02], .006, .006, M.FRAME, { group: 62 });
+    m.ell([-W / 2 + .08, sh[3] - .28, zf + .02], [.08, .08, .08], M.FRAME, { group: 63, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 8) > .6 ? M.BELLY : undefined) });
+  },
+
+  // The microphone, spotlit: a chrome stand on a round base, a big vintage capsule mic, its cable coiling away; a spot lamp hanging over
+  // it on its cable (its own warm bulb; the cone of light is the view's: the music builder's), a round rug under it.
+  microphone(m, { W, D, H }) {
+    const r = Math.min(W, D) / 2;
+    disc(m, [0, .006, 0], r * 1.3, .006, M.CLOTH, { group: 1, paint: p => (Math.hypot(p[0], p[2]) > r * 1.1 ? M.FLOWER : Math.hypot(p[0], p[2]) < r * .5 ? M.ACCENT : undefined) });
+    disc(m, [0, .03, 0], r * .45, .02, M.FRAME, { group: 2 });
+    m.seg([0, .03, 0], [0, H * .78, 0], .016, .014, M.FRAME, { group: 3 });
+    m.ell([0, H * .78, 0], [.035, .035, .035], M.FRAME, { group: 3 });
+    const mic = [0, H * .78 + .1, .05];
+    m.ell(mic, [.07, .1, .07], M.FRAME, { group: 4, paint: p => (Math.abs(((p[1] - mic[1]) / .03) % 1 - .5) < .12 || p[1] < mic[1] - .06 ? M.SHADES : undefined), dir: [0, 1, .3] });
+    m.chain([[0, H * .7, 0, .01], [-.1, H * .4, -.05, .01], [-.2, .02, -.1, .01], [-.35, .01, .1, .01], [-.2, .01, .25, .01]], M.SHADES, { group: 5 });
+    // the spot lamp over it, hanging from above on its cable
+    const lamp = [0, H * 1.25, .05];
+    m.seg([lamp[0], H * 1.5, lamp[2]], lamp, .006, .006, M.SHADES, { group: 10, extra: true });
+    m.seg(lamp, [lamp[0], lamp[1] - .14, lamp[2] + .03], .05, .1, M.SHADES, { group: 11, extra: true });
+    bulb(m, [lamp[0], lamp[1] - .15, lamp[2] + .03], .05, M.WOKEN, 12, [WARM, 20, .55]);
+    (m.marks ??= {}).spot = [lamp[0], lamp[1] - .15, lamp[2] + .03];
+  },
+
   // A locked friend's room's door: a pointed gothic door of planks in its frame, iron straps and a ring, a wreath of leaves with a heart,
   // a little neon "do not disturb" glow (a crescent) over it, a glowing lock.
   bedroom2Door(m, s) { PIECES.door(m, s, 0); },
@@ -626,6 +770,9 @@ const PIECES = {
     light(m, [0, h + .3, z + .2], k ? FAIRY : MAGICL, 10, .3);
   },
 };
+
+/** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
+export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM, FAIRY, MAGICL, SCREEN, GREEN };
 
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
 export const FURNITURE_IDS = Object.keys(PIECES).filter(id => id !== "door");
@@ -664,7 +811,9 @@ const ROOM_COLOURS = {
   crowsNest: { [M.CLOTH]: [40, 74, 110], [M.ACCENT]: [200, 84, 56] }, // sea blue and a buoy's red
   atrium: { [M.CLOTH]: [92, 62, 40], [M.ACCENT]: [186, 60, 52] }, // bark and a wax seal's red
 };
-export function furnitureColours(st = {}, room = "bedroom") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}) }; }
+/** A piece's own colours over its room's (the biome board's frames). */
+const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i])])) };
+export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
  *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives
@@ -678,6 +827,12 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   const m = new Model({ blend: .025 });
   build(m, { W: foot.w / SIZE, D: foot.d / SIZE, H: foot.h / SIZE }, state ?? FURNITURE_STATES[id]?.[0]);
   if (curve > 0 && BEND.has(id)) bendModel(m, curve / SIZE, foot.d / SIZE);
+  return modelSprite(m, { ppm, pitch, yaw });
+}
+
+/** A model of the house's (metres of the real piece) drawn at the house's pixel, SIZE times over, turned by yaw: its sprite, cropped,
+ *  where its middle on the floor lands (`origin`), its lights and its marks in pixels (furnitureSprite's; art/houseDecor.js's too). */
+export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0 } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
   const { sp, project } = render(m, { scale: ppm * SIZE, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
@@ -686,5 +841,7 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (mm) crop.put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
   const [ox, oy] = project([0, 0, 0]);
   const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * SIZE, R: L.R * SIZE, rgb: L.rgb, power: L.power }; });
-  return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights };
+  // (its marks: named points of it in pixels, for the view: the mic's spot lamp, where the music builder's cone of light hangs from)
+  const marks = Object.fromEntries(Object.entries(m.marks ?? {}).map(([k, c]) => { const [mx, my] = project(c); return [k, { x: +(mx - x0).toFixed(1), y: +(my - y0).toFixed(1) }]; }));
+  return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights, marks };
 }

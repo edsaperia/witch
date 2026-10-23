@@ -39,19 +39,19 @@
    "areas": ["heath", "moor", "cave-mouth", "ravine", "log-pile", "meadow", "stone-shrine", "rocky-slope", "grassland"]
   },
   {
-   "name": "Badlands & rocky",
-   "biomes": ["badlands", "rocky", "volcanic"],
+   "name": "Badlands & volcanic",
+   "biomes": ["badlands", "volcanic"],
    "areas": ["red-canyon", "cactus-flats", "scrub-wash", "warren", "dragon-scrub"]
   },
   {
    "name": "Hot",
    "biomes": ["hot"],
-   "areas": ["erg", "plains", "bushveld", "savanna"]
+   "areas": ["erg", "plains", "bushveld", "savanna", "desert-ruin"]
   },
   {
    "name": "Jungle",
    "biomes": ["jungle"],
-   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle"]
+   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle", "step-pyramid"]
   },
   {
    "name": "Mangrove swamp",

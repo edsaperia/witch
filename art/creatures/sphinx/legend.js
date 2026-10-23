@@ -1,0 +1,1 @@
+export const LEGEND_SPHINX = { sink: .38, droop: .7, drop: [], over: { moss: 0, lichen: .16, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }; // the desert ruin's sphinx: couched in the sand to its shoulders like the old statue it passes for, its headcloth gone to weathered stone, drifted over
