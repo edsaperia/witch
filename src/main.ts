@@ -1,6 +1,6 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { chartOpen, chartWarmsNight, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { chartOpen, chartWarmsNight, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { divesHome, openingWay, opensOnChart } from "./app/opening";
 import { bedside, wakeInBedroom } from "./rules/opening";
 import { startWake } from "./rules/wakeUp";
@@ -35,7 +35,7 @@ import { saveLoadout } from "./app/loadout";
 import { castable } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
-import { stationOf } from "./rules/stations";
+import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { fillTrunk } from "./rules/finds";
 import { loadBroom, migrateBroom, partFound } from "./app/broomSave";
@@ -569,11 +569,18 @@ function chartFromCard(): void {
 /** The sea chart over the night (the map table's, and the cards'): choosing the island she's on never starts a new night (Ed,
  *  2026-10-21: "choosing the same island after a night has ended shouldn't start a new night - going to bed does that"): the chart
  *  closes as Close does, nothing recorded, and the night (or its afterparty, its card up) goes on as it was; another sails. */
-function chartOverNight(): void {
+function chartOverNight(table?: string): void {
   const n = N(), island = chartIsland(n.tuning.map?.island);
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
-  openChart((href, to) => void sailFromChart(href, to), chartWorldArg(), { here, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`) });
+  if (table) chartAt = table;
+  openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+    ...(table ? { table: { onLeave: () => { tableShut = chartAt; chartAt = null; closeChart(); } } } : {}) });
 }
+/** The map table's chart by nearness (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes
+ *  stations"; rules/stations.ts tableOf, ui/chartOverlay.ts `table`): up as she comes to the table, the night held behind it;
+ *  she moves and it slides away, and stays away till she's left the table (or E there brings it back). The table it's up at, and
+ *  the one she put it away at. */
+let chartAt: string | null = null, tableShut: string | null = null;
 document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
 document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
@@ -793,7 +800,11 @@ function frame(now: number): void {
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
   } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) chartOverNight();
+  // The tables (the map table's sea chart) by nearness, as the stations; E at one brings it back after she's put it away there.
+  const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
+  if (!table) tableShut = null;
+  if (!bot && game.leashEvents.some(e => e.kind === "chart")) tableShut = null;
+  if (table && table.use.kind === "chart" && !chartOpen() && tableShut !== table.id) chartOverNight(table.id);
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart

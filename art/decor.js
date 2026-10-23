@@ -14,7 +14,7 @@ import { M, Sprite, hsv2rgb, sinHash, glowBall } from "./core.js";
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 
-const dcCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
+export const dcCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 const dcBark = p => { const n = dcCell(p, 12); return n < .14 ? M.BARKD : n > .88 ? M.BARKL : undefined; };
 const dcLeafy = c => p => { const n = dcCell(p, 10, 3); return p[1] < c[1] - .2 || n < .2 ? M.LEAF3 : n > .8 ? M.LEAF2 : undefined; };
 // stone: mortar courses, cracks, moss on top faces (more when overgrown)
@@ -30,8 +30,8 @@ const dcTufts = (m, n, R, g, seed) => { for (let i = 0; i < n; i++) { const a = 
 const dcCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: .04, paint: dcLeafy(c) });
 const dcLimb = (m, pts, g) => m.chain(pts, M.TRUNK, { group: g, rough: .012, paint: dcBark });
 // dead wood: bleached and grey, its cracks dark
-const dcDead = (m, pts, g) => m.chain(pts, M.STONE, { group: g, rough: .014, paint: p => { const n = dcCell(p, 11, 9); return n < .2 ? M.BARKD : n > .8 ? M.STONED : undefined; } });
-const dcRock = (m, c, r, g, o = {}) => m.ell(c, r, M.STONE, { group: g, rough: .03, dir: o.dir, paint: p => p[1] > c[1] + r[1] * (o.moss ?? .62) && dcCell(p, 5, g) < .7 ? M.MOSS : dcCell(p, 14) > .9 ? M.STONED : undefined }); // moss in patches on top
+export const dcDead = (m, pts, g) => m.chain(pts, M.STONE, { group: g, rough: .014, paint: p => { const n = dcCell(p, 11, 9); return n < .2 ? M.BARKD : n > .8 ? M.STONED : undefined; } });
+export const dcRock = (m, c, r, g, o = {}) => m.ell(c, r, M.STONE, { group: g, rough: .03, dir: o.dir, paint: p => p[1] > c[1] + r[1] * (o.moss ?? .62) && dcCell(p, 5, g) < .7 ? M.MOSS : dcCell(p, 14) > .9 ? M.STONED : undefined }); // moss in patches on top
 
 // ---------------- ruins ----------------
 // build(m, grown): grown 0 weathered, 1 overgrown. split: the model height above which it goes in the top (null: not tall).
@@ -212,6 +212,10 @@ export function decorColours(st = {}, tint = [1, 1, 1]) {
 // crownY up (tall pieces; empty otherwise), bot the rest. footprint: the radius on the ground, in metres.
 export function decorSprite(id, st = {}, { variant = 0, ppm = 16 } = {}) {
   const d = DECOR_BY_ID[id]; if (!d) throw new Error(`no decoration "${id}"`);
+  return decorPieceSprite(d, st, { variant, ppm });
+}
+/** Any piece built like a decoration (d: { build(m, variant), size, variants, split }), drawn the same way (art/lakeShore.js too). */
+export function decorPieceSprite(d, st = {}, { variant = 0, ppm = 16 } = {}) {
   const m = new Model({ blend: .05 }); d.build(m, variant % d.variants);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
