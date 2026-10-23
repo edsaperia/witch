@@ -73,6 +73,7 @@ import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type
 import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, overBedLine, type NightWay } from "./app/sail";
 import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
+import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
@@ -87,6 +88,8 @@ if (TIMING) watchLongTasks();
 const logTiming = (): void => { if (TIMING) N().playtest.timing(transitionTiming()); };
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
+// A builder's quick shot (?shot=<scene>, app/shot.ts): only the art the view needs, no start card or bedroom, the waves held.
+shotParams(params); shotParams(bootLink);
 // (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
 let zooPanel: import("./zoo/panel").ZooPanel | null = null;
 let bootSeed = parseSeed(params.get("seed"));
