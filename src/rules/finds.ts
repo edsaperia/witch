@@ -23,6 +23,8 @@ import { hash2 } from "./random";
 import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
 import { PART_IDS, fitPart, partById } from "./broomParts";
 import { setParts, type SpellState } from "./spells";
+import { deckOf, onFloor } from "./treehouse";
+import type { Game } from "./game";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
 export type FindKindId = "wearable" | "part";
@@ -118,4 +120,28 @@ export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: numb
   const t = g.trunk;
   if (!t || !t.item || t.found) return null;
   return { kind: t.kind, item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+}
+
+/** Where a find spawned by her stands (the dev spawn, Ed 2026-10-23: "a way to spawn the collectible near the player"): a few
+ *  metres in front of her (the way she faces, a little toward the camera), else round her, on clear ground: on the island,
+ *  not in a lake, the treehouse or a tree, rock or ruin. Null with nowhere within 12 m. */
+export function spawnSpot(g: Pick<Game, "map" | "forest" | "tuning" | "witches">, i = 0): { x: number; z: number } | null {
+  const w = g.witches[i].body, map = g.map, deck = deckOf(map, g.tuning);
+  const a0 = Math.atan2(0.6, w.facing >= 0 ? 1 : -1);
+  for (const r of [4, 5, 6, 8, 10, 12]) for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) {
+    const a = a0 + (k * Math.PI) / 6, x = w.x + Math.cos(a) * r, z = w.z + Math.sin(a) * r, cell = map.cellSafe(x, z).cell;
+    if (!isInside(map.bounds, x, z, 10) || map.isLake(cell[0], cell[1]) || (deck && onFloor(deck, x, z, 3))) continue;
+    if (g.forest.treesNear(x, z, 3).some(t => Math.hypot(t.x - x, t.z - z) < 2.5)) continue;
+    if (g.forest.decorNear(x, z, 4).some(p => Math.hypot(p.x - x, p.z - z) < 3)) continue;
+    return { x, z };
+  }
+  return null;
+}
+
+/** Tonight's find replaced by `kind`'s `item` at (x, z) (the dev spawn): the night's one find, so the constellation, the
+ *  telescope and E at it all go by it, and taking it is the real claim (sigilButton.ts). Its kind must list the item. */
+export function spawnFind(g: { trunk: Trunk | null; map: ForestMap }, kind: FindKindId, item: string, at: { x: number; z: number }): Trunk | null {
+  if (!findKind(kind)?.items.includes(item)) return null;
+  const c = g.map.cellSafe(at.x, at.z).cell;
+  return (g.trunk = { x: at.x, z: at.z, cell: [c[0], c[1]], kind, item, found: false });
 }

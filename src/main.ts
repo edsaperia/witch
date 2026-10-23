@@ -40,7 +40,7 @@ import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
-import { fillTrunk } from "./rules/finds";
+import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
 import { loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
@@ -464,7 +464,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab });
+    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -538,9 +538,25 @@ const repro = (() => {
   return { link, machine: mach, changed, full, line: () => reproLine(reproState(N().game, changed()), changed().length) };
 })();
 // The finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23): from the debug overlay's buttons, or ?dev=finds.
-const findsPanel = new FindsPanel(findsCtx);
+// Spawning a find near her (Ed, 2026-10-23: "a way to spawn the collectible near the player, perhaps from the pause menu";
+// rules/finds.ts spawnSpot, spawnFind): a kind's item, or tonight's own find (kind null), on clear ground a few metres in front
+// of her, as tonight's find: the constellation, the telescope and E at it go by it, and taking it is the real claim.
+function spawnHere(kind: FindKindId | null, item: string | null): string {
+  const g = N().game, at = spawnSpot(g);
+  if (!at) return "no clear ground within 12 m of her (in the treehouse? step out onto the island)";
+  if (kind && item) return spawnFind(g, kind, item, at) ? `${kind} ${item} spawned ${Math.round(Math.hypot(at.x - g.witch.x, at.z - g.witch.z))} m from her` : `no ${kind} ${item}`;
+  if (g.trunk && g.trunk.item === null) fillTrunk(g, { wearable: findsCtx().owned(), part: new Set(loadBroom().found) });
+  if (!g.trunk?.item || g.trunk.found) return "no find tonight (all found, or taken)";
+  const c = g.map.cellSafe(at.x, at.z).cell;
+  Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
+  return `tonight's ${g.trunk.kind} ${g.trunk.item} moved next to her`;
+}
+const findsPanel = new FindsPanel(findsCtx, spawnHere);
 document.getElementById("finds-dev-btn")?.addEventListener("click", () => findsPanel.toggle());
-if (new URLSearchParams(location.search).get("dev") === "finds") findsPanel.toggle(true);
+const devFinds = new URLSearchParams(location.search).get("dev") === "finds";
+if (devFinds) findsPanel.toggle(true);
+// ?spawnfind=kind:item (or tonight): spawned once, as soon as she first stands on open ground (the treehouse isn't), for shots.
+let spawnWanted = new URLSearchParams(location.search).get("spawnfind");
 document.getElementById("copy-debug")?.addEventListener("click", e => {
   const b = e.currentTarget as HTMLButtonElement, text = repro.full();
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
@@ -826,6 +842,11 @@ function frame(now: number): void {
     keepFound(findsCtx(), "wearable", e.obj);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
+  }
+  if (spawnWanted && !game.witch.perch && game.witch.mode === "ground" && !game.witch.seated) {
+    const [k, i] = spawnWanted.includes(":") ? spawnWanted.split(":") : [null, null];
+    const said = spawnHere(k as FindKindId | null, i);
+    if (!said.startsWith("no clear ground")) { console.log(`spawnfind: ${said}`); spawnWanted = null; }
   }
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
