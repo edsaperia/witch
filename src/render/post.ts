@@ -36,6 +36,11 @@ void main() {
   gl_FragColor = c;
 }`;
 
+// The forest behind the house's enclosed rooms, darkened (MOCK, ?behind=dim: renderIndoors).
+const DIM = /* glsl */ `
+uniform sampler2D uSrc; uniform float uK; varying vec2 vUv;
+void main() { gl_FragColor = vec4(texture2D(uSrc, vUv).rgb * uK, 1.0); }`;
+
 // Scene (sampled as whole low-res pixels), the smooth effects layer (sampled smoothly) and bloom.
 /** How much of the grade her light's pool is spared at its centre (0 none, 1 all). */
 const POOL_SPARE = 0.8;
@@ -151,6 +156,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
+      dim: m(DIM, { uSrc: { value: null }, uK: { value: 0.3 } }),
       composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
@@ -192,6 +198,38 @@ export class Post {
     this.a.setSize(lowW, lowH); this.b.setSize(lowW, lowH);
   }
 
+  /** MOCK (?behind=, Ed 2026-10-23: "when you're inside the treehouse in an enclosed room ... the forest behind the tree should be
+   *  black, or maybe heavily blurred/darkened"): what's drawn behind the house while she's in an enclosed room. null: as ever;
+   *  "black": the house alone (camera layer 1: render/view.ts houseLayer); "dim": the forest (layer 0) drawn at half size, blurred
+   *  three times each way and darkened to `indoorsDim`, the house drawn sharp over it. */
+  indoors: null | "black" | "dim" = null;
+  indoorsDim = 0.6;
+  private renderIndoors(scene: THREE.Scene, camera: THREE.Camera): void {
+    const r = this.renderer, mask = camera.layers.mask;
+    if (this.indoors === "dim") {
+      camera.layers.set(0);
+      r.setRenderTarget(this.bright);
+      r.render(scene, camera);
+      const bw = this.bright.width, bh = this.bright.height;
+      for (let i = 0; i < 3; i++) {
+        this.pass("blur", this.bloomB, u => { u.uSrc.value = this.bright.texture; u.uStep.value.set((1 + i) / bw, 0); });
+        this.pass("blur", this.bright, u => { u.uSrc.value = this.bloomB.texture; u.uStep.value.set(0, (1 + i) / bh); });
+      }
+      this.pass("dim", this.scene, u => { u.uSrc.value = this.bright.texture; u.uK.value = this.indoorsDim; });
+      camera.layers.set(1);
+      r.setRenderTarget(this.scene);
+      const ac = r.autoClear;
+      r.autoClear = false; r.clearDepth(); r.render(scene, camera); r.autoClear = ac;
+    } else {
+      const col = r.getClearColor(new THREE.Color()), alpha = r.getClearAlpha();
+      camera.layers.set(1);
+      r.setClearColor(0x000000, 1);
+      r.render(scene, camera);
+      r.setClearColor(col, alpha);
+    }
+    camera.layers.mask = mask;
+  }
+
   private pass(name: string, to: THREE.WebGLRenderTarget | null, set: (u: Record<string, THREE.IUniform>) => void): void {
     const mat = this.mats[name];
     set(mat.uniforms);
@@ -220,7 +258,7 @@ export class Post {
     const r = this.renderer, t = this.tuning;
     r.setRenderTarget(this.scene);
     const t0 = performance.now();
-    r.render(scene, camera);
+    if (this.indoors) this.renderIndoors(scene, camera); else r.render(scene, camera);
     this.sceneMs = performance.now() - t0;
     yield;
 

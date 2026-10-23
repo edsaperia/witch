@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { carrierOf, deckOf, noRiseAt } from "../rules/treehouse";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { HouseRoomsView } from "./houseRooms";
@@ -989,6 +989,19 @@ export class View {
     return m;
   }
 
+  /** MOCK (?behind=black|dim, Ed 2026-10-23: the forest behind the house's enclosed rooms black, or darkened and blurred; post.ts
+   *  renderIndoors): while she's in a room or on a branch off the Terrace (rules/treehouse.ts noRiseAt) and not at the telescope,
+   *  the house's own meshes (its rooms, the Ent's art, her) on camera layer 1 alone, drawn over black or the dimmed forest. */
+  private behind: "black" | "dim" | null = ((v: string | null) => (v === "black" || v === "dim" ? v : null))(new URLSearchParams(globalThis.location?.search ?? "").get("behind"));
+  private indoorsMock(g: Game): void {
+    if (!this.behind) return;
+    const deck = deckOf(g.map, g.tuning), w = g.witch;
+    const enclosed = !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
+    this.camera.layers.enable(1);
+    if (enclosed) for (const o of [...(this.houseRooms?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.set(1));
+    this.post.indoors = enclosed ? this.behind : null;
+  }
+
   /** The hot springs' steam (render/lakeLooks.ts): a vent every so often over their deep water, the nearest puffing. */
   private updateSteam(g: Game, time: number): void {
     const S = this.steam, w = g.witch;
@@ -1297,6 +1310,7 @@ export class View {
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
     this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
+    this.indoorsMock(this.game);
     this.post.render(this.scene, this.camera);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
