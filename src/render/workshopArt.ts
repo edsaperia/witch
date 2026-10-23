@@ -1,5 +1,6 @@
-// The Workshop in the world (Ed, 2026-10-22/23; docs/backlog/workshop.md): her broom resting on the bay's trestles (on the lathe while
-// she's at the lathe), drawn from her fitted parts, and the parts found hanging on the pegboard's 3 × 3 biome board (rules/broomParts.ts
+// The Workshop in the world (Ed, 2026-10-22/23; docs/backlog/workshop.md): her broom resting on the bay's trestles while she's at the
+// bay (on the lathe while she's at the lathe; elsewhere it's in her hand on the Terrace, or not drawn: rules/stations.ts broomWhere),
+// drawn from her fitted parts, and the parts found hanging on the pegboard's 3 × 3 biome board (rules/broomParts.ts
 // BOARD), each in its cell: a found one in her broom's colours, a missing one a dark outline, tonight's (the night's find, when it's a
 // part: g.trunk) glowing in its cell (the board says one is out there, never where). Laid on Alpha's furniture by its marks
 // (art/furniture.js: broomBay.rest, lathe.rest, pegboard.cell0 to cell8; render/houseRooms.ts places them), baked a piece a frame,
@@ -67,7 +68,7 @@ export function glowCanvas(src: HTMLCanvasElement, pad = 3, rgb: number[] = [255
  *  piece isn't baked yet. */
 export type MarkAt = (piece: string, mark: string, dx: number, dy: number) => V3 | null;
 /** What the Workshop shows: her parts, the ones she's found, tonight's (a part to find, not found yet) and where her broom rests. */
-export interface WorkshopState { fitted: Fitted; found: ReadonlySet<string>; tonight: string | null; at: "bay" | "lathe"; genome: unknown }
+export interface WorkshopState { fitted: Fitted; found: ReadonlySet<string>; tonight: string | null; /** where her broom rests (null: not here, she's elsewhere: rules/stations.ts broomWhere) */ at: "bay" | "lathe" | null; genome: unknown }
 
 interface Pic { key: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number; ox: number; oy: number; piece: string; mark: string; glow?: boolean }
 
@@ -81,7 +82,7 @@ export class WorkshopArt {
   update(s: WorkshopState, st: Style, ppm: number, pitch: number, yawOf: (piece: string) => number, markAt: MarkAt, orderOf: (piece: string) => number, t: number): void {
     const colours = broomColours(st, s.genome), ck = JSON.stringify([colours[(Art.M as Record<string, number>).BROOM], colours[(Art.M as Record<string, number>).STRAW]]);
     const host = s.at === "lathe" ? "lathe" : "broomBay";
-    this.want = [{ key: `broom|${host}|${SLOTS.map(k => s.fitted[k] ?? "-").join(",")}|${ck}|${ppm.toFixed(3)}`, piece: host, mark: "rest",
+    this.want = !s.at ? [] : [{ key: `broom|${host}|${SLOTS.map(k => s.fitted[k] ?? "-").join(",")}|${ck}|${ppm.toFixed(3)}`, piece: host, mark: "rest",
       bake: () => { const d = restingBroomSprite(s.fitted, { ppm, pitch, yaw: yawOf(host), scale: host === "lathe" ? 1.5 : 2 }) as Drawn; return { c: litCanvas(d, "workshop", st, 1, "", colours), ox: d.origin.x, oy: d.origin.y }; } }];
     BOARD.forEach((cell, i) => {
       const found = s.found.has(cell.part), glow = !found && s.tonight === cell.part;

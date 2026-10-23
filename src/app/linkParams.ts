@@ -6,6 +6,7 @@ import { loadSave, worldSeed } from "./chartSave";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import { loadBroom } from "./broomSave";
+import { applyOwn } from "./finds";
 import { fittedParts } from "../rules/broomParts";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -208,6 +209,9 @@ export function tuningFromLink(params: URLSearchParams) {
   if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
   // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=.
   { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat }; }
+  // ?own= (app/finds.ts; Ed, 2026-10-23, the dev control's switch): finds given or let go on this browser's saves, as the dev
+  // control does (all, none, kind:item, kind:*), before the night reads them.
+  { const own = params.get("own"); if (own !== null) applyOwn(own); }
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
   // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }

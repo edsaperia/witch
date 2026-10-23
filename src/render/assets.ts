@@ -84,12 +84,15 @@ export class AssetLibrary {
   witch: Atlas = placeholderAtlas(256);
   /** Her genome (art/witchGenome.js; null: the classic witch). */
   witchGenome: unknown = null;
+  /** Her last few looks' frames, by genome (her nightie and her clothes on the wake-up, rules/clothesPile.ts): a look she goes back
+   *  to is put on at once, not after its redraw waits behind the art drawn ahead (minutes, on a slow machine). */
+  private witchLooks = new Map<string, { atlas: Atlas; art: WitchArt }>();
   /** On foot (from frame 16): each pose's frames, towards and away. */
   readonly witchFoot: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[]; idleBroom: number[]; walkBroom: number[] }>;
   /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
   readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */
@@ -275,8 +278,11 @@ export class AssetLibrary {
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "witch") {
       if (r.job.bare) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; }
-      else if (JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null)) { // (a look since replaced by the creator's next: not hers)
-        this.witch = { ...atlas, grounds: r.result.ours!.grounds }; this.applyWitchTables(r.result.ours!); this.home.witch = true;
+      else {
+        const look = { atlas: { ...atlas, grounds: r.result.ours!.grounds }, art: r.result.ours! }, k = JSON.stringify(r.job.genome ?? null);
+        this.witchLooks.delete(k); this.witchLooks.set(k, look);
+        if (this.witchLooks.size > 4) this.witchLooks.delete(this.witchLooks.keys().next().value!);
+        if (k === JSON.stringify(this.witchGenome ?? null)) this.wearLook(look); // (a look since replaced by the creator's next: kept, not hers)
       }
     } else if (r.job.kind === "props") { this.props = atlas; this.home.props = true; }
     else if (r.job.kind === "soundsystems") { this.soundsystems = atlas; this.home.soundsystems = true; }
@@ -501,7 +507,12 @@ export class AssetLibrary {
    *  scratching, the wait after a knockout). */
   djFrame(beat: number, cast = false, scratch = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast, scratch }); } // (scratch: her respawn wait after a knockout; art/witch.js's frames for it, else she DJs as ever)
   /** The character creator changed her look: her frames again, from an art worker (her old ones until they arrive; then onWitch). */
-  rebakeWitch(genome: unknown): void { this.witchGenome = genome; this.bare = null; this.bareAsked = false; this.ask(this.witchJob(genome, false), true); }
+  rebakeWitch(genome: unknown): void {
+    this.witchGenome = genome; this.bare = null; this.bareAsked = false;
+    const had = this.witchLooks.get(JSON.stringify(genome ?? null));
+    if (had) this.wearLook(had); else this.ask(this.witchJob(genome, false), true);
+  }
+  private wearLook(look: { atlas: Atlas; art: WitchArt }): void { this.witch = look.atlas; this.applyWitchTables(look.art); this.home.witch = true; }
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
    *  ground (`witchHatFrame`): asked for the first time they're wanted (the view asks once the game is up); a stand-in
    *  till they arrive (then onWitch). */

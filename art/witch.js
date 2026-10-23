@@ -467,7 +467,7 @@ function fastModel(frame, L = DEFAULT_LOOK) {
 // her hat tip as anchors. frames and a suggested fps per pose; the party's poses loop, and say what they are
 // (party: dance, pair, social, move or rest); WITCH_PAIRS says how two witches meet (or three: the broom limbo).
 export const WITCH_FOOT_POSES = {
-  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
+  stand: { frames: 3, fps: 3 }, idle: { frames: 3, fps: 2.5 }, walk: { frames: 6, fps: 9 }, idleBroom: { frames: 3, fps: 2.5 }, walkBroom: { frames: 6, fps: 9 }, land: { frames: 3, fps: 10 }, takeoff: { frames: 3, fps: 10 }, talk: { frames: 4, fps: 2.5 }, placeSigil: { frames: 3, fps: 6 }, liftSigil: { frames: 3, fps: 6 }, sit: { frames: 2, fps: 1.5 },
   twoStep: { frames: 4, fps: 4, party: "dance" }, bounce: { frames: 2, fps: 4, party: "dance" }, shuffle: { frames: 4, fps: 6, party: "dance" }, spin: { frames: 4, fps: 6, party: "dance" },
   headbang: { frames: 2, fps: 4, party: "dance" }, jump: { frames: 3, fps: 5, party: "dance" },
   dancePair: { frames: 4, fps: 4, party: "pair" }, holdHands: { frames: 2, fps: 2, party: "pair" }, hug: { frames: 2, fps: 1.5, party: "pair" }, highFive: { frames: 2, fps: 3, party: "pair" },
@@ -499,6 +499,8 @@ export const WITCH_SEAT_HEIGHT = .34;
 // direction; held: through her far hand, that far from the binding; null: put down), a leg swung up, a talking or
 // laughing mouth, shut eyes, a cup, a turn (spinning, about the vertical), lie (lying back), and the pair anchor.
 const UPRIGHT = { binding: [-.02, .31, -.2], dir: [.02, 1, -.04] };
+// her broom carried upright in her far hand (idleBroom, walkBroom): its binding that far below the hand
+const CARRIED = { held: .2, dir: [.04, 1, -.04] };
 const Q = Math.PI / 2;
 // the broom limbo's bar: how high the holders hold the broom (model units; her limbo's top passes just under it)
 export const LIMBO_BAR = .82;
@@ -513,6 +515,14 @@ const FOOT_FRAMES = {
     return { broom: null, bend: .06, crouch: .05 * Math.abs(c), roll: .05 * Math.sin(p), tilt: .12 * Math.sin(p), sway: .02 + .015 * Math.abs(Math.sin(p)), look: -.02,
       feet: [[.02 - .15 * c, lift(p + Math.PI), -.09], [.02 + .15 * c, lift(p), .09]],
       free: [.03 - .13 * c, .45, .17], hand: "rest", far: [.03 + .13 * c, .45, -.17], farHand: "rest" }; }),
+  // and the same carrying her broom (Ed, 2026-10-23: "she holds it when she's on the terrace"): upright in her far hand like a staff,
+  // its bristles just off the floor, that hand swinging only a little as she walks (render/view/witch.ts, rules/stations.ts broomWhere)
+  idleBroom: [0, 1, 2].map(f => ({ broom: CARRIED, breathe: [0, .006, .012][f], sway: [0, .015, .03][f], tilt: [0, .05, .1][f],
+    feet: [[-.01, .07, -.09], [.04, .07, .09]], free: [.03, .43 + [0, .006, .012][f], .17], hand: "rest", far: [.06, .5 + [0, .006, .012][f], -.18] })),
+  walkBroom: [0, 1, 2, 3, 4, 5].map(f => { const p = f / 6 * 2 * Math.PI, c = Math.cos(p), lift = q => .07 + Math.max(0, -Math.sin(q)) * .1;
+    return { broom: CARRIED, bend: .06, crouch: .05 * Math.abs(c), roll: .05 * Math.sin(p), tilt: .12 * Math.sin(p), sway: .02 + .015 * Math.abs(Math.sin(p)), look: -.02,
+      feet: [[.02 - .15 * c, lift(p + Math.PI), -.09], [.02 + .15 * c, lift(p), .09]],
+      free: [.03 - .13 * c, .45, .17], hand: "rest", far: [.06 + .04 * c, .5, -.18] }; }),
   land: [
     { crouch: .2, hop: .01, broom: { astride: true }, sway: .05 },                                                 // astride the dipped broom, feet touching down
     { crouch: .1, bend: .1, broom: { binding: [-.28, .26, -.08], dir: [.6, .5, -.06] }, legUp: [.18, .24, .12], sway: .03, free: [.2, .58, .2], hand: "rest" }, // swinging a leg over
@@ -677,7 +687,7 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
   const m = new Model({ blend: .03 }), hop = K.hop, sway = K.sway;
   const hipY = K.sit ? (K.seat ?? WITCH_SEAT_HEIGHT) + .06 : .45 - K.crouch * .21 + hop, hipX = -K.crouch * .12 + (K.hipX || 0);
   // the broom: astride it (the handle level between her legs), a binding point and a direction, through her far hand, or put down
-  const B = K.broom, astride = !!(B && B.astride), yb = hipY - .04;
+  const B = L.nightie || L.barefoot ? null : K.broom, astride = !!(B && B.astride), yb = hipY - .04; // (not yet dressed: never her broom)
   // (a canoe, a basket, a bicycle, a jet or speeder bike, a drone isn't held like a staff: it stands on the ground beside her, art/brooms.js)
   const parked = !!B && !astride && PARKED[L.broom] !== undefined;
   const bdir = !B || astride || parked ? [1, 0, 0] : v3.norm(B.dir), bind = astride ? [-.36, yb, 0] : !B ? null : parked ? [-.5, PARKED[L.broom], -.36] : B.held !== undefined ? v3.sub(K.far, v3.mul(bdir, B.held)) : B.binding;
@@ -692,28 +702,38 @@ function footModel(pose, frame, L = DEFAULT_LOOK) {
     const swing = K.sit ? K.swing * side : 0; // sitting: her legs over the seat's edge, swinging one forward, one back
     const foot = given ? [given[0], given[1] + hop, given[2]] : K.sit ? [.24 + swing, .09 + Math.max(0, swing) * .6, side * .1] : side > 0 && K.legUp ? K.legUp : [(side > 0 ? .05 : -.01) + (K.toes ? -.03 : 0), .07 + (K.toes ? hop * .4 : hop), side * .1];
     const knee = K.sit && !given ? [.21, hipY + .01, side * .09] : kneeOf(hip, foot, .21);
-    m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g });
     const toe = K.toes ? [.03, -.045, 0] : [.05, -.03, 0];
-    m.ell(v3.add(foot, toe), shoeR(L), M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
+    // in her nightie (Ed, 2026-10-23: "When waking up she wears only a nightie"): bare legs below its hem; barefoot till her shoes are on
+    if (L.nightie) { m.seg(hip, knee, .05, .04, M.SKIN, { group: g }); m.seg(knee, foot, .04, .033, M.SKIN, { group: g }); }
+    else { m.seg(hip, knee, .055, .045, M.JEANS, { group: g }); m.seg(knee, foot, .045, .04, M.JEANS, { group: g }); }
+    if (L.barefoot) m.ell(v3.add(foot, [.035, -.035, 0]), [.06, .026, .036], M.SKIN, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g });
+    else m.ell(v3.add(foot, toe), shoeR(L), M.SHOES, { dir: K.toes ? [1, -.6, 0] : [1, 0, 0], group: g, paint: p => p[1] < foot[1] + toe[1] - .015 ? M.BELLY : undefined });
   }
   // body: hips in jeans, a top under an open jacket (or a party top), leaning with the spine
   const spine = v3.norm([Math.sin(K.bend), Math.cos(K.bend), Math.sin(K.roll)]), fwd = [Math.cos(K.bend), -Math.sin(K.bend), 0];
-  const hips = [hipX, hipY + .03, 0]; m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
+  const hips = [hipX, hipY + .03, 0];
   const chest = v3.add(hips, v3.add(v3.mul(spine, .19), [0, K.breathe, 0]));
-  m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
+  if (L.nightie) { // a long white nightdress: its bodice, its skirt flaring from her hips to below her knees, its hem trimmed in her jacket's colour and a ribbon at her waist in her hat's (her own colours on it)
+    m.ell(chest, [.095, .15 + K.breathe * .5, .11], M.BELLY, { dir: fwd, group: 1, paint: p => (v3.dot(v3.sub(p, chest), spine) > .1 && v3.dot(v3.sub(p, chest), fwd) > .04 ? M.SKIN : undefined) });
+    const hem = K.sit ? v3.add(hips, [.2, -.04, 0]) : v3.add(hips, [.01 - sway * .3, -Math.min(.33, hipY - .1), 0]);
+    m.seg(v3.add(hips, v3.mul(spine, .06)), hem, .1, .14, M.BELLY, { group: 1, paint: p => { const t = v3.dot(v3.sub(p, hem), v3.norm(v3.sub(hips, hem))); return t < .02 ? M.JACKET : undefined; } });
+    m.ell(v3.add(hips, v3.mul(spine, .1)), [.1, .02, .112], M.HAT, { group: 1 });
+  } else m.ell(hips, [.1, .08, .105], M.JEANS, { group: 1 });
+  if (!L.nightie) m.ell(chest, [.1, .15 + K.breathe * .5, .115], M.JACKET, { dir: fwd, group: 1, paint: torsoPaint(L, chest, fwd) });
   // the jacket's hem hanging behind, stirring (a poncho or a cape instead)
-  if (L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
-  drawWrap(m, L, chest, fwd, spine, false);
+  if (!L.nightie && L.top !== "poncho" && L.top !== "cape") m.chain([[...v3.add(chest, v3.add(v3.mul(fwd, -.07), v3.mul(spine, -.08))), .07], [...v3.add(chest, v3.add(v3.mul(fwd, -.11 - sway), v3.mul(spine, -.2))), .05], [...v3.add(chest, v3.add(v3.mul(fwd, -.13 - sway * 1.6), v3.mul(spine, -.29))), .025]], M.JACKET, { group: 12 });
+  if (!L.nightie) drawWrap(m, L, chest, fwd, spine, false);
   // head: tilted to one side, looking up or down, nodding
   const H = v3.add(chest, v3.add(v3.mul(spine, .27), [K.look * .03 + K.nod * .07, -K.nod * .05, K.tilt * .04]));
   // arms: the far hand grips the broom (or not); the near hand is free (or on the handle, astride)
   const shoulder = side => v3.add(chest, v3.add(v3.mul(spine, .1), [0, 0, side * .12]));
   const grip = astride ? [.28, yb + .03, -.05] : parked ? [.03, hipY + .01, -.17] : B ? along(Math.max(.12, (Math.min(.62, hipY + .2) - bind[1]) / Math.max(.3, bdir[1]))) : null;
-  const free = astride ? [.28, yb + .03, .05] : K.free;
+  const free = astride ? [.28, yb + .03, .05] : K.free ?? [hipX + .03, hipY + .02, .16]; // (a broom's frame drawn without it, not yet dressed: the hand at her side)
   for (const side of [-1, 1]) {
-    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip;
+    const g = side > 0 ? 7 : 5, sh = shoulder(side), hand = side > 0 ? free : K.far || grip || [hipX + .03, hipY + .02, -.16]; // (no broom to hold: at her side)
     const elbow = side > 0 && K.elbow ? K.elbow : side < 0 && K.farElbow ? K.farElbow : v3.add(v3.lerp(sh, hand, .5), [-.03, -.02, side * .05]);
-    m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g });
+    if (L.nightie) { m.ell(sh, [.05, .045, .05], M.BELLY, { group: g }); m.seg(sh, elbow, .033, .029, M.SKIN, { group: g }); m.seg(elbow, hand, .029, .025, M.SKIN, { group: g }); } // (a puff sleeve, bare arms)
+    else { m.seg(sh, elbow, .04, .035, M.JACKET, { group: g }); m.seg(elbow, hand, .035, .03, M.JACKET, { group: g }); }
     drawHand(m, side > 0 ? (astride ? "grip" : K.hand) : K.farHand || "grip", hand, g);
     drawGlowsticks(m, L, elbow, hand, side, g);
   }
@@ -918,6 +938,33 @@ export function witchHatSprite(st = {}, { look, facing = "towards" } = {}) {
   const m = new Model({ blend: .03 }), brim = [0, .02, 0];
   drawHat(m, L, brim, [1, .12, .18], v3.add(brim, [.02, .17, .01]), v3.add(brim, [-.1, .28, .03]));
   const { sp, s } = render(m, { scale: witchScale(witchHeight(st)), facing });
+  sp.scale = s;
+  cleanFlecks(sp);
+  return sp;
+}
+// Last night's clothes in a pile on her bedroom floor (Ed, 2026-10-23: "When waking up she wears only a nightie; last night's clothes
+// are in a pile on the floor"): her own (the look's top and jacket, jeans, trainers, cloak, headphones, and her hat on top, her
+// look's colours as she wears them), heaped low, at the bedroom furniture's double size; `slots`, which are still in it (rules/
+// clothesPile.ts: top, shoes, cloak, hat, bits), the rest already on her. Its middle on the floor is the bottom of the sprite; null
+// when the pile's empty.
+export function clothesPileSprite(st = {}, { look, facing = "towards", slots = ["top", "shoes", "cloak", "hat", "bits"] } = {}) {
+  const L = { ...DEFAULT_LOOK, ...look }, m = new Model({ blend: .04 }), has = k => slots.includes(k);
+  if (!slots.length) return null;
+  let top = .02; // (how high the heap is so far: the hat sits on what's there)
+  if (has("top")) {
+    m.ell([.02, .05, .02], [.22, .05, .15], M.JEANS, { group: 1 }); // the jeans, folded under
+    m.seg([-.2, .03, -.08], [-.32, .025, .02], .045, .04, M.JEANS, { group: 1 }); // a leg trailing off
+    m.ell([-.03, .11, -.02], [.19, .055, .14], M.JACKET, { dir: [1, .15, .3], group: 2 }); // the jacket, crumpled over it
+    m.seg([.12, .1, .05], [.25, .04, .13], .04, .035, M.JACKET, { group: 2 }); // a sleeve, flung out
+    m.ell([.06, .15, .03], [.11, .035, .09], M.TOP, { dir: [1, -.2, .5], group: 3 }); // her top on top
+    top = .17;
+  }
+  if (has("cloak") && L.cloak && L.cloak !== "none") { m.ell([-.12, top - .01, .1], [.17, .04, .12], M.CLOTH, { dir: [1, .1, -.4], group: 6 }); top += .03; } // her cloak, bundled
+  if (has("shoes")) for (const [x, z, a] of [[.27, -.1, .4], [.33, .03, -.3]]) m.ell([x, .035, z], shoeR(L), M.SHOES, { dir: [Math.cos(a), 0, Math.sin(a)], group: 4, paint: p => (p[1] < .015 ? M.BELLY : undefined) }); // her trainers, kicked off
+  if (has("bits") && L.phones) { m.chain([[-.2, .03, .12, .015], [-.24, .07, .17, .015], [-.29, .03, .2, .015]], M.PHONES, { group: 5 }); for (const c of [[-.2, .03, .12], [-.29, .03, .2]]) m.ell(c, [.035, .03, .035], M.PHONES, { group: 5 }); }
+  if (has("hat") && L.hat && L.hat !== "none") { const brim = [-.05, top, -.02]; drawHat(m, L, brim, [1, .35, .3], v3.add(brim, [.03, .14, .02]), v3.add(brim, [-.12, .2, .05])); } // her hat, tipped over on the heap
+  if (!m.parts.length) return null;
+  const { sp, s } = render(m, { scale: witchScale(witchHeight(st)) * 1.6, facing }); // (the bedroom's furniture is twice life size: Ed, 2026-10-23; her clothes heaped at the same)
   sp.scale = s;
   cleanFlecks(sp);
   return sp;

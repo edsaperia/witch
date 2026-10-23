@@ -20,7 +20,12 @@ import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./
 import { nearestIn } from "../rules/houseRooms";
 import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
+import { broomWhere, stationOf } from "../rules/stations";
+import * as Art from "../../art/generator.js";
+import { witchLookOf } from "./artBuild";
+import { dressed } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
+import { Spotlight } from "./spotlight";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -30,7 +35,7 @@ interface Quad { p: [number, number, number][]; rgb: [number, number, number]; o
 
 const PLANK: [number, number, number] = [0.36, 0.25, 0.16], PLANK2: [number, number, number] = [0.31, 0.21, 0.13], SEAM: [number, number, number] = [0.2, 0.13, 0.08];
 const WALL: [number, number, number] = [0.3, 0.2, 0.12], WALL_R: [number, number, number] = [0.22, 0.145, 0.085], WALL_TOP: [number, number, number] = [0.42, 0.3, 0.19];
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
 const SKIRT = 0.35, PLANK_W = 0.5, STEP_X = 2;
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
@@ -158,6 +163,8 @@ export class HouseRoomsView {
   private readonly workshop = new WorkshopArt();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
+  /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
+  private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
@@ -165,11 +172,18 @@ export class HouseRoomsView {
   private readonly roofs = new THREE.Group();
   private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean }[] = [];
   private lastT = 0;
+  /** Her whole outfit (her genome, as the creator and the stations keep it), for last night's clothes in their pile: she herself is
+   *  drawn in what she has on (main.ts: rules/clothesPile.ts wornGenome). */
+  outfit: unknown = null;
+  // (last night's clothes by her bed while she's not yet dressed: her outfit's own sprite, art/witch.js clothesPileSprite, of what's
+  // still in the pile; drawn as the furniture is, a picture in the house's plane)
+  private pile: { key: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number } | null = null;
 
   constructor() {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.934), new Part(this.mat, 19.94), new Part(this.mat, 19.944)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.roofs.visible = false;
+    this.furniture.add(this.spot.mesh);
     this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
@@ -199,6 +213,7 @@ export class HouseRoomsView {
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
     this.workshop.dispose();
+    this.spot.dispose();
   }
 
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
@@ -320,16 +335,45 @@ export class HouseRoomsView {
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
     }
-    // the Workshop's (render/workshopArt.ts): her broom resting on the bay (on the lathe while she's at it), her parts on the pegboard;
+    // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
+    // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
     // only in or near the Workshop (its pieces baked: they're baked as she nears them)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
     if (piece("broomBay") || piece("pegboard") || piece("lathe")) {
-      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null;
-      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: lit === "lathe" ? "lathe" : "bay", genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
+      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
+      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
         id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },
         (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
         id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
     }
+    // the mic's spotlight, from its lamp down to the floor round its foot (its `spot` mark: art/furniture.js)
+    const mic = [...this.pieces.values()].find(p => p.id === "microphone" && p.mesh.visible && p.art.marks.spot);
+    if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }
+    else this.spot.mesh.visible = false;
+    // last night's clothes, in a pile by her bed (rules/clothesPile.ts): what's still in it, till she's dressed
+    const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = g.wake?.pile ?? [];
+    if (po && slots.length) {
+      const key = `${JSON.stringify(this.outfit)}|${slots.join()}`;
+      if (this.pile?.key !== key) {
+        if (this.pile) { this.furniture.remove(this.pile.mesh); this.pile.mesh.geometry.dispose(); ((this.pile.mesh.material as THREE.MeshBasicMaterial).map)?.dispose(); (this.pile.mesh.material as THREE.Material).dispose(); this.pile = null; }
+        const st = v.assets.style, mine = witchLookOf(st, this.outfit), sp = (Art.clothesPileSprite as (st: object, o: object) => { w: number; h: number } | null)(st, { look: mine.look, slots });
+        if (sp) {
+          const b = (Art.bake as (sp: object, c: object, st: object, o: unknown) => { A: HTMLCanvasElement })(sp, mine.colours, st, (st as { cOutline?: unknown }).cOutline), tex = new THREE.CanvasTexture(b.A);
+          tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
+          const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
+          geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2)); geo.setIndex([0, 1, 2, 0, 2, 3]);
+          const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
+          mesh.frustumCulled = false; mesh.renderOrder = 19.9425; this.furniture.add(mesh);
+          this.pile = { key, mesh, pos, w: sp.w, h: sp.h };
+        }
+      }
+      if (this.pile) {
+        const P = this.pile; P.mesh.visible = true;
+        [[-P.w / 2, -P.h], [P.w / 2, -P.h], [P.w / 2, 0], [-P.w / 2, 0]].forEach(([dx, dy], i) => { const p = pxWorld(po.x, po.z, dx, dy); P.pos[i * 3] = p.x; P.pos[i * 3 + 1] = p.y; P.pos[i * 3 + 2] = p.z; });
+        (P.mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+        (P.mesh.material as THREE.MeshBasicMaterial).color.setScalar(po.id === lit ? 1.15 : 1);
+      }
+    } else if (this.pile) this.pile.mesh.visible = false;
     // on the page: the object she's at, a placeholder's line, the bed's ring
     for (const e of g.leashEvents) if (e.kind === "house" && e.obj) { const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj); if (o?.use.kind === "say") this.said = { obj: o, at: ht }; }
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
@@ -342,7 +386,7 @@ export class HouseRoomsView {
     this.box.style.display = "block";
     for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
     const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) ? at : null, 0.5, at ? tagOf(at, W, D, w) : "");
+    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, at?.use.kind === "pile" ? 1.6 : 0.5, at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
