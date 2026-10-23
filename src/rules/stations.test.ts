@@ -99,24 +99,41 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
-  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): each part's own look and distance", () => {
+  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): each part's own aim and distance", () => {
     const P = TUNING.camera.station!.parts!;
     const settle = (part: string) => {
       const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
       for (let i = 0; i < 4 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true, framePart: part }, STEP);
       return { pose: cameraPose(g.camera, g.witch.lift, g.tuning), cam: g.camera };
     };
-    const head = settle("head"), feet = settle("feet");
-    for (const [part, s] of [["head", head], ["feet", feet]] as const) {
-      expect(s.cam.stationLook).toBeCloseTo(P[part].look, 2);
+    const parts = ["head", "hat", "top", "legs", "feet"] as const, at_ = Object.fromEntries(parts.map(p => [p, settle(p)]));
+    for (const part of parts) {
+      const s = at_[part];
+      expect(s.cam.stationAim).toBeCloseTo(P[part].aim!, 2);
       expect(s.cam.stationDistance).toBeCloseTo(P[part].distance, 2);
+      // (Ed's playtest, 2026-10-23: "it aims at her feet, and so when you're zoomed close her head is off screen": the aim was metres
+      // below her feet; now it's a share of her height as drawn, up her, the view lifting it by how tall she's drawn)
+      expect(s.pose.ty - s.cam.ty, part).toBeGreaterThanOrEqual(0);
+      expect(s.pose.aim, part).toBeCloseTo(P[part].aim!, 2);
+      expect(s.pose.aim!, part).toBeGreaterThan(0);
+      expect(s.pose.aim!, part).toBeLessThanOrEqual(1);
     }
-    // (the looks are calibrated against her drawn sprite, which the house draws onto its floor's pixels, so only the
-    // difference is checked: the aim moves by the looks' difference)
-    expect((head.pose.ty - head.cam.ty) - (feet.pose.ty - feet.cam.ty)).toBeCloseTo(P.head.look - P.feet.look, 1);
-    expect(head.pose.distance).toBeLessThan(feet.pose.distance);
+    // up her in order: her hat over her head over her top over her legs over her feet
+    expect(at_.hat.pose.aim!).toBeGreaterThan(at_.head.pose.aim!);
+    expect(at_.head.pose.aim!).toBeGreaterThan(at_.top.pose.aim!);
+    expect(at_.top.pose.aim!).toBeGreaterThan(at_.legs.pose.aim!);
+    expect(at_.legs.pose.aim!).toBeGreaterThan(at_.feet.pose.aim!);
+    expect(at_.head.pose.distance).toBeLessThan(at_.feet.pose.distance);
+    // the zoom and the station's never stack: zoomed all the way in first, the station frames her no closer than from the start's zoom
+    const zoomedIn = (() => {
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      for (let i = 0; i < 20; i++) stepGame(g, { ...idle, zoom: -1 }, STEP);
+      for (let i = 0; i < 4 * S.ease / STEP + 600; i++) stepGame(g, { ...idle, framing: true, framePart: "head" }, STEP);
+      return cameraPose(g.camera, g.witch.lift, g.tuning);
+    })();
+    expect(zoomedIn.distance).toBeGreaterThanOrEqual(at_.head.pose.distance * 0.98);
     // the pegboard's frame (board): aimed up over her to the wall behind, the board mid-screen (Alpha's shots, 2026-10-23)
-    expect(P.board.look).toBeGreaterThan(P.hat.look);
+    expect(P.board.look).toBeGreaterThan(0);
     expect(SHELVES.pegboard.frame).toBe("board");
   });
 

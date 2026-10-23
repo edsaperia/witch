@@ -30,8 +30,9 @@ export interface CameraState {
   house?: number;
   /** At a dressing station, choosing (camera.station; ui/stationPanel.ts): 0 not to 1 choosing, eased over camera.station.ease seconds. */
   station?: number;
-  /** And where on her it's aimed and how close (camera.station.parts: the part being chosen), eased between parts. */
-  stationLook?: number; stationDistance?: number;
+  /** And where on her it's aimed and how close (camera.station.parts: the part being chosen), eased between parts: look metres up
+   *  (a thing by her: the pegboard), aim a share of her drawn height up her (her head, her top...), distance its share. */
+  stationLook?: number; stationAim?: number; stationDistance?: number;
   /** The opening shot (Ed, v171): 1 while she sits on the treehouse, close in on her seat
    *  (camera.intro), running down to 0 over camera.intro.ease seconds once she leaves it. */
   intro?: number;
@@ -61,6 +62,8 @@ export interface CameraPose {
   tx: number;
   ty: number;
   tz: number;
+  /** Aimed this share of her height as drawn above that (the view knows it: render/view/camera.ts): a station's part of her. */
+  aim?: number;
 }
 
 export function newCamera(t: Tuning, x: number, y: number, z: number): CameraState {
@@ -118,10 +121,11 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   let sk = (c.station ?? 0) + (inS - (c.station ?? 0)) * se;
   if (sk < 1e-4) sk = 0; else if (sk > 1 - 1e-4) sk = 1;
   // ... on the part of her being chosen (camera.station.parts), eased from one part to the next; with none, the station's own.
-  const P = (part && Sc?.parts?.[part]) || null, toLook = P?.look ?? 0, toDist = P?.distance ?? Sc?.distance ?? 1;
+  const P = (part && Sc?.parts?.[part]) || null, toLook = P?.look ?? 0, toAim = P ? P.aim ?? 0 : Sc?.aim ?? 0, toDist = P?.distance ?? Sc?.distance ?? 1;
   const sLook = c.stationLook === undefined ? toLook : c.stationLook + (toLook - c.stationLook) * se;
+  const sAim = c.stationAim === undefined ? toAim : c.stationAim + (toAim - c.stationAim) * se;
   const sDist = c.stationDistance === undefined ? toDist : c.stationDistance + (toDist - c.stationDistance) * se;
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}), ...(hk > 0 || c.house !== undefined ? { house: hk } : {}), ...(sk > 0 || c.station !== undefined ? { station: sk, stationLook: sLook, stationDistance: sDist } : {}) }; // (none until she's first in a circle: the state as before)
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}), ...(hk > 0 || c.house !== undefined ? { house: hk } : {}), ...(sk > 0 || c.station !== undefined ? { station: sk, stationLook: sLook, stationAim: sAim, stationDistance: sDist } : {}) }; // (none until she's first in a circle: the state as before)
 }
 const coast0 = (v?: CoastView | null) => (v ? clamp(v.near, 0, 1) : 0);
 
@@ -182,7 +186,16 @@ export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose 
   if (Hc && hk > 0) { angle = lerp(angle, Hc.angle, hk); distance *= lerp(1, Hc.distance, hk); }
   // At a dressing station, choosing (camera.station): closer, and moved aside so she stands clear of the panel.
   const Sc = t.camera.station, sk = Sc?.on ? smoothstep(c.station ?? 0) : 0;
-  if (Sc && sk > 0) { distance *= lerp(1, c.stationDistance ?? Sc.distance, sk); side += Sc.side * distance * sk; look += (c.stationLook ?? 0) * sk; }
+  // Aimed at the part of her being chosen, a share of her height (Ed's playtest, 2026-10-23: "it aims at her feet, and so when you're
+  // zoomed close her head is off screen"): the view lifts its aim by it, as it knows how tall she's drawn.
+  let aim = 0;
+  // Its distance a share of the start's (on foot, indoors), never further out than the zoom has her: the zoom in and the station's
+  // never stacking, so she's never closer than the station frames her (Ed's playtest, 2026-10-23: zoomed close at a station, the two
+  // together put the camera a few metres off, her head off the top of the screen).
+  if (Sc && sk > 0) {
+    const steps = Math.max(1, t.camera.zoomSteps), z0 = steps > 1 ? t.camera.startZoom / (steps - 1) : 0, start = lerp(g.distanceIn, g.distanceOut, z0) * (Hc ? lerp(1, Hc.distance, hk) : 1);
+    distance = lerp(distance, Math.min(distance, start * (c.stationDistance ?? Sc.distance)), sk); side += Sc.side * distance * sk; look += (c.stationLook ?? 0) * sk; aim = (c.stationAim ?? 0) * sk;
+  }
   const a = (angle * Math.PI) / 180, ty = c.ty + look, tx = c.tx + side + cxs;
-  return { angle, distance, x: tx, y: ty + Math.sin(a) * distance, z: tz + Math.cos(a) * distance, tx, ty, tz };
+  return { angle, distance, x: tx, y: ty + Math.sin(a) * distance, z: tz + Math.cos(a) * distance, tx, ty, tz, ...(aim ? { aim } : {}) };
 }

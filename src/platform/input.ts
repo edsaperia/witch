@@ -146,12 +146,13 @@ export class Input {
       }
       moveX += sx; moveZ += sy;
       const any = (a: readonly number[]) => a.some(edge);
-      if (any(PAD.rise)) toggleMode = true;
+      const menu = this.dpadMenu; // (at a station the pad's A and X choose in its panel too: ui/stationPanel.ts)
+      if (!menu && any(PAD.rise)) toggleMode = true;
       if (any(PAD.zoomOut)) zoom += 1;
       if (any(PAD.zoomIn)) zoom -= 1;
       if (any(PAD.debug)) debug = true;
-      if (any(PAD.sigil)) sigil = true;
-      if (PAD.sigil.some(btn)) sigilHeld = true;
+      if (!menu && any(PAD.sigil)) sigil = true;
+      if (!menu && PAD.sigil.some(btn)) sigilHeld = true;
       if (any(PAD.hat)) hat = true;
       if (any(PAD.spell)) spell = true;
       if (any(PAD.cycle)) cycle = true;
