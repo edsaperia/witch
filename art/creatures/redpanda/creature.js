@@ -16,5 +16,15 @@ export const CREATURE_REDPANDA = {
     scale: { "invites.radius": 1.5 },
     label: "Red panda's Cuddle: 💌s land on animals a little wider of where they strike"
   },
-  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 }
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "ember bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "rally",
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "chirps",
+    tells: { melee: "rears up", ranged: "tail up", special: "chirps" }
+  }
 };
