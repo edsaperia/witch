@@ -18,8 +18,8 @@ const yaw = Number(process.env.YAW || 0), PER = Number(process.env.PER || 6);
 const { FURNITURE_STATES } = await import(R + "/art/furniture.js");
 const jobs = FURNITURE_IDS.flatMap(id => (FURNITURE_STATES[id] ?? [undefined]).map(state => ({ id, state })));
 const sprites = jobs.map(({ id, state }) => { const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0;
-  const foot = Math.abs(dx) > Math.abs(dz) ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h };
-  const t0 = performance.now(); const s = furnitureSprite(id, foot, {}, { ppm, pitch, yaw, state }); console.log(id, state ?? "", s.sp.w, s.sp.h, (performance.now() - t0).toFixed(0) + "ms", s.lights.length); return { s, col: furnitureColours({}, o.room) }; });
+  const foot = Math.abs(dx) > Math.abs(dz) ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h }, curve = r?.r && Math.hypot(dx, dz) > 1.2 ? Math.hypot(dx, dz) + foot.d / 2 : 0; // (bent round its room's wall: render/houseFurniture.ts standing)
+  const t0 = performance.now(); const s = furnitureSprite(id, foot, {}, { ppm, pitch, yaw, state, curve }); console.log(id, state ?? "", s.sp.w, s.sp.h, (performance.now() - t0).toFixed(0) + "ms", s.lights.length); return { s, col: furnitureColours({}, o.room) }; });
 const gap = 6, rows = [];
 for (let i = 0; i < sprites.length; i += PER) rows.push(sprites.slice(i, i + PER));
 const W = Math.max(...rows.map(r => r.reduce((a, q) => a + q.s.sp.w + gap, gap))), rowH = rows.map(r => Math.max(...r.map(q => q.s.sp.h)) + gap), Hh = rowH.reduce((a, b) => a + b, gap);

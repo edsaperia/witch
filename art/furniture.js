@@ -38,6 +38,51 @@ const disc = (m, c, r, t, mat, o) => m.ell(c, [r, t, r], mat, o);
 /** A short cylinder from y0 to y1 (a pot, a cup, a cauldron's band): a cone with flat-ish caps. */
 const can = (m, x, z, y0, y1, r, mat, o) => m.seg([x, y0 + r * .3, z], [x, y1 - r * .3, z], r, r, mat, o);
 
+// ---------- following a round room's wall ----------
+// Ed, 2026-10-23: "furniture goes in round rooms so no need to make everything rectangular as if to go against a wall". A piece along the
+// wall (BEND) is built straight and then bent round the wall's arc, `R` metres from the room's middle at its back: every part moved
+// round it (x along the wall becomes the angle round the arc, z the way in), turned with it, long ones cut into short lengths first so
+// a shelf or a rail curves rather than cutting the arc's chord; a part's paint and a flat's mask keep the straight piece's places.
+const sub3 = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]], add3 = (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], mul3 = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
+function bendModel(m, R, D) {
+  const zb = -D / 2, C = zb + R;
+  const to = p => { const rho = R - (p[2] - zb), a = p[0] / R; return [rho * Math.sin(a), p[1], C - rho * Math.cos(a)]; };
+  const back = p => { const dx = p[0], dz = C - p[2], rho = Math.hypot(dx, dz), a = Math.atan2(dx, dz); return [a * R, p[1], zb + R - rho]; };
+  const turn = (v, a) => [v[0] * Math.cos(a) - v[2] * Math.sin(a), v[1], v[0] * Math.sin(a) + v[2] * Math.cos(a)];
+  const L = .08; // (no straight length past this along the wall)
+  const parts = [];
+  for (const q of m.parts) {
+    if (q.type === "box" && Math.abs(q.axes[0][0]) > .9 && q.h[0] > L) {
+      const n = Math.ceil(q.h[0] / L), hl = q.h[0] / n;
+      for (let i = 0; i < n; i++) parts.push({ ...q, c: add3(q.c, mul3(q.axes[0], -q.h[0] + hl * (2 * i + 1))), h: [hl + q.round * .5, q.h[1], q.h[2]] });
+    } else if (q.type === "cone" && Math.abs(q.b[0] - q.a[0]) > 2 * L) {
+      const n = Math.ceil(Math.abs(q.b[0] - q.a[0]) / (2 * L)), d = sub3(q.b, q.a);
+      for (let i = 0; i < n; i++) parts.push({ ...q, a: add3(q.a, mul3(d, i / n)), b: add3(q.a, mul3(d, (i + 1) / n)), r1: q.r1 + (q.r2 - q.r1) * i / n, r2: q.r1 + (q.r2 - q.r1) * (i + 1) / n });
+    } else parts.push(q);
+  }
+  m.parts = parts.map(q => {
+    const o = q.paint ? { paint: p => q.paint(back(p)) } : {};
+    if (q.type === "cone") return { ...q, ...o, a: to(q.a), b: to(q.b) };
+    const a = q.c[0] / R;
+    return { ...q, ...o, c: to(q.c), axes: q.axes.map(v => turn(v, a)) };
+  });
+  const flats = [];
+  for (const f of m.flats) {
+    const alongU = Math.abs(f.u[0]) > .9 && f.su > L, alongV = !alongU && Math.abs(f.v[0]) > .9 && f.sv > L;
+    if (!alongU && !alongV) { flats.push(f); continue; }
+    const S = alongU ? f.su : f.sv, ax = alongU ? f.u : f.v, n = Math.ceil(S / L);
+    for (let i = 0; i < n; i++) {
+      const mid = -1 + (2 * i + 1) / n; // (its strip's middle, in the mask's -1..1)
+      const mask = alongU ? (s, t) => f.mask(mid + s / n, t) : (s, t) => f.mask(s, mid + t / n);
+      flats.push({ ...f, c: add3(f.c, mul3(ax, mid * S)), ...(alongU ? { su: S / n * 1.04 } : { sv: S / n * 1.04 }), mask });
+    }
+  }
+  m.flats = flats.map(f => { const a = f.c[0] / R; return { ...f, c: to(f.c), u: turn(f.u, a), v: turn(f.v, a) }; });
+  for (const Lt of m.lights ?? []) Lt.c = to(Lt.c);
+}
+/** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
+export const BEND = new Set(["wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
+
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
 const PIECES = {
@@ -464,13 +509,13 @@ const PIECES = {
     sprig(m, [0, sit + .14, R * .55], 3, .05, 18, .9);
   },
 
-  // The card table: a gothic table with a green baize top and a carved rim, cards dealt and fanned, stacks of chips, a candelabra of
+  // The card table: a round gothic table with a green baize top and a dark rim, cards dealt and fanned, stacks of chips, a candelabra of
   // three candles, a phone face down (modern clutter).
   cardTable(m, { W, D, H }) {
     const R = Math.min(W, D) / 2 - .04, top = H;
-    m.box([0, top - .03, 0], [R, .03, R], M.BARKD, { round: .05, group: 1 });
-    m.box([0, top + .002, 0], [R - .08, .006, R - .08], M.CLOTH, { round: .02, group: 2 });
-    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { m.chain([[x * (R - .1), top - .05, z * (R - .1), .045], [x * (R - .07), top * .5, z * (R - .07), .035], [x * (R - .12), .05, z * (R - .12), .04]], M.BARKD, { group: 3 }); m.ell([x * (R - .14), .03, z * (R - .14)], [.05, .03, .05], M.FLOWER, { group: 3 }); }
+    disc(m, [0, top - .03, 0], R, .03, M.BARKD, { group: 1 });
+    disc(m, [0, top + .002, 0], R - .07, .006, M.CLOTH, { group: 2 });
+    for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([x, z]) => [x * .68, z * .68])) { m.chain([[x * (R - .1), top - .05, z * (R - .1), .045], [x * (R - .02), top * .5, z * (R - .02), .035], [x * (R - .12), .05, z * (R - .12), .04]], M.BARKD, { group: 3 }); m.ell([x * (R - .14), .03, z * (R - .14)], [.05, .03, .05], M.FLOWER, { group: 3 }); }
     const sit = top + .01;
     // cards in front of three places and a fanned hand; chips in stacks
     for (const [x, z, a] of [[0, R * .5, 0], [-R * .5, 0, 1.57], [R * .5, -R * .1, -1.57]]) for (let i = 0; i < 3; i++) { const b = a + (i - 1) * .25; m.flat([x + Math.sin(b) * .04, sit + i * .002, z + Math.cos(b) * .02], rotY(X, b), rotY(Z, b), .06, .09, (s, t) => (Math.abs(s) > .75 || Math.abs(t) > .82 ? M.BELLY : M.ACCENT), { group: 10 + i, bend: 0 }); }
@@ -624,13 +669,15 @@ export function furnitureColours(st = {}, room = "bedroom") { return { ...BASE, 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
  *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives
  *  it (twice the real piece's, SIZE), w along the wall it backs on (its front along d); yaw: which way it faces; ppm: art pixels a
- *  metre (the house's: 1 / the view's metres an art pixel); pitch: the view's; state: one of its FURNITURE_STATES. */
-/** @param {string} id @param {{ w: number, d: number, h: number }} foot @param {object} [st] @param {{ ppm?: number, pitch?: number, yaw?: number, state?: string }} [o] */
-export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, yaw = Math.PI / 4, state = undefined } = {}) {
+ *  metre (the house's: 1 / the view's metres an art pixel); pitch: the view's; state: one of its FURNITURE_STATES; curve: the radius (m,
+ *  house.json's) of the round wall it backs on, its back that far from the room's middle (0: straight), for the pieces in BEND. */
+/** @param {string} id @param {{ w: number, d: number, h: number }} foot @param {object} [st] @param {{ ppm?: number, pitch?: number, yaw?: number, state?: string, curve?: number }} [o] */
+export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, yaw = Math.PI / 4, state = undefined, curve = 0 } = {}) {
   const build = PIECES[id];
   if (!build || id === "door") throw new Error(`no furniture "${id}"`);
   const m = new Model({ blend: .025 });
   build(m, { W: foot.w / SIZE, D: foot.d / SIZE, H: foot.h / SIZE }, state ?? FURNITURE_STATES[id]?.[0]);
+  if (curve > 0 && BEND.has(id)) bendModel(m, curve / SIZE, foot.d / SIZE);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
   const { sp, project } = render(m, { scale: ppm * SIZE, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;

@@ -18,7 +18,7 @@ import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./houseArt";
 import { nearestIn } from "../rules/houseRooms";
-import { bakeFurniture, furnitureState, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { bakeFurniture, furnitureState, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -77,7 +77,7 @@ function buildQuads(hub: number, T?: Terrace): Quad[] {
 /** The objects: a box each (its two near sides and its top: the plan's x0 and z1 faces); the hats' floor a rug. */
 function objects(q: Quad[]): void {
   for (const o of HOUSE_ROOMS.objects) {
-    if (FURNITURE.has(o.id)) continue; // (drawn as art: render/houseFurniture.ts)
+    if (FURNITURE.has(o.id) || DRAWN_ELSEWHERE.has(o.id)) continue; // (drawn as art: render/houseFurniture.ts, or by another's)
     const c = KIND[o.use.kind], x0 = o.x - o.w / 2, x1 = o.x + o.w / 2, z0 = o.z - o.d / 2, z1 = o.z + o.d / 2, top: [number, number, number] = [c[0] * 1.15, c[1] * 1.15, c[2] * 1.15];
     if (o.use.kind === "hats") { q.push(quad([[x0, z0, 0.01], [x1, z0, 0.01], [x1, z1, 0.01], [x0, z1, 0.01]], [0.36, 0.16, 0.26], 2, o.id)); continue; }
     const box = [quad([[x0, z0, 0], [x0, z1, 0], [x0, z1, o.h], [x0, z0, o.h]], c, 2, o.id), quad([[x0, z1, 0], [x1, z1, 0], [x1, z1, o.h], [x0, z1, o.h]], [c[0] * 0.72, c[1] * 0.72, c[2] * 0.72], 2, o.id), quad([[x0, z0, o.h], [x1, z0, o.h], [x1, z1, o.h], [x0, z1, o.h]], top, 2, o.id)];
