@@ -111,7 +111,7 @@ describe("the treehouse's rooms", () => {
   });
 
   it("each placeholder's E says so too (main.ts shows its line)", () => {
-    for (const o of HOUSE_ROOMS.objects.filter(q => q.use.kind === "say")) {
+    for (const o of HOUSE_ROOMS.objects.filter(q => q.use.kind === "say" && !room(q.room).locked)) { // (a locked room's placeholders: out of reach, below)
       const g = inHouse(0, 0), at = before(o);
       put(g, at.x, at.z);
       expect(press(g).find(e => e.kind === "house")?.obj, o.id).toBe(o.id);
@@ -208,7 +208,7 @@ describe("the treehouse's rooms", () => {
     expect(locked.map(r => r.id).sort()).toEqual(["bedroom2", "bedroom3"]);
     for (const r of locked) {
       const R = room(r.id), door = HOUSE_ROOMS.objects.find(o => o.id === `${r.id}Door`)!;
-      expect(2 * R.r, r.id).toBeGreaterThanOrEqual(16); expect(R.r).toBeLessThanOrEqual(host.r);
+      expect(R.r, `${r.id}: her room's size`).toBe(host.r);
       expect(door.use).toEqual({ kind: "say", line: "A friend's room. Locked for now." });
       expect(Math.abs(Math.hypot(door.x - R.cx, door.z - R.cz) - R.r)).toBeLessThan(0.5); // (at its rim, where the branch ends)
       const g = inHouse(door.x + (door.x - R.cx) / R.r * 1.2, door.z + (door.z - R.cz) / R.r * 1.2), W = g.witches[0];
@@ -216,6 +216,18 @@ describe("the treehouse's rooms", () => {
       walk(g, (R.cx - door.x) / R.r, (R.cz - door.z) / R.r, 2); // (walking at the door, into the room)
       expect(Math.hypot(W.body.x - deck(g).x - R.cx, W.body.z - deck(g).z - R.cz), r.id).toBeGreaterThan(R.r - 0.3); // (kept out)
       expect(W.body.perch).toBe(true);
+    }
+  });
+
+  it("the other bedrooms hold their placeholders (Ed, 2026-10-23: \"fill the other two with placeholders for now\"): a bare bed, a sheeted wardrobe and chest, crates; out of her reach, the way in from their door clear", () => {
+    for (const r of HOUSE_ROOMS.rooms.filter(q => q.locked)) {
+      const door = obj(`${r.id}Door`), mine = HOUSE_ROOMS.objects.filter(o => o.room === r.id);
+      expect(mine.map(o => o.id).sort(), r.id).toEqual(["Bed", "Chest", "Crates", "Wardrobe"].map(k => r.id + k));
+      for (const o of mine) {
+        expect(Math.hypot(o.x - door.x, o.z - door.z) - Math.hypot(o.w, o.d) / 2, `${o.id}: clear of the door`).toBeGreaterThan(2.5);
+        const g = inHouse(0, 0), at = before(o); put(g, at.x, at.z);
+        expect(press(g).some(e => e.kind === "house" && e.obj === o.id), `${o.id}: out of reach`).toBe(false);
+      }
     }
   });
 

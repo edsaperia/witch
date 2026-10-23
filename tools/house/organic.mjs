@@ -25,8 +25,8 @@ const PLAN = [
   ["solarium", "Solarium", "parlour", -70, 4.5, 6.5, 1],
   ["study", "Study", "parlour", -14, 2.6, 6.5, -1],
   ["boudoir", "Boudoir", "parlour", 43, 3.1, 4.5, 0.8],
-  ["bedroom2", "Bedroom 2", "boudoir", 72, 4.5, 8, -1, true],
-  ["bedroom3", "Bedroom 3", "boudoir", 136, 4.5, 8, 1, true],
+  ["bedroom2", "Bedroom 2", "boudoir", 76, 10, 9, -1, true],
+  ["bedroom3", "Bedroom 3", "boudoir", 133, 2.5, 9, 1, true],
   ["bedroom", "Bedroom", "boudoir", 2.5, 2.5, 9, -0.8],
   ["crowsNest", "Crow's nest", "bedroom", 76, 2.5, 4.5, 0.6],
 ];
@@ -67,6 +67,8 @@ const FOOT = {
   cardTable: [3.4, 3.4, 1.5], broomBay: [6, 2.4, 2.2], lathe: [4.8, 1.6, 2], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
   drumKit: [4.4, 4, 2.6], synthRack: [4.8, 1.4, 3.8], microphone: [1, 1, 3.4],
   clothesPile: [2, 1.6, 0.6],
+  // the other two bedrooms' placeholders under dust sheets (art/sheeted.js), the same in both
+  ...Object.fromEntries(["bedroom2", "bedroom3"].flatMap(r => [[`${r}Bed`, [4, 5.2, 1.2]], [`${r}Wardrobe`, [4, 1.4, 4.4]], [`${r}Chest`, [2.8, 1.6, 1.8]], [`${r}Crates`, [3, 1.6, 2.6]]])),
 };
 const at = (id, room, b, inn, more = {}) => {
   const p = P[room], a = (b * Math.PI) / 180, [W, D, Hh] = FOOT[id] ?? [old[id].w, old[id].d, old[id].h], side = Math.abs(Math.sin(a)) > Math.abs(Math.cos(a));
@@ -74,6 +76,8 @@ const at = (id, room, b, inn, more = {}) => {
   return { ...old[id], room, x: f2(p.x + R * Math.sin(a)), z: f2(p.z - R * Math.cos(a)), w: side ? D : W, d: side ? W : D, h: Hh, ...more };
 };
 const make = (id, room, label, b, inn, use) => ({ ...at(id, room, b, inn), id, label, use });
+const SHEETED = { Bed: ["A bare bed frame", 3.4], Wardrobe: ["Something under a dust sheet"], Chest: ["Something under a dust sheet"], Crates: ["Packing crates"] };
+const sheeted = (room, at) => Object.entries(at).map(([k, b]) => make(`${room}${k}`, room, SHEETED[k][0], b, SHEETED[k][1], { kind: "say", line: "Waiting for its witch." }));
 const door = (id, room) => ({ id: `${room}Door`, room: "boudoir", label: "Door", ...doors[room], w: 1.4, d: 1.4, h: 4.4, use: { kind: "say", line: "A friend's room. Locked for now." } });
 const objects = [
   at("wardrobe", "bedroom", -62), at("dressingTable", "bedroom", -25), at("curtains", "bedroom", 8),
@@ -99,6 +103,10 @@ const objects = [
   // last night's clothes, on the floor by her bed, between it and the room's middle (rules/clothesPile.ts; Ed, 2026-10-23)
   make("clothesPile", "bedroom", "Last night's clothes", 110, 5, { kind: "pile" }),
   door("bedroom2Door", "bedroom2"), door("bedroom3Door", "bedroom3"),
+  // the other two bedrooms (Ed, 2026-10-23: one per witch, "fill the other two with placeholders for now; the key thing is to reserve
+  // the space"): her room's size, locked, their furniture under dust sheets (art/sheeted.js), the way in from the Boudoir left clear
+  ...sheeted("bedroom2", { Bed: 76, Wardrobe: 150, Chest: 10, Crates: -170 }),
+  ...sheeted("bedroom3", { Bed: 133, Wardrobe: -135, Chest: 40, Crates: 85 }),
 ];
 const { reserved, ...rest } = H;
 // (as the file was laid out: a key a line, each room, branch and object on one line)

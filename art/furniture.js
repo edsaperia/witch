@@ -13,6 +13,7 @@
 //   - A piece with states (the curtains, open or shut) takes `state` and is drawn once for each.
 import { M, Sprite, hsv2rgb, hash2 } from "./core.js";
 import { Model, render } from "./model3d.js";
+import { SHEETED_PIECES } from "./sheeted.js";
 
 /** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
@@ -769,6 +770,8 @@ const PIECES = {
     for (let i = 0; i < 8; i++) { const a = -1.9 + i * .45, b = a + .45; m.seg([Math.cos(a) * .14, h + .3 + Math.sin(a) * .14, z + .05], [Math.cos(b) * .14, h + .3 + Math.sin(b) * .14, z + .05], .018, .018, neon, { group: 8, extra: true }); }
     light(m, [0, h + .3, z + .2], k ? FAIRY : MAGICL, 10, .3);
   },
+  // the two locked bedrooms' placeholders, under dust sheets (art/sheeted.js)
+  ...SHEETED_PIECES,
 };
 
 /** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
