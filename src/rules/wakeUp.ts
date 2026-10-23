@@ -65,10 +65,6 @@ export function startWake(g: Game, ht: number, short = false): boolean {
   return true;
 }
 
-/** Waking up and not yet free to walk: in bed (ringing, snoozing) or stretching. */
-export const inBedNow = (w: WakeState | undefined): boolean => !!w && w.beat !== "up";
-/** The wake-up under way: she's in it, the curtains not yet open. */
-export const waking = (g: { wake?: WakeState }): boolean => !!g.wake && !g.wake.open;
 /** The bedroom's door shut: till the curtains have opened and she's dressed (Ed, 2026-10-23: the door waits for both). */
 export const doorShut = (g: { wake?: WakeState }): boolean => !!g.wake && (!g.wake.open || !dressed(g.wake));
 /** How often the door says to get dressed while she walks at it (s, her clock). */

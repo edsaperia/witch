@@ -5153,10 +5153,15 @@
         "bpm": {
           "type": "number",
           "minimum": 0
+        },
+        "knockBeats": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "bpm"
+        "bpm",
+        "knockBeats"
       ],
       "additionalProperties": false
     },

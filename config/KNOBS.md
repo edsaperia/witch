@@ -1196,6 +1196,7 @@ The music's clock (beats per minute): the lasers sweep to it and party animals d
 | knob | type | range |
 |---|---|---|
 | `beat.bpm` | number | 0 to … |
+| `beat.knockBeats` | number | 0 to … |
 | `leyLines.on` | boolean |  |
 | `leyLines.pulseSpeed` | number | 0 to … |
 | `leyLines.reveal` | number | 0 to … |

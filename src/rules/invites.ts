@@ -360,9 +360,3 @@ export function stepInvites(s: Invites, c: InviteControls, witch: { x: number; z
 
 }
 
-/** How far the next burst has recharged: 0 just fired, 1 ready (for the action bar). */
-export function inviteCharge(s: Invites, time: number): number {
-  if (time >= s.readyAt) return 1;
-  const total = s.readyAt - s.burstAt;
-  return total > 0 ? Math.max(0, Math.min(1, (time - s.burstAt) / total)) : 1;
-}
