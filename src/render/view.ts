@@ -313,6 +313,9 @@ type NightState = ReturnType<typeof nightState>;
 // (the night's fields are the View's own, made by nightState: in the constructor, and again by setGame)
 export interface View extends NightState {}
 
+/** The area types on a map (its cells' types, by their look's index): the ones whose tufts take its biome (GrassView.tufts). */
+const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>([HOME_LOOK]); for (const c of map.cells) s.add(map.typeOf(c[0], c[1])); return s; }; // (and home's meadow)
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -594,7 +597,7 @@ export class View {
     this.scene.add(this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
     this.tuftBiome = style.biome ?? this.assets.typeBiome; // (in the island's biome: art/flora/biomes.js; ?biome= over it)
-    const tufts = yield* GrassView.tufts(this.tuftBiome ? { ...style, biome: this.tuftBiome } : style);
+    const tufts = yield* GrassView.tufts(this.tuftBiome ? { ...style, biome: this.tuftBiome } : style, islandTypes(game.map));
     yield;
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms, tufts);
     yield "parts";
@@ -874,7 +877,7 @@ export class View {
     const island = new IslandLayers(this.scene, { game, style: this.style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOf(game.map, t) }, false);
     yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
     yield* island.finishSteps();
-    const tb = this.style.biome ?? this.assets.typeBiome, tufts = tb !== this.tuftBiome ? yield* GrassView.tufts(tb ? { ...this.style, biome: tb } : this.style) : null; // (another biome's: drawn again, a step an area type)
+    const tb = this.style.biome ?? this.assets.typeBiome, tufts = tb !== this.tuftBiome ? yield* GrassView.tufts(tb ? { ...this.style, biome: tb } : this.style, islandTypes(game.map)) : null; // (another biome's: drawn again, a step an area type)
     yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
