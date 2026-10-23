@@ -14,7 +14,7 @@ import type { Style } from "./style";
 
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };
 type Piece = { w: number; h: number; m: Uint8Array; n: Float32Array | number[]; put: unknown };
-type Drawn = { sp: Piece; origin: { x: number; y: number }; lights: Light[]; marks?: Record<string, { x: number; y: number }> };
+export type Drawn = { sp: Piece; origin: { x: number; y: number }; lights: Light[]; marks?: Record<string, { x: number; y: number }> };
 
 /** Whether the house's objects are drawn as art (`?furniture=0`: the boxes, as before). */
 export const furnitureOn = typeof location === "undefined" || new URLSearchParams(location.search).get("furniture") !== "0";
@@ -46,22 +46,31 @@ const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09,
 
 function canvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 
-/** One object's picture, baked and lit: its canvas, its size in art pixels, where its floor's middle is on it. */
-/** marks: named points of the piece in its picture's pixels (art/furniture.js: the mic's spot lamp). */
-export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
-export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
-  const { yaw, foot, curve } = standing(o);
-  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn;
-  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof canvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(d.sp, furnitureColours(st, o.room), { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, canvas);
+/** A drawn piece (art/furniture.js modelSprite's), baked in a room's colours and lit by its own lights: its canvas. */
+export function litCanvas(d: Drawn, room: string, st: Style): HTMLCanvasElement {
+  const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof canvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(d.sp, furnitureColours(st, room), { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, canvas);
   const lit = canvas(b.w, b.h);
   shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);
   // (its alpha as the albedo's: shade leaves the empty pixels as it found them)
   const A = b.A.getContext("2d")!.getImageData(0, 0, b.w, b.h).data, img = lit.getContext("2d")!.getImageData(0, 0, b.w, b.h), L = img.data;
   for (let i = 3; i < L.length; i += 4) L[i] = A[i] ? 255 : 0;
   lit.getContext("2d")!.putImageData(img, 0, 0);
-  const tex = new THREE.CanvasTexture(lit);
+  return lit;
+}
+/** A canvas as the house's texture: an art pixel a texel, its colours as they are. */
+export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
+  const tex = new THREE.CanvasTexture(c);
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
-  return { tex, w: b.w, h: b.h, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
+  return tex;
+}
+
+/** One object's picture, baked and lit: its texture, its size in art pixels, where its floor's middle is on it; marks: named points
+ *  of the piece in its picture's pixels (art/furniture.js: the mic's spot lamp). */
+export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
+export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
+  const { yaw, foot, curve } = standing(o);
+  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st);
+  return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 
 /** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the bedroom's curtains shut while she wakes (rules/wakeUp.ts:

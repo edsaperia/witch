@@ -714,6 +714,9 @@ const PIECES = {
   },
 };
 
+/** The pieces' helpers, for the rooms' dressing (art/houseDecor.js): a light, a bulb, a candle, a sprig, ivy, a pot, a disc. */
+export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM, FAIRY, MAGICL, SCREEN, GREEN };
+
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
 export const FURNITURE_IDS = Object.keys(PIECES).filter(id => id !== "door");
 /** Each piece's states, drawn once each (the first the default). */
@@ -765,6 +768,12 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   const m = new Model({ blend: .025 });
   build(m, { W: foot.w / SIZE, D: foot.d / SIZE, H: foot.h / SIZE }, state ?? FURNITURE_STATES[id]?.[0]);
   if (curve > 0 && BEND.has(id)) bendModel(m, curve / SIZE, foot.d / SIZE);
+  return modelSprite(m, { ppm, pitch, yaw });
+}
+
+/** A model of the house's (metres of the real piece) drawn at the house's pixel, SIZE times over, turned by yaw: its sprite, cropped,
+ *  where its middle on the floor lands (`origin`), its lights and its marks in pixels (furnitureSprite's; art/houseDecor.js's too). */
+export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0 } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
   const { sp, project } = render(m, { scale: ppm * SIZE, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
