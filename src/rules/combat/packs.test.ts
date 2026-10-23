@@ -222,6 +222,16 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
   }, 120000);
 });
 
+describe("pack combat, the fantastic kinds (step 3, 2026-10-23)", () => {
+  it("the sphinx's riddle turns her aim; the feathered serpent's plumes are mirages that take her 💌s", () => {
+    let riddled = false, plumes = 0;
+    arena("pack-sphinx", 60, g => { if (g.witches[0].confused && g.clock.time < g.witches[0].confused.until && !g.witches[0].confused.move) riddled = true; });
+    arena("pack-featheredserpent", 60, g => { plumes = Math.max(plumes, (g.combat.mirages ?? []).filter(m => m.species === "featheredserpent").length); });
+    expect(riddled).toBe(true);
+    expect(plumes).toBeGreaterThan(0);
+  }, 120000);
+});
+
 describe("pack combat, Phase 1's pieces", () => {
   it("the heron's sync: a blink of hers while it lasts brings one of the pack blinking in beside where it put her, striking", () => {
     let synced = 0, blinkAt = -1, near = Infinity;
