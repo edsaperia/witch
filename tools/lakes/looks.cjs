@@ -41,6 +41,8 @@ server.listen(0, "127.0.0.1", async () => {
       g.witch = { ...g.witch, x, z, seated: false, vx: 0, vz: 0, mode: "ground", lift: 0 };
       return { x, z, lake: p, nx: -s.nx, nz: -s.nz };
     }, process.env.AT ? process.env.AT.split(",").map(Number) : null);
+    const tris = await page.evaluate(() => { let n = 0; window.witch.view.scene.traverse(o => { if (o.name === "glacier") n += o.geometry.attributes.position.count / 3; }); return n; });
+    if (tris) console.log(`${look}: the glacier's mesh ${tris} triangles`);
     if (!at) { console.log("no lakes on this island"); process.exit(1); }
     // (on foot, south of the water if she can be: turned so the lake is up the screen)
     await step(120); await page.waitForTimeout(1500); await step(2);

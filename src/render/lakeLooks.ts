@@ -110,11 +110,12 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
       float band = floor((t + (vnoise(q * 0.4) - 0.5) * 2.0) / 2.4);
       vec3 rock = mix(vec3(0.34, 0.31, 0.27), vec3(0.22, 0.2, 0.18), fract(band * 0.618));
       float vine = smoothstep(D * 0.75, D * 0.1, t) * step(0.42, vnoise(vec2((q.x + q.y) * 0.9, t * 0.18)));
-      col = mix(rock, vec3(0.12, 0.3, 0.1), vine) * lit * 1.5 * dark;
+      col = mix(rock, vec3(0.12, 0.3, 0.1), vine) * (lit * 1.8 + 0.05) * dark;
       if (fract(t / 2.4 + vnoise(q * 0.4) * 0.83) < 0.08) col *= 0.6; // (the strata's ledges)
     } else {
       float inPool = smoothstep(18.0, 26.0, lakeAt(q) + (vnoise(q / 9.0) - 0.5) * 10.0);
-      vec4 cv = cells(q / 3.5); vec3 floorc = mix(vec3(0.08, 0.2, 0.07), vec3(0.2, 0.36, 0.12), cv.z) * (cv.y - cv.x < 0.1 ? 0.6 : 1.0) * lit * 1.6 * dark; // (the jungle on its floor: crowns from above)
+      vec4 cv = cells(q / 3.5); vec3 floorc = mix(vec3(0.08, 0.2, 0.07), vec3(0.2, 0.36, 0.12), cv.z) * (cv.y - cv.x < 0.1 ? 0.6 : 1.0) * (lit * 1.8 + 0.06) * dark; // (the jungle on its floor: crowns from above)
+      if (hash(floor(q / 1.2)) > 0.985) floorc += vec3(0.25, 0.9, 0.6) * (0.5 + 0.5 * sin(uTime * 1.7 + hash(floor(q / 1.2) + 3.0) * 30.0)); // (glow-worms down there)
       vec3 pool = lakeGlint(vec3(0.02, 0.06, 0.06), R, 0.6) * 0.8;
       col = mix(floorc, pool, inPool);
     }
