@@ -1,7 +1,7 @@
 // The see-through passes' early out (render/sprites.ts passOf, uSeeEarly) changes no pixel: the built game (DIST, default dist/) at
 // spots in dense woods on foot and in the treetops and at the decks, each frame drawn with it on and then off in the same page (the
 // game's time held) and compared pixel by pixel as drawn. Fails on any pixel that differs, or on a blind comparison (the area
-// types' scenery hidden must change the picture at some spot). Its cost: tools/bench/gpu.cjs.
+// types' scenery hidden by its layers, which the view never resets as it does .visible, must change the picture at some spot). Its cost: tools/bench/gpu.cjs.
 //   npm run build && node tools/bench/early-diff.cjs [out dir] [seed]   (DIST=, SPOTS=decks,muddy,muddyTop,fern)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -39,9 +39,9 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       await setEarly(true); const a0 = await grab(), a = await grab();
       await setEarly(false); const b = await grab();
       await setEarly(true); const a1 = await grab();
-      await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) m.visible = false; });
+      await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) { m.userData.mask = m.layers.mask; m.layers.mask = 0; } });
       const c = await grab();
-      await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) m.visible = true; });
+      await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) m.layers.mask = m.userData.mask; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
       out[spot] = { diff: count(a, b), drift: count(a0, a), back: count(a, a1), scenery: count(a, c), px: a.length / 4 };
       if (out[spot].diff) bad++;
