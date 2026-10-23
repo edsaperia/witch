@@ -58,6 +58,9 @@ export class AssetLibrary {
   /** The seed the area types' trees are drawn under: the island's own (islandArtSeed, so a revisit finds them kept), or the
    *  night's (the default; the view sets it). */
   typeSeed: number;
+  /** The island's biome (rules/lakeLooks.ts biomeKey: its forests' look over the area types' trees and props); none, temperate.
+   *  The view sets it with typeSeed. */
+  typeBiome: string | undefined;
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
@@ -66,7 +69,7 @@ export class AssetLibrary {
   private decor: DecorArt | undefined;
   /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
   private beachEdge: (BeachEdgeArt & { atlas: Atlas }) | undefined;
-  private lakeShore: (LakeShoreArt & { atlas: Atlas }) | undefined;
+  private lakeShore: (LakeShoreArt & { atlas: Atlas; biome?: string }) | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
@@ -308,7 +311,8 @@ export class AssetLibrary {
     } else if (r.job.kind === "beachEdge") {
       this.beachEdge = { atlas, ...r.result.beachEdge! };
     } else if (r.job.kind === "lakeShore") {
-      this.lakeShore = { atlas, ...r.result.lakeShore! };
+      if (this.lakeShore) { this.lakeShore.atlas.albedo.dispose(); this.lakeShore.atlas.normal.dispose(); } // (another island's, landing late or let go)
+      this.lakeShore = { atlas, ...r.result.lakeShore!, biome: (r.job as { biome?: string }).biome };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -344,7 +348,7 @@ export class AssetLibrary {
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
-    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }, true);
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }, true);
     return a;
   }
   /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
@@ -354,7 +358,10 @@ export class AssetLibrary {
   }
   /** The biome lakes' shore dressing (render/lakeShore.ts), or undefined (and asked for). */
   lakeShoreArt(): (LakeShoreArt & { atlas: Atlas }) | undefined {
-    if (!this.lakeShore) this.ask({ kind: "lakeShore", id: "all", style: this.style, K: this.K }, true);
+    // (in the island's biome look, art/flora/biomes.js: drawn again for an island in another; the view lets go of its batch on the
+    // old one when this comes back undefined, render/lakeShore.ts, before it's freed as the new one lands)
+    if (this.lakeShore && this.lakeShore.biome !== this.typeBiome) return this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true), undefined;
+    if (!this.lakeShore) this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true);
     return this.lakeShore;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
@@ -554,13 +561,13 @@ export class AssetLibrary {
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
-  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }); }
+  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
    *  asked for only if kept, so nothing is drawn now; those found wait for swapTonight. Nothing with the trees drawn under the
    *  night's seed already. */
   tonight(types: Iterable<number>): void {
     if (this.typeSeed === this.seed || this.tonightShut) return;
-    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
+    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K, biome: this.typeBiome } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
   }
   /** The moment she can't see the trees change (main.ts revealArt): tonight's sets found by now take the place of the island's;
    *  the rest keep the island's for the whole night (nothing swapped later: no trees changing in play). The types swapped. */
@@ -582,7 +589,7 @@ export class AssetLibrary {
    *  go (its trees, tonight's, its soundsystems; its treehouse if this one's is another), each atlas freed here, once (the view
    *  lets go of its batches on them first, never their atlases); and the new island's seeds and treehouse. Its sets are asked for
    *  afresh as they're wanted (from the browser's store, if drawn before). */
-  reseat(o: { seed: number; typeSeed: number; treehouse: string }): void {
+  reseat(o: { seed: number; typeSeed: number; typeBiome?: string; treehouse: string }): void {
     this.gen++;
     this.queue = this.queue.filter(j => !islandBound(j));
     for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
@@ -592,7 +599,7 @@ export class AssetLibrary {
     for (const a of this.soundsystemsGen.values()) free(a.atlas);
     this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear();
     this.tonightShut = false;
-    this.seed = o.seed; this.typeSeed = o.typeSeed;
+    this.seed = o.seed; this.typeSeed = o.typeSeed; this.typeBiome = o.typeBiome;
     if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)
       this.treehouseId = o.treehouse;
       if (this.home.treehouse) free(this.treehouse.atlas);

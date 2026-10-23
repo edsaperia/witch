@@ -1,7 +1,7 @@
 // Tonight's find written in the stars (Ed, 2026-10-22: "Instead of a crystal ball, the hint should be written in the stars as a
 // constellation seen through the telescope in the direction of the item!"; "With all permanent upgrades, there's one per night,
 // and it's hinted through the telescope"; his answers to the mock, previews/ed/starfield-mock): the night's find's outline traced
-// in 7 to 10 stars (rules/finds.ts nightFind: today a wearable; broom parts, hats and bags to come, any item id an outline here),
+// in 7 to 10 stars (rules/finds.ts nightFind: a wearable or a broom part; hats and records to come, any item id an outline here),
 // standing about 35° up at its bearing from the treehouse, there all night and gone once she's found it. Seen only through the telescope (render/view/camera.ts); its stars
 // a little brighter than their neighbours, faint dotted lines between them fading in once she holds the view on it (render/sky.ts).
 // Here, the outlines and where tonight's stands: drawing only, nothing in the rules reads it.
@@ -10,7 +10,7 @@ import type { NightFind } from "./finds";
 /** An outline: its stars (degrees across the sky from its middle: x to the right, y up) and the lines joining them (by index). */
 export interface Outline { stars: [number, number][]; lines: [number, number][] }
 
-/** The outlines by item id, about 12 to 17° across: every findable wearable's (rules/finds.ts FINDABLE) so far. */
+/** The outlines by item id, about 12 to 17° across: every item in the finds pool's (rules/finds.ts FIND_KINDS: the wearables and the broom parts). */
 export const OUTLINES: Record<string, Outline> = {
   "hair-mohawk": { stars: [[-3, -4], [3, -4], [4, 0], [-4, 0], [-2.5, 2], [-1, 4.5], [1, 5], [2.5, 2.5]], lines: [[0, 1], [1, 2], [3, 0], [3, 4], [4, 5], [5, 6], [6, 7], [7, 2]] },
   shades: { stars: [[-6, 1], [-2, 1], [-2.5, -2], [-5.5, -2], [2, 1], [6, 1], [5.5, -2], [2.5, -2], [-8.5, 2], [8.5, 2]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [1, 4], [0, 8], [5, 9]] },
@@ -22,6 +22,16 @@ export const OUTLINES: Record<string, Outline> = {
   "shoes-chunky": { stars: [[-6, -2], [6, -2], [6.5, 0], [2, 1], [-1, 3], [-4, 3.5], [-6, 1], [0, -2]], lines: [[0, 7], [7, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 0]] },
   bumbag: { stars: [[-3, 1], [3, 1], [3.5, -2], [-3.5, -2], [-8, 2], [8, 2], [0, -0.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [0, 4], [1, 5]] },
   backpack: { stars: [[-3.5, 4], [3.5, 4], [4, -5], [-4, -5], [-3.5, 1], [3.5, 1], [0, 6.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [0, 6], [6, 1]] },
+  // The broom parts (the Workshop, Ed 2026-10-23: rules/broomParts.ts, found in wrecks): each part's own shape.
+  missile: { stars: [[0, 7], [-2.5, 3], [2.5, 3], [-2.5, -4], [2.5, -4], [-5, -7], [5, -7], [-2.5, 1], [2.5, 1]], lines: [[0, 1], [0, 2], [1, 7], [7, 3], [2, 8], [8, 4], [3, 5], [4, 6], [7, 8]] }, // (a nose cone, its band, its fins)
+  curl: { stars: [[-7, -6], [-3.5, -2.5], [0, 1], [3, 4], [5.5, 6], [7, 3.5], [5.5, 1.5], [3.5, 2.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]] }, // (a stick rolled up at its end)
+  horse: { stars: [[-1, -7], [-1, 0], [0, 3], [1.5, 6], [4.5, 5], [6.5, 3], [5.5, 1.5], [2.5, 3], [-2, 4.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 2], [3, 8]] }, // (a horse's head on its stick, its mane)
+  fairing: { stars: [[-7, 0], [-4, 2], [3, 2], [7, 0], [3, -2], [-4, -2], [4.5, 5], [1.5, 2.5]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [2, 6], [6, 7]] }, // (a long fairing, its windscreen up)
+  ladder: { stars: [[-2, -7], [2, -7], [-2, -2], [2, -2], [-2, 3], [2, 3], [-2, 7], [2, 7]], lines: [[0, 2], [2, 4], [4, 6], [1, 3], [3, 5], [5, 7], [0, 1], [2, 3], [4, 5], [6, 7]] }, // (two rails and rungs)
+  canoe: { stars: [[-7, 2.5], [-5, -1], [-2, -2.5], [2, -2.5], [5, -1], [7, 2.5], [-3, 1], [3, 1]], lines: [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [0, 6], [6, 7], [7, 5]] }, // (a hull, its gunwales)
+  nozzles: { stars: [[-4.5, 3], [-1, 3], [-1, -1], [-4.5, -1], [1, 3], [4.5, 3], [4.5, -1], [1, -1], [-2.75, -5], [2.75, -5]], lines: [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [3, 8], [2, 8], [7, 9], [6, 9]] }, // (two nozzles, their flames)
+  twigs: { stars: [[0, 7], [-1, 2.5], [1, 2.5], [-5.5, -6], [-2, -7], [2, -7], [5.5, -6]], lines: [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6], [1, 2]] }, // (a bundle bound at the top, fanning out)
+  oar: { stars: [[0, 8], [0, 2], [-2, 0], [2, 0], [-2.5, -5], [2.5, -5], [0, -7.5]], lines: [[0, 1], [1, 2], [1, 3], [2, 4], [3, 5], [4, 6], [5, 6]] }, // (a handle and its blade)
 };
 
 /** How high (degrees) a constellation's middle stands. */

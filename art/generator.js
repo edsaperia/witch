@@ -43,7 +43,7 @@ import { DOLPHIN, dolphinColours, dolphinSprite, dolphinSplash } from "./dolphin
 import { KRAKEN, krakenColours, krakenTentacle, krakenHead } from "./kraken.js";
 import { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint } from "./decor.js";
 import { LAKE_SHORE_PIECES, LAKE_SHORE_BY_ID, lakeShoreSprite, lakeShoreColours } from "./lakeShore.js";
-import { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours } from "./country.js";
+import { COUNTRY, COUNTRY_BY_ID, WRECK_PARTS, countrySprite, countryColours } from "./country.js";
 import { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours } from "./landmarks.js";
 import { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES } from "./party.js";
 import { GENOMES, GENOME_BY_ID, TEMPLATES, TEMPLATE_IDS, speciesOf, genomeTags, genomeProblems, genomeHash } from "./genome/index.js";
@@ -72,7 +72,7 @@ export { RELICS, RELIC_BY_ID, relicSprite, relicColours, relicLayouts, groundOff
 export { BEACH_FINDS, BEACH_PRINTS, PRINT_HEADINGS, beachSprite, beachColours };
 export { DECOR, DECOR_BY_ID, decorSprite, decorColours, lakeKit, rockTint };
 export { LAKE_SHORE_PIECES, LAKE_SHORE_BY_ID, lakeShoreSprite, lakeShoreColours };
-export { COUNTRY, COUNTRY_BY_ID, countrySprite, countryColours };
+export { COUNTRY, COUNTRY_BY_ID, WRECK_PARTS, countrySprite, countryColours };
 export { LANDMARKS, LANDMARK_BY_ID, LANDMARK_BUILDINGS, landmarkSprite, landmarkColours, witchPixelsPerUnit };
 export { PARTY_OBJECTS, PARTY_BY_ID, PARTY_CLASSES, PARTY_LIGHT_NEONS, PARTY_WARM, PARTY_CLUSTERS, PARTY_CLUSTER_BY_ID, partySprite, partyColours, partyPatch, BALLOON_PALETTES };
 export { SCENES, SCENE_BY_ID, scenePiece, sceneLayout, scenePlacements, sceneRefExists };

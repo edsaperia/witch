@@ -1,13 +1,16 @@
 // Spells: a hat and a broom (Ed, 2026-10-11; docs/backlog/unlocks.md). She has two slots, a hat and a broom, each with a spell
 // (or none: the plain hat and broom). Hats are mostly placed (put down with the sigil button held, rules/hat.ts): some fire once
 // when placed, some work over time while placed; the Helmet is worn. Brooms change how she moves or how much she can pull:
-// some passive, some active, cast with the spell button (R; the pad's L3, Ed 2026-10-15; touch "spell"), then recharging. The plain broom
-// lets her rise again sooner after landing. All unlocked for now; achievements come later. Spells may stun or slow enraged
-// creatures but never damage them (Ed, 2026-10-11). No drawing here.
+// some passive, some active, cast with the spell button (R; the pad's L3, Ed 2026-10-15; touch "spell"), then recharging. The broom's
+// spell isn't picked any more: it's the set her broom's parts complete (the Workshop, Ed 2026-10-23: "R casts the completed set's
+// spell"; rules/broomParts.ts), none on a broom that completes none; the old passive brooms (Long, Double blink, Haul, the plain
+// broom's quick take-off) are parts' stats now. Spells may stun or slow enraged creatures but never damage them (Ed, 2026-10-11).
+// No drawing here.
 import type { Tuning } from "./tuning";
+import { bareBroom, fitPart, fittedOf, partsPull, setForSpell, spellOfParts, type Fitted } from "./broomParts";
 
 export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing" | "edgeseer" | "routeseer";
-export type BroomSpellId = "none" | "speed" | "battering" | "long" | "double" | "leyjump" | "haul" | "pound" | "stealth";
+export type BroomSpellId = "none" | "speed" | "battering" | "leyjump" | "pound" | "stealth";
 
 /** How a spell works: a hat worn, placed (working while it's down), or fired once on placing; a broom passive or active (a
  *  button, with a cooldown). */
@@ -33,13 +36,10 @@ export const HAT_SPELLS: SpellInfo<HatSpellId>[] = [
 ];
 
 export const BROOM_SPELLS: SpellInfo<BroomSpellId>[] = [
-  { id: "none", name: "Plain broom", how: "passive", line: "Rise to the treetops again sooner after landing.", built: true },
+  { id: "none", name: "Bare broom", how: "passive", line: "No spell: no set of parts complete.", built: true },
   { id: "speed", name: "Speed", how: "active", line: "Press the spell button: much faster for a few seconds.", built: true },
-  { id: "long", name: "Long", how: "passive", line: "Blinks go twice as far.", built: true },
-  { id: "double", name: "Double blink", how: "passive", line: "One more blink before it needs to recharge.", built: true }, // (Ed, 2026-10-11: "a broom that gives you an extra blink")
   { id: "battering", name: "Battering", how: "passive", line: "Blinks stun the creatures in her path.", built: true }, // (Ed, 2026-10-12)
   { id: "leyjump", name: "Ley jump", how: "active", line: "Press the spell button: jump to the ley line's pulse. A long recharge.", built: true },
-  { id: "haul", name: "Haul", how: "passive", line: "Her sigils pull on her half as hard.", built: true }, // (Ed, 2026-10-11: "haul always on")
   { id: "pound", name: "Ground pound", how: "active", line: "Press the spell button: rise or land at once, knocking creatures back; landing stuns them.", built: true }, // (Ed, 2026-10-12: Updraft renamed, its landing stuns)
   { id: "stealth", name: "Stealth", how: "passive", line: "Creatures don't see her unless she's inviting or placing or picking up; ones that do chase her till she's out of range.", built: true }, // (Ed, 2026-10-12, instead of Shadow step)
 ];
@@ -53,7 +53,10 @@ export const broomOf = (id: string | undefined): BroomSpellId => (id && broomSpe
 
 export interface SpellState {
   hat: HatSpellId;
+  /** Her broom's spell: the set her parts complete (spellOfParts), never picked on its own. */
   broom: BroomSpellId;
+  /** Her broom's parts, a slot each (rules/broomParts.ts). */
+  parts: Fitted;
   /** Game time the active broom spell's effect ends (it's active before then). */
   activeUntil: number;
   /** Game time it can be cast again. */
@@ -75,15 +78,33 @@ export interface SpellState {
   cyc?: { at: number; x: number; z: number; held: { id: number; a: number; r: number }[] };
 }
 
-export function newSpells(t: Tuning): SpellState {
-  return { hat: hatOf(t.spells.hat), broom: broomOf(t.spells.broom), activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
+/** A broom made of `f`, with the set `spell` gives fitted whole over it if it isn't already its spell (the old ?broom= and the
+ *  broom stand's Power row: debug switches till the Workshop's bay, docs/backlog/workshop.md); "none" leaves it as it is. */
+function withSpell(f: Fitted, spell: BroomSpellId): Fitted {
+  if (spell === "none" || spellOfParts(f) === spell) return f;
+  const set = setForSpell(spell);
+  return set ? set.pieces.reduce(fitPart, f) : f;
 }
 
-/** Her hat and broom spells now (the creator's pick; unknown or unbuilt ones none). */
+export function newSpells(t: Tuning): SpellState {
+  const parts = withSpell(fittedOf(t.spells.parts), broomOf(t.spells.broom));
+  return { hat: hatOf(t.spells.hat), broom: spellOfParts(parts), parts, activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
+}
+
+/** Her broom's parts now (fitted at the bay, or a part found going into an empty slot): its spell follows (its timers reset
+ *  when it changes). */
+export function setParts(s: SpellState, f: Fitted): void {
+  s.parts = f;
+  const b = spellOfParts(f);
+  if (b !== s.broom) { s.broom = b; s.activeUntil = -Infinity; s.readyAt = 0; s.castAt = -Infinity; }
+}
+
+/** Her hat spell now, and her broom's (the creator's pick: unknown or unbuilt ones none). A broom spell other than hers fits
+ *  the set that gives it (a debug switch till the bay; "none" strips her broom bare); her own changes nothing. */
 export function setLoadout(s: SpellState, hat: string | undefined, broom: string | undefined): void {
   s.hat = hatOf(hat);
   const b = broomOf(broom);
-  if (b !== s.broom) { s.broom = b; s.activeUntil = -Infinity; s.readyAt = 0; s.castAt = -Infinity; }
+  if (b !== s.broom) setParts(s, b === "none" ? bareBroom() : withSpell(s.parts, b));
 }
 
 /** Whether her broom has a spell to cast (the action bar's spell slot shows only then). */
@@ -108,8 +129,8 @@ export function castSpell(s: SpellState, time: number, t: Tuning, can = true): b
 export const stealthed = (s: SpellState, time: number): boolean => s.broom === "stealth" && time >= (s.seenUntil ?? -Infinity);
 /** She did something they notice (a 💌 thrown, something put down or picked up): seen for stealth.reveal seconds. */
 export function revealed(s: SpellState, time: number, t: Tuning): void { if (s.broom === "stealth") s.seenUntil = Math.max(s.seenUntil ?? -Infinity, time + (t.spells.stealth?.reveal ?? 3)); }
-/** How much her sigils pull on her: the Haul broom's half (Ed, 2026-10-11: "haul always on"). */
-export const pullOf = (s: SpellState | undefined, t: Tuning): number => (s?.broom === "haul" ? t.spells.haul?.pull ?? 1 : 1);
+/** How much her sigils pull on her: the Canoe hull's less (the Haul broom's old job; rules/broomParts.ts). */
+export const pullOf = (s: SpellState | undefined): number => (s?.parts ? partsPull(s.parts) : 1);
 
 export const spellActive = (s: SpellState, time: number) => time < s.activeUntil;
 
@@ -126,16 +147,6 @@ export function speedMultiplier(s: SpellState, time: number, t: Tuning): number 
   const S = t.spells.speed, k = Math.min(1, (s.activeUntil - time) / 0.5);
   return 1 + (S.mult - 1) * k;
 }
-
-/** Seconds after landing before she can rise again: the plain broom's shorter (Ed, 2026-10-11: "default broom reduces treetop
- *  cooldown"). */
-export const riseCooldownOf = (s: SpellState, t: Tuning): number => (t.riseCooldown ?? 0) * (s.broom === "none" ? t.spells.plain?.riseCooldown ?? 1 : 1);
-
-/** How far her blink goes: the Long broom's twice as far (it stacks with the Hare's extra charges: Ed, 2026-10-11). */
-export const blinkDistance = (s: SpellState, t: Tuning): number => t.dash.distance * (s.broom === "long" ? t.spells.long?.mult ?? 1 : 1);
-
-/** Her blinks before the cooldown: the Double blink broom's one more (stacking with the Hare's: rules/buffs.ts). */
-export const extraBlinks = (s: SpellState, t: Tuning): number => (s.broom === "double" ? t.spells.double?.charges ?? 1 : 0);
 
 /** The Healing ring (Ed, 2026-10-11, "Second wind" reworked: "placed: standing near it, she heals a hit every few seconds"): a
  *  Healing hat of hers down within spells.healing.radius of her (`hats`: those lying, rules/hatSpells.ts hatsDown), she heals a

@@ -1,0 +1,21 @@
+{
+  "_": "The Workshop's broom parts and sets (Ed, 2026-10-22/23; docs/backlog/workshop.md, rules/broomParts.ts). One broom, three slots (tip, chassis, exhaust), one part a slot. Each part's stats change the tuning's numbers for her own movement: a key is a tuning path (or pull: how hard her sigils pull on her, 1 the bare broom's), its mult times the bare broom's number and its add plus it; parts fitted together add up (each mult's share over 1 summed, then the adds). The bare broom (every slot empty) is the tuning as it stands: no quick take-off (Ed, 2026-10-23: it loses the plain broom's; the jet nozzles win it back). look: the broom kind (art/brooms.js; twig, art/witch.js's bristles) whose body (a tip or chassis) or tail (an exhaust) it is. A set complete (all its pieces fitted) gives her its broom spell (rules/spells.ts); no broom completes two at once.",
+  "parts": {
+    "missile": { "slot": "tip", "name": "Missile nose", "look": { "kind": "missile", "piece": "body" }, "up": "Faster in the treetops", "down": "Turns wider", "stats": { "treetopSpeed": { "mult": 1.1 }, "treetop.turnRate": { "mult": 0.8 } } },
+    "curl": { "slot": "tip", "name": "Curled tip", "look": { "kind": "curl", "piece": "body" }, "up": "Blinks go further", "down": "Each dodge recharges slower", "stats": { "dash.distance": { "mult": 1.5 }, "dash.cooldown": { "mult": 1.3 } } },
+    "horse": { "slot": "tip", "name": "Hobby-horse head", "look": { "kind": "hobbyhorse", "piece": "body" }, "up": "Tight turns, and sharp turns bleed boost half as fast", "down": "Boost peaks lower", "stats": { "treetop.turnRate": { "mult": 1.4 }, "treetop.sharpTurnBleed": { "mult": 0.5 }, "treetop.boost": { "add": -0.2 } } },
+    "fairing": { "slot": "chassis", "name": "Jet-bike fairing", "look": { "kind": "jetbike", "piece": "body" }, "up": "Faster on foot", "down": "Heavier off the mark on foot", "stats": { "groundSpeed": { "mult": 1.15 }, "groundAcceleration": { "add": -8 } } },
+    "ladder": { "slot": "chassis", "name": "Ladder", "look": { "kind": "ladder", "piece": "body" }, "up": "Rises and comes down quicker", "down": "Slower on foot", "stats": { "riseTime": { "mult": 0.65 }, "descendTime": { "mult": 0.65 }, "groundSpeed": { "mult": 0.9 } } },
+    "canoe": { "slot": "chassis", "name": "Canoe hull", "look": { "kind": "canoe", "piece": "body" }, "up": "Her sigils pull on her less", "down": "Slower to reach cruise in the treetops", "stats": { "pull": { "mult": 0.65 }, "acceleration": { "mult": 0.75 } } },
+    "nozzles": { "slot": "exhaust", "name": "Jet nozzles", "look": { "kind": "jetbike", "piece": "tail" }, "up": "Quick take-off and landing", "down": "Glides longer to a stop", "stats": { "cooldown.rise": { "mult": 0.5 }, "riseCooldown": { "mult": 0.5 }, "treetop.glideTime": { "mult": 1.8 } } },
+    "twigs": { "slot": "exhaust", "name": "Twig bristles", "look": { "kind": "twig", "piece": "tail" }, "up": "One more dodge", "down": "Boost builds slower", "stats": { "dash.charges": { "add": 1 }, "treetop.boostTime": { "mult": 1.5 } } },
+    "oar": { "slot": "exhaust", "name": "Oar blade", "look": { "kind": "oar", "piece": "tail" }, "up": "Sharp on foot", "down": "Shorter blinks", "stats": { "groundAcceleration": { "add": 12 }, "dash.distance": { "mult": 0.8 } } }
+  },
+  "sets": {
+    "rocket": { "name": "Rocket", "pieces": ["missile", "fairing", "nozzles"], "spell": "speed" },
+    "hedge": { "name": "Hedge", "pieces": ["curl", "ladder", "twigs"], "spell": "stealth" },
+    "ferry": { "name": "Ferry", "pieces": ["horse", "canoe", "oar"], "spell": "leyjump" },
+    "joust": { "name": "Joust", "pieces": ["horse", "fairing"], "spell": "battering" },
+    "piledriver": { "name": "Pile driver", "pieces": ["ladder", "nozzles"], "spell": "pound" }
+  }
+}

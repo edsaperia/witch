@@ -44,7 +44,7 @@ export class LakeShoreView {
     const N = this.of(g.map);
     if (!N.pieces.length) { if (this.batch) this.batch.set([]); return; }
     const art = assets.lakeShoreArt();
-    if (!art) return;
+    if (!art) { if (this.batch) this.dispose(); return; } // (none yet, or another island's being drawn again in this one's biome look)
     if (this.atlas !== art.atlas) { this.dispose(); this.atlas = art.atlas; this.batch = new SpriteBatch(art.atlas, this.mpp, { scenery: true, fade: true }).name("lakeShore"); this.scene.add(...this.batch.meshes); this.at.x = NaN; }
     if (Math.hypot(x - this.at.x, z - this.at.z) < 6) return;
     this.at.x = x; this.at.z = z;

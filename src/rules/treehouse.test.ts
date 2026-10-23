@@ -12,7 +12,10 @@ const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Mat
 const press = (g: Game, c: object) => run(g, STEP, c);
 const D = TUNING.treehouse.deck!, HS = TUNING.treehouse.house!;
 /** The deck as first built: the house off (treehouse.house.on false keeps it, for a build or two). */
-const T0 = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, on: false } } });
+// (on the Jet nozzles: these runs were timed by the take-off's and landing's halved cooldowns, the plain broom's before the bare
+// broom lost them, Ed 2026-10-23; rules/broomParts.ts)
+const JETS = withTuning({ spells: { ...TUNING.spells, parts: "nozzles" } });
+const T0 = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, on: false } }, spells: JETS.spells });
 const game = (T = T0) => { const g = newGame(123, T); g.clock.paused = false; return g; };
 const events = (g: Game, kind: string) => g.leashEvents.filter(e => e.kind === kind);
 
@@ -114,7 +117,7 @@ describe("the treehouse deck", () => {
 describe("the treehouse's house", () => {
   const SEAT = HS.balcony.out + HS.seat;
   it("starts her behind the decks on the balcony, 22 m up; the deck's rules carry over", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!, w = g.witch;
+    const g = game(JETS), d = deckOf(g.map, TUNING)!, w = g.witch;
     expect(d.house).toBeTruthy(); expect(d.h).toBe(22);
     expect(seatOffset(TUNING)).toBeCloseTo(SEAT, 6);
     expect(w.seated).toBe(true); expect(w.perch).toBe(true);
@@ -127,7 +130,7 @@ describe("the treehouse's house", () => {
   });
 
   it("is one floor: she walks from the balcony into the hub and round it, kept in by the hub's wall but where a branch leaves it; its middle clear (the map's in the Atrium now)", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!;
+    const g = game(JETS), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 });
     run(g, 2, { moveZ: -1 }); // north, off the balcony into the hub
     expect(Math.hypot(g.witch.x - d.x, g.witch.z - d.z)).toBeLessThanOrEqual(d.r - d.rail + 1e-6);
@@ -152,7 +155,7 @@ describe("the treehouse's house", () => {
   });
 
   it("lands her when she flies onto the balcony at treetop height, no button; over the hub she only flies past", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!, b = d.house!.balcony;
+    const g = game(JETS), d = deckOf(g.map, TUNING)!, b = d.house!.balcony;
     run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
     g.witch = { ...g.witch, x: b.x + 2, z: b.z + 60, vx: 0, vz: -20 };
@@ -172,7 +175,7 @@ describe("the treehouse's house", () => {
   });
 
   it("takes her flying again when she walks off the balcony's open rim; with no broom she falls and comes back at the circle", () => {
-    const g = game(TUNING);
+    const g = game(JETS);
     run(g, 0.2, { moveZ: -1 });
     let off = false;
     for (let i = 0; i < 300 && !off; i++) { press(g, { moveX: 1, moveZ: 0.3 }); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
@@ -193,7 +196,7 @@ describe("the treehouse's house", () => {
   });
 
   it("opens the chart with E at the map table (in the middle of the Atrium: Ed, 2026-10-23), and nothing goes down up there", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!, t = HOUSE_ROOMS.objects.find(o => o.use.kind === "chart")!, f = objectFront(t, d, 0.4);
+    const g = game(JETS), d = deckOf(g.map, TUNING)!, t = HOUSE_ROOMS.objects.find(o => o.use.kind === "chart")!, f = objectFront(t, d, 0.4);
     run(g, 0.2, { moveZ: -1 });
     g.witch = { ...g.witch, x: f.x, z: f.z, vx: 0, vz: 0 }; run(g, 0.2);
     press(g, { place: true });
@@ -202,7 +205,7 @@ describe("the treehouse's house", () => {
   });
 
   it("brings her back at the magic circle after a knockout, up out of its floor, then walks her to her decks to scratch", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!, c = d.house!.circle;
+    const g = game(JETS), d = deckOf(g.map, TUNING)!, c = d.house!.circle;
     run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2); run(g, 1.5, { moveX: 1 }); press(g, { toggleMode: true }); run(g, 2); // (away on the ground)
     expect(g.witch.perch).toBeFalsy();
     for (let i = 0; i < TUNING.witchHealth.hits; i++) { g.witches[0].health.hurtAt = -Infinity; hitWitch(g, 0, g.clock.time); }
@@ -219,7 +222,7 @@ describe("the treehouse's house", () => {
   });
 
   it("pushes the camera in while she's on its floor, and lets it back out as she flies off", () => {
-    const g = game(TUNING);
+    const g = game(JETS);
     run(g, 0.2, { moveZ: -1 }); run(g, 4);
     expect(g.camera.house ?? 0).toBeGreaterThan(0.95);
     press(g, { toggleMode: true }); run(g, 4);

@@ -1,10 +1,11 @@
-// Hats and brooms with spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): the loadout, the plain broom's
-// shorter rise cooldown, the Long broom's blink, the Helmet (an extra hit, knocked off) and the Healing ring (placed).
+// Hats and brooms with spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): the loadout, the broom's parts in
+// play (the Workshop, Ed 2026-10-23: the old passive brooms' jobs), the Helmet (an extra hit, knocked off) and the Healing ring (placed).
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { hitWitch, newGame, stepGame, type Game } from "./game";
 import { wearing } from "./hat";
-import { BROOM_SPELLS, HAT_SPELLS, blinkDistance, extraBlinks, broomOf, castable, hatOf, newSpells, riseCooldownOf, setLoadout } from "./spells";
+import { BROOM_SPELLS, HAT_SPELLS, broomOf, castable, hatOf, newSpells, setLoadout } from "./spells";
+import { fittedKey } from "./broomParts";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const loadout = (hat: string, broom = "none"): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat, broom } });
@@ -21,41 +22,36 @@ describe("the loadout", () => {
   it("is a hat and a broom, none of either by default; unknown or unbuilt spells are none", () => {
     const s = newSpells(TUNING);
     expect([s.hat, s.broom]).toEqual(["none", "none"]);
+    expect(fittedKey(s.parts)).toBe("-,-,-"); // (a bare broom: no parts)
     expect(hatOf("helmet")).toBe("helmet");
     expect(hatOf("tophat")).toBe("none");
     expect(broomOf("speed")).toBe("speed");
+    expect(broomOf("long")).toBe("none"); // (the passive brooms are parts now: rules/broomParts.ts)
     for (const x of [...HAT_SPELLS, ...BROOM_SPELLS].filter(x => !x.built)) expect(x.id in { none: 1 } ? "none" : hatOf(x.id) === "none" && broomOf(x.id) === "none").toBe(true);
-    setLoadout(s, "healing", "long");
-    expect([s.hat, s.broom]).toEqual(["healing", "long"]);
-    // only a broom with an active spell has anything to cast
-    expect(castable(s)).toBe(false);
+    setLoadout(s, "healing", "none");
+    expect([s.hat, s.broom]).toEqual(["healing", "none"]);
+    expect(castable(s)).toBe(false); // (only a broom with an active spell has anything to cast)
+    // a broom spell picked (the old ?broom= and the stand's Power row, debug switches now) fits the set that gives it
     setLoadout(s, "none", "speed");
+    expect(s.broom).toBe("speed");
+    expect(fittedKey(s.parts)).toBe("missile,fairing,nozzles");
     expect(castable(s)).toBe(true);
+    // and her own spell again changes nothing; none strips it bare
+    setLoadout(s, "helmet", "speed");
+    expect(fittedKey(s.parts)).toBe("missile,fairing,nozzles");
+    setLoadout(s, "none", "none");
+    expect([s.broom, fittedKey(s.parts)]).toEqual(["none", "-,-,-"]);
   });
 });
 
-describe("brooms", () => {
-  it("the plain broom lets her rise again sooner after landing (Ed: 'default broom reduces treetop cooldown')", () => {
-    const plain = newSpells(TUNING), speed = newSpells(loadout("none", "speed"));
-    expect(riseCooldownOf(plain, TUNING)).toBeCloseTo((TUNING.riseCooldown ?? 0) * TUNING.spells.plain!.riseCooldown);
-    expect(riseCooldownOf(speed, TUNING)).toBe(TUNING.riseCooldown ?? 0);
-    expect(riseCooldownOf(plain, TUNING)).toBeLessThan(riseCooldownOf(speed, TUNING));
-  });
-
-  it("the Long broom's blinks go twice as far", () => {
-    expect(blinkDistance(newSpells(loadout("none", "long")), TUNING)).toBe(TUNING.dash.distance * 2);
-    expect(blinkDistance(newSpells(TUNING), TUNING)).toBe(TUNING.dash.distance);
-    // in the game: the blink's target as far as the clear ground lets it, never shorter than the plain one's
+describe("broom parts in the game (the Workshop, Ed 2026-10-23)", () => {
+  const parts = (p: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, parts: p } });
+  it("the Curled tip's blinks go half as far again", () => {
     const far = (t: Tuning) => { const g = game(t); g.witch = { ...g.witch, x: g.map.dancefloor.x, z: g.map.dancefloor.z }; stepGame(g, { ...C, moveX: 1, dash: true }, 1 / 60); const D = g.witches[0].dash; return Math.hypot(D.toX - D.fromX, D.toZ - D.fromZ); };
-    expect(far(loadout("none", "long"))).toBeGreaterThan(far(TUNING) + 5);
+    expect(far(parts("curl"))).toBeGreaterThan(far(TUNING) + 4);
+    expect(far(parts("oar"))).toBeLessThan(far(TUNING) - 2); // (the Oar blade's shorter)
   });
-});
-
-describe("the Double blink broom (Ed, 2026-10-11: 'a broom that gives you an extra blink')", () => {
-  it("gives one more blink before the cooldown", () => {
-    expect(extraBlinks(newSpells(loadout("none", "double")), TUNING)).toBe(1);
-    expect(extraBlinks(newSpells(TUNING), TUNING)).toBe(0);
-    // in the game: blink after blink, one more goes before she has to wait
+  it("the Twig bristles give one more blink before the cooldown (the Double blink broom's old job)", () => {
     const blinks = (t: Tuning) => {
       const g = game(t);
       g.witch = { ...g.witch, x: g.map.dancefloor.x, z: g.map.dancefloor.z };
@@ -64,7 +60,17 @@ describe("the Double blink broom (Ed, 2026-10-11: 'a broom that gives you an ext
       for (let i = 0; i < 8; i++) { const at = g.witches[0].dash.at; stepGame(g, { ...C, moveX: i % 2 ? 1 : -1, dash: true }, 1 / 60); step(g, 0.25); if (g.witches[0].dash.at !== at) n++; }
       return n;
     };
-    expect(blinks(loadout("none", "double"))).toBe(blinks(TUNING) + 1);
+    expect(blinks(parts("twigs"))).toBe(blinks(TUNING) + 1);
+  });
+  it("the Jet-bike fairing runs faster on foot, the Ladder slower", () => {
+    const run = (t: Tuning) => { const g = game(t), x0 = g.witch.x; step(g, 1.5, { ...C, moveX: 1 }); return g.witch.x - x0; };
+    const bare = run(TUNING);
+    expect(run(parts("fairing"))).toBeGreaterThan(bare * 1.08);
+    expect(run(parts("ladder"))).toBeLessThan(bare * 0.95);
+  });
+  it("the Missile nose flies faster in the treetops", () => {
+    const fly = (t: Tuning) => { const g = game(t); g.witch = { ...g.witch, mode: "treetop", lift: 1 }; const x0 = g.witch.x; step(g, 1, { ...C, moveX: 1 }); return g.witch.x - x0; };
+    expect(fly(parts("missile"))).toBeGreaterThan(fly(TUNING) * 1.05);
   });
 });
 

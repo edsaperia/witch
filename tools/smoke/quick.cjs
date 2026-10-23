@@ -75,6 +75,8 @@ async function main() {
     await page.mouse.click(W / 2, H * 0.42, { button: "right" });
     await page.waitForFunction(() => Number.isFinite(window.witch.game.witches[0].dash.at), null, { timeout: 60000, polling: 100 }).catch(() => {});
     check(await page.evaluate(() => Number.isFinite(window.witch.game.witches[0].dash.at)), "right click dodges (a blink on the ground)");
+    // (the bare broom's take-off needs the shared cooldown empty: no quick take-off since the Workshop's parts, Ed 2026-10-23)
+    await page.waitForFunction(() => !(window.witch.game.witches[0].cool?.left > 0.01), null, { timeout: 60000, polling: 100 }).catch(() => {});
     await page.keyboard.press("Space");
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
     check((await state()).mode === "treetop", "space rises to the treetops");
