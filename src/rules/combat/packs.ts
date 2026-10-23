@@ -1,5 +1,5 @@
 // Pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-15 and 2026-10-19): behind the tuning's combat.packs.on, a pack
-// of a kind in config/packs.json (one kind, one side, one target) fights in phases: it closes in (approach), every member glows and
+// of a kind with a `pack` (its creature.js; config/packs.json the rest) (one kind, one side, one target) fights in phases: it closes in (approach), every member glows and
 // its call plays (the tell), it combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her or the
 // furthest throws the special), then it falls back by its kind's retreat pattern (the lull, longer for a bigger pack; her own pack
 // holds instead), and again. Roles come from position every step; how many may wind up or strike at her at once is the kind's
@@ -16,6 +16,7 @@
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
 // waits its turn its kind's tactic places it (the wolves' surround: rules/combat.ts).
 import raw from "../../../config/packs.json";
+import { sectionOf } from "../creatureConfig";
 import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
@@ -52,7 +53,9 @@ export interface PacksData {
   /** The lull's prowl round her once at its place: near (m), pace (times its speed); freeze, the share of the lull a freeze holds first. */
   prowl: { near: number; pace: number; freeze: number };
 }
-export const PACKS = raw as unknown as PacksData;
+/** packs.json, its kinds each creature's own `pack` (art/creatures/<id>/creature.js, 2026-10-23: so builders adding kinds don't
+ *  collide), spread over any the file still holds. */
+export const PACKS = { ...(raw as unknown as PacksData), kinds: { ...(raw as unknown as PacksData).kinds, ...(sectionOf("pack") as Record<string, PackKind>) } } as PacksData;
 /** A kind's pack entry, or null (it fights as before). */
 export const packKindOf = (species: string, data: PacksData = PACKS): PackKind | null => data.kinds[species] ?? null;
 /** A kind's special's numbers: the special's, with the kind's own variant over them. */

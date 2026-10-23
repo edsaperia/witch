@@ -29,5 +29,15 @@ export const CREATURE_ARMADILLO = {
     scale: { "dash.distance": 1.2 },
     add: { "dash.gone": 0.15 },
     label: "Armadillo's Roll: a little longer blink, and untouchable a little longer after it"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: null,
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the curl",
+    tells: { melee: "crouch", special: "the curl" }
   }
 };

@@ -46,5 +46,22 @@ export const CREATURE_RAVEN = {
     volume: 1.3
   },
   buff: { name: "Wings", kind: "move", scale: { treetopSpeed: 1.2 }, label: "Raven's Wings: faster in the treetops" },
-  character: { sprite: "hop", every: [3, 6], for: 0.7 }
+  character: { sprite: "hop", every: [3, 6], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: {
+      name: "spit and barb",
+      range: 36,
+      shots: [0, 1, 2],
+      spread: 8,
+      attacks: [null, "longspit", "longbarb"],
+      tint: "red"
+    },
+    special: "mirage",
+    retreat: "branches",
+    rhythm: "steady",
+    pressure: 1,
+    call: "a caw",
+    tells: { melee: "wings", ranged: "aim line", special: "a caw" }
+  }
 };
