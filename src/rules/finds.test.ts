@@ -3,9 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
-import { FINDABLE, fillTrunk, findPiece, nightPick, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
+import { FINDABLE, fillTrunk, findPiece, nightFind, nightPick, spawnFind, spawnSpot, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
 import { PART_IDS, fittedKey, fittedOf } from "./broomParts";
 import { SHELVES } from "./wardrobe";
+import { deckOf, onFloor } from "./treehouse";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 function game(seed = 123): Game {
@@ -140,5 +141,49 @@ describe("tonight's wreck (the Workshop, Ed 2026-10-23: a broom part to find)", 
     h.partyOver = { at: h.clock.time, ease: 1 } as Game["partyOver"];
     stepGame(h, C, 1 / 60);
     expect(fittedKey(V.spells.parts)).toBe(fittedKey(fittedOf("canoe")));
+  });
+});
+
+describe("a find spawned near her (the dev spawn; Ed, 2026-10-23: \"a way to spawn the collectible near the player\")", () => {
+  /** E at tonight's find: what the rules say and do. */
+  const claim = (g: Game) => { const T = g.trunk!; at(g, T.x + 0.5, T.z); press(g); return { events: g.leashEvents.filter(e => e.kind === "found").map(e => [e.obj, e.find]), found: T.found, parts: g.witches[0].spells.parts, broom: g.witches[0].spells.broom }; };
+  for (const [kind, item] of [["wearable", FINDABLE[0].id], ["part", "nozzles"]] as const) it(`is claimed exactly as a placed one (${kind} ${item})`, () => {
+    const placed = game(); fillTrunk(placed, {}); placed.trunk!.kind = kind; placed.trunk!.item = item;
+    const spawned = game(), W = spawned.witches[0].body;
+    at(spawned, W.x + 200, W.z + 150); // (out on the island)
+    const spot = spawnSpot(spawned)!;
+    expect(spot).not.toBeNull();
+    expect(spawnFind(spawned, kind, item, spot)).toBe(spawned.trunk);
+    expect(claim(spawned)).toEqual(claim(placed));
+  });
+  it("stands a few metres from her on clear ground: no tree, rock or ruin on it, not on a lake or the treehouse", () => {
+    const g = game(), W = g.witches[0].body;
+    let n = 0;
+    for (const [dx, dz] of [[200, 150], [-260, 90], [120, -300], [-80, -220], [300, 260]]) {
+      at(g, W.x + dx, W.z + dz);
+      const p = spawnSpot(g);
+      if (!p) continue;
+      n++;
+      const d = Math.hypot(p.x - g.witch.x, p.z - g.witch.z);
+      expect(d).toBeGreaterThanOrEqual(4); expect(d).toBeLessThanOrEqual(12.01);
+      expect(g.forest.treesNear(p.x, p.z, 3).some(t => Math.hypot(t.x - p.x, t.z - p.z) < 2.5)).toBe(false);
+      const c = g.map.cellSafe(p.x, p.z).cell;
+      expect(g.map.isLake(c[0], c[1])).toBe(false);
+    }
+    expect(n).toBeGreaterThanOrEqual(4);
+    // from her decks: never on the treehouse's floor (the ground beyond it, if any)
+    const h = game(), d = deckOf(h.map, h.tuning), q = spawnSpot(h);
+    if (d && q) expect(onFloor(d, q.x, q.z, 3)).toBe(false);
+  });
+  it("is tonight's find: the constellation's way points at it, and an unknown item spawns nothing", () => {
+    const g = game(), W = g.witches[0].body;
+    at(g, W.x - 240, W.z + 60);
+    const p = spawnSpot(g)!;
+    spawnFind(g, "part", "ladder", p);
+    const nf = nightFind(g, g.map.treehouse.x, g.map.treehouse.z)!;
+    expect(nf).toMatchObject({ kind: "part", item: "ladder" });
+    expect(nf.bearing).toBeCloseTo((wayTo(g.map.treehouse.x, g.map.treehouse.z, p.x, p.z).bearing * 180) / Math.PI);
+    expect(spawnFind(g, "part", "no-such-part", p)).toBeNull();
+    expect(g.trunk!.item).toBe("ladder");
   });
 });
