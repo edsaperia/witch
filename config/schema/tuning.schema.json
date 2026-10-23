@@ -2750,6 +2750,9 @@
         "broom": {
           "type": "string"
         },
+        "parts": {
+          "type": "string"
+        },
         "speed": {
           "type": "object",
           "properties": {
@@ -2770,32 +2773,6 @@
             "mult",
             "duration",
             "cooldown"
-          ],
-          "additionalProperties": false
-        },
-        "plain": {
-          "type": "object",
-          "properties": {
-            "riseCooldown": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "riseCooldown"
-          ],
-          "additionalProperties": false
-        },
-        "long": {
-          "type": "object",
-          "properties": {
-            "mult": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "mult"
           ],
           "additionalProperties": false
         },
@@ -2830,19 +2807,6 @@
           ],
           "additionalProperties": false
         },
-        "double": {
-          "type": "object",
-          "properties": {
-            "charges": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "charges"
-          ],
-          "additionalProperties": false
-        },
         "battering": {
           "type": "object",
           "properties": {
@@ -2871,19 +2835,6 @@
           },
           "required": [
             "cooldown"
-          ],
-          "additionalProperties": false
-        },
-        "haul": {
-          "type": "object",
-          "properties": {
-            "pull": {
-              "type": "number",
-              "minimum": 0
-            }
-          },
-          "required": [
-            "pull"
           ],
           "additionalProperties": false
         },
@@ -3162,15 +3113,12 @@
       "required": [
         "hat",
         "broom",
+        "parts",
         "speed",
-        "plain",
-        "long",
         "healing",
         "helmet",
-        "double",
         "battering",
         "leyjump",
-        "haul",
         "pound",
         "stealth",
         "harvest",

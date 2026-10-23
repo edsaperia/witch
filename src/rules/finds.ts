@@ -7,15 +7,28 @@
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
 // (rules/constellations.ts; the crystal ball's vision is gone, the ball a placeholder again). Where the trunk stands is the night's (map.seed); what's in it
 // is the page's to say (what she owns is this browser's), so the rules place it empty and the page fills it (fillTrunk).
+//
+// The finds pool (Ed, 2026-10-23: "One draw over everything she hasn't found. Clothes, brooms, hats, records - everything that's a
+// permanent upgrade."): every kind of permanent upgrade is a FindKind in FIND_KINDS (its items, the piece its find is drawn as,
+// what claiming one does in the rules), and the night's one find is a single seeded draw over every item of every kind she hasn't
+// found (nightPick): the kind drawn decides the find, a wearable in the trunk or a broom part in a wreck (an old witch's crashed
+// broom, the Workshop's: docs/backlog/workshop.md), placed alike (placeTrunk), a ground-mode find, E taking it at once, only while
+// the party's on, kept even if the night's then lost. No forced early wreck, no biome weighting (Ed, 2026-10-23). A new kind (hats,
+// records) joins by adding its FindKind: its items, its piece, its claim.
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
 import { canopyOver, type Relic } from "./legends";
 import { hash2 } from "./random";
 import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
+import { PART_IDS, fitPart, partById } from "./broomParts";
+import { setParts, type SpellState } from "./spells";
 
-/** The night's trunk: where it stands, what's in it (null: nothing she lacks, so none tonight), and whether she's taken it. */
-export interface Trunk { x: number; z: number; cell: [number, number]; item: string | null; found: boolean }
+/** The kinds of permanent upgrade found in the forest, one a night across them all. */
+export type FindKindId = "wearable" | "part";
+/** The night's find: where it stands, what kind it is and what's in it (item null: not yet filled, or nothing she lacks, so none
+ *  tonight), and whether she's taken it. A wearable's is the travel trunk, a broom part's a wreck; kept as `g.trunk` either way. */
+export interface Trunk { x: number; z: number; cell: [number, number]; kind: FindKindId; item: string | null; found: boolean }
 
 /** How close she must stand to open it (m), how far from the relics it stands (m), and the rings round an area's middle it's looked for on. */
 export const TRUNK_REACH = 2.2, TRUNK_CLEAR = 30;
@@ -24,6 +37,28 @@ const RINGS = [45, 60, 35, 75, 28];
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of
  *  three parts ... We have designed this before": the garage's). */
 export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !SHELVES.broom.items.includes(i));
+
+/** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
+ *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
+ *  keeps it for good, app/owned.ts and app/broomSave.ts, from the "found" event). */
+export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; claim?(s: SpellState, item: string): void }
+export const FIND_KINDS: readonly FindKind[] = [
+  { id: "wearable", name: "trunk", items: FINDABLE.map(i => i.id), piece: () => "travel-trunk" },
+  // (a part found goes on her broom at once if its slot is empty: till the Workshop's bay lets her fit it, docs/backlog/workshop.md)
+  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}`, claim(s, id) { const p = partById(id); if (p && !s.parts[p.slot]) setParts(s, fitPart(s.parts, id)); } },
+];
+export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
+/** What she has found (or owns) of each kind; a kind left out counts as none found. */
+export type Found = Partial<Record<FindKindId, ReadonlySet<string>>>;
+
+/** The night's one find (Ed, 2026-10-23: "One draw over everything she hasn't found"): one seeded draw (the night's seed) over
+ *  every item of every kind she lacks, a ticket each; the kind drawn decides the find. Null once she has everything. */
+export function nightPick(seed: number, found: Found): { kind: FindKindId; item: string } | null {
+  const left: { kind: FindKindId; item: string }[] = [];
+  for (const k of FIND_KINDS) for (const item of k.items) if (!found[k.id]?.has(item)) left.push({ kind: k.id, item });
+  if (!left.length) return null;
+  return left[Math.floor(hash2(seed, left.length, 8123) * left.length) % left.length];
+}
 
 /** Where tonight's trunk stands (map.seed): in a seeded wild area (not home), in its woods round its middle, under the canopy
  *  if it can be (so the treetops hide it), off its clearings and its legend's circle, clear of the relics. Null on a map with
@@ -45,24 +80,20 @@ export function placeTrunk(map: ForestMap, forest: { treesNear(x: number, z: num
       if (!best || score > best.score) best = { x, z, score };
       if (best.score === 3) break;
     }
-    if (best) return { x: best.x, z: best.z, cell: [cell[0], cell[1]], item: null, found: false };
+    if (best) return { x: best.x, z: best.z, cell: [cell[0], cell[1]], kind: "wearable", item: null, found: false };
   }
   return null;
 }
 
-/** What tonight's trunk holds (the night's seed, out of the findable ones she doesn't own): null once she has them all. */
-export function trunkItem(seed: number, owned: ReadonlySet<string>): string | null {
-  const left = FINDABLE.filter(i => !owned.has(i.id));
-  if (!left.length) return null;
-  return left[Math.floor(hash2(seed, left.length, 8123) * left.length) % left.length].id;
-}
-
-/** Puts what it holds in tonight's trunk (main.ts, from what this browser says she owns); nothing to hold, no trunk. */
-export function fillTrunk(g: { trunk: Trunk | null; map: ForestMap }, owned: ReadonlySet<string>): void {
+/** Makes tonight's find what the night's draw says (main.ts, from what this browser says she has: nightPick), a trunk or a wreck
+ *  where placeTrunk put it; nothing left to find, none. */
+export function fillTrunk(g: { trunk: Trunk | null; map: ForestMap }, found: Found): void {
   if (!g.trunk) return;
-  const item = trunkItem(g.map.seed, owned);
-  if (item) g.trunk.item = item; else g.trunk = null;
+  const pick = nightPick(g.map.seed, found);
+  if (pick) { g.trunk.kind = pick.kind; g.trunk.item = pick.item; } else g.trunk = null;
 }
+/** The art piece tonight's find is drawn as (the trunk, or the part's wreck). */
+export const findPiece = (t: Trunk): string => findKind(t.kind).piece(t.item ?? "");
 
 /** The trunk she stands at to open (on the ground, within its reach, still full), else null. */
 export function trunkAt(trunk: Trunk | null, x: number, z: number): Trunk | null {
@@ -80,11 +111,11 @@ export function wayTo(fromX: number, fromZ: number, x: number, z: number): { poi
 
 /** The night's one permanent upgrade to find (Ed, 2026-10-22: "With all permanent upgrades, there's one per night, and it's
  *  hinted through the telescope"): what kind it is, its item id and its bearing (degrees clockwise from north) from (fromX, fromZ),
- *  the treehouse. Never two at once. Today a wearable, in the trunk (broom parts, hats and bags to come, each its own kind); null
- *  with none to find tonight, or once it's found. The constellation's one source (rules/constellations.ts). */
-export interface NightFind { kind: "wearable"; item: string; bearing: number }
+ *  the treehouse. Never two at once. A wearable in the trunk or a broom part in a wreck (hats and records to come, each its own
+ *  kind in FIND_KINDS); null with none to find tonight, or once it's found. The constellation's one source (rules/constellations.ts). */
+export interface NightFind { kind: FindKindId; item: string; bearing: number }
 export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: number): NightFind | null {
   const t = g.trunk;
   if (!t || !t.item || t.found) return null;
-  return { kind: "wearable", item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+  return { kind: t.kind, item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
 }

@@ -50,7 +50,8 @@ import { affection, blocksLetters, hit as hitAffection } from "./affection";
 import { knockWitch, newKnock, stepWitchKnock, stunned, type Blow, type Knock } from "./knock";
 import { applyDash, dashing, newDash, rechargeDash, refundDash, startDash, type DashState } from "./dash";
 import { coolReady, coolRefund, coolRoom, coolSpend, coolWait, newCool, stepCool, type CoolState } from "./cooldown";
-import { blinkDistance, castSpell, extraBlinks, newSpells, pullOf, revealed, riseCooldownOf, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { castSpell, newSpells, pullOf, revealed, speedMultiplier, stepHealingRing, type SpellState } from "./spells";
+import { broomTuning } from "./broomParts";
 import { batter, canPound, groundPound, hiddenWitch, leyJump, leyJumpTarget } from "./brooms";
 import type { HouseState } from "./houseRooms";
 import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWitches";
@@ -352,7 +353,7 @@ export const affectionOf = (g: Game): Affection => {
 /** Hits to fill a meter, by level: the tuning's invites.hits, a legend's the party-legend egg's (legends.partyHits). */
 export const meterHits = (t: Tuning): number[] => [...t.invites.hits.slice(0, 3), t.legends.partyHits];
 
-export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning, pullOf(w.spells, g.buffs?.tuning ?? g.tuning)); // (the Haul broom's lighter: rules/spells.ts)
+export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf(w.leash.stack, g.creatures, w.body, g.buffs?.tuning ?? g.tuning, pullOf(w.spells)); // (the Canoe hull's lighter: rules/broomParts.ts)
 
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
@@ -401,8 +402,12 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
-/** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Double blink broom's one more. */
-export const blinkCharges = (g: Game, W: Witch): number => (g.tuning.dash.charges ?? 1) + g.buffs.mods.charges + extraBlinks(W.spells, g.tuning);
+/** The tuning witch W moves by: the step's (the legends' buffs on it) with her broom's parts' numbers (rules/broomParts.ts: the
+ *  Workshop, Ed 2026-10-23); the bare broom's is the step's own. */
+export const witchTuning = (g: Game, W: Witch): Tuning => broomTuning(g.buffs?.tuning ?? g.tuning, W.spells.parts);
+
+/** Her blinks in hand before the cooldown: the tuning's two (Ed, 2026-10-08), Hare's Dash bursts' more, the Twig bristles' one more. */
+export const blinkCharges = (g: Game, W: Witch): number => (broomTuning(g.tuning, W.spells.parts).dash.charges ?? 1) + g.buffs.mods.charges;
 
 /** Note where everything was before a step, for drawing between steps. */
 function remember(g: Game): void {
@@ -487,20 +492,23 @@ function fixedStep(g: Game, controls: Controls): void {
   // minutes; seated there, E having cast it, both hold her as ever.)
   if ((!g.wake || g.witch.seated) && (heldBySpell(g.party, g.clock.time) || heldByRoutine(g, g.clock.time))) c = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const W = g.witches[0];
+  // Her own movement plays by her broom's parts (rules/broomParts.ts: speeds, turning, rise and fall, the cooldowns, blinks; the
+  // bare broom's the tuning's own): `tw` for her steps, blinks and cooldowns below, `t` for the rest.
+  const tw = broomTuning(t, W.spells.parts);
   // Her broom's spell (rules/spells.ts): Speed's boost, or at once Ley jump (to the ley line's pulse) or Ground pound (rules/brooms.ts).
   if (c.spell && !W.ko && castSpell(g.spells, ht, t, W.spells.broom === "leyjump" ? !!leyJumpTarget(g) : W.spells.broom === "pound" ? canPound(W.body) : true)) {
     if (W.spells.broom === "leyjump") leyJump(g, W, (x, z) => blinkClear(g, x, z));
-    else if (W.spells.broom === "pound" && groundPound(g, W, t)) { W.landedAt = ht; if (t.cooldown?.shared) coolSpend(W.cool, riseCooldownOf(W.spells, t), coolRoom(t, blinkCharges(g, W))); } // (a landing, for the shared cooldown too)
+    else if (W.spells.broom === "pound" && groundPound(g, W, t)) { W.landedAt = ht; if (tw.cooldown?.shared) coolSpend(W.cool, tw.riseCooldown ?? 0, coolRoom(tw, blinkCharges(g, W))); } // (a landing, for the shared cooldown too)
   }
   // The speed boost: her speeds times its multiplier while it's on.
-  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = blinkCharges(g, W); // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more; the Double blink broom one more)
+  const M = g.buffs.mods, H = LEGEND_BUFFS.how, charges = blinkCharges(g, W); // (two blinks before the cooldown, Ed 2026-10-08; Hare's Dash bursts more; the Twig bristles one more)
   // One cooldown for her dodge and her take-off (Ed, 2026-10-15; rules/cooldown.ts): a counter with room for her blinks, a dodge
-  // adding dash.cooldown, a take-off cooldown.rise, a landing riseCooldown (the plain broom's share of the last two); it drains on her clock.
-  const shared = !!t.cooldown?.shared, room = coolRoom(t, charges), plainK = W.spells.broom === "none" ? t.spells.plain?.riseCooldown ?? 1 : 1;
+  // adding dash.cooldown, a take-off cooldown.rise, a landing riseCooldown (the Jet nozzles halve the last two); it drains on her clock.
+  const shared = !!tw.cooldown?.shared, room = coolRoom(tw, charges);
   if (shared) stepCool(W.cool, hdt);
   // Her speed: the boost spell, a slow, Momentum (Boar) after a blink, and firing (no slowing: Ram's Steady).
   const firing = W.invites.burstLeft > 0 || (!!c.fire && t.invites.on && g.witch.mode === "ground" && !g.witch.seated);
-  const boost = speedMultiplier(g.spells, ht, t) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
+  const boost = speedMultiplier(g.spells, ht, tw) * (W.slowUntil !== undefined && g.clock.time < W.slowUntil ? W.slowMult ?? 1 : 1)
     * (M.momentum > 0 && ht < W.dash.at + H.momentum.time ? 1 + (H.momentum.speed - 1) * M.momentum : 1)
     * (firing && !M.steady && g.witch.mode === "ground" ? t.invites.fireSlow ?? 1 : 1);
   // Knocked out: no input but the camera's zoom while it plays out.
@@ -529,25 +537,25 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
   // dodging"; rising takes her out of ground mode at once).
-  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, (t.cooldown?.rise ?? 0) * plainK, room) : ht < (W.landedAt ?? -Infinity) + riseCooldownOf(W.spells, t))) c = { ...c, toggleMode: false }; // (the plain broom's shorter: rules/spells.ts; shared: the counter must have room for the take-off)
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, tw.cooldown?.rise ?? 0, room) : ht < (W.landedAt ?? -Infinity) + (tw.riseCooldown ?? 0))) c = { ...c, toggleMode: false }; // (the Jet nozzles' shorter: rules/broomParts.ts; shared: the counter must have room for the take-off)
   const was = W.body;
-  if (!shared) rechargeDash(W.dash, ht, charges, t.dash.cooldown);
+  if (!shared) rechargeDash(W.dash, ht, charges, tw.dash.cooldown);
   // A blink (Decoy, Beaver: it leaves a waiting 💌 where she was).
   // (A press is held for dash.buffer seconds until it can go: pressed a moment early still blinks.)
-  if (c.dash) W.dash.bufferUntil = ht + t.dash.buffer;
+  if (c.dash) W.dash.bufferUntil = ht + tw.dash.buffer;
   if (ht <= (W.dash.bufferUntil ?? -Infinity) && !W.ko && !stunned(W.knock, ht)
-    && startDash(W.dash, was, c.moveX, c.moveZ, ht, W.spells.broom === "long" ? { ...t, dash: { ...t.dash, distance: blinkDistance(W.spells, t) } } : t, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0, shared ? coolReady(W.cool, t.dash.cooldown, room) : undefined)) {
+    && startDash(W.dash, was, c.moveX, c.moveZ, ht, tw, g.map.bounds, (x, z) => blinkClear(g, x, z), charges, H.charges.chain, c.aimX ?? 0, c.aimZ ?? 0, shared ? coolReady(W.cool, tw.dash.cooldown, room) : undefined)) {
     W.dash.bufferUntil = undefined;
-    if (shared) coolSpend(W.cool, t.dash.cooldown, room); // (the dodge's share of the one cooldown)
+    if (shared) coolSpend(W.cool, tw.dash.cooldown, room); // (the dodge's share of the one cooldown)
     if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
-  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? t : { ...t, groundSpeed: t.groundSpeed * boost, treetopSpeed: t.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells, t)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
   if (g.wake) keepInBedroom(g); // (the bedroom's door shut till the curtains open: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
-  if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, riseCooldownOf(W.spells, t), room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
-  if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, (t.cooldown?.rise ?? 0) * plainK, room); // (taken off: its share; not her first step off the decks)
-  if (shared) { const wait = coolWait(W.cool, t.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
+  if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
+  if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
+  if (shared) { const wait = coolWait(W.cool, tw.dash.cooldown, room); if (wait > 0) W.dash.readyAt = ht + wait; } // (the dash's readyAt kept true to the counter, for the reticle and the buffer)
   // On the treehouse deck or off it (rules/treehouse.ts): landed on it, or risen off it.
   const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).

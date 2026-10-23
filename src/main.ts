@@ -38,6 +38,8 @@ import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { fillTrunk } from "./rules/finds";
+import { loadBroom, migrateBroom, partFound } from "./app/broomSave";
+import { partById } from "./rules/broomParts";
 import { loadOwned, saveOwned } from "./app/owned";
 import { StationPanel } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
@@ -95,6 +97,9 @@ const bootMap = params.get("arrive") ? null : startBootMapPrep(bootSeed, params)
 
 declare const __BUILD__: string;
 const BUILD = typeof __BUILD__ === "string" ? __BUILD__ : "dev";
+// Brooms before parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): a saved broom shape back to the Classic look and a saved
+// broom spell dropped, once, before her look is read.
+migrateBroom();
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 let lookNow = JSON.stringify(savedLook);
@@ -763,9 +768,13 @@ function frame(now: number): void {
   // E at the treehouse deck's map table (rules/treehouse.ts): the sea chart over the game, to sail from at any time (Ed, 2026-10-11:
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
-  // Tonight's trunk (rules/finds.ts): filled from what she owns once a night; taken, its wearable is hers for good (app/owned.ts).
-  if (game.trunk && game.trunk.item === null) fillTrunk(game, owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>));
-  for (const e of game.leashEvents) if (e.kind === "found" && e.obj) {
+  // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
+  // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
+  if (game.trunk && game.trunk.item === null) fillTrunk(game, { wearable: owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), part: new Set(loadBroom().found) });
+  for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
+    partFound(e.obj, game.spells.parts);
+    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj}${game.spells.parts[partById(e.obj)?.slot ?? "tip"] === e.obj ? " · on her broom" : ""}`);
+  } else if (e.kind === "found" && e.obj) {
     (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)).add(e.obj); saveOwned(owned);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);

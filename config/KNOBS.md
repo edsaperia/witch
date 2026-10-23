@@ -574,7 +574,7 @@ After she lands she can't rise again for this many seconds (Ed, 2026-10-11: play
 
 ### `cooldown`, `groundHeight`, `treetopHeight`
 
-One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown. The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts): shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the plain broom's spells.plain.riseCooldown times both of the last). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Double blink broom): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.
+One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown. The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts): shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the Jet nozzles halve both of the last: config/broom-parts.json). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Twig bristles): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.
 
 | knob | type | range |
 |---|---|---|
@@ -679,19 +679,16 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.clear.treehouse` | number | 0 to … |
 | `spells.hat` | string |  |
 | `spells.broom` | string |  |
+| `spells.parts` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
 | `spells.speed.cooldown` | number | 0 to … |
-| `spells.plain.riseCooldown` | number | 0 to … |
-| `spells.long.mult` | number | 0 to … |
 | `spells.healing.radius` | number | 0 to … |
 | `spells.healing.every` | number | 0 to … |
 | `spells.helmet.drop` | number | 0 to … |
-| `spells.double.charges` | number | 0 to … |
 | `spells.battering.width` | number | 0 to … |
 | `spells.battering.stun` | number | 0 to … |
 | `spells.leyjump.cooldown` | number | 0 to … |
-| `spells.haul.pull` | number | 0 to … |
 | `spells.pound.cooldown` | number | 0 to … |
 | `spells.pound.radius` | number | 0 to … |
 | `spells.pound.push` | number | 0 to … |

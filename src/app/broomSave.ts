@@ -1,0 +1,57 @@
+// Her broom's parts (the Workshop, Ed 2026-10-23; rules/broomParts.ts), kept on this browser (localStorage witch.broom): the parts
+// she has found (each from a wreck, rules/finds.ts) and which is fitted in each slot. A first game's broom is bare and she owns no
+// part. Storage blocked: this run only.
+//
+// The migration from the brooms before parts: a browser with no witch.broom yet had a broom shape in her look (witch.genome's
+// broom.kind) and maybe a broom spell (witch.loadout's broom). Shapes are parts' looks now, and spells come from sets, so the
+// shape goes back to the Classic look (its colours and fit kept) and the spell is dropped (every spell was free for testing:
+// nothing of it is owned). Once, then witch.broom says it's done.
+import { PART_IDS, SLOTS, bareBroom, partById, type Fitted } from "../rules/broomParts";
+import { LOADOUT_KEY } from "./loadout";
+
+export const BROOM_KEY = "witch.broom";
+const GENOME_KEY = "witch.genome";
+export interface BroomSave { v: 1; found: string[]; fitted: Fitted }
+type Store = Pick<Storage, "getItem" | "setItem">;
+const storeOf = (s?: Store | null): Store | null => { try { return s ?? globalThis.localStorage ?? null; } catch { return null; } };
+
+/** Her broom as saved: the parts found (known ones only) and those fitted (a found part, in its own slot). */
+export function loadBroom(storage?: Store | null): BroomSave {
+  const out: BroomSave = { v: 1, found: [], fitted: bareBroom() };
+  try {
+    const o = JSON.parse(storeOf(storage)?.getItem(BROOM_KEY) ?? "null") as Partial<BroomSave> | null;
+    if (!o) return out;
+    out.found = PART_IDS.filter(id => Array.isArray(o.found) && o.found.includes(id));
+    for (const s of SLOTS) { const id = o.fitted?.[s]; if (id && out.found.includes(id) && partById(id)?.slot === s) out.fitted[s] = id; }
+  } catch { /* spoilt: a bare broom */ }
+  return out;
+}
+
+export function saveBroom(b: BroomSave, storage?: Store | null): void {
+  try { storeOf(storage)?.setItem(BROOM_KEY, JSON.stringify({ v: 1, found: [...new Set(b.found)].sort(), fitted: b.fitted })); } catch { /* storage blocked: this run only */ }
+}
+
+/** A part found (the "found" event of a wreck): hers for good, and fitted as the rules fitted it (`fitted`: her broom now). */
+export function partFound(id: string, fitted: Fitted, storage?: Store | null): BroomSave {
+  const b = loadBroom(storage);
+  if (!b.found.includes(id)) b.found.push(id);
+  b.fitted = fitted;
+  saveBroom(b, storage);
+  return loadBroom(storage);
+}
+
+/** The once-only migration (above): returns whether it changed anything. */
+export function migrateBroom(storage?: Store | null): boolean {
+  const st = storeOf(storage);
+  if (!st) return false;
+  try {
+    if (st.getItem(BROOM_KEY) !== null) return false;
+    let changed = false;
+    const g = JSON.parse(st.getItem(GENOME_KEY) ?? "null") as { broom?: { kind?: string } } | null;
+    if (g?.broom && g.broom.kind && g.broom.kind !== "classic") { g.broom.kind = "classic"; st.setItem(GENOME_KEY, JSON.stringify(g)); changed = true; }
+    const l = JSON.parse(st.getItem(LOADOUT_KEY) ?? "null") as { hat?: string; broom?: string } | null;
+    if (l && "broom" in l) { const { broom, ...rest } = l; st.setItem(LOADOUT_KEY, JSON.stringify(rest)); changed ||= !!broom && broom !== "none"; }
+    saveBroom({ v: 1, found: [], fitted: bareBroom() }, st);
+    return changed;
+  } catch { return false; }
+}
