@@ -43,7 +43,7 @@ export class TelescopeView {
     });
     this.strip = document.createElement("canvas");
     this.strip.width = STRIP.w; this.strip.height = STRIP.h;
-    Object.assign(this.strip.style, { position: "absolute", top: "14px", left: "50%", width: `${STRIP.w * STRIP.px}px`, maxWidth: "80vw", height: `${STRIP.h * STRIP.px}px`, transform: "translateX(-50%)", imageRendering: "pixelated" });
+    Object.assign(this.strip.style, { position: "absolute", top: "36px", left: "50%", width: `${STRIP.w * STRIP.px}px`, maxWidth: "80vw", height: `${STRIP.h * STRIP.px}px`, transform: "translateX(-50%)", imageRendering: "pixelated" });
     this.el.append(this.strip, this.readout);
     host.append(this.el);
     // The arrows look round while she looks (WASD walks her off); the mouse looks round as it moves.
