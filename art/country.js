@@ -433,140 +433,140 @@ const fhRing = (m, n, r, fn) => { for (let i = 0; i < n; i++) { const a = i / n 
 
 const HAT_FINDS = {
   // the Helmet: on top of a cairn, an iron rim riveted round its brim and a chin strap hanging
-  helmet(m) {
+  helmet(m, o = {}) {
     fhEarth(m, [.5, .05, .36]);
     for (const [x, y, z, r] of [[0, .08, 0, .2], [-.12, .09, .08, .12], [.13, .08, .06, .12], [.02, .2, .01, .13], [0, .3, 0, .09]]) fhStone(m, [x, y, z], [r, r * .7, r * .85], 2, Math.round(x * 50 + 3));
-    fhHat(m, [0, .38, 0], M.JACKET, M.FRAME, { brim: .9, crook: .3, tall: .85 });
+    if (!o.empty) { fhHat(m, [0, .38, 0], M.JACKET, M.FRAME, { brim: .9, crook: .3, tall: .85 });
     m.ell([0, .395, 0], [.185, .022, .17], M.FRAME, { group: 25, paint: p => ctCell(p, 30, 1) < .2 ? M.STONED : undefined }); // the iron rim
-    m.seg([.15, .39, .05], [.17, .22, .1], .008, .008, M.CLOTH, { group: 26 }); // the strap
+    m.seg([.15, .39, .05], [.17, .22, .1], .008, .008, M.CLOTH, { group: 26 }); } // the strap
     ctTufts(m, 5, .5, 11, 31); ctMoss(m, [-.15, .12, .1], [.1, .04, .07], 6);
   },
   // the Healing ring: in the middle of a fairy ring of pale toadstools, a white band, the moss there greener
-  healing(m) {
+  healing(m, o = {}) {
     fhEarth(m, [.6, .04, .42], [0, .02, 0], M.MOSS, .2);
     fhRing(m, 9, .42, (x, z, i) => { const h = .06 + sinHash(i, 41) * .04; m.seg([x, .02, z], [x, h, z], .014, .012, M.BELLY, { group: 3 }); m.ell([x, h, z], [.045, .025, .045], i % 3 ? M.BELLY : M.EAR, { group: 4 }); });
-    fhHat(m, [0, .04, 0], M.EAR, M.ACCENT, { crook: .8, tall: 1.1 });
+    if (!o.empty) fhHat(m, [0, .04, 0], M.EAR, M.ACCENT, { crook: .8, tall: 1.1 });
     ctTufts(m, 4, .55, 11, 42);
   },
   // the Harvest hat: upturned and full of berries among berry bushes
-  harvest(m) {
+  harvest(m, o = {}) {
     fhEarth(m, [.6, .05, .4]);
     fhRing(m, 5, .38, (x, z, i) => fhBush(m, [x, .08, z], .8 + sinHash(i, 9) * .3, 5 + 2 * (i % 2), i + 11));
-    const n = mark(m); m.ell([0, .02, 0], [.2, .018, .18], M.STRAW, { group: 20 }); m.seg([0, .02, 0], [.02, -.18, .01], .095, .05, M.STRAW, { group: 21 }); m.ell([0, .045, 0], [.093, .024, .093], M.ACCENT, { group: 22 });
-    place(m, n, { roll: .15, at: [0, .15, 0] }); fhBerries(m, [0, .17, .02], 23, 9, 3); // upturned, berries heaped in its crown
+    if (!o.empty) { const n = mark(m); m.ell([0, .02, 0], [.2, .018, .18], M.STRAW, { group: 20 }); m.seg([0, .02, 0], [.02, -.18, .01], .095, .05, M.STRAW, { group: 21 }); m.ell([0, .045, 0], [.093, .024, .093], M.ACCENT, { group: 22 });
+    place(m, n, { roll: .15, at: [0, .15, 0] }); fhBerries(m, [0, .17, .02], 23, 9, 3); } // upturned, berries heaped in its crown
     ctTufts(m, 4, .6, 11, 43);
   },
   // the Dowsing hat: hung on a forked hazel stick driven in by a little pool
-  dowsing(m) {
+  dowsing(m, o = {}) {
     fhEarth(m, [.55, .04, .38]);
     m.ell([.22, .03, .1], [.2, .012, .14], M.WATER, { group: 2 });
     m.seg([-.1, .02, 0], [-.08, .5, 0], .02, .016, M.WOOD, { group: 3 }); m.seg([-.08, .5, 0], [-.2, .72, 0], .014, .01, M.WOOD, { group: 3 }); m.seg([-.08, .5, 0], [.04, .72, 0], .014, .01, M.WOOD, { group: 3 }); // the fork
-    fhHat(m, [-.08, .62, 0], M.HAT2, M.POM, { roll: .1, crook: 1.2 });
+    if (!o.empty) fhHat(m, [-.08, .62, 0], M.HAT2, M.POM, { roll: .1, crook: 1.2 });
     ctFern(m, [.35, .02, -.15], 6, .45); ctTufts(m, 4, .55, 11, 44);
   },
   // the Sentry hat: up on a little lookout of four posts and a plank platform
-  sentry(m) {
+  sentry(m, o = {}) {
     fhEarth(m, [.5, .04, .36]);
     for (const [x, z] of [[-.18, -.12], [.18, -.12], [-.18, .12], [.18, .12]]) m.seg([x, .02, z], [x * .8, .62, z * .8], .022, .018, M.WOOD, { group: 2, paint: ctPlank(9, .2) });
     m.box([0, .64, 0], [.2, .02, .14], M.WOOD, { group: 3, round: .01, paint: ctPlank(9, .1) });
     m.seg([-.16, .3, .1], [.16, .5, .1], .01, .01, M.WOOD, { group: 4 }); // a brace
-    fhHat(m, [0, .67, 0], M.HAT1, M.ACCENT, { crook: .6 });
+    if (!o.empty) fhHat(m, [0, .67, 0], M.HAT1, M.ACCENT, { crook: .6 });
     ctTufts(m, 5, .55, 11, 45);
   },
   // the Bramble hat: snagged in a thicket of thorny canes, ripped, a few blackberries
-  bramble(m) {
+  bramble(m, o = {}) {
     fhEarth(m, [.6, .05, .4]);
     for (let i = 0; i < 9; i++) { const a = i * .7, r = .1 + sinHash(i, 61) * .3, x = Math.cos(a) * r, z = Math.sin(a) * r * .6, h = .3 + sinHash(i, 62) * .25; m.chain([[x, .02, z, .016], [x * 1.2, h, z * 1.1, .012], [x * 1.6 + .1, h * .7, z * 1.3, .006]], i % 2 ? M.BARK2 : M.BODY2, { group: 3 + (i % 2), paint: p => ctCell(p, 40, i) < .15 ? M.LEAF : undefined }); }
     for (let i = 0; i < 6; i++) m.ell([Math.cos(i * 1.1) * .25, .25 + sinHash(i, 63) * .15, Math.sin(i * 1.1) * .15], [.025, .025, .025], M.JACKET, { group: 6 });
-    fhHat(m, [.05, .36, 0], M.BODY, M.BODY3, { roll: .9, yaw: .4, crook: 1.4 });
+    if (!o.empty) fhHat(m, [.05, .36, 0], M.BODY, M.BODY3, { roll: .9, yaw: .4, crook: 1.4 });
     ctTufts(m, 3, .55, 11, 46);
   },
   // the Slingshot hat: hung on a forked branch with a sling between its prongs, a heap of pebbles below
-  slingshot(m) {
+  slingshot(m, o = {}) {
     fhEarth(m, [.5, .04, .35]);
     m.seg([0, .02, 0], [0, .38, 0], .03, .025, M.TRUNK, { group: 2 }); m.seg([0, .38, 0], [-.14, .62, 0], .02, .014, M.TRUNK, { group: 2 }); m.seg([0, .38, 0], [.14, .62, 0], .02, .014, M.TRUNK, { group: 2 });
     m.seg([-.14, .58, 0], [0, .5, .05], .008, .008, M.ACCENT, { group: 3 }); m.seg([.14, .58, 0], [0, .5, .05], .008, .008, M.ACCENT, { group: 3 }); // the sling
-    fhHat(m, [.14, .66, 0], M.ACCENT, M.POM, { roll: .3, crook: .9 });
+    if (!o.empty) fhHat(m, [.14, .66, 0], M.ACCENT, M.POM, { roll: .3, crook: .9 });
     for (let i = 0; i < 7; i++) fhStone(m, [-.15 + (i % 3) * .07, .03 + Math.floor(i / 3) * .03, .15 + (i % 2) * .04], [.03, .025, .03], 5, i);
     ctTufts(m, 4, .55, 11, 47);
   },
   // the Gathering hat: in the middle of a little nest of gathered things: twigs, pebbles, a feather, a bottle cap
-  gathering(m) {
+  gathering(m, o = {}) {
     fhEarth(m, [.5, .04, .36]);
     fhRing(m, 14, .28, (x, z, i) => m.seg([x, .04, z], [x * .6 + .05, .06, z * .6 - .04], .012, .008, i % 3 ? M.BARK2 : M.STRAW, { group: 2 + (i % 2) }));
     fhRing(m, 6, .38, (x, z, i) => i % 2 ? fhStone(m, [x, .03, z], [.03, .022, .03], 4, i) : m.ell([x, .03, z], [.03, .01, .03], i % 4 ? M.POM : M.FRAME, { group: 5 }));
     m.seg([.2, .04, -.2], [.35, .1, -.15], .012, .002, M.BELLY, { group: 6 }); // a feather
-    fhHat(m, [0, .06, 0], M.POM, M.TOP, { crook: 1.1, roll: .1 });
+    if (!o.empty) fhHat(m, [0, .06, 0], M.POM, M.TOP, { crook: 1.1, roll: .1 });
     ctTufts(m, 3, .55, 11, 48);
   },
   // the Mine hat: blown into a scorched crater, its brim singed, clods thrown round it
-  mine(m) {
+  mine(m, o = {}) {
     fhEarth(m, [.62, .04, .44], [0, .015, 0], M.BODY3, .1);
     m.ell([0, .02, 0], [.36, .025, .26], M.STONED, { group: 2, paint: p => ctCell(p, 10, 2) < .3 ? M.BODY3 : undefined }); // the crater
     fhRing(m, 8, .5, (x, z, i) => m.ell([x, .04, z], [.05, .035, .04], i % 2 ? M.STONED : M.MOSS, { group: 3, rough: .01 }));
-    fhHat(m, [.05, .06, 0], M.BODY2, M.BODY3, { roll: 1.3, yaw: .7, crook: 1.5 });
+    if (!o.empty) fhHat(m, [.05, .06, 0], M.BODY2, M.BODY3, { roll: 1.3, yaw: .7, crook: 1.5 });
     ctTufts(m, 3, .6, 11, 49, 0, .3);
   },
   // the Lullaby hat: in a bed of poppies, a nightcap's tassel on its tip
-  lullaby(m) {
+  lullaby(m, o = {}) {
     fhEarth(m, [.6, .04, .42], [0, .02, 0], M.MOSS, .2);
     for (let i = 0; i < 16; i++) { const a = sinHash(i, 51) * 6.283, d = .15 + .38 * Math.sqrt(sinHash(51, i)), x = Math.cos(a) * d, z = Math.sin(a) * d * .7, h = .1 + sinHash(i, 52) * .12; m.seg([x, .02, z], [x, h, z], .006, .005, M.LEAF2, { group: 3 }); m.ell([x, h, z], [.03, .018, .03], M.ACCENT, { group: 4 }); }
-    fhHat(m, [0, .05, 0], M.TOP, M.BELLY, { roll: 1.35, yaw: -.4, tall: 1.1 });
-    m.ell([-.36, .12, .02], [.035, .035, .035], M.BELLY, { group: 26 }); // the tassel
+    if (!o.empty) fhHat(m, [0, .05, 0], M.TOP, M.BELLY, { roll: 1.35, yaw: -.4, tall: 1.1 });
+    if (!o.empty) m.ell([-.36, .12, .02], [.035, .035, .035], M.BELLY, { group: 26 }); // the tassel
     ctTufts(m, 3, .55, 11, 53);
   },
   // the Cyclone hat: caught on a windy tor's top stone, the grass round it swirled flat, leaves in a spiral
-  cyclone(m) {
+  cyclone(m, o = {}) {
     fhEarth(m, [.6, .05, .42]);
     fhStone(m, [0, .14, 0], [.24, .16, .2], 2, 7); fhStone(m, [-.22, .08, .12], [.14, .09, .11], 2, 8); fhStone(m, [.0, .32, .0], [.14, .08, .12], 3, 9);
     for (let i = 0; i < 18; i++) { const a = i * .55, r = .2 + i * .022; m.seg([Math.cos(a) * r, .03, Math.sin(a) * r * .7], [Math.cos(a + .4) * r, .03, Math.sin(a + .4) * r * .7], .012, .008, i % 3 ? M.LEAF2 : M.STRAW, { group: 4 + (i % 2) }); }
-    fhHat(m, [.02, .39, 0], M.HAT2, M.POM, { roll: .35, yaw: 1, crook: 1.6 });
+    if (!o.empty) fhHat(m, [.02, .39, 0], M.HAT2, M.POM, { roll: .35, yaw: 1, crook: 1.6 });
     ctTufts(m, 3, .6, 11, 54);
   },
   // the Nursing hat: by a spring welling up between stones into a mossy basin, a cloth folded on its brim
-  nursing(m) {
+  nursing(m, o = {}) {
     fhEarth(m, [.6, .04, .42]);
     m.ell([.15, .03, 0], [.24, .012, .16], M.WATER, { group: 2 });
     fhRing(m, 7, .27, (x, z, i) => fhStone(m, [x + .15, .04, z], [.06, .045, .05], 3, i + 20));
     ctMoss(m, [-.22, .05, .05], [.18, .04, .14], 4);
-    fhHat(m, [-.22, .08, .05], M.BELLY, M.HAT2, { crook: .7 });
-    m.box([-.12, .1, .1], [.06, .008, .04], M.CLOTH, { group: 26 }); // a folded cloth
+    if (!o.empty) fhHat(m, [-.22, .08, .05], M.BELLY, M.HAT2, { crook: .7 });
+    if (!o.empty) m.box([-.12, .1, .1], [.06, .008, .04], M.CLOTH, { group: 26 }); // a folded cloth
     ctTufts(m, 4, .6, 11, 55);
   },
   // the Edge-seer: on a boundary stone, an old marker leaning where two places meet
-  edgeseer(m) {
+  edgeseer(m, o = {}) {
     fhEarth(m, [.55, .04, .38]);
     m.box([0, .3, 0], [.1, .3, .06], M.STONE, { group: 2, round: .03, paint: p => ctCell(p, 10, 4) < .25 ? M.MOSS : Math.abs(p[0]) < .015 && p[1] > .4 && p[1] < .55 ? M.STONED : undefined }); // the stone, a line cut down it
     m.seg([-.5, .02, .25], [.5, .02, -.25], .015, .015, M.STONED, { group: 3 }); // the line the edge runs along
-    fhHat(m, [0, .61, 0], M.CLOTH, M.HAT1, { crook: .5, roll: .1 });
+    if (!o.empty) fhHat(m, [0, .61, 0], M.CLOTH, M.HAT1, { crook: .5, roll: .1 });
     ctTufts(m, 5, .55, 11, 56);
   },
   // the Route-seer: on top of an old fingerpost, its blank arms pointing four ways
-  routeseer(m) {
+  routeseer(m, o = {}) {
     fhEarth(m, [.5, .04, .36]);
     m.seg([0, .02, 0], [0, .9, 0], .028, .024, M.WOOD, { group: 2, paint: ctPlank(9, .2) });
     for (const [a, h] of [[.3, .74], [2.1, .7], [3.6, .64], [5.1, .6]]) { const n = mark(m); m.box([.17, 0, 0], [.17, .035, .012], M.WOOD, { group: 3, round: .01, paint: ctWorn(0, .2) }); m.seg([.34, -.035, 0], [.38, 0, 0], .012, .012, M.WOOD, { group: 3 }); m.seg([.34, .035, 0], [.38, 0, 0], .012, .012, M.WOOD, { group: 3 }); place(m, n, { yaw: a, at: [0, h, 0] }); }
-    fhHat(m, [0, .92, 0], M.HAT1, M.POM, { crook: 1 });
+    if (!o.empty) fhHat(m, [0, .92, 0], M.HAT1, M.POM, { crook: 1 });
     ctTufts(m, 5, .5, 11, 57); ctIvy(m, [0, .04, .03], [0, .5, .03], 6, 58);
   },
 };
 const BAG_FINDS = {
   // the bum bag: hung by its strap from a snag on a stump, its zip half open
-  bumbag(m) {
+  bumbag(m, o = {}) {
     fhEarth(m, [.45, .04, .32]);
     ctCyl(m, [0, 0, 0], [0, .38, 0], .14, M.TRUNK, 2, { paint: p => ctCell(p, 9, 2) < .3 ? M.MOSS : undefined, end: ctRings([0, .38, 0], 1) });
     m.seg([.0, .36, .1], [.03, .42, .16], .015, .01, M.TRUNK, { group: 3 }); // the snag
-    m.seg([.03, .4, .15], [.12, .22, .2], .01, .01, M.JACKET, { group: 4 }); m.seg([.03, .4, .15], [-.08, .22, .2], .01, .01, M.JACKET, { group: 4 }); // its strap over the stump's snag // its strap
-    m.ell([.02, .2, .2], [.15, .085, .06], M.TOP, { group: 5 }); m.seg([-.11, .23, .25], [.15, .23, .25], .009, .009, M.POM, { group: 6 }); // the bag, its zip
+    if (!o.empty) { m.seg([.03, .4, .15], [.12, .22, .2], .01, .01, M.JACKET, { group: 4 }); m.seg([.03, .4, .15], [-.08, .22, .2], .01, .01, M.JACKET, { group: 4 }); // its strap over the stump's snag // its strap
+    m.ell([.02, .2, .2], [.15, .085, .06], M.TOP, { group: 5 }); m.seg([-.11, .23, .25], [.15, .23, .25], .009, .009, M.POM, { group: 6 }); } // the bag, its zip
     ctTufts(m, 4, .5, 11, 59);
   },
   // the backpack: slumped against a mossy log, a bedroll strapped on top, its flap open on a map
-  backpack(m) {
+  backpack(m, o = {}) {
     fhEarth(m, [.6, .05, .4]);
     ctCyl(m, [-.4, .12, -.1], [.4, .12, -.1], .12, M.TRUNK, 2, { paint: p => p[1] > .18 && ctCell(p, 10, 1) < .7 ? M.MOSS : undefined, end: ctRings([0, .12, -.1], 0) });
-    const n = mark(m); m.box([0, .18, 0], [.14, .18, .08], M.HAT2, { group: 3, round: .04, paint: p => ctCell(p, 16, 2) < .1 ? M.MOSS : undefined }); m.box([0, .27, .06], [.12, .06, .03], M.HAT2, { group: 4, round: .02 }); // its body, its flap
+    if (!o.empty) { const n = mark(m); m.box([0, .18, 0], [.14, .18, .08], M.HAT2, { group: 3, round: .04, paint: p => ctCell(p, 16, 2) < .1 ? M.MOSS : undefined }); m.box([0, .27, .06], [.12, .06, .03], M.HAT2, { group: 4, round: .02 }); // its body, its flap
     ctCyl(m, [-.16, .4, 0], [.16, .4, 0], .05, M.CLOTH, 5); m.box([0, .2, .09], [.07, .05, .01], M.BELLY, { group: 6 }); // the bedroll, the map
-    place(m, n, { pitch: -.25, yaw: .2, at: [0, .02, .08] });
+    place(m, n, { pitch: -.25, yaw: .2, at: [0, .02, .08] }); }
     ctTufts(m, 4, .6, 11, 60, 0, .25);
   },
 };
@@ -709,6 +709,10 @@ const SCENE_PIECES = {
   } },
 };
 
+// The hat and bag finds' size, a factor on the witch's scale (1: as drafted, about 1 to 1.2 m across), in one place for the art
+// director's finds style guide (Ed, 2026-10-23: "consistent size and lighting design"), which will set it and any shared light.
+export const FIND_SIZE = { hat: 1, bag: 1 };
+
 // ---------------- the table ----------------
 // family: farm | street | scene; size: a factor on the witch's scale; split: the model height above which it goes in the top (treetop mode).
 export const COUNTRY = [
@@ -716,8 +720,8 @@ export const COUNTRY = [
   ...Object.entries(STREET).map(([id, d]) => ({ id, family: "street", size: 1, split: null, ...d })),
   ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d })),
   ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build })),
-  ...Object.entries(HAT_FINDS).map(([id, build]) => ({ id: `hatfind-${id}`, family: "find", size: 1, split: null, desc: `the ${id} hat lying where its spell would have put it (rules/finds.ts)`, build })),
-  ...Object.entries(BAG_FINDS).map(([id, build]) => ({ id: `bagfind-${id}`, family: "find", size: 1, split: null, desc: `the ${id}, left where its owner left it (rules/finds.ts)`, build })),
+  ...Object.entries(HAT_FINDS).flatMap(([id, build]) => [false, true].map(empty => ({ id: `hatfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.hat, split: null, desc: `the ${id} hat lying where its spell would have put it${empty ? ", taken" : ""} (rules/finds.ts)`, build: m => build(m, { empty }) }))),
+  ...Object.entries(BAG_FINDS).flatMap(([id, build]) => [false, true].map(empty => ({ id: `bagfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.bag, split: null, desc: `the ${id}, left where its owner left it${empty ? ", taken" : ""} (rules/finds.ts)`, build: m => build(m, { empty }) }))),
 ];
 /** The broom parts' wrecks, by part id (rules/broomParts.ts): each drawn as the country piece wreck-<id>. */
 export const WRECK_PARTS = Object.keys(WRECKS);

@@ -53,6 +53,9 @@ export const broomOf = (id: string | undefined): BroomSpellId => (id && broomSpe
 
 export interface SpellState {
   hat: HatSpellId;
+  /** The spell hats she owns (Ed, 2026-10-23: every hat but the plain one is found, one a night: rules/finds.ts); absent, every
+   *  built hat (tests, tools and bots). The page sets it from her save (app/hatSave.ts) through the tuning's spells.hats. */
+  hats?: string[];
   /** Her broom's spell: the set her parts complete (spellOfParts), never picked on its own. */
   broom: BroomSpellId;
   /** Her broom's parts, a slot each (rules/broomParts.ts). */
@@ -88,8 +91,11 @@ function withSpell(f: Fitted, spell: BroomSpellId): Fitted {
 
 export function newSpells(t: Tuning): SpellState {
   const parts = withSpell(fittedOf(t.spells.parts), broomOf(t.spells.broom));
-  return { hat: hatOf(t.spells.hat), broom: spellOfParts(parts), parts, activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
+  const owned = t.spells.hats;
+  return { hat: hatOf(t.spells.hat), ...(owned !== undefined && owned !== "*" ? { hats: owned.split(",").filter(id => hatOf(id) !== "none") } : {}), broom: spellOfParts(parts), parts, activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
 }
+/** Whether she owns a hat (the plain hat is always hers). */
+export const ownsHat = (s: Pick<SpellState, "hats">, id: string): boolean => id === "none" || !s.hats || s.hats.includes(id);
 
 /** Her broom's parts now (fitted at the bay, or a part found going into an empty slot): its spell follows (its timers reset
  *  when it changes). */

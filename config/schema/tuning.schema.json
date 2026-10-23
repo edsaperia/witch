@@ -2752,6 +2752,9 @@
         "hat": {
           "type": "string"
         },
+        "hats": {
+          "type": "string"
+        },
         "broom": {
           "type": "string"
         },
@@ -3117,6 +3120,7 @@
       },
       "required": [
         "hat",
+        "hats",
         "broom",
         "parts",
         "speed",

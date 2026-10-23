@@ -80,6 +80,10 @@ Ed's idea, superseding the achievements rule below for hats (kept for the record
 
 Open: which hat each island holds (fixed by kind, or dealt); whether a shrine is guarded or tested by its own power (sleeping animals round the Lullaby shrine, thorns round Bramble); what brooms cost; whether a hat left at a shrine for a later night is still the same one (it is, by this rule).
 
+## Hats and bags found, one a night (built, Ed 2026-10-23)
+
+Every spell hat, the bum bag and the backpack are finds in the one draw (rules/finds.ts FIND_KINDS `hat`, `bag`), each its own ground object (art/country.js `hatfind-<spell>`, `bagfind-<bag>`), hinted by its constellation; only the plain hat is hers at first (everyone started over), a found hat lies on the Parlour's hats' floor, and worn it keeps her Mirror look. The shared find treatment (size, glow, light) waits on the art director's finds style guide. The weapon bags (below) will join the `bag` kind.
+
 ## Bags: weapons, found like hats (Ed, 2026-10-18)
 
 **Not built; don't build without Ed's go.** "There will be bags that give you different 'weapons', which are found like hats."

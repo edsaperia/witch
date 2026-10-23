@@ -4,7 +4,7 @@
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
 import { atMapTable, deckOf } from "./treehouse";
-import { objectAt, stepBed, useHats } from "./houseRooms";
+import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
 import type { Tuning } from "./tuning";
@@ -87,6 +87,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);
+    if (trunk.kind === "hat") addFloorHat(W, trunk.item!);
     relicEvents.push({ kind: "found", id: W.id, x: trunk.x, z: trunk.z, at: ht, obj: trunk.item!, find: trunk.kind });
   }
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
