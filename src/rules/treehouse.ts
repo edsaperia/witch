@@ -60,8 +60,10 @@ export const onFloor = (d: Deck, x: number, z: number, pad = 0): boolean => Math
 /** On the Terrace: the hub's disc or its balcony (the house's one open floor, where she lands and takes off). */
 export const onTerrace = (d: Deck, x: number, z: number): boolean => Math.hypot(x - d.x, z - d.z) <= d.r || onBalcony(d, x, z);
 /** In the house's rooms or on its branches, off the Terrace: she can't rise there (Ed, 2026-10-23: "She shouldn't be able to rise
- *  while in the treehouse, except on the terrace"; rules/witch.ts). */
-export const noRiseAt = (d: Deck, x: number, z: number): boolean => !!d.house?.rooms && onRoomFloor(d.house.rooms, x, z) && !onTerrace(d, x, z);
+ *  while in the treehouse, except on the terrace"; rules/witch.ts). For her on the house's floor (perched): anywhere off the Terrace,
+ *  not only where a floor test finds a room, since the walls keep her on a round room's very edge, which reads as just outside it
+ *  (Ed's playtest, v4273: the pad's X at a bedroom station, the stick held toward it, took her off). */
+export const noRiseAt = (d: Deck, x: number, z: number): boolean => !!d.house?.rooms && !onTerrace(d, x, z);
 
 /** Flying at treetop height over the balcony: she lands on it (Ed, 2026-10-14: "to enter the treehouse you fly directly onto a balcony"). */
 export const flyOnto = (d: Deck, x: number, z: number): boolean => onBalcony(d, x, z);
