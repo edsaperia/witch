@@ -70,6 +70,7 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uCullDbg: { value: new THREE.Vector3(1, 1, 1) },
   uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
   uSeeDither: { value: 0 }, // (the circle hunt: the see-through as a dither in the solid pass, no second pass)
   uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
@@ -86,7 +87,7 @@ export const SPRITE_UNIFORMS = {
 };
 
 const VERT = /* glsl */ `
-uniform vec4 uSeeDbg;
+uniform vec4 uSeeDbg; uniform vec3 uCullDbg;
 uniform vec3 uRight, uUp;
 uniform vec2 uRes;
 uniform float uWitchDepth;
@@ -218,16 +219,16 @@ void main() {
   // batch still appearing). Anything else is wholly the opaque pass's.
   if (uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeDbg.z > 0.5) { // (uSeeDbg.z: the circle hunt's switch for this cull)
     bool need = uIsScenery > 0.5 && uAppear < 0.996;
-    if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
+    if (uCullDbg.x > 0.5 && uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
       float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
       vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
       if (dot(d, d) < R * R) need = true;
     }
-    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
+    if (uCullDbg.y > 0.5 && abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
       vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
       if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0) need = true;
     }
-    if (uIsScenery > 0.5) {
+    if (uCullDbg.z > 0.5 && uIsScenery > 0.5) {
       float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
       if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y) need = true;
     }
