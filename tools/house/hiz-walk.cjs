@@ -1,12 +1,13 @@
 // The treehouse's occluders (render/hiz.ts) change no pixel: the built game (DIST, default dist/) at spots all round the house (the
 // decks, the balcony, its sides and back, on its floors and in the air round it, from the camera's own view at each), each frame drawn
-// with them on and then off in the same page and compared pixel by pixel (the canvas as drawn, before anything is scaled), and each
-// way timed (FRAMES frames, the GPU finished each). Fails on any pixel that differs.
-//   npm run build && node tools/house/hiz-walk.cjs [out dir] [seed]   (DIST=, FRAMES=4, SPOTS=decks,balcony,...)
+// with them on and then off in the same page and compared pixel by pixel (the canvas as drawn, before anything is scaled). Fails on
+// any pixel that differs, and on a blind comparison (the area types' scenery hidden must change some pixel at some spot: else the
+// frames weren't drawn; in the enclosed rooms it's dark behind the house anyway). Its cost: tools/bench/gpu.cjs (QUERY=hiz=0 against the default).
+//   npm run build && node tools/house/hiz-walk.cjs [out dir] [seed]   (DIST=, SPOTS=decks,balcony,...)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/hiz-walk", seed = "123"] = process.argv.slice(2);
-const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")), FRAMES = Number(process.env.FRAMES || 4);
+const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 // (metres from the treehouse's spot, south +z; mode; the house's floor or the air)
 const ALL = {
@@ -48,18 +49,23 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       }, [off, NONE]);
       const a = await grab(false), b = await grab(true);
       let diff = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2]) diff++;
-      const time = off => page.evaluate(([off, F, NONE]) => { const w = window.witch, v = w.view, gl = v.renderer.getContext(); v.hizOff = off; w.frame(NONE, 0, true); gl.finish(); const ms = []; for (let i = 0; i < F; i++) { const t0 = performance.now(); w.frame(NONE, 0, true); gl.finish(); ms.push(performance.now() - t0); } ms.sort((p, q) => p - q); return ms[ms.length >> 1]; }, [off, FRAMES, NONE]);
-      const on = await time(false), off = await time(true);
+      // (and a blind check: with the area types' scenery hidden the picture must change, or nothing was drawn)
+      const seen = await page.evaluate(() => { const v = window.witch.view, all = [...v.typeBatches.values()].flatMap(b => b.meshes); all.forEach(m => { m.visible = false; }); return all.length; });
+      const c = await grab(false);
+      await page.evaluate(() => { for (const b of window.witch.view.typeBatches.values()) for (const m of b.meshes) m.visible = true; });
+      let blind = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== c.px[i] || a.px[i + 1] !== c.px[i + 1] || a.px[i + 2] !== c.px[i + 2]) blind++;
       await page.evaluate(() => { window.witch.view.hizOff = false; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
-      out[spot] = { diff, px: a.W * a.H, on: +on.toFixed(0), off: +off.toFixed(0), sameFrame: a.t === b.t };
+      out[spot] = { diff, px: a.W * a.H, scenery: blind, batches: seen, sameFrame: a.t === b.t };
       if (diff) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
   } finally {
     fs.writeFileSync(path.join(outDir, "hiz-walk.json"), JSON.stringify(out, null, 1));
     console.log(errors.length ? "errors: " + errors.slice(0, 3).join(" | ") : "no page errors");
-    console.log(bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
+    const blindAll = Object.keys(out).length > 0 && Object.values(out).every(o => !o.scenery);
+    if (blindAll) bad++;
+    console.log(blindAll ? "FAIL: blind (hiding the scenery changed nothing anywhere: were the frames drawn?)" : bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
     await browser.close(); server.close();
     process.exitCode = bad || errors.length ? 1 : 0;
   }
