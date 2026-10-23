@@ -29,5 +29,15 @@ export const CREATURE_BOAR = {
     mods: { momentum: 1 },
     label: "Boar's Momentum: a burst of speed after each blink"
   },
-  character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+    ranged: null,
+    special: "stampede",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "heads down",
+    tells: { melee: "head down", special: "heads down" }
+  }
 };

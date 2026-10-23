@@ -7,6 +7,7 @@ import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
 import { STATION_SLACK, broomWhere, stationAt, stationOf, tableOf } from "./stations";
 import { cameraPose } from "./camera";
+import { SHELVES } from "./wardrobe";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const deck = (g: Game) => deckOf(g.map, g.tuning)!;
@@ -114,6 +115,9 @@ describe("the dressing stations by nearness", () => {
     // difference is checked: the aim moves by the looks' difference)
     expect((head.pose.ty - head.cam.ty) - (feet.pose.ty - feet.cam.ty)).toBeCloseTo(P.head.look - P.feet.look, 1);
     expect(head.pose.distance).toBeLessThan(feet.pose.distance);
+    // the pegboard's frame (board): aimed up over her to the wall behind, the board mid-screen (Alpha's shots, 2026-10-23)
+    expect(P.board.look).toBeGreaterThan(P.hat.look);
+    expect(SHELVES.pegboard.frame).toBe("board");
   });
 
   it("never eases in away from the house, framing or not", () => {

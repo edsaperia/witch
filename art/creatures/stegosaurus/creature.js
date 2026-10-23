@@ -27,5 +27,15 @@ export const CREATURE_STEGOSAURUS = {
     scale: { "invites.radius": 1.6 },
     label: "Stegosaurus's Tail sweep: each 💌 bursts wider"
   },
-  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
+    ranged: { name: "thrown stone", range: 10, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "stampede",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the plates flush",
+    tells: { melee: "tail raised", ranged: "rears", special: "the plates flush" }
+  }
 };

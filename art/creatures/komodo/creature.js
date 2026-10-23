@@ -14,5 +14,16 @@ export const CREATURE_KOMODO = {
     kind: "move",
     scale: { "dash.distance": 1.35 },
     label: "Komodo dragon's Lunge: your blink lunges further"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "confusion",
+    specialWith: { time: 3 },
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "a hiss",
+    tells: { melee: "jaws open", ranged: "throat swells", special: "a hiss" }
   }
 };

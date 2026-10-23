@@ -1394,6 +1394,23 @@
                 "time"
               ],
               "additionalProperties": false
+            },
+            "dark": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "fade"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1410,7 +1427,8 @@
             "circle",
             "landTime",
             "walk",
-            "fall"
+            "fall",
+            "dark"
           ],
           "additionalProperties": false
         },
@@ -5157,10 +5175,15 @@
         "bpm": {
           "type": "number",
           "minimum": 0
+        },
+        "knockBeats": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "bpm"
+        "bpm",
+        "knockBeats"
       ],
       "additionalProperties": false
     },
@@ -8648,6 +8671,24 @@
                     "distance"
                   ],
                   "additionalProperties": false
+                },
+                "board": {
+                  "type": "object",
+                  "properties": {
+                    "look": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "look",
+                    "distance"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -8656,7 +8697,8 @@
                 "top",
                 "legs",
                 "feet",
-                "broom"
+                "broom",
+                "board"
               ],
               "additionalProperties": false
             }

@@ -23,5 +23,15 @@ export const CREATURE_HARE = {
     mods: { charges: 2 },
     label: "Hare's Dash bursts: 2 more blink charges"
   },
-  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 }
+  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+    ranged: { name: "moon-dust bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "call",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 2,
+    call: "thump",
+    tells: { melee: "turns its back", ranged: "ears flat", special: "the thump" }
+  }
 };
