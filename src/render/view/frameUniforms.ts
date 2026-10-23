@@ -10,6 +10,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
+import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
 
 /** Sets this frame's sprite and light uniforms, after the camera (`up`, its tilted up). */
@@ -71,8 +72,9 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uFindLook.value.set(Fd.lightFloor, Fd.rim, Fd.eyeshine.strength, Fd.eyeshine.blink);
   SPRITE_UNIFORMS.uEyeRange.value = Fd.eyeshine.range;
   // Each tree's own leaf colour (Ed, 2026-10-16 and 2026-10-19; the tuning's leafJitter: the autumn share, the value share and the hue degrees; render/sprites.ts).
-  const LJ = t.leafJitter;
-  SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn : 0, LJ ? LJ.value : 0, LJ ? (LJ.hue ?? 0) / 360 : 0);
+  // The island's biome keeps its share of the autumn and the hue turn (art/flora/biomes.js: none under snow, so it stays white).
+  const LJ = t.leafJitter, bj = biomeJitter(v.assets.style.biome ?? v.assets.typeBiome);
+  SPRITE_UNIFORMS.uLeafJitter.value.set(LJ ? LJ.autumn * bj : 0, LJ ? LJ.value : 0, LJ ? ((LJ.hue ?? 0) / 360) * bj : 0);
   // The wind: gentler over the treetops (Ed, v171: "gentle and lovely").
   const W = t.wind;
   SPRITE_UNIFORMS.uWind.value.set(W.on ? W.strength * (1 + (W.treetop - 1) * lifted) : 0, W.speed, W.gustScale, time);

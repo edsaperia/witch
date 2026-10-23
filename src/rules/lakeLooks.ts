@@ -43,10 +43,23 @@ export function islandBearing(id: string, world: number): number {
  *  out (Ed: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"). */
 export function islandBiome(id: string, world: number, phase: number, knobs: Pick<LakeKnobs, "biomeFrom" | "biomeFirstShare">): IslandBiome {
   if (id === "home") return { blend: TEMPERATE, lakeBlend: null, lakeShare: 0 };
-  const biome = KINDS[id]?.biome ?? "temperate", bearing = islandBearing(id, world);
-  const blend: Blend = biome === "temperate" ? TEMPERATE : blendAt(bearing);
+  const bearing = islandBearing(id, world), blend = islandBlend(id, world);
   const lakeBlend = phase >= knobs.biomeFrom ? blendAt(bearing) : null;
   return { blend, lakeBlend, lakeShare: !lakeBlend ? 0 : phase === knobs.biomeFrom ? knobs.biomeFirstShare : 1 };
+}
+
+/** Island `id`'s land's biomes: temperate (home, and a temperate kind's island) as it stands; else the two its bearing lies
+ *  between (blendAt). */
+export function islandBlend(id: string, world: number): Blend {
+  const biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
+  return biome === "temperate" ? TEMPERATE : blendAt(islandBearing(id, world));
+}
+/** The key of island `id`'s biome blend, for its forests' look (art/flora/biomes.js biomeLook; the area art's jobs and their cache,
+ *  render/artBuild.ts): "a|b|w", its share to two places; undefined on a temperate island (its art as it always was). */
+export function biomeKey(id: string, world: number): string | undefined {
+  const B = islandBlend(id, world);
+  if (B.a === "temperate" && B.b === "temperate") return undefined;
+  return B.a === B.b ? B.a : `${B.a}|${B.b}|${B.w.toFixed(2)}`;
 }
 
 /** A seeded number in 0..1 from two integers. */

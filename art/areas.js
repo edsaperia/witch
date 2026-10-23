@@ -20,6 +20,7 @@ import { TALL_KINDS, tallPiece } from "./tall.js";
 import { groundTile } from "./ground.js";
 import { AREA_RECIPES, recipeProblems } from "./recipes.js";
 import { withVariant } from "./flora/variants.js";
+import { biomeLook, biomeStyle, biomeScale, biomeSnow, biomeColours } from "./flora/biomes.js";
 const RECIPE_LAYOUTS = {};
 import { propPiece, propFor, rimPiece, rimSeed } from "./props/generator.js";
 
@@ -269,8 +270,14 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
   sp.mark([add(c, [-rx * .6, -ry * .8]), add(c, [rx * .1, -ry * 1.1]), add(c, [rx * .3, -ry * .5]), add(c, [-rx * .3, -ry * .3])], M.BELLY, [M.ACCENT]);
   if (moss) sp.mark(tufts([add(c, [-rx * 1.1, -ry * .55]), add(c, [0, -ry * 1.3]), add(c, [rx * 1.1, -ry * .5]), add(c, [rx * .6, -ry * .2]), add(c, [-rx * .6, -ry * .2])], 0, 3, 3, ry * .15, 1), M.LEAF, [M.ACCENT, M.BELLY, M.BODY2]);
 }
-// Each returns { sp, colours }; s scales to the pixel size.
+// Each returns { sp, colours }; s scales to the pixel size. Under a biome (st.biome: art/flora/biomes.js) its leaves, wood and moss
+// take the biome's look, its own flowers and berries kept; a tree prop grows in the biome's way too (propRaw's tree).
 function prop(kind, o, def, st, r, s) {
+  const p = propRaw(kind, o, def, st, r, s), look = st.biome && kind !== "tree" ? biomeLook(st.biome) : null;
+  if (look && p?.colours) p.colours = biomeColours({ ...p.colours }, look, M, { flower: false });
+  return p;
+}
+function propRaw(kind, o, def, st, r, s) {
   if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
   const lh = o.leafHue ?? def.leaf, ls = st.sat * (o.leafSat ?? 1); // (a prop's own leaf hue and saturation: the moor's dry violet-brown grass)
@@ -280,10 +287,10 @@ function prop(kind, o, def, st, r, s) {
   if (kind === "tree") {
     const f = treeSpecies(o.type).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
-    const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
-    snowCrown(t.sp, o.snow ?? def.snow ?? 0, 1); // (a snowy area's snow on its crown)
+    const look = st.biome ? biomeLook(st.biome) : null, t = f(r, biomeStyle(ts, look), st.treeSize * s * (o.scale || 1) * biomeScale(look) * uni(r, .9, 1.1));
+    snowCrown(t.sp, biomeSnow(look, o.snow ?? def.snow ?? 0), 1); // (a snowy area's snow on its crown)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232]; biomeColours(c, look, M);
     return { sp: t.sp, colours: c };
   }
   if (kind === "shrub") { // a leafy bush, flowering or berried
@@ -480,6 +487,7 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [], raw = [];
+  const look = st.biome ? biomeLook(st.biome) : null; // (the island's biome over the area's trees, art/flora/biomes.js: st.biome, from its art job's biome key)
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
     const o = slots ? { ...character, ...own(slots[n].type), ...slots[n], minor: undefined } : minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
@@ -493,10 +501,11 @@ export function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas =
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
-    const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
-    snowCrown(t.sp, o.snow ?? def.snow ?? 0, n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
+    const tsb = biomeStyle(ts, look);
+    const t = f(r, tsb, st.treeSize * K * (o.scale || 1) * biomeScale(look) * scale * uni(r, .95, 1.05));
+    snowCrown(t.sp, biomeSnow(look, o.snow ?? def.snow ?? 0), n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232]; biomeColours(c, look, M);
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);
     out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(t.sp), top: sw(parts.top), bot: sw(parts.bot) }, crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });

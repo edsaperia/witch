@@ -6,6 +6,7 @@
 // seed (&seed=), finds them kept. What isn't done by the time she lands the game draws as before.
 import type { ArtJob, ArtResult } from "../render/artBuild";
 import { artCacheKey, hashText, islandArtSeed } from "../render/artCache";
+import { biomeKey } from "../rules/lakeLooks";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
 import { loadSave } from "./chartSave";
@@ -42,8 +43,8 @@ export interface LandingBake {
  *  (kept for every night: what the game draws at once, render/artCache.ts islandArtSeed), then under the night's (swapped in
  *  unseen as she lands, main.ts revealArt). */
 export function landingJobs(island: string, world: number, seed: number, style: ArtJob["style"], K: number): ArtJob[] {
-  const types = landingTypes(island, world), own = islandArtSeed(world, island);
-  return [...types.map(t => ({ kind: "type", id: t, style, seed: own, K }) as ArtJob), ...types.map(t => ({ kind: "type", id: t, style, seed, K }) as ArtJob)];
+  const types = landingTypes(island, world), own = islandArtSeed(world, island), biome = biomeKey(island, world); // (biome: its forests' look, as the view asks: render/view.ts)
+  return [...types.map(t => ({ kind: "type", id: t, style, seed: own, K, biome }) as ArtJob), ...types.map(t => ({ kind: "type", id: t, style, seed, K, biome }) as ArtJob)];
 }
 
 /** Draw island `island`'s area types for night `seed` (world `world`, or the save's) ahead, in workers, into the art cache. */
