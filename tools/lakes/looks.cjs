@@ -48,8 +48,12 @@ server.listen(0, "127.0.0.1", async () => {
     if (tris) console.log(`${look}: the glacier's mesh ${tris} triangles`);
     if (!at) { console.log("no lakes on this island"); process.exit(1); }
     // (on foot, south of the water if she can be: turned so the lake is up the screen)
-    await step(120); await page.waitForTimeout(1500); await step(2);
+    await step(120);
+    // (a dressed lake's shore pieces: their art, drawn by a worker, waited for)
+    await page.waitForFunction(() => { const S = window.witch.view.lakeShore; return !S?.night?.pieces.length || !!window.witch.view.assets.lakeShore; }, null, { timeout: 120000, polling: 1000 }).catch(() => console.log(`${look}: shore art never came`));
+    await step(30); await page.waitForTimeout(1500); await step(2);
     await page.screenshot({ path: path.join(outDir, `${look}-ground.png`) });
+    console.log(`${look}: shore pieces drawn`, await page.evaluate(() => { let n = 0; window.witch.view.scene.traverse(o => { if (/lakeShore/.test(o.name || "") && o.count != null) n += o.count; }); const S = window.witch.view.lakeShore; return { n, pieces: S?.night?.pieces.length, atlas: !!S?.atlas, art: !!window.witch.view.assets.lakeShore, items: S?.items.length }; }));
     const tg = await time();
     await step(1, { toggleMode: true }); await step(150);
     for (let i = 0; i < 6; i++) await step(10, { moveX: at.nx, moveZ: at.nz });
