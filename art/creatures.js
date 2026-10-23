@@ -56,7 +56,7 @@ export function speciesColours(sp, st, gear = null) {
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
-  const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = Array.isArray(s.belly) ? hsv2rgb(...s.belly) : s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const mh = s.magic ?? st.magicHue + s.hue * .3, magic = hsv2rgb(mh, .6, 1), magic2 = hsv2rgb(mh, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
