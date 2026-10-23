@@ -47,7 +47,7 @@ Every find carries the same three things, whatever its object, so a player who h
 
 ### 2. Its own light: pale gold-white
 
-- A **point light** at the find, low (about 0.6 m up), reach about **7 m** at strength 2.4 (the tuning's `lights.find`, live), in **pale gold-white** (about `#fff5d6`, RGB 1, 0.96, 0.84 in the light's colour): whiter and brighter than anything round it.
+- A **point light** at the find, low (about 0.6 m up), reach about **7 m** at strength 4 (the tuning's `lights.find`, live; 2.4 read only faintly in the fern forest at 8 m, 4 clearly), in **pale gold-white** (about `#fff5d6`, RGB 1, 0.96, 0.84 in the light's colour): whiter and brighter than anything round it.
 - **Brighter and whiter than her lantern.** Her own light is warm amber and fills the ground round her; a warm glow beside her vanishes in it (the first mocks, below). The find's light must be clearly the brightest and the whitest thing on that ground, so it reads as "not mine" even with her standing a few metres off. Tune it in the fern forest, the worst case.
 - A slow, slight breath (about ±10% over 2.4 s), never a flicker: fire flickers fast and warm, a find glows steady and pale.
 - It's one light against the budget (`lightBudget`), like a lantern: fine on Ed's Intel UHD.
