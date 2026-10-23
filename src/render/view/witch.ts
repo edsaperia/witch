@@ -3,6 +3,7 @@
 // the party's and the beach's views of her, where she is on screen, and her shadow.
 import { deckOf } from "../../rules/treehouse";
 import { onRoomFloor } from "../../rules/houseRooms";
+import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
 import { PARTY_CAST } from "../../rules/party";
 import { STEP } from "../../rules/game";
@@ -85,7 +86,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
       const sp = Math.hypot(w.vx, w.vz), heading = still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
       v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.walk);
-      const list = still ? (Hd?.idle?.length ? Hd.idle : F.idle[side]) : (Hd?.walk?.length ? Hd.walk : F.walk[side]);
+      // (on the Terrace she carries her broom: Ed, 2026-10-23, "she holds it when she's on the terrace"; rules/stations.ts broomWhere)
+      const held = broomWhere(g, stationOf(g, null, t)?.id ?? null, t) === "held" && !!F.idleBroom && !!F.walkBroom;
+      const I = held ? "idleBroom" : "idle", Wk = held ? "walkBroom" : "walk";
+      const list = still ? (Hd?.[I]?.length ? Hd[I] : F[I][side]) : (Hd?.[Wk]?.length ? Hd[Wk] : F[Wk][side]);
       wf = list[(still ? Math.floor(ht * F.idle.fps) : Math.floor(v.walkPhase)) % list.length];
     }
     else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);

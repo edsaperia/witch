@@ -679,7 +679,6 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.clear.speaker` | number | 0 to … |
 | `dash.clear.treehouse` | number | 0 to … |
 | `spells.hat` | string |  |
-| `spells.broom` | string |  |
 | `spells.parts` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |
@@ -1197,6 +1196,7 @@ The music's clock (beats per minute): the lasers sweep to it and party animals d
 | knob | type | range |
 |---|---|---|
 | `beat.bpm` | number | 0 to … |
+| `beat.knockBeats` | number | 0 to … |
 | `leyLines.on` | boolean |  |
 | `leyLines.pulseSpeed` | number | 0 to … |
 | `leyLines.reveal` | number | 0 to … |
@@ -1819,6 +1819,8 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `camera.station.parts.feet.distance` | number | 0 to … |
 | `camera.station.parts.broom.look` | number | -5 to 5 |
 | `camera.station.parts.broom.distance` | number | 0 to … |
+| `camera.station.parts.board.look` | number | 0 to … |
+| `camera.station.parts.board.distance` | number | 0 to … |
 
 ### `pixelSize`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`
 

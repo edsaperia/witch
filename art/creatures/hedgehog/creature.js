@@ -31,5 +31,15 @@ export const CREATURE_HEDGEHOG = {
     add: { "dash.gone": 0.35 },
     label: "Hedgehog's Curl: untouchable for longer after a blink"
   },
-  character: { sprite: "puff", every: [4, 8], for: 0.9 }
+  character: { sprite: "puff", every: [4, 8], for: 0.9 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "spine fan", range: 12, shots: [0, 1, 3], spread: 30, tint: "red" },
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "bristle",
+    tells: { melee: "crouch", ranged: "bristles up", special: "the curl" }
+  }
 };

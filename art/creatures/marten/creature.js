@@ -21,5 +21,15 @@ export const CREATURE_MARTEN = {
     scale: { groundSpeed: 1.2 },
     label: "Marten's Scamper: faster on the ground"
   },
-  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 }
+  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "ember bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "call",
+    retreat: "leapfrog",
+    rhythm: "tight",
+    pressure: 2,
+    call: "chirr",
+    tells: { melee: "crouch", ranged: "chirrs", special: "head up" }
+  }
 };

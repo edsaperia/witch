@@ -106,7 +106,6 @@ export function pixelIcon(id: string): HTMLCanvasElement {
   rows.forEach((row, j) => [...row.padEnd(11, ".").slice(0, 11)].forEach((ch, i) => { if (PAL[ch]) { x.fillStyle = PAL[ch]; x.fillRect(i, j, 1, 1); } }));
   return c;
 }
-export const ICON_IDS = Object.keys(ICONS);
 
 /** Strips a leading emoji (and its space) from a label: "🎲 Randomise" is "Randomise" on the grid. */
 export const noEmoji = (s: string) => s.replace(/^[^\p{L}\p{N}(]+\s*/u, "");

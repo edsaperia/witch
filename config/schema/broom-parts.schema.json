@@ -104,11 +104,35 @@
         ],
         "additionalProperties": false
       }
+    },
+    "board": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "part": {
+            "type": "string"
+          },
+          "point": {
+            "type": "string"
+          },
+          "biome": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "part",
+          "point",
+          "biome"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
     "parts",
-    "sets"
+    "sets",
+    "board"
   ],
   "additionalProperties": false
 }

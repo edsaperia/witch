@@ -1,7 +1,7 @@
 // Her broom's parts kept on this browser (app/broomSave.ts; the Workshop, Ed 2026-10-23), and the migration from the brooms
 // before parts.
 import { describe, expect, it } from "vitest";
-import { BROOM_KEY, loadBroom, migrateBroom, partFound, saveBroom } from "./broomSave";
+import { BROOM_KEY, fitBroom, loadBroom, migrateBroom, partFound, saveBroom } from "./broomSave";
 import { LOADOUT_KEY, loadLoadout } from "./loadout";
 import { fittedKey, fittedOf } from "../rules/broomParts";
 
@@ -13,13 +13,23 @@ describe("the broom's save (witch.broom)", () => {
     expect(b.found).toEqual([]);
     expect(fittedKey(b.fitted)).toBe("-,-,-");
   });
-  it("a part found is kept (even if the night's then lost: saved the moment she picks it up), and fitted as the rules fitted it", () => {
+  it("a part found is kept (even if the night's then lost: saved the moment she picks it up), not fitted: the bay fits it", () => {
     const s = store();
-    partFound("nozzles", fittedOf("nozzles"), s);
-    partFound("ladder", fittedOf("ladder,nozzles"), s);
+    partFound("nozzles", s);
+    partFound("ladder", s);
     const b = loadBroom(s);
     expect(new Set(b.found)).toEqual(new Set(["ladder", "nozzles"]));
-    expect(fittedKey(b.fitted)).toBe("-,ladder,nozzles");
+    expect(fittedKey(b.fitted)).toBe("-,-,-");
+    fitBroom(fittedOf("ladder,nozzles"), s);
+    expect(fittedKey(loadBroom(s).fitted)).toBe("-,ladder,nozzles");
+    partFound("missile", s); // (another found keeps her broom as fitted)
+    expect(fittedKey(loadBroom(s).fitted)).toBe("-,ladder,nozzles");
+  });
+  it("the bay keeps only parts she's found (a ?parts= broom fitted for a load isn't saved)", () => {
+    const s = store();
+    partFound("ladder", s);
+    fitBroom(fittedOf("missile,ladder,nozzles"), s);
+    expect(fittedKey(loadBroom(s).fitted)).toBe("-,ladder,-");
   });
   it("fits only parts she has found, each in its own slot; unknown ones dropped", () => {
     const s = store();
@@ -39,7 +49,7 @@ describe("the migration from the brooms before parts", () => {
     expect(g.broom).toEqual({ ...genome.broom, kind: "classic" });
     expect(g.palette).toEqual(genome.palette);
     expect(JSON.parse(s.m.get(LOADOUT_KEY)!)).toEqual({ hat: "helmet" });
-    expect(loadLoadout(s)).toEqual({ hat: "helmet", broom: "none" });
+    expect(loadLoadout(s)).toEqual({ hat: "helmet" });
     expect(s.m.has(BROOM_KEY)).toBe(true);
     expect(fittedKey(loadBroom(s).fitted)).toBe("-,-,-"); // (no part owned: a first broom is bare)
     // once: a shape picked since stays

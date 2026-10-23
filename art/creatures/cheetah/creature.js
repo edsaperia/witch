@@ -13,5 +13,15 @@ export const CREATURE_CHEETAH = {
   traits: ["nimble"],
   voice: { family: "cat", pitch: 1.4, glide: 0.7 },
   buff: { name: "Sprint", kind: "move", scale: { groundSpeed: 1.15 }, label: "Cheetah's Sprint: quicker on foot" },
-  character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "dust bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "circle",
+    rhythm: "tight",
+    pressure: 2,
+    call: "a crouch",
+    tells: { melee: "crouch", ranged: "tail flick", special: "a crouch" }
+  }
 };

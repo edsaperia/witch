@@ -2752,9 +2752,6 @@
         "hat": {
           "type": "string"
         },
-        "broom": {
-          "type": "string"
-        },
         "parts": {
           "type": "string"
         },
@@ -3117,7 +3114,6 @@
       },
       "required": [
         "hat",
-        "broom",
         "parts",
         "speed",
         "healing",
@@ -5157,10 +5153,15 @@
         "bpm": {
           "type": "number",
           "minimum": 0
+        },
+        "knockBeats": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "bpm"
+        "bpm",
+        "knockBeats"
       ],
       "additionalProperties": false
     },
@@ -8648,6 +8649,24 @@
                     "distance"
                   ],
                   "additionalProperties": false
+                },
+                "board": {
+                  "type": "object",
+                  "properties": {
+                    "look": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "look",
+                    "distance"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -8656,7 +8675,8 @@
                 "top",
                 "legs",
                 "feet",
-                "broom"
+                "broom",
+                "board"
               ],
               "additionalProperties": false
             }

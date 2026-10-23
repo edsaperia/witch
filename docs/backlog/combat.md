@@ -136,6 +136,8 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 
 ### Phase 2
 
+**Built a biome at a time, data only** (Juliet, from 2026-10-23; `config/packs.json`, each kind's `pack-<kind>` arena and its special's sign in `packs.test.ts`): volcanic (komodo, salamander, stegosaurus); badlands (armadillo, meerkat, rattlesnake, scorpion); hot (cat, cheetah, fennec, lion). Their specials and retreats are today's: a movement-reversing confusion is the bat's (`specialWith.move`), the salamander's flame line a slowing wall, a freeze the `freeze` retreat. The kinds that need a new special (knockback, pull, decoy, mind control) come with it (Lima).
+
 | Kind | Melee (tell) | Ranged (tell) | Special: pack move (tell) | Retreat | Rhythm |
 |---|---|---|---|---|---|
 | bear | heavy swipe, knockback, short lunge | none | **cover**: stands over a hurt packmate and takes its hits (rears up) | hold ground, backing off | slow |

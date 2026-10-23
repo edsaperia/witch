@@ -31,11 +31,19 @@ export function saveBroom(b: BroomSave, storage?: Store | null): void {
   try { storeOf(storage)?.setItem(BROOM_KEY, JSON.stringify({ v: 1, found: [...new Set(b.found)].sort(), fitted: b.fitted })); } catch { /* storage blocked: this run only */ }
 }
 
-/** A part found (the "found" event of a wreck): hers for good, and fitted as the rules fitted it (`fitted`: her broom now). */
-export function partFound(id: string, fitted: Fitted, storage?: Store | null): BroomSave {
+/** A part found (the "found" event of a wreck): hers for good, not fitted (it waits at the Workshop: the bay fits it). */
+export function partFound(id: string, storage?: Store | null): BroomSave {
   const b = loadBroom(storage);
   if (!b.found.includes(id)) b.found.push(id);
-  b.fitted = fitted;
+  saveBroom(b, storage);
+  return loadBroom(storage);
+}
+
+/** Her broom fitted at the Workshop's bay (ui/stationPanel.ts): kept, each slot only with a part she's found (one she hasn't, as
+ *  ?parts= can fit for a load, isn't kept). */
+export function fitBroom(fitted: Fitted, storage?: Store | null): BroomSave {
+  const b = loadBroom(storage);
+  for (const s of SLOTS) { const id = fitted[s]; b.fitted[s] = id && b.found.includes(id) && partById(id)?.slot === s ? id : null; }
   saveBroom(b, storage);
   return loadBroom(storage);
 }
