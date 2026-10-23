@@ -456,9 +456,6 @@ label.check input { accent-color: var(--accent); }
     return ((h ^ h >>> 16) >>> 0) / 4294967296;
   }
 
-  // src/rules/departure.ts
-  var EXIT_TURN = 4 * Math.PI / 180;
-
   // src/rules/leycurve.ts
   var TAU = Math.PI * 2;
   var TURNS = [0, -0.35, 0.35, -0.7, 0.7, ...Array.from({ length: 12 }, (_, k) => (k + 1) / 13 * TAU)];
