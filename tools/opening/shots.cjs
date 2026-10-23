@@ -177,7 +177,7 @@ function front(id, by) {
     }
     const marks = await page.evaluate(() => performance.getEntriesByType("mark").filter(m => /^(opening|chart|game):/.test(m.name)).map(m => `${m.name} ${(m.startTime / 1000).toFixed(1)} s`));
     log("marks:\n  " + marks.join("\n  "));
-    fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ corner, unlocked, marks }, null, 1));
+    fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ marks }, null, 1));
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error(errors.join("\n")); process.exit(1); }
   log("ok");
