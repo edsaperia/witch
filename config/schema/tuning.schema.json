@@ -9893,6 +9893,24 @@
     "lights": {
       "type": "object",
       "properties": {
+        "find": {
+          "type": "object",
+          "properties": {
+            "reach": {
+              "type": "number",
+              "minimum": 0
+            },
+            "strength": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "reach",
+            "strength"
+          ],
+          "additionalProperties": false
+        },
         "campfire": {
           "type": "object",
           "properties": {
@@ -9939,6 +9957,7 @@
         }
       },
       "required": [
+        "find",
         "campfire",
         "stone",
         "knee",

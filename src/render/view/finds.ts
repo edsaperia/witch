@@ -1,9 +1,11 @@
-// Tonight's travel trunk (rules/finds.ts; Ed, 2026-10-21: an old trunk, half-sunk and mossy, its lid ajar with cloth showing),
-// a wearable in it to find: drawn each frame from its own small atlas (art/country.js travel-trunk, a "find" art job:
-// render/artBuild.ts), standing where the rules put it, under the canopy. Once she's taken what was in it, it stands there empty.
-// Or tonight's wreck (the Workshop, Ed 2026-10-23: rules/finds.ts FIND_KINDS), a broom part's own crashed broom (art/country.js
-// wreck-<part>), drawn the same way. Not taken by the time the party's lost, it's gone from the map (Ed, 2026-10-18: "All
-// permanent unlock items disappear from the map after a party is lost").
+// Tonight's find (rules/finds.ts FIND_KINDS), as the finds style guide has it (Ed, 2026-10-23; docs/art-guide/FINDS.md): one
+// flask-sized object (art/country.js's find pieces: clothes a folded bundle, bags a little bag, a broom part the part), drawn each
+// frame from its own small atlas (a "find" art job: render/artBuild.ts) where the rules put it, under the canopy, on a patch of
+// clear ground (findClear: no tufts on it, view.ts) in its own pale gold-white light (findLight, render/view/lights.ts), the
+// brightest and whitest thing there. Hidden from the treetops: the light lights only the ground under the crowns. Once she's taken
+// it, it's gone, and its patch and light with it. Not taken by the time the party's lost, it's gone from the map too (Ed,
+// 2026-10-18: "All permanent unlock items disappear from the map after a party is lost").
+import * as THREE from "three";
 import type { View } from "../view";
 import { findPiece } from "../../rules/finds";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
@@ -15,12 +17,32 @@ const TRUNK_SEEN = 120;
  *  else on the island. */
 const TRUNK_ASK = 400;
 
+/** The find's patch: no tufts within about 1.3 m of it, trodden short a little past (grass.ts's uClear clears from 0.6 of this). */
+const FIND_PATCH = 2.2;
+/** Its light's colour: pale gold-white, the finds' own (no other light uses it). */
+const FIND_GOLD = new THREE.Vector3(1, 0.96, 0.84);
+
+/** Tonight's find while it's there to take: on the map, not yet taken, the party not lost. */
+const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !v.game.partyOver ? T : null; };
+
+/** Where the cover is cleared for tonight's find (view.ts, with the placed sigils'), or null. */
+export function findClear(v: View): { x: number; z: number; r: number } | null {
+  const T = findThere(v);
+  return T ? { x: T.x, z: T.z, r: FIND_PATCH } : null;
+}
+
+/** Tonight's find's own light, low over its patch, breathing slightly (never a flicker), or null once it's taken. */
+export function findLight(v: View, time: number): { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number } | null {
+  const T = findThere(v), L = v.game.tuning.lights.find;
+  return T ? { x: T.x, y: 0.6, z: T.z, reach: L.reach, rgb: FIND_GOLD, strength: L.strength * (0.9 + 0.1 * Math.sin((time * Math.PI * 2) / 2.4)) } : null;
+}
+
 export function drawFinds(v: View): void {
   // (a batch a piece, each with its own atlas: tonight's find can change mid-night, the dev spawn's: rules/finds.ts spawnFind)
   const T = v.game.trunk, id = T?.item ? findPiece(T) : "", key = `finds:${id}`;
   for (const [k, b] of v.decorBatches) if (k.startsWith("finds:") && k !== key) b.set([]);
   const batch = v.decorBatches.get(key);
-  if (!T || !T.item || (v.game.partyOver && !T.found)) { batch?.set([]); return; }
+  if (!T || !T.item || T.found || v.game.partyOver) { batch?.set([]); return; }
   const w = v.game.witch, d = Math.hypot(w.x - T.x, w.z - T.z);
   if (d > TRUNK_ASK) { batch?.set([]); return; }
   const fa = v.assets.findArt(id, d <= TRUNK_SEEN), a = fa?.pieces[id];
