@@ -70,6 +70,8 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  /** The see-through passes ask passOf first (1; 0: where they always did, to compare: tools/bench/early-diff.cjs). */
+  uSeeEarly: { value: 1 },
   uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
   uSeeDither: { value: 0 }, // (the circle hunt: the see-through as a dither in the solid pass, no second pass)
   uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
@@ -282,6 +284,7 @@ uniform float uLegendAwake; // a dark-coated legend awake: the share of its own 
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
 uniform vec4 uSeeDbg;
+uniform float uSeeEarly;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
@@ -391,7 +394,7 @@ bool passOf() {
 }
 void shade() {
   // (the see-through passes: whether this pixel is theirs at all, first: passOf)
-  bool early = uFadePass > 0.5 && uSilhouette.a <= 0.0;
+  bool early = uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeEarly > 0.5;
   if (early && !passOf()) discard;
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
