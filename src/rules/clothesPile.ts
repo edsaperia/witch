@@ -12,7 +12,7 @@ export type PileSlot = "top" | "shoes" | "cloak" | "hat" | "bits";
 /** Every piece, as the pile starts each wake-up. */
 export const PILE_SLOTS: readonly PileSlot[] = ["top", "shoes", "cloak", "hat", "bits"];
 
-/** The piece each dressing station puts on (config/house.json's station ids). The dressing table (her hair, skin, face, earrings)
+/** The piece each dressing station puts on (config/house/'s station ids). The dressing table (her hair, skin, face, earrings)
  *  dresses nothing: those are hers in the nightie too. */
 export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top", shoeRack: "shoes", cloakPegs: "cloak", bags: "bits" };
 

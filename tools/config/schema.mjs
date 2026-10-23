@@ -33,7 +33,7 @@ if (has("add")) {
 const schema = JSON.parse(readFileSync(SCHEMA, "utf8"));
 if (has("docs")) writeFileSync(DOCS, knobsMarkdown(tuning, schema, "Tuning knobs", FILE));
 if (has("check") || !process.argv.slice(2).length) {
-  for (const [file, value, sch, name] of [[FILE, tuning, schema, "tuning"], ...CONFIGS.map(c => [c.file, JSON.parse(readFileSync(c.file, "utf8")), JSON.parse(readFileSync(c.schema, "utf8")), c.name])]) {
+  for (const [file, value, sch, name] of [[FILE, tuning, schema, "tuning"], ...CONFIGS.map(c => [c.file, configData(c.name, c.file), JSON.parse(readFileSync(c.schema, "utf8")), c.name])]) {
     const errs = validate(value, sch, name);
     console.log(errs.length ? errs.join("\n") : `${file}: valid`);
     if (errs.length) process.exitCode = 1;

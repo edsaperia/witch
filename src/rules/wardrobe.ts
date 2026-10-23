@@ -33,7 +33,7 @@ export const SKIN_COLS = SKIN_HUES.length;
 /** A skin swatch (hue, saturation, value) at column `col`, row `row` (0 the palest). */
 export const skinSwatch = (col: number, row: number): number[] => { const [v, s] = SKIN_TONES[row]; return [SKIN_HUES[col], col === SKIN_COLS - 1 ? +(s * .8).toFixed(3) : s, v]; };
 
-/** A station's shelves, top to bottom (config/house.json's object id), or null for one with none. */
+/** A station's shelves, top to bottom (config/house/'s object id), or null for one with none. */
 export function shelvesAt(station: string): Shelf[] | null {
   const ids = RAW.stations[station];
   return ids ? ids.map(id => SHELVES[id]) : null;

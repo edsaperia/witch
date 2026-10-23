@@ -1,0 +1,15 @@
+{
+  "id": "workshop",
+  "label": "Workshop",
+  "order": 40,
+  "parent": "terrace",
+  "bearing": -100,
+  "branch": 4.5,
+  "radius": 7.5,
+  "bend": -1,
+  "objects": [
+    {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":25,"in":0.9,"foot":[5,0.5,4.4]},
+    {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":-38,"foot":[6,2.4,2.2]},
+    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":88,"foot":[4.8,1.6,2]}
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "id": "bedroom3",
+  "label": "Bedroom 3",
+  "order": 120,
+  "parent": "boudoir",
+  "bearing": 133,
+  "branch": 2.5,
+  "radius": 9,
+  "bend": 1,
+  "locked": true,
+  "door": {"label":"Door","foot":[1.4,1.4,4.4],"use":{"kind":"say","line":"A friend's room. Locked for now."}},
+  "objects": [
+    {"id":"bedroom3Bed","label":"A bare bed frame","use":{"kind":"say","line":"Waiting for its witch."},"bearing":133,"in":3.4,"foot":[4,5.2,1.2]},
+    {"id":"bedroom3Wardrobe","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"bearing":-135,"foot":[4,1.4,4.4]},
+    {"id":"bedroom3Chest","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"bearing":40,"foot":[2.8,1.6,1.8]},
+    {"id":"bedroom3Crates","label":"Packing crates","use":{"kind":"say","line":"Waiting for its witch."},"bearing":85,"foot":[3,1.6,2.6]}
+  ]
+}

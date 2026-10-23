@@ -311,7 +311,7 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
 creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
-// stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
+// stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
