@@ -1996,7 +1996,7 @@ label.check input { accent-color: var(--accent); }
     return out;
   }
   function band(spine, { cap = 1, capEnd = cap } = {}) {
-    const L2 = [], R4 = [], n = spine.length;
+    const L2 = [], R5 = [], n = spine.length;
     for (let i = 0; i < n; i++) {
       const a = spine[Math.max(0, i - 1)], b = spine[Math.min(n - 1, i + 1)];
       let dx = b[0] - a[0], dy = b[1] - a[1];
@@ -2005,14 +2005,14 @@ label.check input { accent-color: var(--accent); }
       dy /= l;
       const w = spine[i][2] / 2;
       L2.push([spine[i][0] - dy * w, spine[i][1] + dx * w]);
-      R4.push([spine[i][0] + dy * w, spine[i][1] - dx * w]);
+      R5.push([spine[i][0] + dy * w, spine[i][1] - dx * w]);
     }
     const end = (p, q, w, c) => {
       let dx = p[0] - q[0], dy = p[1] - q[1];
       const l = Math.hypot(dx, dy) || 1;
       return [p[0] + dx / l * w / 2 * c, p[1] + dy / l * w / 2 * c];
     };
-    const pts = [...L2, end(spine[n - 1], spine[n - 2], spine[n - 1][2], capEnd), ...R4.reverse(), end(spine[0], spine[1], spine[0][2], cap)];
+    const pts = [...L2, end(spine[n - 1], spine[n - 2], spine[n - 1][2], capEnd), ...R5.reverse(), end(spine[0], spine[1], spine[0][2], cap)];
     return pts;
   }
   var add = (a, b) => [a[0] + b[0], a[1] + b[1]];
@@ -2196,10 +2196,10 @@ label.check input { accent-color: var(--accent); }
         for (let i = 0; i < w * h; i++) if (mask[i] && !onlyOn.has(this.m[i])) mask[i] = 0;
       }
       const { vx, vy } = edgeVectors(w, h, mask);
-      let R4 = depth;
-      if (!R4) {
-        for (let i = 0; i < w * h; i++) if (mask[i]) R4 = Math.max(R4, Math.hypot(vx[i], vy[i]));
-        R4 = Math.max(1.5, Math.min(R4 * 0.9, 2.5 + R4 * 0.35));
+      let R5 = depth;
+      if (!R5) {
+        for (let i = 0; i < w * h; i++) if (mask[i]) R5 = Math.max(R5, Math.hypot(vx[i], vy[i]));
+        R5 = Math.max(1.5, Math.min(R5 * 0.9, 2.5 + R5 * 0.35));
       }
       for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
         const i = y * w + x;
@@ -2208,7 +2208,7 @@ label.check input { accent-color: var(--accent); }
           this.m[i] = mat;
           continue;
         }
-        const d = Math.hypot(vx[i], vy[i]), t = Math.min(1, Math.max(0, (d - 0.5) / R4));
+        const d = Math.hypot(vx[i], vy[i]), t = Math.min(1, Math.max(0, (d - 0.5) / R5));
         const slope = Math.min(2.6, (1 - t) / Math.sqrt(Math.max(0.02, 1 - (1 - t) * (1 - t)))) * round;
         let nx = vx[i] / (d || 1) * slope + tilt[0], ny = vy[i] / (d || 1) * slope + tilt[1];
         const l = Math.hypot(nx, ny, 1);
@@ -4707,7 +4707,7 @@ label.check input { accent-color: var(--accent); }
     }
     const toWorld = (p) => [p[0] * cy - p[2] * sy, p[1], p[0] * sy + p[2] * cy];
     const toModel = (p) => [p[0] * cy + p[2] * sy, p[1], -p[0] * sy + p[2] * cy];
-    const D2 = [0, -spp, -cp], U = [0, cp, -spp], R4 = [1, 0, 0], B = [0, spp, cp];
+    const D2 = [0, -spp, -cp], U = [0, cp, -spp], R5 = [1, 0, 0], B = [0, spp, cp];
     const k = model.blend, clipY = model.clipY ?? -Infinity;
     const parts = model.parts.map((q) => {
       if (q.type === "ell") {
@@ -4727,7 +4727,7 @@ label.check input { accent-color: var(--accent); }
     });
     const all = [...parts, ...flats];
     const bounds = (q) => {
-      const sx = dot(q.bc, R4), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k);
+      const sx = dot(q.bc, R5), su = dot(q.bc, U), e = q.br + (q.uw ? 0 : k);
       return [sx - e, sx + e, su - e, su + e];
     };
     for (const q of all) [q.x0, q.x1, q.u0, q.u1] = bounds(q);
@@ -4759,7 +4759,7 @@ label.check input { accent-color: var(--accent); }
       const cand = tiles[Math.floor(iy / T) * TW + Math.floor(ix / T)];
       if (!cand.length) continue;
       const sx = X0 + (ix + 0.5 - 1) / s, su = U1 - (iy + 0.5) / s;
-      const O = v3.add(v3.add(v3.mul(R4, sx), v3.mul(U, su)), v3.mul(B, 50));
+      const O = v3.add(v3.add(v3.mul(R5, sx), v3.mul(U, su)), v3.mul(B, 50));
       let tmin = Infinity, tmax = -Infinity;
       const vol = [], fl = [];
       for (const qi of cand) {
@@ -4849,7 +4849,7 @@ label.check input { accent-color: var(--accent); }
       const i = iy * W + ix;
       depth[i] = hitT;
       grp[i] = hitG;
-      sp.px(ix, iy, hitMat, dot(hitN, R4), -dot(hitN, U), dot(hitN, B));
+      sp.px(ix, iy, hitMat, dot(hitN, R5), -dot(hitN, U), dot(hitN, B));
     }
     const lines = [];
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -4937,6 +4937,242 @@ label.check input { accent-color: var(--accent); }
 
   // art/brooms.js
   var NEW_BROOMS = ["missile", "curl", "handlebars", "hobbyhorse", "jetbike", "oar", "mop", "pitchfork", "canoe", "ladder", "speeder", "bicycle", "drone", "gyrocopter"];
+  var BR_BODY = 2;
+  var BR_TAIL = 3;
+  var BR_TRIM = 13;
+  var BR_GLOW = 16;
+  var BR_BITS = 17;
+  var BR_SIDE = [0, 0, 1];
+  function broomAlong(L2, a, b) {
+    const e = v3.add(a, v3.mul(v3.sub(b, a), L2.broomLength ?? 1)), len = Math.hypot(...v3.sub(e, a)), d = v3.norm(v3.sub(e, a)), up = v3.norm(v3.cross(BR_SIDE, d));
+    return { a, e, d, up, len, at: (t, u = 0, s = 0) => v3.add(v3.add(v3.add(a, v3.mul(d, t)), v3.mul(up, u)), v3.mul(BR_SIDE, s)) };
+  }
+  var broomTail = (c, r, o) => {
+    const d = v3.norm(o.dir), up = v3.norm(v3.cross(BR_SIDE, d)), bind = v3.add(c, v3.mul(d, r[0] * 0.76));
+    return { d, up, bind, at: (t, u = 0, s = 0) => v3.add(v3.add(v3.add(bind, v3.mul(d, t)), v3.mul(up, u)), v3.mul(BR_SIDE, s)) };
+  };
+  var broomF4 = (L2) => (L2.frame ?? 0) % 4;
+  var broomFlick = (L2) => [1, 0.8, 1.15, 0.9][broomF4(L2)];
+  function broomStick(m, L2, a, b, r1, r2) {
+    const F = broomAlong(L2, a, b), bend = L2.broomBend || 0;
+    if (!bend) m.seg(a, F.e, r1, r2, M.BROOM, { group: BR_BODY });
+    else m.chain([[...a, r1], [...v3.add(v3.lerp(a, F.e, 0.55), [0, bend * 0.12, 0]), (r1 + r2) / 2], [...F.e, r2]], M.BROOM, { group: BR_BODY });
+    return F;
+  }
+  function broomRing(m, c, u, v, R5, r, mat, group, n = 12) {
+    const p = (k) => v3.add(c, v3.add(v3.mul(u, R5 * Math.cos(k / n * Math.PI * 2)), v3.mul(v, R5 * Math.sin(k / n * Math.PI * 2))));
+    for (let k = 0; k < n; k++) m.seg(p(k), p(k + 1), r, r, mat, { group });
+  }
+  function broomWheel(m, c, d, up, R5, turn) {
+    broomRing(m, c, d, up, R5, 0.016, M.NOSE, BR_BITS, 14);
+    m.ell(c, [0.025, 0.025, 0.02], M.STRAW, { group: BR_TRIM });
+    for (let k = 0; k < 3; k++) {
+      const a = turn + k * Math.PI * 2 / 3;
+      m.seg(c, v3.add(c, v3.add(v3.mul(d, R5 * Math.cos(a)), v3.mul(up, R5 * Math.sin(a)))), 8e-3, 8e-3, M.STRAW, { group: BR_TRIM });
+    }
+  }
+  var BROOM_KINDS = {
+    // a missile: a fat body with a pointed nose, fins at the back and a flame
+    missile: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b);
+        m.seg(a, F.e, 0.052, 0.052, M.BROOM, { group: BR_BODY });
+        m.seg(F.e, v3.add(F.e, v3.mul(F.d, 0.17)), 0.052, 6e-3, M.STRAW, { group: BR_TRIM });
+        m.seg(F.at(F.len * 0.8), F.at(F.len * 0.84), 0.056, 0.056, M.STRAW, { group: BR_TRIM });
+      },
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), k = L2.bristles ?? 1;
+        for (const v of [T.up, v3.mul(T.up, -1), BR_SIDE, v3.mul(BR_SIDE, -1)]) m.box(v3.add(T.at(0.02), v3.mul(v, 0.075)), [0.065, 0.04, 7e-3], M.STRAW, { dir: T.d, up: v, group: BR_TRIM, round: 6e-3 });
+        const fl = 0.13 * k * broomFlick(L2);
+        m.ell(T.at(-fl * 0.75), [fl, 0.045, 0.045], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true });
+        m.ell(T.at(-fl * 0.45), [fl * 0.5, 0.025, 0.025], M.MAGIC2, { dir: T.d, group: BR_GLOW, extra: true });
+      }
+    },
+    // a curled tip: hers, the nose rolled up into a curl
+    curl: {
+      bristles: true,
+      // (hers at the back)
+      body(m, L2, a, b, r1, r2) {
+        const F = broomStick(m, L2, a, b, r1, r2), e = F.e, pts = [];
+        for (let i = 0; i <= 12; i++) {
+          const th = i * 0.62, R5 = 0.075 * (1 - i / 16);
+          pts.push([...v3.add(v3.add(e, v3.mul(F.d, Math.sin(th) * R5)), v3.mul(F.up, R5 - Math.cos(th) * R5)), r2 * (1 - i / 22)]);
+        }
+        m.chain(pts, M.BROOM, { group: BR_BODY });
+      }
+    },
+    // handlebars: a stem up from the nose and a bar across it with grips
+    handlebars: {
+      bristles: true,
+      body(m, L2, a, b, r1, r2) {
+        const F = broomStick(m, L2, a, b, r1, r2), top = v3.add(F.e, v3.mul(F.up, 0.09));
+        m.seg(F.e, top, 0.016, 0.014, M.BROOM, { group: BR_BODY });
+        m.seg(v3.add(top, [0, 0, -0.13]), v3.add(top, [0, 0, 0.13]), 0.013, 0.013, M.BROOM, { group: BR_TRIM });
+        for (const s of [-1, 1]) m.seg(v3.add(top, [0, 0, s * 0.1]), v3.add(top, [0, 0, s * 0.15]), 0.022, 0.022, M.STRAW, { group: BR_BITS });
+      }
+    },
+    // a hobby horse: a horse's head on the nose, a little wheel at the back
+    hobbyhorse: {
+      body(m, L2, a, b, r1, r2) {
+        const F = broomStick(m, L2, a, b, r1, r2), neck = v3.add(v3.add(F.e, v3.mul(F.d, 0.05)), v3.mul(F.up, 0.13)), head = v3.add(neck, v3.add(v3.mul(F.d, 0.07), v3.mul(F.up, 0.02)));
+        m.seg(F.e, neck, 0.035, 0.03, M.STRAW, { group: BR_TRIM });
+        m.ell(head, [0.085, 0.042, 0.038], M.STRAW, { dir: v3.norm(v3.sub(F.d, v3.mul(F.up, 0.7))), up: F.up, group: BR_TRIM });
+        for (const s of [-1, 1]) {
+          m.seg(v3.add(neck, [0, 0, s * 0.018]), v3.add(v3.add(neck, v3.mul(F.up, 0.06)), [0, 0, s * 0.022]), 0.014, 4e-3, M.STRAW, { group: BR_TRIM });
+          m.ell(v3.add(head, [0, 0, s * 0.037]), [0.012, 0.012, 6e-3], M.EYE, { group: BR_TRIM });
+        }
+        m.chain([[...v3.add(neck, v3.mul(F.up, 0.03)), 0.022], [...v3.add(v3.lerp(F.e, neck, 0.5), v3.mul(F.d, -0.035)), 0.02], [...v3.add(F.e, v3.mul(F.d, -0.04)), 0.012]], M.BROOM, { group: BR_BITS });
+      },
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o);
+        m.seg(T.at(0), T.at(-0.04), 0.015, 0.015, M.BROOM, { group: BR_BODY });
+        broomWheel(m, T.at(-0.05), T.d, T.up, 0.05, broomF4(L2) * Math.PI / 6);
+      }
+    },
+    // a jet bike: a fat fairing under her, a windscreen, twin nozzles glowing at the back
+    jetbike: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b);
+        m.ell(v3.add(v3.lerp(a, F.e, 0.5), v3.mul(F.up, -0.05)), [F.len * 0.52, 0.075, 0.085], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+        m.ell(v3.add(F.at(F.len * 0.8), v3.mul(F.up, 0.03)), [0.08, 0.04, 0.065], M.STRAW, { dir: v3.norm(v3.add(F.d, v3.mul(F.up, 0.5))), group: BR_TRIM });
+        m.seg(F.at(F.len * 0.25, -0.06, 0.09), F.at(F.len * 0.7, -0.06, 0.09), 0.012, 0.012, M.STRAW, { group: BR_TRIM });
+        m.seg(F.at(F.len * 0.25, -0.06, -0.09), F.at(F.len * 0.7, -0.06, -0.09), 0.012, 0.012, M.STRAW, { group: BR_TRIM });
+      },
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), k = L2.bristles ?? 1, fl = 0.09 * k * broomFlick(L2);
+        for (const s of [-1, 1]) {
+          m.seg(T.at(0.04, -0.05, s * 0.045), T.at(-0.05, -0.05, s * 0.05), 0.03, 0.036, M.STRAW, { group: BR_TRIM });
+          m.ell(T.at(-0.06 - fl * 0.6, -0.05, s * 0.05), [fl, 0.028, 0.028], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true });
+        }
+      }
+    },
+    // an oar: hers, its back end a flat blade
+    oar: { body: broomStick, tail(m, L2, c, r, o) {
+      const T = broomTail(c, r, o), k = L2.bristles ?? 1;
+      m.seg(T.at(0), T.at(-0.06), 0.024, 0.028, M.STRAW, { group: BR_TRIM });
+      m.ell(T.at(-0.06 - 0.17 * k), [0.19 * k, 0.075, 0.016], M.STRAW, { dir: T.d, up: T.up, group: BR_TRIM });
+    } },
+    // a mop: a shaggy head of strands, dripping
+    mop: {
+      body: broomStick,
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), k = L2.bristles ?? 1, f = broomF4(L2);
+        m.ell(T.at(-0.01), [0.04, 0.035, 0.035], M.STRAW, { dir: T.d, group: BR_TRIM });
+        for (let i = 0; i < 10; i++) {
+          const a = i / 10 * Math.PI * 2, out = v3.add(v3.mul(T.up, Math.cos(a)), v3.mul(BR_SIDE, Math.sin(a))), sway = [0, 0.015, 0.025, 0.01][(f + i) % 4];
+          const end = v3.add(v3.add(T.at(-0.16 * k), v3.mul(out, 0.06)), [0, -0.05 - 0.03 * k + sway, 0]);
+          m.chain([[...T.at(-0.02), 0.016], [...v3.add(T.at(-0.09 * k), v3.mul(out, 0.05)), 0.015], [...end, 0.012]], M.STRAW, { group: i % 2 ? BR_TAIL : BR_BITS });
+        }
+        for (let i = 0; i < 2; i++) {
+          const t = (f + i * 2) % 4 / 4;
+          m.ell(v3.add(T.at(-0.12 * k - i * 0.05), [0, -0.12 - t * 0.12, (i - 0.5) * 0.04]), [0.011, 0.016, 0.011], M.MAGIC2, { group: BR_GLOW, extra: true });
+        }
+      }
+    },
+    // a pitchfork: its back end three tines
+    pitchfork: {
+      body: broomStick,
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), k = L2.bristles ?? 1;
+        m.seg(T.at(0.02), T.at(-0.02), 0.022, 0.026, M.STRAW, { group: BR_TRIM });
+        m.chain([[...T.at(-0.03, 0, -0.065), 0.012], [...T.at(-0.045, 0, 0), 0.014], [...T.at(-0.03, 0, 0.065), 0.012]], M.STRAW, { group: BR_TRIM });
+        for (const s of [-0.065, 0, 0.065]) m.chain([[...T.at(-0.035, 0, s), 0.011], [...T.at(-0.12 * k, 0.012, s * 1.08), 9e-3], [...T.at(-0.22 * k, 0.02, s * 1.1), 4e-3]], M.STRAW, { group: BR_TRIM });
+      }
+    },
+    // a canoe: a hollow hull she sits in, its inside in the trim colour
+    canoe: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b), c = v3.add(v3.lerp(a, F.e, 0.45), v3.mul(F.up, -0.06));
+        m.ell(c, [F.len * 0.6, 0.085, 0.14], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+        m.ell(v3.add(c, v3.mul(F.up, 0.045)), [F.len * 0.55, 0.085, 0.115], M.STRAW, { dir: F.d, up: F.up, group: BR_BODY, cut: true });
+        for (const t of [-0.5, 0.55]) m.seg(v3.add(c, v3.mul(F.d, t * F.len)), v3.add(v3.add(c, v3.mul(F.d, t * F.len * 1.12)), v3.mul(F.up, 0.1)), 0.02, 0.012, M.BROOM, { group: BR_TRIM });
+      }
+    },
+    // a ladder: two rails and rungs
+    ladder: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b), n = Math.max(3, Math.round(F.len / 0.11));
+        for (const s of [-0.075, 0.075]) m.seg(F.at(0, 0, s), F.at(F.len, 0, s), 0.016, 0.016, M.BROOM, { group: BR_BODY });
+        for (let i = 0; i <= n; i++) m.seg(F.at(F.len * (i + 0.5) / (n + 1), 0, -0.075), F.at(F.len * (i + 0.5) / (n + 1), 0, 0.075), 0.011, 0.011, M.STRAW, { group: BR_TRIM });
+      }
+    },
+    // a speeder bike: a slim body, two prongs out front with vanes, an engine glowing at the back
+    speeder: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b);
+        m.ell(v3.add(v3.lerp(a, F.e, 0.5), v3.mul(F.up, -0.03)), [F.len * 0.5, 0.045, 0.055], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+        for (const s of [-1, 1]) {
+          m.seg(F.at(F.len * 0.85, -0.02, s * 0.03), F.at(F.len + 0.25, -0.03, s * 0.07), 0.018, 0.01, M.STRAW, { group: BR_TRIM });
+          m.box(F.at(F.len + 0.2, -0.03, s * 0.075), [0.045, 0.035, 5e-3], M.BROOM, { dir: F.d, up: F.up, group: BR_BITS, round: 4e-3 });
+        }
+      },
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), k = L2.bristles ?? 1, fl = 0.06 * k * broomFlick(L2);
+        m.ell(T.at(0.03, -0.03), [0.11, 0.06, 0.07], M.STRAW, { dir: T.d, group: BR_TRIM });
+        m.ell(T.at(-0.08 - fl * 0.5, -0.03), [fl, 0.045, 0.05], M.MAGIC, { dir: T.d, group: BR_GLOW, extra: true });
+      }
+    },
+    // a bicycle: a frame under the handle, two wheels turning, a saddle and handlebars
+    bicycle: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b), turn = broomF4(L2) * Math.PI / 6, R5 = 0.14, low = -0.2;
+        const rear = F.at(0.04, low), front = F.at(F.len - 0.02, low), seat = F.at(0.46, -0.02), bb = F.at(0.5, low + 0.02), head = F.at(F.len - 0.1, 0);
+        broomWheel(m, rear, F.d, F.up, R5, turn);
+        broomWheel(m, front, F.d, F.up, R5, turn);
+        for (const [p, q] of [[F.at(0.36, 0), head], [head, bb], [seat, bb], [bb, rear], [seat, rear], [head, front]]) m.seg(p, q, 0.016, 0.016, M.BROOM, { group: BR_BODY });
+        m.ell(v3.add(seat, v3.mul(F.up, 0.03)), [0.06, 0.018, 0.04], M.STRAW, { dir: F.d, up: F.up, group: BR_TRIM });
+        const top = v3.add(head, v3.mul(F.up, 0.07));
+        m.seg(head, top, 0.014, 0.014, M.BROOM, { group: BR_BODY });
+        m.seg(v3.add(top, [0, 0, -0.1]), v3.add(top, [0, 0, 0.1]), 0.012, 0.012, M.STRAW, { group: BR_TRIM });
+        const cr = [Math.cos(turn * 2), Math.sin(turn * 2)];
+        for (const s of [-1, 1]) m.seg(bb, v3.add(bb, v3.add(v3.add(v3.mul(F.d, s * 0.05 * cr[0]), v3.mul(F.up, s * 0.05 * cr[1])), [0, 0, s * 0.03])), 0.01, 0.01, M.STRAW, { group: BR_BITS });
+      }
+    },
+    // a quad drone: a plate under her, four arms, rotors spinning, lights at their ends
+    drone: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b), c = v3.add(v3.add(a, v3.mul(F.d, 0.46)), v3.mul(F.up, -0.06)), k = L2.broomLength ?? 1, turn = (L2.frame ?? 0) * Math.PI / 3;
+        m.ell(c, [0.15, 0.04, 0.13], M.BROOM, { dir: F.d, up: F.up, group: BR_BODY });
+        m.ell(v3.add(c, v3.mul(F.up, -0.045)), [0.05, 0.03, 0.05], M.STRAW, { group: BR_TRIM });
+        for (const [p, q] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+          const hub = v3.add(c, v3.add(v3.mul(F.d, p * 0.3 * k), [0, 0, q * 0.28 * k])), top = v3.add(hub, v3.mul(F.up, 0.05));
+          m.seg(c, hub, 0.022, 0.02, M.BROOM, { group: BR_BODY });
+          m.seg(hub, top, 0.03, 0.026, M.STRAW, { group: BR_TRIM });
+          const t = turn + (p * q > 0 ? 0 : Math.PI / 2), dr = v3.add(v3.mul(F.d, Math.cos(t) * 0.13), [0, 0, Math.sin(t) * 0.13]);
+          m.seg(v3.sub(top, dr), v3.add(top, dr), 0.014, 0.014, M.STRAW, { group: BR_BITS });
+          broomRing(m, top, F.d, BR_SIDE, 0.13, 6e-3, M.STRAW, BR_BITS + 1, 12);
+          m.ell(v3.add(hub, v3.mul(F.up, -0.02)), [0.016, 0.016, 0.016], p > 0 ? M.MAGIC : M.MAGIC2, { group: BR_GLOW });
+        }
+      }
+    },
+    // a gyrocopter: a keel under her with a bubble nose, a mast behind her up past her hat, a big rotor turning on it, a tail fin and a
+    // pusher propeller at the back
+    gyrocopter: {
+      body(m, L2, a, b) {
+        const F = broomAlong(L2, a, b), turn = (L2.frame ?? 0) * Math.PI / 3;
+        m.seg(F.at(0, -0.06), F.at(F.len, -0.06), 0.03, 0.028, M.BROOM, { group: BR_BODY });
+        m.ell(F.at(F.len - 0.02, -0.02), [0.1, 0.07, 0.07], M.STRAW, { dir: F.d, up: F.up, group: BR_TRIM });
+        const foot = F.at(0.3, -0.04), top = v3.add(F.at(0.24, 0), v3.mul(F.up, 0.98));
+        m.seg(foot, top, 0.022, 0.016, M.BROOM, { group: BR_BODY });
+        m.ell(top, [0.03, 0.025, 0.03], M.STRAW, { group: BR_TRIM });
+        for (const k of [0, 1]) {
+          const t = turn + k * Math.PI, dr = v3.add(v3.mul(F.d, Math.cos(t) * 0.5), [0, 0, Math.sin(t) * 0.5]);
+          m.seg(top, v3.add(top, dr), 0.02, 0.014, M.STRAW, { group: BR_BITS, extra: true });
+        }
+        broomRing(m, v3.add(top, v3.mul(F.up, -5e-3)), F.d, BR_SIDE, 0.5, 5e-3, M.BROOM, BR_BITS + 1, 20);
+        for (const s2 of [-1, 1]) m.seg(F.at(0.5, -0.07, s2 * 0.02), F.at(0.42, -0.25, s2 * 0.13), 0.012, 0.012, M.BROOM, { group: BR_BITS });
+      },
+      tail(m, L2, c, r, o) {
+        const T = broomTail(c, r, o), turn = (L2.frame ?? 0) * Math.PI / 4 + 0.4;
+        m.box(T.at(0, 0.08), [0.07, 0.08, 8e-3], M.STRAW, { dir: T.d, up: T.up, group: BR_TRIM, round: 6e-3 });
+        m.ell(T.at(-0.03, -0.06), [0.03, 0.025, 0.025], M.STRAW, { group: BR_TRIM });
+        for (const k of [0, 1]) {
+          const t = turn + k * Math.PI, dr = v3.add(v3.mul(T.up, Math.cos(t) * 0.11), [0, 0, Math.sin(t) * 0.11]);
+          m.seg(T.at(-0.05, -0.06), v3.add(T.at(-0.05, -0.06), dr), 0.012, 8e-3, M.BROOM, { group: BR_BITS });
+        }
+      }
+    }
+  };
 
   // art/witchGenome.js
   var WITCH_AXES = {
@@ -5601,9 +5837,9 @@ label.check input { accent-color: var(--accent); }
   var spRockAt = (m, c, r, g, moss = true) => m.ell(c, r, M.STONE, { group: g, rough: 0.025, paint: (p) => p[1] > c[1] + r[1] * 0.45 && moss ? M.MOSS : Math.abs(Math.sin(p[0] * 13 + p[2] * 7)) < 0.06 ? M.STONED : void 0 });
   var spCrown = (m, c, r, g) => m.ell(c, r, M.LEAF, { group: g, rough: 0.04, paint: spLeafy(c) });
   var spLimb = (m, pts, g) => m.chain(pts, M.TRUNK, { group: g, rough: 0.012, paint: spBark });
-  var spTufts = (m, n, R4, g, seed2, h = 0.3, mat = M.LEAF2) => {
+  var spTufts = (m, n, R5, g, seed2, h = 0.3, mat = M.LEAF2) => {
     for (let i = 0; i < n; i++) {
-      const a = spHash(seed2, i) * 6.283, d = R4 * Math.sqrt(spHash(i, seed2)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7;
+      const a = spHash(seed2, i) * 6.283, d = R5 * Math.sqrt(spHash(i, seed2)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7;
       m.ell([x, h * 0.3, z], [0.07, h * (0.35 + spHash(i, 4) * 0.3), 0.07], mat, { group: g + i % 3, paint: (p) => p[1] > h * 0.45 ? M.LEAF : void 0 });
     }
   };
@@ -5642,7 +5878,7 @@ label.check input { accent-color: var(--accent); }
       m.ell([0, 0.16, 0], [0.78, 0.2, 0.72], M.STONE, { group: 1, rough: 0.015, paint: (p) => p[1] > 0.3 ? M.MOSS : void 0 });
       spWater(m, [0, 0.345, 0], [0.55, 0.5], 2);
       for (let i = 0; i < 6; i++) {
-        const a = i / 6 * Math.PI * 2 + 0.4, R4 = 1.5 + spHash(i) * 0.3, b = [Math.cos(a) * R4, 0, Math.sin(a) * R4 * 0.8], h = 1.1 + spHash(i, 2) * 0.7, t = v3.add(b, [0, h, 0]);
+        const a = i / 6 * Math.PI * 2 + 0.4, R5 = 1.5 + spHash(i) * 0.3, b = [Math.cos(a) * R5, 0, Math.sin(a) * R5 * 0.8], h = 1.1 + spHash(i, 2) * 0.7, t = v3.add(b, [0, h, 0]);
         m.seg(b, t, 0.12, 0.09, M.TRUNK, { group: 3 + i, rough: 0.02, paint: spBark });
         for (let k = 0; k < 7; k++) {
           const fa = k / 7 * Math.PI * 2 + i, d = [Math.cos(fa), 0, Math.sin(fa)];
@@ -5776,16 +6012,16 @@ label.check input { accent-color: var(--accent); }
         const n = spHash(Math.floor(p[0] * 10) + Math.floor(p[2] * 10) * 7, Math.floor(p[1] * 10));
         return n < 0.2 ? M.NOSE : n > 0.88 ? M.BARK2 : void 0;
       };
-      const R4 = (y) => 2.4 * (1 - Math.max(0, y - 0.2) / 1.75 * 0.72);
+      const R5 = (y) => 2.4 * (1 - Math.max(0, y - 0.2) / 1.75 * 0.72);
       for (let i = 0; i < 7; i++) {
         const t = i / 7, y = 0.2 + t * 1.75;
-        m.ell([0, y, 0], [R4(y), 0.38, R4(y) * 0.85], M.BARKD, { group: 1, rough: 0.05, paint: scoria });
+        m.ell([0, y, 0], [R5(y), 0.38, R5(y) * 0.85], M.BARKD, { group: 1, rough: 0.05, paint: scoria });
       }
       m.ell([0, 2.05, 0], [0.78, 0.1, 0.64], M.GLOW, { group: 2, paint: (p) => {
         const d = Math.hypot(p[0], p[2] / 0.82);
         return d < 0.42 ? M.NOSE : d < 0.52 ? M.BODY2 : d > 0.72 ? M.ACCENT : void 0;
       } });
-      const flow = [2, 1.7, 1.4, 1.1, 0.8, 0.5, 0.22].map((y, i) => [Math.sin(i * 1.3) * 0.18 + 0.1, y + 0.08, R4(y) * 0.85 + 0.02, 0.07 + i * 0.012]);
+      const flow = [2, 1.7, 1.4, 1.1, 0.8, 0.5, 0.22].map((y, i) => [Math.sin(i * 1.3) * 0.18 + 0.1, y + 0.08, R5(y) * 0.85 + 0.02, 0.07 + i * 0.012]);
       m.chain(flow, M.GLOW, { group: 3, extra: true, paint: (p) => {
         const n = spHash(Math.floor(p[0] * 24), Math.floor(p[1] * 24 + p[2] * 11));
         return n < 0.2 ? M.BODY2 : n > 0.85 ? M.ACCENT : void 0;
@@ -5836,7 +6072,7 @@ label.check input { accent-color: var(--accent); }
       } });
       m.box([0, 1.12, 0], [0.2, 0.1, 0.01], M.FRAME, { dir: [1, -0.5, 0], round: 5e-3, group: 5 });
       for (let i = 0; i < 22; i++) {
-        const a = i / 22 * Math.PI * 2, R4 = 1.25 + spHash(i) * 0.2, c = [Math.cos(a) * R4, 0, Math.sin(a) * R4 * 0.85];
+        const a = i / 22 * Math.PI * 2, R5 = 1.25 + spHash(i) * 0.2, c = [Math.cos(a) * R5, 0, Math.sin(a) * R5 * 0.85];
         m.seg(c, v3.add(c, [0, 0.18, 0]), 0.015, 0.012, M.LEAF2, { group: 6 });
         m.ell(v3.add(c, [0, 0.2, 0]), [0.05, 0.04, 0.05], [M.FLOWER, M.BELLY, M.ACCENT][i % 3], { group: 7 });
       }
@@ -5921,10 +6157,10 @@ label.check input { accent-color: var(--accent); }
     "cairn"(m) {
       let y = 0;
       for (let ring2 = 0; ring2 < 6; ring2++) {
-        const R4 = 0.9 - ring2 * 0.14, n = Math.max(3, 9 - ring2);
+        const R5 = 0.9 - ring2 * 0.14, n = Math.max(3, 9 - ring2);
         for (let i = 0; i < n; i++) {
           const a = i / n * Math.PI * 2 + ring2;
-          spRockAt(m, [Math.cos(a) * R4 * 0.8, y + 0.14, Math.sin(a) * R4 * 0.7], [0.24 - ring2 * 0.02, 0.15, 0.2 - ring2 * 0.02], 1 + (ring2 + i) % 4, ring2 < 2);
+          spRockAt(m, [Math.cos(a) * R5 * 0.8, y + 0.14, Math.sin(a) * R5 * 0.7], [0.24 - ring2 * 0.02, 0.15, 0.2 - ring2 * 0.02], 1 + (ring2 + i) % 4, ring2 < 2);
         }
         y += 0.26;
       }
@@ -6231,12 +6467,12 @@ label.check input { accent-color: var(--accent); }
       };
     }
   }
-  function ring(m, c, n, R4, tube, mat, o) {
+  function ring(m, c, n, R5, tube, mat, o) {
     n = v3.norm(n);
     const u = v3.norm(v3.cross(n, Math.abs(n[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0])), w = v3.cross(n, u), pts = [];
     for (let i = 0; i <= 14; i++) {
       const a = i / 14 * Math.PI * 2;
-      pts.push([...v3.add(c, v3.add(v3.mul(u, Math.cos(a) * R4), v3.mul(w, Math.sin(a) * R4))), tube]);
+      pts.push([...v3.add(c, v3.add(v3.mul(u, Math.cos(a) * R5), v3.mul(w, Math.sin(a) * R5))), tube]);
     }
     m.chain(pts, mat, o);
   }
@@ -6557,8 +6793,8 @@ label.check input { accent-color: var(--accent); }
   }
   function troll3d(S, level, frame, st, facing = "towards") {
     const m = new Model(), q = { ...S.q, ...S.levelQ?.[level] || {} }, sw = frame ? 1 : -1;
-    const F = [0.8, 0, 0.6], R4 = [-0.6, 0, 0.8];
-    const P2 = (f, u, s) => [F[0] * f + R4[0] * s, u, F[2] * f + R4[2] * s], D2 = (f, u, s) => v3.norm(P2(f, u, s)), at2 = (c, f, u, s) => v3.add(c, P2(f, u, s));
+    const F = [0.8, 0, 0.6], R5 = [-0.6, 0, 0.8];
+    const P2 = (f, u, s) => [F[0] * f + R5[0] * s, u, F[2] * f + R5[2] * s], D2 = (f, u, s) => v3.norm(P2(f, u, s)), at2 = (c, f, u, s) => v3.add(c, P2(f, u, s));
     const hr = q.hr ?? 0.24, bw = q.bw ?? 0.42, hunch = q.hunch ?? 1, nose = q.nose ?? 1, beard = q.beard ?? 1, eyeK = q.eyeK ?? 1, stoneTo = q.stone ?? 0, reach = q.reach ?? 1, tusk = q.tusks ?? 0, mossK = q.mossK ?? 1, hump = q.boulder ?? 0;
     const fr = (p) => p[0] * F[0] + p[2] * F[2];
     const stoned = (p, base) => stoneTo && p[1] < stoneTo + 0.05 * Math.sin(p[0] * 29 + p[2] * 23) + 0.03 * Math.sin(p[0] * 61 - p[2] * 47) ? spotty(p, 22, 0.12) ? M.STONED : M.STONE : base;
@@ -6791,16 +7027,16 @@ label.check input { accent-color: var(--accent); }
   }
   function mole3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, m = new Model(), f = frame ? 0.03 : 0;
-    const g = Math.min(level, 2), L2 = [0.56, 0.82, 1][g], Hk = [0.5, 0.78, 1][g], Sn = [0.55, 0.8, 1][g], R4 = [0.6 * L2, 0.25 * [1.08, 1.02, 1][g], 0.33 * [1.02, 1, 1][g]];
+    const g = Math.min(level, 2), L2 = [0.56, 0.82, 1][g], Hk = [0.5, 0.78, 1][g], Sn = [0.55, 0.8, 1][g], R5 = [0.6 * L2, 0.25 * [1.08, 1.02, 1][g], 0.33 * [1.02, 1, 1][g]];
     const coat = g === 0 ? M.SKIN : M.BODY, back = g === 0 ? M.SKIN : M.BODY2;
-    m.seg([-R4[0] + 0.02, 0.16, 0], [-R4[0] - 0.1, 0.1, 0], 0.04, 0.02, M.SKIN, { group: 3 });
+    m.seg([-R5[0] + 0.02, 0.16, 0], [-R5[0] - 0.1, 0.1, 0], 0.04, 0.02, M.SKIN, { group: 3 });
     for (const side of [-1, 1]) {
       const d = (frame ? 1 : -1) * side * 0.06, x = -0.3 * L2 + d;
       m.ell([x, 0.05, side * 0.2], [0.07, 0.04, 0.05], M.SKIN, { group: side > 0 ? 6 : 2 });
       m.anchors.feet.push({ c: [x, 0.05, side * 0.2], r: 0.07, group: side > 0 ? 6 : 2 });
     }
-    m.ell([0, 0.26, 0], R4, coat, { paint: (p) => p[1] > 0.4 ? back : g === 1 && p[1] < 0.14 ? M.SKIN : void 0 });
-    const nx = R4[0] + 0.04;
+    m.ell([0, 0.26, 0], R5, coat, { paint: (p) => p[1] > 0.4 ? back : g === 1 && p[1] < 0.14 ? M.SKIN : void 0 });
+    const nx = R5[0] + 0.04;
     m.ell([nx, 0.22, 0], [0.26 * Sn, 0.07, 0.07], M.SKIN, { dir: [1, -0.15, 0], group: 1 });
     m.ell([nx + 0.25 * Sn, 0.18, 0], [0.04, 0.05, 0.06], M.NOSE, { group: 1 });
     const elder = legend && S.elder, hk = (elder ? 1.55 : 1) * Hk;
@@ -6822,9 +7058,9 @@ label.check input { accent-color: var(--accent); }
         m.ell(v3.add(lan, [0, 0.22, 0]), [0.06, 0.035, 0.06], M.WOOD, { group: 142, extra: true });
       }
     }
-    for (const side of [-1, 1]) m.ell(Model.surface([0, 0.26, 0], R4, v3.norm([0.85, 0.3, side * 0.35])), [0.015, 0.015, 0.015], elder ? M.WEB : legend ? M.MAGIC2 : M.EYE, { group: 1 });
+    for (const side of [-1, 1]) m.ell(Model.surface([0, 0.26, 0], R5, v3.norm([0.85, 0.3, side * 0.35])), [0.015, 0.015, 0.015], elder ? M.WEB : legend ? M.MAGIC2 : M.EYE, { group: 1 });
     m.anchors.head = { c: [0.32 * L2, 0.34, 0], r: [0.25, 0.22, 0.25], top: [0.3 * L2, 0.58, 0] };
-    m.anchors.eyes = { pts: [-1, 1].map((side) => Model.surface([0, 0.26, 0], R4, v3.norm([0.85, 0.3, side * 0.35]))), size: 0.03 };
+    m.anchors.eyes = { pts: [-1, 1].map((side) => Model.surface([0, 0.26, 0], R5, v3.norm([0.85, 0.3, side * 0.35]))), size: 0.03 };
     m.anchors.neck = { c: [0.36, 0.3, 0], r: 0.27, dir: [1, 0.1, 0] };
     if (elder) {
       grizzle(m, (p) => p[1] > 0.38 ? 0.2 : 0.08, M.STONE, [M.BODY, M.BODY2]);
@@ -6839,15 +7075,15 @@ label.check input { accent-color: var(--accent); }
     return finish(m, S, level, st, 0.55, facing);
   }
   function armadilloBall(S, frame, st, facing) {
-    const m = new Model(), R4 = 0.46, c = [0, R4, 0], n = 9, step2 = Math.PI * 2 / n, roll = frame ? step2 / 2 : 0;
+    const m = new Model(), R5 = 0.46, c = [0, R5, 0], n = 9, step2 = Math.PI * 2 / n, roll = frame ? step2 / 2 : 0;
     const elder = S.elder;
-    m.ell(c, [R4, R4, R4 * 0.92], M.BODY, { paint: (p) => {
+    m.ell(c, [R5, R5, R5 * 0.92], M.BODY, { paint: (p) => {
       const a = Math.atan2(p[1] - c[1], p[0] - c[0]) + roll, k = (a / step2 % 1 + 1) % 1, band2 = Math.floor(a / step2);
       if (!elder) return k < 0.1 ? M.MAGIC : band2 % 2 ? M.BODY2 : spotty(p, 24, 0.25) ? M.BODY3 : void 0;
       if (k < 0.1) return M.MAGIC;
       if (k < 0.16 && spotty(p, 40, 0.45)) return M.MOSS;
       if (k > 0.9) return M.WOOD;
-      const zig = Math.abs((p[2] / R4 * 3 + 10) % 1 - 0.5) * 0.5 + 0.38;
+      const zig = Math.abs((p[2] / R5 * 3 + 10) % 1 - 0.5) * 0.5 + 0.38;
       if (Math.abs(k - zig) < 0.035) return M.BODY3;
       if (spotty(p, 30, 0.1)) return M.STONED;
       return band2 % 2 ? M.BODY2 : spotty(p, 55, 0.25) ? M.WEB : void 0;
@@ -6857,20 +7093,20 @@ label.check input { accent-color: var(--accent); }
       for (const z of [-0.45, 0, 0.45]) {
         const d = v3.norm([Math.cos(a), Math.sin(a), z]);
         if (d[2] < -0.1) continue;
-        m.ell(Model.surface(c, [R4, R4, R4 * 0.92], d), [0.036, 0.036, 0.036], M.WOOD, { group: 3, extra: true });
+        m.ell(Model.surface(c, [R5, R5, R5 * 0.92], d), [0.036, 0.036, 0.036], M.WOOD, { group: 3, extra: true });
       }
     }
     if (elder) for (const [a, z] of [[0.6, 0.3], [2.4, 0.5], [4.2, 0.2]]) {
-      const p0 = Model.surface(c, [R4, R4, R4 * 0.92], v3.norm([Math.cos(a - roll), Math.sin(a - roll), z]));
+      const p0 = Model.surface(c, [R5, R5, R5 * 0.92], v3.norm([Math.cos(a - roll), Math.sin(a - roll), z]));
       m.ell(p0, [0.05, 0.035, 0.03], M.BODY, { group: 1, cut: true });
     }
-    for (const side of [-1, 1]) m.ell([R4 * 0.55, R4 * 1.62, side * R4 * 0.3], [0.1, 0.035, 0.03], M.SKIN, { dir: [0.3, 1, side * 0.4], group: 1 });
-    m.ell([R4 * 0.95, R4 * 0.55, 0], [0.05, 0.03, 0.03], M.NOSE, { group: 1 });
-    for (const side of [-1, 1]) m.ell(Model.surface(c, [R4, R4, R4 * 0.92], v3.norm([0.8, 0.55, side * 0.32])), [0.025, 0.025, 0.025], M.MAGIC2, { group: 1 });
-    m.ell([0, 0.02, 0], [R4 * 0.8, 0.02, R4 * 0.6], M.MAGIC, { group: 2, extra: true });
-    m.anchors.head = { c: [R4 * 0.7, R4 * 1.2, 0], r: [0.14, 0.12, 0.12], top: [R4 * 0.6, R4 * 1.7, 0] };
-    m.anchors.eyes = { pts: [-1, 1].map((side) => Model.surface(c, [R4, R4, R4 * 0.92], v3.norm([0.8, 0.55, side * 0.32]))), size: 0.025 };
-    m.anchors.neck = { c: [R4 * 0.7, R4, 0], r: 0.12, dir: [1, 0.2, 0] };
+    for (const side of [-1, 1]) m.ell([R5 * 0.55, R5 * 1.62, side * R5 * 0.3], [0.1, 0.035, 0.03], M.SKIN, { dir: [0.3, 1, side * 0.4], group: 1 });
+    m.ell([R5 * 0.95, R5 * 0.55, 0], [0.05, 0.03, 0.03], M.NOSE, { group: 1 });
+    for (const side of [-1, 1]) m.ell(Model.surface(c, [R5, R5, R5 * 0.92], v3.norm([0.8, 0.55, side * 0.32])), [0.025, 0.025, 0.025], M.MAGIC2, { group: 1 });
+    m.ell([0, 0.02, 0], [R5 * 0.8, 0.02, R5 * 0.6], M.MAGIC, { group: 2, extra: true });
+    m.anchors.head = { c: [R5 * 0.7, R5 * 1.2, 0], r: [0.14, 0.12, 0.12], top: [R5 * 0.6, R5 * 1.7, 0] };
+    m.anchors.eyes = { pts: [-1, 1].map((side) => Model.surface(c, [R5, R5, R5 * 0.92], v3.norm([0.8, 0.55, side * 0.32]))), size: 0.025 };
+    m.anchors.neck = { c: [R5 * 0.7, R5, 0], r: 0.12, dir: [1, 0.2, 0] };
     return finish(m, S, 3, st, 0.55, facing);
   }
   function armadillo3d(S, level, frame, st, facing = "towards") {
@@ -6986,9 +7222,9 @@ label.check input { accent-color: var(--accent); }
     const bandMat = (k) => sh.pale ? M.SKIN : sh.bands && Math.floor(k * sh.bands) % 2 ? M.BODY3 : M.BODY;
     const pts = [];
     for (let i = 0; i <= n; i++) {
-      const u = i / n, a = -Math.PI * 0.6 + u * turns * Math.PI * 2, R4 = R0 * Math.pow(1 - u * 0.82, 1.1), h = cone * R0 * 2.4 * u;
-      const p = v3.add(v3.add(base, v3.mul(ax, h)), v3.add(v3.mul(e1, Math.cos(a) * R4 * 0.55), v3.mul(e2, Math.sin(a) * R4 * 0.55)));
-      pts.push([...p, R4 * (sh.stars ? 0.44 : 0.5) + 0.015, u, v3.add(base, v3.mul(ax, h))]);
+      const u = i / n, a = -Math.PI * 0.6 + u * turns * Math.PI * 2, R5 = R0 * Math.pow(1 - u * 0.82, 1.1), h = cone * R0 * 2.4 * u;
+      const p = v3.add(v3.add(base, v3.mul(ax, h)), v3.add(v3.mul(e1, Math.cos(a) * R5 * 0.55), v3.mul(e2, Math.sin(a) * R5 * 0.55)));
+      pts.push([...p, R5 * (sh.stars ? 0.44 : 0.5) + 0.015, u, v3.add(base, v3.mul(ax, h))]);
     }
     const starPaint = (i) => (p) => {
       if (i % 4 === 0 && Math.hypot(...v3.sub(p, pts[i].slice(0, 3))) < pts[i][3] * 0.45) return M.NIGHT2;
@@ -7015,11 +7251,11 @@ label.check input { accent-color: var(--accent); }
       m.ell(v3.add(p0.slice(0, 3), v3.mul(v3.norm(d), p0[3] * 0.95)), [p0[3] * k, p0[3] * k * 0.7, p0[3] * k], M.NIGHT2, { group: 3, cut: true });
     }
     if (sh.runes) for (let i = 4; i < n * 0.8; i += 5) {
-      const p = pts[i], ax2 = p[5], out = v3.norm(v3.add(v3.norm(v3.sub(p.slice(0, 3), ax2)), [0.2, 0.2, 0.9])), f = v3.add(p.slice(0, 3), v3.mul(out, p[3] * 0.95)), t = v3.norm(v3.sub(pts[i + 1].slice(0, 3), p.slice(0, 3))), up = v3.norm(v3.cross(out, t)), w = p[3] * 0.5, o = { group: 150 + i % 2, extra: true }, R4 = (a, b) => v3.add(f, v3.add(v3.mul(t, a * w), v3.mul(up, b * w)));
+      const p = pts[i], ax2 = p[5], out = v3.norm(v3.add(v3.norm(v3.sub(p.slice(0, 3), ax2)), [0.2, 0.2, 0.9])), f = v3.add(p.slice(0, 3), v3.mul(out, p[3] * 0.95)), t = v3.norm(v3.sub(pts[i + 1].slice(0, 3), p.slice(0, 3))), up = v3.norm(v3.cross(out, t)), w = p[3] * 0.5, o = { group: 150 + i % 2, extra: true }, R5 = (a, b) => v3.add(f, v3.add(v3.mul(t, a * w), v3.mul(up, b * w)));
       const k = i % 3;
-      m.seg(R4(0, -0.6), R4(0, 0.6), w * 0.14, w * 0.14, M.RUNE, o);
-      m.seg(R4(0, k ? 0.1 : -0.2), R4(0.55, k === 2 ? -0.35 : 0.5), w * 0.12, w * 0.12, M.RUNE, o);
-      m.seg(R4(0, -0.1), R4(-0.55, k === 1 ? 0.5 : -0.45), w * 0.12, w * 0.12, M.RUNE, o);
+      m.seg(R5(0, -0.6), R5(0, 0.6), w * 0.14, w * 0.14, M.RUNE, o);
+      m.seg(R5(0, k ? 0.1 : -0.2), R5(0.55, k === 2 ? -0.35 : 0.5), w * 0.12, w * 0.12, M.RUNE, o);
+      m.seg(R5(0, -0.1), R5(-0.55, k === 1 ? 0.5 : -0.45), w * 0.12, w * 0.12, M.RUNE, o);
     }
     if (sh.ridge) for (let w = 1; w < turns; w++) {
       const i = Math.round(w / turns * n), p = pts[i];
@@ -7142,8 +7378,8 @@ label.check input { accent-color: var(--accent); }
     };
     if (coil) {
       for (let i = 0; i <= 30; i++) {
-        const t = i / 30, a = t * Math.PI * 2 * 2.6, R4 = (0.55 - t * 0.25) * coil;
-        pts.push([Math.cos(a) * R4 - 0.1, r0 + t * 0.32 * coil, Math.sin(a) * R4 * 0.8, r0 * (1.15 - t * 0.2)]);
+        const t = i / 30, a = t * Math.PI * 2 * 2.6, R5 = (0.55 - t * 0.25) * coil;
+        pts.push([Math.cos(a) * R5 - 0.1, r0 + t * 0.32 * coil, Math.sin(a) * R5 * 0.8, r0 * (1.15 - t * 0.2)]);
       }
     } else {
       for (let i = 0; i <= 14; i++) {
@@ -7162,7 +7398,7 @@ label.check input { accent-color: var(--accent); }
       m.ell(b, [w * 0.9, w * 0.55, w * 0.8], i % 2 ? M.BELLY : M.ACCENT, { dir: up, group: 12, paint: (p) => p[1] > b[1] + w * 0.3 ? M.BODYL : void 0 });
       b = v3.add(b, v3.mul(v3.norm(up), w * 1.05));
     }
-    if (has("ripple") && RATTLING && frame) for (const R4 of [0.5, 0.8, 1.1]) m.ell([tail[0] - 0.05, 4e-3, tail[2]], [R4 * rk * 0.6, 4e-3, R4 * rk * 0.45], M.LINE, { group: 0, paint: (p) => Math.hypot((p[0] - tail[0] + 0.05) / (R4 * rk * 0.6), (p[2] - tail[2]) / (R4 * rk * 0.45)) > 0.9 ? M.LINE : null });
+    if (has("ripple") && RATTLING && frame) for (const R5 of [0.5, 0.8, 1.1]) m.ell([tail[0] - 0.05, 4e-3, tail[2]], [R5 * rk * 0.6, 4e-3, R5 * rk * 0.45], M.LINE, { group: 0, paint: (p) => Math.hypot((p[0] - tail[0] + 0.05) / (R5 * rk * 0.6), (p[2] - tail[2]) / (R5 * rk * 0.45)) > 0.9 ? M.LINE : null });
     const hr = 0.085 * th, hc = v3.add(neckTop, [hr * 1.1, hr * 0.2, 0]);
     m.ell(hc, [hr * 1.5, hr * 0.65, hr * 1.1], M.BODY, { dir: [1, -0.2, 0], group: 1, paint: (p) => p[1] > hc[1] + hr * 0.3 ? M.BODY2 : void 0 });
     eyesOn(m, hc, [hr * 1.5, hr * 0.65, hr * 1.1], [[0.45, 0.55, 0.7], [0.45, 0.55, -0.7]], hr * 0.2, legend ? M.MAGIC2 : M.EYE);
@@ -7489,7 +7725,7 @@ label.check input { accent-color: var(--accent); }
         const r = Math.hypot(a, b);
         if (r > 1) return null;
         const th = Math.atan2(b, a), k = th / (Math.PI * 2 / n), sp = Math.abs(k - Math.round(k)) * r * Math.PI * 2 / n;
-        const ringD = Math.min(...rings.map((R4) => Math.abs(r * Math.cos(Math.PI / n) / Math.max(0.3, Math.cos(sp / Math.max(0.05, r))) - R4)));
+        const ringD = Math.min(...rings.map((R5) => Math.abs(r * Math.cos(Math.PI / n) / Math.max(0.3, Math.cos(sp / Math.max(0.05, r))) - R5)));
         const broken = r > 0.62 && (Math.round(k) % 5 === 2 || ringD < 0.016 && Math.abs(Math.sin(th * 5)) > 0.9), thread = !broken && (sp < 0.018 || ringD < 0.016);
         if (thread) return sp < 0.03 && ringD < 0.03 ? M.GLINT : M.BELLY;
         if (r < 0.58) return (Math.floor(k + 10) + (r < 0.4 ? 1 : 0)) % 2 ? M.MAGIC : M.MAGIC2;
@@ -8399,8 +8635,8 @@ label.check input { accent-color: var(--accent); }
   }
   var SHAPES = { cone: (f) => 0.25 + 0.75 * (1 - f), sphere: (f) => 0.3 + 0.7 * Math.sin(Math.PI * Math.min(1, 0.15 + f * 0.85)), flame: (f) => 0.3 + 0.7 * Math.sin(Math.PI * Math.min(1, f * 0.6 + 0.1)), even: () => 1, cup: (f) => 0.5 + 0.5 * f };
   function stampPixels(kind, ss, seed2) {
-    const out = [], R4 = Math.ceil(ss * 1.4);
-    for (let dy = -R4; dy <= R4; dy++) for (let dx = -R4; dx <= R4; dx++) {
+    const out = [], R5 = Math.ceil(ss * 1.4);
+    for (let dy = -R5; dy <= R5; dy++) for (let dx = -R5; dx <= R5; dx++) {
       const h = hash22(dx + 40, dy + 40, seed2);
       if (kind === "crystal") {
         const d2 = Math.abs(dx) / ss + Math.abs(dy) / (ss * 1.35);
@@ -8579,7 +8815,7 @@ label.check input { accent-color: var(--accent); }
   }
   function blobTree(r, st, s, P2) {
     const [PX, PY] = st.treePad || [0, 0], k = (P2.narrow ? 0.8 + 0.2 * spread(st) : spread(st)) * (P2.wide || 1), W = Math.round(P2.w * s * k + (P2.wPad ?? 40) * s), H = Math.round(P2.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
-    const T = P2.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
+    const T = st.biomeTrunk && !P2.trunk.stilts ? { ...P2.trunk, ...st.biomeTrunk } : P2.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
     const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? 0.55 : 1) / Math.sqrt(n), lean0 = (r() - 0.5) * (T.lean ?? 0.3) * st.gnarl + (st.treeLean || 0);
     const tips = [], ends = [], trunks0 = [];
     const grow = (b, len, w, li) => {
@@ -8640,7 +8876,7 @@ label.check input { accent-color: var(--accent); }
     if (T.scars) {
       for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
     }
-    const C2 = P2.crown, lowestEnd = Math.max(...ends.map((e) => e[1]));
+    const C2 = st.biomeCrown ? { ...P2.crown, ...Object.fromEntries(Object.entries(st.biomeCrown).filter(([k2]) => !P2.crown[k2])) } : P2.crown, lowestEnd = Math.max(...ends.map((e) => e[1]));
     if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
     if (C2.fronds) return frondCrown(sp, r, st, s, k, ends[0], C2, gy);
     const mid = [tips.reduce((a, t) => a + t[0], 0) / tips.length, tips.reduce((a, t) => a + t[1], 0) / tips.length];
@@ -9211,7 +9447,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0, lake: 0, modern: 0.1 },
       feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock."
     },
-    flora: { species: [["juniper", 0.6], ["hawthorn", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["juniper", 0.6], ["acacia", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.4, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9286,10 +9522,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.24,
     floor: ["mud", 0.08, 0.32, 0.52],
-    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
     wall: [["rockwall", {}]],
     small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-    big: [["tree", { type: "hawthorn", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
+    big: [["tree", { type: "olive", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
     setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: 0.8, stone: [0.07, 0.3, 0.62] }],
     pathKinds: ["animal", "dirt"],
     layout: {
@@ -9304,7 +9540,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.3, rocks: 0.5, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly."
     },
-    flora: { species: [["hawthorn", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
+    flora: { species: [["olive", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9415,7 +9651,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.27,
     floor: ["moss", 0.27, 0.45, 0.36],
-    text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
+    text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and yew", set: "an old ring in a glade, where the roe gather at dusk" },
     small: [["fern", {}], ["grass", { h: 1.1 }]],
     big: [["tree", { type: "rowan", variant: "mossy", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
     pathKinds: ["animal", "roots"],
@@ -9432,7 +9668,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.2, rocks: 0.4, freak: 0.15, lake: 0.15, modern: 0.1 },
       feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks."
     },
-    flora: { species: [["rowan", 0.4], ["birch", 0.35], ["oak", 0.25]], palette: { sat: 0.95, val: 0.95 } },
+    flora: { species: [["rowan", 0.4], ["birch", 0.35], ["yew", 0.25]], palette: { sat: 0.95, val: 0.95 } },
     settings: { treeDensity: 0.6, groundCover: { density: 0.85, kinds: ["moss", "blades"] } }
   };
 
@@ -9465,7 +9701,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.1, freak: 0.1, lake: 0.65, modern: 0.05 },
       feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming."
     },
-    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["alder", 0.15]], palette: { sat: 0.85, val: 0.8 } },
+    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["strangler", 0.15]], palette: { sat: 0.85, val: 0.8 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -9498,7 +9734,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.4, freak: 0.05, lake: 0.35, modern: 0.1 },
       feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs."
     },
-    flora: { species: [["mangrove", 0.7], ["alder", 0.2], ["aspen", 0.1]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["mangrove", 0.7], ["datePalm", 0.2], ["willow", 0.1]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9576,7 +9812,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.05, 0.5, 0.45],
-    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, thorny hawthorn", set: "a ring of old boma posts round a cold hearth" },
+    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
     wall: [["bush", {}]],
     small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
     big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
@@ -9595,7 +9831,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.45, freak: 0.1, lake: 0.2, modern: 0.1 },
       feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight."
     },
-    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["hawthorn", 0.15]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["baobab", 0.15]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "grass"] } }
   };
 
@@ -9640,7 +9876,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.09, 0.3, 0.66],
-    text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros and Joshua trees", set: "a heap of pale stones" },
+    text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros, Joshua trees and palo verde", set: "a heap of pale stones" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 0.9, leafHue: 0.14, leafSat: 0.3 }], ["bush", { small: true }]],
     big: [["tree", { type: "saguaro", scale: 1.1 }], ["tree", { type: "joshua", minor: true, scale: 1 }], ["boulder", { sparse: 0.15 }]],
@@ -9659,7 +9895,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.2, rocks: 0.6, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Pale flats of gravelly sand, saguaros standing alone with their arms raised, Joshua trees and prickly pear between; open, dry and rattling."
     },
-    flora: { species: [["saguaro", 0.5], ["joshua", 0.3], ["pricklyPear", 0.2]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["saguaro", 0.4], ["joshua", 0.2], ["paloVerde", 0.25], ["pricklyPear", 0.15]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.35, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9884,7 +10120,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.15, rocks: 0.7, freak: 0.05, lake: 0, modern: 0.1 },
       feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock."
     },
-    flora: { species: [["datePalm", 0.5], ["acacia", 0.35], ["hawthorn", 0.15]], palette: { sat: 0.75, val: 0.95 } },
+    flora: { species: [["datePalm", 0.5], ["acacia", 0.35], ["cycad", 0.15]], palette: { sat: 0.75, val: 0.95 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.7, kinds: ["tallgrass", "blades"] } }
   };
 
@@ -9930,10 +10166,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.3,
     floor: ["lichen", 0.3, 0.22, 0.44],
     snow: 0.45,
-    text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
+    text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and juniper krummholz", set: "a heap of glacier rubble with a slab on top" },
     wall: [["rockwall", {}]],
     small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
+    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "juniper", minor: true, scale: 0.95, gnarl: 1 }]],
     steep: true,
     pathKinds: ["footpath"],
     setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [0.74, 0.14, 0.62], dark: [0.72, 0.16, 0.34], lichen: [0.74, 0.08, 0.84] } }],
@@ -9949,7 +10185,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.05, rocks: 0.75, freak: 0.05, lake: 0.1, modern: 0.05 },
       feel: "High, bare and bright: lichened rock and fingers of glacier ice, rock spires standing over the scree, larch bent by the wind and old wild olives in the lee of the rocks, broom and juniper scrub and heather among the stones."
     },
-    flora: { species: [["larch", 0.45], ["olive", 0.35], ["pine", 0.2]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["larch", 0.45], ["juniper", 0.35], ["pine", 0.2]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.5, kinds: ["heather", "moss", "blades"] } }
   };
 
@@ -10374,15 +10610,117 @@ label.check input { accent-color: var(--accent); }
 
   // art/recipes.js
   var AREA_RECIPES = [...AREA_FOLDER_RECIPES];
-  function recipeProblems(R4) {
+  function recipeProblems(R5) {
     const out = [];
-    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R4[k] == null) out.push(k);
-    if (!Number.isInteger(R4.slot) || R4.slot < 0) out.push("slot");
-    if (R4.floor && (!Array.isArray(R4.floor) || R4.floor.length !== 4)) out.push("floor");
-    if (!R4.set && !R4.setPiece) out.push("set or setPiece");
-    if (!R4.big?.length) out.push("big");
+    for (const k of ["id", "name", "creature", "floor", "text", "layout"]) if (R5[k] == null) out.push(k);
+    if (!Number.isInteger(R5.slot) || R5.slot < 0) out.push("slot");
+    if (R5.floor && (!Array.isArray(R5.floor) || R5.floor.length !== 4)) out.push("floor");
+    if (!R5.set && !R5.setPiece) out.push("set or setPiece");
+    if (!R5.big?.length) out.push("big");
     return out;
   }
+
+  // art/flora/biomes.js
+  var BIOME_LOOKS = {
+    temperate: { name: "Temperate", feel: "as the game is: blue-green broadleaf and pine" },
+    cold: {
+      name: "Cold (N)",
+      feel: "dark blue-green conifers under snow, pale bark, frost on the moss",
+      leaf: [48, 104, 96, 0.5],
+      sat: 0.6,
+      val: 1.25,
+      bark: [168, 168, 176, 0.35],
+      moss: [205, 215, 226],
+      snow: 0.8,
+      jitter: 0,
+      knobs: { gnarl: 0.1 }
+    },
+    "mountains and glaciers": {
+      name: "Mountains & glaciers (NE)",
+      feel: "grey-green, wind-bent, hung with pale lichen beards, a dusting of snow",
+      leaf: [108, 136, 104, 0.55],
+      sat: 0.55,
+      val: 1.15,
+      bark: [118, 110, 104, 0.3],
+      moss: [180, 196, 168],
+      snow: 0.28,
+      jitter: 0.3,
+      knobs: { lean: 0.25, gnarl: 0.3, hang: 0.5, scale: 0.9 }
+    },
+    volcanic: {
+      name: "Volcanic (E)",
+      feel: "fertile ash: lush deep emerald on charred black trunks, red new growth catching the lava's glow",
+      leaf: [10, 120, 74, 0.5],
+      sat: 1.35,
+      val: 1,
+      lit: [226, 88, 54, 0.55],
+      bark: [34, 28, 30, 0.65],
+      moss: [96, 64, 52],
+      jitter: 0.5,
+      knobs: { gnarl: 0.25 }
+    },
+    badlands: {
+      name: "Badlands (SE)",
+      feel: "dusty sage and olive scrub, ochre bark, low and twisted but full",
+      leaf: [172, 150, 60, 0.65],
+      sat: 0.85,
+      val: 1.12,
+      lit: [222, 172, 88, 0.45],
+      bark: [180, 98, 50, 0.6],
+      moss: [150, 120, 80],
+      jitter: 0.6,
+      knobs: { lean: 0.2, gnarl: 0.35, scale: 0.82 }
+    },
+    hot: {
+      name: "Hot (S)",
+      feel: "sunlit yellow-olive savanna green, pale sandy bark",
+      leaf: [176, 176, 48, 0.62],
+      sat: 1.05,
+      val: 1.15,
+      lit: [236, 214, 120, 0.35],
+      bark: [192, 162, 122, 0.36],
+      moss: [170, 150, 90],
+      jitter: 0.8,
+      knobs: {}
+    },
+    "mangrove swamp": {
+      name: "Mangrove swamp (SW)",
+      feel: "dark glossy olive-teal over wet black-brown roots, grey Spanish moss",
+      leaf: [96, 118, 44, 0.55],
+      sat: 0.95,
+      val: 1.1,
+      bark: [62, 50, 40, 0.42],
+      moss: [168, 176, 146],
+      jitter: 0.6,
+      knobs: { hang: 0.6 },
+      trunk: { stilts: { n: [4, 6], at: [0.12, 0.3], reach: [10, 22], w: 0.35 } }
+    },
+    jungle: {
+      name: "Jungle (W)",
+      feel: "vivid saturated emerald, vines hung with flowers, dark wet bark",
+      leaf: [20, 150, 64, 0.55],
+      sat: 1.45,
+      val: 1.15,
+      bark: [72, 56, 40, 0.2],
+      moss: [80, 130, 70],
+      flower: [236, 84, 150],
+      jitter: 0.7,
+      knobs: { hang: 0.25 },
+      crown: { vines: { share: 0.16, len: [10, 26], budEvery: 6, bud: "FLOWER" }, dots: { share: 0.04, mat: "FLOWER", size: 2 } }
+    },
+    "cold rainforest": {
+      name: "Cold rainforest (NW)",
+      feel: "very deep blue-green, every bough furred and hung with bright moss",
+      leaf: [20, 96, 80, 0.5],
+      sat: 1.15,
+      val: 0.95,
+      bark: [80, 100, 58, 0.5],
+      moss: [160, 214, 100],
+      jitter: 0.4,
+      knobs: { hang: 0.9, gnarl: 0.15 }
+    }
+  };
+  BIOME_LOOKS.rocky = BIOME_LOOKS.volcanic;
 
   // art/props/genomes.js
   var PROP_GENOMES = {
@@ -10974,15 +11312,15 @@ label.check input { accent-color: var(--accent); }
     "stone-shrine": { steep: true }
   };
   for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find((a) => a.id === id), f);
-  for (const R4 of AREA_RECIPES) {
-    const bad = recipeProblems(R4);
-    if (bad.length) throw new Error(`area recipe ${R4.id}: missing ${bad.join(", ")}`);
-    const { layout, flora, setPiece, slot, ...area2 } = R4;
+  for (const R5 of AREA_RECIPES) {
+    const bad = recipeProblems(R5);
+    if (bad.length) throw new Error(`area recipe ${R5.id}: missing ${bad.join(", ")}`);
+    const { layout, flora, setPiece, slot, ...area2 } = R5;
     void slot;
     AREAS.push(area2);
-    RECIPE_LAYOUTS[R4.id] = layout;
-    if (flora) AREA_FLORA[R4.id] = flora;
-    if (setPiece && !R4.set) NEW_SET_PIECES[R4.id] = setPiece;
+    RECIPE_LAYOUTS[R5.id] = layout;
+    if (flora) AREA_FLORA[R5.id] = flora;
+    if (setPiece && !R5.set) NEW_SET_PIECES[R5.id] = setPiece;
   }
   for (const [id, [kind, text]] of Object.entries(NEW_SET_PIECES)) {
     const A2 = AREAS.find((x) => x.id === id);
@@ -11437,6 +11775,36 @@ label.check input { accent-color: var(--accent); }
     }
   };
 
+  // config/broom-parts.json
+  var broom_parts_default = {
+    _: "The Workshop's broom parts and sets (Ed, 2026-10-22/23; docs/backlog/workshop.md, rules/broomParts.ts). One broom, three slots (tip, chassis, exhaust), one part a slot. Each part's stats change the tuning's numbers for her own movement: a key is a tuning path (or pull: how hard her sigils pull on her, 1 the bare broom's), its mult times the bare broom's number and its add plus it; parts fitted together add up (each mult's share over 1 summed, then the adds). The bare broom (every slot empty) is the tuning as it stands: no quick take-off (Ed, 2026-10-23: it loses the plain broom's; the jet nozzles win it back). look: the broom kind (art/brooms.js; twig, art/witch.js's bristles) whose body (a tip or chassis) or tail (an exhaust) it is. A set complete (all its pieces fitted) gives her its broom spell (rules/spells.ts); no broom completes two at once.",
+    parts: {
+      missile: { slot: "tip", name: "Missile nose", look: { kind: "missile", piece: "body" }, up: "Faster in the treetops", down: "Turns wider", stats: { treetopSpeed: { mult: 1.1 }, "treetop.turnRate": { mult: 0.8 } } },
+      curl: { slot: "tip", name: "Curled tip", look: { kind: "curl", piece: "body" }, up: "Blinks go further", down: "Each dodge recharges slower", stats: { "dash.distance": { mult: 1.5 }, "dash.cooldown": { mult: 1.3 } } },
+      horse: { slot: "tip", name: "Hobby-horse head", look: { kind: "hobbyhorse", piece: "body" }, up: "Tight turns, and sharp turns bleed boost half as fast", down: "Boost peaks lower", stats: { "treetop.turnRate": { mult: 1.4 }, "treetop.sharpTurnBleed": { mult: 0.5 }, "treetop.boost": { add: -0.2 } } },
+      fairing: { slot: "chassis", name: "Jet-bike fairing", look: { kind: "jetbike", piece: "body" }, up: "Faster on foot", down: "Heavier off the mark on foot", stats: { groundSpeed: { mult: 1.15 }, groundAcceleration: { add: -8 } } },
+      ladder: { slot: "chassis", name: "Ladder", look: { kind: "ladder", piece: "body" }, up: "Rises and comes down quicker", down: "Slower on foot", stats: { riseTime: { mult: 0.65 }, descendTime: { mult: 0.65 }, groundSpeed: { mult: 0.9 } } },
+      canoe: { slot: "chassis", name: "Canoe hull", look: { kind: "canoe", piece: "body" }, up: "Her sigils pull on her less", down: "Slower to reach cruise in the treetops", stats: { pull: { mult: 0.65 }, acceleration: { mult: 0.75 } } },
+      nozzles: { slot: "exhaust", name: "Jet nozzles", look: { kind: "jetbike", piece: "tail" }, up: "Quick take-off and landing", down: "Glides longer to a stop", stats: { "cooldown.rise": { mult: 0.5 }, riseCooldown: { mult: 0.5 }, "treetop.glideTime": { mult: 1.8 } } },
+      twigs: { slot: "exhaust", name: "Twig bristles", look: { kind: "twig", piece: "tail" }, up: "One more dodge", down: "Boost builds slower", stats: { "dash.charges": { add: 1 }, "treetop.boostTime": { mult: 1.5 } } },
+      oar: { slot: "exhaust", name: "Oar blade", look: { kind: "oar", piece: "tail" }, up: "Sharp on foot", down: "Shorter blinks", stats: { groundAcceleration: { add: 12 }, "dash.distance": { mult: 0.8 } } }
+    },
+    sets: {
+      rocket: { name: "Rocket", pieces: ["missile", "fairing", "nozzles"], spell: "speed" },
+      hedge: { name: "Hedge", pieces: ["curl", "ladder", "twigs"], spell: "stealth" },
+      ferry: { name: "Ferry", pieces: ["horse", "canoe", "oar"], spell: "leyjump" },
+      joust: { name: "Joust", pieces: ["horse", "fairing"], spell: "battering" },
+      piledriver: { name: "Pile driver", pieces: ["ladder", "nozzles"], spell: "pound" }
+    }
+  };
+
+  // src/rules/broomParts.ts
+  var R = broom_parts_default;
+  var PARTS = Object.entries(R.parts).map(([id, p]) => ({ id, ...p }));
+  var PART_IDS = PARTS.map((p) => p.id);
+  var SETS = Object.entries(R.sets).map(([id, s]) => ({ id, ...s }));
+  var BY_ID = new Map(PARTS.map((p) => [p.id, p]));
+
   // src/rules/spells.ts
   var HAT_SPELLS = [
     { id: "none", name: "Plain hat", how: "placed", line: "No spell.", built: true },
@@ -11476,9 +11844,9 @@ label.check input { accent-color: var(--accent); }
     const r = rlCell(p, 16, 3), n = rlCell(p, 6, 5);
     return n < moss && p[1] > 0.1 ? M.MOSS : r > 1 - rust * 0.7 ? M.BODY2 : void 0;
   };
-  var rlTufts = (m, n, R4, g, seed2, cx = 0, cz = 0) => {
+  var rlTufts = (m, n, R5, g, seed2, cx = 0, cz = 0) => {
     for (let i = 0; i < n; i++) {
-      const a = sinHash(seed2, i) * 6.283, d = R4 * Math.sqrt(sinHash(i, seed2));
+      const a = sinHash(seed2, i) * 6.283, d = R5 * Math.sqrt(sinHash(i, seed2));
       m.ell([cx + Math.cos(a) * d, 0.07, cz + Math.sin(a) * d * 0.7], [0.07, 0.1 + sinHash(i, 4) * 0.08, 0.07], M.LEAF2, { group: g + i % 3, paint: (p) => p[1] > 0.13 ? M.LEAF : void 0 });
     }
   };
@@ -11499,13 +11867,13 @@ label.check input { accent-color: var(--accent); }
   } });
   var rlBar = (m, a, b, g, r = 0.025, mat = M.FRAME) => m.seg(a, b, r, r, mat, { group: g, paint: rlWorn(0.35, 0.05) });
   function rlPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at: at2 = [0, 0, 0] } = {}) {
-    const R4 = (v, a, i, j) => {
+    const R5 = (v, a, i, j) => {
       const c = Math.cos(a), s = Math.sin(a), o = [...v];
       o[i] = v[i] * c - v[j] * s;
       o[j] = v[i] * s + v[j] * c;
       return o;
     };
-    const rot2 = (v) => R4(R4(R4(v, roll, 1, 2), pitch, 0, 1), -yaw, 0, 2), inv = (v) => R4(R4(R4(v, yaw, 0, 2), -pitch, 0, 1), -roll, 1, 2);
+    const rot2 = (v) => R5(R5(R5(v, roll, 1, 2), pitch, 0, 1), -yaw, 0, 2), inv = (v) => R5(R5(R5(v, yaw, 0, 2), -pitch, 0, 1), -roll, 1, 2);
     const fwd = (p) => v3.add(rot2(p), at2), back = (p) => inv(v3.sub(p, at2));
     for (const q of m.parts.slice(from)) {
       if (q.type === "cone") {
@@ -11746,9 +12114,9 @@ label.check input { accent-color: var(--accent); }
       rlTufts(m, 10, 1.4, 5, 17);
     } },
     "climbing-frame": { desc: "a climbing frame, a dome of bars wound with ivy", split: 1.4, build(m) {
-      const R4 = 1, pts = (i, j) => {
+      const R5 = 1, pts = (i, j) => {
         const a = i / 8 * 6.283, b = j / 4 * Math.PI / 2;
-        return [Math.cos(a) * Math.cos(b) * R4, Math.sin(b) * R4 * 1.5, Math.sin(a) * Math.cos(b) * R4];
+        return [Math.cos(a) * Math.cos(b) * R5, Math.sin(b) * R5 * 1.5, Math.sin(a) * Math.cos(b) * R5];
       };
       for (let i = 0; i < 8; i++) for (let j = 0; j < 4; j++) {
         rlBar(m, pts(i, j), pts(i, j + 1), 1, 0.025);
@@ -11914,9 +12282,9 @@ label.check input { accent-color: var(--accent); }
     if (Math.abs(Math.sin(p[1] * 60 + Math.sin(p[0] * 9) * 1.5)) > 0.97) return M.BARK2;
     return ctCell(p, k * 3, 2) > 0.9 ? M.BARKD : void 0;
   };
-  var ctTufts = (m, n, R4, g, seed2, cx = 0, cz = 0) => {
+  var ctTufts = (m, n, R5, g, seed2, cx = 0, cz = 0) => {
     for (let i = 0; i < n; i++) {
-      const a = sinHash(seed2, i) * 6.283, d = R4 * Math.sqrt(sinHash(i, seed2));
+      const a = sinHash(seed2, i) * 6.283, d = R5 * Math.sqrt(sinHash(i, seed2));
       m.ell([cx + Math.cos(a) * d, 0.07, cz + Math.sin(a) * d * 0.7], [0.07, 0.1 + sinHash(i, 4) * 0.08, 0.07], M.LEAF2, { group: g + i % 3, paint: (p) => p[1] > 0.13 ? M.LEAF : void 0 });
     }
   };
@@ -11952,13 +12320,13 @@ label.check input { accent-color: var(--accent); }
     return d > r * 0.8 && Math.abs(Math.sin(Math.atan2(p[1] - c[1], p[0] - c[0]) * 14)) < 0.3 ? M.NOSE : void 0;
   } });
   function ctPlace(m, from, { yaw = 0, pitch = 0, roll = 0, at: at2 = [0, 0, 0] } = {}, fromFlat = m.flats.length) {
-    const R4 = (v, a, i, j) => {
+    const R5 = (v, a, i, j) => {
       const c = Math.cos(a), s = Math.sin(a), o = [...v];
       o[i] = v[i] * c - v[j] * s;
       o[j] = v[i] * s + v[j] * c;
       return o;
     };
-    const rot2 = (v) => R4(R4(R4(v, roll, 1, 2), pitch, 0, 1), -yaw, 0, 2), inv = (v) => R4(R4(R4(v, yaw, 0, 2), -pitch, 0, 1), -roll, 1, 2);
+    const rot2 = (v) => R5(R5(R5(v, roll, 1, 2), pitch, 0, 1), -yaw, 0, 2), inv = (v) => R5(R5(R5(v, yaw, 0, 2), -pitch, 0, 1), -roll, 1, 2);
     const fwd = (p) => v3.add(rot2(p), at2), back = (p) => inv(v3.sub(p, at2));
     for (const q of m.parts.slice(from)) {
       if (q.type === "cone") {
@@ -12349,6 +12717,198 @@ label.check input { accent-color: var(--accent); }
     m.ell([-0.17, 0.31, -0.04], [0.14, 0.05, 0.1], M.ACCENT, { group: 6, rough: 0.02 });
     ctTufts(m, 9, 0.75, 7, 41);
   }
+  var wkRemap = (m, map) => {
+    const R5 = {
+      ...m,
+      parts: m.parts,
+      flats: m.flats,
+      seg: (a, b, r1, r2, mat, o = {}) => (m.seg(a, b, r1, r2, map[mat] ?? mat, o), R5),
+      chain: (pts, mat, o = {}) => (m.chain(pts, map[mat] ?? mat, o), R5),
+      ell: (c, r, mat, o = {}) => (m.ell(c, r, map[mat] ?? mat, o), R5),
+      box: (c, h, mat, o = {}) => (m.box(c, h, map[mat] ?? mat, o), R5),
+      flat: (...x) => (m.flat(...x), R5)
+    };
+    return R5;
+  };
+  var WK_COLD = { [M.MAGIC]: M.BODY3, [M.MAGIC2]: M.STONED, [M.EYE]: M.NOSE, [M.GLINT]: M.BELLY };
+  var wkMats = (body, trim2) => ({ ...WK_COLD, [M.BROOM]: body, [M.STRAW]: trim2 });
+  var WK_L = { broomLength: 1, bristles: 1, frame: 0 };
+  function wkKind(m, kind, piece, mats, at2, { g = 3, x0 = -0.5, x1 = 0.62, L: L2 = {} } = {}) {
+    const n = mark(m), K = BROOM_KINDS[kind], mm = wkRemap(m, mats), LL = { ...WK_L, ...L2 };
+    if (piece === "body") K.body(mm, LL, [x0, 0, 0], [x1, 0, 0], 0.022, 0.018);
+    else K.tail(mm, LL, [x0 - 0.13, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: g });
+    place(m, n, at2);
+  }
+  function wkStick(m, x0, x1, at2, g = 4, mat = M.WOOD) {
+    const n = mark(m);
+    m.seg([x0, 0, 0], [x1, 0, 0], 0.022, 0.018, mat, { group: g, paint: ctPlank(9, 0.2) });
+    place(m, n, at2);
+  }
+  function wkBundle(m, at2, g = 5) {
+    const n = mark(m);
+    m.ell([-0.34, 0, 0], [0.36, 0.1, 0.1], M.STRAW, { group: g, rough: 0.012, paint: (p) => ctCell(p, 24, 2) < 0.25 ? M.BARK2 : void 0 });
+    m.seg([0.03, 0, 0], [-0.06, 0, 0], 0.06, 0.07, M.WOOD, { group: g + 1 });
+    for (let i = 0; i < 7; i++) {
+      const s = (i / 6 - 0.5) * 2;
+      m.seg([-0.45, 0, 0], [-0.85 - 0.06 * (i % 2), s * 0.13, (i % 3 - 1) * 0.1], 0.014, 6e-3, M.STRAW, { group: g + 2 });
+    }
+    place(m, n, at2);
+  }
+  function wkHat(m, at2, yaw, g = 8, roll = 1.25) {
+    const n = mark(m);
+    m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.HAT1, { group: g, rough: 6e-3 });
+    m.seg([0, 0.02, 0], [0.02, 0.24, 0.01], 0.095, 0.05, M.HAT1, { group: g + 1 });
+    m.seg([0.02, 0.24, 0.01], [-0.1, 0.36, 0.02], 0.05, 6e-3, M.HAT1, { group: g + 1 });
+    m.ell([0, 0.04, 0], [0.088, 0.02, 0.088], M.JACKET, { group: g + 2 });
+    place(m, n, { roll, yaw, at: at2 });
+  }
+  function wkStraws(m, n, R5, cx, cz, seed2, g = 13) {
+    for (let i = 0; i < n; i++) {
+      const a = sinHash(seed2, i) * 6.283, d = R5 * Math.sqrt(sinHash(i, seed2 + 3)), x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d * 0.7, b = sinHash(i, seed2 + 7) * 6.283;
+      m.seg([x, 0.012, z], [x + Math.cos(b) * 0.1, 0.012, z + Math.sin(b) * 0.08], 7e-3, 5e-3, M.STRAW, { group: g + i % 2 });
+    }
+  }
+  var wkEarth = (m, c, r, burnt = false, g = 1) => m.ell(c, r, burnt ? M.BODY3 : M.STONED, { group: g, rough: 0.03, paint: (p) => ctCell(p, 12, 2) < (burnt ? 0.25 : 0.4) ? burnt ? M.STONED : M.MOSS : ctCell(p, 9, 3) < 0.12 ? M.MOSS : void 0 });
+  function wkLog(m, c, len, r, g = 2) {
+    ctCyl(m, [c[0] - len, c[1], c[2]], [c[0] + len, c[1], c[2]], r, M.TRUNK, g, { paint: (p) => p[1] > c[1] + r * 0.4 && ctCell(p, 10, 1) < 0.7 ? M.MOSS : ctCell(p, 20, 4) < 0.2 ? M.BARK2 : void 0, end: ctRings([c[0], c[1], c[2]], 0) });
+  }
+  var WRECKS = {
+    // the Missile nose: buried tail-first, only its nose and band up out of a mound, like a shell that never went off; a ring of
+    // its fins snapped off round it, scorched earth, the hat hung on a fin
+    missile(m) {
+      wkEarth(m, [0, 0.02, 0], [0.62, 0.05, 0.46], true);
+      wkEarth(m, [0, 0.07, 0], [0.26, 0.12, 0.22], false, 2);
+      wkKind(m, "missile", "body", wkMats(M.BODY, M.FRAME), { pitch: 1.4, yaw: 0.3, at: [0, 0.02, 0] }, { x0: 0, x1: 0.8 });
+      for (let i = 0; i < 4; i++) {
+        const a = i * 1.7 + 0.4, x = Math.cos(a) * 0.45, z = Math.sin(a) * 0.32, n = mark(m);
+        m.box([0, 0, 0], [0.07, 0.045, 8e-3], M.FRAME, { round: 6e-3, group: 5, paint: ctWorn(0.5, 0.1) });
+        place(m, n, { yaw: a, roll: i === 1 ? 1.3 : 0.2, at: [x, i === 1 ? 0.07 : 0.02, z] });
+      }
+      wkHat(m, [Math.cos(2.1) * 0.45 + 0.02, 0.12, Math.sin(2.1) * 0.32], 0.6, 8, 0.5);
+      ctMoss(m, [-0.3, 0.05, 0.2], [0.12, 0.03, 0.08], 6);
+      ctTufts(m, 6, 0.75, 11, 71);
+      wkStraws(m, 5, 0.4, 0.2, -0.2, 72);
+    },
+    // the Curled tip: snapped in two over a mossy log, the curl hanging off the far side; its bristles strewn along the log, ivy over
+    // the break, a hat crushed under the log
+    curl(m) {
+      wkEarth(m, [0, 0.02, 0], [0.75, 0.05, 0.42]);
+      wkLog(m, [0, 0.14, -0.05], 0.55, 0.13);
+      wkKind(m, "curl", "body", wkMats(M.WOOD, M.WOOD), { pitch: -0.75, yaw: -0.2, at: [-0.1, 0.38, -0.22] });
+      wkStick(m, -0.55, 0, { pitch: 0.35, yaw: 0.25, at: [0.15, 0.04, 0.2] });
+      ctIvy(m, [-0.15, 0.1, 0.05], [0.02, 0.32, -0.08], 6, 73);
+      wkStraws(m, 14, 0.55, 0, 0.1, 74);
+      wkHat(m, [0.42, 0.02, -0.12], 2.6, 8, 1.5);
+      ctMoss(m, [0.3, 0.26, -0.05], [0.14, 0.04, 0.1], 7);
+      ctTufts(m, 6, 0.85, 11, 75);
+    },
+    // the Hobby-horse head: driven upright into the ground like a grave marker, the horse looking out, a red scarf round its neck,
+    // ivy up the handle, bristles at its foot, the hat beside it
+    horse(m) {
+      wkEarth(m, [0, 0.03, 0], [0.4, 0.07, 0.3]);
+      wkKind(m, "hobbyhorse", "body", wkMats(M.WOOD, M.BELLY), { pitch: 1.35, yaw: 0.4, at: [0, 0.02, 0] }, { x0: 0, x1: 0.75 });
+      m.ell([0.03, 0.78, 0.01], [0.06, 0.035, 0.06], M.ACCENT, { group: 5 });
+      m.seg([0.04, 0.78, 0.02], [0.14, 0.62, 0.08], 0.03, 0.02, M.ACCENT, { group: 5 });
+      m.seg([0.14, 0.62, 0.08], [0.17, 0.42, 0.12], 0.02, 0.012, M.ACCENT, { group: 5 });
+      ctIvy(m, [0, 0.05, 0.03], [0.04, 0.45, 0.03], 6, 53);
+      wkStraws(m, 14, 0.45, 0.1, 0.15, 54, 7);
+      wkHat(m, [-0.45, 0, 0.22], 2.2, 9);
+      ctTufts(m, 4, 0.7, 12, 55, 0, -0.35);
+    },
+    // the Jet-bike fairing: on its side, sledged a long furrow into the ground; a torn-up trail of turf behind it, the windscreen
+    // cracked, ferns grown up through the furrow
+    fairing(m) {
+      m.ell([-0.35, 0.015, 0], [0.75, 0.03, 0.2], M.BODY3, { group: 1, rough: 0.02, paint: (p) => ctCell(p, 10, 2) < 0.3 ? M.STONED : void 0 });
+      for (let i = 0; i < 5; i++) {
+        const x = -1 + i * 0.2, n = mark(m);
+        m.box([0, 0, 0], [0.07, 0.025, 0.05], M.MOSS, { round: 0.02, group: 2, rough: 0.01, paint: (p) => ctCell(p, 14, i) < 0.4 ? M.STONED : void 0 });
+        place(m, n, { yaw: i * 0.9, roll: i % 2 ? 0.6 : -0.5, at: [x, 0.04, i % 2 ? 0.2 : -0.2] });
+      }
+      wkEarth(m, [0.35, 0.05, 0], [0.24, 0.08, 0.24], false, 3);
+      wkKind(m, "jetbike", "body", wkMats(M.BODY, M.BELLY), { roll: 1.25, yaw: 0.1, at: [0.05, 0.12, 0] });
+      m.seg([0.32, 0.3, -0.05], [0.36, 0.2, 0.02], 6e-3, 6e-3, M.LINE, { group: 9 });
+      ctFern(m, [-0.55, 0.02, 0], 6, 0.5);
+      ctFern(m, [-1, 0.02, 0.05], 7, 0.4);
+      wkHat(m, [-0.75, 0.02, 0.3], 1);
+      ctTufts(m, 6, 0.9, 11, 76, -0.2, 0);
+    },
+    // the Ladder: leaning against a trunk as if climbed, rungs broken; the hat high in the tree's lowest branch, a lantern at its foot
+    ladder(m) {
+      wkEarth(m, [0, 0.02, 0], [0.55, 0.05, 0.4]);
+      ctCyl(m, [0.15, 0, -0.25], [0.15, 1.55, -0.25], 0.16, M.TRUNK, 2, { paint: (p) => ctCell(p, 9, 2) < 0.3 && p[1] < 0.6 ? M.MOSS : ctCell(p, 20, 4) < 0.25 ? M.BARK2 : void 0, end: ctRings([0.15, 1.55, -0.25], 1) });
+      m.seg([0.15, 1.15, -0.25], [0.6, 1.42, -0.2], 0.05, 0.025, M.TRUNK, { group: 3 });
+      m.seg([0.6, 1.42, -0.2], [0.78, 1.45, -0.2], 0.025, 0.012, M.TRUNK, { group: 3 });
+      wkKind(m, "ladder", "body", wkMats(M.BARKL, M.WOOD), { pitch: 1.2, yaw: -0.15, at: [-0.38, 0.02, 0.05] }, { x0: 0, x1: 1.25 });
+      for (const [x, y] of [[-0.12, 0.5], [-0.02, 0.74]]) {
+        const n = mark(m);
+        m.seg([0, 0, -0.06], [0, 0, 0.04], 0.011, 0.011, M.WOOD, { group: 6 });
+        place(m, n, { roll: 0.9, yaw: 0.3, at: [x, y, 0.2] });
+      }
+      wkHat(m, [0.62, 1.45, -0.2], 0.4, 8, 0.25);
+      ctCyl(m, [-0.45, 0, 0.25], [-0.45, 0.14, 0.25], 0.055, M.FRAME, 10, { end: M.NOSE });
+      m.ell([-0.45, 0.19, 0.25], [0.04, 0.05, 0.04], M.STONED, { group: 11 });
+      ctIvy(m, [0.2, 0.05, -0.1], [0.18, 0.8, -0.1], 7, 77);
+      ctTufts(m, 6, 0.7, 12, 78);
+      ctMoss(m, [0.15, 0.04, -0.25], [0.25, 0.05, 0.2], 5);
+    },
+    // the Canoe hull: turned turtle in the moss, its bow up on a root, a fern through a split in it, its paddle beside it, the hat
+    // on the ground
+    canoe(m) {
+      wkEarth(m, [0, 0.02, 0], [0.75, 0.05, 0.4]);
+      m.seg([0.5, 0.02, -0.15], [0.7, 0.1, 0.1], 0.05, 0.03, M.TRUNK, { group: 2 });
+      wkKind(m, "canoe", "body", wkMats(M.ACCENT, M.WOOD), { roll: Math.PI, pitch: 0.12, yaw: -0.25, at: [0.05, 0.1, 0] });
+      const o = mark(m);
+      BROOM_KINDS.oar.tail(wkRemap(m, { [M.STRAW]: M.WOOD }), WK_L, [-0.62, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: 4 });
+      m.seg([-0.5, 0, 0], [0.4, 0, 0], 0.02, 0.018, M.WOOD, { group: 4 });
+      place(m, o, { yaw: 0.9, at: [-0.25, 0.03, 0.38] });
+      ctFern(m, [0.15, 0.14, -0.05], 6, 0.55);
+      ctMoss(m, [-0.3, 0.18, -0.03], [0.18, 0.04, 0.1], 7);
+      wkHat(m, [0.7, 0, 0.25], -1.2);
+      ctTufts(m, 5, 0.9, 11, 52, 0, -0.4);
+    },
+    // the Jet nozzles: nose-down, the back end up, the nozzles cold and sooted; a scorched ring of thrown earth, moss over the near
+    // side, the hat flung clear
+    nozzles(m) {
+      wkEarth(m, [0, 0.02, 0], [0.6, 0.04, 0.4], true);
+      wkEarth(m, [0.22, 0.06, 0], [0.34, 0.13, 0.3], false, 2);
+      const n = mark(m), mm = wkRemap(m, wkMats(M.BODY, M.FRAME));
+      BROOM_KINDS.jetbike.body(mm, WK_L, [-0.5, 0, 0], [0.62, 0, 0], 0.022, 0.018);
+      BROOM_KINDS.jetbike.tail(mm, WK_L, [-0.62, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: 3 });
+      place(m, n, { pitch: -0.85, yaw: 0.5, roll: 0.25, at: [-0.1, 0.5, 0] });
+      ctMoss(m, [-0.3, 0.06, -0.15], [0.12, 0.04, 0.1], 6);
+      wkHat(m, [0.55, 0, 0.25], 0.8);
+      ctTufts(m, 4, 0.8, 11, 51, 0, -0.35);
+      wkStraws(m, 8, 0.4, -0.35, 0.2, 56);
+    },
+    // the Twig bristles: a bristle bundle on its own, wedged in a fork of roots, the handle gone; bristles and twigs scattered for
+    // metres as if it came apart in the air, the hat upturned with water in it
+    twigs(m) {
+      wkEarth(m, [0, 0.02, 0], [0.8, 0.04, 0.45]);
+      for (const [a, l] of [[-0.5, 0.5], [0.4, 0.45], [1.4, 0.35]]) m.chain([[0, 0.12, -0.15, 0.07], [Math.cos(a) * l * 0.5, 0.07, -0.15 + Math.sin(a) * l * 0.4, 0.045], [Math.cos(a) * l, 0.02, -0.15 + Math.sin(a) * l * 0.7, 0.02]], M.TRUNK, { group: 2, paint: (p) => ctCell(p, 12, 1) < 0.3 ? M.MOSS : void 0 });
+      wkBundle(m, { pitch: 0.6, yaw: 0.5, roll: 0.2, at: [0.2, 0.3, -0.1] });
+      m.seg([0.06, 0.2, -0.07], [0.12, 0.22, -0.05], 0.02, 0.012, M.WOOD, { group: 6 });
+      wkStraws(m, 22, 0.8, 0, 0.1, 79);
+      const h = mark(m);
+      m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.HAT1, { group: 8 });
+      m.seg([0, 0.02, 0], [0.02, -0.18, 0.01], 0.095, 0.05, M.HAT1, { group: 9 });
+      m.ell([0, 0.03, 0], [0.08, 0.01, 0.08], M.WATER, { group: 10 });
+      place(m, h, { roll: 0.1, at: [-0.5, 0.12, 0.25] });
+      ctTufts(m, 6, 0.9, 11, 80);
+    },
+    // the Oar blade: stuck straight up out of a pool's edge, the handle under the water line; reeds round it, the hat floating
+    oar(m) {
+      m.ell([0, 0.015, 0], [0.7, 0.03, 0.42], M.STONED, { group: 1, rough: 0.02, paint: (p) => ctCell(p, 12, 2) < 0.45 ? M.MOSS : void 0 });
+      m.ell([0.05, 0.03, 0.02], [0.5, 0.012, 0.3], M.WATER, { group: 2, paint: (p) => ctCell(p, 11) < 0.15 ? M.LEAF3 : void 0 });
+      wkKind(m, "oar", "tail", { [M.STRAW]: M.CLOTH }, { pitch: -1.45, yaw: 0.3, at: [-0.05, 0.03, 0] }, { x0: 0, L: { bristles: 1.5 } });
+      for (let i = 0; i < 9; i++) {
+        const a = i * 0.8 + 2, r = 0.3 + sinHash(i, 81) * 0.15, x = Math.cos(a) * r, z = Math.sin(a) * r * 0.7, hh = 0.25 + sinHash(i, 82) * 0.2;
+        m.seg([x, 0.02, z], [x + 0.02, hh, z], 0.012, 4e-3, i % 3 ? M.LEAF : M.LEAF2, { group: 5 + i % 2 });
+        if (i % 3 === 0) m.ell([x + 0.02, hh - 0.05, z], [0.014, 0.04, 0.014], M.BARK2, { group: 7 });
+      }
+      wkHat(m, [0.3, 0.04, 0.12], 1.9, 8, 0.1);
+      ctTufts(m, 5, 0.8, 11, 83, -0.3, -0.2);
+    }
+  };
   var SCENE_PIECES = {
     "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) {
       travelTrunk(m);
@@ -12600,8 +13160,10 @@ label.check input { accent-color: var(--accent); }
   var COUNTRY = [
     ...Object.entries(FARM).map(([id, d]) => ({ id, family: "farm", size: 1, split: null, ...d })),
     ...Object.entries(STREET).map(([id, d]) => ({ id, family: "street", size: 1, split: null, ...d })),
-    ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d }))
+    ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d })),
+    ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build }))
   ];
+  var WRECK_PARTS = Object.keys(WRECKS);
   var COUNTRY_BY_ID = Object.fromEntries(COUNTRY.map((d) => [d.id, d]));
 
   // art/decor.js
@@ -12629,9 +13191,9 @@ label.check input { accent-color: var(--accent); }
     }
     m.chain(pts, M.LEAF, { group: g, rough: 0.02, paint: (p) => dcCell(p, 30) < 0.3 ? M.LEAF2 : void 0 });
   };
-  var dcTufts = (m, n, R4, g, seed2) => {
+  var dcTufts = (m, n, R5, g, seed2) => {
     for (let i = 0; i < n; i++) {
-      const a = sinHash(seed2, i) * 6.283, d = R4 * Math.sqrt(sinHash(i, seed2)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7;
+      const a = sinHash(seed2, i) * 6.283, d = R5 * Math.sqrt(sinHash(i, seed2)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7;
       m.ell([x, 0.08, z], [0.07, 0.1 + sinHash(i, 4) * 0.08, 0.07], M.LEAF2, { group: g + i % 3, paint: (p) => p[1] > 0.14 ? M.LEAF : void 0 });
     }
   };
@@ -13305,8 +13867,8 @@ label.check input { accent-color: var(--accent); }
     "neon-star": { cls: "set", desc: "a neon star outline on a stake, glowing", glow: true, light: "neon", build(m) {
       ctBar(m, [0, 0, -0.02], [0, 0.9, -0.02], 1, 0.02, M.FRAME, void 0);
       m.flat([0, 1.15, 0], [1, 0, 0], [0, 1, 0], 0.35, 0.35, pNeon((s, t) => {
-        const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R4 = 0.45 + 0.4 * Math.abs(Math.cos(a * 2.5));
-        return Math.abs(r - R4 * 0.95);
+        const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R5 = 0.45 + 0.4 * Math.abs(Math.cos(a * 2.5));
+        return Math.abs(r - R5 * 0.95);
       }), { group: 2, bend: 0.05 });
     } },
     "neon-moon": { cls: "set", desc: "a neon crescent moon on a stake, glowing", glow: true, light: "neon", build(m) {
@@ -13389,8 +13951,8 @@ label.check input { accent-color: var(--accent); }
       m.ell([0, 0.04, 0], [0.06, 0.05, 0.06], M.BODY3, { group: 1 });
       m.chain([[0, 0.06, 0, 6e-3], [0.04, 0.6, 0, 6e-3], [0, 1.05, 0, 6e-3]], M.CLOTH, { group: 2 });
       m.flat([0, 1.3, 0], [1, 0, 0.2], [0, 1, 0], 0.25, 0.25, (s, t) => {
-        const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R4 = 0.5 + 0.45 * Math.abs(Math.cos(a * 2.5));
-        return r > R4 ? null : Math.hypot(s + 0.25, t - 0.3) < 0.12 ? SHINE : BALLOON[0];
+        const a = Math.atan2(t, s) + Math.PI / 2, r = Math.hypot(s, t), R5 = 0.5 + 0.45 * Math.abs(Math.cos(a * 2.5));
+        return r > R5 ? null : Math.hypot(s + 0.25, t - 0.3) < 0.12 ? SHINE : BALLOON[0];
       }, { group: 3, bend: 0.5 });
     } },
     "balloon-foil-heart": { desc: "a foil heart balloon on a string weighted to the ground", bob: [0.09, 3.1], anchors: { tie: [0, 0.06, 0] }, build(m) {
@@ -13449,10 +14011,10 @@ label.check input { accent-color: var(--accent); }
       ctGlow(m, v3.add(c, [Math.sin(i * 2.3 + frame) * 0.12 * k, y + 0.2 * k, Math.cos(i * 1.7) * 0.08 * k]), 0.012 + 0.01 * (i % 2), g + 10 + i, i % 2 ? FIRE2 : FIRE);
     }
   };
-  var pRing = (m, c, R4, g, n = 9) => {
+  var pRing = (m, c, R5, g, n = 9) => {
     for (let i = 0; i < n; i++) {
       const a = i / n * Math.PI * 2;
-      m.ell(v3.add(c, [Math.cos(a) * R4, 0.05 * R4 / 0.32, Math.sin(a) * R4 * 0.9]), [0.09 * R4 / 0.32, 0.06 * R4 / 0.32, 0.08 * R4 / 0.32], i % 3 ? M.STONE : M.STONED, { dir: [-Math.sin(a), 0, Math.cos(a)], group: g + i % 3, rough: 6e-3 });
+      m.ell(v3.add(c, [Math.cos(a) * R5, 0.05 * R5 / 0.32, Math.sin(a) * R5 * 0.9]), [0.09 * R5 / 0.32, 0.06 * R5 / 0.32, 0.08 * R5 / 0.32], i % 3 ? M.STONE : M.STONED, { dir: [-Math.sin(a), 0, Math.cos(a)], group: g + i % 3, rough: 6e-3 });
     }
   };
   var pLogs = (m, c, k, g, cold = false) => {
@@ -13772,9 +14334,9 @@ label.check input { accent-color: var(--accent); }
     return n > 0.94 ? M.STONED : void 0;
   };
   var ldBlock = (m, c, h, g, o = {}) => m.box(c, h, o.mat ?? M.STONE, { round: 0.025, rough: 0.01, group: g, paint: ldStone(o.courses ?? 4, o.moss ?? 0.14), ...o });
-  var ldRubble = (m, c, n, R4, g, seed2, mat = M.STONE) => {
+  var ldRubble = (m, c, n, R5, g, seed2, mat = M.STONE) => {
     for (let i = 0; i < n; i++) {
-      const a = ctHash(seed2, i) * 6.283, d = R4 * Math.sqrt(ctHash(i, seed2)), s = 0.08 + ctHash(i, seed2 + 2) * 0.12;
+      const a = ctHash(seed2, i) * 6.283, d = R5 * Math.sqrt(ctHash(i, seed2)), s = 0.08 + ctHash(i, seed2 + 2) * 0.12;
       m.box([c[0] + Math.cos(a) * d, s * 0.7, c[2] + Math.sin(a) * d * 0.8], [s * 1.3, s * 0.7, s], mat, { dir: [Math.cos(a * 3), (ctHash(i, 3) - 0.5) * 0.5, Math.sin(a * 3)], round: 0.02, rough: 8e-3, group: g + i % 3, paint: ldStone(0, 0.3) });
     }
   };
@@ -14335,28 +14897,28 @@ label.check input { accent-color: var(--accent); }
       m.seg([c[0] + Math.cos(a + jit) * d, r, c[2] + Math.sin(a + jit) * d], [c[0] + Math.cos(a + jit) * (d + r * 2.6), r, c[2] + Math.sin(a + jit) * (d + r * 2.6)], r, r, M.BELLY, { group: g, paint: (p) => Math.abs(Math.sin(p[1] * 30 + p[0] * 9)) > 0.93 ? M.STONED : ldStone(0, 0.3)(p) });
     }
   };
-  var ldOvergrow = (m, o, R4, g, seed2, tops = []) => {
-    ctTufts(m, Math.round(8 + o * 26), R4, g, seed2);
+  var ldOvergrow = (m, o, R5, g, seed2, tops = []) => {
+    ctTufts(m, Math.round(8 + o * 26), R5, g, seed2);
     for (let i = 0; i < Math.round(o * 4); i++) {
-      const a = ctHash(seed2, i + 40) * 6.283, d = R4 * (0.5 + 0.5 * ctHash(i, seed2 + 41));
+      const a = ctHash(seed2, i + 40) * 6.283, d = R5 * (0.5 + 0.5 * ctHash(i, seed2 + 41));
       ctCrown(m, [Math.cos(a) * d, 0.25, Math.sin(a) * d * 0.7], [0.35, 0.28, 0.3], g + 1);
     }
     tops.forEach((t, i) => {
       if (ctHash(seed2, i + 60) < o) ctIvy(m, [t[0] - 0.15, 0.1, t[2] + 0.15], [t[0] - 0.1, t[1], t[2] + 0.16], g + 2, seed2 + i);
     });
-    if (o > 0.6 && R4 > 2) {
-      const x = (ctHash(seed2, 77) - 0.5) * R4, z = (ctHash(77, seed2) - 0.5) * R4 * 0.6;
+    if (o > 0.6 && R5 > 2) {
+      const x = (ctHash(seed2, 77) - 0.5) * R5, z = (ctHash(77, seed2) - 0.5) * R5 * 0.6;
       m.chain([[x, 0, z, 0.07], [x + 0.1, 0.9, z, 0.05], [x + 0.05, 1.6, z, 0.03]], M.TRUNK, { group: g + 3, rough: 0.01 });
       ctCrown(m, [x + 0.05, 1.9, z], [0.5, 0.4, 0.45], g + 4);
     }
   };
   var CLASSICAL_PLANS = {
     tholos: { size: "large", desc: "a round temple (a tholos): a ring of columns on a round stepped base, some fallen, a stub of its inner wall", build(m, r) {
-      const R4 = cuni(r, 1.4, 1.9), n = 8 + Math.floor(r() * 5), H = cuni(r, 1.7, 2.2), fall = cuni(r, 0.15, 0.55), o = r(), tops = [];
-      for (let i = 0; i < 3; i++) ctCyl(m, [0, i * 0.12, 0], [0, 0.12 + i * 0.12, 0], R4 + 0.45 - i * 0.15, M.BELLY, 1, { paint: ldStone(0, 0.3) });
+      const R5 = cuni(r, 1.4, 1.9), n = 8 + Math.floor(r() * 5), H = cuni(r, 1.7, 2.2), fall = cuni(r, 0.15, 0.55), o = r(), tops = [];
+      for (let i = 0; i < 3; i++) ctCyl(m, [0, i * 0.12, 0], [0, 0.12 + i * 0.12, 0], R5 + 0.45 - i * 0.15, M.BELLY, 1, { paint: ldStone(0, 0.3) });
       const top = 0.36, standing = [];
       for (let i = 0; i < n; i++) {
-        const a = i / n * 6.283, x = Math.cos(a) * R4, z = Math.sin(a) * R4 * 0.9, h = r();
+        const a = i / n * 6.283, x = Math.cos(a) * R5, z = Math.sin(a) * R5 * 0.9, h = r();
         if (h < fall) {
           ldFallen(m, [x, 0, z], a + (r() - 0.5) * 0.8, 3, 0.14, 6);
           continue;
@@ -14368,13 +14930,13 @@ label.check input { accent-color: var(--accent); }
       }
       for (let i = 0; i + 1 < standing.length; i++) {
         const [x0, z0] = standing[i], [x1, z1] = standing[i + 1];
-        if (Math.hypot(x1 - x0, z1 - z0) < 2 * R4 * Math.sin(Math.PI / n) * 1.3 && r() > fall) ldBlock(m, [(x0 + x1) / 2, top + H + 0.2, (z0 + z1) / 2], [Math.hypot(x1 - x0, z1 - z0) / 2 + 0.1, 0.09, 0.12], 4, { mat: M.BELLY, courses: 0, dir: [x1 - x0, 0, z1 - z0] });
+        if (Math.hypot(x1 - x0, z1 - z0) < 2 * R5 * Math.sin(Math.PI / n) * 1.3 && r() > fall) ldBlock(m, [(x0 + x1) / 2, top + H + 0.2, (z0 + z1) / 2], [Math.hypot(x1 - x0, z1 - z0) / 2 + 0.1, 0.09, 0.12], 4, { mat: M.BELLY, courses: 0, dir: [x1 - x0, 0, z1 - z0] });
       }
       for (let i = 0; i < 6; i++) if (r() > fall) {
         const a = (i / 6 + 0.3) * 6.283;
-        ldBlock(m, [Math.cos(a) * R4 * 0.45, top + 0.35, Math.sin(a) * R4 * 0.4], [0.3, 0.35 * cuni(r, 0.5, 1.3), 0.1], 5, { mat: M.BELLY, courses: 3, dir: [-Math.sin(a), 0, Math.cos(a)] });
+        ldBlock(m, [Math.cos(a) * R5 * 0.45, top + 0.35, Math.sin(a) * R5 * 0.4], [0.3, 0.35 * cuni(r, 0.5, 1.3), 0.1], 5, { mat: M.BELLY, courses: 3, dir: [-Math.sin(a), 0, Math.cos(a)] });
       }
-      ldOvergrow(m, o, R4 + 1, 8, 201, tops);
+      ldOvergrow(m, o, R5 + 1, 8, 201, tops);
     } },
     colonnade: { size: "large", desc: "a long colonnade (a stoa): two rows of columns before a back wall, the rows gapped where columns fell, stretches of architrave still up", build(m, r) {
       const n = 6 + Math.floor(r() * 3), sp = 0.72, L2 = (n - 1) * sp / 2, H = cuni(r, 1.6, 2), fall = cuni(r, 0.15, 0.5), o = r(), tops = [];
@@ -14901,8 +15463,8 @@ label.check input { accent-color: var(--accent); }
   };
 
   // src/rules/movement.ts
-  var R = movement_default;
-  var MOVEMENT = { ...R, profiles: { ...R.profiles, ...sectionOf("movement") }, legends: { ...R.legends, bySpecies: { ...R.legends.bySpecies, ...sectionOf("legendMoves") } }, bodies: { ...R.bodies, radius: { ...R.bodies.radius, ...sectionOf("radius") } } };
+  var R2 = movement_default;
+  var MOVEMENT = { ...R2, profiles: { ...R2.profiles, ...sectionOf("movement") }, legends: { ...R2.legends, bySpecies: { ...R2.legends.bySpecies, ...sectionOf("legendMoves") } }, bodies: { ...R2.bodies, radius: { ...R2.bodies.radius, ...sectionOf("radius") } } };
 
   // config/combat.json
   var combat_default = {
@@ -15358,7 +15920,7 @@ label.check input { accent-color: var(--accent); }
     descendTime: 0.55,
     _riseCooldown: "After she lands she can't rise again for this many seconds (Ed, 2026-10-11: players rose to the treetops instead of dodging, since rising takes her out of ground mode, and out of reach, at once). 0: no wait.",
     riseCooldown: 3,
-    _cooldown: `One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown. The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts): shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the plain broom's spells.plain.riseCooldown times both of the last). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Double blink broom): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.`,
+    _cooldown: `One cooldown for her dodge and her take-off (Ed, 2026-10-15: "One trail, one cooldown. The trail she leaves in the treetops, landing and taking off should also appear when she dodges. Its length shows one shared cooldown counter for dodge and take-off (the two contribute different amounts to it)"; rules/cooldown.ts): shared on, a counter in seconds draining a second a second; a dodge adds dash.cooldown, a take-off rise, a landing riseCooldown (the Jet nozzles halve both of the last: config/broom-parts.json). It has room for dash.charges dodges (dash.charges x dash.cooldown seconds; more with Hare's Dash bursts and the Twig bristles): an action goes when the counter is at or under that room less its own amount, so two dodges go straight off and the third waits a second as before, and a landing's 3 s (over the room) means no dodge for 2 s and no rising for 3; after a dodge no take-off for a second. Her trail (trail.cooldown) shows it. Off: the dodge's charges and the rise cooldown run apart as before.`,
     cooldown: { shared: true, rise: 2 },
     groundHeight: 1.4,
     treetopHeight: 24,
@@ -15373,7 +15935,7 @@ label.check input { accent-color: var(--accent); }
     knockout: { releaseEach: 0, releaseMax: 0, emptyBeat: 0.5, teleport: 1.2, legendsLoyal: false, dropHat: true, hatFloat: 3, dim: 0.6, rise: 0.9, respawn: { base: 6, step: 0, max: 6, cooldown: 60, minScratch: 1.5 }, candleStep: 1, bpmStep: 5 },
     _dash: "The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's moving (her steering, on the pad and on keyboard and mouse alike, not the way she's aiming: Ed, 2026-10-11; standing still, the way she's facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06; off since 2026-10-11): on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.",
     dash: { distance: 15, gone: 0.05, cooldown: 1, buffer: 0.2, charges: 2, toCursor: false, aimDead: 1.5, clear: { tree: 1.2, decor: 2.5, sound: 3, speaker: 1.5, treehouse: 4 } },
-    spells: { hat: "none", broom: "none", speed: { mult: 2.2, duration: 4, cooldown: 12 }, plain: { riseCooldown: 0.5 }, long: { mult: 2 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, double: { charges: 1 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, haul: { pull: 0.5 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
+    spells: { hat: "none", broom: "none", parts: "", speed: { mult: 2.2, duration: 4, cooldown: 12 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
     _trail: `Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it. One trail, one cooldown (Ed, 2026-10-15; the tuning's cooldown): it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed).`,
     trail: { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true, cooldown: 24, bySpeed: true },
     _swoopTrail: `The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).`,
@@ -15392,7 +15954,7 @@ label.check input { accent-color: var(--accent); }
     _bond: `The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.`,
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArcSlack: 0.8, threadArcTaut: 0.02, threadArcMax: 8 },
     __creatures: "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
-    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), chosen in the creator (or ?hat= and ?broom=). hat, broom: the defaults. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Brooms change how she moves or pulls; an active one is cast with the spell button (R; gamepad circle; touch spell), then recharges. plain: the plain broom, riseCooldown times this (Ed: the default broom reduces the treetop cooldown). speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. long: the Long broom, blinks mult times as far (stacking with the Hare's charges). double: the Double blink broom (Ed, 2026-10-11: \"a broom that gives you an extra blink\"), charges more blinks before the cooldown, stacking with the Hare's. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. haul: the Haul broom, her sigils' pull times pull (Ed: always on). pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
+    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), chosen in the creator (or ?hat= and ?broom=). hat, broom: the defaults (broom: a broom spell, the set that gives it fitted whole; a debug switch since the Workshop, Ed 2026-10-23). parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, witch.broom; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
     _fight: `The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live on the pause page (Esc): its Debug knobs sliders, or [ and ] for scale, ; and ' for speed, , and . for momentum. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air. Walking away is no escape (Ed, 2026-10-06: "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"): charge.chase, a charge runs at least that many times her ground speed and on until it has caught up with her walking straight down its lane (its own time if longer), so stepping out of the lane at its tell, a blink sideways or the treetops get her clear, walking doesn't (0: off); leap.lead, a leap comes down where she'll be when it lands, as she's going at take-off (that share of it; 0: where she was). miss: a charge that struck nothing stands winded that many seconds after (stars round its head), an opening for her \u{1F48C}s (Ed, 2026-10-06: "We want to reward skilful use of blink and accurate invitation aiming").`,
     fight: { scale: 1, speed: 1, momentum: 1, charge: { reach: 2, turn: 0.4, brake: 0.5, contact: true, chase: 1.6, miss: 1.2 }, leap: { reach: 1.5, through: 5, contact: true, lead: 1 } },
     _combat: `packs: pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-19), on by default (Ed, 2026-10-20: "Turn pack combat on by default") and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating. Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems they plan to attack"; it was its walk times marchMult, under 1 m/s, and marchOnRun 5 m/s marching on). Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack (Ed, 2026-10-11: some "seem to struggle to damage soundsystems"; a charge struck once a run, a swoop once a dive). A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 (Ed, 2026-10-08, from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives). Home is its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; rules/speakers.ts), each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone). shake: how hard a legend's quake shakes the screen (0 none). daze: seconds a wild creature knocked down in a fight lies stunned (nothing attacks it, it attacks nothing, she can still invite it; it counts as present for its legend, and no siege takes it) before it runs off home (Ed, round 13, 2026-10-06: 'the length of the stun of wild creatures that are downed in combat, before they run away, should be 20 seconds'; it was 8, states.json's daze). leaveArea: a wild creature chases her (or her party) up to this many metres past its area's edge (Ed, round 13, 2026-10-06: 30; it was 10); beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected. defendRadius (Ed, 2026-10-09: her posse defends her, "just ones that are in the same combat as you"): her animals following her within this many metres of her go first for anything attacking her, spread over her attackers; farther off, following her, one fights back only at what's on it itself (and parked, guarding or travelling ones carry on as they were): never pulled across to her fight. taunt (Ed, 2026-10-09, on #592: "Taunt seems good"): a creature after her that one of her animals in her fight hits turns on that animal instead, with chance chance, for time seconds (a lunge at her already under way lands first; then it may come back to her).`,
@@ -15605,15 +16167,15 @@ label.check input { accent-color: var(--accent); }
     for (const c of Object.values(swarm.classes)) for (const sp of c.species) out[sp] = ref / Math.max(1, c.cap);
     return out;
   }
-  var R2 = combat_default;
+  var R3 = combat_default;
   var COMBAT = {
-    ...R2,
-    bySpecies: { ...R2.bySpecies, ...sectionOf("attacks") },
-    strength: { species: { ...R2.strength?.species ?? {}, ...sectionOf("strength") } },
-    ranged: [...R2.ranged, ...speciesWith("ranged")],
-    kite: { ...R2.kite, species: [...R2.kite.species, ...speciesWith("kite")] },
-    temperament: Object.fromEntries(Object.entries(R2.temperament).map(([k, v]) => [k, [...v, ...speciesWith("temperament", k)]])),
-    traits: Object.fromEntries(Object.entries(R2.traits).map(([k, v]) => [k, [...v, ...speciesWith("traits", k)]]))
+    ...R3,
+    bySpecies: { ...R3.bySpecies, ...sectionOf("attacks") },
+    strength: { species: { ...R3.strength?.species ?? {}, ...sectionOf("strength") } },
+    ranged: [...R3.ranged, ...speciesWith("ranged")],
+    kite: { ...R3.kite, species: [...R3.kite.species, ...speciesWith("kite")] },
+    temperament: Object.fromEntries(Object.entries(R3.temperament).map(([k, v]) => [k, [...v, ...speciesWith("temperament", k)]])),
+    traits: Object.fromEntries(Object.entries(R3.traits).map(([k, v]) => [k, [...v, ...speciesWith("traits", k)]]))
   };
   COMBAT.strength = { species: { ...classStrengths(tuning_default.population.swarm), ...COMBAT.strength?.species ?? {} } };
 
@@ -15633,8 +16195,8 @@ label.check input { accent-color: var(--accent); }
   var pushZ = new Float64Array(0);
 
   // src/rules/buffs.ts
-  var R3 = legend_buffs_default;
-  var LEGEND_BUFFS = { ...R3, species: { ...R3.species, ...sectionOf("buff") } };
+  var R4 = legend_buffs_default;
+  var LEGEND_BUFFS = { ...R4, species: { ...R4.species, ...sectionOf("buff") } };
 
   // src/rules/musicPlan.ts
   function bootLayers(cue2, bar2) {
@@ -18029,7 +18591,7 @@ registerProcessor("witch-fof", WitchFof);
     }
   }
   function roar(K, pan = 0, near2 = 1) {
-    const R4 = K.T.roar, c = K.ctx, at2 = c.currentTime + 0.01, out = K.voice(pan, 0.8, 2.4), vol = R4.volume * near2, dur = 2.2;
+    const R5 = K.T.roar, c = K.ctx, at2 = c.currentTime + 0.01, out = K.voice(pan, 0.8, 2.4), vol = R5.volume * near2, dur = 2.2;
     if (!K.ready("roar", 1)) return;
     const lp = c.createBiquadFilter(), g = c.createGain(), sh = c.createWaveShaper();
     lp.type = "lowpass";
@@ -18212,7 +18774,7 @@ registerProcessor("witch-fof", WitchFof);
     nextPop = 0;
     nextCreak = 0;
     update(level) {
-      const K = this.k, R4 = K.T.room, c = K.ctx, now = c.currentTime;
+      const K = this.k, R5 = K.T.room, c = K.ctx, now = c.currentTime;
       if (!this.hum && level <= 1e-3) return;
       if (!this.hum) {
         this.hum = c.createGain();
@@ -18245,8 +18807,8 @@ registerProcessor("witch-fof", WitchFof);
         h.start(now);
       }
       const L2 = Math.max(0, Math.min(1, level));
-      this.hum.gain.setTargetAtTime(R4.volume * R4.hum * L2, now, 0.3);
-      this.crackle.gain.setTargetAtTime(R4.volume * R4.crackle * 0.15 * L2, now, 0.3);
+      this.hum.gain.setTargetAtTime(R5.volume * R5.hum * L2, now, 0.3);
+      this.crackle.gain.setTargetAtTime(R5.volume * R5.crackle * 0.15 * L2, now, 0.3);
       if (L2 > 0.05 && now >= this.nextPop) {
         this.nextPop = now + 0.05 + Math.random() * 0.35;
         const at2 = now + 0.01, bp = c.createBiquadFilter(), g = c.createGain(), out = K.voice((Math.random() - 0.5) * 0.4, 0.1);
@@ -18254,13 +18816,13 @@ registerProcessor("witch-fof", WitchFof);
         bp.frequency.value = 1500 + Math.random() * 3e3;
         bp.Q.value = 2;
         g.connect(out);
-        K.env(g, at2, R4.volume * R4.crackle * L2 * (0.3 + 0.7 * Math.random() ** 3), 5e-4, 6e-3);
+        K.env(g, at2, R5.volume * R5.crackle * L2 * (0.3 + 0.7 * Math.random() ** 3), 5e-4, 6e-3);
         bp.connect(g);
         K.noiseBurst(at2, 0.01, bp, Math.random());
       }
       if (L2 > 0.05 && now >= this.nextCreak) {
-        this.nextCreak = now + R4.creakEvery * (0.5 + Math.random());
-        this.creak(R4.volume * R4.creak * L2, (Math.random() - 0.5) * 1.2);
+        this.nextCreak = now + R5.creakEvery * (0.5 + Math.random());
+        this.creak(R5.volume * R5.creak * L2, (Math.random() - 0.5) * 1.2);
       }
     }
     /** The treehouse's timber creaking: a slow, rough, low glide. */
@@ -20109,7 +20671,7 @@ registerProcessor("witch-fof", WitchFof);
     }
   }
   function relic(K, pan = 0) {
-    const R4 = K.T.relic, c = K.ctx, at2 = c.currentTime + 0.01, out = K.voice(pan, 1, 2.5), vol = R4.volume;
+    const R5 = K.T.relic, c = K.ctx, at2 = c.currentTime + 0.01, out = K.voice(pan, 1, 2.5), vol = R5.volume;
     const notes = [0, 4, 7, 11, 14, 18];
     notes.forEach((m, i) => {
       const t = at2 + i * 0.085, f = mtof(K.root + 39 + m);
@@ -20194,9 +20756,9 @@ registerProcessor("witch-fof", WitchFof);
     });
   }
   function refused(K, pan = 0, near2 = 1) {
-    const R4 = K.T.refused;
-    if (!R4 || !K.ready("refused", R4.gap)) return;
-    const c = K.ctx, at2 = c.currentTime + 5e-3, out = K.voice(pan, 0.35 + 0.4 * near2), vol = R4.volume * near2;
+    const R5 = K.T.refused;
+    if (!R5 || !K.ready("refused", R5.gap)) return;
+    const c = K.ctx, at2 = c.currentTime + 5e-3, out = K.voice(pan, 0.35 + 0.4 * near2), vol = R5.volume * near2;
     const bp = c.createBiquadFilter();
     bp.type = "bandpass";
     bp.Q.value = 5;
