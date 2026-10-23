@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { setupArena } from "../arena";
 import { type Creature } from "../creatures";
-import { newGame, stepGame, STEP, type Controls, type Game } from "../game";
+import { mirageDecoys, newGame, stepGame, STEP, type Controls, type Game } from "../game";
 import { TUNING, withTuning } from "../tuning";
 import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot, strikingNow } from "./packs";
 import { FIGHT, profileOf } from "../movement";
@@ -181,6 +181,77 @@ describe("pack combat in play (the switch on)", () => {
 
 // Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the toad's spores, the bat's screech turning her
 // movement. (The flyers fought on the ground in a pack till Ed, 2026-10-20: now they keep their dive, below.)
+describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", () => {
+  it("each of the seven strikes and throws its special: the ambushers (spider, crocodile) don't lie in wait once their pack engages", () => {
+    const bad: string[] = [];
+    for (const k of ["ram", "ibex", "rhino", "spider", "crocodile", "griffin", "raccoon"]) {
+      let struck = 0, specials = 0;
+      arena(`pack-${k}`, 40, g => { for (const e of fresh(g)) { if (e.kind === "windup" || e.kind === "charged" || e.kind === "shot") struck++; if (e.kind === "packSpecial") specials++; } });
+      if (!struck || !specials) bad.push(`${k}: ${struck} strikes, ${specials} specials`);
+    }
+    expect(bad).toEqual([]);
+  }, 300000);
+
+  it("knockback: the ram's special is its charge, and that blow throws her its throw, exactly", () => {
+    const want = (PACKS.specials.knockback.throw ?? 10) * FIGHT.scale, thrown: number[] = [];
+    let rams = 0;
+    const armed = new Set<number>();
+    arena("pack-ram", 60, g => {
+      const W = g.witches[0];
+      for (const e of fresh(g)) if (e.kind === "packSpecial" && g.creatures[e.id!]?.charge) rams++;
+      for (const c of g.creatures) if (c?.packThrow) armed.add(c.id);
+      for (const id of [...armed]) if (!g.creatures[id].packThrow) { armed.delete(id); if (W.knock && W.knock.at >= g.herTime - STEP * 1.5) thrown.push(Math.hypot(W.knock.kx, W.knock.kz) / g.tuning.witch.knock.ease); }
+    });
+    expect(rams).toBeGreaterThan(0);
+    expect(thrown.length).toBeGreaterThan(0);
+    for (const m of thrown) { expect(m).toBeGreaterThan(want * 0.6); expect(m).toBeLessThanOrEqual(want * 1.01); } // (adults' throw; a young pack's a little less)
+  }, 120000);
+
+  it("pull: the spider's web line drags her toward it, no hurt", () => {
+    const drags: number[] = [];
+    let at = -1, from = 0, by = -1;
+    arena("pack-spider", 60, g => {
+      const W = g.witches[0].body;
+      for (const e of fresh(g)) if (e.kind === "packPull") { at = g.clock.time; by = e.id!; from = Math.hypot(W.x - g.creatures[by].x, W.z - g.creatures[by].z); }
+      if (at >= 0 && g.clock.time >= at + 0.8) { const c = g.creatures[by]; drags.push(from - Math.hypot(W.x - c.x, W.z - c.z)); at = -1; }
+    });
+    expect(drags.length).toBeGreaterThan(0);
+    expect(Math.max(...drags)).toBeGreaterThan(3); // (6 m an adult's, a young one's 0.7 of it, the spider moving meanwhile)
+  }, 120000);
+
+  it("decoy: a 💌 the waving raccoon catches is wasted, its meter untouched (Ed, 2026-10-23: \"otherwise it's not a decoy\")", () => {
+    // (one of the pack across the arena waving, she throwing straight at it: before it's on her and she's staggered)
+    const g = newGame(5, ON); g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "pack-raccoon");
+    const W = g.witches[0], c = g.creatures.filter(k => k?.species === "raccoon" && !k.leashed && k.level === 2).sort((p, q) => Math.hypot(p.x - W.body.x, p.z - W.body.z) - Math.hypot(q.x - W.body.x, q.z - W.body.z))[0];
+    let caught = 0, landed = 0;
+    const seen = new Set<object>(); // (her 💌s' events, each once: they run on her clock)
+    for (let i = 0; i < 2 / STEP; i++) {
+      g.combat.decoys = [{ id: c.id, until: g.clock.time + 1, r: (PACKS.specials.decoy.radius ?? 3) * FIGHT.scale, side: "wild" }];
+      W.health.hp = 1e6; stepGame(g, { ...idle, fire: true, aimX: c.x - W.body.x, aimZ: c.z - W.body.z }, STEP);
+      for (const e of W.invites.events) if (!seen.has(e)) { seen.add(e); if (e.kind === "fizzled") caught++; if (e.kind === "hit" && e.id === c.id) landed++; }
+    }
+    expect(caught).toBeGreaterThan(0);
+    expect(landed).toBe(0);
+  }, 120000);
+
+  it("decoy: the raccoon waving catches her 💌s for its time", () => {
+    let seen = 0, lasted = 0;
+    arena("pack-raccoon", 60, g => {
+      const d = g.combat.decoys ?? [];
+      if (d.length) {
+        seen++;
+        for (const q of d) { expect(g.creatures[q.id].species).toBe("raccoon"); expect(q.r).toBeGreaterThan(1); lasted = Math.max(lasted, q.until - g.clock.time); }
+        // (what her 💌s meet: the one waving, where it stands now, as wide as its radius)
+        const c = g.creatures[d[0].id];
+        expect(mirageDecoys(g, g.clock.time).some(x => x.x === c.x && x.z === c.z && x.r === d[0].r)).toBe(true);
+      }
+    });
+    expect(seen).toBeGreaterThan(0);
+    expect(lasted).toBeLessThanOrEqual((PACKS.specials.decoy.time ?? 3) + 1e-6);
+  }, 120000);
+});
+
 describe("pack combat, Phase 1's pieces", () => {
   it("the heron's sync: a blink of hers while it lasts brings one of the pack blinking in beside where it put her, striking", () => {
     let synced = 0, blinkAt = -1, near = Infinity;
