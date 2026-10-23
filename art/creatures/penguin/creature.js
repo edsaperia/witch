@@ -35,5 +35,15 @@ export const CREATURE_PENGUIN = {
     kind: "move",
     scale: { groundSpeed: 1.1, groundAcceleration: 1.5 },
     label: "Penguin's Toboggan: a little quicker on foot, and quicker off the mark"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: { name: "ice pellet", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "stampede",
+    retreat: "huddle",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the drop",
+    tells: { melee: "beak up", ranged: "flippers out", special: "the drop" }
   }
 };

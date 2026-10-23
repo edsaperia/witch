@@ -50,5 +50,15 @@ export const CREATURE_OWL = {
     mods: { echo: 1 },
     label: "Owl's Echo: each burst fires again half a second later"
   },
-  character: { sprite: "look", every: [4, 8], for: 1.4 }
+  character: { sprite: "look", every: [4, 8], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: { name: "lob", range: 30, shots: [0, 1, 1], delivery: "lob", flight: 1.2, size: [1, 3, 3.5], tint: "red" },
+    special: "mind",
+    retreat: "branches",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the eyes glow",
+    tells: { melee: "wings", ranged: "the circle", special: "the eyes glow" }
+  }
 };

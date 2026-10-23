@@ -1,10 +1,10 @@
-// A panel over the first load's sea chart (app/opening.ts; Ed, 2026-10-20: "What's new and Options: on the chart"): the chart's
-// corner buttons open it on what the start card holds (its What's new, the screen shake's option), borrowed while it's up and put
+// A panel on the pause page (main.ts pauseControls; Ed, 2026-10-23: What's new and Options, on the first load's sea chart till its
+// chart-first start went): its buttons open it on what the start card holds (its keys, What's new, the screen shake's option), borrowed while it's up and put
 // back where they were as it closes, so the creator's tabs still find them later in the page (main.ts dressCreator). One at a time;
 // its ×, Esc or the button again closes it.
 let shown: { el: HTMLDivElement; back: (() => void)[]; id: string } | null = null;
 
-/** Show `nodes` in a panel titled `title` over `host` (the chart's wrap); the same `id` again closes it. */
+/** Show `nodes` in a panel titled `title` over `host`; the same `id` again closes it. */
 export function toggleCornerPanel(host: HTMLElement, id: string, title: string, nodes: HTMLElement[]): void {
   const was = shown?.id;
   closeCornerPanel();

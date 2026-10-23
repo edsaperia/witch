@@ -616,7 +616,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length ? mirageDecoys(g, g.clock.time) : undefined);
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
   if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
@@ -689,9 +689,12 @@ function indexByArea(creatures: Creature[]): Map<string, Creature[]> {
   return m;
 }
 
-/** The raven's mirage images (rules/combat/packs.ts) her 💌s can meet: each takes one and bursts. */
-function mirageDecoys(g: Game, time: number): Decoy[] {
-  return (g.combat.mirages ?? []).filter(m => time < m.until && huntsWitch(m.side as State)).map(m => ({ x: m.x, z: m.z, r: 0.9, hit: () => burstMirage(g.combat, m.id, time) }));
+/** The raven's mirage images and the raccoons' decoys (rules/combat/packs.ts) her 💌s can meet: an image takes one and bursts; a decoy catches them. */
+export function mirageDecoys(g: Game, time: number): Decoy[] {
+  const images = (g.combat.mirages ?? []).filter(m => time < m.until && huntsWitch(m.side as State)).map(m => ({ x: m.x, z: m.z, r: 0.9, hit: () => burstMirage(g.combat, m.id, time) }));
+  // The raccoons' decoy (rules/combat/packs.ts): the one waving catches her 💌s in its way, its meter untouched.
+  const waving = (g.combat.decoys ?? []).filter(q => time < q.until && huntsWitch(q.side as State) && g.creatures[q.id] && !g.creatures[q.id].gone).map(q => ({ x: g.creatures[q.id].x, z: g.creatures[q.id].z, r: q.r, hit: () => {} }));
+  return waving.length ? [...images, ...waving] : images;
 }
 
 /** Her aim, turned while she's confused (pack combat: the stoat's war dance, its drift wavering; rules/combat/packs.ts). */
@@ -756,6 +759,11 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
       dash: id => { const W = g.witches[id]; return W && W.dash.at > -Infinity ? { at: W.dash.at, x: W.dash.toX, z: W.dash.toZ } : null; },
       lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
       confuse: (id, until, drift, move) => { const W = g.witches[id]; if (W) W.confused = { until, drift, ...(move ? { move: true } : {}) }; },
+      pull: (id, x, z, metres) => { // (thrown toward the puller: a blow from behind her, exactly so far and never past it; a blink dodges it, as a blow)
+        const W = g.witches[id], at = g.herTime; if (!W || W.ko || dashing(W.dash, at) || g.partyOver) return;
+        const dx = W.body.x - x, dz = W.body.z - z, d = Math.hypot(dx, dz); if (d < 2) return;
+        knockWitch((W.knock ??= newKnock()), W.body, { x: W.body.x + dx / d, z: W.body.z + dz / d, knockback: 0, rams: false, metres: Math.min(metres, d - 1.5) }, at, t);
+      },
     },
     slowWitch: (id, until, mult) => { const w = g.witches[id]; if (w) { w.slowUntil = Math.max(w.slowUntil ?? 0, until); w.slowMult = Math.min(mult, w.slowUntil > until ? w.slowMult ?? 1 : 1); } },
     hitWitch: (id, at, blow) => hitWitch(g, id, at, t, blow),

@@ -16,5 +16,15 @@ export const CREATURE_LYNX = {
     scale: { groundAcceleration: 2, "treetop.turnRate": 1.4 },
     label: "Lynx's Poise: sharper turns, quicker starts"
   },
-  character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 }
+  character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "shriek bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "feint",
+    retreat: "freeze",
+    rhythm: "steady",
+    pressure: 2,
+    call: "crouch",
+    tells: { melee: "crouch", ranged: "ears flat", special: "crouch" }
+  }
 };
