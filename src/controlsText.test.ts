@@ -19,10 +19,10 @@ describe("the controls text", () => {
     expect(keys).toContain("triangle puts her hat down or picks it up · circle cycles the stack · pressing the left stick, her broom's spell");
   });
   it("covers the treehouse: the map's sea chart, the stations, the bed held", () => {
-    for (const s of ["E at the map", "sea chart", "the broom stand opens dressing up", "E at the bestiary's book opens the zoo", "hold E at the bed"]) expect(keys).toContain(s);
+    for (const s of ["E at the map", "sea chart", "walking up to the mirror", "the bay fits her broom's parts", "E at the bestiary's book opens the zoo", "hold E at the bed"]) expect(keys).toContain(s);
   });
   it("keeps nothing stale: no Player pick, no Esc back to the start, no dodge diamond, no old pad layout", () => {
-    for (const s of ['"Player:"', "Esc back here", "diamond", "triangle cycles", "circle broom spell"]) expect(keys).not.toContain(s);
+    for (const s of ['"Player:"', "Esc back here", "diamond", "triangle cycles", "circle broom spell", "broom stand"]) expect(keys).not.toContain(s);
   });
 });
 

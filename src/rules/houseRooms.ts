@@ -1,8 +1,8 @@
 // The treehouse's placeholder rooms (Ed, 2026-10-19: "we should start working on building this into the island so you can enter
 // and exit during the party ... stick with placeholder rooms for now"; config/house.json, the mock previews/ed/big-room-mock): plank
 // rooms joined by corridors off the hub (rules/treehouse.ts), walked as one floor with it, each holding objects she walks up to and
-// uses with E (the sigil button): the dressing stations, the bags and the broom stand open the creator at only their own choices,
-// the hats' floor holds her hats as objects, the bed (E held) ends the night, the bestiary's book opens the zoo over the night,
+// uses: the dressing stations, the bags and the Workshop's bay, lathe and pegboard slide in their panels as she nears them
+// (rules/stations.ts), and with E (the sigil button) the hats' floor holds her hats as objects, the bed (E held) ends the night, the bestiary's book opens the zoo over the night,
 // and the rest are placeholders that say a line. The rules know where the floor is and which object she's at; what an object's E
 // opens is main.ts's (the "house" leash event). No drawing here (render/houseRooms.ts).
 import HOUSE from "../../config/house.json";

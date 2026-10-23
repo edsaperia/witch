@@ -70,9 +70,6 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "phones", name: "🎧 Headphones", axes: [], wear: ["phones"], parts: ["headphones"] },
   { id: "more", name: "✨ Magic and more", axes: [], wear: ["lantern", "vial", "book", "glowsticks", "wristband"], parts: [] },
 ];
-/** A treehouse station's choices (config/house.json `use`): the axes, accessories and colour parts it shows, and the Hat or Broom
- *  box's power row if it names one. */
-export interface Station { axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
 /** The box an axis, an accessory or a colour part is in (the last box for one none names). */
 export const boxOf = (kind: "axes" | "wear" | "parts", k: string): string => (BOXES.find(b => b[kind].includes(k)) ?? BOXES[BOXES.length - 1]).id;
 /** Whether a slider draws anything on her look (art/witchGenome.js sliderApplies), and what greys it out. */
@@ -209,7 +206,7 @@ export class Creator {
   stepTab(by: number): void { const ids = [...this.boxes.keys()], i = ids.indexOf(this.box); this.openBox(ids[((i < 0 ? 0 : i + by) % ids.length + ids.length) % ids.length]); }
   /** Called with her look when the party spell bursts (the scroll cast and the world ready): play starts, the spell cast. */
   onStart: (g: Genome) => void = () => {};
-  /** Her hat's and broom's spells (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat and Broom boxes;
+  /** Her hat's spell (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat box;
    *  their shape and colour stay on the sliders), and a callback when she changes one. */
   loadout: { hat: string } = { hat: "none" };
   /** The spell hats she owns (rules/spells.ts SpellState.hats; absent, every one): the Hat box offers only these (Ed, 2026-10-23: hats are found). */
@@ -253,19 +250,10 @@ export class Creator {
    *  sets done of total, and whether play can start. */
   progress: () => { done: number; total: number; ready: boolean } = () => ({ done: 1, total: 1, ready: true });
   get open(): boolean { return this.root.style.display !== "none"; }
-  /** Open mid-night from one of the treehouse's stations (Ed, 2026-10-19; rules/houseRooms.ts, config/house.json: the mirror,
-   *  the wardrobe, the bags, the broom stand...; the Bedroom button and F are gone), the world running on at the house's tenth:
-   *  no party scroll, its place taken by the way out ("Back to the island", Ed, 2026-10-11). */
-  visiting = false;
-  /** A station of the treehouse's (config/house.json; Ed, 2026-10-19): only these of its choices show (null: all of them). */
-  private only: Station | null = null;
   /** Paused by the pause page (Esc) while her room is open (Ed, 2026-10-14): her keys and clicks wait, she stands still. */
   private _frozen = false;
   get frozen(): boolean { return this._frozen; }
   set frozen(on: boolean) { this._frozen = on; this.held.clear(); this.root.style.pointerEvents = on ? "none" : ""; }
-  /** The way out, mid-night: her look as it is now. */
-  onExit: (g: Genome) => void = () => {};
-  private exitBtn = h("button", { type: "button", text: "Back to the island" });
   /** The build's version (Ed, 2026-10-13: "so he can see at once which version he's looking at"): small and dim in the top
    *  left, in the margin above the tapestry (laid out by place()), never over anything. */
   private ver = document.createElement("div");
@@ -305,10 +293,6 @@ export class Creator {
     this.scroll.onCast = () => { saveGenome(this.g); this.onGesture(); };
     this.scroll.onBurst = () => { this.hide(); this.onStart(this.genome()); };
     this.scroll.sound = (cue, v) => this.spellSound(cue, v);
-    Object.assign(this.exitBtn.style, { position: "absolute", display: "none", zIndex: "4", font: "inherit", fontSize: "15px", color: "#1d1408", background: "var(--accent, #e8b46a)", border: "2px solid rgba(255,236,200,.85)", borderRadius: "8px", cursor: "pointer", boxShadow: "0 0 18px rgba(232,180,106,.45)" });
-    this.exitBtn.dataset.exit = "";
-    this.exitBtn.addEventListener("click", () => this.leave());
-    this.root.append(this.exitBtn);
     // While it's open, its keys are its own but the debug overlay's ` (Enter casts the party spell, R randomises, WASD or the arrows walk her about); nothing reaches the game.
     window.addEventListener("keydown", e => {
       if (!this.open || e.code === "Backquote") return; // (bar the debug overlay's key: the Player pick shows with it, app/playerPick.ts)
@@ -318,7 +302,7 @@ export class Creator {
       e.stopPropagation();
       if (WALK_KEYS.has(e.code)) { e.preventDefault(); this.held.add(e.code); this.keyHint.pressed(e.code); (document.activeElement as HTMLElement | null)?.blur?.(); return; } // (a slider keeps no arrow keys: they walk her)
       if ((e.target as HTMLElement)?.tagName === "INPUT" && e.code !== "Enter") return;
-      if (e.code === "Enter") { e.preventDefault(); if (this.visiting) this.leave(); else this.scroll.cast(); } else if (e.code === "KeyR") this.randomise(); // (Esc pauses, in her room as anywhere: Ed, 2026-10-14; the way out of a visit is its button)
+      if (e.code === "Enter") { e.preventDefault(); this.scroll.cast(); } else if (e.code === "KeyR") this.randomise(); // (Esc pauses, in her room as anywhere: Ed, 2026-10-14)
       else if (e.key === "?" && this.boxes.has("controls")) { e.preventDefault(); this.openBox("controls"); }
       else if (e.code === "KeyQ" || e.code === "PageUp") { e.preventDefault(); this.stepTab(-1); } else if (e.code === "KeyE" || e.code === "PageDown") { e.preventDefault(); this.stepTab(1); }
     }, { capture: true });
@@ -339,18 +323,7 @@ export class Creator {
     this.building = true;
     void runSliced(roomSteps(this.st, this.roomS), "bedroom").then(r => { this.room = r; this.walker ??= newWalker(r.walk); this.dirty = true; this.laid = ""; });
   }
-  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); if (this.visiting) { this.visiting = false; this.scroll.el.style.display = ""; this.exitBtn.style.display = "none"; } }
-  /** Back in her room mid-night, from a station in the treehouse (rules/houseRooms.ts: the mirror, the wardrobe, the cloak pegs, the
-   *  shoe rack, the bags, the broom stand): as at the start, but only that station's choices, and the way out in the party scroll's place. */
-  visit(only: Station | null = null): void {
-    this.visiting = true;
-    if (only || this.only) { this.only = only; this.build(); }
-    this.show();
-    this.scroll.stop(); this.scroll.el.style.display = "none"; this.exitBtn.style.display = "block";
-    this.laid = ""; this.dirty = true;
-  }
-  /** Out of her room, back to the island (mid-night): her look saved as at the start. */
-  private leave(): void { saveGenome(this.g); this.hide(); if (this.only) { this.only = null; this.build(); } this.onExit(this.genome()); }
+  hide(): void { this.root.style.display = "none"; cancelAnimationFrame(this.raf); this.held.clear(); this.scroll.stop(); this.spellSound("hum", 0); }
   genome(): Genome { return clone(this.g); }
   /** Her look as a station's panel changed it (ui/stationPanel.ts): this room shows it next time it opens. */
   adopt(g: unknown): void { this.g = upgrade(clone(g)); this.build(); this.dirty = true; }
@@ -412,10 +385,9 @@ export class Creator {
     const set = (axis: string, v: unknown) => { const [part, key] = slot(axis); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; this.dirty = true; };
     const accs = Object.keys({ ...CLASSIC.accessories, ...g.accessories }).filter(k => !(k in AXES)); // (a choice is an axis)
     const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
-    const O = this.only, keep = (kind: "axes" | "wear" | "parts", k: string) => !O || O[kind].includes(k);
     for (const B of BOXES) {
       // (no broom shapes: brooms are the Workshop's parts, Ed 2026-10-23; the Classic look the bare broom's)
-      const axes = Object.keys(AXES).filter(a => a !== "broom" && boxOf("axes", a) === B.id && keep("axes", a)), wear = accs.filter(k => boxOf("wear", k) === B.id && keep("wear", k)), parts = PARTS.filter(k => boxOf("parts", k) === B.id && keep("parts", k));
+      const axes = Object.keys(AXES).filter(a => a !== "broom" && boxOf("axes", a) === B.id), wear = accs.filter(k => boxOf("wear", k) === B.id), parts = PARTS.filter(k => boxOf("parts", k) === B.id);
       if (!axes.length && !wear.length && !parts.length) continue;
       const body = box(B.id, B.name);
       // its toggles first (what it is, worn or not), then its sliders and pickers
@@ -428,17 +400,17 @@ export class Creator {
           ar.append(h("label", { style: { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" } }, c, WEAR_NAMES[k] ?? label(k)));
         }
       }
-      if (B.id === "hat" && (!O || O.spell === "hat")) this.spellRow(body, "hat", row); // (a hat's power; a broom's is its parts' set: the Workshop's bay)
+      if (B.id === "hat") this.spellRow(body, "hat", row); // (a hat's power; a broom's is its parts' set: the Workshop's bay)
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
-    if (!O) for (const T of this.extraTabs) box(T.id, T.name).append(...T.nodes); // (the controls, the options: theirs, moved in whole; not at a station)
+    for (const T of this.extraTabs) box(T.id, T.name).append(...T.nodes); // (the controls, the options: theirs, moved in whole)
     this.inert();
     if (!this.boxes.has(this.box)) this.openBox(this.boxes.keys().next().value ?? "");
     // The buttons.
     const bar = h("div", { data: { bar: "" }, style: { display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "10px", position: "sticky", bottom: "0", background: "rgba(22,14,32,.97)", padding: "6px 0" } });
     const btn = (text: string, f: () => void, main = false) => bar.appendChild(button(text, f, { style: { font: "inherit", fontSize: "14px", color: main ? "#1d1408" : "inherit", background: main ? "var(--accent)" : "rgba(255,255,255,.1)", border: "1px solid rgba(232,226,244,.4)", borderRadius: "6px", padding: "6px 12px", cursor: "pointer", flex: main ? "1 1 100%" : "1 1 auto" } }));
-    if (!O) { btn("Randomise", () => this.randomise()); btn("Wild", () => this.wild()); btn("Classic", () => this.classic()); } // (her whole look: not at a station)
+    btn("Randomise", () => this.randomise()); btn("Wild", () => this.wild()); btn("Classic", () => this.classic()); // (her whole look)
     // (the forest growing behind: the room's fairy lights are its loading bar, Ed: "I love the bedroom party lights as loading bar")
     P.append(bar);
   }
@@ -726,8 +698,6 @@ export class Creator {
     const [cw, ch] = SpellScroll.SIZE;
     const pad = (cw - SpellScroll.ART[0]) / 2;
     this.scroll.place(px(Math.min(SW - MARGIN + pad - cw, rx + bx1 - Math.round(cw * .55))), px(Math.min(SH - MARGIN + pad - ch, ry + by1 - Math.round(ch * .7))), px(cw), px(ch));
-    // (mid-night, the way out where the scroll would be)
-    Object.assign(this.exitBtn.style, { left: this.scroll.el.style.left, top: this.scroll.el.style.top, width: this.scroll.el.style.width, height: px(Math.round(ch * .45)) });
   }
 }
 
