@@ -1,0 +1,23 @@
+{
+ "corner": [
+  "📜 What's new",
+  "⚙ Options",
+  "🐾 Zoo"
+ ],
+ "unlocked": [
+  "home"
+ ],
+ "marks": [
+  "opening:chart 3.6 s",
+  "chart:open 3.6 s",
+  "chart:mounted 3.7 s",
+  "chart:island1 11.5 s",
+  "chart:sail 24.4 s",
+  "chart:flown 57.6 s",
+  "chart:go 57.6 s",
+  "opening:sail 57.6 s",
+  "game:reveal 140.6 s",
+  "game:arrived 140.6 s",
+  "game:frame1 140.6 s"
+ ]
+}
