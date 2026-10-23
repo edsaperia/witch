@@ -17,7 +17,7 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], out = {};
-  let bad = 0;
+  let bad = 0, done = false;
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
@@ -46,12 +46,13 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       if (out[spot].diff) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
+    done = true;
   } finally {
     fs.writeFileSync(path.join(outDir, "early-diff.json"), JSON.stringify(out, null, 1));
     const blind = Object.keys(out).length > 0 && Object.values(out).every(o => !o.scenery);
     console.log(errors.length ? "errors: " + errors.slice(0, 3).join(" | ") : "no page errors");
-    console.log(blind ? "FAIL: blind (hiding the scenery changed nothing)" : bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
+    console.log(!done ? "FAIL: stopped before every spot was compared" : blind ? "FAIL: blind (hiding the scenery changed nothing)" : bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
     await browser.close(); server.close();
-    process.exitCode = bad || blind || errors.length ? 1 : 0;
+    process.exitCode = !done || bad || blind || errors.length ? 1 : 0;
   }
 })();
