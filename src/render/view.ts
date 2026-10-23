@@ -344,6 +344,8 @@ export class View {
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
+  /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
+  private tuftBiome: string | undefined;
   creatureBatches = new Map<string, SpriteBatch>();
   witchBatch!: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
@@ -591,7 +593,8 @@ export class View {
     yield "grass";
     this.scene.add(this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    const tufts = yield* GrassView.tufts(style);
+    this.tuftBiome = style.biome ?? this.assets.typeBiome; // (in the island's biome: art/flora/biomes.js; ?biome= over it)
+    const tufts = yield* GrassView.tufts(this.tuftBiome ? { ...style, biome: this.tuftBiome } : style);
     yield;
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms, tufts);
     yield "parts";
@@ -871,12 +874,14 @@ export class View {
     const island = new IslandLayers(this.scene, { game, style: this.style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOf(game.map, t) }, false);
     yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
     yield* island.finishSteps();
+    const tb = this.style.biome ?? this.assets.typeBiome, tufts = tb !== this.tuftBiome ? yield* GrassView.tufts(tb ? { ...this.style, biome: tb } : this.style) : null; // (another biome's: drawn again, a step an area type)
     yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
     island.ley.scale(this.leyBase);
     // What draws on the ground re-pointed at the new one before the old is let go.
     this.beachView.setGround(island.ground);
+    if (tufts) { this.grass.setArt(tufts); this.tuftBiome = tb; }
     this.grass.setMap(game.map, game.forest, (island.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     // The swap: the new island in (its hills the field in use), then the old let go.
     this.island = island;

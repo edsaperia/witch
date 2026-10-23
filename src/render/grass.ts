@@ -196,8 +196,20 @@ export class GrassView {
     return { kinds, rushes, pixels: yield* packSteps(sprites, 512) };
   }
 
+  /** The tufts drawn again (View.setGame: an island in another biome, art/flora/biomes.js): the new atlas in, the old freed. Call it
+   *  with setMap, which empties every block, so nothing is drawn from the old frames. */
+  setArt(made: TuftArt): void {
+    const old = this.atlas;
+    this.kinds = made.kinds; this.rushes = made.rushes;
+    this.atlas = atlasFromPixels(made.pixels);
+    const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
+    const u = this.mat.uniforms;
+    u.uTufts.value = this.atlas.albedo; u.uTuftN.value = this.atlas.normal; (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);
+    old.albedo.dispose(); old.normal.dispose();
+  }
+
   /** Another night's map (View.setGame): its tufts worked out afresh, every block emptied and free, and the canopy's and
-   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's.) */
+   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's, drawn again only for another biome: setArt.) */
   setMap(map: ForestMap, forest: Forest | undefined, ground?: Record<string, THREE.IUniform>): void {
     this.map = map; this.forest = forest;
     this.cells.clear(); this.held.clear(); this.free = []; this.top = 0; this.lastCi = NaN; this.lastCj = NaN;
