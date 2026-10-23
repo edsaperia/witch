@@ -1,7 +1,7 @@
 // Things to wear found in the forest (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other
 // permanent upgrades. Hints are given by the crystal ball"; his answers on the proposal, the same day): each night the island
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
-// come from the garage's parts, docs/backlog/unlocks.md), in an old travel trunk half-sunk in a wild area's woods, under the
+// come from the Workshop's parts, docs/backlog/workshop.md), in an old travel trunk half-sunk in a wild area's woods, under the
 // canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers at once (the
 // "found" leash event; app/owned.ts keeps it, even if the night's then lost). Its hint is written in the stars (Ed, 2026-10-22):
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
@@ -20,9 +20,11 @@ import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
 import { canopyOver, type Relic } from "./legends";
 import { hash2 } from "./random";
-import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
-import { PART_IDS, fitPart, partById } from "./broomParts";
-import { setParts, type SpellState } from "./spells";
+import { ITEMS, type WardrobeItem } from "./wardrobe";
+import { PART_IDS } from "./broomParts";
+import type { SpellState } from "./spells";
+import { deckOf, onFloor } from "./treehouse";
+import type { Game } from "./game";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
 export type FindKindId = "wearable" | "part";
@@ -36,7 +38,7 @@ const RINGS = [45, 60, 35, 75, 28];
 
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of
  *  three parts ... We have designed this before": the garage's). */
-export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !SHELVES.broom.items.includes(i));
+export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !i.set["broom.kind"]);
 
 /** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
  *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
@@ -44,8 +46,8 @@ export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !
 export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; claim?(s: SpellState, item: string): void }
 export const FIND_KINDS: readonly FindKind[] = [
   { id: "wearable", name: "trunk", items: FINDABLE.map(i => i.id), piece: () => "travel-trunk" },
-  // (a part found goes on her broom at once if its slot is empty: till the Workshop's bay lets her fit it, docs/backlog/workshop.md)
-  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}`, claim(s, id) { const p = partById(id); if (p && !s.parts[p.slot]) setParts(s, fitPart(s.parts, id)); } },
+  // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
+  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}` },
 ];
 export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
 /** What she has found (or owns) of each kind; a kind left out counts as none found. */
@@ -118,4 +120,28 @@ export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: numb
   const t = g.trunk;
   if (!t || !t.item || t.found) return null;
   return { kind: t.kind, item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+}
+
+/** Where a find spawned by her stands (the dev spawn, Ed 2026-10-23: "a way to spawn the collectible near the player"): a few
+ *  metres in front of her (the way she faces, a little toward the camera), else round her, on clear ground: on the island,
+ *  not in a lake, the treehouse or a tree, rock or ruin. Null with nowhere within 12 m. */
+export function spawnSpot(g: Pick<Game, "map" | "forest" | "tuning" | "witches">, i = 0): { x: number; z: number } | null {
+  const w = g.witches[i].body, map = g.map, deck = deckOf(map, g.tuning);
+  const a0 = Math.atan2(0.6, w.facing >= 0 ? 1 : -1);
+  for (const r of [4, 5, 6, 8, 10, 12]) for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) {
+    const a = a0 + (k * Math.PI) / 6, x = w.x + Math.cos(a) * r, z = w.z + Math.sin(a) * r, cell = map.cellSafe(x, z).cell;
+    if (!isInside(map.bounds, x, z, 10) || map.isLake(cell[0], cell[1]) || (deck && onFloor(deck, x, z, 3))) continue;
+    if (g.forest.treesNear(x, z, 3).some(t => Math.hypot(t.x - x, t.z - z) < 2.5)) continue;
+    if (g.forest.decorNear(x, z, 4).some(p => Math.hypot(p.x - x, p.z - z) < 3)) continue;
+    return { x, z };
+  }
+  return null;
+}
+
+/** Tonight's find replaced by `kind`'s `item` at (x, z) (the dev spawn): the night's one find, so the constellation, the
+ *  telescope and E at it all go by it, and taking it is the real claim (sigilButton.ts). Its kind must list the item. */
+export function spawnFind(g: { trunk: Trunk | null; map: ForestMap }, kind: FindKindId, item: string, at: { x: number; z: number }): Trunk | null {
+  if (!findKind(kind)?.items.includes(item)) return null;
+  const c = g.map.cellSafe(at.x, at.z).cell;
+  return (g.trunk = { x: at.x, z: at.z, cell: [c[0], c[1]], kind, item, found: false });
 }

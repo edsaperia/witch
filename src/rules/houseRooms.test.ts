@@ -101,7 +101,7 @@ describe("the treehouse's rooms", () => {
   });
 
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {
-    for (const id of ["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomStand", "book"]) {
+    for (const id of ["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard", "book"]) {
       const o = obj(id), g = inHouse(0, 0), d = deck(g), at = before(o);
       put(g, at.x, at.z);
       expect(objectAt(d, g.witches[0].body.x, g.witches[0].body.z)?.id, id).toBe(id);

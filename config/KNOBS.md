@@ -679,7 +679,6 @@ The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'da
 | `dash.clear.speaker` | number | 0 to … |
 | `dash.clear.treehouse` | number | 0 to … |
 | `spells.hat` | string |  |
-| `spells.broom` | string |  |
 | `spells.parts` | string |  |
 | `spells.speed.mult` | number | 0 to … |
 | `spells.speed.duration` | number | 0 to … |

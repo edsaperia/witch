@@ -18,11 +18,14 @@ import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./houseArt";
 import { nearestIn } from "../rules/houseRooms";
-import { bakeFurniture, furnitureState, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { WorkshopArt } from "./workshopArt";
+import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { dressed } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
+import { Spotlight } from "./spotlight";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -156,8 +159,12 @@ export class HouseRoomsView {
   /** Named points of the furniture in the world this frame, "<id>.<mark>" (the mic's spot lamp: "microphone.spot"), for the view. */
   readonly marks = new Map<string, V3>();
   private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array; id: string; x: number; z: number }>();
+  /** The Workshop's: her broom on the bay (or the lathe) and the parts on the pegboard, laid on those pieces' marks (render/workshopArt.ts). */
+  private readonly workshop = new WorkshopArt();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
+  /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
+  private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
@@ -176,7 +183,8 @@ export class HouseRoomsView {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.934), new Part(this.mat, 19.94), new Part(this.mat, 19.944)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.roofs.visible = false;
-    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.roofs];
+    this.furniture.add(this.spot.mesh);
+    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -204,6 +212,8 @@ export class HouseRoomsView {
     for (const p of this.parts) p.geo.dispose();
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
+    this.workshop.dispose();
+    this.spot.dispose();
   }
 
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
@@ -212,6 +222,7 @@ export class HouseRoomsView {
     const shown = !!(d?.house?.rooms && T.ent && w.perch && !w.seated && (w.mode === "ground" || w.mode === "descending"));
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
+    this.workshop.group.visible = shown;
     this.floor.visible = shown && !!(HOUSE_ROOMS as { organic?: boolean }).organic;
     this.roofs.visible = this.floor.visible;
     if (!shown) { this.box.style.display = "none"; return; }
@@ -325,6 +336,21 @@ export class HouseRoomsView {
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
     }
+    // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
+    // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
+    // only in or near the Workshop (its pieces baked: they're baked as she nears them)
+    const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
+    if (piece("broomBay") || piece("pegboard") || piece("lathe")) {
+      const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
+      this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
+        id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },
+        (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
+        id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
+    }
+    // the mic's spotlight, from its lamp down to the floor round its foot (its `spot` mark: art/furniture.js)
+    const mic = [...this.pieces.values()].find(p => p.id === "microphone" && p.mesh.visible && p.art.marks.spot);
+    if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }
+    else this.spot.mesh.visible = false;
     // last night's clothes, in a pile by her bed (rules/clothesPile.ts): what's still in it, till she's dressed
     const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = g.wake?.pile ?? [];
     if (po && slots.length) {

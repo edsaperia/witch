@@ -35,6 +35,12 @@ describe("biome forests", () => {
     expect(t[M.TRUNK]).not.toEqual(c[M.TRUNK]);
     expect(t[M.FLOWER]).toEqual(c[M.FLOWER]);
     expect(biomeColours({ ...c }, null, M)).toEqual(c);
+    const rock = { [M.STONE]: [128, 126, 134], [M.STONED]: [64, 62, 72], [M.WEB]: [225, 225, 232] };
+    expect(biomeColours({ ...rock }, biomeLook("badlands"), M)[M.STONE]).toEqual(rock[M.STONE]); // (stone only when asked: the trees' tables keep theirs)
+    const red = biomeColours({ ...rock }, biomeLook("badlands"), M, { stone: true });
+    expect(red[M.STONE][0]).toBeGreaterThan(red[M.STONE][2]); // (red sandstone)
+    expect(red[M.STONED][0]).toBeLessThan(red[M.STONE][0]); // (its shade still darker)
+    expect(red[M.WEB]).toEqual(rock[M.WEB]); // (snow stays white)
     expect(biomeJitter("cold")).toBe(0);
     expect(biomeJitter(undefined)).toBe(1);
   });
