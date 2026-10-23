@@ -1,8 +1,8 @@
 {
   "kind": "bat",
   "slot": 17,
-  "phase": 1,
-  "bearing": 195,
-  "dir": "SSW",
-  "biome": "temperate"
+  "phase": 2,
+  "bearing": 281.25,
+  "dir": "WNW",
+  "biome": "jungle"
 }
