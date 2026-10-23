@@ -758,6 +758,8 @@ function frame(now: number): void {
   // Choosing at a station (the pointer or the d-pad in its panel, or stood still a moment): the camera eases in on her; she moves, out.
   if (c.moveX || c.moveZ) { stations.walked(); stillAt = 0; } else stillAt += dt;
   c.framing = !!stations.station && (stations.choosing || stillAt > 0.4);
+  c.framePart = c.framing ? stations.framePart : null; // (zoomed on the part of her being chosen: camera.station.parts)
+  view.hatOff = stations.bareHead; // (her hat off at the dressing table, so her face and hair show)
   c.autoTalk = autoTalk;
   if (c.debug) hud.setDebug(!hud.debugOn);
   view.debugReadouts = hud.debugOn;
