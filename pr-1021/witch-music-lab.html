@@ -660,16 +660,16 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/bat/genome.js
-  var GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: 0.78, sat: 0.25, val: 0.45 }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
+  var GENOME_BAT = { id: "bat", name: "Fruit bat", template: "flyer", builder: "bat", palette: { hue: 0.06, sat: 0.5, val: 0.36, belly: [0.1, 0.62, 0.78] }, look: { fruit: true }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
 
   // art/creatures/bear/genome.js
-  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: 0.3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: 0.2 }, { kind: "moss", amount: 0.5 }, { kind: "scars", count: 4 }, { kind: "claws", size: 0.26 }] }] };
+  var GENOME_BEAR = { id: "bear", name: "Black bear", template: "quadruped", builder: "quad", palette: { hue: 0.7, sat: 0.12, val: 0.2, belly: [0.08, 0.4, 0.62] }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 1.1, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 1.15 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 1.3 } }, { body: { humpK: 3, front: 1.45 }, features: [{ kind: "grizzle", amount: 0.3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: 0.2 }, { kind: "moss", amount: 0.5 }, { kind: "scars", count: 4 }, { kind: "claws", size: 0.26 }] }] };
 
   // art/creatures/beaver/genome.js
   var GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: 0.06, sat: 0.6, val: 0.45 }, body: { stance: "flat", hgt: 0.66, len: 0.62, chest: 0.34, tuck: 0.3, neck: 0.18, neckAng: 0.35, neckW: 0.6, hr: 0.3, legW: 1.25, back: "hump" }, head: { snout: 0.55, snoutD: 0.8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "flat", feet: "paw" }, legend: ["moss"], levels: [{ body: { hgt: 0.66, len: 0.48, chest: 0.4, tuck: 0.38, back: "arch", legW: 1.4 }, head: { snout: 0.4, snoutD: 0.75, teeth: false }, parts: { ears: { kind: "round", size: 0.65 }, tail: "stub" } }, { body: { hgt: 0.7, len: 0.7, chest: 0.3, tuck: 0.26, back: "arch", legW: 1.1 }, head: { snout: 0.58 }, parts: { ears: { kind: "round", size: 0.5 } } }, null, { head: { bigTeeth: true, log: true } }] };
 
   // art/creatures/beetle/genome.js
-  var GENOME_BEETLE = { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: 0.78, sat: 0.5, val: 0.35 }, legend: ["antlers"] };
+  var GENOME_BEETLE = { id: "beetle", name: "Fire beetle", template: "insectoid", builder: "beetle", palette: { hue: 0.02, sat: 0.25, val: 0.2, accent: [0.05, 0.92, 1], magic: 0.05 }, look: { embers: true }, legend: ["antlers"] };
 
   // art/creatures/boar/genome.js
   var GENOME_BOAR = {
@@ -706,14 +706,14 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/cat/genome.js
   var GENOME_CAT = {
     id: "cat",
-    name: "Wildcat",
+    name: "Sand cat",
     template: "quadruped",
     builder: "quad",
-    palette: { hue: 0.08, sat: 0.1, val: 0.52, belly: "white", magic: 0.13 },
+    palette: { hue: 0.1, sat: 0.32, val: 0.78, belly: "white", magic: 0.13 },
     body: { hgt: 0.7, len: 0.68, chest: 0.4, tuck: 0.48, neck: 0.2, neckAng: 0.75, neckW: 0.36, hr: 0.32, legW: 0.58 },
-    head: { snout: 0.38, snoutD: 0.7, snoutTaper: 0.85, cheeks: true, whiskers: true, eyeK: 1.45 },
-    parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" },
-    coat: { belly: true, tabby: { n: 13, w: 0.3 }, socks: 0.2 },
+    head: { snout: 0.34, snoutD: 0.66, snoutTaper: 0.85, cheeks: true, whiskers: true, eyeK: 1.45, skullZ: 1.15, skullY: 0.9 },
+    parts: { ears: { kind: "point", size: 1.7 }, tail: "stoat", feet: "paw" },
+    coat: { belly: true, tabby: { n: 9, w: 0.14, mat: "BODY2" }, socks: 0.2 },
     legend: [],
     // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
     // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
@@ -1139,7 +1139,7 @@ label.check input { accent-color: var(--accent); }
   var GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: 0.7, sat: 0.15, val: 0.32, flower: [70, 190, 150] }, legend: [], elder: { kind: "mole" }, texture: { kind: "fur", size: 3 } };
 
   // art/creatures/moth/genome.js
-  var GENOME_MOTH = { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: 0.1, sat: 0.3, val: 0.7 }, legend: ["eyespots"], texture: { kind: "fur", size: 3, stretch: 1.6 } };
+  var GENOME_MOTH = { id: "moth", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: 0.13, sat: 0.72, val: 0.95, accent: [0.6, 0.7, 0.9] }, look: { butterfly: true }, legend: ["eyespots"] };
 
   // art/creatures/newt/genome.js
   var GENOME_NEWT = {
@@ -1158,24 +1158,24 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/otter/genome.js
-  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
+  var GENOME_OTTER = { id: "otter", name: "Smooth-coated otter", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.42, val: 0.6, belly: [0.11, 0.22, 0.9] }, body: { stance: "flat", hgt: 0.46, len: 1.3, chest: 0.3, tuck: 0.26, neck: 0.4, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.32 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
 
   // art/creatures/owl/genome.js
   var GENOME_OWL = {
     id: "owl",
-    name: "Owl",
+    name: "Spotted owl",
     template: "avian",
     builder: "owl",
-    palette: { hue: 0.08, sat: 0.5, val: 0.55 },
+    palette: { hue: 0.07, sat: 0.5, val: 0.38, belly: [0.1, 0.12, 0.9] },
     legend: ["eyesRing", "wings"],
     // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
     // adult with a dark-rimmed disc, long tufts, a barred chest and patterned wing tips, and the legend: wings half spread like a
     // cloak edged in moonlight, tufts swept back like horns, a ring of glowing eyes round its disc
     levels: [
       { body: { down: true }, head: { tufts: 0 } },
-      { head: { tufts: 0.7 } },
-      { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
-      { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }
+      { body: { spotted: true }, head: { tufts: 0.7 } },
+      { body: { bars: true, spotted: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
+      { body: { bars: true, spotted: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }
       // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
     ]
   };
@@ -1394,7 +1394,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/snake/genome.js
-  var GENOME_SNAKE = { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: 0.25, sat: 0.45, val: 0.45 }, legend: ["shed"] };
+  var GENOME_SNAKE = { id: "snake", name: "Jungle python", template: "serpent", builder: "snake", palette: { hue: 0.37, sat: 0.75, val: 0.5, belly: "yellow" }, look: { python: true }, legend: ["shed"] };
 
   // art/creatures/snowleopard/genome.js
   var GENOME_SNOWLEOPARD = {
@@ -1421,7 +1421,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/spider/genome.js
-  var GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: 0.07, sat: 0.45, val: 0.4 }, legend: ["rose"], texture: { kind: "bristles", size: 2 } };
+  var GENOME_SPIDER = { id: "spider", name: "Tarantula", template: "insectoid", builder: "spider", palette: { hue: 0.05, sat: 0.3, val: 0.24, accent: [0.06, 0.8, 0.88] }, look: { tarantula: true }, legend: ["rose"], texture: { kind: "bristles", size: 3 } };
 
   // art/creatures/squirrel/genome.js
   var GENOME_SQUIRREL = {
@@ -1717,7 +1717,7 @@ label.check input { accent-color: var(--accent); }
   var SIGIL_MOLE = { neon: "cyan", strokes: [C(0.5, 0.4, 0.24), L([0.4, 0.6], [0.5, 0.86], [0.6, 0.6]), D(0.5, 0.86), ...pair(D(0.42, 0.4), E(0.17, 0.66, 0.1, 0.09), L([0.1, 0.72], [0.06, 0.82]), L([0.17, 0.75], [0.16, 0.86]), L([0.24, 0.73], [0.27, 0.83]))] };
 
   // art/creatures/moth/sigil.js
-  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.05, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.82], [0.4, 0.84], [0.46, 0.66]), bow([0.47, 0.31], [0.34, 0.07], 0.3), C(0.21, 0.32, 0.05))] };
+  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.04, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.78], [0.3, 0.84], [0.26, 0.96]), L([0.3, 0.84], [0.4, 0.82], [0.46, 0.66]), L([0.48, 0.31], [0.38, 0.1]), D(0.38, 0.09), C(0.21, 0.32, 0.05))] };
 
   // art/creatures/newt/sigil.js
   var SIGIL_NEWT = { neon: "acid", strokes: [E(0.36, 0.58, 0.24, 0.08), C(0.17, 0.55, 0.07), D(0.15, 0.53), L([0.6, 0.58], [0.94, 0.52]), L(...Array.from({ length: 25 }, (_, i) => [0.2 + 0.72 * i / 24, 0.47 - 0.012 * i / 24 * 6 - 0.035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([0.26, 0.65], [0.22, 0.76], [0.15, 0.78]), L([0.46, 0.65], [0.5, 0.76], [0.57, 0.78])] };
@@ -3249,7 +3249,7 @@ label.check input { accent-color: var(--accent); }
     temperament: "skittish",
     traits: ["flier", "swarm"],
     voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-    buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Moth's Flutter: one more \u{1F48C} a burst" },
+    buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Butterfly's Flutter: one more \u{1F48C} a burst" },
     character: { sprite: "shiver", every: [2, 5], for: 0.6 }
   };
 
@@ -6079,6 +6079,7 @@ label.check input { accent-color: var(--accent); }
     if (g.palette.ear) S.ear = g.palette.ear;
     if (g.palette.magic != null) S.magic = g.palette.magic;
     if (g.hydra) S.hydra = g.hydra;
+    if (g.look) S.look = g.look;
     if (g.palette.flower) S.flower = g.palette.flower;
     if (g.template === "quadruped") {
       const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -6261,10 +6262,10 @@ label.check input { accent-color: var(--accent); }
       m.anchors.feet.push({ c: [0.13 + f, 0.04, side * 0.15], r: 0.08, group: side > 0 ? 6 : 2, fit: "claw" });
     }
     m.ell([-0.32, 0.32, 0], [0.22, 0.06, 0.14], M.BODY2, { dir: [-1, -0.6, 0], group: 3 });
-    m.ell([0, 0.55 + bob, 0], [0.36, 0.52, 0.36], M.BODY, { rough: q.down ? 0.03 : void 0, paint: (p) => q.down ? spotty(p, 14, 0.3) ? M.BODY : M.BELLY : p[0] > 0.12 && p[1] < hy - hr * 0.5 ? q.bars ? Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY : Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, 0.5) ? M.BODY2 : M.BELLY : void 0 });
+    m.ell([0, 0.55 + bob, 0], [0.36, 0.52, 0.36], M.BODY, { rough: q.down ? 0.03 : void 0, paint: (p) => q.down ? spotty(p, 14, 0.3) ? M.BODY : M.BELLY : p[0] > 0.12 && p[1] < hy - hr * 0.5 ? q.spotted ? Math.floor(p[1] * 20 + Math.sin(p[2] * 17) * 0.6) % 2 && !spotty(p, 18, 0.3) ? M.BODY2 : M.BELLY : q.bars ? Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY : Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, 0.5) ? M.BODY2 : M.BELLY : void 0 });
     if (q.cloak) for (const side of [-1, 1]) wing3d(m, [-0.05, 0.78 + bob, side * 0.3], side, 1.25, frame ? 0.08 : -0.05, M.BODY2, M.WEB, side > 0 ? 40 : 50);
-    else if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.06, 0.58 + bob, side * 0.3], [0.4, 0.3, 0.08], M.BODY2, { dir: [-0.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: (p) => q.wingTips && p[1] < 0.42 + bob ? Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY : spotty(p, 12, 0.15) ? M.BODY3 : void 0 });
-    m.ell([0, hy, 0], [hr, hr * 0.9, hr], M.BODY, { rough: q.down ? 0.02 : void 0 });
+    else if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.06, 0.58 + bob, side * 0.3], [0.4, 0.3, 0.08], M.BODY2, { dir: [-0.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: (p) => q.wingTips && p[1] < 0.42 + bob ? Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY : q.spotted && spotty(p, 16, 0.28) ? M.BELLY : spotty(p, 12, 0.15) ? M.BODY3 : void 0 });
+    m.ell([0, hy, 0], [hr, hr * 0.9, hr], M.BODY, { rough: q.down ? 0.02 : void 0, paint: q.spotted ? (p) => spotty(p, 22, 0.22) ? M.BELLY : void 0 : void 0 });
     const tl = q.tufts ?? (baby ? 0 : 1);
     for (const side of [-1, 1]) {
       const fd = v3.norm([0.75, -0.05, side * 0.4 + 0.35]), c = v3.add(Model.surface([0, hy, 0], [hr, hr * 0.9, hr], fd), v3.mul(fd, -hr * 0.05));
@@ -6651,7 +6652,7 @@ label.check input { accent-color: var(--accent); }
   }
   var heronNeck = (ph) => Math.cos(ph * Math.PI * 4) * 0.035;
   function bat3d(S, level, frame, st, facing = "towards") {
-    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = has("wingsBig") ? 1.5 : 1;
+    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, Fr = S.look?.fruit, span = (has("wingsBig") ? 1.5 : 1) * (Fr ? 1.1 : 1);
     shadow(m, 0, 0.3 * span);
     for (const side of [-1, 1]) {
       const sh = [0, y + 0.05, side * 0.1], wr = [0.05, y + (up ? 0.35 : -0.05), side * 0.45 * span];
@@ -6662,9 +6663,10 @@ label.check input { accent-color: var(--accent); }
       const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
       m.flat(v3.add(v3.lerp(sh, tips[0], 0.5), v3.mul(v, 0.12 * span)), u, v, Math.hypot(...span3) * 0.55, 0.3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: 0.2 });
     }
-    m.ell([0, y, 0], [0.13, 0.16, 0.12], M.BODY, { group: 1 });
-    const hc = [0.08, y + 0.2, 0];
+    m.ell([0, y, 0], Fr ? [0.15, 0.2, 0.14] : [0.13, 0.16, 0.12], M.BODY, { group: 1, paint: Fr ? (p) => p[1] > y + 0.04 ? M.BELLY : void 0 : void 0 });
+    const hc = [0.08, y + (Fr ? 0.27 : 0.2), 0];
     m.ell(hc, [0.12, 0.11, 0.11], M.BODY, { group: 1 });
+    if (Fr) m.ell(v3.add(hc, [0.11, -0.03, 0]), [0.1, 0.055, 0.055], M.BODY, { dir: [1, -0.25, 0], group: 1 });
     const sonar = has("sonar");
     for (const side of [-1, 1]) {
       if (sonar) {
@@ -6674,10 +6676,11 @@ label.check input { accent-color: var(--accent); }
           const r = (p[1] - hc[1]) * 22;
           return Math.abs(r - Math.round(r)) < 0.16 ? M.MAGIC2 : M.EAR;
         } });
-      } else m.ell(v3.add(hc, [-0.02, 0.15, side * 0.07]), [0.12, 0.045, 0.02], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
+      } else if (Fr) m.ell(v3.add(hc, [-0.02, 0.13, side * 0.07]), [0.085, 0.04, 0.018], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
+      else m.ell(v3.add(hc, [-0.02, 0.15, side * 0.07]), [0.12, 0.045, 0.02], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
     }
-    eyesOn(m, hc, [0.12, 0.11, 0.11], [[0.7, 0.2, 0.5], [0.7, 0.2, -0.5]], 0.025, legend ? M.MAGIC2 : M.EYE);
-    m.ell(Model.surface(hc, [0.12, 0.11, 0.11], [1, -0.2, 0]), [0.025, 0.02, 0.03], M.NOSE, { group: 1 });
+    eyesOn(m, hc, [0.12, 0.11, 0.11], [[0.7, 0.2, 0.5], [0.7, 0.2, -0.5]], Fr ? 0.034 : 0.025, legend ? M.MAGIC2 : M.EYE);
+    m.ell(Fr ? v3.add(hc, [0.2, -0.055, 0]) : Model.surface(hc, [0.12, 0.11, 0.11], [1, -0.2, 0]), [0.025, 0.02, 0.03], M.NOSE, { group: 1 });
     if (sonar) for (let i = 0; i < 3; i++) {
       const r = 0.07 + (i + (frame ? 0.5 : 0)) * 0.07, c = v3.add(hc, [0.18 + i * 0.12 + (frame ? 0.06 : 0), -0.04, 0]);
       m.flat(c, [0, 0, 1], [0, 1, 0], r, r, (a, b) => {
@@ -6803,8 +6806,9 @@ label.check input { accent-color: var(--accent); }
       const x = 0.25 - i * 0.25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? 0.06 : -0.06, base = [x, 0.22, side * 0.2];
       m.chain([[...base, 0.03], [x + ph + (1 - i) * 0.06, 0.32, side * 0.42, 0.025], [x + ph * 1.5 + (1 - i) * 0.15, 0.02, side * 0.55, 0.015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
     }
-    m.ell([-0.12, 0.34, 0], [0.46, 0.24, 0.32], M.BODY, { paint: (p) => Math.abs(p[2]) < 0.018 && p[1] > 0.4 ? M.LINE : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < 0.04 && p[1] > 0.38 ? M.BELLY : p[1] > 0.5 && p[2] > 0.05 && p[2] < 0.17 ? M.BELLY : void 0 });
-    m.ell([0.38, 0.33, 0], [0.16, 0.16, 0.26], M.BODY, { group: 1 });
+    const ember = S.look?.embers ? (p) => p[1] > 0.4 && (Math.abs(Math.abs(p[2]) - 0.1) < 0.022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < 0.09 * Math.min(1, (p[1] - 0.38) * 6)) : null;
+    m.ell([-0.12, 0.34, 0], [0.46, 0.24, 0.32], M.BODY, { paint: (p) => Math.abs(p[2]) < 0.018 && p[1] > 0.4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < 0.04 && p[1] > 0.38 ? M.BELLY : p[1] > 0.5 && p[2] > 0.05 && p[2] < 0.17 ? M.BELLY : void 0 });
+    m.ell([0.38, 0.33, 0], [0.16, 0.16, 0.26], M.BODY, { group: 1, paint: ember ? (p) => p[1] > 0.4 && Math.abs(p[2]) < 0.05 ? M.ACCENT : void 0 : void 0 });
     const hc = [0.56, 0.3, 0];
     m.ell(hc, [0.1, 0.1, 0.17], M.BODY2, { group: 1 });
     const jl = [0.3, 0.7, 0.95, 1][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
@@ -6998,19 +7002,20 @@ label.check input { accent-color: var(--accent); }
   }
   function snake3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, baby = level === 0, young = level === 1, has = (f) => legend && S.legend.includes(f), m = new Model(), ph = frame ? 0.7 : 0, pts = [];
-    const girth = [0.9, 0.82, 1, 1][level], rise = [1, 0.85, 1.15, 1.15][level];
+    const Py = S.look?.python, girth = [0.9, 0.82, 1, 1][level] * (Py ? 1.3 : 1), rise = [1, 0.85, 1.15, 1.15][level];
     for (let i = 0; i <= 12; i++) {
       const t = i / 12;
       pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), (0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]);
     }
     pts.push([0.38, 0.07 + 0.18 * rise, pts[12][2], 0.07 * girth], [0.42, 0.07 + 0.38 * rise, pts[12][2] * 0.8, 0.065 * girth]);
-    const spots = baby ? 0 : young ? 0.15 : 0.3, bands = level >= 2;
-    m.chain(pts, M.BODY, { paint: (p) => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
+    const spots = Py ? 0 : baby ? 0 : young ? 0.15 : 0.3, bands = !Py && level >= 2, flecks = Py && !baby;
+    m.chain(pts, M.BODY, { paint: (p) => flecks && p[1] > 0.07 + 0.07 * girth && spotty([p[0] * 1.6, p[1], p[2]], 26, young ? 0.14 : 0.22) && !(has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05) ? M.BELLY : has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
     const hc = [0.5, 0.07 + 0.43 * rise, pts[13][2] * 0.8], hr = baby ? 0.13 : young ? 0.105 : 0.09;
     m.rig = { spine: pts.map((p) => p.slice()), head: hc, hr };
     m.part = "head";
-    m.ell(hc, [hr * 1.5, hr * 0.75, hr], M.BODY, { dir: [1, -0.15, 0], group: 1 });
-    eyesOn(m, hc, [hr * 1.5, hr * 0.75, hr], [[0.5, 0.5, 0.7], [0.5, 0.5, -0.7]], hr * 0.22, legend ? M.MAGIC2 : M.EYE);
+    const HR = [hr * 1.5, hr * 0.75, hr * (Py ? 1.25 : 1)];
+    m.ell(hc, HR, M.BODY, { dir: [1, -0.15, 0], group: 1 });
+    eyesOn(m, hc, HR, [[0.5, 0.5, 0.7], [0.5, 0.5, -0.7]], hr * 0.22, legend ? M.MAGIC2 : M.EYE);
     if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * 0.2, 0]), v3.add(hc, [hr * 2.3, -hr * 0.3, 0]), 0.01, 8e-3, M.SKIN, { group: 1 });
     m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-0.02, -0.01, 0]), r: 0.06, group: 3, tail: true });
     m.anchors.neck = { c: [0.42, 0.36, pts[12][2] * 0.9], r: 0.075, dir: [0.2, 1, 0] };
@@ -7167,7 +7172,20 @@ label.check input { accent-color: var(--accent); }
     m.part = "body";
     return finish(m, S, level, st, 0.45, facing);
   }
+  var bflyFore = (s, t) => {
+    const u = (s + 1) / 2, half = (0.5 + 0.5 * u) * (u > 0.78 ? Math.sqrt(Math.max(0, 1 - ((u - 0.78) / 0.22) ** 2)) : 1);
+    if (Math.abs(t) > half) return null;
+    if (u > 0.8 || Math.abs(t) > half * 0.86) return Math.floor(Math.abs(t) * 5 + u * 4) % 3 === 0 && u > 0.82 ? M.BELLY : M.NOSE;
+    return Math.abs((t + 1) * 1.6 - Math.round((t + 1) * 1.6)) < 0.07 || u < 0.08 ? M.NOSE : M.BODY;
+  };
+  var bflyHind = (s, t) => {
+    const u = (s + 1) / 2, r = Math.hypot(s * 0.95, t);
+    if (r > 0.95) return null;
+    if (r > 0.7) return r > 0.76 && r < 0.86 && Math.floor((Math.atan2(t, s) + 4) * 4) % 2 ? M.ACCENT : M.NOSE;
+    return Math.abs(Math.atan2(t, s + 1.1) * 3 - Math.round(Math.atan2(t, s + 1.1) * 3)) < 0.06 || u < 0.06 ? M.NOSE : M.BODY;
+  };
   function moth3d(S, level, frame, st, facing = "towards") {
+    if (S.look?.butterfly) return butterfly3d(S, level, frame, st, facing);
     const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = has("wingsBig") ? 1.45 : 1;
     const wm = has("wingsBig") ? M.MAGIC : M.BODY;
     shadow(m, 0, 0.3 * span);
@@ -7192,6 +7210,39 @@ label.check input { accent-color: var(--accent); }
     m.ell([0, y, 0], [0.22, 0.09, 0.09], M.BELLY, { group: 1, paint: (p) => spotty(p, 30, 0.25) ? M.BODY2 : void 0 });
     m.ell([0.17, y + 0.03, 0], [0.07, 0.07, 0.07], M.BELLY, { group: 1 });
     eyesOn(m, [0.17, y + 0.03, 0], [0.07, 0.07, 0.07], [[0.7, 0.3, 0.6], [0.7, 0.3, -0.6]], 0.02, legend ? M.MAGIC2 : M.EYE);
+    return finish(m, S, level, st, 0.5, facing);
+  }
+  function butterfly3d(S, level, frame, st, facing) {
+    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = 1.15;
+    shadow(m, 0, 0.32 * span);
+    for (const side of [-1, 1]) {
+      const lift = up ? 0.85 : -0.08, fore = v3.norm([0.3, lift, side]), hind = v3.norm([-0.32, lift * 0.8, side]);
+      m.flat(v3.add([0.02, y, side * 0.04], v3.mul(fore, 0.4 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), 0.42 * span, 0.3 * span, bflyFore, { group: 10 + (side > 0 ? 1 : 0) });
+      const hc = v3.add([-0.06, y, side * 0.04], v3.mul(hind, 0.26 * span));
+      if (has("eyespots")) {
+        const eye = (a, b) => {
+          if (Math.hypot(a, b) > 1 - 0.14 * Math.max(0, Math.sin(Math.atan2(b, a) * 7))) return null;
+          const e = Math.hypot((a - 0.05) / 0.62, b / 0.78);
+          if (e < 0.2) return Math.hypot(a + 0.02, b - 0.12) < 0.07 ? M.GLINT : M.NOSE;
+          if (e < 0.32) return M.MAGIC2;
+          if (e < 0.55) return M.MAGIC;
+          if (e < 0.72) return M.NOSE;
+          if (e < 0.8) return M.BELLY;
+          return M.BODY;
+        };
+        m.flat(v3.add([-0.05, y, side * 0.05], v3.mul(hind, 0.36)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), 0.38, 0.3, eye, { group: 12 + (side > 0 ? 1 : 0), extra: true });
+      } else {
+        m.flat(hc, hind, v3.norm(v3.cross(hind, [0, 1, 0])), 0.28 * span, 0.22 * span, bflyHind, { group: 12 + (side > 0 ? 1 : 0) });
+        const tb = v3.add(hc, v3.mul(hind, 0.22 * span));
+        m.seg(tb, v3.add(tb, v3.add(v3.mul(hind, 0.14 * span), [-0.1, -0.04, 0])), 0.022, 0.014, M.NOSE, { group: 12 + (side > 0 ? 1 : 0) });
+      }
+      m.chain([[0.12, y + 0.06, side * 0.02, 8e-3], [0.24, y + 0.3, side * 0.1, 8e-3], [0.3, y + 0.44, side * 0.15, 8e-3]], M.NOSE, { group: 11 });
+      m.ell([0.3, y + 0.45, side * 0.15], [0.025, 0.025, 0.025], M.NOSE, { group: 11 });
+    }
+    m.ell([-0.04, y - 0.02, 0], [0.24, 0.045, 0.045], M.BODY3, { group: 1, paint: (p) => p[1] < y - 0.03 ? M.BODY : void 0 });
+    m.ell([0.14, y + 0.02, 0], [0.07, 0.06, 0.06], M.BODY3, { group: 1 });
+    m.ell([0.22, y + 0.03, 0], [0.05, 0.05, 0.05], M.BODY3, { group: 1 });
+    eyesOn(m, [0.22, y + 0.03, 0], [0.05, 0.05, 0.05], [[0.7, 0.3, 0.6], [0.7, 0.3, -0.6]], 0.02, legend ? M.MAGIC2 : M.EYE);
     return finish(m, S, level, st, 0.5, facing);
   }
   var dfWing = (mat, vein, stig, torn = 0) => (s, t) => {
@@ -7265,13 +7316,18 @@ label.check input { accent-color: var(--accent); }
   }
   function spider3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model();
-    const ce = [0.15, 0.28, 0];
+    const ce = [0.15, 0.28, 0], T = S.look?.tarantula, lk = T ? 1.5 : 1;
     for (const side of [-1, 1]) for (let i = 0; i < 4; i++) {
       const a = -0.6 + i * 0.4, ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? 0.05 : -0.05, base = v3.add(ce, [0.05 - i * 0.04, 0, side * 0.1]);
       const knee = v3.add(base, [Math.cos(a) * 0.3 * (i < 2 ? 1 : -0.6) + ph, 0.3, side * 0.3]), foot = v3.add(base, [Math.cos(a) * 0.55 * (i < 2 ? 1 : -0.8) + ph * 1.5, -0.28, side * 0.55]);
-      m.chain([[...base, 0.03], [...knee, 0.028], [...foot, 0.015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+      const band2 = T ? (p) => {
+        const a2 = Math.hypot(...v3.sub(p, knee)), b = Math.hypot(...v3.sub(p, foot));
+        return a2 > 0.035 && a2 < 0.07 || b > 0.07 && b < 0.11 ? M.ACCENT : void 0;
+      } : void 0;
+      m.chain([[...base, 0.03 * lk], [...knee, 0.028 * lk], [...foot, 0.015 * lk]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2, rough: T ? 8e-3 : void 0, paint: band2 });
     }
-    m.ell([-0.28, 0.38, 0], [0.34, 0.28, 0.3], M.BODY, { paint: (p) => (Math.abs(p[2]) < 0.03 || Math.abs(p[0] + 0.28) < 0.03) && p[1] > 0.45 ? M.BELLY : void 0 });
+    if (T) m.ell([-0.3, 0.4, 0], [0.38, 0.31, 0.33], M.BODY, { rough: 0.02, paint: (p) => p[1] > 0.5 && spotty(p, 22, 0.25) ? M.BELLY : void 0 });
+    else m.ell([-0.28, 0.38, 0], [0.34, 0.28, 0.3], M.BODY, { paint: (p) => (Math.abs(p[2]) < 0.03 || Math.abs(p[0] + 0.28) < 0.03) && p[1] > 0.45 ? M.BELLY : void 0 });
     m.ell(ce, [0.18, 0.13, 0.17], M.BODY2, { group: 1 });
     m.anchors.head = { c: ce, r: [0.18, 0.13, 0.17] };
     m.anchors.eyes = { pts: [[0.05, 0.05], [0.05, -0.05]].map(([dy, dz]) => Model.surface(ce, [0.18, 0.13, 0.17], v3.norm([0.9, dy * 6, dz * 4]))), size: 0.03 };
@@ -15186,7 +15242,7 @@ label.check input { accent-color: var(--accent); }
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once the home ring's speakers are all down (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just switch off (sound and lights)"), the afterparty, any soundsystem still standing switched off: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once (home's speakers down).`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
     __view: "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
-    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves.`,
+    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom), aimed look metres up her and its distance times distance in place of the station's own, eased from part to part as the cursor moves.`,
     _sail: "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
     sail: { inPlace: true },
     _opening: "The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
@@ -15211,7 +15267,7 @@ label.check input { accent-color: var(--accent); }
       intro: { distance: 34, angle: 22, ease: 1.3 },
       circle: { on: true, angle: 20, distance: 0.75, ease: 1.2, frame: 0.35, look: 1.5 },
       house: { on: true, angle: 24, distance: 0.62, ease: 1 },
-      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5 }
+      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, parts: { head: { look: -2.9, distance: 0.32 }, hat: { look: -1.2, distance: 0.4 }, top: { look: -3.2, distance: 0.4 }, legs: { look: -3.8, distance: 0.42 }, feet: { look: -2.85, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 } } }
     },
     _look: `Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (3, Ed 2026-10-07 after playtesting 5 and 4: "the large pixels look cute but it's impossible to see what's going on"; ?px=4|5 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach \xD7 glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.`,
     pixelSize: 3,
