@@ -70,6 +70,6 @@
     "broomBody": { "frame": "broom", "label": "Body", "colour": ["broom"], "items": [] },
     "broomTrim": { "frame": "broom", "label": "Trim", "colour": ["bristles"], "items": [] },
     "broomFit": { "frame": "broom", "label": "Fit", "fit": ["broomLength", "broomThickness", "broomBend", "bristles"], "items": [] },
-    "pegboard": { "frame": "broom", "label": "Her finds, laid out like the world", "board": true, "readOnly": true, "items": [] }
+    "pegboard": { "frame": "board", "label": "Her finds, laid out like the world", "board": true, "readOnly": true, "items": [] }
   }
 }

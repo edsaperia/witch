@@ -16,5 +16,15 @@ export const CREATURE_BADGER = {
     scale: { "invites.radius": 2.2 },
     label: "Badger's Big heart: bigger 💌s, easier to land"
   },
-  character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 }
+  character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "maul", "maul"], knockback: 8 },
+    ranged: { name: "stone shard", range: 14, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "cover",
+    retreat: "hold",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the dig",
+    tells: { melee: "crouch", ranged: "turns its back", special: "the dig" }
+  }
 };

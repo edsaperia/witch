@@ -21,5 +21,15 @@ export const CREATURE_OTTER = {
     mods: { ricochet: 1 },
     label: "Otter's Skimming stone: 💌s bounce on to another animal"
   },
-  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 }
+  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "rally",
+    retreat: "water",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the whistle",
+    tells: { melee: "crouch", ranged: "rears up", special: "the whistle" }
+  }
 };
