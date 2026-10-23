@@ -5,7 +5,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
-import { STATION_SLACK, stationAt, stationOf } from "./stations";
+import { STATION_SLACK, stationAt, stationOf, tableOf } from "./stations";
 import { cameraPose } from "./camera";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -122,5 +122,15 @@ describe("the dressing stations by nearness", () => {
     for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, framing: true }, STEP);
     expect(g.camera.station ?? 0).toBe(0);
   });
-});
 
+  it("the map table comes to her by nearness as a table (Ed, 2026-10-23: its chart slides up from the bottom), never as a dressing station", () => {
+    const p = before("mapTable", 0.5), g = inHouse(p.x, p.z);
+    expect(tableOf(g, null)?.id).toBe("mapTable");
+    expect(stationOf(g, null)?.id).not.toBe("mapTable");
+    const q = before("mapTable", HOUSE_ROOMS.reach + STATION_SLACK + 0.5), far = inHouse(q.x, q.z);
+    expect(tableOf(far, "mapTable")).toBeNull(); // (past the slack: it goes)
+    const r = before("mapTable", HOUSE_ROOMS.reach + STATION_SLACK / 2), edge = inHouse(r.x, r.z);
+    expect(tableOf(edge, "mapTable")?.id).toBe("mapTable"); // (within the slack, open: it stays)
+    expect(tableOf(edge, null)).toBeNull(); // (but isn't opened from there)
+  });
+});

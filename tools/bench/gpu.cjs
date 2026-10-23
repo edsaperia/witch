@@ -6,7 +6,7 @@
 // pass alone, the GPU's own time where the browser can time it (EXT_disjoint_timer_query_webgl2: not under the software
 // renderer here, where the frame gap is the GPU's time instead, the picture rasterised on the CPU), the draw calls and the
 // triangles. The knobs are the tuning's, set live (the view reads them each frame), so the game's build is what's measured.
-//   node tools/bench/gpu.cjs [out dir]   DIST=dist SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
+//   node tools/bench/gpu.cjs [out dir]   DIST=dist QUERY=island=fox SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
@@ -55,7 +55,7 @@ const VARIANTS = [
   page.on("pageerror", e => errors.push(String(e)));
   page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
   const t0 = Date.now(), lap = what => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)} s] ${what}`);
-  await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto`);
+  await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto${process.env.QUERY ? "&" + process.env.QUERY : ""}`);
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
   lap("ready");
   // Off the decks (Space takes her up; a second press brings her down), to the spot on foot, at the zoom, the waves brought on.

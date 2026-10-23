@@ -2,7 +2,7 @@
   "kind": "snake",
   "slot": 26,
   "phase": 2,
-  "bearing": 170,
-  "dir": "S",
-  "biome": "temperate"
+  "bearing": 258.75,
+  "dir": "W",
+  "biome": "jungle"
 }

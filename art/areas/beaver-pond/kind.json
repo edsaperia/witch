@@ -1,8 +1,8 @@
 {
   "kind": "beaver",
   "slot": 29,
-  "phase": 2,
-  "bearing": 290,
-  "dir": "WNW",
+  "phase": 1,
+  "bearing": 75,
+  "dir": "ENE",
   "biome": "temperate"
 }

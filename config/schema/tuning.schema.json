@@ -183,6 +183,47 @@
         "biomeFirstShare": {
           "type": "number",
           "minimum": 0
+        },
+        "glacierClear": {
+          "type": "number",
+          "minimum": 0
+        },
+        "steam": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "rise": {
+              "type": "number",
+              "minimum": 0
+            },
+            "life": {
+              "type": "number",
+              "minimum": 0
+            },
+            "size": {
+              "type": "number",
+              "minimum": 0
+            },
+            "opacity": {
+              "type": "number",
+              "minimum": 0
+            },
+            "spacing": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "rise",
+            "life",
+            "size",
+            "opacity",
+            "spacing"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -190,7 +231,9 @@
         "pad",
         "koi",
         "biomeFrom",
-        "biomeFirstShare"
+        "biomeFirstShare",
+        "glacierClear",
+        "steam"
       ],
       "additionalProperties": false
     },
@@ -236,11 +279,16 @@
         "edgeBand": {
           "type": "number",
           "minimum": 0
+        },
+        "sailHold": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "moon",
-        "edgeBand"
+        "edgeBand",
+        "sailHold"
       ],
       "additionalProperties": false
     },
