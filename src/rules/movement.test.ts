@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { type Level } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { MOVEMENT } from "./movement";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 /** A quiet game, the witch on the ground away from everything, too tough to knock out (to watch them move). */
-function quiet(): Game {
-  const g = newGame(77, TUNING);
+function quiet(t = TUNING): Game {
+  const g = newGame(77, t);
   g.clock.paused = false;
   const d = g.map.dancefloor;
   g.witch = { ...g.witch, seated: false, x: d.x, z: d.z + 20, mode: "ground", lift: 0 };
@@ -79,7 +79,8 @@ describe("creature movement (Stage 5)", () => {
   }), 60000);
 
   it("has an owl's lob land where she was: standing still she's hit, stepping away she isn't (her owls' lob: wild ones swoop)", () => grounded("owl", () => {
-    const g = quiet(), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
+    // (its own lob, outside a pack: in a pack since 2026-10-23 its shots are aimed where a dodge would go, rules/combat/packs.ts)
+    const g = quiet(withTuning({ combat: { ...TUNING.combat, packs: { on: false } } })), owl = pick(g, "owl", 1, 30, 0), W = g.witches[0], hp0 = W.health.hp;
     run(g, 6);
     expect(W.health.hp).toBeLessThan(hp0);
     // Now step away each time a lob is in the air.
