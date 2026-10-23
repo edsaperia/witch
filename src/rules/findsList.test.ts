@@ -13,7 +13,7 @@ const DOC = new URL("../../docs/art-guide/FINDS.md", import.meta.url), START = "
 export function findsList(): string {
   const out: string[] = [];
   for (const k of FIND_KINDS) {
-    out.push(`### ${k.id}: found in a ${k.name} (${k.items.length})`, "");
+    out.push(`### ${k.id}: found as a ${k.name} (${k.items.length})`, "");
     if (k.id === "wearable") {
       for (const s of Object.values(SHELVES)) {
         const here = s.items.filter(i => k.items.includes(i.id));

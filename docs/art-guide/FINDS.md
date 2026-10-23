@@ -4,34 +4,34 @@ Ed (2026-10-23): "For the permanent-upgrade finds … while they are different o
 
 A **find** is the night's one permanent upgrade (`src/rules/finds.ts`). There's one a night, drawn from everything she hasn't found yet. It lies on the ground in a wild area's woods, under the canopy, and is hinted by a constellation through the telescope. She takes it with E while the party's on. Every kind of find (wearables in a travel trunk, broom parts in a wreck, and hats, bags and records to come) follows this guide, whatever its object.
 
-> **Status: Ed's rules** (2026-10-23, his answers to the proposal's four questions), but for one still open: whether the flask size is the item alone, with its setting (a trunk, a wreck) allowed to be bigger round it, or the whole find (**pending**, below). Builders apply it: Echo the hats and bags (`FIND_SIZE` in `art/country.js`), Alpha the wrecks, Hotel and Golf the trunk. The proof shots are in [`finds/`](finds/).
+> **Status: Ed's rules** (2026-10-23, his answers to the proposal's four questions, and on size: "the whole find is flask-sized"). Applied to every kind in `art/country.js` (the find pieces), `rules/finds.ts` (`FIND_KINDS`' pieces) and `render/view/finds.ts` (the patch and the light). The proof shots are in [`finds/`](finds/).
 
 ## The master list
 
 Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fails if it differs. After adding a kind or an item, run `UPDATE_FINDS=1 npx vitest run src/rules/findsList.test.ts`.
 
 <!-- finds:start -->
-### wearable: found in a trunk (10)
+### wearable: found as a bundle (10)
 
-- **Hair** (drawn as `travel-trunk`): Mohawk (`hair-mohawk`)
-- **Face** (drawn as `travel-trunk`): Sunglasses (`shades`)
-- **Jacket** (drawn as `travel-trunk`): Sequin jacket (`top-sequins`), Cape (`top-cape`), Mesh top (`top-mesh`)
-- **Cloak** (drawn as `travel-trunk`): Long cloak (`cloak-long`), Hooded cloak (`cloak-hooded`)
-- **Shoes** (drawn as `travel-trunk`): Chunky trainers (`shoes-chunky`)
-- **Bag** (drawn as `travel-trunk`): Bum bag (`bumbag`)
-- **Backpack** (drawn as `travel-trunk`): Backpack (`backpack`)
+- **Hair** (drawn as `find-bundle`): Mohawk (`hair-mohawk`)
+- **Face** (drawn as `find-bundle`): Sunglasses (`shades`)
+- **Jacket** (drawn as `find-bundle`): Sequin jacket (`top-sequins`), Cape (`top-cape`), Mesh top (`top-mesh`)
+- **Cloak** (drawn as `find-bundle`): Long cloak (`cloak-long`), Hooded cloak (`cloak-hooded`)
+- **Shoes** (drawn as `find-bundle`): Chunky trainers (`shoes-chunky`)
+- **Bag** (drawn as `find-bag`): Bum bag (`bumbag`)
+- **Backpack** (drawn as `find-bag`): Backpack (`backpack`)
 
-### part: found in a wreck (9)
+### part: found as a broom part (9)
 
-- Missile nose (`missile`), drawn as `wreck-missile`
-- Curled tip (`curl`), drawn as `wreck-curl`
-- Hobby-horse head (`horse`), drawn as `wreck-horse`
-- Jet-bike fairing (`fairing`), drawn as `wreck-fairing`
-- Ladder (`ladder`), drawn as `wreck-ladder`
-- Canoe hull (`canoe`), drawn as `wreck-canoe`
-- Jet nozzles (`nozzles`), drawn as `wreck-nozzles`
-- Twig bristles (`twigs`), drawn as `wreck-twigs`
-- Oar blade (`oar`), drawn as `wreck-oar`
+- Missile nose (`missile`), drawn as `find-part-missile`
+- Curled tip (`curl`), drawn as `find-part-curl`
+- Hobby-horse head (`horse`), drawn as `find-part-horse`
+- Jet-bike fairing (`fairing`), drawn as `find-part-fairing`
+- Ladder (`ladder`), drawn as `find-part-ladder`
+- Canoe hull (`canoe`), drawn as `find-part-canoe`
+- Jet nozzles (`nozzles`), drawn as `find-part-nozzles`
+- Twig bristles (`twigs`), drawn as `find-part-twigs`
+- Oar blade (`oar`), drawn as `find-part-oar`
 <!-- finds:end -->
 
 
@@ -41,24 +41,34 @@ Every find carries the same three things, whatever its object, so a player who h
 
 ### 1. A clear patch
 
-- A round patch of bare ground about **1.3 m** across its radius round the find: no tufts, no undergrowth, no small props on it. The forest floor's own earth, a step darker than its surroundings, so its edge reads against the tufts round it.
-- Tufts and ferns grow thick right up to its edge but never over it, so the find's outline is never broken.
-- It's placed clear of trunks (2 m or more from any) and off paths and clearings, under the canopy as `placeTrunk` places it now.
+- A round patch of bare ground about **1.3 m** in radius round the find: no tufts on it, and the cover trodden short a little past it (the ground cover's `uClear`, as round a placed sigil). The forest floor's own earth, so the find and its light read against the tufts round it.
+- Tufts and ferns grow right up to it but never over it, so the find's outline is never broken.
+- It lies where `placeTrunk` puts it: in a wild area's woods, under the canopy, off its clearings and its legend's circle, clear of the relics.
 
 ### 2. Its own light: pale gold-white
 
-- A **point light** at the find, low (about 0.6 m up), reach about **4.5 m**, in **pale gold-white** (about `#fff5d6`, RGB 1, 0.96, 0.84 in the light's colour): whiter and brighter than anything round it.
+- A **point light** at the find, low (about 0.6 m up), reach about **7 m** at strength 2.4 (the tuning's `lights.find`, live), in **pale gold-white** (about `#fff5d6`, RGB 1, 0.96, 0.84 in the light's colour): whiter and brighter than anything round it.
 - **Brighter and whiter than her lantern.** Her own light is warm amber and fills the ground round her; a warm glow beside her vanishes in it (the first mocks, below). The find's light must be clearly the brightest and the whitest thing on that ground, so it reads as "not mine" even with her standing a few metres off. Tune it in the fern forest, the worst case.
 - A slow, slight breath (about ±10% over 2.4 s), never a flicker: fire flickers fast and warm, a find glows steady and pale.
 - It's one light against the budget (`lightBudget`), like a lantern: fine on Ed's Intel UHD.
 - **No other light source uses this colour.** Party amber, the moon's blue, each area's neon, a hit's white flash and her lantern are all taken: pale gold-white is the finds'.
 - Nothing on the object itself glows (no emissive pixels); it's lit by its light.
 
-### 3. One size: about a flask
+### 3. One size: the whole find about a flask
 
-- **The item: about 0.25 to 0.35 m tall** (Ed: "approx the size of a flask"), the same band for every kind. At art pixel 3 that's only **3 to 4 art pixels** (10.7 art pixels a metre), too small for any shape to read at the ground zoom: what she spots is the patch and the light, and the shape tells her what it is only once she's close.
-- **Its setting** (the trunk the wearable lies in, the wreck round a broom part, a hat's box): **pending Ed's answer.** Either the setting may be larger round the flask-sized item (a trunk or a wreck at its own size, the item on or in it), or the whole find is flask-sized. Until he answers, builders keep the item at flask size and leave settings as they are.
-- Baked at its size and drawn at scale 1 (never a fractional draw scale: section 10 of `docs/ART-GUIDE.md`).
+- **The whole find is one small object, about 0.25 to 0.35 m tall** at the witch's scale (Ed: "approx the size of a flask"; she's about 1.7 m), at most about 0.45 m across. **No setting round it:** no trunk, no wreck scene, no cairn, stump, log, fairy ring or fingerpost. One object, on its patch, in its light.
+- Drawn at one scale, `FIND_SIZE` (0.6 of the witch's scale) in `art/country.js`: about **6 to 8 art pixels tall** at the game's art pixel. That's tiny: from 20 m she spots the patch and the light, and the object tells her what it is only close up.
+- **Each kind's object, one family** (`art/country.js`, `find-*`; `FIND_KINDS` names them):
+  - **Clothes** (hair, face, jacket, cloak, shoes: the wearables): a **folded bundle**, three folds of cloth (`find-bundle`).
+  - **Bags** (the bum bag and the backpack): a **little leather bag** with its strap looped up (`find-bag`).
+  - **Hats**: a **pointed hat** lying on its brim (`find-hat`; its colours its spell's, with #1044).
+  - **Broom parts**: **the part itself**, short, leaning on the ground, cold and in faded paint, from `art/brooms.js`'s own kinds so it looks as it will on her broom (`find-part-<id>`: missile nose, curled tip, hobby-horse head, jet-bike fairing, ladder, canoe hull, jet nozzles, twig bristles, oar blade).
+- **The family's marks:** every one tied with the same **pale ribbon** (a cream band and a little bow: the finds' own mark, the hat's as its band); lit on its top, dark at its foot; nothing on it glows (its light is the game's).
+- Baked at its size and drawn at scale 1 (never a fractional draw scale: section 10 of `docs/ART-GUIDE.md`). `node art/check.mjs`'s **finds** task checks every kind: each drawn, standing, 0.1 to 0.26 of her height and 0.4 of it across at most, nothing glowing, the ribbon on it, no two alike.
+
+### Taken
+
+- Once she's taken it, the object, its patch and its light all go: the ground grows back over, the forest is dark there again. The same once the party's lost.
 
 ### 4. From the treetops: hidden
 

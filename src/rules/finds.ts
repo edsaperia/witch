@@ -20,7 +20,7 @@ import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
 import { canopyOver, type Relic } from "./legends";
 import { hash2 } from "./random";
-import { ITEMS, type WardrobeItem } from "./wardrobe";
+import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
 import { PART_IDS } from "./broomParts";
 import type { SpellState } from "./spells";
 import { deckOf, onFloor } from "./treehouse";
@@ -39,15 +39,19 @@ const RINGS = [45, 60, 35, 75, 28];
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of
  *  three parts ... We have designed this before": the garage's). */
 export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !i.set["broom.kind"]);
+/** The wearables found as a little bag rather than a bundle of clothes (the bag and backpack shelves'). */
+const BAGS = new Set(["bag", "backpack"].flatMap(id => SHELVES[id]?.items.map(i => i.id) ?? []));
 
 /** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
  *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
  *  keeps it for good, app/owned.ts and app/broomSave.ts, from the "found" event). */
 export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; claim?(s: SpellState, item: string): void }
 export const FIND_KINDS: readonly FindKind[] = [
-  { id: "wearable", name: "trunk", items: FINDABLE.map(i => i.id), piece: () => "travel-trunk" },
+  // (the finds style guide, docs/art-guide/FINDS.md: each find one flask-sized object on a clear, lit patch, no setting round it;
+  // clothes a folded bundle, bags a little bag, a broom part the part itself: art/country.js's find pieces)
+  { id: "wearable", name: "bundle", items: FINDABLE.map(i => i.id), piece: id => (BAGS.has(id) ? "find-bag" : "find-bundle") },
   // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
-  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}` },
+  { id: "part", name: "broom part", items: PART_IDS, piece: id => `find-part-${id}` },
 ];
 export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
 /** What she has found (or owns) of each kind; a kind left out counts as none found. */

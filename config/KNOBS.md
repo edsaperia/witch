@@ -2122,10 +2122,12 @@ Her light in the wild and in a fight (Ed, 2026-10-07: the wild forest darker for
 
 ### `lights`, `glowPower`
 
-How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
+How far (reach, metres) and how strongly each kind of light lights its surroundings. find: tonight's find's own pale gold-white light (the finds style guide, docs/art-guide/FINDS.md: the brightest and whitest thing on its patch, brighter than her lantern; out once it's taken). glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.
 
 | knob | type | range |
 |---|---|---|
+| `lights.find.reach` | number | 0 to … |
+| `lights.find.strength` | number | 0 to … |
 | `lights.campfire.reach` | number | 0 to … |
 | `lights.campfire.strength` | number | 0 to … |
 | `lights.stone.reach` | number | 0 to … |

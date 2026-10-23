@@ -819,22 +819,25 @@ const SPRITE_CHECKS = async ({ names, only }) => {
   task("country", async () => { // countryside and street pieces: each standing on its bottom row, its origin on it, a sane size and footprint, tall ones split, only the flagged ones glow
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
     for (const d of G.COUNTRY) {
+      if (d.family === "find") continue; // (flask-sized: their own task, "finds")
       const R = G.countrySprite(d.id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), big = Math.max(R.metres.width, R.metres.height); fam[d.family] = (fam[d.family] || 0) + 1;
       const split = d.split == null || (stats(R.top).n > 20 && stats(R.top).n + stats(R.bot).n === s2.n), nan = [...sp.n].some(v => !Number.isFinite(v));
       if (!(s2.n > 30 && s2.bottom > 0 && !nan && split && lit === !!d.glow && big >= .5 && big <= 9 && R.metres.footprint > 0 && R.metres.footprint <= 6 && R.origin.x >= 0 && R.origin.x <= sp.w && R.origin.y >= 0 && R.origin.y <= sp.h + 1)) bad.push(`${d.id} ${R.metres.width}x${R.metres.height} m, footprint ${R.metres.footprint}${split ? "" : " split"}${lit === !!d.glow ? "" : " glow"}`);
     }
     res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   });
-  task("wrecks", async () => { // the broom parts' wrecks (the Workshop, rules/finds.ts): one for each part in config/broom-parts.json, each drawn, standing on its bottom row, nothing glowing, all different
+  task("finds", async () => { // the finds (docs/art-guide/FINDS.md, rules/finds.ts): one flask-sized object each, a bundle, a bag and every broom part's own; one size band against the witch, standing, nothing glowing, the finds' pale ribbon on each, all different
     const parts = Object.keys((await (await fetch("/config/broom-parts.json")).json()).parts), bad = [], seen = new Map(), EM = new Set([...G.EMISSIVE]);
-    for (const id of parts) {
-      if (!G.WRECK_PARTS.includes(id) || !G.COUNTRY_BY_ID["wreck-" + id]) { bad.push(`${id} has no wreck`); continue; }
-      const R = G.countrySprite("wreck-" + id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)), key = `${sp.w}x${sp.h}:${[...sp.m].join("")}`;
-      if (!(s2.n > 200 && s2.bottom > 0 && !nan && !lit)) bad.push(`${id} ${s2.n} px${s2.bottom ? "" : " floating"}${lit ? " glowing" : ""}${nan ? " NaN" : ""}`);
+    const W = G.witchSprite(st, { pose: "stand" }), wh = W.h, sizes = [];
+    for (const id of ["find-bundle", "find-hat", "find-bag", ...parts.map(p => "find-part-" + p)]) {
+      if (!G.COUNTRY_BY_ID[id]) { bad.push(`${id} missing`); continue; }
+      const R = G.countrySprite(id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)), key = `${sp.w}x${sp.h}:${[...sp.m].join("")}`;
+      const h = sp.h / wh, w = sp.w / wh, ribbon = [...sp.m].some(v => v === G.M.BELLY); sizes.push(`${id.replace("find-", "")} ${sp.w}x${sp.h}`);
+      if (!(s2.n > 12 && s2.bottom > 0 && !nan && !lit && ribbon && h >= .1 && h <= .26 && w <= .4)) bad.push(`${id} ${sp.w}x${sp.h} px (${h.toFixed(2)} x her height${w > .4 ? ", too wide" : ""})${s2.bottom ? "" : " floating"}${lit ? " glowing" : ""}${ribbon ? "" : " no ribbon"}${nan ? " NaN" : ""}`);
       if (seen.has(key)) bad.push(`${id} the same as ${seen.get(key)}`); seen.set(key, id);
     }
-    if (G.WRECK_PARTS.length !== parts.length) bad.push(`${G.WRECK_PARTS.length} wrecks for ${parts.length} parts`);
-    res.push({ what: "wrecks: every broom part's own, drawn, standing on its bottom row, nothing glowing, no two alike", good: !bad.length && parts.length >= 9, info: bad.join(", ") || `${parts.length} wrecks` });
+    const missing = parts.filter(p => !G.FIND_PARTS.includes(p)); if (missing.length) bad.push(`no find for ${missing.join(", ")}`);
+    res.push({ what: "finds: a bundle, a hat, a bag and every broom part's own, flask-sized (0.1 to 0.26 of her height, 0.4 across at most), standing, nothing glowing, each with the pale ribbon, no two alike", good: !bad.length && parts.length >= 9, info: bad.join(", ") || `her ${wh} px; ${sizes.join(", ")}` });
   });
   task("landmarks", async () => { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);

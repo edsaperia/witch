@@ -59,7 +59,7 @@ describe("tonight's travel trunk", () => {
     // one find a night: the draw fills the one spot placeTrunk chose, as a trunk or a wreck
     const h = game(); fillTrunk(h, {});
     expect([h.trunk!.kind, h.trunk!.item]).toEqual([nightPick(h.map.seed, {})!.kind, nightPick(h.map.seed, {})!.item]);
-    expect(findPiece(h.trunk!)).toBe(h.trunk!.kind === "part" ? `wreck-${h.trunk!.item}` : "travel-trunk");
+    expect(findPiece(h.trunk!)).toBe(h.trunk!.kind === "part" ? `find-part-${h.trunk!.item}` : ["bumbag", "backpack"].includes(h.trunk!.item!) ? "find-bag" : "find-bundle");
   });
 
   it("opens with E on foot: what's in it is hers (a found event), once", () => {
