@@ -115,11 +115,13 @@ async function main() {
     const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, ko: !!W.ko, knock: W.knock, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
     throw new Error(`she wouldn't rise from the ground: ${JSON.stringify(st)}`);
   };
-  // Hold a key for `secs` of game time (a slow headless renderer runs fewer, capped frames).
+  // Hold a key for `secs` of her time (a slow headless renderer runs fewer, capped frames). Her own clock (g.herTime), not the
+  // world's: she starts on the treehouse deck, where the world runs at a tenth (rules/treehouse.ts), and a second of the
+  // world's there was minutes of software-rendered frames (the tilt shots timed out at 240 s).
   const hold = async (page, key, secs, timeout = 240000) => { // the software renderer here runs the treetops (sky, bend) at about a frame a second
-    const from = await state(page);
+    const from = await state(page), h0 = await page.evaluate(() => window.witch.game.herTime);
     await page.keyboard.down(key);
-    await page.waitForFunction(t => window.witch.game.clock.time - t >= 0, from.t + secs, { timeout, polling: 50 });
+    await page.waitForFunction(t => window.witch.game.herTime >= t, h0 + secs, { timeout, polling: 50 });
     const to = await state(page);
     await page.keyboard.up(key);
     return [from, to];
