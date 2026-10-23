@@ -91,7 +91,7 @@ const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.N
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 /** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
+export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "pegboard", "recordShelf", "specimens"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -404,26 +404,6 @@ const PIECES = {
     light(m, [W * .25, sit + .15, .05], SCREEN, 12, .35);
     can(m, W / 2 - .1, .1, sit, sit + .07, .05, M.BELLY, { group: 21 });
     sprig(m, [W / 2 - .1, sit + .1, .1], 5, .08, 22, .7);
-  },
-
-  // The broom stand: a rough wooden rack with three brooms upright (her classic, a twig besom, and a modern one with a bike light), a
-  // bucket of spare bristles, a sprig of leaves sprouting from the rack.
-  broomStand(m, { W, D, H }) {
-    const zb = -D / 2 + .05;
-    m.box([0, .08, 0], [W / 2, .06, D / 2], M.WOOD, { round: .02, group: 1, paint: planks(.2) });
-    m.box([0, H * .7, zb], [W / 2, .05, .05], M.WOOD, { round: .02, group: 2, paint: p => (Math.abs(((p[0] / (W / 4)) % 1 + 1) % 1 - .5) < .08 ? M.BARKD : undefined) });
-    for (const s of [-1, 1]) m.seg([s * (W / 2 - .05), .1, zb], [s * (W / 2 - .05), H * .75, zb], .04, .04, M.WOOD, { group: 2 });
-    const broom = (x, lean, kind, g) => {
-      const top = [x + lean, H, zb + .06], foot = [x, .5, zb + .14];
-      m.seg(foot, top, .025, .022, kind === "modern" ? M.FRAME : M.BROOM, { group: g });
-      if (kind === "twig") for (let i = 0; i < 7; i++) { const a = (i / 6 - .5) * 1.1; m.seg([x, .55, zb + .14], [x + Math.sin(a) * .14, .12, zb + .14 + Math.cos(a) * .04], .02, .012, M.STRAW, { group: g + 1 }); }
-      else m.seg([x, .58, zb + .14], [x, .15, zb + .15], .05, .12, M.STRAW, { group: g + 1, paint: p => (Math.abs(p[1] - .5) < .025 ? (kind === "modern" ? M.ACCENT : M.BROOM) : undefined) });
-      if (kind === "modern") { m.ell([x + lean * .8, H * .85, zb + .1], [.035, .025, .03], M.SHADES, { group: g + 2 }); bulb(m, [x + lean * .8, H * .85, zb + .14], .022, M.GLINT, g + 3, [SCREEN, 8, .25]); }
-    };
-    broom(-W * .3, -.05, "classic", 10); broom(0, .03, "twig", 20); broom(W * .3, .06, "modern", 30);
-    can(m, W / 2 - .08, .3, .14, .38, .12, M.FRAME, { group: 40 });
-    for (let i = 0; i < 6; i++) { const a = i * 1.1; m.seg([W / 2 - .08, .35, .3], [W / 2 - .08 + Math.cos(a) * .12, .55, .3 + Math.sin(a) * .1], .018, .01, M.STRAW, { group: 41 }); }
-    sprig(m, [-W / 2 + .05, H * .78, zb], 6, .12, 42);
   },
 
   // The pegboard (Hotel's Workshop, Ed's OK, 2026-10-23): the 3 × 3 biome board her broom's parts hang on, laid out as the islands'
