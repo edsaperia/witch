@@ -64,7 +64,7 @@ const FOOT = {
   wardrobe: [4, 1.2, 4.4], dressingTable: [2.8, 1.2, 3.4], curtains: [3.6, 0.6, 4.2], bed: [4, 5.2, 1.6], phone: [1.2, 1.2, 1.2], cloakPegs: [2.6, 0.6, 4],
   shoeRack: [3, 1.1, 1.6], crystalBall: [1.4, 1.4, 2.6], telephone: [1, 1, 2.2], mirror: [2.2, 0.6, 4.2], hats: [3.6, 1.8, 0], bags: [3.6, 0.8, 3.2],
   invitations: [3.4, 1.8, 1.8], broomStand: [2.4, 0.8, 3.6], pegboard: [5, 0.5, 4.4], recordShelf: [4.4, 1, 4], cauldron: [2.8, 2.8, 1.8], teaTable: [2.8, 2.8, 1.4],
-  cardTable: [3.4, 3.4, 1.5], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
+  cardTable: [3.4, 3.4, 1.5], broomBay: [6, 2.4, 2.2], lathe: [4.8, 1.6, 2], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
 };
 const at = (id, room, b, inn, more = {}) => {
   const p = P[room], a = (b * Math.PI) / 180, [W, D, Hh] = FOOT[id] ?? [old[id].w, old[id].d, old[id].h], side = Math.abs(Math.sin(a)) > Math.abs(Math.cos(a));
@@ -79,7 +79,10 @@ const objects = [
   at("crystalBall", "boudoir", -30, 2.4), at("telephone", "boudoir", 100),
   at("mirror", "parlour", -25), at("hats", "parlour", 0, 0, { x: P.parlour.x, z: f2(P.parlour.z + 1) }),
   at("bags", "study", -40), at("invitations", "study", 32),
-  at("broomStand", "workshop", -30), at("pegboard", "workshop", 25, 0.9),
+  // (the Workshop, Hotel's, Ed's OK 2026-10-23: the biome board where it was, the broom bay and the lathe along the back wall either side
+  // of it; the old broom stand to the side till Hotel's Workshop takes it away, the bay replacing it)
+  at("broomStand", "workshop", -112), at("pegboard", "workshop", 25, 0.9),
+  make("broomBay", "workshop", "Broom bay", -38, undefined, { kind: "say", line: "Her broom rests here." }), make("lathe", "workshop", "Lathe", 88, undefined, { kind: "say", line: "The lathe waits for her broom." }),
   at("recordShelf", "studio", -10), at("cauldron", "kitchen", 0, 5),
   at("teaTable", "solarium", 0, 5.4), at("cardTable", "drawingRoom", 0, 5.4),
   at("book", "bestiary", 0, 4.5), at("specimens", "bestiary", 70, 1.9),

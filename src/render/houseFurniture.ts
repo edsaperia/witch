@@ -48,8 +48,8 @@ function canvas(w: number, h: number): HTMLCanvasElement { const c = document.cr
 
 /** A drawn piece (art/furniture.js modelSprite's), baked in a room's colours (times `dim`: a rug, flat to the light, darker) and lit by
  *  its own lights: its canvas. */
-export function litCanvas(d: Drawn, room: string, st: Style, dim = 1): HTMLCanvasElement {
-  const colours = Object.fromEntries(Object.entries(furnitureColours(st, room)).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
+export function litCanvas(d: Drawn, room: string, st: Style, dim = 1, id = ""): HTMLCanvasElement {
+  const colours = Object.fromEntries(Object.entries(furnitureColours(st, room, id)).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof canvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(d.sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, canvas);
   const lit = canvas(b.w, b.h);
   shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);
@@ -71,7 +71,7 @@ export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
 export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
 export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
   const { yaw, foot, curve } = standing(o);
-  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st);
+  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st, 1, o.id);
   return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 

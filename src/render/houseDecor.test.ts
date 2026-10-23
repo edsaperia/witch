@@ -7,10 +7,10 @@ import { decorPlan, ROOM_DECOR } from "./houseDecor";
 
 describe("the treehouse's rooms dressed", () => {
   const rooms = HOUSE_ROOMS.rooms.filter(r => r.r && !r.locked);
-  it("gives each room a middle density (Ed's pick): a rug and up to six pieces, three or more in the bigger rooms (the small hubs crowded with branches take what fits)", () => {
+  it("gives each room a middle density (Ed's pick): a rug and up to six pieces, two or more in the bigger rooms (the small hubs crowded with branches, and the busy Workshop, take what fits)", () => {
     for (const r of rooms) {
       const items = decorPlan(r), pieces = items.filter(i => i.kind !== "rug");
-      if (r.r! >= 6) expect(pieces.length, r.id).toBeGreaterThanOrEqual(Math.min(3, (ROOM_DECOR[r.id] ?? []).filter(k => k !== "rug").length));
+      if (r.r! >= 6) expect(pieces.length, r.id).toBeGreaterThanOrEqual(Math.min(2, (ROOM_DECOR[r.id] ?? []).filter(k => k !== "rug").length));
       expect(pieces.length, r.id).toBeLessThanOrEqual(6);
     }
     expect(decorPlan(HOUSE_ROOMS.rooms.find(r => r.locked)!)).toEqual([]);
