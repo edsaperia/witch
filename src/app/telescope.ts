@@ -122,16 +122,16 @@ export class TelescopeView {
     g.clearRect(0, 0, w, h);
     g.font = "7px ui-monospace, monospace"; g.textAlign = "center"; g.textBaseline = "alphabetic";
     const names: Record<number, string> = { 0: "N", 45: "NE", 90: "E", 135: "SE", 180: "S", 225: "SW", 270: "W", 315: "NW" };
+    const deg = `${Math.round(wrapBearing(heading)) % 360}°`, clear = (x: number) => x > mid - 8 && x < mid + 8 + deg.length * 4; // (her degrees' room)
     const from = Math.ceil((heading - span / 2) / 15) * 15;
     for (let d = from; d <= heading + span / 2; d += 15) {
       const x = Math.round(mid + (d - heading) * per), b = wrapBearing(d), a = 1 - Math.pow(Math.abs(x - mid) / mid, 3) * 0.9, name = names[b];
       g.fillStyle = `rgba(${ink},${(name ? 0.85 : 0.45) * a})`;
       g.fillRect(x, name ? 2 : 4, 1, name ? 4 : 2);
-      if (name) { g.fillStyle = `rgba(${ink},${(b % 90 === 0 ? 0.95 : 0.7) * a})`; g.fillText(name, x, 14); }
+      if (name && !clear(x)) { g.fillStyle = `rgba(${ink},${(b % 90 === 0 ? 0.95 : 0.7) * a})`; g.fillText(name, x, 14); }
     }
     g.fillStyle = `rgba(${ink},0.25)`; g.fillRect(8, 1, w - 16, 1); // (the strip's line)
     g.fillStyle = "rgba(255,214,140,0.95)"; g.fillRect(mid - 2, 0, 5, 1); g.fillRect(mid - 1, 1, 3, 1); g.fillRect(mid, 2, 1, 5); // (her bearing)
-    const deg = `${Math.round(wrapBearing(heading)) % 360}°`;
     g.fillStyle = "rgba(2,1,6,0.6)"; g.fillRect(mid + 4, 3, deg.length * 4 + 2, 8);
     g.fillStyle = "rgba(255,214,140,0.95)"; g.textAlign = "left"; g.fillText(deg, mid + 5, 10);
   }
