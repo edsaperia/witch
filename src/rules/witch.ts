@@ -121,7 +121,9 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     // Loaded, she's slowly pulled down: to the floor while she flies on (never dropped into a fight she didn't choose),
     // all the way if she stops or the load is extreme, landing; unloaded, she floats back up.
     if (over > 0) {
-      const floor = steering && !load.extreme ? Wt.floor : 0;
+      // Over a lake (Ed, 2026-10-23: never down over the water from the treetops) the pull stops at its floor: she never lands there.
+      const lake = !!bounds.lakes && onLake(bounds, w.x, w.z, lakeKnobs(t).pad);
+      const floor = lake ? Math.max(Wt.floor, LAKE_HOVER) : steering && !load.extreme ? Wt.floor : 0;
       if (lift > floor) lift = Math.max(floor, lift - Math.min(Wt.sinkMax, Wt.sink * over) * dt);
       if (lift <= 0) { lift = 0; mode = "ground"; }
     } else if (lift < 1) lift = Math.min(1, lift + dt / Math.max(1e-3, t.riseTime));

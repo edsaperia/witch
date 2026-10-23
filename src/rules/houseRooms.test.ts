@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf, keepInHouse } from "./treehouse";
-import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectWorld, toPlan } from "./houseRooms";
+import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
 
@@ -29,27 +29,31 @@ const before = (o: ReturnType<typeof obj>, by = 0.4) => objectWorld(o, { x: 0, z
 /** Where she is on the plan. */
 const onPlan = (g: Game) => { const d = deck(g), b = g.witches[0].body; return toPlan(d, b.x, b.z); };
 const walk = (g: Game, mx: number, mz: number, s: number) => { for (let i = 0; i < s / STEP; i++) stepGame(g, { ...idle, moveX: mx, moveZ: mz }, STEP); };
+/** A room's middle and radius on the plan. */
+const room = (id: string) => { const r = HOUSE_ROOMS.rooms.find(q => q.id === id)!; return r ? { ...r, cx: (r.x0 + r.x1) / 2, cz: (r.z0 + r.z1) / 2, r: r.r! } : { id, cx: 0, cz: 0, r: 7, locked: false }; };
+const unit = (x: number, z: number) => { const l = Math.hypot(x, z); return { x: x / l, z: z / l }; };
+/** Every room but the locked ones is walked: keepInHouse leaves a point inside each where it is. */
+const keepAll = (d: ReturnType<typeof deck>) => HOUSE_ROOMS.rooms.filter(r => !r.locked).every(r => { const R = room(r.id), k = keepInHouse(d, d.x + R.cx, d.z + R.cz); return Math.hypot(k.x - d.x - R.cx, k.z - d.z - R.cz) < 1e-6; });
 const press = (g: Game) => { stepGame(g, { ...idle, place: true, sigilHeld: true }, STEP); return g.leashEvents.filter(e => e.kind === "house" || e.kind === "hatPicked" || e.kind === "hatPut" || e.kind === "chart"); };
 
 describe("the treehouse's rooms", () => {
-  it("are floor: from the hub along the corridor into the dressing room and back, still in the house", () => {
-    const s = plan(2, 0), g = inHouse(s.x, s.z), W = g.witches[0], ne = plan(1, 0); // (along the plan's x: north-east on the screen)
-    walk(g, ne.x, ne.z, 4);
+  it("are floor: from the Terrace along the branch into the Atrium and back, still in the house", () => {
+    const A = room("atrium"), u = unit(A.cx, A.cz), s0 = { x: u.x * 2, z: u.z * 2 }, g = inHouse(s0.x, s0.z), W = g.witches[0];
+    walk(g, u.x, u.z, 2.6);
     expect(W.body.perch).toBe(true);
     expect(W.body.mode).toBe("ground");
-    expect(onPlan(g).x).toBeGreaterThan(12); // (in the dressing room, past the corridor)
-    walk(g, -ne.x, -ne.z, 4);
-    expect(onPlan(g).x).toBeLessThan(6.5); // (back in the hub)
+    expect(Math.hypot(onPlan(g).x - A.cx, onPlan(g).z - A.cz)).toBeLessThan(A.r); // (in the Atrium, past the branch)
+    walk(g, -u.x, -u.z, 2.6);
+    expect(Math.hypot(onPlan(g).x, onPlan(g).z)).toBeLessThan(deck(g).r); // (back on the Terrace)
     expect(W.body.perch).toBe(true);
   });
 
-  it("are laid out on a plan turned 45 degrees (Ed, 2026-10-21: \"more of an isometric view\"): its x north-east, its z south-east, there and back", () => {
-    expect(HOUSE_ROOMS.turn).toBe(45);
-    const a = plan(1, 0), b = plan(0, 1);
-    expect(a.x).toBeCloseTo(Math.SQRT1_2, 6); expect(a.z).toBeCloseTo(-Math.SQRT1_2, 6);
-    expect(b.x).toBeCloseTo(Math.SQRT1_2, 6); expect(b.z).toBeCloseTo(Math.SQRT1_2, 6);
-    const p = toPlan({ x: 3, z: -2 }, 3 + a.x * 5 + b.x * 2, -2 + a.z * 5 + b.z * 2);
-    expect(p.x).toBeCloseTo(5, 6); expect(p.z).toBeCloseTo(2, 6);
+  it("are the Ent's own (Ed, 2026-10-23: \"the corridors are tree branches, the rooms are probably round\"): round rooms on branches, the plan unturned", () => {
+    expect(HOUSE_ROOMS.organic).toBe(true);
+    expect(HOUSE_ROOMS.turn).toBe(0);
+    for (const r of HOUSE_ROOMS.rooms) { expect(r.r, r.id).toBeGreaterThan(0); expect(r.x1 - r.x0, r.id).toBeCloseTo(2 * r.r!, 1); expect(r.z1 - r.z0, r.id).toBeCloseTo(2 * r.r!, 1); }
+    for (const c of HOUSE_ROOMS.corridors) { expect(c.pts!.length, c.id).toBeGreaterThan(2); expect(c.w, c.id).toBeGreaterThanOrEqual(3); }
+    const p = toPlan({ x: 3, z: -2 }, 8, 1); expect(p.x).toBeCloseTo(5, 6); expect(p.z).toBeCloseTo(3, 6); // (unturned: the plan is the world's, from the hub)
   });
 
   it("on foot in the house she walks, at its walk, not her broom's ground speed", () => {
@@ -59,19 +63,18 @@ describe("the treehouse's rooms", () => {
     expect(g.tuning.treehouse.house!.walk).toBeLessThan(g.tuning.groundSpeed / 2);
   });
 
-  it("its rooms leave her room to move: corridors 4 m wide or more, rooms 8 m or more each way", () => {
-    for (const c of HOUSE_ROOMS.corridors) expect(Math.min(c.x1 - c.x0, c.z1 - c.z0), c.id).toBeGreaterThanOrEqual(4);
-    for (const r of HOUSE_ROOMS.rooms) expect(Math.min(r.x1 - r.x0, r.z1 - r.z0), r.id).toBeGreaterThanOrEqual(8);
+  it("its rooms leave her room to move: branches 3 m wide or more, rooms 9 m across or more, the bedrooms 16 m", () => {
+    for (const c of HOUSE_ROOMS.corridors) expect(c.w, c.id).toBeGreaterThanOrEqual(3);
+    for (const r of HOUSE_ROOMS.rooms) expect(2 * r.r!, r.id).toBeGreaterThanOrEqual(r.id.startsWith("bedroom") ? 16 : 9);
   });
 
-  it("their walls keep her in, but not the hub's where a corridor meets it", () => {
+  it("their walls keep her in, round as they are, but not where a branch comes in", () => {
     const d = (() => { const g = newGame(7, TUNING); return deck(g); })();
-    const r = HOUSE_ROOMS.rooms.find(q => q.id === "bedroom")!, out = plan((r.x0 + r.x1) / 2, r.z0 - 3); // (beyond the bedroom's back wall)
-    const k = keepInHouse(d, d.x + out.x, d.z + out.z);
+    const B = room("bedroom"), k = keepInHouse(d, d.x + B.cx, d.z + B.cz - B.r - 3); // (beyond the bedroom's far wall)
     expect(k.off).toBe(false);
-    expect(toPlan(d, k.x, k.z).z).toBeGreaterThanOrEqual(r.z0 - 1e-6);
-    const c = HOUSE_ROOMS.corridors.find(q => q.id === "hub-kitchen")!, on = plan(0, (c.z0 + c.z1) / 2), m = keepInHouse(d, d.x + on.x, d.z + on.z);
-    expect(m.x - d.x).toBeCloseTo(on.x, 6); expect(m.z - d.z).toBeCloseTo(on.z, 6); // (on the corridor, unmoved)
+    expect(Math.hypot(k.x - d.x - B.cx, k.z - d.z - B.cz)).toBeLessThanOrEqual(B.r + 1e-6);
+    const c = HOUSE_ROOMS.corridors.find(q => q.id === "terrace-atrium")!, [mx, mz] = c.pts![4], m = keepInHouse(d, d.x + mx, d.z + mz);
+    expect(m.x - d.x).toBeCloseTo(mx, 6); expect(m.z - d.z).toBeCloseTo(mz, 6); // (on the branch, unmoved)
   });
 
   it("leaving is by the balcony as before: walked off its open rim, she rises", () => {
@@ -99,9 +102,13 @@ describe("the treehouse's rooms", () => {
     }
   });
 
-  it("the map table's E still opens the chart", () => {
-    const g = inHouse(0, -2.4);
+  it("the map table, in the middle of the Atrium (Ed, 2026-10-23), opens the chart; the Terrace's middle no longer does", () => {
+    const t = obj("mapTable"), A = room("atrium");
+    expect(t.use.kind).toBe("chart");
+    expect(Math.hypot(t.x - A.cx, t.z - A.cz)).toBeLessThan(0.5);
+    const f = objectFront(t, { x: 0, z: 0 }, 0.4), g = inHouse(f.x, f.z);
     expect(press(g).some(e => e.kind === "chart")).toBe(true);
+    expect(press(inHouse(0, -2.4)).some(e => e.kind === "chart")).toBe(false);
   });
 
   it("the hats' floor: E by a hat takes it and leaves hers in its place; with none near, E puts hers down at her feet and picks it up again", () => {
@@ -170,39 +177,44 @@ describe("the treehouse's rooms", () => {
     expect(g.partyWitches.players?.[0]?.activity ?? null).toBeNull();
   });
 
-  it("every doorway is open: where a corridor meets a room, their floors (inside their walls) overlap by half a metre or more", () => {
-    const g = newGame(7, TUNING), rail = deck(g).rail;
-    for (const c of HOUSE_ROOMS.corridors) for (const r of HOUSE_ROOMS.rooms) {
-      if (!(c.x0 < r.x1 && c.x1 > r.x0 && c.z0 < r.z1 && c.z1 > r.z0)) continue;
-      const w = Math.min(c.x1, r.x1) - Math.max(c.x0, r.x0) - 2 * rail, d = Math.min(c.z1, r.z1) - Math.max(c.z0, r.z0) - 2 * rail;
-      expect(Math.min(w, d), `${c.id} into ${r.id}`).toBeGreaterThanOrEqual(0.5);
+  it("every doorway is open: each branch runs half a metre or more into the floors it joins (inside their rails)", () => {
+    const g = newGame(7, TUNING), d = deck(g), rail = d.rail;
+    for (const c of HOUSE_ROOMS.corridors) {
+      const [from, to] = c.id.split("-"), ends = [c.pts![0], c.pts![c.pts!.length - 1]];
+      const into = (id: string, [x, z]: [number, number]) => id === "terrace" ? d.r - rail - Math.hypot(x, z) : room(id).r - rail - Math.hypot(x - room(id).cx, z - room(id).cz);
+      expect(into(from, ends[0]), `${c.id} from ${from}`).toBeGreaterThanOrEqual(0.5);
+      if (!room(to).locked) expect(into(to, ends[1]), `${c.id} into ${to}`).toBeGreaterThanOrEqual(0.5);
     }
   });
 
-  it("leave room for the guests' two bedrooms (Ed, 2026-10-21: \"We will have three bedrooms, one for each witch\"): each the host's size, either side of it along the landing, its floor and door clear of everything built", () => {
-    const R = HOUSE_ROOMS.reserved ?? [], host = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!, landing = HOUSE_ROOMS.corridors.find(c => c.id === "landing")!;
-    const over = (a: { x0: number; x1: number; z0: number; z1: number }, b: typeof a) => a.x0 < b.x1 && a.x1 > b.x0 && a.z0 < b.z1 && a.z1 > b.z0;
-    expect(R.length).toBe(2);
-    for (const r of R) {
-      expect([r.x1 - r.x0, r.z1 - r.z0], r.id).toEqual([host.x1 - host.x0, host.z1 - host.z0]);
-      expect(r.x0, r.id).toBe(host.x0); // (along the landing, as the host's)
-      for (const q of [...HOUSE_ROOMS.rooms, ...HOUSE_ROOMS.corridors]) { expect(over(r, q), `${r.id} and ${q.id}`).toBe(false); if (q.id !== "landing") expect(over(r.door, q), `${r.id}'s door and ${q.id}`).toBe(false); }
-      expect(r.door.x0 < landing.x1 && r.door.x1 > r.x0, `${r.id}'s door from the landing's line into it`).toBe(true);
+  it("Bedrooms 2 and 3 are locked (Ed, 2026-10-23: \"The branch stops at the door, and a bubble says it's a friend's room\"): drawn, the branch to the door, E there says so, and she can't go in", () => {
+    const locked = HOUSE_ROOMS.rooms.filter(r => r.locked), host = room("bedroom");
+    expect(locked.map(r => r.id).sort()).toEqual(["bedroom2", "bedroom3"]);
+    for (const r of locked) {
+      const R = room(r.id), door = HOUSE_ROOMS.objects.find(o => o.id === `${r.id}Door`)!;
+      expect(2 * R.r, r.id).toBeGreaterThanOrEqual(16); expect(R.r).toBeLessThanOrEqual(host.r);
+      expect(door.use).toEqual({ kind: "say", line: "A friend's room. Locked for now." });
+      expect(Math.abs(Math.hypot(door.x - R.cx, door.z - R.cz) - R.r)).toBeLessThan(0.5); // (at its rim, where the branch ends)
+      const g = inHouse(door.x + (door.x - R.cx) / R.r * 1.2, door.z + (door.z - R.cz) / R.r * 1.2), W = g.witches[0];
+      expect(press(g).some(e => e.kind === "house" && e.obj === door.id), r.id).toBe(true);
+      walk(g, (R.cx - door.x) / R.r, (R.cz - door.z) / R.r, 2); // (walking at the door, into the room)
+      expect(Math.hypot(W.body.x - deck(g).x - R.cx, W.body.z - deck(g).z - R.cz), r.id).toBeGreaterThan(R.r - 0.3); // (kept out)
+      expect(W.body.perch).toBe(true);
     }
-    expect(over(R[0], R[1])).toBe(false);
   });
 
-  it("every object stands on its room's floor, and every room is reached by a corridor", () => {
-    const g = newGame(7, TUNING), d = deck(g);
+  it("every object stands on its room's floor, every station reaches: E in front of each finds it, on the floor; and every room is reached by a branch", () => {
+    const g = newGame(7, TUNING), d = deck(g), all = keepAll(d);
     for (const o of HOUSE_ROOMS.objects) {
-      if (o.room === "hub") { expect(Math.hypot(o.x, o.z), o.id).toBeLessThan(d.r); continue; }
-      const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room)!;
-      expect(r, o.id).toBeDefined();
-      expect(o.x >= r.x0 && o.x <= r.x1 && o.z >= r.z0 && o.z <= r.z1, o.id).toBe(true);
+      const R = room(o.room);
+      if (o.id.endsWith("Door")) continue; // (a locked room's door: at its rim, the previous test)
+      expect(Math.hypot(o.x - R.cx, o.z - R.cz) + Math.min(o.w, o.d) / 2, o.id).toBeLessThanOrEqual(R.r + 0.6);
+      if (R.locked) continue;
+      const f = objectFront(o, { x: 0, z: 0 }, 0.4), k = keepInHouse(d, d.x + f.x, d.z + f.z);
+      expect(Math.hypot(k.x - d.x - f.x, k.z - d.z - f.z), `${o.id}: in front of it is floor`).toBeLessThan(0.05);
+      expect(objectAt(d, d.x + f.x, d.z + f.z)?.id, `${o.id}: in reach from in front`).toBe(o.id);
     }
-    for (const r of HOUSE_ROOMS.rooms) {
-      const touches = HOUSE_ROOMS.corridors.some(c => c.x0 < r.x1 && c.x1 > r.x0 && c.z0 < r.z1 && c.z1 > r.z0);
-      expect(touches, r.id).toBe(true);
-    }
+    for (const r of HOUSE_ROOMS.rooms) expect(HOUSE_ROOMS.corridors.some(c => c.id.endsWith(`-${r.id}`)), r.id).toBe(true);
+    expect(all).toBe(true);
   });
 });

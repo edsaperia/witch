@@ -13,7 +13,7 @@ export const MODIFIERS = ["none", "knockback", "slow"] as const;
 export const BEHAVIOURS = ["arrive", "keepRange", "orbit", "strafe", "slot", "separation", "cohesion", "wander", "dodge", "light"] as const;
 export const TACTICS = ["surround", "pincer", "hitAndRun", "volley", "swarm", "flank", "none"] as const;
 export const MOVES = ["charge", "ambush", "burrow", "leap", "dig", "block", "trail", "flash", "swoop"] as const;
-export const HOUSE_USES = ["creator", "hats", "bed", "curtains", "zoo", "telescope", "say"] as const;
+export const HOUSE_USES = ["creator", "hats", "bed", "curtains", "zoo", "telescope", "say", "chart"] as const;
 type Same<A, B> = [A] extends [B] ? ([B] extends [A] ? true : never) : never;
 export const _check: [Same<(typeof DELIVERIES)[number], Delivery>, Same<(typeof MODIFIERS)[number], Modifier>, Same<(typeof BEHAVIOURS)[number], BehaviourKind>, Same<(typeof TACTICS)[number], TacticKind>, Same<(typeof MOVES)[number], Move["kind"]>] = [true, true, true, true, true];
 

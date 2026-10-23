@@ -17,7 +17,7 @@
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
-import { floorRects, HOUSE_ROOMS, nearestRoomFloor, onRoomFloor, type RoomFloor } from "./houseRooms";
+import { floorRects, HOUSE_ROOMS, nearestRoomFloor, objectAt, onRoomFloor, type RoomFloor } from "./houseRooms";
 
 /** The deck in the world: its middle (x, z), radius, floor height (m over the ground there), the rail's keep-in, the map table, the decks' arc and her seat. */
 export interface Deck {
@@ -122,7 +122,7 @@ export function keepOnDeck(d: Deck, x: number, z: number): { x: number; z: numbe
  *  through it rather than wedging in the corner. */
 const JOIN = 1.5;
 export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: number; off: boolean } {
-  const b = d.house!.balcony, hubOut = d.r - d.rail, balOut = b.r - d.rail, inn = d.table.r + 0.35;
+  const b = d.house!.balcony, hubOut = d.r - d.rail, balOut = b.r - d.rail, inn = HOUSE_ROOMS.organic ? 0 : d.table.r + 0.35; // (the Ent's own: no map on the Terrace)
   const dz = z - b.z, inBal = dz >= -JOIN && Math.hypot(x - b.x, dz) <= balOut, rh = Math.hypot(x - d.x, z - d.z), inHub = rh <= hubOut;
   // In the rooms and corridors off the hub (rules/houseRooms.ts): their walls keep her in, and the hub's wall lets her through
   // where a corridor meets it.
@@ -145,7 +145,7 @@ export function keepInHouse(d: Deck, x: number, z: number): { x: number; z: numb
 }
 
 /** Within reach of the map table (E there opens the sea chart). */
-export const atMapTable = (d: Deck, x: number, z: number): boolean => Math.hypot(x - d.x, z - d.z) <= d.table.r + d.table.use;
+export const atMapTable = (d: Deck, x: number, z: number): boolean => (HOUSE_ROOMS.organic && d.house ? objectAt(d, x, z)?.use.kind === "chart" : Math.hypot(x - d.x, z - d.z) <= d.table.r + d.table.use); // (the Ent's own house: the Atrium's map table, Ed 2026-10-23)
 
 /** Does a 💌 thrown from the deck (or the house's floor) leave it (from (x0, z0) to (x1, z1))? It vanishes at the rail, as one leaving a legend's circle. */
 export const leavesDeck = (d: Deck, x0: number, z0: number, x1: number, z1: number): boolean => onFloor(d, x0, z0) && !onFloor(d, x1, z1);

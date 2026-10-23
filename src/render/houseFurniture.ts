@@ -23,20 +23,18 @@ const furnitureScale = typeof location === "undefined" ? 1 : Number(new URLSearc
 /** The objects drawn as art. */
 export const FURNITURE = new Set<string>(furnitureOn ? FURNITURE_IDS : []);
 
-/** Which way an object stands: its front away from the wall of its room it backs on (the nearest; a free-standing one, in no room
- *  of the plan's, the hub's, towards the camera), as the art's yaw (art/furniture.js: 0 facing the camera, south), and its footprint as
- *  the art takes it, w along that wall. A piece never shows its back: against a near wall (x0 or z1 at the plan's 45°, cut down to its
- *  skirting) it's drawn as against the far wall opposite, for now. */
+/** Which way an object stands: its front towards its room's middle (as rules/houseRooms.ts objectFront has her stand to use it), as
+ *  the art's yaw (art/furniture.js: 0 facing the camera, south), and its footprint as the art takes it: w along the wall it backs on,
+ *  taken from house.json's box by the way it mostly faces (its box's w runs along the plan's x). One in its room's middle, or in no
+ *  room (the Terrace), faces the camera. A piece never shows its back: one facing away from the camera is turned to face it. */
 export function standing(o: HouseObject): { yaw: number; foot: { w: number; d: number; h: number } } {
-  const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room);
-  if (!r) return { yaw: 0, foot: { w: o.w, d: o.d, h: o.h } };
-  const gaps = { x1: r.x1 - (o.x + o.w / 2), z0: o.z - o.d / 2 - r.z0, x0: o.x - o.w / 2 - r.x0, z1: r.z1 - (o.z + o.d / 2) };
-  const wall = (Object.keys(gaps) as (keyof typeof gaps)[]).reduce((a, b) => (gaps[b] < gaps[a] ? b : a));
-  const alongX = wall === "x1" || wall === "x0", face = alongX ? (wall === "x1" ? [-1, 0] : [1, 0]) : wall === "z0" ? [0, 1] : [0, -1];
+  const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0, L = Math.hypot(dx, dz);
+  const alongX = Math.abs(dx) > Math.abs(dz), foot = alongX ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h };
+  if (L < 1.2) return { yaw: 0, foot };
   // (its facing on the plan into the world, east and south, turned to the camera's side; then the yaw that turns the model's front,
   // +z, that way: render's +z goes to (-sin yaw, cos yaw))
-  const p = fromPlan({ x: 0, z: 0 }, face[0], face[1]), f = p.z < -1e-6 ? [-p.x, -p.z] : [p.x, p.z];
-  return { yaw: Math.atan2(-f[0], f[1]), foot: alongX ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h } };
+  const p = fromPlan({ x: 0, z: 0 }, dx / L, dz / L), f = p.z < 0 ? [p.x, -p.z] : [p.x, p.z];
+  return { yaw: Math.atan2(-f[0], f[1]), foot };
 }
 
 /** The room's own light for its furniture (the creator's room's: a dim cool night, the warm things in it). */
