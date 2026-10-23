@@ -166,12 +166,14 @@ export class Hiz {
     r.setRenderTarget(this.atlas); r.setClearColor(0x000000, 0); r.clear();
     r.autoClear = false;
     const at = HIZ_UNIFORMS.uHizAt.value;
+    // (by the atlas's own viewport, in its texels: the renderer's setViewport is the canvas's, scaled by the pixel ratio, and
+    // what it's left at is what every later draw to the canvas uses)
     this.levels.forEach((t, k) => {
       const a = at[k];
       this.place.uniforms.uSrc.value = t.texture; this.place.uniforms.uAt.value.set(a.x, a.y);
-      r.setViewport(a.x, a.y, a.z, a.w); this.quad.material = this.place; r.render(this.quad, this.cam);
+      this.atlas.viewport.set(a.x, a.y, a.z, a.w); r.setRenderTarget(this.atlas); this.quad.material = this.place; r.render(this.quad, this.cam);
     });
-    r.setViewport(0, 0, this.atlas.width, this.atlas.height);
+    this.atlas.viewport.set(0, 0, this.atlas.width, this.atlas.height);
     r.autoClear = ac; r.setClearColor(col, alpha); r.setRenderTarget(was);
     HIZ_UNIFORMS.uHiz.value = this.atlas.texture;
     HIZ_UNIFORMS.uHizOn.value = 1;

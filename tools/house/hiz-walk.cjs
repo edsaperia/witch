@@ -23,10 +23,10 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
   const errors = [], out = {};
   let bad = 0, done = false;
   try {
-    const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: Number(process.env.DPR || 1) });
     page.on("pageerror", e => errors.push(e.message));
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&spell=auto&wave=off`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&spell=auto&wave=off&hiz=0`); // (?hiz=0: the occluders never run till this turns them on, so the first spot's first frame is the game's untouched by them)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
@@ -47,8 +47,11 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
         const calls = v.renderer.info.render.calls;
         return { W, H, px: Array.from(px), calls, t, ht };
       }, [off, NONE]);
-      const a = await grab(false), b = await grab(true);
-      let diff = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2]) diff++;
+      // (off, on, off again: a pass that left the renderer changed would show as the two offs differing, which comparing on with
+      // off alone can't see once both carry it: the canvas's viewport left at the atlas's, 2026-10-23)
+      const n = (p, q) => { let d = 0; for (let i = 0; i < p.px.length; i += 4) if (p.px[i] !== q.px[i] || p.px[i + 1] !== q.px[i + 1] || p.px[i + 2] !== q.px[i + 2]) d++; return d; };
+      const a = await grab(true), b = await grab(false), a1 = await grab(true);
+      const diff = n(a, b), stale = n(a, a1);
       // (and a blind check: with the area types' scenery hidden the picture must change, or nothing was drawn)
       const seen = await page.evaluate(() => { const v = window.witch.view, all = [...v.typeBatches.values()].flatMap(b => b.meshes); all.forEach(m => { m.userData.mask = m.layers.mask; m.layers.mask = 0; }); return all.length; });
       const c = await grab(false);
@@ -56,8 +59,8 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       let blind = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== c.px[i] || a.px[i + 1] !== c.px[i + 1] || a.px[i + 2] !== c.px[i + 2]) blind++;
       await page.evaluate(() => { window.witch.view.hizOff = false; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
-      out[spot] = { diff, px: a.W * a.H, scenery: blind, batches: seen, sameFrame: a.t === b.t };
-      if (diff) bad++;
+      out[spot] = { diff, stale, px: a.W * a.H, scenery: blind, batches: seen, sameFrame: a.t === b.t };
+      if (diff || stale) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
     done = true;
