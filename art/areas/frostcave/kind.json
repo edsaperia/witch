@@ -2,7 +2,7 @@
   "kind": "frostwyrm",
   "slot": 48,
   "phase": 4,
-  "bearing": 45,
-  "dir": "NE",
+  "bearing": 56.25,
+  "dir": "ENE",
   "biome": "mountains and glaciers"
 }

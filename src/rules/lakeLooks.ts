@@ -15,12 +15,12 @@ import { bearingOf, KINDS, worldOf } from "./rosters";
 export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "tar" | "rust" | "lily";
 /** The looks by number, as the shaders know them (the chart's LAKE_FRAG uLook, the ground's lake looks). */
 export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "tar", "rust", "lily"];
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "tar", badlands: "rust", "mangrove swamp": "lily" };
+export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "tar", badlands: "rust", "mangrove swamp": "lily" };
 
-/** The compass's biomes, N first and on clockwise every 45° (the kinds table's by direction). An island's biome blends the two
- *  its bearing lies between, by how near it is to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have
- *  both"). */
-export const COMPASS = ["cold", "mountains and glaciers", "rocky", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"];
+/** The compass's biomes, N first and on clockwise every 45° (the kinds table's by direction; east volcanic, rocky before: Ed,
+ *  2026-10-23, "Can we call 'rocky' 'volcanic'?"). An island's biome blends the two its bearing lies between, by how near it is
+ *  to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have both"). */
+export const COMPASS = ["cold", "mountains and glaciers", "volcanic", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"];
 export interface Blend { a: string; b: string; /** a's share, 0.5 to 1 */ w: number }
 export function blendAt(bearing: number): Blend {
   const d = (((bearing % 360) + 360) % 360) / 45, i = Math.floor(d) % 8, t = d - Math.floor(d);
@@ -37,16 +37,15 @@ export function islandBearing(id: string, world: number): number {
   return at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
 }
 
-/** Island `id`'s biomes (phase its island's): temperate as it stands; else a blend by its bearing (a tag of its own that isn't a
- *  compass point, like the volcanic, the island in it alone); its lakes by its bearing's biomes from the tuning's lakes.biomeFrom
+/** Island `id`'s biomes (phase its island's): temperate as it stands; else a blend by its bearing (the volcanic too, since it
+ *  became the east compass point: Ed, 2026-10-23); its lakes by its bearing's biomes from the tuning's lakes.biomeFrom
  *  phase on (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier"), half of them in that first phase, all further
  *  out (Ed: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"). */
 export function islandBiome(id: string, world: number, phase: number, knobs: Pick<LakeKnobs, "biomeFrom" | "biomeFirstShare">): IslandBiome {
   if (id === "home") return { blend: TEMPERATE, lakeBlend: null, lakeShare: 0 };
   const biome = KINDS[id]?.biome ?? "temperate", bearing = islandBearing(id, world);
-  const own = biome !== "temperate" && !COMPASS.includes(biome) && biome in LAKE_LOOKS;
-  const blend: Blend = biome === "temperate" ? TEMPERATE : own ? { a: biome, b: biome, w: 1 } : blendAt(bearing);
-  const lakeBlend = phase >= knobs.biomeFrom ? (own ? blend : blendAt(bearing)) : null;
+  const blend: Blend = biome === "temperate" ? TEMPERATE : blendAt(bearing);
+  const lakeBlend = phase >= knobs.biomeFrom ? blendAt(bearing) : null;
   return { blend, lakeBlend, lakeShare: !lakeBlend ? 0 : phase === knobs.biomeFrom ? knobs.biomeFirstShare : 1 };
 }
 

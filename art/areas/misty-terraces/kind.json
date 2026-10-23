@@ -2,7 +2,7 @@
   "kind": "redpanda",
   "slot": 34,
   "phase": 3,
-  "bearing": 63,
+  "bearing": 56.25,
   "dir": "ENE",
   "biome": "mountains and glaciers"
 }

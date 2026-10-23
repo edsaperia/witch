@@ -67,6 +67,7 @@ The sea chart (the map table and chart.html; render/chart/seaChart.ts, render/ch
 | `chart.moon.shadow` | number | 0 to … |
 | `chart.moon.disc` | boolean |  |
 | `chart.edgeBand` | number | 0 to … |
+| `chart.sailHold` | number | 0 to … |
 
 ### `islands`
 
