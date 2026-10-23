@@ -1,4 +1,4 @@
-// The biome looks' contact sheet (a mock for Ed, 2026-10-23: art/flora/biomes.js): a row per biome (and temperate), each on a
+// The biome looks' contact sheet (Ed, 2026-10-23: art/flora/biomes.js): a row per biome (and temperate), each on a
 // floor of one of its areas, lit by the game's night: three shared species (oak, pine, birch) in its look, then four of its own
 // species in its look, then a 3 x 3 patch of its own crowns as the treetops see them; then border islands blending two.
 //   node tools/biomes/sheet.mjs <png> [scale]   (MODE=trees, the default; canopy: the treetops; blends: border islands; areas: a real

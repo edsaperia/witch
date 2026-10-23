@@ -58,6 +58,9 @@ export class AssetLibrary {
   /** The seed the area types' trees are drawn under: the island's own (islandArtSeed, so a revisit finds them kept), or the
    *  night's (the default; the view sets it). */
   typeSeed: number;
+  /** The island's biome (rules/lakeLooks.ts biomeKey: its forests' look over the area types' trees and props); none, temperate.
+   *  The view sets it with typeSeed. */
+  typeBiome: string | undefined;
   private creatures = new Map<string, CreatureArt>();
   private rigs = new Map<string, RigArt>();
   private partyWitches = new Map<string, PartyWitchArt & { atlas: Atlas }>();
@@ -335,7 +338,7 @@ export class AssetLibrary {
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
-    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }, true);
+    if (!a) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }, true);
     return a;
   }
   /** The beach's edge of the woods (palms, shrubs, grass clumps), or undefined (and asked for). */
@@ -533,13 +536,13 @@ export class AssetLibrary {
     return a;
   }
   /** Ask for a set ahead of need, without using it. */
-  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K }); }
+  prefetchType(t: number): void { if (!this.types.has(t)) this.ask({ kind: "type", id: t, style: this.style, seed: this.typeSeed, K: this.K, biome: this.typeBiome }); }
   /** Tonight's own trees (the night's seed), for the area types `types`, if they were drawn ahead and kept (app/landingBake.ts):
    *  asked for only if kept, so nothing is drawn now; those found wait for swapTonight. Nothing with the trees drawn under the
    *  night's seed already. */
   tonight(types: Iterable<number>): void {
     if (this.typeSeed === this.seed || this.tonightShut) return;
-    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
+    for (const t of types) { const job = { kind: "type", id: t, style: this.style, seed: this.seed, K: this.K, biome: this.typeBiome } as ArtJob & CacheHint; job.cacheOnly = true; this.ask(job, true); }
   }
   /** The moment she can't see the trees change (main.ts revealArt): tonight's sets found by now take the place of the island's;
    *  the rest keep the island's for the whole night (nothing swapped later: no trees changing in play). The types swapped. */
@@ -561,7 +564,7 @@ export class AssetLibrary {
    *  go (its trees, tonight's, its soundsystems; its treehouse if this one's is another), each atlas freed here, once (the view
    *  lets go of its batches on them first, never their atlases); and the new island's seeds and treehouse. Its sets are asked for
    *  afresh as they're wanted (from the browser's store, if drawn before). */
-  reseat(o: { seed: number; typeSeed: number; treehouse: string }): void {
+  reseat(o: { seed: number; typeSeed: number; typeBiome?: string; treehouse: string }): void {
     this.gen++;
     this.queue = this.queue.filter(j => !islandBound(j));
     for (const k of [...this.inFlight]) if (islandBound(k)) { this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); }
@@ -571,7 +574,7 @@ export class AssetLibrary {
     for (const a of this.soundsystemsGen.values()) free(a.atlas);
     this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear();
     this.tonightShut = false;
-    this.seed = o.seed; this.typeSeed = o.typeSeed;
+    this.seed = o.seed; this.typeSeed = o.typeSeed; this.typeBiome = o.typeBiome;
     if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)
       this.treehouseId = o.treehouse;
       if (this.home.treehouse) free(this.treehouse.atlas);

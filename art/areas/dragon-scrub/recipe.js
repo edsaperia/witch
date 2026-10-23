@@ -14,6 +14,6 @@ export const DRAGON_SCRUB = {
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .15, rocks: .7, freak: .05, lake: 0, modern: .1 },
     feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock.",
   },
-  flora: { species: [["datePalm", .5], ["acacia", .35], ["hawthorn", .15]], palette: { sat: .75, val: .95 } },
+  flora: { species: [["datePalm", .5], ["acacia", .35], ["cycad", .15]] /* (cycad for the hawthorn: the volcanic east, India 2026-10-23, biome forests) */, palette: { sat: .75, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .7, kinds: ["tallgrass", "blades"] } },
 };

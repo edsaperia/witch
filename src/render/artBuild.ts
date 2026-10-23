@@ -3,6 +3,7 @@
 import * as Art from "../../art/generator.js";
 import { LOOKS, lookSeed } from "../rules/map";
 import { AREA_BY_ID, areaAssets } from "../../art/areas.js";
+import { biomeColours, biomeLook, biomeScale, biomeSnow, biomeStyle } from "../../art/flora/biomes.js";
 import { rng } from "../rules/random";
 import type { Style } from "./style";
 import { rigSprites, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -63,10 +64,12 @@ type TreeOpts = { type: string; minor?: boolean; dark?: boolean; gnarl?: number;
 function areaTree(def: ArtDef, o: TreeOpts, st: Style, r: () => number, K: number) {
   const f = (Art.treeSpecies as (type: string) => { fn: unknown })(o.type).fn as (r: () => number, st: Style, s: number) => { sp: unknown; crownY: number }; // any species art/trees.js knows
   const ts = { ...st, leafHue: def.leaf + (o.dark ? 0.05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: (def as { layout?: { hang?: number } }).layout?.hang ?? 0 } as unknown as Style;
-  const t = f(r, ts, st.treeSize * K * (o.scale || 1) * Art.uni(r, 0.9, 1.1));
+  const look = st.biome ? biomeLook(st.biome) : null; // (the island's biome: art/flora/biomes.js)
+  const t = f(r, biomeStyle(ts, look) as Style, st.treeSize * K * (o.scale || 1) * biomeScale(look) * Art.uni(r, 0.9, 1.1));
+  Art.snowCrown(t.sp, biomeSnow(look, 0), 1);
   const c = Art.treeColours(r, ts, f) as Record<number, number[]>;
   if (o.dark) { c[Art.M.LEAF] = c[Art.M.LEAF3]; c[Art.M.LEAF3] = Art.hsv2rgb(def.leaf + 0.05, 0.7, 0.22); }
-  c[Art.M.NOSE] = [20, 16, 24]; c[Art.M.GLINT] = [235, 235, 240];
+  c[Art.M.NOSE] = [20, 16, 24]; c[Art.M.GLINT] = [235, 235, 240]; biomeColours(c, look, Art.M);
   return { parts: Art.splitTree(t), colours: c };
 }
 
@@ -244,7 +247,7 @@ export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
   return { albedo, normal, width: W, height: H, frames };
 }
 
-export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
+export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: number; /** the island's biome blend's key (rules/lakeLooks.ts biomeKey), its look over the area's trees and props; none, temperate */ biome?: string } | { kind: "creature"; id: string; style: Style } | { kind: "rig"; id: string; species: string; level: number; style: Style; /** a party animal's gear, baked on */ gear?: RigGear }
   /** A creature enraged by a wave (Stage 4 playtest): angry glowing red eyes and a darker tint. */
   | { kind: "woken"; id: string; species: string; style: Style }
   /** An area legend asleep (art/legends.js legendForm): its two breathing frames, sunk and grown over. */
@@ -624,7 +627,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
     const gear = { ...partyGearOf(job.seed, job.colour), face: "happy" }; // (both smiling)
     return { px: packPixels(creatureSprites(job.style, job.species, mk, gear), 2048) };
   }
-  const { sprites, layout, floor } = typeSprites(job.style, job.seed, job.id, job.K, mk);
+  const { sprites, layout, floor } = typeSprites(job.biome && !job.style.biome ? ({ ...job.style, biome: job.biome } as unknown as Style) : job.style, job.seed, job.id, job.K, mk); // (the island's biome over its areas' trees and props; ?biome= over it)
   return { px: packPixels(sprites), layout, floor: { albedo: new Uint8Array(pixels(floor.A, floor.w, floor.h)), normal: new Uint8Array(pixels(floor.N, floor.w, floor.h)), w: floor.w, h: floor.h } };
 }
 

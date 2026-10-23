@@ -1,5 +1,5 @@
-// The biome looks in play, a MOCK (art/flora/biomes.js, ?biome=): the built game at one spot, every area's trees in each biome's
-// look, shot on foot and from the treetops. node tools/biomes/shots.cjs [dist] [out dir] [biomes;...] (AT=x,z, SEED=)
+// The biome looks in play (art/flora/biomes.js, ?biome=): the built game at one spot, every area's trees in each biome's
+// look, shot on foot and from the treetops. node tools/biomes/shots.cjs [dist] [out dir] [biomes;...] (kind:<id>: its own island, no ?biome=; AREA=n, SEED=)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -18,9 +18,10 @@ server.listen(0, "127.0.0.1", async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const errors = [];
   for (const biome of list.split(";")) {
-    const name = biome.replace(/ /g, "-"), { BIOME_LOOKS } = await import(path.resolve("art/flora/biomes.js")), J = BIOME_LOOKS[biome]?.jitter ?? 1, LJ = require(path.resolve("config/tuning.json")).leafJitter;
+    const name = biome.replace(/ /g, "-").replace(":", "-"), { BIOME_LOOKS } = await import(path.resolve("art/flora/biomes.js")), J = BIOME_LOOKS[biome]?.jitter ?? 1, LJ = require(path.resolve("config/tuning.json")).leafJitter;
     // (the look's share of the per-tree leaf jitter: in the game a per-area scale, here the island's tuning, ?set=)
-    const q = biome === "temperate" ? "" : `&biome=${encodeURIComponent(biome)}&set=${encodeURIComponent(`leafJitter.autumn=${+(LJ.autumn * J).toFixed(3)};leafJitter.hue=${+(LJ.hue * J).toFixed(2)}`)}`;
+    // (kind:<id>: that kind's own island, its biome as the game gives it, no ?biome= over it)
+    const q = biome.startsWith("kind:") ? `&island=${biome.slice(5)}` : biome === "temperate" ? "" : `&biome=${encodeURIComponent(biome)}&set=${encodeURIComponent(`leafJitter.autumn=${+(LJ.autumn * J).toFixed(3)};leafJitter.hue=${+(LJ.hue * J).toFixed(2)}`)}`;
     const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`${biome}: ${e.message}`));

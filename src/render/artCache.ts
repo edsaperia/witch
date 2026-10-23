@@ -42,7 +42,7 @@ function open(): Promise<IDBDatabase | null> {
 /** Where a set is kept between visits: the art's code, the style (its hash), the set, and for an area type its seed and scale.
  *  Party looks are per creature, so they aren't kept (null). The game's art (render/assets.ts) and the landing's bake ahead
  *  (app/landingBake.ts) both key by it. */
-export const artCacheKey = (j: ArtJob, styleHash: string): string | null => j.kind === "party" ? null : [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
+export const artCacheKey = (j: ArtJob, styleHash: string): string | null => j.kind === "party" ? null : [ART_HASH, styleHash, j.kind + ":" + j.id, j.kind === "type" ? `${j.seed}|${j.K}${j.biome ? "|" + j.biome : ""}` : j.kind === "beachEdge" ? `${j.K}` : ""].join("|");
 
 /** A set drawn before, or null. */
 export async function cacheGet(key: string): Promise<ArtResult | null> {

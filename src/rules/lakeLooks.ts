@@ -45,9 +45,24 @@ export function islandBiome(id: string, world: number, phase: number, knobs: Pic
   if (id === "home") return { blend: TEMPERATE, lakeBlend: null, lakeShare: 0 };
   const biome = KINDS[id]?.biome ?? "temperate", bearing = islandBearing(id, world);
   const own = biome !== "temperate" && !COMPASS.includes(biome) && biome in LAKE_LOOKS;
-  const blend: Blend = biome === "temperate" ? TEMPERATE : own ? { a: biome, b: biome, w: 1 } : blendAt(bearing);
+  const blend = islandBlend(id, world);
   const lakeBlend = phase >= knobs.biomeFrom ? (own ? blend : blendAt(bearing)) : null;
   return { blend, lakeBlend, lakeShare: !lakeBlend ? 0 : phase === knobs.biomeFrom ? knobs.biomeFirstShare : 1 };
+}
+
+/** Island `id`'s land's biomes: temperate (home, and a temperate kind's island) as it stands; a tag of its own that isn't a compass
+ *  point (the volcanic) alone; else the two its bearing lies between (blendAt). */
+export function islandBlend(id: string, world: number): Blend {
+  const biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
+  if (biome === "temperate") return TEMPERATE;
+  return !COMPASS.includes(biome) && biome in LAKE_LOOKS ? { a: biome, b: biome, w: 1 } : blendAt(islandBearing(id, world));
+}
+/** The key of island `id`'s biome blend, for its forests' look (art/flora/biomes.js biomeLook; the area art's jobs and their cache,
+ *  render/artBuild.ts): "a|b|w", its share to two places; undefined on a temperate island (its art as it always was). */
+export function biomeKey(id: string, world: number): string | undefined {
+  const B = islandBlend(id, world);
+  if (B.a === "temperate" && B.b === "temperate") return undefined;
+  return B.a === B.b ? B.a : `${B.a}|${B.b}|${B.w.toFixed(2)}`;
 }
 
 /** A seeded number in 0..1 from two integers. */

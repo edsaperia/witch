@@ -1,10 +1,13 @@
 // Biome looks for the forests (Ed, 2026-10-23: "Design all 8. Consider temperate alongside; they should work as a set." "They're
-// still trees in a forest, so they may be scrubby, but it shouldn't feel desolate."). A MOCK, not in the game yet: each biome a
-// set of cheap changes laid over any species at bake time, never new art: its leaves, bark and moss tinted in RGB after
+// still trees in a forest, so they may be scrubby, but it shouldn't feel desolate."; then "No need to mock"): each biome a set of
+// cheap changes laid over any species at bake time, never new art: its leaves, bark and moss tinted in RGB after
 // treeColours (art/trees.js: its nightGreen squeezes the green hues, so a hue shift there would be lost), the tree builders' own
 // knobs nudged (lean, gnarl, scale, hang), snow on the crown (snowCrown), and, for the blob generator's species, crown extras
-// (vines, dots). An island blends its two neighbouring biomes by bearing (src/rules/lakeLooks.ts blendAt): `biomeLook(blend)`.
-// Nothing here costs a frame: it all runs once, as the area's ten tree variants are baked (art/areas.js areaTreeVariants).
+// (vines, dots). An island blends its two neighbouring biomes by bearing (src/rules/lakeLooks.ts islandBlend, biomeKey):
+// `biomeLook(key)`. Its area types' art jobs carry the key (render/artBuild.ts ArtJob, its cache key too), so their trees (art/areas.js
+// areaTreeVariants), small trees (artBuild areaTree), bushes and props (areas.js prop) bake in its look; the leaf jitter keeps the
+// biome's share (render/view/frameUniforms.ts). Nothing here costs a frame: it all runs once, as an area type's art is baked. A
+// temperate island has no key: its art exactly as before. `?biome=<name or key>` puts every area in one look (a tryout).
 
 // leaf: [r, g, b, k] mix every leaf tone toward that colour by k; sat and val after it. lit: the lit tone (LEAF2) mixed toward its
 // own colour (new growth, sun-bleaching). bark: the trunk's three tones toward a colour. moss: hanging moss and lichen's colour.
@@ -36,7 +39,8 @@ const NUM = ["sat", "val", "snow", "jitter"], KNOB_ADD = ["lean", "gnarl", "hang
 const mixArr = (a, b, w) => a && b ? a.map((v, i) => v * w + b[i] * (1 - w)) : a ? a.map((v, i) => i === 3 ? v * w : v) : b ? b.map((v, i) => i === 3 ? v * (1 - w) : v) : undefined;
 /** A biome's look, or two blended (`{ a, b, w }`, a's share w): every number mixed by share, crown extras kept at their share. */
 export function biomeLook(blend) {
-  if (typeof blend === "string") blend = { a: blend, b: blend, w: 1 };
+  if (typeof blend === "string") { const [a, b = a, w = "1"] = blend.split("|"); blend = { a, b, w: +w }; } // (a name, or a blend's key: "a|b|w", rules/lakeLooks.ts biomeKey)
+  if (!blend || (blend.a === "temperate" && blend.b === "temperate")) return null;
   const A = BIOME_LOOKS[blend.a] || BIOME_LOOKS.temperate, B = BIOME_LOOKS[blend.b] || BIOME_LOOKS.temperate, w = blend.w ?? 1, out = { name: blend.a === blend.b ? A.name : `${A.name} ${Math.round(w * 100)}% · ${B.name}` };
   for (const k of NUM) out[k] = (A[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * w + (B[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * (1 - w);
   for (const k of ["leaf", "lit", "bark"]) out[k] = mixArr(A[k], B[k], w);
@@ -49,6 +53,15 @@ export function biomeLook(blend) {
   if (Object.keys(crown).length) out.crown = crown;
   const trunk = w >= .5 ? A.trunk : B.trunk; if (trunk) out.trunk = trunk;
   return out;
+}
+
+/** The share of the game's per-tree leaf jitter a biome (a name or a blend's key) keeps: 1 temperate, 0 the snow's (its
+ *  autumn and hue turns would tint snow and lichen; render/view/frameUniforms.ts). Remembered by key. */
+const JITTER = new Map();
+export function biomeJitter(key) {
+  if (!key) return 1;
+  let j = JITTER.get(key); if (j === undefined) { j = biomeLook(key)?.jitter ?? 1; JITTER.set(key, j); }
+  return j;
 }
 
 /** A tree style (an area's `ts`) with a biome's knobs laid over it. */
@@ -69,12 +82,13 @@ export const biomeSnow = (look, own = 0) => Math.max(own, look?.snow ?? 0);
 
 const mix = (c, m, k) => [0, 1, 2].map(i => Math.round(c[i] * (1 - k) + m[i] * k));
 function satVal(c, s, v) { const l = .3 * c[0] + .59 * c[1] + .11 * c[2]; return c.map(x => Math.max(0, Math.min(255, Math.round((l + (x - l) * s) * v)))); }
-/** A tree's colour table (treeColours' and the area's) tinted by a biome, in place. M: the material numbers. */
-export function biomeColours(c, look, M) {
+/** A tree's colour table (treeColours' and the area's) tinted by a biome, in place. M: the material numbers. flower: false keeps
+ *  the table's own flowers and berries (a prop's: a flowerbed, a hedge's berries). */
+export function biomeColours(c, look, M, { flower = true } = {}) {
   if (!look) return c;
   for (const m of [M.LEAF, M.LEAF2, M.LEAF3]) if (c[m]) { let x = look.leaf ? mix(c[m], look.leaf, look.leaf[3]) : c[m]; if (m === M.LEAF2 && look.lit) x = mix(x, look.lit, look.lit[3]); c[m] = satVal(x, look.sat ?? 1, look.val ?? 1); }
   if (look.bark) for (const m of [M.TRUNK, M.BARKD, M.BARKL]) if (c[m]) c[m] = mix(c[m], look.bark, look.bark[3]);
   if (look.moss && c[M.MOSS]) c[M.MOSS] = look.moss.slice(0, 3);
-  if (look.flower) c[M.FLOWER] = look.flower.slice(0, 3);
+  if (flower && look.flower) c[M.FLOWER] = look.flower.slice(0, 3);
   return c;
 }
