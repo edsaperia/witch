@@ -302,12 +302,17 @@ stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime 
 stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
-// The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it, full screen,
-// the night running on at the house's tenth while she stands still; E or Esc leaves. On an integrated GPU (Ed's Intel UHD) its
+// The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
+// 2026-10-23: "opens when you walk up to it, look around with aiming keys"; by nearness, as the map table's chart), full screen,
+// the night running on at the house's tenth while she stands still; walking off (WASD, the left stick), E or Esc leaves, and it
+// stays shut till she's left it (E there opens it again). On an integrated GPU (Ed's Intel UHD) its
 // picture is drawn at telescope.lowGpuResolution (?telescopeRes= sets it), scaled up square.
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
+let scopeAt: string | null = null, scopeShut: string | null = null; // (the telescope it's open at, and the one she left it at)
+telescope.onWalk = () => { scopeShut = scopeAt; }; // (and any closing while she's there: below, onChange)
 telescope.onChange = on => {
   const T = N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
+  if (!on) scopeShut = scopeAt; // (closed at it, by walking, E or Esc: not opened again till she's left it)
   view.pixelScale = on ? 1 / Math.max(0.25, Math.min(1, res)) : 1;
   fit();
   input.clearPresses();
@@ -318,7 +323,7 @@ const useHouse = (obj: string): void => {
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
-  else if (o.use.kind === "telescope" && tuning.telescope) telescope.open(game, tuning.telescope);
+  else if (o.use.kind === "telescope" && tuning.telescope) { scopeShut = null; scopeAt = o.id; telescope.open(game, tuning.telescope); }
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -784,7 +789,11 @@ function frame(now: number): void {
   if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.spells.broom, game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : ""); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
-  input.dpadMenu = !!stations.station;
+  // The telescope by nearness (as the tables): up as she comes to it, shut once she walks off, till she's left it.
+  const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
+  if (!scope) { scopeShut = null; if (telescope.on && scopeAt) { telescope.close(); scopeAt = null; } }
+  else if (!telescope.on && scopeShut !== scope.id && tuning.telescope) { scopeAt = scope.id; telescope.open(game, tuning.telescope); }
+  input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
   if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
@@ -919,6 +928,7 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
   look: (heading: number, zoom: number, elevation?: number) => { const { game, tuning } = N(); if (!tuning.telescope) return false; telescope.open(game, tuning.telescope); telescope.point(heading, zoom, tuning.telescope, elevation); view.telescope = telescope.look(tuning.telescope); return true; },
   close: () => { telescope.close(); view.telescope = null; },
   get on() { return telescope.on; },
+  get aim() { return telescope.aiming; },
 };
 (window as unknown as { witch: Record<string, unknown> }).witch.sail = (island: string, seed: number, o: { end?: FlightEnd | null; fail?: boolean } = {}): Promise<boolean> => {
   sailFail = !!o.fail && params.get("debug") === "sail";

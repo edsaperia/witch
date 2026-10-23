@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
-import { compassPoint, moonInView, newTelescope, stepTelescope, telescopeFloor, telescopeFov, telescopeMagnification, telescopePitch, wrapBearing } from "./telescope";
+import { compassPoint, moonInView, newTelescope, stepTelescope, telescopeFloor, telescopeFov, telescopeMagnification, telescopePitch, turnTelescope, wrapBearing } from "./telescope";
 
 const T = TUNING.telescope!;
 
@@ -19,6 +19,13 @@ describe("the telescope (rules/telescope.ts)", () => {
     s = stepTelescope(newTelescope(T), { moveX: -1, moveZ: 0 }, 1, T);
     expect(s.heading).toBeCloseTo(wrapBearing(-T.pan));
     expect(s.heading).toBeGreaterThanOrEqual(0);
+  });
+  it("turns straight by the mouse's degrees, wrapping round and tilting no further than its floor and tiltMax", () => {
+    const s = newTelescope(T);
+    expect(turnTelescope(s, -10, 0, T).heading).toBeCloseTo(350);
+    expect(turnTelescope(s, 5, 3, T)).toEqual({ heading: 5, elevation: telescopeFloor(T) + 3, zoom: 0 });
+    expect(turnTelescope(s, 0, 999, T).elevation).toBe(T.tiltMax);
+    expect(turnTelescope(s, 0, -999, T).elevation).toBe(telescopeFloor(T));
   });
   it("pans slower zoomed in, so the view moves alike on screen", () => {
     const wide = stepTelescope({ heading: 0, elevation: 0, zoom: 0 }, { moveX: 1, moveZ: 0 }, 0.1, T).heading;
