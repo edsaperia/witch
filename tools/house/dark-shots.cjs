@@ -46,7 +46,7 @@ const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 
     // The reveal: from the kitchen's middle along its branch onto the Terrace's north edge, shot every 0.1 s; then back.
     await dark(true);
     const [kx, kz] = mid("kitchen"), edge = await page.evaluate(() => -window.witch.tuning.treehouse.house.hub + 1);
-    await stand(kx, kz); await step(SETTLE);
+    await stand(kx, kz); await step(Math.max(SETTLE, 60)); // (wholly dark first: the fade is 0.6 s)
     await stand(0, edge);
     for (let i = 0; i <= 7; i++) { await shot(`reveal-${i * 100}`); await step(6); }
     await stand(kx, kz);
