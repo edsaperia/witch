@@ -15,6 +15,7 @@ import { discoArt, discoSettle, Ground } from "./ground";
 import type { DiscoDrawn } from "./islandArt";
 import { HeightField, useHeightField } from "./height";
 import { LeyLines } from "./leylines";
+import { glacierMesh, mockLakeLook } from "./lakeLooks";
 import { MapTable } from "./mapTable";
 import { MarkerArt } from "./markers";
 import { Minimap } from "./minimap";
@@ -85,6 +86,7 @@ export class IslandLayers {
     this.discoLater = disco.later;
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.root.add(this.ground.mesh);
+    if (mockLakeLook() === 1) { const g = glacierMesh(game.map.bounds, game.map.seed, mpp); if (g) this.root.add(g); } // (MOCK: render/lakeLooks.ts)
   }
 
   /** The dancefloor's pictures being drawn by an art worker (groundSteps), put in by finishSteps. */
