@@ -28,7 +28,7 @@ export class StudioPlayer {
   /** Notes held, by key: what letting go releases. */
   private held = new Map<string, ((at: number) => void)[]>();
   private latched: ((at: number) => void)[] = [];
-  private loopAt = 0; private loopStep = 0; private loopWas = false;
+  private loopAt = 0; private loopStep = 0; private loopWas = false; private loopAhead = 0.2; private loopLast = 0;
   private pad: boolean[] = [];
   private style: MusicStyle;
 
@@ -37,7 +37,7 @@ export class StudioPlayer {
     addEventListener("keydown", e => this.key(e, true), { capture: true });
     addEventListener("keyup", e => this.key(e, false), { capture: true });
     panel.onPress = (what, down) => this.press(what, down);
-    panel.onControl = c => { applyControl(this.state, c); this.panel.show(this.state); };
+    panel.onControl = c => this.control(c);
   }
 
   /** The instrument she's at now (null: none). */
@@ -96,7 +96,7 @@ export class StudioPlayer {
     e.preventDefault(); e.stopImmediatePropagation(); // (every other key is the instrument's, not the game's)
     if (down && e.repeat) return;
     const c = down ? controlFor(e.code) : null;
-    if (c) { applyControl(this.state, c); this.panel.show(this.state); return; }
+    if (c) { this.control(c); return; }
     if (e.code === "ShiftLeft" || e.code === "ShiftRight") return;
     this.press(e.code, down, e.shiftKey);
   }
@@ -190,15 +190,25 @@ export class StudioPlayer {
     if (this.at === "mic") { const x = gp.axes[0] ?? 0, y = gp.axes[1] ?? 0; if (Math.hypot(x, y) > 0.5) { const P = this.state.players[0], v: Vowel = Math.abs(x) > Math.abs(y) ? S.mic.vowels[x < 0 ? "left" : "right"] : S.mic.vowels[y < 0 ? "up" : "down"]; if (v !== P.vowel) { P.vowel = v; this.panel.show(this.state); } } }
   }
 
+  /** The number row (or its buttons): the loop and her sound, the loop's change heard at once rather than at the next frame. */
+  private control(c: NonNullable<ReturnType<typeof controlFor>>): void {
+    applyControl(this.state, c); this.panel.show(this.state);
+    if (this.ctx && this.main) this.loop(this.ctx);
+  }
+
   // ---- the loop ----
 
-  /** The loop's sixteenths scheduled a fifth of a second ahead on the audio clock, at its own tempo, while anyone's at an instrument;
-   *  started on its first bar. */
+  /** The loop's sixteenths scheduled ahead on the audio clock, at its own tempo, while anyone's at an instrument; started on its first
+   *  bar. A fifth of a second ahead, further after a long frame (up to 2 s, easing back), so a stall doesn't drop its beats (as the
+   *  music engine's `maxAhead`); a stall longer than that skips the steps it missed rather than playing them late in a burst. */
   private loop(ctx: AudioContext): void {
-    const L = this.state.loop, now = ctx.currentTime, six = 60 / L.bpm / 4;
+    const L = this.state.loop, now = ctx.currentTime, six = 60 / L.bpm / 4, gap = now - this.loopLast;
+    this.loopLast = now;
+    this.loopAhead = Math.min(2, Math.max(0.2, gap * 1.5, this.loopAhead - 0.5 * gap));
     if (!L.on || !this.state.players.some(p => p.at)) { this.loopWas = false; return; } // (on, it plays while someone's at an instrument)
     if (!this.loopWas) { this.loopWas = true; this.loopAt = now + 0.08; this.loopStep = 0; } // (a new tempo from the next sixteenth: each step its own length)
-    while (this.loopAt < now + 0.2) {
+    if (this.loopAt < now) { const n = Math.ceil((now - this.loopAt) / six); this.loopAt += n * six; this.loopStep += n; }
+    while (this.loopAt < now + this.loopAhead) {
       for (const h of loopHits(L.style, this.loopStep)) this.main!.note(`loop|${h.patch}`, h.patch, h.midi, h.vel * S.loop.level, this.loopAt, h.steps * six);
       this.panel.beat(this.loopStep % 16, this.loopAt - now);
       this.loopStep++; this.loopAt += six;
