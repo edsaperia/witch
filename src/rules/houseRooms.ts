@@ -19,7 +19,9 @@ export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
   | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
   /** The map table (Ed, 2026-10-23: in the middle of the Atrium): E opens the sea chart (rules/treehouse.ts atMapTable). */
-  | { kind: "chart" };
+  | { kind: "chart" }
+  /** A treehouse Studio instrument (Ed, 2026-10-23): she's at it by nearness, its menu in and every key playing it (rules/studio.ts). */
+  | { kind: "instrument"; instrument: "drums" | "synth" | "mic" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
 export interface HouseConfig {
   on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;

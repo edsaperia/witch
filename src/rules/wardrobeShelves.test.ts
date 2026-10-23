@@ -2,7 +2,8 @@
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
 import { HOUSE_ROOMS } from "./houseRooms";
-import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, itemById, ownedOf, shelvesAt, skinSwatch, wear, wears } from "./wardrobe";
+import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, bareHeadAt, itemById, itemsToChoose, ownedOf, shelvesAt, shownItems, skinSwatch, wear, wears } from "./wardrobe";
+import { TUNING } from "./tuning";
 
 const CLASSIC = Art.WITCH_GENOME as unknown as Record<string, unknown>;
 const AXES = Art.WITCH_AXES as Record<string, unknown[]>;
@@ -76,3 +77,26 @@ describe("the wardrobe", () => {
     for (let r = 0; r < GRID_ROWS; r++) for (let c = 0; c < SKIN_COLS; c++) { const [h, s, v] = skinSwatch(c, r); for (const x of [h, s, v]) { expect(x).toBeGreaterThanOrEqual(0); expect(x).toBeLessThanOrEqual(1); } }
   });
 });
+
+describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till the Workshop, her hat off for her face", () => {
+  it("an item row shows once two of its items are hers", () => {
+    const face = SHELVES.face, earrings = SHELVES.earrings;
+    expect(itemsToChoose(face, new Set(STARTING_SET))).toBe(false); // (bare only: the sunglasses still to find)
+    expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
+    expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
+  });
+  it("the broom stand shows Classic only till the Workshop's parts", () => {
+    expect(shownItems(SHELVES.broom).map(i => i.id)).toEqual(["broom-classic"]);
+    expect(itemsToChoose(SHELVES.broom, new Set(SHELVES.broom.items.map(i => i.id)))).toBe(false);
+    expect(shelvesAt("broomStand")!.some(s => s.power)).toBe(true); // (its powers kept till then)
+  });
+  it("every shelf names the part of her the camera zooms on, one the tuning has", () => {
+    const parts = TUNING.camera.station!.parts!;
+    for (const s of Object.values(SHELVES)) expect(parts[s.frame!], s.id).toBeTruthy();
+  });
+  it("her hat comes off at the dressing table, not at the hat's mirror", () => {
+    expect(bareHeadAt("dressingTable")).toBe(true);
+    expect(bareHeadAt("mirror")).toBe(false);
+  });
+});
+

@@ -5,7 +5,7 @@
 import * as Art from "../../art/generator.js";
 import { atlasFromPixels, placeholderAtlas, type Atlas } from "./atlas";
 import { witchSprites, type SoundsystemGenArt, type TreehouseArt, type WitchArt } from "./homeArt";
-import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
+import { creatureFrame, walkGait, runJob, type ArtJob, type ArtResult, type BeachArt, type BeachEdgeArt, type LakeShoreArt, type DecorPiece, type PartyWitchArt, type PartyArt, type PathPieceArt, type RelicArt, type RelicLayouts, type SceneArt, type SpeakerArt, type TilePixels, type TypeLayout } from "./artBuild";
 import type { Style } from "./style";
 import { artCacheKey, cachePut, hashText, type CacheHint } from "./artCache";
 import { rigGearKey, type RigGear, type RigMeta } from "./rig/rigBuild";
@@ -69,6 +69,7 @@ export class AssetLibrary {
   private decor: DecorArt | undefined;
   /** The beach's edge of the woods (render/beach.ts): asked for only when she comes near the sand. */
   private beachEdge: (BeachEdgeArt & { atlas: Atlas }) | undefined;
+  private lakeShore: (LakeShoreArt & { atlas: Atlas; biome?: string }) | undefined;
   private speakers: (SpeakerArt & { atlas: Atlas }) | undefined;
   private scenes: (SceneArt & { atlas: Atlas }) | undefined;
   private pieces: { atlas: Atlas; byId: Record<string, PathPieceArt> } | undefined;
@@ -303,6 +304,9 @@ export class AssetLibrary {
       this.partyWitches.set(r.job.id, { atlas, ...r.result.witch! });
     } else if (r.job.kind === "beachEdge") {
       this.beachEdge = { atlas, ...r.result.beachEdge! };
+    } else if (r.job.kind === "lakeShore") {
+      if (this.lakeShore) { this.lakeShore.atlas.albedo.dispose(); this.lakeShore.atlas.normal.dispose(); } // (another island's, landing late or let go)
+      this.lakeShore = { atlas, ...r.result.lakeShore!, biome: (r.job as { biome?: string }).biome };
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
@@ -345,6 +349,14 @@ export class AssetLibrary {
   beachEdgeArt(): (BeachEdgeArt & { atlas: Atlas }) | undefined {
     if (!this.beachEdge) this.ask({ kind: "beachEdge", id: "all", style: this.style, K: this.K }, true);
     return this.beachEdge;
+  }
+  /** The biome lakes' shore dressing (render/lakeShore.ts), or undefined (and asked for). */
+  lakeShoreArt(): (LakeShoreArt & { atlas: Atlas }) | undefined {
+    // (in the island's biome look, art/flora/biomes.js: drawn again for an island in another; the view lets go of its batch on the
+    // old one when this comes back undefined, render/lakeShore.ts, before it's freed as the new one lands)
+    if (this.lakeShore && this.lakeShore.biome !== this.typeBiome) return this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true), undefined;
+    if (!this.lakeShore) this.ask({ kind: "lakeShore", id: this.typeBiome ?? "all", style: this.style, K: this.K, biome: this.typeBiome }, true);
+    return this.lakeShore;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
   decorArt(): DecorArt | undefined {
@@ -499,6 +511,8 @@ export class AssetLibrary {
   }
   private bare: Atlas | null = null;
   private bareAsked = false;
+  /** Her frames without her hat are in (not the stand-in). */
+  get bareReady(): boolean { return !!this.bare; }
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;

@@ -42,6 +42,12 @@ export function stepTelescope(s: Telescope, c: { moveX: number; moveZ: number; z
   return { heading: wrapBearing(s.heading + c.moveX * T.pan * k * dt), elevation, zoom };
 }
 
+/** Turned straight by `dHeading` and `dElevation` degrees (the mouse: Ed, 2026-10-23, "look around with aiming keys"), the
+ *  elevation kept between its floor and tiltMax. */
+export function turnTelescope(s: Telescope, dHeading: number, dElevation: number, T: TelescopeTuning): Telescope {
+  return { ...s, heading: wrapBearing(s.heading + dHeading), elevation: Math.min(T.tiltMax, Math.max(telescopeFloor(T), s.elevation + dElevation)) };
+}
+
 /** The pitch (degrees down) from an eye `eye` metres up to the ground `aim` metres out, over ground bent by `bend` (dropping
  *  bend × d² at d metres: render/height.ts): what the view tilts down by so its middle lands there. */
 export const telescopePitch = (eye: number, aim: number, bend: number): number => (Math.atan((eye + bend * aim * aim) / Math.max(1, aim)) * 180) / Math.PI;

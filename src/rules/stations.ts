@@ -14,23 +14,32 @@ import type { Tuning } from "./tuning";
 /** How much further than the house's reach she can step before an open station's panel goes (m). */
 export const STATION_SLACK = 0.8;
 
-const isStation = (o: HouseObject) => o.use.kind === "creator";
+/** The uses that come to her by nearness: the dressing stations' (the creator: their panels slide in from the left, ui/stationPanel.ts)
+ *  and the tables' (Ed, 2026-10-23: "'Tables' slide in from the bottom and have a soft edge (they're more diegetic)": the Atrium's
+ *  map table's sea chart, ui/chartOverlay.ts; the card table's to come, docs/backlog/treehouse.md). */
+export const STATION_USES: readonly HouseObject["use"]["kind"][] = ["creator"];
+export const TABLE_USES: readonly HouseObject["use"]["kind"][] = ["chart"];
 
 /** The station she's at, standing at (x, z) with `open` the one whose panel is open now (null for none): that one while she's
- *  within reach + slack of it, else the nearest station within reach, else null. */
-export function stationAt(at: { x: number; z: number }, x: number, z: number, open: string | null, H = HOUSE_ROOMS, slack = STATION_SLACK): HouseObject | null {
-  const cur = open ? H.objects.find(o => o.id === open && isStation(o)) : undefined;
+ *  within reach + slack of it, else the nearest station within reach, else null. `uses`: which objects count (the dressing
+ *  stations by default; TABLE_USES for the tables). */
+export function stationAt(at: { x: number; z: number }, x: number, z: number, open: string | null, H = HOUSE_ROOMS, slack = STATION_SLACK, uses: readonly string[] = STATION_USES): HouseObject | null {
+  const is = (o: HouseObject) => uses.includes(o.use.kind);
+  const cur = open ? H.objects.find(o => o.id === open && is(o)) : undefined;
   if (cur && fromObject(cur, at, x, z) <= H.reach + slack) return cur;
   let best: HouseObject | null = null, bd = H.reach;
-  for (const o of H.objects) if (isStation(o)) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
+  for (const o of H.objects) if (is(o)) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
   return best;
 }
 
-/** Her station in the game as it is: only on foot in the house (landed, off her decks, not knocked out), else null. */
-export function stationOf(g: Game, open: string | null, tuning: Tuning = g.tuning): HouseObject | null {
+/** Her station in the game as it is: only on foot in the house (landed, off her decks, not knocked out), else null. `uses` as
+ *  stationAt's. */
+export function stationOf(g: Game, open: string | null, tuning: Tuning = g.tuning, uses: readonly string[] = STATION_USES): HouseObject | null {
   const w = g.witch, W = g.witches[0];
   if (!w.perch || w.mode !== "ground" || w.seated || W.ko) return null;
   const d = deckOf(g.map, tuning);
   if (!d || !hasRooms(d)) return null;
-  return stationAt(d, w.x, w.z, open);
+  return stationAt(d, w.x, w.z, open, HOUSE_ROOMS, STATION_SLACK, uses);
 }
+/** The table she's at (its thing slides up from the bottom: ui/chartOverlay.ts), as stationOf. */
+export const tableOf = (g: Game, open: string | null, tuning: Tuning = g.tuning): HouseObject | null => stationOf(g, open, tuning, TABLE_USES);
