@@ -98,7 +98,7 @@ export class TelescopeView {
       ly += (b(13) ? 1 : 0) - (b(12) ? 1 : 0) + (Math.abs(ry) > 0.18 ? ry : 0);
     }
     const l = Math.hypot(lx, ly); if (l > 1) { lx /= l; ly /= l; }
-    this.aim = stepTelescope(this.aim, { moveX: lx, moveZ: ly, zoom: c.zoom }, dt, T);
+    this.aim = stepTelescope(this.aim, { moveX: lx, moveZ: ly, zoom: c.zoom }, Math.min(dt, 0.1), T); // (a long frame doesn't swing it round)
     // the mouse: the view follows it, a pixel of movement a pixel of the view across (its field over the screen's width)
     const per = telescopeFov(T, this.aim.zoom) / Math.max(1, innerHeight);
     if (this.mouse.x || this.mouse.y) { this.aim = turnTelescope(this.aim, this.mouse.x * per, -this.mouse.y * per, T); this.mouse.x = 0; this.mouse.y = 0; }
