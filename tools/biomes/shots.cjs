@@ -18,7 +18,9 @@ server.listen(0, "127.0.0.1", async () => {
   fs.mkdirSync(outDir, { recursive: true });
   const errors = [];
   for (const biome of list.split(";")) {
-    const name = biome.replace(/ /g, "-"), q = biome === "temperate" ? "" : `&biome=${encodeURIComponent(biome)}`;
+    const name = biome.replace(/ /g, "-"), { BIOME_LOOKS } = await import(path.resolve("art/flora/biomes.js")), J = BIOME_LOOKS[biome]?.jitter ?? 1, LJ = require(path.resolve("config/tuning.json")).leafJitter;
+    // (the look's share of the per-tree leaf jitter: in the game a per-area scale, here the island's tuning, ?set=)
+    const q = biome === "temperate" ? "" : `&biome=${encodeURIComponent(biome)}&set=${encodeURIComponent(`leafJitter.autumn=${+(LJ.autumn * J).toFixed(3)};leafJitter.hue=${+(LJ.hue * J).toFixed(2)}`)}`;
     const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`${biome}: ${e.message}`));
