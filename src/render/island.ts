@@ -15,6 +15,8 @@ import { discoArt, discoSettle, Ground } from "./ground";
 import type { DiscoDrawn } from "./islandArt";
 import { HeightField, useHeightField } from "./height";
 import { LeyLines } from "./leylines";
+import { glacierMesh, lakeLooksOf } from "./lakeLooks";
+import { lakeKnobs } from "../rules/lakes";
 import { MapTable } from "./mapTable";
 import { MarkerArt } from "./markers";
 import { Minimap } from "./minimap";
@@ -53,6 +55,8 @@ export class IslandLayers {
   markerShadows: TrunkShadowBatch | null = null;
   ley!: LeyLines;
   dancefloor!: Dancefloor;
+  /** The north's lakes' glacier, if the island has any (render/lakeLooks.ts). */
+  glacier: THREE.Mesh | null = null;
 
   /** `attach` false: built off the scene, to be swapped in (attach) once whole (View.setGame: the next island built before the
    *  last is let go, so the shader programs both use are never freed and made again). */
@@ -85,6 +89,9 @@ export class IslandLayers {
     this.discoLater = disco.later;
     this.ground.mesh.renderOrder = -1; // first: the grounds' decals go on it before anything stands on it
     this.root.add(this.ground.mesh);
+    // the north's lakes' glacier (render/lakeLooks.ts), its peaks under her treetop flight (she can't come down over a lake: #1016)
+    const lakes = lakeLooksOf(game.map), ice = lakes && glacierMesh(lakes, game.map.island?.seed ?? game.map.seed, mpp, t.treetopHeight - lakeKnobs(t).glacierClear);
+    if (ice) { this.glacier = ice; this.root.add(ice); }
   }
 
   /** The dancefloor's pictures being drawn by an art worker (groundSteps), put in by finishSteps. */
@@ -164,5 +171,6 @@ export class IslandLayers {
     this.markerArt?.dispose();
     this.ley?.dispose();
     this.dancefloor?.dispose();
+    if (this.glacier) { this.glacier.geometry.dispose(); (this.glacier.material as THREE.Material).dispose(); }
   }
 }

@@ -29,6 +29,9 @@ import { slowAmount, slowest } from "./slowtime";
 import { moonState, type MoonState } from "../rules/moon";
 import { Clouds } from "./clouds";
 import { Smoke } from "./smoke";
+import { lakeLooksOf, steamVents } from "./lakeLooks";
+import { lakeKnobs } from "../rules/lakes";
+import type { ForestMap } from "../rules/map";
 import { OcclusionProbes } from "./occlusion";
 import { Ride } from "./ride";
 import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, type HeightField } from "./height";
@@ -331,6 +334,9 @@ export class View {
   clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke!: Smoke;
+  /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
+  private steam!: Smoke;
+  private steamFor: { map: ForestMap; vents: Float32Array } | null = null;
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
@@ -536,7 +542,8 @@ export class View {
     this.clouds = new Clouds(t.sky.clouds, t.sky.lightning, game.seed);
     this.scene.add(this.clouds.mesh, this.clouds.bolt);
     this.smoke = new Smoke(t.smoke);
-    this.scene.add(this.smoke.mesh);
+    { const S = lakeKnobs(t).steam; this.steam = new Smoke({ ...t.smoke, on: S.on, rate: 1.2, life: S.life, rise: S.rise, speed: (S.rise / S.life) * 1.6, size: S.size, grow: 2, opacity: S.opacity, warm: 0, perFire: 8, maxFires: 12 }); }
+    this.scene.add(this.smoke.mesh, this.steam.mesh);
     this.assets.onFloor = (type, tile) => this.ground.setFloor(type, tile);
     this.assets.prefetchType(HOME_LOOK); // home's meadow floor (no trees ask for it)
     const cs = t.canopyShadow;
@@ -978,6 +985,16 @@ export class View {
     return m;
   }
 
+  /** The hot springs' steam (render/lakeLooks.ts): a vent every so often over their deep water, the nearest puffing. */
+  private updateSteam(g: Game, time: number): void {
+    const S = this.steam, w = g.witch;
+    if (this.steamFor?.map !== g.map) { const k = lakeLooksOf(g.map); this.steamFor = { map: g.map, vents: k ? steamVents(k, lakeKnobs(g.tuning).steam.spacing) : new Float32Array(0) }; }
+    const v = this.steamFor.vents;
+    S.begin();
+    for (let i = 0; i < v.length; i += 2) S.add(v[i], groundHeight(v[i], v[i + 1]), v[i + 1], 1, w.x, w.z);
+    S.end(time);
+  }
+
   /** The smoke (render/smoke.ts): the world's campfires burning now, the party's fires, and the charcoal huts' mounds, nearest first. */
   private updateSmoke(g: Game, time: number): void {
     const S = this.smoke, t = g.tuning, w = g.witch, R = t.smoke.range;
@@ -1219,6 +1236,7 @@ export class View {
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
+    this.updateSteam(g, time);
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);

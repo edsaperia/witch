@@ -10,8 +10,8 @@ import { hash2 } from "./random";
 
 /** The lakes' knobs (the tuning's lakes): shore, metres of bare shore round the water (no trees, nothing placed); pad, how far
  *  from the water anything on foot stops; koi, the share of lakes with koi in them (the view's). */
-export interface LakeKnobs { shore: number; pad: number; koi: number; /** the island phase from which its lakes show its compass biomes' looks on the sea chart (app/chartOutlines.worker.ts) */ biomeFrom: number; /** the share of that first phase's lakes that do (further out all, further in none) */ biomeFirstShare: number }
-export const LAKES: LakeKnobs = { shore: 4, pad: 1.5, koi: 0.5, biomeFrom: 3, biomeFirstShare: 0.5 };
+export interface LakeKnobs { shore: number; pad: number; koi: number; /** the island phase from which its lakes show its compass biomes' looks on the sea chart (app/chartOutlines.worker.ts) */ biomeFrom: number; /** the share of that first phase's lakes that do (further out all, further in none) */ biomeFirstShare: number; /** the glacier's peaks kept this far (m) under her treetop flight (render/lakeLooks.ts) */ glacierClear: number; /** the hot springs' steam (render/lakeLooks.ts steamVents, render/smoke.ts) */ steam: { on: boolean; rise: number; life: number; size: number; opacity: number; spacing: number } }
+export const LAKES: LakeKnobs = { shore: 4, pad: 1.5, koi: 0.5, biomeFrom: 3, biomeFirstShare: 0.5, glacierClear: 5, steam: { on: true, rise: 14, life: 7, size: 4, opacity: 0.4, spacing: 28 } };
 export const lakeKnobs = (t: { lakes?: Partial<LakeKnobs> }): LakeKnobs => ({ ...LAKES, ...t.lakes });
 
 /** How far into a lake (x, z) is (m): + on the water, - ashore (-Infinity with no lakes, or well clear of them). */

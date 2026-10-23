@@ -13,9 +13,10 @@ import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
 import { LOOKS } from "../rules/map";
 import { speakerRadius } from "../rules/speakers";
-import type { Beach, Bounds } from "../rules/mapShape";
+import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { LAKE_LOOKS_GLSL, lakeLookTexture, lakeLooksOf } from "./lakeLooks";
 import { HEIGHT_GLSL, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import type { TilePixels } from "./artBuild";
 import type { Style } from "./style";
@@ -118,6 +119,7 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }
+${LAKE_LOOKS_GLSL}
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
   // How many art pixels one screen pixel spans, across and down (taken here, in uniform flow): over 1 when the camera is far
@@ -395,7 +397,13 @@ void main() {
     vec2 kuv = (p - uLakeBox.xy + uLake.y) * uLakeBox.zw;
     if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
       float ld = texture2D(uLakes, kuv).r + (vnoise(p / 5.0 + 23.0) - 0.5) * 1.4; // (+ on the water; its line wobbled a little)
-      if (ld > -2.6) {
+      // a biome lake (Ed, 2026-10-23; render/lakeLooks.ts): its look's shore and water, the sea chart's look for it
+      float LK = ld > -14.0 ? lakeLookAt(kuv) : 0.0;
+      if (LK > 0.5 && ld > -lakeRim(LK)) {
+        vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
+        if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
+        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
+      } else if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < front) {
@@ -578,7 +586,7 @@ export class Ground {
         uLandBox: { value: new THREE.Vector4() },
         uLand: { value: null as THREE.DataTexture | null },
         uMoonRoad: { value: new THREE.Vector3() },
-        ...lakeUniforms(map.bounds, map.seed, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)),
+        ...lakeUniforms(map, lakeKnobs(map.tuning).koi, koiScale(st, metresPerPixel)),
         uLegendRings: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
@@ -749,7 +757,7 @@ export class Ground {
    *  map (the height field's texture is the HeightField's own, left alone). */
   dispose(): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
-    for (const k of ["uDiscoBase", "uDiscoLit", "uLakes"]) (u[k]?.value as THREE.Texture | null)?.dispose();
+    for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
     this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.discoTiles.dispose();
     this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose();
   }
@@ -805,17 +813,19 @@ const discoOf = (d: DiscoDrawn, radius: number): DiscoArt => ({ base: d.base as 
 
 /** The lakes' map (rules/lakes.ts) for the ground shader: how far into a lake, as a half-float texture eased between its samples;
  *  and their koi. */
-function lakeUniforms(bounds: Bounds, seed: number, share: number, koiSize: number): Record<string, THREE.IUniform> {
-  const L = bounds.lakes;
+function lakeUniforms(map: ForestMap, share: number, koiSize: number): Record<string, THREE.IUniform> {
+  const bounds = map.bounds, L = bounds.lakes;
   const koi = { value: Array.from({ length: 8 }, () => new THREE.Vector4()) };
-  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uKoi: koi, uKoiSize: { value: koiSize } };
-  koiPonds(bounds, seed, share).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
+  if (!L) return { uLake: { value: new THREE.Vector4() }, uLakeBox: { value: new THREE.Vector4() }, uLakes: { value: null }, uLakeLooks: { value: null }, uKoi: koi, uKoiSize: { value: koiSize } };
+  // (koi only in the plain water: render/lakeLooks.ts, the biome lakes' looks)
+  const K = lakeLooksOf(map)!, plain = (x: number, z: number) => { const c = Math.round((x - L.x0) / L.step), r = Math.round((z - L.z0) / L.step); return c < 0 || r < 0 || c >= L.cols || r >= L.rows || K.near[r * L.cols + c] === 0; };
+  koiPonds(bounds, map.seed, share).filter(k => plain(k.x, k.z)).slice(0, 8).forEach((k, i) => koi.value[i].set(k.x, k.z, k.r, k.seed + k.count / 10));
   const N = L.cols * L.rows, data = new Uint16Array(N), h = THREE.DataUtils.toHalfFloat;
   for (let k = 0; k < N; k++) data[k] = h(Math.max(-60, Math.min(60, L.dist[k])));
   const t = new THREE.DataTexture(data, L.cols, L.rows, THREE.RedFormat, THREE.HalfFloatType);
   t.magFilter = t.minFilter = THREE.LinearFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
   t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
-  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uKoi: koi, uKoiSize: { value: koiSize } };
+  return { uLake: { value: new THREE.Vector4(1, L.step / 2, 0, 0) }, uLakeBox: { value: new THREE.Vector4(L.x0, L.z0, 1 / (L.step * L.cols), 1 / (L.step * L.rows)) }, uLakes: { value: t }, uLakeLooks: { value: lakeLookTexture(K) }, uKoi: koi, uKoiSize: { value: koiSize } };
 }
 
 /** A koi's scale in the shader (Ed, 2026-10-12: "large, similar to the size of a baby creature"): as long as a baby creature is
