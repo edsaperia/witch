@@ -32,5 +32,15 @@ export const CREATURE_WOODLOUSE = {
     mods: { rear: 1 },
     label: "Woodlouse's Rear guard: each burst also fires a 💌 behind you"
   },
-  character: { sprite: "puff", every: [4, 8], for: 1 }
+  character: { sprite: "puff", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: null,
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the curl",
+    tells: { melee: "crouch", special: "the curl" }
+  }
 };
