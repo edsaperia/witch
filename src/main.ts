@@ -245,6 +245,7 @@ sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where t
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
+freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 
 // Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
 // the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party
@@ -455,7 +456,7 @@ function pauseControls(on: boolean): void {
   if (!on || dressed) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
   if (!pauseBtns) {
     pauseBtns = document.createElement("div");
-    pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
+    pauseBtns.id = "pause-btns"; pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
     const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
     for (const [label, id, title, el] of [["❔ Controls", "controls", "CONTROLS", keys], ["📜 What's new", "news", "WHAT'S NEW", news], ["⚙ Options", "options", "OPTIONS", shakeEl]] as const) {
       if (!el) continue;
