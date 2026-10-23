@@ -65,6 +65,7 @@
     { "id": "specimens", "room": "bestiary", "label": "Skeletons and skulls", "x": 20.54, "z": 3.16, "w": 0.8, "d": 6, "h": 4, "use": { "kind": "say", "line": "The skeletons and skulls come later."} },
     { "id": "telescope", "room": "crowsNest", "label": "Telescope", "x": 37.7, "z": -55.94, "w": 1.6, "d": 1.6, "h": 3.2, "use": { "kind": "telescope"} },
     { "room": "atrium", "x": 10.92, "z": -9.84, "id": "mapTable", "label": "Map table", "w": 2.6, "d": 2.6, "h": 0.9, "use": { "kind": "chart"} },
+    { "room": "bedroom", "x": 24.69, "z": -48.53, "w": 1.6, "d": 2, "h": 0.6, "id": "clothesPile", "label": "Last night's clothes", "use": { "kind": "pile"} },
     { "id": "bedroom2Door", "room": "boudoir", "label": "Door", "x": 28.93, "z": -36.75, "w": 1.4, "d": 1.4, "h": 4.4, "use": { "kind": "say", "line": "A friend's room. Locked for now."} },
     { "id": "bedroom3Door", "room": "boudoir", "label": "Door", "x": 26.59, "z": -27.34, "w": 1.4, "d": 1.4, "h": 4.4, "use": { "kind": "say", "line": "A friend's room. Locked for now."} }
   ],

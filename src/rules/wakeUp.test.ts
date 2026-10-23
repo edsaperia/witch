@@ -6,7 +6,8 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS, fromPlan, objectFront, toPlan } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
-import { atDecks, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, doorShut, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { dressed, PILE_SLOTS, wearFromStation, wornGenome } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { heldByRoutine } from "./djSet";
 
@@ -138,18 +139,96 @@ describe("never past the build", () => {
     expect(run(g, STEP)).toContain("curtains"); // (no press)
     expect(g.wake!.open).toBe(true);
     expect(g.party.spellAt).toBeNull();
-    const door = fromPlan(g.map.treehouse, room.x0 + 1, 0); g.witches[0].body = { ...g.witches[0].body, ...door }; // (by the door, on the plan's x0 wall)
-    run(g, 6, { moveX: -1, moveZ: 1 }); // (out along the plan's -x: south-west on the screen)
-    expect(inRoom(g)).toBe(false);
+    standAt(g, "clothesPile", 0.4); expect(press(g)).toContain("dressed"); // (and dressed: the door waits on both, Ed 2026-10-23)
+    atDoor(g); run(g, 4, outward());
+    expect(outOfBedroom(g)).toBe(true);
   });
 });
 
-/** Up, the curtains open: free to walk the house, the party not started. */
+/** By the bedroom's door, just inside it (the branch to the Boudoir's end in the bedroom: config/house.json). */
+const doorBranch = () => HOUSE_ROOMS.corridors.find(c => c.id === "boudoir-bedroom")!.pts!;
+const atDoor = (g: Game) => { const p = doorBranch(), [x, z] = p[p.length - 1], at = fromPlan(g.map.treehouse, x, z); g.witches[0].body = { ...g.witches[0].body, x: at.x, z: at.z, vx: 0, vz: 0 }; };
+/** Walking out of the door, along its branch to the Boudoir. */
+const outward = (): Partial<Controls> => { const p = doorBranch(), [x0, z0] = p[p.length - 1], [x1, z1] = p[0], L = Math.hypot(x1 - x0, z1 - z0); return { moveX: (x1 - x0) / L, moveZ: (z1 - z0) / L }; };
+/** Out of the bedroom: past its round wall (on the house's plan). */
+const outOfBedroom = (g: Game) => { const p = rel(g); return Math.hypot(p.x - (room.x0 + room.x1) / 2, p.z - (room.z0 + room.z1) / 2) > room.r! + 0.3; };
+
+/** Up, the curtains open and dressed: free to walk the house, the party not started. */
 function curtainsOpen(): Game {
   const g = up(true);
   expect(g.wake!.open).toBe(true); // (the island ready, they opened by themselves as she got up)
+  standAt(g, "clothesPile", 0.4); press(g);
+  expect(dressed(g.wake)).toBe(true);
   return g;
 }
+
+describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)\")", () => {
+  it("she wakes in her nightie, every piece of her outfit in the pile by her bed", () => {
+    const g = woken();
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+    const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!, bed = obj("bed");
+    expect(pile.room).toBe("bedroom");
+    expect(Math.hypot(pile.x - bed.x, pile.z - bed.z)).toBeLessThan(8); // (by her bed)
+    const on = wornGenome(null, g.wake!.pile) as unknown as { hat: { shape: string }; cloak: string; accessories: Record<string, unknown> };
+    expect(on.accessories.nightie).toBe(true); expect(on.accessories.barefoot).toBe(true); expect(on.accessories.phones).toBe(false);
+    expect(on.hat.shape).toBe("none"); expect(on.cloak).toBe("none");
+  });
+
+  it("the shorter wake-up too (every wake-up: later loads, after the bed)", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; wakeInBedroom(g); startWake(g, g.herTime, true);
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+  });
+
+  it("E at the pile puts on all of it at once: dressed", () => {
+    const g = up(false);
+    standAt(g, "clothesPile", 0.4);
+    expect(press(g)).toContain("dressed");
+    expect(g.wake!.pile).toEqual([]);
+    expect(dressed(g.wake)).toBe(true);
+    expect(press(g)).not.toContain("dressed"); // (nothing left to put on)
+  });
+
+  it("a station's choice puts its piece on her, and the pile keeps the rest (Ed: \"if she puts on a top via the menu, the pile then puts on everything else except yesterday's top\")", () => {
+    const g = up(false), w = g.wake!;
+    expect(wearFromStation(w, "wardrobe")).toBe(true);
+    expect(w.pile).toEqual(PILE_SLOTS.filter(s => s !== "top"));
+    expect(wearFromStation(w, "wardrobe")).toBe(false); // (on already)
+    expect(wearFromStation(w, "dressingTable")).toBe(false); // (her hair and face: hers in the nightie too)
+    const on = wornGenome(null, w.pile) as unknown as { accessories: Record<string, unknown> };
+    expect(on.accessories.nightie).toBeUndefined(); expect(on.accessories.barefoot).toBe(true); // (her top on, her feet still bare)
+    wearFromStation(w, "shoeRack"); wearFromStation(w, "cloakPegs");
+    expect(w.pile).toEqual(["hat", "bits"]);
+    standAt(g, "clothesPile", 0.4); press(g);
+    expect(w.pile).toEqual([]);
+    expect(wornGenome(null, w.pile)).toBeNull(); // (dressed: her own look, as it is)
+  });
+
+  it("the door waits till she's dressed (Ed: \"get dressed first\"), the curtains open or not; dressed by the stations alone counts", () => {
+    const g = up(true);
+    expect(g.wake!.open).toBe(true);
+    expect(doorShut(g)).toBe(true);
+    atDoor(g);
+    const seen = run(g, 6, outward());
+    expect(outOfBedroom(g)).toBe(false);
+    expect(seen).toContain("dressFirst");
+    expect(seen.filter(e => e === "dressFirst").length).toBeLessThanOrEqual(2); // (now and then, not every step)
+    for (const st of ["wardrobe", "shoeRack", "cloakPegs"]) wearFromStation(g.wake!, st);
+    expect(doorShut(g)).toBe(true); // (her hat and bits still in the pile)
+    g.wake!.pile = []; // (all on by the stations: the bags' a station too, past the door, so here as if picked up)
+    expect(doorShut(g)).toBe(false);
+    atDoor(g); run(g, 4, outward());
+    expect(outOfBedroom(g)).toBe(true);
+  });
+
+  it("dressed before the curtains open, the door still waits for them", () => {
+    const g = up(false);
+    standAt(g, "clothesPile", 0.4); press(g);
+    expect(dressed(g.wake)).toBe(true);
+    atDoor(g); run(g, 4, outward());
+    expect(outOfBedroom(g)).toBe(false);
+  });
+});
 
 describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
   it("every dressing station but the hat's mirror, the bags and the broom stand is in the bedroom", () => {
