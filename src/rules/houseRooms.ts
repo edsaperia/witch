@@ -13,14 +13,17 @@ import type { LeashEvent } from "./leash";
 
 /** A rectangle of floor on the house's plan (config/house.json): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
-export interface Rect { x0: number; x1: number; z0: number; z1: number }
+export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number; /** a room drawn but not walked yet (Bedrooms 2 and 3: Ed, 2026-10-23, "locked. The branch stops at the door") */ locked?: boolean }
 /** What E does at an object (config/house.json `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string };
+  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
+  /** The map table (Ed, 2026-10-23: in the middle of the Atrium): E opens the sea chart (rules/treehouse.ts atMapTable). */
+  | { kind: "chart" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
 export interface HouseConfig {
   on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;
+  /** the Ent's own (Ed, 2026-10-23): round rooms on its branches, the hub's walls and map gone (art/ent.js), the map table an object */ organic?: boolean;
   rooms: (Rect & { id: string; label: string })[]; corridors: (Rect & { id: string })[];
   objects: HouseObject[]; bed: { hold: number };
   /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
@@ -53,26 +56,39 @@ export function toPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 
 export interface RoomFloor { at: At; turn: number; rects: Rect[] }
 /** The rooms' and corridors' floor at a hub, each rectangle pulled in by `inset` metres (her rail's keep-in). */
 export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
-  return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, rects: [...H.rooms, ...H.corridors].map(r => ({ x0: r.x0 + inset, x1: r.x1 - inset, z0: r.z0 + inset, z1: r.z1 - inset })) };
+  return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, rects: [...H.rooms.filter(r => !r.locked), ...H.corridors].map(r => ({ x0: r.x0 + inset, x1: r.x1 - inset, z0: r.z0 + inset, z1: r.z1 - inset, ...(r.r ? { r: r.r - inset } : {}), ...(r.pts ? { pts: r.pts, w: (r.w ?? 3) - 2 * inset } : {}) })) };
 }
-const inRect = (r: Rect, x: number, z: number, pad = 0) => x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad;
+/** The nearest point of a floor shape to (x, z) on the plan, and how far (0 inside). */
+export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number; d: number } {
+  if (r.r) { const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, d = Math.hypot(x - cx, z - cz); return d <= r.r ? { x, z, d: 0 } : { x: cx + ((x - cx) * r.r) / d, z: cz + ((z - cz) * r.r) / d, d: d - r.r }; }
+  if (r.pts) {
+    let best = { x, z, d: Infinity }; const h = (r.w ?? 3) / 2;
+    for (let i = 1; i < r.pts.length; i++) {
+      const [ax, az] = r.pts[i - 1], [bx, bz] = r.pts[i], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / Math.max(1e-9, dx * dx + dz * dz)));
+      const px = ax + dx * t, pz = az + dz * t, d = Math.hypot(x - px, z - pz);
+      if (d - h < best.d) best = d <= h ? { x, z, d: 0 } : { x: px + ((x - px) * h) / d, z: pz + ((z - pz) * h) / d, d: d - h };
+    }
+    return best;
+  }
+  const px = Math.min(r.x1, Math.max(r.x0, x)), pz = Math.min(r.z1, Math.max(r.z0, z));
+  return { x: px, z: pz, d: Math.hypot(px - x, pz - z) };
+}
+const inRect = (r: Rect, x: number, z: number, pad = 0) => (r.r || r.pts ? nearestIn(r, x, z).d <= pad : x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad);
 /** On a room's or a corridor's floor (`pad` metres past its edges), standing at (x, z) in the world. */
 export const onRoomFloor = (f: RoomFloor, x: number, z: number, pad = 0): boolean => { const p = toPlan(f.at, x, z, f.turn); return f.rects.some(r => inRect(r, p.x, p.z, pad)); };
 /** The nearest point to (x, z) on any of the rooms' and corridors' floors (in the world), and how far it is. */
 export function nearestRoomFloor(f: RoomFloor, x: number, z: number): { x: number; z: number; d: number } | null {
   const p = toPlan(f.at, x, z, f.turn);
   let best: { x: number; z: number; d: number } | null = null;
-  for (const r of f.rects) {
-    const px = Math.min(r.x1, Math.max(r.x0, p.x)), pz = Math.min(r.z1, Math.max(r.z0, p.z)), d = Math.hypot(px - p.x, pz - p.z);
-    if (!best || d < best.d) best = { x: px, z: pz, d };
-  }
+  for (const r of f.rects) { const n = nearestIn(r, p.x, p.z); if (!best || n.d < best.d) best = n; }
   return best && { ...fromPlan(f.at, best.x, best.z, f.turn), d: best.d };
 }
 /** A room's floor (house.json's room by id), kept to it: (x, z) in the world, put back inside its walls `inset` metres in; null without it. */
 export function keepInRoom(at: At, room: string, x: number, z: number, inset = 0, H = HOUSE_ROOMS): { x: number; z: number; inside: boolean } | null {
   const r = H.rooms.find(q => q.id === room);
   if (!r) return null;
-  const p = toPlan(at, x, z, H.turn ?? 0), px = Math.min(r.x1 - inset, Math.max(r.x0 + inset, p.x)), pz = Math.min(r.z1 - inset, Math.max(r.z0 + inset, p.z));
+  const p = toPlan(at, x, z, H.turn ?? 0), n = r.r ? nearestIn({ ...r, r: r.r - inset }, p.x, p.z) : null;
+  const px = n ? n.x : Math.min(r.x1 - inset, Math.max(r.x0 + inset, p.x)), pz = n ? n.z : Math.min(r.z1 - inset, Math.max(r.z0 + inset, p.z));
   return px === p.x && pz === p.z ? { x, z, inside: true } : { ...fromPlan(at, px, pz, H.turn ?? 0), inside: false };
 }
 /** Where on the plan's (x, z) an object's middle is, in the world (or any point given on the plan relative to it: dx along its w, dz along its d). */

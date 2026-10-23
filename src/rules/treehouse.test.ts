@@ -6,7 +6,7 @@ import { newGame, stepGame, STEP, type Game } from "./game";
 import { carrierOf, deckOf, flyOnto, keepInHouse, keepOnDeck, onFloor, onTreehouse, seatOffset } from "./treehouse";
 import { hitWitch } from "./game";
 import { witchHeight } from "./witch";
-import { onRoomFloor } from "./houseRooms";
+import { HOUSE_ROOMS, objectFront, onRoomFloor } from "./houseRooms";
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const press = (g: Game, c: object) => run(g, STEP, c);
@@ -126,7 +126,7 @@ describe("the treehouse's house", () => {
     expect(onTreehouse(g)).toBe(true);
   });
 
-  it("is one floor: she walks from the balcony into the hub and round the map, kept in by the hub's wall and clear of the map's pedestal", () => {
+  it("is one floor: she walks from the balcony into the hub and round it, kept in by the hub's wall but where a branch leaves it; its middle clear (the map's in the Atrium now)", () => {
     const g = game(TUNING), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 });
     run(g, 2, { moveZ: -1 }); // north, off the balcony into the hub
@@ -136,9 +136,9 @@ describe("the treehouse's house", () => {
       run(g, 2, { moveX: mx, moveZ: mz });
       const r = Math.hypot(g.witch.x - d.x, g.witch.z - d.z);
       if (r > d.r - d.rail + 1e-6) expect(onRoomFloor(d.house!.rooms!, g.witch.x, g.witch.z, 1e-6)).toBe(true); // (out through a corridor's doorway: rules/houseRooms.ts)
-      expect(r).toBeGreaterThanOrEqual(d.table.r + 0.35 - 1e-6);
       expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
     }
+    const mid = keepInHouse(d, d.x, d.z); expect([mid.x, mid.z]).toEqual([d.x, d.z]); // (no map's pedestal on the Terrace: Ed, 2026-10-23)
     // from the hub's south-east corner she walks out onto the balcony and off its rim (no notch where the half-disc meets the round wall)
     g.witch = { ...g.witch, x: d.x + 3, z: d.z + 4.4, vx: 0, vz: 0 };
     let out = false;
@@ -192,10 +192,10 @@ describe("the treehouse's house", () => {
     expect([g2.witch.perch, g2.witch.mode]).toEqual([true, "ground"]);
   });
 
-  it("opens the chart with E at the map, and nothing goes down up there", () => {
-    const g = game(TUNING), d = deckOf(g.map, TUNING)!;
+  it("opens the chart with E at the map table (in the middle of the Atrium: Ed, 2026-10-23), and nothing goes down up there", () => {
+    const g = game(TUNING), d = deckOf(g.map, TUNING)!, t = HOUSE_ROOMS.objects.find(o => o.use.kind === "chart")!, f = objectFront(t, d, 0.4);
     run(g, 0.2, { moveZ: -1 });
-    for (let i = 0; i < 600 && Math.hypot(g.witch.x - d.x, g.witch.z - d.z) > d.table.r + 0.8; i++) press(g, { moveX: (d.x - g.witch.x), moveZ: (d.z - g.witch.z) });
+    g.witch = { ...g.witch, x: f.x, z: f.z, vx: 0, vz: 0 }; run(g, 0.2);
     press(g, { place: true });
     expect(events(g, "chart").length).toBe(1);
     expect(g.leash.placed.length).toBe(0);
