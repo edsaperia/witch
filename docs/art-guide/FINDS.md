@@ -4,7 +4,7 @@ Ed (2026-10-23): "For the permanent-upgrade finds … while they are different o
 
 A **find** is the night's one permanent upgrade (`src/rules/finds.ts`). There's one a night, drawn from everything she hasn't found yet. It lies on the ground in a wild area's woods, under the canopy, and is hinted by a constellation through the telescope. She takes it with E while the party's on. Every kind of find (wearables in a travel trunk, broom parts in a wreck, and hats, bags and records to come) follows this guide, whatever its object.
 
-> **Status: proposal.** The signature below is the art director's recommendation. Ed's choices (see the questions at the end) are still to come, and nothing is built until he answers. The mocks are in [`finds/`](finds/).
+> **Status: Ed's rules** (2026-10-23, his answers to the proposal's four questions), but for one still open: whether the flask size is the item alone, with its setting (a trunk, a wreck) allowed to be bigger round it, or the whole find (**pending**, below). Builders apply it: Echo the hats and bags (`FIND_SIZE` in `art/country.js`), Alpha the wrecks, Hotel and Golf the trunk. The proof shots are in [`finds/`](finds/).
 
 ## The master list
 
@@ -35,52 +35,55 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 <!-- finds:end -->
 
 
-## What the mocks showed
+## The find signature (Ed's rules)
 
-Seed 123, at night, in the densest spot of the fern forest (26 trees within 12 m) and the muddy forest (16), the witch about 8 m from the find. The contact sheet is [`finds/contact.jpg`](finds/contact.jpg): rows are today (base), A, B and C; the columns are the trunk and the wreck on the ground and the wreck from the treetops. B and C have the fern forest only (the muddy forest's runs were cut short).
+Every find carries the same three things, whatever its object, so a player who has seen one knows the next: **a clear patch, its own light, and one size.** Ed (2026-10-23): "clear patch, its own light, rules on size". Nothing else marks it: no wisp over it, no opening in the canopy, no shaft of moonlight.
 
-- **Today, both finds are invisible in dense forest.** The trunk and the wreck are small dark lumps under the crowns. From the treetops they're under the canopy by design (`placeTrunk` looks for cover). Nothing on either says "I'm the special one".
-- **The wisp is the only thing that marks the spot** (A and C). In the muddy forest's cool, dark light the gold orb reads at once. In the fern forest it's much weaker, because **the witch's own warm light floods the same colour** round her: gold on amber is lost. The wisp's colour has to stand apart from her light, not only from the party's.
-- **Opening the canopy over the find (C) changes little at this distance.** She's 8 m off, inside her own canopy hole already. It should matter from 15 to 30 m; that's unmocked.
-- **The moon shaft (B) doesn't show from the treetops** as mocked: a column of faint dots is eaten by the crowns and the tilt-shift. Nothing tried shows a find from the treetops, which matches the design (the constellation gives the way, she comes down to look).
-- **The object itself never reads**, whatever the light: neither the trunk's nor the wreck's shape shows among the ferns and trunks. Light finds the spot; only a clear patch, a bigger and brighter shape and contrast make it *the thing*.
+### 1. A clear patch
 
-## The find signature (the recommendation)
+- A round patch of bare ground about **1.3 m** across its radius round the find: no tufts, no undergrowth, no small props on it. The forest floor's own earth, a step darker than its surroundings, so its edge reads against the tufts round it.
+- Tufts and ferns grow thick right up to its edge but never over it, so the find's outline is never broken.
+- It's placed clear of trunks (2 m or more from any) and off paths and clearings, under the canopy as `placeTrunk` places it now.
 
-Every find carries the same four things, whatever its object. A player who has seen one knows the next.
+### 2. Its own light: pale gold-white
 
-### 1. Size
+- A **point light** at the find, low (about 0.6 m up), reach about **4.5 m**, in **pale gold-white** (about `#fff5d6`, RGB 1, 0.96, 0.84 in the light's colour): whiter and brighter than anything round it.
+- **Brighter and whiter than her lantern.** Her own light is warm amber and fills the ground round her; a warm glow beside her vanishes in it (the first mocks, below). The find's light must be clearly the brightest and the whitest thing on that ground, so it reads as "not mine" even with her standing a few metres off. Tune it in the fern forest, the worst case.
+- A slow, slight breath (about ±10% over 2.4 s), never a flicker: fire flickers fast and warm, a find glows steady and pale.
+- It's one light against the budget (`lightBudget`), like a lantern: fine on Ed's Intel UHD.
+- **No other light source uses this colour.** Party amber, the moon's blue, each area's neon, a hit's white flash and her lantern are all taken: pale gold-white is the finds'.
+- Nothing on the object itself glows (no emissive pixels); it's lit by its light.
 
-- **Footprint:** 1.2 to 2.4 m across (13 to 26 art pixels at the default art pixel 3, 10.7 art pixels a metre).
-- **Height:** 0.8 to 1.4 m (9 to 15 art pixels): about the witch's waist to her shoulder (she's about 1.8 m). It's big enough to stand above the tufts (8 to 13 px, up to about 1.2 m) and small enough to be a thing on the ground, not a building.
-- **One scale for every kind:** a trunk, a wreck, a hat box and a record crate all sit in the same band, so size says "find" before shape does.
+### 3. One size: about a flask
 
-### 2. Light: its own small gold glow, one for every kind
+- **The item: about 0.25 to 0.35 m tall** (Ed: "approx the size of a flask"), the same band for every kind. At art pixel 3 that's only **3 to 4 art pixels** (10.7 art pixels a metre), too small for any shape to read at the ground zoom: what she spots is the patch and the light, and the shape tells her what it is only once she's close.
+- **Its setting** (the trunk the wearable lies in, the wreck round a broom part, a hat's box): **pending Ed's answer.** Either the setting may be larger round the flask-sized item (a trunk or a wreck at its own size, the item on or in it), or the whole find is flask-sized. Until he answers, builders keep the item at flask size and leave settings as they are.
+- Baked at its size and drawn at scale 1 (never a fractional draw scale: section 10 of `docs/ART-GUIDE.md`).
 
-- **A wisp:** a small orb of pale **find gold** (`#ffe6a8`, warmer and paler than the party's amber `#e8b46a` and nothing like the moon's blue-violet) hovers about 1.6 m over the find. It bobs a little (±0.12 m) and pulses slowly (a 2.4 s period, 75 to 100 %).
-- **A point light** of the same gold under it (reach about 7 m) pools on the find and the ground round it. It's one light against the budget (`lightBudget`), like a lantern, and fine on Ed's Intel UHD.
-- **A few motes** (at most 6 to 8 dots) rise from the find through the wisp, so it reads as alive, not a lamp.
-- **It must stand apart from her own light.** The mocks show gold lost in the warm pool of her lantern, so the wisp needs a whiter, brighter core than anything round her (or a colour of its own: see the questions).
-- **No other light source in the game uses find gold.** It's the finds' own colour, as amber is the party's and white is a hit's.
+### 4. From the treetops: hidden
 
-### 3. Seen through the canopy
-
-- **Within about 30 m on the ground, the canopy opens over the find** as it does over her (the same cutout widened to hold both, or a second hole), so the find is seen in its own light, not guessed through crowns. (Untested past 8 m: the mocks were taken inside her own hole.)
-- **From the treetops it stays hidden** (the recommendation): the constellation gives the bearing, and she comes down to search. Ed may want a faint glint through the canopy instead (see the questions).
-
-### 4. Silhouette and contrast
-
-- **A clear ground patch:** a ring about 1 m wider than the find, of bare trodden earth (the area's own floor, a step darker), with no tufts and no undergrowth on it. Tufts and ferns grow thick round it but never over it, so its outline is never broken.
-- **A lit top, a dark base:** the object's own value darkest at its foot and lightest on its top, which catches the gold. Nothing on it glows but the wisp (the trunk's cloth and the wreck's hat stay unlit colours).
-- **One unmistakable shape per kind**, from the treetop distance's 13 to 26 px: a trunk's box and arched lid, a wreck's broom handle at an angle, and for hats and bags their own box and strap. At 12 px each must still read as what it is.
+- A find can't be seen from the treetops (Ed's answer): its light lights the ground under the canopy, and nothing rises above the crowns. **The constellation through the telescope gives the way**; she comes down into the woods to look for it.
 
 ### In every biome
 
-- **Snow:** the gold reads warm on cold white. Keep the wisp's halo below white, so it isn't a hole in the snow.
-- **Jungle and the densest woods:** this is what the canopy opening is for. Never place a find in a patch the opening can't clear.
-- **Volcanic:** lava and fire are orange-red. Find gold is paler and yellower, and it *pulses slowly* while fire flickers fast, so the two never read alike.
-- **The night mood and the party's light:** inside a partified area the party's amber is warmer and orange. Find gold sits above it in value and below the moon in saturation.
+- **Snow:** pale gold-white on white snow loses its contrast; keep the patch's bare earth (or dark ice) under it, so the light shows on a dark floor.
+- **Jungle and the densest woods:** the patch and the light are the whole read. The fern forest is the test.
+- **Volcanic:** lava and fire are orange-red and flicker; the find's light is paler, whiter and steady.
+- **In a partified area:** the party's light is warm amber; the find's stays whiter and above it in value.
 
-## Questions for Ed
+## The proof shots
 
-See the REPORT for the multiple-choice questions and the mocks they refer to.
+Seed 123, at night, the find in the densest spot of the fern forest (the trunk) and the muddy forest (a wreck), the witch on the ground 8 m and 20 m off: today's find against the guide's treatment (the item drawn at flask size, the clear patch, the pale gold-white light), both from today's `claude/prototype` with a mock of the treatment (not this PR's code), the find placed by `?spawnfind=` (#1046). The contact sheet is [`finds/proof.jpg`](finds/proof.jpg).
+
+_The shots are being taken; their notes follow._
+
+## How the rules were chosen
+
+The first mocks ([`finds/contact.jpg`](finds/contact.jpg): today, A a gold wisp over the find, B a shaft of moonlight, C the wisp with the canopy opened over it; fern and muddy forest, 8 m off) found:
+
+- today's trunk and wreck invisible in dense forest, on the ground and from the treetops;
+- a warm glow lost beside her own warm light in the fern forest (so the light is whiter and brighter than her lantern);
+- the canopy opening making little difference at 8 m, and the moon shaft not showing from the treetops (so neither is in the rules);
+- the objects' shapes never reading among the ferns (so the patch carries the read).
+
+Ed chose the patch, its own light and a size rule; hidden from the treetops; pale gold-white; one size, about a flask.
