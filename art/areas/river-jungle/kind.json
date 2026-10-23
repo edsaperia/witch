@@ -1,8 +1,8 @@
 {
   "kind": "jaguar",
   "slot": 60,
-  "phase": 4,
-  "bearing": 285,
+  "phase": 3,
+  "bearing": 281.25,
   "dir": "WNW",
   "biome": "jungle"
 }

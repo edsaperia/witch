@@ -2,7 +2,7 @@
   "kind": "salamander",
   "slot": 24,
   "phase": 2,
-  "bearing": 100,
-  "dir": "E",
-  "biome": "temperate"
+  "bearing": 101.25,
+  "dir": "ESE",
+  "biome": "volcanic"
 }

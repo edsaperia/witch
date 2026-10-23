@@ -1,8 +1,8 @@
 {
   "kind": "otter",
   "slot": 12,
-  "phase": 1,
-  "bearing": 270,
-  "dir": "W",
-  "biome": "temperate"
+  "phase": 2,
+  "bearing": 236.25,
+  "dir": "WSW",
+  "biome": "mangrove swamp"
 }
