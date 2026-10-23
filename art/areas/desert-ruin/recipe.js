@@ -3,9 +3,9 @@
 // growing in its squares; the sphinx its creature. Ed's columns as for the 30.
 export const DESERT_RUIN = {
   slot: 32, id: "desert-ruin", name: "Desert ruin", creature: "sphinx", by: "recipe", leaf: .2, floor: ["sand", .1, .36, .7],
-  text: { floor: "drifted sand over old paving", wall: "tumbled walls of sandstone blocks", small: "dry tussocks and fallen stones", big: "broken columns, date palms and acacias in the old streets", set: "a fallen colossus's head half buried in the sand" },
+  text: { floor: "drifted sand over old paving", wall: "tumbled walls of sandstone blocks", small: "dry tussocks and fallen stones", big: "broken columns, old date palms and acacias in the old streets", set: "a fallen colossus's head half buried in the sand" },
   wall: [["stones", {}], ["rockwall", {}]], small: [["grass", { h: .7, leafHue: .13, leafSat: .3 }], ["stones", {}]],
-  big: [["tree", { type: "datePalm", scale: 1.05 }], ["tree", { type: "acacia", minor: true, scale: .9 }], ["pillar", { sparse: .22 }], ["pillar", { sparse: .14, broken: true, lean: .12 }], ["boulder", { sparse: .1 }]],
+  big: [["tree", { type: "datePalm", variant: "ancient", scale: 1.05 }], ["tree", { type: "acacia", minor: true, scale: .9 }], ["pillar", { sparse: .22 }], ["pillar", { sparse: .14, broken: true, lean: .12 }], ["boulder", { sparse: .1 }]],
   pathKinds: ["track", "stairs"],
   setPiece: ["heap", "a heap of fallen sandstone blocks", 1.2, { of: "rubble", top: "post", moss: 0, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
