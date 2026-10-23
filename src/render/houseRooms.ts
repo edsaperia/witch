@@ -16,6 +16,7 @@ import type { Witch } from "../rules/game";
 import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
+import { bakeFurniture, FURNITURE, type FurnitureArt } from "./houseFurniture";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -63,6 +64,7 @@ function buildQuads(hub: number): Quad[] {
   }
   // the objects: a box each (its two near sides and its top: the plan's x0 and z1 faces); the hats' floor a rug
   for (const o of H.objects) {
+    if (FURNITURE.has(o.id)) continue; // (drawn as art: render/houseFurniture.ts)
     const c = KIND[o.use.kind], x0 = o.x - o.w / 2, x1 = o.x + o.w / 2, z0 = o.z - o.d / 2, z1 = o.z + o.d / 2, top: [number, number, number] = [c[0] * 1.15, c[1] * 1.15, c[2] * 1.15];
     if (o.use.kind === "hats") { q.push(quad([[x0, z0, 0.01], [x1, z0, 0.01], [x1, z1, 0.01], [x0, z1, 0.01]], [0.36, 0.16, 0.26], 2, o.id)); continue; }
     const box = [quad([[x0, z0, 0], [x0, z1, 0], [x0, z1, o.h], [x0, z0, o.h]], c, 2, o.id), quad([[x0, z1, 0], [x1, z1, 0], [x1, z1, o.h], [x0, z1, o.h]], [c[0] * 0.72, c[1] * 0.72, c[2] * 0.72], 2, o.id), quad([[x0, z0, o.h], [x1, z0, o.h], [x1, z1, o.h], [x0, z1, o.h]], top, 2, o.id)];
@@ -113,7 +115,7 @@ class Part {
 
 export class HouseRoomsView {
   /** Its meshes, for the scene: behind the hub, and in front. */
-  readonly meshes: THREE.Mesh[];
+  readonly meshes: THREE.Object3D[];
   // (a placeholder's floor plan over the picture: in the see-through pass (three.js draws every solid thing first), after the
   // trees' see-through passes, 11 and 19.9, before her, 19.95 in a room (render/view/witch.ts), so the trees round the house never
   // hide it nor it her; no depth, their own quads in order, the far ones first, floors, walls, then the objects)
@@ -127,10 +129,13 @@ export class HouseRoomsView {
   private readonly bubble: HTMLDivElement;
   private readonly ring: HTMLDivElement;
   private said: { obj: HouseObject; at: number } | null = null;
+  /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
+  private readonly furniture = new THREE.Group();
+  private readonly pieces = new Map<string, { art: FurnitureArt; mesh: THREE.Mesh; pos: Float32Array }>();
 
   constructor() {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.94)];
-    this.meshes = this.parts.map(p => p.mesh);
+    this.meshes = [...this.parts.map(p => p.mesh), this.furniture];
     this.box = document.createElement("div");
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
     const pill = "position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 14px/1.2 inherit;padding:3px 8px;border-radius:8px;";
@@ -147,13 +152,18 @@ export class HouseRoomsView {
     for (const p of this.parts) p.mesh.visible = false;
   }
   /** Off the page (an island whose treehouse has no rooms): its meshes' geometry and material let go, its labels taken off. */
-  dispose(): void { for (const p of this.parts) p.geo.dispose(); this.mat.dispose(); this.box.remove(); }
+  dispose(): void {
+    for (const p of this.parts) p.geo.dispose();
+    this.mat.dispose(); this.box.remove();
+    for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
+  }
 
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
     const shown = !!(d?.house?.rooms && T.ent && w.perch && !w.seated && (w.mode === "ground" || w.mode === "descending"));
     for (const p of this.parts) p.mesh.visible = shown;
+    this.furniture.visible = shown;
     if (!shown) { this.box.style.display = "none"; return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
     if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(D.r); this.hatsKey = ""; }
@@ -180,6 +190,30 @@ export class HouseRoomsView {
       }
       (P.geo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (P.geo.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
+    }
+    // the furniture: a piece baked a frame (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
+    // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, mirrored on a z0 wall
+    const todo = HOUSE_ROOMS.objects.find(o => FURNITURE.has(o.id) && !this.pieces.has(o.id));
+    if (todo) {
+      const art = bakeFurniture(todo, v.assets.style, 1 / v.mpp, Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))));
+      const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(art.flip ? [1, 0, 0, 0, 0, 1, 1, 1] : [0, 0, 1, 0, 1, 1, 0, 1]), 2));
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+      const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false;
+      // (after the boxes' half it's in: behind the hub, or in front; nearer pieces later)
+      mesh.renderOrder = (south(todo.x, todo.z) < BEHIND ? 19.935 : 19.945) + 0.0001 * Math.tanh(south(todo.x, todo.z) / 60);
+      this.furniture.add(mesh); this.pieces.set(todo.id, { art, mesh, pos });
+    }
+    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    for (const [id, { art, mesh, pos }] of this.pieces) {
+      const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, ox = art.flip ? art.w - art.ox : art.ox;
+      // (corners in the picture's pixels from its floor's middle: top-left, top-right, bottom-right, bottom-left; flipY off, so v 0 is its top)
+      const c = [[-ox, -art.oy], [art.w - ox, -art.oy], [art.w - ox, art.h - art.oy], [-ox, art.h - art.oy]];
+      c.forEach(([dx, dy], i) => { const p = pxWorld(o.x, o.z, dx, dy); pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z; });
+      (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+      (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.3 : 1);
     }
     // on the page: the object she's at, a placeholder's line, the bed's ring
     for (const e of g.leashEvents) if (e.kind === "house" && e.obj) { const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj); if (o?.use.kind === "say") this.said = { obj: o, at: ht }; }
