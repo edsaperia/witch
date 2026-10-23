@@ -8125,7 +8125,7 @@
     "opening": {
       "type": "object",
       "properties": {
-        "chart": {
+        "bedroom": {
           "type": "boolean"
         },
         "wake": {
@@ -8153,7 +8153,7 @@
         }
       },
       "required": [
-        "chart",
+        "bedroom",
         "wake"
       ],
       "additionalProperties": false
