@@ -175,7 +175,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const Hat = g.witches[0].hat;
   if (!v.bareAsked && Hat.has && !g.clock.paused && ht > 1) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
   // At a station for her head and face (ui/stationPanel.ts bareHead; Ed, 2026-10-23), drawn without it too, once those frames are in.
-  const bare = Hat.has && (!!Hat.down || (v.hatOff && v.assets.bareReady)) ? (v.bareBatch ??= v.makeWitchBatch(true)) : null;
+  const bare = Hat.has && (!!Hat.down || (v.hatOff && !!v.assets.witchBare() && v.assets.bareReady)) ? // (her hat off at a station: witchBare asks for the bare frames, hat on till they're in)
+    (v.bareBatch ??= v.makeWitchBatch(true)) : null;
 
   const watlas = bare ? v.assets.witchBare() : v.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
