@@ -58,6 +58,27 @@ async function main() {
     results.push(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) errors.push(what);
   };
 
+  // The art waits (as the bench's, #1038): the page's loop stands still while the art is drawn, or on the cloud's 4 cores its
+  // software-rendered frames take most of the CPU from the art workers (since #1024 the start's art took past the 40-minute
+  // wait: India, 2026-10-23). A wait that also needs the forest built (built a few chunks a frame) runs the loop till it's in,
+  // stands it still for the art, then lets a few frames through and looks again, till both hold together. It always leaves
+  // the loop running, as the steps expect. `soft`: a wait that may time out (the old .catch(() => {})).
+  async function settleArt(page, { forest = false, trees = false, ground = false, timeout = 900000, soft = false } = {}) {
+    const until = Date.now() + timeout;
+    const built = () => page.evaluate(([t, gr]) => { const s = window.witch.view.stats; return s.forestMissing === 0 && (!t || s.trees > 0) && (!gr || s.pendingGround === 0); }, [trees, ground]);
+    try {
+      for (;;) {
+        if (forest) await page.waitForFunction(([t, gr]) => { const s = window.witch.view.stats; return s.forestMissing === 0 && (!t || s.trees > 0) && (!gr || s.pendingGround === 0); }, [trees, ground], { timeout: Math.max(1000, until - Date.now()), polling: 500 });
+        await page.evaluate(() => { window.witch.manual = true; });
+        await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: Math.max(1000, until - Date.now()), polling: 1000 });
+        await page.evaluate(() => { window.witch.manual = false; });
+        if (!forest) return;
+        await sleep(1500); // (a few frames: what they ask for, if anything)
+        if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0 && (await built())) return;
+        if (Date.now() > until) throw new Error("settleArt: timed out");
+      }
+    } catch (e) { await page.evaluate(() => { window.witch.manual = false; }).catch(() => {}); if (!soft) throw e; }
+  }
   let shared = null;
   async function run(name, viewport, steps, query) {
     if (process.env.ONLY && !process.env.ONLY.split(",").includes(name)) return; // ONLY=party,cull runs just those
@@ -73,7 +94,7 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000 });
     // All the art is drawn in the background after start; the software renderer here starves the
     // workers of CPU (minutes at big window sizes), so wait for it before flying, so the shots show the forest as players do.
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
+    await settleArt(page, { timeout: 2400000 });
     await steps(page);
     await page.close();
   }
@@ -209,7 +230,7 @@ async function main() {
     // and what it draws then must not count as popping in.
     const t0 = await page.evaluate(() => window.witch.game.clock.time);
     await page.waitForFunction(t => window.witch.game.clock.time - t >= 0.5, t0, { timeout: 120000, polling: 50 });
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 });
+    await settleArt(page);
     await page.evaluate(() => { window.witch.view.pops = []; window.witch.view.trackPops = true; });
     await flyPath(page);
     await shot(page, "08-heath.png");
@@ -441,7 +462,7 @@ async function main() {
       }
       check(there, `the witch is moved to the ${id}'s densest wooded spot for the trunk shots`);
       if (!there) continue;
-      await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+      await settleArt(page, { forest: true, soft: true });
       await sleep(1500);
       const lit = await page.screenshot({ timeout: 300000 });
       // The mask frame drawn plain: the bloom, the tilt-shift's blur and the mist layer smeared the flat magenta over the
@@ -611,7 +632,7 @@ async function main() {
       return { x: best[0], z: best[1], slope: bs };
     });
     await sleep(1500);
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0, null, { timeout: 900000, polling: 1000 }).catch(() => {});
+    await settleArt(page, { forest: true, soft: true });
     await sleep(1500);
     await shot(page, file);
     const still = await page.evaluate(() => { const g = window.witch.game, w = g.witch; return { x: w.x, z: w.z, perch: !!w.perch, seated: !!w.seated, kds: g.knockdowns?.length ?? 0 }; });
@@ -722,7 +743,7 @@ async function main() {
   // it showed: an Old oaks wood, on the ground among tall trees in front of her.
   await run("neutral", { width: 1000, height: 663 }, async page => {
     // (the art and the forest round the spot all in first: once the game runs the forest's count keeps moving)
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0 && window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0, null, { timeout: 600000, polling: 500 });
+    await settleArt(page, { forest: true, trees: true, timeout: 600000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 250 }); // (started: she's drawn)
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 300000, polling: 250 });
@@ -777,7 +798,7 @@ async function main() {
     // minute under the software renderer here, 10 to 20 minutes after a move to a new area, and what the checks below
     // read is the scenery placed, which the forest's count says is in (probed on the moth's island, 2026-10-15).
     await page.waitForFunction(() => window.witch.view.stats.forestMissing === 0 && window.witch.view.stats.trees > 0 && window.witch.view.stats.pendingGround === 0, null, { timeout: 900000, polling: 500 }); // (about 3 minutes here)
-    await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 300000, polling: 1000 }).catch(() => {});
+    await settleArt(page, { timeout: 300000, soft: true });
     await sleep(1500);
     await shot(page, "ground-cave-mouth.png");
     const r = await page.evaluate(() => {
