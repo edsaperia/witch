@@ -21,7 +21,7 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const errors = [], out = {};
-  let bad = 0;
+  let bad = 0, done = false;
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
@@ -60,12 +60,13 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       if (diff) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
+    done = true;
   } finally {
     fs.writeFileSync(path.join(outDir, "hiz-walk.json"), JSON.stringify(out, null, 1));
     console.log(errors.length ? "errors: " + errors.slice(0, 3).join(" | ") : "no page errors");
     const blindAll = Object.keys(out).length > 0 && Object.values(out).every(o => !o.scenery);
-    if (blindAll) bad++;
-    console.log(blindAll ? "FAIL: blind (hiding the scenery changed nothing anywhere: were the frames drawn?)" : bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
+    if (blindAll || !done) bad++;
+    console.log(!done ? "FAIL: stopped before every spot was compared" : blindAll ? "FAIL: blind (hiding the scenery changed nothing anywhere: were the frames drawn?)" : bad ? `FAIL: ${bad} spots differ` : "every spot the same to the pixel");
     await browser.close(); server.close();
     process.exitCode = bad || errors.length ? 1 : 0;
   }
