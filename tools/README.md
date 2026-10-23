@@ -21,7 +21,7 @@ Scripts for building, checking and measuring the game, run from the repository r
 - [`hologram/`](hologram/README.md): 1 script — bend.cjs
 - [`islands/`](islands/README.md): 3 scripts — chart.mjs, map.mjs, sheet.mjs
 - [`labs/`](labs/README.md): 1 script — publish.mjs
-- [`lakes/`](lakes/README.md): 2 scripts — leylines.mjs, shots.cjs
+- [`lakes/`](lakes/README.md): 4 scripts — leylines.mjs, looks-map.mjs, looks.cjs, shots.cjs
 - [`leash/`](leash/README.md): 1 script — route-strip.mjs
 - [`lighting/`](lighting/README.md): 1 script — survey.cjs
 - [`making-of/`](making-of/README.md): 1 script — build.mjs
