@@ -46,7 +46,7 @@
   {
    "name": "Hot",
    "biomes": ["hot"],
-   "areas": ["erg", "plains", "bushveld", "savanna"]
+   "areas": ["erg", "plains", "bushveld", "savanna", "desert-ruin"]
   },
   {
    "name": "Jungle",
