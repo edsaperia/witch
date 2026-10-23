@@ -114,6 +114,15 @@ async function settle(page, file, frozen = false) {
 // 2026-10-21: boot 972 s against 139 s on a 4-vCPU one). The pool's size changes when sets land, never what's drawn: the
 // scenes wait for all of it (pending, then the steps' urgent waits, then the settle). BENCH_CORES=<n> to try another.
 const ARTCORES = Number(process.env.BENCH_CORES || require("os").availableParallelism() + 1);
+// The art jobs' log (BENCH_LAPS): each worker job's kind, id and time from sent to back, so a slower art wait shows whether it
+// was more art or the same art slower (the boot's doubling, 2026-10-23: the same jobs, each slower, the CPU going elsewhere).
+const JOBS = () => {
+  window.__benchJobs = []; const W = window.Worker;
+  window.Worker = class extends W {
+    constructor(...a) { super(...a); this.addEventListener("message", e => { const j = e.data?.job; if (j && this.__t) window.__benchJobs.push({ kind: j.kind, id: String(j.id), ms: Math.round(performance.now() - this.__t) }); this.__t = 0; }); }
+    postMessage(m, ...r) { if (m && m.kind) this.__t = performance.now(); return super.postMessage(m, ...r); }
+  };
+};
 const WORKERS = n => { const real = navigator.hardwareConcurrency; Object.defineProperty(Navigator.prototype, "hardwareConcurrency", { get: () => n, configurable: true }); window.__benchCores = { real, told: n }; };
 
 // The page's clock, which the bench can hold (settle): performance.now as ever until it's set.
@@ -164,6 +173,7 @@ async function main() {
     const page = await context.newPage();
     await page.addInitScript(CLOCK);
     await page.addInitScript(WORKERS, ARTCORES);
+    if (process.env.BENCH_LAPS) await page.addInitScript(JOBS);
     if (s.frozen) await page.addInitScript("window.__benchClock(1e7);");
     page.on("pageerror", e => errors.push(`${s.name}: ${e.message}`));
     const t0 = Date.now();
@@ -172,8 +182,21 @@ async function main() {
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");
     if (process.env.BENCH_LAPS) { const c = await page.evaluate(() => window.__benchCores); console.log(`  ${s.name} cores: the machine's ${require("os").availableParallelism()}, the page's ${c?.real}, told ${c?.told}`); }
+    // The loop stands still while the art is drawn (it stood still from just after, anyway: below): left running, the page
+    // redraws its scene on the software renderer every frame meanwhile, and on CI's 4 cores that took most of the CPU from the
+    // art workers (#1024 made those frames dearer and the boot's art wait doubled, 12 to 13 minutes: every long bench past the
+    // job's 40 minutes, 2026-10-23). Nothing the scenes draw changes: the shots wait for all the art either way.
+    await page.evaluate(() => { window.witch.manual = true; });
     await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
     lap("art");
+    if (process.env.BENCH_LAPS) {
+      // (the art drawn by now, by kind: jobs and the seconds they took, and the five longest)
+      const jobs = await page.evaluate(() => window.__benchJobs ?? []), by = {};
+      for (const j of jobs) { const b = (by[j.kind] ??= { n: 0, s: 0 }); b.n++; b.s += j.ms / 1000; }
+      const kinds = Object.entries(by).sort((a, b) => b[1].s - a[1].s).map(([k, b]) => `${k} ${b.n}/${Math.round(b.s)}s`).join(", ");
+      const top = [...jobs].sort((a, b) => b.ms - a.ms).slice(0, 5).map(j => `${j.kind}:${j.id.slice(0, 24)} ${Math.round(j.ms / 1000)}s`).join(", ");
+      console.log(`  ${s.name} art jobs ${jobs.length}: ${kinds}; longest ${top}`);
+    }
     if (s.creator) {
       // The bedroom: the character creator as it opens, the game behind it not yet started.
       await page.evaluate(() => { window.witch.manual = true; });
