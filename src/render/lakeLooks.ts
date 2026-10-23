@@ -1,27 +1,76 @@
-// Biome lakes in play (MOCK, Ed 2026-10-23: "We should make the biome lakes in game"; docs/backlog/journey.md "Lakes by biome"):
-// `?lakelook=<look>` draws every lake on the island in one look, so each can be judged in the game's own view. The looks are
-// the sea chart's (app/chartOutlines.worker.ts LOOK_IDS), drawn by the ground shader (LAKE_LOOKS_GLSL) on the lakes' own map,
-// all but the north's: a craggy glacier with ice peaks (Ed: "something that looks less walkable-on"), a mesh of its own
-// (glacierMesh). Looks only: the rules' lakes are unchanged.
+// Biome lakes in play (Ed, 2026-10-23: "We should make the biome lakes in game"; docs/backlog/journey.md "Lakes by biome"): each
+// lake on the island in the look the sea chart gives it (rules/lakeLooks.ts lakesOf: its island's biomes by its bearing, seeded by
+// the lake), drawn by the ground shader (LAKE_LOOKS_GLSL) from the lakes' own map and a map of their looks (lakeLookTexture), all
+// but the north's: a craggy glacier with ice peaks (Ed: "something that looks less walkable-on"), a mesh of its own (glacierMesh),
+// and the hot springs' steam (steamVents, for render/smoke.ts). Looks only: every lake plays as water (rules/lakes.ts).
+// `?lakelook=<look>` draws every lake in one look (the tools' shots: tools/lakes/looks.cjs).
 import * as THREE from "three";
-import type { Bounds } from "../rules/mapShape";
+import { LOOK_IDS, lakesOf, mapBiome, type LakeLook } from "../rules/lakeLooks";
+import type { LandMap } from "../rules/land";
+import type { ForestMap } from "../rules/map";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 
-/** The looks by number, as the chart's (LOOK_IDS), the north's ice the glacier. */
-export const MOCK_LOOKS = ["water", "glacier", "lava", "oasis", "sinkhole", "tarn", "tar", "rust", "lily"] as const;
-
-/** ?lakelook=: the look every lake takes (0, plain water, without it). */
-export function mockLakeLook(): number {
+/** ?lakelook=: the look every lake takes (null: each its own). "glacier" is the north's ice. */
+function forcedLook(): LakeLook | null {
   const v = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("lakelook");
-  const i = v ? MOCK_LOOKS.indexOf(v as (typeof MOCK_LOOKS)[number]) : -1;
-  return Math.max(0, i);
+  const l = (v === "glacier" ? "ice" : v) as LakeLook | null;
+  return l && LOOK_IDS.includes(l) ? l : null;
+}
+
+/** A map's lakes and their looks: `lake` each sample of the lakes' map's lake (-1 ashore), `looks` each lake's, and `near` each
+ *  sample's look (LOOK_IDS: its lake's, or ashore the nearest lake's within RIM metres; 0 none). Made once a map. */
+export interface LakeLooks { L: LandMap; lake: Int32Array; looks: LakeLook[]; near: Uint8Array; any: Set<LakeLook> }
+/** How far onto the shore a lake's look reaches (m): its widest rim (LAKE_LOOKS_GLSL lakeRim) and a sample to spare. */
+const RIM = 14;
+const MADE = new WeakMap<ForestMap, LakeLooks | null>();
+export function lakeLooksOf(map: ForestMap): LakeLooks | null {
+  if (MADE.has(map)) return MADE.get(map)!;
+  const L = map.bounds.lakes ?? null;
+  let out: LakeLooks | null = null;
+  if (L) {
+    const island = map.island, made = lakesOf(L, island?.seed ?? 0, mapBiome(island, map.tuning)), force = forcedLook();
+    const looks = force ? made.looks.map(() => force) : made.looks;
+    const n = L.cols * L.rows, near = new Uint8Array(n), steps = new Uint8Array(n).fill(255), queue: number[] = [], reach = Math.ceil(RIM / L.step);
+    for (let i = 0; i < n; i++) if (made.lake[i] >= 0) { near[i] = LOOK_IDS.indexOf(looks[made.lake[i]]); steps[i] = 0; queue.push(i); }
+    // (ashore: the nearest lake's, by steps across the grid)
+    for (let q = 0; q < queue.length; q++) {
+      const i = queue[q], c = i % L.cols;
+      if (steps[i] >= reach) continue;
+      for (const j of [c > 0 ? i - 1 : -1, c < L.cols - 1 ? i + 1 : -1, i - L.cols, i + L.cols]) if (j >= 0 && j < n && steps[j] === 255) { steps[j] = steps[i] + 1; near[j] = near[i]; queue.push(j); }
+    }
+    out = { L, lake: made.lake, looks, near, any: new Set(looks) };
+  }
+  MADE.set(map, out);
+  return out;
+}
+
+/** The looks' map for the ground shader: each sample's look (LOOK_IDS) in r, read whole (nearest), on the lakes' map's grid. */
+export function lakeLookTexture(k: LakeLooks): THREE.DataTexture {
+  const t = new THREE.DataTexture(k.near, k.L.cols, k.L.rows, THREE.RedFormat, THREE.UnsignedByteType);
+  t.magFilter = t.minFilter = THREE.NearestFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
+  t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.unpackAlignment = 1; t.needsUpdate = true;
+  return t;
+}
+
+/** The hot springs' steam (the rust pools': Ed, 2026-10-23, "more like Yellowstone hot springs"): a vent every SPACING metres
+ *  over each one's deep water (x, z pairs), for the steam's puffs (render/smoke.ts, the tuning's lakes.steam). */
+export function steamVents(k: LakeLooks, spacing = 28, inward = 9): Float32Array {
+  const L = k.L, out: number[] = [], cell = Math.max(1, Math.round(spacing / L.step)), rust = new Set(k.looks.map((l, i) => (l === "rust" ? i : -1)).filter(i => i >= 0));
+  if (!rust.size) return new Float32Array(0);
+  for (let r = 0; r < L.rows; r += cell) for (let c = 0; c < L.cols; c += cell) {
+    // (each block's deepest sample, if it's well into a hot spring)
+    let best = -1, bd = inward;
+    for (let rr = r; rr < Math.min(L.rows, r + cell); rr++) for (let cc = c; cc < Math.min(L.cols, c + cell); cc++) { const i = rr * L.cols + cc; if (rust.has(k.lake[i]) && L.dist[i] > bd) { bd = L.dist[i]; best = i; } }
+    if (best >= 0) out.push(L.x0 + (best % L.cols) * L.step, L.z0 + Math.floor(best / L.cols) * L.step);
+  }
+  return new Float32Array(out);
 }
 
 /** GLSL (the ground's fragment shader, after hash, vnoise, the light and the lakes' uniforms): each look's shore (lakeShore,
  *  the area's floor turned to it) and water (lakeWater, the colour drawn). */
 export const LAKE_LOOKS_GLSL = /* glsl */ `
-uniform float uLakeLook;
+uniform sampler2D uLakeLooks; // each sample's look (LOOK_IDS), on the lakes' map's grid (render/lakeLooks.ts lakeLookTexture)
 // cells(q): the nearest and second-nearest of a jittered grid's points (distances), the nearest's id, and its bearing from q
 vec4 cells(vec2 q) {
   vec2 i = floor(q), f = fract(q); float d1 = 9.0, d2 = 9.0, id = 0.0, an = 0.0;
@@ -32,6 +81,7 @@ vec4 cells(vec2 q) {
   return vec4(sqrt(d1), sqrt(d2), id, an);
 }
 float lakeAt(vec2 q) { return texture2D(uLakes, (q - uLakeBox.xy + uLake.y) * uLakeBox.zw).r; }
+float lakeLookAt(vec2 kuv) { return floor(texture2D(uLakeLooks, kuv).r * 255.0 + 0.5); }
 // how far round its shore each look reaches (m)
 float lakeRim(float L) { return L < 0.5 ? 2.6 : L < 1.5 ? 6.0 : L < 2.5 ? 7.0 : L < 3.5 ? 8.0 : L < 4.5 ? 5.0 : L < 5.5 ? 6.0 : L < 6.5 ? 5.0 : L < 7.5 ? 10.0 : 6.0; }
 // the shore: the area's floor c turned to the look's, toward the water (k 0 at the rim's edge, 1 at the water)
@@ -43,7 +93,10 @@ vec3 lakeShore(float L, float ld, vec2 p, vec3 c) {
   if (L < 4.5) { vec3 s = mix(vec3(0.14, 0.26, 0.1), vec3(0.24, 0.34, 0.16), n); if (k > 0.82) s = mix(vec3(0.28, 0.27, 0.24), vec3(0.18, 0.18, 0.16), n); return mix(c, s, clamp(k * 1.5, 0.0, 1.0)); } // jungle up to a rock lip
   if (L < 5.5) { vec4 v = cells(p / 0.7); vec3 s = mix(vec3(0.42, 0.44, 0.46), vec3(0.58, 0.6, 0.62), v.z) * (v.y - v.x < 0.08 ? 0.6 : 1.0); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.5, 0.0, 1.0)); } // grey scree
   if (L < 6.5) { vec3 s = mix(vec3(0.05, 0.045, 0.04), vec3(0.12, 0.1, 0.08), n); if (fract(n * 13.0) < 0.06) s = vec3(0.3, 0.3, 0.32); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.6, 0.0, 1.0)); } // black, sticky, glossy specks
-  if (L < 7.5) { vec3 s = mix(vec3(0.86, 0.82, 0.74), vec3(0.94, 0.9, 0.84), n); float st = vnoise(vec2(p.x * 1.6, ld * 0.25) + 3.0); if (st > 0.62) s = mix(s, vec3(0.72, 0.38, 0.16), smoothstep(0.62, 0.8, st) * k); return mix(c, s, clamp(k * 1.3 + (n2 - 0.5) * 0.4, 0.0, 1.0)); } // pale crust, rust streaks
+  if (L < 7.5) { // a hot spring's travertine: pale terraces stepping down to it, orange-brown runoff streaking them (Mammoth Hot Springs)
+    float st = fract(ld / 2.2 + (vnoise(p / 3.0) - 0.5) * 0.5); vec3 s = mix(vec3(0.84, 0.8, 0.72), vec3(0.94, 0.9, 0.82), n) * (st > 0.85 ? 1.12 : st < 0.2 ? 0.78 : 1.0);
+    float run = vnoise(vec2(p.x * 0.9 + p.y * 0.3, ld * 0.35) + 3.0); if (run > 0.55) s = mix(s, mix(vec3(0.72, 0.4, 0.16), vec3(0.55, 0.3, 0.14), n), smoothstep(0.55, 0.75, run) * (0.4 + 0.6 * k));
+    return mix(c, s, clamp(k * 1.3 + (n2 - 0.5) * 0.4, 0.0, 1.0)); }
   vec3 s = mix(vec3(0.16, 0.3, 0.1), vec3(0.32, 0.42, 0.16), step(0.5, vnoise(vec2(p.x * 3.0, p.y * 0.4)))); return mix(c, s, clamp(k * 1.5, 0.0, 1.0)); // reeds
 }
 // the moon's glint and a star or two on a surface of reflection R (gloss: how sharp)
@@ -123,14 +176,16 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     hz = 0.3;
     return col;
   }
-  if (L < 5.5) { // a glacial tarn: milky turquoise meltwater, ice chunks floating at its edge
-    float deep = smoothstep(0.0, 10.0, ld);
+  if (L < 5.5) { // a glacial tarn: milky turquoise meltwater crowded with ice (Ed, 2026-10-23: "bigger and more ice chunks"), thickest at its edge
+    float deep = smoothstep(0.0, 10.0, ld), edge = 1.0 - smoothstep(2.0, 30.0, ld);
     vec3 col = mix(vec3(0.24, 0.5, 0.5), vec3(0.13, 0.34, 0.38), deep) * (0.6 + lum * 0.9);
     col = lakeGlint(col, R, 0.5);
-    vec4 v = cells(p / 2.3 + vec2(uTime * 0.01, 0.0));
-    float r = 0.42 * (1.0 - smoothstep(1.0, 9.0, ld)) * step(0.3, v.z);
-    if (v.x < r) col = mix(vec3(0.62, 0.72, 0.8), vec3(0.8, 0.88, 0.94), step(0.6, fract(v.w * 0.5 + 0.3))) * lit * 1.15;
-    else if (v.x < r + 0.07 && r > 0.0) col *= 0.55; // (its shadow in the water)
+    vec4 v = cells(p / 4.5 + vec2(uTime * 0.012, uTime * 0.004));
+    float d = v.x * (1.0 + 0.18 * sin(v.w * 5.0 + v.z * 20.0)); // (blocky, not round)
+    float r = (0.2 + 0.22 * edge + 0.12 * fract(v.z * 5.0)) * step(0.2 - 0.12 * edge, v.z);
+    if (r > 0.0 && d < r) col = mix(vec3(0.62, 0.72, 0.8), vec3(0.82, 0.9, 0.95), step(0.55, fract(v.w * 0.5 + 0.3))) * lit * 1.15 * (d > r - 0.04 ? 0.85 : 1.0);
+    else if (r > 0.0 && d < r + 0.09) col = mix(col, vec3(0.42, 0.66, 0.68) * (0.6 + lum), 0.6); // (its foot under the water, pale)
+    else if (r > 0.0 && d < r + 0.12) col *= 0.6;
     return col;
   }
   if (L < 6.5) { // a tar pit: glossy black, slow bubbles, oil-slick rainbows
@@ -143,12 +198,16 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     if (v.z > 0.4 && ph < 0.2 && v.x < 0.1) col = vec3(0.16, 0.15, 0.15); // (and its dome)
     return lakeGlint(col, R, 1.6);
   }
-  if (L < 7.5) { // a rust pool: red-orange mineral water in terraces of pale crust stepping down to it
-    float lv = ld + (vnoise(p / 5.0) - 0.5) * 3.0, tier = floor(lv / 3.2), f = fract(lv / 3.2);
-    vec3 col = mix(vec3(0.62, 0.36, 0.16), vec3(0.45, 0.18, 0.1), clamp(tier / 8.0, 0.0, 1.0)) * (0.45 + lum * 0.8);
-    if (f < 0.13 && tier < 8.0) col = mix(vec3(0.82, 0.76, 0.66), vec3(0.92, 0.86, 0.76), vnoise(p * 2.0)) * lit * 1.6; // (each terrace's rim)
-    else if (f < 0.22 && tier < 8.0) col *= 0.75;
-    return lakeGlint(col, R, 0.7);
+  if (L < 7.5) { // a hot spring (Ed, 2026-10-23: "more like Yellowstone hot springs"; Grand Prismatic): a deep blue eye ringed by
+    // pale green, yellow, orange and rust mats out to its shore, rings wobbling, mottled; steam drifting over the hot middle
+    float lv = ld + (vnoise(p / 6.0) - 0.5) * 2.5, mot = 0.9 + 0.2 * vnoise(p / 1.4);
+    vec3 col = lv < 2.0 ? vec3(0.46, 0.2, 0.1) : lv < 4.5 ? vec3(0.74, 0.36, 0.1) : lv < 7.0 ? vec3(0.86, 0.6, 0.14) : lv < 9.5 ? vec3(0.84, 0.78, 0.3) : lv < 11.5 ? vec3(0.46, 0.64, 0.44) : mix(vec3(0.16, 0.52, 0.62), vec3(0.05, 0.2, 0.46), smoothstep(12.0, 26.0, lv));
+    col *= mot * (0.5 + lum * 0.9);
+    if (fract(lv / 2.5) < 0.1 && lv < 11.5) col *= 0.82; // (the mats' fine rings)
+    col = lakeGlint(col, R, 0.8);
+    float wisp = smoothstep(0.42, 0.75, vnoise(p / 9.0 + uTime * vec2(0.09, 0.05)) * vnoise(p / 3.5 - uTime * vec2(0.12, 0.03)) * 1.6) * smoothstep(5.0, 16.0, lv);
+    col = mix(col, vec3(0.62, 0.66, 0.7) * (0.45 + lum), wisp * 0.45);
+    return col;
   }
   // a lily pond: dark water under giant lily pads, a few flowers
   vec3 col = lakeGlint(vec3(0.03, 0.07, 0.05) * (0.6 + lum), R, 0.8);
@@ -206,37 +265,41 @@ function vnoise(x: number, z: number, seed: number): number {
 }
 
 /** How high the glacier stands (m above the lake's level) at (x, z), `d` metres in from its shore: rising from the shore into
- *  ridges, crags and a few high peaks. */
-export function glacierHeight(x: number, z: number, d: number, seed: number, peak = 20): number {
+ *  ridges, crags and a few high peaks (Ed, 2026-10-23: "as shown", about the treetops), eased under `cap` (her treetop flight
+ *  over a lake: #1016, she can't come down there, so she never goes through the ice). */
+export function glacierHeight(x: number, z: number, d: number, seed: number, peak = 20, cap = 20): number {
   if (d <= 0) return 0;
   const ridged = (s: number, k: number) => { const n = 1 - Math.abs(2 * vnoise(x / s, z / s, seed + k) - 1); return n * n; };
   const r = ridged(42, 1) * 0.62 + ridged(15, 2) * 0.28 + ridged(5, 3) * 0.1;
   const rise = Math.min(1, d / 14) ** 0.8;
-  return rise * (1.5 + 3.5 * ridged(4, 4) + peak * Math.pow(Math.max(0, r - 0.25) / 0.75, 2.2)); // (broken seracs between the peaks: nowhere flat to stand)
+  const h = rise * (1.5 + 3.5 * ridged(4, 4) + peak * Math.pow(Math.max(0, r - 0.25) / 0.75, 2.2)); // (broken seracs between the peaks: nowhere flat to stand)
+  const knee = cap * 0.75;
+  return h <= knee ? h : knee + (cap - knee) * (1 - Math.exp(-(h - knee) / (cap - knee)));
 }
 
-/** The glacier over every lake (null with none): non-indexed (each face its own, so it draws faceted). */
-export function glacierMesh(bounds: Bounds, seed: number, mpp: number, peak = 20): THREE.Mesh | null {
-  const L = bounds.lakes;
-  if (!L) return null;
-  const B = L.box, cell = 2.5, cols = Math.ceil((B.maxX - B.minX) / cell) + 3, rows = Math.ceil((B.maxZ - B.minZ) / cell) + 3;
-  const x0 = B.minX - cell, z0 = B.minZ - cell;
-  const H = new Float32Array(cols * rows), D = new Float32Array(cols * rows);
+/** The glacier over every north lake (null with none): non-indexed (each face its own, so it draws faceted), its peaks under
+ *  `cap` metres. */
+export function glacierMesh(k: LakeLooks, seed: number, mpp: number, cap: number, peak = 20): THREE.Mesh | null {
+  const L = k.L, ice = k.looks.map(l => l === "ice");
+  if (!ice.some(Boolean)) return null;
+  // (the box round the ice lakes alone)
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (let i = 0; i < k.lake.length; i++) if (k.lake[i] >= 0 && ice[k.lake[i]]) { const x = L.x0 + (i % L.cols) * L.step, z = L.z0 + Math.floor(i / L.cols) * L.step; minX = Math.min(minX, x); maxX = Math.max(maxX, x); minZ = Math.min(minZ, z); maxZ = Math.max(maxZ, z); }
+  const iceAt = (x: number, z: number) => { const c = Math.round((x - L.x0) / L.step), r = Math.round((z - L.z0) / L.step); if (c < 0 || r < 0 || c >= L.cols || r >= L.rows) return false; const i = r * L.cols + c, j = k.lake[i]; return j >= 0 ? ice[j] : LOOK_IDS[k.near[i]] === "ice"; };
+  const cell = 2.5, pad = L.step * 2, cols = Math.ceil((maxX - minX + pad * 2) / cell) + 2, rows = Math.ceil((maxZ - minZ + pad * 2) / cell) + 2;
+  const x0 = minX - pad, z0 = minZ - pad;
+  const H = new Float32Array(cols * rows), D = new Float32Array(cols * rows), I = new Uint8Array(cols * rows);
+  const jit = (c: number, r: number) => [(vnoise(c * 7.3, r * 3.1, seed + 9) - 0.5) * cell * 0.7, (vnoise(c * 2.9, r * 6.7, seed + 11) - 0.5) * cell * 0.7]; // (a jittered grid, so the facets aren't in rows)
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
-    // (a jittered grid, so the facets aren't in rows)
-    const jx = (vnoise(c * 7.3, r * 3.1, seed + 9) - 0.5) * cell * 0.7, jz = (vnoise(c * 2.9, r * 6.7, seed + 11) - 0.5) * cell * 0.7;
-    const x = x0 + c * cell + jx, z = z0 + r * cell + jz, i = r * cols + c, rough = L.roughDistAt(x, z);
+    const [jx, jz] = jit(c, r), x = x0 + c * cell + jx, z = z0 + r * cell + jz, i = r * cols + c, rough = L.roughDistAt(x, z);
     const d = rough < -2 * L.step - 8 ? rough : L.distAt(x, z); // (well ashore: the rough distance will do)
-    D[i] = d; H[i] = glacierHeight(x, z, d, seed, peak);
+    D[i] = d; I[i] = iceAt(x, z) ? 1 : 0; H[i] = I[i] ? glacierHeight(x, z, d, seed, peak, cap) : 0;
   }
   const pos: number[] = [];
-  const at = (c: number, r: number) => {
-    const jx = (vnoise(c * 7.3, r * 3.1, seed + 9) - 0.5) * cell * 0.7, jz = (vnoise(c * 2.9, r * 6.7, seed + 11) - 0.5) * cell * 0.7;
-    return [x0 + c * cell + jx, H[r * cols + c], z0 + r * cell + jz];
-  };
+  const at = (c: number, r: number) => { const [jx, jz] = jit(c, r); return [x0 + c * cell + jx, H[r * cols + c], z0 + r * cell + jz]; };
   for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
     const i = r * cols + c;
-    if (Math.max(D[i], D[i + 1], D[i + cols], D[i + cols + 1]) < -0.5) continue; // (ashore)
+    if (Math.max(D[i], D[i + 1], D[i + cols], D[i + cols + 1]) < -0.5 || !(I[i] || I[i + 1] || I[i + cols] || I[i + cols + 1])) continue; // (ashore, or another lake)
     const a = at(c, r), b = at(c + 1, r), e = at(c, r + 1), f = at(c + 1, r + 1);
     pos.push(...a, ...e, ...b, ...b, ...e, ...f);
   }
