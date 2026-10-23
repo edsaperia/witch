@@ -68,7 +68,7 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     float n = vnoise(p / 2.5), cr = abs(vnoise(p / vec2(9.0, 3.0) + 5.0) - 0.5);
     vec3 a = mix(vec3(0.7, 0.8, 0.88), vec3(0.42, 0.62, 0.78), smoothstep(0.3, 0.7, n));
     if (cr < 0.035) a = vec3(0.12, 0.26, 0.42);
-    return a * lit * 0.85;
+    return a * lit * 0.6;
   }
   if (L < 2.5) { // lava: a black crust broken into plates, molten in the cracks and along the shore, pulsing
     vec2 q = p / 5.5 + vec2(uTime * 0.025, uTime * 0.015);
@@ -188,10 +188,11 @@ void main() {
   float steep = 1.0 - N.y;
   vec3 a = mix(vec3(0.86, 0.92, 0.97), vec3(0.5, 0.72, 0.86), smoothstep(0.25, 0.55, steep));
   a = mix(a, vec3(0.2, 0.4, 0.62), smoothstep(0.6, 0.85, steep) * (1.0 - smoothstep(6.0, 14.0, vUp)));
-  if (fract(vUp / 2.2 + h1(floor(vWorld.xz / 3.0)) * 0.3) < 0.08 && steep > 0.35) a *= 0.72; // (layered ice in the faces)
+  if (fract(vUp / 3.0 + h1(floor(vWorld.xz / 6.0)) * 0.3) < 0.07 && steep > 0.4) a *= 0.82; // (layered ice in the faces)
   vec3 l = nightLightShaded(N, vWorld, 1.0);
-  vec3 col = a * l * 0.95;
-  col = floor(col * 14.0 + h1(px) * 0.9) / 14.0; // (in steps, as the art is)
+  float lit = clamp(dot(N, normalize(vec3(uMoonDir.x, max(0.3, uMoonDir.y), uMoonDir.z))), 0.0, 1.0);
+  vec3 col = a * l * (0.48 + 0.75 * floor(lit * 3.0 + 0.5) / 3.0); // (the moonlit faces bright, the rest in blue shade: three steps)
+  col = floor(col * 16.0 + 0.5) / 16.0; // (in steps, as the art is)
   if (N.y > 0.7 && h1(px + floor(uTime * 2.0)) > 0.992) col += vec3(0.35, 0.4, 0.45); // (a glint on the snow)
   gl_FragColor = vec4(haze(col, vWorld), 1.0);
 }`;
@@ -205,16 +206,16 @@ function vnoise(x: number, z: number, seed: number): number {
 
 /** How high the glacier stands (m above the lake's level) at (x, z), `d` metres in from its shore: rising from the shore into
  *  ridges, crags and a few high peaks. */
-export function glacierHeight(x: number, z: number, d: number, seed: number, peak = 16): number {
+export function glacierHeight(x: number, z: number, d: number, seed: number, peak = 20): number {
   if (d <= 0) return 0;
   const ridged = (s: number, k: number) => { const n = 1 - Math.abs(2 * vnoise(x / s, z / s, seed + k) - 1); return n * n; };
-  const r = ridged(22, 1) * 0.6 + ridged(9, 2) * 0.3 + ridged(3.5, 3) * 0.12;
-  const rise = Math.min(1, d / 9) ** 0.7;
-  return rise * (1.2 + peak * Math.pow(Math.max(0, r - 0.18) / 0.84, 1.8));
+  const r = ridged(42, 1) * 0.62 + ridged(15, 2) * 0.28 + ridged(5, 3) * 0.1;
+  const rise = Math.min(1, d / 14) ** 0.8;
+  return rise * (1.5 + 3.5 * ridged(4, 4) + peak * Math.pow(Math.max(0, r - 0.25) / 0.75, 2.2)); // (broken seracs between the peaks: nowhere flat to stand)
 }
 
 /** The glacier over every lake (null with none): non-indexed (each face its own, so it draws faceted). */
-export function glacierMesh(bounds: Bounds, seed: number, mpp: number, peak = 16): THREE.Mesh | null {
+export function glacierMesh(bounds: Bounds, seed: number, mpp: number, peak = 20): THREE.Mesh | null {
   const L = bounds.lakes;
   if (!L) return null;
   const B = L.box, cell = 2.5, cols = Math.ceil((B.maxX - B.minX) / cell) + 3, rows = Math.ceil((B.maxZ - B.minZ) / cell) + 3;
