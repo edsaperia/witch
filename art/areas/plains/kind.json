@@ -1,8 +1,8 @@
 {
   "kind": "cheetah",
   "slot": 55,
-  "phase": 4,
-  "bearing": 185,
-  "dir": "S",
+  "phase": 3,
+  "bearing": 191.25,
+  "dir": "SSW",
   "biome": "hot"
 }

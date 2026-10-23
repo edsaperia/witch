@@ -2,7 +2,7 @@
   "kind": "ram",
   "slot": 23,
   "phase": 2,
-  "bearing": 75,
-  "dir": "ENE",
-  "biome": "temperate"
+  "bearing": 78.75,
+  "dir": "E",
+  "biome": "volcanic"
 }

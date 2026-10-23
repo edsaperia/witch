@@ -1,8 +1,8 @@
 {
   "kind": "raven",
   "slot": 19,
-  "phase": 1,
-  "bearing": 35,
-  "dir": "NE",
-  "biome": "temperate"
+  "phase": 2,
+  "bearing": 56.25,
+  "dir": "ENE",
+  "biome": "mountains and glaciers"
 }

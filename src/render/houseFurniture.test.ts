@@ -31,6 +31,14 @@ describe("the treehouse's furniture", () => {
       }
     }
   });
+  it("draws the Studio's instruments (Ed, 2026-10-23: a glam-rock drum kit, a retro wall of synths, the mic under its spot lamp) at their planned footprints, the lamp marked for the view's light", () => {
+    for (const [id, foot] of [["drumKit", { w: 4.4, d: 4, h: 2.6 }], ["synthRack", { w: 4.8, d: 1.4, h: 3.8 }], ["microphone", { w: 1, d: 1, h: 3.4 }]] as const) {
+      const d = furnitureSprite(id, foot, {}, { ppm: PPM, yaw: 0, curve: id === "synthRack" ? 6.5 : 0 }) as Drawn & { marks: Record<string, { x: number; y: number }> };
+      expect(d.sp.m.filter(Boolean).length, id).toBeGreaterThan(120);
+      expect(d.lights.length, `${id}: lit`).toBeGreaterThan(0);
+      if (id === "microphone") { const s = d.marks.spot; expect(s.y, "the spot lamp over the mic").toBeLessThan(d.origin.y - 20); expect(s.x).toBeGreaterThan(0); expect(s.x).toBeLessThan(d.sp.w); }
+    }
+  });
   it("draws its states differently (the curtains open and shut)", () => {
     const o = HOUSE_ROOMS.objects.find(q => q.id === "curtains")!, { yaw, foot } = standing(o);
     const [a, b] = ["open", "shut"].map(state => (furnitureSprite("curtains", foot, {}, { ppm: PPM, yaw, state }) as Drawn).sp.m.join());
