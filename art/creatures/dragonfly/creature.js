@@ -34,5 +34,15 @@ export const CREATURE_DRAGONFLY = {
     scale: { treetopSpeed: 1.1, "treetop.turnRate": 1.6 },
     label: "Dragonfly's Hover: sharper turns over the treetops, and a little quicker"
   },
-  character: { sprite: "shiver", every: [1.5, 4], for: 0.5 }
+  character: { sprite: "shiver", every: [1.5, 4], for: 0.5 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water drop", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 3,
+    call: "a hover",
+    tells: { melee: "wings", ranged: "tail curls", special: "a hover" }
+  }
 };
