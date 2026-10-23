@@ -17,5 +17,16 @@ export const CREATURE_GRIFFIN = {
     scale: { "invites.speed": 1.25 },
     label: "Griffin's Talon: 💌s fly a quarter faster"
   },
-  character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 }
+  character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "feather bolt", range: 18, shots: [0, 1, 3], spread: 12, tint: "red" },
+    special: "pull",
+    specialWith: { pull: 6, reach: 18 },
+    retreat: "branches",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the wings",
+    tells: { melee: "wings up", ranged: "a wingbeat", special: "the wings" }
+  }
 };

@@ -29,5 +29,15 @@ export const CREATURE_ELEPHANT = {
     scale: { "invites.radius": 1.6, "invites.range": 1.2 },
     label: "Elephant's Trumpet: bigger 💌s that carry further"
   },
-  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 }
+  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
+    ranged: null,
+    special: "stampede",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "ears out",
+    tells: { melee: "trunk raised", special: "ears out" }
+  }
 };

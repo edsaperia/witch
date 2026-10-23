@@ -825,6 +825,19 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   });
+  task("hatBagFinds", async () => { // the hats and bags found on the islands (rules/finds.ts; Ed, 2026-10-23): each its own piece, drawn, standing on its bottom row, nothing glowing, no two alike, and its taken (-empty) piece drawn without it
+    const ids = G.COUNTRY.filter(d => d.family === "find" && !d.id.endsWith("-empty")).map(d => d.id), bad = [], seen = new Map(), EM = new Set([...G.EMISSIVE]);
+    const key = sp => `${sp.w}x${sp.h}:${[...sp.m].join("")}`;
+    for (const id of ids) {
+      const sp = G.countrySprite(id, st).whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)), k = key(sp);
+      if (!(s2.n > 200 && s2.bottom > 0 && !nan && !lit)) bad.push(`${id} ${s2.n} px${s2.bottom ? "" : " floating"}${lit ? " glowing" : ""}${nan ? " NaN" : ""}`);
+      if (seen.has(k)) bad.push(`${id} the same as ${seen.get(k)}`); seen.set(k, id);
+      if (!G.COUNTRY_BY_ID[id + "-empty"]) { bad.push(`${id} has no -empty`); continue; }
+      const e = G.countrySprite(id + "-empty", st).whole;
+      if (key(e) === k || stats(e).n < 100) bad.push(`${id}-empty ${key(e) === k ? "the same as full" : "empty"}`);
+    }
+    res.push({ what: "hat and bag finds: each its own piece, drawn, standing, nothing glowing, no two alike, and its taken piece without it", good: !bad.length && ids.length >= 16, info: bad.join(", ") || `${ids.length} finds` });
+  });
   task("wrecks", async () => { // the broom parts' wrecks (the Workshop, rules/finds.ts): one for each part in config/broom-parts.json, each drawn, standing on its bottom row, nothing glowing, all different
     const parts = Object.keys((await (await fetch("/config/broom-parts.json")).json()).parts), bad = [], seen = new Map(), EM = new Set([...G.EMISSIVE]);
     for (const id of parts) {

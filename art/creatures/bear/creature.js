@@ -13,5 +13,15 @@ export const CREATURE_BEAR = {
     mods: { charge: 1 },
     label: "Bear's Wind-up: hold to charge, let go for a big volley"
   },
-  character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 }
+  character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"] },
+    ranged: null,
+    special: "cover",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "rears up",
+    tells: { melee: "rears up", special: "rears up" }
+  }
 };

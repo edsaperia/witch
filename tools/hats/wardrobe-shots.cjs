@@ -19,7 +19,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&hat=helmet`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&hat=helmet&hats=all`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 600000, polling: 500 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 4, null, { timeout: 600000, polling: 500 });

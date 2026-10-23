@@ -16,5 +16,15 @@ export const CREATURE_SNOWLEOPARD = {
     scale: { "dash.distance": 1.15, "treetop.turnRate": 1.3 },
     label: "Snow leopard's Ghost of the peaks: a longer blink, and sharper turns in the treetops"
   },
-  character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
+  character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "snow bolt", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "feint",
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "tail up",
+    tells: { melee: "crouch", ranged: "ears back", special: "tail up" }
+  }
 };

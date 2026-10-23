@@ -8,12 +8,13 @@ import { TUNING } from "../rules/tuning";
 import { HeightField } from "./height";
 import { runSliced, runSync, sliceLog, type Steps } from "./slices";
 
+/** A clock of the test's own (ms): a step's work moves it on, so the slicing is the same however loaded the machine is. */
+const clock = { t: 0, now: () => clock.t };
 function* counted(log: string[], n: number, spin = 0): Steps<number> {
   for (let i = 0; i < n; i++) {
     if (i === 3) yield "half";
     else yield;
-    const t0 = performance.now();
-    while (performance.now() - t0 < spin) { /* a step's work */ }
+    clock.t += spin; // (a step's work)
     log.push(`step ${i}`);
   }
   return n;
@@ -32,14 +33,14 @@ describe("a build in steps (render/slices.ts)", () => {
     let turns = 0, running = true;
     const tick = () => { if (!running) return; turns++; setTimeout(tick, 0); }; // (the page's other work: a task between the build's)
     setTimeout(tick, 0);
-    await runSliced(counted(log, 12, 4), "test", 8);
+    await runSliced(counted(log, 12, 4), "test", 8, clock.now);
     running = false;
     expect(turns).toBeGreaterThanOrEqual(4); // (12 steps of 4 ms in 8 ms slices: about 6 slices, the page's turns between)
     const s = sliceLog.at(-1)!;
     expect(s.what).toBe("test");
-    expect(s.slices).toBeGreaterThanOrEqual(5);
-    expect(s.longest).toBeGreaterThanOrEqual(3.5);
-    expect(s.longest).toBeLessThan(50);
+    expect(s.slices).toBe(6); // (two 4 ms steps fill each 8 ms slice)
+    expect(s.longest).toBe(4);
+    expect(s.ms).toBe(48);
   });
   it("fills the height field's window in steps exactly as follow fills it at once", { timeout: 120000 }, () => {
     const map = generateMap(6, TUNING), forest = new Forest(map), df = map.dancefloor;

@@ -24,5 +24,15 @@ export const CREATURE_DORMOUSE = {
     mods: { orbit: 1 },
     label: "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by"
   },
-  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 }
+  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "nut bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "rally",
+    retreat: "freeze",
+    rhythm: "steady",
+    pressure: 3,
+    call: "a yawn",
+    tells: { melee: "crouch", ranged: "winds back", special: "stretches" }
+  }
 };

@@ -22,6 +22,8 @@ export const SIZE = 2;
 const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
 const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
 /** A light at model point c: its colour, its reach in pixels (at the house's pixel, before SIZE) and its power (art/lighting.js shade's). */
+/** The tilt (radians, nose up) the Workshop's parts hang at on the pegboard's pegs (art/workshop.js partSprite's `hung`). */
+export const HANG = .35;
 const light = (m, c, rgb, R, power) => { (m.lights ??= []).push({ c, rgb, R, power }); };
 /** A glowing bulb, flame or bead (drawn unlit), its light with it. */
 const bulb = (m, c, r, mat, g, lit) => { m.ell(c, [r, r, r], mat, { group: g, extra: true }); if (lit) light(m, c, ...lit); };
@@ -90,7 +92,7 @@ const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.N
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 /** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
+export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "pegboard", "recordShelf", "specimens"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -405,33 +407,14 @@ const PIECES = {
     sprig(m, [W / 2 - .1, sit + .1, .1], 5, .08, 22, .7);
   },
 
-  // The broom stand: a rough wooden rack with three brooms upright (her classic, a twig besom, and a modern one with a bike light), a
-  // bucket of spare bristles, a sprig of leaves sprouting from the rack.
-  broomStand(m, { W, D, H }) {
-    const zb = -D / 2 + .05;
-    m.box([0, .08, 0], [W / 2, .06, D / 2], M.WOOD, { round: .02, group: 1, paint: planks(.2) });
-    m.box([0, H * .7, zb], [W / 2, .05, .05], M.WOOD, { round: .02, group: 2, paint: p => (Math.abs(((p[0] / (W / 4)) % 1 + 1) % 1 - .5) < .08 ? M.BARKD : undefined) });
-    for (const s of [-1, 1]) m.seg([s * (W / 2 - .05), .1, zb], [s * (W / 2 - .05), H * .75, zb], .04, .04, M.WOOD, { group: 2 });
-    const broom = (x, lean, kind, g) => {
-      const top = [x + lean, H, zb + .06], foot = [x, .5, zb + .14];
-      m.seg(foot, top, .025, .022, kind === "modern" ? M.FRAME : M.BROOM, { group: g });
-      if (kind === "twig") for (let i = 0; i < 7; i++) { const a = (i / 6 - .5) * 1.1; m.seg([x, .55, zb + .14], [x + Math.sin(a) * .14, .12, zb + .14 + Math.cos(a) * .04], .02, .012, M.STRAW, { group: g + 1 }); }
-      else m.seg([x, .58, zb + .14], [x, .15, zb + .15], .05, .12, M.STRAW, { group: g + 1, paint: p => (Math.abs(p[1] - .5) < .025 ? (kind === "modern" ? M.ACCENT : M.BROOM) : undefined) });
-      if (kind === "modern") { m.ell([x + lean * .8, H * .85, zb + .1], [.035, .025, .03], M.SHADES, { group: g + 2 }); bulb(m, [x + lean * .8, H * .85, zb + .14], .022, M.GLINT, g + 3, [SCREEN, 8, .25]); }
-    };
-    broom(-W * .3, -.05, "classic", 10); broom(0, .03, "twig", 20); broom(W * .3, .06, "modern", 30);
-    can(m, W / 2 - .08, .3, .14, .38, .12, M.FRAME, { group: 40 });
-    for (let i = 0; i < 6; i++) { const a = i * 1.1; m.seg([W / 2 - .08, .35, .3], [W / 2 - .08 + Math.cos(a) * .12, .55, .3 + Math.sin(a) * .1], .018, .01, M.STRAW, { group: 41 }); }
-    sprig(m, [-W / 2 + .05, H * .78, zb], 6, .12, 42);
-  },
-
   // The pegboard (Hotel's Workshop, Ed's OK, 2026-10-23): the 3 × 3 biome board her broom's parts hang on, laid out as the islands'
   // biome map with north up: a board of holes in a wooden frame, its nine cells each framed in its biome's colour (BIOMES), a brass
   // compass rose over it; a sprig sprouting from a corner. Each cell's middle is a mark (`cell0` to `cell8`, row by row from the top
   // left) for the parts Hotel hangs on it, which glow on tonight's cell.
   pegboard(m, { W, D, H }) {
     const zb = -D / 2 + .02, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
-    m.box([0, cy, zb], [W / 2, hh, .02], M.STRAW, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
+    // (a dark board, oily green, so the parts hung on it stand out against it: art/workshop.js)
+    m.box([0, cy, zb], [W / 2, hh, .02], M.CLOTH, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
     m.box([0, cy, zb - .012], [W / 2 + .05, hh + .05, .015], M.WOOD, { round: .01, group: 2 });
     // the nine cells' frames, each in its biome's colour (BIOMES' materials), a gap of board between them
     const cw = (W - .12) / 3, ch = (2 * hh - .12) / 3;
@@ -440,6 +423,8 @@ const PIECES = {
       for (const sy of [-1, 1]) m.box([x, y + sy * (ch / 2 - .03), zf], [cw / 2 - .04, fw, .012], mat, { group: 10 + r * 3 + c });
       for (const sx of [-1, 1]) m.box([x + sx * (cw / 2 - .04), y, zf], [fw, ch / 2 - .03, .012], mat, { group: 10 + r * 3 + c });
       (m.marks ??= {})[`cell${r * 3 + c}`] = [x, y, zf + .03];
+      // two pegs a cell, the part hung across them at HANG's tilt (art/workshop.js), a little under its line
+      for (const t of [-.2, .2]) { const px = x + t * Math.cos(HANG), py = y + t * Math.sin(HANG) - .045; m.seg([px, py, zf], [px, py, zf + .07], .016, .014, M.BARKD, { group: 40 + r * 3 + c }); }
     }
     // the compass rose over it: a brass disc, its four points, north up and red
     const rc = [0, y1 + .2, zf - .01];
@@ -816,7 +801,9 @@ const ROOM_COLOURS = {
   ...SHEETED_COLOURS, // the two locked bedrooms: dull dust sheets (art/sheeted.js)
 };
 /** A piece's own colours over its room's (the biome board's frames). */
-const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i])])) };
+/** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
+const FRAME_DIM = .6;
+const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its

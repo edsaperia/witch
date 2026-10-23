@@ -13,5 +13,15 @@ export const CREATURE_FROSTTROLL = {
     scale: { groundSpeed: 1.12, riseTime: 0.8 },
     label: "Frost troll's Long stride: quicker on foot, and a quicker climb to the treetops"
   },
-  character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 }
+  character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
+    ranged: null,
+    special: "cover",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "crouches",
+    tells: { melee: "club raised", special: "crouches" }
+  }
 };

@@ -34,5 +34,16 @@ export const CREATURE_BAT = {
   traits: ["flier", "swarm"],
   voice: { family: "bat" },
   buff: { name: "Flit", kind: "move", scale: { "dash.distance": 1.5 }, label: "Bat's Flit: your blink goes further" },
-  character: { sprite: "shiver", every: [3, 6], for: 0.6 }
+  character: { sprite: "shiver", every: [3, 6], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "screech", "bigscreech"] },
+    ranged: { name: "screech bolt", range: 10, shots: [0, 1, 2], spread: 12, tint: "red" },
+    special: "confusion",
+    specialWith: { move: true, drift: 60 },
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 3,
+    call: "the ring",
+    tells: { melee: "wings", ranged: "mouth open", special: "the ring" }
+  }
 };

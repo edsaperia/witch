@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "smoke": "node tools/smoke/smoke.cjs",
     "smoke:quick": "node tools/smoke/quick.cjs",
+    "shot": "node tools/shot/shot.cjs",
     "bench": "node tools/bench/run.mjs",
     "bench:compare": "node tools/bench/compare.cjs",
     "bench:quick": "node tools/bench/run.mjs --quick"

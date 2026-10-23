@@ -1,6 +1,7 @@
 // The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, art/furniture.js) in the built game (DIST, default
 // dist/) at 1600×900: she's put in each room of the house (config/house.json) a little south of its middle and the camera zoomed
 // out ZOOM steps (default 1), a shot each (`<room>.png`).
+// BROOM: her broom's save (localStorage witch.broom, as app/broomSave.ts keeps it: {"v":1,"found":[...],"fitted":{...}}).
 // QUERY adds to the link (QUERY=furniture=0: the plain boxes, to compare). ONLY=bedroom,boudoir shoots only those. Fails on a page
 // error.
 //   npm run build && node tools/house/furniture-shots.cjs <out dir> [seed]
@@ -22,6 +23,7 @@ const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
+    if (process.env.BROOM) await page.addInitScript(b => { try { localStorage.setItem("witch.broom", b); } catch { /* */ } }, process.env.BROOM); // (her broom's save: the Workshop's parts found and fitted)
     await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&wave=off&opening=old${QUERY}`);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.keyboard.press("Enter");

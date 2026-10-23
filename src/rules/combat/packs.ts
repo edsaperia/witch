@@ -1,5 +1,5 @@
 // Pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-15 and 2026-10-19): behind the tuning's combat.packs.on, a pack
-// of a kind in config/packs.json (one kind, one side, one target) fights in phases: it closes in (approach), every member glows and
+// of a kind with a `pack` (its creature.js; config/packs.json the rest) (one kind, one side, one target) fights in phases: it closes in (approach), every member glows and
 // its call plays (the tell), it combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her or the
 // furthest throws the special), then it falls back by its kind's retreat pattern (the lull, longer for a bigger pack; her own pack
 // holds instead), and again. Roles come from position every step; how many may wind up or strike at her at once is the kind's
@@ -16,6 +16,7 @@
 // pack engages from that move's reach, reachOf); a kiter's strike is its shot, never a lunge; the slime trail runs on; and while it
 // waits its turn its kind's tactic places it (the wolves' surround: rules/combat.ts).
 import raw from "../../../config/packs.json";
+import { sectionOf } from "../creatureConfig";
 import { type Creature, type Level } from "../creatures";
 import { foes, huntsWitch } from "../creatureStates";
 import { hash2 } from "../random";
@@ -25,11 +26,12 @@ import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
 export type Phase = "approach" | "tell" | "combo" | "lull";
-export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync";
+export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync" | "knockback" | "pull" | "decoy" | "mind";
 /** A special's numbers (packs.json specials), and a kind's own variant over them (its `specialWith`). */
 export interface SpecialData { time?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number;
   /** confusion: her movement turned, not her aim (the bat's screech) */ move?: boolean; /** cloud: a flash inside it confuses her aim (the moth's) */ flash?: boolean; /** cloud: its thrower leaps and it comes down where it lands (the toad's) */ leap?: boolean;
-  /** cover: the coverer and its packmate both dig in, shells locked (the beetle's) */ both?: boolean; /** mirage: images by level [young, adult] */ images?: number[]; /** sync: how many blink with her */ count?: number }
+  /** cover: the coverer and its packmate both dig in, shells locked (the beetle's) */ both?: boolean; /** mirage: images by level [young, adult] */ images?: number[]; /** sync: how many blink with her */ count?: number;
+  /** knockback: metres its ram throws her */ throw?: number; /** pull: metres it drags her toward it (within reach) */ pull?: number }
 export type Move = "melee" | "ranged";
 type Rhythm = { tell: number; gap: number; lull: number; perMember: number; timeout: number };
 export interface PackKind {
@@ -52,7 +54,9 @@ export interface PacksData {
   /** The lull's prowl round her once at its place: near (m), pace (times its speed); freeze, the share of the lull a freeze holds first. */
   prowl: { near: number; pace: number; freeze: number };
 }
-export const PACKS = raw as unknown as PacksData;
+/** packs.json, its kinds each creature's own `pack` (art/creatures/<id>/creature.js, 2026-10-23: so builders adding kinds don't
+ *  collide), spread over any the file still holds. */
+export const PACKS = { ...(raw as unknown as PacksData), kinds: { ...(raw as unknown as PacksData).kinds, ...(sectionOf("pack") as Record<string, PackKind>) } } as PacksData;
 /** A kind's pack entry, or null (it fights as before). */
 export const packKindOf = (species: string, data: PacksData = PACKS): PackKind | null => data.kinds[species] ?? null;
 /** A kind's special's numbers: the special's, with the kind's own variant over them. */
@@ -197,6 +201,8 @@ export interface PackWorld {
   dash?: (id: number) => { at: number; x: number; z: number } | null;
   /** Whether one of her 💌s reached this creature just now. */
   lettered?: (id: number) => boolean;
+  /** She's dragged `metres` toward (x, z), no hurt (the spider's web line, the crocodile's current, the griffin's gust); a blink dodges it. */
+  pull?: (id: number, x: number, z: number, metres: number) => void;
   /** Her aim turns up to `drift` radians, wavering, till then (the stoat's war dance); `move`: her movement instead (the bat's screech). */
   confuse?: (id: number, until: number, drift: number, move?: boolean) => void;
 }
@@ -210,7 +216,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     const tg = c.fight?.target;
     // (a soundsystem or speaker doesn't fight back or dodge: at one a creature fights as before packs, its own attack at full rate,
     // no combo, lull or retreat: Ed, 2026-10-20, a lone boar dealt under half its damage a second to a home speaker)
-    if (!tg || tg.kind === "sound" || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
+    if (!tg || tg.kind === "sound" || c.mind || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
     const k = keyOf(c, tg);
     let l = groups.get(k);
     if (!l) groups.set(k, (l = []));
@@ -221,8 +227,10 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     if (c.packHide && time >= c.packHide.until) { if (c.packHide.tx !== undefined) { c.x = c.packHide.tx; c.z = c.packHide.tz!; } c.packHide = undefined; }
     if (c.packShell !== undefined && time >= c.packShell) c.packShell = undefined;
     if (c.packSync !== undefined && time >= c.packSync) c.packSync = undefined;
+    if (c.mind && time >= c.mind.until) { c.mind = undefined; if (c.fight?.target?.kind === "witch" && c.leashed) c.fight.target = null; } // (her animal turned on her is hers again)
   }
   if (s.mirages?.length) s.mirages = s.mirages.filter(m => time < m.until);
+  if (s.decoys?.length) s.decoys = s.decoys.filter(q => time < q.until && !!w.creatures[q.id] && !w.creatures[q.id].gone);
   for (const k of [...states.keys()]) if (!groups.has(k)) states.delete(k);
   for (const [key, members] of groups) {
     members.sort((a, b) => a.id - b.id);
@@ -325,9 +333,14 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       const own = m.fight?.packMove;
       const move: Move = own && m.fight && strikingNow(m) ? own : role === "lunger" ? lungeMove(m.species, K) : K.ranged ? "ranged" : "melee";
       const d: Directive = { role, phase: st!.phase, state: st!, may: false, move };
+      const own2 = profileOf(m.species)?.move;
       if (m.packSync !== undefined && time < m.packSync) {
         // Blinked in where she blinked (the heron's sync): it strikes at once, whatever the pack's phase.
         d.may = true;
+      } else if (own2?.kind === "ambush" && own2.strike && m.sprung !== undefined && time - m.sprung < (own2.time ?? 0.5) && !st!.struck.includes(m.id) && !st!.hers) {
+        // Sprung from lying in wait (the snake, its move's strike): it strikes as it springs, whatever the pack's phase (Ed, 2026-10-20:
+        // kinds keep their own moves in a pack), taking a token like any strike.
+        d.may = true; d.move = "melee";
       } else if (role === "hurt" && !st!.hers) {
         // Hurt members run while the healthy attack (Ed): out of reach, on its own bearing from her.
         const a = Math.atan2(m.z - p.z, m.x - p.x), out2 = 18 * FIGHT.scale;
@@ -442,6 +455,43 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       break;
     }
     case "sync": st.syncUntil = time + T; st.syncFrom = time; break; // (blinking where she blinks: stepPacks)
+    case "knockback": {
+      // The run-up and ram (the ram's, the ibex's off a slope, the rhino's): it charges her by its own charge, and that blow throws her
+      // `throw` m (hers on the wild: a charge as ever).
+      const P = profileOf(by.species)?.move;
+      if (P?.kind === "charge" && !by.charge && by.fight && !by.fight.lunge && by.fight.windupUntil === 0) {
+        startCharge(by, P, p.x, p.z, time);
+        if (tg.kind === "witch") by.packThrow = { until: time + T + (P.windup ?? 0.5) + (P.time ?? 1), metres: (sp.throw ?? 10) * S * scale };
+      }
+      break;
+    }
+    case "pull": {
+      // Dragged toward the puller (the spider's web line, the crocodile's current, the griffin's gust): her, within its reach; hers on
+      // the wild, the foes round it.
+      const M = (sp.pull ?? 6) * S * scale, reach = (sp.reach ?? 18) * S * (young ? data.young.range : 1);
+      if (tg.kind === "witch" && huntsWitch(side)) {
+        // (the special one if she's in its reach, else the nearest of them that has her in its)
+        const v = w.witches[tg.id], dOf = (m: Creature) => (v ? Math.hypot(v.x - m.x, v.z - m.z) : Infinity), puller = v && dOf(by) <= reach ? by : healthy.filter(m => dOf(m) <= reach).sort((a, b) => dOf(a) - dOf(b))[0];
+        if (v && puller) { pw.pull?.(tg.id, puller.x, puller.z, M); s.events.push({ kind: "packPull", x: v.x, z: v.z, at: time, id: puller.id }); }
+      }
+      else for (const o of w.active) if (o !== by && targetable(o) && foes(sideOf(o), side) && !o.boss && Math.hypot(o.x - by.x, o.z - by.z) <= reach) { const d = Math.hypot(by.x - o.x, by.z - o.z) || 1, k = Math.min(M, Math.max(0, d - 2 * S)); o.kx = ((by.x - o.x) / d) * k * 6; o.kz = ((by.z - o.z) / d) * k * 6; }
+      break;
+    }
+    case "mind": {
+      // Adults only (combat.md): a stare or a glow turns one of her animals on her for its time: the one it's fighting, else the nearest
+      // of hers within its radius; none, and she's within it, her aim drifts instead. Hers on the wild: the foe it's on is stunned
+      // (packs.json hers.stun).
+      if (by.level < 2) break;
+      if (huntsWitch(side)) {
+        const owner = tg.kind === "witch" ? tg.id : 0, v = w.witches[owner], d = (o: Creature) => Math.hypot(o.x - by.x, o.z - by.z);
+        const fought = tg.kind === "creature" ? w.creatures[tg.id] : null;
+        const turn = fought && fought.leashed && !fought.boss && !fought.mind ? fought : w.active.filter(o => o.leashed && !o.gone && !o.boss && o.level > 0 && !o.mind && d(o) <= Rr).sort((a, b) => d(a) - d(b))[0];
+        if (turn && v) { turn.mind = { until: time + T, of: owner }; s.events.push({ kind: "packMind", x: turn.x, z: turn.z, at: time, id: turn.id }); }
+        else if (v && tg.kind === "witch" && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(owner, time + T, ((sp.drift ?? 30) * Math.PI) / 180);
+      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); } }
+      break;
+    }
+    case "decoy": (s.decoys ??= []).push({ id: by.id, until: time + T, r: Rr, side }); break; // (the raccoon waving: her 💌s in its way go to it: rules/game.ts)
     case "wall": {
       // Across her path: her heading, else the way from the pack to her.
       const v = tg.kind === "witch" ? w.witches[tg.id] : null, hv = Math.hypot(v?.vx ?? 0, v?.vz ?? 0);
