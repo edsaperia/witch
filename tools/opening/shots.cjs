@@ -42,9 +42,8 @@ function front(id, by) {
     await page.waitForTimeout(3000);
     await shot("02-wake.png");
     // the pause page's What's new and Options (the chart's corner, before: Ed, 2026-10-23)
-    await page.keyboard.press("Escape");
-    await page.waitForFunction(() => window.witch?.freeze?.frozen ?? true, null, { timeout: 60000 }).catch(() => {});
     for (const [label, name] of [["What's new", "03-whats-new.png"], ["Options", "04-options.png"]]) {
+      await page.keyboard.press("Escape"); // (paused; the Esc below closes the panel and resumes, as Controls')
       await page.click(`button:has-text("${label}")`, { timeout: 60000 });
       await page.waitForSelector(".corner-panel");
       await shot(name);
@@ -52,7 +51,6 @@ function front(id, by) {
       if (await page.$(".corner-panel")) fail(`Esc didn't close ${label}`);
     }
     if (!(await page.evaluate(() => !!document.querySelector("#start .ss-body")))) fail("What's new wasn't put back on the start card");
-    await page.keyboard.press("Escape"); // (unpaused)
     await page.waitForTimeout(1500);
     const w = await page.evaluate(() => { const g = window.witch?.game; const b = g?.witch; return b ? { x: b.x - g.map.treehouse.x, z: b.z - g.map.treehouse.z, seated: !!b.seated, house: g.camera.house } : null; });
     log("she's at", JSON.stringify(w));

@@ -6,7 +6,7 @@ import { wakeInBedroom } from "./rules/opening";
 import { startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
-import { toggleCornerPanel, closeCornerPanel, cornerPanelOpen } from "./ui/cornerPanel";
+import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
@@ -241,7 +241,7 @@ const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
-freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at && !cornerPanelOpen(); // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
+freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 
 // Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
 // the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party

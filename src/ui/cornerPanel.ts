@@ -27,9 +27,6 @@ export function toggleCornerPanel(host: HTMLElement, id: string, title: string, 
   shown = { el, back, id };
 }
 
-/** A panel's up (its Esc closes it, never the pause: main.ts freeze.started). */
-export const cornerPanelOpen = (): boolean => !!shown;
-
 /** Close the panel, if one's up: its borrowed nodes back where they were. */
 export function closeCornerPanel(): void {
   if (!shown) return;
