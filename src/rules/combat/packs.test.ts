@@ -219,6 +219,22 @@ describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", 
     expect(Math.max(...drags)).toBeGreaterThan(3); // (6 m an adult's, a young one's 0.7 of it, the spider moving meanwhile)
   }, 120000);
 
+  it("decoy: a 💌 the waving raccoon catches is wasted, its meter untouched (Ed, 2026-10-23: \"otherwise it's not a decoy\")", () => {
+    // (one of the pack across the arena waving, she throwing straight at it: before it's on her and she's staggered)
+    const g = newGame(5, ON); g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "pack-raccoon");
+    const W = g.witches[0], c = g.creatures.filter(k => k?.species === "raccoon" && !k.leashed && k.level === 2).sort((p, q) => Math.hypot(p.x - W.body.x, p.z - W.body.z) - Math.hypot(q.x - W.body.x, q.z - W.body.z))[0];
+    let caught = 0, landed = 0;
+    const seen = new Set<object>(); // (her 💌s' events, each once: they run on her clock)
+    for (let i = 0; i < 2 / STEP; i++) {
+      g.combat.decoys = [{ id: c.id, until: g.clock.time + 1, r: (PACKS.specials.decoy.radius ?? 3) * FIGHT.scale, side: "wild" }];
+      W.health.hp = 1e6; stepGame(g, { ...idle, fire: true, aimX: c.x - W.body.x, aimZ: c.z - W.body.z }, STEP);
+      for (const e of W.invites.events) if (!seen.has(e)) { seen.add(e); if (e.kind === "fizzled") caught++; if (e.kind === "hit" && e.id === c.id) landed++; }
+    }
+    expect(caught).toBeGreaterThan(0);
+    expect(landed).toBe(0);
+  }, 120000);
+
   it("decoy: the raccoon waving catches her 💌s for its time", () => {
     let seen = 0, lasted = 0;
     arena("pack-raccoon", 60, g => {
