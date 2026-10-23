@@ -42,15 +42,17 @@ export const STUDIO_SLACK = 0.8;
 export const instrumentOfObject = (o: HouseObject): Instrument | null => (o.use.kind === "instrument" ? o.use.instrument : null);
 
 /** The instrument object she's at, standing at (x, z), `open` the one she's at now and `left` the one she stepped away from:
- *  `open` while she's within reach + slack of it; else the nearest within reach (not `left`). `stillLeft`: whether she's still
- *  near `left` (null once she's walked off it, so it can open again). */
+ *  `open` while she's within reach + slack of it; else, once she's walked off `left`, the nearest within reach (none while she's
+ *  still by it: Esc at the drum kit never opens the synth beside it). `stillLeft`: `left` while she's still within reach + slack
+ *  of it, null once she's walked off it. */
 export function instrumentAt(at: { x: number; z: number }, x: number, z: number, open: string | null, left: string | null, H = HOUSE_ROOMS, slack = STUDIO_SLACK): { object: HouseObject | null; stillLeft: string | null } {
   const near = (o: HouseObject, pad: number) => fromObject(o, at, x, z) <= H.reach + pad;
   const L = left ? H.objects.find(o => o.id === left) : undefined, stillLeft = L && near(L, slack) ? left : null;
   const cur = open ? H.objects.find(o => o.id === open && instrumentOfObject(o)) : undefined;
   if (cur && near(cur, slack)) return { object: cur, stillLeft };
+  if (stillLeft) return { object: null, stillLeft };
   let best: HouseObject | null = null, bd = H.reach;
-  for (const o of H.objects) if (instrumentOfObject(o) && o.id !== stillLeft) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
+  for (const o of H.objects) if (instrumentOfObject(o)) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
   return { object: best, stillLeft };
 }
 

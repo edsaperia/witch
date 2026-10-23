@@ -79,6 +79,9 @@ describe("the Studio's instruments by nearness", () => {
     leaveInstrument(st); expect(st.players[0].at).toBeNull(); expect(st.players[0].left).toBe("drumKit");
     const again = instrumentAt(at, front.x, front.z, null, "drumKit");
     expect(again.object).toBeNull(); expect(again.stillLeft).toBe("drumKit");
+    // (nothing else opens while she's still by it: not the synth beside the kit)
+    const synth = HOUSE_ROOMS.objects.find(o => o.id === "synthRack")!, between = { x: (kit.x + kit.w / 2 + synth.x - synth.w / 2) / 2, z: kit.z - kit.d / 2 + 0.3 };
+    if (fromObject(synth, at, between.x, between.z) <= HOUSE_ROOMS.reach) expect(instrumentAt(at, between.x, between.z, null, "drumKit").object).toBeNull();
     const far = instrumentAt(at, mic.x, mic.z + mic.d / 2 + 0.6, null, "drumKit");
     expect(far.stillLeft).toBeNull(); expect(far.object?.id).toBe("microphone");
   });

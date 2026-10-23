@@ -56,7 +56,8 @@ const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.js
     await page.keyboard.press("Escape");
     ok(await atIs(null, 20000), "Esc steps her away");
     await page.waitForTimeout(1500);
-    ok(await page.evaluate(() => window.witch.studio.at === null && !window.witch.game.clock.paused), "it stays shut while she's still by it, and the game isn't paused");
+    const shut = await page.evaluate(() => { const s = window.witch.studio, P = s.state.players[0]; return { at: s.at, object: P.object, left: P.left, paused: window.witch.game.clock.paused, frozen: !!document.querySelector(".freeze-on, body.frozen") }; });
+    ok(shut.at === null && !shut.paused, `it stays shut while she's still by it, and the game isn't paused (${JSON.stringify(shut)})`);
 
     // the modular synth: held notes, the arrows' live controls, Space's latch
     await stand(obj("synthRack"));
