@@ -1,8 +1,8 @@
 {
   "kind": "bear",
   "slot": 30,
-  "phase": 2,
-  "bearing": 320,
+  "phase": 4,
+  "bearing": 303.75,
   "dir": "NW",
-  "biome": "temperate"
+  "biome": "cold rainforest"
 }

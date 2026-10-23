@@ -2,7 +2,7 @@
   "kind": "wolf",
   "slot": 21,
   "phase": 2,
-  "bearing": 25,
+  "bearing": 11.25,
   "dir": "NNE",
-  "biome": "temperate"
+  "biome": "cold"
 }

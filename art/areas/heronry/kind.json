@@ -1,8 +1,8 @@
 {
   "kind": "heron",
   "slot": 13,
-  "phase": 1,
-  "bearing": 240,
-  "dir": "WSW",
-  "biome": "temperate"
+  "phase": 2,
+  "bearing": 213.75,
+  "dir": "SW",
+  "biome": "mangrove swamp"
 }

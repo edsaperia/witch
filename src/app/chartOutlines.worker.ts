@@ -11,10 +11,10 @@
 import { generateMap, islandLand } from "../rules/map";
 import { beachOf } from "../rules/mapShape";
 import { drawnHills, hillsAt, lakeLevel, terrainAt } from "../rules/terrain";
-import { bearingOf, homeIsland, islandOf, isPlaceholder, KINDS, knownKinds } from "../rules/rosters";
-import { islandAt } from "./chartLayout";
+import { homeIsland, islandOf, isPlaceholder, knownKinds } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
+import { islandBiome, lookOfLoop, loopMiddles, nearestLoop, LOOK_IDS, type Blend, type LakeLook } from "../rules/lakeLooks";
 import type { LandMap } from "../rules/land";
 import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/islandMesh";
@@ -50,39 +50,22 @@ function hsv(h: number, s: number, v: number): [number, number, number] {
 type RGB = [number, number, number];
 /** A biome's land colours, as a map's terrain is painted (Ed, 2026-10-12: "natural land colours", "colour it themed by its
  *  biome"): its lowlands, uplands, rock and heights, its beach, and its forest (how the ground darkens where trees stand thick).
- *  By the kind's biome (config/kinds.json, by its island's direction: north cold, south hot, east rocky, west jungle, the
- *  diagonals between; today's 32 temperate). */
+ *  By the kind's biome (config/kinds.json, by its island's direction: north cold, south hot, east volcanic, west jungle, the
+ *  diagonals between; 16 temperate). */
 interface Palette { low: RGB; up: RGB; rock: RGB; peak: RGB; sand: RGB; forest: RGB }
 const PALETTES: Record<string, Palette> = {
   temperate: { low: hsv(0.27, 0.42, 0.5), up: hsv(0.2, 0.36, 0.46), rock: hsv(0.09, 0.18, 0.44), peak: hsv(0.1, 0.08, 0.62), sand: hsv(0.12, 0.32, 0.66), forest: hsv(0.33, 0.55, 0.3) },
   cold: { low: hsv(0.3, 0.16, 0.5), up: hsv(0.45, 0.1, 0.56), rock: hsv(0.6, 0.1, 0.48), peak: hsv(0.58, 0.04, 0.86), sand: hsv(0.1, 0.1, 0.62), forest: hsv(0.42, 0.35, 0.3) },
   hot: { low: hsv(0.11, 0.42, 0.66), up: hsv(0.08, 0.5, 0.58), rock: hsv(0.04, 0.45, 0.46), peak: hsv(0.09, 0.3, 0.7), sand: hsv(0.12, 0.3, 0.76), forest: hsv(0.2, 0.45, 0.38) },
-  rocky: { low: hsv(0.25, 0.14, 0.46), up: hsv(0.6, 0.1, 0.44), rock: hsv(0.62, 0.12, 0.36), peak: hsv(0.6, 0.06, 0.6), sand: hsv(0.1, 0.12, 0.58), forest: hsv(0.36, 0.3, 0.3) },
   jungle: { low: hsv(0.36, 0.62, 0.42), up: hsv(0.32, 0.58, 0.36), rock: hsv(0.25, 0.3, 0.3), peak: hsv(0.3, 0.25, 0.44), sand: hsv(0.13, 0.36, 0.66), forest: hsv(0.38, 0.75, 0.22) },
   "mountains and glaciers": { low: hsv(0.33, 0.22, 0.44), up: hsv(0.55, 0.12, 0.5), rock: hsv(0.6, 0.1, 0.42), peak: hsv(0.55, 0.06, 0.92), sand: hsv(0.1, 0.1, 0.6), forest: hsv(0.4, 0.4, 0.28) },
   "mangrove swamp": { low: hsv(0.24, 0.42, 0.38), up: hsv(0.2, 0.36, 0.36), rock: hsv(0.12, 0.26, 0.34), peak: hsv(0.15, 0.2, 0.46), sand: hsv(0.12, 0.3, 0.5), forest: hsv(0.3, 0.6, 0.22) },
   "cold rainforest": { low: hsv(0.4, 0.42, 0.36), up: hsv(0.42, 0.32, 0.38), rock: hsv(0.55, 0.12, 0.38), peak: hsv(0.55, 0.06, 0.7), sand: hsv(0.1, 0.14, 0.56), forest: hsv(0.42, 0.6, 0.2) },
-  volcanic: { low: hsv(0.05, 0.2, 0.26), up: hsv(0.03, 0.18, 0.2), rock: hsv(0.62, 0.08, 0.16), peak: hsv(0.04, 0.75, 0.62), sand: hsv(0.08, 0.12, 0.34), forest: hsv(0.3, 0.45, 0.24) }, // (an island tagged volcanic, the stegosaurus's: black basalt and ash, a glowing peak; Ed, 2026-10-13)
+  volcanic: { low: hsv(0.05, 0.2, 0.26), up: hsv(0.03, 0.18, 0.2), rock: hsv(0.62, 0.08, 0.16), peak: hsv(0.04, 0.75, 0.62), sand: hsv(0.08, 0.12, 0.34), forest: hsv(0.3, 0.45, 0.24) }, // (black basalt and ash, a glowing peak: the stegosaurus's island first, Ed, 2026-10-13; every east island since, Ed, 2026-10-23)
   badlands: { low: hsv(0.07, 0.4, 0.56), up: hsv(0.04, 0.45, 0.48), rock: hsv(0.02, 0.4, 0.38), peak: hsv(0.06, 0.25, 0.6), sand: hsv(0.1, 0.3, 0.68), forest: hsv(0.18, 0.4, 0.34) },
 };
-/** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
- *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice, lava, an oasis, a sinkhole, else
- *  water: north cold, east rocky (the volcano: "rocky is volcano"), south hot, west jungle. The diagonals have their own (Ed, via
- *  the coordinator): a glacial tarn in the mountains and glaciers (NE), a tar pit in the cold rainforest (NW; a hot spring till Ed, 2026-10-13: it looked like somewhere you could walk), a rust pool in
- *  the badlands (SE), a lily pond in the mangrove swamp (SW). Temperate keeps water. Looks only. */
-export type LakeLook = "water" | "ice" | "lava" | "oasis" | "sinkhole" | "tarn" | "tar" | "rust" | "lily";
-/** The looks by number, as the chart's lake shader knows them (seaChart.ts LAKE_FRAG's uLook). */
-export const LOOK_IDS: readonly LakeLook[] = ["water", "ice", "lava", "oasis", "sinkhole", "tarn", "tar", "rust", "lily"];
-/** The compass's biomes, N first and on clockwise every 45° (config/kinds.json's by direction). An island's biome blends the two
- *  its bearing lies between, by how near it is to each (Ed, 2026-10-12: "These blend smoothly; ones on the border might have
- *  both"): its land's colours mixed by that share, and each of its lakes one of the two looks, by those odds, seeded. */
-const COMPASS = ["cold", "mountains and glaciers", "rocky", "badlands", "hot", "mangrove swamp", "jungle", "cold rainforest"];
-export interface Blend { a: string; b: string; /** a's share, 0.5 to 1 */ w: number }
-export function blendAt(bearing: number): Blend {
-  const d = (((bearing % 360) + 360) % 360) / 45, i = Math.floor(d) % 8, t = d - Math.floor(d);
-  return t <= 0.5 ? { a: COMPASS[i], b: COMPASS[(i + 1) % 8], w: 1 - t } : { a: COMPASS[(i + 1) % 8], b: COMPASS[i], w: t };
-}
-export const LAKE_LOOKS: Record<string, LakeLook> = { cold: "ice", rocky: "lava", volcanic: "lava", hot: "oasis", jungle: "sinkhole", "mountains and glaciers": "tarn", "cold rainforest": "tar", badlands: "rust", "mangrove swamp": "lily" };
+// What a biome's lakes become, and an island's biomes by its bearing: rules/lakeLooks.ts (the game's lakes take the same).
+export { LOOK_IDS, LAKE_LOOKS, blendAt, type LakeLook, type Blend } from "../rules/lakeLooks";
 /** Each look's rim on the shore round its lakes: its colour, how wide (m) and how strongly. */
 const LAKE_RIMS: Record<LakeLook, { rgb: RGB; width: number; k: number }> = {
   water: { rgb: [0, 0, 0], width: 0, k: 0 },
@@ -144,9 +127,7 @@ function ground(src: Source, across = ACROSS): IslandGround {
     }
   }
   // each lake's look: one of the blend's two, by its odds, seeded by the lake (its shore loop: the same on every grid)
-  const LB = src.lakeBlend ?? { a: "temperate", b: "temperate", w: 1 };
-  const looks = new Uint8Array(n), lookA = LOOK_IDS.indexOf(LAKE_LOOKS[LB.a] ?? "water"), lookB = LOOK_IDS.indexOf(LAKE_LOOKS[LB.b] ?? "water");
-  const shores = (lakes?.loops ?? []).map(l => { let sx = 0, sz = 0; const m = l.pts.length / 2; for (let k = 0; k < m; k++) { sx += l.pts[k * 2]; sz += l.pts[k * 2 + 1]; } return { x: sx / m, z: sz / m }; });
+  const looks = new Uint8Array(n), shores = lakes ? loopMiddles(lakes) : [];
   const seen = new Uint8Array(n), stack: number[] = [];
   for (let i0 = 0; i0 < n; i0++) {
     if (water[i0] !== 2 || seen[i0]) continue;
@@ -155,9 +136,7 @@ function ground(src: Source, across = ACROSS): IslandGround {
       const i = stack.pop()!, r = (i / cols) | 0, c = i - r * cols; part.push(i); sx += x0 + c * step; sz += z0 + r * step;
       for (const j of [c > 0 ? i - 1 : -1, c < cols - 1 ? i + 1 : -1, i - cols, i + cols]) if (j >= 0 && j < n && water[j] === 2 && !seen[j]) { seen[j] = 1; stack.push(j); }
     }
-    const mx = sx / part.length, mz = sz / part.length;
-    let best = 0, bd = Infinity; shores.forEach((p, k) => { const dd = Math.hypot(p.x - mx, p.z - mz); if (dd < bd) { bd = dd; best = k; } });
-    const look = rand(src.seed, best * 7919 + 29) >= src.lakeShare ? 0 : rand(src.seed, best * 7919 + 13) < LB.w ? lookA : lookB;
+    const look = LOOK_IDS.indexOf(lookOfLoop(nearestLoop(shores, sx / part.length, sz / part.length), src.seed, { blend: src.blend, lakeBlend: src.lakeBlend, lakeShare: src.lakeShare }));
     for (const i of part) looks[i] = look;
   }
   // a sinkhole is no lake but a dry pit: a lip just below its rim, sheer walls, a forest floor far below (`ring` in from its rim)
@@ -213,16 +192,9 @@ export function make(id: string, world: number, found: string[], step: number, a
   if (had) return outlineOf(id, world, had, across);
   const island = id === "home" ? homeIsland(world, knownKinds(found)) : islandOf(id, world);
   if (!island) return null;
-  const H = drawnHills(TUNING), biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
-  // its biome: temperate as it stands; else a blend by its bearing where the archipelago put it (else its table's bearing); its
-  // lakes by that bearing's biomes from the tuning's lakes.biomeFrom phase on (Ed, 2026-10-12: "biome lakes can start appearing one
-  // phase earlier": so a temperate island that far out has the compass's lakes too), before it plain water
-  const at = id === "home" ? null : islandAt(id, world), bearing = at ? (Math.atan2(at.x, -at.y) * 180) / Math.PI : bearingOf(id, world);
-  const own = biome !== "temperate" && !COMPASS.includes(biome) && !!PALETTES[biome]; // (a tag that is a palette of its own, not a compass point: the island in it alone, its lakes its look)
-  const blend: Blend = biome === "temperate" ? { a: "temperate", b: "temperate", w: 1 } : own ? { a: biome, b: biome, w: 1 } : blendAt(bearing), seed = island.seed | 0;
-  // (Ed: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain")
-  const LK = lakeKnobs(TUNING), lakeBlend = id !== "home" && island.phase >= LK.biomeFrom ? (own ? blend : blendAt(bearing)) : null;
-  const lakeShare = !lakeBlend ? 0 : island.phase === LK.biomeFrom ? LK.biomeFirstShare : 1;
+  const H = drawnHills(TUNING), seed = island.seed | 0;
+  // its biomes by where it lies (rules/lakeLooks.ts: the game's lakes take the same)
+  const { blend, lakeBlend, lakeShare } = islandBiome(id, world, island.phase, lakeKnobs(TUNING));
   let src: Source;
   if (id !== "home" && isPlaceholder(id)) { // uncharted: its land alone, the hills as drawn, no forest known
     const l = islandLand(island, TUNING, step), lakes = l.lakes ?? null;

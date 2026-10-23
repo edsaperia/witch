@@ -1,8 +1,8 @@
 {
   "kind": "stag",
   "slot": 28,
-  "phase": 2,
-  "bearing": 265,
-  "dir": "W",
+  "phase": 1,
+  "bearing": 255,
+  "dir": "WSW",
   "biome": "temperate"
 }
