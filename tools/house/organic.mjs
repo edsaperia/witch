@@ -68,11 +68,11 @@ const objects = [
   at("broomStand", "workshop", -20, 1.2), at("pegboard", "workshop", 25, 0.9),
   // the Studio's instruments (Ed, 2026-10-23: "a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit)";
   // rules/studio.ts), and the record shelf beside the DJ booth (Ed: "the record collection is actually next to the DJ booth"): on the
-  // Terrace by the balcony, beside the decks
-  make("drumKit", "studio", "Drum kit", -45, 2, 2.4, 2, 1.3, { kind: "instrument", instrument: "drums" }),
-  make("synthRack", "studio", "Modular synth", 45, 1.2, 2.6, 0.7, 1.9, { kind: "instrument", instrument: "synth" }),
-  make("microphone", "studio", "Microphone", 0, 6.5, 0.5, 0.5, 1.7, { kind: "instrument", instrument: "mic" }),
-  at("recordShelf", "terrace", 146, 0.73, { w: 0.6, d: 1.6, h: 1.6 }), at("cauldron", "kitchen", 0, 3.5),
+  // Terrace by the balcony, beside the decks (footprints about twice a real piece's, as the house's furniture: Alpha, art/furniture.js)
+  make("drumKit", "studio", "Drum kit", -45, 2.5, 4.4, 4, 2.6, { kind: "instrument", instrument: "drums" }),
+  make("synthRack", "studio", "Modular synth", 45, 2, 4.8, 1.4, 3.8, { kind: "instrument", instrument: "synth" }),
+  make("microphone", "studio", "Microphone", 0, 6.5, 1, 1, 3.4, { kind: "instrument", instrument: "mic" }),
+  at("recordShelf", "terrace", 146, 0.73, { w: 1.2, d: 3.2, h: 3.2 }), at("cauldron", "kitchen", 0, 3.5),
   at("teaTable", "solarium", 0, 4), at("cardTable", "drawingRoom", 0, 4.2),
   at("book", "bestiary", 0, 4.5), at("specimens", "bestiary", 70, 0.9),
   at("telescope", "crowsNest", 30, 2),

@@ -79,7 +79,7 @@ describe("the Studio's instruments by nearness", () => {
     leaveInstrument(st); expect(st.players[0].at).toBeNull(); expect(st.players[0].left).toBe("drumKit");
     const again = instrumentAt(at, front.x, front.z, null, "drumKit");
     expect(again.object).toBeNull(); expect(again.stillLeft).toBe("drumKit");
-    const far = instrumentAt(at, mic.x, mic.z + 0.6, null, "drumKit");
+    const far = instrumentAt(at, mic.x, mic.z + mic.d / 2 + 0.6, null, "drumKit");
     expect(far.stillLeft).toBeNull(); expect(far.object?.id).toBe("microphone");
   });
 });
