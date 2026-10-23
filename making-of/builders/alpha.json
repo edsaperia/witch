@@ -2,17 +2,21 @@
   "builder": "Alpha",
   "phase": "The treehouse's furniture (2026-10-23)",
   "slice": "Every object in the treehouse drawn as pixel art in place of its plain box, in Ed's mismatched style: cottage pieces sprouting leaves, the odd gothic one, and modern clutter (#1017)",
-  "prs": [1017],
+  "prs": [
+    1017
+  ],
   "built": [
     "`art/furniture.js`: each of the house's 25 objects as a 3D model, built from its footprint in `config/house.json` and never from where it stands, so the house's layout can move it. It includes a gothic canopy bed with a hoodie and a glowing phone on it, a clothes rail strung with fairy lights, a bulb-lit vanity, the crystal ball on its clawed brass stand, curtains that are shut while she wakes, a cauldron with the last of a brew glowing in it, a record shelf with a lava lamp, a pegboard with a neon bolt, a cabinet of skulls, a telescope and the locked bedrooms' doors",
     "A palette for each room, and lights of every kind: candles, bulbs, fairy lights, neon, screens and magic. Each piece lights what's near it, as the creator's room does",
     "Ed's answers on the mock: the pieces twice their real size, the bed's canopy over its head half, the rooms dim with the glows carrying them, and fewer, chunkier things of clutter that read at a glance",
     "`render/houseFurniture.ts` turns each piece to face its room's middle and bakes it, the nearest first, a piece a frame. `render/houseRooms.ts` draws them between each room's floor and its near rail. `tools/house/organic.mjs` gives each piece its size and puts its back to the rim of Golf's round rooms",
-    "`tools/house/furniture-sheet.mjs` draws them all as a contact sheet without a browser; `tools/house/furniture-shots.cjs` shoots each room in the game"
+    "`tools/house/furniture-sheet.mjs` draws them all as a contact sheet without a browser; `tools/house/furniture-shots.cjs` shoots each room in the game",
+    "`art/broomParts.js`: the Workshop's nine broom parts as pieces of their own (Ed's picks: mismatched salvage, glowing only where a real light would be), in her broom's two colours over the Workshop's steel, brass, wood and rust; her broom on the bay assembled from the parts she's fitted, and each part hung on the biome board's pegs, made stubbier and tilted so it reads at about 20 pixels."
   ],
   "learned": [
     "Detail that reads on a contact sheet can turn to noise in the game, where the lighting and the pixel style flatten it. Fewer, bigger things read better. Asking Ed four multiple-choice questions on a mock of four pieces settled the style before the other 21 were drawn",
-    "A piece facing any angle beats a mirrored one: mirroring flips the light with it, and a round room's arc wants every angle"
+    "A piece facing any angle beats a mirrored one: mirroring flips the light with it, and a round room's arc wants every angle",
+    "A part that reads at 60 pixels on a card can vanish at 20 on a wall: drawing it shorter and tilted, so the same features take more of its pixels, did more for it than any detail. And a bright frame round a thing glows over it once the game's bloom is on."
   ],
   "previews": []
 }

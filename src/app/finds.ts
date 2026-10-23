@@ -4,15 +4,16 @@
 // dev control (ui/findsPanel.ts) and ?own= all go through grantFind/keepFound, so a granted find is exactly a found one (Ed,
 // 2026-10-23: "we will need a debug control that allows devs to give themselves collectible items"). A new kind of find (hats,
 // bags, records) adds its keeper here: KEEPERS is a record of every FindKindId, so the typecheck asks for it.
-import { FIND_KINDS, findKind, type FindKindId } from "../rules/finds";
+import { FIND_KINDS, HAT_FINDS, findKind, type FindKindId } from "../rules/finds";
 import { SLOTS, bareBroom, partById, spellOfParts } from "../rules/broomParts";
-import { setParts, type SpellState } from "../rules/spells";
+import { hatSpell, setLoadout, setParts, type SpellState } from "../rules/spells";
 import { itemById } from "../rules/wardrobe";
 import { loadOwned, saveOwned } from "./owned";
 import { loadBroom, partFound, saveBroom } from "./broomSave";
+import { HATS_KEY, hatFound, loadHats } from "./hatSave";
 
 /** What a keeper works on: her spells (a broom part's claim fits it there) and what she owns to wear (the page's set, kept). */
-export interface FindsCtx { spells: Pick<SpellState, "parts" | "broom" | "activeUntil" | "readyAt" | "castAt">; owned(): Set<string> }
+export interface FindsCtx { spells: Pick<SpellState, "parts" | "broom" | "activeUntil" | "readyAt" | "castAt"> & Partial<Pick<SpellState, "hat" | "hats">>; owned(): Set<string> }
 export interface Keeper {
   /** an item's name, as the game shows it */
   label(id: string): string;
@@ -32,6 +33,24 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
     // (one she's wearing still counts as hers: app/owned.ts's loadOwned)
     drop: (c, id) => { const o = c.owned(); o.delete(id); saveOwned(o); },
   },
+  // (the spell hats: app/hatSave.ts's witch.hats; her own tonight are her spells' hats, every one when the tuning says so)
+  hat: {
+    label: id => hatSpell(id)?.name ?? id,
+    has: c => new Set(c.spells.hats ?? HAT_FINDS),
+    keep: (_c, id) => { hatFound(id); },
+    drop: (c, id) => {
+      try { localStorage.setItem(HATS_KEY, JSON.stringify(loadHats().filter(h => h !== id))); } catch { /* storage blocked: this run only */ }
+      const s = c.spells; if (s.hats) s.hats = s.hats.filter(h => h !== id);
+      if (s.hat === id) setLoadout(s as SpellState, "none"); // (off her if she wears it)
+    },
+  },
+  // (the bags are wardrobe items, kept in witch.owned as the wearables are)
+  bag: {
+    label: id => itemById(id)?.name ?? id,
+    has: c => c.owned(),
+    keep: (c, id) => { const o = c.owned(); o.add(id); saveOwned(o); },
+    drop: (c, id) => { const o = c.owned(); o.delete(id); saveOwned(o); },
+  },
   part: {
     label: id => partById(id)?.name ?? id,
     has: () => new Set(loadBroom().found),
@@ -45,6 +64,9 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
     },
   },
 };
+
+/** What she has of every kind: the night's draw's (rules/finds.ts fillTrunk). */
+export const foundAll = (c: FindsCtx): Partial<Record<FindKindId, ReadonlySet<string>>> => Object.fromEntries(FIND_KINDS.map(k => [k.id, KEEPERS[k.id].has(c)]));
 
 /** The page's half of a find: kept for good (the "found" event, after the rules' claim). */
 export const keepFound = (c: FindsCtx, kind: FindKindId, id: string): void => KEEPERS[kind].keep(c, id);

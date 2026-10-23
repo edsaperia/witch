@@ -277,7 +277,9 @@ export class AssetLibrary {
     const atlas = atlasFromPixels(r.result.px);
     this.timings.push({ set: this.key(r.job), ms: r.ms ?? 0, at: performance.now(), cached: !!r.cached });
     if (r.job.kind === "witch") {
-      if (r.job.bare) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; }
+      // (her hat-off frames only for the look she has now: a job for a look she's since changed from, at a station where she's drawn
+      // from them, would put the old look back on her, the new one never showing: Ed's playtest, 2026-10-23, "I can't select them")
+      if (r.job.bare) { if (JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null)) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; } }
       else {
         const look = { atlas: { ...atlas, grounds: r.result.ours!.grounds }, art: r.result.ours! }, k = JSON.stringify(r.job.genome ?? null);
         this.witchLooks.delete(k); this.witchLooks.set(k, look);
@@ -346,6 +348,8 @@ export class AssetLibrary {
     this.version++;
   }
 
+  /** Whether a species' plain art is in (nothing asked for): render/view/creatures.ts asks only for the ones that may be on screen. */
+  hasCreature(species: string): boolean { return this.creatures.has(species); }
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
@@ -366,6 +370,9 @@ export class AssetLibrary {
     return this.lakeShore;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
+  /** Whether the decor's and the path pieces' sets are in (nothing asked for: render/view/scenery.ts asks once one may be on screen). */
+  hasDecor(): boolean { return !!this.decor; }
+  hasPathPieces(): boolean { return !!this.pieces; }
   decorArt(): DecorArt | undefined {
     // (in the island's biome look, art/flora/biomes.js: drawn again for an island in another; the scenery lets go of its batch on
     // the old one when this comes back undefined, render/view/scenery.ts, before it's freed as the new one lands)
@@ -526,7 +533,7 @@ export class AssetLibrary {
   }
   private bare: Atlas | null = null;
   private bareAsked = false;
-  /** Her frames without her hat are in (not the stand-in). */
+  /** Her frames without her hat are in (not the stand-in): always her look now (onResult drops one for a look she's left). */
   get bareReady(): boolean { return !!this.bare; }
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */

@@ -22,5 +22,16 @@ export const CREATURE_SPIDER = {
     scale: { "invites.range": 1.5 },
     label: "Spider's Long thread: 💌s fly further"
   },
-  character: { sprite: "shiver", every: [3, 7], for: 0.5 }
+  character: { sprite: "shiver", every: [3, 7], for: 0.5 },
+  pack: {
+    melee: null,
+    ranged: { name: "web shot", range: 22, shots: [0, 1, 1], attacks: [null, "web", "bigweb"], tint: "red" },
+    special: "pull",
+    specialWith: { pull: 6, reach: 22 },
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "legs raised",
+    tells: { ranged: "abdomen up", special: "the line" }
+  }
 };

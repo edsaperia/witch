@@ -28,5 +28,15 @@ export const CREATURE_UNICORN = {
     scale: { "dash.distance": 1.2, groundAcceleration: 1.5 },
     label: "Unicorn's Grace: a longer blink and quicker starts"
   },
-  character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 }
+  character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "horn bolt", range: 16, shots: [0, 1, 2], spread: 6, tint: "red" },
+    special: "mind",
+    retreat: "circle",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the horn glows",
+    tells: { melee: "head down", ranged: "the horn", special: "the horn glows" }
+  }
 };

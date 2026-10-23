@@ -18,5 +18,22 @@ export const CREATURE_FEATHEREDSERPENT = {
     scale: { treetopSpeed: 1.15, riseTime: 0.7 },
     label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
   },
-  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 }
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: {
+      name: "venom spit",
+      range: 24,
+      shots: [0, 1, 2],
+      spread: 8,
+      attacks: [null, "spit", "longspit"],
+      tint: "red"
+    },
+    special: "mirage",
+    retreat: "branches",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the ruff fans",
+    tells: { melee: "the ruff flares", ranged: "aim line", special: "the ruff fans" }
+  }
 };

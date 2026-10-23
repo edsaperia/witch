@@ -1,7 +1,7 @@
 // The treehouse's dressing stations by nearness (Ed, 2026-10-21, after the new opening: "the customisation menus take me back to
 // the old bedroom screen; instead I should see the menu slide in from the left when I go near the relevant object, and slide away
 // when I walk away from it"). A station is a house object whose use is the creator (config/house.json: the mirrors, the wardrobe,
-// the cloak pegs, the shoe rack, the bags, the broom stand); she's at one within the house's reach of its edge, and stays at it
+// the cloak pegs, the shoe rack, the bags; the Workshop's bay, lathe and pegboard); she's at one within the house's reach of its edge, and stays at it
 // till she's `slack` metres further off, so its panel doesn't flicker at the edge; one at a time, the nearest. Where an object is
 // and whether there are rooms are houseRooms.ts's (fromObject, hasRooms), never worked out here, so a new plan for the rooms
 // moves the stations' reach with them. Stations are known by their `use` alone. No E: the page

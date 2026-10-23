@@ -17,5 +17,15 @@ export const CREATURE_JAGUAR = {
     scale: { "invites.range": 1.3, "invites.speed": 1.15 },
     label: "Jaguar's Night eyes: 💌s fly further and a little faster"
   },
-  character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 }
+  character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "jaguar bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "a stillness",
+    tells: { melee: "crouch", ranged: "snarls", special: "a stillness" }
+  }
 };

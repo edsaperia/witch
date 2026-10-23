@@ -19,5 +19,15 @@ export const CREATURE_TIGER = {
     scale: { "dash.distance": 1.4, groundAcceleration: 1.4 },
     label: "Tiger's Pounce: a longer blink, and quicker off the mark"
   },
-  character: { posture: { head: [0.02, -0.02], body: -0.02 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
+  character: { posture: { head: [0.02, -0.02], body: -0.02 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"] },
+    ranged: { name: "growl bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "feint",
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "crouch",
+    tells: { melee: "crouch", ranged: "growls", special: "a short spring" }
+  }
 };

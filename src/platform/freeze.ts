@@ -3,9 +3,28 @@
 // while frozen, . steps one fixed step (Shift+. ten), and a stamp says exactly what is on screen
 // (version, seed, game time, where she is, the area, the camera) with a link to copy. P stays the
 // waves' own pause; this one stops everything.
+//
+// The pause page over everything (Ed's playtest, 2026-10-23: "pause menu should go on top of e.g. map screen and other things
+// like that"), in this one place rather than overlay by overlay: while frozen a clear shield covers the screen above every overlay
+// (the map table's and the sea chart, the station panels, the Workshop's, the telescope, the finds dev panel, the zoo...), the
+// pause page's own pieces (PAUSE_UI) above it, so only they take the mouse; every key not aimed at them stops here, before any
+// overlay's listener (this one is made before theirs), Esc included, so Esc pauses instead of also shutting what's open (at a
+// Studio instrument Esc is still hers first: Ed, 2026-10-23, "Esc steps her away, the next Esc pauses", main.ts freeze.started); and the gamepad reads as none to all but the freeze (navigator.getGamepads wrapped), so
+// an overlay's own pad loop doesn't move under the pause. Thawed, everything is as it was: the overlay open as it was left.
 import { areaUnderWitch, STEP, stepGame, type Controls, type Game } from "../rules/game";
 
 const STILL: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+/** The pause page's own pieces: above the shield while frozen, and the only things keys and the mouse reach then (its test
+ *  sliders, its Controls / What's new / Options buttons and their panel, the Music Lab, the new-build notice, the freeze's stamp). */
+export const PAUSE_UI = ["#pause-sliders", "#pause-btns", ".corner-panel", "#music-lab", "#new-build", "#freeze-marker", "#freeze-stamp"];
+/** Over every overlay (the highest is the corner panel's 62). */
+const PAUSE_Z = 1000;
+const LAYER_CSS = `#pause-shield { position: fixed; inset: 0; z-index: ${PAUSE_Z}; display: none; }
+body.paused #pause-shield { display: block; }
+body.paused :is(${PAUSE_UI.join(", ")}) { z-index: ${PAUSE_Z + 1} !important; }`;
+
+/** The browser's own gamepads (the freeze reads them; everyone else through the wrapper, none while frozen). */
+const realPads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads.bind(navigator) : null;
 
 export class Freeze {
   frozen = false;
@@ -17,6 +36,8 @@ export class Freeze {
   private readonly copy = document.createElement("button");
   /** Whether the game has started (Escape on the start screen starts it, like any key). */
   started = () => true;
+  /** Whether Esc is the pause's (false: someone else's, e.g. the bot game's way back to the start screen). */
+  ownsEsc = () => true;
   /** Told on every freeze and thaw (the music's audio stops dead; the pause page's sliders slide in). */
   onToggle: (frozen: boolean) => void = () => {};
   /** Quiet (Ed, 2026-10-12: "the pause page shouldn't put any other overlay on the game"): no card or stamp of its own; the
@@ -32,13 +53,24 @@ export class Freeze {
     Object.assign(this.copy.style, { marginTop: "6px", font: "inherit", pointerEvents: "auto", cursor: "pointer" });
     this.copy.textContent = "copy link";
     this.copy.addEventListener("click", () => this.copyLink());
-    document.body.append(this.marker, this.stamp);
-    // Before the game's own input (capture), so a press while frozen never starts or flies anything.
+    this.marker.id = "freeze-marker"; this.stamp.id = "freeze-stamp";
+    const style = document.createElement("style"), shield = document.createElement("div");
+    style.textContent = LAYER_CSS; shield.id = "pause-shield";
+    document.head.append(style);
+    document.body.append(this.marker, this.stamp, shield);
+    // Before the game's own input and every overlay's (capture, and made first), so a press while frozen never starts, flies or
+    // chooses anything: Esc is the pause's alone; frozen, only the pause page's own pieces have keys.
     window.addEventListener("keydown", e => {
-      if (e.code === "Escape" && !e.repeat && this.started()) { e.preventDefault(); this.toggle(); }
+      if (e.code === "Escape" && this.ownsEsc() && (this.frozen || this.started())) {
+        e.preventDefault(); e.stopImmediatePropagation();
+        if (!e.repeat) this.toggle();
+      }
       // While frozen . steps (and isn't also the fight-momentum debug key); otherwise it's that key.
-      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopPropagation(); this.step(e.shiftKey ? 10 : 1); }
+      else if (e.code === "Period" && this.frozen) { e.preventDefault(); e.stopImmediatePropagation(); this.step(e.shiftKey ? 10 : 1); }
+      else if (this.frozen && !(e.target as Element | null)?.closest?.(PAUSE_UI.join(","))) e.stopImmediatePropagation();
     }, { capture: true });
+    // The gamepad, while frozen, the freeze's alone (pollPad's Start): every other reader of it sees none.
+    if (realPads) Object.defineProperty(navigator, "getGamepads", { configurable: true, writable: true, value: () => (this.frozen ? [] : realPads()) });
   }
 
   /** A new night on the same page (app/night.ts): its game and seed from here on. */
@@ -50,6 +82,7 @@ export class Freeze {
     const g = this.game;
     if (this.frozen) { this.wasPaused = g.clock.paused; g.clock.paused = true; }
     else g.clock.paused = this.wasPaused;
+    document.body.classList.toggle("paused", this.frozen);
     this.onToggle(this.frozen);
     this.marker.style.display = this.stamp.style.display = this.frozen && !this.quiet ? "block" : "none";
   }
@@ -62,8 +95,7 @@ export class Freeze {
 
   /** Gamepad Start (standard button 9) toggles, read once a frame. */
   pollPad(): void {
-    const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
-    const pad = [...pads].find(p => p), down = !!pad?.buttons[9]?.pressed;
+    const pad = [...(realPads?.() ?? [])].find(p => p), down = !!pad?.buttons[9]?.pressed;
     if (down && !this.padPrev) this.toggle();
     this.padPrev = down;
   }
