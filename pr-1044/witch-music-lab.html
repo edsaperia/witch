@@ -5229,6 +5229,7 @@ label.check input { accent-color: var(--accent); }
   };
   var WITCH_SEAT_HEIGHT = 0.34;
   var UPRIGHT = { binding: [-0.02, 0.31, -0.2], dir: [0.02, 1, -0.04] };
+  var CARRIED = { held: 0.2, dir: [0.04, 1, -0.04] };
   var Q = Math.PI / 2;
   var LIMBO_BAR = 0.82;
   var FOOT_FRAMES = {
@@ -5262,6 +5263,34 @@ label.check input { accent-color: var(--accent); }
         hand: "rest",
         far: [0.03 + 0.13 * c, 0.45, -0.17],
         farHand: "rest"
+      };
+    }),
+    // and the same carrying her broom (Ed, 2026-10-23: "she holds it when she's on the terrace"): upright in her far hand like a staff,
+    // its bristles just off the floor, that hand swinging only a little as she walks (render/view/witch.ts, rules/stations.ts broomWhere)
+    idleBroom: [0, 1, 2].map((f) => ({
+      broom: CARRIED,
+      breathe: [0, 6e-3, 0.012][f],
+      sway: [0, 0.015, 0.03][f],
+      tilt: [0, 0.05, 0.1][f],
+      feet: [[-0.01, 0.07, -0.09], [0.04, 0.07, 0.09]],
+      free: [0.03, 0.43 + [0, 6e-3, 0.012][f], 0.17],
+      hand: "rest",
+      far: [0.06, 0.5 + [0, 6e-3, 0.012][f], -0.18]
+    })),
+    walkBroom: [0, 1, 2, 3, 4, 5].map((f) => {
+      const p = f / 6 * 2 * Math.PI, c = Math.cos(p), lift = (q) => 0.07 + Math.max(0, -Math.sin(q)) * 0.1;
+      return {
+        broom: CARRIED,
+        bend: 0.06,
+        crouch: 0.05 * Math.abs(c),
+        roll: 0.05 * Math.sin(p),
+        tilt: 0.12 * Math.sin(p),
+        sway: 0.02 + 0.015 * Math.abs(Math.sin(p)),
+        look: -0.02,
+        feet: [[0.02 - 0.15 * c, lift(p + Math.PI), -0.09], [0.02 + 0.15 * c, lift(p), 0.09]],
+        free: [0.03 - 0.13 * c, 0.45, 0.17],
+        hand: "rest",
+        far: [0.06 + 0.04 * c, 0.5, -0.18]
       };
     }),
     land: [
@@ -10629,6 +10658,7 @@ label.check input { accent-color: var(--accent); }
       bark: [168, 168, 176, 0.35],
       moss: [205, 215, 226],
       snow: 0.8,
+      stone: [150, 156, 170, 0.35],
       jitter: 0,
       knobs: { gnarl: 0.1 }
     },
@@ -10641,6 +10671,7 @@ label.check input { accent-color: var(--accent); }
       bark: [118, 110, 104, 0.3],
       moss: [180, 196, 168],
       snow: 0.28,
+      stone: [132, 128, 130, 0.3],
       jitter: 0.3,
       knobs: { lean: 0.25, gnarl: 0.3, hang: 0.5, scale: 0.9 }
     },
@@ -10653,6 +10684,7 @@ label.check input { accent-color: var(--accent); }
       lit: [226, 88, 54, 0.55],
       bark: [34, 28, 30, 0.65],
       moss: [96, 64, 52],
+      stone: [34, 30, 36, 0.7],
       jitter: 0.5,
       knobs: { gnarl: 0.25 }
     },
@@ -10665,6 +10697,7 @@ label.check input { accent-color: var(--accent); }
       lit: [222, 172, 88, 0.45],
       bark: [180, 98, 50, 0.6],
       moss: [150, 120, 80],
+      stone: [184, 88, 52, 0.65],
       jitter: 0.6,
       knobs: { lean: 0.2, gnarl: 0.35, scale: 0.82 }
     },
@@ -10677,6 +10710,7 @@ label.check input { accent-color: var(--accent); }
       lit: [236, 214, 120, 0.35],
       bark: [192, 162, 122, 0.36],
       moss: [170, 150, 90],
+      stone: [214, 180, 124, 0.6],
       jitter: 0.8,
       knobs: {}
     },
@@ -10688,6 +10722,7 @@ label.check input { accent-color: var(--accent); }
       val: 1.1,
       bark: [62, 50, 40, 0.42],
       moss: [168, 176, 146],
+      stone: [76, 84, 64, 0.3],
       jitter: 0.6,
       knobs: { hang: 0.6 },
       trunk: { stilts: { n: [4, 6], at: [0.12, 0.3], reach: [10, 22], w: 0.35 } }
@@ -10701,6 +10736,7 @@ label.check input { accent-color: var(--accent); }
       bark: [72, 56, 40, 0.2],
       moss: [80, 130, 70],
       flower: [236, 84, 150],
+      stone: [88, 96, 70, 0.25],
       jitter: 0.7,
       knobs: { hang: 0.25 },
       crown: { vines: { share: 0.16, len: [10, 26], budEvery: 6, bud: "FLOWER" }, dots: { share: 0.04, mat: "FLOWER", size: 2 } }
@@ -10713,6 +10749,7 @@ label.check input { accent-color: var(--accent); }
       val: 0.95,
       bark: [80, 100, 58, 0.5],
       moss: [160, 214, 100],
+      stone: [84, 104, 76, 0.35],
       jitter: 0.4,
       knobs: { hang: 0.9, gnarl: 0.15 }
     }
@@ -11774,7 +11811,7 @@ label.check input { accent-color: var(--accent); }
 
   // config/broom-parts.json
   var broom_parts_default = {
-    _: "The Workshop's broom parts and sets (Ed, 2026-10-22/23; docs/backlog/workshop.md, rules/broomParts.ts). One broom, three slots (tip, chassis, exhaust), one part a slot. Each part's stats change the tuning's numbers for her own movement: a key is a tuning path (or pull: how hard her sigils pull on her, 1 the bare broom's), its mult times the bare broom's number and its add plus it; parts fitted together add up (each mult's share over 1 summed, then the adds). The bare broom (every slot empty) is the tuning as it stands: no quick take-off (Ed, 2026-10-23: it loses the plain broom's; the jet nozzles win it back). look: the broom kind (art/brooms.js; twig, art/witch.js's bristles) whose body (a tip or chassis) or tail (an exhaust) it is. A set complete (all its pieces fitted) gives her its broom spell (rules/spells.ts); no broom completes two at once.",
+    _: "The Workshop's broom parts and sets (Ed, 2026-10-22/23; docs/backlog/workshop.md, rules/broomParts.ts). One broom, three slots (tip, chassis, exhaust), one part a slot. Each part's stats change the tuning's numbers for her own movement: a key is a tuning path (or pull: how hard her sigils pull on her, 1 the bare broom's), its mult times the bare broom's number and its add plus it; parts fitted together add up (each mult's share over 1 summed, then the adds). The bare broom (every slot empty) is the tuning as it stands: no quick take-off (Ed, 2026-10-23: it loses the plain broom's; the jet nozzles win it back). look: the broom kind (art/brooms.js; twig, art/witch.js's bristles) whose body (a tip or chassis) or tail (an exhaust) it is. A set complete (all its pieces fitted) gives her its broom spell (rules/spells.ts); no broom completes two at once. board: the Workshop's pegboard (a read-only station: ui/stationPanel.ts), the 3 \xD7 3 biome map with north up, its cells row by row from the north-west (Ed, 2026-10-23; docs/backlog/workshop.md): each cell's part, its compass point and its biome; the three columns are the three-piece sets (west Ferry, middle Hedge, east Rocket).",
     parts: {
       missile: { slot: "tip", name: "Missile nose", look: { kind: "missile", piece: "body" }, up: "Faster in the treetops", down: "Turns wider", stats: { treetopSpeed: { mult: 1.1 }, "treetop.turnRate": { mult: 0.8 } } },
       curl: { slot: "tip", name: "Curled tip", look: { kind: "curl", piece: "body" }, up: "Blinks go further", down: "Each dodge recharges slower", stats: { "dash.distance": { mult: 1.5 }, "dash.cooldown": { mult: 1.3 } } },
@@ -11792,7 +11829,18 @@ label.check input { accent-color: var(--accent); }
       ferry: { name: "Ferry", pieces: ["horse", "canoe", "oar"], spell: "leyjump" },
       joust: { name: "Joust", pieces: ["horse", "fairing"], spell: "battering" },
       piledriver: { name: "Pile driver", pieces: ["ladder", "nozzles"], spell: "pound" }
-    }
+    },
+    board: [
+      { part: "oar", point: "North-west", biome: "Cold rainforest" },
+      { part: "ladder", point: "North", biome: "Cold" },
+      { part: "missile", point: "North-east", biome: "Mountains" },
+      { part: "horse", point: "West", biome: "Jungle" },
+      { part: "twigs", point: "Home", biome: "Temperate" },
+      { part: "fairing", point: "East", biome: "Rocky" },
+      { part: "canoe", point: "South-west", biome: "Mangrove" },
+      { part: "curl", point: "South", biome: "Hot" },
+      { part: "nozzles", point: "South-east", biome: "Badlands" }
+    ]
   };
 
   // src/rules/broomParts.ts
@@ -11800,6 +11848,7 @@ label.check input { accent-color: var(--accent); }
   var PARTS = Object.entries(R.parts).map(([id, p]) => ({ id, ...p }));
   var PART_IDS = PARTS.map((p) => p.id);
   var SETS = Object.entries(R.sets).map(([id, s]) => ({ id, ...s }));
+  var BOARD = R.board;
   var BY_ID = new Map(PARTS.map((p) => [p.id, p]));
 
   // src/rules/spells.ts
@@ -16147,7 +16196,7 @@ label.check input { accent-color: var(--accent); }
     knockout: { releaseEach: 0, releaseMax: 0, emptyBeat: 0.5, teleport: 1.2, legendsLoyal: false, dropHat: true, hatFloat: 3, dim: 0.6, rise: 0.9, respawn: { base: 6, step: 0, max: 6, cooldown: 60, minScratch: 1.5 }, candleStep: 1, bpmStep: 5 },
     _dash: "The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's moving (her steering, on the pad and on keyboard and mouse alike, not the way she's aiming: Ed, 2026-10-11; standing still, the way she's facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06; off since 2026-10-11): on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.",
     dash: { distance: 15, gone: 0.05, cooldown: 1, buffer: 0.2, charges: 2, toCursor: false, aimDead: 1.5, clear: { tree: 1.2, decor: 2.5, sound: 3, speaker: 1.5, treehouse: 4 } },
-    spells: { hat: "none", hats: "*", broom: "none", parts: "", speed: { mult: 2.2, duration: 4, cooldown: 12 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
+    spells: { hat: "none", hats: "*", parts: "", speed: { mult: 2.2, duration: 4, cooldown: 12 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
     _trail: `Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it. One trail, one cooldown (Ed, 2026-10-15; the tuning's cooldown): it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed).`,
     trail: { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true, cooldown: 24, bySpeed: true },
     _swoopTrail: `The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).`,
@@ -16166,7 +16215,7 @@ label.check input { accent-color: var(--accent); }
     _bond: `The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.`,
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArcSlack: 0.8, threadArcTaut: 0.02, threadArcMax: 8 },
     __creatures: "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
-    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), chosen in the creator (or ?hat= and ?broom=). hat, broom: the defaults; hats: the spell hats she owns, a comma list or * for every one (Ed, 2026-10-23: only the plain hat is hers at first, every spell hat found one a night, rules/finds.ts; the page sets it from her save, app/hatSave.ts, and ?hats= for one load) (broom: a broom spell, the set that gives it fitted whole; a debug switch since the Workshop, Ed 2026-10-23). parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, witch.broom; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
+    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete (the Workshop, Ed 2026-10-23). hat: the default; hats: the spell hats she owns, a comma list or * for every one (Ed, 2026-10-23: only the plain hat is hers at first, every spell hat found one a night, rules/finds.ts; the page sets it from her save, app/hatSave.ts, and ?hats= for one load). parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
     _fight: `The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live on the pause page (Esc): its Debug knobs sliders, or [ and ] for scale, ; and ' for speed, , and . for momentum. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air. Walking away is no escape (Ed, 2026-10-06: "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"): charge.chase, a charge runs at least that many times her ground speed and on until it has caught up with her walking straight down its lane (its own time if longer), so stepping out of the lane at its tell, a blink sideways or the treetops get her clear, walking doesn't (0: off); leap.lead, a leap comes down where she'll be when it lands, as she's going at take-off (that share of it; 0: where she was). miss: a charge that struck nothing stands winded that many seconds after (stars round its head), an opening for her \u{1F48C}s (Ed, 2026-10-06: "We want to reward skilful use of blink and accurate invitation aiming").`,
     fight: { scale: 1, speed: 1, momentum: 1, charge: { reach: 2, turn: 0.4, brake: 0.5, contact: true, chase: 1.6, miss: 1.2 }, leap: { reach: 1.5, through: 5, contact: true, lead: 1 } },
     _combat: `packs: pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-19), on by default (Ed, 2026-10-20: "Turn pack combat on by default") and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating. Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems they plan to attack"; it was its walk times marchMult, under 1 m/s, and marchOnRun 5 m/s marching on). Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack (Ed, 2026-10-11: some "seem to struggle to damage soundsystems"; a charge struck once a run, a swoop once a dive). A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 (Ed, 2026-10-08, from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives). Home is its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; rules/speakers.ts), each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone). shake: how hard a legend's quake shakes the screen (0 none). daze: seconds a wild creature knocked down in a fight lies stunned (nothing attacks it, it attacks nothing, she can still invite it; it counts as present for its legend, and no siege takes it) before it runs off home (Ed, round 13, 2026-10-06: 'the length of the stun of wild creatures that are downed in combat, before they run away, should be 20 seconds'; it was 8, states.json's daze). leaveArea: a wild creature chases her (or her party) up to this many metres past its area's edge (Ed, round 13, 2026-10-06: 30; it was 10); beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected. defendRadius (Ed, 2026-10-09: her posse defends her, "just ones that are in the same combat as you"): her animals following her within this many metres of her go first for anything attacking her, spread over her attackers; farther off, following her, one fights back only at what's on it itself (and parked, guarding or travelling ones carry on as they were): never pulled across to her fight. taunt (Ed, 2026-10-09, on #592: "Taunt seems good"): a creature after her that one of her animals in her fight hits turns on that animal instead, with chance chance, for time seconds (a lunge at her already under way lands first; then it may come back to her).`,
