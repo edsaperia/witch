@@ -22,7 +22,7 @@ describe("the house, a file a room (config/house/)", () => {
     expect(byId(objects)).toEqual(byId(o0)); // (now room by room: the order's not used, but for exact ties)
     expect(objects.length).toBe(o0.length);
   });
-  it("is the same for the game (Vite) and the tools (from disk)", () => expect(loadHouse()).toEqual(H));
+  it("is the same for the game (each room imported by name) and the tools (every room file on disk): no room file left out", () => expect(loadHouse()).toEqual(H));
   it("has every room in its own file, named by its id, every object's id once, each parent placed before its child", () => {
     const dir = new URL("../../config/house/rooms/", import.meta.url), files = readdirSync(dir).filter(f => f.endsWith(".json"));
     const rooms = files.map(f => [f, JSON.parse(readFileSync(new URL(f, dir), "utf8"))] as const);
