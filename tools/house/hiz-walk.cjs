@@ -1,7 +1,7 @@
 // The treehouse's occluders (render/hiz.ts) change no pixel: the built game (DIST, default dist/) at spots all round the house (the
 // decks, the balcony, its sides and back, on its floors and in the air round it, from the camera's own view at each), each frame drawn
 // with them on and then off in the same page and compared pixel by pixel (the canvas as drawn, before anything is scaled). Fails on
-// any pixel that differs, and on a blind comparison (the area types' scenery hidden must change some pixel at some spot: else the
+// any pixel that differs, and on a blind comparison (the area types' scenery hidden by its layers, which the view never resets as it does .visible each time it lists them, must change some pixel at some spot: else the
 // frames weren't drawn; in the enclosed rooms it's dark behind the house anyway). Its cost: tools/bench/gpu.cjs (QUERY=hiz=0 against the default).
 //   npm run build && node tools/house/hiz-walk.cjs [out dir] [seed]   (DIST=, SPOTS=decks,balcony,...)
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -50,9 +50,9 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       const a = await grab(false), b = await grab(true);
       let diff = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2]) diff++;
       // (and a blind check: with the area types' scenery hidden the picture must change, or nothing was drawn)
-      const seen = await page.evaluate(() => { const v = window.witch.view, all = [...v.typeBatches.values()].flatMap(b => b.meshes); all.forEach(m => { m.visible = false; }); return all.length; });
+      const seen = await page.evaluate(() => { const v = window.witch.view, all = [...v.typeBatches.values()].flatMap(b => b.meshes); all.forEach(m => { m.userData.mask = m.layers.mask; m.layers.mask = 0; }); return all.length; });
       const c = await grab(false);
-      await page.evaluate(() => { for (const b of window.witch.view.typeBatches.values()) for (const m of b.meshes) m.visible = true; });
+      await page.evaluate(() => { for (const b of window.witch.view.typeBatches.values()) for (const m of b.meshes) m.layers.mask = m.userData.mask; });
       let blind = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== c.px[i] || a.px[i + 1] !== c.px[i + 1] || a.px[i + 2] !== c.px[i + 2]) blind++;
       await page.evaluate(() => { window.witch.view.hizOff = false; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
