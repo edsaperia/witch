@@ -519,6 +519,14 @@ function fixedStep(g: Game, controls: Controls): void {
     c = { ...c, toggleMode: false };
     g.leashEvents.push({ kind: "grounded", id: 0, x: W.body.x, z: W.body.z, at: ht });
   }
+  // No coming down over a lake (Ed, 2026-10-23: "At the moment you can press x to leave treetop mode while over a lake; you go
+  // lower and move more slowly. I don't think you should be able to do that"): up in the treetops, or rising, over the water (the
+  // lake test with its pad, as on foot: rules/lakes.ts), the press is dropped and she flies on at full height and speed; and is
+  // said, the "lakeHold" leash event: the refusal's soft "nope", as for a sigil refused (platform/audio/sfxCues.ts).
+  if (c.toggleMode && (W.body.mode === "treetop" || W.body.mode === "rising") && g.map.bounds.lakes && onLake(g.map.bounds, W.body.x, W.body.z, lakeKnobs(t).pad)) {
+    c = { ...c, toggleMode: false };
+    g.leashEvents.push({ kind: "lakeHold", id: 0, x: W.body.x, z: W.body.z, at: ht });
+  }
   // Just landed: no rising again till riseCooldown seconds after (Ed, 2026-10-11: "players rise to the treetops instead of
   // dodging"; rising takes her out of ground mode at once).
   if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && (shared ? !coolReady(W.cool, (t.cooldown?.rise ?? 0) * plainK, room) : ht < (W.landedAt ?? -Infinity) + riseCooldownOf(W.spells, t))) c = { ...c, toggleMode: false }; // (the plain broom's shorter: rules/spells.ts; shared: the counter must have room for the take-off)
