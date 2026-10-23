@@ -7,6 +7,7 @@ import { TUNING, withTuning } from "./tuning";
 import { newParty, spreadWave, cellKey } from "./party";
 import { departureRoute, leyChain, leyKey, onAreaDone } from "./leylines";
 import { speakerCircle } from "./departure";
+import { leyRadius } from "./leyroute";
 
 const map = generateMap(123, TUNING);
 /** The same map with leyLines.advance "first": a quest done moves the line on (the default since Ed, 2026-10-08, is "wave": it doesn't). */
@@ -133,5 +134,27 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
     }
     expect(east, "some leave to the east (off to the right)").toBeGreaterThan(0);
     expect(west, "and some to the west").toBeGreaterThan(0);
+  }, 60000);
+  it("leaves the ring in a sweep no tighter than the line's own radius, like every other turn (Ed, 2026-10-23)", () => {
+    // (the turn's radius by three points 12 m apart along it, from where it leaves the speakers' circle to the first stone)
+    const radius = (a: number[], b: number[], c: number[]) => {
+      const ab = Math.hypot(b[0] - a[0], b[1] - a[1]), bc = Math.hypot(c[0] - b[0], c[1] - b[1]), ca = Math.hypot(a[0] - c[0], a[1] - c[1]);
+      const area2 = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]));
+      return area2 < 1e-9 ? Infinity : (ab * bc * ca) / (2 * area2);
+    };
+    let tightest = Infinity;
+    for (const T of [TUNING, { ...TUNING, party: { ...TUNING.party, picker: "noisy" } }]) for (const seed of [123, 293912, 7, 1000, 42, 31337, 5, 99]) {
+      const m = generateMap(seed, T), p = newParty(m), [, b] = ahead(p, m, 2), d = m.dancefloor, rho = speakerCircle(m), R = leyRadius(m);
+      const pts = departureRoute(m, b, D.avoid, 4), k = 3;
+      // (where it leaves the speakers' circle: its last point on it, or, where it only touches it, its nearest to home)
+      let off = 0, near = Infinity;
+      pts.forEach((q, i) => { const r = Math.hypot(q[0] - d.x, q[1] - d.z); if (r <= rho + 0.5 || r < near) off = i; near = Math.min(near, r); });
+      for (let i = off + k; i < pts.length - k; i++) {
+        const r = radius(pts[i - k], pts[i], pts[i + k]);
+        tightest = Math.min(tightest, r / R);
+        expect(r, `seed ${seed} at ${i} of ${pts.length}`).toBeGreaterThanOrEqual(R);
+      }
+    }
+    expect(tightest).toBeLessThan(1.5); // (it does turn: the test sees the sweep)
   }, 60000);
 });

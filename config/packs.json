@@ -71,5 +71,7 @@
     "toad": { "melee": { "attacks": [null, "nip", "nip"] }, "ranged": { "name": "spore lob", "range": 16, "shots": [0, 1, 1], "delivery": "lob", "flight": 1.1, "size": [1, 3, 3.5], "patch": { "radius": 2.5, "slow": 0.5, "time": 3 }, "tint": "red" }, "special": "cloud", "specialWith": { "leap": true }, "retreat": "arcs", "rhythm": "steady", "pressure": 3, "call": "puffs up", "tells": { "melee": "tongue", "ranged": "puffs up", "special": "the leap" } }
   },
   "_hers": "Her own pack (Ed, 2026-10-15: 'the same combos, but no retreats or scatters'): between combos it holds where it is for hold seconds instead of a lull; a special the wild side uses on her it uses on the wild (a confusion slows them, mind control becomes a stun for stun seconds).",
-  "hers": { "hold": 1.2, "stun": 1.5 }
+  "hers": { "hold": 1.2, "stun": 1.5 },
+  "_prowl": "The lull's prowl (Ed's playtests, 2026-10-23: \"lulls between pack attacks seem to have the animals stand still instead of retreat\"): a member that has fallen back to its place (within near metres of it) doesn't halt there but prowls round her at that distance (its place moving on, each its own way round), at pace times its speed, till its pack comes again. Not the retreats that stand (still: the snail's shell, the badger's hold); a freeze holds its place for the lull's first freeze share, hard to see, then prowls like the rest (Ed, 2026-10-23).",
+  "prowl": { "near": 1.5, "pace": 0.45, "freeze": 0.4 }
 }

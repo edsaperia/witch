@@ -7,6 +7,7 @@ import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import { hatsFrom } from "./hatSave";
 import { loadBroom } from "./broomSave";
+import { applyOwn } from "./finds";
 import { fittedParts } from "../rules/broomParts";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
@@ -208,6 +209,9 @@ export function tuningFromLink(params: URLSearchParams) {
   // (?found=a,b: those islands found for this load, whatever this browser's save says: the debug overlay's repro link, app/repro.ts)
   if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
   // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
+  // ?own= (app/finds.ts; Ed, 2026-10-23, the dev control's switch): finds given or let go on this browser's saves, as the dev
+  // control does (all, none, kind:item, kind:*), before the night reads them (her hats too: app/hatSave.ts, read just below).
+  { const own = params.get("own"); if (own !== null) applyOwn(own); }
   // Her hats (app/hatSave.ts; Ed, 2026-10-23: the plain hat hers, the rest found): a saved hat she doesn't own is the plain one.
   { const L = loadoutFrom(params), hats = hatsFrom(params, L.hat), hat = hats === "*" || L.hat === "none" || hats.split(",").includes(L.hat) ? L.hat : "none"; tuning.spells = { ...tuning.spells, hat, hats, broom: L.broom }; }
   // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted on this browser, or ?parts=missile,ladder,nozzles
