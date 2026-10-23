@@ -19,7 +19,8 @@ const PIECES = {
   // A rug: round or oval, rings or a check, the room's cloth and accent with a gold edge, a fringe at its ends; flat on the floor.
   rug(m, k, { r = 1.5 } = {}) {
     const oval = rnd(k, 1) > .5, rx = r, rz = oval ? r * .7 : r, check = rnd(k, 2) > .55;
-    m.ell([0, .008, 0], [rx, .008, rz], M.CLOTH, { group: 1, paint: p => { const q = Math.hypot(p[0] / rx, p[2] / rz); if (q > .9) return M.FLOWER; if (check) return (Math.floor(p[0] * 3) + Math.floor(p[2] * 3)) % 2 ? M.ACCENT : undefined; return Math.floor(q * 6) % 2 ? M.ACCENT : undefined; } });
+    // (in the room's cloth and its shade, a darker border: no bright gold or accent, which a flat floor facing the light blooms into a glare)
+    m.ell([0, .008, 0], [rx, .008, rz], M.CLOTH, { group: 1, paint: p => { const q = Math.hypot(p[0] / rx, p[2] / rz); if (q > .9) return M.HAIR; if (check) return (Math.floor(p[0] * 3) + Math.floor(p[2] * 3)) % 2 ? M.BODY : undefined; return Math.floor(q * 6) % 2 ? M.BODY : undefined; } });
     if (oval) for (const s of [-1, 1]) for (let i = 0; i < 7; i++) { const z = (i / 6 - .5) * rz; m.seg([s * rx * .99, .008, z], [s * (rx + .08), .008, z], .01, .01, M.BELLY, { group: 2 }); }
   },
   // A floor lamp: a gas lamp (an iron post, a glass lantern head burning warm) or a modern arc lamp (a chrome arc, a dome shade glowing).
