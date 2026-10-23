@@ -2770,6 +2770,9 @@
         "hat": {
           "type": "string"
         },
+        "hats": {
+          "type": "string"
+        },
         "parts": {
           "type": "string"
         },
@@ -3132,6 +3135,7 @@
       },
       "required": [
         "hat",
+        "hats",
         "parts",
         "speed",
         "healing",

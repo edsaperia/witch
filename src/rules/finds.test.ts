@@ -3,7 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
-import { FINDABLE, fillTrunk, findPiece, nightFind, nightPick, spawnFind, spawnSpot, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
+import { BAG_ITEMS, FINDABLE, FIND_KINDS, HAT_FINDS, fillTrunk, findPiece, nightFind, nightPick, spawnFind, spawnSpot, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
+import { HAT_FLOOR, floorHats, hatsOnFloor } from "./houseRooms";
+import { newSpells, ownsHat } from "./spells";
+import { COUNTRY_BY_ID } from "../../art/country.js";
 import { PART_IDS, fittedKey } from "./broomParts";
 import { deckOf, onFloor } from "./treehouse";
 
@@ -41,25 +44,59 @@ describe("tonight's travel trunk", () => {
   it("holds what the night's one draw picks over everything she lacks, of every kind (Ed, 2026-10-23); nothing once she has it all", () => {
     expect(FINDABLE.length).toBeGreaterThan(5);
     for (const i of FINDABLE) { expect(i.start, i.id).toBeFalsy(); expect(i.set["broom.kind"], i.id).toBeUndefined(); } // (no broom shapes: brooms are parts)
-    const wearables = new Set(FINDABLE.map(i => i.id)), parts = new Set(PART_IDS);
+    const wearables = new Set(FINDABLE.map(i => i.id)), parts = new Set(PART_IDS), hats = new Set(HAT_FINDS), bags = new Set(BAG_ITEMS);
+    const of = { wearable: wearables, part: parts, hat: hats, bag: bags } as const;
     // the same night, the same find; nights differ, and over many both kinds come up
     const pick = nightPick(123, {})!;
     expect(nightPick(123, {})).toEqual(pick);
     const picks = Array.from({ length: 60 }, (_, s) => nightPick(s + 1, {})!);
     expect(new Set(picks.map(p => p.item)).size).toBeGreaterThan(10);
-    expect(picks.some(p => p.kind === "wearable") && picks.some(p => p.kind === "part")).toBe(true);
-    for (const p of picks) expect(p.kind === "part" ? parts.has(p.item) : wearables.has(p.item), p.item).toBe(true);
+    expect(picks.some(p => p.kind === "wearable") && picks.some(p => p.kind === "part") && picks.some(p => p.kind === "hat")).toBe(true);
+    for (const p of picks) expect(of[p.kind].has(p.item), p.item).toBe(true);
     // what she has is never drawn; a kind with nothing left never comes up
     expect(nightPick(123, { [pick.kind]: new Set([pick.item]) })).not.toEqual(pick);
-    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables })!.kind).toBe("part"); }
+    for (let s = 1; s <= 40; s++) { expect(nightPick(s, { part: parts, hat: hats, bag: bags })!.kind).toBe("wearable"); expect(nightPick(s, { wearable: wearables, hat: hats, bag: bags })!.kind).toBe("part"); }
     // everything found: nothing to find, and no trunk or wreck tonight
-    expect(nightPick(5, { wearable: wearables, part: parts })).toBeNull();
-    const g = game(); fillTrunk(g, { wearable: wearables, part: parts });
+    expect(nightPick(5, of)).toBeNull();
+    const g = game(); fillTrunk(g, of);
     expect(g.trunk).toBeNull();
     // one find a night: the draw fills the one spot placeTrunk chose, as a trunk or a wreck
     const h = game(); fillTrunk(h, {});
     expect([h.trunk!.kind, h.trunk!.item]).toEqual([nightPick(h.map.seed, {})!.kind, nightPick(h.map.seed, {})!.item]);
-    expect(findPiece(h.trunk!)).toBe(h.trunk!.kind === "part" ? `wreck-${h.trunk!.item}` : "travel-trunk");
+    expect(findPiece(h.trunk!)).toBe(FIND_KINDS.find(k => k.id === h.trunk!.kind)!.piece(h.trunk!.item!));
+  });
+
+  it("finds hats and bags each on its own (Ed, 2026-10-23): every spell hat but the plain one, the bum bag and the backpack, out of the trunk", () => {
+    expect(HAT_FINDS).not.toContain("none");
+    expect(HAT_FINDS.length).toBe(14);
+    expect([...BAG_ITEMS].sort()).toEqual(["backpack", "bumbag"]);
+    for (const b of BAG_ITEMS) expect(FINDABLE.some(i => i.id === b), b).toBe(false); // (no longer in the trunk)
+    for (const k of FIND_KINDS) for (const id of k.items) { expect(COUNTRY_BY_ID[k.piece(id)], k.piece(id)).toBeDefined(); if (k.empty) expect(COUNTRY_BY_ID[k.empty(id)], k.empty(id)).toBeDefined(); } // (every find drawn: art/country.js)
+    const hat = FIND_KINDS.find(k => k.id === "hat")!, bag = FIND_KINDS.find(k => k.id === "bag")!;
+    expect(hat.piece("sentry")).toBe("hatfind-sentry"); expect(bag.piece("bumbag")).toBe("bagfind-bumbag");
+    // taken, the piece stands on without it
+    const g = game(); g.trunk = { ...g.trunk!, kind: "hat", item: "sentry", found: false };
+    expect(findPiece(g.trunk)).toBe("hatfind-sentry");
+    g.trunk.found = true; expect(findPiece(g.trunk)).toBe("hatfind-sentry-empty");
+  });
+
+  it("starts her with the plain hat only; a hat found is hers and lies on the hats' floor (Ed, 2026-10-23: the floor fills as she finds them)", () => {
+    const own = newSpells({ ...TUNING, spells: { ...TUNING.spells, hats: "" } });
+    expect(own.hats).toEqual([]);
+    expect(ownsHat(own, "none")).toBe(true); expect(ownsHat(own, "sentry")).toBe(false);
+    expect(newSpells({ ...TUNING, spells: { ...TUNING.spells, hats: "*" } }).hats).toBeUndefined(); // (every hat: tests and tools)
+    expect(newSpells({ ...TUNING, spells: { ...TUNING.spells, hats: "helmet,nope" } }).hats).toEqual(["helmet"]);
+    const g = game();
+    const W = g.witches[0]; W.spells.hats = ["helmet"];
+    expect(hatsOnFloor(W).filter(Boolean)).toEqual(["helmet"]); // (only hers: the rest of the slots empty)
+    floorHats(W); // (laid out, as on her first visit)
+    g.trunk = { ...g.trunk!, kind: "hat", item: "lullaby", found: false };
+    at(g, g.trunk.x, g.trunk.z); g.party.spellAt = undefined;
+    press(g);
+    expect(g.trunk.found).toBe(true);
+    expect(W.spells.hats).toContain("lullaby");
+    expect(floorHats(W)[HAT_FLOOR.indexOf("lullaby")]).toBe("lullaby");
+    expect(g.leashEvents.some(e => e.kind === "found" && e.obj === "lullaby" && e.find === "hat")).toBe(true);
   });
 
   it("opens with E on foot: what's in it is hers (a found event), once", () => {

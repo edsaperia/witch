@@ -35,7 +35,7 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable, setParts } from "./rules/spells";
+import { castable, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
@@ -44,7 +44,7 @@ import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds"
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
-import { keepFound, type FindsCtx } from "./app/finds";
+import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { FindsPanel } from "./ui/findsPanel";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
@@ -304,7 +304,7 @@ const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
-creator.loadout = { hat: N().game.spells.hat };
+creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
 creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
@@ -562,7 +562,7 @@ function spawnHere(kind: FindKindId | null, item: string | null): string {
   const g = N().game, at = spawnSpot(g);
   if (!at) return "no clear ground within 12 m of her (in the treehouse? step out onto the island)";
   if (kind && item) return spawnFind(g, kind, item, at) ? `${kind} ${item} spawned ${Math.round(Math.hypot(at.x - g.witch.x, at.z - g.witch.z))} m from her` : `no ${kind} ${item}`;
-  if (g.trunk && g.trunk.item === null) fillTrunk(g, { wearable: findsCtx().owned(), part: new Set(loadBroom().found) });
+  if (g.trunk && g.trunk.item === null) fillTrunk(g, foundAll(findsCtx()));
   if (!g.trunk?.item || g.trunk.found) return "no find tonight (all found, or taken)";
   const c = g.map.cellSafe(at.x, at.z).cell;
   Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
@@ -758,7 +758,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  creator.loadout = { hat: n.game.spells.hat };
+  creator.loadout = { hat: n.game.spells.hat }; creator.hats = n.game.spells.hats;
   lastDraw = 0;
   await view.prepare();
   n.flags.ready = true;
@@ -827,13 +827,16 @@ function frame(now: number): void {
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
   // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
-  if (game.trunk && game.trunk.item === null) fillTrunk(game, { wearable: owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), part: new Set(loadBroom().found) });
+  if (game.trunk && game.trunk.item === null) fillTrunk(game, foundAll(findsCtx()));
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
     keepFound(findsCtx(), "part", e.obj);
     view.partsFound = new Set(loadBroom().found); // (hers, not fitted: it waits at the Workshop, the bay to fit it)
     hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`);
+  } else if (e.kind === "found" && e.obj && e.find === "hat") {
+    keepFound(findsCtx(), "hat", e.obj); // (hers for good; the rules laid it on the hats' floor: rules/houseRooms.ts addFloorHat)
+    hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`);
   } else if (e.kind === "found" && e.obj) {
-    keepFound(findsCtx(), "wearable", e.obj);
+    keepFound(findsCtx(), e.find === "bag" ? "bag" : "wearable", e.obj);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
   }

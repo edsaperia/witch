@@ -6,7 +6,7 @@
 // and the rest are placeholders that say a line. The rules know where the floor is and which object she's at; what an object's E
 // opens is main.ts's (the "house" leash event). No drawing here (render/houseRooms.ts).
 import HOUSE from "../../config/house.json";
-import { HAT_SPELLS, setLoadout } from "./spells";
+import { HAT_SPELLS, ownsHat, setLoadout } from "./spells";
 import { hatButton, leaveHat, wearing } from "./hat";
 import type { Witch } from "./game";
 import type { LeashEvent } from "./leash";
@@ -133,7 +133,8 @@ export function hatSlots(at: At, H = HOUSE_ROOMS): { x: number; z: number }[] {
   return out;
 }
 /** The hats lying on the hats' floor (each slot's spell, "" when empty), laid out the first time: every one of hers but the one
- *  she wears and any lying elsewhere. */
+ *  she wears and any lying elsewhere. A hat she hasn't found leaves its slot empty (Ed, 2026-10-23: "the floor fills as she finds
+ *  them"). */
 export function floorHats(W: Witch): string[] {
   const H = (W.house ??= {});
   return (H.hats ??= hatsOnFloor(W));
@@ -142,7 +143,12 @@ export function floorHats(W: Witch): string[] {
 export function hatsOnFloor(W: Witch): string[] {
   if (W.house?.hats) return W.house.hats;
   const out = new Set([W.spells.hat, ...W.hat.left.map(q => q.spell)]);
-  return HAT_FLOOR.map(s => (out.has(s) ? "" : s));
+  return HAT_FLOOR.map(s => (out.has(s) || !ownsHat(W.spells, s) ? "" : s));
+}
+/** A hat she's just found (rules/finds.ts) laid in its slot, if the floor's laid out already (else it's laid with the rest). */
+export function addFloorHat(W: Witch, id: string): void {
+  const hats = W.house?.hats, i = HAT_FLOOR.indexOf(id);
+  if (hats && i >= 0 && !hats[i] && W.spells.hat !== id) hats[i] = id;
 }
 
 /** E at the hats' floor (Ed, 2026-10-19: "there's no hat rack per se - just an area to put down hats, which are just game objects

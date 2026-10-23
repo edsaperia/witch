@@ -18,7 +18,7 @@ import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
-import { HAT_SPELLS } from "../rules/spells";
+import { HAT_SPELLS, ownsHat } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
 import { runSliced, type Steps } from "../render/slices";
 
@@ -212,6 +212,8 @@ export class Creator {
   /** Her hat's and broom's spells (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat and Broom boxes;
    *  their shape and colour stay on the sliders), and a callback when she changes one. */
   loadout: { hat: string } = { hat: "none" };
+  /** The spell hats she owns (rules/spells.ts SpellState.hats; absent, every one): the Hat box offers only these (Ed, 2026-10-23: hats are found). */
+  hats?: string[];
   onLoadout: (l: { hat: string }) => void = () => {};
   /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
@@ -446,7 +448,7 @@ export class Creator {
    *  chosen apart till they're matched): a dropdown of the built ones, "none" first, the chosen one's icon beside it
    *  (render/hatIcons.ts) and its line under it. (The broom's spell is its parts' set: the Workshop, Ed 2026-10-23.) */
   private spellRow(body: HTMLElement, slot: "hat", row: (p: HTMLElement, n: string) => HTMLElement): void {
-    const r = row(body, "Power"), list = HAT_SPELLS.filter(x => x.built), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+    const r = row(body, "Power"), list = HAT_SPELLS.filter(x => x.built && ownsHat({ hats: this.hats }, x.id)), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
     const pick = document.createElement("select"), icon = h("span", { style: { display: "inline-flex", width: "13px", height: "13px", marginLeft: "6px" } });
     pick.dataset.spell = slot;
     Object.assign(pick.style, { font: "inherit", color: "inherit", background: "rgba(255,255,255,.08)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" });
