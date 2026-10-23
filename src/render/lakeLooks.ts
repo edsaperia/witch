@@ -143,23 +143,23 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     return lakeGlint(col, R, 1.6);
   }
   if (L < 7.5) { // a rust pool: red-orange mineral water in terraces of pale crust stepping down to it
-    float lv = ld + (vnoise(p / 4.0) - 0.5) * 1.4, tier = floor(lv / 2.6), f = fract(lv / 2.6);
-    vec3 col = mix(vec3(0.68, 0.34, 0.12), vec3(0.42, 0.12, 0.05), clamp(tier / 4.0, 0.0, 1.0)) * (0.6 + lum * 0.9);
-    if (f < 0.16 && tier < 4.0) col = mix(vec3(0.82, 0.76, 0.66), vec3(0.92, 0.86, 0.76), vnoise(p * 2.0)) * lit * 1.6; // (each terrace's rim)
-    else if (f < 0.26 && tier < 4.0) col *= 0.75;
+    float lv = ld + (vnoise(p / 5.0) - 0.5) * 3.0, tier = floor(lv / 3.2), f = fract(lv / 3.2);
+    vec3 col = mix(vec3(0.62, 0.36, 0.16), vec3(0.45, 0.18, 0.1), clamp(tier / 8.0, 0.0, 1.0)) * (0.45 + lum * 0.8);
+    if (f < 0.13 && tier < 8.0) col = mix(vec3(0.82, 0.76, 0.66), vec3(0.92, 0.86, 0.76), vnoise(p * 2.0)) * lit * 1.6; // (each terrace's rim)
+    else if (f < 0.22 && tier < 8.0) col *= 0.75;
     return lakeGlint(col, R, 0.7);
   }
   // a lily pond: dark water under giant lily pads, a few flowers
   vec3 col = lakeGlint(vec3(0.03, 0.07, 0.05) * (0.6 + lum), R, 0.8);
-  vec4 v = cells(p / 2.6);
+  vec4 v = cells(p / 5.0);
   float r = 0.26 + 0.14 * fract(v.z * 7.0), a = mod(v.w - v.z * 6.283 + 3.1416, 6.283) - 3.1416;
-  if (v.z > 0.22 && ld > 0.6 && v.x < r && abs(a) > 0.28) {
+  if (v.z > 0.4 && ld > 0.6 && v.x < r && abs(a) > 0.28) {
     vec3 pad = mix(vec3(0.16, 0.36, 0.12), vec3(0.24, 0.46, 0.16), step(0.5, v.z));
     if (v.x > r - 0.05) pad *= 1.25;
     if (fract((v.w + 3.1416) * 8.0 / 6.283) < 0.12) pad *= 0.8;
     col = pad * lit * 1.6;
-    if (v.z > 0.82 && v.x < 0.1) col = v.x < 0.04 ? vec3(1.0, 0.85, 0.35) : vec3(0.98, 0.6, 0.78) * (0.7 + lum); // (a flower, faintly bright)
-  } else if (v.z > 0.22 && v.x < r + 0.05 && v.x >= r) col *= 0.6;
+    if (v.z > 0.8 && v.x < 0.08) col = v.x < 0.04 ? vec3(1.0, 0.85, 0.35) : vec3(0.98, 0.6, 0.78) * (0.7 + lum); // (a flower, faintly bright)
+  } else if (v.z > 0.4 && v.x < r + 0.04 && v.x >= r) col *= 0.6;
   return col;
 }
 `;
