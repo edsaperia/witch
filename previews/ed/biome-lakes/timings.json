@@ -1,0 +1,42 @@
+{
+ "glacier": {
+  "ground": 302.7,
+  "treetops": 231.7,
+  "far": 288.9
+ },
+ "rust": {
+  "ground": 403.4,
+  "treetops": 368.9,
+  "far": 421.7
+ },
+ "lava": {
+  "ground": 215.5,
+  "treetops": 390.5,
+  "far": 384.6
+ },
+ "oasis": {
+  "ground": 213.9,
+  "treetops": 233.8,
+  "far": 305.9
+ },
+ "sinkhole": {
+  "ground": 518.7,
+  "treetops": 552.8,
+  "far": 583
+ },
+ "tarn": {
+  "ground": 1201.6,
+  "treetops": 832.2,
+  "far": 741.3
+ },
+ "tar": {
+  "ground": 523.6,
+  "treetops": 442.2,
+  "far": 470.2
+ },
+ "lily": {
+  "ground": 766.5,
+  "treetops": 1403.3,
+  "far": 1144.3
+ }
+}
