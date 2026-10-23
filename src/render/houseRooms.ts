@@ -16,6 +16,8 @@ import type { Witch } from "../rules/game";
 import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
+import * as Art from "../../art/generator.js";
+import { witchLookOf } from "./artBuild";
 import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./houseArt";
 import { nearestIn } from "../rules/houseRooms";
 
@@ -76,6 +78,7 @@ function buildQuads(hub: number, T?: Terrace): Quad[] {
 /** The objects: a box each (its two near sides and its top: the plan's x0 and z1 faces); the hats' floor a rug. */
 function objects(q: Quad[]): void {
   for (const o of HOUSE_ROOMS.objects) {
+    if (o.id === "clothesPile") continue; // (drawn as its sprite: HouseRoomsView's pile)
     const c = KIND[o.use.kind], x0 = o.x - o.w / 2, x1 = o.x + o.w / 2, z0 = o.z - o.d / 2, z1 = o.z + o.d / 2, top: [number, number, number] = [c[0] * 1.15, c[1] * 1.15, c[2] * 1.15];
     if (o.use.kind === "hats") { q.push(quad([[x0, z0, 0.01], [x1, z0, 0.01], [x1, z1, 0.01], [x0, z1, 0.01]], [0.36, 0.16, 0.26], 2, o.id)); continue; }
     const box = [quad([[x0, z0, 0], [x0, z1, 0], [x0, z1, o.h], [x0, z0, o.h]], c, 2, o.id), quad([[x0, z1, 0], [x1, z1, 0], [x1, z1, o.h], [x0, z1, o.h]], [c[0] * 0.72, c[1] * 0.72, c[2] * 0.72], 2, o.id), quad([[x0, z0, o.h], [x1, z0, o.h], [x1, z1, o.h], [x0, z1, o.h]], top, 2, o.id)];
@@ -143,6 +146,11 @@ export class HouseRoomsView {
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
+  // (the mock: last night's clothes in a pile by her bed, her own outfit's sprite standing on the floor; Ed, 2026-10-23)
+  private readonly pile = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
+  private pileKey = "";
+  /** The pile's there (the mock's switch: picked up, gone). */
+  showPile = true;
   // (each room's roof, a canopy of leaves: hidden while she's in it or near; render/houseArt.ts paintRoof)
   private readonly roofs = new THREE.Group();
   private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean }[] = [];
@@ -152,7 +160,8 @@ export class HouseRoomsView {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.94)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.roofs.visible = false;
-    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.roofs];
+    this.pile.frustumCulled = false; this.pile.visible = false; this.pile.renderOrder = 19.945;
+    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.pile, this.roofs];
     this.box = document.createElement("div");
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
     const pill = "position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 14px/1.2 inherit;padding:3px 8px;border-radius:8px;";
@@ -245,6 +254,26 @@ export class HouseRoomsView {
         }
         pos.needsUpdate = true;
       }
+    }
+    const po = HOUSE_ROOMS.objects.find(o => o.id === "clothesPile");
+    this.pile.visible = !!po && this.showPile;
+    if (po && this.pile.visible) {
+      const key = JSON.stringify(v.assets.witchGenome);
+      if (key !== this.pileKey) {
+        this.pileKey = key;
+        const st = v.assets.style, mine = witchLookOf(st, v.assets.witchGenome), sp = (Art.clothesPileSprite as (st: object, o: object) => { w: number; h: number })(st, { look: mine.look });
+        const b = (Art.bake as (sp: object, c: object, st: object, o: unknown) => { A: HTMLCanvasElement })(sp, mine.colours, st, (st as { cOutline?: unknown }).cOutline), tex = new THREE.CanvasTexture(b.A);
+        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.SRGBColorSpace;
+        (this.pile.material as THREE.MeshBasicMaterial).map = tex; (this.pile.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        this.pile.userData.size = [sp.w * v.mpp, sp.h * v.mpp];
+      }
+      // standing on the floor at its spot, facing the camera (as the house's own sprites are, on the house's plane)
+      const [sw, sh] = this.pile.userData.size as number[], c = toWorld(po.x, po.z, 0), top = toWorld(po.x, po.z, sh);
+      const right = new THREE.Vector3().setFromMatrixColumn(v.camera.matrixWorld, 0).multiplyScalar(sw);
+      this.pile.position.set((c.x + top.x) / 2, (c.y + top.y) / 2, (c.z + top.z) / 2);
+      const up = new THREE.Vector3(top.x - c.x, top.y - c.y, top.z - c.z);
+      this.pile.matrixAutoUpdate = false;
+      this.pile.matrix.makeBasis(right, up, new THREE.Vector3().crossVectors(right, up).normalize()).setPosition(this.pile.position);
     }
     const at = objectAt(D, w.x, w.z), lit = at?.id;
     for (const P of this.parts) {

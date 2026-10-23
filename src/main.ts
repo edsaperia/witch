@@ -900,6 +900,8 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// (the nightie mock: her look set as a genome, and last night's clothes picked up or not)
+(window as unknown as { witch: Record<string, unknown> }).witch.mockLook = (g: unknown, pile: boolean) => { view.setWitch(g as never); if (view.houseRooms) view.houseRooms.showPile = pile; };
 // The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
 // wide, 1 close) and an elevation (degrees up; its lowest if not given), or stop.
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
