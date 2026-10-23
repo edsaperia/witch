@@ -25,6 +25,8 @@ import { AimHud } from "./render/aimhud";
 import { UPCOMING } from "./ui/upcoming";
 import { StallLog } from "./platform/stallLog";
 import { Freeze } from "./platform/freeze";
+import { StudioPlayer } from "./app/studio";
+import { StudioPanel } from "./ui/studioPanel";
 import { Creator, loadGenome, saveGenome } from "./ui/creator";
 import { BOT_KINDS, type BotKind } from "./rules/botKinds";
 import type { Bot } from "./rules/bot";
@@ -218,7 +220,7 @@ const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
-freeze.started = () => (startEl.style.display === "none" || creator.open) && !chartWarmsNight(); // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?"; not under the first load's chart: its Esc is the chart's)
+freeze.started = () => (startEl.style.display === "none" || creator.open) && !chartWarmsNight() && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?"; not under the first load's chart: its Esc is the chart's)
 
 // Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
 // the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party
@@ -305,6 +307,11 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it, full screen,
 // the night running on at the house's tenth while she stands still; E or Esc leaves. On an integrated GPU (Ed's Intel UHD) its
 // picture is drawn at telescope.lowGpuResolution (?telescopeRes= sets it), scaled up square.
+// The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
+// kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
+// till Esc (the pad's B) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
+const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tuning.music.volume * sound.level, new StudioPanel());
+let studioAt: string | null = null;
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
 telescope.onChange = on => {
   const T = N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
@@ -735,7 +742,9 @@ function frame(now: number): void {
   freeze.pollPad();
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
-  const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on ? stillControls(raw) : raw;
+  studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt);
+  if (studio.at !== studioAt) { studioAt = studio.at; input.clearPresses(); }
+  const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on || studio.at ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
@@ -900,6 +909,8 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
+(window as unknown as { witch: Record<string, unknown> }).witch.studio = studio;
 // The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
 // wide, 1 close) and an elevation (degrees up; its lowest if not given), or stop.
 (window as unknown as { witch: Record<string, unknown> }).witch.telescope = {
