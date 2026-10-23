@@ -16,5 +16,15 @@ export const CREATURE_CAT = {
     mods: { trail: 1 },
     label: "Wildcat's Paw prints: 💌s leave a trail of paw prints that lands too"
   },
-  character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 }
+  character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "hiss bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "a stillness",
+    tells: { melee: "crouch", ranged: "ears back", special: "a stillness" }
+  }
 };
