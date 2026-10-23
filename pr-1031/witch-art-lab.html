@@ -4175,11 +4175,14 @@ const GENOME_BADGER = { id: "badger", name: "Badger", template: "quadruped", bui
 
 
 // ---- inlined from art/creatures/bat/genome.js ----
-const GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["sonar"] , texture: { kind: "fur", size: 3 } };
+// the jungle's fruit bat (the biome roster, 2026-10-23; a pipistrelle before): a flying fox, a fox's face with big eyes and small
+// ears, a golden mantle over its shoulders, broad dark wings
+const GENOME_BAT = { id: "bat", name: "Fruit bat", template: "flyer", builder: "bat", palette: { hue: .06, sat: .5, val: .36, belly: [.1, .62, .78] }, look: { fruit: true }, legend: ["sonar"] , texture: { kind: "fur", size: 3 } };
 
 
 // ---- inlined from art/creatures/bear/genome.js ----
-const GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: .3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: .2 }, { kind: "moss", amount: .5 }, { kind: "scars", count: 4 }, { kind: "claws", size: .26 }] }] };
+// the cold rainforest's black bear (the biome roster, 2026-10-23): black, a tan muzzle, tall ears, no grizzly's shoulder hump
+const GENOME_BEAR = { id: "bear", name: "Black bear", template: "quadruped", builder: "quad", palette: { hue: .7, sat: .12, val: .2, belly: [.08, .4, .62] }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 1.1, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 1.15 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 1.3 } }, { body: { humpK: 3, front: 1.45 }, features: [{ kind: "grizzle", amount: .3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: .2 }, { kind: "moss", amount: .5 }, { kind: "scars", count: 4 }, { kind: "claws", size: .26 }] }] };
 
 
 // ---- inlined from art/creatures/beaver/genome.js ----
@@ -4187,7 +4190,9 @@ const GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", bui
 
 
 // ---- inlined from art/creatures/beetle/genome.js ----
-const GENOME_BEETLE = { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["antlers"] };
+// the volcanic east's fire beetle (the biome roster, 2026-10-23; the stag beetle before): a black shell cracked with embers down its
+// wing cases, its great jaws still a stag beetle's; its legend's antlers tipped with fire
+const GENOME_BEETLE = { id: "beetle", name: "Fire beetle", template: "insectoid", builder: "beetle", palette: { hue: .02, sat: .25, val: .2, accent: [.05, .92, 1], magic: .05 }, look: { embers: true }, legend: ["antlers"] };
 
 
 // ---- inlined from art/creatures/boar/genome.js ----
@@ -4212,9 +4217,9 @@ const GENOME_BOAR = { id: "boar", name: "Boar", template: "quadruped", builder: 
 
 
 // ---- inlined from art/creatures/cat/genome.js ----
-// the meadow's wildcat (Ed, 2026-10-12: the glowworm replaced by a cat hunting in the long grass): a stocky striped tabby, a broad
-// round head, a thick blunt tail; its legend crowned
-const GENOME_CAT = { id: "cat", name: "Wildcat", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .1, val: .52, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .38, snoutD: .7, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45 }, parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 13, w: .3 }, socks: .2 }, legend: [],
+// the hot lands' sand cat (Ed, 2026-10-12: a wildcat hunting in the long grass; the biome roster, 2026-10-23: now the desert's):
+// small and stocky, pale sand, a broad flat head under big low-set ears, faint bars only, a black-ringed tail; its legend crowned
+const GENOME_CAT = { id: "cat", name: "Sand cat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .78, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .34, snoutD: .66, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45, skullZ: 1.15, skullY: .9 }, parts: { ears: { kind: "point", size: 1.7 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 9, w: .14, mat: "BODY2" }, socks: .2 }, legend: [],
   // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
   // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
   levels: [
@@ -4501,7 +4506,9 @@ const GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mol
 
 
 // ---- inlined from art/creatures/moth/genome.js ----
-const GENOME_MOTH = { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["eyespots"] , texture: { kind: "fur", size: 3, stretch: 1.6 } };
+// the temperate meadow's butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail; its id kept, so saves are
+// untouched): yellow wings veined and bordered black, tails, blue crescents; its legend's hind wings two great eyes
+const GENOME_MOTH = { id: "moth", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: .13, sat: .72, val: .95, accent: [.6, .7, .9] }, look: { butterfly: true }, legend: ["eyespots"] };
 
 
 // ---- inlined from art/creatures/newt/genome.js ----
@@ -4511,19 +4518,22 @@ const GENOME_NEWT = { id: "newt", name: "Newt", template: "quadruped", builder: 
 
 
 // ---- inlined from art/creatures/otter/genome.js ----
-const GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { stance: "flat", hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] , levels: [{ body: { hgt: .44, len: .66, chest: .38, tuck: .34, neck: .26, legW: 1.35 }, head: { snout: .38, snoutD: .65 }, parts: { ears: { kind: "round", size: .6 }, tail: "thin" } }, { body: { hgt: .48, len: 1.25, chest: .28, tuck: .22, neck: .4, legW: 1.0 }, head: { snout: .6 } }, null, { body: { pearl: true } }] };
+// the mangrove's smooth-coated otter (the biome roster, 2026-10-23): paler, sleeker and longer, its throat cream, a thick flat tail
+const GENOME_OTTER = { id: "otter", name: "Smooth-coated otter", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .42, val: .6, belly: [.11, .22, .9] }, body: { stance: "flat", hgt: .46, len: 1.3, chest: .3, tuck: .26, neck: .4, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .32 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] , levels: [{ body: { hgt: .44, len: .66, chest: .38, tuck: .34, neck: .26, legW: 1.35 }, head: { snout: .38, snoutD: .65 }, parts: { ears: { kind: "round", size: .6 }, tail: "thin" } }, { body: { hgt: .48, len: 1.25, chest: .28, tuck: .22, neck: .4, legW: 1.0 }, head: { snout: .6 } }, null, { body: { pearl: true } }] };
 
 
 // ---- inlined from art/creatures/owl/genome.js ----
-const GENOME_OWL = { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"],
+// the cold rainforest's spotted owl (the biome roster, 2026-10-23): dark chocolate brown, white spots over its crown and wings, its
+// chest barred in broken white bars from the young on
+const GENOME_OWL = { id: "owl", name: "Spotted owl", template: "avian", builder: "owl", palette: { hue: .07, sat: .5, val: .38, belly: [.1, .12, .9] }, legend: ["eyesRing", "wings"],
   // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
   // adult with a dark-rimmed disc, long tufts, a barred chest and patterned wing tips, and the legend: wings half spread like a
   // cloak edged in moonlight, tufts swept back like horns, a ring of glowing eyes round its disc
   levels: [
     { body: { down: true }, head: { tufts: 0 } },
-    { head: { tufts: .7 } },
-    { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
-    { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }, // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
+    { body: { spotted: true }, head: { tufts: .7 } },
+    { body: { bars: true, spotted: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
+    { body: { bars: true, spotted: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }, // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
   ] };
 
 
@@ -4656,7 +4666,9 @@ const GENOME_SNAIL = { id: "snail", name: "Snail", template: "squat", builder: "
 
 
 // ---- inlined from art/creatures/snake/genome.js ----
-const GENOME_SNAKE = { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["shed"] };
+// the jungle's python (the biome roster, 2026-10-23; a grass snake before): heavy, emerald green with white flecks down its spine and
+// a yellow belly, a broad head; plain where the desert's rattlesnake is sandy and diamond-backed
+const GENOME_SNAKE = { id: "snake", name: "Jungle python", template: "serpent", builder: "snake", palette: { hue: .37, sat: .75, val: .5, belly: "yellow" }, look: { python: true }, legend: ["shed"] };
 
 
 // ---- inlined from art/creatures/snowleopard/genome.js ----
@@ -4697,7 +4709,9 @@ const GENOME_SPHINX = { id: "sphinx", name: "Sphinx", template: "quadruped", bui
 
 
 // ---- inlined from art/creatures/spider/genome.js ----
-const GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["rose"] , texture: { kind: "bristles", size: 2 } };
+// the badlands' tarantula (the biome roster, 2026-10-23; a forest spider before): dark and hairy, a big furry abdomen, thick legs
+// banded orange at every joint; its legend's web the old rose window
+const GENOME_SPIDER = { id: "spider", name: "Tarantula", template: "insectoid", builder: "spider", palette: { hue: .05, sat: .3, val: .24, accent: [.06, .8, .88] }, look: { tarantula: true }, legend: ["rose"] , texture: { kind: "bristles", size: 3 } };
 
 
 // ---- inlined from art/creatures/squirrel/genome.js ----
@@ -5024,8 +5038,9 @@ const SIGIL_MOLE = { neon: "cyan", strokes: [C(.5, .4, .24), L([.4, .6], [.5, .8
 
 // ---- inlined from art/creatures/moth/sigil.js ----
 
-// wings spread, the forewings broad and the hindwings rounded, a furry body and feathery antennae
-const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .05, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .82], [.4, .84], [.46, .66]), bow([.47, .31], [.34, .07], .3), C(.21, .32, .05))] };
+// the butterfly (the moth turned a swallowtail, 2026-10-23): wings spread, the forewings broad, the hindwings rounded with a tail
+// each, a slender body and long antennae ending in clubs
+const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .04, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .78], [.3, .84], [.26, .96]), L([.3, .84], [.4, .82], [.46, .66]), L([.48, .31], [.38, .1]), D(.38, .09), C(.21, .32, .05))] };
 
 
 // ---- inlined from art/creatures/newt/sigil.js ----
@@ -5225,7 +5240,7 @@ const LEGEND_BEAVER = { sink: .5, droop: 1, drop: [89], over: { moss: .45, liche
 
 
 // ---- inlined from art/creatures/beetle/legend.js ----
-const LEGEND_BEETLE = { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .45, lichen: .08, ferns: 1, grass: 2, mushrooms: 4, brackets: 3, roots: 2, stones: 0 } };
+const LEGEND_BEETLE = { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .15, lichen: .12, ferns: 0, grass: 1, mushrooms: 0, brackets: 0, roots: 1, stones: 4 } };
 
 
 // ---- inlined from art/creatures/boar/legend.js ----
@@ -5415,7 +5430,7 @@ const LEGEND_SPHINX = { sink: .38, droop: .7, drop: [], over: { moss: 0, lichen:
 
 
 // ---- inlined from art/creatures/spider/legend.js ----
-const LEGEND_SPIDER = { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .4, lichen: .1, ferns: 3, grass: 2, mushrooms: 3, roots: 2, stones: 1 } };
+const LEGEND_SPIDER = { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .12, lichen: .14, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 4 } };
 
 
 // ---- inlined from art/creatures/squirrel/legend.js ----
@@ -6669,7 +6684,7 @@ const CREATURE_MOTH = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-  buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Moth's Flutter: one more 💌 a burst" },
+  buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Butterfly's Flutter: one more 💌 a burst" },
   character: { sprite: "shiver", every: [2, 5], for: 0.6 }
 };
 
@@ -7840,7 +7855,8 @@ function speciesOf(g) {
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
-  if (g.hydra) S.hydra = g.hydra; // the hydra builder's own options (its heads by level, a crest)
+  if (g.hydra) S.hydra = g.hydra;
+  if (g.look) S.look = g.look; // a one-species builder's own look (the biome recolours, 2026-10-23: the fire beetle's embers, the tarantula's banded legs...) // the hydra builder's own options (its heads by level, a crest)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -9298,12 +9314,12 @@ function owl3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) { const f = (frame ? -1 : 1) * side * .07; m.seg([.05, .2, side * .14], [.08 + f, .05, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16 + f, .03, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13 + f, .04, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); } // (each frame a step: one foot ahead, the other behind, in turn)
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked (barred, an adult's; all down, an owlet's)
-  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
+  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.spotted ? (Math.floor(p[1] * 20 + Math.sin(p[2] * 17) * .6) % 2 && !spotty(p, 18, .3) ? M.BODY2 : M.BELLY) : q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
   // wings: folded (their tips patterned, an adult's), spread like a cloak and edged in moonlight (a legend's), or the old spirit wings
   if (q.cloak) for (const side of [-1, 1]) wing3d(m, [-.05, .78 + bob, side * .3], side, 1.25, frame ? .08 : -.05, M.BODY2, M.WEB, side > 0 ? 40 : 50); // half spread like a cloak, its feathers edged in moonlight
-  else if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => q.wingTips && p[1] < .42 + bob ? (Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY) : spotty(p, 12, .15) ? M.BODY3 : undefined });
+  else if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => q.wingTips && p[1] < .42 + bob ? (Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY) : q.spotted && spotty(p, 16, .28) ? M.BELLY : spotty(p, 12, .15) ? M.BODY3 : undefined });
   // head: big and round, sunk into the shoulders
-  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY, { rough: q.down ? .02 : undefined });
+  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY, { rough: q.down ? .02 : undefined, paint: q.spotted ? p => spotty(p, 22, .22) ? M.BELLY : undefined : undefined }); // (a spotted owl's white-flecked crown)
   // facial disc: two pale bowls facing forward, with huge eyes
   const tl = q.tufts ?? (baby ? 0 : 1);
   for (const side of [-1, 1]) {
@@ -9652,7 +9668,7 @@ function heronLegs(ph, hip) {
 const heronNeck = ph => Math.cos(ph * Math.PI * 4) * .035;
 
 function bat3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, Fr = S.look?.fruit, span = (has("wingsBig") ? 1.5 : 1) * (Fr ? 1.1 : 1); // (Fr: the fruit bat's: a fox's face, a golden mantle, big eyes, bigger wings)
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
     const sh = [0, y + .05, side * .1], wr = [.05, y + (up ? .35 : -.05), side * .45 * span];
@@ -9663,16 +9679,18 @@ function bat3d(S, level, frame, st, facing = "towards") {
     const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
     m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, .12 * span)), u, v, Math.hypot(...span3) * .55, .3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: .2 });
   }
-  m.ell([0, y, 0], [.13, .16, .12], M.BODY, { group: 1 });
-  const hc = [.08, y + .2, 0];
+  m.ell([0, y, 0], Fr ? [.15, .2, .14] : [.13, .16, .12], M.BODY, { group: 1, paint: Fr ? p => p[1] > y + .04 ? M.BELLY : undefined : undefined });
+  const hc = [.08, y + (Fr ? .27 : .2), 0];
   m.ell(hc, [.12, .11, .11], M.BODY, { group: 1 });
+  if (Fr) m.ell(v3.add(hc, [.11, -.03, 0]), [.1, .055, .055], M.BODY, { dir: [1, -.25, 0], group: 1 }); // its fox's muzzle
   const sonar = has("sonar"); // (the legend audit's ★, Ed 2026-10-13: ears as tall as its body, ribbed and glowing, sonar rings pulsing from its mouth)
   for (const side of [-1, 1]) {
     if (sonar) { const c = v3.add(hc, [-.03, .36, side * .1]); m.ell(c, [.34, .1, .025], M.BODY, { dir: [.12, 1, side * .28], up: [1, 0, 0], group: 1, extra: true, paint: p => { if (p[0] < c[0] - .02) return undefined; const r = (p[1] - hc[1]) * 22; return Math.abs(r - Math.round(r)) < .16 ? M.MAGIC2 : M.EAR; } }); }
+    else if (Fr) m.ell(v3.add(hc, [-.02, .13, side * .07]), [.085, .04, .018], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
     else m.ell(v3.add(hc, [-.02, .15, side * .07]), [.12, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
   }
-  eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], .025, legend ? M.MAGIC2 : M.EYE);
-  m.ell(Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
+  eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], Fr ? .034 : .025, legend ? M.MAGIC2 : M.EYE);
+  m.ell(Fr ? v3.add(hc, [.2, -.055, 0]) : Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
   if (sonar) for (let i = 0; i < 3; i++) { const r = .07 + (i + (frame ? .5 : 0)) * .07, c = v3.add(hc, [.18 + i * .12 + (frame ? .06 : 0), -.04, 0]); // rings of sound rolling out from its mouth
     m.flat(c, [0, 0, 1], [0, 1, 0], r, r, (a, b) => { const d = Math.hypot(a, b); return d > 1 || d < .78 ? null : M.MAGIC; }, { group: 130 + i, extra: true, bend: 0 }); }
   return finish(m, S, level, st, .55, facing);
@@ -9797,8 +9815,9 @@ function beetle3d(S, level, frame, st, facing = "towards") {
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
   }
-  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
-  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1 });
+  const ember = S.look?.embers ? p => p[1] > .4 && (Math.abs(Math.abs(p[2]) - .1) < .022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < .09 * Math.min(1, (p[1] - .38) * 6)) : null; // (the fire beetle's ember markings: a band down each wing case and cracks across them)
+  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
+  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
   const hc = [.56, .3, 0];
   m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
   const jl = [.3, .7, .95, 1.0][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
@@ -9940,18 +9959,19 @@ function woodlouse3d(S, level, frame, st, facing = "towards") {
 
 function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, baby = level === 0, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
-  const girth = [.9, .82, 1, 1][level], rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
+  const Py = S.look?.python, girth = [.9, .82, 1, 1][level] * (Py ? 1.3 : 1), rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), (.03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]); }
   pts.push([.38, .07 + .18 * rise, pts[12][2], .07 * girth], [.42, .07 + .38 * rise, pts[12][2] * .8, .065 * girth]);
   // (Ed's review, 2026-10-13: "the baby and young are copies") its pattern comes in with age: the hatchling plain, the young
   // faintly spotted, the adult's spots and dark bands across its back; and the hatchling's head big for its body
-  const spots = baby ? 0 : young ? .15 : .3, bands = level >= 2;
-  m.chain(pts, M.BODY, { paint: p => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
+  const spots = Py ? 0 : baby ? 0 : young ? .15 : .3, bands = !Py && level >= 2, flecks = Py && !baby; // (the jungle python's: plain emerald with white flecks along its spine, no bands)
+  m.chain(pts, M.BODY, { paint: p => flecks && p[1] > .07 + .07 * girth && spotty([p[0] * 1.6, p[1], p[2]], 26, young ? .14 : .22) && !(has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05) ? M.BELLY : has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
   const hc = [.5, .07 + .43 * rise, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
   m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
   m.part = "head";
-  m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
-  eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
+  const HR = [hr * 1.5, hr * .75, hr * (Py ? 1.25 : 1)]; // (a python's broad head)
+  m.ell(hc, HR, M.BODY, { dir: [1, -.15, 0], group: 1 });
+  eyesOn(m, hc, HR, [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: [.42, .36, pts[12][2] * .9], r: .075, dir: [.2, 1, 0] };
@@ -10102,7 +10122,17 @@ function hydra3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .45, facing);
 }
 
+// The butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail, its id kept): S.look.butterfly. Yellow wings held up
+// over its back or spread flat (its two frames), black veins and borders flecked pale, a tail off each hind wing over blue
+// crescents; a slender dark body, long antennae ending in clubs. Its legend's hind wings the old great eyes.
+const bflyFore = (s, t) => { const u = (s + 1) / 2, half = (.5 + .5 * u) * (u > .78 ? Math.sqrt(Math.max(0, 1 - ((u - .78) / .22) ** 2)) : 1); if (Math.abs(t) > half) return null;
+  if (u > .8 || Math.abs(t) > half * .86) return Math.floor(Math.abs(t) * 5 + u * 4) % 3 === 0 && u > .82 ? M.BELLY : M.NOSE; // the black border, flecked pale
+  return Math.abs((t + 1) * 1.6 - Math.round((t + 1) * 1.6)) < .07 || u < .08 ? M.NOSE : M.BODY; };
+const bflyHind = (s, t) => { const u = (s + 1) / 2, r = Math.hypot(s * .95, t); if (r > .95) return null;
+  if (r > .7) return r > .76 && r < .86 && Math.floor((Math.atan2(t, s) + 4) * 4) % 2 ? M.ACCENT : M.NOSE; // blue crescents in its black hem
+  return Math.abs(Math.atan2(t, s + 1.1) * 3 - Math.round(Math.atan2(t, s + 1.1) * 3)) < .06 || u < .06 ? M.NOSE : M.BODY; };
 function moth3d(S, level, frame, st, facing = "towards") {
+  if (S.look?.butterfly) return butterfly3d(S, level, frame, st, facing);
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
   shadow(m, 0, .3 * span);
@@ -10118,6 +10148,30 @@ function moth3d(S, level, frame, st, facing = "towards") {
   m.ell([0, y, 0], [.22, .09, .09], M.BELLY, { group: 1, paint: p => spotty(p, 30, .25) ? M.BODY2 : undefined });
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
+  return finish(m, S, level, st, .5, facing);
+}
+
+function butterfly3d(S, level, frame, st, facing) {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = 1.15;
+  shadow(m, 0, .32 * span);
+  for (const side of [-1, 1]) {
+    const lift = up ? .85 : -.08, fore = v3.norm([.3, lift, side]), hind = v3.norm([-.32, lift * .8, side]);
+    m.flat(v3.add([.02, y, side * .04], v3.mul(fore, .4 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), .42 * span, .3 * span, bflyFore, { group: 10 + (side > 0 ? 1 : 0) });
+    const hc = v3.add([-.06, y, side * .04], v3.mul(hind, .26 * span));
+    if (has("eyespots")) { // its hind wings grown into two great staring eyes (the legend audit's ★, the moth's kept)
+      const eye = (a, b) => { if (Math.hypot(a, b) > 1 - .14 * Math.max(0, Math.sin(Math.atan2(b, a) * 7))) return null; const e = Math.hypot((a - .05) / .62, b / .78); if (e < .2) return Math.hypot(a + .02, b - .12) < .07 ? M.GLINT : M.NOSE; if (e < .32) return M.MAGIC2; if (e < .55) return M.MAGIC; if (e < .72) return M.NOSE; if (e < .8) return M.BELLY; return M.BODY; };
+      m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .36)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .38, .3, eye, { group: 12 + (side > 0 ? 1 : 0), extra: true });
+    } else {
+      m.flat(hc, hind, v3.norm(v3.cross(hind, [0, 1, 0])), .28 * span, .22 * span, bflyHind, { group: 12 + (side > 0 ? 1 : 0) });
+      const tb = v3.add(hc, v3.mul(hind, .22 * span)); m.seg(tb, v3.add(tb, v3.add(v3.mul(hind, .14 * span), [-.1, -.04, 0])), .022, .014, M.NOSE, { group: 12 + (side > 0 ? 1 : 0) }); // its swallow's tail
+    }
+    m.chain([[.12, y + .06, side * .02, .008], [.24, y + .3, side * .1, .008], [.3, y + .44, side * .15, .008]], M.NOSE, { group: 11 }); // long antennae...
+    m.ell([.3, y + .45, side * .15], [.025, .025, .025], M.NOSE, { group: 11 }); // ...ending in clubs
+  }
+  m.ell([-.04, y - .02, 0], [.24, .045, .045], M.BODY3, { group: 1, paint: p => p[1] < y - .03 ? M.BODY : undefined });
+  m.ell([.14, y + .02, 0], [.07, .06, .06], M.BODY3, { group: 1 });
+  m.ell([.22, y + .03, 0], [.05, .05, .05], M.BODY3, { group: 1 });
+  eyesOn(m, [.22, y + .03, 0], [.05, .05, .05], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .5, facing);
 }
 
@@ -10201,13 +10255,15 @@ function crab3d(S, level, frame, st, facing = "towards") {
 
 function spider3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
-  const ce = [.15, .28, 0];
+  const ce = [.15, .28, 0], T = S.look?.tarantula, lk = T ? 1.5 : 1; // (the tarantula's: thick hairy legs banded at each joint, a big furry abdomen)
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
     const a = (-.6 + i * .4), ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? .05 : -.05, base = v3.add(ce, [.05 - i * .04, 0, side * .1]);
     const knee = v3.add(base, [Math.cos(a) * .3 * (i < 2 ? 1 : -.6) + ph, .3, side * .3]), foot = v3.add(base, [Math.cos(a) * .55 * (i < 2 ? 1 : -.8) + ph * 1.5, -.28, side * .55]);
-    m.chain([[...base, .03], [...knee, .028], [...foot, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+    const band = T ? p => { const a = Math.hypot(...v3.sub(p, knee)), b = Math.hypot(...v3.sub(p, foot)); return (a > .035 && a < .07) || (b > .07 && b < .11) ? M.ACCENT : undefined; } : undefined;
+    m.chain([[...base, .03 * lk], [...knee, .028 * lk], [...foot, .015 * lk]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2, rough: T ? .008 : undefined, paint: band });
   }
-  m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
+  if (T) m.ell([-.3, .4, 0], [.38, .31, .33], M.BODY, { rough: .02, paint: p => p[1] > .5 && spotty(p, 22, .25) ? M.BELLY : undefined });
+  else m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
   m.ell(ce, [.18, .13, .17], M.BODY2, { group: 1 });
   m.anchors.head = { c: ce, r: [.18, .13, .17] };
   m.anchors.eyes = { pts: [[.05, .05], [.05, -.05]].map(([dy, dz]) => Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4]))), size: .03 };
@@ -10278,7 +10334,7 @@ function speciesColours(sp, st, gear = null) {
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
-  const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = Array.isArray(s.belly) ? hsv2rgb(...s.belly) : s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const mh = s.magic ?? st.magicHue + s.hue * .3, magic = hsv2rgb(mh, .6, 1), magic2 = hsv2rgb(mh, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
