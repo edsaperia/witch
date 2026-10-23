@@ -432,7 +432,8 @@ const PIECES = {
   // left) for the parts Hotel hangs on it, which glow on tonight's cell.
   pegboard(m, { W, D, H }) {
     const zb = -D / 2 + .02, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
-    m.box([0, cy, zb], [W / 2, hh, .02], M.STRAW, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
+    // (a dark board, oily green, so the parts hung on it stand out against it: art/workshop.js)
+    m.box([0, cy, zb], [W / 2, hh, .02], M.CLOTH, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
     m.box([0, cy, zb - .012], [W / 2 + .05, hh + .05, .015], M.WOOD, { round: .01, group: 2 });
     // the nine cells' frames, each in its biome's colour (BIOMES' materials), a gap of board between them
     const cw = (W - .12) / 3, ch = (2 * hh - .12) / 3;
@@ -816,7 +817,9 @@ const ROOM_COLOURS = {
   atrium: { [M.CLOTH]: [92, 62, 40], [M.ACCENT]: [186, 60, 52] }, // bark and a wax seal's red
 };
 /** A piece's own colours over its room's (the biome board's frames). */
-const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i])])) };
+/** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
+const FRAME_DIM = .6;
+const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
