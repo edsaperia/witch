@@ -15,5 +15,15 @@ export const CREATURE_POLARBEAR = {
     scale: { "invites.range": 1.25, "invites.radius": 1.3 },
     label: "Polar bear's Blizzard: 💌s fly further and land more easily"
   },
-  character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 }
+  character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"] },
+    ranged: null,
+    special: "cover",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "rears up",
+    tells: { melee: "rears up", special: "rears up" }
+  }
 };

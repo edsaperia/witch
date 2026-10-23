@@ -11,15 +11,35 @@ A **find** is the night's one permanent upgrade (`src/rules/finds.ts`). There's 
 Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fails if it differs. After adding a kind or an item, run `UPDATE_FINDS=1 npx vitest run src/rules/findsList.test.ts`.
 
 <!-- finds:start -->
-### wearable: found as a bundle (10)
+### wearable: found as a bundle (8)
 
 - **Hair** (drawn as `find-bundle`): Mohawk (`hair-mohawk`)
 - **Face** (drawn as `find-bundle`): Sunglasses (`shades`)
 - **Jacket** (drawn as `find-bundle`): Sequin jacket (`top-sequins`), Cape (`top-cape`), Mesh top (`top-mesh`)
 - **Cloak** (drawn as `find-bundle`): Long cloak (`cloak-long`), Hooded cloak (`cloak-hooded`)
 - **Shoes** (drawn as `find-bundle`): Chunky trainers (`shoes-chunky`)
-- **Bag** (drawn as `find-bag`): Bum bag (`bumbag`)
-- **Backpack** (drawn as `find-bag`): Backpack (`backpack`)
+
+### hat: found as a hat (14)
+
+- helmet (`helmet`), drawn as `find-hat`
+- healing (`healing`), drawn as `find-hat`
+- harvest (`harvest`), drawn as `find-hat`
+- dowsing (`dowsing`), drawn as `find-hat`
+- sentry (`sentry`), drawn as `find-hat`
+- bramble (`bramble`), drawn as `find-hat`
+- slingshot (`slingshot`), drawn as `find-hat`
+- gathering (`gathering`), drawn as `find-hat`
+- mine (`mine`), drawn as `find-hat`
+- lullaby (`lullaby`), drawn as `find-hat`
+- cyclone (`cyclone`), drawn as `find-hat`
+- nursing (`nursing`), drawn as `find-hat`
+- edgeseer (`edgeseer`), drawn as `find-hat`
+- routeseer (`routeseer`), drawn as `find-hat`
+
+### bag: found as a bag (2)
+
+- bumbag (`bumbag`), drawn as `find-bag`
+- backpack (`backpack`), drawn as `find-bag`
 
 ### part: found as a broom part (9)
 

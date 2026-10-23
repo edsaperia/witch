@@ -1,7 +1,6 @@
 // The bedroom's main-thread budget (2026-10-21; Foxtrot's measure, Alpha's "one long task after the map"): the built game loaded
 // headless, its long tasks (over 50 ms) from witch:view on, while the bedroom shows and the island builds. Plain (the creator's
-// room as the loading cover, ?quick=1) or, OPENING=1, the new opening: the chart, Sail home (its dive skipped with a key), the
-// wake-up's alarm, and the dressing table's mirror opening the creator (its room made then). Prints the longest tasks and how many
+// room as the loading cover, ?quick=1, ?opening=old) or, OPENING=1, the opening: asleep in the dark, the wake-up's alarm, and the dressing table's mirror opening the creator (its room made then). Prints the longest tasks and how many
 // passed 200 ms; with LIMIT=<ms>, fails if any did after witch:view.
 //   node tools/opening/bedroom-budget.cjs [dist] [throttle] [secs]   (OPENING=1, LIMIT=, OUT=<json>)
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -16,15 +15,10 @@ srv.listen(0, "127.0.0.1", async () => {
   const errors = []; p.on("pageerror", e => errors.push(e.message));
   if (Number(thr) > 1) { const cdp = await p.context().newCDPSession(p); await cdp.send("Emulation.setCPUThrottlingRate", { rate: Number(thr) }); }
   const T = Number(thr), t0 = Date.now();
-  await p.goto(`http://127.0.0.1:${srv.address().port}/?quick=1&timing=1${opening ? "&opening=chart" : "&opening=old"}`);
+  await p.goto(`http://127.0.0.1:${srv.address().port}/?quick=1&timing=1${opening ? "&opening=bedroom" : "&opening=old"}`);
   let mirrorAt = null;
   if (opening) {
-    await p.waitForSelector("#chart-overlay .home", { timeout: 600000 * T });
-    await p.waitForTimeout(1500);
-    await p.click("#chart-overlay .home");
-    await p.waitForFunction(() => !document.getElementById("chart-overlay"), null, { timeout: 600000 * T, polling: 500 });
-    await p.keyboard.press("Space");
-    await p.waitForFunction(() => !!window.witch?.game?.wake && !document.body.classList.contains("arriving"), null, { timeout: 900000 * T, polling: 500 });
+    await p.waitForFunction(() => !!window.witch?.game?.wake, null, { timeout: 900000 * T, polling: 500 });
     await p.waitForTimeout(Number(secs) * 500); // (the alarm ringing, the island building)
     // up and to the dressing table: its mirror opens the creator by itself
     await p.evaluate(() => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; g.wake.beat = "up"; W.body = { ...W.body, x: th.x + 14.2, z: th.z - 13.5, vx: 0, vz: 0 }; });

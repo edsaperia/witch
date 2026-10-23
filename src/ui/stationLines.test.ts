@@ -8,7 +8,7 @@ import { BOARD, PARTS, bareBroom, fittedKey, fittedOf, partById } from "../rules
 import { setParts } from "../rules/spells";
 import { SHELVES, shelvesAt, type Shelf } from "../rules/wardrobe";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { broomSummary, canChoose, cardAt, choose, partStats, setChips, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, setChips, stationLines, type Line } from "./stationLines";
 
 const ctx = (owned: string[] = []) => ({ owned: new Set(owned), fitOn: () => true, grid: (s: Shelf) => ({ cols: s.grid === "skin" ? 6 : 13, rows: 5 }) });
 const linesAt = (id: string) => { const sh = shelvesAt(id)!; return { sh, L: stationLines(sh, ctx()) }; };
@@ -100,5 +100,22 @@ describe("the stations", () => {
     expect(ids).toEqual(expect.arrayContaining(["broomBay", "lathe", "pegboard"]));
     expect(ids).not.toContain("broomStand");
     for (const id of ids) expect(shelvesAt(id), id).not.toBeNull();
+  });
+});
+
+describe("panelPad (a gamepad on a station's panel)", () => {
+  const pressed = (...i: number[]) => { const b = Array(17).fill(false); for (const k of i) b[k] = true; return b; };
+  it("the bottom and left face buttons choose (Ed's playtest, 2026-10-23: he pressed the bottom one to choose)", () => {
+    expect(panelPad(pressed(0), [0, 0, 0, 0]).choose).toBe(true);
+    expect(panelPad(pressed(2), [0, 0, 0, 0]).choose).toBe(true);
+    expect(panelPad(pressed(1), [0, 0, 0, 0]).choose).toBe(false);
+  });
+  it("the d-pad and the right stick move the selector (Ed: \"right stick is probably more natural\"); the left stick doesn't", () => {
+    expect(panelPad(pressed(15), [0, 0, 0, 0]).dir).toBe("right");
+    expect(panelPad(pressed(12), [0, 0, 0, 0]).dir).toBe("up");
+    expect(panelPad(pressed(), [0, 0, 0.9, 0.2]).dir).toBe("right");
+    expect(panelPad(pressed(), [0, 0, -0.1, -0.8]).dir).toBe("up");
+    expect(panelPad(pressed(), [0, 0, 0.3, 0.2]).dir).toBe("");
+    expect(panelPad(pressed(), [1, 1, 0, 0]).dir).toBe("");
   });
 });

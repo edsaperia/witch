@@ -50,6 +50,16 @@ const front = (id, gap = 0.7) => {
       out[id] = await page.evaluate(() => document.querySelector("#station-panel .sp-head")?.textContent);
     };
     await at("pegboard"); await shot("pegboard");
+    // LOOKS=0,1.5:0.5,3: the pegboard's frame tried at each look (and distance, after a colon: camera.station.parts.board), live,
+    // then stop (for tuning it)
+    if (process.env.LOOKS) {
+      for (const v of process.env.LOOKS.split(",")) {
+        const [look, distance] = v.split(":").map(Number);
+        await page.evaluate(([look, distance]) => { const B = window.witch.game.tuning.camera.station.parts.board; B.look = look; if (distance) B.distance = distance; }, [look, distance]);
+        await page.waitForTimeout(10000); await shot(`pegboard-look${v.replace(":", "-d")}`);
+      }
+      return;
+    }
     await at("broomBay"); await shot("bay");
     // a card chosen: down to the chassis's line (the Jet-bike fairing, fitted), one along to the Ladder: on her broom at once, the
     // Pile driver whole (the Ladder and the Jet nozzles: Ground pound)

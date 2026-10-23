@@ -9,16 +9,19 @@
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { partSprite, restingBroomSprite } from "../../art/workshop.js";
-import { BOARD, partById, SLOTS, type Fitted } from "../rules/broomParts";
+import { BOARD, SLOTS, type Fitted } from "../rules/broomParts";
 import { litCanvas, pixelTexture, type Drawn } from "./houseFurniture";
 import type { Style } from "./style";
 
 type V3 = { x: number; y: number; z: number };
-/** Her broom's colours by material (her look's broom and bristles: its body and trim), and her magic's glow. */
+/** A part hung on the pegboard, this long (house metres: its pixels at the house's ppm; a cell is about 1.6 m across). */
+const PEG_FIT = 1.75;
+/** Her broom's colours by material (her look's broom and bristles: its body and trim) and her magic's glow: only those, the parts'
+ *  salvage (their steel, brass, old wood and rust) staying the Workshop's own (art/broomParts.js). */
 let memo: { st: Style; g: unknown; c: Record<string, number[]> } | null = null;
 export function broomColours(st: Style, genome: unknown): Record<string, number[]> {
   if (memo && memo.st === st && memo.g === genome) return memo.c;
-  const c = coloursOf(st, genome);
+  const all = coloursOf(st, genome), M = Art.M as Record<string, number>, c = Object.fromEntries([M.BROOM, M.STRAW, M.MAGIC, M.MAGIC2].map(k => [k, all[k]]));
   memo = { st, g: genome, c };
   return c;
 }
@@ -26,11 +29,10 @@ function coloursOf(st: Style, genome: unknown): Record<string, number[]> {
   const look = (Art.genomeLook as (g: unknown) => { outfit: object | null })(genome ?? Art.WITCH_GENOME); // (null: the classic witch, hers)
   return (Art.witchColours as (st: Style, o?: object, x?: object) => Record<string, number[]>)(st, look.outfit ?? undefined, look.outfit ? { styleHues: false } : undefined);
 }
-const lookOf = (id: string | null) => { const p = partById(id); return p ? p.look : null; };
 
 /** A part's picture, lit in the Workshop's light in her broom's colours (`colours`: broomColours). */
-export function partCanvas(st: Style, colours: Record<string, number[]>, id: string, o: { ppm?: number; pitch?: number; yaw?: number; lean?: number; scale?: number } = {}): { c: HTMLCanvasElement; ox: number; oy: number } {
-  const p = partById(id)!, d = partSprite(p.look.kind, p.look.piece, o) as Drawn;
+export function partCanvas(st: Style, colours: Record<string, number[]>, id: string, o: { fit?: number; pitch?: number; yaw?: number; hung?: boolean } = {}): { c: HTMLCanvasElement; ox: number; oy: number } {
+  const d = partSprite(id, o) as Drawn;
   return { c: litCanvas(d, "workshop", st, 1, "", colours), ox: d.origin.x, oy: d.origin.y };
 }
 /** A picture as a dark outline (a part not found yet: the pegboard's empty pegs), its edge `edge` and its inside a faint dark. */
@@ -79,14 +81,13 @@ export class WorkshopArt {
    *  each host piece's draw order, its pictures just after it. `t`: her clock, for tonight's glow. */
   update(s: WorkshopState, st: Style, ppm: number, pitch: number, yawOf: (piece: string) => number, markAt: MarkAt, orderOf: (piece: string) => number, t: number): void {
     const colours = broomColours(st, s.genome), ck = JSON.stringify([colours[(Art.M as Record<string, number>).BROOM], colours[(Art.M as Record<string, number>).STRAW]]);
-    const looks = { tip: lookOf(s.fitted.tip), chassis: lookOf(s.fitted.chassis), exhaust: lookOf(s.fitted.exhaust) };
     const host = s.at === "lathe" ? "lathe" : "broomBay";
     this.want = !s.at ? [] : [{ key: `broom|${host}|${SLOTS.map(k => s.fitted[k] ?? "-").join(",")}|${ck}|${ppm.toFixed(3)}`, piece: host, mark: "rest",
-      bake: () => { const d = restingBroomSprite(looks, { ppm, pitch, yaw: yawOf(host), scale: host === "lathe" ? 1.15 : 1.6 }) as Drawn; return { c: litCanvas(d, "workshop", st, 1, "", colours), ox: d.origin.x, oy: d.origin.y }; } }];
+      bake: () => { const d = restingBroomSprite(s.fitted, { ppm, pitch, yaw: yawOf(host), scale: host === "lathe" ? 1.5 : 2 }) as Drawn; return { c: litCanvas(d, "workshop", st, 1, "", colours), ox: d.origin.x, oy: d.origin.y }; } }];
     BOARD.forEach((cell, i) => {
       const found = s.found.has(cell.part), glow = !found && s.tonight === cell.part;
       this.want.push({ key: `cell${i}|${cell.part}|${found ? "found" : glow ? "tonight" : "missing"}|${found ? ck : ""}|${ppm.toFixed(3)}`, piece: "pegboard", mark: `cell${i}`, glow,
-        bake: () => { const p = partCanvas(st, colours, cell.part, { ppm, pitch, yaw: yawOf("pegboard"), lean: .45, scale: .62 }); if (found) return p; const o = outlineCanvas(p.c); return glow ? { c: glowCanvas(o), ox: p.ox + 3, oy: p.oy + 3 } : { ...p, c: o }; } });
+        bake: () => { const p = partCanvas(st, colours, cell.part, { fit: ppm * PEG_FIT, pitch, yaw: yawOf("pegboard"), hung: true }); if (found) return p; const o = outlineCanvas(p.c); return glow ? { c: glowCanvas(o), ox: p.ox + 3, oy: p.oy + 3 } : { ...p, c: o }; } });
     });
     // what's wanted and not baked: one a frame (the nearest piece first doesn't matter here: ten small pictures)
     const keys = new Set(this.want.map(w => w.key));

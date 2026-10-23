@@ -1394,6 +1394,23 @@
                 "time"
               ],
               "additionalProperties": false
+            },
+            "dark": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "fade": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "fade"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1410,7 +1427,8 @@
             "circle",
             "landTime",
             "walk",
-            "fall"
+            "fall",
+            "dark"
           ],
           "additionalProperties": false
         },
@@ -2752,6 +2770,9 @@
         "hat": {
           "type": "string"
         },
+        "hats": {
+          "type": "string"
+        },
         "parts": {
           "type": "string"
         },
@@ -3114,6 +3135,7 @@
       },
       "required": [
         "hat",
+        "hats",
         "parts",
         "speed",
         "healing",
@@ -5153,10 +5175,15 @@
         "bpm": {
           "type": "number",
           "minimum": 0
+        },
+        "knockBeats": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
-        "bpm"
+        "bpm",
+        "knockBeats"
       ],
       "additionalProperties": false
     },
@@ -8102,7 +8129,7 @@
     "opening": {
       "type": "object",
       "properties": {
-        "chart": {
+        "bedroom": {
           "type": "boolean"
         },
         "wake": {
@@ -8130,7 +8157,7 @@
         }
       },
       "required": [
-        "chart",
+        "bedroom",
         "wake"
       ],
       "additionalProperties": false
@@ -8528,16 +8555,19 @@
               "type": "number",
               "minimum": 0
             },
+            "aim": {
+              "type": "number",
+              "minimum": 0
+            },
             "parts": {
               "type": "object",
               "properties": {
                 "head": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8545,7 +8575,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8553,10 +8583,9 @@
                 "hat": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8564,7 +8593,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8572,10 +8601,9 @@
                 "top": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8583,7 +8611,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8591,10 +8619,9 @@
                 "legs": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8602,7 +8629,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8610,10 +8637,9 @@
                 "feet": {
                   "type": "object",
                   "properties": {
-                    "look": {
+                    "aim": {
                       "type": "number",
-                      "minimum": -5,
-                      "maximum": 5
+                      "minimum": 0
                     },
                     "distance": {
                       "type": "number",
@@ -8621,7 +8647,7 @@
                     }
                   },
                   "required": [
-                    "look",
+                    "aim",
                     "distance"
                   ],
                   "additionalProperties": false
@@ -8644,6 +8670,24 @@
                     "distance"
                   ],
                   "additionalProperties": false
+                },
+                "board": {
+                  "type": "object",
+                  "properties": {
+                    "look": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "distance": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "look",
+                    "distance"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -8652,7 +8696,8 @@
                 "top",
                 "legs",
                 "feet",
-                "broom"
+                "broom",
+                "board"
               ],
               "additionalProperties": false
             }
@@ -8662,6 +8707,7 @@
             "distance",
             "side",
             "ease",
+            "aim",
             "parts"
           ],
           "additionalProperties": false

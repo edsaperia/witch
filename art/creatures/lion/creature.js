@@ -19,5 +19,15 @@ export const CREATURE_LION = {
     scale: { "invites.speed": 1.15, "invites.range": 1.15 },
     label: "Lion's Pride: 💌s fly a little faster and further"
   },
-  character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 }
+  character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
+    ranged: { name: "roar bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "call",
+    retreat: "flanks",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the roar",
+    tells: { melee: "crouch", ranged: "mouth open", special: "the roar" }
+  }
 };

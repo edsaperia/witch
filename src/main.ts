@@ -1,8 +1,8 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
-import { chartOpen, chartWarmsNight, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { divesHome, openingWay, opensOnChart } from "./app/opening";
-import { bedside, wakeInBedroom } from "./rules/opening";
+import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
+import { openingWay, opensInBedroom } from "./app/opening";
+import { wakeInBedroom } from "./rules/opening";
 import { startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
@@ -35,8 +35,8 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable, setParts } from "./rules/spells";
-import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
+import { castable, hatSpell, setParts } from "./rules/spells";
+import { changeLoadout } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
@@ -44,7 +44,7 @@ import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds"
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
-import { keepFound, type FindsCtx } from "./app/finds";
+import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { FindsPanel } from "./ui/findsPanel";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
@@ -71,8 +71,9 @@ import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, overBedLine, type NightWay } from "./app/sail";
-import { ArrivalFlight, hudFade, showStill } from "./app/arrive";
+import { hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
+import { shotParams } from "./app/shot";
 import type { FlightEnd } from "./render/chart/seaChart";
 
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
@@ -87,6 +88,8 @@ if (TIMING) watchLongTasks();
 const logTiming = (): void => { if (TIMING) N().playtest.timing(transitionTiming()); };
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
+// A builder's quick shot (?shot=<scene>, app/shot.ts): only the art the view needs, no start card or bedroom, the waves held.
+shotParams(params); shotParams(bootLink);
 // (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
 let zooPanel: import("./zoo/panel").ZooPanel | null = null;
 let bootSeed = parseSeed(params.get("seed"));
@@ -129,9 +132,10 @@ let sailing = false;
 // The boot's night: the link's tuning, the game, the link's switches, her hat, the playtest run, the knobs' start, the HUD.
 await startNight(page, { how: "boot", island: params.get("island") ?? "", seed: bootSeed, world: params.has("world") ? Number(params.get("world")) : undefined, params, ready: bootMap ?? undefined });
 const { tuning: bootTuning } = N();
-// The new opening (app/opening.ts; Ed, 2026-10-20): a plain first load opens on the sea chart over the boot's night (home's, made
-// and its art drawn under the chart), in place of the bedroom; on by default (Ed, 2026-10-21), ?opening=old for today's start.
-const onChart = opensOnChart(bootLink, bootTuning);
+// The opening (app/opening.ts; Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island
+// instead of the map"): a plain first load is home's night, asleep in the dark while it's made, then she wakes in her bedroom
+// there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
+const inBedroom = opensInBedroom(bootLink, bootTuning);
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -231,6 +235,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
+  if (inBedroom) wakeFirst();
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
@@ -239,7 +244,7 @@ const sound = page.sound = new Sound(bootTuning, N().musicStyle, N().seed);
 sound.leyLink = () => view.ley.currentLink(); // (the pulse's fizz heard where the line is drawn)
 // The freeze (Esc, gamepad Start, the ❚❚ button): a true still for screenshots, . steps (platform/freeze.ts).
 const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
-freeze.started = () => (startEl.style.display === "none" || creator.open) && !chartWarmsNight() && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?"; not under the first load's chart: its Esc is the chart's)
+freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 
 // Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
 // the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party
@@ -301,8 +306,8 @@ function arrived(): void {
 const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
-// Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
-creator.loadout = { hat: N().game.spells.hat };
+// Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
+creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
 creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
@@ -310,7 +315,6 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
 // seed (the only way to: Ed, 2026-10-21, the party's-over card points her here).
-creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); } input.clearPresses(); };
 // The stations' panels (Ed, 2026-10-21, the station menus: "The menu should open when she gets near, and mouse or gamepad direction
 // keys are used to navigate the options"; rules/stations.ts, rules/wardrobe.ts, ui/stationPanel.ts): walking up to a station slides
 // its shelves in over the game, walking away slides them out; no E, no room. What she owns (app/owned.ts) is on its shelves, what's
@@ -391,7 +395,7 @@ function botGame(kind: BotKind): void {
   });
 }
 if (botParam && BOT_KINDS.includes(botParam)) botGame(botParam);
-else if (params.get("creator") !== "0" && !bootArrival && !onChart) creator.show();
+else if (params.get("creator") !== "0" && !bootArrival && !inBedroom) creator.show();
 const lookBtn = document.getElementById("look-btn");
 if (lookBtn) {
   for (const ev of ["pointerdown", "pointerup", "click", "touchstart"]) lookBtn.addEventListener(ev, e => e.stopPropagation()); // (not a start)
@@ -417,7 +421,7 @@ function start(): boolean {
   input.clearPresses();
   return true;
 }
-input.onAny = () => (chartWarmsNight() || (N().arrival && !N().flags.landed) ? true : start()); // (the first load's chart up: its keys are the chart's, the night under it not started; arriving: a key skips the flight, app/arrive.ts; the landing starts it)
+input.onAny = () => (N().arrival && !N().flags.landed ? true : start()); // (arriving: a key skips the flight, app/arrive.ts; the landing starts it)
 // The audio watchdog (app/sound.ts).
 sound.watch(() => !N().game.clock.paused && !freeze.frozen && !document.hidden, () => N().game.speakerBoot.some(t => t !== null), () => N().playtest);
 // The pause page's test sliders (Ed, 2026-10-12; ui/decide.ts PauseSliders): down the left while frozen, the freeze quiet (no card
@@ -442,21 +446,28 @@ freeze.onStamp = text => pauseSliders?.setStamp(text);
 // bedroom and on the pause page, and when a menu's code has been replaced under it.
 const newBuild = new NewBuildNotice(BUILD, document.getElementById("new-build"));
 let menuGone = false;
-/** Controls on the pause page (the new opening, Ed's decision 3: "Controls are taught in the bedroom and kept in the pause menu"):
- *  where the creator's tabs (its ❔ Controls among them) were never set up, a button while paused shows the start card's keys
- *  (ui/cornerPanel.ts, borrowed and put back). */
-let controlsBtn: HTMLButtonElement | null = null;
+/** Controls, What's new and Options on the pause page (the opening, Ed's decision 3: "Controls are taught in the bedroom and kept in
+ *  the pause menu"; Ed, 2026-10-23, the chart's corner gone with the chart-first start): where the creator's tabs were never set up,
+ *  buttons while paused show the start card's keys, its What's new and the screen shake's option (ui/cornerPanel.ts, borrowed and
+ *  put back). */
+let pauseBtns: HTMLDivElement | null = null;
 function pauseControls(on: boolean): void {
-  const keys = startEl.querySelector<HTMLElement>(".keys");
-  if (!on || dressed || !keys) { if (controlsBtn) controlsBtn.style.display = "none"; closeCornerPanel(); return; }
-  if (!controlsBtn) {
-    controlsBtn = document.createElement("button");
-    controlsBtn.type = "button"; controlsBtn.textContent = "❔ Controls";
-    controlsBtn.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.86);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;cursor:pointer";
-    controlsBtn.addEventListener("click", () => toggleCornerPanel(document.body, "controls", "CONTROLS", [keys]));
-    document.body.append(controlsBtn);
+  if (!on || dressed) { if (pauseBtns) pauseBtns.style.display = "none"; closeCornerPanel(); return; }
+  if (!pauseBtns) {
+    pauseBtns = document.createElement("div");
+    pauseBtns.style.cssText = "position:fixed;right:12px;top:12px;z-index:61;display:flex;gap:8px";
+    const keys = startEl.querySelector<HTMLElement>(".keys"), news = startEl.querySelector<HTMLElement>(".ss-body");
+    for (const [label, id, title, el] of [["❔ Controls", "controls", "CONTROLS", keys], ["📜 What's new", "news", "WHAT'S NEW", news], ["⚙ Options", "options", "OPTIONS", shakeEl]] as const) {
+      if (!el) continue;
+      const b = document.createElement("button");
+      b.type = "button"; b.textContent = label;
+      b.style.cssText = "font:13px ui-monospace,monospace;color:#e8e2f4;background:rgba(10,9,22,.86);border:1px solid #3a2f5c;border-radius:6px;padding:6px 12px;cursor:pointer";
+      b.addEventListener("click", () => toggleCornerPanel(document.body, id, title, [el]));
+      pauseBtns.append(b);
+    }
+    document.body.append(pauseBtns);
   }
-  controlsBtn.style.display = "";
+  pauseBtns.style.display = "";
 }
 freeze.onToggle = on => {
   sound.freeze(on);
@@ -496,7 +507,7 @@ function dressCreator(): void {
   // The zoo (Ed, 2026-10-13: ?zoo, "plus a Zoo button"): every creature in its own block, out of a run.
   creator.addButton("Zoo", () => { const u = new URL(location.href); u.searchParams.set("zoo", "1"); location.href = u.toString(); });
 }
-if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (onChart && !botKind) openingChart();
+if (bootArrival) { /* (no card, no bedroom: the still, then the flight) */ } else if (inBedroom) { /* (no card, no creator: asleep in the dark, then the wake-up: wakeFirst) */ }
 else if (params.get("creator") !== "0" && !botKind) dressCreator();
 else startEl.style.display = "";
 // Ed's decisions panel (src/ui/decide.ts, config/decisions.json): ?decide opens it, F2 opens and closes it. Its code loads
@@ -515,6 +526,9 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) N().f
 let lastDraw = 0;
 /** The wake-up's card and dark (render/wakeUp.ts), made the first time a night has one. */
 let wakeCard: WakeCard | null = null;
+/** A plain first load asleep in the dark while home's night is made (the card kept up till she wakes: wakeFirst). */
+let bootAsleep = inBedroom;
+if (inBedroom) (wakeCard = new WakeCard()).sleep();
 const frameStats = new FrameStats(view.renderer.getContext());
 // ?perf=1: the performance panel (app/perfHud.ts), always on.
 const perfHud = page.perfHud = params.get("perf") === "1" ? new PerfHud(N().game, view, frameStats) : null;
@@ -550,7 +564,7 @@ function spawnHere(kind: FindKindId | null, item: string | null): string {
   const g = N().game, at = spawnSpot(g);
   if (!at) return "no clear ground within 12 m of her (in the treehouse? step out onto the island)";
   if (kind && item) return spawnFind(g, kind, item, at) ? `${kind} ${item} spawned ${Math.round(Math.hypot(at.x - g.witch.x, at.z - g.witch.z))} m from her` : `no ${kind} ${item}`;
-  if (g.trunk && g.trunk.item === null) fillTrunk(g, { wearable: findsCtx().owned(), part: new Set(loadBroom().found) });
+  if (g.trunk && g.trunk.item === null) fillTrunk(g, foundAll(findsCtx()));
   if (!g.trunk?.item || g.trunk.found) return "no find tonight (all found, or taken)";
   const c = g.map.cellSafe(at.x, at.z).cell;
   Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
@@ -643,30 +657,15 @@ let chartAt: string | null = null, tableShut: string | null = null;
 document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
 document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
-/** The first load's sea chart (app/opening.ts): over the boot's night, its art drawn on under it (ui/chartOverlay.ts chartWarmsNight),
- *  its corner holding What's new and Options (the start card's, borrowed while shown: ui/cornerPanel.ts); no Close. (No Zoo: Ed,
- *  2026-10-20, "the zoo is now accessed via the bestiary": the book in the treehouse's bestiary.)
- *  Choosing an island starts its night in place as a sail does, the boot's own never played, so nothing's recorded on the chart. */
-function openingChart(): void {
-  mark("opening:chart");
-  const host = () => document.getElementById("chart-overlay") ?? document.body, news = startEl.querySelector<HTMLElement>(".ss-body");
-  const dives = (id: string) => { const n = N(); return divesHome(id, n.spec, !n.game.clock.paused || n.game.clock.time > 0); };
-  openChart((href, to) => { closeCornerPanel(); void sailFromChart(href, to, false); }, chartWorldArg(), { opening: true, noBake: dives, corner: [
-    ...(news ? [{ label: "📜 What's new", onClick: () => toggleCornerPanel(host(), "news", "WHAT'S NEW", [news]) }] : []),
-    ...(shakeEl ? [{ label: "⚙ Options", onClick: () => toggleCornerPanel(host(), "options", "OPTIONS", [shakeEl]) }] : []),
-  ] });
-}
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
 function chartWorldArg(): number | undefined { return new URLSearchParams(location.search).has("world") ? N().tuning.map?.world : undefined; } // (a function: the first load's chart opens before this line runs)
 /** Sailing from the map table's sea chart (ui/chartOverlay.ts, and window.witch.sail under it): the night recorded on the chart,
  *  unwon if it's still on, then the next night started in place (app/sail.ts; the tuning's sail.inPlace, ?sail=inplace|reload)
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
-function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean> {
+function sailFromChart(href: string, to: Sailed): Promise<boolean> {
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
-  if (!record) mark("opening:sail"); // (the first load's chart: the boot's night never played)
-  if (!record && divesHome(to.island, n.spec, !n.game.clock.paused || n.game.clock.time > 0) && diveHome(to)) return Promise.resolve(true);
-  if (record && save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
+  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
   carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
   if (sailWay(n.params, n.tuning) === "reload") { location.href = href; return Promise.resolve(false); }
   return sailOrReload(() => sailInPlace(to), href, h => { location.href = h; }, e => {
@@ -679,26 +678,16 @@ function sailFromChart(href: string, to: Sailed, record = true): Promise<boolean
 const WOKEN_KEY = "witch.woken";
 const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
 const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: the whole wake-up again next time */ } };
-/** The new opening's dive (app/opening.ts divesHome): the first load's chart sailing home, the boot's own night, made under it: no
- *  new night; she wakes in her bedroom in the treehouse (rules/opening.ts) and the chart's flight carries on into it, landing as a
- *  sail's does (the HUD faded in, the night started). False if it can't (no flight's end, no arrival knobs, no rooms): sailed in
- *  place instead. */
-function diveHome(to: Sailed): boolean {
-  const n = N(), A = n.tuning.arrive;
-  if (!to.end || !A || !wakeInBedroom(n.game)) return false;
-  startWake(n.game, n.game.herTime, wokenBefore()); // (in bed, the alarm to ring as the dive lands: rules/wakeUp.ts; the shorter one after the first game's)
-  mark("opening:dive");
-  gestured = true; // (she's played: the sound's woken already)
-  sound.sailing(1);
-  forgetArrival();
-  chartHeld = false; view.assets.hold(false);
-  const rec: Arrival = { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end };
-  showStill(rec); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip();
-  n.arrival = new ArrivalFlight(rec, A, document.getElementById("arrive-still") as HTMLImageElement | null, bedside(n.game) ?? undefined);
-  n.arrival.onReveal = revealArt;
-  lastDraw = 0;
-  if (n.flags.ready) n.arrival.begin(n.game); // (else the boot's own ready begins it)
-  return true;
+/** The opening's wake-up on a plain first load (app/opening.ts opensInBedroom): home's night made (its start's art drawn, the rest
+ *  drawing on behind the bedroom's shut curtains, which wait on it: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
+ *  (rules/opening.ts), the whole wake-up in a first game, the shorter one after. Without the house's rooms, the old start. */
+function wakeFirst(): void {
+  const n = N();
+  bootAsleep = false;
+  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, wokenBefore())) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
+  mark("opening:wake");
+  start();
+  if (!gestured) soundNote(); else sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
 }
 /** Back after a sail in place opens the pause menu (Ed's decision 1; app/sail.ts): armed by the first sail (a first load leaves
  *  Back alone); while the next island is made it only keeps the guard. */
@@ -763,7 +752,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   armBack();
   // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the shorter wake-up
   // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
-  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "chart";
+  const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
   const room = !wakes && spec.params.get("creator") !== "0";
   startEl.classList.add("loading");
   startEl.style.display = room || wakes ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
@@ -771,7 +760,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  creator.loadout = { hat: n.game.spells.hat };
+  creator.loadout = { hat: n.game.spells.hat }; creator.hats = n.game.spells.hats;
   lastDraw = 0;
   await view.prepare();
   n.flags.ready = true;
@@ -808,14 +797,14 @@ function frame(now: number): void {
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt);
   if (studio.at !== studioAt) { studioAt = studio.at; input.clearPresses(); }
-  const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on || studio.at ? stillControls(raw) : raw;
+  const raw = input.read(), human = chartOpen() || telescope.on || studio.at ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
   // nothing is drawn (the canvas keeps its last frame), and no new art is handed to the workers; closed, all as it was.
   const charting = chartOpen();
-  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting && !chartWarmsNight()); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
+  if (charting !== chartHeld) { chartHeld = charting; view.assets.hold(charting); if (charting) { chartWasPaused = game.clock.paused; game.clock.paused = true; } else game.clock.paused = chartWasPaused; }
   // A bot game: the bot's controls, not hers (the camera's zoom and the debug key still hers).
   const c: typeof human = bot ? { ...bot.decide(game), zoom: human.zoom, debug: human.debug, toggleAutoTalk: false } : human;
   if (bot) botTag?.update(bot.doing);
@@ -840,13 +829,16 @@ function frame(now: number): void {
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
   // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
-  if (game.trunk && game.trunk.item === null) fillTrunk(game, { wearable: owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), part: new Set(loadBroom().found) });
+  if (game.trunk && game.trunk.item === null) fillTrunk(game, foundAll(findsCtx()));
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
     keepFound(findsCtx(), "part", e.obj);
     view.partsFound = new Set(loadBroom().found); // (hers, not fitted: it waits at the Workshop, the bay to fit it)
     hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`);
+  } else if (e.kind === "found" && e.obj && e.find === "hat") {
+    keepFound(findsCtx(), "hat", e.obj); // (hers for good; the rules laid it on the hats' floor: rules/houseRooms.ts addFloorHat)
+    hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`);
   } else if (e.kind === "found" && e.obj) {
-    keepFound(findsCtx(), "wearable", e.obj);
+    keepFound(findsCtx(), e.find === "bag" ? "bag" : "wearable", e.obj);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
   }
@@ -873,7 +865,7 @@ function frame(now: number): void {
     for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
-  } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
+  } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   // The tables (the map table's sea chart) by nearness, as the stations; E at one brings it back after she's put it away there.
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
   if (!table) tableShut = null;

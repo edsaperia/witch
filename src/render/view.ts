@@ -7,7 +7,8 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { carrierOf, deckOf, noRiseAt } from "../rules/treehouse";
+import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
@@ -339,6 +340,35 @@ export class View {
   clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke!: Smoke;
+  /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
+   *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
+   *  room or on a branch off the Terrace (rules/treehouse.ts noRiseAt), only the house's own meshes are drawn (its rooms, the Ent's
+   *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
+   *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
+   *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
+   *  speed in the house's slowed time, and the same on any machine). */
+  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
+  private behindHouse(g: Game): void {
+    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
+    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
+    // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
+    if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
+    const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
+    D.at = g.herTime;
+    const fade = Math.max(1e-3, T?.fade ?? 0.6);
+    D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
+    if (!T?.on) D.k = 1;
+    const P = this.post;
+    P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
+    if (D.k >= 1) return;
+    // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
+    for (const o of [...(this.houseRooms?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
+    if (D.door) {
+      const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
+      P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
+    } else P.behindAt = null;
+  }
+
   /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
   private steam!: Smoke;
   /** The biome lakes' shore dressing and the lava's light (render/lakeShore.ts). */
@@ -455,6 +485,8 @@ export class View {
   readonly witchBase = { x: 0, y: 0, z: 0 };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
+  /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
+  witchTall = 0;
   shadowList: ShadowInstance[] = [];
   /** The trunks' shadows from her glow and the fires, a batch an area type (render/trunkShadows.ts); and the scenery's, a batch
    *  an atlas (decor, relics, scenes: render/view/scenery.ts; the runestones, the soundsystems: render/view/home.ts, render/party.ts). */
@@ -1312,7 +1344,9 @@ export class View {
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
-    this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
+    this.behindHouse(this.game);
+    // (the cast-shadow map is the forest's: none while only the house is drawn)
+    if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.post.render(this.scene, this.camera);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");

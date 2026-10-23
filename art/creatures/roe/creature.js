@@ -20,5 +20,15 @@ export const CREATURE_ROE = {
     scale: { "dash.cooldown": 0.7 },
     label: "Roe's Spring: your dodge comes back sooner"
   },
-  character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 }
+  character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "bolt of light", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "scatter",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 2,
+    call: "a bark",
+    tells: { melee: "head down", ranged: "ears up", special: "a bark" }
+  }
 };

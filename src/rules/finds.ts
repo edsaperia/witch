@@ -15,6 +15,13 @@
 // broom, the Workshop's: docs/backlog/workshop.md), placed alike (placeTrunk), a ground-mode find, E taking it at once, only while
 // the party's on, kept even if the night's then lost. No forced early wreck, no biome weighting (Ed, 2026-10-23). A new kind (hats,
 // records) joins by adding its FindKind: its items, its piece, its claim.
+//
+// Hats and bags (Ed, 2026-10-23, the mock previews/ed/hat-bag-finds: "Own objects each - all permanent upgrades will have their
+// own look"): every spell hat is a find (only the plain hat is hers at first), lying where its spell would put it (art/country.js
+// a pointed hat), taken onto the Parlour's hats' floor; the bum bag and the backpack each its own, no longer in the trunk.
+// How every find looks (Ed, 2026-10-23, the finds style guide, docs/art-guide/FINDS.md): one flask-sized object, no setting
+// round it, on a clear patch in its own pale gold-white light (render/view/finds.ts); clothes a folded bundle, a bag a little bag,
+// a hat a pointed hat, a broom part the part itself (art/country.js's find pieces). Taken, it's gone, its patch and light too.
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
@@ -22,12 +29,12 @@ import { canopyOver, type Relic } from "./legends";
 import { hash2 } from "./random";
 import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
 import { PART_IDS } from "./broomParts";
-import type { SpellState } from "./spells";
+import { HAT_SPELLS, type SpellState } from "./spells";
 import { deckOf, onFloor } from "./treehouse";
 import type { Game } from "./game";
 
 /** The kinds of permanent upgrade found in the forest, one a night across them all. */
-export type FindKindId = "wearable" | "part";
+export type FindKindId = "wearable" | "part" | "hat" | "bag";
 /** The night's find: where it stands, what kind it is and what's in it (item null: not yet filled, or nothing she lacks, so none
  *  tonight), and whether she's taken it. A wearable's is the travel trunk, a broom part's a wreck; kept as `g.trunk` either way. */
 export interface Trunk { x: number; z: number; cell: [number, number]; kind: FindKindId; item: string | null; found: boolean }
@@ -36,20 +43,23 @@ export interface Trunk { x: number; z: number; cell: [number, number]; kind: Fin
 export const TRUNK_REACH = 2.2, TRUNK_CLEAR = 30;
 const RINGS = [45, 60, 35, 75, 28];
 
+/** The bags found each on its own (Ed, 2026-10-23): the bag station's wearables not hers from the start (the satchel is). */
+export const BAG_ITEMS: readonly string[] = [...SHELVES.bag.items, ...SHELVES.backpack.items].filter(i => !i.start).map(i => i.id);
+/** The hats found (Ed, 2026-10-23): every built spell hat; the plain one is hers from the start. */
+export const HAT_FINDS: readonly string[] = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id);
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of
  *  three parts ... We have designed this before": the garage's). */
-export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !i.set["broom.kind"]);
-/** The wearables found as a little bag rather than a bundle of clothes (the bag and backpack shelves'). */
-const BAGS = new Set(["bag", "backpack"].flatMap(id => SHELVES[id]?.items.map(i => i.id) ?? []));
+export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !i.set["broom.kind"] && !BAG_ITEMS.includes(i.id));
 
 /** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
  *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
  *  keeps it for good, app/owned.ts and app/broomSave.ts, from the "found" event). */
 export interface FindKind { id: FindKindId; /** what the find is, in a word */ name: string; items: readonly string[]; piece(item: string): string; claim?(s: SpellState, item: string): void }
 export const FIND_KINDS: readonly FindKind[] = [
-  // (the finds style guide, docs/art-guide/FINDS.md: each find one flask-sized object on a clear, lit patch, no setting round it;
-  // clothes a folded bundle, bags a little bag, a broom part the part itself: art/country.js's find pieces)
-  { id: "wearable", name: "bundle", items: FINDABLE.map(i => i.id), piece: id => (BAGS.has(id) ? "find-bag" : "find-bundle") },
+  { id: "wearable", name: "bundle", items: FINDABLE.map(i => i.id), piece: () => "find-bundle" },
+  // (a hat found is hers: onto the hats' floor, rules/houseRooms.ts addFloorHat)
+  { id: "hat", name: "hat", items: HAT_FINDS, piece: () => "find-hat", claim(s, id) { if (s.hats && !s.hats.includes(id)) s.hats.push(id); } },
+  { id: "bag", name: "bag", items: BAG_ITEMS, piece: () => "find-bag" },
   // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
   { id: "part", name: "broom part", items: PART_IDS, piece: id => `find-part-${id}` },
 ];

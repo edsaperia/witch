@@ -17,5 +17,16 @@ export const CREATURE_SPHINX = {
     scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
     label: "Sphinx's Riddle: 💌s carry far and come a little quicker"
   },
-  character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 }
+  character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 },
+  pack: {
+    melee: { attacks: [null, "screech", "bigscreech"] },
+    ranged: { name: "sun bolt", range: 14, shots: [0, 1, 2], spread: 6, tint: "red" },
+    special: "confusion",
+    specialWith: { drift: 40, time: 3 },
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the stare",
+    tells: { melee: "its mouth opens", ranged: "the stare", special: "the riddle" }
+  }
 };

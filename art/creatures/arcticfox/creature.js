@@ -22,5 +22,15 @@ export const CREATURE_ARCTICFOX = {
     scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
     label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
   },
-  character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 }
+  character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "snow bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "mirage",
+    retreat: "freeze",
+    rhythm: "steady",
+    pressure: 2,
+    call: "vanishes",
+    tells: { melee: "crouch", ranged: "tail up", special: "vanishes" }
+  }
 };

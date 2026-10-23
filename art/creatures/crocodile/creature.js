@@ -15,5 +15,16 @@ export const CREATURE_CROCODILE = {
     scale: { "dash.cooldown": 0.6 },
     label: "Crocodile's Snap: your blink comes back quicker"
   },
-  character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 }
+  character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water jet", range: 14, shots: [0, 1, 1], tint: "red" },
+    special: "pull",
+    specialWith: { pull: 5, reach: 14 },
+    retreat: "water",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the roll",
+    tells: { melee: "jaws open", ranged: "a hiss", special: "the roll" }
+  }
 };

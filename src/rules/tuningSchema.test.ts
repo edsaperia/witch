@@ -25,6 +25,29 @@ describe("the tuning schema (config/schema/tuning.schema.json)", () => {
     expect(errs).toMatch(/tuning\.treetopSpeed: missing/);
   });
 
+  it("names only knobs that are there in its notes: a dotted path (beat.knockBeats) read from the note's section up", () => {
+    // (a path whose first name is no knob near the note is prose or a file: chart.html, art/country.js; a localStorage key is
+    // said as one: "localStorage witch.broom")
+    const at = (path: string[]) => path.reduce<unknown>((o, k) => (o && typeof o === "object" ? (o as Record<string, unknown>)[k] : undefined), raw);
+    const wrong: string[] = [];
+    const walk = (o: Record<string, unknown>, path: string[]) => {
+      for (const [k, v] of Object.entries(o)) {
+        if (v && typeof v === "object" && !Array.isArray(v)) { walk(v as Record<string, unknown>, [...path, k]); continue; }
+        if (!k.startsWith("_") || typeof v !== "string") continue;
+        const section = k === "_" ? path : [...path, k.slice(1)];
+        for (const m of v.matchAll(/(localStorage )?\b([a-z][A-Za-z0-9]*(?:\.[a-z][A-Za-z0-9]*)+)\b(?!\.?[a-z]*\/)/g)) {
+          const p = m[2].split(".");
+          if (m[1] || /^(ts|js|json|md|mjs|cjs|png|html)$/.test(p[p.length - 1])) continue;
+          const ups = section.map((_, i) => section.slice(0, section.length - i)).concat([[]]);
+          if (!ups.some(up => { const o = at(up); return !!o && typeof o === "object" && p[0] in o; })) continue; // (not a knob's name here)
+          if (!ups.some(up => at([...up, ...p]) !== undefined)) wrong.push(`${section.join(".") || "(top)"}: ${m[2]}`);
+        }
+      }
+    };
+    walk(raw as Record<string, unknown>, []);
+    expect(wrong, "a note names a knob that isn't in config/tuning.json: rename or drop it in the note (then --docs)").toEqual([]);
+  });
+
   it("keeps config/KNOBS.md up to date (node tools/config/schema.mjs --docs)", () => {
     expect(readFileSync("config/KNOBS.md", "utf8"), FIX).toBe(knobsMarkdown(raw as Record<string, unknown>, schema, "Tuning knobs", "config/tuning.json"));
   });

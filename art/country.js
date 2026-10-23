@@ -317,8 +317,9 @@ const FIND_PART_KINDS = {
   fairing: ["jetbike", "body"], ladder: ["ladder", "body"], canoe: ["canoe", "body"],
   nozzles: ["jetbike", "tail"], twigs: ["twigs", "bundle"], oar: ["oar", "tail"],
 };
-/** Every find drawn at this share of the witch's scale: the flask size (about 0.3 m tall to her 1.7 m; Ed, 2026-10-23). */
-const FIND_SIZE = .6;
+/** Every find drawn at this share of the witch's scale: the flask size (about 0.3 m tall to her 1.7 m; Ed, 2026-10-23: "the whole
+ *  find is flask-sized"), one for every kind. */
+export const FIND_SIZE = .6;
 const FIND_PIECES = {
   "find-bundle": { size: FIND_SIZE, desc: "a find: a folded bundle of clothes tied with the finds' pale ribbon (a wearable: rules/finds.ts)", build: fdBundle },
   "find-hat": { size: FIND_SIZE, desc: "a find: a pointed hat lying on its brim, the finds' ribbon its band (a hat: #1044)", build: fdHat },
