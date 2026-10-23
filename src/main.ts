@@ -4,6 +4,7 @@ import { chartOpen, chartWarmsNight, closeChart, openChart, prepareChart, type S
 import { divesHome, openingWay, opensOnChart } from "./app/opening";
 import { bedside, wakeInBedroom } from "./rules/opening";
 import { startWake } from "./rules/wakeUp";
+import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
 import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
@@ -105,6 +106,16 @@ migrateBroom();
 // Her look (the character creator's, kept on this browser; else the classic witch).
 const savedLook = loadGenome();
 let lookNow = JSON.stringify(savedLook);
+// What she has on (rules/clothesPile.ts; Ed, 2026-10-23): her look, less what's still in last night's pile while she wakes (her
+// nightie, bare feet, no hat...); shown whenever her look or the pile changes (`shownLook`: what the view was last given).
+let shownLook = "";
+function showLook(): void {
+  const pile = (page.night ?? page.last)?.game.wake?.pile, key = `${lookNow}|${pile?.join() ?? ""}`;
+  if (key === shownLook) return;
+  const look = JSON.parse(lookNow) as unknown;
+  if (view.houseRooms) view.houseRooms.outfit = look;
+  shownLook = key; view.setWitch(wornGenome(look as never, pile));
+}
 // The page and the night (app/night.ts; docs/plans/sail-without-reload.md B): the page made once, the night (its link, tuning,
 // game, playtest run, HUD, arrival and flags) held in `page.night`, read there by everything that needs it, never captured.
 const page: Page = { night: null, build: BUILD, look: () => (lookNow ? JSON.parse(lookNow) : savedLook) };
@@ -297,7 +308,7 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
 // seed (the only way to: Ed, 2026-10-21, the party's-over card points her here).
-creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } input.clearPresses(); };
+creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); } input.clearPresses(); };
 // The stations' panels (Ed, 2026-10-21, the station menus: "The menu should open when she gets near, and mouse or gamepad direction
 // keys are used to navigate the options"; rules/stations.ts, rules/wardrobe.ts, ui/stationPanel.ts): walking up to a station slides
 // its shelves in over the game, walking away slides them out; no E, no room. What she owns (app/owned.ts) is on its shelves, what's
@@ -305,7 +316,13 @@ creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
 let owned: Set<string> | null = null, stillAt = 0;
-stations.onLook = g => { saveGenome(g as never); creator.adopt(g); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); } };
+stations.onLook = g => {
+  saveGenome(g as never); creator.adopt(g);
+  // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
+  const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
+  showLook();
+};
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
@@ -348,7 +365,7 @@ creator.onGesture = () => sound.wake();
 creator.onStart = g => {
   const who = playerPick?.value ?? "human"; // (the dev "Player:" pick: a bot plays the run instead of her)
   if (who !== "human" && BOT_KINDS.includes(who as BotKind)) { botGame(who as BotKind); return; }
-  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); view.setWitch(g); wearHat(g); }
+  if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); }
   if (start()) queueCast();
 }; // (the scroll's burst: play, and the spell cast)
 creator.spellSound = (cue, v) => sound.sfx?.spell(cue, v);
@@ -361,7 +378,7 @@ function botGame(kind: BotKind): void {
   if (botKind) return;
   botKind = kind;
   const look = pleasingWitch(N().seed);
-  lookNow = JSON.stringify(look); view.setWitch(look); wearHat(look);
+  lookNow = JSON.stringify(look); showLook(); wearHat(look);
   if (creator.open) creator.hide();
   void Promise.all([import("./rules/bot"), import("./ui/botGame")]).then(([{ BOT_GAME, newBot }, { BotTag }]) => {
     bot = newBot(kind, BOT_GAME[kind]); // (the skilled one questing, bringing relics and feeding: rules/bot.ts BOT_GAME)
@@ -744,7 +761,7 @@ function leaveBot(): void {
   bot = null; botTag = null; botKind = null;
   const look = loadGenome();
   lookNow = JSON.stringify(look);
-  view.setWitch(look);
+  showLook();
 }
 /** ?debug=sail's test of the fallback: window.witch.sail(island, seed, { fail: true }). */
 let sailFail = false;
@@ -820,8 +837,9 @@ function frame(now: number): void {
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
   if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
+  showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); } // (the dressing table's mirror: its panel by nearness, as every station's)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
   } else if (!sailing) wakeCard?.hide(); // (asleep while the next night's made: kept up)
