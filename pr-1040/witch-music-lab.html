@@ -456,9 +456,6 @@ label.check input { accent-color: var(--accent); }
     return ((h ^ h >>> 16) >>> 0) / 4294967296;
   }
 
-  // src/rules/departure.ts
-  var EXIT_TURN = 4 * Math.PI / 180;
-
   // src/rules/leycurve.ts
   var TAU = Math.PI * 2;
   var TURNS = [0, -0.35, 0.35, -0.7, 0.7, ...Array.from({ length: 12 }, (_, k) => (k + 1) / 13 * TAU)];
@@ -5232,6 +5229,7 @@ label.check input { accent-color: var(--accent); }
   };
   var WITCH_SEAT_HEIGHT = 0.34;
   var UPRIGHT = { binding: [-0.02, 0.31, -0.2], dir: [0.02, 1, -0.04] };
+  var CARRIED = { held: 0.2, dir: [0.04, 1, -0.04] };
   var Q = Math.PI / 2;
   var LIMBO_BAR = 0.82;
   var FOOT_FRAMES = {
@@ -5265,6 +5263,34 @@ label.check input { accent-color: var(--accent); }
         hand: "rest",
         far: [0.03 + 0.13 * c, 0.45, -0.17],
         farHand: "rest"
+      };
+    }),
+    // and the same carrying her broom (Ed, 2026-10-23: "she holds it when she's on the terrace"): upright in her far hand like a staff,
+    // its bristles just off the floor, that hand swinging only a little as she walks (render/view/witch.ts, rules/stations.ts broomWhere)
+    idleBroom: [0, 1, 2].map((f) => ({
+      broom: CARRIED,
+      breathe: [0, 6e-3, 0.012][f],
+      sway: [0, 0.015, 0.03][f],
+      tilt: [0, 0.05, 0.1][f],
+      feet: [[-0.01, 0.07, -0.09], [0.04, 0.07, 0.09]],
+      free: [0.03, 0.43 + [0, 6e-3, 0.012][f], 0.17],
+      hand: "rest",
+      far: [0.06, 0.5 + [0, 6e-3, 0.012][f], -0.18]
+    })),
+    walkBroom: [0, 1, 2, 3, 4, 5].map((f) => {
+      const p = f / 6 * 2 * Math.PI, c = Math.cos(p), lift = (q) => 0.07 + Math.max(0, -Math.sin(q)) * 0.1;
+      return {
+        broom: CARRIED,
+        bend: 0.06,
+        crouch: 0.05 * Math.abs(c),
+        roll: 0.05 * Math.sin(p),
+        tilt: 0.12 * Math.sin(p),
+        sway: 0.02 + 0.015 * Math.abs(Math.sin(p)),
+        look: -0.02,
+        feet: [[0.02 - 0.15 * c, lift(p + Math.PI), -0.09], [0.02 + 0.15 * c, lift(p), 0.09]],
+        free: [0.03 - 0.13 * c, 0.45, 0.17],
+        hand: "rest",
+        far: [0.06 + 0.04 * c, 0.5, -0.18]
       };
     }),
     land: [
