@@ -19,5 +19,15 @@ export const CREATURE_RACCOON = {
     kind: "shot",
     scale: { "invites.cooldown": 0.85, "invites.speed": 1.15 },
     label: "Raccoon's Light fingers: quicker bursts, 💌s flying a little faster"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "thrown stone", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "decoy",
+    retreat: "splitBack",
+    rhythm: "steady",
+    pressure: 2,
+    call: "waves",
+    tells: { melee: "crouch", ranged: "a wind-up", special: "waves" }
   }
 };

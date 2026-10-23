@@ -21,5 +21,15 @@ export const CREATURE_MEERKAT = {
     scale: { "invites.range": 1.3 },
     label: "Meerkat's Lookout: 💌s reach further"
   },
-  character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 }
+  character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "sand bolt", range: 10, shots: [0, 1, 2], spread: 12, tint: "red" },
+    special: "call",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 2,
+    call: "stands tall",
+    tells: { melee: "crouch", ranged: "digs", special: "the lookout's chirp" }
+  }
 };

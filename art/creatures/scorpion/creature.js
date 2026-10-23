@@ -15,5 +15,16 @@ export const CREATURE_SCORPION = {
     scale: { "invites.cooldown": 0.85 },
     label: "Scorpion's Sting: 💌s pass through to the next, with a little less wait"
   },
-  character: { sprite: "shiver", every: [3, 7], for: 0.5 }
+  character: { sprite: "shiver", every: [3, 7], for: 0.5 },
+  pack: {
+    melee: null,
+    ranged: { name: "venom bolt", range: 10, shots: [0, 1, 3], spread: 20, tint: "red" },
+    special: "wall",
+    specialWith: { time: 3 },
+    retreat: "burrowApart",
+    rhythm: "slow",
+    pressure: 2,
+    call: "the dig",
+    tells: { ranged: "tail up", special: "the dig" }
+  }
 };

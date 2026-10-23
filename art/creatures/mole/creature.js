@@ -18,5 +18,15 @@ export const CREATURE_MOLE = {
     scale: { riseTime: 0.5, descendTime: 0.5 },
     label: "Mole's Burrow: rise and land twice as fast"
   },
-  character: { sprite: "look", every: [4, 8], for: 1 }
+  character: { sprite: "look", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "earth bolt", range: 15, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red", mound: true },
+    special: "cloud",
+    retreat: "burrowApart",
+    rhythm: "steady",
+    pressure: 3,
+    call: "the mound moving",
+    tells: { melee: "crouch", ranged: "digs", special: "the mound moving" }
+  }
 };

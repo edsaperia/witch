@@ -19,5 +19,16 @@ export const CREATURE_RATTLESNAKE = {
     scale: { "invites.speed": 1.15, "invites.radius": 1.3 },
     label: "Rattlesnake's Warning: 💌s fly a little faster and land wider"
   },
-  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 }
+  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "venom spit", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "confusion",
+    specialWith: { move: true },
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the rattle",
+    tells: { melee: "coils", ranged: "head back", special: "the rattle" }
+  }
 };
