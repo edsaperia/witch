@@ -10,6 +10,7 @@ import { witchHeight } from "../rules/witch";
 import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { applyRepro } from "./repro";
+import { takeShot } from "./shot";
 
 /** Returns what undoes its listeners (the arena's J), for the night's end (app/night.ts). */
 export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams): () => void {
@@ -33,6 +34,9 @@ export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams
   if (params.get("partyover") === "1") endParty(game);
   // The debug overlay's repro link (app/repro.ts): ?wave=N, ?cleared=, ?at=x,z&mode=, ?zoom=.
   applyRepro(game, params);
+  // ?shot=<scene> (app/shot.ts): her put where the builder's shot is, after the rest of the link.
+  const shot = params.get("shot");
+  if (shot) takeShot(game, shot);
   const arenaParam = params.get("arena");
   let undo = () => {};
   if (arenaParam) {

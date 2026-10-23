@@ -29,5 +29,15 @@ export const CREATURE_ELK = {
     mods: { slip: 1 },
     label: "Elk's Slip past: 💌s slip through enraged animals"
   },
-  character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 }
+  character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+    ranged: { name: "gust of breath", range: 10, shots: [0, 1, 3], spread: 40, speed: 0.8, tint: "red" },
+    special: "stampede",
+    retreat: "flanks",
+    rhythm: "slow",
+    pressure: 1,
+    call: "heads down",
+    tells: { melee: "head down", ranged: "head up", special: "heads down" }
+  }
 };

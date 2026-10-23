@@ -40,6 +40,9 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   }
   const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
   if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
+  // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
+  // sprite stands (up the screen), so that part stays in the middle at any zoom.
+  if (!F && pose.aim) target.addScaledVector(up, pose.aim * v.witchTall);
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
   let moonNow!: ReturnType<View["updateMoon"]>;

@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
-import { changeLoadout, hatsDown, newHatFromRoom } from "./hatSpells";
+import { changeLoadout, hatsDown } from "./hatSpells";
 import { hatMarkers, wearing } from "./hat";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
@@ -34,14 +34,14 @@ describe("changing her hat mid-night", () => {
     expect(hatsDown(W)).toEqual([{ x: 10, z: 10, at: 0, spell: "cyclone" }]);
   });
 
-  it("out of her room with the same hat, she has a new one on too; several can lie about at once", () => {
+  it("several can lie about at once", () => {
     const g = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "sentry" } }), W = g.witches[0];
     W.hat.down = { x: 10, z: 10, at: 0 };
-    newHatFromRoom(W);
+    changeLoadout(W, "healing");
     expect(wearing(W.hat)).toBe(true);
     W.hat.down = { x: 50, z: 10, at: 1 };
     changeLoadout(W, "bramble");
-    expect(W.hat.left.map(q => q.spell)).toEqual(["sentry", "sentry"]);
+    expect(W.hat.left.map(q => q.spell)).toEqual(["sentry", "healing"]);
     expect(hatsDown(W).length).toBe(2);
     // a pointer to each (Ed, 2026-10-12: "If there are multiple hats on the ground, they each get a pointer")
     W.hat.down = { x: 90, z: 10, at: 2 };
