@@ -21,5 +21,15 @@ export const CREATURE_WOLF = {
     mods: { ring: 1 },
     label: "Wolf's Howl: every 5th burst a ring of 💌s round you"
   },
-  character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 }
+  character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "frost breath", range: 10, shots: [0, 1, 3], spread: 40, speed: 0.8, tint: "red" },
+    special: "call",
+    retreat: "flanks",
+    rhythm: "tight",
+    pressure: 2,
+    call: "a howl",
+    tells: { melee: "crouch", ranged: "head low", special: "the howl" }
+  }
 };

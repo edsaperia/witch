@@ -22,3 +22,18 @@ Timings in the cloud's software renderer are noisy and slow (frames are mostly t
 - **`node tools/bench/ts.mjs spikes`** (`spikes.ts`): a bot game (`--seed`, `--bot`, `--wave`), every step over `--over` ms noted; `--profile=<step>,...` replays and profiles exactly those steps.
 - **`hitch.cjs`** (the hitch hunt, overnight phase 2): the built game in headless Chromium brought to a late wave (`SEED=871136 WAVE=28`, a wave every 3 s of play), then the ground and treetop paths flown, a wave called in, and the hunt (down in the nearest wild area with the most young and adults, her health held, circling while they hunt her: rules/hunt.ts; `HUNT=0` skips it), each frame judged by its CPU work without `draw` (the software rasteriser here): p50/p95/p99/worst, frames over 16.7/33/100 ms, each part's frames over 16.7 ms, the long frames' parts, draw calls and the JS heap. `FINISH=1` drains the GPU inside each draw (`gl.finish`): in the cloud's software renderer its backlog is otherwise waited on in whichever part makes the next GL call (`groundTiles`, `leash`, `party`, `uniforms` reading 50 ms to 3 s), so only with it do the other parts read as CPU alone; even then a texture upload now and then waits on the renderer (`groundTiles`, 0.5 to 3 s, not reproducible frame to frame). Writes `hitch.json`. `node tools/bench/hitch.cjs [out]`, about 45 minutes (an hour with the hunt).
 - **`late.cjs` switches**: `HEAP=1`, the sampling heap profiler (`late-heap.json`); `GLSTATS=1`, every WebGL call counted over the timed frames, the bytes of buffer and texture uploads, and the buffer uploads by who made them (in `late.json`'s `gl`; on the software renderer the counts and bytes are the trustworthy part); `PROFILE=1`, the CPU profiler over the timed frames (`late-profile.json`: the page's own JS by self time; build with `npx vite build --minify false` for readable names).
+
+## Declared differences (a PR that means to change the game)
+
+The Bench workflow compares a PR's base and head. A PR that changes the game on purpose says what it changes in
+`tools/bench/expect/<its branch>.json` (the branch's own name, slashes and all: `tools/bench/expect/claude/my-branch.json`):
+
+```json
+{ "reason": "the boot's forest recoloured for the biomes",
+  "frames": { "boot": "the trees' new colours", "wave-fight": "the same, behind the fight" },
+  "rules": { "creatures": "a new species in the home roster" } }
+```
+
+`"*"` declares every scene (or every state part). The compare (`compare.cjs --expect <file>`, `expect.cjs`) is then green when
+only what's declared differs, each listed with its reason, and red on anything undeclared; a declaration that didn't differ is
+listed too (stale, or a change that didn't happen). Mismatches that can't be declared (a scene or seed missing) always fail.

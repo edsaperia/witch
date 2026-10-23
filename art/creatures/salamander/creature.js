@@ -17,5 +17,15 @@ export const CREATURE_SALAMANDER = {
     scale: { "invites.cooldown": 0.6 },
     label: "Salamander's Quick fire: less wait between bursts"
   },
-  character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 }
+  character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 },
+  pack: {
+    melee: null,
+    ranged: { name: "fire beam", range: 20, shots: [0, 1, 1], attacks: [null, "beam", "widebeam"], tint: "red" },
+    special: "wall",
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the glow",
+    tells: { ranged: "aim line", special: "the glow" }
+  }
 };

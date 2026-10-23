@@ -22,5 +22,15 @@ export const CREATURE_SQUIRREL = {
     mods: { cache: 1 },
     label: "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near"
   },
-  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 }
+  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "acorn bolts", range: 14, shots: [0, 1, 3], spread: 14, tint: "red" },
+    special: "scatter",
+    retreat: "trees",
+    rhythm: "tight",
+    pressure: 2,
+    call: "rustle",
+    tells: { melee: "crouch", ranged: "winds back", special: "a rustle in the crowns" }
+  }
 };

@@ -23,5 +23,15 @@ export const CREATURE_STOAT = {
     mods: { frenzy: 1 },
     label: "Stoat's Frenzy: winning an animal over gives back a blink"
   },
-  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 }
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "dart of light", range: 10, shots: [0, 1, 2], spread: 8, speed: 1.4, tint: "red" },
+    special: "confusion",
+    retreat: "circle",
+    rhythm: "tight",
+    pressure: 2,
+    call: "the dance",
+    tells: { melee: "crouch", ranged: "sways", special: "the dance" }
+  }
 };

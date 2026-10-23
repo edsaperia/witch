@@ -18,5 +18,15 @@ export const CREATURE_SNAIL = {
     mods: { boomerang: 1 },
     label: "Snail's Spiral: 💌s come back to you, landing on the way"
   },
-  character: { sprite: "puff", every: [6, 12], for: 2 }
+  character: { sprite: "puff", every: [6, 12], for: 2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: null,
+    special: "wall",
+    retreat: "shell",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the trail",
+    tells: { melee: "rears", special: "the trail" }
+  }
 };

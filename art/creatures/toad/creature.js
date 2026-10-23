@@ -18,5 +18,25 @@ export const CREATURE_TOAD = {
     mods: { split: 1 },
     label: "Toad's Spawn: a 💌 that lands splits into 3 small ones"
   },
-  character: { sprite: "hop", every: [5, 10], for: 0.7 }
+  character: { sprite: "hop", every: [5, 10], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: {
+      name: "spore lob",
+      range: 16,
+      shots: [0, 1, 1],
+      delivery: "lob",
+      flight: 1.1,
+      size: [1, 3, 3.5],
+      patch: { radius: 2.5, slow: 0.5, time: 3 },
+      tint: "red"
+    },
+    special: "cloud",
+    specialWith: { leap: true },
+    retreat: "arcs",
+    rhythm: "steady",
+    pressure: 3,
+    call: "puffs up",
+    tells: { melee: "tongue", ranged: "puffs up", special: "the leap" }
+  }
 };
