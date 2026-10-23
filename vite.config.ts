@@ -1,21 +1,20 @@
 import { defineConfig } from "vitest/config";
-import { createHash } from "node:crypto";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism } from "node:os";
 import { readPng } from "./tools/overrides/png";
+import { artHash as artHashOf, overrideFiles as overridesAt } from "./tools/artHash";
 
 // base "./": the same build works at the site's root and under /pr-<number>/.
 // The build's version, shown in the corner: the Pages workflow sets these; local builds say "dev".
 const version = process.env.WITCH_VERSION ? `v${process.env.WITCH_VERSION}` : "dev";
 const sha = (process.env.WITCH_SHA ?? "").slice(0, 7);
-// What the drawn sprite sets depend on (the art code, how sets are packed, the area types' own
-// numbers): browsers keep drawn sets under this hash, so a build that changes none of it reuses them.
-const artFiles = [...readdirSync("art").filter(f => f.endsWith(".js")).map(f => `art/${f}`), "src/render/artBuild.ts", "src/render/homeArt.ts", "src/rules/map.ts", "src/rules/random.ts", "config/area-types.json"];
+// What the drawn sprite sets depend on (tools/artHash.ts): browsers keep drawn sets under this hash, so a build that
+// changes none of it reuses them.
+const artHash = artHashOf();
 // Hand-drawn sprites (art/overrides/<species>/<pose>.png, src/render/overrides.ts): read here, given to the game as
 // virtual:art-overrides (each one's size and RGBA pixels), and part of the art's hash.
 const OVERRIDES = "art/overrides";
-const overrideFiles = existsSync(OVERRIDES) ? readdirSync(OVERRIDES, { withFileTypes: true }).filter(d => d.isDirectory()).flatMap(d => readdirSync(`${OVERRIDES}/${d.name}`).filter(f => f.endsWith(".png")).sort().map(f => `${OVERRIDES}/${d.name}/${f}`)).sort() : [];
-const artHash = createHash("sha1").update(artFiles.map(f => f + "\n" + readFileSync(f, "utf8")).join("\n")).update(overrideFiles.join("\n")).update(Buffer.concat(overrideFiles.map(f => readFileSync(f)))).digest("hex").slice(0, 12);
+const overrideFiles = overridesAt(".");
 // The config files' notes (keys starting with _: Ed's reference, generated into config/KNOBS.md) are not read by the game, so
 // a build leaves them out of the bundle: the tuning file alone is 187 kB minified, 159 kB of it notes, and it rides in the game
 // and in the sea chart's outlines worker both (about 95 kB gzipped off the download). Dev, the tests and the tools read the

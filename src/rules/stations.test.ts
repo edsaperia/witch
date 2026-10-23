@@ -98,6 +98,24 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
+  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): each part's own look and distance", () => {
+    const P = TUNING.camera.station!.parts!;
+    const settle = (part: string) => {
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      for (let i = 0; i < 4 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true, framePart: part }, STEP);
+      return { pose: cameraPose(g.camera, g.witch.lift, g.tuning), cam: g.camera };
+    };
+    const head = settle("head"), feet = settle("feet");
+    for (const [part, s] of [["head", head], ["feet", feet]] as const) {
+      expect(s.cam.stationLook).toBeCloseTo(P[part].look, 2);
+      expect(s.cam.stationDistance).toBeCloseTo(P[part].distance, 2);
+    }
+    // (the looks are calibrated against her drawn sprite, which the house draws onto its floor's pixels, so only the
+    // difference is checked: the aim moves by the looks' difference)
+    expect((head.pose.ty - head.cam.ty) - (feet.pose.ty - feet.cam.ty)).toBeCloseTo(P.head.look - P.feet.look, 1);
+    expect(head.pose.distance).toBeLessThan(feet.pose.distance);
+  });
+
   it("never eases in away from the house, framing or not", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false;

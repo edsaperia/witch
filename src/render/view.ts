@@ -348,6 +348,8 @@ export class View {
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
   bareBatch: SpriteBatch | null = null;
   bareAsked = false;
+  /** Drawn without her hat while a station for her head and face is open (main.ts, ui/stationPanel.ts bareHead). */
+  hatOff = false;
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;

@@ -417,6 +417,13 @@ export class MusicEngine {
     this.play({ part, patch, midi, vel, step: 0, offset: 0, dur: 0 }, t, dur, 60 / 120 / 4);
   }
 
+  /** One piece of the voice effects' work put off (their halls' impulses), as update does a frame at a time: for a page playing
+   *  notes without update (the treehouse Studio). True while there's more. */
+  warmFx(): boolean {
+    for (const ch of this.channels.values()) if (ch.fx?.warm()) return true;
+    return false;
+  }
+
   /** The Studio's tempo (it plays without a beat clock): the echoes' time and the voice effects' beat. */
   tempo(bpm: number): void {
     this.bpmNow = bpm;
@@ -436,15 +443,17 @@ export class MusicEngine {
     }, 6000);
   }
 
-  /** A synth note held from audio time `t` till the function it gives back is called with the time to let go (the Studio's
-   *  keyboard); any other kind of patch plays a short note and the function does nothing. */
+  /** A synth or sampled note held from audio time `t` till the function it gives back is called with the time to let go (the
+   *  Studio's keyboard; the treehouse Studio's instruments: a sung note loops its recording's steady middle while held); any other
+   *  kind of patch plays a short note and the function does nothing. */
   hold(part: string, patch: string, midi: number, vel: number, t: number): (at: number) => void {
     const p = this.style.patches[patch];
     if (!p) return () => { /* none */ };
-    if (p.kind !== "synth") { this.note(part, patch, midi, vel, t, 0.4); return () => { /* one shot */ }; }
+    if (p.kind !== "synth" && p.kind !== "sample") { this.note(part, patch, midi, vel, t, 0.4); return () => { /* one shot */ }; }
     const held: Held = [], ch = this.channel(part, p);
     this.notePitch = 1;
-    this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
+    if (p.kind === "sample") this.sampled(t, p, p.gain * vel, mtof(midi), Infinity, 0, ch, held);
+    else this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
     return at => {
       for (const h of held) {
         h.gain.gain.setTargetAtTime(0, at, h.release / 3);
@@ -767,12 +776,12 @@ export class MusicEngine {
   /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
    *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
    *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
-  private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel): void {
+  private sampled(t: number, p: Patch, peak: number, freq: number, dur: number, step: number, ch: Channel, held?: Held): void {
     // the recording: the sample set's nearest note (bent at most a semitone), else the one recording at its root
     const want = 69 + 12 * Math.log2(freq / 440), near = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
     const rec = this.recordings.get(near?.sample ?? p.sample ?? "") ?? (near ? this.recordings.get(p.sample ?? "") : undefined), root = near && this.recordings.has(near.sample) ? near.midi : p.root ?? 69;
     if (!rec) { this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step, ch); return; }
-    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+    const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
     if (len < 0.05) return;
     if (!ch.presence) { ch.presence = c.createBiquadFilter(); ch.presence.type = "peaking"; ch.presence.frequency.value = 3000; ch.presence.Q.value = 0.8; ch.presence.gain.value = p.presence ?? 0; ch.presence.connect(ch.in); }
     const fx = ch.fx, beat = 60 / Math.max(40, this.bpmNow);
@@ -786,7 +795,7 @@ export class MusicEngine {
       }
     }
     const phrase = ch.lastEnd === undefined || t - ch.lastEnd > beat;
-    ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + len);
+    ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
     ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
     const src = c.createBufferSource(), g = c.createGain();
     src.buffer = rec; src.playbackRate.value = rate;
@@ -794,8 +803,8 @@ export class MusicEngine {
     // over its last (a 30 ms ramp with none), so a held note breathes rather than switches on
     const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
     const envelope = (gain: AudioParam, top: number) => {
-      gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + rise);
-      gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len);
+      gain.setValueAtTime(0, t); gain.linearRampToValueAtTime(top, t + (held ? 0.12 : rise));
+      if (!held) { gain.setValueAtTime(top, t + Math.max(rise, len - fall)); gain.linearRampToValueAtTime(0, t + len); }
     };
     envelope(g.gain, peak);
     // its vowel (Ed, 2026-10-11: "stick to aa and oo"), the patch's taken in turn through the phrase: the recording sings a dark
@@ -815,15 +824,20 @@ export class MusicEngine {
       const pk = c.createBiquadFilter(); pk.type = "peaking"; pk.frequency.value = f; pk.Q.value = 2.2; pk.gain.value = db;
       last.connect(pk); last = pk; nodes.push(pk);
     }
-    last.connect(ch.presence); src.start(t, skip, len * rate + 0.02);
+    // (held: the recording's steady middle looped till it's let go)
+    if (held) { src.loop = true; src.loopStart = Math.min(skip + 0.15, rec.duration / 3); src.loopEnd = Math.max(src.loopStart + 0.3, rec.duration - 0.1); src.start(t, skip); }
+    last.connect(ch.presence);
+    if (!held) src.start(t, skip, len * rate + 0.02);
     // breath (Ed, 2026-10-14: "gentler, breathier"): shaped noise under the note, through the same swell, at the patch's level
     if ((p.breath ?? 0) > 0) {
       const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();
       n.buffer = this.noise; n.loop = true; bp.type = "bandpass"; bp.frequency.value = 2400; bp.Q.value = 0.9;
       envelope(bg.gain, peak * (p.breath ?? 0));
-      n.connect(bp).connect(bg).connect(ch.presence); n.start(t); n.stop(t + len + 0.02);
+      n.connect(bp).connect(bg).connect(ch.presence); n.start(t);
+      if (held) held.push({ gain: bg, filter: null, fBase: 0, fRelease: 0.01, release: 0.25, sources: [n] }); else n.stop(t + len + 0.02);
       nodes.push(n, bp, bg);
     }
+    if (held) held.push({ gain: g, filter: null, fBase: 0, fRelease: 0.01, release: Math.max(0.15, p.release ?? 0.35), sources: [src] });
     src.onended = () => { for (const n of nodes) n.disconnect(); };
   }
 

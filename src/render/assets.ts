@@ -504,6 +504,8 @@ export class AssetLibrary {
   }
   private bare: Atlas | null = null;
   private bareAsked = false;
+  /** Her frames without her hat are in (not the stand-in). */
+  get bareReady(): boolean { return !!this.bare; }
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;

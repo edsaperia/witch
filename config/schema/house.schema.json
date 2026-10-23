@@ -150,7 +150,8 @@
                   "zoo",
                   "telescope",
                   "say",
-                  "chart"
+                  "chart",
+                  "instrument"
                 ]
               },
               "axes": {
@@ -176,6 +177,14 @@
               },
               "spell": {
                 "type": "string"
+              },
+              "instrument": {
+                "type": "string",
+                "enum": [
+                  "drums",
+                  "synth",
+                  "mic"
+                ]
               }
             },
             "required": [
