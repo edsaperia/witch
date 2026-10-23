@@ -10,6 +10,7 @@ import type { Style } from "../render/style";
 import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, itemsToChoose, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import { BROOM_SPELLS } from "../rules/spells";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
+import { SlideIn } from "./slideIn";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -18,9 +19,9 @@ const rgb = Art.hsv2rgb as (h: number, s: number, v: number) => number[];
 const css = ([h, s, v]: number[]) => { const [r, g, b] = rgb(h, s, v); return `rgb(${r | 0},${g | 0},${b | 0})`; };
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
-/** How long the panel takes to slide (ms), and how long after the last change her look goes to the game (ms: a run of d-pad
- *  steps over the colours is one bake, not one a swatch). */
-const SLIDE_MS = 220, LOOK_AFTER = 160;
+/** How long after the last change her look goes to the game (ms: a run of d-pad steps over the colours is one bake, not one a
+ *  swatch). */
+const LOOK_AFTER = 160;
 /** The d-pad held: its first repeat after this many seconds, then one every REPEAT. */
 const HOLD = .35, REPEAT = .11;
 /** The fit sliders that only mean anything while what they shape is on (none at 0: the fit never puts it on). */
@@ -55,7 +56,7 @@ export class StationPanel {
   private pointerIn = false;
   private navAt = -1e9;
   private lookTimer = 0;
-  private slideTimer = 0;
+  private slide: SlideIn;
   private pad = { held: "", next: 0 };
   private thumbs = new Map<string, HTMLCanvasElement>();
   private lastThumb = new Map<string, HTMLCanvasElement>();
@@ -67,6 +68,7 @@ export class StationPanel {
     this.root.id = "station-panel";
     installCss();
     document.body.append(this.root);
+    this.slide = new SlideIn(this.root, "left", "flex"); // (in and out as the tables' are: ui/slideIn.ts)
     this.root.addEventListener("pointerenter", () => { this.pointerIn = true; });
     this.root.addEventListener("pointerleave", () => { this.pointerIn = false; if (this.hover) { this.hover = null; this.paintDetail(); } });
     this.root.addEventListener("pointerover", e => { const t = (e.target as HTMLElement).closest<HTMLElement>("[data-line]"); const at = t && { line: +t.dataset.line!, col: +t.dataset.col! }; if (at && (at.line !== this.hover?.line || at.col !== this.hover?.col)) { this.hover = at; this.paintDetail(); } });
@@ -99,25 +101,22 @@ export class StationPanel {
 
   /** Slides `station`'s panel in (another's swapped for it) with her look, what she owns and her broom's power. */
   open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, broom: string, banner = ""): void {
-    const swap = !!this.id && this.id !== station;
-    clearTimeout(this.slideTimer);
     this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.broom = broom; this.banner = banner;
     this.navAt = -1e9; this.hover = null;
     const L = this.lines(), first = L.findIndex(l => l.kind === "items");
     const worn = first >= 0 ? shownItems(this.shelves[L[first].shelf]).findIndex(i => wears(this.g, i)) : 0;
     this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
     this.paint();
-    this.root.style.display = "flex";
-    if (!swap) { this.root.classList.remove("in"); void this.root.offsetWidth; }
-    this.root.classList.add("in");
+    this.slide.in(); // (another station's swapped in place: it's in already)
+    this.root.classList.add("in"); // (a mark for the tools: tools/opening/shots.cjs)
   }
   /** Slides it away (her look sent first, if a change was waiting). */
   close(): void {
     if (!this.id) return;
     if (this.lookTimer) this.lookNow();
     this.id = null; this.pointerIn = false; this.queue = [];
+    this.slide.out();
     this.root.classList.remove("in");
-    this.slideTimer = window.setTimeout(() => { if (!this.id) this.root.style.display = "none"; }, SLIDE_MS + 40);
   }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
@@ -319,8 +318,7 @@ function installCss(): void {
   if (cssDone) return; cssDone = true;
   const s = document.createElement("style");
   s.textContent = `
-#station-panel { --ol: #0b0716; position: fixed; left: 0; top: 12px; bottom: 12px; width: min(330px, 40vw); z-index: 18; display: none; box-sizing: border-box; padding: 8px 12px 8px 16px; border: 1px solid rgba(232,180,106,.7); border-left: 0; border-radius: 0 12px 12px 0; box-shadow: 0 0 0 1px rgba(11,7,22,.75), inset 0 0 0 1px rgba(11,7,22,.75); color: var(--ink, #e8e2f4); font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; transform: translateX(-105%); transition: transform ${SLIDE_MS}ms ease-out; flex-direction: column; gap: 6px; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9); }
-#station-panel.in { transform: none; }
+#station-panel { --ol: #0b0716; position: fixed; left: 0; top: 12px; bottom: 12px; width: min(330px, 40vw); z-index: 18; box-sizing: border-box; padding: 8px 12px 8px 16px; border: 1px solid rgba(232,180,106,.7); border-left: 0; border-radius: 0 12px 12px 0; box-shadow: 0 0 0 1px rgba(11,7,22,.75), inset 0 0 0 1px rgba(11,7,22,.75); color: var(--ink, #e8e2f4); font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; flex-direction: column; gap: 6px; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9); }
 #station-panel .sp-banner { color: var(--accent, #e8b46a); font-size: 12px; }
 #station-panel .sp-head { display: flex; align-items: baseline; gap: 8px; }
 #station-panel .sp-head b { font-size: 18px; color: var(--accent, #e8b46a); letter-spacing: 1px; } #station-panel .sp-head span { margin-left: auto; color: var(--ink, #e8e2f4); font-size: 11px; opacity: .85; }
