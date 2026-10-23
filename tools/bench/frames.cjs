@@ -5,7 +5,7 @@
 // same twice running), and for the timed flights each frame's own work (rules and view, view.ms by
 // part). Writes <out>/frames.json and <out>/<scene>.png; tools/bench/compare.cjs compares two outs.
 // Run `npm run build` first. Playwright comes from the machine's global install.
-//   node tools/bench/frames.cjs [out dir] (default bench-out/)   SEED=123 ONLY=ground,treetop
+//   node tools/bench/frames.cjs [out dir] (default bench-out/)   SEED=123 ONLY=ground,treetop DIST=dist
 //   (an ONLY run matches only an ONLY run of the same scenes: the scenes before warm the art caches)
 //   QUICK=1 (npm run bench:quick, about 5 minutes): three cheap scenes at 960×540, each loaded with ?quick=1 (only the art
 //   it needs): the bedroom (the character creator as it opens), the boot (off the decks, the home ring booting) and a wave
@@ -16,7 +16,7 @@ const path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
-const root = path.resolve(__dirname, "../../dist");
+const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../bench-out"));
 const seed = process.env.SEED || "123";
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png" };

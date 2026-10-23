@@ -170,7 +170,7 @@ export class HouseRoomsView {
   private floorArt: FloorArt | null = null;
   // (each room's roof, a canopy of leaves: hidden while she's in it or near; render/houseArt.ts paintRoof)
   private readonly roofs = new THREE.Group();
-  private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean }[] = [];
+  private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean; door?: { x: number; z: number } }[] = [];
   private lastT = 0;
   /** Her whole outfit (her genome, as the creator and the stations keep it), for last night's clothes in their pile: she herself is
    *  drawn in what she has on (main.ts: rules/clothesPile.ts wornGenome). */
@@ -272,12 +272,13 @@ export class HouseRoomsView {
         geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array((M + 1) * (M + 1) * 3), 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
         const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
         mesh.frustumCulled = false; mesh.renderOrder = 19.97; this.roofs.add(mesh);
-        this.roofList.push({ mesh, cx: (r.x0 + r.x1) / 2, cz: (r.z0 + r.z1) / 2, R, a: 1, locked: !!r.locked });
+        this.roofList.push({ mesh, cx: (r.x0 + r.x1) / 2, cz: (r.z0 + r.z1) / 2, R, a: 1, locked: !!r.locked, door: HOUSE_ROOMS.objects.find(o => o.id === `${r.id}Door`) });
       });
       const me = toPlanAt0(w.x - D.x, w.z - D.z);
       for (const f of this.roofList) {
-        // hidden while she's in the room or near its door (its rim and a little past), eased (as the forest's canopy over her)
-        const near = !f.locked && Math.hypot(me.x - f.cx, me.z - f.cz) < f.R + 1.5, want = near ? 0 : 1; // (a locked room's stays on)
+        // hidden while she's in the room or near its door (its rim and a little past), eased (as the forest's canopy over her); a locked
+        // room's only while she's at its door, peeking in at its sheeted furniture (art/sheeted.js), the door still shut
+        const near = f.locked ? !!f.door && Math.hypot(me.x - f.door.x, me.z - f.door.z) < 3.5 : Math.hypot(me.x - f.cx, me.z - f.cz) < f.R + 1.5, want = near ? 0 : 1;
         f.a += (want - f.a) * (1 - Math.exp(-6 * dt)); if (dt === 0) f.a = want;
         (f.mesh.material as THREE.MeshBasicMaterial).opacity = f.a; f.mesh.visible = f.a > 0.02;
         const pos = f.mesh.geometry.getAttribute("position") as THREE.BufferAttribute;
