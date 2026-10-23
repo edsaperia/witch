@@ -15,6 +15,8 @@ import { hash2 } from "../../rules/random";
  *  per-tree colour jitter"; the amount is the tuning's leafJitter, applied to its leaves in the sprite shader). One pair a tree,
  *  the same every frame and every load. */
 const JITTERS = new Map<number, [number, number]>();
+/** The biggest a tree is drawn (m, wide and tall, a grove's boost included): what may be on screen before its art is in. */
+const TREE_MAX = { w: 40, h: 80 };
 export function leafJitterOf(p: { x: number; z: number }): [number, number] {
   const xi = Math.round(p.x * 4) | 0, zi = Math.round(p.z * 4) | 0, key = xi * 131071 + zi;
   let j = JITTERS.get(key);
@@ -152,6 +154,9 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   const TS = t.telescope, eye = focusOf(v);
   const rc = canopy > reach ? (tele ? round(canopy) : viewRect(v, canopy, margin)) : r, ccx = (rc.minX + rc.maxX) / 2, ccz = (rc.minZ + rc.maxZ) / 2, chalf = Math.max(rc.maxX - rc.minX, rc.maxZ - rc.minZ) / 2;
   for (const p of g.forest.treesNear(ccx, ccz, chalf)) {
+    // (its area type's art asked for only if the tree may be on screen, by the biggest a tree is drawn: the first frame's art
+    // first, not every type in the canopy's square; the island's others come ahead of need, view.ts askIsland)
+    if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, Math.max(reach, canopy))) continue;
     const art = v.assets.typeArt(p.type);
     if (!art || !art.layout.big.length) continue;
     // (a legend's grove, rules/forest.ts legendGrove: as strong as it is here, a share of the area's two tallest kinds,
@@ -185,6 +190,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   }
   const scatter = function* (kind: string, list: Plant[], pick: (l: TypeArt["layout"]) => Piece[]): Generator<void, void, void> {
     for (const p of list) {
+      if (!v.assets.hasType(p.type) && !inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, reach)) continue; // (as the trees: asked for only if it may be on screen)
       const art = v.assets.typeArt(p.type);
       if (!art) continue;
       const pieces = pick(art.layout);
@@ -226,7 +232,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
   yield* scatter("rim", g.forest.rimNear(cx, cz, half), l => rimPieces(l));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
-  const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
+  // (its set asked for once one may be on screen, as the trees' art)
+  const decor = v.assets.hasDecor() || g.forest.decorNear(cx, cz, half).some(d => inView(v, d.x, d.z, TREE_MAX.w, TREE_MAX.h, margin, reach)) ? v.assets.decorArt() : undefined, dl: SpriteInstance[] = [];
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
     const list = decor.families[d.family];
     if (!list?.length) continue;
@@ -243,7 +250,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   }
   // The paths' 3D pieces (bridges, stairs, railway landmarks, posts), as scenery, each with its
   // middle on the ground over its spot.
-  const pa = v.assets.pathPieceArt();
+  const pa = v.assets.hasPathPieces() || g.map.paths.pieces.some(p => Math.abs(p.x - cx) <= half && Math.abs(p.z - cz) <= half && inView(v, p.x, p.z, TREE_MAX.w, TREE_MAX.h, margin, reach)) ? v.assets.pathPieceArt() : undefined;
   if (pa) {
     const pl: SpriteInstance[] = [], R = SPRITE_UNIFORMS.uRight.value;
     for (const p of g.map.paths.pieces) {

@@ -345,6 +345,8 @@ export class AssetLibrary {
     this.version++;
   }
 
+  /** Whether a species' plain art is in (nothing asked for): render/view/creatures.ts asks only for the ones that may be on screen. */
+  hasCreature(species: string): boolean { return this.creatures.has(species); }
   /** An area type's art, or undefined (and asked for) if it is not drawn yet. */
   typeArt(t: number): TypeArt | undefined {
     const a = this.types.get(t);
@@ -365,6 +367,9 @@ export class AssetLibrary {
     return this.lakeShore;
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
+  /** Whether the decor's and the path pieces' sets are in (nothing asked for: render/view/scenery.ts asks once one may be on screen). */
+  hasDecor(): boolean { return !!this.decor; }
+  hasPathPieces(): boolean { return !!this.pieces; }
   decorArt(): DecorArt | undefined {
     if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
     return this.decor;
