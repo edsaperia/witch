@@ -14,7 +14,7 @@ import type { Style } from "./style";
 
 type Light = { x: number; y: number; z: number; R: number; rgb: number[]; power: number };
 type Piece = { w: number; h: number; m: Uint8Array; n: Float32Array | number[]; put: unknown };
-type Drawn = { sp: Piece; origin: { x: number; y: number }; lights: Light[] };
+type Drawn = { sp: Piece; origin: { x: number; y: number }; lights: Light[]; marks?: Record<string, { x: number; y: number }> };
 
 /** Whether the house's objects are drawn as art (`?furniture=0`: the boxes, as before). */
 export const furnitureOn = typeof location === "undefined" || new URLSearchParams(location.search).get("furniture") !== "0";
@@ -47,7 +47,8 @@ const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09,
 function canvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 
 /** One object's picture, baked and lit: its canvas, its size in art pixels, where its floor's middle is on it. */
-export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number }
+/** marks: named points of the piece in its picture's pixels (art/furniture.js: the mic's spot lamp). */
+export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
 export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
   const { yaw, foot, curve } = standing(o);
   const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn;
@@ -60,7 +61,7 @@ export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: num
   lit.getContext("2d")!.putImageData(img, 0, 0);
   const tex = new THREE.CanvasTexture(lit);
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
-  return { tex, w: b.w, h: b.h, ox: d.origin.x, oy: d.origin.y };
+  return { tex, w: b.w, h: b.h, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 
 /** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the bedroom's curtains shut while she wakes (rules/wakeUp.ts:
