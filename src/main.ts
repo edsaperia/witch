@@ -342,8 +342,8 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
 // 2026-10-23: "opens when you walk up to it, look around with aiming keys"; by nearness, as the map table's chart), full screen,
 // the night running on at the house's tenth while she stands still; walking off (WASD, the left stick), E or Esc leaves, and it
-// stays shut till she's left it (E there opens it again). On an integrated GPU (Ed's Intel UHD) its
-// picture is drawn at telescope.lowGpuResolution (?telescopeRes= sets it), scaled up square.
+// stays shut till she's left it (E there opens it again). Its picture is drawn at telescope.resolution, on an integrated GPU
+// (Ed's Intel UHD) telescope.lowGpuResolution (?telescopeRes= sets it: 0.25 to 3, 1 the game's pixels, 2 twice as fine).
 // The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
 // till Esc (the pad's B) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
@@ -355,7 +355,7 @@ telescope.onWalk = () => { scopeShut = scopeAt; }; // (and any closing while she
 telescope.onChange = on => {
   const T = N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
   if (!on) scopeShut = scopeAt; // (closed at it, by walking, E or Esc: not opened again till she's left it)
-  view.pixelScale = on ? 1 / Math.max(0.25, Math.min(1, res)) : 1;
+  view.pixelScale = on ? 1 / Math.max(0.25, Math.min(3, res)) : 1; // (finer than the game's pixels too: Ed, 2026-10-23, "too pixellated")
   fit();
   input.clearPresses();
 };

@@ -717,7 +717,7 @@ export class View {
 
   /** The haze's range before the telescope widened it (restored as she looks away). */
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
-  /** The picture's pixels this many times the pixel size (the telescope at half resolution on a weak GPU: 2; main.ts resizes). */
+  /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */
   pixelScale = 1;
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
