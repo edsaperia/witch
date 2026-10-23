@@ -71,7 +71,7 @@ function front(id, by) {
     log("she's at", JSON.stringify(w));
     if (!w || w.seated || w.z > -9) fail("she didn't wake in her bedroom");
     // the wake-up (rules/wakeUp.ts): each beat's shot, driven by its own input, waiting on her clock
-    const wake = () => page.evaluate(() => { const W = window.witch.game.wake; return W ? { beat: W.beat, snoozes: W.snoozes, open: W.open, mirror: W.mirror, ready: !!window.witch.game.islandReady, pending: window.witch.view.assets.pending, drawn: window.witch.view.islandDrawn(), age: window.witch.game.herTime - W.at } : null; });
+    const wake = () => page.evaluate(() => { const W = window.witch.game.wake; return W ? { beat: W.beat, snoozes: W.snoozes, open: W.open, pile: W.pile?.length ?? 0, mirror: W.mirror, ready: !!window.witch.game.islandReady, pending: window.witch.view.assets.pending, drawn: window.witch.view.islandDrawn(), age: window.witch.game.herTime - W.at } : null; });
     const until = async (f, what) => { for (let i = 0; i < 1800; i++) { const s = await wake(); if (s && f(s)) return s; await page.waitForTimeout(500); } fail(`the wake-up never got to ${what}`); };
     if ((await wake())?.beat !== "alarm") fail("no alarm as she landed");
     await until(s => s.age > 1, "a second of ringing");
@@ -136,6 +136,14 @@ function front(id, by) {
     await until(s => s.open, "the curtains open by themselves");
     await page.waitForTimeout(2500);
     await shot("12-curtains-open.png");
+    // still in her nightie (Ed, 2026-10-23: rules/clothesPile.ts): the door waits; E at last night's clothes by the bed puts them on
+    if (!(await wake()).pile) fail("no clothes in the pile by her bed: she should wake in her nightie");
+    await goTo("clothesPile", 0.5); await page.waitForTimeout(1500);
+    await shot("12a-the-pile.png");
+    await page.keyboard.press("KeyE");
+    await until(s => !s.pile, "dressed at the pile");
+    await page.waitForTimeout(2500);
+    await shot("12b-dressed.png");
     // and the door lets her out: from just inside it, out along the branch to the Boudoir (the Ent's own house: tools/house/organic.mjs)
     const bed = HOUSE.rooms.find(r => r.id === "bedroom"), bc = [(bed.x0 + bed.x1) / 2, (bed.z0 + bed.z1) / 2], br = HOUSE.corridors.find(c => c.id === "boudoir-bedroom").pts;
     const [ix, iz] = br[br.length - 1], [jx, jz] = br[0], L = Math.hypot(jx - ix, jz - iz), door = plan(ix, iz), [ox, oz] = plan((jx - ix) / L, (jz - iz) / L);
@@ -146,7 +154,7 @@ function front(id, by) {
     for (let i = 0; i < 120 && !(await left()); i++) await page.waitForTimeout(500);
     for (const k of keys) await page.keyboard.up(k);
     if (!(await left())) fail("the door didn't let her out of the bedroom once the curtains opened");
-    await shot("12b-out-of-the-door.png");
+    await shot("12c-out-of-the-door.png");
     // out to her decks: E there seats her and casts the party spell, its needle-drop routine the DJ intro (Ed's decision 2)
     const spell = () => page.evaluate(() => window.witch.game.party.spellAt);
     if ((await spell()) !== null) fail("the party started before her decks");

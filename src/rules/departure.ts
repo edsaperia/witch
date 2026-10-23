@@ -24,9 +24,10 @@ export function departureRoute(map: ForestMap, to: { x: number; z: number }, _av
   const ap = ringApproach(map, rho, s, step, ring), span = s * (ap.at - af), pts = ap.pts.slice();
   const rest = Math.max(0, ring - span), nRing = Math.ceil((rest * rho) / step);
   for (let i = 1; i <= nRing; i++) pts.push(at(af + s * (span + (rest * i) / nRing), rho));
-  // Off the ring along it (Ed, 2026-10-06: no right angle, no jog where it leaves), turning toward the objective no faster than
-  // EXIT_TURN a metre, always outward (so never back over the ring: round the long way if it must), then straight on to it.
-  const a0 = af + s * ring;
+  // Off the ring along it (Ed, 2026-10-06: no right angle, no jog where it leaves), turning toward the objective no tighter than
+  // the rest of the line turns (exitTurn), always outward (so never back over the ring: round the long way if it must), then
+  // straight on to it.
+  const a0 = af + s * ring, turn = exitTurn(map);
   let p = at(a0, rho), h = Math.atan2(-s * Math.sin(a0), s * Math.cos(a0)); // (heading along the ring, as it goes round)
   const out = Math.sign(Math.cos(h) * Math.cos(a0) - Math.sin(h) * Math.sin(a0)) || 1; // (the turn that heads away from home)
   for (let k = 0; k < 600; k++) {
@@ -34,7 +35,7 @@ export function departureRoute(map: ForestMap, to: { x: number; z: number }, _av
     diff = Math.atan2(Math.sin(diff), Math.cos(diff));
     if (Math.abs(diff) < 0.02) break;
     if (Math.sign(diff) !== out) diff += out * TAU;
-    h += Math.max(-EXIT_TURN * step, Math.min(EXIT_TURN * step, diff));
+    h += Math.max(-turn * step, Math.min(turn * step, diff));
     p = [p[0] + Math.cos(h) * step, p[1] + Math.sin(h) * step];
     pts.push(p);
     if (Math.hypot(to.x - p[0], to.z - p[1]) < step * 2) break;
@@ -53,8 +54,12 @@ export function departureRoute(map: ForestMap, to: { x: number; z: number }, _av
 /** How far round home (radians) the way from a front outside the ring swings as it comes down on to it: about 10°. */
 const DROP_SPAN = 0.18;
 
-/** How fast the first line turns as it leaves the ring (radians a metre): a gentle curve, about 14 m round. */
-const EXIT_TURN = (4 * Math.PI) / 180;
+/** How fast the first line turns as it leaves the ring (radians a metre): no tighter than every other turn of the line, the ley
+ *  line's own radius (leyLines.minRadius: rules/leyroute.ts leyRadius; Ed, 2026-10-23: the turn where it leaves the ring "sweeps
+ *  like every other turn"; it turned about 14 m round before). */
+export const exitTurn = (map: Pick<ForestMap, "tuning">): number => 1 / (EXIT_ROOM * Math.max(1, map.tuning.leyLines.minRadius ?? 30));
+/** (a tenth wider than the radius: the smoothing after can tighten where the turn meets the ring by a few percent) */
+const EXIT_ROOM = 1.1;
 
 /** The way from the treehouse's front onto the ring of radius `rho` round home, turning `s` (-1 clockwise on the screen,
  *  1 the other way): leaving the front heading out and round, and meeting the ring along it, never at a right angle (Ed,

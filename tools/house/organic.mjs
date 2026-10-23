@@ -66,6 +66,7 @@ const FOOT = {
   invitations: [3.4, 1.8, 1.8], broomStand: [2.4, 0.8, 3.6], pegboard: [5, 0.5, 4.4], recordShelf: [4.4, 1, 4], cauldron: [2.8, 2.8, 1.8], teaTable: [2.8, 2.8, 1.4],
   cardTable: [3.4, 3.4, 1.5], broomBay: [6, 2.4, 2.2], lathe: [4.8, 1.6, 2], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
   drumKit: [4.4, 4, 2.6], synthRack: [4.8, 1.4, 3.8], microphone: [1, 1, 3.4],
+  clothesPile: [2, 1.6, 0.6],
 };
 const at = (id, room, b, inn, more = {}) => {
   const p = P[room], a = (b * Math.PI) / 180, [W, D, Hh] = FOOT[id] ?? [old[id].w, old[id].d, old[id].h], side = Math.abs(Math.sin(a)) > Math.abs(Math.cos(a));
@@ -95,6 +96,8 @@ const objects = [
   at("book", "bestiary", 0, 4.5), at("specimens", "bestiary", 70, 1.9),
   at("telescope", "crowsNest", 30, 2),
   make("mapTable", "atrium", "Map table", 0, 4.5, { kind: "chart" }),
+  // last night's clothes, on the floor by her bed, between it and the room's middle (rules/clothesPile.ts; Ed, 2026-10-23)
+  make("clothesPile", "bedroom", "Last night's clothes", 110, 5, { kind: "pile" }),
   door("bedroom2Door", "bedroom2"), door("bedroom3Door", "bedroom3"),
 ];
 const { reserved, ...rest } = H;
