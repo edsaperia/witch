@@ -25,7 +25,7 @@ server.listen(0, "127.0.0.1", async () => {
     const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`${biome}: ${e.message}`));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&spell=auto${q}`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}&creator=0&spell=auto${q}${process.env.Q ? "&" + process.env.Q : ""}`); // (Q: more of the link, e.g. biome=temperate for the look off)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
     await page.keyboard.press("Enter");
     const step = (n, o = {}) => page.evaluate(([n, o]) => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60, i === n - 1); const b = w.game.witch; return { x: Math.round(b.x), z: Math.round(b.z), mode: b.mode }; }, [n, o]);
