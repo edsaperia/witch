@@ -2472,7 +2472,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
       label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
     },
-    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 }
+    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "snow bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "mirage",
+      retreat: "freeze",
+      rhythm: "steady",
+      pressure: 2,
+      call: "vanishes",
+      tells: { melee: "crouch", ranged: "tail up", special: "vanishes" }
+    }
   };
 
   // art/creatures/armadillo/creature.js
@@ -2611,7 +2621,17 @@ label.check input { accent-color: var(--accent); }
       mods: { charge: 1 },
       label: "Bear's Wind-up: hold to charge, let go for a big volley"
     },
-    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 }
+    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"] },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "rears up",
+      tells: { melee: "rears up", special: "rears up" }
+    }
   };
 
   // art/creatures/beaver/creature.js
@@ -2631,7 +2651,18 @@ label.check input { accent-color: var(--accent); }
       mods: { decoy: 1 },
       label: "Beaver's Decoy: blinking leaves a waiting \u{1F48C} where you were"
     },
-    character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 }
+    character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+      ranged: { name: "wood chip", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "wall",
+      specialWith: { time: 4 },
+      retreat: "water",
+      rhythm: "slow",
+      pressure: 2,
+      call: "the carry",
+      tells: { melee: "tail up", ranged: "gnaws", special: "the carry" }
+    }
   };
 
   // art/creatures/beetle/creature.js
@@ -2716,7 +2747,17 @@ label.check input { accent-color: var(--accent); }
       mods: { trail: 1 },
       label: "Wildcat's Paw prints: \u{1F48C}s leave a trail of paw prints that lands too"
     },
-    character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 }
+    character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "hiss bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "sync",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "a stillness",
+      tells: { melee: "crouch", ranged: "ears back", special: "a stillness" }
+    }
   };
 
   // art/creatures/cheetah/creature.js
@@ -2733,7 +2774,17 @@ label.check input { accent-color: var(--accent); }
     traits: ["nimble"],
     voice: { family: "cat", pitch: 1.4, glide: 0.7 },
     buff: { name: "Sprint", kind: "move", scale: { groundSpeed: 1.15 }, label: "Cheetah's Sprint: quicker on foot" },
-    character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 }
+    character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "dust bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "sync",
+      retreat: "circle",
+      rhythm: "tight",
+      pressure: 2,
+      call: "a crouch",
+      tells: { melee: "crouch", ranged: "tail flick", special: "a crouch" }
+    }
   };
 
   // art/creatures/crab/creature.js
@@ -2755,7 +2806,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundAcceleration: 1.6, "dash.distance": 1.2 },
       label: "Crab's Sidestep: quicker off the mark on foot, and a longer blink"
     },
-    character: { sprite: "shiver", every: [3, 6], for: 0.6 }
+    character: { sprite: "shiver", every: [3, 6], for: 0.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 2,
+      call: "the raise",
+      tells: { melee: "claws open", special: "the raise" }
+    }
   };
 
   // art/creatures/crocodile/creature.js
@@ -2774,7 +2835,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.cooldown": 0.6 },
       label: "Crocodile's Snap: your blink comes back quicker"
     },
-    character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 }
+    character: { posture: { head: [0.02, -0.03], body: -0.01 }, quirk: "tailflick", every: [6, 11], for: 1 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "water jet", range: 14, shots: [0, 1, 1], tint: "red" },
+      special: "pull",
+      specialWith: { pull: 5, reach: 14 },
+      retreat: "water",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the roll",
+      tells: { melee: "jaws open", ranged: "a hiss", special: "the roll" }
+    }
   };
 
   // art/creatures/dormouse/creature.js
@@ -2850,7 +2922,17 @@ label.check input { accent-color: var(--accent); }
       scale: { treetopSpeed: 1.1, "treetop.turnRate": 1.6 },
       label: "Dragonfly's Hover: sharper turns over the treetops, and a little quicker"
     },
-    character: { sprite: "shiver", every: [1.5, 4], for: 0.5 }
+    character: { sprite: "shiver", every: [1.5, 4], for: 0.5 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "water drop", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "sync",
+      retreat: "zigzagApart",
+      rhythm: "tight",
+      pressure: 3,
+      call: "a hover",
+      tells: { melee: "wings", ranged: "tail curls", special: "a hover" }
+    }
   };
 
   // art/creatures/elephant/creature.js
@@ -2883,7 +2965,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.radius": 1.6, "invites.range": 1.2 },
       label: "Elephant's Trumpet: bigger \u{1F48C}s that carry further"
     },
-    character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 }
+    character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "stomp", every: [6, 12], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
+      ranged: null,
+      special: "stampede",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "ears out",
+      tells: { melee: "trunk raised", special: "ears out" }
+    }
   };
 
   // art/creatures/elk/creature.js
@@ -2916,7 +3008,17 @@ label.check input { accent-color: var(--accent); }
       mods: { slip: 1 },
       label: "Elk's Slip past: \u{1F48C}s slip through enraged animals"
     },
-    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 }
+    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+      ranged: { name: "gust of breath", range: 10, shots: [0, 1, 3], spread: 40, speed: 0.8, tint: "red" },
+      special: "stampede",
+      retreat: "flanks",
+      rhythm: "slow",
+      pressure: 1,
+      call: "heads down",
+      tells: { melee: "head down", ranged: "head up", special: "heads down" }
+    }
   };
 
   // art/creatures/featheredserpent/creature.js
@@ -2938,7 +3040,24 @@ label.check input { accent-color: var(--accent); }
       scale: { treetopSpeed: 1.15, riseTime: 0.7 },
       label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
     },
-    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 }
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "nip"] },
+      ranged: {
+        name: "venom spit",
+        range: 24,
+        shots: [0, 1, 2],
+        spread: 8,
+        attacks: [null, "spit", "longspit"],
+        tint: "red"
+      },
+      special: "mirage",
+      retreat: "branches",
+      rhythm: "steady",
+      pressure: 2,
+      call: "the ruff fans",
+      tells: { melee: "the ruff flares", ranged: "aim line", special: "the ruff fans" }
+    }
   };
 
   // art/creatures/fennec/creature.js
@@ -2952,7 +3071,17 @@ label.check input { accent-color: var(--accent); }
     radius: 0.45,
     voice: { family: "canid", pitch: 2.1, glide: 0.9 },
     buff: { name: "Ears", kind: "shot", scale: { "invites.range": 1.35 }, label: "Fennec's Ears: \u{1F48C}s reach further" },
-    character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 }
+    character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "sand bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "mirage",
+      retreat: "splitBack",
+      rhythm: "tight",
+      pressure: 2,
+      call: "ears flat",
+      tells: { melee: "crouch", ranged: "ears up", special: "ears flat" }
+    }
   };
 
   // art/creatures/flyingsquirrel/creature.js
@@ -2977,7 +3106,17 @@ label.check input { accent-color: var(--accent); }
       scale: { treetopSpeed: 1.1, "dash.distance": 1.2 },
       label: "Flying squirrel's Soar: a little quicker over the treetops, and a longer blink"
     },
-    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 }
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "acorn bolt", range: 12, shots: [0, 1, 3], spread: 14, tint: "red" },
+      special: "scatter",
+      retreat: "trees",
+      rhythm: "tight",
+      pressure: 2,
+      call: "the launch",
+      tells: { melee: "the launch", ranged: "winds back", special: "the launch" }
+    }
   };
 
   // art/creatures/fox/creature.js
@@ -3024,7 +3163,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundSpeed: 1.12, riseTime: 0.8 },
       label: "Frost troll's Long stride: quicker on foot, and a quicker climb to the treetops"
     },
-    character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 }
+    character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "crouches",
+      tells: { melee: "club raised", special: "crouches" }
+    }
   };
 
   // art/creatures/frostwyrm/creature.js
@@ -3045,7 +3194,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.3 },
       label: "Wyrm's Glide: a longer blink, as over ice"
     },
-    character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 }
+    character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "frost beam", range: 20, shots: [0, 1, 1], attacks: [null, "beam", "widebeam"], tint: "red" },
+      special: "wall",
+      specialWith: { time: 4 },
+      retreat: "freeze",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the breath",
+      tells: { melee: "jaws open", ranged: "aim line", special: "the breath" }
+    }
   };
 
   // art/creatures/griffin/creature.js
@@ -3066,7 +3226,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.speed": 1.25 },
       label: "Griffin's Talon: \u{1F48C}s fly a quarter faster"
     },
-    character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 }
+    character: { posture: { head: [0.03, 0.03], body: 0 }, quirk: "shake", every: [5, 10], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "feather bolt", range: 18, shots: [0, 1, 3], spread: 12, tint: "red" },
+      special: "pull",
+      specialWith: { pull: 6, reach: 18 },
+      retreat: "branches",
+      rhythm: "steady",
+      pressure: 2,
+      call: "the wings",
+      tells: { melee: "wings up", ranged: "a wingbeat", special: "the wings" }
+    }
   };
 
   // art/creatures/hare/creature.js
@@ -3217,7 +3388,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.cooldown": 0.75, "invites.radius": 1.2 },
       label: "Hydra's Many Heads: \u{1F48C}s come quicker and land a little more easily"
     },
-    character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 }
+    character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "head spit", range: 16, shots: [0, 3, 5], spread: 30, tint: "red" },
+      special: "rally",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the regrowth",
+      tells: { melee: "heads rear", ranged: "heads back", special: "the regrowth" }
+    }
   };
 
   // art/creatures/ibex/creature.js
@@ -3250,7 +3431,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundAcceleration: 1.4, riseTime: 0.75 },
       label: "Ibex's Sure-footed: quicker starts on foot, and a quicker climb to the treetops"
     },
-    character: { posture: { head: [0.05, 0.02], body: 0 }, quirk: "stomp", every: [5, 9], for: 0.9 }
+    character: { posture: { head: [0.05, 0.02], body: 0 }, quirk: "stomp", every: [5, 9], for: 0.9 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+      ranged: { name: "dislodged stone", range: 14, shots: [0, 1, 1], tint: "red" },
+      special: "knockback",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 1,
+      call: "backs off uphill",
+      tells: { melee: "head down", ranged: "a hoof scrape", special: "backs off uphill" }
+    }
   };
 
   // art/creatures/jaguar/creature.js
@@ -3271,7 +3462,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.range": 1.3, "invites.speed": 1.15 },
       label: "Jaguar's Night eyes: \u{1F48C}s fly further and a little faster"
     },
-    character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 }
+    character: { posture: { head: [0.02, -0.03], body: -0.02 }, quirk: "tailflick", every: [5, 9], for: 0.9 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "jaguar bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "sync",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "a stillness",
+      tells: { melee: "crouch", ranged: "snarls", special: "a stillness" }
+    }
   };
 
   // art/creatures/komodo/creature.js
@@ -3323,7 +3524,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.speed": 1.15, "invites.range": 1.15 },
       label: "Lion's Pride: \u{1F48C}s fly a little faster and further"
     },
-    character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 }
+    character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
+      ranged: { name: "roar bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+      special: "call",
+      retreat: "flanks",
+      rhythm: "steady",
+      pressure: 2,
+      call: "the roar",
+      tells: { melee: "crouch", ranged: "mouth open", special: "the roar" }
+    }
   };
 
   // art/creatures/lynx/creature.js
@@ -3343,7 +3554,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundAcceleration: 2, "treetop.turnRate": 1.4 },
       label: "Lynx's Poise: sharper turns, quicker starts"
     },
-    character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 }
+    character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "shriek bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "feint",
+      retreat: "freeze",
+      rhythm: "steady",
+      pressure: 2,
+      call: "crouch",
+      tells: { melee: "crouch", ranged: "ears flat", special: "crouch" }
+    }
   };
 
   // art/creatures/marten/creature.js
@@ -3601,7 +3822,17 @@ label.check input { accent-color: var(--accent); }
       mods: { echo: 1 },
       label: "Owl's Echo: each burst fires again half a second later"
     },
-    character: { sprite: "look", every: [4, 8], for: 1.4 }
+    character: { sprite: "look", every: [4, 8], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "nip", "nip"] },
+      ranged: { name: "lob", range: 30, shots: [0, 1, 1], delivery: "lob", flight: 1.2, size: [1, 3, 3.5], tint: "red" },
+      special: "mind",
+      retreat: "branches",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the eyes glow",
+      tells: { melee: "wings", ranged: "the circle", special: "the eyes glow" }
+    }
   };
 
   // art/creatures/penguin/creature.js
@@ -3640,6 +3871,16 @@ label.check input { accent-color: var(--accent); }
       kind: "move",
       scale: { groundSpeed: 1.1, groundAcceleration: 1.5 },
       label: "Penguin's Toboggan: a little quicker on foot, and quicker off the mark"
+    },
+    pack: {
+      melee: { attacks: [null, "nip", "nip"] },
+      ranged: { name: "ice pellet", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "stampede",
+      retreat: "huddle",
+      rhythm: "slow",
+      pressure: 3,
+      call: "the drop",
+      tells: { melee: "beak up", ranged: "flippers out", special: "the drop" }
     }
   };
 
@@ -3659,7 +3900,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.range": 1.25, "invites.radius": 1.3 },
       label: "Polar bear's Blizzard: \u{1F48C}s fly further and land more easily"
     },
-    character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 }
+    character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"] },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "rears up",
+      tells: { melee: "rears up", special: "rears up" }
+    }
   };
 
   // art/creatures/raccoon/creature.js
@@ -3682,6 +3933,16 @@ label.check input { accent-color: var(--accent); }
       kind: "shot",
       scale: { "invites.cooldown": 0.85, "invites.speed": 1.15 },
       label: "Raccoon's Light fingers: quicker bursts, \u{1F48C}s flying a little faster"
+    },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "thrown stone", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "decoy",
+      retreat: "splitBack",
+      rhythm: "steady",
+      pressure: 2,
+      call: "waves",
+      tells: { melee: "crouch", ranged: "a wind-up", special: "waves" }
     }
   };
 
@@ -3710,7 +3971,17 @@ label.check input { accent-color: var(--accent); }
     temperament: "skittish",
     voice: { family: "big", pitch: 1.6, am: [12, 0.5], vowel: 1, noise: 0.1 },
     buff: { name: "Steady", kind: "move", mods: { steady: 1 }, label: "Ram's Steady: no slowing while you fire" },
-    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 }
+    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+      ranged: { name: "dislodged stone", range: 12, shots: [0, 1, 1], tint: "red" },
+      special: "knockback",
+      retreat: "backLine",
+      rhythm: "steady",
+      pressure: 1,
+      call: "backs off",
+      tells: { melee: "head down", ranged: "a hoof scrape", special: "backs off" }
+    }
   };
 
   // art/creatures/rattlesnake/creature.js
@@ -3831,7 +4102,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.radius": 1.5 },
       label: "Red panda's Cuddle: \u{1F48C}s land on animals a little wider of where they strike"
     },
-    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 }
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "ember bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "rally",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "chirps",
+      tells: { melee: "rears up", ranged: "tail up", special: "chirps" }
+    }
   };
 
   // art/creatures/rhino/creature.js
@@ -3862,7 +4143,18 @@ label.check input { accent-color: var(--accent); }
       scale: { groundSpeed: 1.25, groundAcceleration: 0.7 },
       label: "Rhino's Charge: much faster on the ground, slower to get going"
     },
-    character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 }
+    character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+      ranged: { name: "dust bolt", range: 10, shots: [0, 1, 1], tint: "red" },
+      special: "knockback",
+      specialWith: { throw: 12 },
+      retreat: "circle",
+      rhythm: "slow",
+      pressure: 1,
+      call: "paws the ground",
+      tells: { melee: "head down", ranged: "a snort", special: "paws the ground" }
+    }
   };
 
   // art/creatures/roe/creature.js
@@ -3886,7 +4178,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.cooldown": 0.7 },
       label: "Roe's Spring: your dodge comes back sooner"
     },
-    character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 }
+    character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "bolt of light", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "scatter",
+      retreat: "zigzagApart",
+      rhythm: "tight",
+      pressure: 2,
+      call: "a bark",
+      tells: { melee: "head down", ranged: "ears up", special: "a bark" }
+    }
   };
 
   // art/creatures/salamander/creature.js
@@ -3999,7 +4301,18 @@ label.check input { accent-color: var(--accent); }
     temperament: "skittish",
     voice: { family: "snake" },
     buff: { name: "Strike", kind: "shot", scale: { "invites.speed": 1.4 }, label: "Snake's Strike: \u{1F48C}s fly faster" },
-    character: { posture: { head: [0, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 }
+    character: { posture: { head: [0, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "confusion",
+      specialWith: { move: true, radius: 5 },
+      retreat: "freeze",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the sway",
+      tells: { melee: "coils", ranged: "head back", special: "the sway" }
+    }
   };
 
   // art/creatures/snowleopard/creature.js
@@ -4019,7 +4332,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.15, "treetop.turnRate": 1.3 },
       label: "Snow leopard's Ghost of the peaks: a longer blink, and sharper turns in the treetops"
     },
-    character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
+    character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "snow bolt", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "feint",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "tail up",
+      tells: { melee: "crouch", ranged: "ears back", special: "tail up" }
+    }
   };
 
   // art/creatures/sphinx/creature.js
@@ -4040,7 +4363,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
       label: "Sphinx's Riddle: \u{1F48C}s carry far and come a little quicker"
     },
-    character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 }
+    character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 },
+    pack: {
+      melee: { attacks: [null, "screech", "bigscreech"] },
+      ranged: { name: "sun bolt", range: 14, shots: [0, 1, 2], spread: 6, tint: "red" },
+      special: "confusion",
+      specialWith: { drift: 40, time: 3 },
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the stare",
+      tells: { melee: "its mouth opens", ranged: "the stare", special: "the riddle" }
+    }
   };
 
   // art/creatures/spider/creature.js
@@ -4066,7 +4400,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.range": 1.5 },
       label: "Spider's Long thread: \u{1F48C}s fly further"
     },
-    character: { sprite: "shiver", every: [3, 7], for: 0.5 }
+    character: { sprite: "shiver", every: [3, 7], for: 0.5 },
+    pack: {
+      melee: null,
+      ranged: { name: "web shot", range: 22, shots: [0, 1, 1], attacks: [null, "web", "bigweb"], tint: "red" },
+      special: "pull",
+      specialWith: { pull: 6, reach: 22 },
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "legs raised",
+      tells: { ranged: "abdomen up", special: "the line" }
+    }
   };
 
   // art/creatures/squirrel/creature.js
@@ -4137,7 +4482,17 @@ label.check input { accent-color: var(--accent); }
       mods: { pierce: 1 },
       label: "Stag's Pierce: \u{1F48C}s pass through the first animal and fly on"
     },
-    character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 }
+    character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "antler light", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "stampede",
+      retreat: "splitBack",
+      rhythm: "steady",
+      pressure: 2,
+      call: "heads down",
+      tells: { melee: "head down", ranged: "antlers glow", special: "heads down" }
+    }
   };
 
   // art/creatures/stegosaurus/creature.js
@@ -4238,7 +4593,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.4, groundAcceleration: 1.4 },
       label: "Tiger's Pounce: a longer blink, and quicker off the mark"
     },
-    character: { posture: { head: [0.02, -0.02], body: -0.02 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
+    character: { posture: { head: [0.02, -0.02], body: -0.02 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"] },
+      ranged: { name: "growl bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+      special: "feint",
+      retreat: "freeze",
+      rhythm: "slow",
+      pressure: 1,
+      call: "crouch",
+      tells: { melee: "crouch", ranged: "growls", special: "a short spring" }
+    }
   };
 
   // art/creatures/toad/creature.js
@@ -4312,7 +4677,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.2, groundAcceleration: 1.5 },
       label: "Unicorn's Grace: a longer blink and quicker starts"
     },
-    character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 }
+    character: { posture: { head: [-0.02, 0.08], body: 0.01 }, quirk: "stomp", every: [5, 10], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "horn bolt", range: 16, shots: [0, 1, 2], spread: 6, tint: "red" },
+      special: "mind",
+      retreat: "circle",
+      rhythm: "steady",
+      pressure: 2,
+      call: "the horn glows",
+      tells: { melee: "head down", ranged: "the horn", special: "the horn glows" }
+    }
   };
 
   // art/creatures/wolf/creature.js
@@ -13263,6 +13638,218 @@ label.check input { accent-color: var(--accent); }
       ctTufts(m, 5, 0.8, 11, 83, -0.3, -0.2);
     }
   };
+  function fhHat(m, at2, body, band2, { brim = 1, crook = 1, tall = 1, roll = 0, yaw = 0, pitch = 0, g = 20 } = {}) {
+    const n = mark(m), b = 0.2 * brim, t = tall;
+    m.ell([0, 0.015, 0], [b, 0.018, b * 0.9], body, { group: g, rough: 4e-3 });
+    m.seg([0, 0.02, 0], [0.015, 0.2 * t, 0.01], 0.095, 0.055, body, { group: g + 1 });
+    m.seg([0.015, 0.2 * t, 0.01], [-0.09 * crook, 0.33 * t, 0.02], 0.055, 6e-3, body, { group: g + 1 });
+    m.ell([0, 0.045, 0], [0.093, 0.024, 0.093], band2, { group: g + 2 });
+    place(m, n, { roll, yaw, pitch, at: at2 });
+  }
+  var fhEarth = (m, r = [0.55, 0.05, 0.38], c = [0, 0.02, 0], mat = M.STONED, moss = 0.4) => m.ell(c, r, mat, { group: 1, rough: 0.025, paint: (p) => ctCell(p, 12, 2) < moss ? M.MOSS : void 0 });
+  var fhStone = (m, c, r, g, seed2) => m.ell(c, r, M.STONE, { group: g, rough: 0.02, paint: (p) => ctCell(p, 10, seed2) < 0.25 ? M.MOSS : ctCell(p, 22, seed2 + 1) < 0.12 ? M.STONED : void 0 });
+  var fhBerries = (m, c, g, k = 5, seed2 = 0) => {
+    for (let i = 0; i < k; i++) {
+      const a = sinHash(seed2, i) * 6.283, d = 0.03 + sinHash(i, seed2) * 0.04;
+      m.ell([c[0] + Math.cos(a) * d, c[1] + sinHash(i, seed2 + 2) * 0.04, c[2] + Math.sin(a) * d], [0.022, 0.022, 0.022], M.ACCENT, { group: g });
+    }
+  };
+  var fhBush = (m, c, s, g, seed2) => {
+    m.ell(c, [0.13 * s, 0.1 * s, 0.11 * s], M.LEAF, { group: g, rough: 0.03, paint: (p) => ctCell(p, 14, seed2) < 0.3 ? M.LEAF3 : ctCell(p, 9, seed2 + 1) < 0.2 ? M.LEAF2 : void 0 });
+    fhBerries(m, [c[0], c[1] + 0.05 * s, c[2] + 0.08 * s], g + 1, 4, seed2);
+  };
+  var fhRing = (m, n, r, fn) => {
+    for (let i = 0; i < n; i++) {
+      const a = i / n * 6.283;
+      fn(Math.cos(a) * r, Math.sin(a) * r * 0.72, i);
+    }
+  };
+  var HAT_FINDS = {
+    // the Helmet: on top of a cairn, an iron rim riveted round its brim and a chin strap hanging
+    helmet(m, o = {}) {
+      fhEarth(m, [0.5, 0.05, 0.36]);
+      for (const [x, y, z, r] of [[0, 0.08, 0, 0.2], [-0.12, 0.09, 0.08, 0.12], [0.13, 0.08, 0.06, 0.12], [0.02, 0.2, 0.01, 0.13], [0, 0.3, 0, 0.09]]) fhStone(m, [x, y, z], [r, r * 0.7, r * 0.85], 2, Math.round(x * 50 + 3));
+      if (!o.empty) {
+        fhHat(m, [0, 0.38, 0], M.JACKET, M.FRAME, { brim: 0.9, crook: 0.3, tall: 0.85 });
+        m.ell([0, 0.395, 0], [0.185, 0.022, 0.17], M.FRAME, { group: 25, paint: (p) => ctCell(p, 30, 1) < 0.2 ? M.STONED : void 0 });
+        m.seg([0.15, 0.39, 0.05], [0.17, 0.22, 0.1], 8e-3, 8e-3, M.CLOTH, { group: 26 });
+      }
+      ctTufts(m, 5, 0.5, 11, 31);
+      ctMoss(m, [-0.15, 0.12, 0.1], [0.1, 0.04, 0.07], 6);
+    },
+    // the Healing ring: in the middle of a fairy ring of pale toadstools, a white band, the moss there greener
+    healing(m, o = {}) {
+      fhEarth(m, [0.6, 0.04, 0.42], [0, 0.02, 0], M.MOSS, 0.2);
+      fhRing(m, 9, 0.42, (x, z, i) => {
+        const h = 0.06 + sinHash(i, 41) * 0.04;
+        m.seg([x, 0.02, z], [x, h, z], 0.014, 0.012, M.BELLY, { group: 3 });
+        m.ell([x, h, z], [0.045, 0.025, 0.045], i % 3 ? M.BELLY : M.EAR, { group: 4 });
+      });
+      if (!o.empty) fhHat(m, [0, 0.04, 0], M.EAR, M.ACCENT, { crook: 0.8, tall: 1.1 });
+      ctTufts(m, 4, 0.55, 11, 42);
+    },
+    // the Harvest hat: upturned and full of berries among berry bushes
+    harvest(m, o = {}) {
+      fhEarth(m, [0.6, 0.05, 0.4]);
+      fhRing(m, 5, 0.38, (x, z, i) => fhBush(m, [x, 0.08, z], 0.8 + sinHash(i, 9) * 0.3, 5 + 2 * (i % 2), i + 11));
+      if (!o.empty) {
+        const n = mark(m);
+        m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.STRAW, { group: 20 });
+        m.seg([0, 0.02, 0], [0.02, -0.18, 0.01], 0.095, 0.05, M.STRAW, { group: 21 });
+        m.ell([0, 0.045, 0], [0.093, 0.024, 0.093], M.ACCENT, { group: 22 });
+        place(m, n, { roll: 0.15, at: [0, 0.15, 0] });
+        fhBerries(m, [0, 0.17, 0.02], 23, 9, 3);
+      }
+      ctTufts(m, 4, 0.6, 11, 43);
+    },
+    // the Dowsing hat: hung on a forked hazel stick driven in by a little pool
+    dowsing(m, o = {}) {
+      fhEarth(m, [0.55, 0.04, 0.38]);
+      m.ell([0.22, 0.03, 0.1], [0.2, 0.012, 0.14], M.WATER, { group: 2 });
+      m.seg([-0.1, 0.02, 0], [-0.08, 0.5, 0], 0.02, 0.016, M.WOOD, { group: 3 });
+      m.seg([-0.08, 0.5, 0], [-0.2, 0.72, 0], 0.014, 0.01, M.WOOD, { group: 3 });
+      m.seg([-0.08, 0.5, 0], [0.04, 0.72, 0], 0.014, 0.01, M.WOOD, { group: 3 });
+      if (!o.empty) fhHat(m, [-0.08, 0.62, 0], M.HAT2, M.POM, { roll: 0.1, crook: 1.2 });
+      ctFern(m, [0.35, 0.02, -0.15], 6, 0.45);
+      ctTufts(m, 4, 0.55, 11, 44);
+    },
+    // the Sentry hat: up on a little lookout of four posts and a plank platform
+    sentry(m, o = {}) {
+      fhEarth(m, [0.5, 0.04, 0.36]);
+      for (const [x, z] of [[-0.18, -0.12], [0.18, -0.12], [-0.18, 0.12], [0.18, 0.12]]) m.seg([x, 0.02, z], [x * 0.8, 0.62, z * 0.8], 0.022, 0.018, M.WOOD, { group: 2, paint: ctPlank(9, 0.2) });
+      m.box([0, 0.64, 0], [0.2, 0.02, 0.14], M.WOOD, { group: 3, round: 0.01, paint: ctPlank(9, 0.1) });
+      m.seg([-0.16, 0.3, 0.1], [0.16, 0.5, 0.1], 0.01, 0.01, M.WOOD, { group: 4 });
+      if (!o.empty) fhHat(m, [0, 0.67, 0], M.HAT1, M.ACCENT, { crook: 0.6 });
+      ctTufts(m, 5, 0.55, 11, 45);
+    },
+    // the Bramble hat: snagged in a thicket of thorny canes, ripped, a few blackberries
+    bramble(m, o = {}) {
+      fhEarth(m, [0.6, 0.05, 0.4]);
+      for (let i = 0; i < 9; i++) {
+        const a = i * 0.7, r = 0.1 + sinHash(i, 61) * 0.3, x = Math.cos(a) * r, z = Math.sin(a) * r * 0.6, h = 0.3 + sinHash(i, 62) * 0.25;
+        m.chain([[x, 0.02, z, 0.016], [x * 1.2, h, z * 1.1, 0.012], [x * 1.6 + 0.1, h * 0.7, z * 1.3, 6e-3]], i % 2 ? M.BARK2 : M.BODY2, { group: 3 + i % 2, paint: (p) => ctCell(p, 40, i) < 0.15 ? M.LEAF : void 0 });
+      }
+      for (let i = 0; i < 6; i++) m.ell([Math.cos(i * 1.1) * 0.25, 0.25 + sinHash(i, 63) * 0.15, Math.sin(i * 1.1) * 0.15], [0.025, 0.025, 0.025], M.JACKET, { group: 6 });
+      if (!o.empty) fhHat(m, [0.05, 0.36, 0], M.BODY, M.BODY3, { roll: 0.9, yaw: 0.4, crook: 1.4 });
+      ctTufts(m, 3, 0.55, 11, 46);
+    },
+    // the Slingshot hat: hung on a forked branch with a sling between its prongs, a heap of pebbles below
+    slingshot(m, o = {}) {
+      fhEarth(m, [0.5, 0.04, 0.35]);
+      m.seg([0, 0.02, 0], [0, 0.38, 0], 0.03, 0.025, M.TRUNK, { group: 2 });
+      m.seg([0, 0.38, 0], [-0.14, 0.62, 0], 0.02, 0.014, M.TRUNK, { group: 2 });
+      m.seg([0, 0.38, 0], [0.14, 0.62, 0], 0.02, 0.014, M.TRUNK, { group: 2 });
+      m.seg([-0.14, 0.58, 0], [0, 0.5, 0.05], 8e-3, 8e-3, M.ACCENT, { group: 3 });
+      m.seg([0.14, 0.58, 0], [0, 0.5, 0.05], 8e-3, 8e-3, M.ACCENT, { group: 3 });
+      if (!o.empty) fhHat(m, [0.14, 0.66, 0], M.ACCENT, M.POM, { roll: 0.3, crook: 0.9 });
+      for (let i = 0; i < 7; i++) fhStone(m, [-0.15 + i % 3 * 0.07, 0.03 + Math.floor(i / 3) * 0.03, 0.15 + i % 2 * 0.04], [0.03, 0.025, 0.03], 5, i);
+      ctTufts(m, 4, 0.55, 11, 47);
+    },
+    // the Gathering hat: in the middle of a little nest of gathered things: twigs, pebbles, a feather, a bottle cap
+    gathering(m, o = {}) {
+      fhEarth(m, [0.5, 0.04, 0.36]);
+      fhRing(m, 14, 0.28, (x, z, i) => m.seg([x, 0.04, z], [x * 0.6 + 0.05, 0.06, z * 0.6 - 0.04], 0.012, 8e-3, i % 3 ? M.BARK2 : M.STRAW, { group: 2 + i % 2 }));
+      fhRing(m, 6, 0.38, (x, z, i) => i % 2 ? fhStone(m, [x, 0.03, z], [0.03, 0.022, 0.03], 4, i) : m.ell([x, 0.03, z], [0.03, 0.01, 0.03], i % 4 ? M.POM : M.FRAME, { group: 5 }));
+      m.seg([0.2, 0.04, -0.2], [0.35, 0.1, -0.15], 0.012, 2e-3, M.BELLY, { group: 6 });
+      if (!o.empty) fhHat(m, [0, 0.06, 0], M.POM, M.TOP, { crook: 1.1, roll: 0.1 });
+      ctTufts(m, 3, 0.55, 11, 48);
+    },
+    // the Mine hat: blown into a scorched crater, its brim singed, clods thrown round it
+    mine(m, o = {}) {
+      fhEarth(m, [0.62, 0.04, 0.44], [0, 0.015, 0], M.BODY3, 0.1);
+      m.ell([0, 0.02, 0], [0.36, 0.025, 0.26], M.STONED, { group: 2, paint: (p) => ctCell(p, 10, 2) < 0.3 ? M.BODY3 : void 0 });
+      fhRing(m, 8, 0.5, (x, z, i) => m.ell([x, 0.04, z], [0.05, 0.035, 0.04], i % 2 ? M.STONED : M.MOSS, { group: 3, rough: 0.01 }));
+      if (!o.empty) fhHat(m, [0.05, 0.06, 0], M.BODY2, M.BODY3, { roll: 1.3, yaw: 0.7, crook: 1.5 });
+      ctTufts(m, 3, 0.6, 11, 49, 0, 0.3);
+    },
+    // the Lullaby hat: in a bed of poppies, a nightcap's tassel on its tip
+    lullaby(m, o = {}) {
+      fhEarth(m, [0.6, 0.04, 0.42], [0, 0.02, 0], M.MOSS, 0.2);
+      for (let i = 0; i < 16; i++) {
+        const a = sinHash(i, 51) * 6.283, d = 0.15 + 0.38 * Math.sqrt(sinHash(51, i)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7, h = 0.1 + sinHash(i, 52) * 0.12;
+        m.seg([x, 0.02, z], [x, h, z], 6e-3, 5e-3, M.LEAF2, { group: 3 });
+        m.ell([x, h, z], [0.03, 0.018, 0.03], M.ACCENT, { group: 4 });
+      }
+      if (!o.empty) fhHat(m, [0, 0.05, 0], M.TOP, M.BELLY, { roll: 1.35, yaw: -0.4, tall: 1.1 });
+      if (!o.empty) m.ell([-0.36, 0.12, 0.02], [0.035, 0.035, 0.035], M.BELLY, { group: 26 });
+      ctTufts(m, 3, 0.55, 11, 53);
+    },
+    // the Cyclone hat: caught on a windy tor's top stone, the grass round it swirled flat, leaves in a spiral
+    cyclone(m, o = {}) {
+      fhEarth(m, [0.6, 0.05, 0.42]);
+      fhStone(m, [0, 0.14, 0], [0.24, 0.16, 0.2], 2, 7);
+      fhStone(m, [-0.22, 0.08, 0.12], [0.14, 0.09, 0.11], 2, 8);
+      fhStone(m, [0, 0.32, 0], [0.14, 0.08, 0.12], 3, 9);
+      for (let i = 0; i < 18; i++) {
+        const a = i * 0.55, r = 0.2 + i * 0.022;
+        m.seg([Math.cos(a) * r, 0.03, Math.sin(a) * r * 0.7], [Math.cos(a + 0.4) * r, 0.03, Math.sin(a + 0.4) * r * 0.7], 0.012, 8e-3, i % 3 ? M.LEAF2 : M.STRAW, { group: 4 + i % 2 });
+      }
+      if (!o.empty) fhHat(m, [0.02, 0.39, 0], M.HAT2, M.POM, { roll: 0.35, yaw: 1, crook: 1.6 });
+      ctTufts(m, 3, 0.6, 11, 54);
+    },
+    // the Nursing hat: by a spring welling up between stones into a mossy basin, a cloth folded on its brim
+    nursing(m, o = {}) {
+      fhEarth(m, [0.6, 0.04, 0.42]);
+      m.ell([0.15, 0.03, 0], [0.24, 0.012, 0.16], M.WATER, { group: 2 });
+      fhRing(m, 7, 0.27, (x, z, i) => fhStone(m, [x + 0.15, 0.04, z], [0.06, 0.045, 0.05], 3, i + 20));
+      ctMoss(m, [-0.22, 0.05, 0.05], [0.18, 0.04, 0.14], 4);
+      if (!o.empty) fhHat(m, [-0.22, 0.08, 0.05], M.BELLY, M.HAT2, { crook: 0.7 });
+      if (!o.empty) m.box([-0.12, 0.1, 0.1], [0.06, 8e-3, 0.04], M.CLOTH, { group: 26 });
+      ctTufts(m, 4, 0.6, 11, 55);
+    },
+    // the Edge-seer: on a boundary stone, an old marker leaning where two places meet
+    edgeseer(m, o = {}) {
+      fhEarth(m, [0.55, 0.04, 0.38]);
+      m.box([0, 0.3, 0], [0.1, 0.3, 0.06], M.STONE, { group: 2, round: 0.03, paint: (p) => ctCell(p, 10, 4) < 0.25 ? M.MOSS : Math.abs(p[0]) < 0.015 && p[1] > 0.4 && p[1] < 0.55 ? M.STONED : void 0 });
+      m.seg([-0.5, 0.02, 0.25], [0.5, 0.02, -0.25], 0.015, 0.015, M.STONED, { group: 3 });
+      if (!o.empty) fhHat(m, [0, 0.61, 0], M.CLOTH, M.HAT1, { crook: 0.5, roll: 0.1 });
+      ctTufts(m, 5, 0.55, 11, 56);
+    },
+    // the Route-seer: on top of an old fingerpost, its blank arms pointing four ways
+    routeseer(m, o = {}) {
+      fhEarth(m, [0.5, 0.04, 0.36]);
+      m.seg([0, 0.02, 0], [0, 0.9, 0], 0.028, 0.024, M.WOOD, { group: 2, paint: ctPlank(9, 0.2) });
+      for (const [a, h] of [[0.3, 0.74], [2.1, 0.7], [3.6, 0.64], [5.1, 0.6]]) {
+        const n = mark(m);
+        m.box([0.17, 0, 0], [0.17, 0.035, 0.012], M.WOOD, { group: 3, round: 0.01, paint: ctWorn(0, 0.2) });
+        m.seg([0.34, -0.035, 0], [0.38, 0, 0], 0.012, 0.012, M.WOOD, { group: 3 });
+        m.seg([0.34, 0.035, 0], [0.38, 0, 0], 0.012, 0.012, M.WOOD, { group: 3 });
+        place(m, n, { yaw: a, at: [0, h, 0] });
+      }
+      if (!o.empty) fhHat(m, [0, 0.92, 0], M.HAT1, M.POM, { crook: 1 });
+      ctTufts(m, 5, 0.5, 11, 57);
+      ctIvy(m, [0, 0.04, 0.03], [0, 0.5, 0.03], 6, 58);
+    }
+  };
+  var BAG_FINDS = {
+    // the bum bag: hung by its strap from a snag on a stump, its zip half open
+    bumbag(m, o = {}) {
+      fhEarth(m, [0.45, 0.04, 0.32]);
+      ctCyl(m, [0, 0, 0], [0, 0.38, 0], 0.14, M.TRUNK, 2, { paint: (p) => ctCell(p, 9, 2) < 0.3 ? M.MOSS : void 0, end: ctRings([0, 0.38, 0], 1) });
+      m.seg([0, 0.36, 0.1], [0.03, 0.42, 0.16], 0.015, 0.01, M.TRUNK, { group: 3 });
+      if (!o.empty) {
+        m.seg([0.03, 0.4, 0.15], [0.12, 0.22, 0.2], 0.01, 0.01, M.JACKET, { group: 4 });
+        m.seg([0.03, 0.4, 0.15], [-0.08, 0.22, 0.2], 0.01, 0.01, M.JACKET, { group: 4 });
+        m.ell([0.02, 0.2, 0.2], [0.15, 0.085, 0.06], M.TOP, { group: 5 });
+        m.seg([-0.11, 0.23, 0.25], [0.15, 0.23, 0.25], 9e-3, 9e-3, M.POM, { group: 6 });
+      }
+      ctTufts(m, 4, 0.5, 11, 59);
+    },
+    // the backpack: slumped against a mossy log, a bedroll strapped on top, its flap open on a map
+    backpack(m, o = {}) {
+      fhEarth(m, [0.6, 0.05, 0.4]);
+      ctCyl(m, [-0.4, 0.12, -0.1], [0.4, 0.12, -0.1], 0.12, M.TRUNK, 2, { paint: (p) => p[1] > 0.18 && ctCell(p, 10, 1) < 0.7 ? M.MOSS : void 0, end: ctRings([0, 0.12, -0.1], 0) });
+      if (!o.empty) {
+        const n = mark(m);
+        m.box([0, 0.18, 0], [0.14, 0.18, 0.08], M.HAT2, { group: 3, round: 0.04, paint: (p) => ctCell(p, 16, 2) < 0.1 ? M.MOSS : void 0 });
+        m.box([0, 0.27, 0.06], [0.12, 0.06, 0.03], M.HAT2, { group: 4, round: 0.02 });
+        ctCyl(m, [-0.16, 0.4, 0], [0.16, 0.4, 0], 0.05, M.CLOTH, 5);
+        m.box([0, 0.2, 0.09], [0.07, 0.05, 0.01], M.BELLY, { group: 6 });
+        place(m, n, { pitch: -0.25, yaw: 0.2, at: [0, 0.02, 0.08] });
+      }
+      ctTufts(m, 4, 0.6, 11, 60, 0, 0.25);
+    }
+  };
   var SCENE_PIECES = {
     "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) {
       travelTrunk(m);
@@ -13511,11 +14098,14 @@ label.check input { accent-color: var(--accent); }
       ctTufts(m, 10, 1, 7, 61);
     } }
   };
+  var FIND_SIZE = { hat: 1, bag: 1 };
   var COUNTRY = [
     ...Object.entries(FARM).map(([id, d]) => ({ id, family: "farm", size: 1, split: null, ...d })),
     ...Object.entries(STREET).map(([id, d]) => ({ id, family: "street", size: 1, split: null, ...d })),
     ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d })),
-    ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build }))
+    ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build })),
+    ...Object.entries(HAT_FINDS).flatMap(([id, build]) => [false, true].map((empty) => ({ id: `hatfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.hat, split: null, desc: `the ${id} hat lying where its spell would have put it${empty ? ", taken" : ""} (rules/finds.ts)`, build: (m) => build(m, { empty }) }))),
+    ...Object.entries(BAG_FINDS).flatMap(([id, build]) => [false, true].map((empty) => ({ id: `bagfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.bag, split: null, desc: `the ${id}, left where its owner left it${empty ? ", taken" : ""} (rules/finds.ts)`, build: (m) => build(m, { empty }) })))
   ];
   var WRECK_PARTS = Object.keys(WRECKS);
   var COUNTRY_BY_ID = Object.fromEntries(COUNTRY.map((d) => [d.id, d]));
@@ -16209,8 +16799,8 @@ label.check input { accent-color: var(--accent); }
     _glades: `The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.`,
     wisps: { _: "Will-o'-the-wisps in the wild areas (Ed, 2026-10-07): a seeded chance per square of ground (cell m) within reach of her; none within partyNear of a partified area, the full chance from partyFar; height [low, high] m, drift m, a cycle of period s (fade in, linger, fade out, gone); core and halo size in art pixels; colour.", on: true, cell: 26, reach: 75, chance: 0.4, partyNear: 40, partyFar: 140, height: [1.2, 3], drift: 3, period: 22, size: 3, halo: 9, hue: 0.47, sat: 0.4, bright: 1.6 },
     glades: { on: true, radius: 14, top: 0.55, reach: 160, hue: 0.76, sat: 0.5, light: 0.9, edge: 0.5, edgeEase: 2, dark: 0.6, glowOff: 1, fade: 1, motes: { per: 40, rise: 0.55, height: 8, size: 1, hue: 0.55, sat: 0.3, bright: 1.3 } },
-    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts): the hub, a round room where the deck was (hub its radius, height its floor's, rail its wall's keep-in, table and tableUse the map's radius and reach: E there opens the chart), and the balcony hung off its south side (balcony.out its centre south of the hub's, balcony.r its radius), open at its rim either side of the decks' desk (decks, round the balcony's centre; seat her standing place behind them, from the balcony's centre): at treetop height she flies straight onto it and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed.`,
-    treehouse: { gap: 5, angle: -90, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, hub: 7, height: 22, grace: 2, rail: 0.45, table: 1.55, tableUse: 1.6, balcony: { out: 6.3, r: 5 }, decks: { inner: 3.47, outer: 4.33, from: 54.5, to: 125.5 }, seat: 3.47, circle: { out: 4.2, r: 1.3 }, landTime: 0.35, walk: 5, fall: { on: false, time: 0.9 } }, carrier: "island" },
+    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts): the hub, a round room where the deck was (hub its radius, height its floor's, rail its wall's keep-in, table and tableUse the map's radius and reach: E there opens the chart), and the balcony hung off its south side (balcony.out its centre south of the hub's, balcony.r its radius), open at its rim either side of the decks' desk (decks, round the balcony's centre; seat her standing place behind them, from the balcony's centre): at treetop height she flies straight onto it and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed. The dark behind the rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"): with dark.on, in a room or on a branch off the Terrace only the house, the Ent's crowns and her are drawn, over black; stepping onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds (and goes again as she goes back in), and through the telescope it fades in over the same.`,
+    treehouse: { gap: 5, angle: -90, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, hub: 7, height: 22, grace: 2, rail: 0.45, table: 1.55, tableUse: 1.6, balcony: { out: 6.3, r: 5 }, decks: { inner: 3.47, outer: 4.33, from: 54.5, to: 125.5 }, seat: 3.47, circle: { out: 4.2, r: 1.3 }, landTime: 0.35, walk: 5, fall: { on: false, time: 0.9 }, dark: { on: true, fade: 0.6 } }, carrier: "island" },
     _home: `Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"): the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle.`,
     home: { margin: 10, gap: 0.3 },
     _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows. Kinds (Ed, 2026-10-11, the small islands): only the playground; the sports grounds are left out of kinds.",
@@ -16289,7 +16879,7 @@ label.check input { accent-color: var(--accent); }
     knockout: { releaseEach: 0, releaseMax: 0, emptyBeat: 0.5, teleport: 1.2, legendsLoyal: false, dropHat: true, hatFloat: 3, dim: 0.6, rise: 0.9, respawn: { base: 6, step: 0, max: 6, cooldown: 60, minScratch: 1.5 }, candleStep: 1, bpmStep: 5 },
     _dash: "The dash, a blink (Ed, 2026-10-04, 2026-10-05; right click, gamepad A, touch 'dash'): on the ground only, she vanishes and reappears distance metres the way she's moving (her steering, on the pad and on keyboard and mouse alike, not the way she's aiming: Ed, 2026-10-11; standing still, the way she's facing) in one step, then cooldown seconds before the next. toCursor (Ed's playtest, 2026-10-06; off since 2026-10-11): on, she blinks toward the ground under the cursor (or the way the right stick points), the way she faces when the cursor is within aimDead metres of her, and with nothing to aim by (touch) the way she's steering; off, always the way she's steering. buffer: a press up to this many seconds before she can blink (still recharging, landing, staggered) waits and blinks the moment she can. For gone seconds (a few frames) she isn't drawn and can't be hit; otherwise she's as hittable as ever: it's for slipping out of a shot's path. She lands clear of trees, rocks and ruins, soundsystems, the dancefloor's speakers and the treehouse by clear's metres each, the blink shortened to the furthest clear spot.",
     dash: { distance: 15, gone: 0.05, cooldown: 1, buffer: 0.2, charges: 2, toCursor: false, aimDead: 1.5, clear: { tree: 1.2, decor: 2.5, sound: 3, speaker: 1.5, treehouse: 4 } },
-    spells: { hat: "none", parts: "", speed: { mult: 2.2, duration: 4, cooldown: 12 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
+    spells: { hat: "none", hats: "*", parts: "", speed: { mult: 2.2, duration: 4, cooldown: 12 }, healing: { radius: 5, every: 6 }, helmet: { drop: 1.2 }, battering: { width: 1.5, stun: 1.5 }, leyjump: { cooldown: 60 }, pound: { cooldown: 10, radius: 8, push: 6, stun: 1 }, stealth: { reveal: 3, range: 25 }, harvest: { berries: 6, radius: 3, every: 60 }, dowsing: { time: 60 }, sentry: { range: 33, every: 1.2 }, slingshot: { catch: 10, fire: 40, hold: 1.5, radius: 2.5, max: 12 }, gathering: { range: 100 }, bramble: { range: 30 }, mine: { range: 15, stun: 3, every: 20 }, lullaby: { range: 15, time: 30, every: 30 }, cyclone: { radius: 10, time: 3, every: 20, spin: 1, lift: 3, fling: 10, flingTime: 0.5, stun: 1.5 }, nursing: { range: 10, rate: 0.1 } },
     _trail: `Her flight trail (Ed, 2026-10-06: "more like a fading-out glow, similar to the leylines. Its length relates to her speed: 5 m on the ground and 20 m on the treetops. The glow should be the same as the current area colour"): a ribbon of glow along her path, fading to nothing at its tail, in the colour of the area she's over (eased over colourEase seconds as she crosses into the next). Its length: ground metres at full speed on the ground, treetops metres over the treetops, from none below from (a share of her top speed) to full at top speed along curve (1 straight), growing to a new speed's over grow seconds and shrinking over shrink. width: metres across on the ground and over the treetops; bright: its brightness; fade: how it fades along its length (eased out: bright for its first stretch, then thinning to nothing; higher keeps it bright longer), its width tapering with it. sparks: the broom's little amber sparks as well. ?trail=0 hides it. One trail, one cooldown (Ed, 2026-10-15; the tuning's cooldown): it also runs along her blink when she dodges (the ribbon laid along the blink's line, from where she left to where she lands), and it is at least cooldown metres times the share of the shared cooldown counter in use (full right after a take-off or a landing, half after a dodge with two in hand, draining to nothing as the counter empties), so its length shows the cooldown; bySpeed off leaves only that (no length from her speed).`,
     trail: { on: true, ground: 5, treetops: 20, from: 0.15, curve: 1, width: [1, 1.7], bright: 1, fade: 2, grow: 0.25, shrink: 0.6, colourEase: 0.6, sparks: true, cooldown: 24, bySpeed: true },
     _swoopTrail: `The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).`,
@@ -16308,7 +16898,7 @@ label.check input { accent-color: var(--accent); }
     _bond: `The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.`,
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArcSlack: 0.8, threadArcTaut: 0.02, threadArcMax: 8 },
     __creatures: "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
-    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete (the Workshop, Ed 2026-10-23). hat: the default. parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
+    _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete (the Workshop, Ed 2026-10-23). hat: the default; hats: the spell hats she owns, a comma list or * for every one (Ed, 2026-10-23: only the plain hat is hers at first, every spell hat found one a night, rules/finds.ts; the page sets it from her save, app/hatSave.ts, and ?hats= for one load). parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
     _fight: `The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live on the pause page (Esc): its Debug knobs sliders, or [ and ] for scale, ; and ' for speed, , and . for momentum. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air. Walking away is no escape (Ed, 2026-10-06: "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"): charge.chase, a charge runs at least that many times her ground speed and on until it has caught up with her walking straight down its lane (its own time if longer), so stepping out of the lane at its tell, a blink sideways or the treetops get her clear, walking doesn't (0: off); leap.lead, a leap comes down where she'll be when it lands, as she's going at take-off (that share of it; 0: where she was). miss: a charge that struck nothing stands winded that many seconds after (stars round its head), an opening for her \u{1F48C}s (Ed, 2026-10-06: "We want to reward skilful use of blink and accurate invitation aiming").`,
     fight: { scale: 1, speed: 1, momentum: 1, charge: { reach: 2, turn: 0.4, brake: 0.5, contact: true, chase: 1.6, miss: 1.2 }, leap: { reach: 1.5, through: 5, contact: true, lead: 1 } },
     _combat: `packs: pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-19), on by default (Ed, 2026-10-20: "Turn pack combat on by default") and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating. Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems they plan to attack"; it was its walk times marchMult, under 1 m/s, and marchOnRun 5 m/s marching on). Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack (Ed, 2026-10-11: some "seem to struggle to damage soundsystems"; a charge struck once a run, a swoop once a dive). A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 (Ed, 2026-10-08, from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives). Home is its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; rules/speakers.ts), each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone). shake: how hard a legend's quake shakes the screen (0 none). daze: seconds a wild creature knocked down in a fight lies stunned (nothing attacks it, it attacks nothing, she can still invite it; it counts as present for its legend, and no siege takes it) before it runs off home (Ed, round 13, 2026-10-06: 'the length of the stun of wild creatures that are downed in combat, before they run away, should be 20 seconds'; it was 8, states.json's daze). leaveArea: a wild creature chases her (or her party) up to this many metres past its area's edge (Ed, round 13, 2026-10-06: 30; it was 10); beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected. defendRadius (Ed, 2026-10-09: her posse defends her, "just ones that are in the same combat as you"): her animals following her within this many metres of her go first for anything attacking her, spread over her attackers; farther off, following her, one fights back only at what's on it itself (and parked, guarding or travelling ones carry on as they were): never pulled across to her fight. taunt (Ed, 2026-10-09, on #592: "Taunt seems good"): a creature after her that one of her animals in her fight hits turns on that animal instead, with chance chance, for time seconds (a lunge at her already under way lands first; then it may come back to her).`,
@@ -16353,7 +16943,7 @@ label.check input { accent-color: var(--accent); }
     legendSpeed: 0.35,
     __party: "The party: the beat, waves, soundsystems, the dancefloor, its lights and objects, the party witches, the ley lines, music and sound, and the end.",
     _beat: "The music's clock (beats per minute): the lasers sweep to it and party animals dance to it. Later the music itself drives it.",
-    beat: { bpm: 120 },
+    beat: { bpm: 120, knockBeats: 4 },
     leyLines: { on: true, pulseSpeed: 1, reveal: 2.5, far: [1, 1], behindBright: 1, advance: "wave", fade: 1, brightness: 0.4, width: [3, 5.5], core: [0.3, 0.6, 0.15, 0.3], height: [1.2, 1.5], valley: 0.3, flow: [14, 22], depart: { avoid: 2 }, minRadius: 25 },
     _lasers: "Each playing soundsystem's laser show: bursts of blockBars bars, on about duty of the time (seeded per soundsystem), up to maxCount beams stepping on the bars, fanned over spread degrees (no beam tilting more than maxTilt from straight up), swinging sweep degrees once every sweepBeats beats (slow, like searchlights), opening and closing the fan every openBars bars, length metres tall, opacity 0-1, fading in over fadeIn and out over fadeOut seconds, and fading with distance from fadeNear to fadeFar metres. Glow only: no light, nothing from the light budget.",
     _speakerLasers: "The dancefloor ring's lasers (Ed, 2026-10-04: none from the disco ball; one on top of each ring speaker): a single beam from each playing speaker, at most tilt degrees off straight up and leaning outwards, swinging sweep degrees sideways, over sweepBeats beats, neighbours out of phase; length metres, at opacity (thinner-looking than the area soundsystems' fans). Damaged speakers flicker theirs; destroyed ones have none. 12 more beams on top of the lasers' own.",
@@ -16413,11 +17003,11 @@ label.check input { accent-color: var(--accent); }
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once the home ring's speakers are all down (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just switch off (sound and lights)"), the afterparty, any soundsystem still standing switched off: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once (home's speakers down).`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
     __view: "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
-    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom), aimed look metres up her and its distance times distance in place of the station's own, eased from part to part as the cursor moves.`,
+    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed look metres up her and its distance times distance in place of the station's own, eased from part to part as the cursor moves.`,
     _sail: "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
     sail: { inPlace: true },
-    _opening: "The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
-    opening: { chart: true, wake: { snooze: 5, stretch: 3, alarmMin: 0.4 } },
+    _opening: `The opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there (Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island instead of the map"; the sea chart came first from 2026-10-20 till then), asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load. wake: the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.`,
+    opening: { bedroom: true, wake: { snooze: 5, stretch: 3, alarmMin: 0.4 } },
     _arrive: "Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).",
     arrive: { warm: { frames: 3, ms: 120, max: 8 }, maxStep: 0.05, fade: 0.6, speed: 110, minLeg: 1.5, low: { angle: 20, distance: 110, offshore: 60 }, frame: { angle: 34, distance: 170, lift: 8 }, rise: 3.5, settle: 3 },
     camera: {
@@ -16438,7 +17028,7 @@ label.check input { accent-color: var(--accent); }
       intro: { distance: 34, angle: 22, ease: 1.3 },
       circle: { on: true, angle: 20, distance: 0.75, ease: 1.2, frame: 0.35, look: 1.5 },
       house: { on: true, angle: 24, distance: 0.62, ease: 1 },
-      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, parts: { head: { look: -2.9, distance: 0.32 }, hat: { look: -1.2, distance: 0.4 }, top: { look: -3.2, distance: 0.4 }, legs: { look: -3.8, distance: 0.42 }, feet: { look: -2.85, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 } } }
+      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, parts: { head: { look: -2.9, distance: 0.32 }, hat: { look: -1.2, distance: 0.4 }, top: { look: -3.2, distance: 0.4 }, legs: { look: -3.8, distance: 0.42 }, feet: { look: -2.85, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 }, board: { look: 2, distance: 0.35 } } }
     },
     _look: `Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (3, Ed 2026-10-07 after playtesting 5 and 4: "the large pixels look cute but it's impossible to see what's going on"; ?px=4|5 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach \xD7 glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.`,
     pixelSize: 3,
@@ -16563,7 +17153,7 @@ label.check input { accent-color: var(--accent); }
     limits: { combo: 8, lanes: 1, lines: 2, shots: 6, hurt: 0.5, engage: 6, split: 18, close: 8 },
     _bolt: "Every magic bolt (combat.md: 'one projectile sprite tinted'): the base its kinds' ranged moves are built on (range, shots and spread by kind).",
     bolt: { delivery: "shot", range: 12, speed: 22, radius: 0.6, windup: 0.7, cooldown: 2.6, modifier: "none" },
-    _specials: "Each special's numbers (the young times young.special): radius, metres it reaches; time, seconds it lasts; cooldown, seconds before the pack may use it again. call: all may strike within time (at her one at a time still, the tuning's dodge.a tokens); feint: the fake tell's seconds (lead); confusion: her aim turns up to drift degrees; cloud: hides the tells inside it; wall: a line length long of patches that slow her to slow; rally: heals heal hits' worth; cover: digs in by a hurt packmate (else the one she's inviting) and takes its hits, armour its damage times; scatter: hidden time, then round her at ring times its reach; stampede: rolls at her curled up, as the kind's charge; at her, every member's turn to charge for time, one after another as her dodge tokens free (Ed, 2026-10-20), hers on the wild all at once. Phase 1's (Echo, 2026-10-19): mirage: images (young, adult) of the flock round her, ring times 8 m out, each taking a \u{1F48C} meant for them and bursting, for time; sync: for time, each blink of hers brings count of the pack blinking in ring metres from where it put her, striking at once. A kind's specialWith is its own variant over these: confusion's move (her movement turned, not her aim: the bat's), cloud's flash (it confuses her aim inside it: the moth's) and leap (its thrower leaps at her and it comes down where it lands: the toad's), cover's both (two lock shells, both dug in: the beetle's).",
+    _specials: "Each special's numbers (the young times young.special): radius, metres it reaches; time, seconds it lasts; cooldown, seconds before the pack may use it again. call: all may strike within time (at her one at a time still, the tuning's dodge.a tokens); feint: the fake tell's seconds (lead); confusion: her aim turns up to drift degrees; cloud: hides the tells inside it; wall: a line length long of patches that slow her to slow; rally: heals heal hits' worth; cover: digs in by a hurt packmate (else the one she's inviting) and takes its hits, armour its damage times; scatter: hidden time, then round her at ring times its reach; stampede: rolls at her curled up, as the kind's charge; at her, every member's turn to charge for time, one after another as her dodge tokens free (Ed, 2026-10-20), hers on the wild all at once. Phase 1's (Echo, 2026-10-19): mirage: images (young, adult) of the flock round her, ring times 8 m out, each taking a \u{1F48C} meant for them and bursting, for time; sync: for time, each blink of hers brings count of the pack blinking in ring metres from where it put her, striking at once. A kind's specialWith is its own variant over these: confusion's move (her movement turned, not her aim: the bat's), cloud's flash (it confuses her aim inside it: the moth's) and leap (its thrower leaps at her and it comes down where it lands: the toad's), cover's both (two lock shells, both dug in: the beetle's). Step 2 (2026-10-23): knockback: the run-up and ram, the special one charging her by its own charge, that blow throwing her throw metres (the ram, the ibex, the rhino 12); pull: within reach metres of it she's dragged pull metres toward it, no hurt, a blink dodging it (the spider's web line, the crocodile's current, the griffin's gust; hers on the wild drags them in); decoy: the one waving catches her \u{1F48C}s that fly within radius of it for time, its meter untouched (the raccoon); mind (adults only): the nearest of her animals within radius turns on her for time, none near, her aim drifts drift degrees; hers on the wild, its foe stunned hers.stun s (the owl, the unicorn).",
     specials: {
       stampede: { time: 4, cooldown: 9, tint: "red" },
       scatter: { time: 0.6, ring: 1.1, cooldown: 8, tint: "white" },
@@ -16575,7 +17165,11 @@ label.check input { accent-color: var(--accent); }
       rally: { radius: 12, heal: 1, cooldown: 9, tint: "green" },
       cover: { time: 3, reach: 4, armour: 0.5, cooldown: 8, tint: "white" },
       mirage: { time: 6, images: [2, 3], ring: 1, cooldown: 10, tint: "violet" },
-      sync: { time: 5, count: 1, ring: 2.5, cooldown: 9, tint: "white" }
+      sync: { time: 5, count: 1, ring: 2.5, cooldown: 9, tint: "white" },
+      knockback: { time: 2, throw: 10, cooldown: 8, tint: "red" },
+      pull: { pull: 6, reach: 18, cooldown: 9, tint: "violet" },
+      decoy: { time: 3, radius: 3, cooldown: 9, tint: "white" },
+      mind: { time: 3, radius: 14, drift: 30, cooldown: 10, tint: "violet" }
     },
     _retreats: "Each retreat pattern (the lull's movement, round her): out, metres from her it falls back to; hide, whether it's out of sight (untouchable, not drawn) for the middle of the lull and back from another side (half: every other member, the rest staying down); still, whether it stands where it is. Phase 1's (Echo): flanks (the wolves: two groups to her sides), backLine (the boars: backing off slowly in a line facing her), branches (the ravens: half up into the branches), water (the newts and otters: under, back out elsewhere; out of sight like a burrow, wherever the water is: no water map yet), huddle (the beetles: into one huddle), arcs (the toads: hopping off apart in arcs), swirl (the moths: round her, quicker than a circle).",
     retreats: {
