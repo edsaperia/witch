@@ -21,6 +21,8 @@ export const SIZE = 2;
 const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
 const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
 /** A light at model point c: its colour, its reach in pixels (at the house's pixel, before SIZE) and its power (art/lighting.js shade's). */
+/** The tilt (radians, nose up) the Workshop's parts hang at on the pegboard's pegs (art/workshop.js partSprite's `hung`). */
+export const HANG = .35;
 const light = (m, c, rgb, R, power) => { (m.lights ??= []).push({ c, rgb, R, power }); };
 /** A glowing bulb, flame or bead (drawn unlit), its light with it. */
 const bulb = (m, c, r, mat, g, lit) => { m.ell(c, [r, r, r], mat, { group: g, extra: true }); if (lit) light(m, c, ...lit); };
@@ -439,6 +441,8 @@ const PIECES = {
       for (const sy of [-1, 1]) m.box([x, y + sy * (ch / 2 - .03), zf], [cw / 2 - .04, fw, .012], mat, { group: 10 + r * 3 + c });
       for (const sx of [-1, 1]) m.box([x + sx * (cw / 2 - .04), y, zf], [fw, ch / 2 - .03, .012], mat, { group: 10 + r * 3 + c });
       (m.marks ??= {})[`cell${r * 3 + c}`] = [x, y, zf + .03];
+      // two pegs a cell, the part hung across them at HANG's tilt (art/workshop.js), a little under its line
+      for (const t of [-.2, .2]) { const px = x + t * Math.cos(HANG), py = y + t * Math.sin(HANG) - .045; m.seg([px, py, zf], [px, py, zf + .07], .016, .014, M.BARKD, { group: 40 + r * 3 + c }); }
     }
     // the compass rose over it: a brass disc, its four points, north up and red
     const rc = [0, y1 + .2, zf - .01];

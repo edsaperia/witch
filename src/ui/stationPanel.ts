@@ -303,7 +303,7 @@ export class StationPanel {
     const was = this.lastThumb.get(key.slice(0, key.lastIndexOf(":"))); if (was) el.replaceChildren(was); // (the last one shown, till the new one's baked)
     if (!this.queue.some(q => q.key === key)) {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
-      if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { ppm: 30, pitch: .3 }).c }); }
+      if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { fit: 58 }).c }); }
       else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
     if (!this.raf) this.raf = requestAnimationFrame(() => this.bakeSome());
