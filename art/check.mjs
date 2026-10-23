@@ -825,6 +825,17 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     }
     res.push({ what: "farm and street pieces: farm 15+, street 10+; standing, origin on the sprite, 0.5 to 9 m, footprint up to 6 m, tall ones split, only the flagged ones glow", good: !bad.length && fam.farm >= 15 && fam.street >= 10, info: bad.join(", ") || Object.entries(fam).map(([k, n]) => k + " " + n).join(", ") });
   });
+  task("wrecks", async () => { // the broom parts' wrecks (the Workshop, rules/finds.ts): one for each part in config/broom-parts.json, each drawn, standing on its bottom row, nothing glowing, all different
+    const parts = Object.keys((await (await fetch("/config/broom-parts.json")).json()).parts), bad = [], seen = new Map(), EM = new Set([...G.EMISSIVE]);
+    for (const id of parts) {
+      if (!G.WRECK_PARTS.includes(id) || !G.COUNTRY_BY_ID["wreck-" + id]) { bad.push(`${id} has no wreck`); continue; }
+      const R = G.countrySprite("wreck-" + id, st), sp = R.whole, s2 = stats(sp), lit = [...sp.m].some(v => EM.has(v)), nan = [...sp.n].some(v => !Number.isFinite(v)), key = `${sp.w}x${sp.h}:${[...sp.m].join("")}`;
+      if (!(s2.n > 200 && s2.bottom > 0 && !nan && !lit)) bad.push(`${id} ${s2.n} px${s2.bottom ? "" : " floating"}${lit ? " glowing" : ""}${nan ? " NaN" : ""}`);
+      if (seen.has(key)) bad.push(`${id} the same as ${seen.get(key)}`); seen.set(key, id);
+    }
+    if (G.WRECK_PARTS.length !== parts.length) bad.push(`${G.WRECK_PARTS.length} wrecks for ${parts.length} parts`);
+    res.push({ what: "wrecks: every broom part's own, drawn, standing on its bottom row, nothing glowing, no two alike", good: !bad.length && parts.length >= 9, info: bad.join(", ") || `${parts.length} wrecks` });
+  });
   task("landmarks", async () => { // the large scenes' pieces: each standing, origin on the sprite, 0.3 to 16 m, tall ones split, decals flat, only the flagged ones glow; buildings in two halves
     const bad = [], fam = {}, EM = new Set([...G.EMISSIVE]);
     for (const d of G.LANDMARKS) {

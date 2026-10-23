@@ -7,9 +7,10 @@ import { coolCharge, coolReady, coolShare, coolSpend, newCool, stepCool } from "
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
-/** Her on home's open ground, off her decks, waves off, on a broom with a spell (the plain broom halves the take-off's and the landing's amounts: spells.plain). */
-const SPEED = withTuning({ spells: { ...TUNING.spells, broom: "speed" } });
-function onGround(t: Tuning = SPEED): Game {
+/** Her on home's open ground, off her decks, waves off, on the bare broom (no parts: the take-off's and the landing's full
+ *  amounts; the Jet nozzles would halve them, rules/broomParts.ts). */
+const BARE = withTuning({ spells: { ...TUNING.spells, broom: "none", parts: "" } });
+function onGround(t: Tuning = BARE): Game {
   const g = newGame(7, t), W = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
   W.body = { ...W.body, seated: false, mode: "ground", lift: 0, x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z + 30 };

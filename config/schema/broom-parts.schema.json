@@ -1,0 +1,114 @@
+{
+  "type": "object",
+  "properties": {
+    "parts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "string",
+            "enum": [
+              "tip",
+              "chassis",
+              "exhaust"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "look": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string"
+              },
+              "piece": {
+                "type": "string",
+                "enum": [
+                  "body",
+                  "tail"
+                ]
+              }
+            },
+            "required": [
+              "kind",
+              "piece"
+            ],
+            "additionalProperties": false
+          },
+          "up": {
+            "type": "string"
+          },
+          "down": {
+            "type": "string"
+          },
+          "stats": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "mult": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "add": {
+                  "type": "number"
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "slot",
+          "name",
+          "look",
+          "up",
+          "down",
+          "stats"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "sets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "pieces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "spell": {
+            "type": "string",
+            "enum": [
+              "speed",
+              "battering",
+              "leyjump",
+              "pound",
+              "stealth"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "pieces",
+          "spell"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "parts",
+    "sets"
+  ],
+  "additionalProperties": false
+}

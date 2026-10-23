@@ -15,7 +15,7 @@ import { HouseRoomsView } from "./houseRooms";
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
-import { blinkCharges, poseOf } from "../rules/game";
+import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
@@ -1218,7 +1218,7 @@ export class View {
       const dt = this.trailAt < 0 ? 0 : Math.min(0.1, Math.max(0, ht - this.trailAt)); this.trailAt = ht;
       const back = sp > 0.1 ? 0.6 / sp : 0, W0 = g.witches[0], D = W0.dash;
       // (and its length at least the shared cooldown's share: rules/cooldown.ts, Ed 2026-10-15; the ribbon along her blink's line)
-      const cool = t.cooldown?.shared ? coolShare(W0.cool, coolRoom(t, blinkCharges(g, W0))) : 0;
+      const tw = witchTuning(g, W0), cool = tw.cooldown?.shared ? coolShare(W0.cool, coolRoom(tw, blinkCharges(g, W0))) : 0; // (her broom's parts: rules/broomParts.ts)
       this.trail.update(w.x - w.vx * back, witchHeight(w, t) + 0.25 + this.rideOff, w.z - w.vz * back, sp, top, lift, c, ht, dt, D.at, D, cool);
       // the load she carries (render/load.ts): read once a frame, for the stack, the threads, her lean and her broom
       loadView(g, t.load ?? LOAD_DEFAULT, dt, this.leashView.load);

@@ -8,12 +8,13 @@ import { bootSeconds } from "../rules/bootRing";
 import { newCamera } from "../rules/camera";
 import { witchHeight } from "../rules/witch";
 import { setKnob, knobAt } from "../ui/decisions";
+import { fittedParts } from "../rules/broomParts";
 
 /** The link's switches the repro link writes itself (anything else on the page's own link is carried over as it was). */
-export const REPRO_KEYS = ["seed", "world", "found", "hat", "broom", "wave", "cleared", "at", "mode", "zoom", "creator", "spell", "set"] as const;
+export const REPRO_KEYS = ["seed", "world", "found", "hat", "broom", "parts", "wave", "cleared", "at", "mode", "zoom", "creator", "spell", "set"] as const;
 /** Tuning paths every load sets from elsewhere: never listed as changed. The link's own switches, the chart's save and her loadout
  *  (app/linkParams.ts); the beat from the music style (the same); the prop generator, always on (app/viewParams.ts). */
-const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.broom", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
+const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.broom", "spells.parts", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
 
 /** Every leaf (a number, string, boolean or list) where `live` differs from `base`, by its dotted path; `_` notes skipped. */
 export function tuningDiff(live: unknown, base: unknown, prefix = "", out: [string, unknown][] = []): [string, unknown][] {
@@ -40,11 +41,11 @@ export function applySet(tuning: object, raw: string | null): void {
 export const setText = (diff: [string, unknown][]): string => diff.map(([p, v]) => `${p}=${JSON.stringify(v)}`).join(";");
 
 /** The game state the link rebuilds. */
-export interface ReproState { seed: number; world?: number; found: string[]; hat: string; broom: string; wave: number; cleared: string[]; at?: [number, number]; mode?: "ground" | "treetop"; zoom: number; set: string }
+export interface ReproState { seed: number; world?: number; found: string[]; hat: string; broom: string; /** her broom's parts (rules/broomParts.ts), a comma list */ parts?: string; wave: number; cleared: string[]; at?: [number, number]; mode?: "ground" | "treetop"; zoom: number; set: string }
 export function reproState(g: Game, changed: [string, unknown][]): ReproState {
   const w = g.witch, m = g.tuning.map, onDecks = !!w.seated || !!w.perch;
   return {
-    seed: g.seed, world: m?.world, found: [...(m?.found ?? [])], hat: g.spells.hat, broom: g.spells.broom,
+    seed: g.seed, world: m?.world, found: [...(m?.found ?? [])], hat: g.spells.hat, broom: g.spells.broom, parts: fittedParts(g.spells.parts).map(p => p.id).join(","),
     wave: g.party.wave, cleared: [...(g.party.ahead ?? [])].map(k => k.replace(",", "_")),
     ...(onDecks ? {} : { at: [Math.round(w.x), Math.round(w.z)] as [number, number], mode: w.lift >= 0.5 ? "treetop" as const : "ground" as const }),
     zoom: g.camera.zoomStep, set: setText(changed),
@@ -57,7 +58,7 @@ export function reproQuery(s: ReproState, page: URLSearchParams): string {
   for (const k of [...p.keys()]) if (k === "debug" || k === "playtest") p.delete(k);
   const q: [string, string][] = [["seed", String(s.seed)]];
   if (s.world !== undefined) q.push(["world", String(s.world)]);
-  q.push(["found", s.found.join(",")], ["hat", s.hat], ["broom", s.broom]); // (always: a builder's own save would stand in otherwise)
+  q.push(["found", s.found.join(",")], ["hat", s.hat], ["broom", s.broom], ["parts", s.parts ?? ""]); // (always: a builder's own save would stand in otherwise)
   if (s.wave > 0) q.push(["wave", String(s.wave)]);
   if (s.cleared.length) q.push(["cleared", s.cleared.join(",")]);
   if (s.at) q.push(["at", s.at.join(",")], ["mode", s.mode!]);

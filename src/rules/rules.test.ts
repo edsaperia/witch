@@ -1693,6 +1693,7 @@ describe("the simulation (Stage 4)", () => {
     const g = newGame(321, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
+    g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, STEP / 4);
     expect(g.witch.mode).toBe("ground");
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP);
@@ -1703,6 +1704,7 @@ describe("the simulation (Stage 4)", () => {
     const g = newGame(321, TUNING);
     g.clock.paused = false;
     g.witch = { ...g.witch, seated: false, perch: false };
+    g.witches[0].cool.left = 0; // (the shared cooldown empty: the bare broom's take-off needs all its room, Ed 2026-10-23)
     stepGame(g, { moveX: 0, moveZ: 0, toggleMode: true, zoom: 0 }, 0.1); // six steps
     expect(g.witch.mode).toBe("rising");
   });

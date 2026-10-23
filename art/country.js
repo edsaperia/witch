@@ -16,6 +16,7 @@ export const ctHash = sinHash, ctGlow = glowBall; // (their old names here, for 
 import { Model, render, v3 } from "./model3d.js";
 import { witchPixelsPerUnit } from "./witch.js";
 import { carModel } from "./relics.js";
+import { BROOM_KINDS } from "./brooms.js";
 
 export const ctCell = (p, k, s = 0) => sinHash(Math.floor(p[0] * k) + Math.floor(p[2] * k) * 57 + s, Math.floor(p[1] * k));
 // weathering: rust and moss patches over a material
@@ -269,6 +270,147 @@ function travelTrunk(m) {
   ctTufts(m, 9, .75, 7, 41);
 }
 
+// ---------------- wrecks ----------------
+// An old witch's crashed broom (the Workshop, Ed 2026-10-22/23: docs/backlog/workshop.md; rules/finds.ts FIND_KINDS), the night's
+// find when it's a broom part: each part's wreck its own scene, the part itself as it lies, posed to tell its story, made from
+// art/brooms.js's own kinds so it looks as it will on her broom. Every wreck has a lost pointed hat somewhere in it and a skirt of
+// moss and tufts; nothing glows (a ground-mode find, no glint: the jet's flames and the horse's eyes cold).
+const wkRemap = (m, map) => { const R = { ...m, parts: m.parts, flats: m.flats,
+  seg: (a, b, r1, r2, mat, o = {}) => (m.seg(a, b, r1, r2, map[mat] ?? mat, o), R), chain: (pts, mat, o = {}) => (m.chain(pts, map[mat] ?? mat, o), R),
+  ell: (c, r, mat, o = {}) => (m.ell(c, r, map[mat] ?? mat, o), R), box: (c, h, mat, o = {}) => (m.box(c, h, map[mat] ?? mat, o), R), flat: (...x) => (m.flat(...x), R) }; return R; };
+// her broom's materials in the country kit's: the body faded paint or old wood, the trim hay or rust, the glow gone cold and sooty
+const WK_COLD = { [M.MAGIC]: M.BODY3, [M.MAGIC2]: M.STONED, [M.EYE]: M.NOSE, [M.GLINT]: M.BELLY };
+const wkMats = (body, trim) => ({ ...WK_COLD, [M.BROOM]: body, [M.STRAW]: trim });
+const WK_L = { broomLength: 1, bristles: 1, frame: 0 };
+// One end of a kind, drawn along x (its body from x0 to x1, its nose at x1; or its tail bound at x0, pointing back along -x) and
+// then placed; L: the kind's knobs (bristles: its back end's size).
+function wkKind(m, kind, piece, mats, at, { g = 3, x0 = -.5, x1 = .62, L = {} } = {}) {
+  const n = mark(m), K = BROOM_KINDS[kind], mm = wkRemap(m, mats), LL = { ...WK_L, ...L };
+  if (piece === "body") K.body(mm, LL, [x0, 0, 0], [x1, 0, 0], .022, .018);
+  else K.tail(mm, LL, [x0 - .13, 0, 0], [.17, .07, .08], { dir: [1, 0, 0], group: g });
+  place(m, n, at);
+}
+// a plain broomstick from x0 to x1, placed
+function wkStick(m, x0, x1, at, g = 4, mat = M.WOOD) { const n = mark(m); m.seg([x0, 0, 0], [x1, 0, 0], .022, .018, mat, { group: g, paint: ctPlank(9, .2) }); place(m, n, at); }
+// a twig broom's bundle: a long bound sheaf of bristles along -x from 0, stray twigs out of its end
+function wkBundle(m, at, g = 5) {
+  const n = mark(m);
+  m.ell([-.34, 0, 0], [.36, .1, .1], M.STRAW, { group: g, rough: .012, paint: p => ctCell(p, 24, 2) < .25 ? M.BARK2 : undefined });
+  m.seg([.03, 0, 0], [-.06, 0, 0], .06, .07, M.WOOD, { group: g + 1 }); // its binding
+  for (let i = 0; i < 7; i++) { const s = (i / 6 - .5) * 2; m.seg([-.45, 0, 0], [-.85 - .06 * (i % 2), s * .13, (i % 3 - 1) * .1], .014, .006, M.STRAW, { group: g + 2 }); }
+  place(m, n, at);
+}
+// a pointed witch's hat lost in it, lying on its side (her hat's colours long faded), its band dark
+function wkHat(m, at, yaw, g = 8, roll = 1.25) {
+  const n = mark(m);
+  m.ell([0, .02, 0], [.2, .018, .18], M.HAT1, { group: g, rough: .006 }); // the brim
+  m.seg([0, .02, 0], [.02, .24, .01], .095, .05, M.HAT1, { group: g + 1 });
+  m.seg([.02, .24, .01], [-.1, .36, .02], .05, .006, M.HAT1, { group: g + 1 }); // the crown's crook
+  m.ell([0, .04, 0], [.088, .02, .088], M.JACKET, { group: g + 2 }); // its band
+  place(m, n, { roll, yaw, at });
+}
+// bristles and twigs strewn on the ground
+function wkStraws(m, n, R, cx, cz, seed, g = 13) { for (let i = 0; i < n; i++) { const a = sinHash(seed, i) * 6.283, d = R * Math.sqrt(sinHash(i, seed + 3)), x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d * .7, b = sinHash(i, seed + 7) * 6.283; m.seg([x, .012, z], [x + Math.cos(b) * .1, .012, z + Math.sin(b) * .08], .007, .005, M.STRAW, { group: g + (i % 2) }); } }
+// earth, mossed (and scorched: `burnt`)
+const wkEarth = (m, c, r, burnt = false, g = 1) => m.ell(c, r, burnt ? M.BODY3 : M.STONED, { group: g, rough: .03, paint: p => ctCell(p, 12, 2) < (burnt ? .25 : .4) ? (burnt ? M.STONED : M.MOSS) : ctCell(p, 9, 3) < .12 ? M.MOSS : undefined });
+// a mossy log along x
+function wkLog(m, c, len, r, g = 2) { ctCyl(m, [c[0] - len, c[1], c[2]], [c[0] + len, c[1], c[2]], r, M.TRUNK, g, { paint: p => p[1] > c[1] + r * .4 && ctCell(p, 10, 1) < .7 ? M.MOSS : ctCell(p, 20, 4) < .2 ? M.BARK2 : undefined, end: ctRings([c[0], c[1], c[2]], 0) }); }
+
+const WRECKS = {
+  // the Missile nose: buried tail-first, only its nose and band up out of a mound, like a shell that never went off; a ring of
+  // its fins snapped off round it, scorched earth, the hat hung on a fin
+  missile(m) {
+    wkEarth(m, [0, .02, 0], [.62, .05, .46], true); wkEarth(m, [0, .07, 0], [.26, .12, .22], false, 2); // the scorch, and the mound it's sunk in
+    wkKind(m, "missile", "body", wkMats(M.BODY, M.FRAME), { pitch: 1.4, yaw: .3, at: [0, .02, 0] }, { x0: 0, x1: .8 }); // (its foot in the mound)
+    for (let i = 0; i < 4; i++) { const a = i * 1.7 + .4, x = Math.cos(a) * .45, z = Math.sin(a) * .32, n = mark(m); m.box([0, 0, 0], [.07, .045, .008], M.FRAME, { round: .006, group: 5, paint: ctWorn(.5, .1) }); place(m, n, { yaw: a, roll: i === 1 ? 1.3 : .2, at: [x, i === 1 ? .07 : .02, z] }); }
+    wkHat(m, [Math.cos(2.1) * .45 + .02, .12, Math.sin(2.1) * .32], .6, 8, .5);
+    ctMoss(m, [-.3, .05, .2], [.12, .03, .08], 6); ctTufts(m, 6, .75, 11, 71); wkStraws(m, 5, .4, .2, -.2, 72);
+  },
+  // the Curled tip: snapped in two over a mossy log, the curl hanging off the far side; its bristles strewn along the log, ivy over
+  // the break, a hat crushed under the log
+  curl(m) {
+    wkEarth(m, [0, .02, 0], [.75, .05, .42]);
+    wkLog(m, [0, .14, -.05], .55, .13);
+    wkKind(m, "curl", "body", wkMats(M.WOOD, M.WOOD), { pitch: -.75, yaw: -.2, at: [-.1, .38, -.22] }); // its front half over the log, the curl down the far side
+    wkStick(m, -.55, 0, { pitch: .35, yaw: .25, at: [.15, .04, .2] }); // its back half fallen this side
+    ctIvy(m, [-.15, .1, .05], [.02, .32, -.08], 6, 73);
+    wkStraws(m, 14, .55, 0, .1, 74); wkHat(m, [.42, .02, -.12], 2.6, 8, 1.5);
+    ctMoss(m, [.3, .26, -.05], [.14, .04, .1], 7); ctTufts(m, 6, .85, 11, 75);
+  },
+  // the Hobby-horse head: driven upright into the ground like a grave marker, the horse looking out, a red scarf round its neck,
+  // ivy up the handle, bristles at its foot, the hat beside it
+  horse(m) {
+    wkEarth(m, [0, .03, 0], [.4, .07, .3]);
+    wkKind(m, "hobbyhorse", "body", wkMats(M.WOOD, M.BELLY), { pitch: 1.35, yaw: .4, at: [0, .02, 0] }, { x0: 0, x1: .75 }); // upright, a little leaning, its foot in the earth
+    m.ell([.03, .78, .01], [.06, .035, .06], M.ACCENT, { group: 5 }); // the scarf's knot
+    m.seg([.04, .78, .02], [.14, .62, .08], .03, .02, M.ACCENT, { group: 5 }); m.seg([.14, .62, .08], [.17, .42, .12], .02, .012, M.ACCENT, { group: 5 }); // its tail
+    ctIvy(m, [.0, .05, .03], [.04, .45, .03], 6, 53); wkStraws(m, 14, .45, .1, .15, 54, 7); wkHat(m, [-.45, 0, .22], 2.2, 9); ctTufts(m, 4, .7, 12, 55, 0, -.35);
+  },
+  // the Jet-bike fairing: on its side, sledged a long furrow into the ground; a torn-up trail of turf behind it, the windscreen
+  // cracked, ferns grown up through the furrow
+  fairing(m) {
+    m.ell([-.35, .015, 0], [.75, .03, .2], M.BODY3, { group: 1, rough: .02, paint: p => ctCell(p, 10, 2) < .3 ? M.STONED : undefined }); // the furrow
+    for (let i = 0; i < 5; i++) { const x = -1 + i * .2, n = mark(m); m.box([0, 0, 0], [.07, .025, .05], M.MOSS, { round: .02, group: 2, rough: .01, paint: p => ctCell(p, 14, i) < .4 ? M.STONED : undefined }); place(m, n, { yaw: i * .9, roll: i % 2 ? .6 : -.5, at: [x, .04, (i % 2 ? .2 : -.2)] }); } // turf thrown up either side
+    wkEarth(m, [.35, .05, 0], [.24, .08, .24], false, 3); // the earth banked at its nose
+    wkKind(m, "jetbike", "body", wkMats(M.BODY, M.BELLY), { roll: 1.25, yaw: .1, at: [.05, .12, 0] }); // on its side
+    m.seg([.32, .3, -.05], [.36, .2, .02], .006, .006, M.LINE, { group: 9 }); // the windscreen's crack
+    ctFern(m, [-.55, .02, 0], 6, .5); ctFern(m, [-1.0, .02, .05], 7, .4);
+    wkHat(m, [-.75, .02, .3], 1.0); ctTufts(m, 6, .9, 11, 76, -.2, 0);
+  },
+  // the Ladder: leaning against a trunk as if climbed, rungs broken; the hat high in the tree's lowest branch, a lantern at its foot
+  ladder(m) {
+    wkEarth(m, [0, .02, 0], [.55, .05, .4]);
+    ctCyl(m, [.15, 0, -.25], [.15, 1.55, -.25], .16, M.TRUNK, 2, { paint: p => ctCell(p, 9, 2) < .3 && p[1] < .6 ? M.MOSS : ctCell(p, 20, 4) < .25 ? M.BARK2 : undefined, end: ctRings([.15, 1.55, -.25], 1) }); // the trunk, its top snapped off
+    m.seg([.15, 1.15, -.25], [.6, 1.42, -.2], .05, .025, M.TRUNK, { group: 3 }); m.seg([.6, 1.42, -.2], [.78, 1.45, -.2], .025, .012, M.TRUNK, { group: 3 }); // its lowest branch
+    wkKind(m, "ladder", "body", wkMats(M.BARKL, M.WOOD), { pitch: 1.2, yaw: -.15, at: [-.38, .02, .05] }, { x0: 0, x1: 1.25 }); // leaning up its side
+    for (const [x, y] of [[-.12, .5], [-.02, .74]]) { const n = mark(m); m.seg([0, 0, -.06], [0, 0, .04], .011, .011, M.WOOD, { group: 6 }); place(m, n, { roll: .9, yaw: .3, at: [x, y, .2] }); } // broken rungs hanging
+    wkHat(m, [.62, 1.45, -.2], .4, 8, .25); // up in the branch
+    ctCyl(m, [-.45, 0, .25], [-.45, .14, .25], .055, M.FRAME, 10, { end: M.NOSE }); m.ell([-.45, .19, .25], [.04, .05, .04], M.STONED, { group: 11 }); // the lantern at its foot, long out
+    ctIvy(m, [.2, .05, -.1], [.18, .8, -.1], 7, 77); ctTufts(m, 6, .7, 12, 78); ctMoss(m, [.15, .04, -.25], [.25, .05, .2], 5);
+  },
+  // the Canoe hull: turned turtle in the moss, its bow up on a root, a fern through a split in it, its paddle beside it, the hat
+  // on the ground
+  canoe(m) {
+    wkEarth(m, [0, .02, 0], [.75, .05, .4]);
+    m.seg([.5, .02, -.15], [.7, .1, .1], .05, .03, M.TRUNK, { group: 2 }); // the root it's up on
+    wkKind(m, "canoe", "body", wkMats(M.ACCENT, M.WOOD), { roll: Math.PI, pitch: .12, yaw: -.25, at: [.05, .1, 0] }); // upside down, its bow up
+    const o = mark(m); BROOM_KINDS.oar.tail(wkRemap(m, { [M.STRAW]: M.WOOD }), WK_L, [-.62, 0, 0], [.17, .07, .08], { dir: [1, 0, 0], group: 4 }); m.seg([-.5, 0, 0], [.4, 0, 0], .02, .018, M.WOOD, { group: 4 });
+    place(m, o, { yaw: .9, at: [-.25, .03, .38] }); // its paddle
+    ctFern(m, [.15, .14, -.05], 6, .55); ctMoss(m, [-.3, .18, -.03], [.18, .04, .1], 7); wkHat(m, [.7, 0, .25], -1.2); ctTufts(m, 5, .9, 11, 52, 0, -.4);
+  },
+  // the Jet nozzles: nose-down, the back end up, the nozzles cold and sooted; a scorched ring of thrown earth, moss over the near
+  // side, the hat flung clear
+  nozzles(m) {
+    wkEarth(m, [0, .02, 0], [.6, .04, .4], true); wkEarth(m, [.22, .06, 0], [.34, .13, .3], false, 2);
+    const n = mark(m), mm = wkRemap(m, wkMats(M.BODY, M.FRAME));
+    BROOM_KINDS.jetbike.body(mm, WK_L, [-.5, 0, 0], [.62, 0, 0], .022, .018); BROOM_KINDS.jetbike.tail(mm, WK_L, [-.62, 0, 0], [.17, .07, .08], { dir: [1, 0, 0], group: 3 });
+    place(m, n, { pitch: -.85, yaw: .5, roll: .25, at: [-.1, .5, 0] }); // nose-down in the mound, its nozzles up
+    ctMoss(m, [-.3, .06, -.15], [.12, .04, .1], 6); wkHat(m, [.55, 0, .25], .8); ctTufts(m, 4, .8, 11, 51, 0, -.35); wkStraws(m, 8, .4, -.35, .2, 56);
+  },
+  // the Twig bristles: a bristle bundle on its own, wedged in a fork of roots, the handle gone; bristles and twigs scattered for
+  // metres as if it came apart in the air, the hat upturned with water in it
+  twigs(m) {
+    wkEarth(m, [0, .02, 0], [.8, .04, .45]);
+    for (const [a, l] of [[-.5, .5], [.4, .45], [1.4, .35]]) m.chain([[0, .12, -.15, .07], [Math.cos(a) * l * .5, .07, -.15 + Math.sin(a) * l * .4, .045], [Math.cos(a) * l, .02, -.15 + Math.sin(a) * l * .7, .02]], M.TRUNK, { group: 2, paint: p => ctCell(p, 12, 1) < .3 ? M.MOSS : undefined }); // the fork of roots
+    wkBundle(m, { pitch: .6, yaw: .5, roll: .2, at: [.2, .3, -.1] });
+    m.seg([.06, .2, -.07], [.12, .22, -.05], .02, .012, M.WOOD, { group: 6 }); // the handle's snapped stub
+    wkStraws(m, 22, .8, 0, .1, 79);
+    const h = mark(m); // the hat upturned, rain in its crown
+    m.ell([0, .02, 0], [.2, .018, .18], M.HAT1, { group: 8 }); m.seg([0, .02, 0], [.02, -.18, .01], .095, .05, M.HAT1, { group: 9 }); m.ell([0, .03, 0], [.08, .01, .08], M.WATER, { group: 10 });
+    place(m, h, { roll: .1, at: [-.5, .12, .25] });
+    ctTufts(m, 6, .9, 11, 80);
+  },
+  // the Oar blade: stuck straight up out of a pool's edge, the handle under the water line; reeds round it, the hat floating
+  oar(m) {
+    m.ell([0, .015, 0], [.7, .03, .42], M.STONED, { group: 1, rough: .02, paint: p => ctCell(p, 12, 2) < .45 ? M.MOSS : undefined }); // the bank
+    m.ell([.05, .03, .02], [.5, .012, .3], M.WATER, { group: 2, paint: p => ctCell(p, 11) < .15 ? M.LEAF3 : undefined }); // the pool
+    wkKind(m, "oar", "tail", { [M.STRAW]: M.CLOTH }, { pitch: -1.45, yaw: .3, at: [-.05, .03, 0] }, { x0: 0, L: { bristles: 1.5 } }); // the blade up, its painted face weathered, the handle down in the water
+    for (let i = 0; i < 9; i++) { const a = i * .8 + 2, r = .3 + sinHash(i, 81) * .15, x = Math.cos(a) * r, z = Math.sin(a) * r * .7, hh = .25 + sinHash(i, 82) * .2; m.seg([x, .02, z], [x + .02, hh, z], .012, .004, i % 3 ? M.LEAF : M.LEAF2, { group: 5 + (i % 2) }); if (i % 3 === 0) m.ell([x + .02, hh - .05, z], [.014, .04, .014], M.BARK2, { group: 7 }); } // reeds, a bulrush or two
+    wkHat(m, [.3, .04, .12], 1.9, 8, .1); // floating, on its brim
+    ctTufts(m, 5, .8, 11, 83, -.3, -.2);
+  },
+};
+
 const SCENE_PIECES = {
   "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) { travelTrunk(m); } },
   "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) { harvestSprout(m, 0); } },
@@ -413,7 +555,10 @@ export const COUNTRY = [
   ...Object.entries(FARM).map(([id, d]) => ({ id, family: "farm", size: 1, split: null, ...d })),
   ...Object.entries(STREET).map(([id, d]) => ({ id, family: "street", size: 1, split: null, ...d })),
   ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d })),
+  ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build })),
 ];
+/** The broom parts' wrecks, by part id (rules/broomParts.ts): each drawn as the country piece wreck-<id>. */
+export const WRECK_PARTS = Object.keys(WRECKS);
 export const COUNTRY_BY_ID = Object.fromEntries(COUNTRY.map(d => [d.id, d]));
 export function countryColours(st = {}) {
   const leaf = st.leafHue ?? .3, trunk = st.trunkHue ?? .07;

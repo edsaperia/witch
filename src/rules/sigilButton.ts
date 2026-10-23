@@ -13,7 +13,7 @@ import { heldByCombat } from "./creatures";
 import { stepLeash, type LeashEvent } from "./leash";
 import { flaskUnder } from "./legends";
 import { growthSpurt } from "./berries";
-import { trunkAt } from "./finds";
+import { findKind, trunkAt } from "./finds";
 import { runeNear } from "./creatureStates";
 import { spaceRadius } from "./spacing";
 import { hatButton, putHat, wearing } from "./hat";
@@ -81,11 +81,13 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     W.hat.down = { x: g.witch.x, z: g.witch.z, at: ht }; delete W.hat.hold;
     relicEvents.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
   }
-  // Tonight's travel trunk (rules/finds.ts; Ed, 2026-10-21): E at it while the party's on takes what's in it, hers at once.
+  // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
+  // takes what's in it, hers at once (a broom part onto her broom if its slot is empty: the kind's claim).
   const trunk = (sigil || place) && onFoot && !g.partyOver ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null;
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
-    relicEvents.push({ kind: "found", id: W.id, x: trunk.x, z: trunk.z, at: ht, obj: trunk.item! });
+    findKind(trunk.kind).claim?.(W.spells, trunk.item!);
+    relicEvents.push({ kind: "found", id: W.id, x: trunk.x, z: trunk.z, at: ht, obj: trunk.item!, find: trunk.kind });
   }
   // A run (rules/leash.ts, Ed 2026-10-15): the button held since a press that picked up keeps picking up (a lying relic's sigil too);
   // held since one that put down, nothing here (the leash puts the next down as she enters an empty hex).

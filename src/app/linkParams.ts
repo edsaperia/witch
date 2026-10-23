@@ -5,6 +5,8 @@ import { playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
+import { loadBroom } from "./broomSave";
+import { fittedParts } from "../rules/broomParts";
 import type { MusicCue } from "../rules/musicPlan";
 import type { MusicStyle } from "../rules/musicScore";
 import musicStyleJson from "../../config/music-style.json";
@@ -206,6 +208,9 @@ export function tuningFromLink(params: URLSearchParams) {
   if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
   // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
   { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
+  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted on this browser, or ?parts=missile,ladder,nozzles
+  // for one load (any parts, found or not: a debug switch till the bay).
+  { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
   applySet(tuning, params.get("set"));
   return { tuning, musicStyle, musicCue: musicCueNow, world, WORLD_DEFAULT };

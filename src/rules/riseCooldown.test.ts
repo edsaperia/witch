@@ -20,8 +20,8 @@ function landed(t = TUNING) {
 describe("the rise cooldown (riseCooldown)", () => {
   it("is 3 s", () => expect(TUNING.riseCooldown).toBe(3));
 
-  it("just landed, rising does nothing till riseCooldown seconds after; then she rises (on a broom with a spell)", () => {
-    const { g, W } = landed(withTuning({ spells: { ...TUNING.spells, broom: "speed" } }));
+  it("just landed, rising does nothing till riseCooldown seconds after; then she rises (the bare broom: Ed, 2026-10-23, no quick take-off)", () => {
+    const { g, W } = landed();
     for (let i = 0; i < (TUNING.riseCooldown! - 0.5) / STEP; i++) stepGame(g, idle, STEP);
     stepGame(g, { ...idle, toggleMode: true }, STEP);
     expect(W.body.mode).toBe("ground"); // (2.5 s on: not yet)
@@ -30,15 +30,20 @@ describe("the rise cooldown (riseCooldown)", () => {
     expect(W.body.mode).not.toBe("ground"); // (3.1 s on: up she goes)
   });
 
-  it("the plain broom's is shorter (Ed, 2026-10-11: 'default broom reduces treetop cooldown'; spells.plain)", () => {
-    const { g, W } = landed(), k = TUNING.riseCooldown! * TUNING.spells.plain!.riseCooldown;
-    for (let i = 0; i < (k + 0.1) / STEP; i++) stepGame(g, idle, STEP);
-    stepGame(g, { ...idle, toggleMode: true }, STEP);
-    expect(W.body.mode).not.toBe("ground");
+  it("the Jet nozzles' is half (the plain broom's old quick take-off, won back by a part: Ed, 2026-10-23); the bare broom's isn't", () => {
+    const k = TUNING.riseCooldown! * 0.5, after = (parts: string) => {
+      const { g, W } = landed(withTuning({ spells: { ...TUNING.spells, parts } }));
+      for (let i = 0; i < (k + 0.1) / STEP; i++) stepGame(g, idle, STEP);
+      stepGame(g, { ...idle, toggleMode: true }, STEP);
+      return W.body.mode !== "ground";
+    };
+    expect(after("nozzles")).toBe(true);
+    expect(after("")).toBe(false);
   });
 
   it("at 0, she rises again at once", () => {
-    const { g, W } = landed(withTuning({ riseCooldown: 0 }));
+    // (on the Jet nozzles: the take-off's own share, 1 s, fits beside what's left of the new game's dodge on the shared counter)
+    const { g, W } = landed(withTuning({ riseCooldown: 0, spells: { ...TUNING.spells, parts: "nozzles" } }));
     stepGame(g, { ...idle, toggleMode: true }, STEP);
     expect(W.body.mode).not.toBe("ground");
   });
