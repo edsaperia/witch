@@ -19,6 +19,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 /** The parts: each a set of [from, to] edits to the ground's fragment shader (every `from` must be found, or the run says so). */
 const VARIANTS = [
   { id: "base", what: "as built", edits: [] },
+  { id: "allcode", what: "the lakes' and the beach's code compiled in, as before fix C (the plain ground's program)", edits: [["uniform sampler2D uAreas;", "#ifndef GROUND_LAKES\n#define GROUND_LAKES\n#endif\n#ifndef GROUND_BEACH\n#define GROUND_BEACH\n#endif\nuniform sampler2D uAreas;"]] },
   { id: "flat", what: "a flat colour: the cost of the mesh and its raster alone", edits: [["void main() {\n  vec2 px = floor(vWorld.xz / uPixel);", "void main() { gl_FragColor = vec4(0.2, 0.3, 0.25, 1.0); return;\n  vec2 px = floor(vWorld.xz / uPixel);"]] },
   { id: "lights", what: "no point lights (the loop in nightLightShaded)", edits: [["if (i >= uLightCount) break;\n    vec3 lv", "break;\n    vec3 lv"]] },
   { id: "glades", what: "no legend glade light (gladeLight's loop)", edits: [["if (i >= uGladeCount) break;", "break;"]] },
