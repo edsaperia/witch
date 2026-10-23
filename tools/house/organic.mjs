@@ -2,8 +2,11 @@
 // probably round"; previews/ed/treehouse-layout-v3/mock2): writes config/house.json's rooms, branches and objects from the plan
 // below, keeping its other fields. Each room is placed by its parent: a bearing (degrees from north, clockwise), the branch's length
 // between their rims (m) and its own radius (m), the branch bowed `bend` metres to one side. Metres from the hub's centre, x east,
-// z south (the plan unturned: turn 0). Objects are boxes on the plan (Alpha draws furniture by id and footprint), each placed at a
-// bearing from its room's middle, `in` metres in from its rim. Checks no two rooms crowd (2 m apart unless joined) and prints the walk
+// z south (the plan unturned: turn 0). Objects are boxes on the plan (art/furniture.js draws each by id and footprint), each placed
+// at a bearing from its room's middle, its back to the rim: its size (FOOT: along the wall it backs on, out from it, and up, in metres,
+// twice a real piece's: Ed, 2026-10-23, the furniture "about 2x, as big as in her old creator bedroom") turned into the plan's box by
+// the way it faces (w along x: a piece facing mostly east or west has its depth along x), `in` metres in from the rim to its middle
+// (by default half its depth and a little: its back against the rail). Checks no two rooms crowd (2 m apart unless joined) and prints the walk
 // from the Terrace to the bedroom's door.
 //   node tools/house/organic.mjs [--check]
 import { readFileSync, writeFileSync } from "node:fs";
@@ -55,22 +58,33 @@ const corridors = L.filter(p => p.parent).map(p => {
   const xs = pts.map(v => v[0]), zs = pts.map(v => v[1]);
   return { id: `${p.parent}-${p.id}`, x0: f2(Math.min(...xs) - BW / 2), x1: f2(Math.max(...xs) + BW / 2), z0: f2(Math.min(...zs) - BW / 2), z1: f2(Math.max(...zs) + BW / 2), w: BW, pts };
 });
-const at = (id, room, b, inn, more = {}) => { const p = P[room], a = (b * Math.PI) / 180, R = p.r - inn; return { ...old[id], room, x: f2(p.x + R * Math.sin(a)), z: f2(p.z - R * Math.cos(a)), ...more }; };
-const make = (id, room, label, b, inn, w, d, h, use) => at("", room, b, inn, { id, label, w, d, h, use });
-const door = (id, room) => ({ id: `${room}Door`, room: "boudoir", label: "Door", ...doors[room], w: 1.4, d: 1.4, h: 2.4, use: { kind: "say", line: "A friend's room. Locked for now." } });
-old[""] = {};
+// each object's size (m): along the wall it backs on, out from it, up; twice a real piece's (the map table's and the hats' rug as they
+// were: the Atrium's table already its size, the rug the hats' slots)
+const FOOT = {
+  wardrobe: [4, 1.2, 4.4], dressingTable: [2.8, 1.2, 3.4], curtains: [3.6, 0.6, 4.2], bed: [4, 5.2, 1.6], phone: [1.2, 1.2, 1.2], cloakPegs: [2.6, 0.6, 4],
+  shoeRack: [3, 1.1, 1.6], crystalBall: [1.4, 1.4, 2.6], telephone: [1, 1, 2.2], mirror: [2.2, 0.6, 4.2], hats: [3.6, 1.8, 0], bags: [3.6, 0.8, 3.2],
+  invitations: [3.4, 1.8, 1.8], broomStand: [2.4, 0.8, 3.6], pegboard: [5, 0.5, 4.4], recordShelf: [4.4, 1, 4], cauldron: [2.8, 2.8, 1.8], teaTable: [2.8, 2.8, 1.4],
+  cardTable: [3.4, 3.4, 1.5], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
+};
+const at = (id, room, b, inn, more = {}) => {
+  const p = P[room], a = (b * Math.PI) / 180, [W, D, Hh] = FOOT[id] ?? [old[id].w, old[id].d, old[id].h], side = Math.abs(Math.sin(a)) > Math.abs(Math.cos(a));
+  const R = p.r - (inn ?? D / 2 + 0.35);
+  return { ...old[id], room, x: f2(p.x + R * Math.sin(a)), z: f2(p.z - R * Math.cos(a)), w: side ? D : W, d: side ? W : D, h: Hh, ...more };
+};
+const make = (id, room, label, b, inn, use) => ({ ...at(id, room, b, inn), id, label, use });
+const door = (id, room) => ({ id: `${room}Door`, room: "boudoir", label: "Door", ...doors[room], w: 1.4, d: 1.4, h: 4.4, use: { kind: "say", line: "A friend's room. Locked for now." } });
 const objects = [
-  at("wardrobe", "bedroom", -55, 1.2), at("dressingTable", "bedroom", -20, 1), at("curtains", "bedroom", 18, 0.6, { w: 1.8, d: 0.3 }),
-  at("bed", "bedroom", 42, 3.2), at("phone", "bedroom", 30, 1.4), at("cloakPegs", "bedroom", -95, 0.8, { w: 0.3, d: 1.3 }), at("shoeRack", "bedroom", -125, 1),
-  at("crystalBall", "boudoir", -30, 1.2), at("telephone", "boudoir", 100, 1.1),
-  at("mirror", "parlour", -10, 1, { w: 1.1, d: 0.3 }), at("hats", "parlour", 0, 0, { x: P.parlour.x, z: f2(P.parlour.z + 1) }),
-  at("bags", "study", -30, 1.3, { w: 1.8, d: 0.4 }), at("invitations", "study", 30, 1.6),
-  at("broomStand", "workshop", -20, 1.2), at("pegboard", "workshop", 25, 0.9),
-  at("recordShelf", "studio", -15, 1, { w: 2.2, d: 0.5 }), at("cauldron", "kitchen", 0, 3.5),
-  at("teaTable", "solarium", 0, 4), at("cardTable", "drawingRoom", 0, 4.2),
-  at("book", "bestiary", 0, 4.5), at("specimens", "bestiary", 70, 0.9),
+  at("wardrobe", "bedroom", -62), at("dressingTable", "bedroom", -25), at("curtains", "bedroom", 8),
+  at("bed", "bedroom", 45, 3.4), at("phone", "bedroom", 85, 1.2), at("cloakPegs", "bedroom", -100), at("shoeRack", "bedroom", -138),
+  at("crystalBall", "boudoir", -30, 1.4), at("telephone", "boudoir", 100),
+  at("mirror", "parlour", -25), at("hats", "parlour", 0, 0, { x: P.parlour.x, z: f2(P.parlour.z + 1) }),
+  at("bags", "study", -40), at("invitations", "study", 32),
+  at("broomStand", "workshop", -30), at("pegboard", "workshop", 25, 0.9),
+  at("recordShelf", "studio", -10), at("cauldron", "kitchen", 0, 4),
+  at("teaTable", "solarium", 0, 4.2), at("cardTable", "drawingRoom", 0, 4.4),
+  at("book", "bestiary", 0, 4.5), at("specimens", "bestiary", 70, 1.9),
   at("telescope", "crowsNest", 30, 2),
-  make("mapTable", "atrium", "Map table", 0, 4.5, 2.6, 2.6, 0.9, { kind: "chart" }),
+  make("mapTable", "atrium", "Map table", 0, 4.5, { kind: "chart" }),
   door("bedroom2Door", "bedroom2"), door("bedroom3Door", "bedroom3"),
 ];
 const { reserved, ...rest } = H;

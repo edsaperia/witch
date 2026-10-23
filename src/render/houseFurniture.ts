@@ -1,13 +1,13 @@
-// The treehouse's furniture drawn as art (Ed, 2026-10-23; art/furniture.js) in place of render/houseRooms.ts's plain boxes: each piece
-// baked by its id and its footprint (config/house.json: w, d, h), never by where it stands, so the house's layout can move it. Its
-// back goes to the nearest of its room's walls, its front turned away from it (the hub's free-standing crystal ball, to the camera),
-// drawn at that turn. Baked and lit once (the creator's room's way, ui/creator.ts roomSteps: art/core.js bake, then art/lighting.js
-// shade with its own lights), a piece a frame as she first comes in, then drawn as a flat picture in the house's plane (as the boxes are: render/houseRooms.ts toWorld), its
-// floor's middle on the object's middle. The mock (Ed's four: the bed, the wardrobe, the dressing table, the crystal ball); `?furniture=0`
-// draws the boxes as before, to compare.
+// The treehouse's furniture drawn as art (Ed, 2026-10-23; art/furniture.js) in place of render/houseRooms.ts's plain boxes: every
+// object of the house baked by its id and its footprint (config/house.json: w, d, h), never by where it stands, so the house's layout
+// can move it; turned to face its room's middle (`standing`), drawn in its state (`furnitureState`: the curtains open or shut). Baked
+// and lit once (the creator's room's way, ui/creator.ts roomSteps: art/core.js bake, then art/lighting.js shade with its own lights),
+// a piece a frame, the nearest her first, then drawn as a flat picture in the house's plane (as the boxes were: render/houseRooms.ts
+// toWorld), its floor's middle on the object's middle. `?furniture=0` draws the boxes as before, to compare.
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { furnitureSprite, furnitureColours, FURNITURE_IDS } from "../../art/furniture.js";
+import type { Game } from "../rules/game";
 import { shade } from "../../art/lighting.js";
 import { HOUSE_ROOMS, fromPlan, type HouseObject } from "../rules/houseRooms";
 import type { Style } from "./style";
@@ -18,8 +18,6 @@ type Drawn = { sp: Piece; origin: { x: number; y: number }; lights: Light[] };
 
 /** Whether the house's objects are drawn as art (`?furniture=0`: the boxes, as before). */
 export const furnitureOn = typeof location === "undefined" || new URLSearchParams(location.search).get("furniture") !== "0";
-/** How much bigger than its footprint a piece is drawn (`?furnitureScale=1.6`: to try them nearer her size; 1, house.json's). */
-const furnitureScale = typeof location === "undefined" ? 1 : Number(new URLSearchParams(location.search).get("furnitureScale")) || 1;
 /** The objects drawn as art. */
 export const FURNITURE = new Set<string>(furnitureOn ? FURNITURE_IDS : []);
 
@@ -44,9 +42,9 @@ function canvas(w: number, h: number): HTMLCanvasElement { const c = document.cr
 
 /** One object's picture, baked and lit: its canvas, its size in art pixels, where its floor's middle is on it. */
 export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number }
-export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number): FurnitureArt {
-  const { yaw, foot: f } = standing(o), k = furnitureScale, foot = { w: f.w * k, d: f.d * k, h: f.h * k };
-  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw }) as Drawn;
+export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
+  const { yaw, foot } = standing(o);
+  const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state }) as Drawn;
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof canvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(d.sp, furnitureColours(st, o.room), { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, canvas);
   const lit = canvas(b.w, b.h);
   shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);
@@ -57,4 +55,11 @@ export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: num
   const tex = new THREE.CanvasTexture(lit);
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false;
   return { tex, w: b.w, h: b.h, ox: d.origin.x, oy: d.origin.y };
+}
+
+/** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the bedroom's curtains shut while she wakes (rules/wakeUp.ts:
+ *  until they've opened), open after. */
+export function furnitureState(id: string, g: Pick<Game, "wake">): string | undefined {
+  if (id === "curtains") return g.wake && !g.wake.open ? "shut" : "open";
+  return undefined;
 }
