@@ -144,7 +144,7 @@ export function stampBlobs(sp, r, st, s, list, C) {
 export function blobTree(r, st, s, P) {
   // (st.treePad: room past the tree's own frame, left and right, and above, for a crown that grows out of it: trees.js unclipped)
   const [PX, PY] = st.treePad || [0, 0], k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
-  const T = P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
+  const T = st.biomeTrunk && !P.trunk.stilts ? { ...P.trunk, ...st.biomeTrunk } : P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
   const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * (T.lean ?? .3) * st.gnarl + (st.treeLean || 0);
   const tips = [], ends = [], trunks0 = [];
   // a level's children along a limb, then theirs, down to the last level, whose tips carry the crown
@@ -189,7 +189,7 @@ export function blobTree(r, st, s, P) {
   }
   if (T.upper) for (let y = 0; y < PY + H * T.upper; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
   if (T.scars) for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
-  const C = P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
+  const C = st.biomeCrown ? { ...P.crown, ...Object.fromEntries(Object.entries(st.biomeCrown).filter(([k]) => !P.crown[k])) } : P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
   if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
   if (C.fronds) return frondCrown(sp, r, st, s, k, ends[0], C, gy);
   // the blobs: the tips spread round the crown, evenly by angle about its middle, the biggest on top
