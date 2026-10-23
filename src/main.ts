@@ -36,7 +36,7 @@ import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, hatSpell, setParts } from "./rules/spells";
-import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
+import { changeLoadout } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
@@ -306,7 +306,7 @@ function arrived(): void {
 const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
-// Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
+// Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
 creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
@@ -315,7 +315,6 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
 // seed (the only way to: Ed, 2026-10-21, the party's-over card points her here).
-creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); showLook(); wearHat(g); } input.clearPresses(); };
 // The stations' panels (Ed, 2026-10-21, the station menus: "The menu should open when she gets near, and mouse or gamepad direction
 // keys are used to navigate the options"; rules/stations.ts, rules/wardrobe.ts, ui/stationPanel.ts): walking up to a station slides
 // its shelves in over the game, walking away slides them out; no E, no room. What she owns (app/owned.ts) is on its shelves, what's
@@ -798,7 +797,7 @@ function frame(now: number): void {
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt);
   if (studio.at !== studioAt) { studioAt = studio.at; input.clearPresses(); }
-  const raw = input.read(), human = chartOpen() || creator.visiting || telescope.on || studio.at ? stillControls(raw) : raw;
+  const raw = input.read(), human = chartOpen() || telescope.on || studio.at ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew

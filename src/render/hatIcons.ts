@@ -1,5 +1,5 @@
-// The Hat and Broom boxes' chips' icons (golf's asks, 2026-10-12, for the creator's spell chips: src/ui/creator.ts spellRow): each
-// built hat and broom spell as a 13-pixel glyph in the indicator's format (render/indicator.ts HAT, FLASK): `#` its ink, `+` a lighter tone,
+// The Hat box's chips' icons (golf's asks, 2026-10-12, for the creator's spell chips: src/ui/creator.ts spellRow): each
+// built hat spell as a 13-pixel glyph in the indicator's format (render/indicator.ts HAT, FLASK): `#` its ink, `+` a lighter tone,
 // `.` clear. Drawn in two tones of the chip's colour, a whole number of screen pixels a glyph pixel.
 export const HAT_ICONS: Record<string, readonly string[]> = {
   // a round helmet, its rim and a strap under the chin
@@ -225,105 +225,5 @@ export const HAT_ICONS: Record<string, readonly string[]> = {
     "+#..........+",
     ".#.#+#...#+#.",
     "..#...#+#....",
-  ],
-};
-
-/** The Broom box's chips' icons (golf, 2026-10-12): each built broom spell ("none" the plain broom), as HAT_ICONS. */
-export const BROOM_ICONS: Record<string, readonly string[]> = {
-  // a plain broom
-  none: [
-    ".............",
-    "...........##",
-    "..........##.",
-    ".........##..",
-    "........##...",
-    ".......##....",
-    "....+.##.....",
-    "...####......",
-    ".#####+......",
-    "...###.......",
-    "..###........",
-    "...##........",
-    "....#........",
-  ],
-  // a broom with speed lines behind it
-  speed: [
-    ".............",
-    "..++++++.....",
-    ".............",
-    "++++++......#",
-    "...........#.",
-    ".++++....##..",
-    "........##...",
-    ".....+.#.....",
-    "....###......",
-    "..#####+.....",
-    "....###......",
-    "...###.......",
-    "....##.......",
-  ],
-  // a broom's point bursting on impact
-  battering: [
-    ".........#...",
-    ".........#...",
-    "........+#+..",
-    "......#######",
-    "........+#+..",
-    ".....##..#...",
-    "....###..#...",
-    "...###.......",
-    "..###........",
-    ".###.........",
-    "###..........",
-    "##...........",
-    "#............",
-  ],
-  // an arc of the ley line to its spark
-  leyjump: [
-    ".............",
-    ".............",
-    ".....##......",
-    "....#.++.....",
-    "...#...+.....",
-    "...#...#.....",
-    "...+....#....",
-    "..+.....#....",
-    "..+.....+....",
-    "..#......++#+",
-    ".#.......+#+#",
-    ".#........##+",
-    ".............",
-  ],
-  // an arrow down onto the ground, the impact flying out
-  pound: [
-    ".....##......",
-    ".....##......",
-    ".....##......",
-    ".....##......",
-    ".....##......",
-    "...#.##...#..",
-    "....###..#...",
-    ".....##.#....",
-    "..+.......+..",
-    ".+.........+.",
-    "...+.....+...",
-    "#############",
-    ".............",
-  ],
-  // a closed eye
-  stealth: [
-    ".............",
-    ".............",
-    ".............",
-    "#...........#",
-    "##.........##",
-    ".###.....###.",
-    "..#########..",
-    "....#####....",
-    "..+..+.+..+..",
-    ".+...+.+...+.",
-    ".............",
-    ".............",
-    ".............",
   ],
 };
