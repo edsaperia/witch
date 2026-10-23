@@ -6096,7 +6096,17 @@ const CREATURE_CAT = {
     mods: { trail: 1 },
     label: "Wildcat's Paw prints: 💌s leave a trail of paw prints that lands too"
   },
-  character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 }
+  character: { posture: { head: [0.03, 0], body: -0.01 }, quirk: "tailflick", every: [3, 7], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "hiss bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "trees",
+    rhythm: "steady",
+    pressure: 2,
+    call: "a stillness",
+    tells: { melee: "crouch", ranged: "ears back", special: "a stillness" }
+  }
 };
 
 
@@ -6116,7 +6126,17 @@ const CREATURE_CHEETAH = {
   traits: ["nimble"],
   voice: { family: "cat", pitch: 1.4, glide: 0.7 },
   buff: { name: "Sprint", kind: "move", scale: { groundSpeed: 1.15 }, label: "Cheetah's Sprint: quicker on foot" },
-  character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.03, 0.02], body: -0.01 }, quirk: "perk", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "dust bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "sync",
+    retreat: "circle",
+    rhythm: "tight",
+    pressure: 2,
+    call: "a crouch",
+    tells: { melee: "crouch", ranged: "tail flick", special: "a crouch" }
+  }
 };
 
 
@@ -6387,7 +6407,17 @@ const CREATURE_FENNEC = {
   radius: 0.45,
   voice: { family: "canid", pitch: 2.1, glide: 0.9 },
   buff: { name: "Ears", kind: "shot", scale: { "invites.range": 1.35 }, label: "Fennec's Ears: 💌s reach further" },
-  character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 }
+  character: { posture: { head: [0.02, 0.04], body: 0 }, quirk: "perk", every: [3, 6], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "sand bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "mirage",
+    retreat: "splitBack",
+    rhythm: "tight",
+    pressure: 2,
+    call: "ears flat",
+    tells: { melee: "crouch", ranged: "ears up", special: "ears flat" }
+  }
 };
 
 
@@ -6818,7 +6848,17 @@ const CREATURE_LION = {
     scale: { "invites.speed": 1.15, "invites.range": 1.15 },
     label: "Lion's Pride: 💌s fly a little faster and further"
   },
-  character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 }
+  character: { posture: { head: [0, 0.03], body: 0.01 }, quirk: "stretch", every: [7, 12], for: 1.5 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
+    ranged: { name: "roar bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "call",
+    retreat: "flanks",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the roar",
+    tells: { melee: "crouch", ranged: "mouth open", special: "the roar" }
+  }
 };
 
 
