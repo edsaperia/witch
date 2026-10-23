@@ -63,7 +63,7 @@ const corridors = L.filter(p => p.parent).map(p => {
 const FOOT = {
   wardrobe: [4, 1.2, 4.4], dressingTable: [2.8, 1.2, 3.4], curtains: [3.6, 0.6, 4.2], bed: [4, 5.2, 1.6], phone: [1.2, 1.2, 1.2], cloakPegs: [2.6, 0.6, 4],
   shoeRack: [3, 1.1, 1.6], crystalBall: [1.4, 1.4, 2.6], telephone: [1, 1, 2.2], mirror: [2.2, 0.6, 4.2], hats: [3.6, 1.8, 0], bags: [3.6, 0.8, 3.2],
-  invitations: [3.4, 1.8, 1.8], broomStand: [2.4, 0.8, 3.6], pegboard: [5, 0.5, 4.4], recordShelf: [4.4, 1, 4], cauldron: [2.8, 2.8, 1.8], teaTable: [2.8, 2.8, 1.4],
+  invitations: [3.4, 1.8, 1.8], pegboard: [5, 0.5, 4.4], recordShelf: [4.4, 1, 4], cauldron: [2.8, 2.8, 1.8], teaTable: [2.8, 2.8, 1.4],
   cardTable: [3.4, 3.4, 1.5], broomBay: [6, 2.4, 2.2], lathe: [4.8, 1.6, 2], book: [1.6, 1.2, 2.2], specimens: [6, 0.8, 4], telescope: [1.6, 1.6, 3.2], mapTable: [2.6, 2.6, 0.9],
   drumKit: [4.4, 4, 2.6], synthRack: [4.8, 1.4, 3.8], microphone: [1, 1, 3.4],
 };
@@ -72,6 +72,8 @@ const at = (id, room, b, inn, more = {}) => {
   const R = p.r - (inn ?? D / 2 + 0.35);
   return { ...old[id], room, x: f2(p.x + R * Math.sin(a)), z: f2(p.z - R * Math.cos(a)), w: side ? D : W, d: side ? W : D, h: Hh, ...more };
 };
+// a Workshop station's use: by nearness, its choices config/wardrobe.json's (the creator's own axes, wear and parts left empty)
+const STATION = { kind: "creator", axes: [], wear: [], parts: [] };
 const make = (id, room, label, b, inn, use) => ({ ...at(id, room, b, inn), id, label, use });
 const door = (id, room) => ({ id: `${room}Door`, room: "boudoir", label: "Door", ...doors[room], w: 1.4, d: 1.4, h: 4.4, use: { kind: "say", line: "A friend's room. Locked for now." } });
 const objects = [
@@ -81,9 +83,10 @@ const objects = [
   at("mirror", "parlour", -25), at("hats", "parlour", 0, 0, { x: P.parlour.x, z: f2(P.parlour.z + 1) }),
   at("bags", "study", -40), at("invitations", "study", 32),
   // (the Workshop, Hotel's, Ed's OK 2026-10-23: the biome board where it was, the broom bay and the lathe along the back wall either side
-  // of it; the old broom stand to the side till Hotel's Workshop takes it away, the bay replacing it)
-  at("broomStand", "workshop", -112), at("pegboard", "workshop", 25, 0.9),
-  make("broomBay", "workshop", "Broom bay", -38, undefined, { kind: "say", line: "Her broom rests here." }), make("lathe", "workshop", "Lathe", 88, undefined, { kind: "say", line: "The lathe waits for her broom." }),
+  // of it; each a station, its menu sliding in as she comes to it (config/wardrobe.json, ui/stationPanel.ts): the bay fits her broom's
+  // parts, the lathe its colours and fit, the pegboard shows the parts found, read-only. The old broom stand is gone, the bay in its place)
+  make("pegboard", "workshop", "Pegboard", 25, 0.9, STATION),
+  make("broomBay", "workshop", "Broom bay", -38, undefined, STATION), make("lathe", "workshop", "Lathe", 88, undefined, STATION),
   // the Studio's instruments (Ed, 2026-10-23: "a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit)";
   // rules/studio.ts), and the record shelf beside the DJ booth (Ed: "the record collection is actually next to the DJ booth"): on the
   // Terrace by the balcony, beside the decks, its long side north to south (Alpha's art/furniture.js)

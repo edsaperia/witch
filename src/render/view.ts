@@ -354,6 +354,9 @@ export class View {
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  /** The broom parts she's found (this browser's, app/broomSave.ts: main.ts keeps it): the Workshop's pegboard hangs them in colour
+   *  (render/workshopArt.ts). */
+  partsFound: ReadonlySet<string> = new Set();
   /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
   get mapTable(): MapTable | null { return this.island.mapTable; }
   set mapTable(m: MapTable | null) { this.island.mapTable = m; } // (the bench lets it go: tools/bench/frames.cjs)

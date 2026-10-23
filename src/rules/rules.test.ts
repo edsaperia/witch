@@ -1545,7 +1545,7 @@ describe("music by proximity (Ed, 2026-10-04)", () => {
 });
 
 describe("the Speed broom (Ed, 2026-10-04; a broom since 2026-10-11)", () => {
-  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, broom: "speed" } });
+  const S = TUNING.spells.speed, SPEED = withTuning({ spells: { ...TUNING.spells, parts: "missile,fairing,nozzles" } });
   it("casts the speed boost: much faster for its duration, then recharges over its cooldown", () => {
     const s = newSpells(SPEED);
     expect(s.broom).toBe("speed");

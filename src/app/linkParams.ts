@@ -206,10 +206,10 @@ export function tuningFromLink(params: URLSearchParams) {
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
   // (?found=a,b: those islands found for this load, whatever this browser's save says: the debug overlay's repro link, app/repro.ts)
   if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
-  // Her hat and broom spells (app/loadout.ts): the creator's, kept on this browser, or ?hat= and ?broom=.
-  { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat, broom: L.broom }; }
-  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted on this browser, or ?parts=missile,ladder,nozzles
-  // for one load (any parts, found or not: a debug switch till the bay).
+  // Her hat's spell (app/loadout.ts): the creator's, kept on this browser, or ?hat=.
+  { const L = loadoutFrom(params); tuning.spells = { ...tuning.spells, hat: L.hat }; }
+  // Her broom's parts (app/broomSave.ts; the Workshop, Ed 2026-10-23): those fitted at the bay on this browser, or
+  // ?parts=missile,ladder,nozzles for one load (any parts, found or not: for testing). Her broom's spell is the set they complete.
   { const P = params.get("parts"); tuning.spells = { ...tuning.spells, parts: P !== null ? P : fittedParts(loadBroom().fitted).map(p => p.id).join(",") }; }
   // ?set=path=value;path=value (the repro link's: every setting changed from the build's, app/repro.ts), last, over the rest.
   applySet(tuning, params.get("set"));

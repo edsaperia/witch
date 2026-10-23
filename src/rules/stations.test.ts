@@ -28,7 +28,7 @@ function inHouse(dx: number, dz: number): Game {
 
 describe("the dressing stations by nearness", () => {
   it("are the creator's stations, and there are some", () => {
-    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomStand", "dressingTable"]));
+    expect(STATIONS.map(o => o.id)).toEqual(expect.arrayContaining(["mirror", "wardrobe", "cloakPegs", "shoeRack", "bags", "broomBay", "lathe", "pegboard", "dressingTable"]));
   });
 
   it("in the game, each bedroom station (dressed before the door: Ed, 2026-10-21) opens with her standing at it", () => {
