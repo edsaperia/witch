@@ -5864,6 +5864,16 @@ const CREATURE_ARMADILLO = {
     scale: { "dash.distance": 1.2 },
     add: { "dash.gone": 0.15 },
     label: "Armadillo's Roll: a little longer blink, and untouchable a little longer after it"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: null,
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the curl",
+    tells: { melee: "crouch", special: "the curl" }
   }
 };
 
@@ -5887,7 +5897,17 @@ const CREATURE_BADGER = {
     scale: { "invites.radius": 2.2 },
     label: "Badger's Big heart: bigger 💌s, easier to land"
   },
-  character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 }
+  character: { posture: { head: [0.04, -0.07], body: -0.02 }, quirk: "sniff", every: [3, 6], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "maul", "maul"], knockback: 8 },
+    ranged: { name: "stone shard", range: 14, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "cover",
+    retreat: "hold",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the dig",
+    tells: { melee: "crouch", ranged: "turns its back", special: "the dig" }
+  }
 };
 
 
@@ -5928,7 +5948,18 @@ const CREATURE_BAT = {
   traits: ["flier", "swarm"],
   voice: { family: "bat" },
   buff: { name: "Flit", kind: "move", scale: { "dash.distance": 1.5 }, label: "Bat's Flit: your blink goes further" },
-  character: { sprite: "shiver", every: [3, 6], for: 0.6 }
+  character: { sprite: "shiver", every: [3, 6], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "screech", "bigscreech"] },
+    ranged: { name: "screech bolt", range: 10, shots: [0, 1, 2], spread: 12, tint: "red" },
+    special: "confusion",
+    specialWith: { move: true, drift: 60 },
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 3,
+    call: "the ring",
+    tells: { melee: "wings", ranged: "mouth open", special: "the ring" }
+  }
 };
 
 
@@ -5985,7 +6016,18 @@ const CREATURE_BEETLE = {
   traits: ["armoured"],
   voice: { family: "bug", pitch: 0.7, am: [60, 0.9], volume: 1.5 },
   buff: { name: "Fan", kind: "shot", mods: { fan: 1 }, label: "Beetle's Fan: each shot a 3-way spread" },
-  character: { sprite: "shiver", every: [4, 8], for: 0.6 }
+  character: { sprite: "shiver", every: [4, 8], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+    ranged: null,
+    special: "cover",
+    specialWith: { both: true },
+    retreat: "huddle",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the clack",
+    tells: { melee: "horns down", special: "the clack" }
+  }
 };
 
 
@@ -6021,7 +6063,17 @@ const CREATURE_BOAR = {
     mods: { momentum: 1 },
     label: "Boar's Momentum: a burst of speed after each blink"
   },
-  character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.05, -0.06], body: 0 }, quirk: "stomp", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+    ranged: null,
+    special: "stampede",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "heads down",
+    tells: { melee: "head down", special: "heads down" }
+  }
 };
 
 
@@ -6142,7 +6194,17 @@ const CREATURE_DORMOUSE = {
     mods: { orbit: 1 },
     label: "Dormouse's Lullaby orbit: two 💌s circle you and fly at animals close by"
   },
-  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 }
+  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "nut bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "rally",
+    retreat: "freeze",
+    rhythm: "steady",
+    pressure: 3,
+    call: "a yawn",
+    tells: { melee: "crouch", ranged: "winds back", special: "stretches" }
+  }
 };
 
 
@@ -6348,7 +6410,17 @@ const CREATURE_FOX = {
   temperament: "curious",
   voice: { family: "canid", pitch: 1.5, glide: 0.8 },
   buff: { name: "Charm", kind: "shot", mods: { charm: 1 }, label: "Fox's Charm: 💌s home in on the nearest animal" },
-  character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "perk", every: [4, 8], for: 1.1 }
+  character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "perk", every: [4, 8], for: 1.1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "fox-fire", range: 15, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "feint",
+    retreat: "splitBack",
+    rhythm: "steady",
+    pressure: 2,
+    call: "ears flat",
+    tells: { melee: "crouch", ranged: "tail up", special: "ears flat" }
+  }
 };
 
 
@@ -6446,7 +6518,17 @@ const CREATURE_HARE = {
     mods: { charges: 2 },
     label: "Hare's Dash bursts: 2 more blink charges"
   },
-  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 }
+  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "thump", every: [4, 8], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+    ranged: { name: "moon-dust bolt", range: 12, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "call",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 2,
+    call: "thump",
+    tells: { melee: "turns its back", ranged: "ears flat", special: "the thump" }
+  }
 };
 
 
@@ -6484,7 +6566,17 @@ const CREATURE_HEDGEHOG = {
     add: { "dash.gone": 0.35 },
     label: "Hedgehog's Curl: untouchable for longer after a blink"
   },
-  character: { sprite: "puff", every: [4, 8], for: 0.9 }
+  character: { sprite: "puff", every: [4, 8], for: 0.9 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "spine fan", range: 12, shots: [0, 1, 3], spread: 30, tint: "red" },
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "bristle",
+    tells: { melee: "crouch", ranged: "bristles up", special: "the curl" }
+  }
 };
 
 
@@ -6527,7 +6619,17 @@ const CREATURE_HERON = {
     scale: { groundSpeed: 1.1, "dash.distance": 1.25 },
     label: "Heron's Stride: a little quicker on foot, and a longer blink"
   },
-  character: { sprite: "puff", every: [6, 11], for: 1.4 }
+  character: { sprite: "puff", every: [6, 11], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water jet", range: 18, shots: [0, 1, 1], speed: 1.4, size: [1, 1, 1.3], tint: "red" },
+    special: "sync",
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "a stillness",
+    tells: { melee: "the neck draws back", ranged: "aim line", special: "a stillness, then a flash" }
+  }
 };
 
 
@@ -6630,6 +6732,17 @@ const CREATURE_KOMODO = {
     kind: "move",
     scale: { "dash.distance": 1.35 },
     label: "Komodo dragon's Lunge: your blink lunges further"
+  },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "confusion",
+    specialWith: { time: 3 },
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "a hiss",
+    tells: { melee: "jaws open", ranged: "throat swells", special: "a hiss" }
   }
 };
 
@@ -6707,7 +6820,17 @@ const CREATURE_MARTEN = {
     scale: { groundSpeed: 1.2 },
     label: "Marten's Scamper: faster on the ground"
   },
-  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 }
+  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "sniff", every: [3, 6], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "ember bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "call",
+    retreat: "leapfrog",
+    rhythm: "tight",
+    pressure: 2,
+    call: "chirr",
+    tells: { melee: "crouch", ranged: "chirrs", special: "head up" }
+  }
 };
 
 
@@ -6735,7 +6858,17 @@ const CREATURE_MEERKAT = {
     scale: { "invites.range": 1.3 },
     label: "Meerkat's Lookout: 💌s reach further"
   },
-  character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 }
+  character: { posture: { head: [0, 0.06], body: 0.01 }, quirk: "sentinel", every: [5, 9], for: 3.5 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "sand bolt", range: 10, shots: [0, 1, 2], spread: 12, tint: "red" },
+    special: "call",
+    retreat: "zigzagApart",
+    rhythm: "tight",
+    pressure: 2,
+    call: "stands tall",
+    tells: { melee: "crouch", ranged: "digs", special: "the lookout's chirp" }
+  }
 };
 
 
@@ -6760,7 +6893,17 @@ const CREATURE_MOLE = {
     scale: { riseTime: 0.5, descendTime: 0.5 },
     label: "Mole's Burrow: rise and land twice as fast"
   },
-  character: { sprite: "look", every: [4, 8], for: 1 }
+  character: { sprite: "look", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "earth bolt", range: 15, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red", mound: true },
+    special: "cloud",
+    retreat: "burrowApart",
+    rhythm: "steady",
+    pressure: 3,
+    call: "the mound moving",
+    tells: { melee: "crouch", ranged: "digs", special: "the mound moving" }
+  }
 };
 
 
@@ -6785,8 +6928,24 @@ const CREATURE_MOTH = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-  buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Butterfly's Flutter: one more 💌 a burst" },
-  character: { sprite: "shiver", every: [2, 5], for: 0.6 }
+  buff: {
+    name: "Flutter",
+    kind: "shot",
+    add: { "invites.burst": 1 },
+    label: "Butterfly's Flutter: one more 💌 a burst"
+  },
+  character: { sprite: "shiver", every: [2, 5], for: 0.6 },
+  pack: {
+    melee: null,
+    ranged: { name: "dust bolt", range: 10, shots: [0, 1, 3], spread: 20, tint: "red" },
+    special: "cloud",
+    specialWith: { flash: true, radius: 5 },
+    retreat: "swirl",
+    rhythm: "tight",
+    pressure: 3,
+    call: "the flash",
+    tells: { ranged: "wings fan", special: "the flash" }
+  }
 };
 
 
@@ -6807,7 +6966,17 @@ const CREATURE_NEWT = {
     scale: { "invites.speed": 1.2, "invites.range": 1.2 },
     label: "Newt's Wriggle: 💌s fly a little faster and further"
   },
-  character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 },
+  pack: {
+    melee: null,
+    ranged: { name: "spit", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "wall",
+    retreat: "water",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the gleam",
+    tells: { ranged: "throat pulses", special: "the gleam" }
+  }
 };
 
 
@@ -6835,7 +7004,17 @@ const CREATURE_OTTER = {
     mods: { ricochet: 1 },
     label: "Otter's Skimming stone: 💌s bounce on to another animal"
   },
-  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 }
+  character: { posture: { head: [0.02, 0.02], body: -0.01 }, quirk: "shake", every: [5, 9], for: 0.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "rally",
+    retreat: "water",
+    rhythm: "steady",
+    pressure: 2,
+    call: "the whistle",
+    tells: { melee: "crouch", ranged: "rears up", special: "the whistle" }
+  }
 };
 
 
@@ -7039,7 +7218,18 @@ const CREATURE_RATTLESNAKE = {
     scale: { "invites.speed": 1.15, "invites.radius": 1.3 },
     label: "Rattlesnake's Warning: 💌s fly a little faster and land wider"
   },
-  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 }
+  character: { posture: { head: [0, 0.03], body: 0 }, quirk: "rattle", every: [5, 9], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "venom spit", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "confusion",
+    specialWith: { move: true },
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the rattle",
+    tells: { melee: "coils", ranged: "head back", special: "the rattle" }
+  }
 };
 
 
@@ -7092,7 +7282,24 @@ const CREATURE_RAVEN = {
     volume: 1.3
   },
   buff: { name: "Wings", kind: "move", scale: { treetopSpeed: 1.2 }, label: "Raven's Wings: faster in the treetops" },
-  character: { sprite: "hop", every: [3, 6], for: 0.7 }
+  character: { sprite: "hop", every: [3, 6], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: {
+      name: "spit and barb",
+      range: 36,
+      shots: [0, 1, 2],
+      spread: 8,
+      attacks: [null, "longspit", "longbarb"],
+      tint: "red"
+    },
+    special: "mirage",
+    retreat: "branches",
+    rhythm: "steady",
+    pressure: 1,
+    call: "a caw",
+    tells: { melee: "wings", ranged: "aim line", special: "a caw" }
+  }
 };
 
 
@@ -7200,7 +7407,17 @@ const CREATURE_SALAMANDER = {
     scale: { "invites.cooldown": 0.6 },
     label: "Salamander's Quick fire: less wait between bursts"
   },
-  character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 }
+  character: { posture: { head: [0.03, -0.02], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1.2 },
+  pack: {
+    melee: null,
+    ranged: { name: "fire beam", range: 20, shots: [0, 1, 1], attacks: [null, "beam", "widebeam"], tint: "red" },
+    special: "wall",
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the glow",
+    tells: { ranged: "aim line", special: "the glow" }
+  }
 };
 
 
@@ -7222,7 +7439,18 @@ const CREATURE_SCORPION = {
     scale: { "invites.cooldown": 0.85 },
     label: "Scorpion's Sting: 💌s pass through to the next, with a little less wait"
   },
-  character: { sprite: "shiver", every: [3, 7], for: 0.5 }
+  character: { sprite: "shiver", every: [3, 7], for: 0.5 },
+  pack: {
+    melee: null,
+    ranged: { name: "venom bolt", range: 10, shots: [0, 1, 3], spread: 20, tint: "red" },
+    special: "wall",
+    specialWith: { time: 3 },
+    retreat: "burrowApart",
+    rhythm: "slow",
+    pressure: 2,
+    call: "the dig",
+    tells: { ranged: "tail up", special: "the dig" }
+  }
 };
 
 
@@ -7247,7 +7475,17 @@ const CREATURE_SNAIL = {
     mods: { boomerang: 1 },
     label: "Snail's Spiral: 💌s come back to you, landing on the way"
   },
-  character: { sprite: "puff", every: [6, 12], for: 2 }
+  character: { sprite: "puff", every: [6, 12], for: 2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: null,
+    special: "wall",
+    retreat: "shell",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the trail",
+    tells: { melee: "rears", special: "the trail" }
+  }
 };
 
 
@@ -7375,7 +7613,17 @@ const CREATURE_SQUIRREL = {
     mods: { cache: 1 },
     label: "Squirrel's Cache: you drop 💌s that wait and fly at animals that come near"
   },
-  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 }
+  character: { posture: { head: [0, 0.04], body: 0 }, quirk: "tailflick", every: [2, 4], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "acorn bolts", range: 14, shots: [0, 1, 3], spread: 14, tint: "red" },
+    special: "scatter",
+    retreat: "trees",
+    rhythm: "tight",
+    pressure: 2,
+    call: "rustle",
+    tells: { melee: "crouch", ranged: "winds back", special: "a rustle in the crowns" }
+  }
 };
 
 
@@ -7447,7 +7695,17 @@ const CREATURE_STEGOSAURUS = {
     scale: { "invites.radius": 1.6 },
     label: "Stegosaurus's Tail sweep: each 💌 bursts wider"
   },
-  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.02, -0.03], body: 0 }, quirk: "sniff", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "swipe", "bigswipe"], knockback: 8 },
+    ranged: { name: "thrown stone", range: 10, shots: [0, 1, 1], size: [1, 1, 1.5], tint: "red" },
+    special: "stampede",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the plates flush",
+    tells: { melee: "tail raised", ranged: "rears", special: "the plates flush" }
+  }
 };
 
 
@@ -7477,7 +7735,17 @@ const CREATURE_STOAT = {
     mods: { frenzy: 1 },
     label: "Stoat's Frenzy: winning an animal over gives back a blink"
   },
-  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 }
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [3, 6], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "dart of light", range: 10, shots: [0, 1, 2], spread: 8, speed: 1.4, tint: "red" },
+    special: "confusion",
+    retreat: "circle",
+    rhythm: "tight",
+    pressure: 2,
+    call: "the dance",
+    tells: { melee: "crouch", ranged: "sways", special: "the dance" }
+  }
 };
 
 
@@ -7528,7 +7796,27 @@ const CREATURE_TOAD = {
     mods: { split: 1 },
     label: "Toad's Spawn: a 💌 that lands splits into 3 small ones"
   },
-  character: { sprite: "hop", every: [5, 10], for: 0.7 }
+  character: { sprite: "hop", every: [5, 10], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: {
+      name: "spore lob",
+      range: 16,
+      shots: [0, 1, 1],
+      delivery: "lob",
+      flight: 1.1,
+      size: [1, 3, 3.5],
+      patch: { radius: 2.5, slow: 0.5, time: 3 },
+      tint: "red"
+    },
+    special: "cloud",
+    specialWith: { leap: true },
+    retreat: "arcs",
+    rhythm: "steady",
+    pressure: 3,
+    call: "puffs up",
+    tells: { melee: "tongue", ranged: "puffs up", special: "the leap" }
+  }
 };
 
 
@@ -7591,7 +7879,17 @@ const CREATURE_WOLF = {
     mods: { ring: 1 },
     label: "Wolf's Howl: every 5th burst a ring of 💌s round you"
   },
-  character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 }
+  character: { posture: { head: [0.05, -0.05], body: -0.02 }, quirk: "howl", every: [7, 13], for: 1.8 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "frost breath", range: 10, shots: [0, 1, 3], spread: 40, speed: 0.8, tint: "red" },
+    special: "call",
+    retreat: "flanks",
+    rhythm: "tight",
+    pressure: 2,
+    call: "a howl",
+    tells: { melee: "crouch", ranged: "head low", special: "the howl" }
+  }
 };
 
 
@@ -7630,7 +7928,17 @@ const CREATURE_WOODLOUSE = {
     mods: { rear: 1 },
     label: "Woodlouse's Rear guard: each burst also fires a 💌 behind you"
   },
-  character: { sprite: "puff", every: [4, 8], for: 1 }
+  character: { sprite: "puff", every: [4, 8], for: 1 },
+  pack: {
+    melee: { attacks: [null, "nip", "nip"] },
+    ranged: null,
+    special: "stampede",
+    retreat: "rollApart",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the curl",
+    tells: { melee: "crouch", special: "the curl" }
+  }
 };
 
 
