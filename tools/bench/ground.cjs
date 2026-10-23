@@ -5,8 +5,8 @@
 // at a time by rewriting its source in the page (render/ground.ts FRAG and the lighting's LIGHT_GLSL it includes), and each
 // frame read back and compared with the base's pixel for pixel, so a part that costs time but changes nothing at a spot shows.
 // Time stands still (each measured frame steps 0 s), so two frames of one shader are the same picture.
-//   npm run build && node tools/bench/ground.cjs [out dir]   DIST=dist SEED=569166 SPOTS=decks,ground:60,-170,treetop:60,-170
-//   SIZE=1280x720 FRAMES=12 ONLY=base,lights QUERY=island=fox
+//   npm run build && node tools/bench/ground.cjs [out dir]   DIST=dist SEED=569166 SPOTS=decks,ground:60,-170,treetop:60,-170,coast:90
+//   SIZE=1280x720 FRAMES=24 ONLY=base,lights QUERY=island=fox GROUND_ONLY=1 (the ground alone in the measured frames)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
@@ -59,6 +59,8 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
   const results = [];
   for (const spot of SPOTS) {
     const page = await browser.newPage({ viewport: { width: W, height: H } });
+    // (the page's clock, which the run holds once the spot is settled: what eases on it, her glow's place and the like, then stands still)
+    await page.addInitScript(`(() => { const real = performance.now.bind(performance); let held = null; performance.now = () => (held === null ? real() : held); window.__holdClock = v => { held = v; }; })();`);
     const errors = [];
     page.on("pageerror", e => errors.push(String(e)));
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
@@ -66,7 +68,11 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
     await page.waitForFunction(() => window.witch?.ready, null, { timeout: 900000, polling: 500 });
     await page.evaluate(() => { window.witch.manual = true; });
     if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForTimeout(500); }
-    if (spot !== "decks") {
+    if (spot.startsWith("coast:")) {
+      // (on foot 30 m in from the sea's coast facing that bearing, degrees clockwise from east: the beach drawn, its program in use)
+      const said = await page.evaluate(deg => { const c = window.witch.coastFacing(deg * Math.PI / 180); return c ? window.witch.shot(`at:${c.x - c.nx * 30},${c.z - c.nz * 30}`) : { ok: false, say: "no coast that way" }; }, +spot.slice(6));
+      if (!said.ok) throw new Error(said.say);
+    } else if (spot !== "decks") {
       const [mode, dx, dz] = spot.split(/[:,]/);
       const said = await page.evaluate(([mode, dx, dz]) => { const d = window.witch.game.map.dancefloor; return window.witch.shot(`at:${d.x + +dx},${d.z + +dz}${mode === "treetop" ? ",treetop" : ""}`); }, [mode, dx, dz]);
       if (!said.ok) throw new Error(said.say);
@@ -80,7 +86,8 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
       await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 1800000, polling: 1000 });
     }
     await step(30, 1 / 60);
-    lap(`${spot}: settled`);
+    lap(`${spot}: settled (the ground's program: ${await page.evaluate(() => Object.keys(window.witch.view.ground.mesh.material.defines ?? {}).join(", ") || "plain")})`);
+    await page.evaluate(on => { window.__groundOnly = on; }, env("GROUND_ONLY", "0") === "1");
     // The ground's own draw timed on the GPU; a frame drawn and read back at once (the canvas isn't kept between tasks).
     const ok = await page.evaluate(() => {
       const v = window.witch.view, r = v.renderer, gl = r.getContext(), ext = gl.getExtension("EXT_disjoint_timer_query_webgl2");
@@ -93,10 +100,25 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
       };
       window.__gDrain = () => { while (pending.length && gl.getQueryParameter(pending[0], gl.QUERY_RESULT_AVAILABLE)) { const q = pending.shift(), ns = gl.getQueryParameter(q, gl.QUERY_RESULT); gl.deleteQuery(q); if (!gl.getParameter(ext.GPU_DISJOINT_EXT)) window.__g.ms.push(ns / 1e6); } return pending.length; };
       window.__gSrc = mesh.material.fragmentShader;
+      // GROUND_ONLY=1: everything but the ground hidden for the measured frames, so a spot whose picture isn't still at 0 s (her
+      // glow, a creature's idle) still diffs the ground alone
+      if (window.__groundOnly) v.scene.traverse(o => { if (o.isMesh || o.isPoints || o.isLine || o.isSprite) { let up = o, mine = false; while (up) { if (up === mesh) { mine = true; break; } up = up.parent; } if (!mine && o.visible) o.visible = false; } });
       window.__gFrame = read => { window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0, true); if (!read) return null; const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, px = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px); return { w, h, px }; };
       return true;
     });
     if (!ok) throw new Error("no GPU timer here (EXT_disjoint_timer_query_webgl2)");
+    await page.evaluate(() => window.__holdClock(performance.now()));
+    // (still at 0 s, the ground can go on changing a few frames more: its area tiles and heights filled a few a frame round her;
+    // drawn until two frames running are the same, so the diffs are of the shader alone)
+    const still = await page.evaluate(() => {
+      let prev = null, same = 0, n = 0;
+      for (; n < 400 && same < 2; n++) { const f = window.__gFrame(true).px; let d = prev ? 0 : 1; if (prev) for (let i = 0; i < f.length; i++) if (f[i] !== prev[i]) { d = 1; break; } same = d ? 0 : same + 1; prev = f; }
+      return { frames: n, still: same >= 2 };
+    });
+    lap(`${spot}: ${still.still ? "still" : "NOT STILL"} after ${still.frames} frames`);
+    // (and from here her glow's radius pinned: it eases toward its target for ever, in the ninth figure, and now and then a pixel
+    // of her pool crosses a step; and the dancefloor's tiles, lit by their own clock, kept as they are; then two frames of one shader are the same picture, and what the diffs compare is the shader)
+    await page.evaluate(() => { const u = window.witch.view.ground.mesh.material.uniforms.uGlowR, v = u.value; Object.defineProperty(u, "value", { get: () => v, set() {}, configurable: true }); window.witch.view.ground.setFloorTiles = () => {}; });
     for (const V of VARIANTS) {
       if (ONLY && !ONLY.includes(V.id) && V.id !== "base" && V.id !== "base2") continue;
       const applied = await page.evaluate(edits => {
@@ -109,9 +131,25 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
       // (a frame to compile, then the measured ones; the last read back)
       await page.evaluate(() => { window.__gFrame(false); window.__gFrame(false); window.__g.ms.length = 0; });
       for (let i = 0; i < FRAMES; i++) await page.evaluate(() => window.__gFrame(false));
+      // The same frame twice, back to back with nothing stepped between (what the frames step, her glow easing, the dancefloor's
+      // tiles, the view's budgeted work, can't come into it): the scene drawn with the shader as built and with this variant's,
+      // into one target, read back and compared. The proof that a change leaves the picture as it was.
+      const same = V.id.startsWith("base") ? null : await page.evaluate(() => {
+        const v = window.witch.view, r = v.renderer, gl = r.getContext(), mesh = v.ground.mesh, mine = mesh.material;
+        const built = window.__gBuilt ??= Object.assign(mine.clone(), { uniforms: mine.uniforms, fragmentShader: window.__gSrc });
+        built.defines = { ...mine.defines }; built.needsUpdate = true;
+        const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, rt = new window.witch.view.post.sceneTarget.constructor(w, h);
+        const read = () => { r.setRenderTarget(rt); r.clear(); r.render(v.scene, v.camera); const px = new Uint8Array(w * h * 4); r.readRenderTargetPixels(rt, 0, 0, w, h, px); r.setRenderTarget(null); return px; };
+        mesh.material = built; read(); const a = read();
+        mesh.material = mine; read(); const b = read();
+        rt.dispose();
+        let d = 0, m = 0; for (let i = 0; i < a.length; i += 4) { const e = Math.max(Math.abs(a[i] - b[i]), Math.abs(a[i + 1] - b[i + 1]), Math.abs(a[i + 2] - b[i + 2])); if (e) { d++; if (e > m) m = e; } }
+        return { diff: d, maxd: m };
+      });
       // (the frame read back and compared with the base's in the page; the base's kept there)
       const cmp = await page.evaluate(isBase => {
         const f = window.__gFrame(true), b = window.__gBase, px = f.px;
+        (window.__gKept ??= []).push(px);
         if (isBase) { window.__gBase = px; return { diff: 0, maxd: 0, of: px.length / 4 }; }
         let diff = 0, maxd = 0;
         for (let i = 0; i < px.length; i += 4) { const d = Math.max(Math.abs(px[i] - b[i]), Math.abs(px[i + 1] - b[i + 1]), Math.abs(px[i + 2] - b[i + 2])); if (d) { diff++; if (d > maxd) maxd = d; } }
@@ -120,15 +158,20 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
       for (let i = 0; i < 60 && (await page.evaluate(() => window.__gDrain())) > 0; i++) await page.waitForTimeout(250);
       const ms = await page.evaluate(() => window.__g.ms.slice());
       const diff = cmp.diff, maxd = cmp.maxd;
-      const row = { spot, id: V.id, what: V.what, ms: med(ms), n: ms.length, diffPx: diff, maxDiff: maxd, of: cmp.of };
+      const row = { spot, id: V.id, what: V.what, ms: med(ms), n: ms.length, diffPx: diff, maxDiff: maxd, of: cmp.of, same };
       results.push(row);
-      lap(`  ${spot} ${V.id.padEnd(10)} ground ${row.ms.toFixed(1)} ms (${ms.length} frames)${V.id === "base" ? "" : `, ${diff} px differ (max ${maxd})`}`);
+      lap(`  ${spot} ${V.id.padEnd(10)} ground ${row.ms.toFixed(1)} ms (${ms.length} frames)${V.id === "base" ? "" : `, ${diff} px differ (max ${maxd})`}${same ? `; drawn back to back with the shader as built: ${same.diff} px differ (max ${same.maxd})` : ""}`);
     }
+    // (each variant against the frame drawn next, too: a slow drift in the ground, tiles filled late, shows in both, the fix in neither)
+    const next = await page.evaluate(() => { const K = window.__gKept, o = []; for (let k = 1; k + 1 < K.length; k++) { let d = 0; for (let i = 0; i < K[k].length; i += 4) if (K[k][i] !== K[k + 1][i] || K[k][i + 1] !== K[k + 1][i + 1] || K[k][i + 2] !== K[k + 1][i + 2]) d++; o.push(d); } window.__gKept = []; return o; });
+    const ran = results.filter(r => r.spot === spot);
+    next.forEach((d, k) => { const r = ran[k + 1]; if (r) r.diffNext = d; });
+    lap(`  ${spot}: pixels each variant differs from the frame drawn after it: ${ran.slice(1, -1).map((r, k) => `${r.id} ${next[k]}`).join(", ")}`);
     if (errors.length) console.log(`  page errors at ${spot}: ${errors.slice(0, 3).join(" | ")}`);
     await page.close();
   }
-  const lines = ["| spot | part off | ground ms | saved vs base | pixels changed |", "|---|---|---|---|---|"];
-  for (const r of results) { const bs = results.filter(q => q.spot === r.spot && q.id.startsWith("base")), b = { ms: bs.reduce((a, q) => a + q.ms, 0) / bs.length }; lines.push(`| ${r.spot} | ${r.id}: ${r.what} | ${r.ms.toFixed(1)} | ${r.id === "base" ? "" : `${(b.ms - r.ms).toFixed(1)} (${((1 - r.ms / b.ms) * 100).toFixed(0)}%)`} | ${r.id === "base" ? "" : `${r.diffPx} (max ${r.maxDiff})`} |`); }
+  const lines = ["| spot | part off | ground ms | saved vs base | pixels changed (frame / back to back) |", "|---|---|---|---|---|"];
+  for (const r of results) { const bs = results.filter(q => q.spot === r.spot && q.id.startsWith("base")), b = { ms: bs.reduce((a, q) => a + q.ms, 0) / bs.length }; lines.push(`| ${r.spot} | ${r.id}: ${r.what} | ${r.ms.toFixed(1)} | ${r.id === "base" ? "" : `${(b.ms - r.ms).toFixed(1)} (${((1 - r.ms / b.ms) * 100).toFixed(0)}%)`} | ${r.id === "base" ? "" : `${r.diffPx} (max ${r.maxDiff})`}${r.same ? ` / ${r.same.diff} (max ${r.same.maxd})` : ""} |`); }
   console.log("\n" + lines.join("\n"));
   fs.writeFileSync(path.join(out, "ground.md"), lines.join("\n") + "\n");
   fs.writeFileSync(path.join(out, "ground.json"), JSON.stringify(results, null, 1));
