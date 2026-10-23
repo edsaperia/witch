@@ -328,9 +328,14 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       const own = m.fight?.packMove;
       const move: Move = own && m.fight && strikingNow(m) ? own : role === "lunger" ? lungeMove(m.species, K) : K.ranged ? "ranged" : "melee";
       const d: Directive = { role, phase: st!.phase, state: st!, may: false, move };
+      const own2 = profileOf(m.species)?.move;
       if (m.packSync !== undefined && time < m.packSync) {
         // Blinked in where she blinked (the heron's sync): it strikes at once, whatever the pack's phase.
         d.may = true;
+      } else if (own2?.kind === "ambush" && own2.strike && m.sprung !== undefined && time - m.sprung < (own2.time ?? 0.5) && !st!.struck.includes(m.id) && !st!.hers) {
+        // Sprung from lying in wait (the snake, its move's strike): it strikes as it springs, whatever the pack's phase (Ed, 2026-10-20:
+        // kinds keep their own moves in a pack), taking a token like any strike.
+        d.may = true; d.move = "melee";
       } else if (role === "hurt" && !st!.hers) {
         // Hurt members run while the healthy attack (Ed): out of reach, on its own bearing from her.
         const a = Math.atan2(m.z - p.z, m.x - p.x), out2 = 18 * FIGHT.scale;
