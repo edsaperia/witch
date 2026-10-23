@@ -6,10 +6,10 @@ import { GENOMES, speciesOf } from "./genome/index.js";
 import { textureSprite } from "./genome/texture.js";
 import { napForm } from "./naps.js";
 export const textureSeed = id => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) & 0xffff;
-import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, troll3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, hydra3d, moth3d, spider3d, dragonfly3d, crab3d, rattlesnake3d, rattle3d, scorpion3d, penguin3d } from "./creatures3d.js";
+import { withForm, withGear, withTexture, withView, viewKey, height3d, quad3d, owl3d, hedgehog3d, toad3d, troll3d, raven3d, heron3d, HERON_GAIT, bat3d, mole3d, sentinel3d, armadillo3d, beetle3d, scarab3d, snail3d, woodlouse3d, snake3d, hydra3d, moth3d, spider3d, dragonfly3d, crab3d, rattlesnake3d, rattle3d, scorpion3d, penguin3d, quetzal3d } from "./creatures3d.js";
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
-const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d })); // body plan -> 3D builder; four-legged species all use quad3d
+const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d, quetzal: quetzal3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
 // Idle poses (a genome's `idle`; Ed, 2026-10-12): drawn as a baked frame while it stands still now and then (render/view/creatures.ts),
 // the four-legged rig standing aside. The meerkat sat up as a sentinel.
@@ -56,7 +56,7 @@ export function speciesColours(sp, st, gear = null) {
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
-  const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = Array.isArray(s.belly) ? hsv2rgb(...s.belly) : s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const mh = s.magic ?? st.magicHue + s.hue * .3, magic = hsv2rgb(mh, .6, 1), magic2 = hsv2rgb(mh, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {

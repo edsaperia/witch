@@ -74,6 +74,8 @@ const LARGE = {
     ["@coptic-basilica", 0, 0], ["rubble", -1.0, 2.4], ["rubble", 3.4, 1.6, "left"], ["decor:split", -3.4, 1.8]] },
   "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "stream"], pieces: [
     ["pagoda-temple", 0, 0], ["decor:pair", -2.8, 1.6], ["decor:rock", 2.9, -1.4], ["rubble", -2.4, -1.8, "left"]] },
+  "step-pyramid": { desc: "a stepped pyramid in its clearing, its stair between serpent balustrades, fallen blocks at its foot", suits: ["step-pyramid"], pieces: [
+    ["step-pyramid", 0, 0], ["rubble", 3.6, 2.0], ["decor:standing-rock", -3.8, 1.4, "left"]] },
   "stupa": { desc: "a stupa on its terraces with a tree rooted in its dome, its spire's rings fallen at its foot, standing stones near", suits: ["heath", "moor", "rocky-slope", "grassland"], pieces: [
     ["stupa", 0, 0], ["decor:standing-rock", -3.2, -1.0], ["decor:pair", 3.0, 1.8, "left"]] },
   "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "garden", "heath"], pieces: [
@@ -87,7 +89,7 @@ const LARGE = {
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;

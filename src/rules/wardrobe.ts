@@ -6,12 +6,12 @@ import WARDROBE from "../../config/wardrobe.json";
 
 /** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
  *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
-export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean }
+export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean; /** hidden till the Workshop exists (every broom but Classic: Ed, 2026-10-23) */ workshop?: boolean }
 /** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES) or its power. */
-export interface Shelf { id: string; label: string; items: WardrobeItem[]; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; power?: "broom"; always?: boolean }
+export interface Shelf { id: string; label: string; items: WardrobeItem[]; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; power?: "broom"; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string }
 type Genome = Record<string, unknown>;
 
-const RAW = WARDROBE as unknown as { stations: Record<string, string[]>; shelves: Record<string, Omit<Shelf, "id">> };
+const RAW = WARDROBE as unknown as { stations: Record<string, string[]>; shelves: Record<string, Omit<Shelf, "id">>; bareHead?: string[] };
 export const SHELVES: Record<string, Shelf> = Object.fromEntries(Object.entries(RAW.shelves).map(([id, s]) => [id, { ...s, id }]));
 export const ITEMS: WardrobeItem[] = Object.values(SHELVES).flatMap(s => s.items);
 const BY_ID = new Map(ITEMS.map(i => [i.id, i]));
@@ -32,6 +32,14 @@ export function shelvesAt(station: string): Shelf[] | null {
   const ids = RAW.stations[station];
   return ids ? ids.map(id => SHELVES[id]) : null;
 }
+
+/** A shelf's items as its panel shows them: those not waiting on the Workshop. */
+export const shownItems = (s: Shelf): WardrobeItem[] => s.items.filter(i => !i.workshop);
+/** Whether a shelf's items give her a choice: two or more of them hers (Ed, 2026-10-23: "Don't show options where there's nothing
+ *  to choose yet"; the row appears once there's something to choose). */
+export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => shownItems(s).filter(i => owned.has(i.id)).length >= 2;
+/** Whether she's drawn without her hat while `station`'s panel is open (its choices are on her head or face: Ed, 2026-10-23). */
+export const bareHeadAt = (station: string): boolean => !!RAW.bareHead?.includes(station);
 
 const get = (g: Genome, path: string): unknown => path.split(".").reduce<unknown>((o, k) => (o as Record<string, unknown> | null | undefined)?.[k], g);
 /** Whether she has `item` on: every value it sets is hers (a number: hers above 0 when its is, none when its is 0). */

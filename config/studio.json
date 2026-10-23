@@ -1,0 +1,35 @@
+{
+  "_": "The treehouse Studio's instruments (Ed, 2026-10-23: \"The studio has a drumkit (top left), modular synth setup (top right), microphone (middle, spotlit). They open menus when you go near that let you 'play them'\"; the mock, previews/ed/studio-instruments on claude/ed-shots; rules/studio.ts, app/studio.ts, ui/studioPanel.ts). The loop: the Studio's own, at its own tempo (bpm, min to max, step a press), never the night's music (Ed: \"the Studio is quiet ... she plays over a click or loop of its own at its own tempo\"), shared by every player at the Studio; its styles in turn; level its share of the Studio's volume. root: the instruments' key (MIDI of the middle row's first note) and scale (every key in it: no wrong notes). Each instrument's sounds, chosen by 5 to 9: the drum kit's kits (each pad's patch; a pad left out plays the house kit's), the synth's patches and the mic's voices, all the music style's patches or this file's own (patches, over the style's). start: the sounds hers from the start (all of them for now; the rest will be finds, Ed: \"instruments and sounds become finds\"). Her notes are never snapped to the loop (Ed, 2026-10-23: \"never ... exactly when pressed\").",
+  "loop": { "bpm": 110, "min": 70, "max": 160, "step": 5, "styles": ["click", "beat", "bass", "drone"], "level": 0.55 },
+  "root": 57,
+  "scale": "dorian",
+  "level": 0.9,
+  "drums": {
+    "kits": [
+      { "id": "house", "name": "House", "pads": { "kick": "kick", "kick808": "kick808", "kickSoft": "softKick", "kickHard": "kickHard", "snare": "snare", "rim": "studioRim", "clap": "clap", "snap": "snap", "hat": "hat", "openHat": "openHat", "shaker": "shaker", "cowbell": "cowbell", "tomHigh": "studioTomHigh", "tomMid": "studioTomMid", "tomLow": "studioTomLow", "tomFloor": "studioTomFloor", "crash": "studioCrash" } },
+      { "id": "808", "name": "808", "pads": { "kick": "kick808", "snare": "clap", "clap": "clap", "hat": "hat", "openHat": "openHat" } },
+      { "id": "hard", "name": "Hard", "pads": { "kick": "kickHard", "snare": "snare", "clap": "snap", "kickSoft": "kick808" } },
+      { "id": "ritual", "name": "Ritual", "pads": { "kick": "studioTomFloor", "snare": "studioTomMid", "clap": "snap", "hat": "shaker", "openHat": "studioRim", "kickHard": "kick" } }
+    ],
+    "start": ["house", "808", "hard", "ritual"]
+  },
+  "synth": { "patches": [
+    { "id": "acid", "name": "Acid" }, { "id": "keys", "name": "Keys" }, { "id": "pad", "name": "Pad" }, { "id": "supersaw", "name": "Supersaw" }, { "id": "lgBell", "name": "Bell" }
+  ], "start": ["acid", "keys", "pad", "supersaw", "lgBell"], "perf": { "open": 4, "close": 0.15, "wobble": 7, "grit": 0.7 } },
+  "mic": { "voices": [
+    { "id": "altoSampled", "name": "Her voice" }, { "id": "recordedVoice", "name": "Bright" }, { "id": "studioOoh", "name": "Ooh choir" }, { "id": "studioRobot", "name": "Robot" }
+  ], "start": ["altoSampled", "recordedVoice", "studioOoh", "studioRobot"], "vowels": { "up": "laa", "down": "ooh", "left": "loo", "right": "mm" }, "formants": { "laa": 950, "ooh": 380, "loo": 520, "mm": 260 } },
+  "patches": {
+    "studioTomHigh": { "kind": "kick", "gain": 0.75, "pitch": 330, "pitchEnd": 190, "pitchTime": 0.12, "decay": 0.3, "click": 0.15, "reverb": 0.15 },
+    "studioTomMid": { "kind": "kick", "gain": 0.8, "pitch": 250, "pitchEnd": 140, "pitchTime": 0.14, "decay": 0.34, "click": 0.15, "reverb": 0.15 },
+    "studioTomLow": { "kind": "kick", "gain": 0.85, "pitch": 190, "pitchEnd": 105, "pitchTime": 0.16, "decay": 0.38, "click": 0.12, "reverb": 0.15 },
+    "studioTomFloor": { "kind": "kick", "gain": 0.9, "pitch": 140, "pitchEnd": 75, "pitchTime": 0.18, "decay": 0.45, "click": 0.1, "reverb": 0.15 },
+    "studioCrash": { "kind": "noise", "source": "metal", "gain": 3.2, "filter": "highpass", "cutoff": 5200, "q": 0.6, "attack": 0.002, "decay": 1.3, "hp": 400, "reverb": 0.25 },
+    "studioRim": { "kind": "bell", "gain": 0.35, "cutoff": 1800, "q": 3, "decay": 0.06, "ratio": 2.1 },
+    "studioOoh": { "kind": "synth", "gain": 0.32, "waves": ["sawtooth"], "unison": 3, "detune": 14, "width": 0.6, "attack": 0.18, "decay": 0.4, "sustain": 0.8, "release": 0.6, "filter": "bandpass", "cutoff": 950, "q": 3, "filter2": "lowpass", "cutoff2": 2600, "vibRate": 5.2, "vibDepth": 18, "vibDelay": 0.35, "reverb": 0.5, "hp": 120 },
+    "studioRobot": { "kind": "synth", "gain": 0.26, "waves": ["square"], "attack": 0.01, "decay": 0.2, "sustain": 0.9, "release": 0.12, "filter": "bandpass", "cutoff": 950, "q": 6, "fmRatio": 1, "fmIndex": 0.3, "reverb": 0.2, "delay": 0.2, "hp": 150 },
+    "studioBass": { "kind": "synth", "gain": 0.32, "waves": ["sawtooth"], "sub": 0.6, "attack": 0.005, "decay": 0.2, "sustain": 0.5, "release": 0.1, "filter": "lowpass", "cutoff": 500, "q": 2, "envAmt": 900, "hp": 30 },
+    "studioDrone": { "kind": "synth", "gain": 0.16, "waves": ["sawtooth", "sawtooth"], "semis": [0, 7], "unison": 2, "detune": 10, "width": 0.7, "attack": 1.2, "decay": 1, "sustain": 0.9, "release": 1.5, "filter": "lowpass", "cutoff": 900, "q": 0.8, "lfoRate": 0.12, "lfoDepth": 300, "reverb": 0.5, "hp": 60 },
+    "studioClick": { "kind": "bell", "gain": 0.22, "cutoff": 3200, "q": 2, "decay": 0.04, "ratio": 1.5 }
+  }
+}

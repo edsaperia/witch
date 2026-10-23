@@ -224,6 +224,9 @@ export type WaveEvent =
 export interface Controls extends Intent, Partial<LeashControls>, InviteControls {
   /** At a dressing station and choosing (ui/stationPanel.ts): the camera eases in on her (camera.station). */
   framing?: boolean;
+  /** And the part of her the row being chosen is about (config/wardrobe.json frame): the camera zooms in on it
+   *  (camera.station.parts; Ed, 2026-10-23: "zoom in on what's being chosen"). */
+  framePart?: string | null;
   /** Debug (O): the nearest area legend turns happy (as if its quest were done). */
   happyNearest?: boolean;
   /** The party spell's button (or its key) pressed: the game starts (rules/party.ts castPartySpell). */
@@ -552,7 +555,7 @@ function fixedStep(g: Game, controls: Controls): void {
   const onDeck = (b: WitchState) => !!b.perch && b.mode === "ground", perchTurn = !was.seated && onDeck(was) !== onDeck(W.body) ? (onDeck(W.body) ? 1 : -1) : 0;
   // A party legend on her leash (the Easter egg): not a step past legends.partyReach of it, blinking, flying or thrown (rules/partyLegend.ts).
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
-  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g)); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
+  g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
   const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
   const lapping = g.win?.phase === "lap"; // (the victory lap: its pulses race along the line, the waves done with: rules/win.ts)

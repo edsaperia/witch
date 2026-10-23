@@ -5,7 +5,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, objectFrontAt } from "./houseRooms";
-import { STATION_SLACK, stationAt, stationOf } from "./stations";
+import { STATION_SLACK, stationAt, stationOf, tableOf } from "./stations";
 import { cameraPose } from "./camera";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -98,11 +98,39 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
+  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): each part's own look and distance", () => {
+    const P = TUNING.camera.station!.parts!;
+    const settle = (part: string) => {
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      for (let i = 0; i < 4 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true, framePart: part }, STEP);
+      return { pose: cameraPose(g.camera, g.witch.lift, g.tuning), cam: g.camera };
+    };
+    const head = settle("head"), feet = settle("feet");
+    for (const [part, s] of [["head", head], ["feet", feet]] as const) {
+      expect(s.cam.stationLook).toBeCloseTo(P[part].look, 2);
+      expect(s.cam.stationDistance).toBeCloseTo(P[part].distance, 2);
+    }
+    // (the looks are calibrated against her drawn sprite, which the house draws onto its floor's pixels, so only the
+    // difference is checked: the aim moves by the looks' difference)
+    expect((head.pose.ty - head.cam.ty) - (feet.pose.ty - feet.cam.ty)).toBeCloseTo(P.head.look - P.feet.look, 1);
+    expect(head.pose.distance).toBeLessThan(feet.pose.distance);
+  });
+
   it("never eases in away from the house, framing or not", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false;
     for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, framing: true }, STEP);
     expect(g.camera.station ?? 0).toBe(0);
   });
-});
 
+  it("the map table comes to her by nearness as a table (Ed, 2026-10-23: its chart slides up from the bottom), never as a dressing station", () => {
+    const p = before("mapTable", 0.5), g = inHouse(p.x, p.z);
+    expect(tableOf(g, null)?.id).toBe("mapTable");
+    expect(stationOf(g, null)?.id).not.toBe("mapTable");
+    const q = before("mapTable", HOUSE_ROOMS.reach + STATION_SLACK + 0.5), far = inHouse(q.x, q.z);
+    expect(tableOf(far, "mapTable")).toBeNull(); // (past the slack: it goes)
+    const r = before("mapTable", HOUSE_ROOMS.reach + STATION_SLACK / 2), edge = inHouse(r.x, r.z);
+    expect(tableOf(edge, "mapTable")?.id).toBe("mapTable"); // (within the slack, open: it stays)
+    expect(tableOf(edge, null)).toBeNull(); // (but isn't opened from there)
+  });
+});

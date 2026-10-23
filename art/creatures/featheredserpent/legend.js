@@ -1,0 +1,1 @@
+export const LEGEND_FEATHEREDSERPENT = { ground: .06, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 4, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }; // the step pyramid's feathered serpent: coiled at the temple's foot like its carved balustrade, its feathers gone to green stone, ferns rooted in its coils

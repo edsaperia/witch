@@ -151,6 +151,7 @@
                   "telescope",
                   "say",
                   "chart",
+                  "instrument",
                   "pile"
                 ]
               },
@@ -177,6 +178,14 @@
               },
               "spell": {
                 "type": "string"
+              },
+              "instrument": {
+                "type": "string",
+                "enum": [
+                  "drums",
+                  "synth",
+                  "mic"
+                ]
               }
             },
             "required": [

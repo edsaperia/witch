@@ -20,6 +20,8 @@ export type HouseUse =
   | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
   /** The map table (Ed, 2026-10-23: in the middle of the Atrium): E opens the sea chart (rules/treehouse.ts atMapTable). */
   | { kind: "chart" }
+  /** A treehouse Studio instrument (Ed, 2026-10-23): she's at it by nearness, its menu in and every key playing it (rules/studio.ts). */
+  | { kind: "instrument"; instrument: "drums" | "synth" | "mic" }
   /** Last night's clothes, in a pile by her bed (rules/clothesPile.ts): E puts on all that's still in it, on a wake-up. */
   | { kind: "pile" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
