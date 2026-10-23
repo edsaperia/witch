@@ -136,6 +136,8 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 
 ### Phase 2
 
+**Built a biome at a time, data only** (Juliet, from 2026-10-23; `config/packs.json`, each kind's `pack-<kind>` arena and its special's sign in `packs.test.ts`): volcanic (komodo, salamander, stegosaurus); badlands (armadillo, meerkat, rattlesnake, scorpion). Their specials and retreats are today's: a movement-reversing confusion is the bat's (`specialWith.move`), the salamander's flame line a slowing wall, a freeze the `freeze` retreat. The kinds that need a new special (knockback, pull, decoy, mind control) come with it (Lima).
+
 | Kind | Melee (tell) | Ranged (tell) | Special: pack move (tell) | Retreat | Rhythm |
 |---|---|---|---|---|---|
 | bear | heavy swipe, knockback, short lunge | none | **cover**: stands over a hurt packmate and takes its hits (rears up) | hold ground, backing off | slow |
@@ -190,7 +192,7 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 1. **The pack forms** as today (one kind, one side, one target), and decides its **rhythm** (its kind's), its **pressure** (how many may strike at once) and **roles by position** each step: the nearest member the lunger, the ones at range the shooters, the one behind her (or the furthest) the special.
 2. **The pack tell**: every member glows and the kind's call plays (a howl, a thump, a chirr); half a second to a second by kind.
 3. **The combo**: the lunger winds up and lunges (a lane); as it commits, the shooters fire (lines or circles) **aimed where a dodge would go** (ahead of her, or where her last blink went); the special lands last (a ring or a bar). What she does answers it: a 💌 at one of them brings cover or the special onto her; her retreat brings the cut-off; her party animal engaging splits the pack.
-4. **The lull**: the pack falls back by its kind's retreat pattern (a circle, a scatter, the trees, a split), longer for a bigger pack; the hurt keep their distance; a lost member makes the rest scatter and regroup.
+4. **The lull**: the pack falls back by its kind's retreat pattern (a circle, a scatter, the trees, a split), longer for a bigger pack; the hurt keep their distance; a lost member makes the rest scatter and regroup. At its place a member doesn't halt but prowls round her at that distance till the pack comes again (Ed's playtests, 2026-10-23: "lulls between pack attacks seem to have the animals stand still instead of retreat"; `packs.json` `prowl`); only the retreats meant to stand (the snail's shell, the badger's hold) stand, and a freeze holds its place for the lull's first part (`prowl.freeze`), then prowls like the rest (Ed, 2026-10-23).
 5. **Again**, from step 2, until the pack is beaten, invited or she's gone.
 
 A besieging pack does the same at a soundsystem, its shooters at the clearing's edge; her parked pack goes out to them and back. (Until step 4, at a soundsystem or speaker a creature fights as before packs, its own attack at its full rate: Ed, 2026-10-20, packs pacing there dealt under half.)

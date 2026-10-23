@@ -17,7 +17,7 @@ import { type Attack, type CombatData, COMBAT, traitsOf, type CombatState, attac
 import { fighting, targetable, sideOf, truce, targetPos, headingOf, lightsNear, sheltered, gaveUp, valid, acquire, Grid, moveToward, nearestSound } from "./combat/targeting";
 import { contacted, touch, land, area, stepKnock, useData } from "./combat/hits";
 import { stepLegendAttack, stepLegend } from "./combat/legend";
-import { stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
+import { PACKS, stepPacks, packsOn, packKindOf, packAttack, packGate, markStrike, dodgeAim, strikingNow, ownStrike, type Directive } from "./combat/packs";
 // (split into rules/combat/: data, targeting, hits, legend; everything public is still exported from here)
 /** A wild flyer that swoops (its profile's move; hostile: wild or enraged, never hers or happy). */
 const swoops = (c: Creature): boolean => !c.leashed && profileOf(c.species)?.move?.kind === "swoop" && (stateOf(c) === "wild" || stateOf(c) === "enraged");
@@ -312,8 +312,24 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
     const speed = (heavy ? DA!.heavy.speed : chasing ? Math.max(own, sprint * DA!.chase) : c.level !== LEGEND && d > 30 * S ? Math.max(own, sprint) : own) * FIGHT.speed * slow;
     // A pack member falling back in its lull, a hurt one keeping away (rules/combat/packs.ts); dug in (the badger's cover, its hold), it
     // stands, biting what comes in reach when its pack lets it.
+    if (!pd?.slot || pd.phase !== "lull") c.packProwl = undefined; // (a new lull's prowl starts from its place)
     if (pd && f.windupUntil === 0 && !c.charge && !c.leap && !c.burrow && !swoops(c)) { // (a flyer in a pack circles aloft through its lull: below)
-      if (pd.slot) { if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; } else moveToward(c, pd.slot.x, pd.slot.z, 0.5, speed, dt); continue; }
+      if (pd.slot) {
+        if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; }
+        // At its place it doesn't halt (Ed's playtests, 2026-10-23: "lulls between pack attacks seem to have the animals stand still
+        // instead of retreat"): once there its place moves on round her at that distance, a little slower than it runs, each its own way
+        // round, and it keeps up, till its pack comes again. A freeze holds its place first, out of reach and hard to see (combat.md), then prowls.
+        const PW = PACKS.prowl, ox = pd.slot.x - p.x, oz = pd.slot.z - p.z, R = Math.hypot(ox, oz);
+        let tx = pd.slot.x, tz = pd.slot.z;
+        if (pd.phase === "lull" && !pd.freeze && R >= 1) {
+          let a = c.packProwl ?? 0;
+          const at = (q: number) => { const cs = Math.cos(q), sn = Math.sin(q); return [p.x + ox * cs - oz * sn, p.z + ox * sn + oz * cs]; };
+          [tx, tz] = at(a);
+          if (Math.hypot(tx - c.x, tz - c.z) <= PW.near * S) { a += (c.id % 2 ? 1 : -1) * (speed * PW.pace * dt) / R; c.packProwl = a; [tx, tz] = at(a); }
+        }
+        moveToward(c, tx, tz, 0.1, speed, dt);
+        continue;
+      }
       if (c.dug !== undefined && time < c.dug) {
         c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1;
         if (time >= f.readyAt && d <= A.range + p.r + 1.5 * FIGHT.scale && strikeNow(pd, f.target)) { f.windupUntil = time + A.windup * 0.7; f.aimX = p.x; f.aimZ = p.z; markStrike(pd, c); s.events.push({ kind: "windup", x: c.x, z: c.z, at: time, id: c.id }); }

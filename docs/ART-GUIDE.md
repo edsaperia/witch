@@ -158,6 +158,23 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 - **Saturated yellow-green crowns read as glowing.** An autumn or dry-leaf area wants old gold at moderate saturation, not lime (#112 v2 wispy forest limes).
 - **Natural colours come from the real animal, but saturation stays moderate.** For example: a red deer's coat, a natterjack's green with its pale stripe, a garden spider's chestnut with a cream cross. Fully saturated oranges and yellows read as toys (#97 "before" stag; #112 ram).
 - **Colour per material, not one ramp.** A species' whole ramp derives from one hue. Use `palette.over` for parts that differ in nature: membranes, dark legs, horns, caps and the glow.
+- **Judge the whole frame at night, as the game is.** The overnight art review's first round found problems in the dark that the lit sheets never show:
+  - the witch and the wolves at the floor's value, so they vanished;
+  - four areas reading as the same dark green;
+  - six party hues at full strength at once;
+  - pools as black holes.
+
+  Check every batch in play at night (a game shot, or `node tools/art-style/capture.cjs`) as well as on its lit sheet. Compare styles where there's light (a party pool, her own light), not in the dark: at the night's light level bold and ref look almost the same (still true on 2026-10-23).
+- **Dark, but legible.** A spooky night still reads its forms. The review's cold wood was right in mood, but from the treetops the forest's shape was lost at 5% value. Upward faces should catch moonlight at 15 to 25%. Lift the moon's fill, not the ambient, so the shadows stay cold.
+- **One light source per idea.**
+  - The party is warm amber pools.
+  - The moon is a cool rim and fill.
+  - Each area has one neon.
+  - The HUD is amber, quieter than the party.
+  - Hits are white, for a frame only.
+
+  Anything else that glows (a guide line, sparkles, eyeshine) is dimmer than these, or it competes: in the review the ley line outshone the party, and white party sparkles read as hits. Her own light is warm too, so a small warm glow beside her is lost in it (the finds mocks, 2026-10-23: a gold wisp a few metres from her vanished in her lantern's pool).
+- **Light the silhouette, not the normals, for anything that must read.** The styles flatten sprite normals, so a rim worked out from the normals disappears under bold and ref. A rim from the alpha edge works in every style: the game's moonlight rim on characters and the sleeping legends' neon outline are both taken from it (`rimAlpha` in `src/render/sprites.ts`, one pixel inside the style's dark outline under bold and ref).
 
 ## 4. Silhouette rules
 

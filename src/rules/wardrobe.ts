@@ -3,12 +3,18 @@
 // since: app/owned.ts keeps them), whether she's wearing one, and putting one on. Only items are
 // found: every colour is hers from the start (Ed, "She starts with all the colour variants"). Pure: the genome in, a new one out.
 import WARDROBE from "../../config/wardrobe.json";
+import type { Slot } from "./broomParts";
 
 /** A thing she can wear: what it sets on her genome (a dotted path for a part), and whether it's hers in a first game (the rest
  *  are found in the forest, as the other permanent upgrades are: Ed, 2026-10-21). */
-export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean; /** hidden till the Workshop exists (every broom but Classic: Ed, 2026-10-23) */ workshop?: boolean }
-/** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES) or its power. */
-export interface Shelf { id: string; label: string; items: WardrobeItem[]; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; power?: "broom"; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string }
+export interface WardrobeItem { id: string; name: string; set: Record<string, string | number | boolean>; start?: boolean }
+/** A row of a station's panel: its items, its colour grid's parts and kind, its fit sliders (WITCH_AXES); or the Workshop's (Ed,
+ *  2026-10-23; docs/backlog/workshop.md): a slot's broom-part cards, the sets' chips, the pegboard's 3 × 3 board. */
+export interface Shelf { id: string; label: string; items: WardrobeItem[]; colour?: string[]; grid?: "cloth" | "skin"; fit?: string[]; always?: boolean; /** the part of her the camera zooms in on while it's chosen (camera.station.parts) */ frame?: string;
+  /** the Workshop's bay: a row of part cards for this slot of her broom (rules/broomParts.ts), the empty slot first */ slot?: Slot;
+  /** the bay: the sets' progress, a chip each */ sets?: boolean;
+  /** the pegboard: the parts on the 3 × 3 biome map (broomParts.ts BOARD) */ board?: boolean;
+  /** to look at, nothing chosen (the pegboard: Ed, 2026-10-23, "its own read-only station menu; fitting stays at the bay") */ readOnly?: boolean }
 type Genome = Record<string, unknown>;
 
 const RAW = WARDROBE as unknown as { stations: Record<string, string[]>; shelves: Record<string, Omit<Shelf, "id">>; bareHead?: string[] };
@@ -33,8 +39,8 @@ export function shelvesAt(station: string): Shelf[] | null {
   return ids ? ids.map(id => SHELVES[id]) : null;
 }
 
-/** A shelf's items as its panel shows them: those not waiting on the Workshop. */
-export const shownItems = (s: Shelf): WardrobeItem[] => s.items.filter(i => !i.workshop);
+/** A shelf's items as its panel shows them (all of them: the brooms that waited on the Workshop are its parts now). */
+export const shownItems = (s: Shelf): WardrobeItem[] => s.items;
 /** Whether a shelf's items give her a choice: two or more of them hers (Ed, 2026-10-23: "Don't show options where there's nothing
  *  to choose yet"; the row appears once there's something to choose). */
 export const itemsToChoose = (s: Shelf, owned: ReadonlySet<string>): boolean => shownItems(s).filter(i => owned.has(i.id)).length >= 2;
