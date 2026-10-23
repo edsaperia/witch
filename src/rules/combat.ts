@@ -233,9 +233,13 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       if (sideOf(c) === "wild" && !c.siege && !c.leashed && gaveUp(w, c, f.target)) c.retreat = true;
       f.target = null;
     }
+    // Turned on her (a wild owl's or unicorn's mind control, rules/combat/packs.ts): one of her animals goes for her till it wears off.
+    const turned = !!c.mind && time < c.mind.until && !!w.witches[c.mind.of];
+    if (c.mind && !turned) { c.mind = undefined; if (f.target?.kind === "witch") f.target = null; }
     const had = !!f.target;
-    if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || (H ? !H.inside(p.x, p.z) : Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z)))) f.target = null; }
-    if (!f.target || f.windupUntil === 0) {
+    if (turned) f.target = { kind: "witch", id: c.mind!.of };
+    else if (f.target && lp) { const p = targetPos(w, s, f.target); if (!p || (H ? !H.inside(p.x, p.z) : Math.hypot(p.x - lp.x, p.z - lp.z) > reach + atk.attack.range || (happy && !w.inArea(c, p.x, p.z)))) f.target = null; }
+    if (!turned && (!f.target || f.windupUntil === 0)) {
       let near = acquire(w, c, reachX, reachZ, reach, atk.attack.range, grid, guarding, H ? o => H.inside(o.x, o.z) : happy ? o => w.inArea(c, o.x, o.z) : undefined, claims);
       // Retreating, it takes up a fight again only with someone back in its own area (no flip-flopping at the band's edge).
       if (near && c.retreat) { const q = targetPos(w, s, near); if (q && w.inArea(c, q.x, q.z)) c.retreat = undefined; else near = null; }

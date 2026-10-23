@@ -262,6 +262,28 @@ describe("pack combat, the fantastic kinds (step 3, 2026-10-23)", () => {
   }, 120000);
 });
 
+describe("pack combat, mind control (the owl, the unicorn; 2026-10-23)", () => {
+  it("a wild adult unicorn's glow turns one of her animals on her for its time, and then it's hers again", () => {
+    const T = PACKS.specials.mind.time ?? 3;
+    let turned = -1, at = 0, onHer = 0, back = false;
+    arena("fox*3@1,unicorn*3@2", 60, g => {
+      for (const e of fresh(g)) if (e.kind === "packMind" && turned < 0) { turned = e.id!; at = g.clock.time; }
+      if (turned < 0) return;
+      const c = g.creatures[turned];
+      if (c.mind && c.fight?.target?.kind === "witch") onHer++;
+      if (g.clock.time > at + T + 0.5 && !c.mind) back = true;
+    });
+    expect(turned).toBeGreaterThanOrEqual(0);
+    expect(onHer).toBeGreaterThan(0);
+    expect(back).toBe(true);
+  }, 120000);
+  it("with none of hers near, its glow turns her aim instead", () => {
+    let riddled = false;
+    arena("pack-unicorn", 60, g => { const v = g.witches[0]; if (v.confused && g.clock.time < v.confused.until) riddled = true; });
+    expect(riddled).toBe(true);
+  }, 120000);
+});
+
 describe("pack combat, Phase 1's pieces", () => {
   it("the heron's sync: a blink of hers while it lasts brings one of the pack blinking in beside where it put her, striking", () => {
     let synced = 0, blinkAt = -1, near = Infinity;

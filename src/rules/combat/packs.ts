@@ -26,7 +26,7 @@ import { fighting, sideOf, targetPos, targetable } from "./targeting";
 
 export type Role = "lunger" | "shooter" | "special" | "hold" | "hurt";
 export type Phase = "approach" | "tell" | "combo" | "lull";
-export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync" | "knockback" | "pull" | "decoy";
+export type SpecialKind = "stampede" | "scatter" | "call" | "feint" | "confusion" | "cloud" | "wall" | "rally" | "cover" | "mirage" | "sync" | "knockback" | "pull" | "decoy" | "mind";
 /** A special's numbers (packs.json specials), and a kind's own variant over them (its `specialWith`). */
 export interface SpecialData { time?: number; radius?: number; cooldown: number; tint: string; lead?: number; drift?: number; length?: number; ahead?: number; slow?: number; heal?: number; reach?: number; armour?: number; ring?: number;
   /** confusion: her movement turned, not her aim (the bat's screech) */ move?: boolean; /** cloud: a flash inside it confuses her aim (the moth's) */ flash?: boolean; /** cloud: its thrower leaps and it comes down where it lands (the toad's) */ leap?: boolean;
@@ -216,7 +216,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     const tg = c.fight?.target;
     // (a soundsystem or speaker doesn't fight back or dodge: at one a creature fights as before packs, its own attack at full rate,
     // no combo, lull or retreat: Ed, 2026-10-20, a lone boar dealt under half its damage a second to a home speaker)
-    if (!tg || tg.kind === "sound" || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
+    if (!tg || tg.kind === "sound" || c.mind || c.gone || c.level < 1 || c.level > 2 || c.boss || c.fleeUntil || c.dazed || !fighting(c) || !packKindOf(c.species, data)) continue;
     const k = keyOf(c, tg);
     let l = groups.get(k);
     if (!l) groups.set(k, (l = []));
@@ -227,6 +227,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
     if (c.packHide && time >= c.packHide.until) { if (c.packHide.tx !== undefined) { c.x = c.packHide.tx; c.z = c.packHide.tz!; } c.packHide = undefined; }
     if (c.packShell !== undefined && time >= c.packShell) c.packShell = undefined;
     if (c.packSync !== undefined && time >= c.packSync) c.packSync = undefined;
+    if (c.mind && time >= c.mind.until) { c.mind = undefined; if (c.fight?.target?.kind === "witch" && c.leashed) c.fight.target = null; } // (her animal turned on her is hers again)
   }
   if (s.mirages?.length) s.mirages = s.mirages.filter(m => time < m.until);
   if (s.decoys?.length) s.decoys = s.decoys.filter(q => time < q.until && !!w.creatures[q.id] && !w.creatures[q.id].gone);
@@ -474,6 +475,20 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
         if (v && puller) { pw.pull?.(tg.id, puller.x, puller.z, M); s.events.push({ kind: "packPull", x: v.x, z: v.z, at: time, id: puller.id }); }
       }
       else for (const o of w.active) if (o !== by && targetable(o) && foes(sideOf(o), side) && !o.boss && Math.hypot(o.x - by.x, o.z - by.z) <= reach) { const d = Math.hypot(by.x - o.x, by.z - o.z) || 1, k = Math.min(M, Math.max(0, d - 2 * S)); o.kx = ((by.x - o.x) / d) * k * 6; o.kz = ((by.z - o.z) / d) * k * 6; }
+      break;
+    }
+    case "mind": {
+      // Adults only (combat.md): a stare or a glow turns one of her animals on her for its time: the one it's fighting, else the nearest
+      // of hers within its radius; none, and she's within it, her aim drifts instead. Hers on the wild: the foe it's on is stunned
+      // (packs.json hers.stun).
+      if (by.level < 2) break;
+      if (huntsWitch(side)) {
+        const owner = tg.kind === "witch" ? tg.id : 0, v = w.witches[owner], d = (o: Creature) => Math.hypot(o.x - by.x, o.z - by.z);
+        const fought = tg.kind === "creature" ? w.creatures[tg.id] : null;
+        const turn = fought && fought.leashed && !fought.boss && !fought.mind ? fought : w.active.filter(o => o.leashed && !o.gone && !o.boss && o.level > 0 && !o.mind && d(o) <= Rr).sort((a, b) => d(a) - d(b))[0];
+        if (turn && v) { turn.mind = { until: time + T, of: owner }; s.events.push({ kind: "packMind", x: turn.x, z: turn.z, at: time, id: turn.id }); }
+        else if (v && tg.kind === "witch" && healthy.some(m => Math.hypot(m.x - v.x, m.z - v.z) <= Rr)) pw.confuse?.(owner, time + T, ((sp.drift ?? 30) * Math.PI) / 180);
+      } else if (tg.kind === "creature") { const o = w.creatures[tg.id]; if (o && !o.boss) { o.stunUntil = Math.max(o.stunUntil ?? 0, time + data.hers.stun); if (o.fight) o.fight.windupUntil = 0; s.events.push({ kind: "stunned", x: o.x, z: o.z, at: time, id: o.id }); } }
       break;
     }
     case "decoy": (s.decoys ??= []).push({ id: by.id, until: time + T, r: Rr, side }); break; // (the raccoon waving: her 💌s in its way go to it: rules/game.ts)
