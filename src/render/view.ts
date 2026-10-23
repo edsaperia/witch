@@ -13,6 +13,9 @@ import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
+import { Hiz, HIZ_LAYER } from "./hiz";
+/** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
+const HIZ_NEAR = 120;
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -367,6 +370,19 @@ export class View {
       const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
     } else P.behindAt = null;
+  }
+
+  /** What the treehouse hides of the forest, left undrawn (render/hiz.ts; the perf pass, 2026-10-23): the Ent's solid pass on its
+   *  occluder layer, the chain built while the camera is within HIZ_NEAR metres of the treehouse (the decks, the balcony, the house,
+   *  flying round it), off elsewhere. `?hiz=0` never builds it (to compare). */
+  private hiz: Hiz | null = null;
+  private readonly hizOff = new URLSearchParams(globalThis.location?.search ?? "").get("hiz") === "0";
+  private occluders(): void {
+    const T = this.game.map.treehouse, cp = this.camera.position, m = this.treehouseBatch.meshes[0];
+    const on = !this.hizOff && !!m && (cp.x - T.x) ** 2 + (cp.z - T.z) ** 2 < HIZ_NEAR * HIZ_NEAR;
+    if (on && !this.hiz) this.hiz = new Hiz(this.renderer);
+    if (m) m.layers.enable(HIZ_LAYER);
+    this.hiz?.render(this.renderer, this.scene, this.camera, this.width, this.height, on);
   }
 
   /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
@@ -1347,6 +1363,7 @@ export class View {
     this.behindHouse(this.game);
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
+    this.occluders();
     this.post.render(this.scene, this.camera);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
