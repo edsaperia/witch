@@ -6,7 +6,7 @@
 // pass alone, the GPU's own time where the browser can time it (EXT_disjoint_timer_query_webgl2: not under the software
 // renderer here, where the frame gap is the GPU's time instead, the picture rasterised on the CPU), the draw calls and the
 // triangles. The knobs are the tuning's, set live (the view reads them each frame), so the game's build is what's measured.
-//   node tools/bench/gpu.cjs [out dir]   DIST=dist QUERY=island=fox SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
+//   node tools/bench/gpu.cjs [out dir]   AT=spot|decks|above DIST=dist QUERY=island=fox SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
@@ -41,6 +41,8 @@ const VARIANTS = [
   { id: "shadows", what: "no shadows of any kind", set: "t.shadows.cast = false; t.shadows.trunks.mode = 'off'; t.shadows.on = false" },
   { id: "bare", what: "no shadows, bloom, tilt-shift or ground cover", set: "t.shadows.cast = false; t.shadows.trunks.mode = 'off'; t.shadows.on = false; t.bloom.on = false; t.tiltShift.on = false; t.groundCover.on = false" },
   // (the shader's own parts, by the view's objects and uniforms: `v` the view, `undo` a list of ways back)
+  { id: "housefirst", what: "the treehouse drawn before the forest (renderOrder), so the depth test can drop what it hides", set: "v.scene.traverse(o => { if (/^treehouse/.test(o.name)) { const r = o.renderOrder; o.renderOrder = r - 100; undo.push(() => { o.renderOrder = r; }); } })" },
+  { id: "notypes", what: "no area scenery (the area types' batches hidden)", set: "for (const b of v.typeBatches.values()) for (const o of b.meshes) if (o.visible) { o.visible = false; undo.push(() => { o.visible = true; }); }" },
   { id: "nofade", what: "no see-through pass (the sprites' second draw)", set: "v.scene.traverse(o => { if (o.material?.uniforms?.uFadePass?.value === 1 && o.visible) { o.visible = false; undo.push(() => { o.visible = true; }); } })" },
   { id: "lights0", what: "no point lights in the pixel shader (uLightCount 0)", set: "const u = v.scene.children.find(o => o.material?.uniforms?.uLightCount)?.material.uniforms.uLightCount ?? v.scene.children.flatMap(o => o.children ?? []).find(o => o.material?.uniforms?.uLightCount)?.material.uniforms.uLightCount; if (!u) throw new Error('no uLightCount'); const was = u.value; Object.defineProperty(u, 'value', { get: () => 0, set() {}, configurable: true }); undo.push(() => { delete u.value; u.value = was; })" },
   { id: "nosway", what: "no pixel wind (uWind.x 0: the sway taps skipped)", set: "let u = null; v.scene.traverse(o => { u ??= o.material?.uniforms?.uWind ?? null; }); if (!u) throw new Error('no uWind'); const w = u.value; Object.defineProperty(w, 'x', { get: () => 0, set() {}, configurable: true }); undo.push(() => { delete w.x; w.x = 0; })" },
@@ -64,9 +66,13 @@ const VARIANTS = [
   // are held by her routine, so a press then is lost and pressed again)
   const mode = () => page.evaluate(() => window.witch.game.witch.mode);
   const go = async (to, from) => { for (let i = 0; i < 300; i++) { const m = await mode(); if (m === to) return; if (m === from) await page.keyboard.press("Space"); await wait(1000); } throw new Error(`never ${to}`); };
-  await go("treetop", "ground");
-  await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
-  await go("ground", "treetop");
+  // (AT=decks: left at her decks as the night starts, the camera's opening shot; AT=above: the spot in the treetops, not landed)
+  const AT = env("AT", "spot");
+  if (AT !== "decks") {
+    await go("treetop", "ground");
+    await page.evaluate(({ X, Z, ZOOM }) => { const g = window.witch.game, w = g.witch; w.x = X; w.z = Z; w.vx = w.vz = 0; g.camera.zoomStep = ZOOM; }, { X, Z, ZOOM });
+    if (AT !== "above") await go("ground", "treetop");
+  }
   for (let i = 1; i <= WAVES; i++) { await page.keyboard.press("KeyN"); await page.waitForFunction(n => window.witch.game.party.wave >= n, i, { timeout: 120000 }).catch(() => {}); }
   const where = await page.evaluate(() => { const g = window.witch.game, w = g.witch, a = g.map.areaAt(w.x, w.z); return { mode: w.mode, x: Math.round(w.x), z: Math.round(w.z), area: a?.type, zoom: g.camera.zoomStep, wave: g.party.wave, gpuTimer: !!window.witch.frameStats.recent().gpu.length || !!window.witch.view.renderer.getContext().getExtension("EXT_disjoint_timer_query_webgl2") }; });
   lap(`at the spot: ${JSON.stringify(where)}; settling ${WARM} s`);
