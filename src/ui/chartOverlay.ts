@@ -18,7 +18,7 @@ import { SlideIn } from "./slideIn";
 const TABLE_FADE = { top: 72, side: 40 };
 const tableMask = `linear-gradient(to bottom, transparent, #000 ${TABLE_FADE.top}px), linear-gradient(to right, transparent, #000 ${TABLE_FADE.side}px, #000 calc(100% - ${TABLE_FADE.side}px), transparent)`;
 
-let open: { wrap: HTMLDivElement; view: ChartView; raf: number; opening: boolean; slide?: SlideIn; moon?: HTMLCanvasElement } | null = null;
+let open: { wrap: HTMLDivElement; view: ChartView; raf: number; slide?: SlideIn; moon?: HTMLCanvasElement } | null = null;
 /** A table's chart sliding away (closeChart): gone once it's out, or at once if another opens meanwhile. */
 let leaving: (() => void) | null = null;
 
@@ -27,18 +27,15 @@ export interface Sailed { island: string; seed: number; world?: number; end?: Fl
 
 /** Open the chart over the game; `onSail` with the island's link (to load) and what she sailed to (a night in place: app/sail.ts)
  *  when she sails; `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
- *  already open. `o.opening`: the first load's chart (app/opening.ts): the whole screen, no Close (there's no night to go back to
- *  yet), the night's art warming under it (chartWarmsNight), and `o.corner`'s buttons in its top right corner. `o.here`: the
- *  island she's on: choosing it closes the chart as Close does (then `o.onStay`), never a sail (app/sail.ts chartChoice). */
-export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { opening?: boolean; corner?: ChartViewOptions["corner"]; noBake?: ChartViewOptions["noBake"]; here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"] } = {}): void {
+ *  already open. `o.here`: the island she's on: choosing it closes the chart as Close does (then `o.onStay`), never a sail (app/sail.ts chartChoice). */
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"] } = {}): void {
   if (open) return;
   leaving?.(); // (the last table's chart still sliding away: gone now, its chart free for this one)
   performance.mark("chart:open");
   stopWarmChart(); // (the chart's own worker makes what isn't kept yet)
   const wrap = document.createElement("div");
   wrap.id = "chart-overlay";
-  wrap.style.cssText = o.opening ? "position:fixed;inset:0;z-index:50;overflow:hidden;background:#05060e"
-    : o.table ? "position:fixed;inset:0;z-index:50;overflow:hidden"
+  wrap.style.cssText = o.table ? "position:fixed;inset:0;z-index:50;overflow:hidden"
     : "position:fixed;inset:4vh 4vw;z-index:50;border:2px solid #3a2f5c;border-radius:8px;overflow:hidden;background:#05060e;box-shadow:0 0 0 100vmax rgba(5,6,14,.55)";
   document.body.append(wrap);
   const slide = o.table ? new SlideIn(wrap, "bottom") : undefined;
@@ -57,16 +54,14 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     mode: "sail", world,
     onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
     onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; host.style.maskImage = host.style.webkitMaskImage = "none"; if (moon) moon.style.display = "none"; }, // (the flight fills the screen, edge to edge)
-    onClose: o.opening ? undefined : closeChart,
+    onClose: closeChart,
     here: o.here,
     onStay: () => { closeChart(); o.onStay?.(); }, // (as Close: the night held behind it goes on as it was, main.ts)
-    corner: o.corner,
-    noBake: o.noBake,
     table: o.table,
   });
   let last = performance.now();
   const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); };
-  open = { wrap, view, raf: requestAnimationFrame(loop), opening: !!o.opening, slide, moon };
+  open = { wrap, view, raf: requestAnimationFrame(loop), slide, moon };
   slide?.in();
   performance.mark("chart:mounted");
   (window as unknown as { chart: unknown }).chart = { chart: view.chart, choose: view.choose, islands: view.islands, view }; // (as chart.html's: for the screenshots and timings)
@@ -108,5 +103,3 @@ export function closeChart(): void {
 }
 
 export const chartOpen = (): boolean => !!open;
-/** The first load's chart is up (openChart's `opening`): the night under it is still being made, so its art isn't held (main.ts). */
-export const chartWarmsNight = (): boolean => !!open?.opening;

@@ -1,9 +1,8 @@
 // The new opening in the built game (app/opening.ts; Ed, 2026-10-20, previews/ed/opening-mock/ on claude/ed-shots), a shot per beat
-// into <out dir>: the first load on the sea chart (?opening=chart: only home unlocked on a first game, a fresh profile), its corner's
-// What's new and Options, home chosen (Sail home: the boot's own night, app/opening.ts divesHome), the chart's
-// dive on into the treehouse and her bedroom, where she wakes, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
-// mirror, the wardrobe, cloak pegs and shoe rack in the bedroom, the curtains opening by themselves, out of its door). Fails on a page error, the creator's bedroom shown, no sail, her anywhere but her bedroom, or a beat that
-// doesn't come. SKIP=1 skips the dive with a key; LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
+// into <out dir>: a fresh profile's first load (?opening=bedroom; Ed, 2026-10-23: no chart first), asleep in the dark while home's
+// night is made, then waking in her bedroom in the treehouse, the pause page's What's new and Options, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
+// mirror, the wardrobe, cloak pegs and shoe rack in the bedroom, the curtains opening by themselves, out of its door). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
+// that doesn't come. LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
 //   node tools/opening/shots.cjs [out dir] (default previews/opening/)
@@ -32,41 +31,29 @@ function front(id, by) {
     if (process.env.LATER === "1") await page.addInitScript(() => localStorage.setItem("witch.woken", "1")); // (a later load: the shorter wake-up)
     page.on("pageerror", e => errors.push(e.message));
     const shot = async name => { await page.screenshot({ path: path.join(out, name), timeout: 300000 }); log("shot", name); };
-    await page.goto(`http://127.0.0.1:${server.address().port}/?opening=chart&quick=1&timing=1&set=${encodeURIComponent("opening.wake.snooze=2;opening.wake.stretch=1")}`);
-    await page.waitForSelector("#chart-overlay .chart-view", { timeout: 600000 });
-    log("the chart is up");
-    if (await page.evaluate(() => window.__creator?.open)) fail("the bedroom opened on the opening's first load");
-    await page.waitForFunction(() => performance.getEntriesByName("chart:island1").length > 0, null, { timeout: 900000, polling: 1000 }).catch(() => log("(no first island yet)"));
+    await page.goto(`http://127.0.0.1:${server.address().port}/?opening=bedroom&quick=1&timing=1&set=${encodeURIComponent("opening.wake.snooze=2;opening.wake.stretch=1")}`);
+    await page.waitForFunction(() => !!window.witch?.view, null, { timeout: 600000, polling: 1000 });
+    await page.waitForTimeout(1500);
+    await shot("01-asleep.png"); // (the first screen: asleep in the dark while home's night is made)
+    if (await page.evaluate(() => !!document.getElementById("chart-overlay"))) fail("the sea chart opened on the first load");
+    if (await page.evaluate(() => window.__creator?.open)) fail("the creator's bedroom opened on the opening's first load");
+    await page.waitForFunction(() => !!window.witch?.game?.wake, null, { timeout: 1200000, polling: 1000 });
+    log("she's waking");
     await page.waitForTimeout(3000);
-    await shot("01-chart.png");
-    const corner = await page.$$eval("#chart-overlay .corner button", bs => bs.map(b => b.textContent));
-    log("corner:", corner.join(" · "));
-    if (corner.some(t => /Zoo/.test(t)) || corner.length !== 2) fail(`the chart's corner should hold only What's new and Options: ${corner.join(", ")}`); // (Ed, 2026-10-20: the zoo's through the bestiary)
-    for (const [label, name] of [["What's new", "02-whats-new.png"], ["Options", "03-options.png"]]) {
-      await page.click(`#chart-overlay .corner button:has-text("${label}")`);
-      await page.waitForSelector("#chart-overlay .corner-panel");
+    await shot("02-wake.png");
+    // the pause page's What's new and Options (the chart's corner, before: Ed, 2026-10-23)
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(() => window.witch?.freeze?.frozen ?? true, null, { timeout: 60000 }).catch(() => {});
+    for (const [label, name] of [["What's new", "03-whats-new.png"], ["Options", "04-options.png"]]) {
+      await page.click(`button:has-text("${label}")`, { timeout: 60000 });
+      await page.waitForSelector(".corner-panel");
       await shot(name);
       await page.keyboard.press("Escape");
-      if (await page.$("#chart-overlay .corner-panel")) fail(`Esc didn't close ${label}`);
+      if (await page.$(".corner-panel")) fail(`Esc didn't close ${label}`);
     }
     if (!(await page.evaluate(() => !!document.querySelector("#start .ss-body")))) fail("What's new wasn't put back on the start card");
-    const unlocked = await page.evaluate(() => window.chart.islands().filter(i => i.sail).map(i => i.id));
-    log("sailable:", unlocked.join(", "));
-    await page.click("#chart-overlay .home");
-    log("sailing home");
-    await page.waitForFunction(() => !document.getElementById("chart-overlay"), null, { timeout: 1200000, polling: 1000 });
-    log("the chart flew in and closed");
+    await page.keyboard.press("Escape"); // (unpaused)
     await page.waitForTimeout(1500);
-    await shot("04-dive.png");
-    // the dive on into her bedroom: unskipped (a shot every few seconds of the flight's own time), or SKIP=1 a key skips it
-    let k = 0;
-    if (process.env.SKIP === "1") await page.keyboard.press("Space");
-    while (await page.evaluate(() => document.body.classList.contains("arriving")) && k < 6) {
-      await page.waitForTimeout(8000);
-      if (await page.evaluate(() => performance.getEntriesByName("witch:landed").length > 0)) await shot(`05-dive-${++k}.png`);
-    }
-    await page.waitForFunction(() => !document.body.classList.contains("arriving"), null, { timeout: 1200000, polling: 1000 });
-    await page.waitForTimeout(3000);
     const w = await page.evaluate(() => { const g = window.witch?.game; const b = g?.witch; return b ? { x: b.x - g.map.treehouse.x, z: b.z - g.map.treehouse.z, seated: !!b.seated, house: g.camera.house } : null; });
     log("she's at", JSON.stringify(w));
     if (!w || w.seated || w.z > -9) fail("she didn't wake in her bedroom");

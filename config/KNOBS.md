@@ -1730,11 +1730,11 @@ Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/s
 
 ### `opening`
 
-The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
+The opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there (Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island instead of the map"; the sea chart came first from 2026-10-20 till then), asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load. wake: the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
 
 | knob | type | range |
 |---|---|---|
-| `opening.chart` | boolean |  |
+| `opening.bedroom` | boolean |  |
 | `opening.wake.snooze` | number | 0 to … |
 | `opening.wake.stretch` | number | 0 to … |
 | `opening.wake.alarmMin` | number | 0 to … |
