@@ -60,3 +60,6 @@ export const SHEETED_ROOMS = ["bedroom2", "bedroom3"];
 export const SHEETED_KINDS = Object.keys(KINDS);
 /** The pieces for art/furniture.js, by object id. */
 export const SHEETED_PIECES = Object.fromEntries(SHEETED_ROOMS.flatMap(r => SHEETED_KINDS.map(k => [r + k, KINDS[k]])));
+/** Their rooms' colours (art/furniture.js's per-room palettes): the dust sheets a dull, dusty grey, not the lit linen of hers (bright
+ *  linen read as glowing under the house's lights), the wood unpolished. */
+export const SHEETED_COLOURS = Object.fromEntries(SHEETED_ROOMS.map(r => [r, { [M.BELLY]: [128, 124, 118], [M.WOOD]: [104, 80, 58], [M.HAIR]: [80, 62, 48] }]));
