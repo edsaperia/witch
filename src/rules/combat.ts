@@ -318,7 +318,7 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
         if (pd.still) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; }
         // At its place it doesn't halt (Ed's playtests, 2026-10-23: "lulls between pack attacks seem to have the animals stand still
         // instead of retreat"): once there its place moves on round her at that distance, a little slower than it runs, each its own way
-        // round, and it keeps up, till its pack comes again. A freeze holds its place, out of reach and hard to see (combat.md).
+        // round, and it keeps up, till its pack comes again. A freeze holds its place first, out of reach and hard to see (combat.md), then prowls.
         const PW = PACKS.prowl, ox = pd.slot.x - p.x, oz = pd.slot.z - p.z, R = Math.hypot(ox, oz);
         let tx = pd.slot.x, tz = pd.slot.z;
         if (pd.phase === "lull" && !pd.freeze && R >= 1) {

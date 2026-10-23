@@ -258,10 +258,10 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
 
 // Ed, 2026-10-20 (pack combat on by default; its tests run with it on): three things the switch showed.
 describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls between pack attacks seem to have the animals stand still instead of retreat\")", () => {
-  // Every kind whose retreat isn't meant to stand (the snail's shell, the badger's hold, the freezes: combat.md "into the trees and
-  // freeze, hard to see") backs off from her in its lull and keeps moving till it comes again; one out of sight (in the trees,
-  // underground, under water) isn't counted.
-  const standing = (k: string) => { const R = PACKS.retreats[PACKS.kinds[k].retreat]; return !!R.still || PACKS.kinds[k].retreat === "freeze"; };
+  // Every kind whose retreat isn't meant to stand (the snail's shell, the badger's hold) backs off from her in its lull and keeps moving
+  // till it comes again, a freeze (combat.md "into the trees and freeze, hard to see") after holding the lull's first part (Ed,
+  // 2026-10-23); one out of sight (in the trees, underground, under water) isn't counted.
+  const standing = (k: string) => !!PACKS.retreats[PACKS.kinds[k].retreat].still;
   it("every moving kind's members back off from her and keep moving through the lull", () => {
     const bad: string[] = [];
     for (const k of Object.keys(PACKS.kinds)) {
@@ -286,8 +286,9 @@ describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls
       });
       for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
       if (!steps) { bad.push(`${k}: no lull`); continue; }
-      if (still / steps > 0.1) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
+      if (still / steps > (PACKS.kinds[k].retreat === "freeze" ? PACKS.prowl.freeze + 0.1 : 0.1)) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
       if (backed < starts * 0.6) bad.push(`${k}: ${backed} of ${starts} backed off`);
+      if (PACKS.kinds[k].retreat === "freeze" && still / steps < 0.03) bad.push(`${k}: no freeze (still ${(100 * still / steps).toFixed(0)}%)`);
     }
     expect(bad).toEqual([]);
   }, 300000);
