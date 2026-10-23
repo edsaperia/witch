@@ -16,5 +16,16 @@ export const CREATURE_BEAVER = {
     mods: { decoy: 1 },
     label: "Beaver's Decoy: blinking leaves a waiting 💌 where you were"
   },
-  character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 }
+  character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+    ranged: { name: "wood chip", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "wall",
+    specialWith: { time: 4 },
+    retreat: "water",
+    rhythm: "slow",
+    pressure: 2,
+    call: "the carry",
+    tells: { melee: "tail up", ranged: "gnaws", special: "the carry" }
+  }
 };

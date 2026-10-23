@@ -31,5 +31,15 @@ export const CREATURE_STAG = {
     mods: { pierce: 1 },
     label: "Stag's Pierce: 💌s pass through the first animal and fly on"
   },
-  character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 }
+  character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "antler light", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "stampede",
+    retreat: "splitBack",
+    rhythm: "steady",
+    pressure: 2,
+    call: "heads down",
+    tells: { melee: "head down", ranged: "antlers glow", special: "heads down" }
+  }
 };
