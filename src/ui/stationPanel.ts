@@ -7,7 +7,7 @@
 // show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
-import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
+import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, itemsToChoose, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
 import { BROOM_SPELLS } from "../rules/spells";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 
@@ -50,7 +50,6 @@ export class StationPanel {
   private st: Style;
   /** The focus (a line and a place along it), the shelf whose colours are open, each shelf's chosen part, what the mouse is over. */
   private at = { line: 0, col: 0 };
-  private openShelf = 0;
   private part = new Map<string, string>();
   private hover: { line: number; col: number } | null = null;
   private pointerIn = false;
@@ -91,6 +90,10 @@ export class StationPanel {
   get station(): string | null { return this.id; }
   /** She's choosing: the pointer's over the panel, or she moved through it since she last walked (main.ts: the camera eases in). */
   get choosing(): boolean { return !!this.id && (this.pointerIn || this.navAt > 0); }
+  /** The part of her the row in focus is about (config/wardrobe.json frame: the camera zooms in on it, camera.station.parts). */
+  get framePart(): string | null { if (!this.id) return null; const l = this.lines()[this.at.line]; return (l ? this.shelves[l.shelf].frame : this.shelves.find(s => s.frame)?.frame) ?? null; }
+  /** She's drawn without her hat while this station's open (its choices are on her head or face: Ed, 2026-10-23). */
+  get bareHead(): boolean { return !!this.id && bareHeadAt(this.id); }
   /** She walked: not choosing till the pointer or the d-pad is back in the panel. */
   walked(): void { this.navAt = -1e9; }
 
@@ -99,10 +102,9 @@ export class StationPanel {
     const swap = !!this.id && this.id !== station;
     clearTimeout(this.slideTimer);
     this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.broom = broom; this.banner = banner;
-    this.openShelf = Math.max(0, shelves.findIndex(s => s.items.length > 0));
     this.navAt = -1e9; this.hover = null;
     const L = this.lines(), first = L.findIndex(l => l.kind === "items");
-    const worn = first >= 0 ? this.shelves[L[first].shelf].items.findIndex(i => wears(this.g, i)) : 0;
+    const worn = first >= 0 ? shownItems(this.shelves[L[first].shelf]).findIndex(i => wears(this.g, i)) : 0;
     this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
     this.paint();
     this.root.style.display = "flex";
@@ -133,21 +135,24 @@ export class StationPanel {
   }
 
   // ---- what's on it ----
-  /** The panel's lines, top to bottom: a shelf's items (or powers), then, if its colours are open (a shelf with no items always,
-   *  else the one last chosen in), its parts (two or more) and the grid's 5 rows, then its fit sliders. */
+  /** The panel's lines, top to bottom, every kind at once (Ed, 2026-10-23: no tabs): a shelf's items, its powers, its colours'
+   *  parts (two or more) and its grid's 5 rows, then its fit sliders. Nothing with no choice in it (Ed: "Don't show options where
+   *  there's nothing to choose yet"): items only when two or more are hers, a fit slider only while what it shapes is on. */
   private lines(): Line[] {
     const out: Line[] = [];
     this.shelves.forEach((s, i) => {
-      if (s.items.length) out.push({ shelf: i, kind: "items", n: s.items.length });
+      if (itemsToChoose(s, this.owned)) out.push({ shelf: i, kind: "items", n: shownItems(s).length });
+      if (s.power) out.push({ shelf: i, kind: "power", n: this.powers().length });
       if (s.colour) {
         if (s.colour.length > 1) out.push({ shelf: i, kind: "parts", n: s.colour.length });
         const cols = s.grid === "skin" ? SKIN_COLS : CLOTH_COLS;
         for (let r = 0; r < GRID_ROWS; r++) out.push({ shelf: i, kind: "grid", n: cols, row: r });
       }
-      for (const a of s.fit ?? []) out.push({ shelf: i, kind: "fit", n: 1, axis: a });
+      for (const a of s.fit ?? []) if (this.fitOn(a)) out.push({ shelf: i, kind: "fit", n: 1, axis: a });
     });
     return out;
   }
+  private fitOn(axis: string): boolean { return !FIT_NEEDS[axis] || FIT_NEEDS[axis](this.g); }
   private powers() { return BROOM_SPELLS.filter(x => x.built); }
   private partOf(s: Shelf): string { const p = this.part.get(s.id); return p && s.colour!.includes(p) ? p : s.colour![0]; }
   private colourOf(part: string): number[] { return { ...classicPalette(this.st), ...this.g.palette }[part] ?? [.07, .5, .45]; }
@@ -189,8 +194,7 @@ export class StationPanel {
     const s = this.shelves[l.shelf];
     this.at = { line, col };
     if (l.kind === "items") {
-      const it = s.items[col];
-      if (s.colour && this.openShelf !== l.shelf) { this.openShelf = l.shelf; this.at.line = this.lines().findIndex(q => q.shelf === l.shelf && q.kind === "items"); }
+      const it = shownItems(s)[col];
       if (this.owned.has(it.id) && !wears(this.g, it)) this.change(wear(this.g, it) as Genome);
     } else if (l.kind === "parts") this.part.set(s.id, s.colour![col]);
     else if (l.kind === "grid") { const part = this.partOf(s), c = this.swatch(s, col, l.row!); this.change({ ...this.g, palette: { ...classicPalette(this.st), ...this.g.palette, [part]: c } }); }
@@ -198,7 +202,7 @@ export class StationPanel {
     this.paint();
   }
   private setFit(axis: string, share: number): void {
-    if (FIT_NEEDS[axis] && !FIT_NEEDS[axis](this.g)) return;
+    if (!this.fitOn(axis)) return;
     const [lo, hi] = this.fitRange(axis), v = +(lo + Math.max(0, Math.min(1, share)) * (hi - lo)).toFixed(3);
     if (Math.abs(v - this.fitValue(axis)) < 1e-6) return;
     const g = clone(this.g), [p, k] = slot(axis);
@@ -215,7 +219,9 @@ export class StationPanel {
   // ---- drawing ----
   private paint(): void {
     if (!this.id) return;
-    const L = this.lines(), at = this.at;
+    const L = this.lines(); // (a fit slider comes and goes with what it shapes: the focus kept on a line that's there)
+    if (this.at.line >= L.length) this.at = { line: Math.max(0, L.length - 1), col: 0 };
+    const at = this.at;
     let html = this.banner ? `<div class="sp-banner">${esc(this.banner)}</div>` : "";
     html += `<div class="sp-head"><b>${esc(STATION_NAMES[this.id] ?? this.id)}</b><span>${this.found()}</span></div><div class="sp-body">`;
     let shelf = -1;
@@ -224,11 +230,11 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += `</div>`;
         shelf = l.shelf;
-        const worn = s.items.find(it => wears(this.g, it));
+        const worn = shownItems(s).find(it => wears(this.g, it));
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}"><div class="sp-lab">${esc(s.label)}${worn ? `<span> · ${esc(worn.name)}</span>` : ""}${s.always ? `<em>every colour</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items") html += `<div class="sp-row">${s.items.map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "power") html += `<div class="sp-row sp-powers">${this.powers().map((p, c) => `<div class="sp-power${p.id === this.broom ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${esc(p.id === "none" ? "Plain" : p.name)}</div>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
@@ -241,14 +247,14 @@ export class StationPanel {
     this.paintDetail();
     this.root.querySelector<HTMLElement>(".focus")?.scrollIntoView({ block: "nearest" });
   }
-  private found(): string { const all = this.shelves.flatMap(s => s.items); return all.length ? `${all.filter(i => this.owned.has(i.id)).length} of ${all.length} found` : ""; }
+  private found(): string { const all = this.shelves.flatMap(shownItems); return all.length ? `${all.filter(i => this.owned.has(i.id)).length} of ${all.length} found` : ""; }
   private paintDetail(): void {
     const box = this.root.querySelector<HTMLElement>(".sp-detail"); if (!box) return;
     const at = this.hover ?? this.at, l = this.lines()[at.line];
     let title = "", text = "", locked = false;
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = s.items[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? "" : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21)
+      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? "" : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21)
       else if (l.kind === "power") { const p = this.powers()[at.col]; title = p.id === "none" ? "Plain broom" : p.name; text = p.line; }
       else if (l.kind === "parts") { title = `Colour: ${PART_NAMES[s.colour![at.col]] ?? s.colour![at.col]}`; text = "Every colour is hers."; }
       else if (l.kind === "grid") { title = `${s.label}: colour`; text = "Every colour is hers."; }

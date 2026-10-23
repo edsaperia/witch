@@ -98,6 +98,20 @@ describe("the dressing stations by nearness", () => {
     expect(g.camera.station).toBeLessThan(0.01);
   });
 
+  it("choosing a row, the camera zooms on the part of her it's about (camera.station.parts): her head closer and higher than her feet", () => {
+    const P = TUNING.camera.station!.parts!;
+    const settle = (part: string) => {
+      const p = objectFrontAt(obj("wardrobe"), at, 0.5), g = inHouse(p.x, p.z), S = g.tuning.camera.station!;
+      for (let i = 0; i < 4 * S.ease / STEP; i++) stepGame(g, { ...idle, framing: true, framePart: part }, STEP);
+      return { pose: cameraPose(g.camera, g.witch.lift, g.tuning), cam: g.camera };
+    };
+    const head = settle("head"), feet = settle("feet");
+    expect(head.cam.stationLook).toBeCloseTo(P.head.look, 2);
+    expect(head.cam.stationDistance).toBeCloseTo(P.head.distance, 2);
+    expect(head.pose.ty - head.cam.ty).toBeGreaterThan(feet.pose.ty - feet.cam.ty + 0.5); // (aimed up at her head, down at her feet)
+    expect(head.pose.distance).toBeLessThan(feet.pose.distance * 1.01);
+  });
+
   it("never eases in away from the house, framing or not", () => {
     const g = newGame(123, TUNING);
     g.clock.paused = false;

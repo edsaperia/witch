@@ -30,6 +30,8 @@ export interface CameraState {
   house?: number;
   /** At a dressing station, choosing (camera.station; ui/stationPanel.ts): 0 not to 1 choosing, eased over camera.station.ease seconds. */
   station?: number;
+  /** And where on her it's aimed and how close (camera.station.parts: the part being chosen), eased between parts. */
+  stationLook?: number; stationDistance?: number;
   /** The opening shot (Ed, v171): 1 while she sits on the treehouse, close in on her seat
    *  (camera.intro), running down to 0 over camera.intro.ease seconds once she leaves it. */
   intro?: number;
@@ -75,7 +77,7 @@ function spring(x: number, v: number, to: number, w: number, dt: number): [numbe
 
 /** Follow the witch: `target` is where she is, `vel` how fast she flies, `lift` her height (0-1).
  *  While she's `seated`, it frames `focus` (her seat, as drawn) for the opening shot. */
-export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning, seated = false, focus?: { x: number; y: number; z: number } | null, coast?: CoastView | null, legend?: { x: number; z: number } | null, house = false, station = false): CameraState {
+export function stepCamera(c: CameraState, zoomDelta: number, target: { x: number; y: number; z: number }, vel: { x: number; z: number }, lift: number, dt: number, t: Tuning, seated = false, focus?: { x: number; y: number; z: number } | null, coast?: CoastView | null, legend?: { x: number; z: number } | null, house = false, station = false, part: string | null = null): CameraState {
   const cam = t.camera, steps = Math.max(1, cam.zoomSteps);
   const intro = seated ? (c.intro ?? 0) : Math.max(0, (c.intro ?? 0) - dt / Math.max(0.05, cam.intro.ease));
   if (seated && focus) target = focus;
@@ -115,7 +117,11 @@ export function stepCamera(c: CameraState, zoomDelta: number, target: { x: numbe
   const Sc = cam.station, inS = Sc?.on && station ? 1 : 0, se = 1 - Math.exp(-3 * dt / Math.max(0.05, Sc?.ease ?? 1));
   let sk = (c.station ?? 0) + (inS - (c.station ?? 0)) * se;
   if (sk < 1e-4) sk = 0; else if (sk > 1 - 1e-4) sk = 1;
-  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}), ...(hk > 0 || c.house !== undefined ? { house: hk } : {}), ...(sk > 0 || c.station !== undefined ? { station: sk } : {}) }; // (none until she's first in a circle: the state as before)
+  // ... on the part of her being chosen (camera.station.parts), eased from one part to the next; with none, the station's own.
+  const P = (part && Sc?.parts?.[part]) || null, toLook = P?.look ?? 0, toDist = P?.distance ?? Sc?.distance ?? 1;
+  const sLook = c.stationLook === undefined ? toLook : c.stationLook + (toLook - c.stationLook) * se;
+  const sDist = c.stationDistance === undefined ? toDist : c.stationDistance + (toDist - c.stationDistance) * se;
+  return { zoomStep, zoom, tx, ty, tz, vx, vy, vz, ax: nax, az: naz, lift: clamp(l, 0, 1), pull, intro, coast: near, gaze, seaBehind, bearing, ...(circle > 0 || c.circle !== undefined ? { circle, cx, cz } : {}), ...(hk > 0 || c.house !== undefined ? { house: hk } : {}), ...(sk > 0 || c.station !== undefined ? { station: sk, stationLook: sLook, stationDistance: sDist } : {}) }; // (none until she's first in a circle: the state as before)
 }
 const coast0 = (v?: CoastView | null) => (v ? clamp(v.near, 0, 1) : 0);
 
@@ -176,7 +182,7 @@ export function cameraPose(c: CameraState, lift: number, t: Tuning): CameraPose 
   if (Hc && hk > 0) { angle = lerp(angle, Hc.angle, hk); distance *= lerp(1, Hc.distance, hk); }
   // At a dressing station, choosing (camera.station): closer, and moved aside so she stands clear of the panel.
   const Sc = t.camera.station, sk = Sc?.on ? smoothstep(c.station ?? 0) : 0;
-  if (Sc && sk > 0) { distance *= lerp(1, Sc.distance, sk); side += Sc.side * distance * sk; }
+  if (Sc && sk > 0) { distance *= lerp(1, c.stationDistance ?? Sc.distance, sk); side += Sc.side * distance * sk; look += (c.stationLook ?? 0) * sk; }
   const a = (angle * Math.PI) / 180, ty = c.ty + look, tx = c.tx + side + cxs;
   return { angle, distance, x: tx, y: ty + Math.sin(a) * distance, z: tz + Math.cos(a) * distance, tx, ty, tz };
 }

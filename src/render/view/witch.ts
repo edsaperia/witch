@@ -174,7 +174,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // (not at a knockout, mid-fight), if she has a hat to lose.
   const Hat = g.witches[0].hat;
   if (!v.bareAsked && Hat.has && !g.clock.paused && ht > 1) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
-  const bare = Hat.has && !!Hat.down ? (v.bareBatch ??= v.makeWitchBatch(true)) : null;
+  // At a station for her head and face (ui/stationPanel.ts bareHead; Ed, 2026-10-23), drawn without it too, once those frames are in.
+  const bare = Hat.has && (!!Hat.down || (v.hatOff && v.assets.bareReady)) ? (v.bareBatch ??= v.makeWitchBatch(true)) : null;
 
   const watlas = bare ? v.assets.witchBare() : v.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
@@ -201,7 +202,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
-  const hatFrame = bare ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
+  const hatFrame = bare && Hat.down ? v.assets.witchBare().frames[v.assets.witchHatFrame] : undefined;
   { // Under a load (render/load.ts), in flight: she leans forward flying away from the pull, her broom tilts nose-up and bows.
     const LV = v.leashView.load, LT = t.load ?? LOAD_DEFAULT, flying = !w.seated && !KO && v.foot < 0.05 && !v.partyWitchView.herIdle;
     const fwd = w.facing < 0 ? -1 : 1, k = flying ? LV.load : 0;
