@@ -133,34 +133,21 @@ export class Input {
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
     for (const pad of pads) {
       if (!pad) continue;
-      const btn = (i: number) => !!pad.buttons[i]?.pressed;
-      const fresh = pad.buttons.some((b, i) => b.pressed && !this.padPrev[i]);
+      const buttons = pad.buttons.map(b => b.pressed);
+      const fresh = buttons.some((b, i) => b && !this.padPrev[i]);
       const consumed = fresh && !!this.onAny?.();
-      const edge = (i: number) => !consumed && btn(i) && !this.padPrev[i];
-      let sx = pad.axes[0] ?? 0, sy = pad.axes[1] ?? 0;
-      const mag = Math.hypot(sx, sy), dead = 0.18;
-      if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
-      if (!this.dpadMenu) { // (at a dressing station the d-pad is its panel's: ui/stationPanel.ts)
-        sx += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
-        sy += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
-      }
-      moveX += sx; moveZ += sy;
-      const any = (a: readonly number[]) => a.some(edge);
-      const menu = this.dpadMenu; // (at a station the pad's A and X choose in its panel too: ui/stationPanel.ts)
-      if (!menu && any(PAD.rise)) toggleMode = true;
-      if (any(PAD.zoomOut)) zoom += 1;
-      if (any(PAD.zoomIn)) zoom -= 1;
-      if (any(PAD.debug)) debug = true;
-      if (!menu && any(PAD.sigil)) sigil = true;
-      if (!menu && PAD.sigil.some(btn)) sigilHeld = true;
-      if (any(PAD.hat)) hat = true;
-      if (any(PAD.spell)) spell = true;
-      if (any(PAD.cycle)) cycle = true;
-      if (any(PAD.dash)) dash = true;
-      // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
-      const rx = pad.axes[2] ?? 0, ry = pad.axes[3] ?? 0;
-      if (Math.hypot(rx, ry) > 0.3) { aimX = rx * 20; aimZ = ry * 20; } // (as a point 20 m out that way: the dash reads a cursor's ground point)
-      if (PAD.invite.some(btn)) fire = true;
+      const P = padControls(buttons, pad.axes, this.padPrev, consumed, this.dpadMenu);
+      moveX += P.moveX; moveZ += P.moveZ; zoom += P.zoom;
+      if (P.toggleMode) toggleMode = true;
+      if (P.debug) debug = true;
+      if (P.sigil) sigil = true;
+      if (P.sigilHeld) sigilHeld = true;
+      if (P.hat) hat = true;
+      if (P.spell) spell = true;
+      if (P.cycle) cycle = true;
+      if (P.dash) dash = true;
+      if (P.aim) { aimX = P.aim.x; aimZ = P.aim.z; }
+      if (P.fire) fire = true;
       this.padPrev = pad.buttons.map(b => b.pressed);
       break;
     }
@@ -183,4 +170,30 @@ export class Input {
     this.touch.autoTalk = false;
     return { moveX, moveZ, toggleMode, zoom: Math.sign(zoom), place, cycle, debug, nextWave, pauseWaves, cycleSpeakers, sigil, sigilHeld, hatHold, hat, inviteNearest, happyNearest, spell, feedNearest, dash, toggleAutoTalk, talkHeld, fire, aimX, aimZ };
   }
+}
+
+/** One gamepad's part of a frame's controls (Input.read): its buttons and sticks, the buttons held last frame, whether a fresh press
+ *  was taken by something else (Input.onAny), and whether a station's panel is open (`menu`, Input.dpadMenu). While it's open the
+ *  panel owns the pad (Ed's playtest, 2026-10-23: the bottom face button, meaning to choose, flew her off from the bedroom): its
+ *  d-pad, right stick and face buttons are the panel's (ui/stationPanel.ts), and only the left stick reaches the game, walking her. */
+export function padControls(buttons: readonly boolean[], axes: readonly number[], prev: readonly boolean[], consumed: boolean, menu: boolean) {
+  const btn = (i: number) => !!buttons[i], edge = (i: number) => !consumed && btn(i) && !prev[i], any = (a: readonly number[]) => a.some(edge);
+  let sx = axes[0] ?? 0, sy = axes[1] ?? 0;
+  const mag = Math.hypot(sx, sy), dead = 0.18;
+  if (mag < dead) { sx = 0; sy = 0; } else { const s = (Math.min(1, mag) - dead) / (1 - dead) / mag; sx *= s; sy *= s; }
+  const out = { moveX: sx, moveZ: sy, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, dash: false, fire: false, aim: null as { x: number; z: number } | null };
+  if (menu) return out; // (at a station: the left stick walks her, all else is its panel's)
+  out.moveX += (btn(15) ? 1 : 0) - (btn(14) ? 1 : 0);
+  out.moveZ += (btn(13) ? 1 : 0) - (btn(12) ? 1 : 0);
+  out.toggleMode = any(PAD.rise);
+  out.zoom = (any(PAD.zoomOut) ? 1 : 0) - (any(PAD.zoomIn) ? 1 : 0);
+  out.debug = any(PAD.debug);
+  out.sigil = any(PAD.sigil);
+  out.sigilHeld = PAD.sigil.some(btn);
+  out.hat = any(PAD.hat); out.spell = any(PAD.spell); out.cycle = any(PAD.cycle); out.dash = any(PAD.dash);
+  // Twin-stick: the right stick aims (screen right is east, down is south), a trigger fires.
+  const rx = axes[2] ?? 0, ry = axes[3] ?? 0;
+  if (Math.hypot(rx, ry) > 0.3) out.aim = { x: rx * 20, z: ry * 20 }; // (as a point 20 m out that way: the dash reads a cursor's ground point)
+  out.fire = PAD.invite.some(btn);
+  return out;
 }

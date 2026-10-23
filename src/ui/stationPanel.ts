@@ -14,7 +14,7 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, canChoose, cardAt, choose, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
 
@@ -139,12 +139,13 @@ export class StationPanel {
   setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
-  /** Each frame while open: the pad's d-pad (the left stick walks her: platform/input.ts leaves the d-pad to the panel). */
+  /** Each frame while open: the pad's d-pad or right stick moves, its bottom or left face button chooses (the left stick walks her:
+   *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
     let dir = "", choose = false;
-    for (const p of pads) { if (!p) continue; const b = (i: number) => !!p.buttons[i]?.pressed; choose ||= PAD_CHOOSE.some(b); dir = b(12) ? "up" : b(13) ? "down" : b(14) ? "left" : b(15) ? "right" : ""; if (dir) break; }
+    for (const p of pads) { if (!p) continue; const P = panelPad(p.buttons.map(x => x.pressed), p.axes); choose ||= P.choose; dir = P.dir; if (dir) break; }
     if (choose && !this.padChoose) this.pick(); // (the pad's A or X: platform/input.ts leaves them to the panel while it's open)
     this.padChoose = choose;
     if (!dir) { this.pad.held = ""; return; }
@@ -356,7 +357,7 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 /** The keys and pad buttons (A, X) that choose what's in focus. */
-const CHOOSE = new Set(["Enter", "NumpadEnter", "Space", "KeyE"]), PAD_CHOOSE = [0, 2];
+const CHOOSE = new Set(["Enter", "NumpadEnter", "Space", "KeyE"]);
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
