@@ -2472,7 +2472,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.2, groundAcceleration: 1.6 },
       label: "Arctic fox's Snow pounce: a longer blink, and quicker starts on foot"
     },
-    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 }
+    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "perk", every: [3, 7], for: 1 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "snow bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "mirage",
+      retreat: "freeze",
+      rhythm: "steady",
+      pressure: 2,
+      call: "vanishes",
+      tells: { melee: "crouch", ranged: "tail up", special: "vanishes" }
+    }
   };
 
   // art/creatures/armadillo/creature.js
@@ -2611,7 +2621,17 @@ label.check input { accent-color: var(--accent); }
       mods: { charge: 1 },
       label: "Bear's Wind-up: hold to charge, let go for a big volley"
     },
-    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 }
+    character: { posture: { head: [0.04, -0.04], body: 0 }, quirk: "scratch", every: [6, 11], for: 1.6 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"] },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "rears up",
+      tells: { melee: "rears up", special: "rears up" }
+    }
   };
 
   // art/creatures/beaver/creature.js
@@ -2631,7 +2651,18 @@ label.check input { accent-color: var(--accent); }
       mods: { decoy: 1 },
       label: "Beaver's Decoy: blinking leaves a waiting \u{1F48C} where you were"
     },
-    character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 }
+    character: { posture: { head: [0.02, -0.02], body: -0.01 }, quirk: "tailslap", every: [5, 9], for: 0.7 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 6 },
+      ranged: { name: "wood chip", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "wall",
+      specialWith: { time: 4 },
+      retreat: "water",
+      rhythm: "slow",
+      pressure: 2,
+      call: "the carry",
+      tells: { melee: "tail up", ranged: "gnaws", special: "the carry" }
+    }
   };
 
   // art/creatures/beetle/creature.js
@@ -2977,7 +3008,17 @@ label.check input { accent-color: var(--accent); }
       mods: { slip: 1 },
       label: "Elk's Slip past: \u{1F48C}s slip through enraged animals"
     },
-    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 }
+    character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+      ranged: { name: "gust of breath", range: 10, shots: [0, 1, 3], spread: 40, speed: 0.8, tint: "red" },
+      special: "stampede",
+      retreat: "flanks",
+      rhythm: "slow",
+      pressure: 1,
+      call: "heads down",
+      tells: { melee: "head down", ranged: "head up", special: "heads down" }
+    }
   };
 
   // art/creatures/featheredserpent/creature.js
@@ -3065,7 +3106,17 @@ label.check input { accent-color: var(--accent); }
       scale: { treetopSpeed: 1.1, "dash.distance": 1.2 },
       label: "Flying squirrel's Soar: a little quicker over the treetops, and a longer blink"
     },
-    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 }
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "acorn bolt", range: 12, shots: [0, 1, 3], spread: 14, tint: "red" },
+      special: "scatter",
+      retreat: "trees",
+      rhythm: "tight",
+      pressure: 2,
+      call: "the launch",
+      tells: { melee: "the launch", ranged: "winds back", special: "the launch" }
+    }
   };
 
   // art/creatures/fox/creature.js
@@ -3112,7 +3163,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundSpeed: 1.12, riseTime: 0.8 },
       label: "Frost troll's Long stride: quicker on foot, and a quicker climb to the treetops"
     },
-    character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 }
+    character: { posture: { head: [0.03, -0.02], body: 0.03 }, quirk: "scratch", every: [5, 10], for: 1.8 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"], knockback: 10 },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "crouches",
+      tells: { melee: "club raised", special: "crouches" }
+    }
   };
 
   // art/creatures/frostwyrm/creature.js
@@ -3133,7 +3194,18 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.3 },
       label: "Wyrm's Glide: a longer blink, as over ice"
     },
-    character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 }
+    character: { posture: { head: [0.02, 0.03], body: 0 }, quirk: "tailslap", every: [6, 11], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "frost beam", range: 20, shots: [0, 1, 1], attacks: [null, "beam", "widebeam"], tint: "red" },
+      special: "wall",
+      specialWith: { time: 4 },
+      retreat: "freeze",
+      rhythm: "slow",
+      pressure: 1,
+      call: "the breath",
+      tells: { melee: "jaws open", ranged: "aim line", special: "the breath" }
+    }
   };
 
   // art/creatures/griffin/creature.js
@@ -3482,7 +3554,17 @@ label.check input { accent-color: var(--accent); }
       scale: { groundAcceleration: 2, "treetop.turnRate": 1.4 },
       label: "Lynx's Poise: sharper turns, quicker starts"
     },
-    character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 }
+    character: { posture: { head: [0.04, -0.02], body: -0.03 }, quirk: "tailflick", every: [3, 6], for: 0.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "shriek bolt", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "feint",
+      retreat: "freeze",
+      rhythm: "steady",
+      pressure: 2,
+      call: "crouch",
+      tells: { melee: "crouch", ranged: "ears flat", special: "crouch" }
+    }
   };
 
   // art/creatures/marten/creature.js
@@ -3789,6 +3871,16 @@ label.check input { accent-color: var(--accent); }
       kind: "move",
       scale: { groundSpeed: 1.1, groundAcceleration: 1.5 },
       label: "Penguin's Toboggan: a little quicker on foot, and quicker off the mark"
+    },
+    pack: {
+      melee: { attacks: [null, "nip", "nip"] },
+      ranged: { name: "ice pellet", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "stampede",
+      retreat: "huddle",
+      rhythm: "slow",
+      pressure: 3,
+      call: "the drop",
+      tells: { melee: "beak up", ranged: "flippers out", special: "the drop" }
     }
   };
 
@@ -3808,7 +3900,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.range": 1.25, "invites.radius": 1.3 },
       label: "Polar bear's Blizzard: \u{1F48C}s fly further and land more easily"
     },
-    character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 }
+    character: { posture: { head: [0.05, -0.02], body: 0 }, quirk: "sniff", every: [5, 9], for: 1.4 },
+    pack: {
+      melee: { attacks: [null, "swipe", "bigswipe"] },
+      ranged: null,
+      special: "cover",
+      retreat: "backLine",
+      rhythm: "slow",
+      pressure: 1,
+      call: "rears up",
+      tells: { melee: "rears up", special: "rears up" }
+    }
   };
 
   // art/creatures/raccoon/creature.js
@@ -4000,7 +4102,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "invites.radius": 1.5 },
       label: "Red panda's Cuddle: \u{1F48C}s land on animals a little wider of where they strike"
     },
-    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 }
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "perk", every: [4, 8], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "ember bolt", range: 10, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "rally",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "chirps",
+      tells: { melee: "rears up", ranged: "tail up", special: "chirps" }
+    }
   };
 
   // art/creatures/rhino/creature.js
@@ -4066,7 +4178,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.cooldown": 0.7 },
       label: "Roe's Spring: your dodge comes back sooner"
     },
-    character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 }
+    character: { posture: { head: [-0.01, 0.06], body: 0 }, quirk: "perk", every: [3, 7], for: 1.2 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "bolt of light", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "scatter",
+      retreat: "zigzagApart",
+      rhythm: "tight",
+      pressure: 2,
+      call: "a bark",
+      tells: { melee: "head down", ranged: "ears up", special: "a bark" }
+    }
   };
 
   // art/creatures/salamander/creature.js
@@ -4210,7 +4332,17 @@ label.check input { accent-color: var(--accent); }
       scale: { "dash.distance": 1.15, "treetop.turnRate": 1.3 },
       label: "Snow leopard's Ghost of the peaks: a longer blink, and sharper turns in the treetops"
     },
-    character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
+    character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "snow bolt", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "feint",
+      retreat: "trees",
+      rhythm: "steady",
+      pressure: 2,
+      call: "tail up",
+      tells: { melee: "crouch", ranged: "ears back", special: "tail up" }
+    }
   };
 
   // art/creatures/sphinx/creature.js
@@ -4350,7 +4482,17 @@ label.check input { accent-color: var(--accent); }
       mods: { pierce: 1 },
       label: "Stag's Pierce: \u{1F48C}s pass through the first animal and fly on"
     },
-    character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 }
+    character: { posture: { head: [-0.02, 0.07], body: 0.01 }, quirk: "perk", every: [5, 10], for: 1.6 },
+    pack: {
+      melee: { attacks: [null, "nip", "maul"] },
+      ranged: { name: "antler light", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+      special: "stampede",
+      retreat: "splitBack",
+      rhythm: "steady",
+      pressure: 2,
+      call: "heads down",
+      tells: { melee: "head down", ranged: "antlers glow", special: "heads down" }
+    }
   };
 
   // art/creatures/stegosaurus/creature.js
@@ -16861,7 +17003,7 @@ label.check input { accent-color: var(--accent); }
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once the home ring's speakers are all down (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just switch off (sound and lights)"), the afterparty, any soundsystem still standing switched off: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once (home's speakers down).`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
     __view: "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
-    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed look metres up her and its distance times distance in place of the station's own, eased from part to part as the cursor moves.`,
+    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.aim: with no part, the camera aimed that share of her height (as she's drawn) up her. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom; board, the Workshop's pegboard, the wall behind her, so aimed up over her to it), aimed aim of her height (as drawn: 0 her feet, 1 the top of her hat) up her and look metres higher (a thing by her: the board, the broom), and its distance times distance in place of the station's own, eased from part to part as the cursor moves (Ed's playtest, 2026-10-23: aimed by metres from her feet, her head went off the top of the screen up close; by her height it stays on the part chosen at any zoom).`,
     _sail: "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
     sail: { inPlace: true },
     _opening: `The opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there (Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island instead of the map"; the sea chart came first from 2026-10-20 till then), asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load. wake: the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.`,
@@ -16886,7 +17028,7 @@ label.check input { accent-color: var(--accent); }
       intro: { distance: 34, angle: 22, ease: 1.3 },
       circle: { on: true, angle: 20, distance: 0.75, ease: 1.2, frame: 0.35, look: 1.5 },
       house: { on: true, angle: 24, distance: 0.62, ease: 1 },
-      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, parts: { head: { look: -2.9, distance: 0.32 }, hat: { look: -1.2, distance: 0.4 }, top: { look: -3.2, distance: 0.4 }, legs: { look: -3.8, distance: 0.42 }, feet: { look: -2.85, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 }, board: { look: 2, distance: 0.35 } } }
+      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, aim: 0.55, parts: { head: { aim: 0.8, distance: 0.32 }, hat: { aim: 0.92, distance: 0.4 }, top: { aim: 0.6, distance: 0.4 }, legs: { aim: 0.35, distance: 0.42 }, feet: { aim: 0.15, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 }, board: { look: 2, distance: 0.35 } } }
     },
     _look: `Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (3, Ed 2026-10-07 after playtesting 5 and 4: "the large pixels look cute but it's impossible to see what's going on"; ?px=4|5 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach \xD7 glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.`,
     pixelSize: 3,
