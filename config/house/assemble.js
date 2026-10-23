@@ -1,7 +1,7 @@
 // The treehouse's plan from its pieces (housekeeping, Ed 2026-10-23: one file a room, so the Workshop's, the Studio's, the bedrooms' and
 // the dressing's pull requests stop colliding in one config/house.json): config/house/base.json (the house's own numbers) and
 // config/house/rooms/<id>.json (a room's place on the plan and its objects), put together as config/house.json was (rooms, branches,
-// objects: rules/houseRooms.ts HouseConfig). Pure: the game reads the files through Vite (src/rules/houseConfig.ts), the tools from
+// objects: rules/houseRooms.ts HouseConfig). Pure: the game reads the files by name (src/rules/houseConfig.ts, which imports each room), the tools from
 // disk (config/house/load.mjs). This is tools/house/organic.mjs's arithmetic, as it wrote config/house.json before the split.
 //
 // A room file: its id and label; `order` (where it comes among the rooms: the Terrace 0, then tens, so a new one slots in between);
