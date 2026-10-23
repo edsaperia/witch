@@ -35,16 +35,18 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable } from "./rules/spells";
+import { castable, setParts } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
-import { fillTrunk } from "./rules/finds";
-import { loadBroom, migrateBroom, partFound } from "./app/broomSave";
+import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
+import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
-import { loadOwned, saveOwned } from "./app/owned";
-import { StationPanel } from "./ui/stationPanel";
+import { loadOwned } from "./app/owned";
+import { keepFound, type FindsCtx } from "./app/finds";
+import { FindsPanel } from "./ui/findsPanel";
+import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { TelescopeView, integratedGpu } from "./app/telescope";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
@@ -142,6 +144,7 @@ const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: pr
 const wearHat = (g: unknown) => wear(N().game, g);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 loadTimes.view = performance.now();
+view.partsFound = new Set(loadBroom().found); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
 performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
 void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
@@ -299,8 +302,8 @@ const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
-creator.loadout = { hat: N().game.spells.hat, broom: N().game.spells.broom };
-creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.loadout = { hat: N().game.spells.hat };
+creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -315,6 +318,8 @@ creator.onExit = g => { newHatFromRoom(N().game.witches[0]); if (JSON.stringify(
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
 let owned: Set<string> | null = null, stillAt = 0;
+/** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
+const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)) });
 stations.onLook = g => {
   saveGenome(g as never); creator.adopt(g);
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
@@ -323,7 +328,11 @@ stations.onLook = g => {
   showLook();
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
-stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
+// The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
+// and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
+stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(f); };
+/** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: new Set(loadBroom().found), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
@@ -460,7 +469,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab });
+    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
@@ -533,6 +542,27 @@ const repro = (() => {
   ]);
   return { link, machine: mach, changed, full, line: () => reproLine(reproState(N().game, changed()), changed().length) };
 })();
+// The finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23): from the debug overlay's buttons, or ?dev=finds.
+// Spawning a find near her (Ed, 2026-10-23: "a way to spawn the collectible near the player, perhaps from the pause menu";
+// rules/finds.ts spawnSpot, spawnFind): a kind's item, or tonight's own find (kind null), on clear ground a few metres in front
+// of her, as tonight's find: the constellation, the telescope and E at it go by it, and taking it is the real claim.
+function spawnHere(kind: FindKindId | null, item: string | null): string {
+  const g = N().game, at = spawnSpot(g);
+  if (!at) return "no clear ground within 12 m of her (in the treehouse? step out onto the island)";
+  if (kind && item) return spawnFind(g, kind, item, at) ? `${kind} ${item} spawned ${Math.round(Math.hypot(at.x - g.witch.x, at.z - g.witch.z))} m from her` : `no ${kind} ${item}`;
+  if (g.trunk && g.trunk.item === null) fillTrunk(g, { wearable: findsCtx().owned(), part: new Set(loadBroom().found) });
+  if (!g.trunk?.item || g.trunk.found) return "no find tonight (all found, or taken)";
+  const c = g.map.cellSafe(at.x, at.z).cell;
+  Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
+  return `tonight's ${g.trunk.kind} ${g.trunk.item} moved next to her`;
+}
+// (it redraws after each give or take, asking again: the pegboard's parts kept up with it)
+const findsPanel = new FindsPanel(() => { view.partsFound = new Set(loadBroom().found); return findsCtx(); }, spawnHere);
+document.getElementById("finds-dev-btn")?.addEventListener("click", () => findsPanel.toggle());
+const devFinds = new URLSearchParams(location.search).get("dev") === "finds";
+if (devFinds) findsPanel.toggle(true);
+// ?spawnfind=kind:item (or tonight): spawned once, as soon as she first stands on open ground (the treehouse isn't), for shots.
+let spawnWanted = new URLSearchParams(location.search).get("spawnfind");
 document.getElementById("copy-debug")?.addEventListener("click", e => {
   const b = e.currentTarget as HTMLButtonElement, text = repro.full();
   void navigator.clipboard?.writeText(text).then(() => { b.textContent = "copied"; }, () => { b.textContent = "copy failed: see console"; console.log(text); }).finally(() => setTimeout(() => { b.textContent = "copy debug info"; }, 1500));
@@ -741,7 +771,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  creator.loadout = { hat: n.game.spells.hat, broom: n.game.spells.broom };
+  creator.loadout = { hat: n.game.spells.hat };
   lastDraw = 0;
   await view.prepare();
   n.flags.ready = true;
@@ -812,16 +842,22 @@ function frame(now: number): void {
   // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
   if (game.trunk && game.trunk.item === null) fillTrunk(game, { wearable: owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>), part: new Set(loadBroom().found) });
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
-    partFound(e.obj, game.spells.parts);
-    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj}${game.spells.parts[partById(e.obj)?.slot ?? "tip"] === e.obj ? " · on her broom" : ""}`);
+    keepFound(findsCtx(), "part", e.obj);
+    view.partsFound = new Set(loadBroom().found); // (hers, not fitted: it waits at the Workshop, the bay to fit it)
+    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`);
   } else if (e.kind === "found" && e.obj) {
-    (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)).add(e.obj); saveOwned(owned);
+    keepFound(findsCtx(), "wearable", e.obj);
     const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
     hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
   }
+  if (spawnWanted && !game.witch.perch && game.witch.mode === "ground" && !game.witch.seated) {
+    const [k, i] = spawnWanted.includes(":") ? spawnWanted.split(":") : [null, null];
+    const said = spawnHere(k as FindKindId | null, i);
+    if (!said.startsWith("no clear ground")) { console.log(`spawnfind: ${said}`); spawnWanted = null; }
+  }
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
-  if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.spells.broom, game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : ""); }
+  if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
   // The telescope by nearness (as the tables): up as she comes to it, shut once she walks off, till she's left it.

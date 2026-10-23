@@ -9,6 +9,7 @@
 //   tips: leaves, flowers, grass and reeds sway more the higher they stand above the sprite's foot and the nearer they are to
 //   its silhouette; thin twigs a little; the rest not at all. bakeSway(sp) draws it as a grey canvas (R = G = B = the sway,
 //   alpha where the sprite has a pixel), the same size as the sprite's albedo, for a parallel texture or atlas channel.
+import { biomeLook, biomeColours } from "./flora/biomes.js";
 import { M, Sprite, hsv2rgb, hash2, rng, bake, defaultCanvas } from "./core.js";
 import { AREA_BY_ID } from "./areas.js";
 import { bakeSway } from "./sway.js";
@@ -86,6 +87,7 @@ export function tuftSprites(id, st = {}) {
   if (sty) { // the pixel-art ramp, as the trees': the shadow deeper and towards blue-violet, the light paler and towards cream ("ref" keeps one tone family)
     const ref = st.artStyle === "ref"; colours[M.LEAF3] = hsv2rgb(leaf + (ref ? .035 : .07), .72, .26); colours[M.LEAF2] = hsv2rgb(leaf - (ref ? .045 : .08), ref ? .3 : .36, .82);
   }
+  const look = st.biome ? biomeLook(st.biome) : null; if (look) biomeColours(colours, look, M, { flower: false, stone: true }); // (the island's biome: art/flora/biomes.js; its flowers kept)
   return mix.map(([kind, weight]) => { const [w, h] = TF_SIZE[kind], sp = new Sprite(w, h); (sty ? TF_STYL : TF_DRAW)[kind](sp, r); if (sty) sp.stylised = st.artStyle; return { kind, weight, sp, colours: kind === "mushrooms" ? { ...colours, [M.STONE]: hsv2rgb(.04, .6, .6) } : colours }; });
 }
 // Baked: [{ kind, weight, A, N, S (its sway mask), w, h }].

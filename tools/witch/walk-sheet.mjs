@@ -1,4 +1,4 @@
-// Her on foot indoors (Ed, 2026-10-21: "we can give her standing and walking art"): the idle (3 frames) and the walk (6), side-on
+// Her on foot indoors (Ed, 2026-10-21: "we can give her standing and walking art"): the idle (3 frames) and the walk (6), and both carrying her broom (the Terrace), side-on
 // turned towards and away, and heading up the screen (away) and down it (towards), at `scale` (default 4), a row each, labelled.
 //   node tools/witch/walk-sheet.mjs <out.png> [scale]
 import { openBrowser } from "../../art/headless.mjs";
@@ -9,7 +9,7 @@ await b.page.goto(b.base + "/art/headless-blank.html").catch(() => {});
 const url = await b.page.evaluate(async S => {
   const G = await import("/art/generator.js"), st = G.defaultStyle(), col = G.witchColours(st);
   const rows = [["side, towards", { facing: "towards" }], ["side, away", { facing: "away" }], ["heading up (away)", { heading: "away" }], ["heading down (towards)", { heading: "towards" }]];
-  const poses = [["idle", G.WITCH_FOOT_POSES.idle.frames], ["walk", G.WITCH_FOOT_POSES.walk.frames]];
+  const poses = [["idle", G.WITCH_FOOT_POSES.idle.frames], ["walk", G.WITCH_FOOT_POSES.walk.frames], ["idleBroom", G.WITCH_FOOT_POSES.idleBroom.frames], ["walkBroom", G.WITCH_FOOT_POSES.walkBroom.frames]];
   const sps = rows.map(([, o]) => poses.flatMap(([pose, n]) => [...Array(n).keys()].map(frame => G.bake(G.witchSprite(st, { ...o, pose, frame }), col, st, st.cOutline))));
   const cw = Math.max(...sps.flat().map(s => s.w)) * S + 8, ch = Math.max(...sps.flat().map(s => s.h)) * S + 8, lw = 220;
   const c = document.createElement("canvas"); c.width = lw + cw * sps[0].length; c.height = 30 + ch * rows.length;

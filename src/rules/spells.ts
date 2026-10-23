@@ -7,7 +7,7 @@
 // broom's quick take-off) are parts' stats now. Spells may stun or slow enraged creatures but never damage them (Ed, 2026-10-11).
 // No drawing here.
 import type { Tuning } from "./tuning";
-import { bareBroom, fitPart, fittedOf, partsPull, setForSpell, spellOfParts, type Fitted } from "./broomParts";
+import { fittedOf, partsPull, spellOfParts, type Fitted } from "./broomParts";
 
 export type HatSpellId = "none" | "harvest" | "dowsing" | "sentry" | "bramble" | "slingshot" | "gathering" | "helmet" | "mine" | "healing" | "lullaby" | "cyclone" | "nursing" | "edgeseer" | "routeseer";
 export type BroomSpellId = "none" | "speed" | "battering" | "leyjump" | "pound" | "stealth";
@@ -78,33 +78,23 @@ export interface SpellState {
   cyc?: { at: number; x: number; z: number; held: { id: number; a: number; r: number }[] };
 }
 
-/** A broom made of `f`, with the set `spell` gives fitted whole over it if it isn't already its spell (the old ?broom= and the
- *  broom stand's Power row: debug switches till the Workshop's bay, docs/backlog/workshop.md); "none" leaves it as it is. */
-function withSpell(f: Fitted, spell: BroomSpellId): Fitted {
-  if (spell === "none" || spellOfParts(f) === spell) return f;
-  const set = setForSpell(spell);
-  return set ? set.pieces.reduce(fitPart, f) : f;
-}
-
 export function newSpells(t: Tuning): SpellState {
-  const parts = withSpell(fittedOf(t.spells.parts), broomOf(t.spells.broom));
+  const parts = fittedOf(t.spells.parts);
   return { hat: hatOf(t.spells.hat), broom: spellOfParts(parts), parts, activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };
 }
 
-/** Her broom's parts now (fitted at the bay, or a part found going into an empty slot): its spell follows (its timers reset
- *  when it changes). */
+/** Her broom's parts now (fitted at the Workshop's bay: ui/stationPanel.ts, main.ts), at once, mid-night too: its stats with them
+ *  (witchTuning reads them each step) and its spell the set they complete (its timers reset when it changes). */
 export function setParts(s: SpellState, f: Fitted): void {
   s.parts = f;
   const b = spellOfParts(f);
   if (b !== s.broom) { s.broom = b; s.activeUntil = -Infinity; s.readyAt = 0; s.castAt = -Infinity; }
 }
 
-/** Her hat spell now, and her broom's (the creator's pick: unknown or unbuilt ones none). A broom spell other than hers fits
- *  the set that gives it (a debug switch till the bay; "none" strips her broom bare); her own changes nothing. */
-export function setLoadout(s: SpellState, hat: string | undefined, broom: string | undefined): void {
+/** Her hat spell now (the creator's pick, or a hat put on: unknown or unbuilt ones none). Her broom's isn't picked: it's her parts'
+ *  set (setParts; the Workshop's bay). */
+export function setLoadout(s: SpellState, hat: string | undefined): void {
   s.hat = hatOf(hat);
-  const b = broomOf(broom);
-  if (b !== s.broom) setParts(s, b === "none" ? bareBroom() : withSpell(s.parts, b));
 }
 
 /** Whether her broom has a spell to cast (the action bar's spell slot shows only then). */

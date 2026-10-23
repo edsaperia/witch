@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import * as Art from "../../art/generator.js";
 import { HOUSE_ROOMS } from "./houseRooms";
-import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, bareHeadAt, itemById, itemsToChoose, ownedOf, shelvesAt, shownItems, skinSwatch, wear, wears } from "./wardrobe";
+import { CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, ITEMS, SHELVES, SKIN_COLS, STARTING_SET, bareHeadAt, itemById, itemsToChoose, ownedOf, shelvesAt, skinSwatch, wear, wears } from "./wardrobe";
 import { TUNING } from "./tuning";
 
 const CLASSIC = Art.WITCH_GENOME as unknown as Record<string, unknown>;
@@ -35,7 +35,7 @@ describe("the wardrobe", () => {
 
   it("has unique ids, and some still to find", () => {
     expect(new Set(ITEMS.map(i => i.id)).size).toBe(ITEMS.length);
-    expect(ITEMS.filter(i => !i.start).length).toBeGreaterThan(10);
+    expect(ITEMS.filter(i => !i.start).length).toBeGreaterThan(5); // (the wearables to find: the brooms are the Workshop's parts now)
   });
 
   it("puts each item on, and only it of its shelf", () => {
@@ -85,10 +85,10 @@ describe("Ed's redo (2026-10-23): nothing with no choice in it, the broom till t
     expect(itemsToChoose(face, new Set([...STARTING_SET, "shades"]))).toBe(true);
     expect(itemsToChoose(earrings, new Set(STARTING_SET))).toBe(true);
   });
-  it("the broom stand shows Classic only till the Workshop's parts", () => {
-    expect(shownItems(SHELVES.broom).map(i => i.id)).toEqual(["broom-classic"]);
-    expect(itemsToChoose(SHELVES.broom, new Set(SHELVES.broom.items.map(i => i.id)))).toBe(false);
-    expect(shelvesAt("broomStand")!.some(s => s.power)).toBe(true); // (its powers kept till then)
+  it("the broom stand is gone (the Workshop's bay, lathe and pegboard in its place), and no station offers a broom's power or shape", () => {
+    expect(shelvesAt("broomStand")).toBeNull();
+    for (const id of ["broomBay", "lathe", "pegboard"]) expect(shelvesAt(id), id).not.toBeNull();
+    for (const s of Object.values(SHELVES)) { expect((s as unknown as Record<string, unknown>).power, s.id).toBeUndefined(); for (const i of s.items) expect(i.set["broom.kind"], i.id).toBeUndefined(); }
   });
   it("every shelf names the part of her the camera zooms on, one the tuning has", () => {
     const parts = TUNING.camera.station!.parts!;

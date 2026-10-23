@@ -151,10 +151,24 @@ describe("pack combat in play (the switch on)", () => {
     otter: g => fresh(g).some(e => e.kind === "packSpecial"),
     toad: g => (g.combat.clouds?.length ?? 0) > 0,
   };
+  // The rest (step 1's data-only kinds, 2026-10-23): their special's own sign, by its kind.
+  const BY_SPECIAL: Record<string, (g: Game, k: string) => boolean> = {
+    stampede: g => g.creatures.some(c => !!c.charge),
+    call: g => !!wildPack(g)?.callUntil,
+    feint: g => wildPack(g)?.feintBy !== undefined,
+    confusion: (g, k) => !!g.witches[0].confused && !!g.witches[0].confused.move === !!packKindOf(k)!.specialWith?.move,
+    cloud: g => (g.combat.clouds?.length ?? 0) > 0,
+    wall: g => g.combat.trails.length > 2,
+    rally: g => fresh(g).some(e => e.kind === "packSpecial"),
+    cover: g => g.creatures.some(c => c.dug !== undefined && c.dug > g.clock.time),
+    mirage: g => (g.combat.mirages?.length ?? 0) > 0,
+    sync: g => wildPack(g)?.syncUntil !== undefined,
+    scatter: g => g.creatures.some(c => !!c.packHide),
+  };
   for (const k of Object.keys(PACKS.kinds)) it(`${k}: combos, its special, its lull, nothing NaN`, () => {
     let seen = false, combos = 0, lulls = 0;
     const g = arena(`pack-${k}`, 30, g => {
-      seen ||= SIGNS[k]?.(g) ?? true;
+      seen ||= SIGNS[k]?.(g) ?? BY_SPECIAL[packKindOf(k)!.special]?.(g, k) ?? true;
       const st = wildPack(g);
       if (st && st.at === g.clock.time) { if (st.phase === "combo") combos++; if (st.phase === "lull") lulls++; }
     });

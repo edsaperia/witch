@@ -3,7 +3,7 @@
 // in and her keys must play it: the drum pads, the synth's held notes with the arrows' live controls and Space's latch, and the
 // mic's notes with harmony. Each must be heard (the Studio's meter: not silent, nothing NaN). The loop must play on 1, and Esc
 // must step her away without pausing and keep the instrument shut while she's still by it. Fails on a page error. Also shoots each
-// menu into <out dir>.
+// menu into <out dir>, and the mic with her stood aside (its spotlight, render/spotlight.ts).
 //   npm run build && node tools/studio/check.cjs [out dir] [dist]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -85,6 +85,10 @@ const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.js
     ok(await page.evaluate(() => window.witch.studio.state.players[0].vowel === "ooh"), "the arrows choose the vowel");
     await page.screenshot({ path: path.join(outDir, "microphone.png") });
     await page.keyboard.press("Escape"); await atIs(null, 20000);
+    // the mic and its spotlight (render/spotlight.ts) with her stood aside, for a before and after
+    const m = obj("microphone"); await page.evaluate(m => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + m.x + 2.5, z: T.z + m.z + 3.5, vx: 0, vz: 0 }; }, m);
+    await page.waitForTimeout(4000);
+    await page.screenshot({ path: path.join(outDir, "microphone-aside.png") });
   } finally { await browser.close(); server.close(); }
   for (const e of errors) console.log(`FAIL page: ${e}`);
   if (errors.length || fails.length) { console.log(`\n${errors.length + fails.length} failed`); process.exit(1); }

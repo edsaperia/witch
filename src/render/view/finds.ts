@@ -16,12 +16,15 @@ const TRUNK_SEEN = 120;
 const TRUNK_ASK = 400;
 
 export function drawFinds(v: View): void {
-  const T = v.game.trunk, batch = v.decorBatches.get("finds");
+  // (a batch a piece, each with its own atlas: tonight's find can change mid-night, the dev spawn's: rules/finds.ts spawnFind)
+  const T = v.game.trunk, id = T?.item ? findPiece(T) : "", key = `finds:${id}`;
+  for (const [k, b] of v.decorBatches) if (k.startsWith("finds:") && k !== key) b.set([]);
+  const batch = v.decorBatches.get(key);
   if (!T || !T.item || (v.game.partyOver && !T.found)) { batch?.set([]); return; }
   const w = v.game.witch, d = Math.hypot(w.x - T.x, w.z - T.z);
   if (d > TRUNK_ASK) { batch?.set([]); return; }
-  const id = findPiece(T), fa = v.assets.findArt(id, d <= TRUNK_SEEN), a = fa?.pieces[id];
+  const fa = v.assets.findArt(id, d <= TRUNK_SEEN), a = fa?.pieces[id];
   if (d > TRUNK_SEEN || !fa || !a) { batch?.set([]); return; }
   const frame = fa.atlas.frames[a.frame], m = v.mpp, items: SpriteInstance[] = [{ x: T.x - (a.originX - frame.w / 2) * m, y: 0, z: T.z, frame, flip: false, scale: 1 }];
-  v.batchFor(v.decorBatches, "finds", () => new SpriteBatch(fa.atlas, v.mpp, { solid: true }))?.set(items);
+  v.batchFor(v.decorBatches, key, () => new SpriteBatch(fa.atlas, v.mpp, { solid: true }))?.set(items);
 }

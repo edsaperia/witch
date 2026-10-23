@@ -174,12 +174,12 @@ export function stepHatSpells(g: Game, W: Witch, down: { x: number; z: number; s
   }
 }
 
-/** Her loadout changed (the creator's Hat and Broom boxes: in her room before the night, or back in it mid-night from the
- *  treehouse deck, Ed's answer 4, 2026-10-11): the new spells, and a new hat swapped in while hers lies on the ground somewhere
+/** Her hat's spell changed (the creator's Hat box: in her room before the night, or back in it mid-night from the treehouse deck,
+ *  Ed's answer 4, 2026-10-11; her broom's spell is her parts' set, the Workshop's bay): the new spell, and a new hat swapped in while hers lies on the ground somewhere
  *  leaves that one where it lies, still working its old spell (Ed, 2026-10-12: "the previous one(s) stay in the world"). */
-export function changeLoadout(W: Witch, hat: string, broom: string): void {
+export function changeLoadout(W: Witch, hat: string): void {
   const was = W.spells.hat;
-  setLoadout(W.spells, hat, broom);
+  setLoadout(W.spells, hat);
   if (W.spells.hat !== was) leaveHat(W.hat, was);
 }
 
