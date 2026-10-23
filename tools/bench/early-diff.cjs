@@ -35,14 +35,15 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       const s = ALL[spot];
       if (s) await page.evaluate(([x, z, mode]) => { const g = window.witch.game; Object.assign(g.witch, { x, z, vx: 0, vz: 0, mode, lift: mode === "treetop" ? 1 : 0, perch: false, seated: false }); g.camera.intro = null; g.introFocus = null; }, s);
       await step(60); await settle();
-      await setEarly(true); const a = await grab();
+      // (two grabs with it on first: a frame that still changes between them is drift, not the early out)
+      await setEarly(true); const a0 = await grab(), a = await grab();
       await setEarly(false); const b = await grab();
-      await setEarly(true);
+      await setEarly(true); const a1 = await grab();
       await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) m.visible = false; });
       const c = await grab();
       await page.evaluate(() => { for (const bb of window.witch.view.typeBatches.values()) for (const m of bb.meshes) m.visible = true; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
-      out[spot] = { diff: count(a, b), scenery: count(a, c), px: a.length / 4 };
+      out[spot] = { diff: count(a, b), drift: count(a0, a), back: count(a, a1), scenery: count(a, c), px: a.length / 4 };
       if (out[spot].diff) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
