@@ -5,6 +5,7 @@
 import * as Art from "../../art/generator.js";
 import { groundOf, witchLookOf, type Baked, type FrameGround, type MakeCanvas } from "./artBuild";
 import type { Style } from "./style";
+import HOUSE_PLAN from "../../config/house.json";
 
 type Poses = Record<string, { towards: number[]; away: number[]; fps: number }>;
 /** Where her frames are in her atlas, pose by pose (render/assets.ts hands them to the view). */
@@ -143,7 +144,9 @@ export interface TreehouseArt { base: { x: number; y: number }; seat: { x: numbe
 export function entTreehouseSprites(style: Style, mk: MakeCanvas, deckY: number, deckR: number, carrierKind: string | null = null, house = false): { sprites: Baked[]; treehouse: TreehouseArt } {
   type EntArt = { far: unknown; near: unknown; foreFrames: unknown[]; foreBox: { x: number; y: number }; candles: { x: number; y: number }[];
     anchors: { base: { x: number; y: number }; deck: { x: number; y: number }; table: { x: number; y: number }; circle?: { x: number; y: number }; balcony?: { x: number; y: number }; seat: { x: number; y: number }; platter?: { x: number; y: number }; camera: { x: number; y: number }; lights: { x: number; y: number; rgb: number[]; kind: string }[] } };
-  const ent = (y: number) => Art.entSprite(style, { facing: "towards", deckY: y, deckR, house }) as EntArt, trunk = (a: EntArt) => a.anchors.base.y - a.anchors.deck.y;
+  // (the Ent's own house, config/house.json organic: the hub's walls, dome, moon and map gone, the Terrace its platform; Ed, 2026-10-23)
+  const look = house && (HOUSE_PLAN as { organic?: boolean }).organic ? { organic: true } : house;
+  const ent = (y: number) => Art.entSprite(style, { facing: "towards", deckY: y, deckR, house: look }) as EntArt, trunk = (a: EntArt) => a.anchors.base.y - a.anchors.deck.y;
   let e = ent(deckY);
   // The island's legend carrying it (art/carrier.js; Ed, 2026-10-10): grown at the Ent's own pixels a metre (its trunk's pixels
   // over the deck's height: its roots' foot stands on the ground), and the Ent grown that much shorter, its roots standing

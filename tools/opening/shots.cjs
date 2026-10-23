@@ -136,13 +136,15 @@ function front(id, by) {
     await until(s => s.open, "the curtains open by themselves");
     await page.waitForTimeout(2500);
     await shot("12-curtains-open.png");
-    // and the door lets her out: from by it, out along the plan's -x into the dressing room
-    const bed = HOUSE.rooms.find(r => r.id === "bedroom"), door = plan(bed.x0 + 1.2, 0), [ox, oz] = plan(-1, 0);
+    // and the door lets her out: from just inside it, out along the branch to the Boudoir (the Ent's own house: tools/house/organic.mjs)
+    const bed = HOUSE.rooms.find(r => r.id === "bedroom"), bc = [(bed.x0 + bed.x1) / 2, (bed.z0 + bed.z1) / 2], br = HOUSE.corridors.find(c => c.id === "boudoir-bedroom").pts;
+    const [ix, iz] = br[br.length - 1], [jx, jz] = br[0], L = Math.hypot(jx - ix, jz - iz), door = plan(ix, iz), [ox, oz] = plan((jx - ix) / L, (jz - iz) / L);
+    const keys = [...(Math.abs(ox) > 0.38 ? [ox < 0 ? "KeyA" : "KeyD"] : []), ...(Math.abs(oz) > 0.38 ? [oz > 0 ? "KeyS" : "KeyW"] : [])];
     await page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, door);
-    await page.keyboard.down(ox < 0 ? "KeyA" : "KeyD"); await page.keyboard.down(oz > 0 ? "KeyS" : "KeyW");
-    const left = () => page.evaluate(([x0, A]) => { const g = window.witch.game, th = g.map.treehouse, dx = g.witch.x - th.x, dz = g.witch.z - th.z; return dx * Math.cos(A) - dz * Math.sin(A) < x0; }, [bed.x0, TURN]); // (past the bedroom's door wall, on the plan)
+    for (const k of keys) await page.keyboard.down(k);
+    const left = () => page.evaluate(([cx, cz, r, A]) => { const g = window.witch.game, th = g.map.treehouse, dx = g.witch.x - th.x, dz = g.witch.z - th.z, px = dx * Math.cos(A) - dz * Math.sin(A), pz = dx * Math.sin(A) + dz * Math.cos(A); return Math.hypot(px - cx, pz - cz) > r + 0.5; }, [bc[0], bc[1], bed.r, TURN]); // (past the bedroom's rim, on the branch)
     for (let i = 0; i < 120 && !(await left()); i++) await page.waitForTimeout(500);
-    await page.keyboard.up(ox < 0 ? "KeyA" : "KeyD"); await page.keyboard.up(oz > 0 ? "KeyS" : "KeyW");
+    for (const k of keys) await page.keyboard.up(k);
     if (!(await left())) fail("the door didn't let her out of the bedroom once the curtains opened");
     await shot("12b-out-of-the-door.png");
     // out to her decks: E there seats her and casts the party spell, its needle-drop routine the DJ intro (Ed's decision 2)

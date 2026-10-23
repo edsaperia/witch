@@ -38,6 +38,13 @@
           },
           "z1": {
             "type": "number"
+          },
+          "r": {
+            "type": "number",
+            "minimum": 0
+          },
+          "locked": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -46,7 +53,8 @@
           "x0",
           "x1",
           "z0",
-          "z1"
+          "z1",
+          "r"
         ],
         "additionalProperties": false
       }
@@ -70,78 +78,29 @@
           },
           "z1": {
             "type": "number"
-          }
-        },
-        "required": [
-          "id",
-          "x0",
-          "x1",
-          "z0",
-          "z1"
-        ],
-        "additionalProperties": false
-      }
-    },
-    "reserved": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
           },
-          "label": {
-            "type": "string"
-          },
-          "x0": {
+          "w": {
             "type": "number",
             "minimum": 0
           },
-          "x1": {
-            "type": "number",
-            "minimum": 0
-          },
-          "z0": {
-            "type": "number"
-          },
-          "z1": {
-            "type": "number"
-          },
-          "door": {
-            "type": "object",
-            "properties": {
-              "x0": {
-                "type": "number",
-                "minimum": 0
-              },
-              "x1": {
-                "type": "number",
-                "minimum": 0
-              },
-              "z0": {
-                "type": "number"
-              },
-              "z1": {
+          "pts": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
                 "type": "number"
               }
-            },
-            "required": [
-              "x0",
-              "x1",
-              "z0",
-              "z1"
-            ],
-            "additionalProperties": false
+            }
           }
         },
         "required": [
           "id",
-          "label",
           "x0",
           "x1",
           "z0",
           "z1",
-          "door"
+          "w",
+          "pts"
         ],
         "additionalProperties": false
       }
@@ -190,11 +149,9 @@
                   "curtains",
                   "zoo",
                   "telescope",
-                  "say"
+                  "say",
+                  "chart"
                 ]
-              },
-              "line": {
-                "type": "string"
               },
               "axes": {
                 "type": "array",
@@ -213,6 +170,9 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "line": {
+                "type": "string"
               },
               "spell": {
                 "type": "string"
@@ -250,6 +210,9 @@
         "hold"
       ],
       "additionalProperties": false
+    },
+    "organic": {
+      "type": "boolean"
     }
   },
   "required": [
@@ -259,9 +222,9 @@
     "reach",
     "rooms",
     "corridors",
-    "reserved",
     "objects",
-    "bed"
+    "bed",
+    "organic"
   ],
   "additionalProperties": false
 }
