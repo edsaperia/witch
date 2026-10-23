@@ -50,8 +50,9 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       // (off, on, off again: a pass that left the renderer changed would show as the two offs differing, which comparing on with
       // off alone can't see once both carry it: the canvas's viewport left at the atlas's, 2026-10-23)
       const n = (p, q) => { let d = 0; for (let i = 0; i < p.px.length; i += 4) if (p.px[i] !== q.px[i] || p.px[i + 1] !== q.px[i + 1] || p.px[i + 2] !== q.px[i + 2]) d++; return d; };
-      const a = await grab(true), b = await grab(false), a1 = await grab(true);
-      const diff = n(a, b), stale = n(a, a1);
+      // (two offs first: the first frame after the settle can still differ from the next, drift that's neither)
+      const a0 = await grab(true), a = await grab(true), b = await grab(false), a1 = await grab(true);
+      const drift = n(a0, a), diff = n(a, b), stale = n(a, a1);
       // (and a blind check: with the area types' scenery hidden the picture must change, or nothing was drawn)
       const seen = await page.evaluate(() => { const v = window.witch.view, all = [...v.typeBatches.values()].flatMap(b => b.meshes); all.forEach(m => { m.userData.mask = m.layers.mask; m.layers.mask = 0; }); return all.length; });
       const c = await grab(false);
@@ -59,7 +60,7 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
       let blind = 0; for (let i = 0; i < a.px.length; i += 4) if (a.px[i] !== c.px[i] || a.px[i + 1] !== c.px[i + 1] || a.px[i + 2] !== c.px[i + 2]) blind++;
       await page.evaluate(() => { window.witch.view.hizOff = false; });
       await page.screenshot({ path: path.join(outDir, `${spot}.png`), timeout: 300000 });
-      out[spot] = { diff, stale, px: a.W * a.H, scenery: blind, batches: seen, sameFrame: a.t === b.t };
+      out[spot] = { diff, stale, drift, px: a.W * a.H, scenery: blind, batches: seen, sameFrame: a.t === b.t };
       if (diff || stale) bad++;
       console.log(spot, JSON.stringify(out[spot]));
     }
