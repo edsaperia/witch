@@ -183,6 +183,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     (v.bareBatch ??= v.makeWitchBatch(true)) : null;
 
   const watlas = bare ? v.assets.witchBare() : v.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
+  v.witchTall = wframe.h * v.mpp * herScale; // (a station's aim is a share of it: render/view/camera.ts)
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
   // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
   // her shadow lies at that point, under her feet whatever the pose.
