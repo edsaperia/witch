@@ -1819,6 +1819,8 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `camera.station.parts.feet.distance` | number | 0 to … |
 | `camera.station.parts.broom.look` | number | -5 to 5 |
 | `camera.station.parts.broom.distance` | number | 0 to … |
+| `camera.station.parts.board.look` | number | 0 to … |
+| `camera.station.parts.board.distance` | number | 0 to … |
 
 ### `pixelSize`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`
 
