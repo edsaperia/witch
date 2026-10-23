@@ -79,7 +79,7 @@ describe("the sets (Ed, 2026-10-23: 'Sets as proposed')", () => {
   });
 
   it("R casts only with a set complete: the bare broom and a half-made one have no spell", () => {
-    const spells = (parts: string) => newSpells({ ...TUNING, spells: { ...TUNING.spells, broom: "none", parts } });
+    const spells = (parts: string) => newSpells({ ...TUNING, spells: { ...TUNING.spells, parts } });
     expect(castable(spells(""))).toBe(false);
     expect(castable(spells("missile,fairing"))).toBe(false);
     expect(castable(spells("missile,fairing,nozzles"))).toBe(true);

@@ -4,11 +4,11 @@ import { describe, expect, it } from "vitest";
 import { TUNING, type Tuning } from "./tuning";
 import { hitWitch, newGame, stepGame, type Game } from "./game";
 import { wearing } from "./hat";
-import { BROOM_SPELLS, HAT_SPELLS, broomOf, castable, hatOf, newSpells, setLoadout } from "./spells";
-import { fittedKey } from "./broomParts";
+import { BROOM_SPELLS, HAT_SPELLS, broomOf, castable, hatOf, newSpells, setLoadout, setParts } from "./spells";
+import { fittedKey, fittedOf } from "./broomParts";
 
 const C = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-const loadout = (hat: string, broom = "none"): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat, broom } });
+const loadout = (hat: string, parts = ""): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, hat, parts } });
 function game(t: Tuning): Game {
   const g = newGame(123, t);
   g.clock.paused = false;
@@ -28,19 +28,15 @@ describe("the loadout", () => {
     expect(broomOf("speed")).toBe("speed");
     expect(broomOf("long")).toBe("none"); // (the passive brooms are parts now: rules/broomParts.ts)
     for (const x of [...HAT_SPELLS, ...BROOM_SPELLS].filter(x => !x.built)) expect(x.id in { none: 1 } ? "none" : hatOf(x.id) === "none" && broomOf(x.id) === "none").toBe(true);
-    setLoadout(s, "healing", "none");
+    setLoadout(s, "healing");
     expect([s.hat, s.broom]).toEqual(["healing", "none"]);
     expect(castable(s)).toBe(false); // (only a broom with an active spell has anything to cast)
-    // a broom spell picked (the old ?broom= and the stand's Power row, debug switches now) fits the set that gives it
-    setLoadout(s, "none", "speed");
+    // her broom's spell is never picked (the stand's Power row and ?broom= are gone): it's the set her parts complete
+    setParts(s, fittedOf("missile,fairing,nozzles"));
     expect(s.broom).toBe("speed");
-    expect(fittedKey(s.parts)).toBe("missile,fairing,nozzles");
     expect(castable(s)).toBe(true);
-    // and her own spell again changes nothing; none strips it bare
-    setLoadout(s, "helmet", "speed");
-    expect(fittedKey(s.parts)).toBe("missile,fairing,nozzles");
-    setLoadout(s, "none", "none");
-    expect([s.broom, fittedKey(s.parts)]).toEqual(["none", "-,-,-"]);
+    setLoadout(s, "helmet"); // (a hat changes nothing of her broom)
+    expect([s.broom, fittedKey(s.parts)]).toEqual(["speed", "missile,fairing,nozzles"]);
   });
 });
 

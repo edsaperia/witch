@@ -1,7 +1,7 @@
 // The biome looks' contact sheet (Ed, 2026-10-23: art/flora/biomes.js): a row per biome (and temperate), each on a
 // floor of one of its areas, lit by the game's night: three shared species (oak, pine, birch) in its look, then four of its own
 // species in its look, then a 3 x 3 patch of its own crowns as the treetops see them; then border islands blending two.
-//   node tools/biomes/sheet.mjs <png> [scale]   (MODE=trees, the default; canopy: the treetops; blends: border islands; areas: a real
+//   node tools/biomes/sheet.mjs <png> [scale]   (MODE=trees, the default; canopy: the treetops; blends: border islands; ground: the tufts and the decor's rocks; areas: a real
 //   area's own trees today and in a biome's look; ROWS=jungle,cold only those; COLS=n panels to a row)
 import { writeFileSync } from "node:fs";
 import { openBrowser } from "../../art/headless.mjs";
@@ -55,6 +55,16 @@ const url = await b.page.evaluate(async ({ scale }) => {
       if (pick && !pick.includes(biome)) continue;
       const vs = s => G.areaTreeVariants(area, s).filter(v => v.heightClass !== "sapling" && !v.face).slice(-3).map(v => v.whole);
       rows.push({ label: `${area}: today | as ${B.BIOME_LOOKS[biome].name}`, floor: G.areaAssets(area, st).floor.sp, items: biome === "temperate" ? vs(st) : [...vs(st), { gap: 16 }, ...vs({ ...st, biome })] });
+    }
+  } else if (mode === "ground") { // each biome's ground cover (tufts, on an area of its own floor) and world-decor rocks and ruins
+    const rocks = G.DECOR.filter(d => d.family === "rocks" || d.family === "ruins").slice(0, 7);
+    for (const [biome, area] of ROWS) {
+      if (pick && !pick.includes(biome)) continue;
+      const s2 = biome === "temperate" ? st : { ...st, biome }, look = biome === "temperate" ? null : B.biomeLook(biome), col = G.decorColours(st);
+      if (look) B.biomeColours(col, look, M, { flower: false, stone: true });
+      const items = G.bakeTufts(area, s2).flatMap(t => { const c = document.createElement("canvas"), n = document.createElement("canvas"); c.width = n.width = t.w * 3; c.height = n.height = t.h * 3; const a = c.getContext("2d"), m = n.getContext("2d"); a.imageSmoothingEnabled = m.imageSmoothingEnabled = false; a.drawImage(t.A, 0, 0, t.w * 3, t.h * 3); m.drawImage(t.N, 0, 0, t.w * 3, t.h * 3); return [{ A: c, N: n, w: t.w * 3, h: t.h * 3 }]; });
+      const pieces = rocks.map(d => { const r = G.decorSprite(d.id, st, { variant: 0 }); return G.bake(r.whole, col, st, "none"); });
+      rows.push({ label: `${B.BIOME_LOOKS[biome].name}: tufts (x3) | rocks and ruins`, floor: G.areaAssets(area, st).floor.sp, items: [...items, { gap: 12 }, ...pieces] });
     }
   } else if (mode === "blends") {
     for (const [blend, area, ids] of BLENDS) {

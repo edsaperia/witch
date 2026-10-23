@@ -9,7 +9,7 @@ const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTal
 
 /** Her on home's open ground, off her decks, waves off, on the bare broom (no parts: the take-off's and the landing's full
  *  amounts; the Jet nozzles would halve them, rules/broomParts.ts). */
-const BARE = withTuning({ spells: { ...TUNING.spells, broom: "none", parts: "" } });
+const BARE = withTuning({ spells: { ...TUNING.spells, parts: "" } });
 function onGround(t: Tuning = BARE): Game {
   const g = newGame(7, t), W = g.witches[0];
   g.clock.paused = false; g.party.paused = true;
@@ -79,7 +79,7 @@ describe("the shared cooldown counter (rules/cooldown.ts)", () => {
   });
 
   it("with cooldown.shared off, the dodge's charges and the rise cooldown run apart as before", () => {
-    const g = onGround(withTuning({ spells: { ...TUNING.spells, broom: "speed" }, cooldown: { shared: false, rise: 2 } }));
+    const g = onGround(withTuning({ spells: { ...TUNING.spells, parts: "missile,fairing,nozzles" }, cooldown: { shared: false, rise: 2 } }));
     expect(blink(g)).toBe(true);
     run(g, 0.3);
     expect(rise(g)).toBe(true); // (a dodge never held her take-off before)

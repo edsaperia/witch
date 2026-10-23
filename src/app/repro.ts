@@ -11,10 +11,10 @@ import { setKnob, knobAt } from "../ui/decisions";
 import { fittedParts } from "../rules/broomParts";
 
 /** The link's switches the repro link writes itself (anything else on the page's own link is carried over as it was). */
-export const REPRO_KEYS = ["seed", "world", "found", "hat", "broom", "parts", "wave", "cleared", "at", "mode", "zoom", "creator", "spell", "set"] as const;
+export const REPRO_KEYS = ["seed", "world", "found", "hat", "parts", "wave", "cleared", "at", "mode", "zoom", "creator", "spell", "set"] as const;
 /** Tuning paths every load sets from elsewhere: never listed as changed. The link's own switches, the chart's save and her loadout
  *  (app/linkParams.ts); the beat from the music style (the same); the prop generator, always on (app/viewParams.ts). */
-const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.broom", "spells.parts", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
+const SET_ELSEWHERE = new Set(["map.found", "map.world", "spells.hat", "spells.parts", "paths.fingerposts", "beat.bpm", "beat.tempos", "beat.blockBars", "beat.rampBars", "partyObjects.generated"]);
 
 /** Every leaf (a number, string, boolean or list) where `live` differs from `base`, by its dotted path; `_` notes skipped. */
 export function tuningDiff(live: unknown, base: unknown, prefix = "", out: [string, unknown][] = []): [string, unknown][] {
@@ -58,7 +58,7 @@ export function reproQuery(s: ReproState, page: URLSearchParams): string {
   for (const k of [...p.keys()]) if (k === "debug" || k === "playtest") p.delete(k);
   const q: [string, string][] = [["seed", String(s.seed)]];
   if (s.world !== undefined) q.push(["world", String(s.world)]);
-  q.push(["found", s.found.join(",")], ["hat", s.hat], ["broom", s.broom], ["parts", s.parts ?? ""]); // (always: a builder's own save would stand in otherwise)
+  q.push(["found", s.found.join(",")], ["hat", s.hat], ["parts", s.parts ?? ""]); // (always: a builder's own save would stand in otherwise)
   if (s.wave > 0) q.push(["wave", String(s.wave)]);
   if (s.cleared.length) q.push(["cleared", s.cleared.join(",")]);
   if (s.at) q.push(["at", s.at.join(",")], ["mode", s.mode!]);

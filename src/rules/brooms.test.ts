@@ -6,13 +6,14 @@ import { TUNING, type Tuning } from "./tuning";
 import { leashLoad, newGame, stepGame, type Controls, type Game } from "./game";
 import { castSpell, stealthed } from "./spells";
 import { leyJumpTarget } from "./brooms";
-import { fittedOf, partsPull } from "./broomParts";
+import { SETS, fittedOf, partsPull } from "./broomParts";
 import { inviteCreature } from "./leash";
 import { cellKey } from "./party";
 import type { Creature } from "./creatures";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-const riding = (broom: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, broom } });
+/** Riding the set that gives `spell` (its parts fitted: the Workshop's bay). */
+const riding = (spell: string): Tuning => ({ ...TUNING, spells: { ...TUNING.spells, parts: SETS.find(s => s.spell === spell)!.pieces.join(",") } });
 function game(t: Tuning): Game {
   const g = newGame(123, t);
   g.clock.paused = false; g.party.paused = true;

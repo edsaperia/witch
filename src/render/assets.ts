@@ -18,7 +18,7 @@ export interface TypeArt {
   cut: Map<number, number>;
 }
 export interface RelicSet { atlas: Atlas; byId: Record<string, RelicArt>; modern: RelicArt[]; layouts: RelicLayouts }
-export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]> }
+export interface DecorArt { atlas: Atlas; pieces: DecorPiece[]; families: Record<string, DecorPiece[]>; /** the island biome it was drawn in (none: temperate) */ biome?: string }
 export interface CreatureArt { atlas: Atlas; frame: (level: number, frame: number, away?: boolean) => number; /** Its walk (art/creatures.js walkGait): frames in the cycle, and how far it moves between them (a share of its width). */ walk?: { frames: number; step: number }; /** A sleeping legend's ground line in each frame (rows from its top): drawn with that row on the ground. */ ground?: number[]; /** And how far its body's middle lies right of the frame's middle in each frame (pixels): drawn with its middle on its place. */ centre?: number[] }
 /** A creature asleep's frame: its level's two breaths (render/artBuild.ts "nap"). */
 export const napFrame = (level: number, f: number) => level * 2 + (f % 2);
@@ -92,7 +92,7 @@ export class AssetLibrary {
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[]; idleBroom: number[]; walkBroom: number[] }>;
   /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
   readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */
@@ -316,7 +316,8 @@ export class AssetLibrary {
     } else if (r.job.kind === "decor") {
       const pieces = r.result.decor!, families: Record<string, DecorPiece[]> = {};
       for (const p of pieces) (families[p.family] ??= []).push(p);
-      this.decor = { atlas, pieces, families };
+      if (this.decor) { this.decor.atlas.albedo.dispose(); this.decor.atlas.normal.dispose(); } // (another island's, landing late or let go)
+      this.decor = { atlas, pieces, families, biome: (r.job as { biome?: string }).biome };
     } else if (r.job.kind === "rig") {
       if (r.result.rig) this.rigs.set(r.job.id, { atlas, meta: r.result.rig, used: performance.now() }); else this.noRig.add(r.job.id);
       this.evictRigs();
@@ -366,7 +367,10 @@ export class AssetLibrary {
   }
   /** The decorations' art (ruins, rocks, freak trees), or undefined (and asked for). */
   decorArt(): DecorArt | undefined {
-    if (!this.decor) this.ask({ kind: "decor", id: "all", style: this.style });
+    // (in the island's biome look, art/flora/biomes.js: drawn again for an island in another; the scenery lets go of its batch on
+    // the old one when this comes back undefined, render/view/scenery.ts, before it's freed as the new one lands)
+    if (this.decor && this.decor.biome !== this.typeBiome) return this.ask({ kind: "decor", id: this.typeBiome ?? "all", style: this.style, biome: this.typeBiome }), undefined;
+    if (!this.decor) this.ask({ kind: "decor", id: this.typeBiome ?? "all", style: this.style, biome: this.typeBiome });
     return this.decor;
   }
   /** Modern relics and the grounds' pieces, or undefined (and asked for). */

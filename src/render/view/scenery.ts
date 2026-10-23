@@ -226,7 +226,8 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   // The rim kit round the legends' clearings (rules/forest.ts legendRim), drawn whole.
   yield* scatter("rim", g.forest.rimNear(cx, cz, half), l => rimPieces(l));
   // Decorations: ruins, rocks and freak trees, as scenery (each family's pieces picked by its variant).
-  const decor = v.assets.decorArt(), dl: SpriteInstance[] = [];
+  const decor = v.assets.decorArt(), dl: SpriteInstance[] = [], dk = `all${decor?.biome ? "@" + decor.biome : ""}`;
+  for (const [k, b] of v.decorBatches) if ((k === "all" || k.startsWith("all@")) && (!decor || k !== dk)) { v.scene.remove(...b.meshes); b.release(); v.decorBatches.delete(k); } // (another biome's rocks, or being drawn again in this island's)
   if (decor) for (const d of g.forest.decorNear(cx, cz, half)) {
     const list = decor.families[d.family];
     if (!list?.length) continue;
@@ -328,7 +329,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   }
   if (sliceDone()) { yield; resume(); }
   dl.sort((a, b) => b.z - a.z); // nearest first, as the trees below
-  if (decor) v.batchFor(v.decorBatches, "all", () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
+  if (decor) v.batchFor(v.decorBatches, dk, () => new SpriteBatch(decor.atlas, mpp, { scenery: true, fade: true }))?.set(dl);
   for (const [type, b] of v.typeBatches) if (!per.has(type)) b.set([]);
   if (t.shadows.trunks) { // (always set, so ?trunks or the pause page's switch can turn them on live; hidden while off: render/view.ts)
     for (const [type, b] of v.trunkShadowBatches) if (typeof type === "number" ? !trunks.has(type) : SCENERY_CASTS.has(type) && !casts.has(type)) b.set([]);

@@ -18,10 +18,15 @@ export interface BroomSet { id: string; name: string; pieces: string[]; spell: B
 /** What's fitted in each slot (null: empty). */
 export type Fitted = Record<Slot, string | null>;
 
-const R = RAW as unknown as { parts: Record<string, Omit<BroomPart, "id">>; sets: Record<string, Omit<BroomSet, "id">> };
+/** A cell of the Workshop's pegboard: its part, its compass point on the 3 × 3 biome map and its biome. */
+export interface BoardCell { part: string; point: string; biome: string }
+const R = RAW as unknown as { parts: Record<string, Omit<BroomPart, "id">>; sets: Record<string, Omit<BroomSet, "id">>; board: BoardCell[] };
 export const PARTS: readonly BroomPart[] = Object.entries(R.parts).map(([id, p]) => ({ id, ...p }));
 export const PART_IDS: readonly string[] = PARTS.map(p => p.id);
 export const SETS: readonly BroomSet[] = Object.entries(R.sets).map(([id, s]) => ({ id, ...s }));
+/** The pegboard's nine cells, row by row from the north-west, north up (Ed, 2026-10-23: the 3 × 3 biome map; its columns the
+ *  three-piece sets, west Ferry, middle Hedge, east Rocket). */
+export const BOARD: readonly BoardCell[] = R.board;
 const BY_ID = new Map(PARTS.map(p => [p.id, p]));
 export const partById = (id: string | null | undefined): BroomPart | undefined => (id ? BY_ID.get(id) : undefined);
 
@@ -29,6 +34,10 @@ export const partById = (id: string | null | undefined): BroomPart | undefined =
 export const bareBroom = (): Fitted => ({ tip: null, chassis: null, exhaust: null });
 /** Her fitted parts, in slot order (empty slots left out). */
 export const fittedParts = (f: Fitted): BroomPart[] => SLOTS.map(s => partById(f[s])).filter((p): p is BroomPart => !!p);
+/** The parts that go in `slot`, in the data's order (the bay's cards after the empty slot). */
+export const partsFor = (slot: Slot): BroomPart[] => PARTS.filter(p => p.slot === slot);
+/** A broom with `slot` emptied. */
+export const emptySlot = (f: Fitted, slot: Slot): Fitted => ({ ...f, [slot]: null });
 /** A broom with `id` fitted in its slot (what was there taken out); an unknown id changes nothing. */
 export function fitPart(f: Fitted, id: string): Fitted {
   const p = partById(id);
@@ -51,8 +60,6 @@ export function completeSet(f: Fitted): BroomSet | null {
 }
 /** The broom spell her parts give: the complete set's, else none (Ed, 2026-10-23: R casts the completed set's spell). */
 export const spellOfParts = (f: Fitted): BroomSpellId => completeSet(f)?.spell ?? "none";
-/** The set that gives `spell` (the old ?broom= and the broom stand's Power row fit it whole: debug switches for now). */
-export const setForSpell = (spell: string): BroomSet | undefined => SETS.find(s => s.spell === spell);
 /** Each set's progress: how many of its pieces she has fitted (the bay's chips, "Rocket 3/3 · Speed"). */
 export const setProgress = (f: Fitted): { set: BroomSet; fitted: number }[] => {
   const on = new Set(SLOTS.map(s => f[s]).filter(Boolean));
