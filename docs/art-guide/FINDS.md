@@ -37,12 +37,13 @@ Written from `FIND_KINDS`, so it can't drift: `src/rules/findsList.test.ts` fail
 
 ## What the mocks showed
 
-Seed 123, at night, in the densest spot of the fern forest and the muddy forest (26 trees within 12 m), the witch about 8 m from the find. The contact sheet is [`finds/contact.jpg`](finds/contact.jpg).
+Seed 123, at night, in the densest spot of the fern forest (26 trees within 12 m) and the muddy forest (16), the witch about 8 m from the find. The contact sheet is [`finds/contact.jpg`](finds/contact.jpg): rows are today (base), A, B and C; the columns are the trunk and the wreck on the ground and the wreck from the treetops. B and C have the fern forest only (the muddy forest's runs were cut short).
 
-- **Today, both finds are invisible in dense forest.** The trunk is a small tan lump in the dark, and the wreck is the same. From the ground the crowns between the camera and the find cover it beyond the edge of her own canopy hole. From the treetops it's under the canopy by design (`placeTrunk` looks for cover). Nothing on either object says "I'm the special one".
-- **A light alone isn't enough under a closed canopy.** A gold wisp over the find (treatment A) shows as a faint glow through the crowns. It works where the canopy is open, not in the thick of the wood, which is exactly where finds are placed.
-- **The canopy has to open over the find** (treatment C). The witch already cuts a hole in the canopy round her. Widening it to take in a find within about 30 m shows the find in its own light, and the wisp then reads at once.
-- **A shaft of moonlight (treatment B)** reaches above the crowns, so it would show from the treetops too. That would change the hunt (finds are under the canopy so you have to come down and look), so it's a question for Ed, not a default.
+- **Today, both finds are invisible in dense forest.** The trunk and the wreck are small dark lumps under the crowns. From the treetops they're under the canopy by design (`placeTrunk` looks for cover). Nothing on either says "I'm the special one".
+- **The wisp is the only thing that marks the spot** (A and C). In the muddy forest's cool, dark light the gold orb reads at once. In the fern forest it's much weaker, because **the witch's own warm light floods the same colour** round her: gold on amber is lost. The wisp's colour has to stand apart from her light, not only from the party's.
+- **Opening the canopy over the find (C) changes little at this distance.** She's 8 m off, inside her own canopy hole already. It should matter from 15 to 30 m; that's unmocked.
+- **The moon shaft (B) doesn't show from the treetops** as mocked: a column of faint dots is eaten by the crowns and the tilt-shift. Nothing tried shows a find from the treetops, which matches the design (the constellation gives the way, she comes down to look).
+- **The object itself never reads**, whatever the light: neither the trunk's nor the wreck's shape shows among the ferns and trunks. Light finds the spot; only a clear patch, a bigger and brighter shape and contrast make it *the thing*.
 
 ## The find signature (the recommendation)
 
@@ -59,11 +60,12 @@ Every find carries the same four things, whatever its object. A player who has s
 - **A wisp:** a small orb of pale **find gold** (`#ffe6a8`, warmer and paler than the party's amber `#e8b46a` and nothing like the moon's blue-violet) hovers about 1.6 m over the find. It bobs a little (±0.12 m) and pulses slowly (a 2.4 s period, 75 to 100 %).
 - **A point light** of the same gold under it (reach about 7 m) pools on the find and the ground round it. It's one light against the budget (`lightBudget`), like a lantern, and fine on Ed's Intel UHD.
 - **A few motes** (at most 6 to 8 dots) rise from the find through the wisp, so it reads as alive, not a lamp.
+- **It must stand apart from her own light.** The mocks show gold lost in the warm pool of her lantern, so the wisp needs a whiter, brighter core than anything round her (or a colour of its own: see the questions).
 - **No other light source in the game uses find gold.** It's the finds' own colour, as amber is the party's and white is a hit's.
 
 ### 3. Seen through the canopy
 
-- **Within about 30 m on the ground, the canopy opens over the find** as it does over her (the same cutout widened to hold both, or a second hole), so the find is seen in its own light, not guessed through crowns.
+- **Within about 30 m on the ground, the canopy opens over the find** as it does over her (the same cutout widened to hold both, or a second hole), so the find is seen in its own light, not guessed through crowns. (Untested past 8 m: the mocks were taken inside her own hole.)
 - **From the treetops it stays hidden** (the recommendation): the constellation gives the bearing, and she comes down to search. Ed may want a faint glint through the canopy instead (see the questions).
 
 ### 4. Silhouette and contrast
