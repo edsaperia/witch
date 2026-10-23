@@ -92,7 +92,7 @@ export class AssetLibrary {
   /** In the treetops: the fast and brake poses' frames, towards and away. */
   readonly witchFly: Record<string, { towards: number[]; away: number[]; fps: number }> = {};
   /** Her straight-up ("up": seen from behind) and straight-down ("down": coming at us) flight frames (#27): hover, lean, fast, brake. */
-  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[] }>;
+  readonly witchHeading = {} as Record<"up" | "down", { hover: number[]; lean: number; leanCycle: number[]; fast: number[]; brake: number[]; idle: number[]; walk: number[]; idleBroom: number[]; walkBroom: number[] }>;
   /** Her lean as a four-frame loop (#37), side-on: towards and away; the game plays it faster with her speed. */
   readonly witchLean = { towards: [] as number[], away: [] as number[] };
   /** Behind the decks (Art.djFrame picks one): her DJ frames, and each one's upper layer (what shows over the DJ table). */

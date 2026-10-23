@@ -47,9 +47,9 @@ const roomLight = (st: Style): Style => ({ ...st, ambient: .85, ambientHue: .09,
 function canvas(w: number, h: number): HTMLCanvasElement { const c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d", { willReadFrequently: true }); return c; }
 
 /** A drawn piece (art/furniture.js modelSprite's), baked in a room's colours (times `dim`: a rug, flat to the light, darker) and lit by
- *  its own lights: its canvas. */
-export function litCanvas(d: Drawn, room: string, st: Style, dim = 1, id = ""): HTMLCanvasElement {
-  const colours = Object.fromEntries(Object.entries(furnitureColours(st, room, id)).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
+ *  its own lights: its canvas. `over`: colours by material over the room's (her broom's, render/workshopArt.ts). */
+export function litCanvas(d: Drawn, room: string, st: Style, dim = 1, id = "", over: Record<string, number[]> = {}): HTMLCanvasElement {
+  const colours = Object.fromEntries(Object.entries({ ...furnitureColours(st, room, id), ...over }).map(([k, c]) => [k, dim === 1 ? c : (c as number[]).map(v => Math.round(v * dim))]));
   const b = (Art.bake as (sp: unknown, c: object, st: Style, outline: unknown, mk: typeof canvas) => { A: HTMLCanvasElement; N: HTMLCanvasElement; w: number; h: number })(d.sp, colours, { ...st, styleInterior: false } as unknown as Style, (st as unknown as { cOutline: unknown }).cOutline, canvas);
   const lit = canvas(b.w, b.h);
   shade({ a: b.A.getContext("2d")!, n: b.N.getContext("2d")!, w: b.w, h: b.h }, lit, roomLight(st), d.lights, null);

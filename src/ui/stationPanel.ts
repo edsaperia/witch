@@ -1,14 +1,20 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
 // slides in from the left as she comes near a station and away as she walks off (main.ts, rules/stations.ts), over the live game.
 // Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
-// colour grid (5 rows: every colour hers), its fit sliders and the broom's power. The mouse points and clicks;
+// colour grid (5 rows: every colour hers), its fit sliders; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md): the bay's
+// part cards (a slot's parts, the empty slot first, the unfound greyed), the sets' chips, the focused part's stats and "Her broom",
+// fitted at once (onFit: main.ts puts them on her broom mid-night and keeps them, app/broomSave.ts); the lathe's colours and fit (no
+// items); the pegboard's 3 × 3 biome board, read-only (its lines focus, nothing is chosen). The mouse points and clicks;
 // the d-pad or the arrow keys move through it, each owned item or colour landed on going on her at once (Ed: "landing on an item
 // wears it at once"); WASD and the left stick only ever walk her. Each change shows on her a beat later (onLook) and she turns to
 // show it (onChange). Her room (ui/creator.ts) is the full-screen creator; this is only the stations'.
 import * as Art from "../../art/generator.js";
 import type { Style } from "../render/style";
-import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, itemsToChoose, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
-import { BROOM_SPELLS } from "../rules/spells";
+import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, skinSwatch, wear, wears, type Shelf, type WardrobeItem } from "../rules/wardrobe";
+import { BOARD, partById, type Fitted } from "../rules/broomParts";
+import type { Tuning } from "../rules/tuning";
+import { broomColours, partCanvas } from "../render/workshopArt";
+import { broomSummary, canChoose, cardAt, choose, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
 
@@ -26,13 +32,16 @@ const LOOK_AFTER = 160;
 const HOLD = .35, REPEAT = .11;
 /** The fit sliders that only mean anything while what they shape is on (none at 0: the fit never puts it on). */
 const FIT_NEEDS: Record<string, (g: Genome) => boolean> = { scarfLength: g => !!g.accessories.scarf, bagSize: g => !!g.accessories.satchel, backpackSize: g => Number(g.backpackSize) > 0 };
-const FIT_NAMES: Record<string, string> = { hatHeight: "Height", hatBrim: "Brim", hatTilt: "Tilt", hatBand: "Band", cloakLength: "Cloak length", scarfLength: "Scarf length", bagSize: "Bag size", backpackSize: "Backpack size", broomLength: "Length", broomThickness: "Thickness", broomBend: "Bend", bristles: "Bristles" };
+const FIT_NAMES: Record<string, string> = { hatHeight: "Height", hatBrim: "Brim", hatTilt: "Tilt", hatBand: "Band", cloakLength: "Cloak length", scarfLength: "Scarf length", bagSize: "Bag size", backpackSize: "Backpack size", broomLength: "Length", broomThickness: "Thickness", broomBend: "Bend", bristles: "Exhaust size" };
+/** What each of her broom's slots does (docs/backlog/workshop.md: the tip steers, the chassis is the body, the exhaust is thrust). */
+const SLOT_ROLE: Record<string, string> = { tip: "steering", chassis: "body", exhaust: "thrust" };
+/** The Workshop's state the bay and the pegboard show (main.ts): the parts she's found, those on her broom, tonight's part to find
+ *  (the night's find when it's a part, not yet taken: one's out there, never where) and the tuning her parts change. */
+export interface WorkshopCtx { found: ReadonlySet<string>; fitted: Fitted; tonight: string | null; tuning: Tuning }
 const PART_NAMES: Record<string, string> = { broom: "handle", bristles: "bristles", hat: "hat", plume: "plume" };
 /** Where an item's picture is cut from her sprite (shares of its height; the broom's, her flying frame whole). */
 const CROP: Record<string, [number, number]> = { hair: [.1, .52], face: [.16, .5], earrings: [.14, .5], jacket: [.33, .8], shoes: [.72, 1], cloak: [.1, 1], scarf: [.1, .8], bag: [.25, 1], backpack: [.1, 1] };
 
-/** One focusable line of the panel: a shelf's items, its colour parts, a row of its grid, a fit slider, or its powers. */
-interface Line { shelf: number; kind: "items" | "parts" | "grid" | "fit" | "power"; n: number; row?: number; axis?: string }
 
 export class StationPanel {
   readonly root = document.createElement("div");
@@ -40,13 +49,13 @@ export class StationPanel {
   onLook: (g: Genome) => void = () => {};
   /** Something changed on her (she turns to show it). */
   onChange: () => void = () => {};
-  /** The broom's power chosen. */
-  onPower: (broom: string) => void = () => {};
+  /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
+  onFit: (f: Fitted) => void = () => {};
   private id: string | null = null;
   private shelves: Shelf[] = [];
   private g!: Genome;
   private owned = new Set<string>();
-  private broom = "none";
+  private ws: WorkshopCtx | null = null;
   private banner = "";
   private st: Style;
   /** The focus (a line and a place along it), the shelf whose colours are open, each shelf's chosen part, what the mouse is over. */
@@ -60,7 +69,7 @@ export class StationPanel {
   private pad = { held: "", next: 0 };
   private thumbs = new Map<string, HTMLCanvasElement>();
   private lastThumb = new Map<string, HTMLCanvasElement>();
-  private queue: { key: string; item: WardrobeItem; shelf: Shelf }[] = [];
+  private queue: { key: string; make: () => HTMLCanvasElement }[] = [];
   private raf = 0;
 
   constructor(style: Style, pixel = 3) {
@@ -99,12 +108,13 @@ export class StationPanel {
   /** She walked: not choosing till the pointer or the d-pad is back in the panel. */
   walked(): void { this.navAt = -1e9; }
 
-  /** Slides `station`'s panel in (another's swapped for it) with her look, what she owns and her broom's power. */
-  open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, broom: string, banner = ""): void {
-    this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.broom = broom; this.banner = banner;
+  /** Slides `station`'s panel in (another's swapped for it) with her look, what she owns and (the Workshop's) her broom's parts. */
+  open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null): void {
+    this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.banner = banner; this.ws = ws;
     this.navAt = -1e9; this.hover = null;
-    const L = this.lines(), first = L.findIndex(l => l.kind === "items");
-    const worn = first >= 0 ? shownItems(this.shelves[L[first].shelf]).findIndex(i => wears(this.g, i)) : 0;
+    const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
+    const s0 = first >= 0 ? this.shelves[L[first].shelf] : null;
+    const worn = !s0 ? 0 : s0.slot ? Math.max(0, Array.from({ length: L[first].n }, (_, c) => cardAt(s0, L[first], c)).indexOf(this.ws?.fitted[s0.slot] ?? null)) : shownItems(s0).findIndex(i => wears(this.g, i));
     this.at = { line: Math.max(0, first), col: Math.max(0, worn) };
     this.paint();
     this.slide.in(); // (another station's swapped in place: it's in already)
@@ -118,6 +128,8 @@ export class StationPanel {
     this.slide.out();
     this.root.classList.remove("in");
   }
+  /** The Workshop's state changed elsewhere (a part found, her broom changed): the panel follows. */
+  setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
   /** Each frame while open: the pad's d-pad (the left stick walks her: platform/input.ts leaves the d-pad to the panel). */
@@ -134,25 +146,12 @@ export class StationPanel {
   }
 
   // ---- what's on it ----
-  /** The panel's lines, top to bottom, every kind at once (Ed, 2026-10-23: no tabs): a shelf's items, its powers, its colours'
-   *  parts (two or more) and its grid's 5 rows, then its fit sliders. Nothing with no choice in it (Ed: "Don't show options where
-   *  there's nothing to choose yet"): items only when two or more are hers, a fit slider only while what it shapes is on. */
+  /** The panel's lines, top to bottom (ui/stationLines.ts). */
   private lines(): Line[] {
-    const out: Line[] = [];
-    this.shelves.forEach((s, i) => {
-      if (itemsToChoose(s, this.owned)) out.push({ shelf: i, kind: "items", n: shownItems(s).length });
-      if (s.power) out.push({ shelf: i, kind: "power", n: this.powers().length });
-      if (s.colour) {
-        if (s.colour.length > 1) out.push({ shelf: i, kind: "parts", n: s.colour.length });
-        const cols = s.grid === "skin" ? SKIN_COLS : CLOTH_COLS;
-        for (let r = 0; r < GRID_ROWS; r++) out.push({ shelf: i, kind: "grid", n: cols, row: r });
-      }
-      for (const a of s.fit ?? []) if (this.fitOn(a)) out.push({ shelf: i, kind: "fit", n: 1, axis: a });
-    });
-    return out;
+    return stationLines(this.shelves, { owned: this.owned, fitOn: a => this.fitOn(a), grid: s => ({ cols: s.grid === "skin" ? SKIN_COLS : CLOTH_COLS, rows: GRID_ROWS }) });
   }
+  private found_(): ReadonlySet<string> { return this.ws?.found ?? new Set(); }
   private fitOn(axis: string): boolean { return !FIT_NEEDS[axis] || FIT_NEEDS[axis](this.g); }
-  private powers() { return BROOM_SPELLS.filter(x => x.built); }
   private partOf(s: Shelf): string { const p = this.part.get(s.id); return p && s.colour!.includes(p) ? p : s.colour![0]; }
   private colourOf(part: string): number[] { return { ...classicPalette(this.st), ...this.g.palette }[part] ?? [.07, .5, .45]; }
   private swatch(s: Shelf, col: number, row: number): number[] { return s.grid === "skin" ? skinSwatch(col, row) : swatchAt(col, CLOTH_ROWS[row]); }
@@ -187,7 +186,8 @@ export class StationPanel {
     else { col = Math.max(0, Math.min(cur.n - 1, col + dx)); if (col === this.at.col) return; }
     this.go(line, col);
   }
-  /** Focus a place, and choose what's there (an owned item or a colour on her, a part to colour, a power). */
+  /** Focus a place, and choose what's there (an owned item or a colour on her, a part to colour, a broom part fitted at the bay;
+   *  a read-only line, the pegboard's, only focuses). */
   private go(line: number, col: number): void {
     const L = this.lines(), l = L[line]; if (!l) return;
     const s = this.shelves[l.shelf];
@@ -197,7 +197,10 @@ export class StationPanel {
       if (this.owned.has(it.id) && !wears(this.g, it)) this.change(wear(this.g, it) as Genome);
     } else if (l.kind === "parts") this.part.set(s.id, s.colour![col]);
     else if (l.kind === "grid") { const part = this.partOf(s), c = this.swatch(s, col, l.row!); this.change({ ...this.g, palette: { ...classicPalette(this.st), ...this.g.palette, [part]: c } }); }
-    else if (l.kind === "power") { const p = this.powers()[col]; if (p && p.id !== this.broom) { this.broom = p.id; this.onPower(p.id); this.onChange(); } }
+    else if (l.kind === "cards" && s.slot && this.ws && canChoose(s, l, col, this.found_())) {
+      const id = cardAt(s, l, col);
+      if (this.ws.fitted[s.slot] !== id) { this.ws = { ...this.ws, fitted: choose(this.ws.fitted, s.slot, id) }; this.onFit(this.ws.fitted); this.onChange(); }
+    }
     this.paint();
   }
   private setFit(axis: string, share: number): void {
@@ -229,49 +232,79 @@ export class StationPanel {
       if (l.shelf !== shelf) {
         if (shelf >= 0) html += `</div>`;
         shelf = l.shelf;
-        const worn = shownItems(s).find(it => wears(this.g, it));
-        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}"><div class="sp-lab">${esc(s.label)}${worn ? `<span> · ${esc(worn.name)}</span>` : ""}${s.always ? `<em>every colour</em>` : ""}</div>`;
+        const worn = s.slot ? partById(this.ws?.fitted[s.slot])?.name : shownItems(s).find(it => wears(this.g, it))?.name;
+        const note = s.always ? "every colour" : s.slot ? SLOT_ROLE[s.slot] : s.board ? "north up" : "";
+        html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}"><div class="sp-lab">${esc(s.label)}${worn ? `<span> · ${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
       if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
-      else if (l.kind === "power") html += `<div class="sp-row sp-powers">${this.powers().map((p, c) => `<div class="sp-power${p.id === this.broom ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${esc(p.id === "none" ? "Plain" : p.name)}</div>`).join("")}</div>`;
+      else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
+        const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
+        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)}<br>${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
+      }).join("")}</div>`;
+      else if (l.kind === "cards") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => {
+        const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
+        return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
+      }).join("")}</div>`;
+      else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
       else if (l.kind === "grid") { const [sc, sr] = this.chosenSwatch(s); html += `<div class="sp-grid" style="grid-template-columns:repeat(${l.n},1fr)">${Array.from({ length: l.n }, (_, c) => `<i class="${sc === c && sr === l.row ? "sel" : ""}${f(c)}" data-line="${i}" data-col="${c}" style="background:${css(this.swatch(s, c, l.row!))}"></i>`).join("")}</div>`; }
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div><div class="sp-foot"><span class="k">🖱</span> click <span class="k">← ↑ → ↓</span> or <span class="k">✥</span> move · walk away to close</div>`;
+    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click <span class="k">← ↑ → ↓</span> or <span class="k">✥</span> move · walk away to close</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
     this.root.querySelector<HTMLElement>(".focus")?.scrollIntoView({ block: "nearest" });
   }
-  private found(): string { const all = this.shelves.flatMap(shownItems); return all.length ? `${all.filter(i => this.owned.has(i.id)).length} of ${all.length} found` : ""; }
+  private found(): string {
+    if (this.shelves.some(q => q.slot || q.board)) return partsFound(this.found_());
+    const all = this.shelves.flatMap(shownItems); return all.length ? `${all.filter(i => this.owned.has(i.id)).length} of ${all.length} found` : "";
+  }
+  /** "Her broom" (the bay): every number her parts change, bare → now, up green and down red, and her spell. */
+  private summary(ws: WorkshopCtx): string {
+    const rows = broomSummary(ws.fitted, ws.tuning);
+    return `<div class="sp-sum"><div class="sp-lab">Her broom<em>bare → now</em></div>${rows.length ? rows.map(r => `<div class="${r.better ? "up" : "down"}"><span>${esc(r.name)}</span><b>${esc(r.from)} → ${esc(r.to)}</b></div>`).join("") : `<div><span>A bare broom</span><b>as it comes</b></div>`}<div class="${spellLine(ws.fitted).startsWith("none") ? "" : "up"}"><span>Spell (R)</span><b>${esc(spellLine(ws.fitted))}</b></div></div>`;
+  }
   private paintDetail(): void {
     const box = this.root.querySelector<HTMLElement>(".sp-detail"); if (!box) return;
     const at = this.hover ?? this.at, l = this.lines()[at.line];
-    let title = "", text = "", locked = false;
+    let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
       if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? "" : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21)
-      else if (l.kind === "power") { const p = this.powers()[at.col]; title = p.id === "none" ? "Plain broom" : p.name; text = p.line; }
+      else if (l.kind === "cards" && s.board) {
+        const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
+        if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
+        else if (this.ws?.tonight === id) { title = "A glowing outline"; text = `${where}. One lies on tonight's island: a wreck somewhere in its woods. The board never says where; the telescope shows its outline in the stars.`; }
+        else { title = "?"; text = `${where}. Still to find.`; locked = true; }
+      } else if (l.kind === "cards") {
+        const id = cardAt(s, l, at.col), p = partById(id);
+        if (!p) { title = "Empty"; text = `Nothing in the ${s.slot}: the bare broom's.`; }
+        else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; } // (unfound: a silhouette, no hint)
+        else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
+      } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
       else if (l.kind === "parts") { title = `Colour: ${PART_NAMES[s.colour![at.col]] ?? s.colour![at.col]}`; text = "Every colour is hers."; }
       else if (l.kind === "grid") { title = `${s.label}: colour`; text = "Every colour is hers."; }
       else { const on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g); title = FIT_NAMES[l.axis!] ?? l.axis!; text = on ? "◀ ▶ or drag to change it." : "Put it on first."; }
     }
     box.className = `sp-detail${locked ? " locked" : ""}`;
-    box.innerHTML = `<h3>${esc(title)}</h3><p>${esc(text)}</p>`;
+    box.innerHTML = `<h3>${esc(title)}${sub ? `<small>${esc(sub)}</small>` : ""}</h3>${stats.map(r => `<p class="${r.better ? "up" : "down"}">${r.better ? "▲" : "▼"} ${esc(r.name)} ${esc(r.from)} → ${esc(r.to)}</p>`).join("")}<p>${esc(text)}</p>`;
   }
 
   // ---- the items' pictures: her, as she is, with each one on (baked a few a frame, kept by look) ----
   private thumbKey(it: WardrobeItem, s: Shelf): string { return `${s.id}:${it.id}:${hash(JSON.stringify(wear(this.g, it)))}`; }
+  /** A broom part's picture (the bay's and the pegboard's cards: render/workshopArt.ts), in her broom's colours. */
+  private partKey(id: string): string { const c = broomColours(this.st, this.g); return `part:${id}:${hash(JSON.stringify([c[ART_M.BROOM], c[ART_M.STRAW]]))}`; }
   private thumbInto(el: HTMLElement): void {
     const key = el.dataset.thumb!, c = this.thumbs.get(key);
     if (c) { el.replaceChildren(c); return; }
     const was = this.lastThumb.get(key.slice(0, key.lastIndexOf(":"))); if (was) el.replaceChildren(was); // (the last one shown, till the new one's baked)
     if (!this.queue.some(q => q.key === key)) {
       const [sid, iid] = key.split(":"), s = this.shelves.find(q => q.id === sid), it = s?.items.find(i => i.id === iid);
-      if (s && it) this.queue.push({ key, item: it, shelf: s });
+      if (sid === "part" && partById(iid)) { const g = this.g; this.queue.push({ key, make: () => partCanvas(this.st, broomColours(this.st, g), iid, { ppm: 30, pitch: .3 }).c }); }
+      else if (s && it) this.queue.push({ key, make: () => wearPicture(this.st, this.g, it, s.id) });
     }
     if (!this.raf) this.raf = requestAnimationFrame(() => this.bakeSome());
   }
@@ -279,14 +312,13 @@ export class StationPanel {
     this.raf = 0;
     const t0 = performance.now();
     while (this.queue.length && performance.now() - t0 < 8) {
-      const q = this.queue.shift()!, c = this.bake(q.item, q.shelf);
+      const q = this.queue.shift()!, c = q.make();
       if (this.thumbs.size > 240) this.thumbs.delete(this.thumbs.keys().next().value!);
       this.thumbs.set(q.key, c); this.lastThumb.set(q.key.slice(0, q.key.lastIndexOf(":")), c);
       const el = this.root.querySelector<HTMLElement>(`[data-thumb="${q.key}"]`); if (el) el.replaceChildren(c);
     }
     if (this.queue.length) this.raf = requestAnimationFrame(() => this.bakeSome());
   }
-  private bake(it: WardrobeItem, s: Shelf): HTMLCanvasElement { return wearPicture(this.st, this.g, it, s.id); }
 
 }
 
@@ -307,7 +339,8 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
-const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomStand: "Broom stand" };
+const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
+const ART_M = Art.M as Record<string, number>;
 const none = (it: WardrobeItem) => Object.values(it.set).every(v => v === false || v === 0 || v === "none");
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
 const hash = (s: string) => { let x = 2166136261; for (let i = 0; i < s.length; i++) x = Math.imul(x ^ s.charCodeAt(i), 16777619); return (x >>> 0).toString(36); };
@@ -345,6 +378,17 @@ function installCss(): void {
 #station-panel .sp-fit span { width: 100px; font-size: 12px; } #station-panel .sp-fit .bar { position: relative; flex: 1; height: 4px; background: rgba(232,226,244,.55); border-radius: 2px; box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-fit .bar i { position: absolute; top: -5px; width: 8px; height: 14px; margin-left: -4px; border-radius: 3px; background: var(--accent, #e8b46a); box-shadow: 0 0 0 1px var(--ol); }
 #station-panel .sp-detail { padding: 0 2px; min-height: 40px; } #station-panel .sp-detail h3 { margin: 0; font-size: 15px; font-weight: 600; } #station-panel .sp-detail p { margin: 0; font-size: 12px; opacity: .85; }
+#station-panel .sp-wide { width: 72px; height: 40px; } #station-panel .sp-wide canvas { height: auto; width: auto; max-width: 66px; max-height: 34px; }
+#station-panel .sp-board { flex-wrap: nowrap; gap: 4px; } #station-panel .sp-cell { flex: 1; position: relative; min-height: 78px; border: 1px solid rgba(232,226,244,.35); border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 3px 2px; cursor: default; background: radial-gradient(closest-side, rgba(11,7,22,.5), rgba(11,7,22,0)); }
+#station-panel .sp-cell small { font-size: 9px; line-height: 1.1; text-align: center; text-transform: uppercase; letter-spacing: .5px; opacity: .85; } #station-panel .sp-cell b { font-size: 10px; font-weight: normal; text-align: center; }
+#station-panel .sp-cell canvas { image-rendering: pixelated; max-width: 84px; max-height: 34px; width: auto; height: auto; filter: drop-shadow(1px 0 0 var(--ol)) drop-shadow(-1px 0 0 var(--ol)) drop-shadow(0 1px 0 var(--ol)) drop-shadow(0 -1px 0 var(--ol)); }
+#station-panel .sp-cell.locked canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 rgba(232,226,244,.45)) drop-shadow(-1px 0 0 rgba(232,226,244,.45)) drop-shadow(0 1px 0 rgba(232,226,244,.45)) drop-shadow(0 -1px 0 rgba(232,226,244,.45)); }
+#station-panel .sp-cell.tonight { border-color: rgba(255,214,120,.9); box-shadow: 0 0 10px rgba(255,214,120,.55), inset 0 0 8px rgba(255,214,120,.3); } #station-panel .sp-cell.tonight canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 #ffd678) drop-shadow(-1px 0 0 #ffd678) drop-shadow(0 1px 0 #ffd678) drop-shadow(0 -1px 0 #ffd678) drop-shadow(0 0 4px rgba(255,214,120,.9)); animation: sp-glow 1.6s ease-in-out infinite; }
+@keyframes sp-glow { 50% { opacity: .65; } }
+#station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: 4px; } #station-panel .sp-chips span { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid rgba(232,226,244,.35); opacity: .75; }
+#station-panel .sp-chips span.some { opacity: .95; } #station-panel .sp-chips span.whole { opacity: 1; color: #1d1408; background: var(--accent, #e8b46a); text-shadow: none; border-color: var(--accent, #e8b46a); }
+#station-panel .sp-detail h3 small { font-size: 11px; font-weight: normal; margin-left: 6px; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }
+#station-panel .sp-sum { padding: 4px 6px; border: 1px solid rgba(232,226,244,.25); border-radius: 6px; font-size: 12px; } #station-panel .sp-sum > div:not(.sp-lab) { display: flex; gap: 6px; } #station-panel .sp-sum > div > b { margin-left: auto; font-weight: normal; }
 #station-panel .sp-foot { font-size: 11px; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; opacity: .85; }
 #station-panel .k { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 4px; background: rgba(11,7,22,.6); border: 1px solid rgba(232,226,244,.6); border-bottom-width: 2px; color: var(--ink, #e8e2f4); font-size: 10px; text-shadow: none; }
 `;
