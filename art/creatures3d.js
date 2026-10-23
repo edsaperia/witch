@@ -167,6 +167,9 @@ function gearUp(m) {
 //   bells: { count, from, to, size, mat, bell }: a saddle-cloth over its back from `from` to `to` along it (mat, FLOWER), its hem in
 //     bronze (bell, WOOD), count temple bells hanging down each side from it.
 //   headcloth: { size, mat }: a jewelled cloth over its brow hanging between its eyes, bronze-edged, three beads along its hem.
+//   nemes: { size, mat, alt, beard, uraeus }: a pharaoh's striped headcloth (the sphinx's, Ed 2026-10-23): a cap over the top and back of
+//     its head, the face left bare, a lappet hanging down each side of its neck, bands of mat (FLOWER, gold) and alt (NIGHT2, lapis);
+//     beard: a plaited false beard under its chin (its length in head radii); uraeus: a cobra rearing on its brow.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   dewlap: { size, mat }: a heavy fold of loose skin hanging under its throat (a big monitor lizard's).
@@ -278,6 +281,21 @@ function evolve3d(m, feats, c) {
       const { H, hr } = c, cl = [H[0] + hr * .82, H[1] + hr * .1, 0], dim = [hr * .14, hr * (f.size ?? .6), hr * .5];
       m.ell(cl, dim, M[f.mat || "FLOWER"], { group: 80, extra: true, dir: [1, -.35, 0], paint: p => Math.abs(p[2]) > dim[2] * .78 || p[1] < cl[1] - dim[1] * .75 ? M.WOOD : undefined });
       for (let i = 0; i < 3; i++) m.ell([cl[0] + hr * .12, cl[1] - dim[1] * .95, (i - 1) * hr * .25], [hr * .06, hr * .07, hr * .06], M.WOOD, { group: 80, extra: true });
+    }
+    if (f.kind === "nemes") { // a pharaoh's striped headcloth: a cap over its crown and the back of its head, its face bare, lappets down either side of its neck
+      m.part = "head";
+      const { H, hr } = c, k = f.size ?? 1, gold = M[f.mat || "FLOWER"], blue = M[f.alt || "NIGHT2"], band = hr * .2 * k, stripe = p => Math.floor((H[1] + hr * 3 - p[1]) / band) % 2 ? blue : gold;
+      const cap = [H[0] - hr * .12, H[1] + hr * .18, 0], capR = [hr * 1.02 * k, hr * .92 * k, hr * 1.08 * k];
+      m.ell(cap, capR, gold, { group: 190, extra: true, paint: p => { const a = Math.atan2(p[2], p[1] - H[1]); return Math.floor((a + 4) * 4.2) % 2 ? blue : gold; } }); // the cap, striped from its crown down
+      m.ell([H[0] + hr * .95, H[1] - hr * .3, 0], [hr * .62, hr * .62, hr * .9], gold, { group: 190, cut: true }); // its face left bare
+      m.ell([H[0] + hr * .85, H[1] + hr * .5, 0], [hr * .14, hr * .1, hr * .95 * k], gold, { group: 190, extra: true }); // the gold band across its brow
+      for (const side of [-1, 1]) { // the lappets: flaring as they fall either side of its face onto its chest
+        const top = [H[0] + hr * .3, H[1] - hr * .1, side * hr * .82 * k], low = [H[0] + hr * .42, H[1] - hr * 1.35 * k, side * hr * .9 * k];
+        m.seg(top, low, hr * .3 * k, hr * .4 * k, gold, { group: 191 + (side > 0 ? 0 : 1), extra: true, paint: stripe });
+      }
+      m.seg([H[0] - hr * .8, H[1] - hr * .05, 0], [H[0] - hr * 1.0, H[1] - hr * .9 * k, 0], hr * .3 * k, hr * .14 * k, gold, { group: 193, extra: true, paint: stripe }); // its queue, gathered at the back
+      if (f.beard) m.seg([H[0] + hr * .78, H[1] - hr * .62, 0], [H[0] + hr * .86, H[1] - hr * (.62 + f.beard), 0], hr * .12, hr * .09, gold, { group: 194, extra: true, paint: p => Math.floor((H[1] - p[1]) / (hr * .1)) % 2 ? blue : gold }); // a plaited false beard
+      if (f.uraeus) m.chain([[H[0] + hr * .9, H[1] + hr * .52, 0, hr * .08], [H[0] + hr * 1.02, H[1] + hr * .72, 0, hr * .1], [H[0] + hr * 1.08, H[1] + hr * .82, 0, hr * .06]], gold, { group: 195, extra: true }); // the cobra rearing on its brow
     }
     if (f.kind === "plates") { // an elder's armour: its hide's bony plates grown into weathered stone, standing proud down its back and over its flanks
       m.part = "body";

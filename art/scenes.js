@@ -87,7 +87,7 @@ const LARGE = {
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;
