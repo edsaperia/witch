@@ -8,4 +8,4 @@ Ed's answers to the first mock: the corridors are the Ent's branches and the roo
 - `plan-top-down.png`: the plan from above (north up).
 - `house.json`: the mock's plan: round rooms (`r`) and curved branches (`pts`, `w`).
 
-Rooms: the bedrooms are 16 m across; the other rooms 13 m; the hubs 9 m (the Atrium and the Boudoir) and 11 m (the Parlour). Branches are 3.2 m wide and 2.5–4.5 m long between rooms. Walking from the Terrace to the bedroom door is about 50 m, about 10 s at 5 m/s.
+Rooms, across: her bedroom 18 m (as today), Bedrooms 2 and 3 16 m, the Workshop 15 m, the other rooms 13 m; the hubs 9 m (the Atrium and the Boudoir) and 11 m (the Parlour). Branches are 3.2 m wide and 2.5–4.5 m long between rooms. Walking from the Terrace to the bedroom door is about 50 m, about 10 s at 5 m/s.
