@@ -14,7 +14,7 @@ import { bareHeadAt, CLOTH_COLS, CLOTH_ROWS, GRID_ROWS, shownItems, SKIN_COLS, s
 import { BOARD, partById, type Fitted } from "../rules/broomParts";
 import type { Tuning } from "../rules/tuning";
 import { broomColours, partCanvas } from "../render/workshopArt";
-import { broomSummary, canChoose, cardAt, choose, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
+import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
 
@@ -63,6 +63,9 @@ export class StationPanel {
   private part = new Map<string, string>();
   private hover: { line: number; col: number } | null = null;
   private pointerIn = false;
+  /** A choice made on something still to be found (pick): its place, till the focus moves (paintDetail says so). */
+  private nope: { line: number; col: number } | null = null;
+  private padChoose = false;
   private navAt = -1e9;
   private lookTimer = 0;
   private slide: SlideIn;
@@ -90,10 +93,14 @@ export class StationPanel {
     });
     // The arrow keys move through the panel while it's open (Ed, 2026-10-21: "the arrow keys move through the panel at a station;
     // WASD still walks her"): taken before the game's input sees them.
+    // Enter, Space or E chooses what's in focus (Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
+    // around"): landing on an owned item already wears it; choosing does too, and says when it's still to be found.
     window.addEventListener("keydown", e => {
-      const d = ARROWS[e.code]; if (!this.id || !d) return;
+      if (!this.id) return;
+      const d = ARROWS[e.code], pick = CHOOSE.has(e.code);
+      if (!d && !pick) return;
       e.preventDefault(); e.stopImmediatePropagation();
-      this.move(d[0], d[1]);
+      if (d) this.move(d[0], d[1]); else if (!e.repeat) this.pick();
     }, true);
   }
 
@@ -132,12 +139,15 @@ export class StationPanel {
   setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
-  /** Each frame while open: the pad's d-pad (the left stick walks her: platform/input.ts leaves the d-pad to the panel). */
+  /** Each frame while open: the pad's d-pad or right stick moves, its bottom or left face button chooses (the left stick walks her:
+   *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
     const pads = typeof navigator !== "undefined" && navigator.getGamepads ? navigator.getGamepads() : [];
-    let dir = "";
-    for (const p of pads) { if (!p) continue; const b = (i: number) => !!p.buttons[i]?.pressed; dir = b(12) ? "up" : b(13) ? "down" : b(14) ? "left" : b(15) ? "right" : ""; if (dir) break; }
+    let dir = "", choose = false;
+    for (const p of pads) { if (!p) continue; const P = panelPad(p.buttons.map(x => x.pressed), p.axes); choose ||= P.choose; dir = P.dir; if (dir) break; }
+    if (choose && !this.padChoose) this.pick(); // (the pad's A or X: platform/input.ts leaves them to the panel while it's open)
+    this.padChoose = choose;
     if (!dir) { this.pad.held = ""; return; }
     if (dir !== this.pad.held) { this.pad = { held: dir, next: time + HOLD }; }
     else if (time >= this.pad.next) this.pad.next = time + REPEAT;
@@ -186,6 +196,14 @@ export class StationPanel {
     else { col = Math.max(0, Math.min(cur.n - 1, col + dx)); if (col === this.at.col) return; }
     this.go(line, col);
   }
+  /** Choose what's in focus (Enter, Space, E, the pad's A or X): as landing on it, and a locked one says it's still to be found. */
+  private pick(): void {
+    const l = this.lines()[this.at.line]; if (!l) return;
+    const s = this.shelves[l.shelf], locked = l.kind === "items" ? !this.owned.has(shownItems(s)[this.at.col].id) : l.kind === "cards" && !!s.slot && !!this.ws && !canChoose(s, l, this.at.col, this.found_());
+    this.nope = locked ? this.at : null;
+    this.go(this.at.line, this.at.col);
+  }
+  private tried(at: { line: number; col: number }): boolean { return !!this.nope && this.nope.line === at.line && this.nope.col === at.col; }
   /** Focus a place, and choose what's there (an owned item or a colour on her, a part to colour, a broom part fitted at the bay;
    *  a read-only line, the pegboard's, only focuses). */
   private go(line: number, col: number): void {
@@ -252,7 +270,7 @@ export class StationPanel {
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click <span class="k">← ↑ → ↓</span> or <span class="k">✥</span> move · walk away to close</div>`;
+    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click or <span class="k">← ↑ → ↓</span> <span class="k">✥</span> to wear · <span class="k">E</span> <span class="k">Enter</span> <span class="k">Ⓐ</span> choose · walk away to close</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
@@ -273,7 +291,7 @@ export class StationPanel {
     let title = "", text = "", locked = false, sub = "", stats: { name: string; from: string; to: string; better: boolean | null }[] = [];
     if (l) {
       const s = this.shelves[l.shelf];
-      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? "" : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21)
+      if (l.kind === "items") { const it = shownItems(s)[at.col]; locked = !this.owned.has(it.id); title = locked ? "🔒" : it.name; text = locked ? (this.tried(at) ? "Not found yet." : "") : wears(this.g, it) ? "Wearing." : "Hers."; } // (a silhouette, nothing more: Ed, 2026-10-21; chosen anyway, it says it's not hers yet)
       else if (l.kind === "cards" && s.board) {
         const id = cardAt(s, l, at.col)!, cell = BOARD[(l.row ?? 0) * 3 + at.col], own = this.found_().has(id), where = `${cell.point.toLowerCase()} · ${cell.biome.toLowerCase()}`;
         if (own) { title = partById(id)!.name; text = `${where}. ${setsOf(id).map(n => `${n} set`).join(", ")}. Fit it at the bay.`; }
@@ -282,7 +300,7 @@ export class StationPanel {
       } else if (l.kind === "cards") {
         const id = cardAt(s, l, at.col), p = partById(id);
         if (!p) { title = "Empty"; text = `Nothing in the ${s.slot}: the bare broom's.`; }
-        else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; } // (unfound: a silhouette, no hint)
+        else if (!this.found_().has(p.id)) { title = "🔒"; locked = true; if (this.tried(at)) text = "Not found yet."; } // (unfound: a silhouette, no hint)
         else { title = p.name; sub = `${p.slot}${setsOf(p.id).length ? ` · ${setsOf(p.id).join(", ")} set${setsOf(p.id).length > 1 ? "s" : ""}` : ""}`; stats = this.ws ? partStats(p.id, this.ws.tuning) : []; text = this.ws?.fitted[p.slot] === p.id ? "On her broom." : "Choose it to fit it."; }
       } else if (l.kind === "chips") { const x = setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null })[at.col]; title = `${x.name} · ${x.spell}`; text = x.whole ? `Whole: R casts ${x.spell}.` : `${x.fitted} of its ${x.of} parts on her broom.`; }
       else if (l.kind === "parts") { title = `Colour: ${PART_NAMES[s.colour![at.col]] ?? s.colour![at.col]}`; text = "Every colour is hers."; }
@@ -338,6 +356,8 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 }
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+/** The keys and pad buttons (A, X) that choose what's in focus. */
+const CHOOSE = new Set(["Enter", "NumpadEnter", "Space", "KeyE"]);
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;

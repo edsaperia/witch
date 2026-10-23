@@ -1810,15 +1810,16 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |
-| `camera.station.parts.head.look` | number | -5 to 5 |
+| `camera.station.aim` | number | 0 to … |
+| `camera.station.parts.head.aim` | number | 0 to … |
 | `camera.station.parts.head.distance` | number | 0 to … |
-| `camera.station.parts.hat.look` | number | -5 to 5 |
+| `camera.station.parts.hat.aim` | number | 0 to … |
 | `camera.station.parts.hat.distance` | number | 0 to … |
-| `camera.station.parts.top.look` | number | -5 to 5 |
+| `camera.station.parts.top.aim` | number | 0 to … |
 | `camera.station.parts.top.distance` | number | 0 to … |
-| `camera.station.parts.legs.look` | number | -5 to 5 |
+| `camera.station.parts.legs.aim` | number | 0 to … |
 | `camera.station.parts.legs.distance` | number | 0 to … |
-| `camera.station.parts.feet.look` | number | -5 to 5 |
+| `camera.station.parts.feet.aim` | number | 0 to … |
 | `camera.station.parts.feet.distance` | number | 0 to … |
 | `camera.station.parts.broom.look` | number | -5 to 5 |
 | `camera.station.parts.broom.distance` | number | 0 to … |
