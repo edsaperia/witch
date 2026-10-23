@@ -8,9 +8,9 @@
 // big enough to read (Ed: "large enough that the animal sigils show clearly on the islands"); her voyages as glowing lines on
 // the water; won islands ringed in gold.
 //   Choose an island (tap or click it; arrow keys, the d-pad or the stick) and the camera glides to it and names it. Three modes:
-// "sail" (between nights): choose it again, press Enter or the pad's A, or the Sail button, to sail there; Start over (after an
-// are-you-sure) forgets it all; over a night, the island she's on is "Back to the party" (or the afterparty): choosing it closes
-// the chart and the night goes on as it was, never a new one (Ed, 2026-10-21; app/sail.ts chartChoice). "look" (mid-night): the same, but no sailing and no starting over. "miniature" (the map table's
+// "sail" (between nights): choose it again, press Enter or the pad's A, or the Sail button, to sail there (Start over is gone:
+// Ed, 2026-10-23); at a table (the Atrium's map table: `table`), the aiming keys choose and the use button sails; over a night, the island she's on is "Back to the party" (or the afterparty): choosing it closes
+// the chart and the night goes on as it was, never a new one (Ed, 2026-10-21; app/sail.ts chartChoice). "look" (mid-night): the same, but no sailing. "miniature" (the map table's
 // model): no card, no buttons, no keys, the camera slowly circling. The save and what's unlocked are chartSave.ts's: this is
 // the view. Its own canvas and renderer, inside `host`; the caller's loop calls update() (no requestAnimationFrame of its own).
 import { islandCoast } from "../rules/islandShape";
@@ -18,7 +18,7 @@ import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds,
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
 import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd } from "../render/chart/seaChart";
-import { loadSave, newCampaign, unlocked, worldSeed, type ChartSave } from "./chartSave";
+import { loadSave, unlocked, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
 import type { OutlineAsk, OutlineDone } from "./chartOutlines.worker";
@@ -58,6 +58,12 @@ export interface ChartViewOptions {
   countUncharted?: boolean;
   /** Buttons in the top right corner (the first load's chart: What's new, Options and the zoo; app/opening.ts). */
   corner?: { label: string; title?: string; onClick: () => void }[];
+  /** Sail mode at a table (Ed, 2026-10-23: the Atrium's map table, its chart sliding up by nearness, ui/chartOverlay.ts): the
+   *  movement keys walk her, so they (WASD, the left stick, and Esc or the pad's circle) put it away (`onLeave`); the aiming keys
+   *  choose (the arrows, the d-pad, the right stick, the mouse); the use button sails (E, Enter or Space; the pad's square). No
+   *  title, Sail home or zoom buttons (the wheel and the shoulders zoom); the testing toggle in the top right; the island she's on
+   *  says so, with no button (going to bed starts the next night there). */
+  table?: { onLeave: () => void };
   /** Islands not to draw or map ahead (app/landingBake.ts, app/mapPrep.ts): the first load's home, whose night is already made under the chart (app/opening.ts divesHome), the work would be thrown away and its workers would starve the night's own art. */
   noBake?: (island: string) => boolean;
 }
@@ -98,9 +104,8 @@ const STYLE = `
 .chart-view a.btn.sail { border-color: var(--accent); color: var(--accent); margin-top: 6px; display: inline-block; }
 .chart-view [hidden] { display: none !important; }
 .chart-view .hint, .chart-view .world { color: var(--dim); font-size: 11px; text-align: center; }
-.chart-view .new-world { align-items: center; background: var(--panel); border: 1px solid #3a2f5c; border-radius: 8px; padding: 8px 10px; }
 .chart-view .corner { position: absolute; right: 12px; top: max(10px, env(safe-area-inset-top)); display: flex; gap: 8px; z-index: 2; }
-.chart-view .new-seed { font: inherit; font-size: 13px; color: #e8e2f4; background: #14112a; border: 1px solid #3a2f5c; border-radius: 6px; padding: 8px; width: 14em; max-width: 50vw; }`;
+`;
 
 const HTML = `
 <canvas aria-label="The sea chart"></canvas>
@@ -108,8 +113,7 @@ const HTML = `
 <div class="corner"></div>
 <div class="bottom">
   <div class="card" hidden><div class="name"></div><div class="phase"></div><div class="state"></div><a class="btn sail" href="./?island=home">Sail there</a></div>
-  <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="start-over">Start over</button><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
-  <div class="new-world bar" hidden><label>New world's seed <input class="new-seed" placeholder="blank: a random one" autocomplete="off"></label><button class="new-go">Start</button><button class="new-cancel">Cancel</button></div>
+  <div class="bar"><button class="zoom-in" aria-label="Zoom in">+</button><button class="zoom-out" aria-label="Zoom out">−</button><a class="btn home" href="./?island=home">Sail home</a><button class="sail-any" aria-pressed="false" title="Testing: sail to any island with a creature, found or not (the save isn't changed)">🧪 Test: sail anywhere</button><button class="close">Close</button></div>
   <div class="world"></div>
   <div class="hint"></div>
 </div>`;
@@ -131,8 +135,14 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   if (mini) { $("top").hidden = true; $("bottom").hidden = true; }
   for (const b of opts.corner ?? []) { const el = document.createElement("button"); el.textContent = b.label; if (b.title) el.title = b.title; el.addEventListener("click", () => b.onClick(), on); $("corner").append(el); }
   $("sail").hidden = true;
-  ($("home") as HTMLElement).hidden = !sailing; $("start-over").hidden = !sailing; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose;
-  $("hint").textContent = sailing
+  const table = sailing ? opts.table : undefined;
+  let left = false; // (at a table, put away: it slides off and takes no more input meanwhile)
+  const leave = () => { if (left) return; left = true; table!.onLeave(); };
+  ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
+  if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
+  $("hint").textContent = table
+    ? "point, or the arrows / d-pad / right stick, to choose · click, E or Enter (□ on a pad) to sail · walk away to put it down · sigils: islands you can sail to · gold rings: won"
+    : sailing
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
 
@@ -182,7 +192,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   const sailTo = (id: string | null) => {
     const isl = islands.find(i => i.id === id);
     if (!sailing || chart.flying) return;
-    if (isHere(id)) { (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was; found or not, she's there)
+    if (isHere(id)) { if (!table) (opts.onStay ?? opts.onClose)?.(); return; } // (no flight, no sail: the night as it was; found or not, she's there)
     if (!isl?.sail) return;
     const w = worldNow();
     performance.mark("chart:sail");
@@ -278,7 +288,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     $("name").textContent = id === "home" ? "Home" : isl.unknown ? "Uncharted waters" : isl.sail ? `The ${id}'s island` : "An island not yet found";
     $("phase").textContent = id === "home" ? "the Ent's island, the middle of the world" : `phase ${phase}`;
     $("state").textContent = (isHere(id) ? "you're here · " : "") + (isl.unknown ? "not yet charted" : isl.won ? "won" : isl.sail ? (id !== "home" && !save.found.includes(id!) ? "not found yet: 🧪 testing, you can sail there" : save.played.includes(id!) ? "played, not yet won" : "found: you can sail there") : "do its legend's quest in a night you win to find it");
-    sail.hidden = !sailing || !(isl.sail || isHere(id));
+    sail.hidden = !sailing || !(isl.sail || isHere(id)) || (!!table && isHere(id)); // (at a table: she's there, nothing to do: the bed starts the next night)
     sail.href = sailHref(id!);
     sail.textContent = isHere(id) ? opts.here!.label : "Sail there";
   }
@@ -297,6 +307,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       if (pointers.size === 2) { const [a, b] = [...pointers.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pinch > 0 && d > 0) chart.zoom(pinch / d); pinch = d; downAt = null; }
     }, on);
     canvas.addEventListener("pointerup", e => {
+      if (left) return;
       if (chart.flying) { pointers.delete(e.pointerId); chart.skipFlight(); return; }
       const tap = pointers.size === 1 && downAt && Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) < 8;
       pointers.delete(e.pointerId); if (pointers.size < 2) pinch = 0;
@@ -316,9 +327,11 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (chart.flying) { e.preventDefault(); chart.skipFlight(); return; } // (any key: on to the end of the flight)
     if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
     if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
-    const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
+    const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], ...(table ? {} : { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] } as Record<string, [number, number]>) };
+    if (left) return;
+    if (table && (["KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code) || e.key === "Escape")) { e.preventDefault(); if (!e.repeat) leave(); return; } // (she walks: it's put away; not a key still held from walking up to it)
     if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
-    else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sailTo(chart.selected); }
+    else if (e.key === "Enter" || e.key === " " || (table && e.code === "KeyE")) { e.preventDefault(); sailTo(chart.selected); }
     else if (e.key === "+" || e.key === "=") chart.zoom(0.8);
     else if (e.key === "-" || e.key === "_") chart.zoom(1.25);
     else if (e.key === "Escape" && opts.onClose) { e.preventDefault(); opts.onClose(); }
@@ -326,22 +339,25 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   if (!mini) addEventListener("keydown", onKey);
 
   // A gamepad: the d-pad or the left stick steps (repeating while held), A sails, B closes, the shoulders zoom.
-  let padWait = 0;
+  let padWait = 0, stickBack = false;
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
     padWait -= dt;
     if (chart.flying) { if (p.buttons.some(x => x.pressed)) chart.skipFlight(); return; }
-    const b = (i: number) => !!p.buttons[i]?.pressed, ax = p.axes[0] ?? 0, ay = p.axes[1] ?? 0;
+    const b = (i: number) => !!p.buttons[i]?.pressed;
+    // (at a table the left stick walks her, so it puts the chart away, and the right stick (her aim) chooses; elsewhere the left)
+    if (left) return;
+    const walk = Math.hypot(p.axes[0] ?? 0, p.axes[1] ?? 0);
+    if (table && walk < 0.3) stickBack = true; // (the stick let go since it came up: a push now is her walking off, not her walking up to it)
+    if (table && walk > 0.5 && stickBack) { leave(); return; }
+    const ax = p.axes[table ? 2 : 0] ?? 0, ay = p.axes[table ? 3 : 1] ?? 0;
     const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
     if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
-    if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
-    if (b(1) && padWait <= 0 && opts.onClose) { opts.onClose(); padWait = 0.5; }
+    if (b(table ? 2 : 0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; } // (at a table the use button, square: cross rises in the game)
+    if (b(1) && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
     if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
   }
 
-  // Start over (golf, #685; Ed, 2026-10-11): a new campaign in a new world, its seed random or typed / pasted in, after an are-you-sure.
-  const panel = $("new-world"), field = $<HTMLInputElement>("new-seed");
-  $("start-over").addEventListener("click", () => { field.value = ""; panel.hidden = false; field.focus(); });
   // Testing (Ed, 2026-10-12: "please give a button that lets me go to island even if I haven't unlocked them yet"): every island
   // with a creature sailable, found or not; the '?' islands still not. Only what she can sail to: the save isn't touched (nothing
   // found, no voyages). Kept on this browser (both the chart page and the map table's).
@@ -351,13 +367,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     sailAny = !sailAny; try { localStorage.setItem(SAIL_ANY, sailAny ? "1" : "0"); } catch { /* storage blocked */ }
     showSailAny(); const was = chart.selected; build(); choose(was);
   });
-  $("new-cancel").addEventListener("click", () => { panel.hidden = true; });
-  $("new-go").addEventListener("click", () => {
-    if (!confirm("Start over in a new world? This forgets every island you've found and won.")) return;
-    save = newCampaign(worldSeed(field.value));
-    panel.hidden = true;
-    if (opts.world != null || opts.save) location.search = ""; else { build(); choose("home"); }
-  });
+
 
   const resize = (cssW?: number, cssH?: number) => {
     if (mini && opts.size) { const p = CHART_PIXEL; chart.resize(opts.size.w * p, opts.size.h * p); return; }
