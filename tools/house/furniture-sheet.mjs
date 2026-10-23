@@ -17,7 +17,10 @@ function png(w, h, rgba) { const crc = b => { let c, t = []; for (let n = 0; n <
 const yaw = Number(process.env.YAW || 0), PER = Number(process.env.PER || 6);
 const { FURNITURE_STATES } = await import(R + "/art/furniture.js");
 const jobs = FURNITURE_IDS.flatMap(id => (FURNITURE_STATES[id] ?? [undefined]).map(state => ({ id, state })));
-const sprites = jobs.map(({ id, state }) => { const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0;
+// (a piece with no object in house.json yet, as the Studio's instruments before the music builder places them: drawn at NEW's
+// footprint, facing the camera; NEW="id:w:d:h,..." for others)
+const NEW = Object.fromEntries([["drumKit", 4.4, 4, 2.6], ["synthRack", 4.8, 1.4, 3.8], ["microphone", 1, 1, 3.4], ...(process.env.NEW ?? "").split(",").filter(Boolean).map(e => e.split(":").map((v, i) => (i ? Number(v) : v)))].map(([id, w, d, h]) => [id, { id, room: "", x: 0, z: 0, w, d, h }]));
+const sprites = jobs.map(({ id, state }) => { const o = H.objects.find(q => q.id === id) ?? NEW[id], r = H.rooms.find(q => q.id === o.room), dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0;
   const foot = Math.abs(dx) > Math.abs(dz) ? { w: o.d, d: o.w, h: o.h } : { w: o.w, d: o.d, h: o.h }, curve = r?.r && Math.hypot(dx, dz) > 1.2 ? Math.hypot(dx, dz) + foot.d / 2 : 0; // (bent round its room's wall: render/houseFurniture.ts standing)
   const t0 = performance.now(); const s = furnitureSprite(id, foot, {}, { ppm, pitch, yaw, state, curve }); console.log(id, state ?? "", s.sp.w, s.sp.h, (performance.now() - t0).toFixed(0) + "ms", s.lights.length); return { s, col: furnitureColours({}, o.room) }; });
 const gap = 6, rows = [];

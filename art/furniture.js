@@ -81,7 +81,7 @@ function bendModel(m, R, D) {
   for (const Lt of m.lights ?? []) Lt.c = to(Lt.c);
 }
 /** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
+export const BEND = new Set(["synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "broomStand", "pegboard", "recordShelf", "specimens"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -607,6 +607,93 @@ const PIECES = {
     can(m, R * .5, -R * .4, top, top + .1, .05, M.ACCENT, { group: 13 });
   },
 
+  // The Studio's drum kit (Ed's pick, 2026-10-23: glam rock): glitter-wrapped shells, a kick drum with a neon star on its head, two
+  // rack toms and a floor tom, a snare, the hi-hat and two brass cymbals on chrome stands, a throne with a hoodie over it, sticks.
+  // Its kick faces the room, the throne behind.
+  drumKit(m, { W, D }) {
+    const glitter = g => p => (hash2(Math.round(p[0] * 40), Math.round(p[1] * 40) + Math.round(p[2] * 40), g) > .72 ? M.BELLY : undefined);
+    const zk = D * .12, R = Math.min(.32, W * .15);
+    // the kick, on its side, its front head facing the room with a neon star; its hoops
+    m.seg([0, R + .02, zk - .25], [0, R + .02, zk + .2], R, R, M.POM, { group: 1, paint: glitter(1) });
+    m.flat([0, R + .02, zk + .23], X, Y, R * .92, R * .92, (s, t) => { if (Math.hypot(s, t) > 1) return undefined; const a = Math.atan2(t, s), k = Math.hypot(s, t), star = .32 + .18 * Math.cos(a * 5); return k < star ? M.COLLAR : M.SHADES; }, { group: 2, bend: 0 });
+    light(m, [0, R, zk + .4], FAIRY, 12, .35);
+    for (const z of [zk - .25, zk + .2]) m.ell([0, R + .02, z], [R + .02, R + .02, .015], M.FRAME, { group: 3 });
+    // toms on the kick, a floor tom, a snare: each a shell (glitter), a pale head, a chrome hoop
+    const drum = (c, r, h, g, tilt = 0) => { m.seg(c, [c[0], c[1] + h, c[2] + tilt], r, r, M.POM, { group: g, paint: glitter(g) }); m.ell([c[0], c[1] + h + .01, c[2] + tilt], [r * .96, .012, r * .96], M.BELLY, { group: g + 1 }); };
+    drum([-.15, R * 2 + .1, zk - .05], .13, .14, 10, -.05); drum([.17, R * 2 + .1, zk - .05], .15, .15, 12, -.05);
+    drum([W * .33, .02, zk - .1], .19, .42, 14);
+    for (const s of [-1, 1]) m.seg([W * .33 + s * .15, 0, zk - .1], [W * .33 + s * .16, .12, zk - .1], .015, .015, M.FRAME, { group: 16 });
+    m.seg([-W * .22, 0, zk - .2], [-W * .22, .5, zk - .2], .015, .015, M.FRAME, { group: 17 }); drum([-W * .22, .5, zk - .2], .16, .1, 18);
+    // the hi-hat, the crash and the ride: chrome stands, brass cymbals tilted to the room
+    const cymbal = (x, z, h, r, g) => { m.seg([x, 0, z], [x, h, z], .014, .012, M.FRAME, { group: g }); for (const a of [0, 2.1, 4.2]) m.seg([x, .03, z], [x + Math.cos(a) * .14, 0, z + Math.sin(a) * .14], .01, .01, M.FRAME, { group: g }); m.ell([x, h + .02, z], [r, .012, r], M.FLOWER, { group: g + 1, dir: [1, .25, 0], up: [0, 1, .3] }); };
+    cymbal(-W * .38, zk - .3, .78, .17, 20); m.ell([-W * .38, .82, zk - .3], [.17, .012, .17], M.FLOWER, { group: 22 });
+    cymbal(-W * .2, zk - .45, 1.2, .23, 23); cymbal(W * .3, zk - .5, 1.1, .26, 25);
+    // the throne behind, a hoodie flung over it; sticks on the snare
+    const zt = -D * .38;
+    m.seg([0, 0, zt], [0, .45, zt], .03, .03, M.FRAME, { group: 30 });
+    m.ell([0, .5, zt], [.17, .06, .17], M.SHADES, { group: 31 });
+    m.ell([.05, .55, zt + .02], [.18, .08, .16], M.HAT1, { group: 32, rough: .01 });
+    m.seg([.15, .52, zt + .1], [.22, .2, zt + .18], .06, .05, M.HAT1, { group: 32 });
+    for (const s of [-1, 1]) m.seg([-W * .22 + s * .03, .62, zk - .3], [-W * .22 + s * .05 + .1, .63, zk - .02], .012, .01, M.WOOD, { group: 33 });
+    // a neon lightning bolt sign on a little stand behind, and a plant (cottage creeping in)
+    m.seg([W * .42, 0, -D * .45], [W * .42, .9, -D * .45], .015, .015, M.FRAME, { group: 40 });
+    for (let i = 0; i < 5; i++) { const a = i * 1.26 - Math.PI / 2, b = a + 1.26; m.seg([W * .42 + Math.cos(a) * .14, 1.05 + Math.sin(a) * .14, -D * .45], [W * .42 + Math.cos(b) * .14, 1.05 + Math.sin(b) * .14, -D * .45], .016, .016, M.MAGIC, { group: 41, extra: true }); }
+    light(m, [W * .42, 1.05, -D * .35], MAGICL, 10, .3);
+    can(m, -W * .44, -D * .4, 0, .2, .1, M.BODY2, { group: 42 }); sprig(m, [-W * .44, .26, -D * .4], 6, .12, 43, .7);
+  },
+
+  // The synth rack (Ed's pick, 2026-10-23: a retro tech wall): metal shelving stacked with vintage synths, two keyboards, a modular
+  // case of blinking lights and patch cables, a reel-to-reel and a little glowing screen; cables tangling down the front; a fern on top.
+  synthRack(m, { W, D, H }) {
+    const sh = [.08, H * .32, H * .62, H * .93], zf = D / 2 - .04;
+    for (const y of sh) m.box([0, y, 0], [W / 2, .02, D / 2 - .02], M.FRAME, { group: 1 });
+    for (const x of [-W / 2 + .02, W / 2 - .02]) for (const z of [-D / 2 + .04, D / 2 - .04]) m.seg([x, 0, z], [x, H, z], .02, .02, M.FRAME, { group: 2 });
+    // the bottom: the reel-to-reel (two reels, a deck) and a speaker cab
+    m.box([-W * .22, sh[0] + .2, 0], [.28, .2, D / 2 - .08], M.SHADES, { round: .02, group: 10 });
+    for (const s of [-1, 1]) { m.ell([-W * .22 + s * .13, sh[0] + .26, zf - .02], [.1, .1, .015], M.FRAME, { group: 11, paint: p => (Math.hypot(p[0] - (-W * .22 + s * .13), p[1] - (sh[0] + .26)) < .03 ? M.SHADES : Math.sin(Math.atan2(p[1] - (sh[0] + .26), p[0] - (-W * .22 + s * .13)) * 3) > .7 ? M.SHADES : undefined) }); }
+    m.box([W * .25, sh[0] + .22, 0], [.24, .22, D / 2 - .08], M.WOOD, { round: .02, group: 12 });
+    m.ell([W * .25, sh[0] + .22, zf - .03], [.15, .15, .02], M.SHADES, { group: 13, paint: p => (Math.hypot(p[0] - W * .25, p[1] - (sh[0] + .22)) < .05 ? M.FRAME : undefined) });
+    // the middle: two keyboards stacked, their keys facing out, knobs over them
+    const keys = (y, g, body) => {
+      m.box([0, y + .07, .02], [W / 2 - .12, .06, D / 2 - .1], body, { round: .02, group: g });
+      m.box([0, y + .1, zf - .08], [W / 2 - .2, .02, .08], M.BELLY, { group: g + 1, paint: p => (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .1 ? M.SHADES : (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .3 && p[2] < zf - .1 ? M.SHADES : undefined)) });
+      for (let i = 0; i < 9; i++) bulb(m, [-W / 2 + .25 + i * (W - .5) / 8, y + .14, -.02], .018, [M.GLINT, M.WOKEN, M.COLLAR][i % 3], g + 2, i === 4 ? [SCREEN, 8, .2] : null);
+    };
+    keys(sh[1], 20, M.ACCENT); keys(sh[1] + .17, 24, M.BELLY);
+    // the top shelf: the modular case, rows of blinking lights and patch cables looping down; the little screen glowing
+    m.box([-W * .1, sh[2] + .26, -.02], [W * .34, .25, D / 2 - .08], M.SHADES, { round: .02, group: 30, paint: p => (Math.abs(((p[1] - sh[2]) / .1) % 1 - .5) < .06 ? M.FRAME : undefined) });
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 9; i++) if (hash2(r, i, 3) > .35) bulb(m, [-W * .1 - W * .3 + i * W * .075, sh[2] + .1 + r * .11, zf - .06], .017, [M.COLLAR, M.GLINT, M.WOKEN, M.MAGIC][(r + i) % 4], 31, r === 2 && i === 3 ? [FAIRY, 10, .3] : null);
+    const cols = [M.COLLAR, M.HAT1, M.FLOWER, M.IRIS, M.ACCENT];
+    for (let i = 0; i < 6; i++) { const x0 = -W * .38 + i * W * .12, x1 = x0 + (hash2(i, 1, 5) - .5) * .4; m.chain([[x0, sh[2] + .3, zf - .02, .012], [(x0 + x1) / 2, sh[2] + .02 - hash2(i, 2, 5) * .25, zf + .03, .012], [x1, sh[2] + .15, zf - .02, .012]], cols[i % cols.length], { group: 35 + i }); }
+    m.box([W * .36, sh[2] + .2, 0], [.13, .19, .14], M.FRAME, { round: .03, group: 42 });
+    m.flat([W * .36, sh[2] + .21, .145], X, Y, .09, .12, (s, t) => (Math.abs(t - Math.sin(s * 6) * .4) < .18 ? M.MAGIC2 : M.GLINT), { group: 43, bend: 0 });
+    light(m, [W * .36, sh[2] + .2, .3], SCREEN, 10, .3);
+    // cables tangling down to the floor, a fern on top, a disco ball hanging off the top shelf's corner
+    for (let i = 0; i < 3; i++) m.chain([[-W * .3 + i * .3, sh[1], zf, .014], [-W * .25 + i * .32, sh[1] * .5, zf + .06, .014], [-W * .2 + i * .25, .01, zf + .2, .014]], [M.SHADES, M.ACCENT, M.HAT1][i], { group: 50 + i });
+    can(m, W * .3, 0, sh[3] + .02, sh[3] + .18, .09, M.BODY2, { group: 60 }); sprig(m, [W * .3, sh[3] + .25, 0], 7, .13, 61, .6);
+    m.seg([-W / 2 + .08, sh[3], zf], [-W / 2 + .08, sh[3] - .2, zf + .02], .006, .006, M.FRAME, { group: 62 });
+    m.ell([-W / 2 + .08, sh[3] - .28, zf + .02], [.08, .08, .08], M.FRAME, { group: 63, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 8) > .6 ? M.BELLY : undefined) });
+  },
+
+  // The microphone, spotlit: a chrome stand on a round base, a big vintage capsule mic, its cable coiling away; a spot lamp hanging over
+  // it on its cable (its own warm bulb; the cone of light is the view's: the music builder's), a round rug under it.
+  microphone(m, { W, D, H }) {
+    const r = Math.min(W, D) / 2;
+    disc(m, [0, .006, 0], r * 1.3, .006, M.CLOTH, { group: 1, paint: p => (Math.hypot(p[0], p[2]) > r * 1.1 ? M.FLOWER : Math.hypot(p[0], p[2]) < r * .5 ? M.ACCENT : undefined) });
+    disc(m, [0, .03, 0], r * .45, .02, M.FRAME, { group: 2 });
+    m.seg([0, .03, 0], [0, H * .78, 0], .016, .014, M.FRAME, { group: 3 });
+    m.ell([0, H * .78, 0], [.035, .035, .035], M.FRAME, { group: 3 });
+    const mic = [0, H * .78 + .1, .05];
+    m.ell(mic, [.07, .1, .07], M.FRAME, { group: 4, paint: p => (Math.abs(((p[1] - mic[1]) / .03) % 1 - .5) < .12 || p[1] < mic[1] - .06 ? M.SHADES : undefined), dir: [0, 1, .3] });
+    m.chain([[0, H * .7, 0, .01], [-.1, H * .4, -.05, .01], [-.2, .02, -.1, .01], [-.35, .01, .1, .01], [-.2, .01, .25, .01]], M.SHADES, { group: 5 });
+    // the spot lamp over it, hanging from above on its cable
+    const lamp = [0, H * 1.25, .05];
+    m.seg([lamp[0], H * 1.5, lamp[2]], lamp, .006, .006, M.SHADES, { group: 10, extra: true });
+    m.seg(lamp, [lamp[0], lamp[1] - .14, lamp[2] + .03], .05, .1, M.SHADES, { group: 11, extra: true });
+    bulb(m, [lamp[0], lamp[1] - .15, lamp[2] + .03], .05, M.WOKEN, 12, [WARM, 20, .55]);
+    (m.marks ??= {}).spot = [lamp[0], lamp[1] - .15, lamp[2] + .03];
+  },
+
   // A locked friend's room's door: a pointed gothic door of planks in its frame, iron straps and a ring, a wreath of leaves with a heart,
   // a little neon "do not disturb" glow (a crescent) over it, a glowing lock.
   bedroom2Door(m, s) { PIECES.door(m, s, 0); },
@@ -686,5 +773,7 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (mm) crop.put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
   const [ox, oy] = project([0, 0, 0]);
   const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * SIZE, R: L.R * SIZE, rgb: L.rgb, power: L.power }; });
-  return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights };
+  // (its marks: named points of it in pixels, for the view: the mic's spot lamp, where the music builder's cone of light hangs from)
+  const marks = Object.fromEntries(Object.entries(m.marks ?? {}).map(([k, c]) => { const [mx, my] = project(c); return [k, { x: +(mx - x0).toFixed(1), y: +(my - y0).toFixed(1) }]; }));
+  return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights, marks };
 }
