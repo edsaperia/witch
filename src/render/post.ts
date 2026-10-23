@@ -10,6 +10,10 @@ import { gradeInto, moodOf } from "./mood";
 import { runSync, type Steps } from "./slices";
 import { hsv2rgb } from "../../art/generator.js";
 
+/** The camera layer the house's own meshes are on as well as the scene's (its rooms, the Ent's art, her): drawn alone behind the
+ *  enclosed rooms (Post.behind). */
+export const HOUSE_LAYER = 1;
+
 export interface PostTuning { light?: import("../rules/tuning").Tuning["light"];
   suspects: { effectsLayer: boolean; showBroken: boolean };
   bloom: { on: boolean; strength: number; threshold: number };
@@ -34,6 +38,16 @@ void main() {
   c += (texture2D(uSrc, vUv + uStep * 1.38) + texture2D(uSrc, vUv - uStep * 1.38)) * 0.316;
   c += (texture2D(uSrc, vUv + uStep * 3.23) + texture2D(uSrc, vUv - uStep * 3.23)) * 0.070;
   gl_FragColor = c;
+}`;
+
+// The forest behind the treehouse's enclosed rooms (Ed, 2026-10-23: render.behind): black over the picture, opened from a point
+// (the doorway she came through, uAt in uv; none: the whole picture at once) out to uR (in heights of the picture), uSoft its edge.
+const VEIL = /* glsl */ `
+uniform vec2 uAt; uniform float uR, uSoft, uAspect, uAll, uK; varying vec2 vUv;
+void main() {
+  float d = length((vUv - uAt) * vec2(uAspect, 1.0));
+  float a = uAll > 0.5 ? 1.0 - uK : smoothstep(uR - uSoft, uR, d);
+  gl_FragColor = vec4(0.0, 0.0, 0.0, a);
 }`;
 
 // Scene (sampled as whole low-res pixels), the smooth effects layer (sampled smoothly) and bloom.
@@ -151,6 +165,7 @@ export class Post {
     this.mats = {
       bright: m(BRIGHT, { uScene: { value: null }, uThreshold: { value: 0.6 } }),
       blur: m(BLUR, { uSrc: { value: null }, uStep: { value: new THREE.Vector2() } }),
+      veil: Object.assign(m(VEIL, { uAt: { value: new THREE.Vector2(0.5, 0.5) }, uR: { value: 0 }, uSoft: { value: 0.15 }, uAspect: { value: 1 }, uAll: { value: 0 }, uK: { value: 0 } }), { transparent: true, blending: THREE.NormalBlending }),
       composite: m(COMPOSITE, { uScene: { value: null }, uBloom: { value: null }, uLow: { value: new THREE.Vector2() }, uBloomStrength: { value: 0 }, uKoDim: { value: 0 }, uBlack: { value: 0 }, uGamma: { value: 1 }, uFx: { value: null }, uFxOn: { value: 0 }, uBroken: { value: 0 }, uGrade: { value: new THREE.Vector4() }, uPool: { value: new THREE.Vector4() }, uIris: { value: new THREE.Vector4() }, uIris2: { value: new THREE.Vector4() }, uGradeTint: { value: new THREE.Vector3(1, 1, 1) } }),
       tilt: m(TILT, { uSrc: { value: null }, uDepth: { value: null }, uTexel: { value: new THREE.Vector2() }, uDir: { value: new THREE.Vector2() }, uStrength: { value: 0 }, uBand: { value: 0.4 }, uCentre: { value: 0.5 }, uSkyBlur: { value: 1 } }),
     };
@@ -192,6 +207,38 @@ export class Post {
     this.a.setSize(lowW, lowH); this.b.setSize(lowW, lowH);
   }
 
+  /** The forest behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
+   *  the terrace) the forest behind the tree should be black"; render/view.ts behindHouse): 1 the picture as ever; 0 the house alone
+   *  (camera layer HOUSE_LAYER: its rooms, the Ent's art, her) over black, the rest of the scene not drawn at all; between, the
+   *  forest coming back from `behindAt` (a point on the picture, uv: the doorway she came through) outward, or the whole picture
+   *  at once with no point (the telescope). */
+  behind = 1;
+  behindAt: THREE.Vector2 | null = null;
+  private drawScene(scene: THREE.Scene, camera: THREE.Camera): void {
+    const r = this.renderer, K = this.behind;
+    if (K >= 1) { r.render(scene, camera); return; }
+    const mask = camera.layers.mask, ac = r.autoClear;
+    if (K <= 0) {
+      const col = r.getClearColor(this.clear), alpha = r.getClearAlpha();
+      camera.layers.set(HOUSE_LAYER); r.setClearColor(0x000000, 1);
+      r.render(scene, camera);
+      r.setClearColor(col, alpha); camera.layers.mask = mask;
+      return;
+    }
+    // (part way: the whole scene, black over what isn't yet revealed, then the house again over that)
+    r.render(scene, camera);
+    const target = r.getRenderTarget(), w = target?.width ?? 1, h = target?.height ?? 1, aspect = w / h, at = this.behindAt;
+    // (the reveal's radius: from nothing to the picture's farthest corner from its point, in picture heights)
+    const far = at ? Math.max(...[[0, 0], [1, 0], [0, 1], [1, 1]].map(([x, y]) => Math.hypot((x - at.x) * aspect, y - at.y))) : 0, soft = 0.15;
+    r.autoClear = false;
+    this.pass("veil", target, u => { u.uAll.value = at ? 0 : 1; u.uK.value = K; u.uAt.value.copy(at ?? u.uAt.value); u.uAspect.value = aspect; u.uSoft.value = soft; u.uR.value = K * (far + soft); });
+    r.clearDepth();
+    camera.layers.set(HOUSE_LAYER);
+    r.render(scene, camera);
+    camera.layers.mask = mask; r.autoClear = ac;
+  }
+  private readonly clear = new THREE.Color();
+
   private pass(name: string, to: THREE.WebGLRenderTarget | null, set: (u: Record<string, THREE.IUniform>) => void): void {
     const mat = this.mats[name];
     set(mat.uniforms);
@@ -220,7 +267,7 @@ export class Post {
     const r = this.renderer, t = this.tuning;
     r.setRenderTarget(this.scene);
     const t0 = performance.now();
-    r.render(scene, camera);
+    this.drawScene(scene, camera);
     this.sceneMs = performance.now() - t0;
     yield;
 
