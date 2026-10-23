@@ -3,14 +3,15 @@
 // each shot as the game draws it (`<room>.png`) and with the dark off (`<room>-off.png`, tuning treehouse.house.dark.on false), and
 // each one's frames timed both ways (12 frames, the GPU finished each: timings.json); then the reveal as she steps from the kitchen's
 // branch onto the Terrace (reveal-<ms>.png, every 0.1 s of her clock) and back (hide-<ms>.png).
-//   npm run build && node tools/house/dark-shots.cjs <out dir> [seed]
+//   npm run build && node tools/house/dark-shots.cjs <out dir> [seed]     (ROOMS=a,b or none, TIME=0 no timings, SETTLE=frames, REVEAL=0)
+// (the cloud's software renderer takes 1 to 8 s a frame here: a whole run is about an hour)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/dark", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
-const ROOMS = (process.env.ROOMS || "bedroom,study,kitchen").split(",");
+const ROOMS = (process.env.ROOMS || "bedroom,study,kitchen").split(",").filter(Boolean), TIME = process.env.TIME !== "0", SETTLE = Number(process.env.SETTLE || 60), REVEAL = process.env.REVEAL !== "0";
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
 const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2); };
 (async () => {
@@ -33,17 +34,19 @@ const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 
     const time = () => page.evaluate(NONE => { const w = window.witch, gl = w.view.renderer.getContext(), t0 = performance.now(); for (let i = 0; i < 12; i++) { w.frame(NONE, 1 / 60, true); gl.finish(); } return (performance.now() - t0) / 12; }, NONE);
     const shot = name => page.screenshot({ path: path.join(outDir, name + ".png"), timeout: 300000 });
     for (const [id, [x, z]] of [...ROOMS.map(id => [id, mid(id)]), ["terrace", [0, 0]]]) {
-      await stand(x, z); await dark(true); await step(90);
-      await shot(id); await dark(false); await step(60); await shot(`${id}-off`);
+      await stand(x, z); await dark(true); await step(SETTLE * 1.5);
+      await shot(id); await dark(false); await step(SETTLE); await shot(`${id}-off`);
+      if (!TIME) continue;
       // (timed after a warm-up, each way twice in turn: the first frames after a move run slow whatever's drawn)
       await time(); timings[id] = {};
-      for (const on of [true, false, false, true]) { await dark(on); await step(60); const k = on ? "dark" : "off"; timings[id][k] = +(((timings[id][k] ?? 0) + (await time()) / 2)).toFixed(1); }
+      for (const on of [true, false, false, true]) { await dark(on); await step(SETTLE); const k = on ? "dark" : "off"; timings[id][k] = +(((timings[id][k] ?? 0) + (await time()) / 2)).toFixed(1); }
       console.log(id, JSON.stringify(timings[id]));
     }
+    if (!REVEAL) return;
     // The reveal: from the kitchen's middle along its branch onto the Terrace's north edge, shot every 0.1 s; then back.
     await dark(true);
     const [kx, kz] = mid("kitchen"), edge = await page.evaluate(() => -window.witch.tuning.treehouse.house.hub + 1);
-    await stand(kx, kz); await step(60);
+    await stand(kx, kz); await step(SETTLE);
     await stand(0, edge);
     for (let i = 0; i <= 7; i++) { await shot(`reveal-${i * 100}`); await step(6); }
     await stand(kx, kz);
