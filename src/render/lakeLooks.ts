@@ -181,7 +181,7 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     vec3 col = mix(vec3(0.24, 0.5, 0.5), vec3(0.13, 0.34, 0.38), deep) * (0.6 + lum * 0.9);
     col = lakeGlint(col, R, 0.5);
     vec4 v = cells(p / 4.5 + vec2(uTime * 0.012, uTime * 0.004));
-    float d = v.x * (1.0 + 0.18 * sin(v.w * 5.0 + v.z * 20.0)); // (blocky, not round)
+    float d = v.x * (1.0 + 0.07 * sin(v.w * 3.0 + v.z * 20.0)); // (lumpy, not round)
     float r = (0.2 + 0.22 * edge + 0.12 * fract(v.z * 5.0)) * step(0.2 - 0.12 * edge, v.z);
     if (r > 0.0 && d < r) col = mix(vec3(0.62, 0.72, 0.8), vec3(0.82, 0.9, 0.95), step(0.55, fract(v.w * 0.5 + 0.3))) * lit * 1.15 * (d > r - 0.04 ? 0.85 : 1.0);
     else if (r > 0.0 && d < r + 0.09) col = mix(col, vec3(0.42, 0.66, 0.68) * (0.6 + lum), 0.6); // (its foot under the water, pale)
