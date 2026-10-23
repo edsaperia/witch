@@ -192,13 +192,13 @@ export class HouseRoomsView {
       (P.geo.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
     }
     // the furniture: a piece baked a frame (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
-    // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, mirrored on a z0 wall
+    // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle
     const todo = HOUSE_ROOMS.objects.find(o => FURNITURE.has(o.id) && !this.pieces.has(o.id));
     if (todo) {
       const art = bakeFurniture(todo, v.assets.style, 1 / v.mpp, Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))));
       const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
       geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array(art.flip ? [1, 0, 0, 0, 0, 1, 1, 1] : [0, 0, 1, 0, 1, 1, 0, 1]), 2));
+      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
       geo.setIndex([0, 1, 2, 0, 2, 3]);
       const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
       const mesh = new THREE.Mesh(geo, mat); mesh.frustumCulled = false;
@@ -208,7 +208,7 @@ export class HouseRoomsView {
     }
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
     for (const [id, { art, mesh, pos }] of this.pieces) {
-      const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, ox = art.flip ? art.w - art.ox : art.ox;
+      const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, ox = art.ox;
       // (corners in the picture's pixels from its floor's middle: top-left, top-right, bottom-right, bottom-left; flipY off, so v 0 is its top)
       const c = [[-ox, -art.oy], [art.w - ox, -art.oy], [art.w - ox, art.h - art.oy], [-ox, art.h - art.oy]];
       c.forEach(([dx, dy], i) => { const p = pxWorld(o.x, o.z, dx, dy); pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z; });

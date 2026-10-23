@@ -5,8 +5,8 @@
 // house.json gives them), never to where it stands, so the house's plan can move it (Golf's layout): drawn by id, at the house's
 // own art pixel and isometric view.
 //   - Model space: metres; x along the wall it backs on (-W/2 to W/2), z out from that wall into the room (its back at -D/2, its
-//     front at D/2), y up from the floor. Seen at yaw 45° its front faces down-left on the screen: a piece backing on the plan's x1
-//     wall; one backing on its z0 wall is the same drawing mirrored (render/houseRooms.ts).
+//     front at D/2), y up from the floor. It's drawn turned by `yaw` (model3d.js render's): 0 its front facing the camera (south),
+//     π/4 down-left on the screen, -π/4 down-right (the way it faces in the house: render/houseFurniture.ts standing).
 //   - Its lights (`m.lights`, model points with a colour, reach and power) come back as pixels, for the lighting pass.
 // The mock (Ed's picks, 2026-10-23): the bed a gothic canopy bed (dark carved posts, velvet curtains half drawn, a moth-eaten canopy,
 // a hoodie and a phone on its charger left on it); the wardrobe an open clothes rail (cloaks and party clothes over shoe boxes, a
@@ -215,14 +215,14 @@ export function furnitureColours(st = {}, room = "bedroom") { return { ...BASE, 
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
  *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives
- *  it, w along the wall it backs on; ppm: art pixels a metre (the house's: 1 / the view's metres an art pixel); pitch: the view's. */
-export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6 } = {}) {
+ *  it, w along the wall it backs on (its front along d); yaw: which way it faces; ppm: art pixels a metre (the house's: 1 / the view's metres an art pixel); pitch: the view's. */
+export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, yaw = Math.PI / 4 } = {}) {
   const build = PIECES[id];
   if (!build) throw new Error(`no furniture "${id}"`);
   const m = new Model({ blend: .025 });
   build(m, { W: foot.w, D: foot.d, H: foot.h });
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
-  const { sp, project } = render(m, { scale: ppm, yaw: Math.PI / 4, pitch, lineGap: .1 });
+  const { sp, project } = render(m, { scale: ppm, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   const W = x1 - x0 + 1, Hh = y1 - y0 + 1, crop = new Sprite(W, Hh);
