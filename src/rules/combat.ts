@@ -417,8 +417,9 @@ export function stepCombat(s: CombatState, w: CombatWorld, data: CombatData = CO
       }
       if (P.move?.kind === "ambush" && !c.leashed) {
         // (Hunting her, it doesn't lie in wait: it comes for her from wherever it is in its area, springing once it's close.
-        // Ed, 2026-10-08: "the aggro creatures are at the opposite end and they don't come and attack me".)
-        if (c.sprung === undefined && d > (P.move.trigger ?? 20) * S) { if (c.hunting === undefined) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } }
+        // Ed, 2026-10-08: "the aggro creatures are at the opposite end and they don't come and attack me". In a pack it lies in wait only
+        // till its pack engages: then its pack's turns bring it in.)
+        if (c.sprung === undefined && d > (P.move.trigger ?? 20) * S) { if (c.hunting === undefined && (!pd || pd.phase === "approach")) { c.moving = false; c.vx = 0; c.vz = 0; c.facing = p.x >= c.x ? 1 : -1; continue; } }
         else if (c.sprung === undefined) {
           c.sprung = time; s.events.push({ kind: "sprung", x: c.x, z: c.z, at: time, id: c.id });
           if (P.move.strike) f.readyAt = Math.min(f.readyAt, time); // (the snake: it strikes as it springs)

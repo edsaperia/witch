@@ -460,7 +460,11 @@ function special(s: CombatState, w: CombatWorld, pw: PackWorld, st: PackState, K
       // Dragged toward the puller (the spider's web line, the crocodile's current, the griffin's gust): her, within its reach; hers on
       // the wild, the foes round it.
       const M = (sp.pull ?? 6) * S * scale, reach = (sp.reach ?? 18) * S * (young ? data.young.range : 1);
-      if (tg.kind === "witch" && huntsWitch(side)) { const v = w.witches[tg.id]; if (v && Math.hypot(v.x - by.x, v.z - by.z) <= reach) { pw.pull?.(tg.id, by.x, by.z, M); s.events.push({ kind: "packPull", x: v.x, z: v.z, at: time, id: by.id }); } }
+      if (tg.kind === "witch" && huntsWitch(side)) {
+        // (the special one if she's in its reach, else the nearest of them that has her in its)
+        const v = w.witches[tg.id], dOf = (m: Creature) => (v ? Math.hypot(v.x - m.x, v.z - m.z) : Infinity), puller = v && dOf(by) <= reach ? by : healthy.filter(m => dOf(m) <= reach).sort((a, b) => dOf(a) - dOf(b))[0];
+        if (v && puller) { pw.pull?.(tg.id, puller.x, puller.z, M); s.events.push({ kind: "packPull", x: v.x, z: v.z, at: time, id: puller.id }); }
+      }
       else for (const o of w.active) if (o !== by && targetable(o) && foes(sideOf(o), side) && !o.boss && Math.hypot(o.x - by.x, o.z - by.z) <= reach) { const d = Math.hypot(by.x - o.x, by.z - o.z) || 1, k = Math.min(M, Math.max(0, d - 2 * S)); o.kx = ((by.x - o.x) / d) * k * 6; o.kz = ((by.z - o.z) / d) * k * 6; }
       break;
     }

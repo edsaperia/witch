@@ -168,6 +168,16 @@ describe("pack combat in play (the switch on)", () => {
 // Phase 1's new pieces (Echo, 2026-10-19): the heron's sync, the raven's mirage, the toad's spores, the bat's screech turning her
 // movement. (The flyers fought on the ground in a pack till Ed, 2026-10-20: now they keep their dive, below.)
 describe("pack combat, step 2's specials (2026-10-23: knockback, pull, decoy)", () => {
+  it("each of the seven strikes and throws its special: the ambushers (spider, crocodile) don't lie in wait once their pack engages", () => {
+    const bad: string[] = [];
+    for (const k of ["ram", "ibex", "rhino", "spider", "crocodile", "griffin", "raccoon"]) {
+      let struck = 0, specials = 0;
+      arena(`pack-${k}`, 40, g => { for (const e of fresh(g)) { if (e.kind === "windup" || e.kind === "charged" || e.kind === "shot") struck++; if (e.kind === "packSpecial") specials++; } });
+      if (!struck || !specials) bad.push(`${k}: ${struck} strikes, ${specials} specials`);
+    }
+    expect(bad).toEqual([]);
+  }, 300000);
+
   it("knockback: the ram's special is its charge, and that blow throws her its throw, exactly", () => {
     const want = (PACKS.specials.knockback.throw ?? 10) * FIGHT.scale, thrown: number[] = [];
     let rams = 0;
