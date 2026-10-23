@@ -13435,18 +13435,7 @@ label.check input { accent-color: var(--accent); }
     }
     m.ell([r(9) * 0.04, 0.52, 0], [0.07, 0.05, 0.06], M.LEAF2, { group: 7 });
   }
-  function travelTrunk(m) {
-    m.ell([0, 0.03, 0], [0.6, 0.08, 0.42], M.STONED, { group: 1, rough: 0.03, paint: (p) => ctCell(p, 12, 2) < 0.3 ? M.MOSS : void 0 });
-    m.box([0, 0.14, 0], [0.42, 0.13, 0.26], M.WOOD, { round: 0.02, group: 2, paint: ctPlank(9, 0.12) });
-    for (const x of [-0.29, 0.29]) m.box([x, 0.15, 0], [0.035, 0.135, 0.275], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
-    m.box([0, 0.44, -0.3], [0.43, 0.2, 0.04], M.WOOD, { round: 0.02, group: 4, paint: ctPlank(9, 0.2) });
-    for (const x of [-0.29, 0.29]) m.box([x, 0.44, -0.27], [0.035, 0.2, 0.02], M.FRAME, { round: 0.01, group: 3, paint: ctWorn(0.6, 0.1) });
-    m.ell([0.04, 0.28, 0.02], [0.3, 0.06, 0.2], M.TOP, { group: 5, rough: 0.02 });
-    m.ell([0.2, 0.2, 0.27], [0.08, 0.12, 0.03], M.TOP, { group: 5 });
-    m.ell([-0.17, 0.31, -0.04], [0.14, 0.05, 0.1], M.ACCENT, { group: 6, rough: 0.02 });
-    ctTufts(m, 9, 0.75, 7, 41);
-  }
-  var wkRemap = (m, map) => {
+  var fdRemap = (m, map) => {
     const R5 = {
       ...m,
       parts: m.parts,
@@ -13459,401 +13448,65 @@ label.check input { accent-color: var(--accent); }
     };
     return R5;
   };
-  var WK_COLD = { [M.MAGIC]: M.BODY3, [M.MAGIC2]: M.STONED, [M.EYE]: M.NOSE, [M.GLINT]: M.BELLY };
-  var wkMats = (body, trim2) => ({ ...WK_COLD, [M.BROOM]: body, [M.STRAW]: trim2 });
-  var WK_L = { broomLength: 1, bristles: 1, frame: 0 };
-  function wkKind(m, kind, piece, mats, at2, { g = 3, x0 = -0.5, x1 = 0.62, L: L2 = {} } = {}) {
-    const n = mark(m), K = BROOM_KINDS[kind], mm = wkRemap(m, mats), LL = { ...WK_L, ...L2 };
-    if (piece === "body") K.body(mm, LL, [x0, 0, 0], [x1, 0, 0], 0.022, 0.018);
-    else K.tail(mm, LL, [x0 - 0.13, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: g });
-    place(m, n, at2);
+  var FD_MATS = { [M.MAGIC]: M.BODY3, [M.MAGIC2]: M.STONED, [M.EYE]: M.NOSE, [M.GLINT]: M.BELLY, [M.BROOM]: M.BODY, [M.STRAW]: M.STRAW };
+  var FD_L = { broomLength: 1, bristles: 0.7, frame: 0 };
+  function fdRibbon(m, c, h, w, g = 20) {
+    m.box(c, [0.012, h, w], M.BELLY, { round: 6e-3, group: g });
+    for (const s of [-1, 1]) m.ell([c[0] + s * 0.025, c[1] + h + 0.01, c[2]], [0.026, 0.014, 0.016], M.BELLY, { group: g + 1, dir: [s, 0.5, 0] });
   }
-  function wkStick(m, x0, x1, at2, g = 4, mat = M.WOOD) {
-    const n = mark(m);
-    m.seg([x0, 0, 0], [x1, 0, 0], 0.022, 0.018, mat, { group: g, paint: ctPlank(9, 0.2) });
-    place(m, n, at2);
+  function fdBundle(m) {
+    m.box([0, 0.045, 0], [0.17, 0.045, 0.12], M.TOP, { round: 0.025, group: 1, rough: 6e-3 });
+    m.box([5e-3, 0.125, -5e-3], [0.16, 0.04, 0.115], M.HAT1, { round: 0.025, group: 2, rough: 6e-3 });
+    m.box([-5e-3, 0.2, 5e-3], [0.15, 0.035, 0.11], M.ACCENT, { round: 0.025, group: 3, rough: 6e-3 });
+    m.ell([0.13, 0.09, 0.1], [0.05, 0.025, 0.02], M.TOP, { group: 4 });
+    fdRibbon(m, [0, 0.12, 0], 0.125, 0.125);
   }
-  function wkBundle(m, at2, g = 5) {
-    const n = mark(m);
-    m.ell([-0.34, 0, 0], [0.36, 0.1, 0.1], M.STRAW, { group: g, rough: 0.012, paint: (p) => ctCell(p, 24, 2) < 0.25 ? M.BARK2 : void 0 });
-    m.seg([0.03, 0, 0], [-0.06, 0, 0], 0.06, 0.07, M.WOOD, { group: g + 1 });
-    for (let i = 0; i < 7; i++) {
-      const s = (i / 6 - 0.5) * 2;
-      m.seg([-0.45, 0, 0], [-0.85 - 0.06 * (i % 2), s * 0.13, (i % 3 - 1) * 0.1], 0.014, 6e-3, M.STRAW, { group: g + 2 });
-    }
-    place(m, n, at2);
+  function fdBag(m) {
+    m.ell([0, 0.1, 0], [0.16, 0.1, 0.09], M.BARK2, { group: 1, rough: 5e-3 });
+    m.box([0, 0.16, 0.045], [0.15, 0.055, 0.012], M.WOOD, { round: 0.02, group: 2 });
+    m.box([0, 0.13, 0.06], [0.02, 0.02, 6e-3], M.FLOWER, { group: 3 });
+    m.chain([[-0.13, 0.14, 0, 0.012], [-0.1, 0.27, 0, 0.012], [0, 0.31, 0, 0.012], [0.1, 0.27, 0, 0.012], [0.13, 0.14, 0, 0.012]], M.BARKD, { group: 4 });
+    m.box([0, 0.3, 0], [0.012, 0.025, 0.02], M.BELLY, { group: 20 });
+    for (const s of [-1, 1]) m.ell([s * 0.025, 0.325, 0], [0.026, 0.014, 0.016], M.BELLY, { group: 21, dir: [s, 0.5, 0] });
   }
-  function wkHat(m, at2, yaw, g = 8, roll = 1.25) {
-    const n = mark(m);
-    m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.HAT1, { group: g, rough: 6e-3 });
-    m.seg([0, 0.02, 0], [0.02, 0.24, 0.01], 0.095, 0.05, M.HAT1, { group: g + 1 });
-    m.seg([0.02, 0.24, 0.01], [-0.1, 0.36, 0.02], 0.05, 6e-3, M.HAT1, { group: g + 1 });
-    m.ell([0, 0.04, 0], [0.088, 0.02, 0.088], M.JACKET, { group: g + 2 });
-    place(m, n, { roll, yaw, at: at2 });
+  function fdHat(m) {
+    m.ell([0, 0.02, 0], [0.17, 0.018, 0.15], M.HAT1, { group: 1, rough: 4e-3 });
+    m.seg([0, 0.02, 0], [0.015, 0.17, 0.01], 0.085, 0.04, M.HAT1, { group: 2 });
+    m.seg([0.015, 0.17, 0.01], [-0.06, 0.26, 0.02], 0.04, 6e-3, M.HAT1, { group: 2 });
+    m.seg([0, 0.03, 0], [3e-3, 0.06, 2e-3], 0.088, 0.08, M.BELLY, { group: 20 });
+    for (const s of [-1, 1]) m.ell([0.07 + s * 0.022, 0.06, 0.06], [0.024, 0.013, 0.014], M.BELLY, { group: 21, dir: [s, 0.5, 0] });
   }
-  function wkStraws(m, n, R5, cx, cz, seed2, g = 13) {
-    for (let i = 0; i < n; i++) {
-      const a = sinHash(seed2, i) * 6.283, d = R5 * Math.sqrt(sinHash(i, seed2 + 3)), x = cx + Math.cos(a) * d, z = cz + Math.sin(a) * d * 0.7, b = sinHash(i, seed2 + 7) * 6.283;
-      m.seg([x, 0.012, z], [x + Math.cos(b) * 0.1, 0.012, z + Math.sin(b) * 0.08], 7e-3, 5e-3, M.STRAW, { group: g + i % 2 });
-    }
+  function fdPart(m, kind, piece) {
+    const n = mark(m), K = BROOM_KINDS[kind] ?? null, mm = fdRemap(m, FD_MATS);
+    if (piece === "body") K.body(mm, FD_L, [-0.2, 0, 0], [0.2, 0, 0], 0.022, 0.018);
+    else if (piece === "bundle") {
+      m.ell([-0.06, 0, 0], [0.16, 0.065, 0.065], M.STRAW, { group: 3, rough: 0.01, paint: (p) => ctCell(p, 24, 2) < 0.25 ? M.BARK2 : void 0 });
+      m.seg([0.1, 0, 0], [0.06, 0, 0], 0.04, 0.045, M.WOOD, { group: 4 });
+      for (let i = 0; i < 5; i++) m.seg([-0.18, 0, 0], [-0.27, (i / 4 - 0.5) * 0.09, (i % 3 - 1) * 0.05], 8e-3, 4e-3, M.STRAW, { group: 5 });
+    } else K.tail(mm, { ...FD_L, bristles: 1.1 }, [0.1, 0, 0], [0.2, 0.09, 0.1], { dir: [1, 0, 0], group: 3 });
+    fdRibbon(mm, [piece === "body" ? -0.12 : 0.06, 0, 0], 0.04, 0.04);
+    place(m, n, { pitch: 0.8, yaw: 0.35, at: [0, 0.12, 0] });
   }
-  var wkEarth = (m, c, r, burnt = false, g = 1) => m.ell(c, r, burnt ? M.BODY3 : M.STONED, { group: g, rough: 0.03, paint: (p) => ctCell(p, 12, 2) < (burnt ? 0.25 : 0.4) ? burnt ? M.STONED : M.MOSS : ctCell(p, 9, 3) < 0.12 ? M.MOSS : void 0 });
-  function wkLog(m, c, len, r, g = 2) {
-    ctCyl(m, [c[0] - len, c[1], c[2]], [c[0] + len, c[1], c[2]], r, M.TRUNK, g, { paint: (p) => p[1] > c[1] + r * 0.4 && ctCell(p, 10, 1) < 0.7 ? M.MOSS : ctCell(p, 20, 4) < 0.2 ? M.BARK2 : void 0, end: ctRings([c[0], c[1], c[2]], 0) });
-  }
-  var WRECKS = {
-    // the Missile nose: buried tail-first, only its nose and band up out of a mound, like a shell that never went off; a ring of
-    // its fins snapped off round it, scorched earth, the hat hung on a fin
-    missile(m) {
-      wkEarth(m, [0, 0.02, 0], [0.62, 0.05, 0.46], true);
-      wkEarth(m, [0, 0.07, 0], [0.26, 0.12, 0.22], false, 2);
-      wkKind(m, "missile", "body", wkMats(M.BODY, M.FRAME), { pitch: 1.4, yaw: 0.3, at: [0, 0.02, 0] }, { x0: 0, x1: 0.8 });
-      for (let i = 0; i < 4; i++) {
-        const a = i * 1.7 + 0.4, x = Math.cos(a) * 0.45, z = Math.sin(a) * 0.32, n = mark(m);
-        m.box([0, 0, 0], [0.07, 0.045, 8e-3], M.FRAME, { round: 6e-3, group: 5, paint: ctWorn(0.5, 0.1) });
-        place(m, n, { yaw: a, roll: i === 1 ? 1.3 : 0.2, at: [x, i === 1 ? 0.07 : 0.02, z] });
-      }
-      wkHat(m, [Math.cos(2.1) * 0.45 + 0.02, 0.12, Math.sin(2.1) * 0.32], 0.6, 8, 0.5);
-      ctMoss(m, [-0.3, 0.05, 0.2], [0.12, 0.03, 0.08], 6);
-      ctTufts(m, 6, 0.75, 11, 71);
-      wkStraws(m, 5, 0.4, 0.2, -0.2, 72);
-    },
-    // the Curled tip: snapped in two over a mossy log, the curl hanging off the far side; its bristles strewn along the log, ivy over
-    // the break, a hat crushed under the log
-    curl(m) {
-      wkEarth(m, [0, 0.02, 0], [0.75, 0.05, 0.42]);
-      wkLog(m, [0, 0.14, -0.05], 0.55, 0.13);
-      wkKind(m, "curl", "body", wkMats(M.WOOD, M.WOOD), { pitch: -0.75, yaw: -0.2, at: [-0.1, 0.38, -0.22] });
-      wkStick(m, -0.55, 0, { pitch: 0.35, yaw: 0.25, at: [0.15, 0.04, 0.2] });
-      ctIvy(m, [-0.15, 0.1, 0.05], [0.02, 0.32, -0.08], 6, 73);
-      wkStraws(m, 14, 0.55, 0, 0.1, 74);
-      wkHat(m, [0.42, 0.02, -0.12], 2.6, 8, 1.5);
-      ctMoss(m, [0.3, 0.26, -0.05], [0.14, 0.04, 0.1], 7);
-      ctTufts(m, 6, 0.85, 11, 75);
-    },
-    // the Hobby-horse head: driven upright into the ground like a grave marker, the horse looking out, a red scarf round its neck,
-    // ivy up the handle, bristles at its foot, the hat beside it
-    horse(m) {
-      wkEarth(m, [0, 0.03, 0], [0.4, 0.07, 0.3]);
-      wkKind(m, "hobbyhorse", "body", wkMats(M.WOOD, M.BELLY), { pitch: 1.35, yaw: 0.4, at: [0, 0.02, 0] }, { x0: 0, x1: 0.75 });
-      m.ell([0.03, 0.78, 0.01], [0.06, 0.035, 0.06], M.ACCENT, { group: 5 });
-      m.seg([0.04, 0.78, 0.02], [0.14, 0.62, 0.08], 0.03, 0.02, M.ACCENT, { group: 5 });
-      m.seg([0.14, 0.62, 0.08], [0.17, 0.42, 0.12], 0.02, 0.012, M.ACCENT, { group: 5 });
-      ctIvy(m, [0, 0.05, 0.03], [0.04, 0.45, 0.03], 6, 53);
-      wkStraws(m, 14, 0.45, 0.1, 0.15, 54, 7);
-      wkHat(m, [-0.45, 0, 0.22], 2.2, 9);
-      ctTufts(m, 4, 0.7, 12, 55, 0, -0.35);
-    },
-    // the Jet-bike fairing: on its side, sledged a long furrow into the ground; a torn-up trail of turf behind it, the windscreen
-    // cracked, ferns grown up through the furrow
-    fairing(m) {
-      m.ell([-0.35, 0.015, 0], [0.75, 0.03, 0.2], M.BODY3, { group: 1, rough: 0.02, paint: (p) => ctCell(p, 10, 2) < 0.3 ? M.STONED : void 0 });
-      for (let i = 0; i < 5; i++) {
-        const x = -1 + i * 0.2, n = mark(m);
-        m.box([0, 0, 0], [0.07, 0.025, 0.05], M.MOSS, { round: 0.02, group: 2, rough: 0.01, paint: (p) => ctCell(p, 14, i) < 0.4 ? M.STONED : void 0 });
-        place(m, n, { yaw: i * 0.9, roll: i % 2 ? 0.6 : -0.5, at: [x, 0.04, i % 2 ? 0.2 : -0.2] });
-      }
-      wkEarth(m, [0.35, 0.05, 0], [0.24, 0.08, 0.24], false, 3);
-      wkKind(m, "jetbike", "body", wkMats(M.BODY, M.BELLY), { roll: 1.25, yaw: 0.1, at: [0.05, 0.12, 0] });
-      m.seg([0.32, 0.3, -0.05], [0.36, 0.2, 0.02], 6e-3, 6e-3, M.LINE, { group: 9 });
-      ctFern(m, [-0.55, 0.02, 0], 6, 0.5);
-      ctFern(m, [-1, 0.02, 0.05], 7, 0.4);
-      wkHat(m, [-0.75, 0.02, 0.3], 1);
-      ctTufts(m, 6, 0.9, 11, 76, -0.2, 0);
-    },
-    // the Ladder: leaning against a trunk as if climbed, rungs broken; the hat high in the tree's lowest branch, a lantern at its foot
-    ladder(m) {
-      wkEarth(m, [0, 0.02, 0], [0.55, 0.05, 0.4]);
-      ctCyl(m, [0.15, 0, -0.25], [0.15, 1.55, -0.25], 0.16, M.TRUNK, 2, { paint: (p) => ctCell(p, 9, 2) < 0.3 && p[1] < 0.6 ? M.MOSS : ctCell(p, 20, 4) < 0.25 ? M.BARK2 : void 0, end: ctRings([0.15, 1.55, -0.25], 1) });
-      m.seg([0.15, 1.15, -0.25], [0.6, 1.42, -0.2], 0.05, 0.025, M.TRUNK, { group: 3 });
-      m.seg([0.6, 1.42, -0.2], [0.78, 1.45, -0.2], 0.025, 0.012, M.TRUNK, { group: 3 });
-      wkKind(m, "ladder", "body", wkMats(M.BARKL, M.WOOD), { pitch: 1.2, yaw: -0.15, at: [-0.38, 0.02, 0.05] }, { x0: 0, x1: 1.25 });
-      for (const [x, y] of [[-0.12, 0.5], [-0.02, 0.74]]) {
-        const n = mark(m);
-        m.seg([0, 0, -0.06], [0, 0, 0.04], 0.011, 0.011, M.WOOD, { group: 6 });
-        place(m, n, { roll: 0.9, yaw: 0.3, at: [x, y, 0.2] });
-      }
-      wkHat(m, [0.62, 1.45, -0.2], 0.4, 8, 0.25);
-      ctCyl(m, [-0.45, 0, 0.25], [-0.45, 0.14, 0.25], 0.055, M.FRAME, 10, { end: M.NOSE });
-      m.ell([-0.45, 0.19, 0.25], [0.04, 0.05, 0.04], M.STONED, { group: 11 });
-      ctIvy(m, [0.2, 0.05, -0.1], [0.18, 0.8, -0.1], 7, 77);
-      ctTufts(m, 6, 0.7, 12, 78);
-      ctMoss(m, [0.15, 0.04, -0.25], [0.25, 0.05, 0.2], 5);
-    },
-    // the Canoe hull: turned turtle in the moss, its bow up on a root, a fern through a split in it, its paddle beside it, the hat
-    // on the ground
-    canoe(m) {
-      wkEarth(m, [0, 0.02, 0], [0.75, 0.05, 0.4]);
-      m.seg([0.5, 0.02, -0.15], [0.7, 0.1, 0.1], 0.05, 0.03, M.TRUNK, { group: 2 });
-      wkKind(m, "canoe", "body", wkMats(M.ACCENT, M.WOOD), { roll: Math.PI, pitch: 0.12, yaw: -0.25, at: [0.05, 0.1, 0] });
-      const o = mark(m);
-      BROOM_KINDS.oar.tail(wkRemap(m, { [M.STRAW]: M.WOOD }), WK_L, [-0.62, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: 4 });
-      m.seg([-0.5, 0, 0], [0.4, 0, 0], 0.02, 0.018, M.WOOD, { group: 4 });
-      place(m, o, { yaw: 0.9, at: [-0.25, 0.03, 0.38] });
-      ctFern(m, [0.15, 0.14, -0.05], 6, 0.55);
-      ctMoss(m, [-0.3, 0.18, -0.03], [0.18, 0.04, 0.1], 7);
-      wkHat(m, [0.7, 0, 0.25], -1.2);
-      ctTufts(m, 5, 0.9, 11, 52, 0, -0.4);
-    },
-    // the Jet nozzles: nose-down, the back end up, the nozzles cold and sooted; a scorched ring of thrown earth, moss over the near
-    // side, the hat flung clear
-    nozzles(m) {
-      wkEarth(m, [0, 0.02, 0], [0.6, 0.04, 0.4], true);
-      wkEarth(m, [0.22, 0.06, 0], [0.34, 0.13, 0.3], false, 2);
-      const n = mark(m), mm = wkRemap(m, wkMats(M.BODY, M.FRAME));
-      BROOM_KINDS.jetbike.body(mm, WK_L, [-0.5, 0, 0], [0.62, 0, 0], 0.022, 0.018);
-      BROOM_KINDS.jetbike.tail(mm, WK_L, [-0.62, 0, 0], [0.17, 0.07, 0.08], { dir: [1, 0, 0], group: 3 });
-      place(m, n, { pitch: -0.85, yaw: 0.5, roll: 0.25, at: [-0.1, 0.5, 0] });
-      ctMoss(m, [-0.3, 0.06, -0.15], [0.12, 0.04, 0.1], 6);
-      wkHat(m, [0.55, 0, 0.25], 0.8);
-      ctTufts(m, 4, 0.8, 11, 51, 0, -0.35);
-      wkStraws(m, 8, 0.4, -0.35, 0.2, 56);
-    },
-    // the Twig bristles: a bristle bundle on its own, wedged in a fork of roots, the handle gone; bristles and twigs scattered for
-    // metres as if it came apart in the air, the hat upturned with water in it
-    twigs(m) {
-      wkEarth(m, [0, 0.02, 0], [0.8, 0.04, 0.45]);
-      for (const [a, l] of [[-0.5, 0.5], [0.4, 0.45], [1.4, 0.35]]) m.chain([[0, 0.12, -0.15, 0.07], [Math.cos(a) * l * 0.5, 0.07, -0.15 + Math.sin(a) * l * 0.4, 0.045], [Math.cos(a) * l, 0.02, -0.15 + Math.sin(a) * l * 0.7, 0.02]], M.TRUNK, { group: 2, paint: (p) => ctCell(p, 12, 1) < 0.3 ? M.MOSS : void 0 });
-      wkBundle(m, { pitch: 0.6, yaw: 0.5, roll: 0.2, at: [0.2, 0.3, -0.1] });
-      m.seg([0.06, 0.2, -0.07], [0.12, 0.22, -0.05], 0.02, 0.012, M.WOOD, { group: 6 });
-      wkStraws(m, 22, 0.8, 0, 0.1, 79);
-      const h = mark(m);
-      m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.HAT1, { group: 8 });
-      m.seg([0, 0.02, 0], [0.02, -0.18, 0.01], 0.095, 0.05, M.HAT1, { group: 9 });
-      m.ell([0, 0.03, 0], [0.08, 0.01, 0.08], M.WATER, { group: 10 });
-      place(m, h, { roll: 0.1, at: [-0.5, 0.12, 0.25] });
-      ctTufts(m, 6, 0.9, 11, 80);
-    },
-    // the Oar blade: stuck straight up out of a pool's edge, the handle under the water line; reeds round it, the hat floating
-    oar(m) {
-      m.ell([0, 0.015, 0], [0.7, 0.03, 0.42], M.STONED, { group: 1, rough: 0.02, paint: (p) => ctCell(p, 12, 2) < 0.45 ? M.MOSS : void 0 });
-      m.ell([0.05, 0.03, 0.02], [0.5, 0.012, 0.3], M.WATER, { group: 2, paint: (p) => ctCell(p, 11) < 0.15 ? M.LEAF3 : void 0 });
-      wkKind(m, "oar", "tail", { [M.STRAW]: M.CLOTH }, { pitch: -1.45, yaw: 0.3, at: [-0.05, 0.03, 0] }, { x0: 0, L: { bristles: 1.5 } });
-      for (let i = 0; i < 9; i++) {
-        const a = i * 0.8 + 2, r = 0.3 + sinHash(i, 81) * 0.15, x = Math.cos(a) * r, z = Math.sin(a) * r * 0.7, hh = 0.25 + sinHash(i, 82) * 0.2;
-        m.seg([x, 0.02, z], [x + 0.02, hh, z], 0.012, 4e-3, i % 3 ? M.LEAF : M.LEAF2, { group: 5 + i % 2 });
-        if (i % 3 === 0) m.ell([x + 0.02, hh - 0.05, z], [0.014, 0.04, 0.014], M.BARK2, { group: 7 });
-      }
-      wkHat(m, [0.3, 0.04, 0.12], 1.9, 8, 0.1);
-      ctTufts(m, 5, 0.8, 11, 83, -0.3, -0.2);
-    }
+  var FIND_PART_KINDS = {
+    missile: ["missile", "body"],
+    curl: ["curl", "body"],
+    horse: ["hobbyhorse", "body"],
+    fairing: ["jetbike", "body"],
+    ladder: ["ladder", "body"],
+    canoe: ["canoe", "body"],
+    nozzles: ["jetbike", "tail"],
+    twigs: ["twigs", "bundle"],
+    oar: ["oar", "tail"]
   };
-  function fhHat(m, at2, body, band2, { brim = 1, crook = 1, tall = 1, roll = 0, yaw = 0, pitch = 0, g = 20 } = {}) {
-    const n = mark(m), b = 0.2 * brim, t = tall;
-    m.ell([0, 0.015, 0], [b, 0.018, b * 0.9], body, { group: g, rough: 4e-3 });
-    m.seg([0, 0.02, 0], [0.015, 0.2 * t, 0.01], 0.095, 0.055, body, { group: g + 1 });
-    m.seg([0.015, 0.2 * t, 0.01], [-0.09 * crook, 0.33 * t, 0.02], 0.055, 6e-3, body, { group: g + 1 });
-    m.ell([0, 0.045, 0], [0.093, 0.024, 0.093], band2, { group: g + 2 });
-    place(m, n, { roll, yaw, pitch, at: at2 });
-  }
-  var fhEarth = (m, r = [0.55, 0.05, 0.38], c = [0, 0.02, 0], mat = M.STONED, moss = 0.4) => m.ell(c, r, mat, { group: 1, rough: 0.025, paint: (p) => ctCell(p, 12, 2) < moss ? M.MOSS : void 0 });
-  var fhStone = (m, c, r, g, seed2) => m.ell(c, r, M.STONE, { group: g, rough: 0.02, paint: (p) => ctCell(p, 10, seed2) < 0.25 ? M.MOSS : ctCell(p, 22, seed2 + 1) < 0.12 ? M.STONED : void 0 });
-  var fhBerries = (m, c, g, k = 5, seed2 = 0) => {
-    for (let i = 0; i < k; i++) {
-      const a = sinHash(seed2, i) * 6.283, d = 0.03 + sinHash(i, seed2) * 0.04;
-      m.ell([c[0] + Math.cos(a) * d, c[1] + sinHash(i, seed2 + 2) * 0.04, c[2] + Math.sin(a) * d], [0.022, 0.022, 0.022], M.ACCENT, { group: g });
-    }
+  var FIND_SIZE = 0.6;
+  var FIND_PIECES = {
+    "find-bundle": { size: FIND_SIZE, desc: "a find: a folded bundle of clothes tied with the finds' pale ribbon (a wearable: rules/finds.ts)", build: fdBundle },
+    "find-hat": { size: FIND_SIZE, desc: "a find: a pointed hat lying on its brim, the finds' ribbon its band (a hat: #1044)", build: fdHat },
+    "find-bag": { size: FIND_SIZE, desc: "a find: a little leather bag, its strap tied with the finds' ribbon (a bag: rules/finds.ts)", build: fdBag },
+    ...Object.fromEntries(Object.entries(FIND_PART_KINDS).map(([id, [kind, piece]]) => [`find-part-${id}`, { size: FIND_SIZE, desc: `a find: the ${id} broom part, tied with the finds' ribbon (the Workshop: rules/finds.ts)`, build: (m) => fdPart(m, kind, piece) }]))
   };
-  var fhBush = (m, c, s, g, seed2) => {
-    m.ell(c, [0.13 * s, 0.1 * s, 0.11 * s], M.LEAF, { group: g, rough: 0.03, paint: (p) => ctCell(p, 14, seed2) < 0.3 ? M.LEAF3 : ctCell(p, 9, seed2 + 1) < 0.2 ? M.LEAF2 : void 0 });
-    fhBerries(m, [c[0], c[1] + 0.05 * s, c[2] + 0.08 * s], g + 1, 4, seed2);
-  };
-  var fhRing = (m, n, r, fn) => {
-    for (let i = 0; i < n; i++) {
-      const a = i / n * 6.283;
-      fn(Math.cos(a) * r, Math.sin(a) * r * 0.72, i);
-    }
-  };
-  var HAT_FINDS = {
-    // the Helmet: on top of a cairn, an iron rim riveted round its brim and a chin strap hanging
-    helmet(m, o = {}) {
-      fhEarth(m, [0.5, 0.05, 0.36]);
-      for (const [x, y, z, r] of [[0, 0.08, 0, 0.2], [-0.12, 0.09, 0.08, 0.12], [0.13, 0.08, 0.06, 0.12], [0.02, 0.2, 0.01, 0.13], [0, 0.3, 0, 0.09]]) fhStone(m, [x, y, z], [r, r * 0.7, r * 0.85], 2, Math.round(x * 50 + 3));
-      if (!o.empty) {
-        fhHat(m, [0, 0.38, 0], M.JACKET, M.FRAME, { brim: 0.9, crook: 0.3, tall: 0.85 });
-        m.ell([0, 0.395, 0], [0.185, 0.022, 0.17], M.FRAME, { group: 25, paint: (p) => ctCell(p, 30, 1) < 0.2 ? M.STONED : void 0 });
-        m.seg([0.15, 0.39, 0.05], [0.17, 0.22, 0.1], 8e-3, 8e-3, M.CLOTH, { group: 26 });
-      }
-      ctTufts(m, 5, 0.5, 11, 31);
-      ctMoss(m, [-0.15, 0.12, 0.1], [0.1, 0.04, 0.07], 6);
-    },
-    // the Healing ring: in the middle of a fairy ring of pale toadstools, a white band, the moss there greener
-    healing(m, o = {}) {
-      fhEarth(m, [0.6, 0.04, 0.42], [0, 0.02, 0], M.MOSS, 0.2);
-      fhRing(m, 9, 0.42, (x, z, i) => {
-        const h = 0.06 + sinHash(i, 41) * 0.04;
-        m.seg([x, 0.02, z], [x, h, z], 0.014, 0.012, M.BELLY, { group: 3 });
-        m.ell([x, h, z], [0.045, 0.025, 0.045], i % 3 ? M.BELLY : M.EAR, { group: 4 });
-      });
-      if (!o.empty) fhHat(m, [0, 0.04, 0], M.EAR, M.ACCENT, { crook: 0.8, tall: 1.1 });
-      ctTufts(m, 4, 0.55, 11, 42);
-    },
-    // the Harvest hat: upturned and full of berries among berry bushes
-    harvest(m, o = {}) {
-      fhEarth(m, [0.6, 0.05, 0.4]);
-      fhRing(m, 5, 0.38, (x, z, i) => fhBush(m, [x, 0.08, z], 0.8 + sinHash(i, 9) * 0.3, 5 + 2 * (i % 2), i + 11));
-      if (!o.empty) {
-        const n = mark(m);
-        m.ell([0, 0.02, 0], [0.2, 0.018, 0.18], M.STRAW, { group: 20 });
-        m.seg([0, 0.02, 0], [0.02, -0.18, 0.01], 0.095, 0.05, M.STRAW, { group: 21 });
-        m.ell([0, 0.045, 0], [0.093, 0.024, 0.093], M.ACCENT, { group: 22 });
-        place(m, n, { roll: 0.15, at: [0, 0.15, 0] });
-        fhBerries(m, [0, 0.17, 0.02], 23, 9, 3);
-      }
-      ctTufts(m, 4, 0.6, 11, 43);
-    },
-    // the Dowsing hat: hung on a forked hazel stick driven in by a little pool
-    dowsing(m, o = {}) {
-      fhEarth(m, [0.55, 0.04, 0.38]);
-      m.ell([0.22, 0.03, 0.1], [0.2, 0.012, 0.14], M.WATER, { group: 2 });
-      m.seg([-0.1, 0.02, 0], [-0.08, 0.5, 0], 0.02, 0.016, M.WOOD, { group: 3 });
-      m.seg([-0.08, 0.5, 0], [-0.2, 0.72, 0], 0.014, 0.01, M.WOOD, { group: 3 });
-      m.seg([-0.08, 0.5, 0], [0.04, 0.72, 0], 0.014, 0.01, M.WOOD, { group: 3 });
-      if (!o.empty) fhHat(m, [-0.08, 0.62, 0], M.HAT2, M.POM, { roll: 0.1, crook: 1.2 });
-      ctFern(m, [0.35, 0.02, -0.15], 6, 0.45);
-      ctTufts(m, 4, 0.55, 11, 44);
-    },
-    // the Sentry hat: up on a little lookout of four posts and a plank platform
-    sentry(m, o = {}) {
-      fhEarth(m, [0.5, 0.04, 0.36]);
-      for (const [x, z] of [[-0.18, -0.12], [0.18, -0.12], [-0.18, 0.12], [0.18, 0.12]]) m.seg([x, 0.02, z], [x * 0.8, 0.62, z * 0.8], 0.022, 0.018, M.WOOD, { group: 2, paint: ctPlank(9, 0.2) });
-      m.box([0, 0.64, 0], [0.2, 0.02, 0.14], M.WOOD, { group: 3, round: 0.01, paint: ctPlank(9, 0.1) });
-      m.seg([-0.16, 0.3, 0.1], [0.16, 0.5, 0.1], 0.01, 0.01, M.WOOD, { group: 4 });
-      if (!o.empty) fhHat(m, [0, 0.67, 0], M.HAT1, M.ACCENT, { crook: 0.6 });
-      ctTufts(m, 5, 0.55, 11, 45);
-    },
-    // the Bramble hat: snagged in a thicket of thorny canes, ripped, a few blackberries
-    bramble(m, o = {}) {
-      fhEarth(m, [0.6, 0.05, 0.4]);
-      for (let i = 0; i < 9; i++) {
-        const a = i * 0.7, r = 0.1 + sinHash(i, 61) * 0.3, x = Math.cos(a) * r, z = Math.sin(a) * r * 0.6, h = 0.3 + sinHash(i, 62) * 0.25;
-        m.chain([[x, 0.02, z, 0.016], [x * 1.2, h, z * 1.1, 0.012], [x * 1.6 + 0.1, h * 0.7, z * 1.3, 6e-3]], i % 2 ? M.BARK2 : M.BODY2, { group: 3 + i % 2, paint: (p) => ctCell(p, 40, i) < 0.15 ? M.LEAF : void 0 });
-      }
-      for (let i = 0; i < 6; i++) m.ell([Math.cos(i * 1.1) * 0.25, 0.25 + sinHash(i, 63) * 0.15, Math.sin(i * 1.1) * 0.15], [0.025, 0.025, 0.025], M.JACKET, { group: 6 });
-      if (!o.empty) fhHat(m, [0.05, 0.36, 0], M.BODY, M.BODY3, { roll: 0.9, yaw: 0.4, crook: 1.4 });
-      ctTufts(m, 3, 0.55, 11, 46);
-    },
-    // the Slingshot hat: hung on a forked branch with a sling between its prongs, a heap of pebbles below
-    slingshot(m, o = {}) {
-      fhEarth(m, [0.5, 0.04, 0.35]);
-      m.seg([0, 0.02, 0], [0, 0.38, 0], 0.03, 0.025, M.TRUNK, { group: 2 });
-      m.seg([0, 0.38, 0], [-0.14, 0.62, 0], 0.02, 0.014, M.TRUNK, { group: 2 });
-      m.seg([0, 0.38, 0], [0.14, 0.62, 0], 0.02, 0.014, M.TRUNK, { group: 2 });
-      m.seg([-0.14, 0.58, 0], [0, 0.5, 0.05], 8e-3, 8e-3, M.ACCENT, { group: 3 });
-      m.seg([0.14, 0.58, 0], [0, 0.5, 0.05], 8e-3, 8e-3, M.ACCENT, { group: 3 });
-      if (!o.empty) fhHat(m, [0.14, 0.66, 0], M.ACCENT, M.POM, { roll: 0.3, crook: 0.9 });
-      for (let i = 0; i < 7; i++) fhStone(m, [-0.15 + i % 3 * 0.07, 0.03 + Math.floor(i / 3) * 0.03, 0.15 + i % 2 * 0.04], [0.03, 0.025, 0.03], 5, i);
-      ctTufts(m, 4, 0.55, 11, 47);
-    },
-    // the Gathering hat: in the middle of a little nest of gathered things: twigs, pebbles, a feather, a bottle cap
-    gathering(m, o = {}) {
-      fhEarth(m, [0.5, 0.04, 0.36]);
-      fhRing(m, 14, 0.28, (x, z, i) => m.seg([x, 0.04, z], [x * 0.6 + 0.05, 0.06, z * 0.6 - 0.04], 0.012, 8e-3, i % 3 ? M.BARK2 : M.STRAW, { group: 2 + i % 2 }));
-      fhRing(m, 6, 0.38, (x, z, i) => i % 2 ? fhStone(m, [x, 0.03, z], [0.03, 0.022, 0.03], 4, i) : m.ell([x, 0.03, z], [0.03, 0.01, 0.03], i % 4 ? M.POM : M.FRAME, { group: 5 }));
-      m.seg([0.2, 0.04, -0.2], [0.35, 0.1, -0.15], 0.012, 2e-3, M.BELLY, { group: 6 });
-      if (!o.empty) fhHat(m, [0, 0.06, 0], M.POM, M.TOP, { crook: 1.1, roll: 0.1 });
-      ctTufts(m, 3, 0.55, 11, 48);
-    },
-    // the Mine hat: blown into a scorched crater, its brim singed, clods thrown round it
-    mine(m, o = {}) {
-      fhEarth(m, [0.62, 0.04, 0.44], [0, 0.015, 0], M.BODY3, 0.1);
-      m.ell([0, 0.02, 0], [0.36, 0.025, 0.26], M.STONED, { group: 2, paint: (p) => ctCell(p, 10, 2) < 0.3 ? M.BODY3 : void 0 });
-      fhRing(m, 8, 0.5, (x, z, i) => m.ell([x, 0.04, z], [0.05, 0.035, 0.04], i % 2 ? M.STONED : M.MOSS, { group: 3, rough: 0.01 }));
-      if (!o.empty) fhHat(m, [0.05, 0.06, 0], M.BODY2, M.BODY3, { roll: 1.3, yaw: 0.7, crook: 1.5 });
-      ctTufts(m, 3, 0.6, 11, 49, 0, 0.3);
-    },
-    // the Lullaby hat: in a bed of poppies, a nightcap's tassel on its tip
-    lullaby(m, o = {}) {
-      fhEarth(m, [0.6, 0.04, 0.42], [0, 0.02, 0], M.MOSS, 0.2);
-      for (let i = 0; i < 16; i++) {
-        const a = sinHash(i, 51) * 6.283, d = 0.15 + 0.38 * Math.sqrt(sinHash(51, i)), x = Math.cos(a) * d, z = Math.sin(a) * d * 0.7, h = 0.1 + sinHash(i, 52) * 0.12;
-        m.seg([x, 0.02, z], [x, h, z], 6e-3, 5e-3, M.LEAF2, { group: 3 });
-        m.ell([x, h, z], [0.03, 0.018, 0.03], M.ACCENT, { group: 4 });
-      }
-      if (!o.empty) fhHat(m, [0, 0.05, 0], M.TOP, M.BELLY, { roll: 1.35, yaw: -0.4, tall: 1.1 });
-      if (!o.empty) m.ell([-0.36, 0.12, 0.02], [0.035, 0.035, 0.035], M.BELLY, { group: 26 });
-      ctTufts(m, 3, 0.55, 11, 53);
-    },
-    // the Cyclone hat: caught on a windy tor's top stone, the grass round it swirled flat, leaves in a spiral
-    cyclone(m, o = {}) {
-      fhEarth(m, [0.6, 0.05, 0.42]);
-      fhStone(m, [0, 0.14, 0], [0.24, 0.16, 0.2], 2, 7);
-      fhStone(m, [-0.22, 0.08, 0.12], [0.14, 0.09, 0.11], 2, 8);
-      fhStone(m, [0, 0.32, 0], [0.14, 0.08, 0.12], 3, 9);
-      for (let i = 0; i < 18; i++) {
-        const a = i * 0.55, r = 0.2 + i * 0.022;
-        m.seg([Math.cos(a) * r, 0.03, Math.sin(a) * r * 0.7], [Math.cos(a + 0.4) * r, 0.03, Math.sin(a + 0.4) * r * 0.7], 0.012, 8e-3, i % 3 ? M.LEAF2 : M.STRAW, { group: 4 + i % 2 });
-      }
-      if (!o.empty) fhHat(m, [0.02, 0.39, 0], M.HAT2, M.POM, { roll: 0.35, yaw: 1, crook: 1.6 });
-      ctTufts(m, 3, 0.6, 11, 54);
-    },
-    // the Nursing hat: by a spring welling up between stones into a mossy basin, a cloth folded on its brim
-    nursing(m, o = {}) {
-      fhEarth(m, [0.6, 0.04, 0.42]);
-      m.ell([0.15, 0.03, 0], [0.24, 0.012, 0.16], M.WATER, { group: 2 });
-      fhRing(m, 7, 0.27, (x, z, i) => fhStone(m, [x + 0.15, 0.04, z], [0.06, 0.045, 0.05], 3, i + 20));
-      ctMoss(m, [-0.22, 0.05, 0.05], [0.18, 0.04, 0.14], 4);
-      if (!o.empty) fhHat(m, [-0.22, 0.08, 0.05], M.BELLY, M.HAT2, { crook: 0.7 });
-      if (!o.empty) m.box([-0.12, 0.1, 0.1], [0.06, 8e-3, 0.04], M.CLOTH, { group: 26 });
-      ctTufts(m, 4, 0.6, 11, 55);
-    },
-    // the Edge-seer: on a boundary stone, an old marker leaning where two places meet
-    edgeseer(m, o = {}) {
-      fhEarth(m, [0.55, 0.04, 0.38]);
-      m.box([0, 0.3, 0], [0.1, 0.3, 0.06], M.STONE, { group: 2, round: 0.03, paint: (p) => ctCell(p, 10, 4) < 0.25 ? M.MOSS : Math.abs(p[0]) < 0.015 && p[1] > 0.4 && p[1] < 0.55 ? M.STONED : void 0 });
-      m.seg([-0.5, 0.02, 0.25], [0.5, 0.02, -0.25], 0.015, 0.015, M.STONED, { group: 3 });
-      if (!o.empty) fhHat(m, [0, 0.61, 0], M.CLOTH, M.HAT1, { crook: 0.5, roll: 0.1 });
-      ctTufts(m, 5, 0.55, 11, 56);
-    },
-    // the Route-seer: on top of an old fingerpost, its blank arms pointing four ways
-    routeseer(m, o = {}) {
-      fhEarth(m, [0.5, 0.04, 0.36]);
-      m.seg([0, 0.02, 0], [0, 0.9, 0], 0.028, 0.024, M.WOOD, { group: 2, paint: ctPlank(9, 0.2) });
-      for (const [a, h] of [[0.3, 0.74], [2.1, 0.7], [3.6, 0.64], [5.1, 0.6]]) {
-        const n = mark(m);
-        m.box([0.17, 0, 0], [0.17, 0.035, 0.012], M.WOOD, { group: 3, round: 0.01, paint: ctWorn(0, 0.2) });
-        m.seg([0.34, -0.035, 0], [0.38, 0, 0], 0.012, 0.012, M.WOOD, { group: 3 });
-        m.seg([0.34, 0.035, 0], [0.38, 0, 0], 0.012, 0.012, M.WOOD, { group: 3 });
-        place(m, n, { yaw: a, at: [0, h, 0] });
-      }
-      if (!o.empty) fhHat(m, [0, 0.92, 0], M.HAT1, M.POM, { crook: 1 });
-      ctTufts(m, 5, 0.5, 11, 57);
-      ctIvy(m, [0, 0.04, 0.03], [0, 0.5, 0.03], 6, 58);
-    }
-  };
-  var BAG_FINDS = {
-    // the bum bag: hung by its strap from a snag on a stump, its zip half open
-    bumbag(m, o = {}) {
-      fhEarth(m, [0.45, 0.04, 0.32]);
-      ctCyl(m, [0, 0, 0], [0, 0.38, 0], 0.14, M.TRUNK, 2, { paint: (p) => ctCell(p, 9, 2) < 0.3 ? M.MOSS : void 0, end: ctRings([0, 0.38, 0], 1) });
-      m.seg([0, 0.36, 0.1], [0.03, 0.42, 0.16], 0.015, 0.01, M.TRUNK, { group: 3 });
-      if (!o.empty) {
-        m.seg([0.03, 0.4, 0.15], [0.12, 0.22, 0.2], 0.01, 0.01, M.JACKET, { group: 4 });
-        m.seg([0.03, 0.4, 0.15], [-0.08, 0.22, 0.2], 0.01, 0.01, M.JACKET, { group: 4 });
-        m.ell([0.02, 0.2, 0.2], [0.15, 0.085, 0.06], M.TOP, { group: 5 });
-        m.seg([-0.11, 0.23, 0.25], [0.15, 0.23, 0.25], 9e-3, 9e-3, M.POM, { group: 6 });
-      }
-      ctTufts(m, 4, 0.5, 11, 59);
-    },
-    // the backpack: slumped against a mossy log, a bedroll strapped on top, its flap open on a map
-    backpack(m, o = {}) {
-      fhEarth(m, [0.6, 0.05, 0.4]);
-      ctCyl(m, [-0.4, 0.12, -0.1], [0.4, 0.12, -0.1], 0.12, M.TRUNK, 2, { paint: (p) => p[1] > 0.18 && ctCell(p, 10, 1) < 0.7 ? M.MOSS : void 0, end: ctRings([0, 0.12, -0.1], 0) });
-      if (!o.empty) {
-        const n = mark(m);
-        m.box([0, 0.18, 0], [0.14, 0.18, 0.08], M.HAT2, { group: 3, round: 0.04, paint: (p) => ctCell(p, 16, 2) < 0.1 ? M.MOSS : void 0 });
-        m.box([0, 0.27, 0.06], [0.12, 0.06, 0.03], M.HAT2, { group: 4, round: 0.02 });
-        ctCyl(m, [-0.16, 0.4, 0], [0.16, 0.4, 0], 0.05, M.CLOTH, 5);
-        m.box([0, 0.2, 0.09], [0.07, 0.05, 0.01], M.BELLY, { group: 6 });
-        place(m, n, { pitch: -0.25, yaw: 0.2, at: [0, 0.02, 0.08] });
-      }
-      ctTufts(m, 4, 0.6, 11, 60, 0, 0.25);
-    }
-  };
+  var FIND_PARTS = Object.keys(FIND_PART_KINDS);
   var SCENE_PIECES = {
-    "travel-trunk": { desc: "an old witch's travel trunk, half-sunk and mossy, its lid ajar with cloth showing (a wearable to find: rules/finds.ts)", build(m) {
-      travelTrunk(m);
-    } },
     "harvest-sprout-1": { desc: "a berry seedling: a dome of leaves on a stem, in a patch of earth (under one of the Harvest hat's berries)", build(m) {
       harvestSprout(m, 0);
     } },
@@ -14098,16 +13751,12 @@ label.check input { accent-color: var(--accent); }
       ctTufts(m, 10, 1, 7, 61);
     } }
   };
-  var FIND_SIZE = { hat: 1, bag: 1 };
   var COUNTRY = [
     ...Object.entries(FARM).map(([id, d]) => ({ id, family: "farm", size: 1, split: null, ...d })),
     ...Object.entries(STREET).map(([id, d]) => ({ id, family: "street", size: 1, split: null, ...d })),
     ...Object.entries(SCENE_PIECES).map(([id, d]) => ({ id, family: "scene", size: 1, split: null, ...d })),
-    ...Object.entries(WRECKS).map(([id, build]) => ({ id: `wreck-${id}`, family: "wreck", size: 1, split: null, desc: `a crashed broom, its ${id} part to find (the Workshop: rules/finds.ts)`, build })),
-    ...Object.entries(HAT_FINDS).flatMap(([id, build]) => [false, true].map((empty) => ({ id: `hatfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.hat, split: null, desc: `the ${id} hat lying where its spell would have put it${empty ? ", taken" : ""} (rules/finds.ts)`, build: (m) => build(m, { empty }) }))),
-    ...Object.entries(BAG_FINDS).flatMap(([id, build]) => [false, true].map((empty) => ({ id: `bagfind-${id}${empty ? "-empty" : ""}`, family: "find", size: FIND_SIZE.bag, split: null, desc: `the ${id}, left where its owner left it${empty ? ", taken" : ""} (rules/finds.ts)`, build: (m) => build(m, { empty }) })))
+    ...Object.entries(FIND_PIECES).map(([id, d]) => ({ id, family: "find", size: 1, split: null, ...d }))
   ];
-  var WRECK_PARTS = Object.keys(WRECKS);
   var COUNTRY_BY_ID = Object.fromEntries(COUNTRY.map((d) => [d.id, d]));
 
   // art/decor.js
@@ -17058,8 +16707,8 @@ label.check input { accent-color: var(--accent); }
     find: { eyeshine: { range: 45, strength: 1.2, blink: 0.08 }, lightFloor: 0.45, rim: 0.5, ambient: 0.28, moonHue: 0.5, moonSat: 0.5 },
     __light: "Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.",
     _hills: `The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her (Ed, v289: "so that you never go behind a bump"): the hills are made at least 4.3 \xD7 amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30\xB0), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch (Ed, v297: "bumps are fine, it's cliffs that really show"): a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off (Ed, v276: "remove the slope shading"): the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top.`,
-    _telescope: `The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): walking up to it looks through it full screen (Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys": the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves), the night running on at the house's tenth, a compass strip along its top. eye: the eye's height (m over the ground at the hub, above its roof; Ed, 2026-10-23: "the telescope view should be 'higher'", 50 to 100). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).`,
-    telescope: { eye: 100, fovWide: 40, fovClose: 8, aimWide: 260, pan: 50, tilt: 35, tiltMax: 80, zoomStep: 0.125, bend: 3e-4, reach: 900, hazeNear: 320, hazeFar: 1e3, thinFrom: 360, thin: 2, thinGrow: 1.25, wedge: 20, moonSpread: 60, consHold: 1, consLines: 0.7, consBright: 1.35, resolution: 1, lowGpuResolution: 0.5, vignette: 0.6 },
+    _telescope: `The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): walking up to it looks through it full screen (Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys": the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves), the night running on at the house's tenth, a compass strip along its top. eye: the eye's height (m over the ground at the hub, above its roof; Ed, 2026-10-23: "the telescope view should be 'higher'", 50 to 100). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's pixels, 2 twice as fine, 0.5 twice as coarse; up to 3); lowGpuResolution: on an integrated GPU (Intel), instead (1, the game's: Ed, 2026-10-23, "telescope view is too pixellated" at 0.5). vignette: how dark its edges (0 none).`,
+    telescope: { eye: 100, fovWide: 40, fovClose: 8, aimWide: 260, pan: 50, tilt: 35, tiltMax: 80, zoomStep: 0.125, bend: 3e-4, reach: 900, hazeNear: 320, hazeFar: 1e3, thinFrom: 360, thin: 2, thinGrow: 1.25, wedge: 20, moonSpread: 60, consHold: 1, consLines: 0.7, consBright: 1.35, resolution: 1, lowGpuResolution: 1, vignette: 0.6 },
     _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).",
     _smoke: "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.",
     smoke: { on: true, rate: 0.6, life: 14, rise: 46, speed: 5, size: 2.6, grow: 4, drift: 0.9, opacity: 0.62, warm: 1, pixel: true, perFire: 12, maxFires: 24, range: 280 },
@@ -17080,8 +16729,14 @@ label.check input { accent-color: var(--accent); }
     glowHeight: 8,
     lightBudget: 20,
     _lightSources: "Light sources placed by seed, on a grid of spacing metres, mostly in clearings and at area edges: the chance per spot of a campfire (shown only once its area is partified: campfires are party objects, Ed 2026-10-04; they light up with a whoosh of sparks as the party arrives), a magic stone, or a pond mirroring the moon (wetPond in wet areas: wetland, stream, bog, beaver pond, moor). (Ed, 2026-10-11: ponds a quarter of before, pond 0.02 to 0.005 and wetPond 0.12 to 0.03.)",
-    _lights: `How far (reach, metres) and how strongly each kind of light lights its surroundings. glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.`,
-    lights: { campfire: { reach: 40, strength: 2.6 }, stone: { reach: 16, strength: 1.8 }, knee: 0.9, ceiling: 1.1 },
+    _lights: `How far (reach, metres) and how strongly each kind of light lights its surroundings. find: tonight's find's own pale gold-white light (the finds style guide, docs/art-guide/FINDS.md: the brightest and whitest thing on its patch, brighter than her lantern; out once it's taken). glowPower: the witch's own glow at its brightest (0-1; 0.95, a bright centre that drops quickly to dark, round 11), full under her, falling off as glowFalloff says out to glowNear of her reach, lit from a source glowHeight metres above her. Light falls off smoothly to nothing at its reach: no rings or bands. knee and ceiling (Ed, 2026-10-12: "soundsystems lighting tends to blow out"; render/lighting.ts softKnee): the light falling on a pixel, every source summed, passes unchanged up to knee of brightness, then eases toward ceiling and never past it, in its own hue, so the ground round a soundsystem's party light, campfires and her glow stays under white and keeps its texture; ceiling at or under knee turns it off.`,
+    lights: {
+      find: { reach: 7, strength: 4 },
+      campfire: { reach: 40, strength: 2.6 },
+      stone: { reach: 16, strength: 1.8 },
+      knee: 0.9,
+      ceiling: 1.1
+    },
     glowPower: 0.95,
     _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
     light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0.9, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, stream: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "cave-mouth": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, norway: { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
