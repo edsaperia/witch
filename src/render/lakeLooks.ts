@@ -39,7 +39,7 @@ vec3 lakeShore(float L, float ld, vec2 p, vec3 c) {
   float k = smoothstep(-lakeRim(L), 0.0, ld), n = vnoise(p / 1.3), n2 = vnoise(p / 4.0 + 7.0);
   if (L < 1.5) return mix(c, vec3(0.74, 0.8, 0.86) * (0.9 + 0.15 * n), clamp(k * 1.3 - 0.3 + (n2 - 0.5) * 0.6, 0.0, 0.95)); // frost and old snow
   if (L < 2.5) { vec3 s = mix(vec3(0.09, 0.075, 0.07), vec3(0.17, 0.12, 0.1), n); if (n > 0.86 && k > 0.5) s = vec3(0.5, 0.12, 0.03); return mix(c, s, clamp(k * 1.4 - 0.1 + (n2 - 0.5) * 0.5, 0.0, 1.0)); } // scorched ground, embers
-  if (L < 3.5) { vec3 s = mix(vec3(0.66, 0.56, 0.38), vec3(0.76, 0.66, 0.46), n); vec3 g = mix(vec3(0.2, 0.4, 0.14), vec3(0.3, 0.5, 0.18), n); float gr = smoothstep(0.45, 0.2, k) * step(0.45, n2); return mix(c, mix(s, g, gr), clamp(k * 1.6, 0.0, 1.0)); } // sand, a green fringe
+  if (L < 3.5) { vec3 s = mix(vec3(0.8, 0.7, 0.5), vec3(0.9, 0.8, 0.58), n); vec3 g = mix(vec3(0.2, 0.4, 0.14), vec3(0.3, 0.5, 0.18), n); float gr = smoothstep(0.45, 0.2, k) * step(0.45, n2); return mix(c, mix(s, g, gr), clamp(k * 1.6, 0.0, 1.0)); } // sand, a green fringe
   if (L < 4.5) { vec3 s = mix(vec3(0.14, 0.26, 0.1), vec3(0.24, 0.34, 0.16), n); if (k > 0.82) s = mix(vec3(0.28, 0.27, 0.24), vec3(0.18, 0.18, 0.16), n); return mix(c, s, clamp(k * 1.5, 0.0, 1.0)); } // jungle up to a rock lip
   if (L < 5.5) { vec4 v = cells(p / 0.7); vec3 s = mix(vec3(0.42, 0.44, 0.46), vec3(0.58, 0.6, 0.62), v.z) * (v.y - v.x < 0.08 ? 0.6 : 1.0); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.5, 0.0, 1.0)); } // grey scree
   if (L < 6.5) { vec3 s = mix(vec3(0.05, 0.045, 0.04), vec3(0.12, 0.1, 0.08), n); if (fract(n * 13.0) < 0.06) s = vec3(0.3, 0.3, 0.32); return mix(c, s, clamp(k * 1.5 + (n2 - 0.5) * 0.6, 0.0, 1.0)); } // black, sticky, glossy specks
@@ -85,11 +85,11 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     return mix(crust, glow, smoothstep(0.05, 0.3, hot));
   }
   if (L < 3.5) { // an oasis: clear, turquoise over sand in the shallows, deep blue in the middle, caustics on the sand
-    float deep = smoothstep(0.0, 9.0, ld + (vnoise(p / 3.0 + 41.0) - 0.5) * 2.0);
+    float deep = smoothstep(0.0, 22.0, ld + (vnoise(p / 6.0 + 41.0) - 0.5) * 6.0);
     vec4 v = cells(p / 1.6 + vec2(uTime * 0.12, uTime * 0.07));
     vec3 sand = vec3(0.72, 0.62, 0.42) * lit * 1.4 + vec3(0.05, 0.1, 0.09) * smoothstep(0.12, 0.0, v.y - v.x);
-    vec3 w = mix(vec3(0.1, 0.42, 0.4), vec3(0.04, 0.16, 0.28), deep) * (0.6 + lum * 0.9);
-    vec3 col = mix(sand * vec3(0.55, 0.9, 0.85), w, 0.25 + 0.75 * deep);
+    vec3 w = mix(vec3(0.12, 0.5, 0.46), vec3(0.05, 0.28, 0.36), deep) * (0.7 + lum * 0.9);
+    vec3 col = mix(sand * vec3(0.6, 0.95, 0.9), w, 0.35 + 0.65 * deep);
     return lakeGlint(col, R, 1.0);
   }
   if (L < 4.5) { // a sinkhole (a jungle tiankeng): sheer walls dropping to a dark pool far below, the far wall seen down the shaft
@@ -104,7 +104,7 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     if (hit > 0.0) for (int k = 0; k < 4; k++) { float m = 0.5 * (t0 + hit); if (lakeAt(S.xz + dir.xz * m * run) < 0.4) hit = m; else t0 = m; }
     float t = hit > 0.0 ? hit : D;
     vec2 q = S.xz + dir.xz * t * run;
-    float dark = mix(1.0, 0.16, pow(t / D, 0.8)), mist = smoothstep(0.35, 1.0, t / D) * 0.5;
+    float dark = mix(1.0, 0.3, pow(t / D, 0.8)), mist = smoothstep(0.5, 1.0, t / D) * 0.22;
     vec3 col;
     if (hit > 0.0) {
       float band = floor((t + (vnoise(q * 0.4) - 0.5) * 2.0) / 2.4);
@@ -113,8 +113,8 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
       col = mix(rock, vec3(0.12, 0.3, 0.1), vine) * lit * 1.5 * dark;
       if (fract(t / 2.4 + vnoise(q * 0.4) * 0.83) < 0.08) col *= 0.6; // (the strata's ledges)
     } else {
-      float inPool = smoothstep(4.0, 9.0, lakeAt(q));
-      vec3 floorc = mix(vec3(0.1, 0.22, 0.08), vec3(0.16, 0.3, 0.1), vnoise(q / 1.5)) * lit * 1.4 * dark;
+      float inPool = smoothstep(18.0, 26.0, lakeAt(q) + (vnoise(q / 9.0) - 0.5) * 10.0);
+      vec4 cv = cells(q / 3.5); vec3 floorc = mix(vec3(0.08, 0.2, 0.07), vec3(0.2, 0.36, 0.12), cv.z) * (cv.y - cv.x < 0.1 ? 0.6 : 1.0) * lit * 1.6 * dark; // (the jungle on its floor: crowns from above)
       vec3 pool = lakeGlint(vec3(0.02, 0.06, 0.06), R, 0.6) * 0.8;
       col = mix(floorc, pool, inPool);
     }
@@ -128,7 +128,7 @@ vec3 lakeWater(float L, float ld, vec2 p, vec2 px, vec3 c, vec3 lit, out float h
     col = lakeGlint(col, R, 0.5);
     vec4 v = cells(p / 2.3 + vec2(uTime * 0.01, 0.0));
     float r = 0.42 * (1.0 - smoothstep(1.0, 9.0, ld)) * step(0.3, v.z);
-    if (v.x < r) col = mix(vec3(0.7, 0.8, 0.86), vec3(0.85, 0.92, 0.96), step(0.6, fract(v.w * 0.5 + 0.3))) * lit * 1.6;
+    if (v.x < r) col = mix(vec3(0.62, 0.72, 0.8), vec3(0.8, 0.88, 0.94), step(0.6, fract(v.w * 0.5 + 0.3))) * lit * 1.15;
     else if (v.x < r + 0.07 && r > 0.0) col *= 0.55; // (its shadow in the water)
     return col;
   }

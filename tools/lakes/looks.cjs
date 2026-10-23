@@ -18,9 +18,10 @@ const server = http.createServer((req, res) => {
 });
 server.listen(0, "127.0.0.1", async () => {
   fs.mkdirSync(outDir, { recursive: true });
-  const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
-  const timings = {}, errors = [];
+  const tfile = path.join(outDir, "timings.json"), timings = fs.existsSync(tfile) ? JSON.parse(fs.readFileSync(tfile, "utf8")) : {}, errors = [];
   for (const look of list.split(",")) {
+    // (a browser a look: SwiftShader's memory isn't all given back by a closed page)
+    const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(`${look}: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`${look}: ${m.text().slice(0, 300)}`); });
@@ -55,10 +56,10 @@ server.listen(0, "127.0.0.1", async () => {
     const tf = await time();
     timings[look] = { ground: +tg.toFixed(1), treetops: +tt.toFixed(1), far: +tf.toFixed(1) };
     console.log(look, JSON.stringify(timings[look]), `lake at ${Math.round(at.lake.x)}, ${Math.round(at.lake.z)}`);
-    await page.close();
+    await browser.close();
+    fs.writeFileSync(tfile, JSON.stringify(timings, null, 1));
   }
-  fs.writeFileSync(path.join(outDir, "timings.json"), JSON.stringify(timings, null, 1));
   console.log(errors.length ? "errors:\n" + errors.slice(0, 6).join("\n") : "no page errors");
-  await browser.close(); server.close();
+  server.close();
   process.exit(errors.length ? 1 : 0);
 });
