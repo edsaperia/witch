@@ -51,7 +51,7 @@
   {
    "name": "Jungle",
    "biomes": ["jungle"],
-   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle"]
+   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle", "step-pyramid"]
   },
   {
    "name": "Mangrove swamp",
