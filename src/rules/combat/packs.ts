@@ -49,6 +49,8 @@ export interface PacksData {
   retreats: Record<string, { out: number; hide?: boolean | "half"; still?: boolean }>;
   kinds: Record<string, PackKind>;
   hers: { hold: number; stun: number };
+  /** The lull's prowl round her once at its place: near (m), step (radians ahead), pace (times its speed). */
+  prowl: { near: number; step: number; pace: number };
 }
 export const PACKS = raw as unknown as PacksData;
 /** A kind's pack entry, or null (it fights as before). */
@@ -101,6 +103,8 @@ export interface Directive {
   move: Move;
   /** Where to go instead of fighting (the lull's pattern, a hurt one keeping away, her pack holding), and whether it stands still. */
   slot?: { x: number; z: number }; still?: boolean;
+  /** A freeze (its retreat "freeze"): at its place it holds, hard to see, rather than prowling round her. */
+  freeze?: boolean;
 }
 
 // ---- Moves on the level's budget -------------------------------------------------------------------------------------------
@@ -331,7 +335,7 @@ export function stepPacks(s: CombatState, w: CombatWorld, pw: PackWorld = {}, da
       } else if (st!.phase === "lull" && !st!.hers) {
         const k = Math.min(1, (time - st!.at) / Math.max(0.1, st!.until - st!.at));
         d.slot = retreatSlot(K.retreat, st!, R2, m, i, n, p, k, time);
-        d.still = !!R2.still;
+        d.still = !!R2.still; d.freeze = K.retreat === "freeze" && !st!.lost;
         // Out of sight in the trees or underground for the lull's middle, back down from another side (rules here, drawing: not drawn).
         if ((R2.hide === true || (R2.hide === "half" && i % 2 === 0)) && !m.packHide && k > 0.3 && k < 0.5) { const a = st!.seed * Math.PI * 2 + Math.PI + (i / n) * Math.PI * 2, r = (R2.out * 0.8) * FIGHT.scale; m.packHide = { until: st!.until, tx: p.x + Math.cos(a) * r, tz: p.z + Math.sin(a) * r }; }
         if (K.retreat === "shell" && !m.packShell) m.packShell = Math.min(st!.until, time + 2); // (the snail: into its shell, untouchable 2 s)

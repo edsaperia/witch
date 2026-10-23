@@ -6,7 +6,7 @@ import { type Creature } from "../creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "../game";
 import { TUNING, withTuning } from "../tuning";
 import { PACKS, assignRoles, lullOf, packAttack, packKindOf, retreatSlot, strikingNow } from "./packs";
-import { profileOf } from "../movement";
+import { FIGHT, profileOf } from "../movement";
 import { COMBAT } from "./data";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -257,6 +257,42 @@ describe("a pack against her walking away (Ed's playtest, v3893)", () => {
 });
 
 // Ed, 2026-10-20 (pack combat on by default; its tests run with it on): three things the switch showed.
+describe("the lull is a retreat, not a halt (Ed's playtests, 2026-10-23: \"lulls between pack attacks seem to have the animals stand still instead of retreat\")", () => {
+  // Every kind whose retreat isn't meant to stand (the snail's shell, the badger's hold, the freezes: combat.md "into the trees and
+  // freeze, hard to see") backs off from her in its lull and keeps moving till it comes again; one out of sight (in the trees,
+  // underground, under water) isn't counted.
+  const standing = (k: string) => { const R = PACKS.retreats[PACKS.kinds[k].retreat]; return !!R.still || PACKS.kinds[k].retreat === "freeze"; };
+  it("every moving kind's members back off from her and keep moving through the lull", () => {
+    const bad: string[] = [];
+    for (const k of Object.keys(PACKS.kinds)) {
+      if (standing(k)) continue;
+      let steps = 0, still = 0, starts = 0, backed = 0, last = "";
+      const mv = profileOf(k)?.move, out = mv?.kind === "swoop" ? mv.radius ?? 0 : PACKS.retreats[PACKS.kinds[k].retreat].out; // (a wild flyer circles aloft at its swoop's own radius)
+      const away = out * FIGHT.scale * 0.8 * (PACKS.kinds[k].retreat === "leapfrog" ? 0.5 : 1); // (the leapfrog's near half falls back half as far)
+      const off = (d0: number, most = 0) => most > d0 + 1 || d0 >= away; // (backed off, or out there already: a shooter at range, a flyer aloft)
+      const startD = new Map<number, number>(), most = new Map<number, number>();
+      arena(`pack-${k}`, 30, g => {
+        const st = wildPack(g), W = g.witches[0].body;
+        if (!st) return;
+        if (st.phase === "lull" && last !== "lull") { for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; } startD.clear(); most.clear(); }
+        last = st.phase;
+        if (st.phase !== "lull") return;
+        for (const id of st.members) {
+          const c = g.creatures[id]; if (!c || c.packHide || c.burrow || c.leap || c.charge) continue;
+          const d = Math.hypot(c.x - W.x, c.z - W.z);
+          if (!startD.has(id)) startD.set(id, d); most.set(id, Math.max(most.get(id) ?? 0, d));
+          steps++; if (!c.moving) still++;
+        }
+      });
+      for (const [id, d0] of startD) { starts++; if (off(d0, most.get(id))) backed++; }
+      if (!steps) { bad.push(`${k}: no lull`); continue; }
+      if (still / steps > 0.1) bad.push(`${k}: standing ${(100 * still / steps).toFixed(0)}% of its lull`);
+      if (backed < starts * 0.6) bad.push(`${k}: ${backed} of ${starts} backed off`);
+    }
+    expect(bad).toEqual([]);
+  }, 300000);
+});
+
 describe("pack combat's fixes (Ed, 2026-10-20)", () => {
   const at = (id: number, x: number, z: number, hp?: number): Creature => ({ id, species: "boar", level: 1, x, z, hp }) as Creature;
 
