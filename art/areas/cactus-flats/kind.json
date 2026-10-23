@@ -1,8 +1,8 @@
 {
   "kind": "rattlesnake",
   "slot": 52,
-  "phase": 4,
-  "bearing": 125,
-  "dir": "SE",
+  "phase": 3,
+  "bearing": 146.25,
+  "dir": "SSE",
   "biome": "badlands"
 }

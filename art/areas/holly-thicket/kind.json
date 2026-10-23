@@ -2,7 +2,7 @@
   "kind": "spider",
   "slot": 25,
   "phase": 2,
-  "bearing": 135,
+  "bearing": 123.75,
   "dir": "SE",
-  "biome": "temperate"
+  "biome": "badlands"
 }

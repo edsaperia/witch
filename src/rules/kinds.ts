@@ -33,3 +33,8 @@ export function assembleKinds(lines: KindLine[]): Record<string, KindInfo> {
   return out;
 }
 export const KINDS_TABLE: Record<string, KindInfo> = assembleKinds(AREA_FOLDER_KINDS as KindLine[]);
+/** Each kind's slot (the table is assembled in slot order). */
+export const KIND_SLOTS: Record<string, number> = Object.fromEntries(Object.keys(KINDS_TABLE).map((k, i) => [k, i]));
+/** The classic map's kinds: the first 32 slots, today's 32 when the journey began (all introduced before phase 3 then). By slot,
+ *  not phase, since the roster moved some of them out to the biomes (Ed, 2026-10-23), so the classic map stays as it was. */
+export const CLASSIC_SLOTS = 32;

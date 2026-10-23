@@ -22,7 +22,8 @@ import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, KINDS, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { zooJunctions, zooPlan, type ZooPlan } from "./zoo";
 
 /** An area type: Ed's 30 are defined with their art in art/areas.js; config/area-types.json adds
@@ -83,10 +84,11 @@ export const HOME_LOOK = AREA_TYPES.length;
  *  check went red on every animal PR). 60 is what it was with the 60 area types of 2026-10-13, so nothing changed then. */
 export const HOME_SEED = 60;
 export const lookSeed = (look: number): number => (look === HOME_LOOK ? HOME_SEED : look);
-/** The area types a map without a roster deals (the classic map): the kinds introduced before phase 3. The journey's new kinds (phase
- *  3 on, area recipes added at the end of AREA_TYPES) come only through their islands' rosters, so adding one leaves every
- *  classic map as it was. */
-export const CLASSIC_TYPES: readonly number[] = AREA_TYPES.map((a, i) => ((KINDS[a.creature]?.phase ?? 0) < 3 ? i : -1)).filter(i => i >= 0);
+/** The area types a map without a roster deals (the classic map): the kinds in the table's first 32 slots (rules/kinds.ts
+ *  CLASSIC_SLOTS; introduced before phase 3 until the roster moved some to the biomes, Ed, 2026-10-23). The journey's new kinds
+ *  (later slots, area recipes added at the end of AREA_TYPES) come only through their islands' rosters, so adding one, or moving
+ *  one, leaves every classic map as it was. */
+export const CLASSIC_TYPES: readonly number[] = AREA_TYPES.map((a, i) => ((KIND_SLOTS[a.creature] ?? 0) < CLASSIC_SLOTS ? i : -1)).filter(i => i >= 0);
 const H_ = HOME_AREA as unknown as ArtArea;
 /** How the ground looks, by an area sample's `look`: the area types, then home's meadow. */
 export const LOOKS: readonly AreaType[] = [...AREA_TYPES, {

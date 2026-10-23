@@ -50,19 +50,18 @@ function hsv(h: number, s: number, v: number): [number, number, number] {
 type RGB = [number, number, number];
 /** A biome's land colours, as a map's terrain is painted (Ed, 2026-10-12: "natural land colours", "colour it themed by its
  *  biome"): its lowlands, uplands, rock and heights, its beach, and its forest (how the ground darkens where trees stand thick).
- *  By the kind's biome (config/kinds.json, by its island's direction: north cold, south hot, east rocky, west jungle, the
- *  diagonals between; today's 32 temperate). */
+ *  By the kind's biome (config/kinds.json, by its island's direction: north cold, south hot, east volcanic, west jungle, the
+ *  diagonals between; 16 temperate). */
 interface Palette { low: RGB; up: RGB; rock: RGB; peak: RGB; sand: RGB; forest: RGB }
 const PALETTES: Record<string, Palette> = {
   temperate: { low: hsv(0.27, 0.42, 0.5), up: hsv(0.2, 0.36, 0.46), rock: hsv(0.09, 0.18, 0.44), peak: hsv(0.1, 0.08, 0.62), sand: hsv(0.12, 0.32, 0.66), forest: hsv(0.33, 0.55, 0.3) },
   cold: { low: hsv(0.3, 0.16, 0.5), up: hsv(0.45, 0.1, 0.56), rock: hsv(0.6, 0.1, 0.48), peak: hsv(0.58, 0.04, 0.86), sand: hsv(0.1, 0.1, 0.62), forest: hsv(0.42, 0.35, 0.3) },
   hot: { low: hsv(0.11, 0.42, 0.66), up: hsv(0.08, 0.5, 0.58), rock: hsv(0.04, 0.45, 0.46), peak: hsv(0.09, 0.3, 0.7), sand: hsv(0.12, 0.3, 0.76), forest: hsv(0.2, 0.45, 0.38) },
-  rocky: { low: hsv(0.25, 0.14, 0.46), up: hsv(0.6, 0.1, 0.44), rock: hsv(0.62, 0.12, 0.36), peak: hsv(0.6, 0.06, 0.6), sand: hsv(0.1, 0.12, 0.58), forest: hsv(0.36, 0.3, 0.3) },
   jungle: { low: hsv(0.36, 0.62, 0.42), up: hsv(0.32, 0.58, 0.36), rock: hsv(0.25, 0.3, 0.3), peak: hsv(0.3, 0.25, 0.44), sand: hsv(0.13, 0.36, 0.66), forest: hsv(0.38, 0.75, 0.22) },
   "mountains and glaciers": { low: hsv(0.33, 0.22, 0.44), up: hsv(0.55, 0.12, 0.5), rock: hsv(0.6, 0.1, 0.42), peak: hsv(0.55, 0.06, 0.92), sand: hsv(0.1, 0.1, 0.6), forest: hsv(0.4, 0.4, 0.28) },
   "mangrove swamp": { low: hsv(0.24, 0.42, 0.38), up: hsv(0.2, 0.36, 0.36), rock: hsv(0.12, 0.26, 0.34), peak: hsv(0.15, 0.2, 0.46), sand: hsv(0.12, 0.3, 0.5), forest: hsv(0.3, 0.6, 0.22) },
   "cold rainforest": { low: hsv(0.4, 0.42, 0.36), up: hsv(0.42, 0.32, 0.38), rock: hsv(0.55, 0.12, 0.38), peak: hsv(0.55, 0.06, 0.7), sand: hsv(0.1, 0.14, 0.56), forest: hsv(0.42, 0.6, 0.2) },
-  volcanic: { low: hsv(0.05, 0.2, 0.26), up: hsv(0.03, 0.18, 0.2), rock: hsv(0.62, 0.08, 0.16), peak: hsv(0.04, 0.75, 0.62), sand: hsv(0.08, 0.12, 0.34), forest: hsv(0.3, 0.45, 0.24) }, // (an island tagged volcanic, the stegosaurus's: black basalt and ash, a glowing peak; Ed, 2026-10-13)
+  volcanic: { low: hsv(0.05, 0.2, 0.26), up: hsv(0.03, 0.18, 0.2), rock: hsv(0.62, 0.08, 0.16), peak: hsv(0.04, 0.75, 0.62), sand: hsv(0.08, 0.12, 0.34), forest: hsv(0.3, 0.45, 0.24) }, // (black basalt and ash, a glowing peak: the stegosaurus's island first, Ed, 2026-10-13; every east island since, Ed, 2026-10-23)
   badlands: { low: hsv(0.07, 0.4, 0.56), up: hsv(0.04, 0.45, 0.48), rock: hsv(0.02, 0.4, 0.38), peak: hsv(0.06, 0.25, 0.6), sand: hsv(0.1, 0.3, 0.68), forest: hsv(0.18, 0.4, 0.34) },
 };
 // What a biome's lakes become, and an island's biomes by its bearing: rules/lakeLooks.ts (the game's lakes take the same).

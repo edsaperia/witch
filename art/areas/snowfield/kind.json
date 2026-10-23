@@ -2,7 +2,7 @@
   "kind": "arcticfox",
   "slot": 32,
   "phase": 3,
-  "bearing": 12,
-  "dir": "NNE",
+  "bearing": 348.75,
+  "dir": "N",
   "biome": "cold"
 }

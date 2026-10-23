@@ -39,8 +39,8 @@
    "areas": ["heath", "moor", "cave-mouth", "ravine", "log-pile", "meadow", "stone-shrine", "rocky-slope", "grassland"]
   },
   {
-   "name": "Badlands & rocky",
-   "biomes": ["badlands", "rocky", "volcanic"],
+   "name": "Badlands & volcanic",
+   "biomes": ["badlands", "volcanic"],
    "areas": ["red-canyon", "cactus-flats", "scrub-wash", "warren", "dragon-scrub"]
   },
   {
