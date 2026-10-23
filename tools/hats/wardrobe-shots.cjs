@@ -37,20 +37,8 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.waitForTimeout(800);
     Object.assign(out, await page.evaluate(() => ({ hat: window.witch.game.spells.hat, wearing: !window.witch.game.witches[0].hat.down, left: window.witch.game.witches[0].hat.left.map(q => q.spell) })));
     await page.screenshot({ path: path.join(outDir, "hats.png") });
-    await stand(at("broomStand"), 0.8);
-    await page.waitForTimeout(1500);
-    await page.keyboard.press("KeyE");
-    await page.waitForSelector('#creator button[data-exit]', { state: "visible", timeout: 60000 });
-    out.tabs = await page.evaluate(() => [...document.querySelectorAll("#creator [data-tab]")].map(b => b.dataset.tab));
-    await page.selectOption('#creator select[data-spell="broom"]', "speed");
-    out.timeScale = await page.evaluate(() => window.witch.game.timeScale);
-    await page.waitForTimeout(800);
-    await page.screenshot({ path: path.join(outDir, "room.png") });
-    await page.click('#creator button[data-exit]');
-    await page.waitForTimeout(1500);
-    Object.assign(out, await page.evaluate(() => ({ broom: window.witch.game.spells.broom, open: document.getElementById("creator").style.display, perch: !!window.witch.game.witch.perch })));
-    await page.screenshot({ path: path.join(outDir, "back.png") });
+    // (the broom stand and its room are gone: the Workshop's stations, tools/workshop/shots.cjs)
   } finally { await browser.close(); server.close(); }
   console.log(JSON.stringify({ ...out, errors }));
-  if (errors.length || out.hat === "helmet" || !out.wearing || out.left.join() !== "helmet" || out.tabs.join() !== "broom" || out.broom !== "speed" || out.open !== "none") process.exit(1);
+  if (errors.length || out.hat === "helmet" || !out.wearing || out.left.join() !== "helmet") process.exit(1);
 })();

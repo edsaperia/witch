@@ -21,14 +21,13 @@ const at = (g: Game, x: number, z: number) => { g.witch = { ...g.witch, x, z, vx
 const press = (g: Game) => { stepGame(g, { ...C, place: true }, 1 / 60); stepGame(g, C, 1 / 60); };
 const spot = (g: Game) => ({ x: g.map.dancefloor.x + 40, z: g.map.dancefloor.z + 40 });
 
-describe("changing her hat and broom mid-night", () => {
+describe("changing her hat mid-night", () => {
   it("takes at once; a hat lying in the world stays there with its spell, and she wears the new one", () => {
-    const g = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "cyclone", broom: "none" } }), W = g.witches[0];
+    const g = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "cyclone" } }), W = g.witches[0];
     W.hat.down = { x: 10, z: 10, at: 0 };
-    changeLoadout(W, "cyclone", "speed");
-    expect(W.spells.broom).toBe("speed");
+    changeLoadout(W, "cyclone");
     expect(W.hat.down).not.toBeNull(); // (the same hat: still lying there, and she's still bare-headed)
-    changeLoadout(W, "healing", "speed");
+    changeLoadout(W, "healing");
     expect(W.spells.hat).toBe("healing");
     expect(wearing(W.hat)).toBe(true); // (a new one on her head)
     expect(W.hat.left).toEqual([{ x: 10, z: 10, at: 0, spell: "cyclone" }]); // (the old one where it lay)
@@ -36,12 +35,12 @@ describe("changing her hat and broom mid-night", () => {
   });
 
   it("out of her room with the same hat, she has a new one on too; several can lie about at once", () => {
-    const g = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "sentry", broom: "none" } }), W = g.witches[0];
+    const g = newGame(123, { ...TUNING, spells: { ...TUNING.spells, hat: "sentry" } }), W = g.witches[0];
     W.hat.down = { x: 10, z: 10, at: 0 };
     newHatFromRoom(W);
     expect(wearing(W.hat)).toBe(true);
     W.hat.down = { x: 50, z: 10, at: 1 };
-    changeLoadout(W, "bramble", "none");
+    changeLoadout(W, "bramble");
     expect(W.hat.left.map(q => q.spell)).toEqual(["sentry", "sentry"]);
     expect(hatsDown(W).length).toBe(2);
     // a pointer to each (Ed, 2026-10-12: "If there are multiple hats on the ground, they each get a pointer")
@@ -54,7 +53,7 @@ describe("her hats left in the world", () => {
   it("keep working: a Bramble hat left lying still slows the wild round it", () => {
     const g = game({ ...TUNING, spells: { ...TUNING.spells, hat: "bramble" } }), W = g.witches[0], p = spot(g);
     W.hat.down = { x: p.x, z: p.z, at: g.clock.time };
-    changeLoadout(W, "healing", W.spells.broom);
+    changeLoadout(W, "healing");
     const c = g.creatures.find(k => !k.gone && !k.leashed && !k.boss && !k.enraged && !k.circle && k.level < 3)!;
     Object.assign(c, { x: p.x + 5, z: p.z, tx: p.x + 5, tz: p.z, rest: 99 });
     at(g, p.x + 200, p.z);
@@ -65,7 +64,7 @@ describe("her hats left in the world", () => {
   it("she can't pick one up wearing a hat; bare-headed she puts it on, its spell hers, and her own stays where it lay", () => {
     const g = game({ ...TUNING, spells: { ...TUNING.spells, hat: "cyclone" } }), W = g.witches[0], p = spot(g);
     W.hat.down = { x: p.x, z: p.z, at: g.clock.time };
-    changeLoadout(W, "healing", W.spells.broom); // (the Cyclone hat left at p; a Healing one on her head)
+    changeLoadout(W, "healing"); // (the Cyclone hat left at p; a Healing one on her head)
     at(g, p.x, p.z);
     press(g);
     expect(W.spells.hat).toBe("healing"); // (wearing one: she can't)

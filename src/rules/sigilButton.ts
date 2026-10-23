@@ -74,7 +74,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   const hatPress = !!c.hat && onFoot;
   const worn = (sigil || place || hatPress) && g.witch.mode === "ground" ? hatButton(W.hat, g.witch.x, g.witch.z, t.leash.runeRadius, W.spells.hat) : null;
   if (worn !== null) {
-    if (worn !== W.spells.hat) setLoadout(W.spells, worn, W.spells.broom);
+    if (worn !== W.spells.hat) setLoadout(W.spells, worn);
     sigil = false; place = false;
     relicEvents.push({ kind: "hatPicked", id: W.id, x: g.witch.x, z: g.witch.z, at: ht }); // (after the leash's step, which starts its events afresh)
   } else if (hatPress && wearing(W.hat)) {
@@ -82,7 +82,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     relicEvents.push({ kind: "hatPut", id: W.id, x: g.witch.x, z: g.witch.z, at: ht });
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
-  // takes what's in it, hers at once (a broom part onto her broom if its slot is empty: the kind's claim).
+  // takes what's in it, hers at once (the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
   const trunk = (sigil || place) && onFoot && !g.partyOver ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null;
   if (trunk) {
     trunk.found = true; sigil = false; place = false;

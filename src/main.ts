@@ -35,18 +35,18 @@ import type { BotTag } from "./ui/botGame";
 import { pleasingWitch } from "./ui/looks";
 import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
-import { castable, hatSpell } from "./rules/spells";
+import { castable, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout, newHatFromRoom } from "./rules/hatSpells";
 import { HOUSE_ROOMS } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
 import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
-import { migrateBroom } from "./app/broomSave";
+import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { foundAll, keepFound, type FindsCtx } from "./app/finds";
 import { FindsPanel } from "./ui/findsPanel";
-import { StationPanel } from "./ui/stationPanel";
+import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { TelescopeView, integratedGpu } from "./app/telescope";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
@@ -144,6 +144,7 @@ const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: pr
 const wearHat = (g: unknown) => wear(N().game, g);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 loadTimes.view = performance.now();
+view.partsFound = new Set(loadBroom().found); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
 performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
 void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
@@ -301,8 +302,8 @@ const creator = new Creator(style, savedLook, bootTuning.pixelSize);
 creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev"; // (its version, top left: Ed, 2026-10-13)
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat and broom spells (rules/spells.ts, app/loadout.ts): the creator's Hat and Broom boxes choose them, kept on this browser.
-creator.loadout = { hat: N().game.spells.hat, broom: N().game.spells.broom }; creator.hats = N().game.spells.hats;
-creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat, l.broom); saveLoadout({ hat: game.spells.hat, broom: game.spells.broom }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
+creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house.json), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -327,7 +328,11 @@ stations.onLook = g => {
   showLook();
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
-stations.onPower = b => { const { game } = N(); creator.loadout = { hat: game.spells.hat, broom: b }; creator.onLoadout(creator.loadout); };
+// The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
+// and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
+stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(f); };
+/** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: new Set(loadBroom().found), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
@@ -551,7 +556,8 @@ function spawnHere(kind: FindKindId | null, item: string | null): string {
   Object.assign(g.trunk, { x: at.x, z: at.z, cell: [c[0], c[1]] });
   return `tonight's ${g.trunk.kind} ${g.trunk.item} moved next to her`;
 }
-const findsPanel = new FindsPanel(findsCtx, spawnHere);
+// (it redraws after each give or take, asking again: the pegboard's parts kept up with it)
+const findsPanel = new FindsPanel(() => { view.partsFound = new Set(loadBroom().found); return findsCtx(); }, spawnHere);
 document.getElementById("finds-dev-btn")?.addEventListener("click", () => findsPanel.toggle());
 const devFinds = new URLSearchParams(location.search).get("dev") === "finds";
 if (devFinds) findsPanel.toggle(true);
@@ -765,7 +771,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  creator.loadout = { hat: n.game.spells.hat, broom: n.game.spells.broom }; creator.hats = n.game.spells.hats;
+  creator.loadout = { hat: n.game.spells.hat }; creator.hats = n.game.spells.hats;
   lastDraw = 0;
   await view.prepare();
   n.flags.ready = true;
@@ -837,7 +843,8 @@ function frame(now: number): void {
   if (game.trunk && game.trunk.item === null) fillTrunk(game, foundAll(findsCtx()));
   for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
     keepFound(findsCtx(), "part", e.obj);
-    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj}${game.spells.parts[partById(e.obj)?.slot ?? "tip"] === e.obj ? " · on her broom" : ""}`);
+    view.partsFound = new Set(loadBroom().found); // (hers, not fitted: it waits at the Workshop, the bay to fit it)
+    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`);
   } else if (e.kind === "found" && e.obj && e.find === "hat") {
     keepFound(findsCtx(), "hat", e.obj); // (hers for good; the rules laid it on the hats' floor: rules/houseRooms.ts addFloorHat)
     hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`);
@@ -853,7 +860,7 @@ function frame(now: number): void {
   }
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
-  if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.spells.broom, game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : ""); }
+  if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
   // The telescope by nearness (as the tables): up as she comes to it, shut once she walks off, till she's left it.

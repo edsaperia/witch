@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
 import { newGame, stepGame, type Controls, type Game } from "../rules/game";
 import { FIND_KINDS, FINDABLE, fillTrunk, type FindKindId } from "../rules/finds";
-import { loadBroom } from "./broomSave";
+import { fitBroom, loadBroom } from "./broomSave";
+import { setParts } from "../rules/spells";
 import { loadOwned } from "./owned";
 import { KEEPERS, applyOwn, dropFind, grantAll, grantFind, keepFound, ownWanted, type FindsCtx } from "./finds";
 
@@ -49,13 +50,14 @@ describe("a find given through the dev control is a find found", () => {
     expect({ saves: saves(), spells: spellsOf(b) }).toEqual(found);
     expect(KEEPERS[kind].has(ctxOf(b)).has(item)).toBe(true);
   });
-  it("completing a set by grants gives its spell, as finding its parts does (the Pile driver: ladder and nozzles, Ground pound)", () => {
+  it("granting a set's parts keeps them as finding them does: found, not fitted (the Workshop's bay fits them), so no spell yet", () => {
     const a = night("part", "ladder");
     findIt(a);
     a.trunk!.found = false; a.trunk!.item = "nozzles";
     findIt(a);
     const found = { saves: saves(), spells: spellsOf(a) };
-    expect(found.spells.broom).toBe("pound");
+    expect(found.spells.broom).toBe("none");
+    expect(loadBroom().found.sort()).toEqual(["ladder", "nozzles"]);
     store.clear();
     const b = newGame(123, TUNING);
     for (const p of ["ladder", "nozzles"]) grantFind(ctxOf(b), "part", p);
@@ -71,8 +73,11 @@ describe("the dev control's other buttons", () => {
     const g = newGame(123, TUNING), c = ctxOf(g);
     grantAll(c, "part", true);
     expect([...KEEPERS.part.has(c)].sort()).toEqual([...FIND_KINDS.find(k => k.id === "part")!.items].sort());
-    const fitted = Object.values(g.witches[0].spells.parts).filter(Boolean) as string[];
-    expect(fitted.length).toBeGreaterThan(0);
+    // (granted is found, not fitted: fit one as the bay does)
+    expect(Object.values(g.witches[0].spells.parts).filter(Boolean)).toEqual([]);
+    setParts(g.witches[0].spells, { ...g.witches[0].spells.parts, exhaust: "nozzles" }); fitBroom(g.witches[0].spells.parts);
+    const fitted = ["nozzles"];
+    expect(loadBroom().fitted.exhaust).toBe("nozzles");
     dropFind(c, "part", fitted[0]);
     expect(Object.values(g.witches[0].spells.parts)).not.toContain(fitted[0]);
     expect(Object.values(loadBroom().fitted)).not.toContain(fitted[0]);
@@ -99,7 +104,7 @@ describe("?own=", () => {
     expect(loadBroom().found.length).toBe(FIND_KINDS.find(k => k.id === "part")!.items.length);
     applyOwn("none,part:nozzles");
     expect(loadBroom().found).toEqual(["nozzles"]);
-    expect(loadBroom().fitted.exhaust).toBe("nozzles");
+    expect(loadBroom().fitted.exhaust).toBeNull(); // (found, not fitted: the bay fits it)
     expect(FINDABLE.some(i => loadOwned(null).has(i.id))).toBe(false);
   });
 });

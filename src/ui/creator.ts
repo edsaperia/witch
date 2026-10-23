@@ -18,7 +18,7 @@ import { SpellScroll, type SpellCue } from "./spellScroll";
 import { KeyHint } from "./keyHint";
 import { installPixelUi, noEmoji, pixelIcon, pixelTitle, tapestry } from "./pixelUi";
 import { button, h } from "./dom";
-import { BROOM_SPELLS, HAT_SPELLS, ownsHat } from "../rules/spells";
+import { HAT_SPELLS, ownsHat } from "../rules/spells";
 import { HAT_ICONS } from "../render/hatIcons";
 import { runSliced, type Steps } from "../render/slices";
 
@@ -63,7 +63,7 @@ export const BOXES: { id: string; name: string; axes: string[]; wear: string[]; 
   { id: "face", name: "🙂 Face", axes: [], wear: ["shades"], parts: ["skin"] },
   { id: "outfit", name: "🧥 Outfit", axes: ["top", "cloak", "cloakLength"], wear: ["patches", "pendant"], parts: ["jacket", "cloak", "top", "jeans"] },
   { id: "shoes", name: "👟 Shoes", axes: [], wear: ["chunky"], parts: ["sneakers"] },
-  { id: "broom", name: "🧹 Broom", axes: ["broom", "broomLength", "broomThickness", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] },
+  { id: "broom", name: "🧹 Broom", axes: ["broomLength", "broomThickness", "broomBend", "bristles"], wear: [], parts: ["broom", "bristles"] }, // (Classic only, no power: its parts and their set's spell are the Workshop's, Ed 2026-10-23)
   { id: "scarf", name: "🧣 Scarf", axes: ["scarfLength"], wear: ["scarf"], parts: ["scarf"] },
   { id: "bag", name: "👜 Bag", axes: ["bagSize"], wear: ["satchel", "bumbag"], parts: ["satchel"] },
   { id: "backpack", name: "🎒 Backpack", axes: ["backpackSize"], wear: [], parts: ["backpack"] },
@@ -211,10 +211,10 @@ export class Creator {
   onStart: (g: Genome) => void = () => {};
   /** Her hat's and broom's spells (rules/spells.ts; Ed, 2026-10-11: chosen "as they are picked now", in the Hat and Broom boxes;
    *  their shape and colour stay on the sliders), and a callback when she changes one. */
-  loadout: { hat: string; broom: string } = { hat: "none", broom: "none" };
+  loadout: { hat: string } = { hat: "none" };
   /** The spell hats she owns (rules/spells.ts SpellState.hats; absent, every one): the Hat box offers only these (Ed, 2026-10-23: hats are found). */
   hats?: string[];
-  onLoadout: (l: { hat: string; broom: string }) => void = () => {};
+  onLoadout: (l: { hat: string }) => void = () => {};
   /** Called on the scroll's click itself (a gesture: the sound can start). */
   onGesture: () => void = () => {};
   /** The party spell's scroll's sound cues (platform/audio/spell.ts). */
@@ -355,13 +355,14 @@ export class Creator {
   /** Her look as a station's panel changed it (ui/stationPanel.ts): this room shows it next time it opens. */
   adopt(g: unknown): void { this.g = upgrade(clone(g)); this.build(); this.dirty = true; }
 
-  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
+  private randomise(): void { this.g = upgrade(pleasingWitch(Math.floor(Math.random() * 1e9))); this.g.palette = snapPalette(this.g.palette); this.g.broom.kind = "classic"; this.build(); this.dirty = true; } // a witch in a palette that goes together (ui/looks.ts)
   /** Wild: every axis anywhere in its (wide) limits, every accessory a coin toss, every colour any swatch. */
   private wild(): void {
     const R = Math.random, g = upgrade(CLASSIC), any = <T>(a: T[]) => a[Math.floor(R() * a.length)];
     for (const [axis, lim] of Object.entries(AXES)) { const [part, key] = slot(axis), v = typeof lim[0] === "string" ? any(lim as string[]) : (lim[0] as number) + ((lim[1] as number) - (lim[0] as number)) * R(); if (part) (g[part] as Record<string, unknown>)[key] = v; else g[key] = v; }
     for (const k of Object.keys(g.accessories)) g.accessories[k] = R() < .5;
     g.palette = Object.fromEntries(PARTS.map(p => [p, swatchAt(Math.floor(R() * GRID_COLS), Math.floor(R() * GRID_ROWS))]));
+    g.broom.kind = "classic"; // (brooms are the Workshop's parts: the Classic is the bare broom's look)
     this.g = g; this.build(); this.dirty = true;
   }
   /** With no hat, the hat's sliders are greyed (they keep their places for when a hat goes back on). */
@@ -413,7 +414,8 @@ export class Creator {
     const pal = () => ({ ...classicPalette(this.style), ...g.palette }), cur = (part: string) => pal()[part] ?? [.07, .5, .45];
     const O = this.only, keep = (kind: "axes" | "wear" | "parts", k: string) => !O || O[kind].includes(k);
     for (const B of BOXES) {
-      const axes = Object.keys(AXES).filter(a => boxOf("axes", a) === B.id && keep("axes", a)), wear = accs.filter(k => boxOf("wear", k) === B.id && keep("wear", k)), parts = PARTS.filter(k => boxOf("parts", k) === B.id && keep("parts", k));
+      // (no broom shapes: brooms are the Workshop's parts, Ed 2026-10-23; the Classic look the bare broom's)
+      const axes = Object.keys(AXES).filter(a => a !== "broom" && boxOf("axes", a) === B.id && keep("axes", a)), wear = accs.filter(k => boxOf("wear", k) === B.id && keep("wear", k)), parts = PARTS.filter(k => boxOf("parts", k) === B.id && keep("parts", k));
       if (!axes.length && !wear.length && !parts.length) continue;
       const body = box(B.id, B.name);
       // its toggles first (what it is, worn or not), then its sliders and pickers
@@ -426,7 +428,7 @@ export class Creator {
           ar.append(h("label", { style: { display: "inline-flex", alignItems: "center", gap: "3px", marginRight: "8px", cursor: "pointer" } }, c, WEAR_NAMES[k] ?? label(k)));
         }
       }
-      if ((B.id === "hat" || B.id === "broom") && (!O || O.spell === B.id)) this.spellRow(body, B.id, row);
+      if (B.id === "hat" && (!O || O.spell === "hat")) this.spellRow(body, "hat", row); // (a hat's power; a broom's is its parts' set: the Workshop's bay)
       for (const axis of axes) this.axisRow(body, axis, row, get, set);
       if (parts.length) this.picker(body, B.id, parts, row, pal, cur);
     }
@@ -442,18 +444,18 @@ export class Creator {
   }
 
   /** An axis's row in its box: a button per choice, or a slider. */
-  /** The Hat or Broom box's power (rules/spells.ts; Ed, 2026-10-12: "for now it can just be a dropdown", the item's look and its
-   *  power chosen apart till they're matched): a dropdown of the built ones, "none" first, the chosen one's icon beside it
-   *  (render/hatIcons.ts) and its line under it. */
-  private spellRow(body: HTMLElement, slot: "hat" | "broom", row: (p: HTMLElement, n: string) => HTMLElement): void {
-    const r = row(body, "Power"), list = (slot === "hat" ? HAT_SPELLS : BROOM_SPELLS).filter(x => x.built && (slot !== "hat" || ownsHat({ hats: this.hats }, x.id))), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
+  /** The Hat box's power (rules/spells.ts; Ed, 2026-10-12: "for now it can just be a dropdown", the item's look and its power
+   *  chosen apart till they're matched): a dropdown of the built ones, "none" first, the chosen one's icon beside it
+   *  (render/hatIcons.ts) and its line under it. (The broom's spell is its parts' set: the Workshop, Ed 2026-10-23.) */
+  private spellRow(body: HTMLElement, slot: "hat", row: (p: HTMLElement, n: string) => HTMLElement): void {
+    const r = row(body, "Power"), list = HAT_SPELLS.filter(x => x.built && ownsHat({ hats: this.hats }, x.id)), say = h("div", { style: { margin: "0 0 6px 84px", opacity: ".8", fontSize: "12px" } });
     const pick = document.createElement("select"), icon = h("span", { style: { display: "inline-flex", width: "13px", height: "13px", marginLeft: "6px" } });
     pick.dataset.spell = slot;
     Object.assign(pick.style, { font: "inherit", color: "inherit", background: "rgba(255,255,255,.08)", border: "1px solid rgba(232,226,244,.3)", borderRadius: "4px", padding: "2px 4px", cursor: "pointer" });
     for (const x of list) { const o = document.createElement("option"); o.value = x.id; o.textContent = x.id === "none" ? "none" : x.name; o.title = x.line; o.style.background = "#1d1430"; pick.append(o); }
     const paint = () => {
       pick.value = this.loadout[slot];
-      const x = list.find(q => q.id === this.loadout[slot]), glyph = slot === "hat" ? HAT_ICONS[this.loadout[slot]] : undefined;
+      const x = list.find(q => q.id === this.loadout[slot]), glyph = HAT_ICONS[this.loadout[slot]];
       say.textContent = x?.line ?? "";
       icon.replaceChildren(...(glyph ? [spellIcon(glyph)] : []));
     };

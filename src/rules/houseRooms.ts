@@ -165,11 +165,11 @@ export function useHats(W: Witch, at: At, x: number, z: number, time: number, ra
     const took = hats[pick], worn = wearing(W.hat);
     if (!worn) leaveHat(W.hat, W.spells.hat);
     hats[pick] = worn && W.spells.hat !== "none" ? W.spells.hat : "";
-    setLoadout(W.spells, took, W.spells.broom);
+    setLoadout(W.spells, took);
     return { kind: "hatPicked", id: W.id, x: slots[pick].x, z: slots[pick].z, at: time };
   }
   const own = hatButton(W.hat, x, z, radius, W.spells.hat);
-  if (own !== null) { if (own !== W.spells.hat) setLoadout(W.spells, own, W.spells.broom); return { kind: "hatPicked", id: W.id, x, z, at: time }; }
+  if (own !== null) { if (own !== W.spells.hat) setLoadout(W.spells, own); return { kind: "hatPicked", id: W.id, x, z, at: time }; }
   if (!wearing(W.hat)) return null;
   W.hat.down = { x, z, at: time }; delete W.hat.hold;
   return { kind: "hatPut", id: W.id, x, z, at: time };

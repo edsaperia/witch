@@ -41,7 +41,7 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
     drop: (c, id) => {
       try { localStorage.setItem(HATS_KEY, JSON.stringify(loadHats().filter(h => h !== id))); } catch { /* storage blocked: this run only */ }
       const s = c.spells; if (s.hats) s.hats = s.hats.filter(h => h !== id);
-      if (s.hat === id) setLoadout(s as SpellState, "none", s.broom); // (off her if she wears it)
+      if (s.hat === id) setLoadout(s as SpellState, "none"); // (off her if she wears it)
     },
   },
   // (the bags are wardrobe items, kept in witch.owned as the wearables are)
@@ -54,7 +54,7 @@ export const KEEPERS: Record<FindKindId, Keeper> = {
   part: {
     label: id => partById(id)?.name ?? id,
     has: () => new Set(loadBroom().found),
-    keep: (c, id) => { partFound(id, c.spells.parts); },
+    keep: (_c, id) => { partFound(id); }, // (hers, not fitted: the Workshop's bay fits it)
     drop: (c, id) => {
       const b = loadBroom(), slot = partById(id)?.slot;
       b.found = b.found.filter(p => p !== id);
@@ -99,7 +99,7 @@ export function ownWanted(spec: string): { none: boolean; grants: { kind: FindKi
 }
 
 /** ?own= at load, before the night reads the saves (app/linkParams.ts): written to this browser's saves, as the dev control
- *  writes them (none first: "none,part:x" leaves only that). Her broom's fitted parts change as a find's claim fits them. */
+ *  writes them (none first: "none,part:x" leaves only that). A part given is found, not fitted (the Workshop's bay fits it). */
 export function applyOwn(spec: string): void {
   const { none, grants } = ownWanted(spec);
   const b = loadBroom(), spells = { parts: b.fitted, broom: spellOfParts(b.fitted), activeUntil: -Infinity, readyAt: 0, castAt: -Infinity };

@@ -38,9 +38,9 @@ server.listen(0, "127.0.0.1", async () => {
     }, AREA);
     console.log(biome, JSON.stringify(spot), JSON.stringify(await step(120)));
     await page.waitForTimeout(2500); await step(2);
-    await page.screenshot({ path: path.join(outDir, `${name}-ground.png`) });
+    await page.screenshot({ path: path.join(outDir, `${name}-ground.png`), timeout: 300000 });
     await step(1, { toggleMode: true }); await step(200); await page.waitForTimeout(2500); await step(2);
-    await page.screenshot({ path: path.join(outDir, `${name}-treetops.png`) });
+    await page.screenshot({ path: path.join(outDir, `${name}-treetops.png`), timeout: 300000 }); // (the software renderer can take minutes over a heavy shot)
     await browser.close();
   }
   console.log(errors.length ? "errors:\n" + errors.slice(0, 6).join("\n") : "no page errors");

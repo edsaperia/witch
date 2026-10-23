@@ -714,7 +714,7 @@ async function main() {
     check(r.top > Math.max(100, full * 0.9), `boosting over the treetops with the Speed broom goes over 100 m/s and near its full ${full.toFixed(0)} (${r.top.toFixed(0)} m/s)`);
     check(r.p99 <= 22, `boosting over the treetops, 99% of frames' own work is within 22 ms (p99 ${r.p99.toFixed(1)} ms)`, "boost-p99");
     check(r.worst <= 40, `boosting over the treetops, no frame's own work takes over 40 ms (worst ${r.worst.toFixed(1)} ms)`, "boost-worst");
-  }, "&debug&broom=speed");
+  }, "&debug&parts=missile,fairing,nozzles");
 
   // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
   // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full

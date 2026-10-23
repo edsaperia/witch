@@ -258,7 +258,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   /** A party animal: an invited creature in its party gear (seeded by its id: collar in its sigil colour, maybe a hat, sunglasses, shoes). */
   | { kind: "party"; id: string; species: string; seed: number; /** the collar's colour; null: no collar (happy, issue #87) */ colour: number[] | null; style: Style }
   /** Every decoration (ruins in both conditions, rocks, freak trees), split as trees are. */
-  | { kind: "decor"; id: string; style: Style }
+  | { kind: "decor"; id: string; style: Style; /** the island's biome key (its look over the rocks, ruins and freak trees); id is the same, or "all" */ biome?: string }
   /** The beach's edge of the woods (render/beach.ts): palms (split as trees are), beach shrubs and grass clumps, each with its sway mask. */
   | { kind: "beachEdge"; id: string; style: Style; K: number }
   /** The biome lakes' shore dressing (render/lakeShore.ts, art/lakeShore.js): each kind's pieces (rules/lakeShore.ts ShoreKind). */
@@ -505,8 +505,10 @@ function lakeShoreSprites(st: Style, K: number, mk: MakeCanvas, biome?: string):
   return { sprites, shore };
 }
 
-function decorSprites(st: Style, mk: MakeCanvas): { sprites: Baked[]; decor: DecorPiece[] } {
-  const sprites: Baked[] = [], decor: DecorPiece[] = [], colours = Art.decorColours(st);
+function decorSprites(st: Style, mk: MakeCanvas, biome?: string): { sprites: Baked[]; decor: DecorPiece[] } {
+  const look = biome ? biomeLook(biome) : null, colours = Art.decorColours(st) as Record<number, number[]>; // (the island's biome: its stone, leaves and wood; art/flora/biomes.js)
+  if (look) biomeColours(colours, look, Art.M, { flower: false, stone: true });
+  const sprites: Baked[] = [], decor: DecorPiece[] = [];
   const empty = (sp: { m: ArrayLike<number> }) => { for (let i = 0; i < sp.m.length; i++) if (sp.m[i]) return false; return true; };
   for (const d of Art.DECOR as { id: string; family: string; variants: number }[])
     for (let v = 0; v < d.variants; v++) {
@@ -622,7 +624,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "pathPieces") { const { sprites, pieces } = pathPieceSprites(job.style, mk); return { px: packPixels(sprites, 2048), pieces }; }
   if (job.kind === "scenes") { const { sprites, scenes } = sceneSprites(job.style, mk); return { px: packPixels(sprites, 2048), scenes }; }
   if (job.kind === "speakers") { const { sprites, speakers } = speakerSprites(job.style, mk, job.stone); return { px: packPixels(sprites, 2048), speakers }; }
-  if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk); return { px: packPixels(sprites, 2048), decor }; }
+  if (job.kind === "decor") { const { sprites, decor } = decorSprites(job.style, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), decor }; }
   if (job.kind === "beachEdge") { const { sprites, beach } = beachEdgeSprites(job.style, job.K, mk); return { px: packPixels(sprites, 2048), beachEdge: beach }; }
   if (job.kind === "lakeShore") { const { sprites, shore } = lakeShoreSprites(job.style, job.K, mk, job.style.biome ?? job.biome); return { px: packPixels(sprites, 2048), lakeShore: shore }; }
   // (enraged: red eyes and the angry face; dressed up: the happy face; art/genome/expressions.js)

@@ -1,7 +1,7 @@
 // Things to wear found in the forest (Ed, 2026-10-21, the station menus' part (b): "The items are found in the forest like other
 // permanent upgrades. Hints are given by the crystal ball"; his answers on the proposal, the same day): each night the island
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
-// come from the garage's parts, docs/backlog/unlocks.md), in an old travel trunk half-sunk in a wild area's woods, under the
+// come from the Workshop's parts, docs/backlog/workshop.md), in an old travel trunk half-sunk in a wild area's woods, under the
 // canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers at once (the
 // "found" leash event; app/owned.ts keeps it, even if the night's then lost). Its hint is written in the stars (Ed, 2026-10-22):
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
@@ -26,8 +26,8 @@ import type { Plant } from "./forest";
 import { canopyOver, type Relic } from "./legends";
 import { hash2 } from "./random";
 import { ITEMS, SHELVES, type WardrobeItem } from "./wardrobe";
-import { PART_IDS, fitPart, partById } from "./broomParts";
-import { HAT_SPELLS, setParts, type SpellState } from "./spells";
+import { PART_IDS } from "./broomParts";
+import { HAT_SPELLS, type SpellState } from "./spells";
 import { deckOf, onFloor } from "./treehouse";
 import type { Game } from "./game";
 
@@ -47,7 +47,7 @@ export const BAG_ITEMS: readonly string[] = [...SHELVES.bag.items, ...SHELVES.ba
 export const HAT_FINDS: readonly string[] = HAT_SPELLS.filter(s => s.built && s.id !== "none").map(s => s.id);
 /** The wearables a trunk can hold: everything not hers from the start, but the brooms (Ed, 2026-10-21: "Brooms are made of
  *  three parts ... We have designed this before": the garage's). */
-export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !SHELVES.broom.items.includes(i) && !BAG_ITEMS.includes(i.id));
+export const FINDABLE: readonly WardrobeItem[] = ITEMS.filter(i => !i.start && !i.set["broom.kind"] && !BAG_ITEMS.includes(i.id));
 
 /** A kind of permanent upgrade in the finds pool: its items (in a fixed order: the draw's tickets), the art piece its find is
  *  drawn as (render/view/finds.ts, the "find" art job: art/country.js), and what claiming one does to her in the rules (the page
@@ -58,8 +58,8 @@ export const FIND_KINDS: readonly FindKind[] = [
   // (a hat found is hers: onto the hats' floor, rules/houseRooms.ts addFloorHat)
   { id: "hat", name: "hat", items: HAT_FINDS, piece: id => `hatfind-${id}`, empty: id => `hatfind-${id}-empty`, claim(s, id) { if (s.hats && !s.hats.includes(id)) s.hats.push(id); } },
   { id: "bag", name: "bag", items: BAG_ITEMS, piece: id => `bagfind-${id}`, empty: id => `bagfind-${id}-empty` },
-  // (a part found goes on her broom at once if its slot is empty: till the Workshop's bay lets her fit it, docs/backlog/workshop.md)
-  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}`, claim(s, id) { const p = partById(id); if (p && !s.parts[p.slot]) setParts(s, fitPart(s.parts, id)); } },
+  // (a part found is hers, not fitted: it waits at the Workshop, the bay to fit it, the pegboard to show it; docs/backlog/workshop.md)
+  { id: "part", name: "wreck", items: PART_IDS, piece: id => `wreck-${id}` },
 ];
 export const findKind = (id: FindKindId): FindKind => FIND_KINDS.find(k => k.id === id)!;
 /** What she has found (or owns) of each kind; a kind left out counts as none found. */

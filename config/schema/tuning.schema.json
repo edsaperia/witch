@@ -2755,9 +2755,6 @@
         "hats": {
           "type": "string"
         },
-        "broom": {
-          "type": "string"
-        },
         "parts": {
           "type": "string"
         },
@@ -3121,7 +3118,6 @@
       "required": [
         "hat",
         "hats",
-        "broom",
         "parts",
         "speed",
         "healing",
