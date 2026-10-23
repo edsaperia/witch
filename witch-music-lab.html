@@ -660,16 +660,16 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/bat/genome.js
-  var GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: 0.78, sat: 0.25, val: 0.45 }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
+  var GENOME_BAT = { id: "bat", name: "Fruit bat", template: "flyer", builder: "bat", palette: { hue: 0.06, sat: 0.5, val: 0.36, belly: [0.1, 0.62, 0.78] }, look: { fruit: true }, legend: ["sonar"], texture: { kind: "fur", size: 3 } };
 
   // art/creatures/bear/genome.js
-  var GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.42 }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 0.9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: 0.3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: 0.2 }, { kind: "moss", amount: 0.5 }, { kind: "scars", count: 4 }, { kind: "claws", size: 0.26 }] }] };
+  var GENOME_BEAR = { id: "bear", name: "Black bear", template: "quadruped", builder: "quad", palette: { hue: 0.7, sat: 0.12, val: 0.2, belly: [0.08, 0.4, 0.62] }, body: { stance: "flat", hgt: 1.25, len: 0.74, chest: 0.4, tuck: 0.46, neck: 0.22, neckAng: 0.1, neckW: 0.6, hr: 0.36, legW: 1.75, back: "hump", front: 1.4, humpK: 1.1, bw: 0.34 }, head: { snout: 0.5, snoutD: 0.72, snoutTaper: 0.8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 1.15 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"], levels: [{ body: { hgt: 1, len: 0.6, front: 1, humpK: 0.6, legW: 1.5, bw: 0.36, chest: 0.44, tuck: 0.5 }, head: { snout: 0.36, snoutD: 0.8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: 0.76, front: 1.1, humpK: 1.2, legW: 1.2, bw: 0.26, chest: 0.36, tuck: 0.38 }, head: { snout: 0.5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 1.3 } }, { body: { humpK: 3, front: 1.45 }, features: [{ kind: "grizzle", amount: 0.3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: 0.2 }, { kind: "moss", amount: 0.5 }, { kind: "scars", count: 4 }, { kind: "claws", size: 0.26 }] }] };
 
   // art/creatures/beaver/genome.js
   var GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", builder: "quad", palette: { hue: 0.06, sat: 0.6, val: 0.45 }, body: { stance: "flat", hgt: 0.66, len: 0.62, chest: 0.34, tuck: 0.3, neck: 0.18, neckAng: 0.35, neckW: 0.6, hr: 0.3, legW: 1.25, back: "hump" }, head: { snout: 0.55, snoutD: 0.8, whiskers: true, teeth: true }, parts: { ears: { kind: "round", size: 0.45 }, tail: "flat", feet: "paw" }, legend: ["moss"], levels: [{ body: { hgt: 0.66, len: 0.48, chest: 0.4, tuck: 0.38, back: "arch", legW: 1.4 }, head: { snout: 0.4, snoutD: 0.75, teeth: false }, parts: { ears: { kind: "round", size: 0.65 }, tail: "stub" } }, { body: { hgt: 0.7, len: 0.7, chest: 0.3, tuck: 0.26, back: "arch", legW: 1.1 }, head: { snout: 0.58 }, parts: { ears: { kind: "round", size: 0.5 } } }, null, { head: { bigTeeth: true, log: true } }] };
 
   // art/creatures/beetle/genome.js
-  var GENOME_BEETLE = { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: 0.78, sat: 0.5, val: 0.35 }, legend: ["antlers"] };
+  var GENOME_BEETLE = { id: "beetle", name: "Fire beetle", template: "insectoid", builder: "beetle", palette: { hue: 0.02, sat: 0.25, val: 0.2, accent: [0.05, 0.92, 1], magic: 0.05 }, look: { embers: true }, legend: ["antlers"] };
 
   // art/creatures/boar/genome.js
   var GENOME_BOAR = {
@@ -706,14 +706,14 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/cat/genome.js
   var GENOME_CAT = {
     id: "cat",
-    name: "Wildcat",
+    name: "Sand cat",
     template: "quadruped",
     builder: "quad",
-    palette: { hue: 0.08, sat: 0.1, val: 0.52, belly: "white", magic: 0.13 },
+    palette: { hue: 0.1, sat: 0.32, val: 0.78, belly: "white", magic: 0.13 },
     body: { hgt: 0.7, len: 0.68, chest: 0.4, tuck: 0.48, neck: 0.2, neckAng: 0.75, neckW: 0.36, hr: 0.32, legW: 0.58 },
-    head: { snout: 0.38, snoutD: 0.7, snoutTaper: 0.85, cheeks: true, whiskers: true, eyeK: 1.45 },
-    parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" },
-    coat: { belly: true, tabby: { n: 13, w: 0.3 }, socks: 0.2 },
+    head: { snout: 0.34, snoutD: 0.66, snoutTaper: 0.85, cheeks: true, whiskers: true, eyeK: 1.45, skullZ: 1.15, skullY: 0.9 },
+    parts: { ears: { kind: "point", size: 1.7 }, tail: "stoat", feet: "paw" },
+    coat: { belly: true, tabby: { n: 9, w: 0.14, mat: "BODY2" }, socks: 0.2 },
     legend: [],
     // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
     // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
@@ -845,6 +845,23 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/elk/genome.js
   var GENOME_ELK = { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.38 }, body: { hgt: 1.4, len: 0.68, chest: 0.6, tuck: 0.66, neck: 0.45, neckAng: 0.75, neckW: 0.42, hr: 0.24, legW: 0.9, back: "hump", profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.1 }, waist: { w: 0.78, d: 0.86 }, loin: { w: 0.85, d: 0.94 }, hip: { w: 0.95 } }, spine: { shoulder: 0.05, ribcage: 0.03 } }, head: { snout: 1.6, snoutD: 0.9, snoutTaper: 0.85 }, parts: { ears: { kind: "point", size: 0.9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"], levels: [null, null, null, { head: { antlerK: 1.75, pools: true } }] };
+
+  // art/creatures/featheredserpent/genome.js
+  var GENOME_FEATHEREDSERPENT = {
+    id: "featheredserpent",
+    name: "Feathered serpent",
+    template: "serpent",
+    builder: "quetzal",
+    palette: { hue: 0.39, sat: 0.62, val: 0.58, belly: "yellow", accent: [0.13, 0.82, 0.96], magic: 0.48, flower: [232, 46, 58] },
+    legend: [],
+    texture: { kind: "scales", size: 3 },
+    levels: [
+      { body: { thick: 0.85, rise: 0.8, ruff: 0.4, plumes: 1, crest: 0.3 } },
+      { body: { thick: 0.95, rise: 1, ruff: 0.75, plumes: 2, crest: 0.7 } },
+      { body: { thick: 1.1, rise: 1.15, ruff: 1, plumes: 3, crest: 1, wings: 0.55 } },
+      { body: { thick: 1.25, rise: 1.3, ruff: 1.35, plumes: 5, crest: 1.3, wings: 1.1, glow: true } }
+    ]
+  };
 
   // art/creatures/fennec/genome.js
   var GENOME_FENNEC = {
@@ -1139,7 +1156,7 @@ label.check input { accent-color: var(--accent); }
   var GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mole", palette: { hue: 0.7, sat: 0.15, val: 0.32, flower: [70, 190, 150] }, legend: [], elder: { kind: "mole" }, texture: { kind: "fur", size: 3 } };
 
   // art/creatures/moth/genome.js
-  var GENOME_MOTH = { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: 0.1, sat: 0.3, val: 0.7 }, legend: ["eyespots"], texture: { kind: "fur", size: 3, stretch: 1.6 } };
+  var GENOME_MOTH = { id: "moth", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: 0.13, sat: 0.72, val: 0.95, accent: [0.6, 0.7, 0.9] }, look: { butterfly: true }, legend: ["eyespots"] };
 
   // art/creatures/newt/genome.js
   var GENOME_NEWT = {
@@ -1158,24 +1175,24 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/otter/genome.js
-  var GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: 0.07, sat: 0.55, val: 0.45, belly: "white" }, body: { stance: "flat", hgt: 0.46, len: 1.15, chest: 0.32, tuck: 0.26, neck: 0.36, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
+  var GENOME_OTTER = { id: "otter", name: "Smooth-coated otter", template: "quadruped", builder: "quad", palette: { hue: 0.08, sat: 0.42, val: 0.6, belly: [0.11, 0.22, 0.9] }, body: { stance: "flat", hgt: 0.46, len: 1.3, chest: 0.3, tuck: 0.26, neck: 0.4, neckAng: 0.5, neckW: 0.6, hr: 0.27, legW: 1.2, back: "arch" }, head: { snout: 0.55, snoutD: 0.55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: 0.32 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"], levels: [{ body: { hgt: 0.44, len: 0.66, chest: 0.38, tuck: 0.34, neck: 0.26, legW: 1.35 }, head: { snout: 0.38, snoutD: 0.65 }, parts: { ears: { kind: "round", size: 0.6 }, tail: "thin" } }, { body: { hgt: 0.48, len: 1.25, chest: 0.28, tuck: 0.22, neck: 0.4, legW: 1 }, head: { snout: 0.6 } }, null, { body: { pearl: true } }] };
 
   // art/creatures/owl/genome.js
   var GENOME_OWL = {
     id: "owl",
-    name: "Owl",
+    name: "Spotted owl",
     template: "avian",
     builder: "owl",
-    palette: { hue: 0.08, sat: 0.5, val: 0.55 },
+    palette: { hue: 0.07, sat: 0.5, val: 0.38, belly: [0.1, 0.12, 0.9] },
     legend: ["eyesRing", "wings"],
     // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
     // adult with a dark-rimmed disc, long tufts, a barred chest and patterned wing tips, and the legend: wings half spread like a
     // cloak edged in moonlight, tufts swept back like horns, a ring of glowing eyes round its disc
     levels: [
       { body: { down: true }, head: { tufts: 0 } },
-      { head: { tufts: 0.7 } },
-      { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
-      { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }
+      { body: { spotted: true }, head: { tufts: 0.7 } },
+      { body: { bars: true, spotted: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
+      { body: { bars: true, spotted: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }
       // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
     ]
   };
@@ -1394,7 +1411,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/snake/genome.js
-  var GENOME_SNAKE = { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: 0.25, sat: 0.45, val: 0.45 }, legend: ["shed"] };
+  var GENOME_SNAKE = { id: "snake", name: "Jungle python", template: "serpent", builder: "snake", palette: { hue: 0.37, sat: 0.75, val: 0.5, belly: "yellow" }, look: { python: true }, legend: ["shed"] };
 
   // art/creatures/snowleopard/genome.js
   var GENOME_SNOWLEOPARD = {
@@ -1420,8 +1437,35 @@ label.check input { accent-color: var(--accent); }
     ]
   };
 
+  // art/creatures/sphinx/genome.js
+  var GENOME_SPHINX = {
+    id: "sphinx",
+    name: "Sphinx",
+    template: "quadruped",
+    builder: "quad",
+    palette: { hue: 0.105, sat: 0.44, val: 0.8, accent: [0.12, 0.72, 0.92], magic: 0.13, flower: [228, 182, 62] },
+    body: { hgt: 1.45, len: 0.82, chest: 0.56, tuck: 0.74, neck: 0.34, neckAng: 0.82, neckW: 0.42, hr: 0.26, legW: 1.05, bw: 0.26, profile: { shoulder: { w: 1.12, d: 1.04 }, waist: { w: 0.82, d: 0.9 }, hip: { w: 0.95 } }, spine: { ribcage: -0.03, waist: -0.04, loin: -0.03 } },
+    head: { snout: 0.38, snoutD: 0.7, snoutTaper: 0.9, cheeks: true, eyeK: 1.05, jawCoat: true },
+    parts: { ears: { kind: "round", size: 0.45 }, tail: "tuft", feet: "paw" },
+    coat: { belly: true },
+    legend: ["mane"],
+    texture: { kind: "fur" },
+    levels: [
+      { body: { len: 0.52, chest: 0.42, tuck: 0.5, hr: 0.32, legW: 1.25 }, head: { snout: 0.3 }, features: [{ kind: "nemes", size: 0.85 }] },
+      { body: { len: 0.76, chest: 0.5, tuck: 0.64, legW: 1 }, features: [{ kind: "nemes" }] },
+      { body: { front: 1.08, legW: 1.15, bw: 0.3 }, features: [{ kind: "nemes", size: 1.05, beard: 0.5 }, { kind: "wings", feathered: true, size: 0.6, mat: "BODY", mat2: "FLOWER" }, { kind: "claws", size: 0.14, mat: "ACCENT" }] },
+      { body: { front: 1.15, legW: 1.3, bw: 0.32, len: 0.86 }, head: { eyeGlow: true }, coat: { scars: 2 }, features: [
+        { kind: "nemes", size: 1.08, beard: 0.7, uraeus: true },
+        { kind: "wings", feathered: true, size: 1.2, mat: "BODY", mat2: "FLOWER" },
+        { kind: "torc", mat: "FLOWER", size: 0.2 },
+        { kind: "claws", size: 0.24, mat: "FLOWER" },
+        { kind: "worn", ear: false }
+      ] }
+    ]
+  };
+
   // art/creatures/spider/genome.js
-  var GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: 0.07, sat: 0.45, val: 0.4 }, legend: ["rose"], texture: { kind: "bristles", size: 2 } };
+  var GENOME_SPIDER = { id: "spider", name: "Tarantula", template: "insectoid", builder: "spider", palette: { hue: 0.05, sat: 0.3, val: 0.24, accent: [0.06, 0.8, 0.88] }, look: { tarantula: true }, legend: ["rose"], texture: { kind: "bristles", size: 3 } };
 
   // art/creatures/squirrel/genome.js
   var GENOME_SQUIRREL = {
@@ -1662,6 +1706,9 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/elk/sigil.js
   var SIGIL_ELK = { neon: "blue", strokes: [...pair(L([0.42, 0.38], [0.3, 0.34], [0.16, 0.28], [0.07, 0.12], [0.15, 0.18], [0.2, 0.08], [0.27, 0.2], [0.33, 0.1], [0.38, 0.26], [0.42, 0.38]), L([0.42, 0.38], [0.4, 0.74], [0.44, 0.86], [0.5, 0.87]), D(0.44, 0.52)), L([0.42, 0.38], [0.58, 0.38]), L([0.5, 0.87], [0.5, 0.95])] };
 
+  // art/creatures/featheredserpent/sigil.js
+  var SIGIL_FEATHEREDSERPENT = { neon: "acid", strokes: [L([0.22, 0.82], [0.5, 0.8], [0.6, 0.7], [0.46, 0.6], [0.44, 0.5], [0.56, 0.4]), L([0.56, 0.4], [0.7, 0.36], [0.78, 0.42], [0.64, 0.47], [0.56, 0.45]), D(0.65, 0.4), ...[0, 1, 2, 3, 4].map((i) => L([0.48, 0.47], [0.48 - 0.18 * Math.cos(0.5 + i * 0.55), 0.47 - 0.2 * Math.sin(0.5 + i * 0.55)])), L([0.22, 0.82], [0.16, 0.74]), L([0.22, 0.82], [0.14, 0.84])] };
+
   // art/creatures/fennec/sigil.js
   var SIGIL_FENNEC = { neon: "orange", strokes: [...pair(L([0.42, 0.42], [0.06, 0.07], [0.27, 0.55]), L([0.33, 0.4], [0.17, 0.19])), ...pair(bow([0.27, 0.55], [0.5, 0.8], 0.22)), ...pair(D(0.4, 0.6)), D(0.5, 0.78)] };
 
@@ -1717,7 +1764,7 @@ label.check input { accent-color: var(--accent); }
   var SIGIL_MOLE = { neon: "cyan", strokes: [C(0.5, 0.4, 0.24), L([0.4, 0.6], [0.5, 0.86], [0.6, 0.6]), D(0.5, 0.86), ...pair(D(0.42, 0.4), E(0.17, 0.66, 0.1, 0.09), L([0.1, 0.72], [0.06, 0.82]), L([0.17, 0.75], [0.16, 0.86]), L([0.24, 0.73], [0.27, 0.83]))] };
 
   // art/creatures/moth/sigil.js
-  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.05, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.82], [0.4, 0.84], [0.46, 0.66]), bow([0.47, 0.31], [0.34, 0.07], 0.3), C(0.21, 0.32, 0.05))] };
+  var SIGIL_MOTH = { neon: "orange", strokes: [E(0.5, 0.54, 0.04, 0.24), ...pair(L([0.46, 0.34], [0.2, 0.14], [0.06, 0.3], [0.2, 0.5], [0.46, 0.5]), L([0.46, 0.52], [0.26, 0.62], [0.22, 0.78], [0.3, 0.84], [0.26, 0.96]), L([0.3, 0.84], [0.4, 0.82], [0.46, 0.66]), L([0.48, 0.31], [0.38, 0.1]), D(0.38, 0.09), C(0.21, 0.32, 0.05))] };
 
   // art/creatures/newt/sigil.js
   var SIGIL_NEWT = { neon: "acid", strokes: [E(0.36, 0.58, 0.24, 0.08), C(0.17, 0.55, 0.07), D(0.15, 0.53), L([0.6, 0.58], [0.94, 0.52]), L(...Array.from({ length: 25 }, (_, i) => [0.2 + 0.72 * i / 24, 0.47 - 0.012 * i / 24 * 6 - 0.035 * Math.abs(Math.sin(i / 24 * 5 * Math.PI))])), L([0.26, 0.65], [0.22, 0.76], [0.15, 0.78]), L([0.46, 0.65], [0.5, 0.76], [0.57, 0.78])] };
@@ -1769,6 +1816,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/snowleopard/sigil.js
   var SIGIL_SNOWLEOPARD = { neon: "violet", strokes: [...pair(L([0.4, 0.3], [0.28, 0.2], [0.18, 0.26], [0.16, 0.5], [0.28, 0.72], [0.5, 0.82]), L([0.3, 0.62], [0.1, 0.6]), D(0.37, 0.47)), L([0.4, 0.3], [0.6, 0.3]), A(0.5, 0.18, 0.06, -90, 270), D(0.5, 0.64)] };
+
+  // art/creatures/sphinx/sigil.js
+  var SIGIL_SPHINX = { neon: "pink", strokes: [L([0.3, 0.86], [0.3, 0.44], [0.38, 0.22], [0.5, 0.16], [0.62, 0.22], [0.7, 0.44], [0.7, 0.86]), L([0.36, 0.34], [0.64, 0.34]), L([0.4, 0.42], [0.4, 0.66], [0.5, 0.74], [0.6, 0.66], [0.6, 0.42]), ...pair(D(0.45, 0.5)), L([0.5, 0.74], [0.5, 0.9]), L([0.3, 0.62], [0.4, 0.62])] };
 
   // art/creatures/spider/sigil.js
   var SIGIL_SPIDER = { neon: "blue", strokes: [C(0.5, 0.62, 0.15), C(0.5, 0.38, 0.08), ...pair(L([0.44, 0.36], [0.26, 0.24], [0.2, 0.06]), L([0.43, 0.42], [0.2, 0.38], [0.08, 0.26]), L([0.4, 0.55], [0.18, 0.58], [0.07, 0.72]), L([0.42, 0.68], [0.24, 0.8], [0.2, 0.94]))] };
@@ -2261,6 +2311,9 @@ label.check input { accent-color: var(--accent); }
   // art/creatures/elk/nap.js
   var NAP_ELK = { kind: "lie", sink: 0.06, droop: 0.5 };
 
+  // art/creatures/featheredserpent/nap.js
+  var NAP_FEATHEREDSERPENT = { kind: "coil", ground: 0, droop: 0.6, curl: 4 };
+
   // art/creatures/fennec/nap.js
   var NAP_FENNEC = { kind: "curl", sink: 0.04, droop: 1, curl: 3.4, tailDown: 0.25 };
 
@@ -2365,6 +2418,9 @@ label.check input { accent-color: var(--accent); }
 
   // art/creatures/snowleopard/nap.js
   var NAP_SNOWLEOPARD = { kind: "curl", sink: 0.04, droop: 1, curl: 4.2, tailDown: 0.2 };
+
+  // art/creatures/sphinx/nap.js
+  var NAP_SPHINX = { kind: "lie", sink: 0.04, droop: 0.3 };
 
   // art/creatures/spider/nap.js
   var NAP_SPIDER = { kind: "flat", ground: 0.26, droop: 0.5, drop: [95, 96, 97, 98, 99] };
@@ -2802,6 +2858,28 @@ label.check input { accent-color: var(--accent); }
       label: "Elk's Slip past: \u{1F48C}s slip through enraged animals"
     },
     character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 }
+  };
+
+  // art/creatures/featheredserpent/creature.js
+  var CREATURE_FEATHEREDSERPENT = {
+    movement: {
+      speed: 15,
+      accel: 40,
+      fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.4, swap: 2 }, { kind: "separation", w: 0.6, radius: 9 }],
+      move: { kind: "ambush", cooldown: 6, trigger: 14, speed: 2.2, time: 0.5 }
+    },
+    radius: 1,
+    attacks: [null, "spit", "longspit", "legendNova"],
+    ranged: true,
+    traits: ["heavy"],
+    voice: { family: "bird", pitch: 0.7, pure: false, wave: "sawtooth", glide: 0.9 },
+    buff: {
+      name: "Plumage",
+      kind: "move",
+      scale: { treetopSpeed: 1.15, riseTime: 0.7 },
+      label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
+    },
+    character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 }
   };
 
   // art/creatures/fennec/creature.js
@@ -3249,7 +3327,7 @@ label.check input { accent-color: var(--accent); }
     temperament: "skittish",
     traits: ["flier", "swarm"],
     voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-    buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Moth's Flutter: one more \u{1F48C} a burst" },
+    buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Butterfly's Flutter: one more \u{1F48C} a burst" },
     character: { sprite: "shiver", every: [2, 5], for: 0.6 }
   };
 
@@ -3709,6 +3787,27 @@ label.check input { accent-color: var(--accent); }
     character: { posture: { head: [0.03, -0.03], body: -0.04 }, quirk: "tailflick", every: [4, 8], for: 0.9 }
   };
 
+  // art/creatures/sphinx/creature.js
+  var CREATURE_SPHINX = {
+    movement: {
+      speed: 13,
+      accel: 30,
+      fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.3, swap: 3 }, { kind: "separation", w: 0.6, radius: 9 }]
+    },
+    radius: 1.2,
+    attacks: [null, "screech", "bigscreech", "legendBeam"],
+    temperament: "curious",
+    traits: ["heavy"],
+    voice: { family: "big", pitch: 0.75, glide: 0.5, dur: 1.3, noise: 0.15 },
+    buff: {
+      name: "Riddle",
+      kind: "shot",
+      scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
+      label: "Sphinx's Riddle: \u{1F48C}s carry far and come a little quicker"
+    },
+    character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 }
+  };
+
   // art/creatures/spider/creature.js
   var CREATURE_SPIDER = {
     movement: {
@@ -3993,11 +4092,11 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/creatures/index.js
-  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
-  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
-  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
-  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+  var CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FEATHEREDSERPENT, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPHINX, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+  var CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+  var CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, featheredserpent: NAP_FEATHEREDSERPENT, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, sphinx: NAP_SPHINX, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
+  var CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+  var CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
   // src/rules/creatureConfig.ts
   var CREATURES = CREATURE_CONFIGS;
@@ -5971,7 +6070,7 @@ label.check input { accent-color: var(--accent); }
     },
     avian: { name: "Bird", builders: ["owl", "raven", "heron", "penguin"], sizes: { head: [0.48, 0.36, 0.36, 0.36], headY: [0.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], texture: { kind: "feathers" }, face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, 0.5], dutyWalk: 0.6, dutyRun: 0.4 } },
     flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth", "dragonfly"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-    serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake", "hydra"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+    serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake", "hydra", "quetzal"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
     insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab", "crab", "scorpion"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, 0.5, 0, 0.5, 0, 0.5], dutyWalk: 0.6, dutyRun: 0.5 } },
     // alternating tripods
     squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo", "troll"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, 0.5, 0.5, 0], dutyWalk: 0.7, dutyRun: 0.5 } }
@@ -6079,6 +6178,7 @@ label.check input { accent-color: var(--accent); }
     if (g.palette.ear) S.ear = g.palette.ear;
     if (g.palette.magic != null) S.magic = g.palette.magic;
     if (g.hydra) S.hydra = g.hydra;
+    if (g.look) S.look = g.look;
     if (g.palette.flower) S.flower = g.palette.flower;
     if (g.template === "quadruped") {
       const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -6261,10 +6361,10 @@ label.check input { accent-color: var(--accent); }
       m.anchors.feet.push({ c: [0.13 + f, 0.04, side * 0.15], r: 0.08, group: side > 0 ? 6 : 2, fit: "claw" });
     }
     m.ell([-0.32, 0.32, 0], [0.22, 0.06, 0.14], M.BODY2, { dir: [-1, -0.6, 0], group: 3 });
-    m.ell([0, 0.55 + bob, 0], [0.36, 0.52, 0.36], M.BODY, { rough: q.down ? 0.03 : void 0, paint: (p) => q.down ? spotty(p, 14, 0.3) ? M.BODY : M.BELLY : p[0] > 0.12 && p[1] < hy - hr * 0.5 ? q.bars ? Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY : Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, 0.5) ? M.BODY2 : M.BELLY : void 0 });
+    m.ell([0, 0.55 + bob, 0], [0.36, 0.52, 0.36], M.BODY, { rough: q.down ? 0.03 : void 0, paint: (p) => q.down ? spotty(p, 14, 0.3) ? M.BODY : M.BELLY : p[0] > 0.12 && p[1] < hy - hr * 0.5 ? q.spotted ? Math.floor(p[1] * 20 + Math.sin(p[2] * 17) * 0.6) % 2 && !spotty(p, 18, 0.3) ? M.BODY2 : M.BELLY : q.bars ? Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY : Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, 0.5) ? M.BODY2 : M.BELLY : void 0 });
     if (q.cloak) for (const side of [-1, 1]) wing3d(m, [-0.05, 0.78 + bob, side * 0.3], side, 1.25, frame ? 0.08 : -0.05, M.BODY2, M.WEB, side > 0 ? 40 : 50);
-    else if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.06, 0.58 + bob, side * 0.3], [0.4, 0.3, 0.08], M.BODY2, { dir: [-0.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: (p) => q.wingTips && p[1] < 0.42 + bob ? Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY : spotty(p, 12, 0.15) ? M.BODY3 : void 0 });
-    m.ell([0, hy, 0], [hr, hr * 0.9, hr], M.BODY, { rough: q.down ? 0.02 : void 0 });
+    else if (!has("wings")) for (const side of [-1, 1]) m.ell([-0.06, 0.58 + bob, side * 0.3], [0.4, 0.3, 0.08], M.BODY2, { dir: [-0.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: (p) => q.wingTips && p[1] < 0.42 + bob ? Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY : q.spotted && spotty(p, 16, 0.28) ? M.BELLY : spotty(p, 12, 0.15) ? M.BODY3 : void 0 });
+    m.ell([0, hy, 0], [hr, hr * 0.9, hr], M.BODY, { rough: q.down ? 0.02 : void 0, paint: q.spotted ? (p) => spotty(p, 22, 0.22) ? M.BELLY : void 0 : void 0 });
     const tl = q.tufts ?? (baby ? 0 : 1);
     for (const side of [-1, 1]) {
       const fd = v3.norm([0.75, -0.05, side * 0.4 + 0.35]), c = v3.add(Model.surface([0, hy, 0], [hr, hr * 0.9, hr], fd), v3.mul(fd, -hr * 0.05));
@@ -6651,7 +6751,7 @@ label.check input { accent-color: var(--accent); }
   }
   var heronNeck = (ph) => Math.cos(ph * Math.PI * 4) * 0.035;
   function bat3d(S, level, frame, st, facing = "towards") {
-    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = has("wingsBig") ? 1.5 : 1;
+    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, Fr = S.look?.fruit, span = (has("wingsBig") ? 1.5 : 1) * (Fr ? 1.1 : 1);
     shadow(m, 0, 0.3 * span);
     for (const side of [-1, 1]) {
       const sh = [0, y + 0.05, side * 0.1], wr = [0.05, y + (up ? 0.35 : -0.05), side * 0.45 * span];
@@ -6662,9 +6762,10 @@ label.check input { accent-color: var(--accent); }
       const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
       m.flat(v3.add(v3.lerp(sh, tips[0], 0.5), v3.mul(v, 0.12 * span)), u, v, Math.hypot(...span3) * 0.55, 0.3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: 0.2 });
     }
-    m.ell([0, y, 0], [0.13, 0.16, 0.12], M.BODY, { group: 1 });
-    const hc = [0.08, y + 0.2, 0];
+    m.ell([0, y, 0], Fr ? [0.15, 0.2, 0.14] : [0.13, 0.16, 0.12], M.BODY, { group: 1, paint: Fr ? (p) => p[1] > y + 0.04 ? M.BELLY : void 0 : void 0 });
+    const hc = [0.08, y + (Fr ? 0.27 : 0.2), 0];
     m.ell(hc, [0.12, 0.11, 0.11], M.BODY, { group: 1 });
+    if (Fr) m.ell(v3.add(hc, [0.11, -0.03, 0]), [0.1, 0.055, 0.055], M.BODY, { dir: [1, -0.25, 0], group: 1 });
     const sonar = has("sonar");
     for (const side of [-1, 1]) {
       if (sonar) {
@@ -6674,10 +6775,11 @@ label.check input { accent-color: var(--accent); }
           const r = (p[1] - hc[1]) * 22;
           return Math.abs(r - Math.round(r)) < 0.16 ? M.MAGIC2 : M.EAR;
         } });
-      } else m.ell(v3.add(hc, [-0.02, 0.15, side * 0.07]), [0.12, 0.045, 0.02], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
+      } else if (Fr) m.ell(v3.add(hc, [-0.02, 0.13, side * 0.07]), [0.085, 0.04, 0.018], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
+      else m.ell(v3.add(hc, [-0.02, 0.15, side * 0.07]), [0.12, 0.045, 0.02], M.BODY, { dir: [0.1, 1, side * 0.3], up: [1, 0, 0], group: 1, paint: (p) => p[0] > hc[0] - 0.01 ? M.EAR : void 0 });
     }
-    eyesOn(m, hc, [0.12, 0.11, 0.11], [[0.7, 0.2, 0.5], [0.7, 0.2, -0.5]], 0.025, legend ? M.MAGIC2 : M.EYE);
-    m.ell(Model.surface(hc, [0.12, 0.11, 0.11], [1, -0.2, 0]), [0.025, 0.02, 0.03], M.NOSE, { group: 1 });
+    eyesOn(m, hc, [0.12, 0.11, 0.11], [[0.7, 0.2, 0.5], [0.7, 0.2, -0.5]], Fr ? 0.034 : 0.025, legend ? M.MAGIC2 : M.EYE);
+    m.ell(Fr ? v3.add(hc, [0.2, -0.055, 0]) : Model.surface(hc, [0.12, 0.11, 0.11], [1, -0.2, 0]), [0.025, 0.02, 0.03], M.NOSE, { group: 1 });
     if (sonar) for (let i = 0; i < 3; i++) {
       const r = 0.07 + (i + (frame ? 0.5 : 0)) * 0.07, c = v3.add(hc, [0.18 + i * 0.12 + (frame ? 0.06 : 0), -0.04, 0]);
       m.flat(c, [0, 0, 1], [0, 1, 0], r, r, (a, b) => {
@@ -6803,8 +6905,9 @@ label.check input { accent-color: var(--accent); }
       const x = 0.25 - i * 0.25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? 0.06 : -0.06, base = [x, 0.22, side * 0.2];
       m.chain([[...base, 0.03], [x + ph + (1 - i) * 0.06, 0.32, side * 0.42, 0.025], [x + ph * 1.5 + (1 - i) * 0.15, 0.02, side * 0.55, 0.015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
     }
-    m.ell([-0.12, 0.34, 0], [0.46, 0.24, 0.32], M.BODY, { paint: (p) => Math.abs(p[2]) < 0.018 && p[1] > 0.4 ? M.LINE : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < 0.04 && p[1] > 0.38 ? M.BELLY : p[1] > 0.5 && p[2] > 0.05 && p[2] < 0.17 ? M.BELLY : void 0 });
-    m.ell([0.38, 0.33, 0], [0.16, 0.16, 0.26], M.BODY, { group: 1 });
+    const ember = S.look?.embers ? (p) => p[1] > 0.4 && (Math.abs(Math.abs(p[2]) - 0.1) < 0.022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < 0.09 * Math.min(1, (p[1] - 0.38) * 6)) : null;
+    m.ell([-0.12, 0.34, 0], [0.46, 0.24, 0.32], M.BODY, { paint: (p) => Math.abs(p[2]) < 0.018 && p[1] > 0.4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < 0.04 && p[1] > 0.38 ? M.BELLY : p[1] > 0.5 && p[2] > 0.05 && p[2] < 0.17 ? M.BELLY : void 0 });
+    m.ell([0.38, 0.33, 0], [0.16, 0.16, 0.26], M.BODY, { group: 1, paint: ember ? (p) => p[1] > 0.4 && Math.abs(p[2]) < 0.05 ? M.ACCENT : void 0 : void 0 });
     const hc = [0.56, 0.3, 0];
     m.ell(hc, [0.1, 0.1, 0.17], M.BODY2, { group: 1 });
     const jl = [0.3, 0.7, 0.95, 1][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
@@ -6998,19 +7101,20 @@ label.check input { accent-color: var(--accent); }
   }
   function snake3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, baby = level === 0, young = level === 1, has = (f) => legend && S.legend.includes(f), m = new Model(), ph = frame ? 0.7 : 0, pts = [];
-    const girth = [0.9, 0.82, 1, 1][level], rise = [1, 0.85, 1.15, 1.15][level];
+    const Py = S.look?.python, girth = [0.9, 0.82, 1, 1][level] * (Py ? 1.3 : 1), rise = [1, 0.85, 1.15, 1.15][level];
     for (let i = 0; i <= 12; i++) {
       const t = i / 12;
       pts.push([-0.9 + t * 1.2, 0.07, Math.sin(t * Math.PI * 2 + ph) * 0.25 * (1 - t * 0.5), (0.03 + 0.045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]);
     }
     pts.push([0.38, 0.07 + 0.18 * rise, pts[12][2], 0.07 * girth], [0.42, 0.07 + 0.38 * rise, pts[12][2] * 0.8, 0.065 * girth]);
-    const spots = baby ? 0 : young ? 0.15 : 0.3, bands = level >= 2;
-    m.chain(pts, M.BODY, { paint: (p) => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
+    const spots = Py ? 0 : baby ? 0 : young ? 0.15 : 0.3, bands = !Py && level >= 2, flecks = Py && !baby;
+    m.chain(pts, M.BODY, { paint: (p) => flecks && p[1] > 0.07 + 0.07 * girth && spotty([p[0] * 1.6, p[1], p[2]], 26, young ? 0.14 : 0.22) && !(has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05) ? M.BELLY : has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < 0.05 && p[1] > 0.06 ? M.BELLY : p[1] < 0.05 && p[0] < 0.35 ? M.BELLY : bands && p[1] > 0.07 && Math.sin(p[0] * 26) > 0.72 || spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots) ? M.BODY3 : void 0 });
     const hc = [0.5, 0.07 + 0.43 * rise, pts[13][2] * 0.8], hr = baby ? 0.13 : young ? 0.105 : 0.09;
     m.rig = { spine: pts.map((p) => p.slice()), head: hc, hr };
     m.part = "head";
-    m.ell(hc, [hr * 1.5, hr * 0.75, hr], M.BODY, { dir: [1, -0.15, 0], group: 1 });
-    eyesOn(m, hc, [hr * 1.5, hr * 0.75, hr], [[0.5, 0.5, 0.7], [0.5, 0.5, -0.7]], hr * 0.22, legend ? M.MAGIC2 : M.EYE);
+    const HR = [hr * 1.5, hr * 0.75, hr * (Py ? 1.25 : 1)];
+    m.ell(hc, HR, M.BODY, { dir: [1, -0.15, 0], group: 1 });
+    eyesOn(m, hc, HR, [[0.5, 0.5, 0.7], [0.5, 0.5, -0.7]], hr * 0.22, legend ? M.MAGIC2 : M.EYE);
     if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * 0.2, 0]), v3.add(hc, [hr * 2.3, -hr * 0.3, 0]), 0.01, 8e-3, M.SKIN, { group: 1 });
     m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-0.02, -0.01, 0]), r: 0.06, group: 3, tail: true });
     m.anchors.neck = { c: [0.42, 0.36, pts[12][2] * 0.9], r: 0.075, dir: [0.2, 1, 0] };
@@ -7103,6 +7207,52 @@ label.check input { accent-color: var(--accent); }
     m.anchors.neck = { c: [0.2, y + 0.05, 0], r: 0.1, dir: [1, 0, 0] };
     return finish(m, S, level, st, 0.45, facing);
   }
+  function quetzal3d(S, level, frame, st, facing = "towards") {
+    const legend = level === 3, m = new Model(), q = S.levelQ?.[level] || {}, ph = frame ? 0.7 : 0, flut = frame ? 0.06 : 0, pts = [];
+    const th = q.thick ?? 1, rise = q.rise ?? 1, r0 = 0.05 * th, tipMat = q.glow ? M.MAGIC : M.ACCENT, PLUME = [M.FLOWER, M.BODY2, M.ACCENT, M.FLOWER, M.MAGIC2];
+    for (let i = 0; i <= 12; i++) {
+      const t = i / 12;
+      pts.push([-0.7 + t * 1, r0 * 0.9, Math.sin(t * Math.PI * 2 + ph) * 0.26 * (1 - t * 0.5), r0 * (0.35 + 0.65 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2))]);
+    }
+    const last = pts[12], neck = [last[0] + 0.1, last[1] + 0.26 * rise, last[2] * 0.7], top = [last[0] + 0.2, last[1] + 0.5 * rise, last[2] * 0.5];
+    pts.push([...neck, r0 * 0.95], [...top, r0 * 0.85]);
+    m.chain(pts, M.BODY, { paint: (p) => p[1] < r0 * 0.45 ? M.BELLY : Math.abs(((p[0] * 9 + Math.abs(p[2]) * 6) % 1 + 1) % 1 - 0.5) < 0.1 && p[1] > r0 * 0.7 ? M.BODY3 : void 0 });
+    const feather = (root, dir, len, w, mat, group, tip = tipMat) => {
+      const d = v3.norm(dir), end = v3.add(root, v3.mul(d, len)), mid = v3.add(v3.lerp(root, end, 0.5), [0, len * 0.06, 0]);
+      m.chain([[...root, w * 0.6], [...mid, w], [...end, w * 0.25]], mat, { group, extra: true, paint: (p) => v3.dot(v3.sub(p, root), d) > len * 0.7 ? tip : void 0 });
+    };
+    const N = v3.lerp(neck, top, 0.55), rf = q.ruff ?? 1, nR = Math.round(10 + rf * 8);
+    if (rf > 0) for (let i = 0; i < nR; i++) {
+      const a = -2.5 + 5 * i / (nR - 1), dir = [-0.45 - flut, Math.cos(a) + 0.15, Math.sin(a) * 1.1];
+      feather(N, dir, (0.16 + 0.1 * (i % 2)) * rf, 0.022 * Math.max(0.7, rf), PLUME[i % 3], 30 + (Math.sin(a) > 0 ? 1 : 0));
+    }
+    const hr = 0.085 * Math.max(0.9, th * 0.95), hc = v3.add(top, [hr * 1.1, hr * 0.25, 0]);
+    m.part = "head";
+    m.ell(hc, [hr * 1.45, hr * 0.72, hr * 1.05], M.BODY, { dir: [1, -0.2, 0], group: 1, paint: (p) => p[1] < hc[1] - hr * 0.3 ? M.BELLY : void 0 });
+    m.ell(v3.add(hc, [hr * 1.15, -hr * 0.12, 0]), [hr * 0.55, hr * 0.36, hr * 0.55], M.ACCENT, { group: 1 });
+    eyesOn(m, hc, [hr * 1.45, hr * 0.72, hr * 1.05], [[0.45, 0.55, 0.7], [0.45, 0.55, -0.7]], hr * 0.2, legend ? M.MAGIC2 : M.EYE);
+    if (!frame) for (const s2 of [-1, 1]) m.seg(v3.add(hc, [hr * 1.5, -hr * 0.3, 0]), v3.add(hc, [hr * 2.3, -hr * 0.4, s2 * hr * 0.25]), 8e-3, 6e-3, M.SKIN, { group: 1 });
+    const cr = q.crest ?? 1;
+    for (let k = 0; k < Math.round(2 + cr * 3); k++) feather(v3.add(hc, [-hr * 0.5, hr * 0.55, (k - 2) * hr * 0.18]), [-0.7 - k * 0.08 - flut, 0.9 - k * 0.12, (k - 2) * 0.15], (0.12 + 0.05 * (k % 2)) * cr * (legend ? 1.6 : 1), 0.018, k % 2 ? M.MAGIC2 : M.FLOWER, 34);
+    m.part = "body";
+    const T = pts[0], np = q.plumes ?? 2;
+    for (let k = 0; k < np; k++) {
+      const z = (k - (np - 1) / 2) * 0.05, a = [T[0] - 0.02, T[1], T[2] + z], b = [T[0] - 0.12 - k * 0.02, T[1] + 0.14 + flut, T[2] + z * 3], c = [T[0] - 0.22 - k * 0.03, T[1] + 0.26 - flut, T[2] + z * 5 + Math.sin(k + ph) * 0.04];
+      m.chain([[...a, 0.014], [...b, 0.02], [...c, 8e-3]], PLUME[(k + 1) % PLUME.length], { group: 36 + k % 2, extra: true, paint: (p) => p[0] < c[0] + 0.06 ? tipMat : void 0 });
+    }
+    const W = q.wings ?? 0;
+    if (W) for (const side of [-1, 1]) {
+      const sh = v3.add(pts[6].slice(0, 3), [0, r0 * 0.8, side * r0 * 0.6]), wr = v3.add(sh, [-0.05 * W, 0.32 * W + flut, side * 0.22 * W]);
+      m.chain([[...sh, 0.03 * W], [...wr, 0.022 * W]], M.BODY, { group: 40 + (side > 0 ? 1 : 0), extra: true });
+      for (let i = 0; i < 7; i++) {
+        const t = i / 6, root = v3.lerp(wr, sh, t * 0.8);
+        feather(root, [-0.6 - 0.4 * t, 0.6 - 0.5 * t, side * 0.1], W * (0.42 - 0.2 * t), 0.03 * W, i % 2 ? M.FLOWER : M.BODY2, 42 + (side > 0 ? 1 : 0));
+      }
+    }
+    m.anchors.feet.push({ c: v3.add(T.slice(0, 3), [-0.02, -0.01, 0]), r: 0.06, group: 3, tail: true });
+    m.anchors.neck = { c: v3.lerp(neck, top, 0.3), r: r0 * 1.2, dir: [0.2, 1, 0] };
+    return finish(m, S, level, st, 0.5, facing);
+  }
   function hydra3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, m = new Model(), ph = frame ? 0.6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
     for (let i = 0; i <= 10; i++) {
@@ -7167,7 +7317,20 @@ label.check input { accent-color: var(--accent); }
     m.part = "body";
     return finish(m, S, level, st, 0.45, facing);
   }
+  var bflyFore = (s, t) => {
+    const u = (s + 1) / 2, half = (0.5 + 0.5 * u) * (u > 0.78 ? Math.sqrt(Math.max(0, 1 - ((u - 0.78) / 0.22) ** 2)) : 1);
+    if (Math.abs(t) > half) return null;
+    if (u > 0.8 || Math.abs(t) > half * 0.86) return Math.floor(Math.abs(t) * 5 + u * 4) % 3 === 0 && u > 0.82 ? M.BELLY : M.NOSE;
+    return Math.abs((t + 1) * 1.6 - Math.round((t + 1) * 1.6)) < 0.07 || u < 0.08 ? M.NOSE : M.BODY;
+  };
+  var bflyHind = (s, t) => {
+    const u = (s + 1) / 2, r = Math.hypot(s * 0.95, t);
+    if (r > 0.95) return null;
+    if (r > 0.7) return r > 0.76 && r < 0.86 && Math.floor((Math.atan2(t, s) + 4) * 4) % 2 ? M.ACCENT : M.NOSE;
+    return Math.abs(Math.atan2(t, s + 1.1) * 3 - Math.round(Math.atan2(t, s + 1.1) * 3)) < 0.06 || u < 0.06 ? M.NOSE : M.BODY;
+  };
   function moth3d(S, level, frame, st, facing = "towards") {
+    if (S.look?.butterfly) return butterfly3d(S, level, frame, st, facing);
     const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = has("wingsBig") ? 1.45 : 1;
     const wm = has("wingsBig") ? M.MAGIC : M.BODY;
     shadow(m, 0, 0.3 * span);
@@ -7192,6 +7355,39 @@ label.check input { accent-color: var(--accent); }
     m.ell([0, y, 0], [0.22, 0.09, 0.09], M.BELLY, { group: 1, paint: (p) => spotty(p, 30, 0.25) ? M.BODY2 : void 0 });
     m.ell([0.17, y + 0.03, 0], [0.07, 0.07, 0.07], M.BELLY, { group: 1 });
     eyesOn(m, [0.17, y + 0.03, 0], [0.07, 0.07, 0.07], [[0.7, 0.3, 0.6], [0.7, 0.3, -0.6]], 0.02, legend ? M.MAGIC2 : M.EYE);
+    return finish(m, S, level, st, 0.5, facing);
+  }
+  function butterfly3d(S, level, frame, st, facing) {
+    const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = 0.55, span = 1.15;
+    shadow(m, 0, 0.32 * span);
+    for (const side of [-1, 1]) {
+      const lift = up ? 0.85 : -0.08, fore = v3.norm([0.3, lift, side]), hind = v3.norm([-0.32, lift * 0.8, side]);
+      m.flat(v3.add([0.02, y, side * 0.04], v3.mul(fore, 0.4 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), 0.42 * span, 0.3 * span, bflyFore, { group: 10 + (side > 0 ? 1 : 0) });
+      const hc = v3.add([-0.06, y, side * 0.04], v3.mul(hind, 0.26 * span));
+      if (has("eyespots")) {
+        const eye = (a, b) => {
+          if (Math.hypot(a, b) > 1 - 0.14 * Math.max(0, Math.sin(Math.atan2(b, a) * 7))) return null;
+          const e = Math.hypot((a - 0.05) / 0.62, b / 0.78);
+          if (e < 0.2) return Math.hypot(a + 0.02, b - 0.12) < 0.07 ? M.GLINT : M.NOSE;
+          if (e < 0.32) return M.MAGIC2;
+          if (e < 0.55) return M.MAGIC;
+          if (e < 0.72) return M.NOSE;
+          if (e < 0.8) return M.BELLY;
+          return M.BODY;
+        };
+        m.flat(v3.add([-0.05, y, side * 0.05], v3.mul(hind, 0.36)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), 0.38, 0.3, eye, { group: 12 + (side > 0 ? 1 : 0), extra: true });
+      } else {
+        m.flat(hc, hind, v3.norm(v3.cross(hind, [0, 1, 0])), 0.28 * span, 0.22 * span, bflyHind, { group: 12 + (side > 0 ? 1 : 0) });
+        const tb = v3.add(hc, v3.mul(hind, 0.22 * span));
+        m.seg(tb, v3.add(tb, v3.add(v3.mul(hind, 0.14 * span), [-0.1, -0.04, 0])), 0.022, 0.014, M.NOSE, { group: 12 + (side > 0 ? 1 : 0) });
+      }
+      m.chain([[0.12, y + 0.06, side * 0.02, 8e-3], [0.24, y + 0.3, side * 0.1, 8e-3], [0.3, y + 0.44, side * 0.15, 8e-3]], M.NOSE, { group: 11 });
+      m.ell([0.3, y + 0.45, side * 0.15], [0.025, 0.025, 0.025], M.NOSE, { group: 11 });
+    }
+    m.ell([-0.04, y - 0.02, 0], [0.24, 0.045, 0.045], M.BODY3, { group: 1, paint: (p) => p[1] < y - 0.03 ? M.BODY : void 0 });
+    m.ell([0.14, y + 0.02, 0], [0.07, 0.06, 0.06], M.BODY3, { group: 1 });
+    m.ell([0.22, y + 0.03, 0], [0.05, 0.05, 0.05], M.BODY3, { group: 1 });
+    eyesOn(m, [0.22, y + 0.03, 0], [0.05, 0.05, 0.05], [[0.7, 0.3, 0.6], [0.7, 0.3, -0.6]], 0.02, legend ? M.MAGIC2 : M.EYE);
     return finish(m, S, level, st, 0.5, facing);
   }
   var dfWing = (mat, vein, stig, torn = 0) => (s, t) => {
@@ -7265,13 +7461,18 @@ label.check input { accent-color: var(--accent); }
   }
   function spider3d(S, level, frame, st, facing = "towards") {
     const legend = level === 3, has = (f) => legend && S.legend.includes(f), m = new Model();
-    const ce = [0.15, 0.28, 0];
+    const ce = [0.15, 0.28, 0], T = S.look?.tarantula, lk = T ? 1.5 : 1;
     for (const side of [-1, 1]) for (let i = 0; i < 4; i++) {
       const a = -0.6 + i * 0.4, ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? 0.05 : -0.05, base = v3.add(ce, [0.05 - i * 0.04, 0, side * 0.1]);
       const knee = v3.add(base, [Math.cos(a) * 0.3 * (i < 2 ? 1 : -0.6) + ph, 0.3, side * 0.3]), foot = v3.add(base, [Math.cos(a) * 0.55 * (i < 2 ? 1 : -0.8) + ph * 1.5, -0.28, side * 0.55]);
-      m.chain([[...base, 0.03], [...knee, 0.028], [...foot, 0.015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+      const band2 = T ? (p) => {
+        const a2 = Math.hypot(...v3.sub(p, knee)), b = Math.hypot(...v3.sub(p, foot));
+        return a2 > 0.035 && a2 < 0.07 || b > 0.07 && b < 0.11 ? M.ACCENT : void 0;
+      } : void 0;
+      m.chain([[...base, 0.03 * lk], [...knee, 0.028 * lk], [...foot, 0.015 * lk]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2, rough: T ? 8e-3 : void 0, paint: band2 });
     }
-    m.ell([-0.28, 0.38, 0], [0.34, 0.28, 0.3], M.BODY, { paint: (p) => (Math.abs(p[2]) < 0.03 || Math.abs(p[0] + 0.28) < 0.03) && p[1] > 0.45 ? M.BELLY : void 0 });
+    if (T) m.ell([-0.3, 0.4, 0], [0.38, 0.31, 0.33], M.BODY, { rough: 0.02, paint: (p) => p[1] > 0.5 && spotty(p, 22, 0.25) ? M.BELLY : void 0 });
+    else m.ell([-0.28, 0.38, 0], [0.34, 0.28, 0.3], M.BODY, { paint: (p) => (Math.abs(p[2]) < 0.03 || Math.abs(p[0] + 0.28) < 0.03) && p[1] > 0.45 ? M.BELLY : void 0 });
     m.ell(ce, [0.18, 0.13, 0.17], M.BODY2, { group: 1 });
     m.anchors.head = { c: ce, r: [0.18, 0.13, 0.17] };
     m.anchors.eyes = { pts: [[0.05, 0.05], [0.05, -0.05]].map(([dy, dz]) => Model.surface(ce, [0.18, 0.13, 0.17], v3.norm([0.9, dy * 6, dz * 4]))), size: 0.03 };
@@ -7299,7 +7500,7 @@ label.check input { accent-color: var(--accent); }
   }
 
   // art/creatures.js
-  var MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d }));
+  var MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d, quetzal: quetzal3d }));
   var SPECIES = GENOMES.map(speciesOf);
   var SPECIES_BY_ID = Object.fromEntries(SPECIES.map((s) => [s.id, s]));
   var GAITS = { heron: { frames: HERON_GAIT.frames, step: 0.08 } };
@@ -7405,6 +7606,10 @@ label.check input { accent-color: var(--accent); }
     jaguar: [...pair(C(0.37, 0.36, 0.03), L([0.17, 0.56], [0.26, 0.58]), D(0.42, 0.8)), L([0.44, 0.84], [0.56, 0.84])],
     elephant: [...pair(A(0.24, 0.42, 0.1, 110, 250), L([0.43, 0.26], [0.47, 0.24])), L([0.46, 0.63], [0.54, 0.63]), L([0.46, 0.7], [0.54, 0.7]), L([0.47, 0.77], [0.55, 0.78])],
     griffin: [L([0.36, 0.5], [0.3, 0.58]), D(0.62, 0.46)],
+    sphinx: [...pair(L([0.3, 0.52], [0.4, 0.52]), L([0.3, 0.72], [0.4, 0.72])), L([0.5, 0.34], [0.5, 0.24]), L([0.46, 0.82], [0.54, 0.82])],
+    // the lappets' stripes, the cobra on its brow, the beard's plait
+    featheredserpent: [...[0, 1, 2].map((i) => L([0.36 + i * 0.06, 0.78 - i * 0.06], [0.4 + i * 0.06, 0.74 - i * 0.06])), D(0.7, 0.4), L([0.62, 0.36], [0.66, 0.3])],
+    // the scales' chevrons up its rising body, its eye's ring, a crest plume
     frostwyrm: [...pair(L([0.336, 0.27], [0.303, 0.205])), ...pair(D(0.475, 0.746))],
     cheetah: [...pair(D(0.3, 0.62)), ...pair(D(0.34, 0.42)), D(0.5, 0.36)],
     lion: [...pair(L([0.3, 0.38], [0.38, 0.34])), ...pair(L([0.36, 0.66], [0.24, 0.68]))],
@@ -8374,7 +8579,7 @@ label.check input { accent-color: var(--accent); }
   }
   function blobTree(r, st, s, P2) {
     const [PX, PY] = st.treePad || [0, 0], k = (P2.narrow ? 0.8 + 0.2 * spread(st) : spread(st)) * (P2.wide || 1), W = Math.round(P2.w * s * k + (P2.wPad ?? 40) * s), H = Math.round(P2.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
-    const T = P2.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
+    const T = st.biomeTrunk && !P2.trunk.stilts ? { ...P2.trunk, ...st.biomeTrunk } : P2.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
     const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? 0.55 : 1) / Math.sqrt(n), lean0 = (r() - 0.5) * (T.lean ?? 0.3) * st.gnarl + (st.treeLean || 0);
     const tips = [], ends = [], trunks0 = [];
     const grow = (b, len, w, li) => {
@@ -8435,7 +8640,7 @@ label.check input { accent-color: var(--accent); }
     if (T.scars) {
       for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
     }
-    const C2 = P2.crown, lowestEnd = Math.max(...ends.map((e) => e[1]));
+    const C2 = st.biomeCrown ? { ...P2.crown, ...Object.fromEntries(Object.entries(st.biomeCrown).filter(([k2]) => !P2.crown[k2])) } : P2.crown, lowestEnd = Math.max(...ends.map((e) => e[1]));
     if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
     if (C2.fronds) return frondCrown(sp, r, st, s, k, ends[0], C2, gy);
     const mid = [tips.reduce((a, t) => a + t[0], 0) / tips.length, tips.reduce((a, t) => a + t[1], 0) / tips.length];
@@ -9006,7 +9211,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0, lake: 0, modern: 0.1 },
       feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock."
     },
-    flora: { species: [["juniper", 0.6], ["hawthorn", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["juniper", 0.6], ["acacia", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.4, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9081,10 +9286,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.24,
     floor: ["mud", 0.08, 0.32, 0.52],
-    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
     wall: [["rockwall", {}]],
     small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-    big: [["tree", { type: "hawthorn", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
+    big: [["tree", { type: "olive", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
     setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: 0.8, stone: [0.07, 0.3, 0.62] }],
     pathKinds: ["animal", "dirt"],
     layout: {
@@ -9099,7 +9304,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.3, rocks: 0.5, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly."
     },
-    flora: { species: [["hawthorn", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
+    flora: { species: [["olive", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9210,7 +9415,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.27,
     floor: ["moss", 0.27, 0.45, 0.36],
-    text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
+    text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and yew", set: "an old ring in a glade, where the roe gather at dusk" },
     small: [["fern", {}], ["grass", { h: 1.1 }]],
     big: [["tree", { type: "rowan", variant: "mossy", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
     pathKinds: ["animal", "roots"],
@@ -9227,7 +9432,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.2, rocks: 0.4, freak: 0.15, lake: 0.15, modern: 0.1 },
       feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks."
     },
-    flora: { species: [["rowan", 0.4], ["birch", 0.35], ["oak", 0.25]], palette: { sat: 0.95, val: 0.95 } },
+    flora: { species: [["rowan", 0.4], ["birch", 0.35], ["yew", 0.25]], palette: { sat: 0.95, val: 0.95 } },
     settings: { treeDensity: 0.6, groundCover: { density: 0.85, kinds: ["moss", "blades"] } }
   };
 
@@ -9260,7 +9465,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.1, freak: 0.1, lake: 0.65, modern: 0.05 },
       feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming."
     },
-    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["alder", 0.15]], palette: { sat: 0.85, val: 0.8 } },
+    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["strangler", 0.15]], palette: { sat: 0.85, val: 0.8 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -9293,7 +9498,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.4, freak: 0.05, lake: 0.35, modern: 0.1 },
       feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs."
     },
-    flora: { species: [["mangrove", 0.7], ["alder", 0.2], ["aspen", 0.1]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["mangrove", 0.7], ["datePalm", 0.2], ["willow", 0.1]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9371,7 +9576,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.05, 0.5, 0.45],
-    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, thorny hawthorn", set: "a ring of old boma posts round a cold hearth" },
+    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
     wall: [["bush", {}]],
     small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
     big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
@@ -9390,7 +9595,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.45, freak: 0.1, lake: 0.2, modern: 0.1 },
       feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight."
     },
-    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["hawthorn", 0.15]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["baobab", 0.15]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "grass"] } }
   };
 
@@ -9435,7 +9640,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.09, 0.3, 0.66],
-    text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros and Joshua trees", set: "a heap of pale stones" },
+    text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros, Joshua trees and palo verde", set: "a heap of pale stones" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 0.9, leafHue: 0.14, leafSat: 0.3 }], ["bush", { small: true }]],
     big: [["tree", { type: "saguaro", scale: 1.1 }], ["tree", { type: "joshua", minor: true, scale: 1 }], ["boulder", { sparse: 0.15 }]],
@@ -9454,7 +9659,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.2, rocks: 0.6, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Pale flats of gravelly sand, saguaros standing alone with their arms raised, Joshua trees and prickly pear between; open, dry and rattling."
     },
-    flora: { species: [["saguaro", 0.5], ["joshua", 0.3], ["pricklyPear", 0.2]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["saguaro", 0.4], ["joshua", 0.2], ["paloVerde", 0.25], ["pricklyPear", 0.15]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.35, kinds: ["pebbles", "blades"] } }
   };
 
@@ -9679,7 +9884,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.15, rocks: 0.7, freak: 0.05, lake: 0, modern: 0.1 },
       feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock."
     },
-    flora: { species: [["datePalm", 0.5], ["acacia", 0.35], ["hawthorn", 0.15]], palette: { sat: 0.75, val: 0.95 } },
+    flora: { species: [["datePalm", 0.5], ["acacia", 0.35], ["cycad", 0.15]], palette: { sat: 0.75, val: 0.95 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.7, kinds: ["tallgrass", "blades"] } }
   };
 
@@ -9725,10 +9930,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.3,
     floor: ["lichen", 0.3, 0.22, 0.44],
     snow: 0.45,
-    text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
+    text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and juniper krummholz", set: "a heap of glacier rubble with a slab on top" },
     wall: [["rockwall", {}]],
     small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "olive", minor: true, scale: 0.95, gnarl: 1 }]],
+    big: [["spire", { sparse: 0.14 }], ["spire", { sparse: 0.08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: 0.75 }], ["tree", { type: "juniper", minor: true, scale: 0.95, gnarl: 1 }]],
     steep: true,
     pathKinds: ["footpath"],
     setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [0.74, 0.14, 0.62], dark: [0.72, 0.16, 0.34], lichen: [0.74, 0.08, 0.84] } }],
@@ -9744,7 +9949,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.05, rocks: 0.75, freak: 0.05, lake: 0.1, modern: 0.05 },
       feel: "High, bare and bright: lichened rock and fingers of glacier ice, rock spires standing over the scree, larch bent by the wind and old wild olives in the lee of the rocks, broom and juniper scrub and heather among the stones."
     },
-    flora: { species: [["larch", 0.45], ["olive", 0.35], ["pine", 0.2]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["larch", 0.45], ["juniper", 0.35], ["pine", 0.2]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.5, kinds: ["heather", "moss", "blades"] } }
   };
 
@@ -9909,6 +10114,74 @@ label.check input { accent-color: var(--accent); }
     settings: { treeDensity: 0.5, groundCover: { density: 0.5, kinds: ["reeds", "blades"] } }
   };
 
+  // art/areas/desert-ruin/recipe.js
+  var DESERT_RUIN = {
+    slot: 32,
+    id: "desert-ruin",
+    name: "Desert ruin",
+    creature: "sphinx",
+    by: "recipe",
+    leaf: 0.2,
+    floor: ["sand", 0.1, 0.36, 0.7],
+    text: { floor: "drifted sand over old paving", wall: "tumbled walls of sandstone blocks", small: "dry tussocks and fallen stones", big: "broken columns, old date palms and acacias in the old streets", set: "a fallen colossus's head half buried in the sand" },
+    wall: [["stones", {}], ["rockwall", {}]],
+    small: [["grass", { h: 0.7, leafHue: 0.13, leafSat: 0.3 }], ["stones", {}]],
+    big: [["tree", { type: "datePalm", variant: "ancient", scale: 1.05 }], ["tree", { type: "acacia", minor: true, scale: 0.9 }], ["pillar", { sparse: 0.22 }], ["pillar", { sparse: 0.14, broken: true, lean: 0.12 }], ["boulder", { sparse: 0.1 }]],
+    pathKinds: ["track", "stairs"],
+    setPiece: ["heap", "a heap of fallen sandstone blocks", 1.2, { of: "rubble", top: "post", moss: 0, rock: "sandstone" }],
+    // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
+    layout: {
+      pattern: "grid",
+      along: 0.4,
+      density: 0.22,
+      clump: 0.5,
+      glades: { count: 3, size: [16, 26] },
+      heightMix: { sapling: 0.2, mature: 0.55, tall: 0.25, giant: 0 },
+      undergrowth: 0.25,
+      lean: { dir: 0.4, amount: 0.1 },
+      terrain: ["mounds", "ridges"],
+      decor: { rate: 0.45, ruins: 0.75, rocks: 0.2, freak: 0, lake: 0.05, modern: 0 },
+      feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched."
+    },
+    flora: { species: [["datePalm", 0.5], ["acacia", 0.3], ["olive", 0.2]], palette: { sat: 0.75, val: 0.92 } },
+    settings: { treeDensity: 0.25, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
+  };
+
+  // art/areas/step-pyramid/recipe.js
+  var STEP_PYRAMID = {
+    slot: 33,
+    id: "step-pyramid",
+    name: "Step pyramid",
+    creature: "featheredserpent",
+    by: "recipe",
+    leaf: 0.31,
+    floor: ["moss", 0.3, 0.45, 0.3],
+    text: { floor: "moss over old paving stones", wall: "carved stone walls under creepers", small: "ferns, bromeliads and fallen carved stones", big: "kapoks and strangler figs, buttressed and hung with lianas", set: "a stepped pyramid, its stair between feathered serpents" },
+    wall: [["stones", {}], ["fern", {}]],
+    small: [["fern", {}], ["stones", {}], ["shrub", {}]],
+    big: [["tree", { type: "kapok", scale: 1.35 }], ["tree", { type: "strangler", minor: true, scale: 1.2 }], ["pillar", { sparse: 0.08, broken: true, lean: 0.1 }]],
+    ponds: true,
+    wet: true,
+    steep: true,
+    pathKinds: ["stairs", "footpath"],
+    setPiece: ["heap", "a heap of carved stones under the figs", 1.2, { of: "rubble", top: "post", moss: 0.6, rock: "sandstone" }],
+    // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13; the pyramid is its scene, art/scenes.js step-pyramid)
+    layout: {
+      pattern: "glades",
+      density: 0.6,
+      clump: 0.55,
+      glades: { count: 3, size: [18, 30] },
+      heightMix: { sapling: 0.1, mature: 0.3, tall: 0.4, giant: 0.2 },
+      undergrowth: 0.75,
+      lean: { dir: 0, amount: 0 },
+      terrain: ["mounds", "pools"],
+      decor: { rate: 0.3, ruins: 0.6, rocks: 0.15, freak: 0.15, lake: 0.1, modern: 0 },
+      feel: "Tall rainforest, kapoks and figs on great buttresses, broken by round clearings of mossy paving; a stepped pyramid in one, green-gold light, bright feathers in the ferns."
+    },
+    flora: { species: [["kapok", 0.45], ["strangler", 0.3], ["bamboo", 0.15], ["vinewood", 0.1]], palette: { sat: 1, val: 0.9 } },
+    settings: { treeDensity: 0.55, groundCover: { density: 0.75, kinds: ["fern", "moss"] } }
+  };
+
   // art/areas/alder-forest/flora.js
   var AREA_FLORA_ALDER_FOREST = { species: [["alder", 0.55, { dark: true }], ["elm", 0.25], ["willow", 0.2]], palette: { sat: 0.95, val: 0.9 } };
 
@@ -10000,7 +10273,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_WISPY_FOREST = { species: [["lime", 0.4], ["birch", 0.25], ["aspen", 0.2], ["whitebeam", 0.15]], palette: { sat: 0.85, val: 1.12 } };
 
   // art/areas/index.js
-  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD];
+  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
   var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
@@ -10013,60 +10286,60 @@ label.check input { accent-color: var(--accent); }
     { "kind": "snail", "slot": 7, "phase": 0, "bearing": 215, "dir": "SW", "biome": "temperate" },
     { "kind": "dormouse", "slot": 8, "phase": 0, "bearing": 310, "dir": "NW", "biome": "temperate" },
     { "kind": "badger", "slot": 9, "phase": 0, "bearing": 130, "dir": "SE", "biome": "temperate" },
-    { "kind": "beetle", "slot": 10, "phase": 1, "bearing": 70, "dir": "ENE", "biome": "temperate" },
-    { "kind": "boar", "slot": 11, "phase": 1, "bearing": 300, "dir": "WNW", "biome": "temperate" },
-    { "kind": "otter", "slot": 12, "phase": 1, "bearing": 270, "dir": "W", "biome": "temperate" },
-    { "kind": "heron", "slot": 13, "phase": 1, "bearing": 240, "dir": "WSW", "biome": "temperate" },
-    { "kind": "newt", "slot": 14, "phase": 1, "bearing": 225, "dir": "SW", "biome": "temperate" },
-    { "kind": "woodlouse", "slot": 15, "phase": 1, "bearing": 110, "dir": "ESE", "biome": "temperate" },
-    { "kind": "moth", "slot": 16, "phase": 1, "bearing": 160, "dir": "SSE", "biome": "temperate" },
-    { "kind": "bat", "slot": 17, "phase": 1, "bearing": 195, "dir": "SSW", "biome": "temperate" },
+    { "kind": "beetle", "slot": 10, "phase": 3, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "boar", "slot": 11, "phase": 1, "bearing": 315, "dir": "NW", "biome": "temperate" },
+    { "kind": "otter", "slot": 12, "phase": 2, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "heron", "slot": 13, "phase": 2, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "newt", "slot": 14, "phase": 1, "bearing": 195, "dir": "SSW", "biome": "temperate" },
+    { "kind": "woodlouse", "slot": 15, "phase": 3, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "moth", "slot": 16, "phase": 1, "bearing": 135, "dir": "SE", "biome": "temperate" },
+    { "kind": "bat", "slot": 17, "phase": 2, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
     { "kind": "toad", "slot": 18, "phase": 1, "bearing": 15, "dir": "NNE", "biome": "temperate" },
-    { "kind": "raven", "slot": 19, "phase": 1, "bearing": 35, "dir": "NE", "biome": "temperate" },
-    { "kind": "elk", "slot": 20, "phase": 2, "bearing": 0, "dir": "N", "biome": "temperate" },
-    { "kind": "wolf", "slot": 21, "phase": 2, "bearing": 25, "dir": "NNE", "biome": "temperate" },
-    { "kind": "lynx", "slot": 22, "phase": 2, "bearing": 50, "dir": "NE", "biome": "temperate" },
-    { "kind": "ram", "slot": 23, "phase": 2, "bearing": 75, "dir": "ENE", "biome": "temperate" },
-    { "kind": "salamander", "slot": 24, "phase": 2, "bearing": 100, "dir": "E", "biome": "temperate" },
-    { "kind": "spider", "slot": 25, "phase": 2, "bearing": 135, "dir": "SE", "biome": "temperate" },
-    { "kind": "snake", "slot": 26, "phase": 2, "bearing": 170, "dir": "S", "biome": "temperate" },
-    { "kind": "cat", "slot": 27, "phase": 2, "bearing": 205, "dir": "SSW", "biome": "temperate" },
-    { "kind": "stag", "slot": 28, "phase": 2, "bearing": 265, "dir": "W", "biome": "temperate" },
-    { "kind": "beaver", "slot": 29, "phase": 2, "bearing": 290, "dir": "WNW", "biome": "temperate" },
-    { "kind": "bear", "slot": 30, "phase": 2, "bearing": 320, "dir": "NW", "biome": "temperate" },
-    { "kind": "owl", "slot": 31, "phase": 2, "bearing": 335, "dir": "NNW", "biome": "temperate" },
-    { "kind": "arcticfox", "slot": 32, "phase": 3, "bearing": 12, "dir": "NNE", "biome": "cold" },
-    { "kind": "ibex", "slot": 33, "phase": 3, "bearing": 38, "dir": "NE", "biome": "mountains and glaciers" },
-    { "kind": "redpanda", "slot": 34, "phase": 3, "bearing": 63, "dir": "ENE", "biome": "mountains and glaciers" },
-    { "kind": "komodo", "slot": 35, "phase": 3, "bearing": 89, "dir": "E", "biome": "rocky" },
-    { "kind": "meerkat", "slot": 36, "phase": 3, "bearing": 115, "dir": "ESE", "biome": "badlands" },
-    { "kind": "armadillo", "slot": 37, "phase": 3, "bearing": 141, "dir": "SE", "biome": "badlands" },
-    { "kind": "fennec", "slot": 38, "phase": 3, "bearing": 166, "dir": "SSE", "biome": "hot" },
-    { "kind": "lion", "slot": 39, "phase": 3, "bearing": 192, "dir": "SSW", "biome": "hot" },
-    { "kind": "crocodile", "slot": 40, "phase": 3, "bearing": 218, "dir": "SW", "biome": "mangrove swamp" },
-    { "kind": "dragonfly", "slot": 41, "phase": 3, "bearing": 243, "dir": "WSW", "biome": "mangrove swamp" },
-    { "kind": "tiger", "slot": 42, "phase": 3, "bearing": 269, "dir": "W", "biome": "jungle" },
-    { "kind": "flyingsquirrel", "slot": 43, "phase": 3, "bearing": 295, "dir": "WNW", "biome": "cold rainforest" },
-    { "kind": "roe", "slot": 44, "phase": 3, "bearing": 321, "dir": "NW", "biome": "cold rainforest" },
-    { "kind": "penguin", "slot": 45, "phase": 3, "bearing": 346, "dir": "NNW", "biome": "cold" },
-    { "kind": "frosttroll", "slot": 46, "phase": 4, "bearing": 5, "dir": "N", "biome": "cold" },
-    { "kind": "snowleopard", "slot": 47, "phase": 4, "bearing": 25, "dir": "NNE", "biome": "mountains and glaciers" },
-    { "kind": "frostwyrm", "slot": 48, "phase": 4, "bearing": 45, "dir": "NE", "biome": "mountains and glaciers" },
-    { "kind": "griffin", "slot": 49, "phase": 4, "bearing": 65, "dir": "ENE", "biome": "mountains and glaciers" },
-    { "kind": "unknown-19", "slot": 50, "phase": 4, "bearing": 85, "dir": "E", "biome": "rocky", "placeholder": true },
-    { "kind": "stegosaurus", "slot": 51, "phase": 4, "bearing": 105, "dir": "ESE", "biome": "volcanic" },
-    { "kind": "rattlesnake", "slot": 52, "phase": 4, "bearing": 125, "dir": "SE", "biome": "badlands" },
-    { "kind": "scorpion", "slot": 53, "phase": 4, "bearing": 145, "dir": "SE", "biome": "badlands" },
-    { "kind": "rhino", "slot": 54, "phase": 4, "bearing": 165, "dir": "SSE", "biome": "hot" },
-    { "kind": "cheetah", "slot": 55, "phase": 4, "bearing": 185, "dir": "S", "biome": "hot" },
-    { "kind": "hydra", "slot": 56, "phase": 4, "bearing": 205, "dir": "SSW", "biome": "mangrove swamp" },
-    { "kind": "crab", "slot": 57, "phase": 4, "bearing": 225, "dir": "SW", "biome": "mangrove swamp" },
-    { "kind": "unknown-27", "slot": 58, "phase": 4, "bearing": 245, "dir": "WSW", "biome": "mangrove swamp", "placeholder": true },
-    { "kind": "elephant", "slot": 59, "phase": 4, "bearing": 265, "dir": "W", "biome": "jungle" },
-    { "kind": "jaguar", "slot": 60, "phase": 4, "bearing": 285, "dir": "WNW", "biome": "jungle" },
-    { "kind": "raccoon", "slot": 61, "phase": 4, "bearing": 305, "dir": "NW", "biome": "cold rainforest" },
-    { "kind": "unicorn", "slot": 62, "phase": 4, "bearing": 325, "dir": "NW", "biome": "cold rainforest" },
-    { "kind": "polarbear", "slot": 63, "phase": 4, "bearing": 345, "dir": "NNW", "biome": "cold" }
+    { "kind": "raven", "slot": 19, "phase": 2, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "elk", "slot": 20, "phase": 2, "bearing": 348.75, "dir": "N", "biome": "cold" },
+    { "kind": "wolf", "slot": 21, "phase": 2, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "lynx", "slot": 22, "phase": 2, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "ram", "slot": 23, "phase": 2, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "salamander", "slot": 24, "phase": 2, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "spider", "slot": 25, "phase": 2, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "snake", "slot": 26, "phase": 2, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "cat", "slot": 27, "phase": 2, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "stag", "slot": 28, "phase": 1, "bearing": 255, "dir": "WSW", "biome": "temperate" },
+    { "kind": "beaver", "slot": 29, "phase": 1, "bearing": 75, "dir": "ENE", "biome": "temperate" },
+    { "kind": "bear", "slot": 30, "phase": 4, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "owl", "slot": 31, "phase": 2, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "arcticfox", "slot": 32, "phase": 3, "bearing": 348.75, "dir": "N", "biome": "cold" },
+    { "kind": "ibex", "slot": 33, "phase": 3, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "redpanda", "slot": 34, "phase": 3, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "komodo", "slot": 35, "phase": 4, "bearing": 78.75, "dir": "E", "biome": "volcanic" },
+    { "kind": "meerkat", "slot": 36, "phase": 2, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "armadillo", "slot": 37, "phase": 3, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "fennec", "slot": 38, "phase": 2, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "lion", "slot": 39, "phase": 3, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "crocodile", "slot": 40, "phase": 3, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "dragonfly", "slot": 41, "phase": 3, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "tiger", "slot": 42, "phase": 3, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "flyingsquirrel", "slot": 43, "phase": 3, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "roe", "slot": 44, "phase": 3, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "penguin", "slot": 45, "phase": 3, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "frosttroll", "slot": 46, "phase": 4, "bearing": 11.25, "dir": "NNE", "biome": "cold" },
+    { "kind": "snowleopard", "slot": 47, "phase": 4, "bearing": 33.75, "dir": "NE", "biome": "mountains and glaciers" },
+    { "kind": "frostwyrm", "slot": 48, "phase": 4, "bearing": 56.25, "dir": "ENE", "biome": "mountains and glaciers" },
+    { "kind": "griffin", "slot": 49, "phase": 4, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "sphinx", "slot": 50, "phase": 4, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "stegosaurus", "slot": 51, "phase": 4, "bearing": 101.25, "dir": "ESE", "biome": "volcanic" },
+    { "kind": "rattlesnake", "slot": 52, "phase": 3, "bearing": 146.25, "dir": "SSE", "biome": "badlands" },
+    { "kind": "scorpion", "slot": 53, "phase": 4, "bearing": 123.75, "dir": "SE", "biome": "badlands" },
+    { "kind": "rhino", "slot": 54, "phase": 4, "bearing": 168.75, "dir": "S", "biome": "hot" },
+    { "kind": "cheetah", "slot": 55, "phase": 3, "bearing": 191.25, "dir": "SSW", "biome": "hot" },
+    { "kind": "hydra", "slot": 56, "phase": 4, "bearing": 236.25, "dir": "WSW", "biome": "mangrove swamp" },
+    { "kind": "crab", "slot": 57, "phase": 4, "bearing": 213.75, "dir": "SW", "biome": "mangrove swamp" },
+    { "kind": "featheredserpent", "slot": 58, "phase": 4, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
+    { "kind": "elephant", "slot": 59, "phase": 4, "bearing": 258.75, "dir": "W", "biome": "jungle" },
+    { "kind": "jaguar", "slot": 60, "phase": 3, "bearing": 281.25, "dir": "WNW", "biome": "jungle" },
+    { "kind": "raccoon", "slot": 61, "phase": 2, "bearing": 303.75, "dir": "NW", "biome": "cold rainforest" },
+    { "kind": "unicorn", "slot": 62, "phase": 4, "bearing": 326.25, "dir": "NNW", "biome": "cold rainforest" },
+    { "kind": "polarbear", "slot": 63, "phase": 4, "bearing": 348.75, "dir": "N", "biome": "cold" }
   ];
 
   // art/flora/variants.js
@@ -10110,6 +10383,108 @@ label.check input { accent-color: var(--accent); }
     if (!R4.big?.length) out.push("big");
     return out;
   }
+
+  // art/flora/biomes.js
+  var BIOME_LOOKS = {
+    temperate: { name: "Temperate", feel: "as the game is: blue-green broadleaf and pine" },
+    cold: {
+      name: "Cold (N)",
+      feel: "dark blue-green conifers under snow, pale bark, frost on the moss",
+      leaf: [48, 104, 96, 0.5],
+      sat: 0.6,
+      val: 1.25,
+      bark: [168, 168, 176, 0.35],
+      moss: [205, 215, 226],
+      snow: 0.8,
+      jitter: 0,
+      knobs: { gnarl: 0.1 }
+    },
+    "mountains and glaciers": {
+      name: "Mountains & glaciers (NE)",
+      feel: "grey-green, wind-bent, hung with pale lichen beards, a dusting of snow",
+      leaf: [108, 136, 104, 0.55],
+      sat: 0.55,
+      val: 1.15,
+      bark: [118, 110, 104, 0.3],
+      moss: [180, 196, 168],
+      snow: 0.28,
+      jitter: 0.3,
+      knobs: { lean: 0.25, gnarl: 0.3, hang: 0.5, scale: 0.9 }
+    },
+    volcanic: {
+      name: "Volcanic (E)",
+      feel: "fertile ash: lush deep emerald on charred black trunks, red new growth catching the lava's glow",
+      leaf: [10, 120, 74, 0.5],
+      sat: 1.35,
+      val: 1,
+      lit: [226, 88, 54, 0.55],
+      bark: [34, 28, 30, 0.65],
+      moss: [96, 64, 52],
+      jitter: 0.5,
+      knobs: { gnarl: 0.25 }
+    },
+    badlands: {
+      name: "Badlands (SE)",
+      feel: "dusty sage and olive scrub, ochre bark, low and twisted but full",
+      leaf: [172, 150, 60, 0.65],
+      sat: 0.85,
+      val: 1.12,
+      lit: [222, 172, 88, 0.45],
+      bark: [180, 98, 50, 0.6],
+      moss: [150, 120, 80],
+      jitter: 0.6,
+      knobs: { lean: 0.2, gnarl: 0.35, scale: 0.82 }
+    },
+    hot: {
+      name: "Hot (S)",
+      feel: "sunlit yellow-olive savanna green, pale sandy bark",
+      leaf: [176, 176, 48, 0.62],
+      sat: 1.05,
+      val: 1.15,
+      lit: [236, 214, 120, 0.35],
+      bark: [192, 162, 122, 0.36],
+      moss: [170, 150, 90],
+      jitter: 0.8,
+      knobs: {}
+    },
+    "mangrove swamp": {
+      name: "Mangrove swamp (SW)",
+      feel: "dark glossy olive-teal over wet black-brown roots, grey Spanish moss",
+      leaf: [96, 118, 44, 0.55],
+      sat: 0.95,
+      val: 1.1,
+      bark: [62, 50, 40, 0.42],
+      moss: [168, 176, 146],
+      jitter: 0.6,
+      knobs: { hang: 0.6 },
+      trunk: { stilts: { n: [4, 6], at: [0.12, 0.3], reach: [10, 22], w: 0.35 } }
+    },
+    jungle: {
+      name: "Jungle (W)",
+      feel: "vivid saturated emerald, vines hung with flowers, dark wet bark",
+      leaf: [20, 150, 64, 0.55],
+      sat: 1.45,
+      val: 1.15,
+      bark: [72, 56, 40, 0.2],
+      moss: [80, 130, 70],
+      flower: [236, 84, 150],
+      jitter: 0.7,
+      knobs: { hang: 0.25 },
+      crown: { vines: { share: 0.16, len: [10, 26], budEvery: 6, bud: "FLOWER" }, dots: { share: 0.04, mat: "FLOWER", size: 2 } }
+    },
+    "cold rainforest": {
+      name: "Cold rainforest (NW)",
+      feel: "very deep blue-green, every bough furred and hung with bright moss",
+      leaf: [20, 96, 80, 0.5],
+      sat: 1.15,
+      val: 0.95,
+      bark: [80, 100, 58, 0.5],
+      moss: [160, 214, 100],
+      jitter: 0.4,
+      knobs: { hang: 0.9, gnarl: 0.15 }
+    }
+  };
+  BIOME_LOOKS.rocky = BIOME_LOOKS.volcanic;
 
   // art/props/genomes.js
   var PROP_GENOMES = {
@@ -13898,6 +14273,38 @@ label.check input { accent-color: var(--accent); }
       ctTufts(m, 18, 2.8, 10, 111);
     } }
   };
+  var LANDMARK_PYRAMID = {
+    "step-pyramid": { desc: "a stepped pyramid of five mossy terraces, a steep stair up its face between balustrades ending in feathered serpents' heads, a little shrine on top with its doorway dark; ferns and a fig's roots taking its corners", split: 2.2, build(m) {
+      const n = 5, H = 0.34;
+      for (let i = 0; i < n; i++) {
+        const w = 2.6 - i * 0.45;
+        ldBlock(m, [0, H * (i + 0.5), 0], [w, H * 0.5, w * 0.9], 1 + i % 2, { courses: 2, moss: 0.3 + i * 0.04 });
+      }
+      const top = H * n, front = 2.6 * 0.9;
+      for (let k = 0; k < 14; k++) {
+        const t = k / 14, y = top * t, z = front - (front - 0.5) * t;
+        m.box([0, y + 0.05, z + 0.08], [0.42, 0.06, 0.1], M.STONE, { group: 6, round: 0.01, paint: ldStone(0, 0.25) });
+      }
+      for (const x of [-0.52, 0.52]) {
+        m.seg([x, 0.14, front + 0.15], [x, top + 0.1, 0.45], 0.1, 0.09, M.STONED, { group: 7 + (x > 0 ? 1 : 0), paint: ldStone(0, 0.35) });
+        m.ell([x, 0.2, front + 0.32], [0.2, 0.17, 0.2], M.STONE, { group: 9 + (x > 0 ? 1 : 0), paint: (p) => ctCell(p, 8, 3) < 0.2 ? M.MOSS : void 0 });
+        m.ell([x, 0.1, front + 0.48], [0.12, 0.06, 0.14], M.STONED, { group: 9 + (x > 0 ? 1 : 0) });
+        for (let f = 0; f < 5; f++) {
+          const a = -1.2 + f * 0.6;
+          m.seg([x, 0.28, front + 0.22], [x + Math.sin(a) * 0.28, 0.28 + Math.cos(a) * 0.26, front + 0.14], 0.05, 0.015, M.STONE, { group: 11, paint: ldStone(0, 0.4) });
+        }
+      }
+      ldBlock(m, [0, top + 0.32, -0.1], [0.62, 0.32, 0.55], 12, { courses: 3, moss: 0.25 });
+      ldBlock(m, [0, top + 0.7, -0.1], [0.7, 0.07, 0.62], 13, { courses: 0, moss: 0.4 });
+      m.box([0, top + 0.26, 0.5], [0.2, 0.26, 0.2], M.STONED, { group: 12, cut: true });
+      m.chain([[2.2, 0.2, 1.6, 0.09], [1.7, 0.8, 1.2, 0.07], [1.3, 1.3, 0.8, 0.05], [1.1, 1.8, 0.5, 0.04]], M.TRUNK, { group: 14, rough: 0.01 });
+      ctCrown(m, [1.1, 2.1, 0.5], [0.6, 0.42, 0.5], 15);
+      ctFern(m, [-2.1, 0.1, 1.8], 16, 1.3);
+      ctFern(m, [1.9, 0.7, -1.2], 17);
+      ctIvy(m, [-2.4, 0, 2.2], [-2, 1.2, 1.9], 18, 141);
+      ctTufts(m, 22, 3.2, 19, 142);
+    } }
+  };
   var LANDMARK_CASTLE = {
     "curtain-wall": { desc: "a stretch of curtain wall, its battlements gapped, arrow slits, ivy up its face", split: 2.2, build(m) {
       ldBlock(m, [0, 1.25, 0], [1.7, 1.25, 0.3], 1, { courses: 8 });
@@ -14224,6 +14631,7 @@ label.check input { accent-color: var(--accent); }
     ...Object.entries(LANDMARK_CARPARK).map(([id, d]) => ({ id, family: "carpark", ...d })),
     ...Object.entries(LANDMARK_SCRAP).map(([id, d]) => ({ id, family: "scrap", ...d })),
     ...Object.entries(WORSHIP).map(([id, d]) => ({ id, family: "worship", ...d })),
+    ...Object.entries(LANDMARK_PYRAMID).map(([id, d]) => ({ id, family: "pyramid", ...d })),
     ...Object.entries(LANDMARK_CASTLE).map(([id, d]) => ({ id, family: "castle", ...d })),
     ...Object.entries(LANDMARK_CLASSICAL).map(([id, d]) => ({ id, family: "classical", ...d })),
     ...Object.entries(LANDMARK_CLASSICAL_GEN).map(([id, d]) => ({ id, family: "classical", ...d }))
@@ -14443,6 +14851,11 @@ label.check input { accent-color: var(--accent); }
       ["decor:rock", 2.9, -1.4],
       ["rubble", -2.4, -1.8, "left"]
     ] },
+    "step-pyramid": { desc: "a stepped pyramid in its clearing, its stair between serpent balustrades, fallen blocks at its foot", suits: ["step-pyramid"], pieces: [
+      ["step-pyramid", 0, 0],
+      ["rubble", 3.6, 2],
+      ["decor:standing-rock", -3.8, 1.4, "left"]
+    ] },
     "stupa": { desc: "a stupa on its terraces with a tree rooted in its dome, its spire's rings fallen at its foot, standing stones near", suits: ["heath", "moor", "rocky-slope", "grassland"], pieces: [
       ["stupa", 0, 0],
       ["decor:standing-rock", -3.2, -1],
@@ -14477,7 +14890,7 @@ label.check input { accent-color: var(--accent); }
     ] }
     // (the toppled statue head gone: Ed, 2026-10-11)
   };
-  var TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath"];
+  var TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"];
   var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
   var TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
   for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
@@ -14516,6 +14929,8 @@ label.check input { accent-color: var(--accent); }
     return out;
   }
   var KINDS_TABLE = assembleKinds(AREA_FOLDER_KINDS);
+  var KIND_SLOTS = Object.fromEntries(Object.keys(KINDS_TABLE).map((k, i) => [k, i]));
+  var CLASSIC_SLOTS = 32;
 
   // src/rules/rosters.ts
   var KINDS = KINDS_TABLE;
@@ -14544,7 +14959,7 @@ label.check input { accent-color: var(--accent); }
     sharesCreature: !!a.sharesCreature
   }));
   var HOME_LOOK = AREA_TYPES.length;
-  var CLASSIC_TYPES = AREA_TYPES.map((a, i) => (KINDS[a.creature]?.phase ?? 0) < 3 ? i : -1).filter((i) => i >= 0);
+  var CLASSIC_TYPES = AREA_TYPES.map((a, i) => (KIND_SLOTS[a.creature] ?? 0) < CLASSIC_SLOTS ? i : -1).filter((i) => i >= 0);
   var H_ = HOME_AREA;
   var LOOKS = [...AREA_TYPES, {
     id: H_.id,
@@ -14956,7 +15371,7 @@ label.check input { accent-color: var(--accent); }
     _lakes: `Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED). biomeFrom: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier": 3, it was 4, the first uncharted islands). biomeFirstShare: the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none (Ed, 2026-10-12: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"). The biome lakes in play (Ed, 2026-10-23: render/lakeLooks.ts, each lake the sea chart's look for it): the north's glacier's peaks kept glacierClear metres under her treetop flight (treetopHeight), and the hot springs' (the rust pools') steam: on, puffs rising rise metres over life seconds, size metres across, at opacity, a vent every spacing metres over their deep water.`,
     lakes: { shore: 4, pad: 1.5, koi: 0.5, biomeFrom: 3, biomeFirstShare: 0.5, glacierClear: 5, steam: { on: true, rise: 14, life: 7, size: 4, opacity: 0.4, spacing: 28 } },
     _chart: `The sea chart (the map table and chart.html; render/chart/seaChart.ts, render/chart/moon.ts). moon (Ed, 2026-10-12: "islands casting shadows from the moon orbiting the map screen"; #746: "have the moon rise over the North West edge of the map as you open the map screen"): each time the chart opens the moon rises over its edge at bearing from (degrees, 0 north, clockwise: -45 the north-west) over rise seconds, from just under the horizon to height degrees, then goes round once every turn seconds; every island's relief throws a shadow away from it, across the sea and into its own valleys, shadow its darkest (0 none, 1 black), the hills' shading following it; disc: its disc drawn in the sky past the rim at its bearing (hidden behind the world). edgeBand (#746: "add empty sea around the edge of the map"): the empty sea past the furthest islands, the disc's radius beyond theirs as a share of it (0 as before; at most 0.6).`,
-    chart: { moon: { rise: 6, turn: 240, height: 22, from: -45, shadow: 0.6, disc: true }, edgeBand: 0.18 },
+    chart: { moon: { rise: 6, turn: 240, height: 22, from: -45, shadow: 0.6, disc: true }, edgeBand: 0.18, sailHold: 1.2, _sailHold: `Seconds the use button (E, Enter, the pad's square) or the mouse is held on an island at the map table's chart to sail there, its ring filling (Ed, 2026-10-23: "You have to hold the button to select a new island to sail to (ring fills)"); let go early, nothing. A click only chooses.` },
     _islands: "Islands other than home (the wave 2 finale's dream bubbles and the sea chart; rules/islandShape.ts, art/islands.js; Ed, docs/backlog/journey.md): coast, the coastline's knobs as map.coast's (amp, the most it strays from round, a share of the radius; harmonics, how many bays and headlands; detail, the finer wobble), stronger than home's so every island has a shape of its own, read at a bubble's 30 pixels.",
     islands: { coast: { amp: 0.3, harmonics: 4, detail: 0.35 } },
     _beach: `The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A beach surrounds the island, and the calm dark water reflects the sky. You can hear the sound of the waves. If you try and fly past the beach, you land and stargaze (the party lying down pose). Other witches can be found on the beach occasionally; if you land near them, you chat, hold hands, and hug. Try and do this in a way that doesn't cost performance - most games won't ever go to the beach, it's just an Easter egg for adventurers."): sand over the last width metres inside her flight's edge (nothing grows or stands on it), the sea from shore metres past the edge, the hills eased over ease metres down to sand metres high where the sand starts and to sea metres at the water. Flying on out over the sand for restAfter seconds she lands (from the treetops too) and lies down to stargaze; any other way gets her up. Lying there facing out to sea (the north coast: the camera always looks north), the bend keeps only camera.seaward of itself, so the open water isn't dropped below a horizon of sand. Lying down, the camera stands by her bearing round the coast (Ed, 2026-10-07: "move the camera further and lower to show off the moon reflecting on the water and the beach and the sky ... check in 12 different directions for a nice composition and smoothly interpolate between them"): camera.bearings, twelve entries every 30 degrees from the north, clockwise: angle (degrees below the horizon), distance (metres back), look (metres over her it aims at), side (metres east it stands and aims: out over the water on the east and west coasts, so the shore runs up the picture with the sea beside it) and bend (the share of the stargazing bend kept there: none facing the open sea to the north, so the water isn't dropped below a horizon of sand; camera.seaward does the same on the way down to the water), joined smoothly all the way round. Lying there (Ed, 2026-10-06: "the bend shader applies so that you can see the sky") the world bends stargazeCurve times the treetops' curve (Ed: "it's stronger than usual, so the sky takes up more of the screen"), eased in and out over about gazeEase seconds, so the night sky opens up over the sea. Lying there with a beach witch (Ed: "If you land near another witch, and you stargaze together, and you wait a few seconds, little hearts will start appearing near you both, floating upwards and disappearing"): after hearts.after seconds a \u2764\uFE0F rises off one or the other every hearts.every[0] to [1] seconds, for hearts.life seconds each, until either gets up; the two stay lying together until she moves. A \u{1F48C} come down on the sand or the sea (Ed: "they last longer and disappear more slowly (5 seconds)") rests letterLinger seconds, fading over the last letterFade, bobbing gently on the water. witchChance of runs (Ed, 2026-10-06: "I think there should always be beach witches, but there are only a handful spread around it": every run) have spots[0] to spots[1] spots spread round the coast (evenly, each nudged by up to a third of the gap), each with witches[0] to witches[1] witches (Ed, 2026-10-06: "Beach witches appear solo": one); landing within meet metres of them and keeping still for idleAfter seconds, one chats, holds hands, hugs and stargazes with her, turn seconds each. None of it is drawn or heard unless she's within shown metres of the sand, nor the witches stepped beyond simRange. on false: forest to the edge, as before. vary (Ed, 2026-10-06: "The beach can be more irregularly shaped"): the sand's width round the coast, width times e to the amp times a seeded smooth noise of harmonics bays and narrows; where the noise is lowest (below -rocky, of -1 to 1) it turns rocky, narrowing to rockyWidth metres; never under min. decor (Ed, 2026-10-06: "a few beach decorations, sparsely: shells, star fish, conch, footprints of people and creatures ... just nature"; rules/beachDecor.ts, art/beach.js): round the coast in sectors sectors, about finds finds a sector (shells, starfish, a conch, seaweed, pebbles; rocks on a rocky stretch), each sector with a trails chance of a trail of prints[0] to prints[1] footprints (bare feet, paws, hooves, a bird's, weighted by kinds) wandering along the sand and fading out (Ed, 2026-10-12: too many on the beach, so finds and trails halved, to 0.35 and 0.035); all of it on the wet and dry sand, the clear metres of it nearest the woods left bare. dolphins (Ed, 2026-10-07; their timetable rules/seaLife.ts, drawn by render/dolphins.ts): leaping off the east coast, within arc radians of due east, one every every[0] to [1] seconds, pair of them in twos, out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that (away from the camera: the stargazing bend drops anything much more than 20 m ahead of her below the screen), each leap length metres along the coast and height high over time seconds. kraken (Ed, 2026-10-07; rules/seaLife.ts, render/kraken.ts): off the west coast, within arc radians of due west, a slot every every seconds, chance of them holding a rising: tentacles[0] to [1] tentacles rising one after another out[0] to [1] metres past the water's edge from her and ahead[0] to [1] metres north of that, each over time seconds, and in head of them the dome of its head and its eye. decor.findScale: the beach finds' size, times (Ed, 2026-10-11: twice; the footprints keep theirs). grain (Ed, 2026-10-12: "The beach is not pixelated like everything else"): how far each of the sand's art pixels is lightened or darkened at random, 0.14 = \xB17%; the sand and sea draw their art pixels doubled until each covers at least a screen pixel (render/ground.ts), so the grain stays chunky under the beach's far, low camera.`,
@@ -15105,7 +15520,7 @@ label.check input { accent-color: var(--accent); }
     _guard: `Parked party animals (at a sigil on the ground) guard it (Ed, 2026-10-04): they take on any wild creature of another kind within radius metres of the sigil, and come back to it. One parked with its sigil in the home area (the dancefloor's) guards all of that area instead (Ed, 2026-10-11: "Animals leashed inside the home area should aggro enemy creatures within that area"): any wild or enraged creature anywhere in it, never one outside it, whatever radius says. Parked in any other area (Ed, 2026-10-15: "Placing a sigil in any area should work as home does: the creatures defend the whole area, plus a radius round the sigil"), it guards all of its sigil's area and radius metres round the sigil besides (rules/homeArea.ts areaOf).`,
     guard: { radius: 40 },
     _creatures: `Wild creatures (Ed, 2026-10-04): every area starts with the same population, population.start (one baby and one young: Ed, 2026-10-05, 'actually, the game should start with one baby and one youth, otherwise you can't avoid enraging lots of legends', after 'the game is hard! we should start each area with just one baby'; before it, one young and one adult, and before that one baby and two adults), and, from the start (Ed, 2026-10-07: his new core design, "no population growth on a clock"), more by its place on the waves' route (Balance 2's shape; rules/growth.ts routePopulation): byRoute.threat, [route index, F] points (1 the first wave's stone; straight lines between, flat past the ends), is the extra fighting value its young and adults add (F by Lanchester, young 11.6, adult 40, babies 0; about what an area woken at that wave grew to before); its kind spends it by its profile (byRoute.profiles[species], else default: the shares of its extra creatures as babies, young and adults), so many more of a swarm's young than of a heavy kind's adults, at the same danger: count = threat \xF7 the profile's mean F a creature \xD7 the area's count scale, rounded, split by the shares (largest remainder, ties by the seed). byRoute.babies: babies in every area, start's included (Ed, 2026-10-07: about two, for quest sigils and berries), at most babyCap. byRoute.minHostile: at least this many young or adults in every wild area (Ed, 2026-10-07: "every wild area has at least one hostile wild creature"), any shortfall made up with young. The hostile swarm (Ed, 2026-10-08, the swarm plan's phase 1: its own young and adults, the ones a wave enrages and sets marching; rules/swarm.ts): its challenge grows with the area's place p in the runestone order (0 the first stone, 1 the last), whatever its species. swarm.classes: strong (cap 6), medium (cap 12: swarm.reference, and every species not listed) and light (cap 16; Ed: "a swarm of 20 is too many; cap it at 16"), each class's strength 12 / its cap on its creatures' health and damage (strong \xD72, light \xD70.75; rules/combat/data.ts), so moving a species is one line here. The target is the estimated power (\u03A3hp \xD7 \u03A3dps; the witch doesn't count: her three hits ignore damage) of a medium reference swarm of swarm.start + (swarm.endAverage \u2212 swarm.start)\xB7p^swarm.curve creatures (1 + 11\xB7p^1.3), its young share easing from swarm.youngShare[0] (1.0) to [1] (0.2). p is the master curve's (Ed, 2026-10-10, 2026-10-11): by the area's wave, (wave \u2212 1)/(swarm.waves \u2212 1), so wave swarm.waves (64) brings today's final swarm, every island plays it from wave 1 as far as it has areas, and a bigger map holds there after. Each area fields, of every size up to its species' cap (capScales: the cap grown along the same curve, at least 2) and every young/adult split, the one nearest the target; among those within swarm.mixTolerance (10%) of the nearest, a mix of young and adults first. A simulated power (config/swarm-power.json, empty in phase 1) stands in for the estimate where it has the swarm. So a default map (about 100 areas) holds about 540 hostiles: the curve's average, 5.8 an area. growth is the old growth on a clock, which the game no longer reads (the balance simulators still do): every wave, each area the party hasn't reached gained growth.perWave more (a fraction carries over: 0.5 is one every other wave; balance, 2026-10-06, DECISION FOR ED: 0.5, from 1, so a player's defence can hold the early sieges and playing well matters), each at a random level by growth.weights (baby, young, adult: equal thirds), so the areas the party reaches late are the ones to fear. Areas already partified don't grow. New ones arrive out of the witch's sight (beyond the haze's far edge plus growth.hide metres), never popping in on screen; areas far from every witch keep them as counts only, made real (from the seed) when a witch comes within creatureSimRadius of the area or it wakes. The home area holds none. Fighting value (DESIGN.md, Balance): a young is worth 15.5, an adult 29, a legend 76; so an area woken at wave n brings about 1 + n/3 young and 1 + n/3 adults (F about 44.5 + 14.8 n), besides its legend (wildLegends). Only creatures whose home is within creatureSimRadius metres of the witch move. node tools/balance/sim.mjs forecasts the sieges these numbers make.`,
-    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant", "stegosaurus", "hydra"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
+    population: { start: { babies: 1, young: 0, adults: 0 }, byRoute: { babies: 2, babyCap: 2, minHostile: 1 }, swarm: { start: 1, endAverage: 12, waves: 64, curve: 1.3, youngShare: [1, 0.2], reference: "medium", classes: { strong: { cap: 6, species: ["bear", "boar", "elk", "stag", "badger", "ram", "beaver", "lion", "frostwyrm", "griffin", "rhino", "polarbear", "tiger", "elephant", "stegosaurus", "hydra", "sphinx", "featheredserpent"] }, medium: { cap: 12, species: [] }, light: { cap: 16, species: ["hedgehog", "mole", "dormouse", "newt", "fennec", "dragonfly", "crab", "rattlesnake", "scorpion", "toad", "snail", "salamander", "bat", "moth", "beetle", "spider", "flyingsquirrel", "woodlouse"] } }, capScales: true, mixTolerance: 0.1 }, growth: { on: true, perWave: 0.5, weights: [1, 1, 1], hide: 20 } },
     creatureSimRadius: 600,
     _simLod: "The simulation's level of detail (Ed, 2026-10-05: creatures far from the action frozen until she comes closer; rules/simLod.ts). Wild creatures roaming are simulated every step within full.ground metres of the witch on the ground, full.treetop over the treetops (each a little past the most the view shows from there at any zoom: 178 and 262 m in a 1900 by 1240 window); beyond, coarsely: once every `every` steps (60 a second), by that many steps' time at once, taking turns; past creatureSimRadius not at all. Besiegers marching on a soundsystem are simulated every step within full of her or within action metres of a soundsystem, a party animal or a happy legend's guard; elsewhere coarsely, marching `every` steps at a time. Going out, one stays in full until band metres past the line, so none flickers. The debug overlay's sim line counts them.",
     simLod: { full: { ground: 200, treetop: 300 }, action: 120, band: 30, every: 30 },
@@ -15184,7 +15599,7 @@ label.check input { accent-color: var(--accent); }
     _partyOver: `The party's over (Ed, 2026-10-06: "when the soundsystems and speakers are all destroyed, the dance music stops, the dancefloor switches off, lights switch off, the upset animals that ran away go home, all the animals go to sleep and make little \u{1F634} speech bubbles, and you can walk the map safely"; rules/partyOver.ts): once the home ring's speakers are all down (Ed, 2026-10-10: "The party should end when all your home speakers are destroyed, not all speakers+soundsystems. When the party ends, undestroyed soundsystems should just switch off (sound and lights)"), the afterparty, any soundsystem still standing switched off: the waves stop, nothing fights, and every creature walks home and sleeps. walk: their pace home, times their roaming speed (they walk, not run: a stroll home after the party). ease: seconds it eases in over (g.partyOver.ease, 0 to 1: the lights going out, the music winding down, the ley line fading to leyFloor of its brightness). ?partyover=1 starts it at once (home's speakers down).`,
     partyOver: { ease: 6, leyFloor: 0.2, walk: 2 },
     __view: "The camera and the view (drawing only): framing, pixel size, culling, fading, finding things.",
-    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves.`,
+    _camera: `shake (Ed, 2026-10-05: "Screen should shake when the witch is hit. More shake when you are on lower health"): each hit adds trauma (0-1), base on her first, perMissingHit more for each hit she was already missing, knockdown on the hit that knocks her down; it falls away at decay a second, and the screen shakes by trauma squared times maxOffsetPx (screen pixels, whole ones) and maxRotDeg, smooth noise wandering speed times a second. ?shake=0 (or the start screen's toggle) turns it off. speedZoom (Ed, 2026-10-05: treetop mode much faster, for travel): the treetop camera's distance is times (treetopSpeed / base) to the power power, so at a faster treetopSpeed it zooms out and the screen holds about as many seconds of flight (power 0: off). curve: the world bends away toward the top of the screen (Ed, 2026-10-04: only over the treetops, so a little night sky shows), per metre ahead of the witch, eased in as she rises; ?curve=<treetop> tries values (0.0015: about 11% of the screen sky in ?bare=1, Ed v276 asked 10-12%; 0.0022 about 24%; under 0.001 none; 0 off); beyond: how many metres past the bent ground's horizon the distant treetops are still drawn (fewer is cheaper). Near-isometric on the ground, after Transistor; the game opens close in on the witch in her seat on the treehouse (intro: distance metres, angle degrees), easing out to the normal view over intro.ease seconds once she moves or rises (Ed, v171); lower over the treetops, looking toward the horizon to feel the speed. The camera follows the witch on a soft spring (follow: its stiffness; higher keeps her closer to the middle) and looks a little ahead of her: lookAhead seconds of flight, at most lookAheadMax metres, eased in at lookAheadEase. zoomEase and liftEase: how softly zoom and rising change the angle and distance. a narrow field of view (fov, degrees) seen from far off, so there is little perspective. Each mode has its own angle (degrees below horizontal) and distance from the witch, at zoomed-in and zoomed-out. Zoom moves between them in zoomSteps steps, starting at startZoom: with 9 steps and startZoom 3 the start is ground 32 degrees at 100 m and treetop 36 degrees at 170 m, with three steps in and five out from each (Ed, 2026-10-10: "Increase the range of allowed zooming substantially in both treetop and ground (but keep the step size the same)": 20 m and 2 degrees a step, as before; was 4 steps, startZoom 1, ground 80-140 m, treetop 150-210 m). circle (Ed, 2026-10-08, considering it: "lowering the camera angle while you're in the circle to make them seem more looming"; legends being hard to make out in their circles): on the ground in a legend's circle the camera eases over ease seconds to angle degrees (from the ground view's 30 to 36), its distance times distance, aimed frame of the way from her to the legend and look metres higher, so the legend stands large over her; it eases back as she leaves. on false turns it off. house (Ed, 2026-10-14: indoors "the camera zooms in so you can see the detail"): landed on the treehouse's floor, the camera eases over ease seconds to angle degrees and its distance times distance. station (Ed, 2026-10-21): at a dressing station and choosing (the pointer or the d-pad in its panel, or stood still a moment: ui/stationPanel.ts), its distance times distance and moved side times that distance east (west when negative), so she stands clear of the panel; eased over ease seconds, and back as soon as she moves. station.parts (Ed, 2026-10-23: "zoom in on what's being chosen"): for the part of her the row in focus is about (config/wardrobe.json's frame: head, hat, top, legs, feet, broom), aimed look metres up her and its distance times distance in place of the station's own, eased from part to part as the cursor moves.`,
     _sail: "Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/sail.ts): inPlace, the next night started on the same page (the old night's music fading out as a quiet sea and wind come in, sfx.sail; Back then opens the pause menu; anything going wrong loads the page anew, quietly), and so the bed and the bot game's exit, and the cards' Sea chart opening the map table's chart over the game; else the page loaded anew on the island's link (or chart.html) as before. ?sail=inplace or ?sail=reload for one page.",
     sail: { inPlace: true },
     _opening: "The new opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): chart, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) opening on the sea chart over the boot's night, only home unlocked in a first game, What's new and Options in its corner, choosing an island starting its night in place as a sail does. On by default (Ed, 2026-10-21); ?opening=old keeps today's start for a load (the bedroom as the loading cover), ?opening=chart forces the chart; false here turns it off for every load. wake: the wake-up in her bedroom the dive lands in (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.",
@@ -15209,7 +15624,7 @@ label.check input { accent-color: var(--accent); }
       intro: { distance: 34, angle: 22, ease: 1.3 },
       circle: { on: true, angle: 20, distance: 0.75, ease: 1.2, frame: 0.35, look: 1.5 },
       house: { on: true, angle: 24, distance: 0.62, ease: 1 },
-      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5 }
+      station: { on: true, distance: 0.6, side: -0.16, ease: 0.5, parts: { head: { look: -2.9, distance: 0.32 }, hat: { look: -1.2, distance: 0.4 }, top: { look: -3.2, distance: 0.4 }, legs: { look: -3.8, distance: 0.42 }, feet: { look: -2.85, distance: 0.4 }, broom: { look: -0.55, distance: 0.5 } } }
     },
     _look: `Everything the camera can see is drawn, plus viewMargin metres round the view, so nothing appears or vanishes on screen. haze: the twilight haze fades the forest from near to far metres from the witch; nothing is drawn beyond far. lightBudget: how many of the nearest point lights (campfires, magic stones, the dancefloor) light the scene at once. pixelSize: screen pixels per art pixel (3, Ed 2026-10-07 after playtesting 5 and 4: "the large pixels look cute but it's impossible to see what's going on"; ?px=4|5 to compare). The witch's light reaches as far as the canopy hole round her in ground mode (its radius plus its soft edge, in metres at her depth, times glowToCutout), so beyond it the forest is dark (Ed, v149); glowNear: the share of that reach where her light has fallen to dark (Ed, round 11: "a bit flat, it should fall off closer"; 1 lit all the way to the hole's edge); glowFalloff: how fast it falls off, as (1 - distance/(reach \xD7 glowNear))^glowFalloff. ?glow=<reach>,<falloff>,<near> in the URL fixes the reach (glowReach metres), the falloff and the near share, to try values live. nightLight (Ed, 2026-10-06: "Seems very bright for nighttime"): her light reaches at most maxReach metres however far the camera is (stargazing, zoomed out), and over the treetops treetopReach metres at treetopGlow of its strength, eased in as she rises, so the canopy stays moonlit with a lantern's warm glow round her; lying on the beach to stargaze, at most gazeReach metres. spriteTilt: 1 = sprites face the camera fully, 0 = stand upright.`,
     pixelSize: 3,
@@ -15239,8 +15654,8 @@ label.check input { accent-color: var(--accent); }
     find: { eyeshine: { range: 45, strength: 1.2, blink: 0.08 }, lightFloor: 0.45, rim: 0.5, ambient: 0.28, moonHue: 0.5, moonSat: 0.5 },
     __light: "Light, sky and mood (drawing only): glow, lights, shadows, haze, mist, smoke, the sky and moon, the looks, tone, bloom and tilt-shift.",
     _hills: `The rolling ground (Ed, 2026-10-04): ground.hills lifts the ground and everything standing on it into broad swells up to amplitude metres up or down, scale metres across, in octaves layers of noise; drawing only, the game itself stays flat. Paths stay level across, and the ground is levelled into plateaus under the dancefloor, the treehouse, soundsystems, set pieces, the grounds and ponds. ?hills=0 turns it off; ?hills=<amplitude> tries another (6 gentle, 20 rolling, 40 the default: Ed, v289 "I guess hills=50 is just too much, maybe 40 is enough"). No slope may rise past the camera's sightline to her (Ed, v289: "so that you never go behind a bump"): the hills are made at least 4.3 \xD7 amplitude / tan(the camera's shallowest pitch) metres across (300 at 40 m and 30\xB0), so taller hills come broader, not steeper; and after everything is combined (the noise, the plateaus' and paths' easing) no slope anywhere is steeper than 0.85 of that pitch (Ed, v297: "bumps are fine, it's cliffs that really show"): a cliff is cut and filled into a slope of the limit, gentler ground left as it is. Plateaus ease in over 2 times the amplitude and paths over 0.6 times, and sprites stand at the lowest ground under their foot. Off (Ed, v276: "remove the slope shading"): the fake relief (relief.strength 0; ?relief=0.9 brings its bumps back) and the slopes' exaggerated light (shade 1). shade: the light reads their slopes this many times steeper, so gentle swells (which trees can stand on upright) still show. relief (above) adds the small bumps on top.`,
-    _telescope: "The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): E at it looks through it full screen, E or Esc leaves, the night running on at the house's tenth. eye: the eye's height (m over the ground at the hub, above its roof). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).",
-    telescope: { eye: 50, fovWide: 40, fovClose: 8, aimWide: 260, pan: 50, tilt: 35, tiltMax: 80, zoomStep: 0.125, bend: 3e-4, reach: 900, hazeNear: 320, hazeFar: 1e3, thinFrom: 360, thin: 2, thinGrow: 1.25, wedge: 20, moonSpread: 60, consHold: 1, consLines: 0.7, consBright: 1.35, resolution: 1, lowGpuResolution: 0.5, vignette: 0.6 },
+    _telescope: `The telescope in the crow's nest (Ed, 2026-10-21: just the view, true to the island, nothing marked; rules/telescope.ts): walking up to it looks through it full screen (Ed, 2026-10-23: "opens when you walk up to it, look around with aiming keys": the mouse, the arrows, the d-pad and the right stick look round; walking her away, E or Esc leaves), the night running on at the house's tenth, a compass strip along its top. eye: the eye's height (m over the ground at the hub, above its roof; Ed, 2026-10-23: "the telescope view should be 'higher'", 50 to 100). fovWide, fovClose: its field of view wide and close (degrees; the game's is 20). aimWide: how far out (m) the middle of the view looks at its lowest (as she first looks: at the forest). pan, tilt: degrees a second panning (left, right) and tilting (up, down: Ed, 2026-10-22, to look at the stars) wide, slower zoomed in (alike on screen); tiltMax: how far up it tilts (degrees). zoomStep: a step of the zoom (the wheel, Z and X, the gamepad's shoulder buttons; 0 wide to 1 close). bend: the world's bend inside it (the treetops' is camera.curve.treetop; gentler, so the far side stays in view). reach: tree crowns are drawn out to this many metres (the island's far side; past the scenery's radius crowns alone); hazeNear, hazeFar: its haze. thinFrom, thin, thinGrow: past thinFrom metres only one crown in thin is drawn, thinGrow times as big (the cheaper far forest). wedge: what's drawn is what lies within its view's width and this many degrees either side, listed again each half of it panned. moonSpread: the game's moon stands at a bearing round north, the game's view this many degrees across. consHold, consLines, consBright: tonight's constellation (the trunk's find's outline in the stars, at its bearing, rules/constellations.ts; Ed, 2026-10-22): its stars' brightness (1 the sky's brightest), its faint dotted lines' strength, fading in once she's held the view on it consHold seconds. resolution: its picture's resolution (1 the game's); lowGpuResolution: on an integrated GPU (Intel), instead. vignette: how dark its edges (0 none).`,
+    telescope: { eye: 100, fovWide: 40, fovClose: 8, aimWide: 260, pan: 50, tilt: 35, tiltMax: 80, zoomStep: 0.125, bend: 3e-4, reach: 900, hazeNear: 320, hazeFar: 1e3, thinFrom: 360, thin: 2, thinGrow: 1.25, wedge: 20, moonSpread: 60, consHold: 1, consLines: 0.7, consBright: 1.35, resolution: 1, lowGpuResolution: 0.5, vignette: 0.6 },
     _sky: "The night sky that shows over the bend in treetop mode (on; ?sky=off leaves the plain dark background there, which costs nothing): stars (how many, 0-1), moon (brightness). clouds (Ed, 2026-10-04: real ones, seen only from underneath, over the bend): count (roughly how many to a screenful of sky), altitude (metres over the ground: above the treetop camera, so never between her and it), speed (m/s they drift), opacity (translucent: stars show through), partyGlow (how strongly what's beneath them lights their undersides: the partified areas' colours, pulsing on the beat; campfires faintly; over dormant forest they stay moonlit grey). lightning: about every so many seconds a cloud in view flickers (flashes per strike), sometimes with a forked bolt toward the horizon; ground: the faint flash on the forest (0 none).",
     _smoke: "Smoke from every fire (Ed, round 13: puffs rising high into the sky before dissipating; render/smoke.ts): the world's campfires, the party's campfires, bonfires and tiki torches, the charcoal burner's mound. Each fire sends up about rate puffs a second (at most perFire at once), each living life seconds: rising at speed m/s at first and slowing, up to rise metres (well over the 24 m treetops), drifting with the wind at drift m/s, starting size metres across and growing to (1 + grow) times that, thinning out before the end; opacity its strength (a cool grey, under the moon and the party's amber), warm how much of the fire's amber the lowest puffs catch underneath; pixel draws them in three stepped tones with a dithered edge at the art pixel (false: smooth). The nearest maxFires fires within range metres smoke, those near the edge fading. on: false turns it off.",
     smoke: { on: true, rate: 0.6, life: 14, rise: 46, speed: 5, size: 2.6, grow: 4, drift: 0.9, opacity: 0.62, warm: 1, pixel: true, perFire: 12, maxFires: 24, range: 280 },
@@ -16545,6 +16960,12 @@ registerProcessor("witch-fof", WitchFof);
     note(part, patch, midi, vel, t, dur) {
       this.play({ part, patch, midi, vel, step: 0, offset: 0, dur: 0 }, t, dur, 60 / 120 / 4);
     }
+    /** One piece of the voice effects' work put off (their halls' impulses), as update does a frame at a time: for a page playing
+     *  notes without update (the treehouse Studio). True while there's more. */
+    warmFx() {
+      for (const ch of this.channels.values()) if (ch.fx?.warm()) return true;
+      return false;
+    }
     /** The Studio's tempo (it plays without a beat clock): the echoes' time and the voice effects' beat. */
     tempo(bpm) {
       this.bpmNow = bpm;
@@ -16570,20 +16991,22 @@ registerProcessor("witch-fof", WitchFof);
         }
       }, 6e3);
     }
-    /** A synth note held from audio time `t` till the function it gives back is called with the time to let go (the Studio's
-     *  keyboard); any other kind of patch plays a short note and the function does nothing. */
+    /** A synth or sampled note held from audio time `t` till the function it gives back is called with the time to let go (the
+     *  Studio's keyboard; the treehouse Studio's instruments: a sung note loops its recording's steady middle while held); any other
+     *  kind of patch plays a short note and the function does nothing. */
     hold(part, patch, midi, vel, t) {
       const p = this.style.patches[patch];
       if (!p) return () => {
       };
-      if (p.kind !== "synth") {
+      if (p.kind !== "synth" && p.kind !== "sample") {
         this.note(part, patch, midi, vel, t, 0.4);
         return () => {
         };
       }
       const held = [], ch = this.channel(part, p);
       this.notePitch = 1;
-      this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
+      if (p.kind === "sample") this.sampled(t, p, p.gain * vel, mtof(midi), Infinity, 0, ch, held);
+      else this.synth(t, p, p.gain * vel, mtof(midi), 0, ch, held);
       return (at2) => {
         for (const h of held) {
           h.gain.gain.setTargetAtTime(0, at2, h.release / 3);
@@ -17022,14 +17445,14 @@ registerProcessor("witch-fof", WitchFof);
     /** A sung note from a recording (Ed, 2026-10-11: the game's singer, "Recorded + ethereal"): the recording retuned to it
      *  (its own length at most), through a presence lift; a phrase (after a rest of a beat or more) swelling in, the last one's
      *  end frozen, as the voice effects ask. Until the recording's loaded, the formant voice sings it. */
-    sampled(t, p, peak, freq, dur, step2, ch) {
+    sampled(t, p, peak, freq, dur, step2, ch, held) {
       const want = 69 + 12 * Math.log2(freq / 440), near2 = p.notes?.length ? p.notes.reduce((a, b) => Math.abs(b.midi - want) < Math.abs(a.midi - want) ? b : a) : null;
       const rec = this.recordings.get(near2?.sample ?? p.sample ?? "") ?? (near2 ? this.recordings.get(p.sample ?? "") : void 0), root = near2 && this.recordings.has(near2.sample) ? near2.midi : p.root ?? 69;
       if (!rec) {
         this.voice(t, { ...p, kind: "voice", vowels: ["ah", "oh", "ee", "eh", "oo"], formantShift: 1.18, q: 10, vibrato: 24, attack: 0.06, decay: 0.4, sustain: 0.85, release: 0.3 }, peak, freq, dur, step2, ch);
         return;
       }
-      const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
+      const c = this.ctx, rate = freq / mtof(root), skip = Math.min(p.skip ?? 0, rec.duration / 2), len = held ? 3600 : Math.min(dur * 0.97, (rec.duration - skip - 0.05) / rate);
       if (len < 0.05) return;
       if (!ch.presence) {
         ch.presence = c.createBiquadFilter();
@@ -17057,7 +17480,7 @@ registerProcessor("witch-fof", WitchFof);
         }
       }
       const phrase = ch.lastEnd === void 0 || t - ch.lastEnd > beat;
-      ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + len);
+      ch.lastEnd = Math.max(ch.lastEnd ?? -Infinity, t + (held ? 0.5 : len));
       ch.sung = phrase ? 0 : (ch.sung ?? 0) + 1;
       const src = c.createBufferSource(), g = c.createGain();
       src.buffer = rec;
@@ -17065,9 +17488,11 @@ registerProcessor("witch-fof", WitchFof);
       const sw = Math.min(0.5, Math.max(0, p.swell ?? 0)), rise = Math.max(0.03, Math.min(len * sw, 1.5)), fall = Math.max(0.08, Math.min(len * sw, 1.5));
       const envelope = (gain, top) => {
         gain.setValueAtTime(0, t);
-        gain.linearRampToValueAtTime(top, t + rise);
-        gain.setValueAtTime(top, t + Math.max(rise, len - fall));
-        gain.linearRampToValueAtTime(0, t + len);
+        gain.linearRampToValueAtTime(top, t + (held ? 0.12 : rise));
+        if (!held) {
+          gain.setValueAtTime(top, t + Math.max(rise, len - fall));
+          gain.linearRampToValueAtTime(0, t + len);
+        }
       };
       envelope(g.gain, peak);
       const vs = p.vowels?.length ? p.vowels : [], vowel = vs.length ? vs[ch.sung % vs.length] : "";
@@ -17097,8 +17522,14 @@ registerProcessor("witch-fof", WitchFof);
         last = pk;
         nodes.push(pk);
       }
+      if (held) {
+        src.loop = true;
+        src.loopStart = Math.min(skip + 0.15, rec.duration / 3);
+        src.loopEnd = Math.max(src.loopStart + 0.3, rec.duration - 0.1);
+        src.start(t, skip);
+      }
       last.connect(ch.presence);
-      src.start(t, skip, len * rate + 0.02);
+      if (!held) src.start(t, skip, len * rate + 0.02);
       if ((p.breath ?? 0) > 0) {
         const n = c.createBufferSource(), bp = c.createBiquadFilter(), bg = c.createGain();
         n.buffer = this.noise;
@@ -17109,9 +17540,11 @@ registerProcessor("witch-fof", WitchFof);
         envelope(bg.gain, peak * (p.breath ?? 0));
         n.connect(bp).connect(bg).connect(ch.presence);
         n.start(t);
-        n.stop(t + len + 0.02);
+        if (held) held.push({ gain: bg, filter: null, fBase: 0, fRelease: 0.01, release: 0.25, sources: [n] });
+        else n.stop(t + len + 0.02);
         nodes.push(n, bp, bg);
       }
+      if (held) held.push({ gain: g, filter: null, fBase: 0, fRelease: 0.01, release: Math.max(0.15, p.release ?? 0.35), sources: [src] });
       src.onended = () => {
         for (const n of nodes) n.disconnect();
       };

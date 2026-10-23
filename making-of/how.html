@@ -250,8 +250,31 @@
 </ol>
 <p>Two smaller rules came in with the night. Preview pictures stopped being committed, because the <code>previews/</code> folder "had grown to 416 MB"; they go into pull-request comments instead, and the best of the old ones were captioned and kept for this site. And each builder, as it finishes, writes its own short note for the Builders' Notes page, one file each, never editing anyone else's: the same trick as the changelog fragments.</p>
 
-<!-- coordinator notes -->
-<p><i>The coordinator's own account of the night follows.</i></p>
+<h2>The coordinator's view</h2>
+<p>Seen from the middle of it all, the work ran like this.</p>
+
+<h3>One coordinator, many builders</h3>
+<p>Ed talks mainly to one session, the coordinator. It turns what he asks for into briefs, and it wakes the builder sessions with scheduled triggers: Alpha to Hotel at first, then India, Juliet and Lima, a rendering builder and a music builder, and short-lived specialists who came in for one job and left (Coach, QA, Balance, Chronicle, which wrote this site, and an art director). When a builder's pull request is green, the coordinator merges it into the prototype branch.</p>
+
+<h3>Mock first</h3>
+<p>Anything visual or design-shaped starts as a mock, made with the game's own renderer: real frames from the real game, never drawings. Ed answers two to four multiple-choice questions about it, and only then is it built. As trust grew, he sometimes skipped the step with a "no need to mock".</p>
+
+<h3>REPORT and FINAL</h3>
+<p>Builders send two kinds of message: a REPORT (a mock or a plan, with its questions) and a FINAL (the pull request is green and ready). The coordinator relays the questions to Ed, and merges on the FINAL.</p>
+
+<h3>Releases</h3>
+<p>To release, the prototype is snapshotted to a branch of its own and merged into <code>main</code>, and the Pages run's number becomes the version (v4093, v4117). Every pull request also gets a playable copy of its own, so Ed can try a change before it lands.</p>
+
+<h3>Ed's playtests drive the work</h3>
+<p>Ed plays on a modest laptop with integrated Intel graphics. He sends timing logs and notes, and those become the next round of briefs. How long the game takes to load, and what each frame costs, on that laptop, is a check that never goes away.</p>
+
+<h3>What the coordinator learned</h3>
+<ul>
+  <li>Multiple-choice questions keep Ed fast: picking from four answers takes seconds, and writing one takes minutes.</li>
+  <li>Never claim something is fixed without confirming it: every bug gets a test or a log that shows it gone.</li>
+  <li>Spread the work across builders so that nothing waits on anyone.</li>
+  <li>Check in with every builder now and then, because messages do get lost. A mock for the Workshop sat unseen until a full check-in found it.</li>
+</ul>
 
 </main>
 <footer><div class="steps"><a rel="prev" href="architecture.html">← The Code</a><a rel="next" href="builders.html">The Builders' Notes →</a></div><p class="dim">Coven Rush is a game by Ed Saperia, in progress. <a href="../">Play the latest build</a> · <a href="https://github.com/edsaperia/witch">Source</a></p></footer>

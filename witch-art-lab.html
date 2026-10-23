@@ -1307,7 +1307,7 @@ function stampBlobs(sp, r, st, s, list, C) {
 function blobTree(r, st, s, P) {
   // (st.treePad: room past the tree's own frame, left and right, and above, for a crown that grows out of it: trees.js unclipped)
   const [PX, PY] = st.treePad || [0, 0], k = (P.narrow ? .8 + .2 * spread(st) : spread(st)) * (P.wide || 1), W = Math.round(P.w * s * k + (P.wPad ?? 40) * s), H = Math.round(P.h * s), sp = new Sprite(W + 2 * PX, H + PY), bx = W / 2 + PX, gy = H + PY;
-  const T = P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
+  const T = st.biomeTrunk && !P.trunk.stilts ? { ...P.trunk, ...st.biomeTrunk } : P.trunk, n = st.treeTrunks || T.stems || 1, tmat = matOf(T.mat || "TRUNK"), lmat = matOf(T.limbMat || T.mat || "TRUNK");
   const tw = T.w * s * (st.treeThick || 1) * (st.treeThin ? .55 : 1) / Math.sqrt(n), lean0 = (r() - .5) * (T.lean ?? .3) * st.gnarl + (st.treeLean || 0);
   const tips = [], ends = [], trunks0 = [];
   // a level's children along a limb, then theirs, down to the last level, whose tips carry the crown
@@ -1352,7 +1352,7 @@ function blobTree(r, st, s, P) {
   }
   if (T.upper) for (let y = 0; y < PY + H * T.upper; y++) for (let x = 0; x < sp.w; x++) { const m = sp.get(x, y); if (m === M.TRUNK || m === M.BARKD || m === tmat) sp.recolour(x, y, M.BELLY); }
   if (T.scars) for (let y = PY % Math.max(2, Math.round(T.scars * s)); y < sp.h; y += Math.max(2, Math.round(T.scars * s))) for (let x = 0; x < sp.w; x++) if (sp.get(x, y) === tmat) sp.recolour(x, y, M.BARKD);
-  const C = P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
+  const C = st.biomeCrown ? { ...P.crown, ...Object.fromEntries(Object.entries(st.biomeCrown).filter(([k]) => !P.crown[k])) } : P.crown, lowestEnd = Math.max(...ends.map(e => e[1]));
   if (st.treeBare || !tips.length) return trim(sp, bx, Math.min(lowestEnd, gy - 6 * s) + 4 * s);
   if (C.fronds) return frondCrown(sp, r, st, s, k, ends[0], C, gy);
   // the blobs: the tips spread round the crown, evenly by angle about its middle, the biggest on top
@@ -4175,11 +4175,14 @@ const GENOME_BADGER = { id: "badger", name: "Badger", template: "quadruped", bui
 
 
 // ---- inlined from art/creatures/bat/genome.js ----
-const GENOME_BAT = { id: "bat", name: "Bat", template: "flyer", builder: "bat", palette: { hue: .78, sat: .25, val: .45 }, legend: ["sonar"] , texture: { kind: "fur", size: 3 } };
+// the jungle's fruit bat (the biome roster, 2026-10-23; a pipistrelle before): a flying fox, a fox's face with big eyes and small
+// ears, a golden mantle over its shoulders, broad dark wings
+const GENOME_BAT = { id: "bat", name: "Fruit bat", template: "flyer", builder: "bat", palette: { hue: .06, sat: .5, val: .36, belly: [.1, .62, .78] }, look: { fruit: true }, legend: ["sonar"] , texture: { kind: "fur", size: 3 } };
 
 
 // ---- inlined from art/creatures/bear/genome.js ----
-const GENOME_BEAR = { id: "bear", name: "Bear", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .42 }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 3.4, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: .9 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 2.2 } }, { body: { humpK: 4.6, front: 1.5 }, features: [{ kind: "grizzle", amount: .3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: .2 }, { kind: "moss", amount: .5 }, { kind: "scars", count: 4 }, { kind: "claws", size: .26 }] }] };
+// the cold rainforest's black bear (the biome roster, 2026-10-23): black, a tan muzzle, tall ears, no grizzly's shoulder hump
+const GENOME_BEAR = { id: "bear", name: "Black bear", template: "quadruped", builder: "quad", palette: { hue: .7, sat: .12, val: .2, belly: [.08, .4, .62] }, body: { stance: "flat", hgt: 1.25, len: .74, chest: .4, tuck: .46, neck: .22, neckAng: .1, neckW: .6, hr: .36, legW: 1.75, back: "hump", front: 1.4, humpK: 1.1, bw: .34 }, head: { snout: .5, snoutD: .72, snoutTaper: .8, muzzle: true, jawCoat: true }, parts: { ears: { kind: "round", size: 1.15 }, tail: "stub", feet: "paw" }, coat: { shaggy: true }, legend: ["moss"] , levels: [{ body: { hgt: 1.0, len: .6, front: 1, humpK: .6, legW: 1.5, bw: .36, chest: .44, tuck: .5 }, head: { snout: .36, snoutD: .8 }, parts: { ears: { kind: "round", size: 1.3 } } }, { body: { hgt: 1.28, len: .76, front: 1.1, humpK: 1.2, legW: 1.2, bw: .26, chest: .36, tuck: .38 }, head: { snout: .5 }, parts: { ears: { kind: "round", size: 1.1 } } }, { body: { humpK: 1.3 } }, { body: { humpK: 3, front: 1.45 }, features: [{ kind: "grizzle", amount: .3 }, { kind: "worn", ear: "far" }, { kind: "bells", at: "throat", size: .2 }, { kind: "moss", amount: .5 }, { kind: "scars", count: 4 }, { kind: "claws", size: .26 }] }] };
 
 
 // ---- inlined from art/creatures/beaver/genome.js ----
@@ -4187,7 +4190,9 @@ const GENOME_BEAVER = { id: "beaver", name: "Beaver", template: "quadruped", bui
 
 
 // ---- inlined from art/creatures/beetle/genome.js ----
-const GENOME_BEETLE = { id: "beetle", name: "Stag beetle", template: "insectoid", builder: "beetle", palette: { hue: .78, sat: .5, val: .35 }, legend: ["antlers"] };
+// the volcanic east's fire beetle (the biome roster, 2026-10-23; the stag beetle before): a black shell cracked with embers down its
+// wing cases, its great jaws still a stag beetle's; its legend's antlers tipped with fire
+const GENOME_BEETLE = { id: "beetle", name: "Fire beetle", template: "insectoid", builder: "beetle", palette: { hue: .02, sat: .25, val: .2, accent: [.05, .92, 1], magic: .05 }, look: { embers: true }, legend: ["antlers"] };
 
 
 // ---- inlined from art/creatures/boar/genome.js ----
@@ -4212,9 +4217,9 @@ const GENOME_BOAR = { id: "boar", name: "Boar", template: "quadruped", builder: 
 
 
 // ---- inlined from art/creatures/cat/genome.js ----
-// the meadow's wildcat (Ed, 2026-10-12: the glowworm replaced by a cat hunting in the long grass): a stocky striped tabby, a broad
-// round head, a thick blunt tail; its legend crowned
-const GENOME_CAT = { id: "cat", name: "Wildcat", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .1, val: .52, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .38, snoutD: .7, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45 }, parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 13, w: .3 }, socks: .2 }, legend: [],
+// the hot lands' sand cat (Ed, 2026-10-12: a wildcat hunting in the long grass; the biome roster, 2026-10-23: now the desert's):
+// small and stocky, pale sand, a broad flat head under big low-set ears, faint bars only, a black-ringed tail; its legend crowned
+const GENOME_CAT = { id: "cat", name: "Sand cat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .78, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .34, snoutD: .66, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45, skullZ: 1.15, skullY: .9 }, parts: { ears: { kind: "point", size: 1.7 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 9, w: .14, mat: "BODY2" }, socks: .2 }, legend: [],
   // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
   // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
   levels: [
@@ -4297,6 +4302,21 @@ const GENOME_ELEPHANT = { id: "elephant", name: "Elephant", template: "quadruped
 
 // ---- inlined from art/creatures/elk/genome.js ----
 const GENOME_ELK = { id: "elk", name: "Elk", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .38 }, body: { hgt: 1.4, len: .68, chest: .6, tuck: .66, neck: .45, neckAng: .75, neckW: .42, hr: .24, legW: .9, back: "hump" , profile: { shoulder: { w: 1.15, d: 1.1 }, ribcage: { w: 1.1 }, waist: { w: .78, d: .86 }, loin: { w: .85, d: .94 }, hip: { w: .95 } } , spine: { shoulder: .05, ribcage: .03 } }, head: { snout: 1.6, snoutD: .9, snoutTaper: .85 }, parts: { ears: { kind: "point", size: .9 }, tail: "stub", feet: "hoof", antlers: "palm" }, coat: { shaggy: true }, legend: ["antlersGlow", "moss"] , levels: [null, null, null, { head: { antlerK: 1.75, pools: true } }] };
+
+
+// ---- inlined from art/creatures/featheredserpent/genome.js ----
+// the step pyramid's feathered serpent (a journey kind: unknown-27's slot, the jungle west, ring 5; Ed, 2026-10-23, its biome's
+// fantastic creature: "the serpent template plus feathers, in bright plumage"): an emerald serpent, gold-bellied, its neck raised in an S
+// inside a ruff of scarlet, gold and turquoise feathers, a crest of plumes off its head, streamers off its tail. Its evolution: a hatchling
+// with a fluff of a ruff, a young with its first streamers, the adult's full ruff and crest and wings beginning; the legend the plumed
+// serpent of the temple: great feathered wings, a towering crest, its feathers' tips burning turquoise
+const GENOME_FEATHEREDSERPENT = { id: "featheredserpent", name: "Feathered serpent", template: "serpent", builder: "quetzal", palette: { hue: .39, sat: .62, val: .58, belly: "yellow", accent: [.13, .82, .96], magic: .48, flower: [232, 46, 58] }, legend: [], texture: { kind: "scales", size: 3 },
+  levels: [
+    { body: { thick: .85, rise: .8, ruff: .4, plumes: 1, crest: .3 } },
+    { body: { thick: .95, rise: 1, ruff: .75, plumes: 2, crest: .7 } },
+    { body: { thick: 1.1, rise: 1.15, ruff: 1, plumes: 3, crest: 1, wings: .55 } },
+    { body: { thick: 1.25, rise: 1.3, ruff: 1.35, plumes: 5, crest: 1.3, wings: 1.1, glow: true } },
+  ] };
 
 
 // ---- inlined from art/creatures/fennec/genome.js ----
@@ -4501,7 +4521,9 @@ const GENOME_MOLE = { id: "mole", name: "Mole", template: "squat", builder: "mol
 
 
 // ---- inlined from art/creatures/moth/genome.js ----
-const GENOME_MOTH = { id: "moth", name: "Moth", template: "flyer", builder: "moth", palette: { hue: .1, sat: .3, val: .7 }, legend: ["eyespots"] , texture: { kind: "fur", size: 3, stretch: 1.6 } };
+// the temperate meadow's butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail; its id kept, so saves are
+// untouched): yellow wings veined and bordered black, tails, blue crescents; its legend's hind wings two great eyes
+const GENOME_MOTH = { id: "moth", name: "Swallowtail", template: "flyer", builder: "moth", palette: { hue: .13, sat: .72, val: .95, accent: [.6, .7, .9] }, look: { butterfly: true }, legend: ["eyespots"] };
 
 
 // ---- inlined from art/creatures/newt/genome.js ----
@@ -4511,19 +4533,22 @@ const GENOME_NEWT = { id: "newt", name: "Newt", template: "quadruped", builder: 
 
 
 // ---- inlined from art/creatures/otter/genome.js ----
-const GENOME_OTTER = { id: "otter", name: "Otter", template: "quadruped", builder: "quad", palette: { hue: .07, sat: .55, val: .45, belly: "white" }, body: { stance: "flat", hgt: .46, len: 1.15, chest: .32, tuck: .26, neck: .36, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .4 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] , levels: [{ body: { hgt: .44, len: .66, chest: .38, tuck: .34, neck: .26, legW: 1.35 }, head: { snout: .38, snoutD: .65 }, parts: { ears: { kind: "round", size: .6 }, tail: "thin" } }, { body: { hgt: .48, len: 1.25, chest: .28, tuck: .22, neck: .4, legW: 1.0 }, head: { snout: .6 } }, null, { body: { pearl: true } }] };
+// the mangrove's smooth-coated otter (the biome roster, 2026-10-23): paler, sleeker and longer, its throat cream, a thick flat tail
+const GENOME_OTTER = { id: "otter", name: "Smooth-coated otter", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .42, val: .6, belly: [.11, .22, .9] }, body: { stance: "flat", hgt: .46, len: 1.3, chest: .3, tuck: .26, neck: .4, neckAng: .5, neckW: .6, hr: .27, legW: 1.2, back: "arch" }, head: { snout: .55, snoutD: .55, muzzle: true, whiskers: true }, parts: { ears: { kind: "round", size: .32 }, tail: "otter", feet: "paw" }, coat: { belly: true }, legend: ["ribbons"] , levels: [{ body: { hgt: .44, len: .66, chest: .38, tuck: .34, neck: .26, legW: 1.35 }, head: { snout: .38, snoutD: .65 }, parts: { ears: { kind: "round", size: .6 }, tail: "thin" } }, { body: { hgt: .48, len: 1.25, chest: .28, tuck: .22, neck: .4, legW: 1.0 }, head: { snout: .6 } }, null, { body: { pearl: true } }] };
 
 
 // ---- inlined from art/creatures/owl/genome.js ----
-const GENOME_OWL = { id: "owl", name: "Owl", template: "avian", builder: "owl", palette: { hue: .08, sat: .5, val: .55 }, legend: ["eyesRing", "wings"],
+// the cold rainforest's spotted owl (the biome roster, 2026-10-23): dark chocolate brown, white spots over its crown and wings, its
+// chest barred in broken white bars from the young on
+const GENOME_OWL = { id: "owl", name: "Spotted owl", template: "avian", builder: "owl", palette: { hue: .07, sat: .5, val: .38, belly: [.1, .12, .9] }, legend: ["eyesRing", "wings"],
   // its evolution (docs/art-guide/EVOLUTIONS.md): a downy owlet with huge eyes and no tufts, a smooth young with short tufts, an
   // adult with a dark-rimmed disc, long tufts, a barred chest and patterned wing tips, and the legend: wings half spread like a
   // cloak edged in moonlight, tufts swept back like horns, a ring of glowing eyes round its disc
   levels: [
     { body: { down: true }, head: { tufts: 0 } },
-    { head: { tufts: .7 } },
-    { body: { bars: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
-    { body: { bars: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }, // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
+    { body: { spotted: true }, head: { tufts: .7 } },
+    { body: { bars: true, spotted: true, wingTips: true }, head: { tufts: 1.5, discRim: true } },
+    { body: { bars: true, spotted: true, cloak: true }, head: { tufts: 2.2, tuftsBack: true, discRim: true, dish: true } }, // (its disc grown into a great dish, eyes like moons: docs/ART-GUIDE.md §0c)
   ] };
 
 
@@ -4656,7 +4681,9 @@ const GENOME_SNAIL = { id: "snail", name: "Snail", template: "squat", builder: "
 
 
 // ---- inlined from art/creatures/snake/genome.js ----
-const GENOME_SNAKE = { id: "snake", name: "Snake", template: "serpent", builder: "snake", palette: { hue: .25, sat: .45, val: .45 }, legend: ["shed"] };
+// the jungle's python (the biome roster, 2026-10-23; a grass snake before): heavy, emerald green with white flecks down its spine and
+// a yellow belly, a broad head; plain where the desert's rattlesnake is sandy and diamond-backed
+const GENOME_SNAKE = { id: "snake", name: "Jungle python", template: "serpent", builder: "snake", palette: { hue: .37, sat: .75, val: .5, belly: "yellow" }, look: { python: true }, legend: ["shed"] };
 
 
 // ---- inlined from art/creatures/snowleopard/genome.js ----
@@ -4676,8 +4703,30 @@ const GENOME_SNOWLEOPARD = { id: "snowleopard", name: "Snow leopard", template: 
   ] };
 
 
+// ---- inlined from art/creatures/sphinx/genome.js ----
+// the desert ruin's sphinx (a journey kind: unknown-19's slot, the hot south, ring 5; Ed, 2026-10-23, its biome's fantastic creature):
+// a lion's long sandstone-gold body couched proud, a flat-faced head under a pharaoh's striped headcloth of gold and lapis, gold claws.
+// Its evolution: a cub in a little headcloth, a lean young, the adult's false beard and first wings, and the legend the riddler of the dunes: an eagle's
+// wings spread over its back, the cobra on its brow, a gold torc, its coat gone to weathered sandstone, its eyes lit
+const GENOME_SPHINX = { id: "sphinx", name: "Sphinx", template: "quadruped", builder: "quad", palette: { hue: .105, sat: .44, val: .8, accent: [.12, .72, .92], magic: .13, flower: [228, 182, 62] }, body: { hgt: 1.45, len: .82, chest: .56, tuck: .74, neck: .34, neckAng: .82, neckW: .42, hr: .26, legW: 1.05, bw: .26, profile: { shoulder: { w: 1.12, d: 1.04 }, waist: { w: .82, d: .9 }, hip: { w: .95 } }, spine: { ribcage: -.03, waist: -.04, loin: -.03 } }, head: { snout: .38, snoutD: .7, snoutTaper: .9, cheeks: true, eyeK: 1.05, jawCoat: true }, parts: { ears: { kind: "round", size: .45 }, tail: "tuft", feet: "paw" }, coat: { belly: true }, legend: ["mane"], texture: { kind: "fur" },
+  levels: [
+    { body: { len: .52, chest: .42, tuck: .5, hr: .32, legW: 1.25 }, head: { snout: .3 }, features: [{ kind: "nemes", size: .85 }] },
+    { body: { len: .76, chest: .5, tuck: .64, legW: 1 }, features: [{ kind: "nemes" }] },
+    { body: { front: 1.08, legW: 1.15, bw: .3 }, features: [{ kind: "nemes", size: 1.05, beard: .5 }, { kind: "wings", feathered: true, size: .6, mat: "BODY", mat2: "FLOWER" }, { kind: "claws", size: .14, mat: "ACCENT" }] },
+    { body: { front: 1.15, legW: 1.3, bw: .32, len: .86 }, head: { eyeGlow: true }, coat: { scars: 2 }, features: [
+      { kind: "nemes", size: 1.08, beard: .7, uraeus: true },
+      { kind: "wings", feathered: true, size: 1.2, mat: "BODY", mat2: "FLOWER" },
+      { kind: "torc", mat: "FLOWER", size: .2 },
+      { kind: "claws", size: .24, mat: "FLOWER" },
+      { kind: "worn", ear: false },
+    ] },
+  ] };
+
+
 // ---- inlined from art/creatures/spider/genome.js ----
-const GENOME_SPIDER = { id: "spider", name: "Spider", template: "insectoid", builder: "spider", palette: { hue: .07, sat: .45, val: .4 }, legend: ["rose"] , texture: { kind: "bristles", size: 2 } };
+// the badlands' tarantula (the biome roster, 2026-10-23; a forest spider before): dark and hairy, a big furry abdomen, thick legs
+// banded orange at every joint; its legend's web the old rose window
+const GENOME_SPIDER = { id: "spider", name: "Tarantula", template: "insectoid", builder: "spider", palette: { hue: .05, sat: .3, val: .24, accent: [.06, .8, .88] }, look: { tarantula: true }, legend: ["rose"] , texture: { kind: "bristles", size: 3 } };
 
 
 // ---- inlined from art/creatures/squirrel/genome.js ----
@@ -4895,6 +4944,12 @@ const SIGIL_ELEPHANT = { neon: "magenta", strokes: [E(.5, .38, .15, .17), ...pai
 const SIGIL_ELK = { neon: "blue", strokes: [...pair(L([.42, .38], [.3, .34], [.16, .28], [.07, .12], [.15, .18], [.2, .08], [.27, .2], [.33, .1], [.38, .26], [.42, .38]), L([.42, .38], [.4, .74], [.44, .86], [.5, .87]), D(.44, .52)), L([.42, .38], [.58, .38]), L([.5, .87], [.5, .95])] };
 
 
+// ---- inlined from art/creatures/featheredserpent/sigil.js ----
+
+// the feathered serpent: its body rising in an S to a head in profile, a fan of feathers round its neck
+const SIGIL_FEATHEREDSERPENT = { neon: "acid", strokes: [L([.22, .82], [.5, .8], [.6, .7], [.46, .6], [.44, .5], [.56, .4]), L([.56, .4], [.7, .36], [.78, .42], [.64, .47], [.56, .45]), D(.65, .4), ...[0, 1, 2, 3, 4].map(i => L([.48, .47], [.48 - .18 * Math.cos(.5 + i * .55), .47 - .2 * Math.sin(.5 + i * .55)])), L([.22, .82], [.16, .74]), L([.22, .82], [.14, .84])] };
+
+
 // ---- inlined from art/creatures/fennec/sigil.js ----
 
 const SIGIL_FENNEC = { neon: "orange", strokes: [...pair(L([.42, .42], [.06, .07], [.27, .55]), L([.33, .4], [.17, .19])), ...pair(bow([.27, .55], [.5, .8], .22)), ...pair(D(.4, .6)), D(.5, .78)] };
@@ -5004,8 +5059,9 @@ const SIGIL_MOLE = { neon: "cyan", strokes: [C(.5, .4, .24), L([.4, .6], [.5, .8
 
 // ---- inlined from art/creatures/moth/sigil.js ----
 
-// wings spread, the forewings broad and the hindwings rounded, a furry body and feathery antennae
-const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .05, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .82], [.4, .84], [.46, .66]), bow([.47, .31], [.34, .07], .3), C(.21, .32, .05))] };
+// the butterfly (the moth turned a swallowtail, 2026-10-23): wings spread, the forewings broad, the hindwings rounded with a tail
+// each, a slender body and long antennae ending in clubs
+const SIGIL_MOTH = { neon: "orange", strokes: [E(.5, .54, .04, .24), ...pair(L([.46, .34], [.2, .14], [.06, .3], [.2, .5], [.46, .5]), L([.46, .52], [.26, .62], [.22, .78], [.3, .84], [.26, .96]), L([.3, .84], [.4, .82], [.46, .66]), L([.48, .31], [.38, .1]), D(.38, .09), C(.21, .32, .05))] };
 
 
 // ---- inlined from art/creatures/newt/sigil.js ----
@@ -5113,6 +5169,12 @@ const SIGIL_SNAKE = { neon: "cyan", strokes: [spiral(.5, .54, .16, .4, 1.3, 0), 
 const SIGIL_SNOWLEOPARD = { neon: "violet", strokes: [...pair(L([.4, .3], [.28, .2], [.18, .26], [.16, .5], [.28, .72], [.5, .82]), L([.3, .62], [.1, .6]), D(.37, .47)), L([.4, .3], [.6, .3]), A(.5, .18, .06, -90, 270), D(.5, .64)] };
 
 
+// ---- inlined from art/creatures/sphinx/sigil.js ----
+
+// the sphinx face on: the headcloth's flat crown and its lappets falling either side of a calm face, the band over its brow, its eyes, the false beard
+const SIGIL_SPHINX = { neon: "pink", strokes: [L([.3, .86], [.3, .44], [.38, .22], [.5, .16], [.62, .22], [.7, .44], [.7, .86]), L([.36, .34], [.64, .34]), L([.4, .42], [.4, .66], [.5, .74], [.6, .66], [.6, .42]), ...pair(D(.45, .5)), L([.5, .74], [.5, .9]), L([.3, .62], [.4, .62])] };
+
+
 // ---- inlined from art/creatures/spider/sigil.js ----
 
 // seen from above: a round body and a small head, eight bent legs
@@ -5199,7 +5261,7 @@ const LEGEND_BEAVER = { sink: .5, droop: 1, drop: [89], over: { moss: .45, liche
 
 
 // ---- inlined from art/creatures/beetle/legend.js ----
-const LEGEND_BEETLE = { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .45, lichen: .08, ferns: 1, grass: 2, mushrooms: 4, brackets: 3, roots: 2, stones: 0 } };
+const LEGEND_BEETLE = { ground: .2, droop: .4, drop: [], wood: [8], over: { moss: .15, lichen: .12, ferns: 0, grass: 1, mushrooms: 0, brackets: 0, roots: 1, stones: 4 } };
 
 
 // ---- inlined from art/creatures/boar/legend.js ----
@@ -5236,6 +5298,10 @@ const LEGEND_ELEPHANT = { sink: .4, droop: .8, drop: [], over: { moss: .6, liche
 
 // ---- inlined from art/creatures/elk/legend.js ----
 const LEGEND_ELK = { sink: .42, droop: .9, drop: [89], wood: [11, 12], over: { moss: .6, lichen: .04, ferns: 3, grass: 6, mushrooms: 2, roots: 3, stones: 2, beard: 5 } };
+
+
+// ---- inlined from art/creatures/featheredserpent/legend.js ----
+const LEGEND_FEATHEREDSERPENT = { ground: .06, droop: 1, drop: [], over: { moss: .55, lichen: .1, ferns: 4, grass: 2, mushrooms: 2, roots: 3, stones: 3, flowers: 2 } }; // the step pyramid's feathered serpent: coiled at the temple's foot like its carved balustrade, its feathers gone to green stone, ferns rooted in its coils
 
 
 // ---- inlined from art/creatures/fennec/legend.js ----
@@ -5384,8 +5450,12 @@ const LEGEND_SNAKE = { ground: .04, droop: 1, drop: [40, 50], over: { moss: .45,
 const LEGEND_SNOWLEOPARD = { sink: .38, droop: 1, drop: [], over: { moss: .05, lichen: .25, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }; // the icefall's snow leopard: curled on a ledge, its tail over its face
 
 
+// ---- inlined from art/creatures/sphinx/legend.js ----
+const LEGEND_SPHINX = { sink: .38, droop: .7, drop: [], over: { moss: 0, lichen: .16, ferns: 0, grass: 1, mushrooms: 0, roots: 0, stones: 6 } }; // the desert ruin's sphinx: couched in the sand to its shoulders like the old statue it passes for, its headcloth gone to weathered stone, drifted over
+
+
 // ---- inlined from art/creatures/spider/legend.js ----
-const LEGEND_SPIDER = { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .4, lichen: .1, ferns: 3, grass: 2, mushrooms: 3, roots: 2, stones: 1 } };
+const LEGEND_SPIDER = { ground: .3, droop: .5, drop: [95, 96, 97, 98, 99], over: { moss: .12, lichen: .14, ferns: 0, grass: 2, mushrooms: 0, roots: 1, stones: 4 } };
 
 
 // ---- inlined from art/creatures/squirrel/legend.js ----
@@ -5488,6 +5558,10 @@ const NAP_ELEPHANT = { kind: "lie", sink: .05, droop: .6 }; // knelt down, her t
 // ---- inlined from art/creatures/elk/nap.js ----
 // lie
 const NAP_ELK = { kind: "lie", sink: .06, droop: .5 };
+
+
+// ---- inlined from art/creatures/featheredserpent/nap.js ----
+const NAP_FEATHEREDSERPENT = { kind: "coil", ground: 0, droop: .6, curl: 4 }; // coiled, its head laid on its coils, its ruff folded
 
 
 // ---- inlined from art/creatures/fennec/nap.js ----
@@ -5633,6 +5707,10 @@ const NAP_SNAKE = { kind: "coil", ground: 0, droop: .6, curl: 5.5, drop: [40, 50
 const NAP_SNOWLEOPARD = { kind: "curl", sink: .04, droop: 1, curl: 4.2, tailDown: .2 }; // (curled tighter since its longer legs, #866: its ground origin stays on the lower half of the sprite, as the nap check wants)
 
 
+// ---- inlined from art/creatures/sphinx/nap.js ----
+const NAP_SPHINX = { kind: "lie", sink: .04, droop: .3 }; // couched, its paws out before it, its head still up
+
+
 // ---- inlined from art/creatures/spider/nap.js ----
 const NAP_SPIDER = { kind: "flat", ground: .26, droop: .5, drop: [95, 96, 97, 98, 99] };
 
@@ -5673,11 +5751,11 @@ const NAP_WOLF = { kind: "curl", sink: .04, droop: 1, curl: 3, tailDown: .25 };
 const NAP_WOODLOUSE = { kind: "flat", ground: .14, drop: [9] };
 
 
-const CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
-const CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
-const CREATURE_LEGENDS = { arcticfox: LEGEND_ARCTICFOX, armadillo: LEGEND_ARMADILLO, badger: LEGEND_BADGER, bat: LEGEND_BAT, bear: LEGEND_BEAR, beaver: LEGEND_BEAVER, beetle: LEGEND_BEETLE, boar: LEGEND_BOAR, cat: LEGEND_CAT, cheetah: LEGEND_CHEETAH, crab: LEGEND_CRAB, crocodile: LEGEND_CROCODILE, dormouse: LEGEND_DORMOUSE, dragonfly: LEGEND_DRAGONFLY, elephant: LEGEND_ELEPHANT, elk: LEGEND_ELK, fennec: LEGEND_FENNEC, flyingsquirrel: LEGEND_FLYINGSQUIRREL, fox: LEGEND_FOX, frosttroll: LEGEND_FROSTTROLL, frostwyrm: LEGEND_FROSTWYRM, griffin: LEGEND_GRIFFIN, hare: LEGEND_HARE, hedgehog: LEGEND_HEDGEHOG, heron: LEGEND_HERON, hydra: LEGEND_HYDRA, ibex: LEGEND_IBEX, jaguar: LEGEND_JAGUAR, komodo: LEGEND_KOMODO, lion: LEGEND_LION, lynx: LEGEND_LYNX, marten: LEGEND_MARTEN, meerkat: LEGEND_MEERKAT, mole: LEGEND_MOLE, moth: LEGEND_MOTH, newt: LEGEND_NEWT, otter: LEGEND_OTTER, owl: LEGEND_OWL, penguin: LEGEND_PENGUIN, polarbear: LEGEND_POLARBEAR, raccoon: LEGEND_RACCOON, ram: LEGEND_RAM, rattlesnake: LEGEND_RATTLESNAKE, raven: LEGEND_RAVEN, redpanda: LEGEND_REDPANDA, rhino: LEGEND_RHINO, roe: LEGEND_ROE, salamander: LEGEND_SALAMANDER, scorpion: LEGEND_SCORPION, snail: LEGEND_SNAIL, snake: LEGEND_SNAKE, snowleopard: LEGEND_SNOWLEOPARD, spider: LEGEND_SPIDER, squirrel: LEGEND_SQUIRREL, stag: LEGEND_STAG, stegosaurus: LEGEND_STEGOSAURUS, stoat: LEGEND_STOAT, tiger: LEGEND_TIGER, toad: LEGEND_TOAD, unicorn: LEGEND_UNICORN, wolf: LEGEND_WOLF, woodlouse: LEGEND_WOODLOUSE };
-const CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
-const CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
+const CREATURE_GENOMES = [GENOME_ARCTICFOX, GENOME_ARMADILLO, GENOME_BADGER, GENOME_BAT, GENOME_BEAR, GENOME_BEAVER, GENOME_BEETLE, GENOME_BOAR, GENOME_CAT, GENOME_CHEETAH, GENOME_CRAB, GENOME_CROCODILE, GENOME_DORMOUSE, GENOME_DRAGONFLY, GENOME_ELEPHANT, GENOME_ELK, GENOME_FEATHEREDSERPENT, GENOME_FENNEC, GENOME_FLYINGSQUIRREL, GENOME_FOX, GENOME_FROSTTROLL, GENOME_FROSTWYRM, GENOME_GRIFFIN, GENOME_HARE, GENOME_HEDGEHOG, GENOME_HERON, GENOME_HYDRA, GENOME_IBEX, GENOME_JAGUAR, GENOME_KOMODO, GENOME_LION, GENOME_LYNX, GENOME_MARTEN, GENOME_MEERKAT, GENOME_MOLE, GENOME_MOTH, GENOME_NEWT, GENOME_OTTER, GENOME_OWL, GENOME_PENGUIN, GENOME_POLARBEAR, GENOME_RACCOON, GENOME_RAM, GENOME_RATTLESNAKE, GENOME_RAVEN, GENOME_REDPANDA, GENOME_RHINO, GENOME_ROE, GENOME_SALAMANDER, GENOME_SCORPION, GENOME_SNAIL, GENOME_SNAKE, GENOME_SNOWLEOPARD, GENOME_SPHINX, GENOME_SPIDER, GENOME_SQUIRREL, GENOME_STAG, GENOME_STEGOSAURUS, GENOME_STOAT, GENOME_TIGER, GENOME_TOAD, GENOME_UNICORN, GENOME_WOLF, GENOME_WOODLOUSE];
+const CREATURE_SIGILS = { arcticfox: SIGIL_ARCTICFOX.strokes, armadillo: SIGIL_ARMADILLO.strokes, badger: SIGIL_BADGER.strokes, bat: SIGIL_BAT.strokes, bear: SIGIL_BEAR.strokes, beaver: SIGIL_BEAVER.strokes, beetle: SIGIL_BEETLE.strokes, boar: SIGIL_BOAR.strokes, cat: SIGIL_CAT.strokes, cheetah: SIGIL_CHEETAH.strokes, crab: SIGIL_CRAB.strokes, crocodile: SIGIL_CROCODILE.strokes, dormouse: SIGIL_DORMOUSE.strokes, dragonfly: SIGIL_DRAGONFLY.strokes, elephant: SIGIL_ELEPHANT.strokes, elk: SIGIL_ELK.strokes, featheredserpent: SIGIL_FEATHEREDSERPENT.strokes, fennec: SIGIL_FENNEC.strokes, flyingsquirrel: SIGIL_FLYINGSQUIRREL.strokes, fox: SIGIL_FOX.strokes, frosttroll: SIGIL_FROSTTROLL.strokes, frostwyrm: SIGIL_FROSTWYRM.strokes, griffin: SIGIL_GRIFFIN.strokes, hare: SIGIL_HARE.strokes, hedgehog: SIGIL_HEDGEHOG.strokes, heron: SIGIL_HERON.strokes, hydra: SIGIL_HYDRA.strokes, ibex: SIGIL_IBEX.strokes, jaguar: SIGIL_JAGUAR.strokes, komodo: SIGIL_KOMODO.strokes, lion: SIGIL_LION.strokes, lynx: SIGIL_LYNX.strokes, marten: SIGIL_MARTEN.strokes, meerkat: SIGIL_MEERKAT.strokes, mole: SIGIL_MOLE.strokes, moth: SIGIL_MOTH.strokes, newt: SIGIL_NEWT.strokes, otter: SIGIL_OTTER.strokes, owl: SIGIL_OWL.strokes, penguin: SIGIL_PENGUIN.strokes, polarbear: SIGIL_POLARBEAR.strokes, raccoon: SIGIL_RACCOON.strokes, ram: SIGIL_RAM.strokes, rattlesnake: SIGIL_RATTLESNAKE.strokes, raven: SIGIL_RAVEN.strokes, redpanda: SIGIL_REDPANDA.strokes, rhino: SIGIL_RHINO.strokes, roe: SIGIL_ROE.strokes, salamander: SIGIL_SALAMANDER.strokes, scorpion: SIGIL_SCORPION.strokes, snail: SIGIL_SNAIL.strokes, snake: SIGIL_SNAKE.strokes, snowleopard: SIGIL_SNOWLEOPARD.strokes, sphinx: SIGIL_SPHINX.strokes, spider: SIGIL_SPIDER.strokes, squirrel: SIGIL_SQUIRREL.strokes, stag: SIGIL_STAG.strokes, stegosaurus: SIGIL_STEGOSAURUS.strokes, stoat: SIGIL_STOAT.strokes, tiger: SIGIL_TIGER.strokes, toad: SIGIL_TOAD.strokes, unicorn: SIGIL_UNICORN.strokes, wolf: SIGIL_WOLF.strokes, woodlouse: SIGIL_WOODLOUSE.strokes };
+const CREATURE_LEGENDS = { arcticfox: LEGEND_ARCTICFOX, armadillo: LEGEND_ARMADILLO, badger: LEGEND_BADGER, bat: LEGEND_BAT, bear: LEGEND_BEAR, beaver: LEGEND_BEAVER, beetle: LEGEND_BEETLE, boar: LEGEND_BOAR, cat: LEGEND_CAT, cheetah: LEGEND_CHEETAH, crab: LEGEND_CRAB, crocodile: LEGEND_CROCODILE, dormouse: LEGEND_DORMOUSE, dragonfly: LEGEND_DRAGONFLY, elephant: LEGEND_ELEPHANT, elk: LEGEND_ELK, featheredserpent: LEGEND_FEATHEREDSERPENT, fennec: LEGEND_FENNEC, flyingsquirrel: LEGEND_FLYINGSQUIRREL, fox: LEGEND_FOX, frosttroll: LEGEND_FROSTTROLL, frostwyrm: LEGEND_FROSTWYRM, griffin: LEGEND_GRIFFIN, hare: LEGEND_HARE, hedgehog: LEGEND_HEDGEHOG, heron: LEGEND_HERON, hydra: LEGEND_HYDRA, ibex: LEGEND_IBEX, jaguar: LEGEND_JAGUAR, komodo: LEGEND_KOMODO, lion: LEGEND_LION, lynx: LEGEND_LYNX, marten: LEGEND_MARTEN, meerkat: LEGEND_MEERKAT, mole: LEGEND_MOLE, moth: LEGEND_MOTH, newt: LEGEND_NEWT, otter: LEGEND_OTTER, owl: LEGEND_OWL, penguin: LEGEND_PENGUIN, polarbear: LEGEND_POLARBEAR, raccoon: LEGEND_RACCOON, ram: LEGEND_RAM, rattlesnake: LEGEND_RATTLESNAKE, raven: LEGEND_RAVEN, redpanda: LEGEND_REDPANDA, rhino: LEGEND_RHINO, roe: LEGEND_ROE, salamander: LEGEND_SALAMANDER, scorpion: LEGEND_SCORPION, snail: LEGEND_SNAIL, snake: LEGEND_SNAKE, snowleopard: LEGEND_SNOWLEOPARD, sphinx: LEGEND_SPHINX, spider: LEGEND_SPIDER, squirrel: LEGEND_SQUIRREL, stag: LEGEND_STAG, stegosaurus: LEGEND_STEGOSAURUS, stoat: LEGEND_STOAT, tiger: LEGEND_TIGER, toad: LEGEND_TOAD, unicorn: LEGEND_UNICORN, wolf: LEGEND_WOLF, woodlouse: LEGEND_WOODLOUSE };
+const CREATURE_NAPS = { arcticfox: NAP_ARCTICFOX, armadillo: NAP_ARMADILLO, badger: NAP_BADGER, bat: NAP_BAT, bear: NAP_BEAR, beaver: NAP_BEAVER, beetle: NAP_BEETLE, boar: NAP_BOAR, cat: NAP_CAT, cheetah: NAP_CHEETAH, crab: NAP_CRAB, crocodile: NAP_CROCODILE, dormouse: NAP_DORMOUSE, dragonfly: NAP_DRAGONFLY, elephant: NAP_ELEPHANT, elk: NAP_ELK, featheredserpent: NAP_FEATHEREDSERPENT, fennec: NAP_FENNEC, flyingsquirrel: NAP_FLYINGSQUIRREL, fox: NAP_FOX, frosttroll: NAP_FROSTTROLL, frostwyrm: NAP_FROSTWYRM, griffin: NAP_GRIFFIN, hare: NAP_HARE, hedgehog: NAP_HEDGEHOG, heron: NAP_HERON, hydra: NAP_HYDRA, jaguar: NAP_JAGUAR, komodo: NAP_KOMODO, lion: NAP_LION, lynx: NAP_LYNX, marten: NAP_MARTEN, meerkat: NAP_MEERKAT, mole: NAP_MOLE, moth: NAP_MOTH, newt: NAP_NEWT, otter: NAP_OTTER, owl: NAP_OWL, penguin: NAP_PENGUIN, polarbear: NAP_POLARBEAR, raccoon: NAP_RACCOON, ram: NAP_RAM, rattlesnake: NAP_RATTLESNAKE, raven: NAP_RAVEN, redpanda: NAP_REDPANDA, rhino: NAP_RHINO, roe: NAP_ROE, salamander: NAP_SALAMANDER, scorpion: NAP_SCORPION, snail: NAP_SNAIL, snake: NAP_SNAKE, snowleopard: NAP_SNOWLEOPARD, sphinx: NAP_SPHINX, spider: NAP_SPIDER, squirrel: NAP_SQUIRREL, stag: NAP_STAG, stegosaurus: NAP_STEGOSAURUS, stoat: NAP_STOAT, tiger: NAP_TIGER, toad: NAP_TOAD, unicorn: NAP_UNICORN, wolf: NAP_WOLF, woodlouse: NAP_WOODLOUSE };
+const CREATURE_NEONS = { arcticfox: SIGIL_ARCTICFOX.neon, armadillo: SIGIL_ARMADILLO.neon, badger: SIGIL_BADGER.neon, bat: SIGIL_BAT.neon, bear: SIGIL_BEAR.neon, beaver: SIGIL_BEAVER.neon, beetle: SIGIL_BEETLE.neon, boar: SIGIL_BOAR.neon, cat: SIGIL_CAT.neon, cheetah: SIGIL_CHEETAH.neon, crab: SIGIL_CRAB.neon, crocodile: SIGIL_CROCODILE.neon, dormouse: SIGIL_DORMOUSE.neon, dragonfly: SIGIL_DRAGONFLY.neon, elephant: SIGIL_ELEPHANT.neon, elk: SIGIL_ELK.neon, featheredserpent: SIGIL_FEATHEREDSERPENT.neon, fennec: SIGIL_FENNEC.neon, flyingsquirrel: SIGIL_FLYINGSQUIRREL.neon, fox: SIGIL_FOX.neon, frosttroll: SIGIL_FROSTTROLL.neon, frostwyrm: SIGIL_FROSTWYRM.neon, griffin: SIGIL_GRIFFIN.neon, hare: SIGIL_HARE.neon, hedgehog: SIGIL_HEDGEHOG.neon, heron: SIGIL_HERON.neon, hydra: SIGIL_HYDRA.neon, ibex: SIGIL_IBEX.neon, jaguar: SIGIL_JAGUAR.neon, komodo: SIGIL_KOMODO.neon, lion: SIGIL_LION.neon, lynx: SIGIL_LYNX.neon, marten: SIGIL_MARTEN.neon, meerkat: SIGIL_MEERKAT.neon, mole: SIGIL_MOLE.neon, moth: SIGIL_MOTH.neon, newt: SIGIL_NEWT.neon, otter: SIGIL_OTTER.neon, owl: SIGIL_OWL.neon, penguin: SIGIL_PENGUIN.neon, polarbear: SIGIL_POLARBEAR.neon, raccoon: SIGIL_RACCOON.neon, ram: SIGIL_RAM.neon, rattlesnake: SIGIL_RATTLESNAKE.neon, raven: SIGIL_RAVEN.neon, redpanda: SIGIL_REDPANDA.neon, rhino: SIGIL_RHINO.neon, roe: SIGIL_ROE.neon, salamander: SIGIL_SALAMANDER.neon, scorpion: SIGIL_SCORPION.neon, snail: SIGIL_SNAIL.neon, snake: SIGIL_SNAKE.neon, snowleopard: SIGIL_SNOWLEOPARD.neon, sphinx: SIGIL_SPHINX.neon, spider: SIGIL_SPIDER.neon, squirrel: SIGIL_SQUIRREL.neon, stag: SIGIL_STAG.neon, stegosaurus: SIGIL_STEGOSAURUS.neon, stoat: SIGIL_STOAT.neon, tiger: SIGIL_TIGER.neon, toad: SIGIL_TOAD.neon, unicorn: SIGIL_UNICORN.neon, wolf: SIGIL_WOLF.neon, woodlouse: SIGIL_WOODLOUSE.neon };
 // ---- inlined from art/creatures/arcticfox/creature.js ----
 // arcticfox: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
 // its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
@@ -6131,6 +6209,31 @@ const CREATURE_ELK = {
     label: "Elk's Slip past: 💌s slip through enraged animals"
   },
   character: { posture: { head: [0.03, 0.02], body: 0 }, quirk: "stomp", every: [6, 11], for: 1.2 }
+};
+
+
+// ---- inlined from art/creatures/featheredserpent/creature.js ----
+// featheredserpent: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
+// its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
+const CREATURE_FEATHEREDSERPENT = {
+  movement: {
+    speed: 15,
+    accel: 40,
+    fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.4, swap: 2 }, { kind: "separation", w: 0.6, radius: 9 }],
+    move: { kind: "ambush", cooldown: 6, trigger: 14, speed: 2.2, time: 0.5 }
+  },
+  radius: 1,
+  attacks: [null, "spit", "longspit", "legendNova"],
+  ranged: true,
+  traits: ["heavy"],
+  voice: { family: "bird", pitch: 0.7, pure: false, wave: "sawtooth", glide: 0.9 },
+  buff: {
+    name: "Plumage",
+    kind: "move",
+    scale: { treetopSpeed: 1.15, riseTime: 0.7 },
+    label: "Feathered serpent's Plumage: a quicker climb to the treetops, and quicker over them"
+  },
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "shake", every: [5, 9], for: 1.2 }
 };
 
 
@@ -6635,7 +6738,7 @@ const CREATURE_MOTH = {
   temperament: "skittish",
   traits: ["flier", "swarm"],
   voice: { family: "bug", pitch: 1.2, am: [120, 0.7], noise: 0.3, volume: 1.2 },
-  buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Moth's Flutter: one more 💌 a burst" },
+  buff: { name: "Flutter", kind: "shot", add: { "invites.burst": 1 }, label: "Butterfly's Flutter: one more 💌 a burst" },
   character: { sprite: "shiver", every: [2, 5], for: 0.6 }
 };
 
@@ -7147,6 +7250,30 @@ const CREATURE_SNOWLEOPARD = {
 };
 
 
+// ---- inlined from art/creatures/sphinx/creature.js ----
+// sphinx: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
+// its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
+const CREATURE_SPHINX = {
+  movement: {
+    speed: 13,
+    accel: 30,
+    fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.3, swap: 3 }, { kind: "separation", w: 0.6, radius: 9 }]
+  },
+  radius: 1.2,
+  attacks: [null, "screech", "bigscreech", "legendBeam"],
+  temperament: "curious",
+  traits: ["heavy"],
+  voice: { family: "big", pitch: 0.75, glide: 0.5, dur: 1.3, noise: 0.15 },
+  buff: {
+    name: "Riddle",
+    kind: "shot",
+    scale: { "invites.range": 1.4, "invites.cooldown": 0.85 },
+    label: "Sphinx's Riddle: 💌s carry far and come a little quicker"
+  },
+  character: { posture: { head: [0, 0.06], body: 0 }, quirk: "stretch", every: [8, 14], for: 1.6 }
+};
+
+
 // ---- inlined from art/creatures/spider/creature.js ----
 // spider: what the game's rules and sounds know about it, section by section (the config files' per-species entries, 2026-10-13;
 // its genome, sigil, sleeping form and nap are its other files). The schema: config/schema/creature.schema.json.
@@ -7460,7 +7587,7 @@ const CREATURE_WOODLOUSE = {
 };
 
 
-const CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
+const CREATURE_CONFIGS = { arcticfox: CREATURE_ARCTICFOX, armadillo: CREATURE_ARMADILLO, badger: CREATURE_BADGER, bat: CREATURE_BAT, bear: CREATURE_BEAR, beaver: CREATURE_BEAVER, beetle: CREATURE_BEETLE, boar: CREATURE_BOAR, cat: CREATURE_CAT, cheetah: CREATURE_CHEETAH, crab: CREATURE_CRAB, crocodile: CREATURE_CROCODILE, dormouse: CREATURE_DORMOUSE, dragonfly: CREATURE_DRAGONFLY, elephant: CREATURE_ELEPHANT, elk: CREATURE_ELK, featheredserpent: CREATURE_FEATHEREDSERPENT, fennec: CREATURE_FENNEC, flyingsquirrel: CREATURE_FLYINGSQUIRREL, fox: CREATURE_FOX, frosttroll: CREATURE_FROSTTROLL, frostwyrm: CREATURE_FROSTWYRM, griffin: CREATURE_GRIFFIN, hare: CREATURE_HARE, hedgehog: CREATURE_HEDGEHOG, heron: CREATURE_HERON, hydra: CREATURE_HYDRA, ibex: CREATURE_IBEX, jaguar: CREATURE_JAGUAR, komodo: CREATURE_KOMODO, lion: CREATURE_LION, lynx: CREATURE_LYNX, marten: CREATURE_MARTEN, meerkat: CREATURE_MEERKAT, mole: CREATURE_MOLE, moth: CREATURE_MOTH, newt: CREATURE_NEWT, otter: CREATURE_OTTER, owl: CREATURE_OWL, penguin: CREATURE_PENGUIN, polarbear: CREATURE_POLARBEAR, raccoon: CREATURE_RACCOON, ram: CREATURE_RAM, rattlesnake: CREATURE_RATTLESNAKE, raven: CREATURE_RAVEN, redpanda: CREATURE_REDPANDA, rhino: CREATURE_RHINO, roe: CREATURE_ROE, salamander: CREATURE_SALAMANDER, scorpion: CREATURE_SCORPION, snail: CREATURE_SNAIL, snake: CREATURE_SNAKE, snowleopard: CREATURE_SNOWLEOPARD, sphinx: CREATURE_SPHINX, spider: CREATURE_SPIDER, squirrel: CREATURE_SQUIRREL, stag: CREATURE_STAG, stegosaurus: CREATURE_STEGOSAURUS, stoat: CREATURE_STOAT, tiger: CREATURE_TIGER, toad: CREATURE_TOAD, unicorn: CREATURE_UNICORN, wolf: CREATURE_WOLF, woodlouse: CREATURE_WOODLOUSE };
 
 
 // Witch creature genomes (#79, stage 1): every species as data, not code. A record names its
@@ -7530,7 +7657,7 @@ const TEMPLATES = {
   },
   avian: { name: "Bird", builders: ["owl", "raven", "heron", "penguin"], sizes: { head: [.48, .36, .36, .36], headY: [.95, 1.08, 1.08, 1.08], build: [1, 1, 1.18, 1.18], motes: [0, 0, 3, 9] }, sockets: { wings: ["wing.folded", "wing.spirit"], head: ["head.round", "head.beak"] }, exclude: [], texture: { kind: "feathers" }, face: { brow: "tuft", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5], dutyWalk: .6, dutyRun: .4 } },
   flyer: { sizes: TEMPLATE_SMALL_SIZES, name: "Flyer", builders: ["bat", "moth", "dragonfly"], sockets: { wings: ["wing.membrane", "wing.scaled"] }, exclude: [], texture: { kind: "fur" }, face: { brow: "tuft", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 0, dutyRun: 0 } },
-  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake", "hydra"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
+  serpent: { sizes: TEMPLATE_SMALL_SIZES, name: "Serpent", builders: ["snake", "rattlesnake", "hydra", "quetzal"], sockets: { head: ["head.snake", "head.worm"] }, exclude: [], texture: { kind: "scales" }, face: { brow: "ridge", happy: "squint", dazed: "x" }, gait: { offsets: [], dutyWalk: 1, dutyRun: 1 } },
   insectoid: { sizes: TEMPLATE_SMALL_SIZES, name: "Many-legged", builders: ["beetle", "spider", "woodlouse", "scarab", "crab", "scorpion"], sockets: { head: ["jaw.stag", "eyes.cluster", "antenna"] }, exclude: [], texture: { kind: "plates" }, face: { brow: "ridge", happy: "arc", dazed: "wobble" }, gait: { offsets: [0, .5, 0, .5, 0, .5], dutyWalk: .6, dutyRun: .5 } }, // alternating tripods
   squat: { sizes: TEMPLATE_SMALL_SIZES, name: "Squat", builders: ["toad", "hedgehog", "mole", "snail", "armadillo", "troll"], sockets: { back: ["back.spines", "back.shell", "back.warts"] }, exclude: [], texture: { kind: "smooth" }, face: { brow: "bar", happy: "squint", dazed: "x" }, gait: { offsets: [0, .5, .5, 0], dutyWalk: .7, dutyRun: .5 } },
 };
@@ -7782,7 +7909,8 @@ function speciesOf(g) {
   if (g.idle) S.idle = g.idle; // its idle pose (art/creatures.js IDLE_BUILDERS: the meerkat sat up as a sentinel)
   if (g.palette.ear) S.ear = g.palette.ear; // its inner ears' own colour [h, s, v] (the fennec's pink)
   if (g.palette.magic != null) S.magic = g.palette.magic; // its own magic glow's hue (else the style's, nudged by its coat)
-  if (g.hydra) S.hydra = g.hydra; // the hydra builder's own options (its heads by level, a crest)
+  if (g.hydra) S.hydra = g.hydra;
+  if (g.look) S.look = g.look; // a one-species builder's own look (the biome recolours, 2026-10-23: the fire beetle's embers, the tarantula's banded legs...) // the hydra builder's own options (its heads by level, a crest)
   if (g.palette.flower) S.flower = g.palette.flower; // its flowers' and berries' colour (the evolution kit's moss and brambles)
   if (g.template === "quadruped") {
     const q = { ...g.body, ...g.head, ...g.coat }, p = g.parts || {};
@@ -7808,7 +7936,7 @@ function speciesOf(g) {
 }
 
 // The evolution kit's features (creatures3d.js evolve3d).
-const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "plates", "offerings", "howl", "furrow", "sail", "patagium", "dewlap", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath", "backPlates", "crown", "darken"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
+const GENOME_FEATURE_KINDS = ["mane", "wisps", "eyeglint", "stones", "claws", "moss", "tails", "ruff", "brambles", "wings", "scars", "beads", "garland", "bells", "headcloth", "nemes", "plates", "offerings", "howl", "furrow", "sail", "patagium", "dewlap", "grizzle", "worn", "torc", "rings", "earrings", "bands", "wreath", "backPlates", "crown", "darken"]; // (grizzle to wreath: the elder kit in creatures3d.js evolve3d, for any legend; the rest are features of their own)
 // A level's overrides, in the builders' bag (as speciesOf makes q).
 function levelQ(l) {
   const q = { ...l.body, ...l.head, ...l.coat }, p = l.parts || {};
@@ -8376,6 +8504,9 @@ function gearUp(m) {
 //   bells: { count, from, to, size, mat, bell }: a saddle-cloth over its back from `from` to `to` along it (mat, FLOWER), its hem in
 //     bronze (bell, WOOD), count temple bells hanging down each side from it.
 //   headcloth: { size, mat }: a jewelled cloth over its brow hanging between its eyes, bronze-edged, three beads along its hem.
+//   nemes: { size, mat, alt, beard, uraeus }: a pharaoh's striped headcloth (the sphinx's, Ed 2026-10-23): a cap over the top and back of
+//     its head, the face left bare, a lappet hanging down each side of its neck, bands of mat (FLOWER, gold) and alt (NIGHT2, lapis);
+//     beard: a plaited false beard under its chin (its length in head radii); uraeus: a cobra rearing on its brow.
 //   brambles: { count, berries }: bramble vines winding over its body, thorny, leafed, with berries (its palette's flower colour).
 //   scars: { count, mat, len }: old healed scars on its flanks, each three parallel claw rakes, pale (WEB) by default: the wear of epochs.
 //   dewlap: { size, mat }: a heavy fold of loose skin hanging under its throat (a big monitor lizard's).
@@ -8487,6 +8618,21 @@ function evolve3d(m, feats, c) {
       const { H, hr } = c, cl = [H[0] + hr * .82, H[1] + hr * .1, 0], dim = [hr * .14, hr * (f.size ?? .6), hr * .5];
       m.ell(cl, dim, M[f.mat || "FLOWER"], { group: 80, extra: true, dir: [1, -.35, 0], paint: p => Math.abs(p[2]) > dim[2] * .78 || p[1] < cl[1] - dim[1] * .75 ? M.WOOD : undefined });
       for (let i = 0; i < 3; i++) m.ell([cl[0] + hr * .12, cl[1] - dim[1] * .95, (i - 1) * hr * .25], [hr * .06, hr * .07, hr * .06], M.WOOD, { group: 80, extra: true });
+    }
+    if (f.kind === "nemes") { // a pharaoh's striped headcloth: a cap over its crown and the back of its head, its face bare, lappets down either side of its neck
+      m.part = "head";
+      const { H, hr } = c, k = f.size ?? 1, gold = M[f.mat || "FLOWER"], blue = M[f.alt || "NIGHT2"], band = hr * .2 * k, stripe = p => Math.floor((H[1] + hr * 3 - p[1]) / band) % 2 ? blue : gold;
+      const cap = [H[0] - hr * .12, H[1] + hr * .18, 0], capR = [hr * 1.02 * k, hr * .92 * k, hr * 1.08 * k];
+      m.ell(cap, capR, gold, { group: 190, extra: true, paint: p => { const a = Math.atan2(p[2], p[1] - H[1]); return Math.floor((a + 4) * 4.2) % 2 ? blue : gold; } }); // the cap, striped from its crown down
+      m.ell([H[0] + hr * .95, H[1] - hr * .3, 0], [hr * .62, hr * .62, hr * .9], gold, { group: 190, cut: true }); // its face left bare
+      m.ell([H[0] + hr * .85, H[1] + hr * .5, 0], [hr * .14, hr * .1, hr * .95 * k], gold, { group: 190, extra: true }); // the gold band across its brow
+      for (const side of [-1, 1]) { // the lappets: flaring as they fall either side of its face onto its chest
+        const top = [H[0] + hr * .3, H[1] - hr * .1, side * hr * .82 * k], low = [H[0] + hr * .42, H[1] - hr * 1.35 * k, side * hr * .9 * k];
+        m.seg(top, low, hr * .3 * k, hr * .4 * k, gold, { group: 191 + (side > 0 ? 0 : 1), extra: true, paint: stripe });
+      }
+      m.seg([H[0] - hr * .8, H[1] - hr * .05, 0], [H[0] - hr * 1.0, H[1] - hr * .9 * k, 0], hr * .3 * k, hr * .14 * k, gold, { group: 193, extra: true, paint: stripe }); // its queue, gathered at the back
+      if (f.beard) m.seg([H[0] + hr * .78, H[1] - hr * .62, 0], [H[0] + hr * .86, H[1] - hr * (.62 + f.beard), 0], hr * .12, hr * .09, gold, { group: 194, extra: true, paint: p => Math.floor((H[1] - p[1]) / (hr * .1)) % 2 ? blue : gold }); // a plaited false beard
+      if (f.uraeus) m.chain([[H[0] + hr * .9, H[1] + hr * .52, 0, hr * .08], [H[0] + hr * 1.02, H[1] + hr * .72, 0, hr * .1], [H[0] + hr * 1.08, H[1] + hr * .82, 0, hr * .06]], gold, { group: 195, extra: true }); // the cobra rearing on its brow
     }
     if (f.kind === "plates") { // an elder's armour: its hide's bony plates grown into weathered stone, standing proud down its back and over its flanks
       m.part = "body";
@@ -9222,12 +9368,12 @@ function owl3d(S, level, frame, st, facing = "towards") {
   for (const side of [-1, 1]) { const f = (frame ? -1 : 1) * side * .07; m.seg([.05, .2, side * .14], [.08 + f, .05, side * .15], .07, .06, M.BODY2, { group: 2 }); for (const dz of [-.04, 0, .04]) m.ell([.16 + f, .03, side * .15 + dz], [.06, .025, .02], M.ACCENT, { group: 2 }); m.anchors.feet.push({ c: [.13 + f, .04, side * .15], r: .08, group: side > 0 ? 6 : 2, fit: "claw" }); } // (each frame a step: one foot ahead, the other behind, in turn)
   m.ell([-.32, .32, 0], [.22, .06, .14], M.BODY2, { dir: [-1, -.6, 0], group: 3 });
   // body: an upright egg, pale breast streaked (barred, an adult's; all down, an owlet's)
-  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
+  m.ell([0, .55 + bob, 0], [.36, .52, .36], M.BODY, { rough: q.down ? .03 : undefined, paint: p => q.down ? (spotty(p, 14, .3) ? M.BODY : M.BELLY) : p[0] > .12 && p[1] < hy - hr * .5 ? (q.spotted ? (Math.floor(p[1] * 20 + Math.sin(p[2] * 17) * .6) % 2 && !spotty(p, 18, .3) ? M.BODY2 : M.BELLY) : q.bars ? (Math.floor(p[1] * 22) % 2 ? M.BODY2 : M.BELLY) : (Math.floor(p[1] * 18) % 3 === 0 && spotty(p, 16, .5)) ? M.BODY2 : M.BELLY) : undefined });
   // wings: folded (their tips patterned, an adult's), spread like a cloak and edged in moonlight (a legend's), or the old spirit wings
   if (q.cloak) for (const side of [-1, 1]) wing3d(m, [-.05, .78 + bob, side * .3], side, 1.25, frame ? .08 : -.05, M.BODY2, M.WEB, side > 0 ? 40 : 50); // half spread like a cloak, its feathers edged in moonlight
-  else if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => q.wingTips && p[1] < .42 + bob ? (Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY) : spotty(p, 12, .15) ? M.BODY3 : undefined });
+  else if (!has("wings")) for (const side of [-1, 1]) m.ell([-.06, .58 + bob, side * .3], [.4, .3, .08], M.BODY2, { dir: [-.3, -1, 0], up: [1, 0, 0], group: side > 0 ? 4 : 2, paint: p => q.wingTips && p[1] < .42 + bob ? (Math.floor(p[1] * 30) % 2 ? M.BODY3 : M.BELLY) : q.spotted && spotty(p, 16, .28) ? M.BELLY : spotty(p, 12, .15) ? M.BODY3 : undefined });
   // head: big and round, sunk into the shoulders
-  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY, { rough: q.down ? .02 : undefined });
+  m.ell([0, hy, 0], [hr, hr * .9, hr], M.BODY, { rough: q.down ? .02 : undefined, paint: q.spotted ? p => spotty(p, 22, .22) ? M.BELLY : undefined : undefined }); // (a spotted owl's white-flecked crown)
   // facial disc: two pale bowls facing forward, with huge eyes
   const tl = q.tufts ?? (baby ? 0 : 1);
   for (const side of [-1, 1]) {
@@ -9576,7 +9722,7 @@ function heronLegs(ph, hip) {
 const heronNeck = ph => Math.cos(ph * Math.PI * 4) * .035;
 
 function bat3d(S, level, frame, st, facing = "towards") {
-  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.5 : 1;
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, Fr = S.look?.fruit, span = (has("wingsBig") ? 1.5 : 1) * (Fr ? 1.1 : 1); // (Fr: the fruit bat's: a fox's face, a golden mantle, big eyes, bigger wings)
   shadow(m, 0, .3 * span);
   for (const side of [-1, 1]) { // membranes between finger bones, flapping
     const sh = [0, y + .05, side * .1], wr = [.05, y + (up ? .35 : -.05), side * .45 * span];
@@ -9587,16 +9733,18 @@ function bat3d(S, level, frame, st, facing = "towards") {
     const span3 = v3.sub(tips[0], sh), u = v3.norm(span3), back = v3.norm(v3.sub(tips[2], wr)), v = v3.norm(v3.sub(back, v3.mul(u, v3.dot(back, u))));
     m.flat(v3.add(v3.lerp(sh, tips[0], .5), v3.mul(v, .12 * span)), u, v, Math.hypot(...span3) * .55, .3 * span, masks.membrane(mem), { group: 10 + (side > 0 ? 1 : 0), bend: .2 });
   }
-  m.ell([0, y, 0], [.13, .16, .12], M.BODY, { group: 1 });
-  const hc = [.08, y + .2, 0];
+  m.ell([0, y, 0], Fr ? [.15, .2, .14] : [.13, .16, .12], M.BODY, { group: 1, paint: Fr ? p => p[1] > y + .04 ? M.BELLY : undefined : undefined });
+  const hc = [.08, y + (Fr ? .27 : .2), 0];
   m.ell(hc, [.12, .11, .11], M.BODY, { group: 1 });
+  if (Fr) m.ell(v3.add(hc, [.11, -.03, 0]), [.1, .055, .055], M.BODY, { dir: [1, -.25, 0], group: 1 }); // its fox's muzzle
   const sonar = has("sonar"); // (the legend audit's ★, Ed 2026-10-13: ears as tall as its body, ribbed and glowing, sonar rings pulsing from its mouth)
   for (const side of [-1, 1]) {
     if (sonar) { const c = v3.add(hc, [-.03, .36, side * .1]); m.ell(c, [.34, .1, .025], M.BODY, { dir: [.12, 1, side * .28], up: [1, 0, 0], group: 1, extra: true, paint: p => { if (p[0] < c[0] - .02) return undefined; const r = (p[1] - hc[1]) * 22; return Math.abs(r - Math.round(r)) < .16 ? M.MAGIC2 : M.EAR; } }); }
+    else if (Fr) m.ell(v3.add(hc, [-.02, .13, side * .07]), [.085, .04, .018], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
     else m.ell(v3.add(hc, [-.02, .15, side * .07]), [.12, .045, .02], M.BODY, { dir: [.1, 1, side * .3], up: [1, 0, 0], group: 1, paint: p => p[0] > hc[0] - .01 ? M.EAR : undefined });
   }
-  eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], .025, legend ? M.MAGIC2 : M.EYE);
-  m.ell(Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
+  eyesOn(m, hc, [.12, .11, .11], [[.7, .2, .5], [.7, .2, -.5]], Fr ? .034 : .025, legend ? M.MAGIC2 : M.EYE);
+  m.ell(Fr ? v3.add(hc, [.2, -.055, 0]) : Model.surface(hc, [.12, .11, .11], [1, -.2, 0]), [.025, .02, .03], M.NOSE, { group: 1 });
   if (sonar) for (let i = 0; i < 3; i++) { const r = .07 + (i + (frame ? .5 : 0)) * .07, c = v3.add(hc, [.18 + i * .12 + (frame ? .06 : 0), -.04, 0]); // rings of sound rolling out from its mouth
     m.flat(c, [0, 0, 1], [0, 1, 0], r, r, (a, b) => { const d = Math.hypot(a, b); return d > 1 || d < .78 ? null : M.MAGIC; }, { group: 130 + i, extra: true, bend: 0 }); }
   return finish(m, S, level, st, .55, facing);
@@ -9721,8 +9869,9 @@ function beetle3d(S, level, frame, st, facing = "towards") {
     const x = .25 - i * .25, ph = (i + (side > 0 ? 1 : 0) + frame) % 2 ? .06 : -.06, base = [x, .22, side * .2];
     m.chain([[...base, .03], [x + ph + (1 - i) * .06, .32, side * .42, .025], [x + ph * 1.5 + (1 - i) * .15, .02, side * .55, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
   }
-  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
-  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1 });
+  const ember = S.look?.embers ? p => p[1] > .4 && (Math.abs(Math.abs(p[2]) - .1) < .022 || Math.abs(Math.sin(p[0] * 15 + Math.sin(p[2] * 13 + p[1] * 6) * 1.6)) < .09 * Math.min(1, (p[1] - .38) * 6)) : null; // (the fire beetle's ember markings: a band down each wing case and cracks across them)
+  m.ell([-.12, .34, 0], [.46, .24, .32], M.BODY, { paint: p => Math.abs(p[2]) < .018 && p[1] > .4 ? M.LINE : ember && ember(p) ? M.ACCENT : has("antlers") && Math.abs(Math.sin(p[0] * 31 + p[2] * 13)) < .04 && p[1] > .38 ? M.BELLY : p[1] > .5 && p[2] > .05 && p[2] < .17 ? M.BELLY : undefined });
+  m.ell([.38, .33, 0], [.16, .16, .26], M.BODY, { group: 1, paint: ember ? p => p[1] > .4 && Math.abs(p[2]) < .05 ? M.ACCENT : undefined : undefined });
   const hc = [.56, .3, 0];
   m.ell(hc, [.1, .1, .17], M.BODY2, { group: 1 });
   const jl = [.3, .7, .95, 1.0][level] * (has("horn") ? 1.3 : 1), jm = has("horn") ? M.MAGIC : M.BODY3;
@@ -9864,18 +10013,19 @@ function woodlouse3d(S, level, frame, st, facing = "towards") {
 
 function snake3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, baby = level === 0, young = level === 1, has = f => legend && S.legend.includes(f), m = new Model(), ph = frame ? .7 : 0, pts = [];
-  const girth = [.9, .82, 1, 1][level], rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
+  const Py = S.look?.python, girth = [.9, .82, 1, 1][level] * (Py ? 1.3 : 1), rise = [1, .85, 1.15, 1.15][level]; // (the young a slim whip, the adult heavy, its head held high)
   for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.9 + t * 1.2, .07, Math.sin(t * Math.PI * 2 + ph) * .25 * (1 - t * .5), (.03 + .045 * Math.sin(Math.min(1, t * 1.4) * Math.PI / 2)) * girth]); }
   pts.push([.38, .07 + .18 * rise, pts[12][2], .07 * girth], [.42, .07 + .38 * rise, pts[12][2] * .8, .065 * girth]);
   // (Ed's review, 2026-10-13: "the baby and young are copies") its pattern comes in with age: the hatchling plain, the young
   // faintly spotted, the adult's spots and dark bands across its back; and the hatchling's head big for its body
-  const spots = baby ? 0 : young ? .15 : .3, bands = level >= 2;
-  m.chain(pts, M.BODY, { paint: p => has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
+  const spots = Py ? 0 : baby ? 0 : young ? .15 : .3, bands = !Py && level >= 2, flecks = Py && !baby; // (the jungle python's: plain emerald with white flecks along its spine, no bands)
+  m.chain(pts, M.BODY, { paint: p => flecks && p[1] > .07 + .07 * girth && spotty([p[0] * 1.6, p[1], p[2]], 26, young ? .14 : .22) && !(has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05) ? M.BELLY : has("shed") && Math.abs(Math.sin(p[0] * 19 + p[2] * 9)) < .05 && p[1] > .06 ? M.BELLY : p[1] < .05 && p[0] < .35 ? M.BELLY : (bands && p[1] > .07 && Math.sin(p[0] * 26) > .72) || (spots && spotty([p[0] * 1.5, p[1], p[2]], 14, spots)) ? M.BODY3 : undefined });
   const hc = [.5, .07 + .43 * rise, pts[13][2] * .8], hr = baby ? .13 : young ? .105 : .09;
   m.rig = { spine: pts.map(p => p.slice()), head: hc, hr }; // the live rig's spine (tail to head, each [x, y, z, radius]) and head, in model units
   m.part = "head";
-  m.ell(hc, [hr * 1.5, hr * .75, hr], M.BODY, { dir: [1, -.15, 0], group: 1 });
-  eyesOn(m, hc, [hr * 1.5, hr * .75, hr], [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
+  const HR = [hr * 1.5, hr * .75, hr * (Py ? 1.25 : 1)]; // (a python's broad head)
+  m.ell(hc, HR, M.BODY, { dir: [1, -.15, 0], group: 1 });
+  eyesOn(m, hc, HR, [[.5, .5, .7], [.5, .5, -.7]], hr * .22, legend ? M.MAGIC2 : M.EYE);
   if (!frame) m.seg(v3.add(hc, [hr * 1.4, -hr * .2, 0]), v3.add(hc, [hr * 2.3, -hr * .3, 0]), .01, .008, M.SKIN, { group: 1 });
   m.anchors.feet.push({ c: v3.add(pts[0].slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on the tail tip
   m.anchors.neck = { c: [.42, .36, pts[12][2] * .9], r: .075, dir: [.2, 1, 0] };
@@ -9977,6 +10127,44 @@ function scorpion3d(S, level, frame, st, facing = "towards") {
 // eye. Its legend (Ed's brief, ART-GUIDE §0c: the elder of its kind; "emphasise the thing that makes that creature unusual"):
 // the most heads, and two necks cut short long ago, in front, each sprouting two new heads (heads that regrow), bronze offering
 // rings high on its necks, old scars. S.hydra: { heads: [per level], crest: true (a draconic crest of spines and frills) }.
+// The feathered serpent (Ed, 2026-10-23: the jungle's fantastic kind, unknown-27's slot, ring 5; "the serpent template plus feathers,
+// in bright plumage"): an emerald serpent, gold-bellied, its front raised in an S, a ruff of long scarlet, gold and turquoise feathers
+// fanned round its neck, a crest of plumes off the back of its head and long streamers off its tail. Its levels (levelQ): thick (its
+// girth), rise (how high its neck stands), ruff (the ruff's feathers' length, 0 none), plumes (tail streamers), crest (head plumes),
+// wings (feathered wings off its back: 0 none, their size), glow (its feathers' tips burning in its magic: the legend's).
+function quetzal3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, m = new Model(), q = S.levelQ?.[level] || {}, ph = frame ? .7 : 0, flut = frame ? .06 : 0, pts = [];
+  const th = q.thick ?? 1, rise = q.rise ?? 1, r0 = .05 * th, tipMat = q.glow ? M.MAGIC : M.ACCENT, PLUME = [M.FLOWER, M.BODY2, M.ACCENT, M.FLOWER, M.MAGIC2];
+  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.7 + t * 1.0, r0 * .9, Math.sin(t * Math.PI * 2 + ph) * .26 * (1 - t * .5), r0 * (.35 + .65 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2))]); }
+  const last = pts[12], neck = [last[0] + .1, last[1] + .26 * rise, last[2] * .7], top = [last[0] + .2, last[1] + .5 * rise, last[2] * .5];
+  pts.push([...neck, r0 * .95], [...top, r0 * .85]);
+  m.chain(pts, M.BODY, { paint: p => p[1] < r0 * .45 ? M.BELLY : Math.abs(((p[0] * 9 + Math.abs(p[2]) * 6) % 1 + 1) % 1 - .5) < .1 && p[1] > r0 * .7 ? M.BODY3 : undefined }); // emerald, its belly gold, dark chevrons down its back
+  const feather = (root, dir, len, w, mat, group, tip = tipMat) => { const d = v3.norm(dir), end = v3.add(root, v3.mul(d, len)), mid = v3.add(v3.lerp(root, end, .5), [0, len * .06, 0]); m.chain([[...root, w * .6], [...mid, w], [...end, w * .25]], mat, { group, extra: true, paint: p => v3.dot(v3.sub(p, root), d) > len * .7 ? tip : undefined }); };
+  // the ruff: feathers fanned round its neck, below its head, all round but underneath, swept a little back
+  const N = v3.lerp(neck, top, .55), rf = q.ruff ?? 1, nR = Math.round(10 + rf * 8);
+  if (rf > 0) for (let i = 0; i < nR; i++) { const a = -2.5 + 5 * i / (nR - 1), dir = [-.45 - flut, Math.cos(a) + .15, Math.sin(a) * 1.1]; feather(N, dir, (.16 + .1 * (i % 2)) * rf, .022 * Math.max(.7, rf), PLUME[i % 3], 30 + (Math.sin(a) > 0 ? 1 : 0)); }
+  // the head: a broad serpent's head, a hooked snout, eyes under a brow, a forked tongue out on one frame
+  const hr = .085 * Math.max(.9, th * .95), hc = v3.add(top, [hr * 1.1, hr * .25, 0]);
+  m.part = "head";
+  m.ell(hc, [hr * 1.45, hr * .72, hr * 1.05], M.BODY, { dir: [1, -.2, 0], group: 1, paint: p => p[1] < hc[1] - hr * .3 ? M.BELLY : undefined });
+  m.ell(v3.add(hc, [hr * 1.15, -hr * .12, 0]), [hr * .55, hr * .36, hr * .55], M.ACCENT, { group: 1 }); // its snout, gold like a beak
+  eyesOn(m, hc, [hr * 1.45, hr * .72, hr * 1.05], [[.45, .55, .7], [.45, .55, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
+  if (!frame) for (const s2 of [-1, 1]) m.seg(v3.add(hc, [hr * 1.5, -hr * .3, 0]), v3.add(hc, [hr * 2.3, -hr * .4, s2 * hr * .25]), .008, .006, M.SKIN, { group: 1 });
+  const cr = q.crest ?? 1; for (let k = 0; k < Math.round(2 + cr * 3); k++) feather(v3.add(hc, [-hr * .5, hr * .55, (k - 2) * hr * .18]), [-.7 - k * .08 - flut, .9 - k * .12, (k - 2) * .15], (.12 + .05 * (k % 2)) * cr * (legend ? 1.6 : 1), .018, k % 2 ? M.MAGIC2 : M.FLOWER, 34);
+  m.part = "body";
+  // its tail's streamers: long plumes trailing back and up off its tail
+  const T = pts[0], np = q.plumes ?? 2; for (let k = 0; k < np; k++) { const z = (k - (np - 1) / 2) * .05, a = [T[0] - .02, T[1], T[2] + z], b = [T[0] - .12 - k * .02, T[1] + .14 + flut, T[2] + z * 3], c = [T[0] - .22 - k * .03, T[1] + .26 - flut, T[2] + z * 5 + Math.sin(k + ph) * .04]; m.chain([[...a, .014], [...b, .02], [...c, .008]], PLUME[(k + 1) % PLUME.length], { group: 36 + (k % 2), extra: true, paint: p => p[0] < c[0] + .06 ? tipMat : undefined }); }
+  // its wings: a pair of feathered wings off its back behind the ruff, flight feathers fanned up and back
+  const W = q.wings ?? 0; if (W) for (const side of [-1, 1]) {
+    const sh = v3.add(pts[6].slice(0, 3), [0, r0 * .8, side * r0 * .6]), wr = v3.add(sh, [-.05 * W, .32 * W + flut, side * .22 * W]);
+    m.chain([[...sh, .03 * W], [...wr, .022 * W]], M.BODY, { group: 40 + (side > 0 ? 1 : 0), extra: true });
+    for (let i = 0; i < 7; i++) { const t = i / 6, root = v3.lerp(wr, sh, t * .8); feather(root, [-.6 - .4 * t, .6 - .5 * t, side * .1], W * (.42 - .2 * t), .03 * W, i % 2 ? M.FLOWER : M.BODY2, 42 + (side > 0 ? 1 : 0)); }
+  }
+  m.anchors.feet.push({ c: v3.add(T.slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on its tail tip
+  m.anchors.neck = { c: v3.lerp(neck, top, .3), r: r0 * 1.2, dir: [.2, 1, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
 function hydra3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
@@ -10026,7 +10214,17 @@ function hydra3d(S, level, frame, st, facing = "towards") {
   return finish(m, S, level, st, .45, facing);
 }
 
+// The butterfly (the biome roster, 2026-10-23: the moth turned a swallowtail, its id kept): S.look.butterfly. Yellow wings held up
+// over its back or spread flat (its two frames), black veins and borders flecked pale, a tail off each hind wing over blue
+// crescents; a slender dark body, long antennae ending in clubs. Its legend's hind wings the old great eyes.
+const bflyFore = (s, t) => { const u = (s + 1) / 2, half = (.5 + .5 * u) * (u > .78 ? Math.sqrt(Math.max(0, 1 - ((u - .78) / .22) ** 2)) : 1); if (Math.abs(t) > half) return null;
+  if (u > .8 || Math.abs(t) > half * .86) return Math.floor(Math.abs(t) * 5 + u * 4) % 3 === 0 && u > .82 ? M.BELLY : M.NOSE; // the black border, flecked pale
+  return Math.abs((t + 1) * 1.6 - Math.round((t + 1) * 1.6)) < .07 || u < .08 ? M.NOSE : M.BODY; };
+const bflyHind = (s, t) => { const u = (s + 1) / 2, r = Math.hypot(s * .95, t); if (r > .95) return null;
+  if (r > .7) return r > .76 && r < .86 && Math.floor((Math.atan2(t, s) + 4) * 4) % 2 ? M.ACCENT : M.NOSE; // blue crescents in its black hem
+  return Math.abs(Math.atan2(t, s + 1.1) * 3 - Math.round(Math.atan2(t, s + 1.1) * 3)) < .06 || u < .06 ? M.NOSE : M.BODY; };
 function moth3d(S, level, frame, st, facing = "towards") {
+  if (S.look?.butterfly) return butterfly3d(S, level, frame, st, facing);
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = has("wingsBig") ? 1.45 : 1;
   const wm = has("wingsBig") ? M.MAGIC : M.BODY;
   shadow(m, 0, .3 * span);
@@ -10042,6 +10240,30 @@ function moth3d(S, level, frame, st, facing = "towards") {
   m.ell([0, y, 0], [.22, .09, .09], M.BELLY, { group: 1, paint: p => spotty(p, 30, .25) ? M.BODY2 : undefined });
   m.ell([.17, y + .03, 0], [.07, .07, .07], M.BELLY, { group: 1 });
   eyesOn(m, [.17, y + .03, 0], [.07, .07, .07], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
+  return finish(m, S, level, st, .5, facing);
+}
+
+function butterfly3d(S, level, frame, st, facing) {
+  const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model(), up = frame === 0, y = .55, span = 1.15;
+  shadow(m, 0, .32 * span);
+  for (const side of [-1, 1]) {
+    const lift = up ? .85 : -.08, fore = v3.norm([.3, lift, side]), hind = v3.norm([-.32, lift * .8, side]);
+    m.flat(v3.add([.02, y, side * .04], v3.mul(fore, .4 * span)), fore, v3.norm(v3.cross(fore, [0, 1, 0])), .42 * span, .3 * span, bflyFore, { group: 10 + (side > 0 ? 1 : 0) });
+    const hc = v3.add([-.06, y, side * .04], v3.mul(hind, .26 * span));
+    if (has("eyespots")) { // its hind wings grown into two great staring eyes (the legend audit's ★, the moth's kept)
+      const eye = (a, b) => { if (Math.hypot(a, b) > 1 - .14 * Math.max(0, Math.sin(Math.atan2(b, a) * 7))) return null; const e = Math.hypot((a - .05) / .62, b / .78); if (e < .2) return Math.hypot(a + .02, b - .12) < .07 ? M.GLINT : M.NOSE; if (e < .32) return M.MAGIC2; if (e < .55) return M.MAGIC; if (e < .72) return M.NOSE; if (e < .8) return M.BELLY; return M.BODY; };
+      m.flat(v3.add([-.05, y, side * .05], v3.mul(hind, .36)), hind, v3.norm(v3.cross(hind, [0, 1, 0])), .38, .3, eye, { group: 12 + (side > 0 ? 1 : 0), extra: true });
+    } else {
+      m.flat(hc, hind, v3.norm(v3.cross(hind, [0, 1, 0])), .28 * span, .22 * span, bflyHind, { group: 12 + (side > 0 ? 1 : 0) });
+      const tb = v3.add(hc, v3.mul(hind, .22 * span)); m.seg(tb, v3.add(tb, v3.add(v3.mul(hind, .14 * span), [-.1, -.04, 0])), .022, .014, M.NOSE, { group: 12 + (side > 0 ? 1 : 0) }); // its swallow's tail
+    }
+    m.chain([[.12, y + .06, side * .02, .008], [.24, y + .3, side * .1, .008], [.3, y + .44, side * .15, .008]], M.NOSE, { group: 11 }); // long antennae...
+    m.ell([.3, y + .45, side * .15], [.025, .025, .025], M.NOSE, { group: 11 }); // ...ending in clubs
+  }
+  m.ell([-.04, y - .02, 0], [.24, .045, .045], M.BODY3, { group: 1, paint: p => p[1] < y - .03 ? M.BODY : undefined });
+  m.ell([.14, y + .02, 0], [.07, .06, .06], M.BODY3, { group: 1 });
+  m.ell([.22, y + .03, 0], [.05, .05, .05], M.BODY3, { group: 1 });
+  eyesOn(m, [.22, y + .03, 0], [.05, .05, .05], [[.7, .3, .6], [.7, .3, -.6]], .02, legend ? M.MAGIC2 : M.EYE);
   return finish(m, S, level, st, .5, facing);
 }
 
@@ -10125,13 +10347,15 @@ function crab3d(S, level, frame, st, facing = "towards") {
 
 function spider3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, has = f => legend && S.legend.includes(f), m = new Model();
-  const ce = [.15, .28, 0];
+  const ce = [.15, .28, 0], T = S.look?.tarantula, lk = T ? 1.5 : 1; // (the tarantula's: thick hairy legs banded at each joint, a big furry abdomen)
   for (const side of [-1, 1]) for (let i = 0; i < 4; i++) { // eight legs, knees high
     const a = (-.6 + i * .4), ph = (i + (side > 0 ? 0 : 1) + frame) % 2 ? .05 : -.05, base = v3.add(ce, [.05 - i * .04, 0, side * .1]);
     const knee = v3.add(base, [Math.cos(a) * .3 * (i < 2 ? 1 : -.6) + ph, .3, side * .3]), foot = v3.add(base, [Math.cos(a) * .55 * (i < 2 ? 1 : -.8) + ph * 1.5, -.28, side * .55]);
-    m.chain([[...base, .03], [...knee, .028], [...foot, .015]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2 });
+    const band = T ? p => { const a = Math.hypot(...v3.sub(p, knee)), b = Math.hypot(...v3.sub(p, foot)); return (a > .035 && a < .07) || (b > .07 && b < .11) ? M.ACCENT : undefined; } : undefined;
+    m.chain([[...base, .03 * lk], [...knee, .028 * lk], [...foot, .015 * lk]], side > 0 ? M.BODY2 : M.BODY3, { group: side > 0 ? 7 : 2, rough: T ? .008 : undefined, paint: band });
   }
-  m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
+  if (T) m.ell([-.3, .4, 0], [.38, .31, .33], M.BODY, { rough: .02, paint: p => p[1] > .5 && spotty(p, 22, .25) ? M.BELLY : undefined });
+  else m.ell([-.28, .38, 0], [.34, .28, .3], M.BODY, { paint: p => (Math.abs(p[2]) < .03 || Math.abs(p[0] + .28) < .03) && p[1] > .45 ? M.BELLY : undefined });
   m.ell(ce, [.18, .13, .17], M.BODY2, { group: 1 });
   m.anchors.head = { c: ce, r: [.18, .13, .17] };
   m.anchors.eyes = { pts: [[.05, .05], [.05, -.05]].map(([dy, dz]) => Model.surface(ce, [.18, .13, .17], v3.norm([.9, dy * 6, dz * 4]))), size: .03 };
@@ -10155,7 +10379,7 @@ function spider3d(S, level, frame, st, facing = "towards") {
 
 // Every species is built in 3D (true three-quarter view, Ed 2026-10-03): four-legged ones by
 // quad3d, the others by a builder per body plan.
-const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d })); // body plan -> 3D builder; four-legged species all use quad3d
+const MODELLED = new Map(Object.entries({ owl: owl3d, hedgehog: hedgehog3d, toad: toad3d, troll: troll3d, raven: raven3d, heron: heron3d, bat: bat3d, mole: mole3d, armadillo: armadillo3d, beetle: beetle3d, scarab: scarab3d, snail: snail3d, woodlouse: woodlouse3d, snake: snake3d, hydra: hydra3d, moth: moth3d, spider: spider3d, dragonfly: dragonfly3d, crab: crab3d, rattlesnake: rattlesnake3d, scorpion: scorpion3d, penguin: penguin3d, quetzal: quetzal3d })); // body plan -> 3D builder; four-legged species all use quad3d
 
 // Idle poses (a genome's `idle`; Ed, 2026-10-12): drawn as a baked frame while it stands still now and then (render/view/creatures.ts),
 // the four-legged rig standing aside. The meerkat sat up as a sentinel.
@@ -10202,7 +10426,7 @@ function speciesColours(sp, st, gear = null) {
 function baseColours(s, st) {
   const v = st.cVal / .85, sat = st.cSat / .6;
   const body = hsv2rgb(s.hue, s.sat * sat * st.sat, s.val * v), hs = st.hueShift || 0; // hs: hue-shifted ramps (lights warmer, shadows redder; the stylisation ladder)
-  const belly = s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
+  const belly = Array.isArray(s.belly) ? hsv2rgb(...s.belly) : s.belly === "yellow" ? [240, 196, 40] : s.belly === "white" || s.q?.face === "badger" ? [236, 232, 222] : hsv2rgb(s.hue + .03, s.sat * .5 * sat, Math.min(1, s.val * v * 1.3 + .08));
   const mh = s.magic ?? st.magicHue + s.hue * .3, magic = hsv2rgb(mh, .6, 1), magic2 = hsv2rgb(mh, .18, 1);
   const pale = ["boar", "stag", "elk", "ram"].includes(s.id);
   return {
@@ -11824,6 +12048,8 @@ const LEGEND_DETAIL = {
   jaguar: [...pair(C(.37, .36, .03), L([.17, .56], [.26, .58]), D(.42, .8)), L([.44, .84], [.56, .84])],
   elephant: [...pair(A(.24, .42, .1, 110, 250), L([.43, .26], [.47, .24])), L([.46, .63], [.54, .63]), L([.46, .7], [.54, .7]), L([.47, .77], [.55, .78])],
   griffin: [L([.36, .5], [.3, .58]), D(.62, .46)],
+  sphinx: [...pair(L([.3, .52], [.4, .52]), L([.3, .72], [.4, .72])), L([.5, .34], [.5, .24]), L([.46, .82], [.54, .82])], // the lappets' stripes, the cobra on its brow, the beard's plait
+  featheredserpent: [...[0, 1, 2].map(i => L([.36 + i * .06, .78 - i * .06], [.4 + i * .06, .74 - i * .06])), D(.7, .4), L([.62, .36], [.66, .3])], // the scales' chevrons up its rising body, its eye's ring, a crest plume
   frostwyrm: [...pair(L([.336, .27], [.303, .205])), ...pair(D(.475, .746))],
   cheetah: [...pair(D(.3, .62)), ...pair(D(.34, .42)), D(.5, .36)],
   lion: [...pair(L([.3, .38], [.38, .34])), ...pair(L([.36, .66], [.24, .68]))],
@@ -12927,7 +13153,7 @@ const WARREN = {
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
-  flora: { species: [["juniper", .6], ["hawthorn", .25], ["pine", .15]], palette: { sat: .6, val: .8 } },
+  flora: { species: [["juniper", .6], ["acacia", .25], ["pine", .15]] /* (Kalahari thorn for the hawthorn: India 2026-10-23, biome forests) */, palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .25, groundCover: { density: .4, kinds: ["pebbles", "blades"] } },
 };
 
@@ -12980,9 +13206,9 @@ const PLAINS = {
 // sun-split stones; the armadillo its creature.
 const SCRUB_WASH = {
   slot: 6, id: "scrub-wash", name: "Scrub wash", creature: "armadillo", by: "recipe", leaf: .24, floor: ["mud", .08, .32, .52],
-  text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted thorn trees, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+  text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-  big: [["tree", { type: "hawthorn", variant: "stunted", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
+  big: [["tree", { type: "olive", variant: "stunted", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
   pathKinds: ["animal", "dirt"],
   layout: {
@@ -12991,7 +13217,7 @@ const SCRUB_WASH = {
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },
-  flora: { species: [["hawthorn", .55], ["juniper", .3], ["pine", .15]], palette: { sat: .6, val: .75 } },
+  flora: { species: [["olive", .55], ["juniper", .3], ["pine", .15]] /* (wild olive for the hawthorn, a temperate tree; the pine a pinyon: India 2026-10-23, biome forests) */, palette: { sat: .6, val: .75 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
 
@@ -13066,7 +13292,7 @@ const EYRIE = {
 // ferny glades where the roe browse at dusk; the roe deer its creature. Its island lies to the north-west (config/kinds.json).
 const DELL = {
   slot: 10, id: "mossy-dell", name: "Mossy dell", creature: "roe", by: "recipe", leaf: .27, floor: ["moss", .27, .45, .36],
-  text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and oak", set: "an old ring in a glade, where the roe gather at dusk" },
+  text: { floor: "deep moss and leaf litter", small: "ferns and foxgloves", big: "rowan, birch and yew", set: "an old ring in a glade, where the roe gather at dusk" },
   small: [["fern", {}], ["grass", { h: 1.1 }]],
   big: [["tree", { type: "rowan", variant: "mossy", scale: 1.05 }], ["tree", { type: "birch", minor: true, scale: 1 }]],
   pathKinds: ["animal", "roots"],
@@ -13077,7 +13303,7 @@ const DELL = {
     terrain: ["hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .15, lake: .15, modern: .1 },
     feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks.",
   },
-  flora: { species: [["rowan", .4], ["birch", .35], ["oak", .25]], palette: { sat: .95, val: .95 } },
+  flora: { species: [["rowan", .4], ["birch", .35], ["yew", .25]] /* (yew for the lowland oak: India 2026-10-23, biome forests) */, palette: { sat: .95, val: .95 } },
   settings: { treeDensity: .6, groundCover: { density: .85, kinds: ["moss", "blades"] } },
 };
 
@@ -13099,7 +13325,7 @@ const MANGROVE_POOLS = {
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
   },
-  flora: { species: [["mangrove", .65], ["willow", .2], ["alder", .15]], palette: { sat: .85, val: .8 } },
+  flora: { species: [["mangrove", .65], ["willow", .2], ["strangler", .15]] /* (strangler fig for the alder: India 2026-10-23, biome forests) */, palette: { sat: .85, val: .8 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };
 
@@ -13121,7 +13347,7 @@ const MUDFLAT = {
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
   },
-  flora: { species: [["mangrove", .7], ["alder", .2], ["aspen", .1]], palette: { sat: .7, val: .85 } },
+  flora: { species: [["mangrove", .7], ["datePalm", .2], ["willow", .1]] /* (for the alder and the boreal aspen: India 2026-10-23, biome forests) */, palette: { sat: .7, val: .85 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
 
@@ -13175,7 +13401,7 @@ const MANGROVE = {
 // plains, it is close and thorny: you come on a rhino before you see it.
 const BUSHVELD = {
   slot: 15, id: "bushveld", name: "Bushveld", creature: "rhino", by: "recipe", leaf: .22, floor: ["sand", .05, .5, .45],
-  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, thorny hawthorn", set: "a ring of old boma posts round a cold hearth" },
+  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
   wall: [["bush", {}]], small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
   big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
   ponds: true, pathKinds: ["track"],
@@ -13186,7 +13412,7 @@ const BUSHVELD = {
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .15, rocks: .45, freak: .1, lake: .2, modern: .1 },
     feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight.",
   },
-  flora: { species: [["flat", .55], ["acacia", .3], ["hawthorn", .15]], palette: { sat: .75, val: .85 } },
+  flora: { species: [["flat", .55], ["acacia", .3], ["baobab", .15]] /* (baobab for the hawthorn: India 2026-10-23, biome forests) */, palette: { sat: .75, val: .85 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "grass"] } },
 };
 
@@ -13220,7 +13446,7 @@ const PACKICE = {
 // and scrub wash.
 const CACTUS_FLATS = {
   slot: 17, id: "cactus-flats", name: "Cactus flats", creature: "rattlesnake", by: "recipe", leaf: .22, floor: ["sand", .09, .3, .66],
-  text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros and Joshua trees", set: "a heap of pale stones" },
+  text: { floor: "pale gravelly sand", wall: "low rocky banks", small: "dry tussocks and prickly pear", big: "saguaros, Joshua trees and palo verde", set: "a heap of pale stones" },
   wall: [["rockwall", {}]], small: [["grass", { h: .9, leafHue: .14, leafSat: .3 }], ["bush", { small: true }]],
   big: [["tree", { type: "saguaro", scale: 1.1 }], ["tree", { type: "joshua", minor: true, scale: 1 }], ["boulder", { sparse: .15 }]],
   pathKinds: ["track"],
@@ -13231,7 +13457,7 @@ const CACTUS_FLATS = {
     terrain: ["rocky", "mounds"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: 0, modern: .1 },
     feel: "Pale flats of gravelly sand, saguaros standing alone with their arms raised, Joshua trees and prickly pear between; open, dry and rattling.",
   },
-  flora: { species: [["saguaro", .5], ["joshua", .3], ["pricklyPear", .2]], palette: { sat: .7, val: .85 } },
+  flora: { species: [["saguaro", .4], ["joshua", .2], ["paloVerde", .25], ["pricklyPear", .15]] /* (palo verde, so it reads as scrub wood, not desert: Ed, "it shouldn't feel desolate"; India 2026-10-23) */, palette: { sat: .7, val: .85 } },
   settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["pebbles", "blades"] } },
 };
 
@@ -13386,7 +13612,7 @@ const DRAGON_SCRUB = {
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .15, rocks: .7, freak: .05, lake: 0, modern: .1 },
     feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock.",
   },
-  flora: { species: [["datePalm", .5], ["acacia", .35], ["hawthorn", .15]], palette: { sat: .75, val: .95 } },
+  flora: { species: [["datePalm", .5], ["acacia", .35], ["cycad", .15]] /* (cycad for the hawthorn: the volcanic east, India 2026-10-23, biome forests) */, palette: { sat: .75, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .7, kinds: ["tallgrass", "blades"] } },
 };
 
@@ -13420,9 +13646,9 @@ const SNOWFIELD = {
 // shrubs and maybe olive trees"), a heap of glacier rubble with a slab on top; the ibex its creature.
 const CRAGS = {
   slot: 26, id: "crags", name: "Crags", creature: "ibex", by: "recipe", leaf: .3, floor: ["lichen", .3, .22, .44], snow: .45,
-  text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and wild olives", set: "a heap of glacier rubble with a slab on top" },
+  text: { floor: "lichen, scree and glacier ice", wall: "rock walls", small: "scree, broom and juniper scrub", big: "rock spires, wind-bent larch and juniper krummholz", set: "a heap of glacier rubble with a slab on top" },
   wall: [["rockwall", {}]], small: [["stones", {}], ["shrub", { flower: [250, 210, 50], spiky: true }], ["shrub", { spiky: true }]],
-  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: .75 }], ["tree", { type: "olive", minor: true, scale: .95, gnarl: 1 }]],
+  big: [["spire", { sparse: .14 }], ["spire", { sparse: .08, twin: true }], ["boulder", { big: true }], ["tree", { type: "larch", variant: "windbent", scale: .75 }], ["tree", { type: "juniper", minor: true, scale: .95, gnarl: 1 }]],
   steep: true, pathKinds: ["footpath"],
   setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [.74, .14, .62], dark: [.72, .16, .34], lichen: [.74, .08, .84] } }],
   layout: {
@@ -13431,7 +13657,7 @@ const CRAGS = {
     terrain: ["rocky", "ridges"], decor: { rate: .3, ruins: .05, rocks: .75, freak: .05, lake: .1, modern: .05 },
     feel: "High, bare and bright: lichened rock and fingers of glacier ice, rock spires standing over the scree, larch bent by the wind and old wild olives in the lee of the rocks, broom and juniper scrub and heather among the stones.",
   },
-  flora: { species: [["larch", .45], ["olive", .35], ["pine", .2]], palette: { sat: .7, val: .85 } },
+  flora: { species: [["larch", .45], ["juniper", .35], ["pine", .2]] /* (juniper for the olive: the olive is a badlands tree, India 2026-10-23, biome forests) */, palette: { sat: .7, val: .85 } },
   settings: { treeDensity: .3, groundCover: { density: .5, kinds: ["heather", "moss", "blades"] } },
 };
 
@@ -13547,6 +13773,51 @@ const DROWNED_WOOD = {
   },
   flora: { species: [["larch", .6], ["willow", .25], ["alder", .15]], palette: { sat: .6, val: .7 } },
   settings: { treeDensity: .5, groundCover: { density: .5, kinds: ["reeds", "blades"] } },
+};
+
+
+// ---- inlined from art/areas/desert-ruin/recipe.js ----
+// The desert ruin (Ed, 2026-10-23: the hot south's fantastic kind, unknown-19's slot, ring 5; "a desert ruin"): a city the sand took,
+// its streets still laid out in lines under the dunes, broken columns and fallen drums along them, date palms, acacias and old olives
+// growing in its squares; the sphinx its creature. Ed's columns as for the 30.
+const DESERT_RUIN = {
+  slot: 32, id: "desert-ruin", name: "Desert ruin", creature: "sphinx", by: "recipe", leaf: .2, floor: ["sand", .1, .36, .7],
+  text: { floor: "drifted sand over old paving", wall: "tumbled walls of sandstone blocks", small: "dry tussocks and fallen stones", big: "broken columns, old date palms and acacias in the old streets", set: "a fallen colossus's head half buried in the sand" },
+  wall: [["stones", {}], ["rockwall", {}]], small: [["grass", { h: .7, leafHue: .13, leafSat: .3 }], ["stones", {}]],
+  big: [["tree", { type: "datePalm", variant: "ancient", scale: 1.05 }], ["tree", { type: "acacia", minor: true, scale: .9 }], ["pillar", { sparse: .22 }], ["pillar", { sparse: .14, broken: true, lean: .12 }], ["boulder", { sparse: .1 }]],
+  pathKinds: ["track", "stairs"],
+  setPiece: ["heap", "a heap of fallen sandstone blocks", 1.2, { of: "rubble", top: "post", moss: 0, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
+  layout: {
+    pattern: "grid", along: .4, density: .22, clump: .5, glades: { count: 3, size: [16, 26] },
+    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .25, lean: { dir: .4, amount: .1 },
+    terrain: ["mounds", "ridges"], decor: { rate: .45, ruins: .75, rocks: .2, freak: 0, lake: .05, modern: 0 },
+    feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched.",
+  },
+  flora: { species: [["datePalm", .5], ["acacia", .3], ["olive", .2]], palette: { sat: .75, val: .92 } },
+  settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["pebbles", "blades"] } },
+};
+
+
+// ---- inlined from art/areas/step-pyramid/recipe.js ----
+// The step pyramid (Ed, 2026-10-23: the jungle west's fantastic kind, unknown-27's slot, ring 5; "its own stepped-pyramid clearing,
+// not the elephant's temple-jungle"): rainforest of kapoks and strangler figs opening into round clearings of mossed paving, a stepped
+// pyramid in one of them, its stair between feathered-serpent balustrades; bright birds' feathers caught in the ferns; the feathered
+// serpent its creature. Ed's columns as for the 30.
+const STEP_PYRAMID = {
+  slot: 33, id: "step-pyramid", name: "Step pyramid", creature: "featheredserpent", by: "recipe", leaf: .31, floor: ["moss", .3, .45, .3],
+  text: { floor: "moss over old paving stones", wall: "carved stone walls under creepers", small: "ferns, bromeliads and fallen carved stones", big: "kapoks and strangler figs, buttressed and hung with lianas", set: "a stepped pyramid, its stair between feathered serpents" },
+  wall: [["stones", {}], ["fern", {}]], small: [["fern", {}], ["stones", {}], ["shrub", {}]],
+  big: [["tree", { type: "kapok", scale: 1.35 }], ["tree", { type: "strangler", minor: true, scale: 1.2 }], ["pillar", { sparse: .08, broken: true, lean: .1 }]],
+  ponds: true, wet: true, steep: true, pathKinds: ["stairs", "footpath"],
+  setPiece: ["heap", "a heap of carved stones under the figs", 1.2, { of: "rubble", top: "post", moss: .6, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13; the pyramid is its scene, art/scenes.js step-pyramid)
+  layout: {
+    pattern: "glades", density: .6, clump: .55, glades: { count: 3, size: [18, 30] },
+    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .75, lean: { dir: 0, amount: 0 },
+    terrain: ["mounds", "pools"], decor: { rate: .3, ruins: .6, rocks: .15, freak: .15, lake: .1, modern: 0 },
+    feel: "Tall rainforest, kapoks and figs on great buttresses, broken by round clearings of mossy paving; a stepped pyramid in one, green-gold light, bright feathers in the ferns.",
+  },
+  flora: { species: [["kapok", .45], ["strangler", .3], ["bamboo", .15], ["vinewood", .1]], palette: { sat: 1, val: .9 } },
+  settings: { treeDensity: .55, groundCover: { density: .75, kinds: ["fern", "moss"] } },
 };
 
 
@@ -13670,7 +13941,7 @@ const AREA_FLORA_WETLAND = { species: [["willow", .45], ["alder", .3], ["aspen",
 const AREA_FLORA_WISPY_FOREST = { species: [["lime", .4], ["birch", .25], ["aspen", .2], ["whitebeam", .15]], palette: { sat: .85, val: 1.12 } };
 
 
-const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD];
+const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
 const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
@@ -13683,60 +13954,60 @@ const AREA_FOLDER_KINDS = [
   {"kind":"snail","slot":7,"phase":0,"bearing":215,"dir":"SW","biome":"temperate"},
   {"kind":"dormouse","slot":8,"phase":0,"bearing":310,"dir":"NW","biome":"temperate"},
   {"kind":"badger","slot":9,"phase":0,"bearing":130,"dir":"SE","biome":"temperate"},
-  {"kind":"beetle","slot":10,"phase":1,"bearing":70,"dir":"ENE","biome":"temperate"},
-  {"kind":"boar","slot":11,"phase":1,"bearing":300,"dir":"WNW","biome":"temperate"},
-  {"kind":"otter","slot":12,"phase":1,"bearing":270,"dir":"W","biome":"temperate"},
-  {"kind":"heron","slot":13,"phase":1,"bearing":240,"dir":"WSW","biome":"temperate"},
-  {"kind":"newt","slot":14,"phase":1,"bearing":225,"dir":"SW","biome":"temperate"},
-  {"kind":"woodlouse","slot":15,"phase":1,"bearing":110,"dir":"ESE","biome":"temperate"},
-  {"kind":"moth","slot":16,"phase":1,"bearing":160,"dir":"SSE","biome":"temperate"},
-  {"kind":"bat","slot":17,"phase":1,"bearing":195,"dir":"SSW","biome":"temperate"},
+  {"kind":"beetle","slot":10,"phase":3,"bearing":78.75,"dir":"E","biome":"volcanic"},
+  {"kind":"boar","slot":11,"phase":1,"bearing":315,"dir":"NW","biome":"temperate"},
+  {"kind":"otter","slot":12,"phase":2,"bearing":236.25,"dir":"WSW","biome":"mangrove swamp"},
+  {"kind":"heron","slot":13,"phase":2,"bearing":213.75,"dir":"SW","biome":"mangrove swamp"},
+  {"kind":"newt","slot":14,"phase":1,"bearing":195,"dir":"SSW","biome":"temperate"},
+  {"kind":"woodlouse","slot":15,"phase":3,"bearing":101.25,"dir":"ESE","biome":"volcanic"},
+  {"kind":"moth","slot":16,"phase":1,"bearing":135,"dir":"SE","biome":"temperate"},
+  {"kind":"bat","slot":17,"phase":2,"bearing":281.25,"dir":"WNW","biome":"jungle"},
   {"kind":"toad","slot":18,"phase":1,"bearing":15,"dir":"NNE","biome":"temperate"},
-  {"kind":"raven","slot":19,"phase":1,"bearing":35,"dir":"NE","biome":"temperate"},
-  {"kind":"elk","slot":20,"phase":2,"bearing":0,"dir":"N","biome":"temperate"},
-  {"kind":"wolf","slot":21,"phase":2,"bearing":25,"dir":"NNE","biome":"temperate"},
-  {"kind":"lynx","slot":22,"phase":2,"bearing":50,"dir":"NE","biome":"temperate"},
-  {"kind":"ram","slot":23,"phase":2,"bearing":75,"dir":"ENE","biome":"temperate"},
-  {"kind":"salamander","slot":24,"phase":2,"bearing":100,"dir":"E","biome":"temperate"},
-  {"kind":"spider","slot":25,"phase":2,"bearing":135,"dir":"SE","biome":"temperate"},
-  {"kind":"snake","slot":26,"phase":2,"bearing":170,"dir":"S","biome":"temperate"},
-  {"kind":"cat","slot":27,"phase":2,"bearing":205,"dir":"SSW","biome":"temperate"},
-  {"kind":"stag","slot":28,"phase":2,"bearing":265,"dir":"W","biome":"temperate"},
-  {"kind":"beaver","slot":29,"phase":2,"bearing":290,"dir":"WNW","biome":"temperate"},
-  {"kind":"bear","slot":30,"phase":2,"bearing":320,"dir":"NW","biome":"temperate"},
-  {"kind":"owl","slot":31,"phase":2,"bearing":335,"dir":"NNW","biome":"temperate"},
-  {"kind":"arcticfox","slot":32,"phase":3,"bearing":12,"dir":"NNE","biome":"cold"},
-  {"kind":"ibex","slot":33,"phase":3,"bearing":38,"dir":"NE","biome":"mountains and glaciers"},
-  {"kind":"redpanda","slot":34,"phase":3,"bearing":63,"dir":"ENE","biome":"mountains and glaciers"},
-  {"kind":"komodo","slot":35,"phase":3,"bearing":89,"dir":"E","biome":"rocky"},
-  {"kind":"meerkat","slot":36,"phase":3,"bearing":115,"dir":"ESE","biome":"badlands"},
-  {"kind":"armadillo","slot":37,"phase":3,"bearing":141,"dir":"SE","biome":"badlands"},
-  {"kind":"fennec","slot":38,"phase":3,"bearing":166,"dir":"SSE","biome":"hot"},
-  {"kind":"lion","slot":39,"phase":3,"bearing":192,"dir":"SSW","biome":"hot"},
-  {"kind":"crocodile","slot":40,"phase":3,"bearing":218,"dir":"SW","biome":"mangrove swamp"},
-  {"kind":"dragonfly","slot":41,"phase":3,"bearing":243,"dir":"WSW","biome":"mangrove swamp"},
-  {"kind":"tiger","slot":42,"phase":3,"bearing":269,"dir":"W","biome":"jungle"},
-  {"kind":"flyingsquirrel","slot":43,"phase":3,"bearing":295,"dir":"WNW","biome":"cold rainforest"},
-  {"kind":"roe","slot":44,"phase":3,"bearing":321,"dir":"NW","biome":"cold rainforest"},
-  {"kind":"penguin","slot":45,"phase":3,"bearing":346,"dir":"NNW","biome":"cold"},
-  {"kind":"frosttroll","slot":46,"phase":4,"bearing":5,"dir":"N","biome":"cold"},
-  {"kind":"snowleopard","slot":47,"phase":4,"bearing":25,"dir":"NNE","biome":"mountains and glaciers"},
-  {"kind":"frostwyrm","slot":48,"phase":4,"bearing":45,"dir":"NE","biome":"mountains and glaciers"},
-  {"kind":"griffin","slot":49,"phase":4,"bearing":65,"dir":"ENE","biome":"mountains and glaciers"},
-  {"kind":"unknown-19","slot":50,"phase":4,"bearing":85,"dir":"E","biome":"rocky","placeholder":true},
-  {"kind":"stegosaurus","slot":51,"phase":4,"bearing":105,"dir":"ESE","biome":"volcanic"},
-  {"kind":"rattlesnake","slot":52,"phase":4,"bearing":125,"dir":"SE","biome":"badlands"},
-  {"kind":"scorpion","slot":53,"phase":4,"bearing":145,"dir":"SE","biome":"badlands"},
-  {"kind":"rhino","slot":54,"phase":4,"bearing":165,"dir":"SSE","biome":"hot"},
-  {"kind":"cheetah","slot":55,"phase":4,"bearing":185,"dir":"S","biome":"hot"},
-  {"kind":"hydra","slot":56,"phase":4,"bearing":205,"dir":"SSW","biome":"mangrove swamp"},
-  {"kind":"crab","slot":57,"phase":4,"bearing":225,"dir":"SW","biome":"mangrove swamp"},
-  {"kind":"unknown-27","slot":58,"phase":4,"bearing":245,"dir":"WSW","biome":"mangrove swamp","placeholder":true},
-  {"kind":"elephant","slot":59,"phase":4,"bearing":265,"dir":"W","biome":"jungle"},
-  {"kind":"jaguar","slot":60,"phase":4,"bearing":285,"dir":"WNW","biome":"jungle"},
-  {"kind":"raccoon","slot":61,"phase":4,"bearing":305,"dir":"NW","biome":"cold rainforest"},
-  {"kind":"unicorn","slot":62,"phase":4,"bearing":325,"dir":"NW","biome":"cold rainforest"},
-  {"kind":"polarbear","slot":63,"phase":4,"bearing":345,"dir":"NNW","biome":"cold"},
+  {"kind":"raven","slot":19,"phase":2,"bearing":56.25,"dir":"ENE","biome":"mountains and glaciers"},
+  {"kind":"elk","slot":20,"phase":2,"bearing":348.75,"dir":"N","biome":"cold"},
+  {"kind":"wolf","slot":21,"phase":2,"bearing":11.25,"dir":"NNE","biome":"cold"},
+  {"kind":"lynx","slot":22,"phase":2,"bearing":33.75,"dir":"NE","biome":"mountains and glaciers"},
+  {"kind":"ram","slot":23,"phase":2,"bearing":78.75,"dir":"E","biome":"volcanic"},
+  {"kind":"salamander","slot":24,"phase":2,"bearing":101.25,"dir":"ESE","biome":"volcanic"},
+  {"kind":"spider","slot":25,"phase":2,"bearing":123.75,"dir":"SE","biome":"badlands"},
+  {"kind":"snake","slot":26,"phase":2,"bearing":258.75,"dir":"W","biome":"jungle"},
+  {"kind":"cat","slot":27,"phase":2,"bearing":168.75,"dir":"S","biome":"hot"},
+  {"kind":"stag","slot":28,"phase":1,"bearing":255,"dir":"WSW","biome":"temperate"},
+  {"kind":"beaver","slot":29,"phase":1,"bearing":75,"dir":"ENE","biome":"temperate"},
+  {"kind":"bear","slot":30,"phase":4,"bearing":303.75,"dir":"NW","biome":"cold rainforest"},
+  {"kind":"owl","slot":31,"phase":2,"bearing":326.25,"dir":"NNW","biome":"cold rainforest"},
+  {"kind":"arcticfox","slot":32,"phase":3,"bearing":348.75,"dir":"N","biome":"cold"},
+  {"kind":"ibex","slot":33,"phase":3,"bearing":33.75,"dir":"NE","biome":"mountains and glaciers"},
+  {"kind":"redpanda","slot":34,"phase":3,"bearing":56.25,"dir":"ENE","biome":"mountains and glaciers"},
+  {"kind":"komodo","slot":35,"phase":4,"bearing":78.75,"dir":"E","biome":"volcanic"},
+  {"kind":"meerkat","slot":36,"phase":2,"bearing":146.25,"dir":"SSE","biome":"badlands"},
+  {"kind":"armadillo","slot":37,"phase":3,"bearing":123.75,"dir":"SE","biome":"badlands"},
+  {"kind":"fennec","slot":38,"phase":2,"bearing":191.25,"dir":"SSW","biome":"hot"},
+  {"kind":"lion","slot":39,"phase":3,"bearing":168.75,"dir":"S","biome":"hot"},
+  {"kind":"crocodile","slot":40,"phase":3,"bearing":213.75,"dir":"SW","biome":"mangrove swamp"},
+  {"kind":"dragonfly","slot":41,"phase":3,"bearing":236.25,"dir":"WSW","biome":"mangrove swamp"},
+  {"kind":"tiger","slot":42,"phase":3,"bearing":258.75,"dir":"W","biome":"jungle"},
+  {"kind":"flyingsquirrel","slot":43,"phase":3,"bearing":326.25,"dir":"NNW","biome":"cold rainforest"},
+  {"kind":"roe","slot":44,"phase":3,"bearing":303.75,"dir":"NW","biome":"cold rainforest"},
+  {"kind":"penguin","slot":45,"phase":3,"bearing":11.25,"dir":"NNE","biome":"cold"},
+  {"kind":"frosttroll","slot":46,"phase":4,"bearing":11.25,"dir":"NNE","biome":"cold"},
+  {"kind":"snowleopard","slot":47,"phase":4,"bearing":33.75,"dir":"NE","biome":"mountains and glaciers"},
+  {"kind":"frostwyrm","slot":48,"phase":4,"bearing":56.25,"dir":"ENE","biome":"mountains and glaciers"},
+  {"kind":"griffin","slot":49,"phase":4,"bearing":146.25,"dir":"SSE","biome":"badlands"},
+  {"kind":"sphinx","slot":50,"phase":4,"bearing":191.25,"dir":"SSW","biome":"hot"},
+  {"kind":"stegosaurus","slot":51,"phase":4,"bearing":101.25,"dir":"ESE","biome":"volcanic"},
+  {"kind":"rattlesnake","slot":52,"phase":3,"bearing":146.25,"dir":"SSE","biome":"badlands"},
+  {"kind":"scorpion","slot":53,"phase":4,"bearing":123.75,"dir":"SE","biome":"badlands"},
+  {"kind":"rhino","slot":54,"phase":4,"bearing":168.75,"dir":"S","biome":"hot"},
+  {"kind":"cheetah","slot":55,"phase":3,"bearing":191.25,"dir":"SSW","biome":"hot"},
+  {"kind":"hydra","slot":56,"phase":4,"bearing":236.25,"dir":"WSW","biome":"mangrove swamp"},
+  {"kind":"crab","slot":57,"phase":4,"bearing":213.75,"dir":"SW","biome":"mangrove swamp"},
+  {"kind":"featheredserpent","slot":58,"phase":4,"bearing":281.25,"dir":"WNW","biome":"jungle"},
+  {"kind":"elephant","slot":59,"phase":4,"bearing":258.75,"dir":"W","biome":"jungle"},
+  {"kind":"jaguar","slot":60,"phase":3,"bearing":281.25,"dir":"WNW","biome":"jungle"},
+  {"kind":"raccoon","slot":61,"phase":2,"bearing":303.75,"dir":"NW","biome":"cold rainforest"},
+  {"kind":"unicorn","slot":62,"phase":4,"bearing":326.25,"dir":"NNW","biome":"cold rainforest"},
+  {"kind":"polarbear","slot":63,"phase":4,"bearing":348.75,"dir":"N","biome":"cold"},
 ];
 
 
@@ -13922,6 +14193,103 @@ function recipeProblems(R) {
   return out;
 }
 
+
+
+// ---- inlined from art/flora/biomes.js ----
+// Biome looks for the forests (Ed, 2026-10-23: "Design all 8. Consider temperate alongside; they should work as a set." "They're
+// still trees in a forest, so they may be scrubby, but it shouldn't feel desolate."; then "No need to mock"): each biome a set of
+// cheap changes laid over any species at bake time, never new art: its leaves, bark and moss tinted in RGB after
+// treeColours (art/trees.js: its nightGreen squeezes the green hues, so a hue shift there would be lost), the tree builders' own
+// knobs nudged (lean, gnarl, scale, hang), snow on the crown (snowCrown), and, for the blob generator's species, crown extras
+// (vines, dots). An island blends its two neighbouring biomes by bearing (src/rules/lakeLooks.ts islandBlend, biomeKey):
+// `biomeLook(key)`. Its area types' art jobs carry the key (render/artBuild.ts ArtJob, its cache key too), so their trees (art/areas.js
+// areaTreeVariants), small trees (artBuild areaTree), bushes and props (areas.js prop) bake in its look; the leaf jitter keeps the
+// biome's share (render/view/frameUniforms.ts). Nothing here costs a frame: it all runs once, as an area type's art is baked. A
+// temperate island has no key: its art exactly as before. `?biome=<name or key>` puts every area in one look (a tryout).
+
+// leaf: [r, g, b, k] mix every leaf tone toward that colour by k; sat and val after it. lit: the lit tone (LEAF2) mixed toward its
+// own colour (new growth, sun-bleaching). bark: the trunk's three tones toward a colour. moss: hanging moss and lichen's colour.
+// knobs: added to (lean, gnarl, hang, snow) or multiplied into (scale) the area's tree recipe. crown: blob-generator extras.
+// jitter: the share of the game's per-tree leaf jitter (render/sprites.ts) kept, 0 none (snow and lichen stay white).
+const BIOME_LOOKS = {
+  temperate: { name: "Temperate", feel: "as the game is: blue-green broadleaf and pine" },
+  cold: { name: "Cold (N)", feel: "dark blue-green conifers under snow, pale bark, frost on the moss",
+    leaf: [48, 104, 96, .5], sat: .6, val: 1.25, bark: [168, 168, 176, .35], moss: [205, 215, 226], snow: .8, jitter: 0, knobs: { gnarl: .1 } },
+  "mountains and glaciers": { name: "Mountains & glaciers (NE)", feel: "grey-green, wind-bent, hung with pale lichen beards, a dusting of snow",
+    leaf: [108, 136, 104, .55], sat: .55, val: 1.15, bark: [118, 110, 104, .3], moss: [180, 196, 168], snow: .28, jitter: .3, knobs: { lean: .25, gnarl: .3, hang: .5, scale: .9 } },
+  volcanic: { name: "Volcanic (E)", feel: "fertile ash: lush deep emerald on charred black trunks, red new growth catching the lava's glow",
+    leaf: [10, 120, 74, .5], sat: 1.35, val: 1, lit: [226, 88, 54, .55], bark: [34, 28, 30, .65], moss: [96, 64, 52], jitter: .5, knobs: { gnarl: .25 } },
+  badlands: { name: "Badlands (SE)", feel: "dusty sage and olive scrub, ochre bark, low and twisted but full",
+    leaf: [172, 150, 60, .65], sat: .85, val: 1.12, lit: [222, 172, 88, .45], bark: [180, 98, 50, .6], moss: [150, 120, 80], jitter: .6, knobs: { lean: .2, gnarl: .35, scale: .82 } },
+  hot: { name: "Hot (S)", feel: "sunlit yellow-olive savanna green, pale sandy bark",
+    leaf: [176, 176, 48, .62], sat: 1.05, val: 1.15, lit: [236, 214, 120, .35], bark: [192, 162, 122, .36], moss: [170, 150, 90], jitter: .8, knobs: {} },
+  "mangrove swamp": { name: "Mangrove swamp (SW)", feel: "dark glossy olive-teal over wet black-brown roots, grey Spanish moss",
+    leaf: [96, 118, 44, .55], sat: .95, val: 1.1, bark: [62, 50, 40, .42], moss: [168, 176, 146], jitter: .6, knobs: { hang: .6 }, trunk: { stilts: { n: [4, 6], at: [.12, .3], reach: [10, 22], w: .35 } } },
+  jungle: { name: "Jungle (W)", feel: "vivid saturated emerald, vines hung with flowers, dark wet bark",
+    leaf: [20, 150, 64, .55], sat: 1.45, val: 1.15, bark: [72, 56, 40, .2], moss: [80, 130, 70], flower: [236, 84, 150], jitter: .7, knobs: { hang: .25 },
+    crown: { vines: { share: .16, len: [10, 26], budEvery: 6, bud: "FLOWER" }, dots: { share: .04, mat: "FLOWER", size: 2 } } },
+  "cold rainforest": { name: "Cold rainforest (NW)", feel: "very deep blue-green, every bough furred and hung with bright moss",
+    leaf: [20, 96, 80, .5], sat: 1.15, val: .95, bark: [80, 100, 58, .5], moss: [160, 214, 100], jitter: .4, knobs: { hang: .9, gnarl: .15 } },
+};
+BIOME_LOOKS.rocky = BIOME_LOOKS.volcanic; // (the east's old name: lakeLooks.ts COMPASS)
+
+const NUM = ["sat", "val", "snow", "jitter"], KNOB_ADD = ["lean", "gnarl", "hang"];
+const mixArr = (a, b, w) => a && b ? a.map((v, i) => v * w + b[i] * (1 - w)) : a ? a.map((v, i) => i === 3 ? v * w : v) : b ? b.map((v, i) => i === 3 ? v * (1 - w) : v) : undefined;
+/** A biome's look, or two blended (`{ a, b, w }`, a's share w): every number mixed by share, crown extras kept at their share. */
+function biomeLook(blend) {
+  if (typeof blend === "string") { const [a, b = a, w = "1"] = blend.split("|"); blend = { a, b, w: +w }; } // (a name, or a blend's key: "a|b|w", rules/lakeLooks.ts biomeKey)
+  if (!blend || (blend.a === "temperate" && blend.b === "temperate")) return null;
+  const A = BIOME_LOOKS[blend.a] || BIOME_LOOKS.temperate, B = BIOME_LOOKS[blend.b] || BIOME_LOOKS.temperate, w = blend.w ?? 1, out = { name: blend.a === blend.b ? A.name : `${A.name} ${Math.round(w * 100)}% · ${B.name}` };
+  for (const k of NUM) out[k] = (A[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * w + (B[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * (1 - w);
+  for (const k of ["leaf", "lit", "bark"]) out[k] = mixArr(A[k], B[k], w);
+  for (const k of ["moss", "flower"]) out[k] = A[k] && B[k] ? A[k].map((v, i) => v * w + B[k][i] * (1 - w)) : (w >= .5 ? A[k] : B[k]) || A[k] || B[k];
+  const ka = A.knobs || {}, kb = B.knobs || {};
+  out.knobs = { scale: (ka.scale ?? 1) * w + (kb.scale ?? 1) * (1 - w) };
+  for (const k of KNOB_ADD) out.knobs[k] = (ka[k] ?? 0) * w + (kb[k] ?? 0) * (1 - w);
+  const crown = {}; // crown extras at their share of the blend
+  for (const [L, s] of [[A, w], [B, 1 - w]]) for (const [k, v] of Object.entries(L.crown || {})) if (s > 0) crown[k] = { ...v, share: (crown[k]?.share ?? 0) + v.share * s };
+  if (Object.keys(crown).length) out.crown = crown;
+  const trunk = w >= .5 ? A.trunk : B.trunk; if (trunk) out.trunk = trunk;
+  return out;
+}
+
+/** The share of the game's per-tree leaf jitter a biome (a name or a blend's key) keeps: 1 temperate, 0 the snow's (its
+ *  autumn and hue turns would tint snow and lichen; render/view/frameUniforms.ts). Remembered by key. */
+const JITTER = new Map();
+function biomeJitter(key) {
+  if (!key) return 1;
+  let j = JITTER.get(key); if (j === undefined) { j = biomeLook(key)?.jitter ?? 1; JITTER.set(key, j); }
+  return j;
+}
+
+/** A tree style (an area's `ts`) with a biome's knobs laid over it. */
+function biomeStyle(ts, look) {
+  if (!look) return ts;
+  const k = look.knobs || {}, o = { ...ts };
+  if (k.lean) o.treeLean = (o.treeLean ?? 0) + k.lean;
+  if (k.gnarl) o.gnarl = Math.min(1, (o.gnarl ?? 0) + k.gnarl);
+  if (k.hang) o.treeHang = Math.min(1, (o.treeHang ?? 0) + k.hang);
+  if (look.crown) o.biomeCrown = look.crown;
+  if (look.trunk) o.biomeTrunk = look.trunk;
+  return o;
+}
+/** The size a biome grows its trees to. */
+const biomeScale = look => look?.knobs?.scale ?? 1;
+/** The snow a biome lays on a crown, over the area's own. */
+const biomeSnow = (look, own = 0) => Math.max(own, look?.snow ?? 0);
+
+const mix = (c, m, k) => [0, 1, 2].map(i => Math.round(c[i] * (1 - k) + m[i] * k));
+function satVal(c, s, v) { const l = .3 * c[0] + .59 * c[1] + .11 * c[2]; return c.map(x => Math.max(0, Math.min(255, Math.round((l + (x - l) * s) * v)))); }
+/** A tree's colour table (treeColours' and the area's) tinted by a biome, in place. M: the material numbers. flower: false keeps
+ *  the table's own flowers and berries (a prop's: a flowerbed, a hedge's berries). */
+function biomeColours(c, look, M, { flower = true } = {}) {
+  if (!look) return c;
+  for (const m of [M.LEAF, M.LEAF2, M.LEAF3]) if (c[m]) { let x = look.leaf ? mix(c[m], look.leaf, look.leaf[3]) : c[m]; if (m === M.LEAF2 && look.lit) x = mix(x, look.lit, look.lit[3]); c[m] = satVal(x, look.sat ?? 1, look.val ?? 1); }
+  if (look.bark) for (const m of [M.TRUNK, M.BARKD, M.BARKL]) if (c[m]) c[m] = mix(c[m], look.bark, look.bark[3]);
+  if (look.moss && c[M.MOSS]) c[M.MOSS] = look.moss.slice(0, 3);
+  if (flower && look.flower) c[M.FLOWER] = look.flower.slice(0, 3);
+  return c;
+}
 
 
 const RECIPE_LAYOUTS = {};
@@ -14172,8 +14540,14 @@ function rock(sp, c, rx, ry, st, r, moss) { // a lumpy stone, lit above, mossy o
   sp.mark([add(c, [-rx * .6, -ry * .8]), add(c, [rx * .1, -ry * 1.1]), add(c, [rx * .3, -ry * .5]), add(c, [-rx * .3, -ry * .3])], M.BELLY, [M.ACCENT]);
   if (moss) sp.mark(tufts([add(c, [-rx * 1.1, -ry * .55]), add(c, [0, -ry * 1.3]), add(c, [rx * 1.1, -ry * .5]), add(c, [rx * .6, -ry * .2]), add(c, [-rx * .6, -ry * .2])], 0, 3, 3, ry * .15, 1), M.LEAF, [M.ACCENT, M.BELLY, M.BODY2]);
 }
-// Each returns { sp, colours }; s scales to the pixel size.
+// Each returns { sp, colours }; s scales to the pixel size. Under a biome (st.biome: art/flora/biomes.js) its leaves, wood and moss
+// take the biome's look, its own flowers and berries kept; a tree prop grows in the biome's way too (propRaw's tree).
 function prop(kind, o, def, st, r, s) {
+  const p = propRaw(kind, o, def, st, r, s), look = st.biome && kind !== "tree" ? biomeLook(st.biome) : null;
+  if (look && p?.colours) p.colours = biomeColours({ ...p.colours }, look, M, { flower: false });
+  return p;
+}
+function propRaw(kind, o, def, st, r, s) {
   if (st.propGen && o.gen) return propPiece(o.gen[0], { ...o.gen[1], seed: o.gen[2] }, def, st); // ?props=gen: the prop generator's variant (art/props/)
   if (TALL_KINDS.includes(kind)) return tallPiece(kind, o, def, st, r); // the tall pieces (tall.js): 3D, at the witch's scale
   const lh = o.leafHue ?? def.leaf, ls = st.sat * (o.leafSat ?? 1); // (a prop's own leaf hue and saturation: the moor's dry violet-brown grass)
@@ -14183,10 +14557,10 @@ function prop(kind, o, def, st, r, s) {
   if (kind === "tree") {
     const f = treeSpecies(o.type).fn;
     const ts = { ...st, leafHue: def.leaf + (o.dark ? .05 : 0), gnarl: o.gnarl ?? st.gnarl, treeBare: o.bare, treeTrunks: o.trunks, treeLean: o.lean, treeThick: o.thick, treeThin: o.thin, treeHollow: o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
-    const t = f(r, ts, st.treeSize * s * (o.scale || 1) * uni(r, .9, 1.1));
-    snowCrown(t.sp, o.snow ?? def.snow ?? 0, 1); // (a snowy area's snow on its crown)
+    const look = st.biome ? biomeLook(st.biome) : null, t = f(r, biomeStyle(ts, look), st.treeSize * s * (o.scale || 1) * biomeScale(look) * uni(r, .9, 1.1));
+    snowCrown(t.sp, biomeSnow(look, o.snow ?? def.snow ?? 0), 1); // (a snowy area's snow on its crown)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232]; biomeColours(c, look, M);
     return { sp: t.sp, colours: c };
   }
   if (kind === "shrub") { // a leafy bush, flowering or berried
@@ -14383,6 +14757,7 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
   const character = (({ type, minor, bare, dark, ...rest }) => rest)(mains[0] || {}), own = type => recipes.find(o => o.type === type);
   if (!recipes.length) return [];
   const seed = id.split("").reduce((a, c) => a * 31 + c.charCodeAt(0), 11) >>> 0, out = [], raw = [];
+  const look = st.biome ? biomeLook(st.biome) : null; // (the island's biome over the area's trees, art/flora/biomes.js: st.biome, from its art job's biome key)
   let n = 0;
   for (const cls of TREE_HEIGHT_CLASSES) for (let i = 0; i < cls.count; i++, n++) {
     const o = slots ? { ...character, ...own(slots[n].type), ...slots[n], minor: undefined } : minors.length && (n === 2 || n === 6) ? minors[(n === 6 ? 1 : 0) % minors.length] : mains[n % mains.length], /* a minor species: one sapling and one mature tree of the ten */ S = treeSpecies(o.type), f = S.fn, r = rng(seed * 7 + n * 131 + 3);
@@ -14396,10 +14771,11 @@ function areaTreeVariants(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaul
     const width = (sapling ? .78 : 1) * (willow ? 1 + Math.max(0, h - 1) * .55 : wide ? 1 + Math.max(0, h - 1) * .45 : narrow && big ? (o.bare ? .6 : .85) : big ? 1.06 : 1);
     const ts = { ...st, crownWidth: (st.crownWidth || 3) * width, leafHue: def.leaf + (o.dark ? .05 : 0), sat: st.sat * (pal?.sat ?? 1), leafVal: pal?.val ?? 1, /* the area's palette */ gnarl: Math.min(1, (o.gnarl ?? st.gnarl) + (cls.id === "giant" ? .2 : 0)),
       treeBare: o.bare, treeTrunks: sapling ? 1 : o.trunks, treeLean: o.lean, treeThick: sapling ? undefined : big && o.thick ? o.thick * 1.1 : o.thick, treeThin: sapling || o.thin, treeHollow: big && o.hollow, treeWebs: o.webs, treeHang: o.hang ?? def.layout?.hang ?? 0 };
-    const t = f(r, ts, st.treeSize * K * (o.scale || 1) * scale * uni(r, .95, 1.05));
-    snowCrown(t.sp, o.snow ?? def.snow ?? 0, n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
+    const tsb = biomeStyle(ts, look);
+    const t = f(r, tsb, st.treeSize * K * (o.scale || 1) * biomeScale(look) * scale * uni(r, .95, 1.05));
+    snowCrown(t.sp, biomeSnow(look, o.snow ?? def.snow ?? 0), n + 1); // snow on its crown (a snowy area's `snow`, or the recipe's own: 0 none)
     const c = treeColours(r, ts, f); if (o.dark) { c[M.LEAF] = c[M.LEAF3]; c[M.LEAF3] = hsv2rgb(def.leaf + .05, .7, .22); }
-    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232];
+    c[M.NOSE] = [20, 16, 24]; c[M.WEB] = [225, 225, 232]; biomeColours(c, look, M);
     const parts = splitTree(t), bk = sp => bake(sp, c, st, "none", makeCanvas), sw = sp => bakeSway(sp, makeCanvas), m = px => +(px / ppm).toFixed(2);
     out.push({ heightClass: cls.id, species: o.type, scale: +scale.toFixed(2), weight: +(cls.weight / cls.count).toFixed(4), whole: bk(t.sp), top: bk(parts.top), bot: bk(parts.bot), sway: { whole: sw(t.sp), top: sw(parts.top), bot: sw(parts.bot) }, crownY: t.crownY,
       metres: { height: m(t.sp.h), crownBase: m(t.sp.h - t.crownY), crownHeight: m(t.crownY), crownRadius: m(t.sp.w / 2) } });
@@ -15797,6 +16173,10 @@ function decorColours(st = {}, tint = [1, 1, 1]) {
 // crownY up (tall pieces; empty otherwise), bot the rest. footprint: the radius on the ground, in metres.
 function decorSprite(id, st = {}, { variant = 0, ppm = 16 } = {}) {
   const d = DECOR_BY_ID[id]; if (!d) throw new Error(`no decoration "${id}"`);
+  return decorPieceSprite(d, st, { variant, ppm });
+}
+/** Any piece built like a decoration (d: { build(m, variant), size, variants, split }), drawn the same way (art/lakeShore.js too). */
+function decorPieceSprite(d, st = {}, { variant = 0, ppm = 16 } = {}) {
   const m = new Model({ blend: .05 }); d.build(m, variant % d.variants);
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // a common ground line
   const s = witchPixelsPerUnit(st) * d.size, { sp, project } = render(m, { scale: s });
@@ -15829,6 +16209,78 @@ function lakeKit(st = {}) {
   const reeds = [0, 1, 2].map(v => prop(m => { for (let i = 0; i < 9 + v * 4; i++) { const x = (sinHash(i, v) - .5) * (.6 + v * .3), z = (sinHash(v, i) - .5) * .3, h = .35 + sinHash(i, v + 5) * .4; m.seg([x, 0, z], [x + (sinHash(i, 9) - .5) * .1, h, z], .02, .012, M.LEAF2, { group: 1 + (i % 3) }); if (i % 3 === 0) m.ell([x, h - .04, z], [.02, .06, .02], M.BARKD, { group: 4 }); } }));
   const lilies = [0, 1, 2].map(v => prop(m => { for (let i = 0; i < 3 + v * 2; i++) { const x = (sinHash(i, v + 3) - .5) * (.5 + v * .3), z = (sinHash(v + 3, i) - .5) * .4; m.ell([x, .01, z], [.09, .01, .08], M.LEAF, { group: 1 + (i % 2), paint: p => Math.atan2(p[2] - z, p[0] - x) > 2.6 ? M.WATER : undefined }); if (i === v) m.ell([x, .04, z], [.035, .03, .035], M.BELLY, { group: 3 }); } }));
   return { water, shore, reeds, lilies, colours: { ...decorColours(st), [M.BODY2]: [76, 64, 48], [M.BELLY]: [200, 214, 226] } };
+}
+
+
+// ---- inlined from art/lakeShore.js ----
+// The biome lakes' shore dressing (Ed, 2026-10-23, the biome lakes' second part): the pieces that stand round each special
+// lake (src/rules/lakeShore.ts lays them out): bones and a drowned trunk in a tar pit, ice chunks by a glacial tarn and a glacier,
+// lava rocks (glowing in their cracks) and scorched trees by lava, a hot spring's pale mineral crust. Built in 3D like the world
+// decorations (decor.js decorPieceSprite), at the witch's scale. The oasis's palms and grass and the lily pond's reeds are
+// the art's own (trees.js palmTree, the beach's grass, decor.js lakeKit), baked beside these (src/render/artBuild.ts lakeShore).
+
+
+// bone: pale, its ends knobbed, its foot in the tar (black)
+const tarFoot = (mat, y = .06) => p => (p[1] < y ? M.NOSE : dcCell(p, 16) > .9 ? M.BODY2 : mat === M.BELLY ? undefined : mat);
+const bone = (m, a, b, r, g) => { m.seg(a, b, r, r * .8, M.BELLY, { group: g, paint: tarFoot(M.BELLY) }); for (const e of [a, b]) m.ell(e, [r * 1.7, r * 1.4, r * 1.7], M.BELLY, { group: g, paint: tarFoot(M.BELLY) }); };
+
+const LAKE_SHORE_PIECES = [
+  // a tar pit: a great beast's ribs half sunk, its skull; a scatter of long bones; a drowned trunk, its limbs reaching up out of the tar
+  { id: "tar-ribs", kind: "bones", variants: 2, size: 1.3, split: null, build(m, v) {
+    const n = 5 + v * 2;
+    m.chain([[-1.1, .12, 0, .07], [0, .2, 0, .08], [1.1 + v * .3, .1, 0, .06]], M.BELLY, { group: 1, paint: tarFoot(M.BELLY, .1) }); // the spine, along the surface
+    for (let i = 0; i < n; i++) { const x = -.9 + i * (1.8 + v * .3) / (n - 1), h = .75 - Math.abs(i - n / 2) * .08;
+      for (const s of [-1, 1]) m.chain([[x, .2, 0, .045], [x + .05, h, s * .35, .04], [x + .1, h * .7, s * .6, .03], [x + .12, .02, s * .7, .02]], M.BELLY, { group: 2 + (i % 3), paint: tarFoot(M.BELLY) }); } // each rib arching up out of the tar and down
+    if (v === 0) { m.ell([1.55, .22, .05], [.32, .22, .24], M.BELLY, { group: 6, paint: p => (p[1] < .08 ? M.NOSE : Math.hypot(p[0] - 1.72, p[1] - .28) < .07 && p[2] > .1 ? M.NOSE : undefined) }); m.seg([1.75, .1, 0], [2.0, .06, 0], .08, .05, M.BELLY, { group: 6, paint: tarFoot(M.BELLY) }); } // its skull, an eye socket black
+  } },
+  { id: "tar-bones", kind: "bones", variants: 2, size: 1, split: null, build(m, v) {
+    for (let i = 0; i < 4 + v; i++) { const a = sinHash(i, v + 3) * 6.28, x = (sinHash(i, v) - .5) * 1.4, z = (sinHash(v, i) - .5) * .7, L = .35 + sinHash(i, 9) * .35;
+      bone(m, [x - Math.cos(a) * L / 2, .05 + sinHash(i, 11) * .12, z - Math.sin(a) * L * .3], [x + Math.cos(a) * L / 2, .04, z + Math.sin(a) * L * .3], .035, 1 + (i % 3)); }
+    if (v === 1) m.ell([.1, .12, .1], [.14, .11, .16], M.BELLY, { group: 4, paint: p => (p[1] < .05 ? M.NOSE : Math.hypot(p[0] - .17, p[1] - .14) < .04 && p[2] > .15 ? M.NOSE : undefined) }); // a small skull
+  } },
+  { id: "drowned-trunk", kind: "trunk", variants: 2, size: 1.4, split: null, build(m, v) {
+    const s = v ? -1 : 1, wet = p => (p[1] < .12 ? M.NOSE : dcCell(p, 11, 9) < .25 ? M.BARKD : undefined);
+    m.chain([[-1.4 * s, .05, -.1, .26], [-.3 * s, .22, 0, .24], [.9 * s, .28, .1, .2], [1.6 * s, .2, .12, .12]], M.STONE, { group: 1, rough: .015, paint: wet }); // lying in the tar, half sunk
+    m.ell([-1.45 * s, .12, -.1], [.28, .3, .3], M.STONE, { group: 1, paint: wet }); // its root plate's stump
+    for (let i = 0; i < 3; i++) { const x = (-.6 + i * .8) * s; dcDead(m, [[x, .3, 0, .08], [x + .15 * s, .9 + i * .15, .05, .05], [x + .1 * s, 1.4 + i * .2, .1, .02]], 2 + i); } // its dead limbs, reaching up out of it
+  } },
+  // ice: angular chunks heaped by the water, snow on their tops, blue in their faces
+  { id: "ice-chunks", kind: "ice", variants: 3, size: 1, split: null, build(m, v) {
+    for (let i = 0; i < 3 + v * 2; i++) { const x = (sinHash(i, v) - .5) * (.8 + v * .5), z = (sinHash(v, i) - .5) * .5, s = .14 + sinHash(i, v + 7) * (.22 + v * .05);
+      const top = .02 + s * 1.2;
+      m.box([x, s * .7, z], [s, s * .75, s * .8], M.STONE, { group: 1 + (i % 3), round: .01, dir: [Math.cos(sinHash(i, 21) * 3), .25 * (sinHash(i, 22) - .5), Math.sin(sinHash(i, 21) * 3)], paint: p => (p[1] > top ? M.BELLY : dcCell(p, 9, i) < .22 ? M.STONED : undefined) }); }
+  } },
+  // lava: black basalt, its cracks glowing; trees by it scorched black
+  { id: "lava-rock", kind: "lavaRock", variants: 3, size: 1, split: null, build(m, v) {
+    const glow = (c, r) => p => { const n = dcCell(p, 7, v + 3); return Math.abs(n - .5) < .05 && p[1] < c[1] + r[1] * .6 ? M.GLOW : n > .88 ? M.STONED : undefined; };
+    const rocks = v === 2 ? [[[0, .45, 0], [.7, .5, .55]]] : [[[-.2, .25, 0], [.4, .28, .35]], [[.35, .15, .2], [.25, .18, .22]], ...(v ? [[[-.5, .1, .3], [.18, .12, .16]]] : [])];
+    rocks.forEach(([c, r], i) => m.ell(c, r, M.STONE, { group: 1 + i, rough: .05, dir: [1, .2 * (i - 1), .3], paint: glow(c, r) }));
+  } },
+  ...["dead-tree", "cleft-tree", "hollow-tree"].map(id => ({ id: "scorched-" + id.split("-")[0], kind: "scorched", variants: 1, size: 1.2, split: DECOR_BY_ID[id].split, build: DECOR_BY_ID[id].build })),
+  // a hot spring's crust: pale travertine lips stepping down, the runoff staining them orange-brown
+  { id: "mineral-crust", kind: "crust", variants: 3, size: 1.1, split: null, build(m, v) {
+    for (let k = 0; k < 3 + v; k++) { const r = .9 - k * .18, y = .05 + k * .06, x = (sinHash(k, v) - .5) * .2;
+      m.ell([x, y, -k * .06], [r, .06, r * .7], M.CLOTH, { group: 1 + (k % 3), rough: .01, paint: p => { const st = Math.sin((p[0] + p[2]) * 13 + v * 2); return st > .7 && dcCell(p, 6, k) < .6 ? M.ACCENT : st > .5 ? M.BODY2 : p[1] > y + .03 && dcCell(p, 9, k) < .3 ? M.WATER : undefined; } }); } // each lip, a shallow pool on top
+  } },
+];
+const LAKE_SHORE_BY_ID = Object.fromEntries(LAKE_SHORE_PIECES.map(d => [d.id, d]));
+
+/** Each kind's colours (the decor's with its own): the tar's black, bone, ice, basalt and its glow, charcoal, travertine. */
+function lakeShoreColours(kind, st = {}) {
+  const c = decorColours(st);
+  if (kind === "bones") return { ...c, [M.BELLY]: [214, 204, 180], [M.BODY2]: [150, 138, 116], [M.NOSE]: [10, 9, 12] };
+  if (kind === "trunk") return { ...c, [M.STONE]: [70, 60, 54], [M.STONED]: [44, 38, 36], [M.BARKD]: [24, 20, 20], [M.NOSE]: [10, 9, 12] };
+  if (kind === "ice") return { ...c, [M.STONE]: [178, 210, 232], [M.STONED]: [96, 150, 200], [M.BELLY]: [236, 244, 250] };
+  if (kind === "lavaRock") return { ...c, [M.STONE]: [48, 42, 46], [M.STONED]: [26, 22, 26], [M.MOSS]: [48, 42, 46], [M.GLOW]: [255, 120, 36] };
+  if (kind === "scorched") return { ...c, [M.STONE]: [46, 40, 38], [M.STONED]: [26, 22, 22], [M.BARKD]: [12, 10, 10], [M.BARKL]: [70, 58, 52], [M.TRUNK]: [40, 34, 32], [M.LEAF3]: [30, 26, 24] };
+  if (kind === "crust") return { ...c, [M.CLOTH]: [228, 220, 200], [M.BODY2]: [196, 150, 96], [M.ACCENT]: [176, 92, 40], [M.WATER]: [92, 150, 170] };
+  return c;
+}
+
+/** One shore piece drawn (decor.js decorPieceSprite: whole, top, bot, crownY, origin, metres) and its colours. */
+function lakeShoreSprite(id, st = {}, { variant = 0 } = {}) {
+  const d = LAKE_SHORE_BY_ID[id]; if (!d) throw new Error(`no lake shore piece "${id}"`);
+  return { ...decorPieceSprite(d, st, { variant: variant % d.variants }), colours: lakeShoreColours(d.kind, st), kind: d.kind };
 }
 
 
@@ -16558,6 +17010,24 @@ const WORSHIP = {
   } },
 };
 
+// ---------------- the step pyramid (Ed, 2026-10-23: the feathered serpent's own clearing) ----------------
+const LANDMARK_PYRAMID = {
+  "step-pyramid": { desc: "a stepped pyramid of five mossy terraces, a steep stair up its face between balustrades ending in feathered serpents' heads, a little shrine on top with its doorway dark; ferns and a fig's roots taking its corners", split: 2.2, build(m) {
+    const n = 5, H = .34;
+    for (let i = 0; i < n; i++) { const w = 2.6 - i * .45; ldBlock(m, [0, H * (i + .5), 0], [w, H * .5, w * .9], 1 + (i % 2), { courses: 2, moss: .3 + i * .04 }); } // the terraces
+    const top = H * n, front = 2.6 * .9;
+    for (let k = 0; k < 14; k++) { const t = k / 14, y = top * t, z = front - (front - .5) * t; m.box([0, y + .05, z + .08], [.42, .06, .1], M.STONE, { group: 6, round: .01, paint: ldStone(0, .25) }); } // the stair, step by step
+    for (const x of [-.52, .52]) { m.seg([x, .14, front + .15], [x, top + .1, .45], .1, .09, M.STONED, { group: 7 + (x > 0 ? 1 : 0), paint: ldStone(0, .35) }); // the balustrades, and at their feet the serpents' heads, jaws open, feathered
+      m.ell([x, .2, front + .32], [.2, .17, .2], M.STONE, { group: 9 + (x > 0 ? 1 : 0), paint: p => ctCell(p, 8, 3) < .2 ? M.MOSS : undefined });
+      m.ell([x, .1, front + .48], [.12, .06, .14], M.STONED, { group: 9 + (x > 0 ? 1 : 0) });
+      for (let f = 0; f < 5; f++) { const a = -1.2 + f * .6; m.seg([x, .28, front + .22], [x + Math.sin(a) * .28, .28 + Math.cos(a) * .26, front + .14], .05, .015, M.STONE, { group: 11, paint: ldStone(0, .4) }); } }
+    ldBlock(m, [0, top + .32, -.1], [.62, .32, .55], 12, { courses: 3, moss: .25 }); ldBlock(m, [0, top + .7, -.1], [.7, .07, .62], 13, { courses: 0, moss: .4 }); // the shrine and its roof slab
+    m.box([0, top + .26, .5], [.2, .26, .2], M.STONED, { group: 12, cut: true }); // its doorway
+    m.chain([[2.2, .2, 1.6, .09], [1.7, .8, 1.2, .07], [1.3, 1.3, .8, .05], [1.1, 1.8, .5, .04]], M.TRUNK, { group: 14, rough: .01 }); ctCrown(m, [1.1, 2.1, .5], [.6, .42, .5], 15); // a fig taking the corner
+    ctFern(m, [-2.1, .1, 1.8], 16, 1.3); ctFern(m, [1.9, .7, -1.2], 17); ctIvy(m, [-2.4, 0, 2.2], [-2.0, 1.2, 1.9], 18, 141); ctTufts(m, 22, 3.2, 19, 142);
+  } },
+};
+
 // ---------------- castle ruins ----------------
 const LANDMARK_CASTLE = {
   "curtain-wall": { desc: "a stretch of curtain wall, its battlements gapped, arrow slits, ivy up its face", split: 2.2, build(m) {
@@ -16746,6 +17216,7 @@ const table = [
   ...Object.entries(LANDMARK_CARPARK).map(([id, d]) => ({ id, family: "carpark", ...d })),
   ...Object.entries(LANDMARK_SCRAP).map(([id, d]) => ({ id, family: "scrap", ...d })),
   ...Object.entries(WORSHIP).map(([id, d]) => ({ id, family: "worship", ...d })),
+  ...Object.entries(LANDMARK_PYRAMID).map(([id, d]) => ({ id, family: "pyramid", ...d })),
   ...Object.entries(LANDMARK_CASTLE).map(([id, d]) => ({ id, family: "castle", ...d })),
   ...Object.entries(LANDMARK_CLASSICAL).map(([id, d]) => ({ id, family: "classical", ...d })),
   ...Object.entries(LANDMARK_CLASSICAL_GEN).map(([id, d]) => ({ id, family: "classical", ...d })),
@@ -17697,6 +18168,8 @@ const LARGE = {
     ["@coptic-basilica", 0, 0], ["rubble", -1.0, 2.4], ["rubble", 3.4, 1.6, "left"], ["decor:split", -3.4, 1.8]] },
   "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "stream"], pieces: [
     ["pagoda-temple", 0, 0], ["decor:pair", -2.8, 1.6], ["decor:rock", 2.9, -1.4], ["rubble", -2.4, -1.8, "left"]] },
+  "step-pyramid": { desc: "a stepped pyramid in its clearing, its stair between serpent balustrades, fallen blocks at its foot", suits: ["step-pyramid"], pieces: [
+    ["step-pyramid", 0, 0], ["rubble", 3.6, 2.0], ["decor:standing-rock", -3.8, 1.4, "left"]] },
   "stupa": { desc: "a stupa on its terraces with a tree rooted in its dome, its spire's rings fallen at its foot, standing stones near", suits: ["heath", "moor", "rocky-slope", "grassland"], pieces: [
     ["stupa", 0, 0], ["decor:standing-rock", -3.2, -1.0], ["decor:pair", 3.0, 1.8, "left"]] },
   "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "garden", "heath"], pieces: [
@@ -17710,7 +18183,7 @@ const LARGE = {
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "cave-mouth", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;
@@ -17934,6 +18407,7 @@ function pathPieceSprite(id, st = {}, ppm = 16) {
 // The areas each path kind suits, turned round: { areaId: [kinds] }, for an area's layout to name its preferred paths; with each
 // area's own extra kinds (areas: art/areas.js AREAS, an area's `pathKinds`: stairs on the steep ones, bridges over the stream).
 function pathKindsByArea(areas = []) { const out = {}; for (const [k, K] of Object.entries(PATH_KINDS)) for (const a of K.moods) (out[a] = out[a] || []).push(k); for (const A of areas) for (const k of A.pathKinds || []) (out[A.id] = out[A.id] || []).push(k); return out; }
+
 
 
 
