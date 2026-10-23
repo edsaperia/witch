@@ -83,9 +83,21 @@ Every find carries the same three things, whatever its object, so a player who h
 
 ## The proof shots
 
-Seed 123, at night, the find in the densest spot of the fern forest (the trunk) and the muddy forest (a wreck), the witch on the ground 8 m and 20 m off: today's find against the guide's treatment (the item drawn at flask size, the clear patch, the pale gold-white light), both from today's `claude/prototype` with a mock of the treatment (not this PR's code), the find placed by `?spawnfind=` (#1046). The contact sheet is [`finds/proof.jpg`](finds/proof.jpg).
+[`finds/proof.jpg`](finds/proof.jpg): seed 123, at night, the find in the densest spot of the fern forest (a wearable: the bundle) and the muddy forest (a broom part: the missile nose), placed by `?spawnfind=` (#1046) and moved there; the witch on the ground 8 m and 20 m from it (the find to her east, a little toward the camera, so it's on screen). Left: today's `claude/prototype` (the trunk, the wreck); right: this branch, with the light at strength 4. Beside each, **what the find adds**: the same paused frame with the find and without it (moved away), their difference brightened four times, so it shows the find alone. (The fern forest moves a little even paused: the speckle all over its maps is that, not the find.)
 
-_The shots are being taken; their notes follow._
+| Pixels the find changes | today | the guide's find |
+|---|---|---|
+| fern forest, 8 m | a small spot by the trunk | **a pale pool of light** beside her |
+| fern forest, 20 m | a fleck | **a pale pool of light** |
+| muddy forest, 8 m | 3,314 (156 × 63) | **23,630 (677 × 338)** |
+| muddy forest, 20 m | a 3 × 3 speck | **4,813 (39 × 72)** |
+
+What it shows:
+
+- **The light carries the read.** At 8 m in both forests and at 20 m in the fern forest the find's light is a pale pool of its own, apart from her lantern's warm one. At 20 m in the muddy forest it's faint, a small patch through the crowns.
+- **The object itself doesn't show** at either distance: at about 6 to 8 art pixels, under the crowns, it's lost. The light and the clear patch are what she spots; the object, close up.
+- **Strength 2.4 was too weak** (an earlier run): in the fern forest it read only faintly at 8 m. 4 is the default (`lights.find` in the tuning file; `?set=lights.find.strength=<n>` tries another for one load).
+- **From the treetops** it's meant not to show (as Ed asked): the light sits 0.6 m up and reaches 7 m, under the crowns. These shots are all on the ground; the treetops weren't shot this round.
 
 ## How the rules were chosen
 
