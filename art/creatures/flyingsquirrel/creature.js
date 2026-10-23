@@ -21,5 +21,15 @@ export const CREATURE_FLYINGSQUIRREL = {
     scale: { treetopSpeed: 1.1, "dash.distance": 1.2 },
     label: "Flying squirrel's Soar: a little quicker over the treetops, and a longer blink"
   },
-  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 }
+  character: { posture: { head: [0, 0.05], body: 0 }, quirk: "sniff", every: [2, 5], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "acorn bolt", range: 12, shots: [0, 1, 3], spread: 14, tint: "red" },
+    special: "scatter",
+    retreat: "trees",
+    rhythm: "tight",
+    pressure: 2,
+    call: "the launch",
+    tells: { melee: "the launch", ranged: "winds back", special: "the launch" }
+  }
 };
