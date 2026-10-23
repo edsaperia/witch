@@ -49,7 +49,9 @@ export function land(w: CombatWorld, s: CombatState, from: Creature | null, tg: 
     // Thrown from the attacker (or where its shot or area hit landed); harder by the attack's
     // knockback, and hard if it rams her (charging, or landing a leap on her).
     const ox = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.x : fx, oz = from && a.delivery !== "shot" && a.delivery !== "lob" ? from.z : fz;
-    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap || !!from.run) }); // (a legend's long charge rams too)
+    const thrown = from?.packThrow && time < from.packThrow.until ? from.packThrow.metres : undefined; // (a pack's knockback ram: rules/combat/packs.ts)
+    if (thrown !== undefined) from!.packThrow = undefined;
+    w.hitWitch(tg.id, time, { x: ox, z: oz, knockback: a.modifier === "knockback" ? a.knockback ?? 0 : 0, rams: !!from && (!!from.charge || !!from.leap || !!from.run), ...(thrown !== undefined ? { metres: thrown } : {}) }); // (a legend's long charge rams too)
     const v = w.witches[tg.id]; s.events.push({ kind: "witchHit", x: v.x, z: v.z, at: time, id: tg.id }); return;
   }
   if (tg.kind === "sound") {

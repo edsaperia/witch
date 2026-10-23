@@ -30,14 +30,14 @@ export const stunned = (k: Knock | undefined, time: number) => !!k && time < k.s
 
 /** What threw her: where the blow came from, the attack's knockback (0 if it has none), and whether
  *  it rams (a charge, or a leap landing on her). */
-export interface Blow { x: number; z: number; knockback: number; rams: boolean }
+export interface Blow { x: number; z: number; knockback: number; rams: boolean; /** thrown exactly this far (a pack's knockback ram, its pull), under witch.knock.max */ metres?: number }
 
 /** How far a blow throws her (metres) and how long it staggers her (seconds). */
 export function knockOf(b: Blow, t: Tuning): { metres: number; stun: number } {
   const K = t.witch.knock;
   if (!K || !K.on) return { metres: 0, stun: 0 };
-  let metres = K.base + (b.knockback > 0 ? K.scale * b.knockback : 0);
-  if (b.rams) metres = Math.max(metres, K.charge);
+  let metres = b.metres ?? K.base + (b.knockback > 0 ? K.scale * b.knockback : 0);
+  if (b.rams && b.metres === undefined) metres = Math.max(metres, K.charge);
   metres = Math.min(K.max, metres);
   const stun = Math.min(K.stunMax, K.stunBase + K.stunScale * Math.max(0, metres - K.base));
   return { metres, stun };
