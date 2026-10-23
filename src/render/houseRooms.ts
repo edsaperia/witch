@@ -127,6 +127,7 @@ export class HouseRoomsView {
   private readonly bubble: HTMLDivElement;
   private readonly ring: HTMLDivElement;
   private said: { obj: HouseObject; at: number } | null = null;
+  private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
 
   constructor() {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.94)];
@@ -138,6 +139,12 @@ export class HouseRoomsView {
     this.bubble = document.createElement("div"); this.bubble.style.cssText = pill + "background:rgba(250,244,255,.94);color:#2a1d38;border-radius:12px;padding:6px 12px;max-width:320px;white-space:normal;text-align:center";
     this.ring = document.createElement("div"); this.ring.style.cssText = "position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border-radius:50%";
     this.box.append(this.tag, this.bubble, this.ring);
+    // (?rooms=labels: each room's name on its floor, for the plan's shots)
+    if (/[?&]rooms=labels/.test(location.search)) for (const r of [{ id: "terrace", label: "Terrace", x0: 0, x1: 0, z0: 0, z1: 0 }, ...HOUSE_ROOMS.rooms]) {
+      const el = document.createElement("div"); el.textContent = r.label;
+      el.style.cssText = "position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 15px/1.1 inherit;padding:2px 7px;border-radius:6px;background:rgba(255,236,190,.92);color:#2a1d38";
+      this.box.append(el); this.labels.push({ el, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+    }
     document.body.append(this.box);
   }
 
@@ -191,6 +198,7 @@ export class HouseRoomsView {
       if (text !== undefined && el.textContent !== text) el.textContent = text;
     };
     this.box.style.display = "block";
+    for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
     const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) ? at : null, 0.5, at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
