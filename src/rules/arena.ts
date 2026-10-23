@@ -11,6 +11,7 @@ import { newCamera } from "./camera";
 import type { Game } from "./game";
 import { witchHeight } from "./witch";
 import { PACKS } from "./combat/packs";
+import { profileOf } from "./movement";
 
 export interface ArenaGroup { species: string; count: number; level: Level; /** (wild) besieging home's soundsystem */ siege?: boolean }
 
@@ -47,7 +48,7 @@ export const ARENA_PRESETS: Record<string, string> = {
 for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,${k === "wolf" ? "fox" : "wolf"}*3@1`; } // (her wolves on wild foxes: a kind never fights its own)
 
 export function setupArena(g: Game, spec: string): void {
-  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec);
+  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec), pack = spec.trim().toLowerCase().startsWith("pack-");
   if (!groups.length) return;
   const L = g.witches[0].leash;
   if (g.arena) {
@@ -83,7 +84,7 @@ export function setupArena(g: Game, spec: string): void {
       // Hers at legend level: a happy area legend guarding the arena (round its home: the arena's middle).
       if (party && gr.level === LEGEND) Object.assign(c, { leashed: false, boss: true, legendState: "happy", stateAt: time, legend: undefined });
       else if (party) { c.leashed = true; L.placed.push({ id: c.id, x, z, at: time }); }
-      else { c.leashed = false; if (gr.siege) Object.assign(c, { siege: "home", enraged: true }); }
+      else { c.leashed = false; if (gr.siege) Object.assign(c, { siege: "home", enraged: true }); else if (pack && profileOf(gr.species)?.move?.kind === "ambush") c.hunting = 0; } // (a pack coming for her: an ambusher hunting her, as a wild area's are after its watch, rules/hunt.ts, not lying in wait out of its trigger)
       ids.push(c.id);
     }
   });
