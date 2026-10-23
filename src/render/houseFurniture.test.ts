@@ -56,10 +56,10 @@ describe("the treehouse's furniture", () => {
   it("faces into its room, towards its middle, and never shows its back to the camera; its footprint as the art's, along its wall", () => {
     for (const o of HOUSE_ROOMS.objects) {
       if (!FURNITURE_IDS.includes(o.id)) continue;
-      const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room)!, { yaw, foot } = standing(o), f = [-Math.sin(yaw), Math.cos(yaw)];
+      const r = HOUSE_ROOMS.rooms.find(q => q.id === o.room), { yaw, foot } = standing(o), f = [-Math.sin(yaw), Math.cos(yaw)];
       expect(f[1], `${o.id}: faces the camera's way`).toBeGreaterThanOrEqual(-1e-9);
-      const dx = (r.x0 + r.x1) / 2 - o.x, dz = (r.z0 + r.z1) / 2 - o.z;
-      if (Math.hypot(dx, dz) > 1.2 && dz > 0) expect(f[0] * dx + f[1] * dz, `${o.id}: faces its room's middle`).toBeGreaterThan(0);
+      const dx = r ? (r.x0 + r.x1) / 2 - o.x : 0, dz = r ? (r.z0 + r.z1) / 2 - o.z : 0; // (on the Terrace, in no room: it faces the camera)
+      if (r && Math.hypot(dx, dz) > 1.2 && dz > 0) expect(f[0] * dx + f[1] * dz, `${o.id}: faces its room's middle`).toBeGreaterThan(0);
       expect([foot.w, foot.d].sort().join(), o.id).toBe([o.w, o.d].sort().join());
     }
   });
