@@ -25,6 +25,7 @@ import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { dressed } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
+import { Spotlight } from "./spotlight";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -162,6 +163,8 @@ export class HouseRoomsView {
   private readonly workshop = new WorkshopArt();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
+  /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
+  private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
@@ -180,6 +183,7 @@ export class HouseRoomsView {
     this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.934), new Part(this.mat, 19.94), new Part(this.mat, 19.944)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.roofs.visible = false;
+    this.furniture.add(this.spot.mesh);
     this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
@@ -209,6 +213,7 @@ export class HouseRoomsView {
     this.mat.dispose(); this.box.remove();
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
     this.workshop.dispose();
+    this.spot.dispose();
   }
 
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
@@ -341,6 +346,10 @@ export class HouseRoomsView {
         (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
         id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
     }
+    // the mic's spotlight, from its lamp down to the floor round its foot (its `spot` mark: art/furniture.js)
+    const mic = [...this.pieces.values()].find(p => p.id === "microphone" && p.mesh.visible && p.art.marks.spot);
+    if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }
+    else this.spot.mesh.visible = false;
     // last night's clothes, in a pile by her bed (rules/clothesPile.ts): what's still in it, till she's dressed
     const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = g.wake?.pile ?? [];
     if (po && slots.length) {
