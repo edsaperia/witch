@@ -35,6 +35,8 @@ const DEFAULT = ["rug", "plant", "lantern", "candles"];
  *  yaw: 0 the camera), its seed, and a rug's radius (metres, house.json's). */
 export interface DecorItem { kind: string; x: number; z: number; yaw: number; k: number; r?: number }
 
+/** A rug's colours, times this: it lies flat to the light, and a pale one blooms into a glare (the solarium's cream). */
+const RUG_DIM = 0.6;
 /** Clear of these (m): a doorway, the way in from it, an object's reach past its edge (on top of the house's own reach). */
 const DOOR_CLEAR = 2.8, WAY_CLEAR = 1.8, REACH_CLEAR = 0.4, GAP = 2;
 
@@ -75,7 +77,7 @@ export function bakeRoomDecor(room: Rect & { id: string; r?: number; locked?: bo
   const items = decorPlan(room);
   if (!items.length) return null;
   const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
-    const d = decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) }) as Drawn, c = litCanvas(d, room.id, st);
+    const d = decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) }) as Drawn, c = litCanvas(d, room.id, st, it.kind === "rug" ? RUG_DIM : 1);
     return { it, c, left: it.x * ppm - d.origin.x, top: it.z * ky - d.origin.y };
   });
   const x0 = Math.floor(Math.min(...drawn.map(q => q.left))), y0 = Math.floor(Math.min(...drawn.map(q => q.top)));
