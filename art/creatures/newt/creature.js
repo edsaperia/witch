@@ -14,5 +14,15 @@ export const CREATURE_NEWT = {
     scale: { "invites.speed": 1.2, "invites.range": 1.2 },
     label: "Newt's Wriggle: 💌s fly a little faster and further"
   },
-  character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 }
+  character: { posture: { head: [0.03, 0.01], body: -0.01 }, quirk: "tailflick", every: [4, 8], for: 1 },
+  pack: {
+    melee: null,
+    ranged: { name: "spit", range: 12, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "wall",
+    retreat: "water",
+    rhythm: "slow",
+    pressure: 3,
+    call: "the gleam",
+    tells: { ranged: "throat pulses", special: "the gleam" }
+  }
 };

@@ -31,7 +31,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
         const pack = () => [...(g.combat.packs?.values() ?? [])].find(s => !s.hers);
         const test = {
           tell: () => pack()?.phase === "tell" && g.clock.time - pack().at > 0.25,
-          combo: () => pack()?.phase === "combo" && (g.combat.shots.length > 0 || pack().members.some(id => g.creatures[id].fight?.lunge)),
+          combo: () => pack()?.phase === "combo" && (g.combat.shots.length > 0 || g.combat.beams.length > 0 || pack().members.some(id => { const c = g.creatures[id]; return c.fight?.lunge || c.fight?.windupUntil > 0 || (c.charge && !c.charge.braking) || c.leap || (c.swoop && ["tele", "dive", "low"].includes(c.swoop.phase)); })), // (a strike: a bolt, a beam, a lunge, a wind-up, or its own charge or leap: the armadillo has no bolt)
           special: () => sp > 0 && g.clock.time - sp > 0.3,
           lull: () => pack()?.phase === "lull" && (g.clock.time - pack().at) > (pack().until - pack().at) * 0.45,
         }[want];

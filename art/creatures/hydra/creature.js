@@ -15,5 +15,15 @@ export const CREATURE_HYDRA = {
     scale: { "invites.cooldown": 0.75, "invites.radius": 1.2 },
     label: "Hydra's Many Heads: 💌s come quicker and land a little more easily"
   },
-  character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 }
+  character: { posture: { head: [0.02, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "head spit", range: 16, shots: [0, 3, 5], spread: 30, tint: "red" },
+    special: "rally",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the regrowth",
+    tells: { melee: "heads rear", ranged: "heads back", special: "the regrowth" }
+  }
 };

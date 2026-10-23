@@ -55,18 +55,7 @@ export function boonWords(species: string): string | null {
   return `${def.name}, ${what}`;
 }
 
-const AGES = ["baby", "young", "adult"], NAMES: Record<string, string> = { beetle: "stag beetle", cat: "wildcat" };
-/** A creature in words, its age first: "a young elk", "an adult otter". */
-export function creatureWords(species: string, level: number): string {
-  const w = `${AGES[level] ?? ""} ${NAMES[species] ?? species}`.trim();
-  return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
-}
-
-/** A kind in words, no age (a legend's dream, Ed 2026-10-18: any age will do): "a badger", "an otter". */
-export function kindWords(species: string): string {
-  const w = NAMES[species] ?? species;
-  return `${/^[aeiou]/.test(w) ? "an" : "a"} ${w}`;
-}
+const NAMES: Record<string, string> = { beetle: "stag beetle", cat: "wildcat" };
 
 /** A kind's name: "hare", "stag beetle". */
 const nameOf = (species: string): string => NAMES[species] ?? species;

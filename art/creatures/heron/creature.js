@@ -36,5 +36,15 @@ export const CREATURE_HERON = {
     scale: { groundSpeed: 1.1, "dash.distance": 1.25 },
     label: "Heron's Stride: a little quicker on foot, and a longer blink"
   },
-  character: { sprite: "puff", every: [6, 11], for: 1.4 }
+  character: { sprite: "puff", every: [6, 11], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "water jet", range: 18, shots: [0, 1, 1], speed: 1.4, size: [1, 1, 1.3], tint: "red" },
+    special: "sync",
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "a stillness",
+    tells: { melee: "the neck draws back", ranged: "aim line", special: "a stillness, then a flash" }
+  }
 };

@@ -7,7 +7,8 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf } from "../rules/treehouse";
+import { carrierOf, deckOf, noRiseAt } from "../rules/treehouse";
+import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
@@ -313,6 +314,9 @@ type NightState = ReturnType<typeof nightState>;
 // (the night's fields are the View's own, made by nightState: in the constructor, and again by setGame)
 export interface View extends NightState {}
 
+/** The area types on a map (its cells' types, by their look's index): the ones whose tufts take its biome (GrassView.tufts). */
+const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>([HOME_LOOK]); for (const c of map.cells) s.add(map.typeOf(c[0], c[1])); return s; }; // (and home's meadow)
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -336,6 +340,35 @@ export class View {
   clouds!: Clouds;
   /** Smoke rising from the fires (Ed, round 13). */
   private smoke!: Smoke;
+  /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
+   *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
+   *  room or on a branch off the Terrace (rules/treehouse.ts noRiseAt), only the house's own meshes are drawn (its rooms, the Ent's
+   *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
+   *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
+   *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
+   *  speed in the house's slowed time, and the same on any machine). */
+  private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
+  private behindHouse(g: Game): void {
+    const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
+    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
+    // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
+    if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
+    const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
+    D.at = g.herTime;
+    const fade = Math.max(1e-3, T?.fade ?? 0.6);
+    D.k = enclosed ? Math.max(0, D.k - dt / fade) : Math.min(1, D.k + dt / fade);
+    if (!T?.on) D.k = 1;
+    const P = this.post;
+    P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
+    if (D.k >= 1) return;
+    // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
+    for (const o of [...(this.houseRooms?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
+    if (D.door) {
+      const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
+      P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
+    } else P.behindAt = null;
+  }
+
   /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
   private steam!: Smoke;
   /** The biome lakes' shore dressing and the lava's light (render/lakeShore.ts). */
@@ -344,6 +377,8 @@ export class View {
   readonly assets: AssetLibrary;
   typeBatches = new Map<number, SpriteBatch>();
   decorBatches = new Map<string, SpriteBatch>();
+  /** The biome the ground cover's tufts were drawn in (none: temperate): drawn again for a night on an island in another. */
+  private tuftBiome: string | undefined;
   creatureBatches = new Map<string, SpriteBatch>();
   witchBatch!: SpriteBatch;
   /** Her with her hat knocked off, and the hat where it lies (rules/hat.ts): made once the game is up. */
@@ -354,6 +389,9 @@ export class View {
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  /** The broom parts she's found (this browser's, app/broomSave.ts: main.ts keeps it): the Workshop's pegboard hangs them in colour
+   *  (render/workshopArt.ts). */
+  partsFound: ReadonlySet<string> = new Set();
   /** The treehouse deck's map table's miniature chart (render/mapTable.ts), with the deck on. */
   get mapTable(): MapTable | null { return this.island.mapTable; }
   set mapTable(m: MapTable | null) { this.island.mapTable = m; } // (the bench lets it go: tools/bench/frames.cjs)
@@ -591,7 +629,8 @@ export class View {
     yield "grass";
     this.scene.add(this.markerFx.group, this.waveNumbers.mesh);
     // The ground cover: tufts round the witch, in ground mode.
-    const tufts = yield* GrassView.tufts(style);
+    this.tuftBiome = style.biome ?? this.assets.typeBiome; // (in the island's biome: art/flora/biomes.js; ?biome= over it)
+    const tufts = yield* GrassView.tufts(this.tuftBiome ? { ...style, biome: this.tuftBiome } : style, islandTypes(game.map));
     yield;
     this.grass = new GrassView(game.map, t, this.mpp, style, game.forest, (this.ground.mesh.material as THREE.ShaderMaterial).uniforms, tufts);
     yield "parts";
@@ -871,12 +910,14 @@ export class View {
     const island = new IslandLayers(this.scene, { game, style: this.style, mpp: this.mpp, maxTexture: this.renderer.capabilities.maxTextureSize, assets: this.assets, deck: deckOf(game.map, t) }, false);
     yield* island.groundSteps(); yield "paths"; yield* island.pathSteps(); yield; island.buildTreehouse(); yield* island.markerSteps(); yield "ley"; island.buildLey(); yield; island.buildDancefloor();
     yield* island.finishSteps();
+    const tb = this.style.biome ?? this.assets.typeBiome, tufts = tb !== this.tuftBiome ? yield* GrassView.tufts(tb ? { ...this.style, biome: tb } : this.style, islandTypes(game.map)) : null; // (another biome's: drawn again, a step an area type)
     yield "swap";
     island.minimap.on = old.minimap.on;
     { const cs = t.canopyShadow; island.ground.setCanopyShadow(cs.on ? cs.strength : 0, cs.height, cs.cover, cs.wind); }
     island.ley.scale(this.leyBase);
     // What draws on the ground re-pointed at the new one before the old is let go.
     this.beachView.setGround(island.ground);
+    if (tufts) { this.grass.setArt(tufts); this.tuftBiome = tb; }
     this.grass.setMap(game.map, game.forest, (island.ground.mesh.material as THREE.ShaderMaterial).uniforms);
     // The swap: the new island in (its hills the field in use), then the old let go.
     this.island = island;
@@ -1300,7 +1341,9 @@ export class View {
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
     if (t.bare) this.hideForBare();
-    this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
+    this.behindHouse(this.game);
+    // (the cast-shadow map is the forest's: none while only the house is drawn)
+    if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.post.render(this.scene, this.camera);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");

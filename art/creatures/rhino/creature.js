@@ -27,5 +27,16 @@ export const CREATURE_RHINO = {
     scale: { groundSpeed: 1.25, groundAcceleration: 0.7 },
     label: "Rhino's Charge: much faster on the ground, slower to get going"
   },
-  character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 }
+  character: { posture: { head: [0.04, -0.07], body: 0 }, quirk: "stomp", every: [5, 9], for: 1.2 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"], knockback: 8 },
+    ranged: { name: "dust bolt", range: 10, shots: [0, 1, 1], tint: "red" },
+    special: "knockback",
+    specialWith: { throw: 12 },
+    retreat: "circle",
+    rhythm: "slow",
+    pressure: 1,
+    call: "paws the ground",
+    tells: { melee: "head down", ranged: "a snort", special: "paws the ground" }
+  }
 };

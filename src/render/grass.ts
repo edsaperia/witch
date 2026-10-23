@@ -113,6 +113,9 @@ const CELL0 = 16384, CELLS = 32768;
 const BLOCK = 32;
 const cellKey = (ci: number, cj: number) => (ci + CELL0) * CELLS + (cj + CELL0);
 
+/** Each area type's tufts as drawn, by the page's style, the type and the biome (GrassView.tufts): a few hundred tiny canvases a
+ *  biome, so an island in a biome met before draws none again. */
+const TUFT_KEPT = new Map<string, { kind: string; weight: number; sway: number; sprite: Baked }[]>();
 /** The tufts' art for every area type, drawn and packed (GrassView.tufts). */
 export interface TuftArt { kinds: { frame: number; upTo: number; sway: number }[][]; rushes: ({ frame: number; sway: number } | undefined)[]; pixels: AtlasPixels }
 
@@ -171,21 +174,32 @@ export class GrassView {
   }
 
   /** The art's tufts for every area type (#34), drawn and packed (render/slices.ts: a step an area type, View.build's grass), with
-   *  how much each sways: the mean of its sway mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes). */
-  static *tufts(style: object): Steps<TuftArt> {
+   *  how much each sways: the mean of its sway mask over its drawn pixels (0 for pebbles and litter, most for long grass and rushes).
+   *  In the style's biome (art/flora/biomes.js) only the area types in `own` (the island's: all, if not given), the rest as they
+   *  always are; each type's drawing kept by its biome (TUFT_KEPT), so a night on another island draws only what it hasn't yet. */
+  static *tufts(style: object, own?: ReadonlySet<number>): Steps<TuftArt> {
     const sprites: Baked[] = [], kinds: TuftArt["kinds"] = [], rushes: TuftArt["rushes"] = [];
+    const { biome, ...plain } = style as { biome?: string }, styleKey = JSON.stringify(plain);
     yield "tufts";
-    for (const type of LOOKS) { // (the area types and home's meadow)
-      yield;
-      const list = Art.bakeTufts(type.id, style) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+    for (let t = 0; t < LOOKS.length; t++) { // (the area types and home's meadow)
+      const type = LOOKS[t], b = biome && (!own || own.has(t)) ? biome : undefined, key = `${styleKey}|${type.id}|${b ?? ""}`;
+      let kept = TUFT_KEPT.get(key);
+      if (!kept) {
+        yield;
+        const list = Art.bakeTufts(type.id, b ? { ...plain, biome: b } : plain) as { kind: string; weight: number; A: Baked["A"]; N: Baked["N"]; S: Baked["A"]; w: number; h: number }[];
+        kept = list.map(b => {
+          const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
+          let sum = 0, n = 0;
+          for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
+          return { kind: b.kind, weight: b.weight, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0, sprite: { A: b.A, N: b.N, w: b.w, h: b.h } };
+        });
+        TUFT_KEPT.set(key, kept);
+      }
       let upTo = 0;
-      kinds.push(list.map(b => {
-        sprites.push({ A: b.A, N: b.N, w: b.w, h: b.h });
-        const px = (b.S.getContext("2d") as CanvasRenderingContext2D).getImageData(0, 0, b.w, b.h).data;
-        let sum = 0, n = 0;
-        for (let i = 0; i < px.length; i += 4) if (px[i + 3] > 0) { sum += px[i]; n++; }
+      kinds.push(kept.map(b => {
+        sprites.push(b.sprite);
         upTo += b.weight;
-        const k = { frame: sprites.length - 1, upTo, sway: n ? Math.min(1, (sum / n / 255) * 2) : 0 };
+        const k = { frame: sprites.length - 1, upTo, sway: b.sway };
         if (b.kind === "rushes") rushes[kinds.length] = k;
         return k;
       }));
@@ -196,8 +210,20 @@ export class GrassView {
     return { kinds, rushes, pixels: yield* packSteps(sprites, 512) };
   }
 
+  /** The tufts drawn again (View.setGame: an island in another biome, art/flora/biomes.js): the new atlas in, the old freed. Call it
+   *  with setMap, which empties every block, so nothing is drawn from the old frames. */
+  setArt(made: TuftArt): void {
+    const old = this.atlas;
+    this.kinds = made.kinds; this.rushes = made.rushes;
+    this.atlas = atlasFromPixels(made.pixels);
+    const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
+    const u = this.mat.uniforms;
+    u.uTufts.value = this.atlas.albedo; u.uTuftN.value = this.atlas.normal; (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);
+    old.albedo.dispose(); old.normal.dispose();
+  }
+
   /** Another night's map (View.setGame): its tufts worked out afresh, every block emptied and free, and the canopy's and
-   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's.) */
+   *  clearings' uniforms its ground's. (The tufts' art, by area type, is the page's, drawn again only for another biome: setArt.) */
   setMap(map: ForestMap, forest: Forest | undefined, ground?: Record<string, THREE.IUniform>): void {
     this.map = map; this.forest = forest;
     this.cells.clear(); this.held.clear(); this.free = []; this.top = 0; this.lastCi = NaN; this.lastCj = NaN;

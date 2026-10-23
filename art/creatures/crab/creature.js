@@ -18,5 +18,15 @@ export const CREATURE_CRAB = {
     scale: { groundAcceleration: 1.6, "dash.distance": 1.2 },
     label: "Crab's Sidestep: quicker off the mark on foot, and a longer blink"
   },
-  character: { sprite: "shiver", every: [3, 6], for: 0.6 }
+  character: { sprite: "shiver", every: [3, 6], for: 0.6 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: null,
+    special: "cover",
+    retreat: "backLine",
+    rhythm: "slow",
+    pressure: 2,
+    call: "the raise",
+    tells: { melee: "claws open", special: "the raise" }
+  }
 };

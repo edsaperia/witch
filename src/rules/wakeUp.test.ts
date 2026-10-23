@@ -231,10 +231,10 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
 });
 
 describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
-  it("every dressing station but the hat's mirror, the bags and the broom stand is in the bedroom", () => {
+  it("every dressing station but the hat's mirror, the bags and the Workshop's is in the bedroom", () => {
     const st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
     expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["cloakPegs", "dressingTable", "shoeRack", "wardrobe"]);
-    expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "broomStand", "mirror"]);
+    expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "broomBay", "lathe", "mirror", "pegboard"]);
   });
 
   it("the island ready before she's up, the curtains open as she gets up, not while she's in bed", () => {
