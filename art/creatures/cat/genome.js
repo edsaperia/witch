@@ -1,6 +1,6 @@
-// the meadow's wildcat (Ed, 2026-10-12: the glowworm replaced by a cat hunting in the long grass): a stocky striped tabby, a broad
-// round head, a thick blunt tail; its legend crowned
-export const GENOME_CAT = { id: "cat", name: "Wildcat", template: "quadruped", builder: "quad", palette: { hue: .08, sat: .1, val: .52, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .38, snoutD: .7, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45 }, parts: { ears: { kind: "point", size: 1.3 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 13, w: .3 }, socks: .2 }, legend: [],
+// the hot lands' sand cat (Ed, 2026-10-12: a wildcat hunting in the long grass; the biome roster, 2026-10-23: now the desert's):
+// small and stocky, pale sand, a broad flat head under big low-set ears, faint bars only, a black-ringed tail; its legend crowned
+export const GENOME_CAT = { id: "cat", name: "Sand cat", template: "quadruped", builder: "quad", palette: { hue: .1, sat: .32, val: .78, belly: "white", magic: .13 }, body: { hgt: .7, len: .68, chest: .4, tuck: .48, neck: .2, neckAng: .75, neckW: .36, hr: .32, legW: .58 }, head: { snout: .34, snoutD: .66, snoutTaper: .85, cheeks: true, whiskers: true, eyeK: 1.45, skullZ: 1.15, skullY: .9 }, parts: { ears: { kind: "point", size: 1.7 }, tail: "stoat", feet: "paw" }, coat: { belly: true, tabby: { n: 9, w: .14, mat: "BODY2" }, socks: .2 }, legend: [],
   // its legend, the elder of the wildcats (docs/ART-GUIDE.md 0c): the meadow's old queen, big and broad, a lion's ruff of
   // cheek fur gone pale with age, long claws, a collar of beads round each leg, and her crown
   levels: [

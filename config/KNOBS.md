@@ -67,6 +67,7 @@ The sea chart (the map table and chart.html; render/chart/seaChart.ts, render/ch
 | `chart.moon.shadow` | number | 0 to … |
 | `chart.moon.disc` | boolean |  |
 | `chart.edgeBand` | number | 0 to … |
+| `chart.sailHold` | number | 0 to … |
 
 ### `islands`
 
@@ -1809,6 +1810,18 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `camera.station.distance` | number | 0 to … |
 | `camera.station.side` | number |  |
 | `camera.station.ease` | number | 0 to … |
+| `camera.station.parts.head.look` | number | -5 to 5 |
+| `camera.station.parts.head.distance` | number | 0 to … |
+| `camera.station.parts.hat.look` | number | -5 to 5 |
+| `camera.station.parts.hat.distance` | number | 0 to … |
+| `camera.station.parts.top.look` | number | -5 to 5 |
+| `camera.station.parts.top.distance` | number | 0 to … |
+| `camera.station.parts.legs.look` | number | -5 to 5 |
+| `camera.station.parts.legs.distance` | number | 0 to … |
+| `camera.station.parts.feet.look` | number | -5 to 5 |
+| `camera.station.parts.feet.distance` | number | 0 to … |
+| `camera.station.parts.broom.look` | number | -5 to 5 |
+| `camera.station.parts.broom.distance` | number | 0 to … |
 
 ### `pixelSize`, `spriteTilt`, `artPixelsPerMetre`, `viewMargin`
 

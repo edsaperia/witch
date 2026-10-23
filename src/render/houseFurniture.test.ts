@@ -39,6 +39,15 @@ describe("the treehouse's furniture", () => {
       if (id === "microphone") { const s = d.marks.spot; expect(s.y, "the spot lamp over the mic").toBeLessThan(d.origin.y - 20); expect(s.x).toBeGreaterThan(0); expect(s.x).toBeLessThan(d.sp.w); }
     }
   });
+  it("draws the Workshop's pieces (Hotel's, Ed's OK 2026-10-23) with their marks for Hotel's broom and parts: the bay's and the lathe's rest, the biome board's nine cells in rows from the top left", () => {
+    for (const id of ["broomBay", "lathe", "pegboard"]) {
+      const o = HOUSE_ROOMS.objects.find(q => q.id === id)!, { yaw, foot, curve } = standing(o);
+      const d = furnitureSprite(id, foot, {}, { ppm: PPM, yaw, curve }) as Drawn & { marks: Record<string, { x: number; y: number }> };
+      const want = id === "pegboard" ? [...Array(9).keys()].map(i => `cell${i}`) : ["rest"];
+      for (const k of want) { const q = d.marks[k]; expect(q, `${id}.${k}`).toBeDefined(); expect(q.x).toBeGreaterThan(0); expect(q.x).toBeLessThan(d.sp.w); expect(q.y).toBeGreaterThan(0); expect(q.y).toBeLessThan(d.origin.y); }
+      if (id === "pegboard") { const c = d.marks; expect(c.cell0.y, "rows from the top").toBeLessThan(c.cell3.y); expect(c.cell3.y).toBeLessThan(c.cell6.y); }
+    }
+  });
   it("draws its states differently (the curtains open and shut)", () => {
     const o = HOUSE_ROOMS.objects.find(q => q.id === "curtains")!, { yaw, foot } = standing(o);
     const [a, b] = ["open", "shut"].map(state => (furnitureSprite("curtains", foot, {}, { ppm: PPM, yaw, state }) as Drawn).sp.m.join());
