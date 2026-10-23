@@ -136,7 +136,7 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 
 ### Phase 2
 
-**Built a biome at a time, data only** (Juliet, from 2026-10-23; `config/packs.json`, each kind's `pack-<kind>` arena and its special's sign in `packs.test.ts`): volcanic (komodo, salamander, stegosaurus); badlands (armadillo, meerkat, rattlesnake, scorpion); hot (cat, cheetah, fennec, lion). Their specials and retreats are today's: a movement-reversing confusion is the bat's (`specialWith.move`), the salamander's flame line a slowing wall, a freeze the `freeze` retreat. The kinds that need a new special (knockback, pull, decoy, mind control) come with it (Lima).
+**Built a biome at a time, data only** (Juliet, from 2026-10-23; `config/packs.json`, each kind's `pack-<kind>` arena and its special's sign in `packs.test.ts`): volcanic (komodo, salamander, stegosaurus); badlands (armadillo, meerkat, rattlesnake, scorpion); hot (cat, cheetah, fennec, lion); jungle (elephant, jaguar, snake, tiger). Their specials and retreats are today's: a movement-reversing confusion is the bat's (`specialWith.move`), the salamander's flame line a slowing wall, a freeze the `freeze` retreat. The kinds that need a new special (knockback, pull, decoy, mind control) come with it (Lima).
 
 | Kind | Melee (tell) | Ranged (tell) | Special: pack move (tell) | Retreat | Rhythm |
 |---|---|---|---|---|---|
@@ -175,7 +175,7 @@ Ranged moves are magic in the species' neon unless named otherwise; a young one'
 | crab | pinch | none | **cover**: a claw raised over a hurt packmate (the raise) | sidle off in a line | slow |
 | dragonfly | bite in a hop-swoop (hover) | a water drop bolt, 10 m | **sync**: darts where she blinks (a hover) | hover apart, half landing | tight |
 | lion | heavy swipe, knockback | a roar bolt, 12 m | **call**: a roar, the pride strikes together (the roar) | split in two, come at her flanks | steady |
-| tiger | heavy swipe in a pounce | a growl bolt, 12 m | **feint**: a short spring, the real pounce from behind (crouch) | into the long grass and freeze | steady |
+| tiger | heavy swipe in a pounce | a growl bolt, 12 m | **feint**: a short spring, the real pounce from behind (crouch) | into the long grass and freeze | slow (built: at steady it reached its place after the freeze, 2026-10-23) |
 | jaguar | bite in a pounce | a bolt, 12 m | **sync**: pounces where she blinks to (a stillness) | up a tree, down behind her | steady |
 | snowleopard | bite in a pounce | a snow bolt, 14 m | **feint**: a spring short, the next lands (tail up) | up the crags, hard to see | steady |
 | elephant | trunk slam, knockback | none | **stampede**: the herd charges in a line (ears out) | back off together, trumpeting | slow |

@@ -16,5 +16,16 @@ export const CREATURE_SNAKE = {
   temperament: "skittish",
   voice: { family: "snake" },
   buff: { name: "Strike", kind: "shot", scale: { "invites.speed": 1.4 }, label: "Snake's Strike: 💌s fly faster" },
-  character: { posture: { head: [0, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 }
+  character: { posture: { head: [0, 0.02], body: 0 }, quirk: "rise", every: [5, 9], for: 1.4 },
+  pack: {
+    melee: { attacks: [null, "nip", "maul"] },
+    ranged: { name: "venom spit", range: 14, shots: [0, 1, 2], spread: 10, tint: "red" },
+    special: "confusion",
+    specialWith: { move: true, radius: 5 },
+    retreat: "freeze",
+    rhythm: "slow",
+    pressure: 1,
+    call: "the sway",
+    tells: { melee: "coils", ranged: "head back", special: "the sway" }
+  }
 };
