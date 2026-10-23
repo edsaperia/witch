@@ -269,6 +269,24 @@ const WORSHIP = {
   } },
 };
 
+// ---------------- the step pyramid (Ed, 2026-10-23: the feathered serpent's own clearing) ----------------
+const LANDMARK_PYRAMID = {
+  "step-pyramid": { desc: "a stepped pyramid of five mossy terraces, a steep stair up its face between balustrades ending in feathered serpents' heads, a little shrine on top with its doorway dark; ferns and a fig's roots taking its corners", split: 2.2, build(m) {
+    const n = 5, H = .34;
+    for (let i = 0; i < n; i++) { const w = 2.6 - i * .45; ldBlock(m, [0, H * (i + .5), 0], [w, H * .5, w * .9], 1 + (i % 2), { courses: 2, moss: .3 + i * .04 }); } // the terraces
+    const top = H * n, front = 2.6 * .9;
+    for (let k = 0; k < 14; k++) { const t = k / 14, y = top * t, z = front - (front - .5) * t; m.box([0, y + .05, z + .08], [.42, .06, .1], M.STONE, { group: 6, round: .01, paint: ldStone(0, .25) }); } // the stair, step by step
+    for (const x of [-.52, .52]) { m.seg([x, .14, front + .15], [x, top + .1, .45], .1, .09, M.STONED, { group: 7 + (x > 0 ? 1 : 0), paint: ldStone(0, .35) }); // the balustrades, and at their feet the serpents' heads, jaws open, feathered
+      m.ell([x, .2, front + .32], [.2, .17, .2], M.STONE, { group: 9 + (x > 0 ? 1 : 0), paint: p => ctCell(p, 8, 3) < .2 ? M.MOSS : undefined });
+      m.ell([x, .1, front + .48], [.12, .06, .14], M.STONED, { group: 9 + (x > 0 ? 1 : 0) });
+      for (let f = 0; f < 5; f++) { const a = -1.2 + f * .6; m.seg([x, .28, front + .22], [x + Math.sin(a) * .28, .28 + Math.cos(a) * .26, front + .14], .05, .015, M.STONE, { group: 11, paint: ldStone(0, .4) }); } }
+    ldBlock(m, [0, top + .32, -.1], [.62, .32, .55], 12, { courses: 3, moss: .25 }); ldBlock(m, [0, top + .7, -.1], [.7, .07, .62], 13, { courses: 0, moss: .4 }); // the shrine and its roof slab
+    m.box([0, top + .26, .5], [.2, .26, .2], M.STONED, { group: 12, cut: true }); // its doorway
+    m.chain([[2.2, .2, 1.6, .09], [1.7, .8, 1.2, .07], [1.3, 1.3, .8, .05], [1.1, 1.8, .5, .04]], M.TRUNK, { group: 14, rough: .01 }); ctCrown(m, [1.1, 2.1, .5], [.6, .42, .5], 15); // a fig taking the corner
+    ctFern(m, [-2.1, .1, 1.8], 16, 1.3); ctFern(m, [1.9, .7, -1.2], 17); ctIvy(m, [-2.4, 0, 2.2], [-2.0, 1.2, 1.9], 18, 141); ctTufts(m, 22, 3.2, 19, 142);
+  } },
+};
+
 // ---------------- castle ruins ----------------
 const LANDMARK_CASTLE = {
   "curtain-wall": { desc: "a stretch of curtain wall, its battlements gapped, arrow slits, ivy up its face", split: 2.2, build(m) {
@@ -457,6 +475,7 @@ const table = [
   ...Object.entries(LANDMARK_CARPARK).map(([id, d]) => ({ id, family: "carpark", ...d })),
   ...Object.entries(LANDMARK_SCRAP).map(([id, d]) => ({ id, family: "scrap", ...d })),
   ...Object.entries(WORSHIP).map(([id, d]) => ({ id, family: "worship", ...d })),
+  ...Object.entries(LANDMARK_PYRAMID).map(([id, d]) => ({ id, family: "pyramid", ...d })),
   ...Object.entries(LANDMARK_CASTLE).map(([id, d]) => ({ id, family: "castle", ...d })),
   ...Object.entries(LANDMARK_CLASSICAL).map(([id, d]) => ({ id, family: "classical", ...d })),
   ...Object.entries(LANDMARK_CLASSICAL_GEN).map(([id, d]) => ({ id, family: "classical", ...d })),

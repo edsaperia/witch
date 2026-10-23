@@ -1790,6 +1790,44 @@ export function scorpion3d(S, level, frame, st, facing = "towards") {
 // eye. Its legend (Ed's brief, ART-GUIDE §0c: the elder of its kind; "emphasise the thing that makes that creature unusual"):
 // the most heads, and two necks cut short long ago, in front, each sprouting two new heads (heads that regrow), bronze offering
 // rings high on its necks, old scars. S.hydra: { heads: [per level], crest: true (a draconic crest of spines and frills) }.
+// The feathered serpent (Ed, 2026-10-23: the jungle's fantastic kind, unknown-27's slot, ring 5; "the serpent template plus feathers,
+// in bright plumage"): an emerald serpent, gold-bellied, its front raised in an S, a ruff of long scarlet, gold and turquoise feathers
+// fanned round its neck, a crest of plumes off the back of its head and long streamers off its tail. Its levels (levelQ): thick (its
+// girth), rise (how high its neck stands), ruff (the ruff's feathers' length, 0 none), plumes (tail streamers), crest (head plumes),
+// wings (feathered wings off its back: 0 none, their size), glow (its feathers' tips burning in its magic: the legend's).
+export function quetzal3d(S, level, frame, st, facing = "towards") {
+  const legend = level === 3, m = new Model(), q = S.levelQ?.[level] || {}, ph = frame ? .7 : 0, flut = frame ? .06 : 0, pts = [];
+  const th = q.thick ?? 1, rise = q.rise ?? 1, r0 = .05 * th, tipMat = q.glow ? M.MAGIC : M.ACCENT, PLUME = [M.FLOWER, M.BODY2, M.ACCENT, M.FLOWER, M.MAGIC2];
+  for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push([-.7 + t * 1.0, r0 * .9, Math.sin(t * Math.PI * 2 + ph) * .26 * (1 - t * .5), r0 * (.35 + .65 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2))]); }
+  const last = pts[12], neck = [last[0] + .1, last[1] + .26 * rise, last[2] * .7], top = [last[0] + .2, last[1] + .5 * rise, last[2] * .5];
+  pts.push([...neck, r0 * .95], [...top, r0 * .85]);
+  m.chain(pts, M.BODY, { paint: p => p[1] < r0 * .45 ? M.BELLY : Math.abs(((p[0] * 9 + Math.abs(p[2]) * 6) % 1 + 1) % 1 - .5) < .1 && p[1] > r0 * .7 ? M.BODY3 : undefined }); // emerald, its belly gold, dark chevrons down its back
+  const feather = (root, dir, len, w, mat, group, tip = tipMat) => { const d = v3.norm(dir), end = v3.add(root, v3.mul(d, len)), mid = v3.add(v3.lerp(root, end, .5), [0, len * .06, 0]); m.chain([[...root, w * .6], [...mid, w], [...end, w * .25]], mat, { group, extra: true, paint: p => v3.dot(v3.sub(p, root), d) > len * .7 ? tip : undefined }); };
+  // the ruff: feathers fanned round its neck, below its head, all round but underneath, swept a little back
+  const N = v3.lerp(neck, top, .55), rf = q.ruff ?? 1, nR = Math.round(10 + rf * 8);
+  if (rf > 0) for (let i = 0; i < nR; i++) { const a = -2.5 + 5 * i / (nR - 1), dir = [-.45 - flut, Math.cos(a) + .15, Math.sin(a) * 1.1]; feather(N, dir, (.16 + .1 * (i % 2)) * rf, .022 * Math.max(.7, rf), PLUME[i % 3], 30 + (Math.sin(a) > 0 ? 1 : 0)); }
+  // the head: a broad serpent's head, a hooked snout, eyes under a brow, a forked tongue out on one frame
+  const hr = .085 * Math.max(.9, th * .95), hc = v3.add(top, [hr * 1.1, hr * .25, 0]);
+  m.part = "head";
+  m.ell(hc, [hr * 1.45, hr * .72, hr * 1.05], M.BODY, { dir: [1, -.2, 0], group: 1, paint: p => p[1] < hc[1] - hr * .3 ? M.BELLY : undefined });
+  m.ell(v3.add(hc, [hr * 1.15, -hr * .12, 0]), [hr * .55, hr * .36, hr * .55], M.ACCENT, { group: 1 }); // its snout, gold like a beak
+  eyesOn(m, hc, [hr * 1.45, hr * .72, hr * 1.05], [[.45, .55, .7], [.45, .55, -.7]], hr * .2, legend ? M.MAGIC2 : M.EYE);
+  if (!frame) for (const s2 of [-1, 1]) m.seg(v3.add(hc, [hr * 1.5, -hr * .3, 0]), v3.add(hc, [hr * 2.3, -hr * .4, s2 * hr * .25]), .008, .006, M.SKIN, { group: 1 });
+  const cr = q.crest ?? 1; for (let k = 0; k < Math.round(2 + cr * 3); k++) feather(v3.add(hc, [-hr * .5, hr * .55, (k - 2) * hr * .18]), [-.7 - k * .08 - flut, .9 - k * .12, (k - 2) * .15], (.12 + .05 * (k % 2)) * cr * (legend ? 1.6 : 1), .018, k % 2 ? M.MAGIC2 : M.FLOWER, 34);
+  m.part = "body";
+  // its tail's streamers: long plumes trailing back and up off its tail
+  const T = pts[0], np = q.plumes ?? 2; for (let k = 0; k < np; k++) { const z = (k - (np - 1) / 2) * .05, a = [T[0] - .02, T[1], T[2] + z], b = [T[0] - .12 - k * .02, T[1] + .14 + flut, T[2] + z * 3], c = [T[0] - .22 - k * .03, T[1] + .26 - flut, T[2] + z * 5 + Math.sin(k + ph) * .04]; m.chain([[...a, .014], [...b, .02], [...c, .008]], PLUME[(k + 1) % PLUME.length], { group: 36 + (k % 2), extra: true, paint: p => p[0] < c[0] + .06 ? tipMat : undefined }); }
+  // its wings: a pair of feathered wings off its back behind the ruff, flight feathers fanned up and back
+  const W = q.wings ?? 0; if (W) for (const side of [-1, 1]) {
+    const sh = v3.add(pts[6].slice(0, 3), [0, r0 * .8, side * r0 * .6]), wr = v3.add(sh, [-.05 * W, .32 * W + flut, side * .22 * W]);
+    m.chain([[...sh, .03 * W], [...wr, .022 * W]], M.BODY, { group: 40 + (side > 0 ? 1 : 0), extra: true });
+    for (let i = 0; i < 7; i++) { const t = i / 6, root = v3.lerp(wr, sh, t * .8); feather(root, [-.6 - .4 * t, .6 - .5 * t, side * .1], W * (.42 - .2 * t), .03 * W, i % 2 ? M.FLOWER : M.BODY2, 42 + (side > 0 ? 1 : 0)); }
+  }
+  m.anchors.feet.push({ c: v3.add(T.slice(0, 3), [-.02, -.01, 0]), r: .06, group: 3, tail: true }); // no feet: a tiny shoe on its tail tip
+  m.anchors.neck = { c: v3.lerp(neck, top, .3), r: r0 * 1.2, dir: [.2, 1, 0] };
+  return finish(m, S, level, st, .5, facing);
+}
+
 export function hydra3d(S, level, frame, st, facing = "towards") {
   const legend = level === 3, m = new Model(), ph = frame ? .6 : 0, heads = (S.hydra?.heads || [1, 3, 5, 7])[level], crest = !!S.hydra?.crest, pts = [];
   for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([-.75 + t * .95, .07, Math.sin(t * Math.PI * 1.6 + ph) * .2 * (1 - t * .4), .035 + .05 * Math.sin(Math.min(1, t * 1.3) * Math.PI / 2)]); }
