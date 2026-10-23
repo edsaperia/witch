@@ -313,7 +313,7 @@ function installCss(): void {
   if (cssDone) return; cssDone = true;
   const s = document.createElement("style");
   s.textContent = `
-#station-panel { --ol: #0b0716; position: fixed; left: 0; top: 12px; bottom: 12px; width: min(330px, 40vw); z-index: 18; display: none; box-sizing: border-box; padding: 8px 12px 8px 16px; color: var(--ink, #e8e2f4); font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; transform: translateX(-105%); transition: transform ${SLIDE_MS}ms ease-out; flex-direction: column; gap: 6px; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9); }
+#station-panel { --ol: #0b0716; position: fixed; left: 0; top: 12px; bottom: 12px; width: min(330px, 40vw); z-index: 18; display: none; box-sizing: border-box; padding: 8px 12px 8px 16px; border: 1px solid rgba(232,180,106,.7); border-left: 0; border-radius: 0 12px 12px 0; box-shadow: 0 0 0 1px rgba(11,7,22,.75), inset 0 0 0 1px rgba(11,7,22,.75); color: var(--ink, #e8e2f4); font: 13px/1.35 ui-monospace, Menlo, Consolas, monospace; transform: translateX(-105%); transition: transform ${SLIDE_MS}ms ease-out; flex-direction: column; gap: 6px; user-select: none; text-shadow: -1px -1px 0 var(--ol), 1px -1px 0 var(--ol), -1px 1px 0 var(--ol), 1px 1px 0 var(--ol), 0 0 6px rgba(0,0,0,.9); }
 #station-panel.in { transform: none; }
 #station-panel .sp-banner { color: var(--accent, #e8b46a); font-size: 12px; }
 #station-panel .sp-head { display: flex; align-items: baseline; gap: 8px; }
