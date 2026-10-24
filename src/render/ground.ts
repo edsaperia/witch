@@ -119,20 +119,23 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
   vec3 k = clamp(abs(mod(fract(h) * 6.0 + vec3(0, 4, 2), 6.0) - 3.0) - 1.0, 0.0, 1.0);
   return clamp(v, 0.0, 1.0) * mix(vec3(1.0), k, clamp(s, 0.0, 1.0));
 }
+#ifdef GROUND_LAKES
 ${LAKE_LOOKS_GLSL}
+#endif
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
-  // How many art pixels one screen pixel spans, across and down (taken here, in uniform flow): over 1 when the camera is far
-  // back or low (the beach's, stargazing), where art-pixel-fine patterns would alias into stripes. The sand and sea draw on a
-  // coarser grid instead (sandCell: the art pixel doubled until it's at least a screen pixel; Ed, 2026-10-12: "The beach is not
-  // pixelated like everything else"), so their grain stays chunky and fixed to the world rather than fading to smooth.
-  vec2 sandCell = exp2(ceil(log2(max(vec2(1.0), vec2(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel))));
   vec2 p = (px + 0.5) * uPixel;                   // its centre, in metres
   // Wobble the lookup a little so area borders read as ragged, not as the texture's grid.
   vec2 j = vec2(vnoise(px / 5.0) - 0.5, vnoise(px / 5.0 + 17.0) - 0.5) * 0.9;
   // The beach and the sea (Ed, 2026-10-06; on only while she's near the edge: render/beach.ts).
   float shoreNear = 0.0; // (the forest floor near the sand: more moonlight, greener; Ed, 2026-10-06: "the forest still shows greens rather than black")
+#ifdef GROUND_BEACH
   if (uBeach.x > 0.0) {
+    // How many art pixels one screen pixel spans, across and down (taken here, in uniform flow: the branch is on a uniform): over 1 when the camera is far
+    // back or low (the beach's, stargazing), where art-pixel-fine patterns would alias into stripes. The sand and sea draw on a
+    // coarser grid instead (sandCell: the art pixel doubled until it's at least a screen pixel; Ed, 2026-10-12: "The beach is not
+    // pixelated like everything else"), so their grain stays chunky and fixed to the world rather than fading to smooth.
+    vec2 sandCell = exp2(ceil(log2(max(vec2(1.0), vec2(fwidth(vWorld.x), fwidth(vWorld.z)) / uPixel))));
     // (from the land map: how far past the coast this is (bd: + out to sea), where the sand starts (sand: its width in from the
     // coast) and the sea (shore); off the map's grid, the sea, deeper the further off)
     vec2 luv = (p - uLandBox.xy + uBeach.z) * uLandBox.zw, cuv = clamp(luv, vec2(0.0), vec2(1.0));
@@ -229,6 +232,7 @@ void main() {
       return;
     }
   }
+#endif
   vec4 area = texture2D(uAreas, (p + j - uExtent.xy) / uExtent.zw);
   float open = area.a > 0.5 ? area.g : 1.0;
   int t = int(area.r * 255.0 + 0.5);
@@ -393,6 +397,7 @@ void main() {
   // Lakes (Ed, 2026-10-11, rules/lakes.ts): no beach, a small shore: the area's own floor running down into the water, darker
   // and wet over the last couple of metres, a pale line lapping at the edge; then shallows where the floor still shows under
   // the water, deepening to a lake blue lighter than the sea's, the night sky in it (its stars, the moon's glint) and ripples.
+#ifdef GROUND_LAKES
   if (uLake.x > 0.0) {
     vec2 kuv = (p - uLakeBox.xy + uLake.y) * uLakeBox.zw;
     if (kuv.x > 0.0 && kuv.y > 0.0 && kuv.x < 1.0 && kuv.y < 1.0) {
@@ -461,6 +466,7 @@ void main() {
       }
     }
   }
+#endif
   // Ponds: dark water mirroring the moon. The glint is a fake highlight from the view and a
   // moon mirrored into the sky ahead, so it slides as the camera moves, and shimmers.
   {
@@ -565,8 +571,12 @@ export class Ground {
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(made);
+    // The shader as two programs over one set of uniforms (the perf pass's fix C, 2026-10-23, tools/bench/ground.cjs: code a
+    // pixel never runs still cost the ground a quarter to two fifths of its time on the cloud's renderer): the lakes' code only on
+    // an island with lakes (fixed for the night), and the beach and sea's only in the second, drawn while the beach is on (setBeach).
+    const lakes = !!map.bounds.lakes, defines = (beach: boolean): Record<string, string> => ({ ...(lakes ? { GROUND_LAKES: "" } : {}), ...(beach ? { GROUND_BEACH: "" } : {}) });
     const mat = new THREE.ShaderMaterial({
-      vertexShader: VERT, fragmentShader: FRAG,
+      vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
         uAreas: { value: this.texture },
@@ -612,8 +622,14 @@ export class Ground {
       if (Math.abs(P.getX(i)) >= REACH - 0.01) P.setX(i, Math.sign(P.getX(i)) * SKIRT);
       if (Math.abs(P.getZ(i)) >= REACH - 0.01) P.setZ(i, Math.sign(P.getZ(i)) * SKIRT);
     }
+    this.plain = mat;
+    this.beach = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, defines: defines(true), uniforms: mat.uniforms });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.frustumCulled = false;
+    // (the beach's program held by a twin that's never shown, so the view compiles and warms it with the rest: View.compileAll)
+    const twin = new THREE.Mesh(geo, this.beach);
+    twin.visible = false; twin.frustumCulled = false;
+    this.mesh.add(twin);
     this.follow((e.minX + e.maxX) / 2, (e.minZ + e.maxZ) / 2);
   }
 
@@ -659,6 +675,7 @@ export class Ground {
   moonRoad(x: number, widthPx: number, up: boolean): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uMoonRoad.value as THREE.Vector3).set(x, widthPx, up ? 1 : 0); }
   setBeach(b: Beach | null): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, v = u.uBeach.value as THREE.Vector4;
+    this.mesh.material = b ? this.beach : this.plain;
     if (!b) { v.set(0, 0, 0, 0); return; }
     const L = b.land;
     if (this.landFor !== b) {
@@ -678,6 +695,9 @@ export class Ground {
   /** The sand's grain: how far each of its art pixels is lightened or darkened, at random (the tuning's beach.grain). */
   sandGrain(k: number): void { ((this.mesh.material as THREE.ShaderMaterial).uniforms.uBeach.value as THREE.Vector4).w = k; }
   private landFor: Beach | null = null;
+  /** The ground's two programs (one set of uniforms): without the beach and sea, and with them. */
+  private readonly plain: THREE.ShaderMaterial;
+  private readonly beach: THREE.ShaderMaterial;
   private landTex: THREE.DataTexture | null = null;
 
   setCircle(hue: number, hue2: number, brightness: number, turn: number): void {
@@ -759,7 +779,7 @@ export class Ground {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
     this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.discoTiles.dispose();
-    this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose();
+    this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
   }
 }
 
