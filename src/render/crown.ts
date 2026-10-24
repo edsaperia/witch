@@ -141,7 +141,7 @@ void main() {
   vec3 N = normalize(u.x * uRight + u.y * uUp + uBack * sqrt(max(0.05, 1.0 - dot(u, u))));
   vec3 L = vLight * (0.55 + 0.6 * max(0.0, dot(N, uMoonDir)) + 0.25 * N.y);
   float y = dot(L, vec3(0.3, 0.55, 0.15)), speck = vnoise2(gl_FragCoord.xy * 0.45) * 0.6 + vnoise2(gl_FragCoord.xy * 0.9 + 7.0) * 0.4;
-  float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
+  float t = clamp(floor(y * 8.5 + 0.3 + (speck - 0.5) * 1.6), 0.0, 4.0); // (a step lighter than the forest's: the mock's crown stands out of the woods)
   vec3 tint = L / max(y, 1e-3);
   vec3 c = leafTone(t) * mix(vec3(1.0), clamp(tint, 0.0, 2.0), 0.12) * (0.85 + 0.4 * min(1.0, y * 2.0));
   gl_FragColor = vec4(crownHaze(c, vWorld), 1.0);

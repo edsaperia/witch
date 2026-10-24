@@ -136,7 +136,9 @@ export class CrownLandmark {
     const cam = camera.position, dist = Math.hypot(cx - cam.x, cz - cam.z), topY = at.y + d.top;
     // the real crown's top hidden by the bend: the impostor up; as the real one clears the horizon, it goes
     const hc = LIGHT_UNIFORMS.uHazeCentre.value, far = Math.min(1, Math.max(0, (Math.hypot(cx - hc.x, cz - hc.y) - LIGHT_UNIFORMS.uHazeRange.value.x) / Math.max(1, LIGHT_UNIFORMS.uHazeRange.value.y - LIGHT_UNIFORMS.uHazeRange.value.x)));
-    const show = !this.baked || indoors || B.x <= 0 ? 0 : !overBendAt(cx, topY, cz, cam) ? 1 : far * far;
+    // (never near it: within one and a half of its widths of her (the bend's focus) the real crown is in view, whatever the haze says)
+    const R = Math.max(d.rx, d.rz), away = Math.min(1, Math.max(0, (Math.hypot(cx - B.y, cz - B.z) - 1.5 * R) / R));
+    const show = !this.baked || indoors || B.x <= 0 ? 0 : (!overBendAt(cx, topY, cz, cam) ? 1 : far * far) * away;
     const hidden = show > 0.02;
     this.u.uShow.value = show;
     for (const o of this.meshes) o.visible = hidden;
