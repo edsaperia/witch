@@ -922,6 +922,7 @@ export class View {
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
     await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
+    performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
     // finds them on the GPU. The hidden too, as above.
@@ -929,7 +930,9 @@ export class View {
     this.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
     const R = this.renderer;
     await runSliced((function* () { for (const t of textures) { if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
+    performance.mark("witch:prep-textures");
     await this.warmDraws();
+    performance.mark("witch:prep-draws");
   }
 
   /** The first frame drawn ahead, a pass a step, its targets a few pixels across (render/post.ts renderSteps): a GL's first draw
