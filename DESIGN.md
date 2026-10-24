@@ -481,9 +481,9 @@ The buffs below are off since 2026-10-18 (see Legend buffs, redesigned).
 ### Multiplayer (Ed, 2026-10-04)
 
 - **Online co-op** is a goal (not versus, not same-screen); networking comes later. Each player is a witch with her own leash stack, spell and camera; creatures, soundsystems, waves and the forecast are shared.
-- **Waves:** the clock stays the same; each wave wakes **one new area per witch** in the game at that moment, so witches can join and leave mid-game and it still works.
+- **Waves:** run as normal, whatever the number of witches (Ed, 2026-10-24; once "one new area per witch", now dropped). Witches can join and leave at any time. The full multiplayer design (the telephone lobby, shared time-slowing, finds, kicking) is in docs/backlog/platform.md, "Multiplayer design".
 - **Sigils:** each witch has her own stack, but a sigil placed on the ground belongs to no one: **any witch can pick it up**.
-- **Legend buffs apply to every witch** once earned (its quest done or a relic by it), whoever earned them; earned buffs are never taken away.
+- **Legend buffs:** legends give no powers now (Ed, 2026-10-18 and 2026-10-24); if they come back, they apply to every witch.
 - **For builders now:** no single-witch assumptions in new rules code (pass the acting witch explicitly); per-player state (camera, mode, music mix, HUD, edge cues) lives in `src/render/`; inputs go through one place that could later carry a player id; the picker and forecast take `areasPerWave` (1 for now). Done in Stage 4: `game.witches[]` (each with her body, leash, spell, dash and health; `game.witch` reads the first), and a fixed-timestep (1/60 s) deterministic simulation driven only by inputs and the seed, drawn eased between steps (for balance sims, off-screen fights and netcode).
 
 ## Run structure

@@ -205,8 +205,10 @@ export function letPartyLegendGo(c: Creature): void {
 }
 
 /** One step: talking, placing and picking up, and the leashed creatures moving. `onGround` is
- *  true only in ground mode (no inviting, placing or picking up from the treetops). */
-export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false): void {
+ *  true only in ground mode (no inviting, placing or picking up from the treetops). `guards`: her stack's creatures seen as
+ *  placed at home while she's in the treehouse (rules/houseGuard.ts): they rest by those spots as by a placed sigil, not by
+ *  her; her stack itself is unchanged. */
+export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls, witch: { x: number; z: number }, onGround: boolean, time: number, dt: number, t: Tuning, busy: (id: number) => boolean = () => false, guards: PlacedSigil[] = []): void {
   s.events = [];
   const T = t.invite, L = t.leash, byId = (id: number) => creatures[id];
   const away = (c: Creature) => Math.hypot(c.x - witch.x, c.z - witch.z);
@@ -311,10 +313,11 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     const to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
     stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
   }
-  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
+  const guarding = new Set(guards.map(p => p.id));
+  for (const id of s.stack) if (!busy(id) && !byId(id).partyLegend && !guarding.has(id) && !(babies.length && isBaby(byId(id)))) stepLeashed(byId(id), witch.x, witch.z, dt, t, t.leash.pace ?? 1); // (a party legend never comes to her: rules/partyLegend.ts)
   // Parked, it rests north of its sigil (up the screen, -z), so the sigil stays in sight and easy to pick up (Ed, 2026-10-10: "Leashed
   // animals should come to rest 10m above their placed sigil"; 2026-10-13: the sigil's top just below its feet, by its size: rules/runeOffset.ts).
-  for (const p of s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
+  for (const p of guards.length ? [...s.placed, ...guards] : s.placed) if (!busy(p.id)) { const c = byId(p.id); stepLeashed(c, p.x, p.z - runeOffset(c, t, 1), dt, t); }
 }
 
 /** The sigil button on the ground at her feet (`only`: in a run, just picking up or just putting down; a press does whichever
