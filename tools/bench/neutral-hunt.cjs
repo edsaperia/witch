@@ -5,7 +5,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 // Issue #1091 (Foxtrot's neutral pair, 2026-10-24): the see-through at full opacity (occlusion.fadeOpacity 1) should draw what the
 // see-through off (occlusion.on false) draws; at seed 886806, on the ground at 3250,2698, it differed by 440 px. One frame held (the
 // game's time still), drawn with each, then again with each suspect switched off, to bisect; where they differ saved as a PNG.
-//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her; RAF=1 each picture taken as the smoke's check takes it)
+//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her; RAF=1 each picture taken as the smoke's check takes it; NOAT=1 started as the smoke starts her)
 const SEED = process.env.SEED || "886806", AT = (process.env.AT || "3250,2698").split(",").map(Number);
 const uni = (name, v) => `{ let u = null; v.scene.traverse(o => { u ??= o.material?.uniforms?.${name} ?? null; }); if (!u) throw new Error("no ${name}"); u.value = ${v}; }`;
 const SUSPECTS = {
@@ -27,6 +27,8 @@ const SUSPECTS = {
   nocull: "t.suspects.seeCull = false;", // (uSeeDbg is set from the suspects every frame: frameUniforms.ts)
 };
 const RAF = process.env.RAF === "1";
+// NOAT=1: started as the smoke starts her (at her decks, then put on the spot before the night starts), not by ?at= in the link
+const NOAT = process.env.NOAT === "1";
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPECTS);
 (async () => {
   const outDir = process.argv[2] || "previews/neutral-hunt";
@@ -38,15 +40,20 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
   try {
     const page = await browser.newPage({ viewport: { width: 1000, height: 663 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${SEED}&creator=0&spell=auto&wave=off&at=${AT[0]},${AT[1]}&mode=ground${process.env.QUERY ? "&" + process.env.QUERY : ""}`); // (QUERY=pixels=keep: as the smoke loads it)
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${SEED}&creator=0&spell=auto&wave=off${NOAT ? "&mode=ground" : `&at=${AT[0]},${AT[1]}&mode=ground`}${process.env.QUERY ? "&" + process.env.QUERY : ""}`); // (QUERY=pixels=keep: as the smoke loads it)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
+    if (NOAT) {
+      // (as the smoke does: on the spot before the night starts, the art round it in, then started)
+      await page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, perch: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, AT);
+      for (let i = 0; i < 120; i++) { if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) break; await new Promise(r => setTimeout(r, 5000)); }
+    }
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     const NONE = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
     if (process.env.FOX !== "0") {
       // (placed as the smoke's neutral section places her, tools/smoke/smoke.cjs: on the spot, a step north to settle the camera,
       // back on the spot, four seconds of play there and ten more, then paused, so the camera and her framing are its own)
-      const place = () => page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, AT);
+      const place = () => page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, perch: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, AT);
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
       await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 });
