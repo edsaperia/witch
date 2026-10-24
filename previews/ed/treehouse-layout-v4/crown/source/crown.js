@@ -19,27 +19,19 @@ for (const r of BRANCH) { const p = byId[r.from], L = Math.hypot(r.x - p.x, r.z 
   CL.push({ a: p, b: r, bend: r.bend, w0: 1.8, w1: 1.2 });
   for (const k of [-.7, .05, .6]) { const c = Math.cos(k), s = Math.sin(k), dx = ux * c - uz * s, dz = ux * s + uz * c, len = 10 + 6 * hash(r.x + k, r.z);
     CL.push({ a: r, b: { x: r.x + dx * len, z: r.z + dz * len }, bend: (hash(k, r.x) - .5) * 3, w0: .8, w1: .3 }); } }
+for (const l of BARK_LIMBS) if (!l.root) CL.push(l); // revision 4: the limbs carrying on past the branch rooms, the topmost limbs over the Turret
 for (const r of TRUNK) for (const k of [0, 1]) { const ang = (r.side > 0 ? Math.PI : 0) + (k ? .8 : -.8) + (hash(r.x, k) - .5) * .6, len = r.r + 9;
   CL.push({ a: r, b: { x: r.x + Math.cos(ang) * len, z: r.z + Math.sin(ang) * len }, bend: (hash(r.z, k) - .5) * 3, w0: 1, w1: .35 }); }
 // the crown's density: big clumps (lobes) and smaller ones, thinning towards its ragged edge
 const dens = (x, z) => fbm(x * .07 + 11, z * .07) * .65 + fbm(x * .21, z * .21 + 4) * .35;
 
-function limbFine(l, x, z) {
-  const a = l.a, b = l.b, ex = b.x - a.x, ez = b.z - a.z, L = Math.hypot(ex, ez), t0 = Math.max(0, Math.min(1, ((x - a.x) * ex + (z - a.z) * ez) / (L * L)));
-  if (Math.hypot(x - a.x - ex * t0, z - a.z - ez * t0) > Math.abs(l.bend) * 2 + l.w0 + 3) return [1e9, 0, 0];
-  const nx = -ez / L, nz = ex / L, cx = (a.x + b.x) / 2 + nx * l.bend * 2, cz = (a.z + b.z) / 2 + nz * l.bend * 2, n = Math.ceil(L * 3);
-  let best = 1e9, bt = 0, side = 0;
-  for (let i = 0; i <= n; i++) { const t = i / n, px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x, pz = (1 - t) * (1 - t) * a.z + 2 * (1 - t) * t * cz + t * t * b.z, d = Math.hypot(x - px, z - pz);
-    if (d < best) { best = d; bt = t; const tx = 2 * (1 - t) * (cx - a.x) + 2 * t * (b.x - cx), tz = 2 * (1 - t) * (cz - a.z) + 2 * t * (b.z - cz); side = ((x - px) * -tz + (z - pz) * tx) / Math.hypot(tx, tz); } }
-  const w = l.w0 + (l.w1 - l.w0) * bt + .25 * (fbm(x * .4, z * .4) - .5); return [best - w, bt, side];
-}
 let OPT = null; // { her: [x, z] or null, holeR: m }
 window.crownSet = o => { OPT = o; };
 window.crownPass = function (img, W, H, x0, z0, ZK, dist) {
   if (!OPT) return;
   const sh = Math.round(HC * Math.cos(A) * PPM * (ZK < 1 ? 1 : 0)), dzc = ZK < 1 ? HC / Math.tan(A) : 0; // (the crown 5 m up: on screen it sits 5 m x cos 24 higher)
   const her = OPT.her, hi = her ? (her[0] - x0) * PPM : 0, hj = her ? (her[1] - z0) * PPM * ZK - .8 * Math.cos(A) * PPM : 0;
-  const RH = (OPT.holeR || 7) * PPM, RE = 1.8 * PPM, d = img.data;
+  const RH = (OPT.holeR || 7) * PPM, RE = 1.8 * PPM, d = img.data, mask = new Uint8Array(W * H); // (mask: 1 the crown's leaves or limbs, 2 a gap)
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), zc = z + dzc;
     if (her) { const r = Math.hypot(i - hi, j - hj); if (r < RH || (r < RH + RE && BAYER[(i & 3) + (j & 3) * 4] > (r - RH) / RE)) continue; } // the see-through hole
@@ -58,11 +50,32 @@ window.crownPass = function (img, W, H, x0, z0, ZK, dist) {
       if (best < 0) { const across = bs / bw, fur = noise(bt * bl * .7, across * 2.4 + bl);
         c = fur < .36 ? BARK[0] : across < -.45 ? BARK[3] : across < .35 ? BARK[2] : BARK[1];
         if (across < -.2 && fbm(x * .7, zc * .7) > .62) c = MOSS[hash(i, j) < .5 ? 0 : 1]; }
-      else { d[k * 4] *= .22; d[k * 4 + 1] *= .26; d[k * 4 + 2] *= .34; continue; }
+      else { d[k * 4] *= .22; d[k * 4 + 1] *= .26; d[k * 4 + 2] *= .34; mask[k] = 2; continue; }
     }
-    d[k * 4] = c[0]; d[k * 4 + 1] = c[1]; d[k * 4 + 2] = c[2];
+    d[k * 4] = c[0]; d[k * 4 + 1] = c[1]; d[k * 4 + 2] = c[2]; mask[k] = 1;
+  }
+  // the string lights in the crown overhead: swags along its limbs and strings across its clumps, each bulb a pixel where the crown is
+  // (none in her hole: they're up in the crown, cut away with it), its glow on the leaves round it and through the gaps onto the floor
+  if (OPT.lights) { if (!IN_BULBS) IN_BULBS = inBulbs(); const gl = new Float32Array(W * H * 3), RG = 6, vis = [];
+    for (const B of IN_BULBS) { const i = Math.floor((B.x - x0) * PPM), j = Math.floor((B.z - dzc - z0) * PPM * ZK + B.down * Math.cos(A) * PPM);
+      if (i < 0 || j < 0 || i >= W || j >= H || mask[j * W + i] !== 1) continue; vis.push([i, j, B]);
+      for (let jj = Math.max(0, j - RG); jj <= Math.min(H - 1, j + RG); jj++) for (let ii = Math.max(0, i - RG); ii <= Math.min(W - 1, i + RG); ii++) { const q = Math.hypot(ii - i, jj - j) / RG; if (q >= 1 || !mask[jj * W + ii]) continue;
+        const f = (1 - q) * (1 - q) * (mask[jj * W + ii] === 2 ? .5 : .3), k = (jj * W + ii) * 3; gl[k] += B.c[0] * f; gl[k + 1] += B.c[1] * f; gl[k + 2] += B.c[2] * f; } }
+    for (let k = 0; k < W * H; k++) for (let c = 0; c < 3; c++) d[k * 4 + c] = Math.min(255, d[k * 4 + c] + gl[k * 3 + c]);
+    for (const [i, j, B] of vis) { const k = (j * W + i) * 4; d[k] = B.c[0]; d[k + 1] = B.c[1]; d[k + 2] = B.c[2]; }
   }
 };
+let IN_BULBS = null;
+function inBulbs() { // the strings in plan (crown-space x, z), each bulb's drop below the swag's ends (m, shown lower on screen)
+  const PAL = ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"].map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))), out = [];
+  const str = (a, b, sag, o) => { const L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(2, Math.round(L / 1.4)); for (let i = 0; i <= n; i++) { const u = i / n; out.push({ x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u, down: sag * 4 * u * (1 - u), c: PAL[(i + o) % 6] }); } };
+  let o = 0;
+  for (const l of CL) { if (l.w0 < .7) continue; const L = Math.hypot(l.b.x - l.a.x, l.b.z - l.a.z), nx = -(l.b.z - l.a.z) / L, nz = (l.b.x - l.a.x) / L, cx = (l.a.x + l.b.x) / 2 + nx * l.bend * 2, cz = (l.a.z + l.b.z) / 2 + nz * l.bend * 2;
+    const at = t => ({ x: (1 - t) * (1 - t) * l.a.x + 2 * (1 - t) * t * cx + t * t * l.b.x, z: (1 - t) * (1 - t) * l.a.z + 2 * (1 - t) * t * cz + t * t * l.b.z }), n = Math.max(1, Math.round(L / 8));
+    for (let i = 0; i < n; i++) str(at(i / n), at((i + 1) / n), 1.4, o++); }
+  for (let i = 0; i < 70; i++) { const r = [...TRUNK, ...BRANCH][i % 14], a = hash(i, 3) * 6.28, d = hash(i, 4) * (r.r + 6), p = { x: r.x + Math.cos(a) * d, z: r.z + Math.sin(a) * d }, b = hash(i, 5) * 6.28, L = 9 + hash(i, 6) * 9;
+    str(p, { x: p.x + Math.cos(b) * L, z: p.z + Math.sin(b) * L }, 2.5, o++); }
+  return out; }
 window.crownAfter = function (P, scale) { // her, a small pink marker where she stands
   if (!OPT || !OPT.her) return; const [px, pz] = P(OPT.her[0], OPT.her[1]), u = PPM * scale;
   ctx.fillStyle = "#ff7ac8"; ctx.strokeStyle = "#2a0a20"; ctx.lineWidth = Math.max(1, scale * .6);
@@ -72,7 +85,7 @@ window.crownAfter = function (P, scale) { // her, a small pink marker where she 
 
 // ---- outside: the oak in the woods at night, an orthographic camera looking north and down ----
 const FLOOR = 32; // the house's floor, metres up the oak
-const TRUNK_AT = [2, 0];
+const TRUNK_AT = [-8, 44]; // (revision 4: the trunk stands under the Dining Room, its roots spreading below it on the plan)
 function tubeInto(P, knots, kind = "bark") { // a Catmull-Rom through [x, y, z, r] knots, as spheres a third of a radius apart
     const k = [knots[0], ...knots, knots[knots.length - 1]];
     for (let i = 1; i < k.length - 2; i++) { const [p0, p1, p2, p3] = [k[i - 1], k[i], k[i + 1], k[i + 2]], L = Math.hypot(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]);
@@ -88,11 +101,11 @@ function closeup() { const P = [];
   for (const [x, y, z, r, thin] of [[-16, 7, -10, 9, 0], [14, 8, -14, 8.5, 0], [-4, 6, -18, 7, 0], [2, 4, 9, 7, .52], [16, 3, 8, 5.5, .58], [-18, 3, 12, 4, .45],
     [7, 2, 17, 2.6, .3], [-1, 1.5, 15, 2.2, .35], [21, 1, 13, 2, .3], [-22, 2, 20, 2.4, .35]]) P.push({ c: [x, y, z], r, kind: "leaf", thin });
   return P; }
-let PRIMS = null;
+let PRIMS = null; const STRINGS = [], BULBS = [];
 function build() {
   const P = [], R = (a, b) => a + (b - a) * Math.random();
   let seed = 7; Math.random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }; // (the same oak every time)
-  const tube = (knots, kind) => tubeInto(P, knots, kind);
+  const tube = (knots, kind) => tubeInto(P, knots, kind), limbKnots = []; // (limbKnots: every limb's knots, for the string lights)
   const [tx, tz] = TRUNK_AT;
   // the trunk, short and massive, its root buttresses flaring into the ground
   tube([[tx, -2, tz, 11], [tx, 8, tz, 8.5], [tx + 1, 16, tz - 1, 7.5], [tx, 22, tz, 7]]);
@@ -108,7 +121,7 @@ function build() {
     [[tx, 20, tz, 5.5], [-6, 34, 28, 4.4], [-10, 33, 52, 3.2], [-14, 37, 78, 1.6]],
   ];
   const ends = [];
-  for (const g of GREAT) { tube(g);
+  for (const g of GREAT) { tube(g); limbKnots.push(g);
     for (let i = 1; i < g.length - 1; i++) for (let f = 0; f < 2; f++) { // forks: smaller twisting branches, out and up to the crown's shell
       const [x, y, z, r] = g[i], out = Math.atan2(z - tz, x - tx) + R(-.9, .9), len = R(18, 30), up = R(8, 26);
       const e = [x + Math.cos(out) * len, y + up, z + Math.sin(out) * len, .5];
@@ -116,7 +129,11 @@ function build() {
   // the house's own limb: its rooms ride on it, the bark showing below their floors
   for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i]; tube([[a.x, FLOOR - 5.5, a.z, 4.5], [(a.x + b.x) / 2 + (i % 2 ? 2 : -2), FLOOR - 6, (a.z + b.z) / 2, 4], [b.x, FLOOR - 5.5, b.z, 3.8]]); }
   tube([[tx, 20, tz, 6], [(tx + 10) / 2, FLOOR - 9, (tz + 8) / 2, 5], [10, FLOOR - 5.5, 8, 4.5]]);
-  for (const r of BRANCH) { const p = byId[r.from]; tube([[p.x, FLOOR - 4, p.z, 3], [(p.x + r.x) / 2, FLOOR - 4 + r.bend * .4, (p.z + r.z) / 2, 2.4], [r.x, FLOOR - 3.5, r.z, 2], [r.x + (r.x - p.x) * .4, FLOOR + 2, r.z + (r.z - p.z) * .4, .6]]); }
+  for (const r of BRANCH) { const p = byId[r.from], k = [[p.x, FLOOR - 4, p.z, 3], [(p.x + r.x) / 2, FLOOR - 4 + r.bend * .4, (p.z + r.z) / 2, 2.4], [r.x, FLOOR - 3.5, r.z, 2]]; tube(k); limbKnots.push(k); }
+  // revision 4: each branch limb carries on past its room as bark, rising gently, forking to twigs out into the crown; the Turret's top limbs too
+  const yOf = new Map(); for (const l of BARK_LIMBS) { if (l.root) continue; const ya = yOf.get(l.a) ?? FLOOR - 3.5, L = Math.hypot(l.b.x - l.a.x, l.b.z - l.a.z), yb = ya + L * (l.a === byId.turret || yOf.get(l.a) > FLOOR + 6 ? .55 : .3); yOf.set(l.b, yb);
+    const nx = -(l.b.z - l.a.z) / L, nz = (l.b.x - l.a.x) / L, k = [[l.a.x, ya, l.a.z, l.w0 * .75], [(l.a.x + l.b.x) / 2 + nx * l.bend, (ya + yb) / 2 - 1, (l.a.z + l.b.z) / 2 + nz * l.bend, (l.w0 + l.w1) * .37], [l.b.x, yb, l.b.z, Math.max(.25, l.w1 * .75)]];
+    tube(k); if (l.w0 > .7) limbKnots.push(k); }
   // the leaves: billowing lobes on a broad low dome (2:1), its outer ends sagging, its inner, lower crown left open
   const CX = 0, CZ = -4, RX = 92, RZ = 88, Y0 = 44, RY = 46;
   for (let n = 0; n < 480; n++) {
@@ -130,6 +147,23 @@ function build() {
       P.push({ c: q, r: R(2, 3.5), kind: "leaf", thin: .3 }); tube([[x + Math.cos(a) * r * .5, y - 2, z + Math.sin(a) * r * .5, .7], [q[0], q[1], q[2], .3]]); }
   }
   for (const e of ends) P.push({ c: [e[0], e[1] + 2, e[2]], r: R(5, 8), kind: "leaf", thin: .35 }); // a clump at each fork's end
+  // the string lights: swags hung under the limbs, and strings draped from clump to clump over the crown's top
+  const PAL = ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"].map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
+  const string = (A, B, sag) => { const L = Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]), n = Math.max(2, Math.round(L / 1.4)), sid = STRINGS.length, o = Math.floor(R(0, 6)), pts = [];
+    for (let i = 0; i <= n; i++) { const u = i / n; pts.push([A[0] + (B[0] - A[0]) * u, A[1] + (B[1] - A[1]) * u - sag * 4 * u * (1 - u), A[2] + (B[2] - A[2]) * u]); }
+    STRINGS.push({ A, B, sag, sid }); pts.forEach((p, i) => BULBS.push({ p, c: PAL[(i + o) % 6], u: i / n, sid, ph: R(0, 1) })); };
+  for (const k of limbKnots) { let prev = null, acc = 0; // along each limb, a swag every 8 m or so, hung just under it
+    for (let i = 1; i < k.length; i++) { const a = k[i - 1], b = k[i], L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]);
+      for (let d = 0; d < L; d += 8) { const u = d / L, q = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u - (a[3] + (b[3] - a[3]) * u) * .95, a[2] + (b[2] - a[2]) * u];
+        if (prev) string(prev, q, 1.4); prev = q; } } }
+  const tops = P.filter(q => q.kind === "leaf" && q.r >= 8 && q.c[1] > Y0 - 6);
+  for (const a of tops) { let best = null, bd = 1e9; for (const b of tops) { const d = Math.hypot(b.c[0] - a.c[0], b.c[2] - a.c[2]); if (b !== a && d > 12 && d < bd) { bd = d; best = b; } }
+    if (!best || bd > 34) continue; const dx = (best.c[0] - a.c[0]) / bd, dz = (best.c[2] - a.c[2]) / bd;
+    string([a.c[0] + dx * a.r * .55, a.c[1] + a.r * .9, a.c[2] + dz * a.r * .55], [best.c[0] - dx * best.r * .55, best.c[1] + best.r * .9, best.c[2] - dz * best.r * .55], 1.5); }
+  for (const a of tops) { if (R(0, 1) > .55) continue; // garlands looped round a clump, lying on its leaves
+    const el = R(.25, .7), o = R(0, 6.28), n = Math.round(2 * Math.PI * a.r * Math.cos(el) / 1.4), sid = STRINGS.length, k0 = Math.floor(R(0, 6));
+    for (let i = 0; i < n; i++) { const th = o + i / n * 6.283, w = el + .12 * Math.sin(th * 3); BULBS.push({ p: [a.c[0] + a.r * 1.02 * Math.cos(w) * Math.cos(th), a.c[1] + a.r * 1.02 * Math.sin(w), a.c[2] + a.r * 1.02 * Math.cos(w) * Math.sin(th)], c: PAL[(i + k0) % 6], u: i / n, sid, ph: R(0, 1) }); }
+    STRINGS.push({ ring: true, sid }); }
   // the woods round about: lower crowns, each two or three rounded clumps
   for (let gx = -330; gx < 330; gx += 11) for (let gz = -300; gz < 260; gz += 11) {
     const x = gx + R(-4, 4), z = gz + R(-4, 4), dr = Math.hypot((x - CX) / 1.05, z - CZ); if (dr < 82 + R(0, 14)) continue;
@@ -140,7 +174,8 @@ const LIGHTS = () => [...TRUNK, ...BRANCH].filter(r => !r.locked).map(r => [r.x,
 let LT = null;
 const glowAt = (x, y, z) => { let g = 0; for (const [lx, ly, lz, lr] of LT) { const d = Math.hypot(x - lx, (y - ly) * 1.3, z - lz); if (d < lr) g += (1 - d / lr) ** 2; } return Math.min(1, g); };
 
-window.outside = function ({ patch = false, pitch, cx, cy, cz, s, W, H, scale = 2, title = "", her = null, holeR = 14, moon = false }) {
+window.crownData = () => { if (!PRIMS) PRIMS = build(); LT = LIGHTS(); return { PRIMS, BULBS, FLOOR, glowAt }; };
+window.outside = function ({ lights = 0, patch = false, pitch, cx, cy, cz, s, W, H, scale = 2, title = "", her = null, holeR = 14, moon = false }) {
   if (!PRIMS) PRIMS = build(); LT = patch ? [] : LIGHTS(); const prims = patch ? closeup() : PRIMS;
   const p = pitch * Math.PI / 180, sp = Math.sin(p), cp = Math.cos(p), F = [0, -sp, -cp], U = [0, cp, -sp];
   const L = (v => { const m = Math.hypot(...v); return v.map(c => c / m); })([-.45, .8, .25]); // the moon: high, west, a little behind her
@@ -197,6 +232,22 @@ window.outside = function ({ patch = false, pitch, cx, cy, cz, s, W, H, scale = 
       const fog = Math.min(.75, Math.max(0, (t - 140) / 520)); if (fog > 0) c = mix(c, FOG, fog);
       put(i, j, t, c);
     }
+  }
+  // the string lights: off, dark glass on a dark wire (seen near); on, each bulb a pixel of the party's palette (two near), its glow on what's round it.
+  // lights between 0 and 1: switching on, running along each string from its start (the party's start at the decks)
+  if (!patch && BULBS.length) {
+    const near = s >= 6, gl = new Float32Array(W * H * 3), RG = Math.max(2.5, s * 1.1), vis = [];
+    if (near) for (const S of STRINGS) { if (S.ring) continue; const L = Math.hypot(S.B[0] - S.A[0], S.B[1] - S.A[1], S.B[2] - S.A[2]), n = Math.ceil(L / .3);
+      for (let i = 0; i <= n; i++) { const u = i / n, q = [S.A[0] + (S.B[0] - S.A[0]) * u, S.A[1] + (S.B[1] - S.A[1]) * u - S.sag * 4 * u * (1 - u), S.A[2] + (S.B[2] - S.A[2]) * u], [x, y, t] = proj(q), a = x | 0, b = y | 0;
+        if (a < 0 || b < 0 || a >= W || b >= H || t > zb[b * W + a] + .5) continue; if (hs && q[1] > FLOOR + 1 && Math.hypot(a - hs[0], b - hs[1]) < RH) continue; const k = (b * W + a) * 4; col[k] = 16; col[k + 1] = 13; col[k + 2] = 14; } }
+    for (const B of BULBS) { const [x, y, t] = proj(B.p), a = x | 0, b = y | 0; if (a < 0 || b < 0 || a >= W || b >= H || t > zb[b * W + a] + .8) continue;
+      if (hs && B.p[1] > FLOOR + 1 && Math.hypot(a - hs[0], b - hs[1]) < RH) continue;
+      const on = lights > 0 && B.u <= lights, fog = Math.min(.6, Math.max(0, (t - 140) / 700)); vis.push([a, b, on, B, fog]);
+      if (on) { const r = Math.ceil(RG); for (let j = Math.max(0, b - r); j <= Math.min(H - 1, b + r); j++) for (let i = Math.max(0, a - r); i <= Math.min(W - 1, a + r); i++) {
+        const d = Math.hypot(i - a, j - b) / RG; if (d >= 1) continue; const f = (1 - d) * (1 - d) * .5 * (1 - fog), k = (j * W + i) * 3; gl[k] += B.c[0] * f; gl[k + 1] += B.c[1] * f; gl[k + 2] += B.c[2] * f; } } }
+    for (let k = 0; k < W * H; k++) for (let c = 0; c < 3; c++) col[k * 4 + c] += gl[k * 3 + c];
+    for (const [a, b, on, B, fog] of vis) { const tw = 1 - .35 * .5 * (1 + Math.sin(B.ph * 40)), c = on ? mix(B.c.map(v => Math.min(255, v * (.85 + .3 * tw))), FOG, fog * .5) : B.c.map(v => v * .18 + 18);
+      if (!on && !near) continue; const sz = near ? 2 : 1; for (let j = b; j < Math.min(H, b + sz); j++) for (let i = a; i < Math.min(W, a + sz); i++) { const k = (j * W + i) * 4; col[k] = c[0]; col[k + 1] = c[1]; col[k + 2] = c[2]; } }
   }
   const im = new ImageData(col, W, H), tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; tmp.getContext("2d").putImageData(im, 0, 0);
   cv.width = W * scale; cv.height = H * scale; ctx.imageSmoothingEnabled = false; ctx.drawImage(tmp, 0, 0, W * scale, H * scale);

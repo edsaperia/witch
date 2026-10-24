@@ -8,7 +8,7 @@
 // its floor the tree's own grain: growth rings round each trunk room's heart, long grain along each branch, blended where they meet.
 const PPM = 32 / 3;
 const FORE = Math.sin(24 * Math.PI / 180); // the floor's foreshortening indoors (0.41)
-let VIEW = "plan"; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
+let VIEW = "plan", SHOW_BARK = true; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
 
 // ---- the plan ----
 const TRUNK = [ // bottom to top, a soft S; r: its size (about its radius, m)
@@ -74,6 +74,37 @@ function limb(a, b, bend, w0, w1, x, z) {
     if (d < best) { best = d; bt = t; const tx = 2 * (1 - t) * (cx - a.x) + 2 * t * (b.x - cx), tz = 2 * (1 - t) * (cz - a.z) + 2 * t * (b.z - cz); side = ((x - px) * -tz + (z - pz) * tx) / Math.hypot(tx, tz); } }
   const w = w0 + (w1 - w0) * bt + .35 * (fbm(x * .2, z * .2) - .5); return [best - w, bt, side];
 }
+// a limb's distance sampled finely (thin twigs come out as beads at limb()'s 24 samples); l: { a, b, bend, w0, w1 }
+function limbFine(l, x, z) {
+  const a = l.a, b = l.b, ex = b.x - a.x, ez = b.z - a.z, L = Math.hypot(ex, ez), t0 = Math.max(0, Math.min(1, ((x - a.x) * ex + (z - a.z) * ez) / (L * L)));
+  if (Math.hypot(x - a.x - ex * t0, z - a.z - ez * t0) > Math.abs(l.bend) * 2 + l.w0 + 3) return [1e9, 0, 0];
+  const nx = -ez / L, nz = ex / L, cx = (a.x + b.x) / 2 + nx * l.bend * 2, cz = (a.z + b.z) / 2 + nz * l.bend * 2, n = Math.ceil(L * 3);
+  let best = 1e9, bt = 0, side = 0;
+  for (let i = 0; i <= n; i++) { const t = i / n, px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x, pz = (1 - t) * (1 - t) * a.z + 2 * (1 - t) * t * cz + t * t * b.z, d = Math.hypot(x - px, z - pz);
+    if (d < best) { best = d; bt = t; const tx = 2 * (1 - t) * (cx - a.x) + 2 * t * (b.x - cx), tz = 2 * (1 - t) * (cz - a.z) + 2 * t * (b.z - cz); side = ((x - px) * -tz + (z - pz) * tx) / Math.hypot(tx, tz); } }
+  const w = l.w0 + (l.w1 - l.w0) * bt + .25 * (fbm(x * .4, z * .4) - .5); return [best - w, bt, side];
+}
+// ---- revision 4 (Ed, 2026-10-24): the plan as a tree's silhouette. Each branch room is a swelling along its limb, not its tip: the
+// limb carries on out of the room's far side as bark (not floor), tapering and forking into twigs out under the crown; the room's floor
+// bulges a little where it leaves (STUB). Below the Dining Room the trunk flares into roots; over the Turret it splits into its top limbs.
+const BARK_LIMBS = [], STUB = [];
+{ const H = (a, b) => hash(a * 1.37 + 3.1, b * .71 + 9.2), at = (p, a, len) => ({ x: p.x + Math.cos(a) * len, z: p.z + Math.sin(a) * len });
+  const fork = (p, a, len, w0, w1, seed, depth) => { const b = at(p, a, len), l = { a: p, b, bend: (H(seed, 1) - .5) * 4, w0, w1 }; BARK_LIMBS.push(l);
+    if (depth > 0) for (const s of [-1, 1]) fork(b, a + s * (.35 + H(seed, s + 2) * .4), len * (.55 + H(seed, s + 5) * .2), w1, Math.max(.2, w1 * .35), seed + s * 7, depth - 1);
+    return l; };
+  for (const r of BRANCH) { const p = byId[r.from], L = Math.hypot(r.x - p.x, r.z - p.z), nx = -(r.z - p.z) / L, nz = (r.x - p.x) / L;
+    const cx = (p.x + r.x) / 2 + nx * r.bend * 2, cz = (p.z + r.z) / 2 + nz * r.bend * 2, a = Math.atan2(r.z - cz, r.x - cx), w = Math.max(2.8, r.r * .42);
+    STUB.push({ a: r, b: at(r, a, r.r + 2.5), bend: 0, w0: w * .9, w1: 1.4 }); // (the floor's hint: a few metres, no path)
+    const main = fork(r, a, r.r + 14 + H(r.x, 0) * 6, w * .85, 1.1, r.x, 2); // on out of its far side, forking twice to twigs
+    fork(at(r, a, r.r + 5), a + (H(r.z, 1) < .5 ? -1 : 1) * (.8 + H(r.z, 2) * .3), 9 + H(r.z, 3) * 4, .8, .25, r.z, 1); }
+  const D = byId.dining; // the trunk below the Dining Room, flaring into roots
+  BARK_LIMBS.push({ a: D, b: { x: D.x - 1, z: D.z + D.r + 8 }, bend: .5, w0: D.r * .8, w1: D.r * .75, root: true });
+  for (let i = 0; i < 5; i++) { const a = Math.PI / 2 + (i - 2) * .55 + (H(i, 9) - .5) * .25, o = at({ x: D.x - 1, z: D.z + D.r + 4 }, a, 6);
+    const l = { a: o, b: at(o, a, 18 + H(i, 4) * 10), bend: (H(i, 5) - .5) * 5, w0: 3.6, w1: .8, root: true }; BARK_LIMBS.push(l);
+    BARK_LIMBS.push({ a: at(o, a, 9), b: at(o, a + (i < 2 ? -.7 : .7), 18), bend: 1, w0: 1.4, w1: .3, root: true }); }
+  const T = byId.turret; // over the Turret, the topmost limbs, up into the crown
+  for (const [k, a] of [[0, -Math.PI / 2 - .75], [1, -Math.PI / 2 + .05], [2, -Math.PI / 2 + .7]]) fork(T, a, 14 + H(k, 6) * 6, 3, .9, 40 + k, 1);
+}
 // the whole floor's distance (negative inside) and, for the grain, which part it's nearest and how far along
 function field(x, z) {
   let d = 1e9, parts = [];
@@ -81,6 +112,7 @@ function field(x, z) {
   for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i], [s, t, side] = limb(a, b, (i % 2 ? 1 : -1) * 1, a.r * .82, b.r * .82, x, z); parts.push({ kind: "spine", s, side, t, a, b }); d = smin(d, s, 6); }
   for (const r of BRANCH) { const p = byId[r.from], [s, t, side] = limb(p, r, r.bend, Math.min(5.5, p.r * .45), Math.max(2.8, r.r * .42), x, z), sb = blob(r, x, z);
     parts.push({ kind: "branch", r, s, side, t }, { kind: "ring", r, s: sb }); d = smin(d, smin(s, sb, 3.5), 5); }
+  for (const l of STUB) { const [s, t, side] = limbFine(l, x, z); d = smin(d, s, 3); }
   return { d, parts };
 }
 
@@ -116,8 +148,10 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
   const roomAt = (x, z) => { let best = null, bd = 1e9; for (const r of [...TRUNK, ...BRANCH]) { const d = blob(r, x, z); if (d < bd) { bd = d; best = r; } } return bd < 0 ? best : null; };
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), f = field(x, z); dist[k] = f.d; inside[k] = f.d < 0 ? 1 : 0; let c;
-    if (!inside[k]) { // the night under the house: the canopy's dark leaves
+    if (!inside[k]) { // the night under the house: the canopy's dark leaves, and the oak's bark limbs (not floor)
       const n = fbm(x * .35, z * .35); c = n > .55 ? WOOD.leaf[1] : n > .35 ? WOOD.leaf[0] : WOOD.night;
+      if (SHOW_BARK) { let best = 1e9, bt = 0, bs = 0, bw = 1, bl = 1; for (const l of BARK_LIMBS) { const [s, t, side] = limbFine(l, x, z); if (s < best) { best = s; bt = t; bs = side; bw = l.w0 + (l.w1 - l.w0) * t; bl = Math.hypot(l.b.x - l.a.x, l.b.z - l.a.z); } }
+        if (best < 0) { const across = bs / bw, fur = noise(bt * bl * .7, across * 2.4 + bl); c = fur < .36 ? WOOD.bark[0] : across < -.45 ? [80, 68, 56] : across < .35 ? WOOD.bark[2] : WOOD.bark[1]; } }
     } else if (f.d > -.45 && TAKEOFF_OPEN(x, z)) { c = WOOD.floor[3]; // the open rim where she steps off: worn pale, no lip
     } else if (f.d > -.45) { // the rim: bark, mossy on top
       const n = hash(i * 3 + 1, j * 7); c = fbm(x * .8, z * .8) > .6 ? WOOD.moss[n > .5 ? 1 : 0] : WOOD.bark[n > .66 ? 2 : n > .33 ? 1 : 0];
@@ -173,6 +207,6 @@ const TRAC = byId.terrace;
 // the walk: bed to the take-off, along the trunk's rooms (bed, Bedroom 1, Boudoir, Parlour, Terrace's middle, the open rim)
 const WALK = [[-2.4, -56.6], [-6, -53], [8, -36], [-6, -16], [10, 8], [TAKEOFF.x, TAKEOFF.z]];
 function walk() { let L = 0; for (let i = 1; i < WALK.length; i++) L += Math.hypot(WALK[i][0] - WALK[i - 1][0], WALK[i][1] - WALK[i - 1][1]); return L; }
-window.mock = { render, walk, TRUNK, BRANCH, OBJ };
-</script><script src="../crown/source/crown.js">
+window.mock = { render, walk, TRUNK, BRANCH, OBJ, BARK_LIMBS };
+</script><script src="../crown/source/crown.js"></script><script src="../crown/source/horizon.js">
 </script></body></html>

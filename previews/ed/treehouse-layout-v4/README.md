@@ -2,6 +2,14 @@
 
 A mock for Ed to approve before anything is built. Nothing in the game has changed.
 
+**Revision 4** (Ed, 2026-10-24: "The branch rooms themselves are not the ends of the branches; maybe they should have paths continuing through them? Or at least, we see this as part of the canopy"). The plan now reads as a tree's silhouette. The trunk's links, the sizes, the pairs and the take-off are all as in revision 3.
+- **Each branch room is a swelling along its limb**, like a burl, not the limb's tip. The limb carries on out of the room's far side, in the direction its branch was heading.
+- **Past the room the limb is bark, not floor.** It is the oak's dark, furrowed limb and can't be walked on. It tapers, forks twice into smaller branches and twigs, and runs out under the crown, ending at its edge. This is the same bark that shows through the crown's gaps. A second, smaller twig leaves each room's limb a little way out.
+- **The floor only hints at it.** Each room's outline bulges out a few metres where the limb leaves (2.5 m past the room's edge, then rounded off). It is not a path or a lookout.
+- **The trunk's ends.** Below the Dining Room the trunk goes down, and it flares into five great roots with smaller ones off them. Above the Turret it splits into three topmost limbs, each forking once, which run up into the crown. The plan now has a base and a top, like the reference oak.
+- Pictures 1 and 5 are re-drawn wider (about 208 × 196 m) to take in the roots and the twigs, with the crown off so the plan is readable. Pictures 2 to 4 are re-drawn too: the bark now shows past the rooms' edges. The bed-to-take-off walk is unchanged at about 93 m.
+- The crown pictures (`crown/`) draw these same limbs under the crown. The roots stay on the ground, so they don't show in the crown.
+
 **Revision 3** (Ed's feedback on revision 2, 2026-10-24: "The branch rooms come in pairs; the upper of each pair should be closer to the trunk, and the lower should be further and curve down. The connections between the trunk rooms should be thicker and shorter, and the zigzag a bit less pronounced, more smooth. The turret should not be directly above bedroom1; it's the top of the trunk effectively, so it's part of the zigzag."):
 - **The trunk is a soft S**, bottom to top: the Dining Room, Terrace, Parlour, Boudoir, Bedroom 1, then the **Turret**, its top and smallest room, on the right. Its links are short and thick (about 0.8 of the rooms' size), so it reads as one massive, gently winding limb.
 - **Each pair of branch rooms** is on its trunk room's outer side. The **upper** room sits close in on a short, straight branch. The **lower** room sits further out on a longer branch that goes out level and curves down. From Ed's diagram:
