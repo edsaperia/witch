@@ -38,26 +38,25 @@ varying vec3 vWorld;
 varying float vLayer;
 ${LIGHT_GLSL}
 ${VALUE_NOISE_GLSL}
-// One sample of the mist's share at q (0 clear .. 1 beyond its type's front): its area's type from the ground's area texture.
-float beyondAt(vec2 q, float d) {
-  vec2 uv = (q - uExtent.xy) / uExtent.zw;
-  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return 0.0;
-  vec4 area = texture2D(uAreas, uv);
-  if (area.a < 0.5) return 0.0; // (no area: the sea)
-  int t = int(area.r * 255.0 + 0.5);
-  float front = uFront[t];
-  if (front >= ${FRONT_CLEAR.toFixed(1)}) return 0.0;
-  return smoothstep(front - uMist.y, front + uMist.y, d) * uFade[t];
-}
 void main() {
   if (gl_FragCoord.z > texture2D(uDepth, gl_FragCoord.xy / uLow).r) discard; // behind something the scene drew
   vec2 p = vWorld.xz;
+  // Its area's type, from one look at the ground's area texture a few metres off by a hash (so where a cleared area meets a misted
+  // one the mist breaks up over a few metres in pixels, not on the texture's grid), and that type's front: all before any noise,
+  // so a cleared area costs a texture read (the frames' cost on a slow GPU: tools/mist/frames.cjs).
+  vec2 j = fract(sin(vec2(dot(floor(p * 2.0), vec2(12.9898, 78.233)), dot(floor(p * 2.0), vec2(39.3468, 11.135)))) * 43758.5453) - 0.5;
+  vec2 uv = (p + j * 12.0 - uExtent.xy) / uExtent.zw;
+  if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) discard;
+  vec4 area = texture2D(uAreas, uv);
+  if (area.a < 0.5) discard; // (no area: the sea)
+  int t = int(area.r * 255.0 + 0.5);
+  float front = uFront[t];
+  if (front >= ${FRONT_CLEAR.toFixed(1)}) discard;
   // The front: the mist beyond it, its edge rolling (noise on the distance from the house, drifting).
   float drift = uRealTime * 0.6;
-  float n = vnoise((p + vec2(drift, drift * 0.4)) / uMist.z) * 0.65 + vnoise((p - vec2(drift * 0.5, 0.0)) / (uMist.z * 0.4) + 11.0) * 0.35;
+  float n = vnoise((p + vec2(drift, drift * 0.4)) / uMist.z);
   float d = length(p - vec2(uMist.w, uHouseZ)) + (n - 0.5) * 2.0 * uMist.y;
-  // Four samples round it, so where a cleared area meets a misted one the mist thins over a few metres, not on the texture's grid.
-  float beyond = (beyondAt(p + vec2(6.0, 2.5), d) + beyondAt(p + vec2(-2.5, 6.0), d) + beyondAt(p + vec2(-6.0, -2.5), d) + beyondAt(p + vec2(2.5, -6.0), d)) * 0.25;
+  float beyond = smoothstep(front - uMist.y, front + uMist.y, d) * uFade[t];
   if (beyond <= 0.01) discard;
   // Each sheet's own billows (thicker low down), so the stack reads as a volume and its top as rolling cloud.
   float b = vnoise(p / (uMist.z * 0.7) + vLayer * 17.0 + vec2(0.0, drift * 0.3));
