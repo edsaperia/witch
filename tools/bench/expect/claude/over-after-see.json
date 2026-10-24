@@ -1,0 +1,4 @@
+{
+  "reason": "#1091: the leash view's over-everything glyphs (hit sparks, glows, pips, trait marks) draw after the see-through passes (renderOrder 3 to 11.4), so the trees in her see-through hole no longer cover them; they now also draw over the sky, clouds and smoke, as everywhere else they already drew over everything",
+  "frames": { "wave-fight": "a fight's sparks, pips and trait marks by her, now over the see-through trees and the smoke" }
+}
