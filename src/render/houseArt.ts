@@ -10,18 +10,6 @@ import { fbm, field, roomAt, outline } from "../../config/house/shape.js";
 type RGB = [number, number, number];
 export interface FloorArt { canvas: HTMLCanvasElement; x0: number; z0: number; w: number; h: number }
 
-const hex = (s: string): RGB => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-const LEAF = ["#26402a", "#335533", "#43703d", "#5a8c48"].map(hex);
-
-/** A small hash of integers to 0..1 (the art's own noise: seeded by place, the same every load). */
-const ihash = (a: number, b: number, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-/** Smooth value noise at (x, z) metres, `s` metres a cell. */
-function noise(x: number, z: number, s: number, k = 0): number {
-  const fx = x / s, fz = z / s, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, a = ihash(ix, iz, k), b = ihash(ix + 1, iz, k), c = ihash(ix, iz + 1, k), d = ihash(ix + 1, iz + 1, k);
-  const su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
-  return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
-}
-
 /** The floor's foreshortening as the game draws it (the house's plane, 24 degrees: render/houseRooms.ts), so the rings, stretched
  *  on the plan by its inverse, read round on screen (the mock's FORE). */
 const FORE = Math.sin((24 * Math.PI) / 180);
@@ -104,24 +92,4 @@ export function standing(H: HouseConfig): Upright[] {
     }
   }
   return q;
-}
-
-/** A room's roof: a dome of leaves over it (Ed, 2026-10-23: "these are like tree canopies that get hidden when you're near"),
- *  painted top-down, `R` metres across its middle, an art pixel a texel: clumps of leaves in four greens, lit from above, darker
- *  to their edges, a ragged rim. */
-export function paintRoof(R: number, mpp: number, seed: number): HTMLCanvasElement {
-  const n = Math.ceil((2 * R) / mpp), c = document.createElement("canvas"); c.width = c.height = n;
-  const g = c.getContext("2d")!, img = g.createImageData(n, n), px = img.data;
-  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
-    const x = (i + 0.5) * mpp - R, z = (j + 0.5) * mpp - R, d = Math.hypot(x, z) / R, o = (j * n + i) * 4;
-    const rag = 0.86 + 0.14 * noise(x + seed * 7, z, 0.9, seed);
-    if (d > rag) { px[o + 3] = 0; continue; }
-    const clump = noise(x + seed, z, 1.1, seed + 3), fine = noise(x, z + seed, 0.3, seed + 5), lit = 0.5 + 0.5 * (-(x + z) / (R * 1.4)) + (clump - 0.5) * 0.6;
-    const k = Math.max(0, Math.min(3, Math.floor((lit * 0.7 + fine * 0.5 - d * 0.35) * 4)));
-    const gap = fine < 0.12 && clump < 0.4;
-    const col = gap ? LEAF[0] : LEAF[k], sh = 0.75 + 0.35 * (1 - d * d);
-    px[o] = col[0] * sh; px[o + 1] = col[1] * sh; px[o + 2] = col[2] * sh; px[o + 3] = 255;
-  }
-  g.putImageData(img, 0, 0);
-  return c;
 }

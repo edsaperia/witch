@@ -1331,6 +1331,23 @@
                 "fade"
               ],
               "additionalProperties": false
+            },
+            "crown": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "seed": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "seed"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -1341,7 +1358,8 @@
             "landTime",
             "walk",
             "fall",
-            "dark"
+            "dark",
+            "crown"
           ],
           "additionalProperties": false
         },

@@ -278,6 +278,8 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 | `treehouse.house.fall.time` | number | 0 to … |
 | `treehouse.house.dark.on` | boolean |  |
 | `treehouse.house.dark.fade` | number | 0 to … |
+| `treehouse.house.crown.on` | boolean |  |
+| `treehouse.house.crown.seed` | number | 0 to … |
 | `treehouse.carrier` | string |  |
 
 ### `home`
