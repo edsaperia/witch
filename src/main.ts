@@ -826,7 +826,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   if (dreamAfterDive && !wakeInBedroom(n.game)) dreamAfterDive = null; // (a dream to come: the flight in ends on her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
-  await view.prepare(A ? { dive: diveReach(n.game.map, A) } : {});
+  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
   if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
   mark("sail:ready");
   return n;
