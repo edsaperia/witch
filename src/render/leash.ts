@@ -165,7 +165,7 @@ export class LeashView {
     });
     this.standing = new Instances(mat(0));
     this.flat = new Instances(mat(1));
-    this.over = new Instances(mat(0, false));
+    this.over = new Instances(mat(0, false)); this.over.mesh.renderOrder = 11.4; // (over everything, so after the see-through passes too: at 3, the trees in her hole, drawn at 10.9 and 11, covered it there and nowhere else, #1091)
     this.stackGlyphs = new Instances(mat(0, false)); this.stackGlyphs.mesh.renderOrder = 11.5; // (after the see-through pass at 11, before her silhouette at 12)
     this.stackBack = new Instances(mat(0, false, true)); this.stackBack.mesh.renderOrder = 11.45;
     const thr = mat(1);

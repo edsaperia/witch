@@ -1,0 +1,7 @@
+{
+  "reason": "#1091: the leash view's over-everything glyphs (hit sparks, glows, pips, trait marks, the treetop berry and legend dots) draw after the see-through passes (renderOrder 3 to 11.4), so half-faded scenery (her see-through hole, crowns at the budget's edge or still appearing) no longer covers them, as solid scenery never did",
+  "frames": {
+    "boot": "far berry dots seen from the treetops (about 126 px) were covered by crowns fading in at the scenery budget's edge (the half-faded pass, 11: with the glyphs at 10.95 the frame matches the base exactly); now they show through those crowns as through every solid one",
+    "wave-fight": "a fight's sparks, pips and trait marks by her, if any sit in her see-through hole"
+  }
+}
