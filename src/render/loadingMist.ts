@@ -60,7 +60,7 @@ void main() {
   if (beyond <= 0.01) discard;
   // Each sheet's own billows (thicker low down), so the stack reads as a volume and its top as rolling cloud.
   float b = vnoise(p / (uMist.z * 0.7) + vLayer * 17.0 + vec2(0.0, drift * 0.3));
-  float a = uMist.x * beyond * mix(1.0, 0.55, vLayer) * mix(0.75, 1.0, smoothstep(0.25, 0.75, b));
+  float a = uMist.x * beyond * mix(1.0, 0.55, vLayer) * mix(0.45, 1.0, smoothstep(0.25, 0.75, b));
   a = floor(a * 6.0 + 0.5) / 6.0; // (in hard steps: the pixel look)
   if (a <= 0.01) discard;
   vec3 col = mix(uHazeColour * 2.2, uMoon * 0.95 + uAmb * 1.1, 0.55) + vec3(0.02, 0.05, 0.06) * (1.0 - vLayer); // (a faint glow low down)
