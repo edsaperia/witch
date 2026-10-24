@@ -501,6 +501,10 @@ export class View {
   readonly subpixel = { x: 0, y: 0 };
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
+  /** Her hat's top on screen as last drawn (shares of the view, y up; on: drawn), for her dream's cloud (render/dream.ts). */
+  readonly herHead = { x: 0.5, y: 0.5, on: false };
+  /** In the house's rooms, her head on the page (CSS px) as the house places it (render/houseRooms.ts) and when (ms). */
+  readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */

@@ -56,6 +56,7 @@ const want = new Set(which.split(","));
       const page = await open("object:bed");
       if (want.has("dream")) for (const [v, total] of [["won", 8], ["lost", 5.5]]) {
         await page.evaluate(v => window.witch.dream(v, "hat", "sentry"), v);
+        log("her head on the page:", JSON.stringify(await page.evaluate(() => window.__dream.head())));
         for (let i = 0, t = 0.2; t < total - 0.1; i++, t += 0.25) { await page.evaluate(t => window.__dream.draw(t), t); await shot(page, `dream-${v}-${String(i).padStart(2, "0")}.png`); }
         log(`dream ${v}: frames saved`);
       }

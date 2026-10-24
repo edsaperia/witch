@@ -253,6 +253,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // the canvas's shift (main.ts) with the camera's own snap, so she lands where the unsnapped camera
   // would put her, to a screen pixel, every frame (the world then lands within half an art pixel).
   v.witchBase.x = wx; v.witchBase.y = wyy + groundHeight(wx, wz); v.witchBase.z = wz;
+  { const p = bendPoint(v.v3.set(wx, hatTop + groundHeight(wx, wz), wz)).project(v.camera); v.herHead.x = (p.x + 1) / 2; v.herHead.y = (p.y + 1) / 2; v.herHead.on = !hidden; } // (her hat's top on screen: her dream's cloud rises from it, render/dream.ts)
   if (!hidden && !v.partyWitchView.herIdle && !onBeach) {
     const b = bendPoint(v.v3.set(wx, wyy + groundHeight(wx, wz), wz)).project(v.camera);
     const X = (b.x * 0.5 + 0.5) * v.width, Y = (b.y * 0.5 + 0.5) * v.height;

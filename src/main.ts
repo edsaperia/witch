@@ -384,10 +384,18 @@ function settleLoan(won: boolean): { loan: Loan; won: boolean } | null {
 function startDream(s: { loan: Loan; won: boolean }, veil = false): void {
   dream?.dispose();
   const of = { item: s.loan.id, name: loanName(s.loan), piece: findKind(s.loan.kind).piece(s.loan.id), won: s.won, home: homeOf(s.loan, id => stationsShowing(shelfOf(id)?.id ?? "")) };
-  dream = new DreamView(of, dreamArt(of, view.assets.style), veil).play(veil && params.has("shot"));
+  dream = new DreamView(of, dreamArt(of, view.assets.style), veil, herHead).play(veil && params.has("shot"));
   dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
   dream.onOver = () => { const n = page.night; if (dreamAsleep && n?.game.wake) endDream(n.game, n.game.herTime); };
   (window as unknown as { __dream?: DreamView }).__dream = dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
+}
+/** Her head's top on the page (CSS px) as last drawn (render/view/witch.ts herHead), for her dream's cloud to rise from; null
+ *  before she's drawn. */
+function herHead(): { x: number; y: number } | null {
+  const H = view.herHouseHead, w = N().game.witch;
+  if (w.perch && H.at > 0) return { x: H.x, y: H.y }; // (in the house: as its labels are placed; kept while the next island is made)
+  const h = view.herHead, r = canvas.getBoundingClientRect();
+  return h.on ? { x: r.left + h.x * r.width, y: r.top + (1 - h.y) * r.height } : null;
 }
 /** The on-loan icon, top left (render/loanIcon.ts). */
 const loanIcon = new LoanIcon();

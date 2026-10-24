@@ -391,6 +391,9 @@ export class HouseRoomsView {
     };
     this.box.style.display = "block";
     for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
+    // her head on the page in the house, as its labels are placed (her dream's cloud rises from it: render/dream.ts; her own drawing's
+    // world point lies elsewhere in the house's plane)
+    { const me = toPlanAt0(w.x - D.x, w.z - D.z), p = toWorld(me.x, me.z, v.witchTall || 1.8), q = v.v3.set(p.x, p.y, p.z).project(v.camera); v.herHouseHead.x = cv.left + (q.x + 1) / 2 * cv.width; v.herHouseHead.y = cv.top + (1 - q.y) / 2 * cv.height; v.herHouseHead.at = performance.now(); }
     // a hat on loan lying on the hats' floor sparkles (Ed, 2026-10-24: no words, sparkly), till she sleeps on it
     const lf = loanFind(g, g.map.treehouse.x, g.map.treehouse.z), li = lf?.kind === "hat" ? hats.indexOf(lf.item) : -1, glints: { x: number; y: number; r: number }[] = [];
     if (li >= 0) {
