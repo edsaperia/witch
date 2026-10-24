@@ -16,9 +16,9 @@ The crown follows the reference Ed sent (described in words in `../README.md`):
 | `a1-outside-lights-switching-on.png` | The party starts at the decks: the lights switch on, running along each string from its start (caught at about halfway). |
 | `a1-outside-lights-on.png` | The party's on: the crown is strewn with colourful string lights. |
 | `a1-outside-lights-on-near.png` | Nearer, with the lights on: swags hung under the limbs, strings draped from clump to clump, and garlands round the clumps. |
-| `a2-outside-landing.png` | Coming in to land from the treetops (pitched 50°, closer). Her see-through hole opens the crown round her (pink). The Terrace floor and its rim are lit warm by the rooms' lamps, and the house's limb shows its bark below the floor. The lights are on; those up in the crown are cut away with it inside her hole. |
-| `b1-inside-trunk-room.png` | Indoors as the game sees it (the 24° camera: depth × 0.41) in the Parlour. The crown is a layer 5 m over the floors. The soft dithered hole round her shows the room. Everywhere else is crown: thick clumps, thin sprays, and the oak's dark furrowed limbs in the gaps, with the floor far below them in deep shade. The bright floor at the bottom right is the Terrace's take-off, open to the sky. |
-| `b2-inside-branch.png` | The same, out on the branch from the Parlour to the Solarium. Both are drawn with the party on: the bulbs are in the crown overhead, glowing on the leaves round them and casting coloured pools through the gaps onto the floor below. |
+| `a2-outside-landing.png` | Coming in to land from the treetops (pitched 50°, closer). The Terrace sits in its own gap: the DJ decks, the magic circle glowing and the floor lit warm by the lamps, with a ragged rim of clumps and limbs and a ring of string lights round it. The house's limb shows its bark below the floor. |
+| `b1-inside-trunk-room.png` | Indoors as the game sees it (the 24° camera: depth × 0.41) in the Parlour. The crown is a layer 5 m over the floors. **The whole room she's in opens**: the crown clears over the Parlour's own irregular outline and its far wall, with a soft, ragged, dithered edge 1 to 3.5 m out. The Terrace below is open too, always. Everywhere else is crown: thick clumps, thin sprays and the oak's dark furrowed limbs in the gaps, with the floor far below them in deep shade. |
+| `b2-inside-branch.png` | Out on the branch from the Parlour to the Solarium: **that stretch of branch opens**, end to end between the two rooms' outlines, plus her own hole. Both pictures are drawn with the party on: the bulbs are in the crown overhead, glowing on the leaves round them and casting coloured pools through the gaps onto the floor below. |
 | `c-closeup-patches.png` | A close-up of one patch. A great limb forks under two thick clumps (top) and thin, gappy ones (lower right), with sprays at the edge. The bark is dark grey-brown, its furrows run along the limb, and moss grows on its top. |
 
 ## How it would be built
@@ -34,20 +34,26 @@ The crown follows the reference Ed sent (described in words in `../README.md`):
 - The real cost is **overdraw**. From outside the crown covers most of the screen, several lobes deep. Two things keep it in check:
   - the lobes are cut-outs, so the depth test rejects what's behind them;
   - each lobe's sprite should be rounded (an octagon or fitted polygon, not a square quad), so fewer empty pixels reach the shader.
-- Indoors the crown is one layer over the house, so it costs about one full-screen pass, plus the hole.
+- Indoors the crown is one layer over the house, so it costs about one full-screen pass. Her room's clearing is a test in that same pass.
 - These are estimates. A real build should be measured with the performance tools (`docs/notes/performance.md`).
 
 ## Re-using the see-through passes
 
 The hole round her should be the forest's own see-through, not a new one. The crown's material would take the same passes and the same uniforms as the trees (`render/sprites.ts`: her circle, its dithered band, `passOf`, the two passes). It would then cut the same soft circle round her and follow the circle-hunt fixes for free. The mock fakes it as a screen-space circle with a Bayer dither at its edge.
 
-The take-off is handled at build time: no lobe within about 18 m of it, so its edge is open to the sky from every angle, with no special pass.
+**The Terrace's gap** (Ed, 2026-10-24: "the terrace should be very visible all the time; a gap in the crown") is handled when the crown is built, with no special pass. The camera always looks north, pitched 30–50° down. So no clump is placed where it would stand on the line of sight down to the Terrace: slid back down that line to the floor, it would land on the Terrace. Any great limb that would cross the gap ducks under the floor there.
+
+The gap therefore opens towards the camera, not straight up, and the Terrace (decks, magic circle, lamps) is in view from the flying camera, coming in to land and from afar. Its rim is ragged clumps and limbs, with a ring of string lights hung round it.
+
+**Indoors, the whole room opens** (Ed: "indoors, whole room opens up; these holes should match the irregular shape of the room"). The crown clears over the room she's in. The clearing is that room's own floor outline (the same shape the floor is drawn from) plus its far wall, widened by a ragged 1–3.5 m dithered edge, as today's roofs open per room.
+
+On a branch (or a trunk link) between rooms, that stretch of branch clears, from one room's outline to the other's, plus the forest's hole round her. In a build this would be one more uniform for the crown's shader, the current room's outline as a small mask texture or a few circles, with the forest's hole kept for her.
 
 ## Fitting the "dark indoors" view
 
 Indoors only the house and the Ent's crowns show. The great crown would be the house's Ent crown: the one thing drawn over the rooms, dark everywhere but where the moon catches its tops and the lamps warm its undersides. The hole round her is the only clear view down. The rooms she isn't in stay hidden under leaves, as the forest hides what's under it outdoors. The floor seen through the gaps is drawn in deep shade so the limbs read against it.
 
-**Open question for Ed:** is one hole round her enough indoors? Or should the room she's in clear as a whole, as the room roofs do today? The mock shows only the hole.
+The rooms she isn't in stay under the leaves, and only her room, its stretch of branch and the Terrace are clear.
 
 ## What the mock can't show
 
@@ -75,7 +81,7 @@ Indoors only the house and the Ent's crowns show. The great crown would be the h
   - afar, as twinkles on the landmark below;
   - inside, through the crown's gaps.
 
-  Bulbs up in the crown are cut by her see-through hole like the leaves, so none hang in mid-air over her room.
+  Bulbs up in the crown are cut away with it where it clears, so none hang in mid-air over her room. A ring of them hangs round the Terrace's gap.
 - **To build:** the crown's lines go through the same bulb and wire meshes and shaders as `rules/strings.ts`'s lines. Those are hung between pairs of trunks at a fixed height; these follow the crown's limbs and clumps instead. So `strings.ts` would take a second source of lines rather than becoming a second system.
 
 ## A landmark over the horizon (Ed, 2026-10-24: "ideally we can see the massive tree over the horizon when you're flying around the map")

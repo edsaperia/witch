@@ -31,13 +31,19 @@ window.crownPass = function (img, W, H, x0, z0, ZK, dist) {
   if (!OPT) return;
   const sh = Math.round(HC * Math.cos(A) * PPM * (ZK < 1 ? 1 : 0)), dzc = ZK < 1 ? HC / Math.tan(A) : 0; // (the crown 5 m up: on screen it sits 5 m x cos 24 higher)
   const her = OPT.her, hi = her ? (her[0] - x0) * PPM : 0, hj = her ? (her[1] - z0) * PPM * ZK - .8 * Math.cos(A) * PPM : 0;
+  const room = her ? [...TRUNK, ...BRANCH].find(r => blob(r, her[0], her[1]) < 0) : null, part = room ? null : her ? onLimb(her[0], her[1]) : null;
+  const clearAt = (x, z) => room ? blob(room, x, z) : part ? part(x, z) : 1e9;
   const RH = (OPT.holeR || 7) * PPM, RE = 1.8 * PPM, d = img.data, mask = new Uint8Array(W * H); // (mask: 1 the crown's leaves or limbs, 2 a gap)
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), zc = z + dzc;
-    if (her) { const r = Math.hypot(i - hi, j - hj); if (r < RH || (r < RH + RE && BAYER[(i & 3) + (j & 3) * 4] > (r - RH) / RE)) continue; } // the see-through hole
+    if (her) { const r = Math.hypot(i - hi, j - hj); if (r < RH || (r < RH + RE && BAYER[(i & 3) + (j & 3) * 4] > (r - RH) / RE)) continue; // the see-through hole round her
+      // (Ed, 2026-10-24: "indoors, whole room opens up; these holes should match the irregular shape of the room"): the crown clears over her
+      // room's own floor outline and its far wall (5 m north of the floor on screen), a ragged dithered edge 1 to 3.5 m out
+      const o = Math.min(clearAt(x, z), clearAt(x, z + 5)) - (1 + (fbm(x * .5, z * .5) - .5) * 1.6);
+      if (o < 0 || (o < 2.5 && BAYER[(i & 3) + (j & 3) * 4] > o / 2.5)) continue; }
     const dC = j + sh < H ? dist[(j + sh) * W + i] : field(x, zc).d, ext = 9 + (fbm(x * .09, zc * .09) - .5) * 10;
     if (dC > ext) continue; // past the crown's ragged edge
-    if (Math.hypot(x - TAKEOFF.x, zc - TAKEOFF.z) < 9 + (fbm(x * .3, zc * .3) - .5) * 4) continue; // the take-off, open to the sky
+    if (blob(TRAC, x, zc) < 3 + (fbm(x * .3, zc * .3) - .5) * 5) continue; // the Terrace: a gap over all of it, always open to the sky (Ed, 2026-10-24)
     const edge = Math.max(0, (dC - (ext - 7)) / 7) * .2, cd = dens(x, zc) - edge;
     let c = null;
     if (cd > .5) { // a thick clump: lit on its top (north) face, dark underneath (south), the leaves' own speckle
@@ -66,6 +72,12 @@ window.crownPass = function (img, W, H, x0, z0, ZK, dist) {
   }
 };
 let IN_BULBS = null;
+// on a branch (or a trunk link) between rooms: the limb she's on, as a distance, clipped to its stretch between the two rooms' outlines
+function onLimb(hx, hz) { const L = [];
+  for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i]; L.push([a, b, (x, z) => limb(a, b, (i % 2 ? 1 : -1) * 1, a.r * .82, b.r * .82, x, z)[0]]); }
+  for (const r of BRANCH) { const p = byId[r.from]; L.push([p, r, (x, z) => limb(p, r, r.bend, Math.min(5.5, p.r * .45), Math.max(2.8, r.r * .42), x, z)[0]]); }
+  let best = null, bd = 1e9; for (const l of L) { const d = l[2](hx, hz); if (d < bd) { bd = d; best = l; } }
+  const [a, b, f] = best; return (x, z) => Math.max(f(x, z), -blob(a, x, z) - 2, -blob(b, x, z) - 2); }
 function inBulbs() { // the strings in plan (crown-space x, z), each bulb's drop below the swag's ends (m, shown lower on screen)
   const PAL = ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"].map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16))), out = [];
   const str = (a, b, sag, o) => { const L = Math.hypot(b.x - a.x, b.z - a.z), n = Math.max(2, Math.round(L / 1.4)); for (let i = 0; i <= n; i++) { const u = i / n; out.push({ x: a.x + (b.x - a.x) * u, z: a.z + (b.z - a.z) * u, down: sag * 4 * u * (1 - u), c: PAL[(i + o) % 6] }); } };
@@ -101,6 +113,9 @@ function closeup() { const P = [];
   for (const [x, y, z, r, thin] of [[-16, 7, -10, 9, 0], [14, 8, -14, 8.5, 0], [-4, 6, -18, 7, 0], [2, 4, 9, 7, .52], [16, 3, 8, 5.5, .58], [-18, 3, 12, 4, .45],
     [7, 2, 17, 2.6, .3], [-1, 1.5, 15, 2.2, .35], [21, 1, 13, 2, .3], [-22, 2, 20, 2.4, .35]]) P.push({ c: [x, y, z], r, kind: "leaf", thin });
   return P; }
+// the Terrace's gap (Ed, 2026-10-24: "the terrace should be very visible all the time"): the camera always looks north, pitched 30 to 50 degrees
+// down, so a clump hides the Terrace when it stands on that line of sight: slid back down along it to the floor, it lands on the Terrace
+const overTerrace = (x, y, z, r) => { let m = 1e9; for (const p of [30, 40, 50]) { const back = Math.max(0, y - FLOOR) / Math.tan(p * Math.PI / 180); m = Math.min(m, blob(TRAC, x, z - back)); } return m - r * .8; };
 let PRIMS = null; const STRINGS = [], BULBS = [];
 function build() {
   const P = [], R = (a, b) => a + (b - a) * Math.random();
@@ -121,6 +136,9 @@ function build() {
     [[tx, 20, tz, 5.5], [-6, 34, 28, 4.4], [-10, 33, 52, 3.2], [-14, 37, 78, 1.6]],
   ];
   const ends = [];
+  for (const g of GREAT) for (const k of [1, 2]) if (g[k]) g[k][1] -= 9; // (under the house's floors, then out and up at its edges)
+  // (and none across the Terrace's gap: a limb that would cross it, seen from the camera, ducks below the floor there)
+  for (const g of GREAT) for (const k of g) if (k[1] > FLOOR - k[3] && overTerrace(k[0], k[1], k[2], -k[3] * 1.25) < 3) k[1] = FLOOR - k[3] - 1;
   for (const g of GREAT) { tube(g); limbKnots.push(g);
     for (let i = 1; i < g.length - 1; i++) for (let f = 0; f < 2; f++) { // forks: smaller twisting branches, out and up to the crown's shell
       const [x, y, z, r] = g[i], out = Math.atan2(z - tz, x - tx) + R(-.9, .9), len = R(18, 30), up = R(8, 26);
@@ -139,14 +157,14 @@ function build() {
   for (let n = 0; n < 480; n++) {
     const th = R(0, 6.283), ph = Math.asin(Math.random()) * 1.4 / 1.5708, sh = R(.8, 1.02), sag = 16 * Math.pow(Math.cos(ph), 6);
     const x = CX + RX * Math.cos(ph) * Math.cos(th) * sh, z = CZ + RZ * Math.cos(ph) * Math.sin(th) * sh, y = Y0 + RY * Math.sin(ph) * sh - sag;
-    if (Math.hypot(x - TAKEOFF.x, z - TAKEOFF.z) < 18) continue; // the take-off's edge: open to the sky
+    const r0 = R(9, 14); if (overTerrace(x, y, z, r0) < R(0, 4)) continue; // the Terrace: a gap in the crown over all of it, always open to the sky (Ed, 2026-10-24)
     const dn = fbm(th * 1.6 + 3, ph * 2.6 + 1); if (dn < .3 && ph < 1.1) continue; // the gaps between the clumps
-    const r = R(9, 14) * (1 - .3 * (1 - ph / 1.4) * Math.cos(ph)) * (ph > .9 ? 1.25 : 1);
+    const r = r0 * (1 - .3 * (1 - ph / 1.4) * Math.cos(ph)) * (ph > .9 ? 1.25 : 1);
     P.push({ c: [x, y, z], r, kind: "leaf", thin: dn < .45 ? .5 : 0 });
     if (ph < .55) for (let s = 0; s < 3; s++) { const a = th + R(-.5, .5), q = [x + Math.cos(a) * (r + R(1, 5)), y - R(0, 7), z + Math.sin(a) * (r + R(1, 5))]; // sprays and twigs sticking out of the edge
-      P.push({ c: q, r: R(2, 3.5), kind: "leaf", thin: .3 }); tube([[x + Math.cos(a) * r * .5, y - 2, z + Math.sin(a) * r * .5, .7], [q[0], q[1], q[2], .3]]); }
+      if (overTerrace(q[0], q[1], q[2], 3) > 2) P.push({ c: q, r: R(2, 3.5), kind: "leaf", thin: .3 }); tube([[x + Math.cos(a) * r * .5, y - 2, z + Math.sin(a) * r * .5, .7], [q[0], q[1], q[2], .3]]); }
   }
-  for (const e of ends) P.push({ c: [e[0], e[1] + 2, e[2]], r: R(5, 8), kind: "leaf", thin: .35 }); // a clump at each fork's end
+  for (const e of ends) if (overTerrace(e[0], e[1] + 2, e[2], 7) > 2) P.push({ c: [e[0], e[1] + 2, e[2]], r: R(5, 8), kind: "leaf", thin: .35 }); // a clump at each fork's end
   // the string lights: swags hung under the limbs, and strings draped from clump to clump over the crown's top
   const PAL = ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"].map(h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)));
   const string = (A, B, sag) => { const L = Math.hypot(B[0] - A[0], B[1] - A[1], B[2] - A[2]), n = Math.max(2, Math.round(L / 1.4)), sid = STRINGS.length, o = Math.floor(R(0, 6)), pts = [];
@@ -164,6 +182,8 @@ function build() {
     const el = R(.25, .7), o = R(0, 6.28), n = Math.round(2 * Math.PI * a.r * Math.cos(el) / 1.4), sid = STRINGS.length, k0 = Math.floor(R(0, 6));
     for (let i = 0; i < n; i++) { const th = o + i / n * 6.283, w = el + .12 * Math.sin(th * 3); BULBS.push({ p: [a.c[0] + a.r * 1.02 * Math.cos(w) * Math.cos(th), a.c[1] + a.r * 1.02 * Math.sin(w), a.c[2] + a.r * 1.02 * Math.cos(w) * Math.sin(th)], c: PAL[(i + k0) % 6], u: i / n, sid, ph: R(0, 1) }); }
     STRINGS.push({ ring: true, sid }); }
+  { const n = 10; let prev = null, first = null; for (let i = 0; i <= n; i++) { const a = i / n * 6.283, q = [TRAC.x + Math.cos(a) * (TRAC.r + 9), FLOOR + 14 + 3 * Math.sin(a * 3), TRAC.z + Math.sin(a) * (TRAC.r + 9)];
+    if (prev) string(prev, q, 2.2); prev = q; } } // (a ring of lights round the Terrace's gap)
   // the woods round about: lower crowns, each two or three rounded clumps
   for (let gx = -330; gx < 330; gx += 11) for (let gz = -300; gz < 260; gz += 11) {
     const x = gx + R(-4, 4), z = gz + R(-4, 4), dr = Math.hypot((x - CX) / 1.05, z - CZ); if (dr < 82 + R(0, 14)) continue;
@@ -200,6 +220,9 @@ window.outside = function ({ lights = 0, patch = false, pitch, cx, cy, cz, s, W,
       let near = 1e9; for (const r of [...TRUNK, ...BRANCH]) near = Math.min(near, Math.hypot(x - r.x, z - r.z) - r.r); if (near > 14) continue;
       const f = field(x, z); if (f.d > 0) continue;
       let c = f.d > -.6 ? BARK[hash(i, j) < .5 ? 1 : 2] : floorTone(x, z, f.parts, false); const g = glowAt(x, FLOOR, z); c = mix(c.map(v => v * .55), [230, 160, 90], g * .35);
+      for (const [id, room, ox, oz, w, dd] of OBJ) { if (room !== "terrace") continue;
+        if (id === "circle") { const rr = Math.hypot(x - ox, z - oz); if (rr < w / 2 && rr > w / 2 - .5) c = [255, 90, 140]; else if (rr < w / 2 - .5) c = mix(c, [200, 60, 120], .25); }
+        else if (Math.abs(x - ox) < w / 2 && Math.abs(z - oz) < dd / 2) c = id === "decks" && hash(i, j) > .8 ? [120, 240, 255] : [34, 26, 36]; }
       put(i, j, lam, c); } }
   // everything else, sphere by sphere through the depth buffer
   for (const q of prims) {
