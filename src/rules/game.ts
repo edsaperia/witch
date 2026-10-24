@@ -16,6 +16,7 @@ import { healBy, heldByCombat, keepsToCircle, napping, spawnCreatures, stepCreat
 import { Forest } from "./forest";
 import { inviteCreature, leashPoint, newLeash, type LeashControls, type LeashEvent, type LeashState } from "./leash";
 import { stepTravel, updateModes } from "./travel";
+import { leashView } from "./houseGuard";
 import { buffing, cheer, LEGENDS, placeRelics, stepLegendStates, type Relic } from "./legends";
 import { placeTrunk, type Trunk } from "./finds";
 import { befriend, danceAt, huntsWitch, invitableNow, stateOf, STATES, type State } from "./creatureStates";
@@ -587,7 +588,9 @@ function fixedStep(g: Game, controls: Controls): void {
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
   if (!calm) stepClear(g);
-  updateModes(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
+  // (in the treehouse her followers guard home as if their sigils were placed there, her stack unchanged: rules/houseGuard.ts)
+  const LV = leashView(W, g.creatures, g.map, t);
+  updateModes(LV.stack, LV.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
   if (!calm) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
   if (!calm) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
@@ -604,8 +607,8 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepWanderers([...g.combat.busy].map(id => g.creatures[id]), g.map, dt)) g.byArea = null; // (those walking home are among combat's busy)
   // (A party animal in a fight is moved by combat, not its leash.)
   // Far from her on the ground, or from its sigil, a party animal travels (rules/travel.ts): quiet, along area borders.
-  stepTravel(g.leash.stack, g.leash.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
-  stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP);
+  stepTravel(LV.stack, LV.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
+  stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP, LV.guards);
   if (perchTurn) W.leash.events.push({ kind: "perch", id: W.id, x: W.body.x, z: W.body.z, at: ht, on: perchTurn > 0 });
   if (was.falling !== undefined && W.body.falling === undefined) W.leash.events.push({ kind: "fell", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (off the balcony with no broom: back at the circle)
   // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
@@ -622,7 +625,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
   questsFromPlaced(g, ht);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
-  stepBerries(B, g.creatures, id => leashPoint(g.leash, id, g.witch.x, g.witch.z), g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; });
+  stepBerries(B, g.creatures, id => { const p = LV.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : leashPoint(g.leash, id, g.witch.x, g.witch.z); }, g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; }); // (a baby eats only at a real sigil, not at its home spot while she's in the treehouse: Ed, 2026-10-24)
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }
@@ -738,15 +741,16 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // Besiegers marching far from her and from the action go coarsely (rules/simLod.ts).
   const coarse = coarseMarchers(g, active, t, dt);
   const stepped = coarse.size ? active.filter(c => !coarse.has(c)) : active;
+  const views = g.witches.map(w => leashView(w, g.creatures, g.map, t)); // (each witch's: in the treehouse, her followers guard home)
   stepCombat(S, {
     creatures: g.creatures, active: stepped, time, dt, t, busy,
     witches: g.witches.map((w, i) => {
       const onGround = w.body.mode === "ground" && !w.body.seated && !w.body.perch; // (up on the treehouse deck: out of every fight)
       return { id: i, x: w.body.x, z: w.body.z, onGround, down: !!w.ko, vx: w.body.vx, vz: w.body.vz, shelter: onGround ? calmRingAt(g, w.body.x, w.body.z)?.id : undefined, ...(hiddenWitch(g, i) ? { hidden: t.spells.stealth?.range ?? 25 } : {}) }; // (her Stealth broom: unseen, rules/brooms.ts) // (in a calm legend's circle, safe from outside: Ed, round 14)
     }),
-    leashPoint: id => { for (const w of g.witches) { const p = leashPoint(w.leash, id, w.body.x, w.body.z); if (p) return p; } return null; },
+    leashPoint: id => { for (let i = 0; i < g.witches.length; i++) { const v = views[i], q = v.placed.find(p => p.id === id); if (q) return { x: q.x, z: q.z }; if (v.stack.includes(id)) return { x: g.witches[i].body.x, z: g.witches[i].body.z }; } return null; },
     asleep: c => !!c.partyLegend || dormant(g, c) || napping(c, time) || (!!c.friendly && !c.leashed), // (a friendly area's creatures leave her party be, and are left be; a sleeper, or one getting up, is out of it)
-    parked: id => g.witches.some(w => w.leash.placed.some(p => p.id === id)),
+    parked: id => views.some(v => v.placed.some(p => p.id === id)),
     talkingTo: id => g.witches.findIndex(w => !!w.leash.talk && w.leash.talk.id === id && !w.leash.talk.refused),
     exit: (x, z) => mapExit(g.map, x, z),
     round: g.map.bounds.lakes ? (x, z, tx, tz) => roundLakes(g.map.bounds, x, z, tx, tz, lakeKnobs(t).shore + 4) : undefined,
@@ -936,9 +940,10 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const time = g.clock.time;
   // Asleep, restless (no kin in its area), angry; happy by a relic (rules/legends.ts, #87).
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
+  const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
     creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
-    areaOf: c => { if (c.leashed) { const p = g.leash.placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
+    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
   // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning
