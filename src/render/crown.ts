@@ -19,6 +19,17 @@ import { SPRITE_UNIFORMS } from "./sprites";
 /** The plan → world map: world = O + x Ex + y Ey + z Ez (y over the floor). */
 export interface PlanMap { o: THREE.Vector3; ex: THREE.Vector3; ey: THREE.Vector3; ez: THREE.Vector3 }
 
+/** The crown's noise: value noise, 64 cells across, tiling (its leaves' speckle, ragged edges, sprays, the bark's furrows). */
+function noiseTexture(): THREE.DataTexture {
+  const N = 64, v = new Float32Array(N * N), h = (i: number, j: number) => { const x = Math.sin(((i % N) + N) % N * 127.1 + (((j % N) + N) % N) * 311.7) * 43758.5453; return x - Math.floor(x); };
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) v[j * N + i] = h(i, j);
+  const data = new Uint8Array(N * N * 4);
+  for (let k = 0; k < N * N; k++) data[k * 4] = data[k * 4 + 1] = data[k * 4 + 2] = Math.round(v[k] * 255), data[k * 4 + 3] = 255;
+  const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+}
+
 /** The mask's side (texels) over the crown's dome: about a metre a texel. */
 const MASK = 128;
 
@@ -35,9 +46,8 @@ uniform vec4 uClearBox; // the mask's plan box: x0, z0, 1/width, 1/depth
 uniform float uClearOn; // 1 indoors with a room (or branch) to clear
 uniform vec4 uWitch, uOcc;
 uniform float uWitchDepth;
-float hash12(vec2 p) { vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
-float vnoise2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
-  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y); }
+uniform sampler2D uNoise; // a tiling value noise, 64 cells across (one lookup in place of four hashes: the crown is a lot of pixels)
+float vnoise2(vec2 p) { return texture2D(uNoise, (p + 0.5) / 64.0).r; }
 float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
   return (i == 0.0 ? 0.0 : i == 1.0 ? 8.0 : i == 2.0 ? 2.0 : i == 3.0 ? 10.0 : i == 4.0 ? 12.0 : i == 5.0 ? 4.0 : i == 6.0 ? 14.0 : i == 7.0 ? 6.0 : i == 8.0 ? 3.0 : i == 9.0 ? 11.0 : i == 10.0 ? 1.0 : i == 11.0 ? 9.0 : i == 12.0 ? 15.0 : i == 13.0 ? 7.0 : i == 14.0 ? 13.0 : 5.0) / 16.0 + 1.0 / 32.0; }
 float screenDistC(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
@@ -72,10 +82,14 @@ varying vec2 vData;
 varying vec3 vWorld;
 varying vec2 vFloor;
 varying float vDepth;
+varying vec3 vLight; // the light on it (its lamps, the moon's fill, her glow), once a vertex: the pixels add only the moon's shading
+uniform vec3 uBack;
 ${SHARED_GLSL}
 ${HEIGHT_VERT_GLSL}
+${LIGHT_GLSL}
 void main() {
   vec3 c = mapPlan(iLobe.xyz), p = c + (corner.x * uRight + corner.y * uUp) * iLobe.w * uLobeK;
+  vLight = nightLight(normalize(uBack + uUp * 0.5 + (corner.x * uRight + corner.y * uUp) * 0.6), c + (corner.x * uRight + corner.y * uUp) * iLobe.w);
   vWorld = c + (corner.x * uRight + corner.y * uUp) * iLobe.w;
   vUv = corner; vData = iData;
   // the floor's plan point under this pixel (indoors: the house's plane, its right the plan's east and its up the plan's north)
@@ -93,6 +107,7 @@ varying vec2 vData;
 varying vec3 vWorld;
 varying vec2 vFloor;
 varying float vDepth;
+varying vec3 vLight;
 uniform vec3 uBack, uRight, uUp;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
@@ -106,11 +121,10 @@ void main() {
   if (rr > 1.0 - rag) discard;
   if (vData.x > 0.0 && vnoise2(vUv * 6.5 + s * 3.1) + vnoise2(vUv * 13.0 - s) * 0.4 < vData.x * 1.5) discard;
   if (cleared(vFloor, vDepth)) discard;
-  // a billowing clump: a sphere's normal, lumped by its leaves
-  vec2 b = vec2(vnoise2(vUv * 5.0 + s * 0.3), vnoise2(vUv * 5.0 + s * 0.3 + 19.0)) - 0.5;
-  vec2 u = vUv + b * 0.45;
+  // a billowing clump: a sphere's normal, lumped by its leaves, shaded by the moon on the light the vertices found
+  vec2 u = vUv + (vec2(vnoise2(vUv * 5.0 + s * 0.3), vnoise2(vUv * 5.0 + s * 0.3 + 19.0)) - 0.5) * 0.45;
   vec3 N = normalize(u.x * uRight + u.y * uUp + uBack * sqrt(max(0.05, 1.0 - dot(u, u))));
-  vec3 L = nightLight(N, vWorld);
+  vec3 L = vLight * (0.55 + 0.6 * max(0.0, dot(N, uMoonDir)) + 0.25 * N.y);
   float y = dot(L, vec3(0.3, 0.55, 0.15)), speck = vnoise2(gl_FragCoord.xy * 0.45) * 0.6 + vnoise2(gl_FragCoord.xy * 0.9 + 7.0) * 0.4;
   float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
   vec3 tint = L / max(y, 1e-3);
@@ -125,13 +139,16 @@ varying vec3 vWorld, vN;
 varying vec2 vBark;
 varying vec2 vFloor;
 varying float vDepth;
+varying vec3 vLight;
 uniform vec3 uRight, uUp;
 ${SHARED_GLSL}
 ${HEIGHT_VERT_GLSL}
+${LIGHT_GLSL}
 void main() {
   vec3 p = mapPlan(position);
   vWorld = p; vBark = aBark;
   vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
+  vLight = nightLight(vN, p); // (once a vertex)
   vec3 q = p - uMapO;
   vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
   vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
@@ -144,12 +161,13 @@ varying vec3 vWorld, vN;
 varying vec2 vBark;
 varying vec2 vFloor;
 varying float vDepth;
+varying vec3 vLight;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
   if (cleared(vFloor, vDepth)) discard;
   vec3 N = normalize(vN);
-  vec3 L = nightLight(N, vWorld);
+  vec3 L = vLight;
   float y = dot(L, vec3(0.3, 0.55, 0.15));
   // furrows running along the limb, the ridges between them lit
   float fur = vnoise2(vec2(vBark.x * 0.7, vBark.y * 9.0)) * 0.7 + vnoise2(vec2(vBark.x * 2.1, vBark.y * 21.0)) * 0.3;
@@ -164,12 +182,12 @@ void main() {
 function barkGeometry(c: Crown): THREE.BufferGeometry {
   const pos: number[] = [], nrm: number[] = [], bark: number[] = [], idx: number[] = [];
   for (const l of c.limbs) {
-    const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 10 : l.knots[0][3] > 0.8 ? 7 : 5;
+    const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 8 : l.knots[0][3] > 0.8 ? 6 : 4;
     const ring: { p: number[]; t: number[]; r: number; s: number }[] = [];
     let along = 0, prev: number[] | null = null;
     for (let i = 1; i < k.length - 2; i++) {
       const [p0, p1, p2, p3] = [k[i - 1], k[i], k[i + 1], k[i + 2]], L = Math.hypot(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]);
-      const n = Math.max(2, Math.ceil(L / Math.max(0.8, Math.min(p1[3], p2[3]) * 1.1)));
+      const n = Math.max(2, Math.ceil(L / Math.max(1.6, Math.min(p1[3], p2[3]) * 2.2))); // (rings about a diameter apart: the bend between is gentle)
       for (let s = 0; s < n + (i === k.length - 3 ? 1 : 0); s++) {
         const t = s / n, t2 = t * t, t3 = t2 * t, q = [0, 1, 2, 3].map(j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3));
         if (prev) along += Math.hypot(q[0] - prev[0], q[1] - prev[1], q[2] - prev[2]);
@@ -243,6 +261,7 @@ export class CrownView {
       uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc,
       uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
       uBendOn: { value: 1 }, uIndoor: { value: 0 }, uLobeK: { value: 1 }, uBack: { value: this.back },
+      uNoise: { value: noiseTexture() },
       uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
     };
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
@@ -294,6 +313,6 @@ export class CrownView {
 
   dispose(): void {
     for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
-    this.maskTex.dispose();
+    this.maskTex.dispose(); (this.uniforms.uNoise.value as THREE.Texture).dispose();
   }
 }
