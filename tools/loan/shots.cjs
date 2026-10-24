@@ -69,11 +69,13 @@ const want = new Set(which.split(","));
       await page.close();
     }
     if (want.has("hats")) {
-      const page = await open("object:hats");
+      const page = await open("object:hats", "&hats=helmet"); // (only the helmet hers: the Sentry hat taken goes onto the floor)
       await step(page, 5);
       log("take:", await page.evaluate(() => window.witch.take("hat", "sentry")));
+      log("floor:", await page.evaluate(() => { const W = window.witch.game.witches[0]; return JSON.stringify({ floor: W.house?.hats ?? null, hats: W.spells.hats ?? null, hat: W.spells.hat, trunk: window.witch.game.trunk }); }));
       await settle(page);
       for (let i = 0; i < 8; i++) { await step(page, 1); await shot(page, `sparkle-hats-${i}.png`); await page.waitForTimeout(220); }
+      log("sparkle:", await page.evaluate(() => { const c = document.querySelector(".loan-sparkle"); return c ? `${c.style.display} ${c.width}x${c.height} at ${c.dataset.at}` : "none"; }));
       await page.close();
     }
     if (want.has("card")) {

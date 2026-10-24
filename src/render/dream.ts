@@ -253,13 +253,15 @@ function line(x: CanvasRenderingContext2D, a: [number, number], b: [number, numb
   if (alpha <= 0 || !a || !b) return;
   x.strokeStyle = `rgba(200,214,255,${alpha})`; x.lineWidth = 1; x.beginPath(); x.moveTo(a[0], a[1]); x.lineTo(b[0], b[1]); x.stroke();
 }
-/** A loan's glint (the same four-point pixel star as the treehouse's sparkle: render/loanSparkle.ts). */
-export function glint(x: CanvasRenderingContext2D, px: number, py: number, b: number, P: number): void {
+/** A loan's glint (the same four-point pixel star as the treehouse's sparkle: render/loanSparkle.ts); `rim`, a dark rim round it, so
+ *  it reads on a bright floor too. */
+export function glint(x: CanvasRenderingContext2D, px: number, py: number, b: number, P: number, rim = false): void {
   if (b <= 0.05) return;
   const k = Math.max(2, Math.round(P * 0.7)), X = Math.round(px / k) * k, Y = Math.round(py / k) * k, arm = b > 0.6 ? 2 : 1;
-  x.fillStyle = `rgba(255,244,214,${b})`; x.fillRect(X, Y, k, k);
-  x.fillStyle = `rgba(255,226,160,${b * 0.75})`;
-  for (let i = 1; i <= arm; i++) { x.fillRect(X + i * k, Y, k, k); x.fillRect(X - i * k, Y, k, k); x.fillRect(X, Y + i * k, k, k); x.fillRect(X, Y - i * k, k, k); }
+  const plus = (c: string, grow: number) => { x.fillStyle = c; x.fillRect(X - grow, Y - arm * k - grow, k + grow * 2, (arm * 2 + 1) * k + grow * 2); x.fillRect(X - arm * k - grow, Y - grow, (arm * 2 + 1) * k + grow * 2, k + grow * 2); };
+  if (rim) plus(`rgba(24,14,36,${0.7 * b})`, Math.max(1, Math.round(k / 2)));
+  plus(`rgba(255,226,160,${b * 0.85})`, 0);
+  x.fillStyle = `rgba(255,252,236,${b})`; x.fillRect(X, Y, k, k);
 }
 function words(x: CanvasRenderingContext2D, text: string, px: number, py: number, a: number, col: string, align: CanvasTextAlign = "left"): void {
   if (a <= 0) return;
