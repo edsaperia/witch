@@ -2,22 +2,32 @@
 
 A mock for Ed to approve before anything is built. Nothing in the game has changed.
 
+**Revision 2** (Ed's feedback, 2026-10-24: "closer to the diagram; trunk rooms weave left and right, and there are two rooms out to one side for each ... See if you can foreshorten the growth ring texture to make the floor look more isometric"; "branches can be longer, and branch rooms larger"):
+- **The trunk zigzags**, bottom to top: the Dining Room on the left, the Terrace on the right, the Parlour on the left, the Boudoir on the right, Bedroom 1 on the left.
+- **Each trunk room's two branch rooms** go out on its outer side and above it, and the Turret sits straight above Bedroom 1.
+- **The branches are longer and thicker, and the rooms bigger:** branch rooms 14 to 16 m across, and the trunk 28 m down to 17 m. The trunk rooms are still the largest.
+- **The floor is foreshortened.** Indoors the game's camera pitches down 24° (the tuning's `camera.house.angle`; `render/view/camera.ts` sets its up vector as (0, cos a, −sin a)). So the floor's depth shows on screen at sin 24° ≈ **0.41** of its width.
+  - The plan is drawn straight down, with only its floor's grain squashed by 0.41, so the rings are ellipses.
+  - The new picture 5 and the three close-ups are drawn entirely as the game sees them: depth × 0.41, the walls standing cos 24° of their height.
+- **The take-off** is on the Terrace's open **south-east rim**, below its two branches, with the DJ decks and the record shelf beside it.
+
 Ed's art direction, verbatim: "it is a large old oak tree with wide, thick, decumbent branches. The trunk rooms are the largest, getting smaller towards to the top. The other rooms sit upon branches. The room and corridor shapes are irregular, and don't have clear joins between them. The floors are wooden but not planks. Redraw the terrace as well to match with the rest."
 
 ## The pictures
 
-1. **[`1-plan.png`](1-plan.png): the plan from above, at the game's scale.**
+1. **[`1-plan.png`](1-plan.png): the plan from above, at the game's scale.** The floor's grain is foreshortened 0.41.
    - Scale: 10.7 art pixels a metre, drawn 2×. The grid is 10 m and north is up, as in the game.
    - **Trunk:** the trunk rooms are labelled in gold, bottom to top: Dining Room, Terrace, Parlour, Boudoir, Bedroom 1.
    - **Branches:** the branch rooms are labelled in blue, each with its size.
    - **Furniture:** at its real footprint, from the room configs.
    - **Locked rooms:** Bedrooms 2 and 3, drawn shut, with a door where each one's branch reaches it.
    - **Walk:** the dotted line is her walk from the bed to the take-off.
-2. **[`2-trunk-room.png`](2-trunk-room.png): a trunk room (the Parlour), at 5×.**
-3. **[`3-branch-join.png`](3-branch-join.png): a branch meeting a room (the Parlour's branch into the Bestiary), at 5×.** It shows the wall of living wood on the far side, as the game stands walls on a room's back half.
-4. **[`4-terrace.png`](4-terrace.png): the Terrace, redrawn to match.**
-   - The DJ decks and the record shelf are by the open rim she steps off from, on its south-east.
+2. **[`2-trunk-room.png`](2-trunk-room.png): a trunk room (the Parlour), as the game sees it, at 4×.**
+3. **[`3-branch-join.png`](3-branch-join.png): a branch meeting a room (the Parlour's branch into the Bestiary), as the game sees it, at 4×.** It shows the wall of living wood on the far side, as the game stands walls on a room's back half.
+4. **[`4-terrace.png`](4-terrace.png): the Terrace, redrawn to match, as the game sees it.**
+   - The DJ decks and the record shelf are by the open rim she steps off from, on its south-east, below its branches.
    - The magic circle is in the middle.
+5. **[`5-as-the-game-sees-it.png`](5-as-the-game-sees-it.png): the whole house as the game's camera would see it indoors.** It has the same labels as the plan.
 
 The floor and walls are as the game would paint them: art pixels, a few tones a material, no anti-aliasing.
 - **One shape.** The trunk, the branches and the rooms are one outline, smoothly joined, so no seams show.
@@ -53,32 +63,39 @@ Gone: the Atrium, the Drawing Room and the Study. Also gone: the crystal ball, t
 
 "Across" means about twice the room's size (the shapes are irregular). Today's figures are the room configs' `radius`.
 
-| Room | Now | v4 |
+| Room | Now | v4 (revision 2) |
 |---|---|---|
-| Dining Room | (none) | **24 m** |
-| Terrace | 14 m (the hub) plus the balcony | **21 m** |
-| Parlour | 11 m | **18 m** |
-| Boudoir | 9 m | **15 m** |
-| Bedroom 1 | 18 m | **14 m** |
-| Workshop | 15 m | 14 m |
-| Kitchen | 13 m | 12 m |
-| Studio | 13 m | 13 m |
-| Cloakroom | (none) | 11 m |
-| Bestiary | 13 m | 12 m |
-| Solarium | 13 m | 12 m |
-| Bedrooms 2 and 3 | 18 m each | 11 m each (Ed: smaller is fine, as long as hers' set of furniture fits; no Turret branch) |
-| Turret (Crow's nest) | 9 m | 9 m |
+| Dining Room (trunk) | (none) | **28 m** |
+| Terrace (trunk) | 14 m (the hub) plus the balcony | **25 m** |
+| Parlour (trunk) | 11 m | **22 m** |
+| Boudoir (trunk) | 9 m | **19 m** |
+| Bedroom 1 (trunk) | 18 m | **17 m** |
+| Workshop | 15 m | 16 m |
+| Kitchen | 13 m | 15 m |
+| Studio | 13 m | 15 m |
+| Bestiary | 13 m | 15 m |
+| Cloakroom | (none) | 14 m |
+| Solarium | 13 m | 14 m |
+| Bedrooms 2 and 3 | 18 m each | 14 m each (they fit hers' set of furniture; no Turret branch) |
+| Turret (Crow's nest) | 9 m | 11 m |
 
-The house overall spans about 80 m by 125 m; today's is about 80 m by 75 m.
+The branches between are about 20 to 30 m long, against about 3 to 10 m today. The house spans about 140 m by 150 m; today's is about 80 m by 75 m.
 
-**The walk from her bed to the take-off is about 77 m**, measured in straight lines through the rooms' middles: Bedroom 1, Boudoir, Parlour, the Terrace, then its open rim. Today's is about the same, also 77 m (Bedroom, Boudoir, Parlour, Atrium, Terrace, the balcony's rim). At her walking speed of 5 m/s that's about 15 s. The Dining Room adds nothing to it, being below the Terrace.
+**The walk is about twice today's.** These are straight lines through the rooms' middles: Bedroom 1, Boudoir, Parlour, then the Terrace. The zigzag and the bigger trunk rooms make it longer. The longer branches don't, since every room on her way is on the trunk.
 
-**From her bed to the Terrace is about 66 m to its middle (about 13 s at 5 m/s), or 55 m to where she first steps onto it (about 11 s).** With no loading gate (Ed's decision, below), the build can use that to judge whether her walk usually covers the island's loading.
+| Walk | Distance | At her walking speed (5 m/s) |
+|---|---|---|
+| Bed to where she first steps onto the Terrace | about 109 m | about 22 s |
+| Bed to the Terrace's middle | about 122 m | about 24 s |
+| Bed to the take-off | about 134 m | about 27 s |
+| Bed to the take-off today | about 77 m | about 15 s |
+
+That gives the island longer to load before she reaches the Terrace (no loading gate: Ed's decision, below). It's also a longer walk every night.
 
 ## Decided since (Ed, 2026-10-24)
 
 - **Bedrooms 2 and 3 are smaller branch rooms.** Ed: "bedrooms 2 and 3 just need to have enough space to hold the same items; they can be smaller because they don't have a turret. Since they're at the top, the trunk is becoming smaller anyway."
-  - At 11 m across, each holds her room's set: bed, wardrobe, shoe rack, dressing table and so on, as they will one day. Today they hold sheeted placeholders.
+  - At 14 m across (revision 2), each holds her room's set: bed, wardrobe, shoe rack, dressing table and so on, as they will one day. Today they hold sheeted placeholders.
   - Neither needs room for a Turret's branch.
 - **No curtains and no loading gate.** Ed: "hopefully the house is large enough that by the time she gets to the terrace it's loaded already. If she sees some stuff pop in, it's not the end of the world."
   - The bedroom's door waits only on her being dressed.
@@ -87,14 +104,10 @@ The house overall spans about 80 m by 125 m; today's is about 80 m by 75 m.
 
 ## Conflicts still open (flagged, not resolved)
 
-1. **Her bedroom shrinks.** It goes from 18 m to 14 m, the smallest trunk room. On 2026-10-21 Ed doubled the rooms ("the treehouse is too small for the witch to move inside"). Everything fits in 14 m, but it's tighter than today.
-2. **The Dining Room is "below" the Terrace, where the take-off was.**
-   - Today the Terrace's front (its south rim, the balcony) is open air, with her decks on it, and that's where she steps off.
-   - With the Dining Room at the bottom of the trunk, the mock bends the trunk: the Dining Room sits to the south-west, and the take-off and decks move to the Terrace's south-east rim.
-   - Ed may want them elsewhere.
-3. **The take-off direction.** Flying back onto the house, she lands where she flies over the balcony's half-disc today (`flyOnto`). That would need to become the Terrace's open rim on its south-east.
-4. **The bags move from the Study to the Parlour.** They stay a dressing station past her door, as now, so this isn't a conflict, just noted.
-5. **The crystal ball is gone.** It's already only a placeholder since the telescope's constellation took its job. Its object and the `ball` use go.
+1. **The walk is about twice today's**: 134 m from bed to take-off, against 77 m (see above).
+2. **The take-off moves.** Today it's the balcony's south rim. In v4 it's the Terrace's open south-east rim, below its branches: open air, with the Dining Room down-left and the Terrace's own branches up-right. Flying back onto the house, she lands where she flies over the balcony's half-disc today (`flyOnto`); that would need to become this rim.
+3. **The bags move from the Study to the Parlour.** They stay a dressing station past her door, as now, so this isn't a conflict, just noted.
+4. **The crystal ball is gone.** It's already only a placeholder since the telescope's constellation took its job. Its object and the `ball` use go.
 
 ## What the build would touch
 

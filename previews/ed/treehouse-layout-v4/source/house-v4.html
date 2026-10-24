@@ -6,26 +6,28 @@
 // Boudoir, Bedroom 1, bottom to top, largest to smallest) with rooms on wide, low branches. One floor seen from above, metres
 // x east, z south (up the screen is north, as in the game). Everything is one shape (rooms and branches smooth-unioned, no seams),
 // its floor the tree's own grain: growth rings round each trunk room's heart, long grain along each branch, blended where they meet.
-const PPM = 32 / 3; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
+const PPM = 32 / 3;
+const FORE = Math.sin(24 * Math.PI / 180); // the floor's foreshortening indoors (0.41)
+let VIEW = "plan"; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
 
 // ---- the plan ----
-const TRUNK = [ // bottom to top; r: its size (about its radius, m)
-  { id: "dining", label: "Dining Room", x: -15, z: 22, r: 12 },
-  { id: "terrace", label: "Terrace", x: 0, z: 0, r: 10.5 },
-  { id: "parlour", label: "Parlour", x: 7, z: -22, r: 9 },
-  { id: "boudoir", label: "Boudoir", x: -3, z: -41, r: 7.5 },
-  { id: "bedroom", label: "Bedroom 1", x: 7, z: -57, r: 7 },
+const TRUNK = [ // bottom to top, weaving left and right; r: its size (about its radius, m)
+  { id: "dining", label: "Dining Room", x: -20, z: 30, r: 14, side: -1 },
+  { id: "terrace", label: "Terrace", x: 14, z: 4, r: 12.5, side: 1 },
+  { id: "parlour", label: "Parlour", x: -18, z: -24, r: 11, side: -1 },
+  { id: "boudoir", label: "Boudoir", x: 13, z: -48, r: 9.5, side: 1 },
+  { id: "bedroom", label: "Bedroom 1", x: -14, z: -70, r: 8.5, side: -1 },
 ];
-const BRANCH = [ // a room on a branch off a trunk room: the room's middle and size, the branch's bend (m sideways at its middle)
-  { id: "kitchen", label: "Kitchen", from: "dining", x: -40, z: 18, r: 6, bend: 2 },
-  { id: "workshop", label: "Workshop", from: "dining", x: -30, z: 46, r: 7, bend: -3 },
-  { id: "studio", label: "Studio", from: "terrace", x: 27, z: -6, r: 6.5, bend: -2 },
-  { id: "cloakroom", label: "Cloakroom", from: "terrace", x: -25, z: -6, r: 5.5, bend: 2 },
-  { id: "bestiary", label: "Bestiary", from: "parlour", x: 31, z: -27, r: 6, bend: 2 },
-  { id: "solarium", label: "Solarium", from: "parlour", x: -19, z: -27, r: 6, bend: -2 },
-  { id: "bedroom2", label: "Bedroom 2", from: "boudoir", x: -27, z: -48, r: 5.5, bend: 2, locked: true },
-  { id: "bedroom3", label: "Bedroom 3", from: "boudoir", x: 19, z: -39, r: 5.5, bend: -1.5, locked: true },
-  { id: "turret", label: "Turret", from: "bedroom", x: 24, z: -68, r: 4.5, bend: 1.5 },
+const BRANCH = [ // a room on a branch off a trunk room, out on that room's outer side: its middle and size, the branch's bend
+  { id: "kitchen", label: "Kitchen", from: "dining", x: -66, z: 38, r: 7.5, bend: -2 },
+  { id: "workshop", label: "Workshop", from: "dining", x: -60, z: 6, r: 8, bend: 2 },
+  { id: "cloakroom", label: "Cloakroom", from: "terrace", x: 60, z: 10, r: 7, bend: 2 },
+  { id: "studio", label: "Studio", from: "terrace", x: 52, z: -20, r: 7.5, bend: -2 },
+  { id: "bestiary", label: "Bestiary", from: "parlour", x: -62, z: -22, r: 7.5, bend: -2 },
+  { id: "solarium", label: "Solarium", from: "parlour", x: -54, z: -52, r: 7, bend: 2 },
+  { id: "bedroom2", label: "Bedroom 2", from: "boudoir", x: 56, z: -44, r: 7, bend: 2, locked: true },
+  { id: "bedroom3", label: "Bedroom 3", from: "boudoir", x: 48, z: -74, r: 7, bend: -2, locked: true },
+  { id: "turret", label: "Turret", from: "bedroom", x: -14, z: -98, r: 5.5, bend: 1.5 },
 ];
 // the furniture: the room configs' own footprints (w along x, d along z, m), placed afresh; h only for the close-ups
 const OBJ = [
@@ -43,7 +45,14 @@ const OBJ = [
   ["shoeRack", "bedroom", 2.5, -53.5, 3, 1.1, "Shoe rack"], ["clothesPile", "bedroom", 9.5, -55, 1.6, 2, "Clothes pile"],
   ["telescope", "turret", 24.5, -69, 1.6, 1.6, "Telescope"],
 ];
-const TAKEOFF = { x: 9.5, z: 7, a: Math.PI / 4 }; // the Terrace's open rim, south-east: where she steps off (and flies back on)
+const OLD = { dining: [-15, 22, 12], kitchen: [-40, 18, 6], workshop: [-30, 46, 7], terrace: [0, 0, 10.5], studio: [27, -6, 6.5], cloakroom: [-25, -6, 5.5],
+  parlour: [7, -22, 9], bestiary: [31, -27, 6], solarium: [-19, -27, 6], boudoir: [-3, -41, 7.5], bedroom: [7, -57, 7], turret: [24, -68, 4.5] };
+// the Terrace's furniture placed afresh: its decks and records on its open east rim, the circle in its middle
+const TERRACE_AT = { decks: [5.5, 8], recordShelf: [-1, 9.5], circle: [-1.5, -2] };
+for (const o of OBJ) { const [id, room, x, z] = o, R = TRUNK.concat(BRANCH).find(q => q.id === room), q = OLD[room];
+  if (room === "terrace" && TERRACE_AT[id]) { o[2] = R.x + TERRACE_AT[id][0]; o[3] = R.z + TERRACE_AT[id][1]; continue; }
+  const k = R.r / q[2]; o[2] = R.x + (x - q[0]) * k; o[3] = R.z + (z - q[1]) * k; }
+const TAKEOFF = { x: 14 + 12.5 * Math.cos(.95), z: 4 + 12.5 * Math.sin(.95), a: .95 }; // the Terrace's open outer rim, south-east (below its branches): where she steps off (and flies back on)
 
 // ---- shapes ----
 const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -57,6 +66,8 @@ function blob(r, x, z) { const dx = x - r.x, dz = z - r.z, a = Math.atan2(dz, dx
   const rr = r.r * (1 + .10 * Math.sin(3 * a + seed) + .07 * Math.sin(5 * a + seed * 2.3) + .05 * (fbm(dx * .15 + seed, dz * .15) - .5) * 2); return Math.hypot(dx, dz) - rr; }
 // a bent limb from a to b: a quadratic curve, its half-width easing from w0 to w1; returns [distance, t along, signed side]
 function limb(a, b, bend, w0, w1, x, z) {
+  { const ex = b.x - a.x, ez = b.z - a.z, L2 = ex * ex + ez * ez, t = Math.max(0, Math.min(1, ((x - a.x) * ex + (z - a.z) * ez) / L2)), far = Math.hypot(x - a.x - ex * t, z - a.z - ez * t) - Math.abs(bend) * 2 - Math.max(w0, w1) - 6;
+    if (far > 0) return [far + 6, t, 0]; } // (far from it: no need to find its nearest point)
   const mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2, L = Math.hypot(b.x - a.x, b.z - a.z), nx = -(b.z - a.z) / L, nz = (b.x - a.x) / L, cx = mx + nx * bend * 2, cz = mz + nz * bend * 2;
   let best = 1e9, bt = 0, side = 0;
   for (let i = 0; i <= 24; i++) { const t = i / 24, px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x, pz = (1 - t) * (1 - t) * a.z + 2 * (1 - t) * t * cz + t * t * b.z, d = Math.hypot(x - px, z - pz);
@@ -68,7 +79,7 @@ function field(x, z) {
   let d = 1e9, parts = [];
   for (const r of TRUNK) { const s = blob(r, x, z); parts.push({ kind: "ring", r, s }); d = smin(d, s, 6); }
   for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i], [s, t, side] = limb(a, b, (i % 2 ? 1 : -1) * 1.5, a.r * .62, b.r * .62, x, z); parts.push({ kind: "spine", s, side, t, a, b }); d = smin(d, s, 6); }
-  for (const r of BRANCH) { const p = byId[r.from], [s, t, side] = limb(p, r, r.bend, Math.min(4.2, p.r * .45), Math.max(1.9, r.r * .42), x, z), sb = blob(r, x, z);
+  for (const r of BRANCH) { const p = byId[r.from], [s, t, side] = limb(p, r, r.bend, Math.min(5.5, p.r * .45), Math.max(2.8, r.r * .42), x, z), sb = blob(r, x, z);
     parts.push({ kind: "branch", r, s, side, t }, { kind: "ring", r, s: sb }); d = smin(d, smin(s, sb, 3.5), 5); }
   return { d, parts };
 }
@@ -83,28 +94,28 @@ const WOOD = { // heartwood, polished: 4 tones, darkest first (the bold style's 
 function grain(x, z, parts) {
   let wsum = 0, g = 0;
   for (const p of parts) { const w = Math.exp(-Math.max(0, p.s + 2) * .45); if (w < 1e-4) continue; let v;
-    if (p.kind === "ring") v = Math.hypot(x - p.r.x, z - p.r.z) * 1.1 + 1.0 * Math.sin(Math.atan2(z - p.r.z, x - p.r.x) * 3 + p.r.x);
+    if (p.kind === "ring") v = Math.hypot(x - p.r.x, VIEW === "plan" ? (z - p.r.z) / FORE : z - p.r.z) * 1.1 + 1.0 * Math.sin(Math.atan2(z - p.r.z, x - p.r.x) * 3 + p.r.x);
     else v = p.side * 1.3 + 1.0 * Math.sin(p.t * 9 + (p.r ? p.r.x : p.a.x)); // (lines along the limb)
     g += v * w; wsum += w; }
   return wsum ? g / wsum : 0;
 }
 function floorTone(x, z, parts, lockedRoom) {
-  const g = grain(x, z, parts) + (fbm(x * .9, z * .9) - .5) * 1.1, f = g - Math.floor(g); // (a ring every 1/1.6 m, warped)
+  const zt = VIEW === "plan" ? z / FORE : z, g = grain(x, z, parts) + (fbm(x * .9, zt * .9) - .5) * 1.1, f = g - Math.floor(g); // (a ring every 1/1.6 m, warped)
   if (lockedRoom) return WOOD.locked[(hash(Math.floor(x * PPM), Math.floor(z * PPM)) < .5) ? 0 : 1];
   if (f < .09) return WOOD.ring; // (a growth line, a pixel or two)
-  const lit = fbm(x * .12 + 7, z * .12) * .9 + (1 - f) * .25, k = lit > .66 ? 3 : lit > .5 ? 2 : lit > .36 ? 1 : 0;
+  const lit = fbm(x * .12 + 7, zt * .12) * .9 + (1 - f) * .25, k = lit > .66 ? 3 : lit > .5 ? 2 : lit > .36 ? 1 : 0;
   return WOOD.floor[k];
 }
 
 // ---- drawing ----
 const cv = document.getElementById("c"), ctx = cv.getContext("2d");
-function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture = true, grid = false, title = "" }) {
-  const W = Math.round((x1 - x0) * PPM), H = Math.round((z1 - z0) * PPM), WALL = Math.round(2.2 * PPM); // a wall's height as drawn (m tilted)
-  const img = new ImageData(W, H), inside = new Uint8Array(W * H), info = new Array(W * H);
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, f = field(x, z); info[j * W + i] = f; inside[j * W + i] = f.d < 0 ? 1 : 0; }
+function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture = true, grid = false, title = "", view = "plan" }) {
+  VIEW = view; const ZK = view === "game" ? FORE : 1;
+  const W = Math.round((x1 - x0) * PPM), H = Math.round((z1 - z0) * PPM * ZK), WALL = Math.round(2.2 * PPM * (view === "game" ? Math.cos(24 * Math.PI / 180) : 1)); // a wall's height as drawn (m tilted)
+  const img = new ImageData(W, H), inside = new Uint8Array(W * H);
   const roomAt = (x, z) => { let best = null, bd = 1e9; for (const r of [...TRUNK, ...BRANCH]) { const d = blob(r, x, z); if (d < bd) { bd = d; best = r; } } return bd < 0 ? best : null; };
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-    const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, f = info[k]; let c;
+    const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), f = field(x, z); inside[k] = f.d < 0 ? 1 : 0; let c;
     if (!inside[k]) { // the night under the house: the canopy's dark leaves
       const n = fbm(x * .35, z * .35); c = n > .55 ? WOOD.leaf[1] : n > .35 ? WOOD.leaf[0] : WOOD.night;
     } else if (f.d > -.45 && TAKEOFF_OPEN(x, z)) { c = WOOD.floor[3]; // the open rim where she steps off: worn pale, no lip
@@ -116,7 +127,7 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
   // walls: the far (north) edges stand up a wall of living wood, the near (south) ones only the low bark rim, as the game draws its rooms
   if (walls) for (let i = 0; i < W; i++) for (let j = 1; j < H; j++) {
     const k = j * W + i; if (!(inside[k] && !inside[k - W])) continue; // (outside above, inside here: a north edge)
-    const x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, rm = roomAt(x, z + .6); if (!rm || TAKEOFF_OPEN(x, z)) continue;
+    const x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), rm = roomAt(x, z + .6); if (!rm || TAKEOFF_OPEN(x, z)) continue;
     for (let t = 0; t < WALL; t++) { const y = j - 1 - t; if (y < 0) break; const kk = y * W + i, furrow = Math.sin(i * 1.7 + Math.floor(i / 3) * 2.1) > .3, top = t >= WALL - 2;
       const c = top ? WOOD.moss[1] : t < 2 ? WOOD.bark[0] : furrow ? WOOD.bark[0] : (t % 7 === 3 && hash(i, 9) > .7 ? WOOD.bark[2] : WOOD.bark[1]);
       img.data.set([...c, 255], kk * 4); }
@@ -124,9 +135,10 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
   cv.width = W * scale; cv.height = H * scale; ctx.imageSmoothingEnabled = false;
   const tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; tmp.getContext("2d").putImageData(img, 0, 0);
   ctx.drawImage(tmp, 0, 0, W * scale, H * scale);
-  const P = (x, z) => [(x - x0) * PPM * scale, (z - z0) * PPM * scale];
+  const P = (x, z) => [(x - x0) * PPM * scale, (z - z0) * PPM * ZK * scale];
   if (furniture) for (const [id, room, x, z, w, d, label] of OBJ) {
     const [a, b] = P(x - w / 2, z - d / 2), [c2, e] = P(x + w / 2, z + d / 2);
+    if (id === "circle") { const cy = (b + e) / 2, ry = (c2 - a) / 2 * ZK; ctx.fillStyle = "rgba(200,40,40,.55)"; ctx.strokeStyle = "#2a1a10"; ctx.beginPath(); ctx.ellipse((a + c2) / 2, cy, (c2 - a) / 2, ry, 0, 0, 7); ctx.fill(); ctx.stroke(); if (labels) { ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.textAlign = "center"; ctx.strokeText(label, (a + c2) / 2, cy + ry + 6 * scale); ctx.fillText(label, (a + c2) / 2, cy + ry + 6 * scale); } continue; }
     ctx.fillStyle = id === "circle" ? "rgba(200,40,40,.55)" : "rgba(236,214,170,.92)"; ctx.strokeStyle = "#2a1a10"; ctx.lineWidth = Math.max(1, scale * .6);
     if (id === "circle") { ctx.beginPath(); ctx.arc((a + c2) / 2, (b + e) / 2, (c2 - a) / 2, 0, 7); ctx.fill(); ctx.stroke(); } else { ctx.fillRect(a, b, c2 - a, e - b); ctx.strokeRect(a, b, c2 - a, e - b); }
     if (labels) { ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.textAlign = "center";
@@ -144,20 +156,20 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
       ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#e8c070"; ctx.textAlign = "center"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("locked door", dx, dz + 12 * scale); ctx.fillText("locked door", dx, dz + 12 * scale); }
     // the walk from her bed to the take-off, along the trunk
     { const pts = WALK.map(([x, z]) => P(x, z)); ctx.setLineDash([4 * scale, 3 * scale]); ctx.strokeStyle = "rgba(160,255,255,.85)"; ctx.lineWidth = Math.max(2, scale * 1.2); ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke(); ctx.setLineDash([]);
-      const [mx, mz] = P(-6, -30); ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.fillStyle = "#9ff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.textAlign = "right"; const t = `bed to take-off: about ${Math.round(walk())} m`; ctx.strokeText(t, mx, mz); ctx.fillText(t, mx, mz); }
+      const [mx, mz] = P(-24, -40); ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.fillStyle = "#9ff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.textAlign = "right"; const t = `bed to take-off: about ${Math.round(walk())} m`; ctx.strokeText(t, mx, mz); ctx.fillText(t, mx, mz); }
     // the take-off
     const [tx, tz] = P(TAKEOFF.x, TAKEOFF.z); ctx.fillStyle = "#9ff"; ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.lineWidth = 4;
-    ctx.strokeText("take-off (open rim) ↘", tx + 8 * scale, tz + 18 * scale); ctx.fillText("take-off (open rim) ↘", tx + 8 * scale, tz + 18 * scale);
+    ctx.textAlign = "left"; ctx.strokeText("← take-off (open south-east rim)", tx + 6 * scale, tz + 4 * scale); ctx.fillText("← take-off (open south-east rim)", tx + 6 * scale, tz + 4 * scale);
     if (grid) { ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1; for (let m = Math.ceil(x0 / 10) * 10; m < x1; m += 10) { const [g] = P(m, 0); ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, cv.height); ctx.stroke(); }
       for (let m = Math.ceil(z0 / 10) * 10; m < z1; m += 10) { const [, g] = P(0, m); ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(cv.width, g); ctx.stroke(); }
       const [sx, sz] = P(x0 + 3, z1 - 4); ctx.fillStyle = "#fff"; ctx.fillRect(sx, sz, 10 * PPM * scale, 3 * scale); ctx.font = `${Math.round(6 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.fillText("10 m (grid 10 m; north is up)", sx, sz - 3 * scale); }
   }
   if (title) { ctx.font = `bold ${Math.round(8 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.fillStyle = "#fff"; ctx.strokeText(title, 8 * scale, 12 * scale); ctx.fillText(title, 8 * scale, 12 * scale); }
 }
-function TAKEOFF_OPEN(x, z) { const dx = x - TRAC.x, dz = z - TRAC.z, a = Math.atan2(dz, dx); return Math.hypot(dx, dz) < TRAC.r + 3 && Math.abs(((a - Math.PI / 4 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < .9; }
+function TAKEOFF_OPEN(x, z) { const dx = x - TRAC.x, dz = z - TRAC.z, a = Math.atan2(dz, dx); return Math.hypot(dx, dz) < TRAC.r + 3 && Math.abs(((a - TAKEOFF.a + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < .55; }
 const TRAC = byId.terrace;
 // the walk: bed to the take-off, along the trunk's rooms (bed, Bedroom 1, Boudoir, Parlour, Terrace's middle, the open rim)
-const WALK = [[10, -57], [7, -55], [1, -48], [-3, -41], [1, -32], [7, -22], [3, -11], [0, 0], [TAKEOFF.x, TAKEOFF.z]];
+const WALK = [[-10, -73], [-14, -70], [0, -60], [13, -48], [0, -36], [-18, -24], [-4, -10], [14, 4], [TAKEOFF.x, TAKEOFF.z]];
 function walk() { let L = 0; for (let i = 1; i < WALK.length; i++) L += Math.hypot(WALK[i][0] - WALK[i - 1][0], WALK[i][1] - WALK[i - 1][1]); return L; }
 window.mock = { render, walk, TRUNK, BRANCH, OBJ };
 </script></body></html>
