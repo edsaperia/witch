@@ -77,6 +77,20 @@ describe("her followers while she's in the treehouse", () => {
     expect(g.leash.stack).toEqual(ids);
   }, 120000);
 
+  it("a baby at its home spot doesn't eat the berries there (Ed, 2026-10-24), though at a real placed sigil it does", () => {
+    const ate = (real: boolean) => {
+      const { g, ids } = night("house"), baby = g.creatures[ids[2]];
+      play(g, 40); // (at its spot)
+      const spot = houseGuards(g.witches[0], g.creatures, g.map, g.tuning).find(p => p.id === baby.id)!;
+      if (real) { g.leash.stack = g.leash.stack.filter(id => id !== baby.id); g.leash.placed.push({ id: baby.id, x: spot.x, z: spot.z, at: g.clock.time }); } // (its sigil really put down there)
+      const berry = g.berries.berries.find(q => q.claimedBy === null && !q.gone)!;
+      Object.assign(g.berries.bushes[berry.bush], { x: baby.x + 3, z: baby.z }); // (a berry within its reach)
+      return play(g, 6, () => g.berries.feeding.has(baby.id) || g.berries.evolving.has(baby.id) || baby.level > 0);
+    };
+    expect(ate(false)).toBe(false); // (at its home spot while she's in the treehouse: no)
+    expect(ate(true)).toBe(true); // (at a real sigil: as ever)
+  }, 120000);
+
   it("defend the home area as placed-sigil creatures do: they engage a wild creature in it that they'd pass by while travelling to her", () => {
     const engaged = (where: "house" | "treetops") => {
       const { g, ids } = night(where), H = homeArea(g.map);

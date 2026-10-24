@@ -625,7 +625,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
   questsFromPlaced(g, ht);
   if (c.feedNearest) feedNearest(B, g.creatures, g.witch.x, g.witch.z, g.clock.time, t, g.beat);
-  stepBerries(B, g.creatures, id => { const p = LV.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : leashPoint(g.leash, id, g.witch.x, g.witch.z); }, g.clock.time, dt, t, g.beat, id => { const p = LV.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; });
+  stepBerries(B, g.creatures, id => { const p = LV.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : leashPoint(g.leash, id, g.witch.x, g.witch.z); }, g.clock.time, dt, t, g.beat, id => { const p = g.leash.placed.find(q => q.id === id); return p ? { x: p.x, z: p.z } : null; }); // (a baby eats only at a real sigil, not at its home spot while she's in the treehouse: Ed, 2026-10-24)
   for (const e of g.leash.events) if (e.kind === "invited" || e.kind === "befriended") g.tally.invites++;
   // Made happy in an area that already has its soundsystem: it joins the dancing there (#87).
   for (const e of g.leash.events) if (e.kind === "befriended") { const c = g.creatures[e.id], a = g.party.areas.get(cellKey(c.cell)); if (a?.soundsystem && g.combat.sounds.has(cellKey(c.cell))) joinParty(g, c, a.soundsystem, a.cell); }

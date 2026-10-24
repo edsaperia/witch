@@ -2,7 +2,8 @@
 // in the home area"; "But they should also defend it, as if their sigils are placed in the home area"). While a witch is perched
 // (up in the treehouse, on its floor), the creatures on her stack (babies too; a party legend stays as ever) are seen by the rules
 // as placed at spots of their own in the home area: they travel there, rest by their spot and guard the whole home area as
-// placed-sigil creatures do (rules/combat.ts: sieges included). No sigil is put down: her stack and leash are unchanged, and
+// placed-sigil creatures do (rules/combat.ts: sieges included), though a baby doesn't eat berries at its spot as at a real sigil
+// (Ed, 2026-10-24: "While a witch is in the treehouse, a baby shouldn't eat berries at its spot"). No sigil is put down: her stack and leash are unchanged, and
 // once she's off the treehouse (walked off its rim, flown or taken off) they're hers again and follow her. Per witch, by
 // whether that witch is perched.
 import type { Creature } from "./creatures";
