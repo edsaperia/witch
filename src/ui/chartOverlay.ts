@@ -61,7 +61,7 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     table: o.table,
   });
   let last = performance.now();
-  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); };
+  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (!open) return; if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); }; // (closed by its own frame: a flight handing over to a night made under it)
   open = { wrap, view, raf: requestAnimationFrame(loop), slide, moon };
   slide?.in();
   performance.mark("chart:mounted");

@@ -765,6 +765,7 @@ export class View {
    *  dive"): metres from the dive's view (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, and the
    *  start not waiting on the trees the view asked for (they come under the loading mist, as each type lands). */
   async prepare(o: { dive?: (x: number, z: number) => number } = {}): Promise<void> {
+    performance.mark("witch:prep-start");
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -772,6 +773,7 @@ export class View {
       this.assets.tonight(types);
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
+    performance.mark("witch:prep-warm");
     this.render(0, false);
     drawCreatures(this);
     { const rect = viewRect(this, this.game.tuning.haze.near, 20), w = this.game.witch; // (the ground round the start, a few tiles a frame: render/slices.ts)

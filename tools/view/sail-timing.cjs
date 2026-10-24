@@ -15,7 +15,7 @@ const [W, H] = (process.env.SIZE || "960x540").split("x").map(Number), THR = Num
 const ISLAND = process.env.ISLAND || "fox", STRIP = Number(process.env.STRIP || 0), RUNS = Number(process.env.RUNS || 1);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
-const MARKS = ["chart:flown", "chart:go", "witch:prep", "witch:game", "witch:view", "witch:prep-ground", "witch:prep-home", "witch:prep-idle", "witch:prep-compiled", "sail:ready", "sail:dive", "witch:landed", "game:arrived", "opening:alarm"];
+const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:prep", "witch:game", "witch:prep-start", "witch:prep-warm", "witch:prep-ground", "witch:prep-home", "witch:prep-idle", "witch:prep-compile0", "witch:prep-compiled", "sail:ready", "sail:dive", "witch:landed", "game:arrived", "opening:alarm"];
 
 (async () => {
   fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -31,6 +31,7 @@ const MARKS = ["chart:flown", "chart:go", "witch:prep", "witch:game", "witch:vie
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
         window.__f = []; const f = t => { window.__f.push(t); requestAnimationFrame(f); }; requestAnimationFrame(f);
+        window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch { /* */ }
       });
       if (THR > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: THR }); }
       const link = `http://127.0.0.1:${server.address().port}/?creator=0&timing=1${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
@@ -67,11 +68,14 @@ const MARKS = ["chart:flown", "chart:go", "witch:prep", "witch:game", "witch:vie
         const dive = (m["sail:dive"] ?? m["witch:landed"] ?? Infinity) + s0, end = (m["opening:alarm"] ?? m["game:arrived"] ?? Infinity) + s0;
         const gaps = (a, z) => { const g = []; for (let i = 1; i < window.__f.length; i++) { const t = window.__f[i]; if (t > a && window.__f[i - 1] < z) g.push(t - window.__f[i - 1]); } return g; };
         const sum = (a, z) => { const g = gaps(a, z); return { frames: g.length, longest: Math.round(Math.max(0, ...g)), frozen: Math.round(g.filter(x => x > gap).reduce((p, x) => p + x, 0)), over: g.filter(x => x > gap).length }; };
-        return { sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end) };
+        // (the longest main-thread tasks from the press to the dive, each with the last mark before it)
+        const all = performance.getEntriesByType("mark").filter(e => e.startTime >= s0).sort((a, b) => a.startTime - b.startTime);
+        const tasks = window.__lt.filter(([t]) => t >= s0 && t < dive).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, d]) => ({ at: Math.round(t - s0), ms: Math.round(d), after: all.filter(e => e.startTime <= t).at(-1)?.name ?? "" }));
+        return { sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), tasks };
       }, [MARKS, GAP * THR, sail]);
       r.shots = shots;
       runs.push(r);
-      log(JSON.stringify({ marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd }));
+      log(JSON.stringify({ marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd, tasks: r.tasks }));
       await page.close();
     }
     fs.writeFileSync(out + ".json", JSON.stringify({ island: ISLAND, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
