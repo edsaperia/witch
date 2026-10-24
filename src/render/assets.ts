@@ -198,12 +198,14 @@ export class AssetLibrary {
       // the queue each time cost creatures x queue while new art was baking)
       if (!urgent || this.promoted.has(k)) return;
       this.promoted.add(k); this.urgentKeys.add(k);
+      if (job.kind === "type") { const L = this.typeLog.get(job.id as number); if (L && L.landed === undefined) L.urgent = true; } // (asked ahead, then wanted on screen)
       const i = this.queue.findIndex(q => this.key(q) === k);
       if (i > this.front) { const [q] = this.queue.splice(i, 1); this.queue.splice(this.front, 0, q); }
       return;
     }
     this.inFlight.add(k);
     if (urgent) this.urgentKeys.add(k);
+    if (job.kind === "type" && job.seed === this.typeSeed && !(job as ArtJob & CacheHint).cacheOnly && !this.typeLog.has(job.id as number)) this.typeLog.set(job.id as number, { asked: performance.now(), urgent });
     if (home) (job as ArtJob & { home?: boolean }).home = true;
     // The cache is the worker's (render/artWorker.ts: the job carries its key; a set drawn before comes back `cached`), so the
     // page never reads or writes a set's megabytes itself (the stall hunt, 2026-10-13); drawing on the page (no workers), it does.
@@ -258,7 +260,22 @@ export class AssetLibrary {
       this.ask(job, true, true); // (with the start's own: something on the page is waiting for it now)
     });
   }
+  /** ?artdelay=<s> (a builder's, render/loadingMist.ts): each area type's trees for this island drawn ahead of need held back to
+   *  land one every that many seconds, in the order they came, so the loading mist lasts long enough to watch (those the view wants
+   *  now, which the start waits for, as they come). 0: all as they come. */
+  typeDelay = 0;
+  private typeNext = 0;
+  private releasing = false;
+  /** This island's area types' sets: when each was asked for and landed (performance.now, ms), urgently (the view wanted it on
+   *  screen) or ahead, and from the art cache or drawn: the loading order's log (window.witch.typeLog, tools/mist/order.cjs). */
+  readonly typeLog = new Map<number, { asked: number; urgent: boolean; landed?: number; cached?: boolean }>();
   private receive(r: Reply): void {
+    if (this.typeDelay > 0 && r.job.kind === "type" && r.result && r.job.seed === this.typeSeed && !this.releasing && !this.urgentKeys.has(this.key(r.job))) {
+      const now = performance.now(), at = Math.max(now, this.typeNext);
+      this.typeNext = at + this.typeDelay * 1000;
+      setTimeout(() => { this.releasing = true; try { this.receive(r); } finally { this.releasing = false; } }, at - now);
+      return;
+    }
     const once = this.once.get(this.key(r.job));
     if (once) { // (a one-off: its asker's, whichever island the page is on)
       this.once.delete(this.key(r.job)); this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
@@ -338,7 +355,10 @@ export class AssetLibrary {
         if (c !== undefined) cut.set(p.bot, c);
       }
       if (r.job.seed !== this.typeSeed) { if (!this.tonightShut) this.tonightTypes.set(r.job.id, { atlas, layout: r.result.layout!, cut }); } // (tonight's: swapped in unseen, swapTonight)
-      else { this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut }); if (r.result.floor) this.onFloor(r.job.id, r.result.floor); }
+      else {
+        this.types.set(r.job.id, { atlas, layout: r.result.layout!, cut }); if (r.result.floor) this.onFloor(r.job.id, r.result.floor);
+        const log = this.typeLog.get(r.job.id as number); if (log) { log.landed = performance.now(); log.cached = !!r.cached; }
+      }
     } else if (r.job.kind === "sleep") this.creatures.set(r.job.id, { atlas, frame: (_level, f) => f % 2, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "nap") this.creatures.set(r.job.id, { atlas, frame: napFrame, ground: r.result.ground, centre: r.result.centre });
     else if (r.job.kind === "glide") this.creatures.set(r.job.id, { atlas, frame: napFrame });
@@ -608,7 +628,7 @@ export class AssetLibrary {
     for (const a of this.types.values()) free(a.atlas);
     for (const a of this.tonightTypes.values()) free(a.atlas);
     for (const a of this.soundsystemsGen.values()) free(a.atlas);
-    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear();
+    this.types.clear(); this.tonightTypes.clear(); this.soundsystemsGen.clear(); this.typeLog.clear(); this.typeNext = 0;
     this.tonightShut = false;
     this.seed = o.seed; this.typeSeed = o.typeSeed; this.typeBiome = o.typeBiome;
     if (o.treehouse !== this.treehouseId || !this.home.treehouse) { // (another, or this one still being drawn: asked again, the last ask dropped)

@@ -77,6 +77,8 @@ import type { Minimap } from "./minimap";
 import { Rulers } from "./rulers";
 import { Mist } from "./mist";
 import { LightRings } from "./lightRings";
+import { LoadingMist } from "./loadingMist";
+import { typeReaches } from "./loadingFront";
 import { SHADOW_DEBUG, SHADOW_TINT, ShadowBatch, type ShadowInstance } from "./shadows";
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
 import { CastShadowMap } from "./castShadows";
@@ -519,6 +521,12 @@ export class View {
   mist: Mist | null = null;
   /** Faint rings of moonlight on the crowns, seen from the treetops (render/lightRings.ts). */
   lightRings: LightRings | null = null;
+  /** The loading mist over the areas whose trees aren't drawn yet (render/loadingMist.ts), made each night by prepare; null once off. */
+  loadingMist: LoadingMist | null = null;
+  /** ?loadmist=1|0 (app/viewParams.ts): the loading mist on or off whatever the tuning and ?quick=1 say; null as they say. */
+  loadingMistLink: boolean | null = null;
+  private mistClock = 0;
+  private mistLast = 0;
   width = 1;
   height = 1;
   /** ?debug=cull: tint anything that has just appeared bright red, and mark where anything has
@@ -761,6 +769,7 @@ export class View {
 
   /** Make the art and ground round the start before the first frame (each night's: run again after setGame). */
   async prepare(): Promise<void> {
+    this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
@@ -781,15 +790,34 @@ export class View {
     // Every area type the map has, drawn in the background now so the forest ahead is ready however fast she flies; the
     // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
     // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for above), not its type's trees.
-    const m = this.game.map, w = this.game.witch, near = new Map<number, number>();
+    // By the treehouse, where she wakes and sits at her decks (Ed, 2026-10-24, the loading mist: "If loading starts with areas
+    // closer to the treehouse, this will look fine"): each type by its nearest area to the house.
+    const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
     for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
       if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
-      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - w.x, s.z - w.z);
+      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - h.x, s.z - h.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
     this.prepared = true;
     await this.compileAll();
     this.askIsland(near);
+  }
+
+  /** The loading mist for this night (render/loadingMist.ts): over every area of the grid but home's, each type's reach from the
+   *  treehouse; on by the tuning, off under ?quick=1 (it draws only what's in view, so the rest would stay misted) and in the bare
+   *  view, ?loadmist= over both. */
+  private makeLoadingMist(): void {
+    if (this.loadingMist) { this.post.fxScene?.remove(this.loadingMist.mesh); this.loadingMist.dispose(); this.loadingMist = null; }
+    const g = this.game, t = g.tuning, T = t.loadingMist;
+    if (!T || !(this.loadingMistLink ?? (T.on && !this.quick && !t.bare))) return;
+    const m = g.map, cells: { type: number; x: number; z: number }[] = [];
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      const s = m.siteOf(x, y); cells.push({ type: m.typeOf(x, y), x: s.x, z: s.z });
+    }
+    const A = this.ground.areaUniforms;
+    this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.fxSize, A.slots);
+    (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 
   /** What the start's first frame would make the first time it's asked for, made ahead in steps (render/slices.ts; Ed's laptop,
@@ -1341,6 +1369,10 @@ export class View {
     this.time("grass+lights");
     LIGHT_UNIFORMS.uTime.value = time; LIGHT_UNIFORMS.uRealTime.value = ht; // (the circle's motes and edge keep her clock)
     this.mist?.follow(pose.tx, pose.tz);
+    if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
+      const now = performance.now(); this.mistClock += this.mistLast ? Math.min(0.1, (now - this.mistLast) / 1000) : 0; this.mistLast = now;
+      this.loadingMist.update(this.mistClock, ty => this.assets.hasType(ty));
+    }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.houseRooms?.update(this, onTreehouse, ht);

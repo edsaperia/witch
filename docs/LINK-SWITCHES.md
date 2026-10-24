@@ -37,6 +37,9 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `debug=shadows` | every shadow a flat magenta | app/viewParams.ts |
 | `debug=attack` | every 10 s, blows on the two farthest soundsystems (never felling one), for the 🔇 alarm | main.ts |
 | `quick=1` | only the art the start needs (the quick smoke and bench) | app/viewParams.ts |
+| `loadmist=1` / `loadmist=0` | the loading mist (render/loadingMist.ts) on or off for this load, whatever the tuning and `quick=1` say (it's off under `quick=1`) | app/viewParams.ts |
+| `artdelay=<s>` | each area type's trees drawn ahead of need held back to land one every that many seconds, to watch the loading mist roll away | app/viewParams.ts, render/assets.ts |
+| `mistgate=0` | the bedroom's curtains and door don't wait for the island's art, so she can go out while it's still drawing | main.ts |
 | `scenery=<m>` | a fixed scenery radius instead of the adaptive budget | app/viewParams.ts |
 | `arena=wolf*4@2,beetle*3` | a fight below the dancefloor, no waves; J sets it up again | app/gameParams.ts |
 | `buffs=fox,toad\|all` | these legends' buffs on from the start | app/gameParams.ts |
