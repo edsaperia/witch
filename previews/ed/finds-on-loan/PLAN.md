@@ -1,119 +1,108 @@
-# Finds on loan till dawn: the mock and the plan (PHASE 1)
+# Finds on loan till dawn: the mock and the plan
 
-Ed's ask (2026-10-24): a find is kept only if the night is won. She borrows it from the stars:
-
+Ed's rule (2026-10-24): a find is kept only if the night is won. She borrows it from the stars.
 - **Taken:** its constellation lights up in full.
 - **During the night:** she can wear or use it at once.
-- **Won:** at dawn it falls as a shooting star into the treehouse, and it's hers for good.
-- **Lost:** as the party dies, its stars drift apart and fade, and it goes back to the sky. It can be drawn again on a later night.
+- **When she sleeps, the verdict comes in her dream** (Ed, round 2: "when she's asleep (after going to bed, or after starting a sail), we can communicate through her dreams").
+  - **Won:** the constellation falls as a shooting star into her treehouse, and the find is hers for good.
+  - **Not won:** its stars drift apart and fade back into the sky. It can be drawn again on a later night.
 
-On loan, two reminders show: a small HUD icon in a faint ring of its constellation, and the lit constellation low in the game's own sky.
+Nothing in the game is changed yet. This folder is the mock. The game change (PHASE 2) comes once Ed approves the dream mock.
 
-Nothing in the game is changed yet. This folder is the mock. The game change comes once Ed approves (PHASE 2).
+## Ed's answers (round 1, 2026-10-24)
+
+| # | Question | Answer |
+|---|---|---|
+| 1–3 | When dawn is, when a loss shows, worn things at a loss | **In her dream, when she sleeps.** The verdict comes in the dream. On a loss, loaned things she's wearing or has fitted are gone when she wakes. The in-world dawn and drift from round 1 (`3-…`, `4-…`) are **dropped**. |
+| 4 | A find after the win | **Once the night is won, finds disappear.** A find not taken by the win is gone, and E can't take one afterwards. |
+| 5 | Where the sky's constellation stands | **At its true bearing**, as through the telescope. |
+| 6 | On foot | **The HUD icon alone** is enough. |
+| 7 | The HUD icon's place | **Top left.** |
+| 8 | The cards' wording | **No words on the end-of-night cards.** Words appear only in the dream, if anywhere (`5-cards.png` is dropped). |
+| 9 | Loaned things in the treehouse | **No text, but sparkly**, at the stations and on the hats' floor. |
+| 10 | Multiplayer: leaving early | **Agreed.** A witch who leaves before she sleeps on a won night doesn't keep it; the others still do. |
+| — | The leak | **Close it:** a worn loaned item must not count as owned at the next load. |
 
 ## The pictures
 
-| File | What it shows |
-|---|---|
-| `1-hud-icon.png` | The on-loan icon on the HUD (top left, under the clock's line), on foot in the forest, with a close-up at 4×. The find's own icon (here the Sentry hat) sits in a faint ring of its constellation's stars. The stars twinkle. |
-| `1-hud-icon-twinkle.gif` / `-strip.png` | The icon's twinkle, 8 frames. |
-| `2-sky-constellation-forest.png`, `2-sky-constellation-home.png` | The lit constellation low in the game's own sky, from the normal treetop camera, over the forest and over home: stars bright, lines drawn whole. Each has a close-up at 3×. On foot under the canopy the game camera shows no sky (see `1-hud-icon.png`), so there the HUD icon is the only reminder. |
-| `3-won-dawn.gif` / `-strip.png` | A won night's dawn: the constellation gathers into one star, which falls as a shooting star into the treehouse, with a flash on its roof. Then the card. |
-| `4-lost-drift.gif` / `-strip.png` | A lost night: as the party's lights ripple out, the stars drift apart, the lines go first, then the stars fade. The HUD icon's ring breaks up the same way and the icon fades. |
-| `5-cards.png` | The won and lost cards with their find line (the wording is Ed's to pick). |
-
 The backgrounds are real frames of the current game (seed 123, `npm run shot`). The new parts are painted over them, at the sizes the game would draw them.
 
-## The plan (PHASE 2, once approved)
+| File | What it shows |
+|---|---|
+| `6-dream-won.png`, `6-dream-won.gif`, `-strip.png` | **The dream, won.** She's asleep: the bed's dark veil and "💤 … zzz …", as the game shows it today (`render/wakeUp.ts`, `WakeCard.sleep`). A dream cloud rises from her in bed, in the legends' dream family (`render/thoughtCloud.ts`: the same cloud shape, puffs, amber ink and dark fill). In it:<br>1. Tonight's lit constellation, with her treehouse small below it.<br>2. The stars gather into one, which falls as a shooting star into the treehouse; its windows light up.<br>3. The find rises out of it, sparkling, with *"the Sentry hat ✦ yours"* beside the cloud.<br>4. The cloud fades back to the zzz.<br>About 6 s. |
+| `7-dream-lost.png`, `7-dream-lost.gif`, `-strip.png` | **The dream, not won.** The same cloud, with the constellation and the find faint in its middle. The lines go first, then the stars drift apart out past the cloud and fade, the find fading with them, with *"the Sentry hat went back to the stars"* beside it. The cloud empties and fades. About 5 s. |
+| `8-sparkle-hats-floor.png`, `.gif`, `-strip.png` | **A loaned hat on the hats' floor**, sparkling: pixel glints twinkling round it in the loan's pale gold-white, a breathing halo and a mote or two rising. No words. (Shot mode lays no hats on the floor, so the hat itself is painted in.) |
+| `9-sparkle-station-card.gif`, `-strip.png` | **A loaned jacket's card at the wardrobe**, sparkling the same way (the third card), 3×. The same goes for a part's card at the Workshop's bay and its peg on the pegboard. |
+| `1-hud-icon.png`, `1-hud-icon-twinkle.gif`, `-strip.png` | Unchanged from round 1. The on-loan HUD icon, top left: the find in a faint ring of its constellation, twinkling. It stays up till she sleeps. |
+| `2-sky-constellation-*.png` | From round 1. The lit constellation's look holds, but per answer 5 it stands at its true bearing, not always in view. |
+| `3-…`, `4-…`, `5-cards.png` | **Superseded** by the dream (answers 1–3 and 8). Kept for the record. |
 
-### Where the loan is held, and what keeps it
+In the bed frame she is standing by the bed, because shot mode can't lay her in it. In the game she would be in bed, under the veil.
 
-- **In the rules (per night):** `g.trunk` already holds the night's one find and `found`. A taken find becomes `g.trunk.loan = { at }` (taken, not yet kept). The rules' claim stays as it is, so she can use the find at once:
-  - a hat goes onto her hats, and onto the hats' floor (`addFloorHat`);
-  - a part is hers at the Workshop's bay;
+## The dream (design)
+
+- **When it plays:** each time she sleeps.
+  - **The bed:** the dark veil and zzz while the next island is made (`WakeCard.sleep`).
+  - **Starting a sail:** over the chart's last still while the next island is made (`sailInPlace`'s `showStill`). The same cloud rises from the bottom middle, since she isn't on screen.
+- **Which dream:**
+  - Won (`game.win.phase === "won"`) with a find on loan: **the won dream**.
+  - Not won with a find on loan: **the drift dream**. This covers the party being over, sailing mid-night, and going to bed before the win.
+  - Nothing on loan: **no dream**, just the zzz.
+- **When it's decided:** the moment she falls asleep, before the next night starts, so a sail's reload fallback can't lose it.
+  - **Won:** `keepFound` saves the find, and the dream plays.
+  - **Not won:** nothing is written, the dream plays, and loaned things are gone when she wakes:
+    - A loaned **hat** she wore: her plain hat. A loaned hat lying anywhere goes too.
+    - Loaned **clothes**: she wakes in her nightie as always. Last night's pile by the bed holds what she wore before she put the loaned thing on (else that slot's starting item).
+    - A loaned **broom part** she fitted: the part she had in that slot before (else the slot is empty), and her broom's spell follows.
+    - A loaned **bag**: her previous bag.
+- **A reload or closed page mid-night:** she never slept, so there's no dream and nothing is kept. The loan was never written. The same seed draws the same find in the same place, so she can take it again.
+- **Its look:**
+  - the legends' dream cloud: its shape (`thoughtShape`), its amber ink and dark fill, at the game's pixel grid;
+  - the constellation's stars and lines as in the sky;
+  - the find drawn as its HUD icon;
+  - her treehouse as a small pixel glyph.
+- **Sound:** (proposal) the won dream's fall gets a soft chime; the drift gets a falling shimmer under the snoring.
+
+## The rest of the plan (PHASE 2)
+
+- **In the rules (per night):** `g.trunk` holds the night's one find, and the taken one is marked as on loan. The rules' claim stays as it is, so she can use it at once:
+  - a hat goes onto her hats and onto the hats' floor;
+  - a part goes to the Workshop's bay;
   - clothes and bags are offered at the stations.
-- **On the page (per night, never written):** the "found" event no longer calls `keepFound`. Instead it adds the item to a **loan** held in memory: the owned set, hats and parts the page shows tonight, with nothing saved to `witch.owned`, `witch.hats` or `witch.broom`.
-- **Kept on a win:** at the moment the night's win is recorded (`game.win.card`, where `nightOver(... won: true)` already records the night's islands), the page calls `keepFound` for the loan. It's saved, and the shooting star plays. This matches the islands: "only a won night keeps them".
-- **A leak to close:** today the look's save (`witch.look`) and `loadOwned`, "one she's wearing still counts as hers", would turn a loaned top she has on into a kept one at the next load. Loaned items must be left out of that rule. The test below covers it.
+- **Finds disappear at the win** (answer 4): once `win.phase` is `"won"`, a find not yet taken is removed. Its piece and light go, E can't take it, and it has no constellation.
+- **On the page:** the "found" event no longer calls `keepFound`. It adds the item to a **loan** held in memory, with nothing written to `witch.owned`, `witch.hats` or `witch.broom`. `keepFound` runs only when she falls asleep on a won night.
+- **The leak:** `loadOwned` counts a worn item as hers, and her look is saved. Loaned items must be left out of that rule, so a loaned top she's wearing never becomes hers at the next load.
+- **The sky's constellation** (answer 5): once taken, it's drawn lit (stars bright, lines whole) at its true bearing and height, in the telescope and in the game camera's own sky. The game camera looks north, so in its sky the constellation shows only when it lies to the north.
+- **The HUD icon** (answers 6 and 7): top left, from taking it until she sleeps.
+- **The sparkle** (answer 9), no text:
+  - a loaned hat's place on the hats' floor;
+  - a loaned item's card at its station (wardrobe, dressing table, shoe rack, cloak pegs, bag station);
+  - a loaned part's card at the bay and its peg on the pegboard.
+- **The cards** (answer 8): no change.
+- **Dev controls:**
+  - `?own=` and the finds panel's give and let go stay as permanent grants.
+  - The finds panel gains tonight's loan with **keep** and **send back**, which play the won or drift dream at once.
+  - `?spawnfind=` takes as a real loan.
+- **Multiplayer** (`docs/backlog/platform.md`, not built): everyone in the house borrows it. On a won night each witch keeps it in her own collection when she sleeps. A witch who leaves before that doesn't keep it (answer 10). This contradicts nothing in the backlog.
+- **Tests:**
+  - kept on a win, when she sleeps;
+  - not kept on a loss (party over, sailing mid-night, bed before the win), or on a reload;
+  - usable during the night (hat worn, part fitted, top worn);
+  - a worn loaned item gone when she wakes, back to what she had;
+  - finds gone at the win, and E taking nothing after it;
+  - the look's save doesn't leak a loaned item;
+  - the dev keep and send-back buttons;
+  - which dream plays (won, drift, none).
+- **Also in PHASE 2:** a changelog fragment and a bench declaration.
 
-### A loss while she's wearing or using it
+## Still for Ed
 
-A loss is any of these:
-- the party's over;
-- she sails away mid-night;
-- she goes to bed before the win;
-- the page reloads.
-
-The question is what happens to a loaned thing she has on:
-
-| Thing | Proposal | Alternative |
-|---|---|---|
-| A hat on her head | Lifts off as stars as the constellation drifts; her plain hat is back (`setLoadout(..., "none")`). A loaned hat lying anywhere (put down in the forest, or on the hats' floor) goes the same way. | Stays on till she goes to bed, then gone. |
-| Clothes she's put on | Shimmer away as the stars drift; that slot goes back to what she wore before she put it on (else the slot's starting item). | The same, at bed. |
-| A broom part fitted at the bay | Leaves the slot as stars; her last part in that slot is back (else the slot is empty); her broom's spell follows (`setParts`). | The same, at bed. |
-| A bag | Goes back to her previous bag. If it holds anything, that stays with her. | The same, at bed. |
-
-The proposal ties it all to the one moment the stars drift apart. After the party's over she walks about safely, so losing a spell then costs nothing.
-
-### The end-of-night cards
-
-- **Won:** a line under the islands: *"The Sentry hat fell from the stars: it's yours, on the hats' floor."* It names where it went, as the found line does today (hats' floor, the wardrobe, the Workshop).
-- **Lost:** a line under "You lasted …": *"The Sentry hat went back to the stars. It may fall your way another night."*
-- With nothing taken tonight, neither card says anything about finds.
-
-### The dev controls
-
-- **`?own=` and the finds panel's give and let go** stay as they are. They are dev grants, written for good, not loans.
-- **The finds panel** gains a line for tonight's loan and two buttons, **keep** (as a win) and **send back** (as a loss), so both endings can be tried without playing a night out.
-- **`?spawnfind=`** spawns as tonight's find, so taking it is a loan like a real one, which is the point of testing with it.
-
-### A reload mid-night
-
-The night isn't saved (`docs/backlog/platform.md`, "Save the night too", not built), and the loan is never written, so a reload loses it. The same seed draws the same find in the same place, so she can take it again.
-
-When the night's save is built, the loan goes in it, and a resumed night resumes the loan.
-
-### Multiplayer (`docs/backlog/platform.md`, not built)
-
-"Tonight's find goes to everyone in the house that night, in each witch's own collection." On loan, that reads:
-- everyone in the house borrows it at once;
-- on a win, every witch still in the house keeps it in her own collection;
-- on a loss, nobody keeps it.
-
-"Hats, brooms and bags are the host's and shared" still holds: a loaned hat is on the host's hats' floor till dawn. Nothing here contradicts the backlog.
-
-### Tests (PHASE 2)
-
-- kept on a win;
-- gone on a loss (party over, sailing mid-night, bed before the win);
-- usable during the night (hat worn, part fitted, top worn);
-- a worn loaned item comes off at a loss;
-- a reload keeps nothing;
-- the look's save doesn't leak a loaned item;
-- the dev keep and send-back buttons work.
-
-## Choices for Ed
-
-1. **When "dawn" is.** The game has no dawn yet.
-   - (a) The win itself, as the victory lap reaches home, just before the card *(proposed)*.
-   - (b) When she goes to bed after a won night.
-2. **A lost night's moment.**
-   - (a) The stars drift as the party's lights ripple out *(proposed)*.
-   - (b) When she goes to bed.
-
-   Sailing away mid-night or going to bed before the win would play the drift quickly first, either way.
-3. **Worn or fitted loaned things at a loss.**
-   - (a) Taken off at the drift, back to what she had *(proposed)*.
-   - (b) Kept on till bed.
-4. **Taking the find after the win.** Today E only works while the party's on. Should a find taken after the win (the conga, the afterparty) be kept at once, with the shooting star straight away? Or should it be closed once the night is won?
-5. **Where the sky's constellation stands.** The game's own sky is a fixed view, looking north just over the horizon.
-   - (a) Always low over the top of the screen, a little left of the moon's path, so it's always in view *(mocked)*.
-   - (b) At its true bearing, so it shows only when the camera faces that way. The game camera always faces north, so it would often be out of view.
-6. **On foot.** The canopy hides the sky, so on foot the HUD icon is the only reminder. Is that enough, or should the constellation also show in clearings where the sky is open?
-7. **The HUD icon's place.**
-   - (a) Top left *(mocked)*.
-   - (b) Beside the clock, top centre.
-   - (c) By the action bar.
-8. **The cards' wording** (above, and in `5-cards.png`).
-9. **Loaned things in the treehouse.** Should they be marked as on loan, a ✦ with "till dawn" on their card at the stations and on the hats' floor? The mock doesn't show this yet.
-10. **Multiplayer:** a witch who leaves before dawn (hangs up, is kicked or loses the line). Proposed: she doesn't keep it (it wasn't dawn for her), and the others still do.
+1. **Words in the dream:**
+   - (a) The find's name, with "✦ yours" or "went back to the stars" beside the cloud *(mocked)*.
+   - (b) The name only.
+   - (c) No words at all.
+2. **The dream's length and skipping:** about 6 s (won) and 5 s (lost).
+   - If the next island is ready sooner, (a) the dream finishes first *(proposed)*, or (b) any key skips it.
+3. **Nothing on loan:** no dream, just the zzz *(proposed)*? Or a quiet dream of the night sky?
+4. **The sail's dream:** over the chart's still, the cloud rising from the bottom middle *(proposed)*.
+5. **What she wakes in after a lost loan:** what she had before she put the loaned thing on *(proposed)*, or the slot's starting item.
