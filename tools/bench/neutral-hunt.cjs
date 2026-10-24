@@ -5,7 +5,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 // Issue #1091 (Foxtrot's neutral pair, 2026-10-24): the see-through at full opacity (occlusion.fadeOpacity 1) should draw what the
 // see-through off (occlusion.on false) draws; at seed 886806, on the ground at 3250,2698, it differed by 440 px. One frame held (the
 // game's time still), drawn with each, then again with each suspect switched off, to bisect; where they differ saved as a PNG.
-//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...)
+//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her)
 const SEED = process.env.SEED || "886806", AT = (process.env.AT || "3250,2698").split(",").map(Number);
 const uni = (name, v) => `{ let u = null; v.scene.traverse(o => { u ??= o.material?.uniforms?.${name} ?? null; }); if (!u) throw new Error("no ${name}"); u.value = ${v}; }`;
 const SUSPECTS = {
@@ -33,9 +33,21 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
     const NONE = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
+    if (process.env.FOX !== "0") {
+      // (placed as the smoke's neutral section places her, tools/smoke/smoke.cjs: on the spot, a step north to settle the camera,
+      // back on the spot, four seconds of play there and ten more, then paused, so the camera and her framing are its own)
+      const place = () => page.evaluate(([x, z]) => { const g = window.witch.game; g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, AT);
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
+      await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 });
+      await sleep(10000);
+      await page.keyboard.press("Escape"); await sleep(3000);
+    }
     const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, true); }, [n, NONE]);
-    await page.evaluate(([x, z]) => { const g = window.witch.game; Object.assign(g.witch, { x, z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }); g.camera.intro = null; g.introFocus = null; }, AT);
-    await step(60);
+    if (process.env.FOX === "0") {
+      await page.evaluate(([x, z]) => { const g = window.witch.game; Object.assign(g.witch, { x, z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }); g.camera.intro = null; g.introFocus = null; }, AT);
+      await step(60);
+    }
     let last = -1, same = 0; for (let i = 0; i < 60 && same < 3; i++) { await step(2); await new Promise(r => setTimeout(r, 2000)); const t = await page.evaluate(() => window.witch.view.renderer.info.render.triangles); same = t === last ? same + 1 : 0; last = t; }
     // One frame drawn with these knobs over the game's, read back as drawn, the knobs put back.
     const grab = (setup, knobs) => page.evaluate(([setup, knobs, NONE]) => {
@@ -61,7 +73,15 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
     for (const id of ONLY) {
       const s = SUSPECTS[id];
       const a0 = await grab(s, A), a = await grab(s, A), b = await grab(s, B), b1 = await grab(s, B), base = await grab(s, {});
-      const r = { diff: count(a, b), driftA: count(a0, a).n, driftB: count(b, b1).n, inUse: count(base, b).n };
+      // (and the smoke's own check with the suspect on, as the issue measured it: the canvas after four real frames, paused)
+      const check = await page.evaluate(async setup => {
+        const w = window.witch, v = w.view, t = w.game.tuning, keptT = JSON.stringify(t.suspects ?? {}), hiz = v.hizOff, unis = new Map();
+        v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const n of ["uSeeEarly", "uCullByPass"]) if (u[n] && !unis.has(n)) unis.set(n, u[n].value); });
+        const was = w.manual; w.manual = false;
+        try { new Function("v", "t", setup)(v, t); const r = await window.__neutralCheck(); return { changed: r.pairs[0].changed, max: r.pairs[0].maxDiff, still: r.still, inUse: r.seeThroughInUse }; }
+        finally { w.manual = was; Object.assign(t.suspects, JSON.parse(keptT)); v.hizOff = hiz; v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const [n, val] of unis) if (u[n]) u[n].value = val; }); }
+      }, s);
+      const r = { check, diff: count(a, b), driftA: count(a0, a).n, driftB: count(b, b1).n, inUse: count(base, b).n };
       out[id] = r; console.log(id, JSON.stringify(r));
       if (id === "base") {
         // (where they differ, magenta over the frame darkened, encoded by the page itself)
