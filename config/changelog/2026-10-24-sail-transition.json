@@ -1,9 +1,10 @@
 {
-  "version": 4407,
+  "version": null,
   "items": [
     "Sailing from the sea chart: the next island is made while the chart flies you in, so there's no long frozen picture before the dive",
     "The chart's zoom slows to wait for the island when it needs to, then flows straight into the dive",
     "The dive now starts further out to sea and comes in across the water",
-    "The island's trees arrive under the loading mist, the ones the dive passes over first"
+    "The island's trees arrive under the loading mist, the ones the dive passes over first",
+    "The sea is drawn under the dive as it comes in across the water"
   ]
 }
