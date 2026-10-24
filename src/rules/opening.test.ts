@@ -6,16 +6,15 @@ import { newGame, stepGame, STEP, poseOf, type Controls } from "./game";
 import { deckOf, onFloor, onTreehouse } from "./treehouse";
 import { HOUSE_ROOMS, toPlan } from "./houseRooms";
 import { bedside, wakeInBedroom } from "./opening";
+import { inRoom } from "../../config/house/shape.js";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
-const bedroom = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!;
 
 describe("waking in her bedroom", () => {
   it("is beside her bed, in the bedroom, on the house's floor", () => {
     const g = newGame(123, TUNING), at = bedside(g)!, p = toPlan(g.map.treehouse, at.x, at.z); // (on the house's turned plan)
     expect(at).not.toBeNull();
-    expect(p.x).toBeGreaterThan(bedroom.x0); expect(p.x).toBeLessThan(bedroom.x1);
-    expect(p.z).toBeGreaterThan(bedroom.z0); expect(p.z).toBeLessThan(bedroom.z1);
+    expect(inRoom(HOUSE_ROOMS.shape, "bedroom", p.x, p.z)).toBeLessThan(0); // (on the bedroom's own floor)
     expect(onFloor(deckOf(g.map, g.tuning)!, at.x, at.z)).toBe(true);
   });
 
@@ -37,9 +36,11 @@ describe("waking in her bedroom", () => {
     const x0 = g.witch.x;
     for (let i = 0; i < 1 / STEP; i++) stepGame(g, { ...idle, moveX: -1 }, STEP);
     expect(g.witch.x).toBeLessThan(x0 - 1);
-    for (let i = 0; i < 4 / STEP; i++) stepGame(g, { ...idle, moveZ: -1 }, STEP); // (up the screen: into the bedroom's back corner)
-    const p = toPlan(g.map.treehouse, g.witch.x, g.witch.z);
-    expect(p.z).toBeGreaterThan(bedroom.z0 - 0.01); expect(p.x).toBeLessThan(bedroom.x1 + 0.01);
-    expect(onTreehouse(g)).toBe(true);
+    const d = deckOf(g.map, g.tuning)!;
+    for (const [mx, mz] of [[0, -1], [-1, 0], [0, 1], [1, 0]]) { // (at the floor's edge each way, the limbs' too: held in)
+      for (let i = 0; i < 4 / STEP; i++) stepGame(g, { ...idle, moveX: mx, moveZ: mz }, STEP);
+      expect(onFloor(d, g.witch.x, g.witch.z, 1e-6), `${mx}, ${mz}`).toBe(true);
+      expect(onTreehouse(g)).toBe(true);
+    }
   });
 });

@@ -189,7 +189,7 @@ describe("legends, redesigned (Ed, 2026-10-05; #87)", () => {
     for (const inside of [false, true]) {
       const g = newGame(123, NO_SLOW);
       g.clock.paused = false; g.party.paused = true;
-      const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false }; })!;
+      const L = setupQuestDemo(g, (x, z) => { g.witch = { ...g.witch, x, z, mode: "ground", lift: 0, seated: false, perch: undefined }; })!; // (on the ground: the oak's rooms spread over the forest round home)
       g.witches[0].health.hp = 1e6;
       const lc = g.map.legendClearing(L.cell[0], L.cell[1])!;
       // (the gift starts out of the circle; only its sigil put down inside finishes the quest: Ed, 2026-10-19)

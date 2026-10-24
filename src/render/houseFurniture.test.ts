@@ -48,11 +48,6 @@ describe("the treehouse's furniture", () => {
       if (id === "pegboard") { const c = d.marks; expect(c.cell0.y, "rows from the top").toBeLessThan(c.cell3.y); expect(c.cell3.y).toBeLessThan(c.cell6.y); }
     }
   });
-  it("draws its states differently (the curtains open and shut)", () => {
-    const o = HOUSE_ROOMS.objects.find(q => q.id === "curtains")!, { yaw, foot } = standing(o);
-    const [a, b] = ["open", "shut"].map(state => (furnitureSprite("curtains", foot, {}, { ppm: PPM, yaw, state }) as Drawn).sp.m.join());
-    expect(a).not.toBe(b);
-  });
   it("faces into its room, towards its middle, and never shows its back to the camera; its footprint as the art's, along its wall", () => {
     for (const o of HOUSE_ROOMS.objects) {
       if (!FURNITURE_IDS.includes(o.id)) continue;

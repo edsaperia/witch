@@ -1,10 +1,11 @@
 // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as
-// often as she likes, moving getting her up, the stretch, walking, the mirror the first time, the curtains), and the rule that
-// nothing gets her past the build: till the island's ready the curtains stay shut and the bedroom's door with them.
+// often as she likes, moving getting her up, the stretch, walking, the mirror the first time), and the bedroom's door: shut till
+// she's dressed, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build).
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS, fromPlan, objectFront, toPlan } from "./houseRooms";
+import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
 import { atDecks, doorShut, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, PILE_SLOTS, wearFromStation, wornGenome } from "./clothesPile";
@@ -13,7 +14,7 @@ import { heldByRoutine } from "./djSet";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const K = WAKE_DEFAULT;
-const room = HOUSE_ROOMS.rooms.find(r => r.id === "bedroom")!, obj = (id: string) => HOUSE_ROOMS.objects.find(o => o.id === id)!;
+const obj = (id: string) => HOUSE_ROOMS.objects.find(o => o.id === id)!;
 
 /** Woken by the dive: in bed in her bedroom, the alarm ringing, the night's spell not cast. */
 function woken(ready = false): Game {
@@ -26,7 +27,7 @@ function woken(ready = false): Game {
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { const seen: WakeEvent[] = []; for (let i = 0; i < Math.round(s / STEP); i++) { stepGame(g, { ...idle, ...c }, STEP); seen.push(...(g.wake?.events ?? [])); } return seen; };
 const press = (g: Game) => run(g, STEP, { place: true, sigil: true });
 const rel = (g: Game) => toPlan(g.map.treehouse, g.witch.x, g.witch.z); // (where she is on the house's plan)
-const inRoom = (g: Game) => { const p = rel(g); return p.x >= room.x0 - 1e-6 && p.x <= room.x1 + 1e-6 && p.z >= room.z0 - 1e-6 && p.z <= room.z1 + 1e-6; };
+const inRoom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.shape, "bedroom", p.x, p.z) <= 0.05; }; // (on its own floor: its blob)
 /** Up and walking: snoozed out of bed by a step of WASD, the stretch over. */
 function up(ready = false): Game { const g = woken(ready); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); return g; }
 const standAt = (g: Game, id: string, by = 0.6) => { const p = objectFront(obj(id), g.map.treehouse, by); g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z, vx: 0, vz: 0 }; };
@@ -104,59 +105,64 @@ describe("the dressing table", () => {
   });
 });
 
-describe("never past the build", () => {
-  it("the curtains stay shut till the island's ready: E there says not yet", () => {
-    const g = up(false);
-    standAt(g, "curtains", 0.5);
-    expect(press(g)).toContain("notYet");
-    expect(g.wake!.open).toBe(false);
-    expect(g.party.spellAt).toBeNull();
-  });
-
-  it("and the bedroom's door with them, however long she walks at it", () => {
-    const g = up(false);
-    run(g, 20, { moveX: -1, moveZ: 1 }); // (at the door to the dressing room, on the plan's x0 wall)
-    expect(inRoom(g)).toBe(true);
-    run(g, 10, { moveX: -1 }); run(g, 10, { moveZ: -1 }); run(g, 10, { moveX: 1 });
-    expect(inRoom(g)).toBe(true);
+describe("the door, and nothing waiting on the build (the oak, Ed 2026-10-24: \"No curtains, and no loading gate\")", () => {
+  it("undressed, the bedroom's door stays shut however long she walks at it, the island built or not", () => {
+    for (const ready of [false, true]) {
+      const g = up(ready);
+      expect(g.wake!.open).toBe(true);
+      expect(doorShut(g)).toBe(true);
+      atDoor(g); run(g, 6, outward());
+      expect(outOfBedroom(g)).toBe(false);
+      run(g, 10, { moveX: -1 }); run(g, 10, { moveZ: -1 }); run(g, 10, { moveX: 1 }); run(g, 10, { moveZ: 1 });
+      expect(inRoom(g)).toBe(true);
+    }
   });
 
   it("nor does the bed end the night meanwhile, nor any key cast the spell", () => {
     const g = up(false);
     standAt(g, "bed", 0.4);
-    const seen = run(g, 3, { place: true, sigil: true, sigilHeld: true, castParty: true, spell: true });
+    run(g, 3, { place: true, sigil: true, sigilHeld: true, castParty: true, spell: true });
     expect(g.leashEvents.some(e => e.kind === "house" && e.obj === "slept")).toBe(false);
-    expect(seen).not.toContain("curtains");
     expect(g.party.spellAt).toBeNull();
   });
 
-  it("once it's ready, the curtains open by themselves (Ed, 2026-10-21: \"as soon as they've loaded\"), and the door with them; the spell waits for her decks", () => {
+  it("dressed, the door opens with the island still being built; the spell waits for her decks", () => {
     const g = up(false);
-    standAt(g, "curtains", 0.5);
-    press(g);
-    expect(g.wake!.open).toBe(false);
-    g.islandReady = true;
-    expect(run(g, STEP)).toContain("curtains"); // (no press)
-    expect(g.wake!.open).toBe(true);
-    expect(g.party.spellAt).toBeNull();
-    standAt(g, "clothesPile", 0.4); expect(press(g)).toContain("dressed"); // (and dressed: the door waits on both, Ed 2026-10-23)
+    expect(g.islandReady).toBe(false);
+    standAt(g, "clothesPile", 0.4); expect(press(g)).toContain("dressed");
+    expect(doorShut(g)).toBe(false);
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);
+    expect(g.party.spellAt).toBeNull();
+  });
+
+  it("has no curtains, and nothing says \"not yet\"", () => {
+    expect(HOUSE_ROOMS.objects.some(o => o.id === "curtains")).toBe(false);
+    const g = up(false), seen = run(g, 2, { place: true, sigil: true });
+    expect(seen as string[]).not.toContain("notYet");
+    expect(seen as string[]).not.toContain("curtains");
   });
 });
 
-/** By the bedroom's door, just inside it (the branch to the Boudoir's end in the bedroom: config/house/). */
+/** By the bedroom's door, just inside it: on the trunk's limb down to the Boudoir, a metre in from where it leaves the bedroom's own floor
+ *  (config/house/). */
 const doorBranch = () => HOUSE_ROOMS.corridors.find(c => c.id === "boudoir-bedroom")!.pts!;
-const atDoor = (g: Game) => { const p = doorBranch(), [x, z] = p[p.length - 1], at = fromPlan(g.map.treehouse, x, z); g.witches[0].body = { ...g.witches[0].body, x: at.x, z: at.z, vx: 0, vz: 0 }; };
+const atDoor = (g: Game) => {
+  const p = doorBranch(), [x0, z0] = p[p.length - 1], [x1, z1] = p[0];
+  let t = 0;
+  while (t < 1 && inBlob(HOUSE_ROOMS.shape, "bedroom", x0 + (x1 - x0) * t, z0 + (z1 - z0) * t) < -1) t += 0.005;
+  const at = fromPlan(g.map.treehouse, x0 + (x1 - x0) * t, z0 + (z1 - z0) * t);
+  g.witches[0].body = { ...g.witches[0].body, x: at.x, z: at.z, vx: 0, vz: 0 };
+};
 /** Walking out of the door, along its branch to the Boudoir. */
 const outward = (): Partial<Controls> => { const p = doorBranch(), [x0, z0] = p[p.length - 1], [x1, z1] = p[0], L = Math.hypot(x1 - x0, z1 - z0); return { moveX: (x1 - x0) / L, moveZ: (z1 - z0) / L }; };
-/** Out of the bedroom: past its round wall (on the house's plan). */
-const outOfBedroom = (g: Game) => { const p = rel(g); return Math.hypot(p.x - (room.x0 + room.x1) / 2, p.z - (room.z0 + room.z1) / 2) > room.r! + 0.3; };
+/** Out of the bedroom: past its own floor's edge (on the house's plan). */
+const outOfBedroom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.shape, "bedroom", p.x, p.z) > 0.3; };
 
-/** Up, the curtains open and dressed: free to walk the house, the party not started. */
-function curtainsOpen(): Game {
-  const g = up(true);
-  expect(g.wake!.open).toBe(true); // (the island ready, they opened by themselves as she got up)
+/** Up and dressed: free to walk the house, the party not started. */
+function upAndDressed(): Game {
+  const g = up();
+  expect(g.wake!.open).toBe(true);
   standAt(g, "clothesPile", 0.4); press(g);
   expect(dressed(g.wake)).toBe(true);
   return g;
@@ -204,8 +210,8 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     expect(wornGenome(null, w.pile)).toBeNull(); // (dressed: her own look, as it is)
   });
 
-  it("the door waits till she's dressed (Ed: \"get dressed first\"), the curtains open or not; dressed by the stations alone counts", () => {
-    const g = up(true);
+  it("the door waits till she's dressed (Ed: \"get dressed first\"); dressed by the stations alone counts", () => {
+    const g = up();
     expect(g.wake!.open).toBe(true);
     expect(doorShut(g)).toBe(true);
     atDoor(g);
@@ -220,44 +226,38 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);
   });
-
-  it("dressed before the curtains open, the door still waits for them", () => {
-    const g = up(false);
-    standAt(g, "clothesPile", 0.4); press(g);
-    expect(dressed(g.wake)).toBe(true);
-    atDoor(g); run(g, 4, outward());
-    expect(outOfBedroom(g)).toBe(false);
-  });
 });
 
 describe("dressing before the door (Ed, 2026-10-21: \"all of the customisation options (except for broom, hat, and bag) should be before the locked door\")", () => {
-  it("every dressing station but the hat's mirror, the bags and the Workshop's is in the bedroom", () => {
+  it("every dressing station but the Cloakroom's (the hat's mirror, the cloak pegs), the bags and the Workshop's is in the bedroom", () => {
     const st = HOUSE_ROOMS.objects.filter(o => o.use.kind === "creator");
-    expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["cloakPegs", "dressingTable", "shoeRack", "wardrobe"]);
-    expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "broomBay", "lathe", "mirror", "pegboard"]);
+    expect(st.filter(o => o.room === "bedroom").map(o => o.id).sort()).toEqual(["dressingTable", "shoeRack", "wardrobe"]);
+    expect(st.filter(o => o.room !== "bedroom").map(o => o.id).sort()).toEqual(["bags", "broomBay", "cloakPegs", "lathe", "mirror", "pegboard"]);
+    expect(obj("cloakPegs").room).toBe("cloakroom");
   });
 
-  it("the island ready before she's up, the curtains open as she gets up, not while she's in bed", () => {
-    const g = woken(true);
+  it("the wake-up's over as she gets up, not while she's in bed or stretching, the island built or not", () => {
+    const g = woken(false);
     run(g, 1);
     expect(g.wake!.open).toBe(false); // (still ringing)
     run(g, 0.1, { moveX: 1 }); run(g, K.stretch - 0.2);
     expect(g.wake!.open).toBe(false); // (stretching)
-    expect(run(g, 0.4)).toContain("curtains");
+    expect(run(g, 0.4)).toContain("up");
+    expect(g.wake!.open).toBe(true);
   });
 });
 const toSeat = (g: Game, dz = 0.6) => { const d = deckOf(g.map, g.tuning)!; g.witches[0].body = { ...g.witches[0].body, x: d.seat.x, z: d.seat.z - dz, vx: 0, vz: 0 }; };
 
 describe("the DJ intro at her decks (in place of the party spell)", () => {
   it("no key casts the spell on her way out, nor E anywhere but her decks", () => {
-    const g = curtainsOpen();
+    const g = upAndDressed();
     run(g, 0.5, { castParty: true, spell: true });
     standAt(g, "bed", 0.4); press(g);
     expect(g.party.spellAt).toBeNull();
   });
 
   it("E at her decks seats her behind them and casts it: its routine holds her there, then the party's on", () => {
-    const g = curtainsOpen();
+    const g = upAndDressed();
     toSeat(g);
     expect(atDecks(g)).toBe(true);
     expect(press(g)).toContain("decks");
@@ -298,12 +298,11 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     expect(run(g, 0.5)).not.toContain("mirror");
   });
 
-  it("and never past the build: the curtains and the door wait all the same", () => {
+  it("and the door waits on her being dressed all the same", () => {
     const g = short(false);
     run(g, K.alarmMin); press(g);
-    standAt(g, "curtains", 0.5);
-    expect(press(g)).toContain("notYet");
-    run(g, 20, { moveX: -1, moveZ: 1 });
+    expect(g.wake!.open).toBe(true);
+    atDoor(g); run(g, 6, outward());
     expect(inRoom(g)).toBe(true);
     expect(g.party.spellAt).toBeNull();
   });

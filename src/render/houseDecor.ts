@@ -19,15 +19,14 @@ export const ROOM_DECOR: Record<string, string[]> = {
   bedroom: ["plant", "shelf", "candles", "neon", "books"],
   boudoir: ["rug", "candles", "neon", "plant", "lantern"],
   parlour: ["rug", "lamp", "plant", "books", "candles"],
-  study: ["rug", "books", "lamp", "shelf", "candles", "plant"],
   workshop: ["rug", "crates", "lantern", "mushrooms", "plant", "lamp"],
   studio: ["rug", "neon", "crates", "plant"],
   kitchen: ["rug", "shelf", "plant", "candles", "lantern", "mushrooms"],
   solarium: ["rug", "plant", "plant", "mushrooms", "lantern", "candles"],
-  drawingRoom: ["lamp", "plant", "books", "neon", "candles"],
+  dining: ["rug", "lamp", "plant", "candles", "books", "neon"],
+  cloakroom: ["rug", "plant", "candles", "lantern"],
   bestiary: ["rug", "mushrooms", "candles", "lantern", "books", "plant"],
-  crowsNest: ["lantern", "crates", "plant"],
-  atrium: ["plant", "lantern", "candles", "mushrooms"],
+  turret: ["lantern", "crates", "plant"],
 };
 const DEFAULT = ["rug", "plant", "lantern", "candles"];
 

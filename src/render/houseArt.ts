@@ -1,87 +1,77 @@
-// The treehouse as the Ent's own (the v3 mock; Ed, 2026-10-23: "The layout doesn't have to be all right-angles; the corridors are
-// tree branches, the rooms are probably round. Why don't you try making some art"): each room a round plank platform on the tree, a
-// rail round it, its log rim showing below; each corridor a bark-covered branch, mossed, leaves at its sides, a rope rail along it.
-// The floors are painted once into one pixel-art texture, an art pixel a texel (`paintFloor`), seen top-down on the house's plan;
-// what stands up off them (the rims, the rails and posts, the lanterns) is quads, as the box rooms' walls (`standing`).
-import type { HouseConfig, Rect } from "../rules/houseRooms";
+// The oak's house as drawn (the layout v4 mock; Ed, 2026-10-24: "a large old oak tree with wide, thick, decumbent branches ... no
+// planks"): the floor one seamless shape (config/house/shape.js), its wood the tree's own, growth rings round each room's heart and
+// long grain along the limbs, flowing into each other; a mossy bark rim round its edge, worn pale and lipless at the Terrace's
+// take-off; living-wood walls standing up off its far (north) edges and a low bark side under its near ones. The floor is painted
+// once into one pixel-art texture, an art pixel a texel (`paintFloor`), seen top-down on the house's plan; what stands up off it is
+// quads (`standing`), traced from the same shape's outline.
+import type { HouseConfig } from "../rules/houseRooms";
+import { fbm, field, roomAt, outline } from "../../config/house/shape.js";
 
 type RGB = [number, number, number];
 export interface FloorArt { canvas: HTMLCanvasElement; x0: number; z0: number; w: number; h: number }
 
 const hex = (s: string): RGB => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-const BOARD = ["#5c3f27", "#553923", "#62452b", "#4f3520"].map(hex), SEAM = hex("#2b1b10"), RIM = ["#3a2616", "#43301c", "#2f1f12"].map(hex);
-const BARK = ["#3f2c1d", "#4a3524", "#35251a", "#54402b"].map(hex), FURROW = hex("#24180f"), MOSS = ["#3e5a2d", "#4e6e36", "#5f8240"].map(hex);
-const LEAF = ["#26402a", "#335533", "#43703d", "#5a8c48"].map(hex), RUG = ["#5b2a4a", "#6e3559", "#c99a4b"].map(hex), OUT = hex("#170f0a");
+const LEAF = ["#26402a", "#335533", "#43703d", "#5a8c48"].map(hex);
 
 /** A small hash of integers to 0..1 (the art's own noise: seeded by place, the same every load). */
-const hash = (a: number, b: number, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+const ihash = (a: number, b: number, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
 /** Smooth value noise at (x, z) metres, `s` metres a cell. */
 function noise(x: number, z: number, s: number, k = 0): number {
-  const fx = x / s, fz = z / s, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, a = hash(ix, iz, k), b = hash(ix + 1, iz, k), c = hash(ix, iz + 1, k), d = hash(ix + 1, iz + 1, k);
+  const fx = x / s, fz = z / s, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, a = ihash(ix, iz, k), b = ihash(ix + 1, iz, k), c = ihash(ix, iz + 1, k), d = ihash(ix + 1, iz + 1, k);
   const su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
   return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
 }
 
-/** Along and across a branch at (x, z): how far along its line (m), how far off it (signed, m), or null off it. */
-function onBranch(r: Rect, x: number, z: number): { s: number; t: number } | null {
-  const pts = r.pts!, h = (r.w ?? 3) / 2;
-  let best: { s: number; t: number; d: number } | null = null, run = 0;
-  for (let i = 1; i < pts.length; i++) {
-    const [ax, az] = pts[i - 1], [bx, bz] = pts[i], dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz), u = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / Math.max(1e-9, L * L)));
-    const px = ax + dx * u, pz = az + dz * u, d = Math.hypot(x - px, z - pz), t = ((x - px) * -dz + (z - pz) * dx) / Math.max(1e-9, L);
-    if (!best || d < best.d) best = { s: run + u * L, t, d };
-    run += L;
-  }
-  return best && best.d <= h + 1.2 ? { s: best.s, t: best.t } : null;
+/** The floor's foreshortening as the game draws it (the house's plane, 24 degrees: render/houseRooms.ts), so the rings, stretched
+ *  on the plan by its inverse, read round on screen (the mock's FORE). */
+const FORE = Math.sin((24 * Math.PI) / 180);
+/** The tree's wood (the mock's WOOD): four floor tones darkest first, a growth line, bark, moss, a locked room's dim boards. */
+const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]] as RGB[], ring: [62, 36, 22] as RGB, bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]] as RGB[], moss: [[46, 66, 38], [70, 96, 50]] as RGB[], locked: [[52, 40, 34], [64, 50, 40]] as RGB[] };
+const DEG = Math.PI / 180;
+
+/** On the Terrace's take-off, its open rim (base.json terrace.takeoff, as rules/treehouse.ts atTakeoff): within its angles and 3 m past
+ *  its size of its middle. */
+export function onTakeoff(H: HouseConfig, x: number, z: number): boolean {
+  const T = H.rooms.find(r => r.id === "terrace"), k = H.terrace?.takeoff;
+  if (!T || !k) return false;
+  const a = Math.atan2(z - T.z, x - T.x) / DEG, da = Math.abs((((a - k.angle) % 360) + 540) % 360 - 180);
+  return Math.hypot(x - T.x, z - T.z) < T.r + 3 && da < k.half;
 }
 
-/** The floors painted: every room's round platform and every branch, an art pixel (`mpp` metres) a texel, top-down on the plan. */
-export interface Terrace { r: number; bz: number; br: number }
+type Part = { kind: string; s: number; side?: number; t?: number; r?: { x: number; z: number }; a?: { x: number; z: number } };
+/** The grain's coordinate (the mock's `grain`): rings about the nearest rooms' hearts, long grain along the limbs, weighted by nearness
+ *  so they flow into each other; (x, z) and the parts in the mock's own frame (config/house/shape.js field). */
+function grain(x: number, z: number, parts: Part[]): number {
+  let wsum = 0, g = 0;
+  for (const p of parts) {
+    const w = Math.exp(-Math.max(0, p.s + 2) * 0.45);
+    if (w < 1e-4) continue;
+    const v = p.kind === "ring" ? Math.hypot(x - p.r!.x, (z - p.r!.z) / FORE) * 1.1 + Math.sin(Math.atan2(z - p.r!.z, x - p.r!.x) * 3 + p.r!.x) : p.side! * 1.3 + Math.sin(p.t! * 9 + (p.r ? p.r.x : p.a!.x));
+    g += v * w; wsum += w;
+  }
+  return wsum ? g / wsum : 0;
+}
+const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+
+/** The floor painted, an art pixel (`mpp` metres) a texel, top-down on the plan: the mock's floor, rim and take-off. */
 export function paintFloor(H: HouseConfig, mpp: number): FloorArt {
-  const all: Rect[] = [...H.rooms, ...H.corridors], pad = 2;
-  const x0 = Math.min(...all.map(r => r.x0)) - pad, x1 = Math.max(...all.map(r => r.x1)) + pad, z0 = Math.min(...all.map(r => r.z0)) - pad, z1 = Math.max(...all.map(r => r.z1)) + pad;
+  const S = H.shape, [ox, oz] = S.noiseAt, pad = 2;
+  const x0 = Math.min(...H.rooms.map(r => r.x0)) - pad, x1 = Math.max(...H.rooms.map(r => r.x1)) + pad, z0 = Math.min(...H.rooms.map(r => r.z0)) - pad, z1 = Math.max(...H.rooms.map(r => r.z1)) + pad;
   const W = Math.ceil((x1 - x0) / mpp), Hh = Math.ceil((z1 - z0) / mpp), canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = Hh;
   const g = canvas.getContext("2d")!, img = g.createImageData(W, Hh), px = img.data;
-  const pods = H.rooms.filter(r => r.r).map(r => ({ r, cx: (r.x0 + r.x1) / 2, cz: (r.z0 + r.z1) / 2, hub: ["atrium", "parlour", "boudoir"].includes((r as { id?: string }).id ?? "") }));
-  const set = (i: number, c: RGB, k = 1) => { px[i] = Math.min(255, c[0] * k); px[i + 1] = Math.min(255, c[1] * k); px[i + 2] = Math.min(255, c[2] * k); px[i + 3] = 255; };
+  const set = (o: number, c: RGB) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) {
-    const x = x0 + (i + 0.5) * mpp, z = z0 + (j + 0.5) * mpp, o = (j * W + i) * 4;
-    // a room's platform: boards (or, at a hub, rings of boards), its log rim, a rug in the bedroom
-    const pod = pods.find(p => Math.hypot(x - p.cx, z - p.cz) <= p.r.r! + 0.25);
-    if (pod) {
-      const R = pod.r.r!, dx = x - pod.cx, dz = z - pod.cz, d = Math.hypot(dx, dz);
-      if (d > R) { set(o, OUT); continue; }
-      if (d > R - 0.55) { set(o, RIM[Math.floor(hash(Math.floor(Math.atan2(dz, dx) * R * 3), 7) * 3)], d > R - 0.12 ? 0.75 : 1); continue; }
-      if (pod.hub) {
-        const ring = Math.floor((R - 0.55 - d) / 0.5), a = Math.atan2(dz, dx), seg = Math.floor(((a + Math.PI) * (d + 0.1)) / 1.6 + hash(ring, 3) * 9);
-        const seam = (R - 0.55 - d) % 0.5 < mpp * 1.1 || ((a + Math.PI) * (d + 0.1) / 1.6 + hash(ring, 3) * 9) % 1 < mpp * 1.1 / 1.6;
-        set(o, seam ? SEAM : BOARD[Math.floor(hash(ring, seg) * 4)], 1 - 0.18 * (d / R) ** 2);
-      } else {
-        const b = Math.floor(z / 0.45), off = hash(b, 11) * 3, run = Math.floor((x + off) / 2.6);
-        const seam = z / 0.45 - b < mpp / 0.45 * 1.1 || ((x + off) / 2.6) % 1 < mpp / 2.6 * 1.1;
-        const knot = hash(Math.floor(x / mpp), Math.floor(z / mpp), 5) > 0.997;
-        set(o, seam || knot ? SEAM : BOARD[Math.floor(hash(b, run) * 4)], (1 - 0.2 * (d / R) ** 3) * (0.96 + 0.08 * noise(x, z, 0.7)));
-      }
-      if ((pod.r as { id?: string }).id === "bedroom" && Math.hypot(dx + 1.5, dz - 1.5) < 3.2) { const q = Math.hypot(dx + 1.5, dz - 1.5); set(o, q > 2.9 ? RUG[2] : RUG[(Math.floor(q / 0.6) + (Math.floor((Math.atan2(dz - 1.5, dx + 1.5) + 4) * 4) % 2)) % 2]); }
-      continue;
-    }
-    // a branch: bark in furrows along it, rounder (lighter) along its crown, mossed towards its sides, leaves past its edge
-    let br: { s: number; t: number; r: Rect } | null = null;
-    for (const r of H.corridors) { if (!r.pts || x < r.x0 - 1.5 || x > r.x1 + 1.5 || z < r.z0 - 1.5 || z > r.z1 + 1.5) continue; const b = onBranch(r, x, z); if (b && (!br || Math.abs(b.t) < Math.abs(br.t))) br = { ...b, r }; }
-    if (br) {
-      const h = (br.r.w ?? 3) / 2, at = Math.abs(br.t);
-      if (at <= h) {
-        const furrow = Math.abs(((br.t * 2.6 + noise(br.s, br.t, 1.3, 2) * 1.6) % 1 + 1) % 1 - 0.5) < 0.09 && hash(Math.floor(br.s / 0.6), Math.floor(br.t * 3)) > 0.25;
-        const shade = 1.12 - 0.5 * (at / h) ** 2, moss = noise(br.s, br.t, 1.6, 4) + (at / h) * 0.35 > 0.88;
-        set(o, furrow ? FURROW : moss ? MOSS[Math.floor(hash(i, j, 3) * 3)] : BARK[Math.floor(noise(br.s * 3, br.t * 2, 0.5, 1) * 4)], shade);
-        continue;
-      }
-      if (at <= h + 0.12) { set(o, OUT); continue; }
-      const leafy = noise(x, z, 0.9, 6) > 0.62 && at < h + 1.0 * noise(x, z, 2.2, 8) + 0.2;
-      if (leafy) { set(o, LEAF[Math.floor(Math.min(3.99, noise(x, z, 0.35, 9) * 4))]); continue; }
-    }
-    px[o + 3] = 0;
+    const x = x0 + (i + 0.5) * mpp, z = z0 + (j + 0.5) * mpp, o = (j * W + i) * 4, parts: Part[] = [], d = field(S, x, z, false, parts);
+    if (d >= 0) { px[o + 3] = 0; continue; }
+    const mx = x + ox, mz = z + oz;
+    if (d > -0.45 && onTakeoff(H, x, z)) { set(o, WOOD.floor[3]); continue; } // (the open rim where she steps off: worn pale, no lip)
+    if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
+    if (H.rooms.find(r => r.id === roomAt(S, x, z)?.id)?.locked) { set(o, WOOD.locked[hash(i, j) < 0.5 ? 0 : 1]); continue; }
+    const gr = grain(mx, mz, parts) + (fbm(mx * 0.9, (mz / FORE) * 0.9) - 0.5) * 1.1, f = gr - Math.floor(gr);
+    if (f < 0.09) { set(o, WOOD.ring); continue; } // (a growth line)
+    const lit = fbm(mx * 0.12 + 7, (mz / FORE) * 0.12) * 0.9 + (1 - f) * 0.25;
+    set(o, WOOD.floor[lit > 0.66 ? 3 : lit > 0.5 ? 2 : lit > 0.36 ? 1 : 0]);
   }
   g.putImageData(img, 0, 0);
   return { canvas, x0, z0, w: x1 - x0, h: z1 - z0 };
@@ -89,69 +79,28 @@ export function paintFloor(H: HouseConfig, mpp: number): FloorArt {
 
 /** A quad of what stands up off the floors: corners in metres on the plan (h up off the floor), its colour (0..1). */
 export interface Upright { p: [number, number, number][]; rgb: RGB; layer: number }
-const c01 = (s: string): RGB => hex(s).map(v => v / 255) as RGB;
-const WALL_A = c01("#4b3321"), WALL_B = c01("#432d1c"), WINDOW = c01("#e8b45a");
-const RIM_SIDE = c01("#2c1d11"), RIM_DARK = c01("#20150c"), POST = c01("#4a3220"), RAIL = c01("#5e4128"), ROPE = c01("#8a7552"), LAMP = c01("#ffc864");
+const c01 = (c: RGB): RGB => c.map(v => v / 255) as RGB;
+const BARK0 = c01(WOOD.bark[0]), BARK1 = c01(WOOD.bark[1]), BARK2 = c01(WOOD.bark[2]), MOSS1 = c01(WOOD.moss[1]);
 
-/** The uprights: each platform's log rim below its edge (the side towards the camera), its rail and posts all round but where a
- *  branch comes in, each branch's bark side below it and a rope rail along both edges on posts, a lantern here and there. Layer 1
- *  behind the floor's middle (drawn before her), 3 in front of it. */
-export function standing(H: HouseConfig, open: (x: number, z: number) => boolean, T?: Terrace): Upright[] {
-  const q: Upright[] = [];
-  if (T) {
-    // the Terrace (Ed, 2026-10-23: "redraw the terrace at the same time"; its floor, the decks and the magic circle the Ent's own,
-    // art/ent.js): a rail round its back half, lanterns on it; its front open air, where she steps off
-    const n = 64;
-    for (const [cx, cz, R, back] of [[0, 0, T.r, true], [0, T.bz, T.br, false]] as [number, number, number, boolean][]) for (let k = 0; k < n; k++) {
-      const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2, nz = Math.sin(am), mx = cx + Math.cos(am) * R, mz = cz + Math.sin(am) * R;
-      const under = back ? Math.hypot(mx, mz - T.bz) < T.br : Math.hypot(mx, mz) < T.r;
-      if (under) continue;
-      if (!back || nz > -0.15 || open(cx + Math.cos(am) * (R + 0.6), cz + Math.sin(am) * (R + 0.6))) continue;
-      const rr = R - 0.18, r0: [number, number] = [cx + Math.cos(a0) * rr, cz + Math.sin(a0) * rr], r1: [number, number] = [cx + Math.cos(a1) * rr, cz + Math.sin(a1) * rr];
-      q.push({ p: [[r0[0], r0[1], 0.95], [r1[0], r1[1], 0.95], [r1[0], r1[1], 1.05], [r0[0], r0[1], 1.05]], rgb: RAIL, layer: 1 });
-      if (k % 2 === 0) q.push({ p: [[r0[0] - 0.07, r0[1], 0], [r0[0] + 0.07, r0[1], 0], [r0[0] + 0.07, r0[1], 1.05], [r0[0] - 0.07, r0[1], 1.05]], rgb: POST, layer: 1 });
-      if (k % 8 === 4) q.push({ p: [[r0[0] - 0.13, r0[1], 1.1], [r0[0] + 0.13, r0[1], 1.1], [r0[0] + 0.13, r0[1], 1.38], [r0[0] - 0.13, r0[1], 1.38]], rgb: LAMP, layer: 1 });
-    }
-  }
-  for (const r of H.rooms) {
-    if (!r.r) continue;
-    const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, R = r.r, n = Math.max(24, Math.round(R * 7));
-    for (let k = 0; k < n; k++) {
-      const a0 = (k / n) * Math.PI * 2, a1 = ((k + 1) / n) * Math.PI * 2, am = (a0 + a1) / 2, nz = Math.sin(am);
-      const p0: [number, number] = [cx + Math.cos(a0) * R, cz + Math.sin(a0) * R], p1: [number, number] = [cx + Math.cos(a1) * R, cz + Math.sin(a1) * R];
-      const gap = open(cx + Math.cos(am) * (R + 0.6), cz + Math.sin(am) * (R + 0.6));
-      if (nz > 0) q.push({ p: [[p0[0], p0[1], 0], [p1[0], p1[1], 0], [p1[0], p1[1], -0.85], [p0[0], p0[1], -0.85]], rgb: k % 3 ? RIM_SIDE : RIM_DARK, layer: 3 });
-      if (gap) continue;
-      const rr = R - 0.18, r0: [number, number] = [cx + Math.cos(a0) * rr, cz + Math.sin(a0) * rr], r1: [number, number] = [cx + Math.cos(a1) * rr, cz + Math.sin(a1) * rr], L = nz > 0 ? 3 : 1;
-      const top = nz > 0 ? 0.55 : 1.05; // (the near rail kept low, so the room's floor shows over it)
-      if (nz <= 0.12) {
-        // the far half walled (Ed, 2026-10-23: "Can the rooms have walls and roofs"): upright boards, a lit window now and then
-        const WH = 2.7, win = k % 7 === 3;
-        q.push({ p: [[r0[0], r0[1], 0], [r1[0], r1[1], 0], [r1[0], r1[1], WH], [r0[0], r0[1], WH]], rgb: k % 2 ? WALL_A : WALL_B, layer: 1 });
-        if (win) q.push({ p: [[r0[0], r0[1], 1.1], [r1[0], r1[1], 1.1], [r1[0], r1[1], 2.0], [r0[0], r0[1], 2.0]], rgb: WINDOW, layer: 1 });
-        q.push({ p: [[r0[0], r0[1], WH - 0.15], [r1[0], r1[1], WH - 0.15], [r1[0], r1[1], WH], [r0[0], r0[1], WH]], rgb: RAIL, layer: 1 });
-        continue;
-      }
-      q.push({ p: [[r0[0], r0[1], top - 0.1], [r1[0], r1[1], top - 0.1], [r1[0], r1[1], top], [r0[0], r0[1], top]], rgb: RAIL, layer: L });
-      if (k % 2 === 0) { q.push({ p: [[r0[0] - 0.07, r0[1], 0], [r0[0] + 0.07, r0[1], 0], [r0[0] + 0.07, r0[1], top], [r0[0] - 0.07, r0[1], top]], rgb: POST, layer: L }); }
-      if (k % 9 === 4 && nz <= 0) q.push({ p: [[r0[0] - 0.13, r0[1], top + 0.05], [r0[0] + 0.13, r0[1], top + 0.05], [r0[0] + 0.13, r0[1], top + 0.33], [r0[0] - 0.13, r0[1], top + 0.33]], rgb: LAMP, layer: L });
-    }
-  }
-  for (const r of H.corridors) {
-    if (!r.pts) continue;
-    const h = (r.w ?? 3) / 2, pts = r.pts;
-    for (let i = 1; i < pts.length; i++) {
-      const [ax, az] = pts[i - 1], [bx, bz] = pts[i], dx = bx - ax, dz = bz - az, L = Math.hypot(dx, dz) || 1, nx = -dz / L, nzz = dx / L;
-      for (const side of [1, -1]) {
-        const ox = nx * h * side, oz = nzz * h * side, faceCam = oz > 0.05;
-        const s0: [number, number] = [ax + ox, az + oz], s1: [number, number] = [bx + ox, bz + oz];
-        const inRoom = (x: number, z: number) => H.rooms.some(q2 => q2.r && Math.hypot(x - (q2.x0 + q2.x1) / 2, z - (q2.z0 + q2.z1) / 2) < q2.r - 0.1) || open(x, z) && Math.hypot(x, z) < 8;
-        if (inRoom(s0[0], s0[1]) || inRoom(s1[0], s1[1])) continue;
-        if (faceCam) q.push({ p: [[s0[0], s0[1], 0], [s1[0], s1[1], 0], [s1[0], s1[1], -0.75], [s0[0], s0[1], -0.75]], rgb: i % 2 ? RIM_SIDE : RIM_DARK, layer: 3 });
-        const lay = faceCam ? 3 : 1;
-        q.push({ p: [[s0[0], s0[1], 0.78], [s1[0], s1[1], 0.78], [s1[0], s1[1], 0.85], [s0[0], s0[1], 0.85]], rgb: ROPE, layer: lay });
-        q.push({ p: [[s0[0] - 0.06, s0[1], 0], [s0[0] + 0.06, s0[1], 0], [s0[0] + 0.06, s0[1], 0.9], [s0[0] - 0.06, s0[1], 0.9]], rgb: POST, layer: lay });
-      }
+/** The uprights, along the floor's outline (half-metre steps): where the floor's edge faces north (away from the camera), a wall of
+ *  living wood (H.wall metres; furrowed bark, moss along its top), layer 1, drawn before her; where it faces south, the bark side
+ *  under the rim, layer 3, in front; none at the take-off. */
+export function standing(H: HouseConfig): Upright[] {
+  const q: Upright[] = [], box = { x0: Math.min(...H.rooms.map(r => r.x0)) - 3, x1: Math.max(...H.rooms.map(r => r.x1)) + 3, z0: Math.min(...H.rooms.map(r => r.z0)) - 3, z1: Math.max(...H.rooms.map(r => r.z1)) + 3 };
+  for (const ring of outline(H.shape, box, 0.5) as [number, number][][]) {
+    // (the ring's winding: its signed area tells which side of each edge is inside)
+    let A = 0;
+    for (let k = 0; k < ring.length; k++) { const [ax, az] = ring[k], [bx, bz] = ring[(k + 1) % ring.length]; A += ax * bz - bx * az; }
+    for (let k = 0; k < ring.length; k++) {
+      const [ax, az] = ring[k], [bx, bz] = ring[(k + 1) % ring.length], L = Math.hypot(bx - ax, bz - az) || 1;
+      const nz = ((A > 0 ? -1 : 1) * (bx - ax)) / L; // (the outward normal's z: negative facing north)
+      const mx = (ax + bx) / 2, mz = (az + bz) / 2;
+      if (onTakeoff(H, mx, mz)) continue;
+      if (nz < -0.2) {
+        const top = H.wall, furrow = Math.sin(k * 1.7 + Math.floor(k / 3) * 2.1) > 0.3;
+        q.push({ p: [[ax, az, 0], [bx, bz, 0], [bx, bz, top - 0.15], [ax, az, top - 0.15]], rgb: furrow ? BARK0 : k % 7 === 3 ? BARK2 : BARK1, layer: 1 });
+        q.push({ p: [[ax, az, top - 0.15], [bx, bz, top - 0.15], [bx, bz, top], [ax, az, top]], rgb: MOSS1, layer: 1 });
+      } else if (nz > 0.2) q.push({ p: [[ax, az, 0], [bx, bz, 0], [bx, bz, -0.85], [ax, az, -0.85]], rgb: k % 3 ? BARK1 : BARK0, layer: 3 });
     }
   }
   return q;

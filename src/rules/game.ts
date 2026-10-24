@@ -207,9 +207,9 @@ export interface Game {
   tally: { berries: number; invites: number; evolved: number; /** soundsystems a legend stamped on as it turned angry (legends.stomp) */ stomps?: number };
   /** Where the opening shot looks: her seat on the treehouse as drawn (the view sets it; the art knows where it is). */
   introFocus?: { x: number; y: number; z: number };
-  /** The new opening's wake-up in her bedroom (rules/wakeUp.ts): set as the chart's dive lands, the curtains' state kept after. */
+  /** The new opening's wake-up in her bedroom (rules/wakeUp.ts): set as the chart's dive lands, kept after (she's up, dressed). */
   wake?: WakeState;
-  /** The island's built (the night's art drawn; main.ts sets it): what the wake-up's curtains wait on. */
+  /** The island's built (the night's art drawn; main.ts sets it): the house's art swaps in its finished pieces then (nothing waits on it). */
   islandReady?: boolean;
 }
 
@@ -488,8 +488,8 @@ function fixedStep(g: Game, controls: Controls): void {
   // rising, blinking, spells or 💌s (the camera's zoom still works). Its button, Enter, or her spell key (R, the pad's L3, touch
   // "spell") while the game waits casts it, rather than the boost (the hold drops that spell press).
   // Waking up in her bedroom (the new opening, rules/wakeUp.ts): the alarm, the snoozes, the stretch, then walking the bedroom
-  // with the spell not yet cast (the curtains cast it, once the island's ready).
-  if (g.wake) c = stepWake(g, c, ht, !!g.islandReady, t.opening?.wake ?? WAKE_DEFAULT);
+  // with the spell not yet cast (her decks cast it, once she's dressed and down the trunk).
+  if (g.wake) c = stepWake(g, c, ht, t.opening?.wake ?? WAKE_DEFAULT);
   if (c.castParty || c.spell) castPartySpell(g.party, g.map, g.clock.time);
   // Then her needle-drop routine at the decks (Ed, 2026-10-07: held till it ends, the first music dropping then; rules/djSet.ts).
   // (Woken in her bedroom, waiting for her to reach her decks: neither holds her on the way, the house's slow time making them
@@ -555,7 +555,7 @@ function fixedStep(g: Game, controls: Controls): void {
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
   W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
-  if (g.wake) keepInBedroom(g); // (the bedroom's door shut till the curtains open: rules/wakeUp.ts)
+  if (g.wake) keepInBedroom(g); // (the bedroom's door shut till she's dressed: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
   if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)

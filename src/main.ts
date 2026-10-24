@@ -680,7 +680,7 @@ const WOKEN_KEY = "witch.woken";
 const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
 const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: the whole wake-up again next time */ } };
 /** The opening's wake-up on a plain first load (app/opening.ts opensInBedroom): home's night made (its start's art drawn, the rest
- *  drawing on behind the bedroom's shut curtains, which wait on it: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
+ *  drawing on behind her while she dresses and walks down: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
  *  (rules/opening.ts), the whole wake-up in a first game, the shorter one after. Without the house's rooms, the old start. */
 function wakeFirst(): void {
   const n = N();
@@ -858,14 +858,14 @@ function frame(now: number): void {
   if (!scope) { scopeShut = null; if (telescope.on && scopeAt) { telescope.close(); scopeAt = null; } }
   else if (!telescope.on && scopeShut !== scope.id && tuning.telescope) { scopeAt = scope.id; telescope.open(game, tuning.telescope); }
   input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)
-  // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
-  // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
-  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
+  // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
+  // and the dressing table's mirror opened by itself the first time; the island's art latched drawn (marked, nothing waits on it).
+  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) { game.islandReady = true; mark("island:ready"); } // (latched: the island's own art drawn, render/view.ts islandDrawn; its time marked for ?timing=1)
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
-    else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, { done: view.assets.done, total: view.assets.done + view.assets.pending }, () => sound.sfx?.alarm());
+    else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
   // The tables (the map table's sea chart) by nearness, as the stations; E at one brings it back after she's put it away there.
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);

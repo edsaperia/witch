@@ -1,51 +1,59 @@
 // The house a file a room (housekeeping, Ed 2026-10-23; rules/houseConfig.ts, config/house/): the same for the game and the tools, and
-// whole. (That the split changed nothing was proved against config/house.json as it was, on #1084's own commits.)
+// whole: the oak's layout (Ed, 2026-10-24, v4), its rooms and limbs, and the outline the crown's builder reads, up to date.
 import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { HOUSE_CONFIG } from "./houseConfig";
 import { houseFiles, loadHouse } from "../../config/house/load.mjs";
 import { roomPlaces } from "../../config/house/assemble.js";
+import { inRoom } from "../../config/house/shape.js";
+import { houseOutline, houseWalk } from "../../config/house/outline.js";
 
 type House = { rooms: { id: string }[]; corridors: { id: string }[]; objects: { id: string; room: string }[] } & Record<string, unknown>;
 const H = HOUSE_CONFIG as House;
 
 describe("the house, a file a room (config/house/)", () => {
   it("is the same for the game (each room imported by name) and the tools (every room file on disk): no room file left out", () => expect(loadHouse()).toEqual(H));
-  it("has every room in its own file, named by its id, every object's id once, each parent placed before its child", () => {
+  it("has every room in its own file, named by its id, every object's id once, each branch room off a trunk room", () => {
     const dir = new URL("../../config/house/rooms/", import.meta.url), files = readdirSync(dir).filter(f => f.endsWith(".json"));
     const rooms = files.map(f => [f, JSON.parse(readFileSync(new URL(f, dir), "utf8"))] as const);
     for (const [f, r] of rooms) expect(f, "named by its id").toBe(`${r.id}.json`);
-    const order = Object.fromEntries(rooms.map(([, r]) => [r.id, r.order]));
-    for (const [, r] of rooms) if (r.parent) expect(order[r.parent], `${r.id}'s parent before it`).toBeLessThan(r.order);
-    expect(new Set(Object.values(order)).size, "orders all different").toBe(rooms.length);
+    const trunk = new Set(rooms.filter(([, r]) => r.trunk).map(([, r]) => r.id));
+    for (const [, r] of rooms) if (!r.trunk) expect(trunk.has(r.from), `${r.id}: off a trunk room`).toBe(true);
+    expect(new Set(rooms.map(([, r]) => r.order)).size, "orders all different").toBe(rooms.length);
     const ids = H.objects.map(o => o.id);
     expect(new Set(ids).size, "object ids unique").toBe(ids.length);
   });
-  it("is whole: every room and object id once, every object in its room (a locked room's door at its rim), every branch from its parent's floor into its room's (or to its door), no two rooms crowding, the walk to her bedroom's door about 49 m", () => {
-    const { base, rooms: files } = houseFiles(), P = roomPlaces(base, files) as Record<string, { id: string; parent?: string; x: number; z: number; r: number }>, H2 = H as unknown as { rooms: { id: string; r: number; locked?: boolean }[]; corridors: { id: string; pts: [number, number][] }[]; objects: { id: string; room: string; x: number; z: number; w: number; d: number }[] };
-    const roomIds = H2.rooms.map(r => r.id);
-    expect(new Set(roomIds).size, "room ids unique").toBe(roomIds.length);
-    const parentOf = Object.fromEntries(files.map((f: { id: string; parent?: string }) => [f.id, f.parent]));
+  it("is the oak (the layout v4, Ed 2026-10-24): six rooms up the trunk, a pair of branch rooms off each of the first four, the last pair locked; the walk from her bed to the take-off about 93 m", () => {
+    const { base, rooms: files } = houseFiles(), P = roomPlaces(base, files) as Record<string, { id: string; parent?: string; trunk: boolean; x: number; z: number; r: number }>;
+    const H2 = H as unknown as { rooms: { id: string; trunk?: boolean; from?: string; locked?: boolean }[]; corridors: { id: string; pts: [number, number][] }[]; objects: { id: string; room: string; x: number; z: number }[]; shape: unknown };
+    expect(H2.rooms.filter(r => r.trunk).map(r => r.id)).toEqual(["dining", "terrace", "parlour", "boudoir", "bedroom", "turret"]);
+    const pairs = Object.fromEntries(["dining", "terrace", "parlour", "boudoir"].map(t => [t, H2.rooms.filter(r => r.from === t).map(r => r.id).sort()]));
+    expect(pairs).toEqual({ dining: ["kitchen", "workshop"], terrace: ["cloakroom", "studio"], parlour: ["bestiary", "solarium"], boudoir: ["bedroom2", "bedroom3"] });
+    expect(H2.rooms.filter(r => r.locked).map(r => r.id).sort()).toEqual(["bedroom2", "bedroom3"]);
+    for (const gone of ["atrium", "drawingRoom", "study", "crowsNest", "curtains", "crystalBall"]) expect(H2.rooms.some(r => r.id === gone) || H2.objects.some(o => o.id === gone), gone).toBe(false);
+    // every object's middle on its own room's floor (a locked room's door on its rim; tools/house/organic.mjs checks the corners)
     for (const o of H2.objects) {
-      const p = P[o.room]; expect(p, `${o.id}: its room ${o.room}`).toBeDefined();
-      const from = Math.hypot(o.x - p.x, o.z - p.z), door = o.id.endsWith("Door") && H2.rooms.find(r => `${r.id}Door` === o.id);
-      if (door) { const L = P[door.id]; expect(Math.abs(Math.hypot(o.x - L.x, o.z - L.z) - L.r), `${o.id}: at its room's rim`).toBeLessThan(0.5); }
-      else expect(from + Math.min(o.w, o.d) / 2, `${o.id}: in ${o.room}`).toBeLessThanOrEqual(p.r + 0.6);
+      const door = o.id.endsWith("Door") ? o.id.slice(0, -4) : null, d = inRoom(H2.shape, door ?? o.room, o.x, o.z);
+      if (door) expect(Math.abs(d), `${o.id}: at ${door}'s rim`).toBeLessThan(0.6);
+      else expect(d, `${o.id}: in ${o.room}`).toBeLessThan(0);
     }
+    // the limbs: the trunk's between its rooms in order, each branch from its trunk room into its room (or to its door)
     for (const c of H2.corridors) {
-      const [from, to] = c.id.split("-"), a = P[from], b = P[to], s = c.pts[0], e = c.pts[c.pts.length - 1], room = H2.rooms.find(r => r.id === to)!;
-      expect(parentOf[to], `${c.id}: from its parent`).toBe(from);
-      expect(Math.hypot(s[0] - a.x, s[1] - a.z), `${c.id}: starts on ${from}'s floor`).toBeLessThan(a.r);
-      if (room.locked) expect(Math.hypot(e[0] - b.x, e[1] - b.z), `${c.id}: ends at ${to}'s door`).toBeGreaterThan(b.r);
-      else expect(Math.hypot(e[0] - b.x, e[1] - b.z), `${c.id}: ends on ${to}'s floor`).toBeLessThan(b.r);
+      const [from, to] = c.id.split("-"), s = c.pts[0], e = c.pts[c.pts.length - 1], room = H2.rooms.find(r => r.id === to)!;
+      expect(room.trunk ? H2.rooms[H2.rooms.indexOf(room) - 1].id : room.from, `${c.id}: from the room below it, or its trunk room`).toBe(from);
+      expect(inRoom(H2.shape, from, s[0], s[1]), `${c.id}: starts on ${from}'s floor`).toBeLessThan(0);
+      if (room.locked) expect(Math.abs(inRoom(H2.shape, to, e[0], e[1])), `${c.id}: ends at ${to}'s door`).toBeLessThan(0.1);
+      else expect(inRoom(H2.shape, to, e[0], e[1]), `${c.id}: ends on ${to}'s floor`).toBeLessThan(0);
     }
-    const L = Object.values(P) as { id: string; parent?: string; x: number; z: number; r: number }[];
+    const L = Object.values(P);
     for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
-      const a = L[i], b = L[j], gap = Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r;
-      expect(gap, `${a.id} and ${b.id} crowd (tools/house/organic.mjs)`).toBeGreaterThanOrEqual(a.parent === b.id || b.parent === a.id ? 1 : 1.4);
+      const a = L[i], b = L[j];
+      expect(Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r, `${a.id} and ${b.id} crowd`).toBeGreaterThanOrEqual(3);
     }
-    const path = ["terrace", "atrium", "parlour", "boudoir", "bedroom"];
-    let walk = -P.bedroom.r; for (let i = 1; i < path.length; i++) walk += Math.hypot(P[path[i]].x - P[path[i - 1]].x, P[path[i]].z - P[path[i - 1]].z);
-    expect(Math.round(walk), "the walk from the Terrace's middle to the bedroom's door (m)").toBe(49);
+    expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m; the mock's 93)").toBe(93);
+  });
+  it("its outline for the crown's builder (config/house/outline.json) is up to date: node tools/house/organic.mjs --outline", () => {
+    const f = JSON.parse(readFileSync(new URL("../../config/house/outline.json", import.meta.url), "utf8"));
+    expect(f).toEqual(JSON.parse(JSON.stringify(houseOutline(H as never))));
   });
 });

@@ -1,16 +1,15 @@
 // The new opening's wake-up (Ed, 2026-10-20; previews/ed/opening-mock/ on claude/ed-shots, beats 3a–5a): the chart's dive lands
 // in her bedroom (rules/opening.ts) with her in bed, her phone's alarm ringing in the dark. E snoozes it, five seconds a time,
 // as often as she likes; moving (WASD, a rise) gets her up: she stretches, then stands beside the bed and walks (WASD, taught in
-// a safe room). The first time she comes to the dressing table its mirror opens by itself (her skin, hair and earrings). The
-// curtains stay shut until the island's ready (the night's art drawn: main.ts says so through `ready`), then open by themselves
-// as soon as she's up (Ed, 2026-10-21: "The curtains should open as soon as they've loaded"); E at them before then says "not
-// yet". Until they're open she stays in the bedroom (its door kept shut), so nothing she does gets ahead of the build: and she
-// dresses meanwhile, everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation
-// options (except for broom, hat, and bag) should be before the locked door"). Then out through the house to her decks, where E starts the party (Ed, 2026-10-20: "The DJ intro replaces
-// the party spell before the party has started"): she's seated behind them and the spell's cast there, its needle-drop routine
-// (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up (`short`: later loads and after the bed, Ed's
-// decisions 4 and 10) has any key or move get her straight up, and the mirror waits to be used; never past the build all the
-// same. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
+// a safe room). The first time she comes to the dressing table its mirror opens by itself (her skin, hair and earrings). Up, the
+// wake-up's over (`open`; the oak, Ed 2026-10-24: no curtains, and nothing waits on the island's build, which carries on behind
+// her): the bedroom's door opens as soon as she's dressed (last night's clothes in their pile by the bed, rules/clothesPile.ts),
+// everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
+// broom, hat, and bag) should be before the locked door"). Then down the trunk to her decks on the Terrace, where E starts the
+// party (Ed, 2026-10-20: "The DJ intro replaces the party spell before the party has started"): she's seated behind them and the
+// spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up
+// (`short`: later loads and after the bed, Ed's decisions 4 and 10) has any key or move get her straight up, and the mirror waits
+// to be used. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
@@ -20,7 +19,7 @@ import { dressed, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
-export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "notYet" | "curtains" | "decks" | /** E at the pile: dressed */ "dressed" | /** at the door undressed */ "dressFirst";
+export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed" | /** at the door undressed */ "dressFirst";
 
 export interface WakeState {
   beat: WakeBeat;
@@ -28,7 +27,7 @@ export interface WakeState {
   at: number;
   /** How many times she's snoozed. */
   snoozes: number;
-  /** The curtains opened (the island's ready, and she's seen it): the wake-up's over, the door open. */
+  /** She's up: the wake-up's over (the door opens once she's dressed). */
   open: boolean;
   /** The dressing table's mirror opened by itself already (or, short, never by itself). */
   mirror: boolean;
@@ -65,64 +64,51 @@ export function startWake(g: Game, ht: number, short = false): boolean {
   return true;
 }
 
-/** The bedroom's door shut: till the curtains have opened and she's dressed (Ed, 2026-10-23: the door waits for both). */
-export const doorShut = (g: { wake?: WakeState }): boolean => !!g.wake && (!g.wake.open || !dressed(g.wake));
+/** The bedroom's door shut: till she's dressed (the oak, 2026-10-24: nothing else; it waited on the curtains, and they on the build). */
+export const doorShut = (g: { wake?: WakeState }): boolean => !!g.wake && !dressed(g.wake);
 /** How often the door says to get dressed while she walks at it (s, her clock). */
 const NAG_EVERY = 3;
 
-/** A step of the wake-up, before her own (rules/game.ts): her controls as the beat lets them through. `ready`: the island's built
- *  (main.ts: the night's art drawn), the only thing the curtains wait on. */
-export function stepWake(g: Game, c: Controls, ht: number, ready: boolean, K: WakeTuning): Controls {
+/** A step of the wake-up, before her own (rules/game.ts): her controls as the beat lets them through. */
+export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Controls {
   const w = g.wake;
   if (!w) return c;
   const moving = Math.hypot(c.moveX, c.moveZ) > 0.1 || !!c.toggleMode, press = !!(c.place || c.sigil);
-  // Up (the curtains open or not): E at last night's clothes puts on all that's still in the pile (rules/clothesPile.ts)
-  if (w.beat === "up" && press && !dressed(w)) {
+  const used = { ...c, toggleMode: false, place: false, sigil: false, sigilHeld: false, castParty: false, spell: false }; // (a press that's the wake-up's, nothing else's)
+  if (w.open) {
+    // Up: E at last night's clothes puts on all that's still in the pile (rules/clothesPile.ts); the dressing table's mirror the
+    // first time she's at it; then out to her decks
     const d = deckOf(g.map, g.tuning), W = g.witches[0], here = d ? objectAt(d, W.body.x, W.body.z) : null;
-    if (here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return { ...c, toggleMode: false, place: false, sigil: false, castParty: false, spell: false }; }
+    if (press && !dressed(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
+    if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
+    if (g.party.spellAt !== null) return c;
+    if (here?.use.kind === "bed") return used; // (no sleeping the night away before it's begun)
+    return toDecks(g, c, press);
   }
-  if (w.open) return g.party.spellAt === null ? toDecks(g, c, press) : c;
   const held: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const to = (beat: WakeBeat, e: WakeEvent) => { w.beat = beat; w.at = ht; w.events.push(e); };
-  const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } to("up", "up"); };
+  const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } w.open = true; to("up", "up"); };
   // (shorter: any key or move, ringing or snoozing, and she's up)
   if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || press || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
   if (w.beat === "alarm") {
     if (moving) to("stretch", "stretch");
     else if (press && ht - w.at >= K.alarmMin) { w.snoozes++; to("snooze", "snooze"); }
-    return held;
-  }
-  if (w.beat === "snooze") {
+  } else if (w.beat === "snooze") {
     if (moving) to("stretch", "stretch");
     else if (ht - w.at >= K.snooze) to("alarm", "ring");
-    return held;
-  }
-  if (w.beat === "stretch") {
-    if (ht - w.at >= K.stretch) up();
-    return held;
-  }
-  // Up: walking the bedroom. The curtains open by themselves once the island's ready; the dressing table's mirror the first time
-  // she's at it; E at the curtains before then.
-  if (ready) { w.open = true; w.events.push("curtains"); return { ...c, toggleMode: false, place: false, sigil: false, castParty: false, spell: false }; }
-  const d = deckOf(g.map, g.tuning), W = g.witches[0], here = d ? objectAt(d, W.body.x, W.body.z) : null;
-  if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
-  if (here?.use.kind === "bed") return { ...c, toggleMode: false, place: false, sigil: false, sigilHeld: false, castParty: false, spell: false }; // (no sleeping the night away before it's begun)
-  if (press && here?.use.kind === "curtains") {
-    w.events.push("notYet"); // (ready, they'd have opened by themselves: above)
-    return { ...c, toggleMode: false, place: false, sigil: false, castParty: false, spell: false }; // (the press is the curtains', nothing else's)
-  }
-  return { ...c, toggleMode: false, castParty: false, spell: false }; // (no rising out of the bedroom; the spell's the decks')
+  } else if (w.beat === "stretch" && ht - w.at >= K.stretch) up();
+  return held;
 }
 
 /** How near her seat behind the decks E starts the party (m). */
 const DECKS_REACH = 1.6;
-/** Standing at her decks (behind them, by her seat on the balcony). */
+/** Standing at her decks (behind them, by her seat on the Terrace). */
 export function atDecks(g: Game): boolean {
   const d = deckOf(g.map, g.tuning), b = g.witches[0].body;
   return !!d && b.mode === "ground" && Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= DECKS_REACH;
 }
-/** The curtains open, the party not started: out to her decks, where E seats her and casts the spell (its routine the DJ intro);
- *  no other key casts it meanwhile. */
+/** Up, the party not started: out to her decks, where E seats her and casts the spell (its routine the DJ intro); no other key
+ *  casts it meanwhile. (Undressed she can't leave the bedroom: keepInBedroom.) */
 function toDecks(g: Game, c: Controls, press: boolean): Controls {
   if (press && atDecks(g)) {
     const d = deckOf(g.map, g.tuning)!, W = g.witches[0];
@@ -134,8 +120,8 @@ function toDecks(g: Game, c: Controls, press: boolean): Controls {
   return { ...c, castParty: false, spell: false };
 }
 
-/** After her step: the bedroom's door shut till the curtains open and she's dressed (she's kept on its floor); walking at it, the
- *  curtains open but the pile still there, it says to get dressed first (now and then). */
+/** After her step: the bedroom's door shut till she's dressed (she's kept on its floor, its own blob: rules/houseRooms.ts
+ *  keepInRoom); walking at it up but the pile still there, it says to get dressed first (now and then). */
 export function keepInBedroom(g: Game): void {
   if (!doorShut(g)) return;
   const W = g.witches[0], b = W.body, k = keepInRoom(g.map.treehouse, "bedroom", b.x, b.z);

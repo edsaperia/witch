@@ -797,7 +797,7 @@ export class View {
     for (const c of g.map.legendClearings) { carvingMask(AREA_TYPES[g.map.typeOf(c.cell[0], c.cell[1])].creature); yield; }
   }
 
-  /** The island built (the new opening's curtains wait on it, rules/wakeUp.ts): the start's art made and every area type the map
+  /** The island built (main.ts marks it for ?timing=1; nothing waits on it since the oak, rules/wakeUp.ts): the start's art made and every area type the map
    *  has drawn (askIsland's; home's own area is its meadow); under ?quick=1, which draws only what's needed as it's needed, the
    *  start's alone. Not the art still in flight: creatures and rigs coming into view keep that from ever emptying. */
   islandDrawn(): boolean {

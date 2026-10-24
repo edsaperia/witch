@@ -11,13 +11,12 @@
 import * as THREE from "three";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject, type Rect } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
 import type { Witch } from "../rules/game";
 import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./houseArt";
-import { nearestIn } from "../rules/houseRooms";
+import { paintFloor, paintRoof, standing, type FloorArt } from "./houseArt";
 import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
@@ -33,14 +32,9 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const PLANK: [number, number, number] = [0.36, 0.25, 0.16], PLANK2: [number, number, number] = [0.31, 0.21, 0.13], SEAM: [number, number, number] = [0.2, 0.13, 0.08];
-const WALL: [number, number, number] = [0.3, 0.2, 0.12], WALL_R: [number, number, number] = [0.22, 0.145, 0.085], WALL_TOP: [number, number, number] = [0.42, 0.3, 0.19];
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
-const SKIRT = 0.35, PLANK_W = 0.5, STEP_X = 2;
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
-
-const inside = (r: Rect, x: number, z: number) => x > r.x0 + 1e-6 && x < r.x1 - 1e-6 && z > r.z0 + 1e-6 && z < r.z1 - 1e-6;
 
 /** How far south a point of the plan lies in the world (the hub's centre 0): the drawing's depth. */
 const south = (x: number, z: number) => fromPlan({ x: 0, z: 0 }, x, z).z;
@@ -48,35 +42,11 @@ const quad = (p: [number, number, number][], rgb: [number, number, number], laye
 /** In the drawing's order: floors, then walls, then objects; each far to near. */
 const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b.depth);
 
-/** The rooms' quads, once: floors in planks, walls with their doorways cut, the objects' boxes. */
-function buildQuads(hub: number, T?: Terrace): Quad[] {
-  const H = HOUSE_ROOMS, all: Rect[] = [...H.rooms, ...H.corridors], q: Quad[] = [];
-  const open = (x: number, z: number, self: Rect) => Math.hypot(x, z) < hub || all.some(r => r !== self && inside(r, x, z)); // (a wall's spot inside another room or corridor, or the hub: a doorway)
-  if ((H as { organic?: boolean }).organic) {
-    // the Ent's own (render/houseArt.ts): the floors a painted texture (FloorMesh), here what stands up off them, and the objects
-    for (const u of standing(H, (x, z) => H.corridors.some(c => nearestIn(c, x, z).d <= 0) || (!T && Math.hypot(x, z) < hub + 0.3), T)) q.push(quad(u.p, u.rgb, u.layer));
-    objects(q);
-    return inOrder(q);
-  }
-  // floors: boards running along the plan's x, half a metre each, a seam between
-  for (const r of all) for (let z = r.z0, i = 0; z < r.z1 - 1e-6; z += PLANK_W, i++) {
-    const z1 = Math.min(r.z1, z + PLANK_W);
-    for (let x = r.x0; x < r.x1 - 1e-6; x += STEP_X) { const x1 = Math.min(r.x1, x + STEP_X); q.push(quad([[x, z, 0], [x1, z, 0], [x1, z1 - 0.04, 0], [x, z1 - 0.04, 0]], i % 2 ? PLANK : PLANK2, 0), quad([[x, z1 - 0.04, 0], [x1, z1 - 0.04, 0], [x1, z1, 0], [x, z1, 0]], SEAM, 0)); }
-  }
-  // walls: along each edge, in 0.5 m pieces, left out where another room, a corridor or the hub opens onto it
-  const wall = (r: Rect, a: [number, number], b: [number, number], h: number, rgb: [number, number, number]) => {
-    const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5));
-    for (let i = 0; i < n; i++) {
-      const u0 = i / n, u1 = (i + 1) / n, x0 = a[0] + (b[0] - a[0]) * u0, z0 = a[1] + (b[1] - a[1]) * u0, x1 = a[0] + (b[0] - a[0]) * u1, z1 = a[1] + (b[1] - a[1]) * u1;
-      const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, nx = (b[1] - a[1]) === 0 ? 0 : 0.3, nz = (b[1] - a[1]) === 0 ? 0.3 : 0;
-      if (open(mx + nx, mz + nz, r) || open(mx - nx, mz - nz, r)) continue;
-      q.push(quad([[x0, z0, 0], [x1, z1, 0], [x1, z1, h - 0.12], [x0, z0, h - 0.12]], rgb, 1), quad([[x0, z0, h - 0.12], [x1, z1, h - 0.12], [x1, z1, h], [x0, z0, h]], WALL_TOP, 1));
-    }
-  };
-  for (const r of all) {
-    wall(r, [r.x0, r.z0], [r.x1, r.z0], H.wall, WALL); wall(r, [r.x1, r.z0], [r.x1, r.z1], H.wall, WALL_R); // the far two, standing: up-left and up-right on the screen
-    wall(r, [r.x0, r.z0], [r.x0, r.z1], SKIRT, WALL); wall(r, [r.x0, r.z1], [r.x1, r.z1], SKIRT, WALL_R); // the near two, cut down (the camera's side)
-  }
+/** The rooms' quads, once: what stands up off the floor (render/houseArt.ts: the floor itself a painted texture, FloorMesh), and the
+ *  objects' boxes. */
+function buildQuads(): Quad[] {
+  const q: Quad[] = [];
+  for (const u of standing(HOUSE_ROOMS)) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
@@ -194,10 +164,10 @@ export class HouseRoomsView {
     this.ring = document.createElement("div"); this.ring.style.cssText = "position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border-radius:50%";
     this.box.append(this.tag, this.bubble, this.ring);
     // (?rooms=labels: each room's name on its floor, for the plan's shots)
-    if (typeof location !== "undefined" && /[?&]rooms=labels/.test(location.search)) for (const r of [{ id: "terrace", label: "Terrace", x0: 0, x1: 0, z0: 0, z1: 0 }, ...HOUSE_ROOMS.rooms]) {
+    if (typeof location !== "undefined" && /[?&]rooms=labels/.test(location.search)) for (const r of HOUSE_ROOMS.rooms) {
       const el = document.createElement("div"); el.textContent = r.label;
       el.style.cssText = "position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 15px/1.1 inherit;padding:2px 7px;border-radius:6px;background:rgba(255,236,190,.92);color:#2a1d38";
-      this.box.append(el); this.labels.push({ el, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+      this.box.append(el); this.labels.push({ el, x: r.x, z: r.z });
     }
     document.body.append(this.box);
   }
@@ -223,12 +193,11 @@ export class HouseRoomsView {
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
-    this.floor.visible = shown && !!(HOUSE_ROOMS as { organic?: boolean }).organic;
+    this.floor.visible = shown;
     this.roofs.visible = this.floor.visible;
     if (!shown) { this.box.style.display = "none"; return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
-    const Tz = (HOUSE_ROOMS as { organic?: boolean }).organic ? { r: D.r, bz: D.house.balcony.z - D.z, br: D.house.balcony.r } : undefined;
-    if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(D.r, Tz); this.hatsKey = ""; }
+    if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
     const W = g.witches[0], hats = hatsOnFloor(W), key = hats.join();
     if (key !== this.hatsKey) {
@@ -302,7 +271,7 @@ export class HouseRoomsView {
     // the furniture: a piece baked a frame (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
     // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, after its part's
     // floors and walls and before its near rails (nearer pieces later)
-    // (each piece keyed by its id and the state it's drawn in now: the curtains baked again, once, the first time they open)
+    // (each piece keyed by its id and the state it's drawn in now)
     const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
     // (the nearest first, and only those within BAKE_NEAR of her: a piece is tens of milliseconds to bake, so a frame takes one; a
     // room's dressing, render/houseDecor.ts, is one more, at the room's middle)
@@ -386,8 +355,8 @@ export class HouseRoomsView {
     };
     this.box.style.display = "block";
     for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
-    const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, at?.use.kind === "pile" ? 1.6 : 0.5, at ? tagOf(at, W, D, w) : "");
+    const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
+    place(this.tag, at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, at?.use.kind === "pile" ? 1.6 : 0.5, at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {

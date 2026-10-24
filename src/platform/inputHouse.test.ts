@@ -58,7 +58,7 @@ describe("rising in the treehouse, through the page's controls", () => {
   for (const how of ["pad", "keys"] as const) {
     it(`${how}: pushed against every room's walls, she stays on the ground`, () => {
       const g = inHouse(), d = deckOf(g.map, g.tuning)!, rose: string[] = [];
-      for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.r)) {
+      for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
         const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
         for (let a = 0; a < 360; a += how === "pad" ? 15 : 45) {
           const u = { x: Math.cos((a * Math.PI) / 180), z: Math.sin((a * Math.PI) / 180) };

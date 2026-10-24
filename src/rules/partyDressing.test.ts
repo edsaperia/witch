@@ -85,7 +85,7 @@ describe("party objects (Ed, 2026-10-04)", () => {
   it("partyObjects.exclude still leaves a piece out (Ed, v271: the LED cube's, empty since the cube was cut)", () => {
     const placed = (tt: typeof t) => { const all: string[] = []; for (let cy = 0; cy < map.n; cy++) for (let cx = 0; cx < map.n; cx++) { if (!map.playable(cx, cy)) continue; all.push(...dressingOf(map, [cx, cy], tt).loose.map(p => pieceId(p.ref))); } return all; };
     expect(P.exclude).toEqual([]);
-    const id = "deck-chair", without = { ...t, partyObjects: { ...P, exclude: [id] } };
+    const id = "neon-star", without = { ...t, partyObjects: { ...P, exclude: [id] } }; // (any piece the map places: the deck chair was, before the oak moved the treehouse)
     expect(placed(t)).toContain(id);
     expect(placed(without)).not.toContain(id);
     expect(leftOut(id, without)).toBe(true);

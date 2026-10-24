@@ -13,7 +13,7 @@ export const MODIFIERS = ["none", "knockback", "slow"] as const;
 export const BEHAVIOURS = ["arrive", "keepRange", "orbit", "strafe", "slot", "separation", "cohesion", "wander", "dodge", "light"] as const;
 export const TACTICS = ["surround", "pincer", "hitAndRun", "volley", "swarm", "flank", "none"] as const;
 export const MOVES = ["charge", "ambush", "burrow", "leap", "dig", "block", "trail", "flash", "swoop"] as const;
-export const HOUSE_USES = ["creator", "hats", "bed", "curtains", "zoo", "telescope", "say", "chart", "instrument", "pile"] as const;
+export const HOUSE_USES = ["creator", "hats", "bed", "zoo", "telescope", "say", "chart", "instrument", "pile"] as const;
 export const BROOM_SLOTS = ["tip", "chassis", "exhaust"] as const;
 /** The broom spells a set can give (rules/spells.ts BroomSpellId, but none). */
 export const SET_SPELLS = ["speed", "battering", "leyjump", "pound", "stealth"] as const;

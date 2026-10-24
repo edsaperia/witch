@@ -3,10 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { TUNING, withTuning } from "./tuning";
 import { newGame, stepGame, STEP, type Game } from "./game";
-import { carrierOf, deckOf, flyOnto, keepInHouse, keepOnDeck, onFloor, onTreehouse, seatOffset } from "./treehouse";
+import { atTakeoff, carrierOf, deckOf, flyOnto, keepInHouse, keepOnDeck, onFloor, onTerrace, onTreehouse, seatOffset } from "./treehouse";
 import { hitWitch } from "./game";
 import { witchHeight } from "./witch";
-import { HOUSE_ROOMS, objectFront, onRoomFloor } from "./houseRooms";
+import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 
 const run = (g: Game, secs: number, c: object = {}) => { for (let i = 0; i < Math.round(secs / STEP); i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...c } as Parameters<typeof stepGame>[1], STEP); };
 const press = (g: Game, c: object) => run(g, STEP, c);
@@ -113,78 +113,98 @@ describe("the treehouse deck", () => {
 });
 
 
-// The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1): the hub where the deck was and the balcony off its south side.
+// The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; the oak since 2026-10-24, config/house/): the Terrace among the trunk's
+// rooms, its decks and its take-off on its open south-east rim, towards the dancefloor.
 describe("the treehouse's house", () => {
-  const SEAT = HS.balcony.out + HS.seat;
-  it("starts her behind the decks on the balcony, 22 m up; the deck's rules carry over", () => {
+  const SEAT = HOUSE_ROOMS.terrace.seat, DEG = Math.PI / 180;
+  /** Out from the Terrace's middle at `a` degrees (clockwise from east) till just past the floor's edge. */
+  const pastEdge = (d: ReturnType<typeof deckOf> & object, a: number, by = 1) => {
+    let r = 0;
+    while (r < 60 && onFloor(d, d.x + Math.cos(a * DEG) * r, d.z + Math.sin(a * DEG) * r)) r += 0.05;
+    return { x: d.x + Math.cos(a * DEG) * (r + by), z: d.z + Math.sin(a * DEG) * (r + by), r };
+  };
+  const K = HOUSE_ROOMS.terrace.takeoff;
+  it("starts her behind the decks on the Terrace, 22 m up; the deck's rules carry over", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!, w = g.witch;
     expect(d.house).toBeTruthy(); expect(d.h).toBe(22);
-    expect(seatOffset(TUNING)).toBeCloseTo(SEAT, 6);
+    expect(seatOffset(TUNING)).toEqual(SEAT);
     expect(w.seated).toBe(true); expect(w.perch).toBe(true);
-    expect(w.x).toBeCloseTo(d.x, 6); expect(w.z).toBeCloseTo(d.z + SEAT, 6);
+    expect(w.x).toBeCloseTo(d.x + SEAT.x, 6); expect(w.z).toBeCloseTo(d.z + SEAT.z, 6);
     expect(witchHeight(w, TUNING)).toBeCloseTo(22 + TUNING.groundHeight, 6);
-    expect(onFloor(d, w.x, w.z)).toBe(true);
+    expect(onFloor(d, w.x, w.z)).toBe(true); expect(onTerrace(d, w.x, w.z)).toBe(true);
+    expect(d.house!.desk.z).toBeGreaterThan(w.z); // (the desk in front of her, south, towards the camera)
     run(g, 0.2, { moveZ: -1 }); run(g, 2);
     expect(g.timeScale).toBeCloseTo(TUNING.legendCircle!.slow.scale, 6); // (time at a tenth on its floor)
     expect(onTreehouse(g)).toBe(true);
   });
 
-  it("is one floor: she walks from the balcony into the hub and round it, kept in by the hub's wall but where a branch leaves it; its middle clear (the map's in the Atrium now)", () => {
+  it("faces the dancefloor: the house north-west of it, the Terrace's take-off towards it (Ed, 2026-10-24)", () => {
+    const g = game(JETS), d = deckOf(g.map, TUNING)!, f = g.map.dancefloor;
+    expect(d.x).toBeLessThan(f.x); expect(d.z).toBeLessThan(f.z);
+    const a = Math.atan2(f.z - d.z, f.x - d.x) / DEG;
+    expect(Math.abs(a - K.angle)).toBeLessThan(K.half); // (the dancefloor within the open rim's span)
+    const p = pastEdge(d, a); expect(atTakeoff(d, p.x, p.z)).toBe(true);
+  });
+
+  it("is one floor: from the Terrace she walks up the trunk and out along the branches, kept in by its edge but for the take-off", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 });
-    run(g, 2, { moveZ: -1 }); // north, off the balcony into the hub
-    expect(Math.hypot(g.witch.x - d.x, g.witch.z - d.z)).toBeLessThanOrEqual(d.r - d.rail + 1e-6);
+    run(g, 2, { moveZ: -1 }); // north, off her seat across the Terrace
     expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
-    for (const [mx, mz] of [[-1, 0], [0, -1], [1, 0], [0.7, -0.7]]) {
+    for (const [mx, mz] of [[-1, 0], [0, -1], [1, 0], [0.7, -0.7], [-0.6, -0.8]]) {
       run(g, 2, { moveX: mx, moveZ: mz });
-      const r = Math.hypot(g.witch.x - d.x, g.witch.z - d.z);
-      if (r > d.r - d.rail + 1e-6) expect(onRoomFloor(d.house!.rooms!, g.witch.x, g.witch.z, 1e-6)).toBe(true); // (out through a corridor's doorway: rules/houseRooms.ts)
+      expect(onFloor(d, g.witch.x, g.witch.z, 1e-6), `${mx}, ${mz}`).toBe(true);
       expect([g.witch.perch, g.witch.mode]).toEqual([true, "ground"]);
     }
-    const mid = keepInHouse(d, d.x, d.z); expect([mid.x, mid.z]).toEqual([d.x, d.z]); // (no map's pedestal on the Terrace: Ed, 2026-10-23)
-    // from the hub's south-east corner she walks out onto the balcony and off its rim (no notch where the half-disc meets the round wall)
-    g.witch = { ...g.witch, x: d.x + 3, z: d.z + 4.4, vx: 0, vz: 0 };
-    let out = false;
-    for (let i = 0; i < 240 && !out; i++) { press(g, { moveX: 0.7, moveZ: 0.7 }); out = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
-    expect(out).toBe(true);
-    // the balcony's sides and the hub's wall keep her; its open rim doesn't
-    const b = d.house!.balcony;
-    expect(keepInHouse(d, d.x - d.r - 3, d.z).off).toBe(false);
-    expect(keepInHouse(d, b.x + b.r + 1, b.z + 1).off).toBe(true); // (east of the rim, just south of its centre line)
-    expect(keepInHouse(d, b.x, b.z + b.r + 1).off).toBe(false); // (straight south: the decks' desk is in the way)
+    const mid = keepInHouse(d, d.x, d.z); expect([mid.x, mid.z]).toEqual([d.x, d.z]);
+    // the edge keeps her, all round but the take-off: there she's off
+    for (let a = 0; a < 360; a += 15) {
+      const p = pastEdge(d, a);
+      if (p.r > HOUSE_ROOMS.rooms.find(r => r.id === "terrace")!.r * 1.4) continue; // (along a limb, not the Terrace's own edge)
+      const k = keepInHouse(d, p.x, p.z), da = Math.abs((((a - K.angle) % 360) + 540) % 360 - 180), T = HOUSE_ROOMS.rooms.find(r => r.id === "terrace")!;
+      if (da < K.half - 3 && p.r + 1.5 < T.r + 3) expect(k.off, `${a}°: the take-off`).toBe(true); // (its open rim: within its span and 3 m of its size, as drawn)
+      else if (da > K.half + 3) expect(k.off, `${a}°: kept`).toBe(false);
+      if (!k.off) expect(onFloor(d, k.x, k.z, 1e-6)).toBe(true);
+    }
+    // the decks' desk is solid
+    const b = d.house!.desk, k = keepInHouse(d, b.x, b.z);
+    expect(Math.abs(k.x - b.x) >= b.w / 2 || Math.abs(k.z - b.z) >= b.d / 2).toBe(true);
   });
 
-  it("lands her when she flies onto the balcony at treetop height, no button; over the hub she only flies past", () => {
-    const g = game(JETS), d = deckOf(g.map, TUNING)!, b = d.house!.balcony;
+  it("lands her when she flies onto the Terrace at treetop height from the dancefloor's side, no button; over the other rooms she only flies past", () => {
+    const g = game(JETS), d = deckOf(g.map, TUNING)!;
     run(g, 0.2, { moveZ: -1 }); press(g, { toggleMode: true }); run(g, 2);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
-    g.witch = { ...g.witch, x: b.x + 2, z: b.z + 60, vx: 0, vz: -20 };
+    const a = K.angle * DEG;
+    g.witch = { ...g.witch, x: d.x + Math.cos(a) * 60, z: d.z + Math.sin(a) * 60, vx: 0, vz: 0 };
     expect(flyOnto(d, g.witch.x, g.witch.z)).toBe(false);
     let landed = false;
-    for (let i = 0; i < 600 && !landed; i++) { press(g, { moveZ: -1 }); landed = g.witch.mode === "ground" && !!g.witch.perch; }
+    for (let i = 0; i < 900 && !landed; i++) { press(g, { moveX: -Math.cos(a), moveZ: -Math.sin(a) }); landed = g.witch.mode === "ground" && !!g.witch.perch; }
     expect(landed).toBe(true);
-    expect(onFloor(d, g.witch.x, g.witch.z)).toBe(true);
+    expect(onTerrace(d, g.witch.x, g.witch.z)).toBe(true);
     expect(witchHeight(g.witch, TUNING)).toBeCloseTo(22 + TUNING.groundHeight, 6);
     expect(events(g, "perch").map(e => e.on)).toEqual([true]); // (the landing's step: its own events)
-    // and over the hub from the north: no landing
+    // and over the trunk's upper rooms, west to east across the Boudoir: no landing
     press(g, { toggleMode: true }); run(g, 2);
-    g.witch = { ...g.witch, x: d.x - 40, z: d.z - 2, vx: 20, vz: 0, mode: "treetop", lift: 1, perch: undefined };
-    for (let i = 0; i < 120; i++) press(g, { moveX: 1 }); // (west to east across the hub, north of the balcony)
-    expect(g.witch.x).toBeGreaterThan(d.x + d.r);
+    const B = HOUSE_ROOMS.rooms.find(r => r.id === "boudoir")!;
+    g.witch = { ...g.witch, x: d.x + B.x - 40, z: d.z + B.z, vx: 20, vz: 0, mode: "treetop", lift: 1, perch: undefined };
+    for (let i = 0; i < 180; i++) press(g, { moveX: 1 });
+    expect(g.witch.x).toBeGreaterThan(d.x + B.x + B.r);
     expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
   });
 
-  it("takes her flying again when she walks off the balcony's open rim; with no broom she falls and comes back at the circle", () => {
+  it("takes her flying again when she walks off the Terrace's open rim; with no broom she falls and comes back at the circle", () => {
+    const out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) }; // (south-east, past the desk's east end)
     const g = game(JETS);
-    run(g, 0.2, { moveZ: -1 });
+    run(g, 0.2, { moveZ: -1 }); run(g, 0.7, { moveX: 1 }); // (off her seat, along behind the desk to its end)
     let off = false;
-    for (let i = 0; i < 300 && !off; i++) { press(g, { moveX: 1, moveZ: 0.3 }); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
+    for (let i = 0; i < 600 && !off; i++) { press(g, out); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
     expect(off).toBe(true);
     run(g, 2); expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
     const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, fall: { on: true, time: 0.9 } } } }), g2 = game(T), d2 = deckOf(g2.map, T)!;
-    run(g2, 0.2, { moveZ: -1 });
+    run(g2, 0.2, { moveZ: -1 }); run(g2, 0.7, { moveX: 1 });
     let falling = false;
-    for (let i = 0; i < 300 && !falling; i++) { press(g2, { moveX: 1, moveZ: 0.3 }); falling = g2.witch.falling !== undefined; }
+    for (let i = 0; i < 600 && !falling; i++) { press(g2, out); falling = g2.witch.falling !== undefined; }
     expect(falling).toBe(true);
     expect(witchHeight(g2.witch, T)).toBeCloseTo(22 + T.groundHeight, 6); // (the camera stays up: her height is the floor's)
     let fell = 0;
@@ -195,8 +215,9 @@ describe("the treehouse's house", () => {
     expect([g2.witch.perch, g2.witch.mode]).toEqual([true, "ground"]);
   });
 
-  it("opens the chart with E at the map table (in the middle of the Atrium: Ed, 2026-10-23), and nothing goes down up there", () => {
+  it("opens the chart with E at the map table (in the Solarium), and nothing goes down up there", () => {
     const g = game(JETS), d = deckOf(g.map, TUNING)!, t = HOUSE_ROOMS.objects.find(o => o.use.kind === "chart")!, f = objectFront(t, d, 0.4);
+    expect(t.room).toBe("solarium");
     run(g, 0.2, { moveZ: -1 });
     g.witch = { ...g.witch, x: f.x, z: f.z, vx: 0, vz: 0 }; run(g, 0.2);
     press(g, { place: true });
