@@ -29,7 +29,8 @@ export function viewFromLink(view: View, params: URLSearchParams): void {
   if (params.get("debug") === "shadows") view.debugShadows();
   view.quick = params.get("quick") === "1";
   // ?loadmist=1|0: the loading mist (render/loadingMist.ts) on or off for this load (off under ?quick=1, which draws only what's
-  // in view, unless asked for); ?artdelay=<s>: each area type's trees land one every that many seconds, to watch it roll away.
+  // in view, unless asked for); ?artdelay=<s>: each area type's trees drawn ahead of need land one every that many seconds, to watch it
+  // roll away (those the view wants now as they come: the start waits for them).
   if (params.has("loadmist")) view.loadingMistLink = params.get("loadmist") !== "0";
   const delay = Number(params.get("artdelay"));
   if (delay > 0) view.assets.typeDelay = delay;

@@ -13,6 +13,8 @@ export interface LoadingMistTuning {
   height: number;
   /** How thick it is: each sheet's opacity at its thickest (0 to 1), the low ones thickest. */
   density: number;
+  /** How bright it glows (times the night's mist colour). */
+  glow: number;
   /** The front's speed out from the treehouse (m/s), and the most seconds a type takes to clear once its art lands. */
   speed: number;
   cap: number;

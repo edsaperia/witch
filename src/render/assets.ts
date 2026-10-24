@@ -260,8 +260,9 @@ export class AssetLibrary {
       this.ask(job, true, true); // (with the start's own: something on the page is waiting for it now)
     });
   }
-  /** ?artdelay=<s> (a builder's, render/loadingMist.ts): each area type's trees for this island held back to land one every that many
-   *  seconds, in the order they came, so the loading mist lasts long enough to watch. 0: as they come. */
+  /** ?artdelay=<s> (a builder's, render/loadingMist.ts): each area type's trees for this island drawn ahead of need held back to
+   *  land one every that many seconds, in the order they came, so the loading mist lasts long enough to watch (those the view wants
+   *  now, which the start waits for, as they come). 0: all as they come. */
   typeDelay = 0;
   private typeNext = 0;
   private releasing = false;
@@ -269,7 +270,7 @@ export class AssetLibrary {
    *  screen) or ahead, and from the art cache or drawn: the loading order's log (window.witch.typeLog, tools/mist/order.cjs). */
   readonly typeLog = new Map<number, { asked: number; urgent: boolean; landed?: number; cached?: boolean }>();
   private receive(r: Reply): void {
-    if (this.typeDelay > 0 && r.job.kind === "type" && r.result && r.job.seed === this.typeSeed && !this.releasing) {
+    if (this.typeDelay > 0 && r.job.kind === "type" && r.result && r.job.seed === this.typeSeed && !this.releasing && !this.urgentKeys.has(this.key(r.job))) {
       const now = performance.now(), at = Math.max(now, this.typeNext);
       this.typeNext = at + this.typeDelay * 1000;
       setTimeout(() => { this.releasing = true; try { this.receive(r); } finally { this.releasing = false; } }, at - now);

@@ -11021,6 +11021,10 @@
           "type": "number",
           "minimum": 0
         },
+        "glow": {
+          "type": "number",
+          "minimum": 0
+        },
         "speed": {
           "type": "number",
           "minimum": 0
@@ -11043,6 +11047,7 @@
         "layers",
         "height",
         "density",
+        "glow",
         "speed",
         "cap",
         "soft",

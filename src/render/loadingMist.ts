@@ -33,7 +33,7 @@ uniform vec4 uExtent;
 uniform vec2 uLow;
 uniform float uFront[${slots}];
 uniform vec4 uMist; // density, soft edge (m), noise size (m), the treehouse's x
-uniform float uHouseZ;
+uniform float uHouseZ, uGlow;
 varying vec3 vWorld;
 varying float vLayer;
 ${LIGHT_GLSL}
@@ -65,6 +65,7 @@ void main() {
   if (a <= 0.01) discard;
   vec3 col = mix(uHazeColour * 2.2, uMoon * 0.95 + uAmb * 1.1, 0.55) + vec3(0.02, 0.05, 0.06) * (1.0 - vLayer); // (a faint glow low down)
   col *= 1.0 + 2.4 * beyond * (1.0 - beyond); // (its rolling edge lit a little brighter)
+  col *= uGlow;
   gl_FragColor = vec4(col * a, a); // premultiplied
 }`;
 
@@ -85,7 +86,7 @@ export class LoadingMist {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: frag(slots),
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uAreas: areas, uExtent: areaExtent, uDepth: { value: depth }, uLow: { value: low },
-        uFront: { value: this.fronts }, uMist: { value: new THREE.Vector4(T.density, T.soft, T.size, house.x) }, uHouseZ: { value: house.z }, uTop: { value: T.height } },
+        uFront: { value: this.fronts }, uMist: { value: new THREE.Vector4(T.density, T.soft, T.size, house.x) }, uHouseZ: { value: house.z }, uTop: { value: T.height }, uGlow: { value: T.glow } },
       depthWrite: false, depthTest: false, transparent: true,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
     });
@@ -119,7 +120,7 @@ export class LoadingMist {
     this.first = false;
     const u = this.mat.uniforms.uMist.value as THREE.Vector4; // (read every frame: the pause page's sliders change them live)
     u.x = this.T.density; u.y = this.T.soft; u.z = this.T.size;
-    this.mat.uniforms.uTop.value = this.T.height;
+    this.mat.uniforms.uTop.value = this.T.height; this.mat.uniforms.uGlow.value = this.T.glow;
     if (!left) { this.done = true; this.mesh.visible = false; }
     return left;
   }
