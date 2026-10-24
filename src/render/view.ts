@@ -762,8 +762,10 @@ export class View {
 
   /** Make the art and ground round the start before the first frame (each night's: run again after setGame). */
   /** `o.dive` (a sail's, Ed 2026-10-24: "Don't wait for the trees"; "we only really need the scenery south of the treehouse for the
-   *  dive"): metres from the dive's view (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, and the
-   *  start not waiting on the trees the view asked for (they come under the loading mist, as each type lands). */
+   *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
+   *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
+   *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
+   *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
   async prepare(o: { dive?: (x: number, z: number) => number } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     this.makeLoadingMist();
@@ -771,6 +773,25 @@ export class View {
       const m = this.game.map, types = new Set<number>();
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
       this.assets.tonight(types);
+    }
+    // Every area type the map has, drawn in the background so the forest ahead is ready however fast she flies; the
+    // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
+    // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for by the house), not its type's trees.
+    // By the treehouse, where she wakes and sits at her decks (Ed, 2026-10-24, the loading mist: "If loading starts with areas
+    // closer to the treehouse, this will look fine"): each type by its nearest area to the house; a sail's, to the dive's view.
+    const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
+      if (!(near.get(t)! <= d)) near.set(t, d);
+    }
+    if (o.dive) {
+      this.homeDone = false;
+      this.prepared = true;
+      this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
+      await this.compileAll();
+      void this.buildHome().catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { this.homeDone = true; });
+      return;
     }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
     performance.mark("witch:prep-warm");
@@ -781,25 +802,32 @@ export class View {
     performance.mark("witch:prep-ground");
     await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     performance.mark("witch:prep-home");
-    if (!o.dive) await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
+    await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
-    // Every area type the map has, drawn in the background now so the forest ahead is ready however fast she flies; the
-    // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
-    // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for above), not its type's trees.
-    // By the treehouse, where she wakes and sits at her decks (Ed, 2026-10-24, the loading mist: "If loading starts with areas
-    // closer to the treehouse, this will look fine"): each type by its nearest area to the house.
-    const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
-    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
-      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
-      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
-      if (!(near.get(t)! <= d)) near.set(t, d);
-    }
     this.prepared = true;
-    if (o.dive) this.askIsland(near); // (a sail's: the workers drawing the dive's areas while the shaders link)
     await this.compileAll();
-    if (!o.dive) this.askIsland(near);
+    this.askIsland(near);
+    this.homeDone = true;
+  }
+
+  /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
+   *  Before a sail's dive it may not be yet (prepare's `dive`): made on through it, by buildHome. */
+  homeDone = true;
+
+  /** A sail's house made through the dive (prepare's `dive`): the forest round it, its art (drawn by the art workers, not on the
+   *  page: the dive's frames go on), the ground round it, a few tiles a frame, and the view's batches made again with it. */
+  private async buildHome(): Promise<void> {
+    await runSliced(this.warmSteps(), "warm");
+    performance.mark("witch:prep-warm");
+    while (!this.assets.homeReady) { this.assets.work(4); await nextFrame(); } // (its jobs sent to the workers a little a frame, under the chart too)
+    performance.mark("witch:prep-home");
+    { const w = this.game.witch, R = this.game.tuning.haze.near + 20, r = { minX: w.x - R, maxX: w.x + R, minZ: w.z - R, maxZ: w.z + R }; // (round her, not the dive's view)
+      while (this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+    performance.mark("witch:prep-ground");
+    await runSliced(refreshSteps(this), "refresh");
+    performance.mark("witch:prep-house");
   }
 
   /** The loading mist for this night (render/loadingMist.ts): over every area of the grid but home's, each type's reach from the

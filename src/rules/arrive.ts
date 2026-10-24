@@ -85,6 +85,33 @@ export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: numbe
   };
 }
 
+/** Whether a point (the world's metres) is on screen in shot `s` (a pinhole looking from shotCamera(s) at its target, `aspect` the
+ *  screen's width over its height), `margin` times the frame's own size round it (1.2: a little before it's at the edge). */
+export function inShot(s: Shot, p: { x: number; y: number; z: number }, aspect: number, margin = 1.2): boolean {
+  const c = shotCamera(s);
+  let fx = s.tx - c.x, fy = s.ty - c.y, fz = s.tz - c.z; const fl = Math.hypot(fx, fy, fz) || 1; fx /= fl; fy /= fl; fz /= fl;
+  // right = forward × up (0, 1, 0); up' = right × forward
+  let rx = -fz, rz = fx; const rl = Math.hypot(rx, rz) || 1; rx /= rl; rz /= rl;
+  const ux = -rz * fy, uy = rz * fx - rx * fz, uz = rx * fy;
+  const dx = p.x - c.x, dy = p.y - c.y, dz = p.z - c.z, depth = dx * fx + dy * fy + dz * fz;
+  if (depth <= 0) return false;
+  const t = Math.tan(((s.fov * Math.PI) / 180) / 2) * margin;
+  return Math.abs((dx * ux + dy * uy + dz * uz) / depth) <= t && Math.abs((dx * rx + dz * rz) / depth) <= t * aspect;
+}
+
+/** When (seconds into plan `p`) the first of `points` comes on screen (inShot, sampled every `step` s), or the flight's length if
+ *  none does before it ends (Ed, 2026-10-24: "the treehouse doesn't have to be ready at the start of the dive - only once it's in
+ *  view"; app/arrive.ts eases the dive short of this while they aren't ready). */
+export function dueAt(p: ArrivePlan, points: { x: number; y: number; z: number }[], aspect: number, step = 0.05): number {
+  const T = planLength(p);
+  for (let s = 0; s < T; s += step) { const k = shotAt(p, s); if (points.some(q => inShot(k, q, aspect))) return s; }
+  return T;
+}
+
+/** The dive's pace short of a piece due in view that isn't ready (the guard): full till `lead` seconds before `due`, then falling
+ *  in proportion to zero at it, so the flight eases into a hover there rather than show it half-built. */
+export const dueRate = (s: number, due: number, lead: number): number => Math.max(0, Math.min(1, (due - s) / Math.max(1e-3, lead)));
+
 /** The flight's length (seconds). */
 export const planLength = (p: ArrivePlan): number => p.times[p.times.length - 1];
 

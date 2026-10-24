@@ -7,7 +7,7 @@
 // skips it). Any key or tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { arrivePlan, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -44,22 +44,56 @@ export class ArrivalFlight {
     if (this.plan || this.done) return;
     if (warmed) this.warmT = { ...this.A, warm: { ...this.A.warm, frames: 0 } };
     this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
-    if (this.skipped) this.land();
   }
 
-  /** Any key or tap: straight to her decks (once the art is ready, if it isn't yet). */
-  skip(): void { this.skipped = true; if (this.plan) this.land(); }
+  /** Any key or tap: straight to her decks (once the art is ready, and the house, if they aren't yet). */
+  skip(): void { this.skipped = true; }
+
+  /** The guard (Ed, 2026-10-24: "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): when
+   *  the house or the dancefloor first comes on screen (seconds into the flight; computed as it begins), the flight's pace (eased),
+   *  and when it eased and the house came ready (ms), for the log. */
+  private due = Infinity;
+  private rate = 1;
+  private easedAt = -1;
+  private dueMarked = false;
+  private readyMarked = false;
 
   /** A frame (`now`, ms): the flight's shot put on the view, or, landed, the view's own camera back. True once landed. */
   frame(v: View, g: Game, now: number): boolean {
     if (this.done) { v.fly = null; return true; }
     if (!this.plan) return false;
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
-    if (this.skipped) { this.land(v); return true; }
+    if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
+    if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
+    if (this.skipped && v.homeDone) { this.land(v); return true; }
+    if (this.skipped) return false; // (skipped with the house still to come: held where it is till it's ready)
+    const before = this.clock.s;
     if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
+    this.guard(v, before, now);
     if (this.clock.s >= planLength(this.plan)) { this.land(v); return true; }
     v.fly = shotAt(this.plan, this.clock.s); // (warming up: the hand-off's own shot, behind the still)
     return false;
+  }
+
+  /** The house not made yet as it's due in view: the flight eased from `GUARD_LEAD` seconds short of it into a hover there, never
+   *  shown half-built; on, its pace eased back, once it's ready. Logged (the marks dive:eased, dive:house-due, dive:on; the console). */
+  private guard(v: View, before: number, now: number): void {
+    const ds = this.clock.s - before;
+    if (ds <= 0) return;
+    const ready = v.homeDone, target = ready ? 1 : dueRate(before, this.due, GUARD_LEAD);
+    this.rate += (target - this.rate) * (1 - Math.exp(-ds / GUARD_EASE));
+    if (!ready) this.rate = Math.min(this.rate, target);
+    this.clock.s = before + ds * this.rate;
+    if (!ready && target < 1 && this.easedAt < 0) {
+      this.easedAt = now; performance.mark("dive:eased");
+      console.info(`arrival: the dive eased, ${(this.due - before).toFixed(1)} s short of the house coming into view, which isn't made yet`);
+    }
+    if (ready && this.easedAt >= 0) {
+      performance.mark("dive:on");
+      console.info(`arrival: the house made, the dive on after ${((now - this.easedAt) / 1000).toFixed(1)} s eased`);
+      this.easedAt = -2; // (logged once)
+    }
+    if (!this.dueMarked && this.clock.s >= this.due) { this.dueMarked = true; performance.mark("dive:house-due"); }
   }
 
   /** Still warming up behind the chart's last frame (the camera there, waiting for the frames to come calm). */
@@ -86,6 +120,12 @@ export class ArrivalFlight {
     document.getElementById("arrive-landing")?.remove();
   }
 }
+
+/** The guard's lead (seconds of the flight before the house is due in view that it starts to ease) and its pace's ease (s). */
+const GUARD_LEAD = 2.5, GUARD_EASE = 0.4;
+
+/** What comes into view as the house (the guard's): the treehouse and the dancefloor, a few metres up. */
+const homeSpots = (g: Game) => [g.map.treehouse, g.map.dancefloor].map(p => ({ x: p.x, y: groundHeight(p.x, p.z) + 6, z: p.z }));
 
 /** index.html's still, as its own script makes it for a sail that loads the page (its look and the push-in's and the "landing…"'s
  *  CSS there by id). */

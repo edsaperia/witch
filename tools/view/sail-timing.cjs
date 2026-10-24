@@ -15,7 +15,7 @@ const [W, H] = (process.env.SIZE || "960x540").split("x").map(Number), THR = Num
 const ISLAND = process.env.ISLAND || "fox", STRIP = Number(process.env.STRIP || 0), RUNS = Number(process.env.RUNS || 1);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
-const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:prep", "witch:game", "witch:prep-start", "witch:prep-warm", "witch:prep-ground", "witch:prep-home", "witch:prep-idle", "witch:prep-compile0", "witch:prep-compiled", "sail:ready", "sail:dive", "witch:landed", "game:arrived", "opening:alarm"];
+const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:prep", "witch:game", "witch:prep-start", "witch:prep-warm", "witch:prep-ground", "witch:prep-home", "witch:prep-idle", "witch:prep-compile0", "witch:prep-compiled", "witch:prep-house", "sail:ready", "witch:landed", "dive:eased", "dive:house-ready", "dive:house-due", "dive:on", "game:arrived", "opening:alarm"];
 
 (async () => {
   fs.mkdirSync(path.dirname(out), { recursive: true });
@@ -65,7 +65,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const at = n => { const e = performance.getEntriesByName(n).filter(x => x.startTime >= s0); return e.length ? Math.round(e[0].startTime - s0) : null; };
         const m = Object.fromEntries(names.map(n => [n, at(n)]));
         const sailAt = performance.getEntriesByName("chart:sail").filter(x => x.startTime >= s0)[0]?.startTime ?? s0;
-        const dive = (m["sail:dive"] ?? m["witch:landed"] ?? Infinity) + s0, end = (m["opening:alarm"] ?? m["game:arrived"] ?? Infinity) + s0;
+        const dive = (m["witch:landed"] ?? Infinity) + s0, end = (m["opening:alarm"] ?? m["game:arrived"] ?? Infinity) + s0;
         const gaps = (a, z) => { const g = []; for (let i = 1; i < window.__f.length; i++) { const t = window.__f[i]; if (t > a && window.__f[i - 1] < z) g.push(t - window.__f[i - 1]); } return g; };
         const sum = (a, z) => { const g = gaps(a, z); return { frames: g.length, longest: Math.round(Math.max(0, ...g)), frozen: Math.round(g.filter(x => x > gap).reduce((p, x) => p + x, 0)), over: g.filter(x => x > gap).length }; };
         // (the longest main-thread tasks from the press to the dive, each with the last mark before it)
