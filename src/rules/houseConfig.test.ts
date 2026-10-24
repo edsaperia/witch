@@ -1,5 +1,5 @@
-// The house a file a room (housekeeping, Ed 2026-10-23; rules/houseConfig.ts, config/house/): put together, it's the house
-// config/house.json held before the split, room for room, branch for branch, object for object; and the files are whole.
+// The house a file a room (housekeeping, Ed 2026-10-23; rules/houseConfig.ts, config/house/): the same for the game and the tools, and
+// whole. (That the split changed nothing was proved against config/house.json as it was, on #1084's own commits.)
 import { describe, expect, it } from "vitest";
 import { readdirSync, readFileSync } from "node:fs";
 import { HOUSE_CONFIG } from "./houseConfig";
@@ -8,20 +8,8 @@ import { roomPlaces } from "../../config/house/assemble.js";
 
 type House = { rooms: { id: string }[]; corridors: { id: string }[]; objects: { id: string; room: string }[] } & Record<string, unknown>;
 const H = HOUSE_CONFIG as House;
-const byId = <T extends { id: string }>(xs: T[]) => Object.fromEntries(xs.map(x => [x.id, x]));
 
 describe("the house, a file a room (config/house/)", () => {
-  it("builds the house config/house.json held before the split: the same rooms and branches in the same order, the same objects, the same numbers", () => {
-    // (the house as it was at the split, written by the old tools/house/organic.mjs: the proof that the split changed nothing, for the
-    // split's own commit; it goes once the split has merged, the structural checks below staying)
-    const before = JSON.parse(readFileSync(new URL("./__fixtures__/house-before-split.json", import.meta.url), "utf8")) as House;
-    const { rooms, corridors, objects, _: note, ...rest } = H, { rooms: r0, corridors: c0, objects: o0, _: note0, ...rest0 } = before; // (its note, `_`, rewritten for the split)
-    expect(rest).toEqual(rest0);
-    expect(rooms).toEqual(r0);
-    expect(corridors).toEqual(c0);
-    expect(byId(objects)).toEqual(byId(o0)); // (now room by room: the order's not used, but for exact ties)
-    expect(objects.length).toBe(o0.length);
-  });
   it("is the same for the game (each room imported by name) and the tools (every room file on disk): no room file left out", () => expect(loadHouse()).toEqual(H));
   it("has every room in its own file, named by its id, every object's id once, each parent placed before its child", () => {
     const dir = new URL("../../config/house/rooms/", import.meta.url), files = readdirSync(dir).filter(f => f.endsWith(".json"));
