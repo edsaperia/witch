@@ -66,6 +66,8 @@ export class CrownLandmark {
   private readonly bulbs: THREE.Points;
   private readonly u: Record<string, THREE.IUniform>;
   private baked = false;
+  /** The real crown wholly hidden behind the bend this frame (render/view.ts leaves it undrawn). */
+  realHidden = false;
   /** The baked picture's frame in the crown's plan: its middle x, the ground under it (m over the floor) and its size (m). */
   private frame = { x: 0, w: 1, h: 1, y0: 0 };
   private readonly v = new THREE.Vector3();
@@ -150,6 +152,9 @@ export class CrownLandmark {
     const show = !this.baked || indoors || B.x <= 0 ? 0 : (!overBendAt(cx, topY, cz, cam) ? 1 : far * far) * away;
     const hidden = show > 0.02;
     this.u.uShow.value = show;
+    // (the real crown wholly behind the bend: every lobe's top and every knot of its limbs under the horizon; then it needn't be
+    // drawn. Asked only while the landmark is up)
+    this.realHidden = hidden && !indoors && B.x > 0 && this.behindBend(at, ex, ez, cam);
     for (const o of this.meshes) o.visible = hidden;
     if (!hidden) return;
     // the horizon on the screen: where the camera's line of sight grazes the bent ground, ahead of the bend's focus
@@ -167,6 +172,13 @@ export class CrownLandmark {
     (this.u.uRect.value as THREE.Vector4).set(bx, bottom + hh, hw, hh);
     this.u.uHaze.value = Math.min(0.6, Math.max(0.35, 0.35 + ((dist - 300) / 1200) * 0.25));
     this.u.uOnAt.value = onAt;
+  }
+
+  private behindBend(at: THREE.Vector3, ex: THREE.Vector3, ez: THREE.Vector3, cam: THREE.Vector3): boolean {
+    const C = this.crown.crown, over = (x: number, y: number, z: number) => overBendAt(at.x + ex.x * x + ez.x * z, at.y + y, at.z + ex.z * x + ez.z * z, cam);
+    for (const l of C.lobes) if (over(l.x, l.y + l.r, l.z)) return false;
+    for (const limb of C.limbs) for (const k of limb.knots) if (over(k[0], k[1] + k[3] + 1.5, k[2])) return false; // (and the swags under them)
+    return true;
   }
 
   dispose(): void { this.target.dispose(); for (const o of this.meshes) { (o as THREE.Mesh).geometry.dispose(); ((o as THREE.Mesh).material as THREE.Material).dispose(); } }

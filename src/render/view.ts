@@ -417,6 +417,7 @@ export class View {
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
   private crownFar: CrownLandmark | null = null;
   private crownAt = Number.NaN;
+  private crownDrawn = true;
   private readonly crownWorld: PlanMap = { o: new THREE.Vector3(), ex: new THREE.Vector3(), ey: new THREE.Vector3(0, 1, 0), ez: new THREE.Vector3() };
   /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
   private ensureCrown(game: Game): void {
@@ -1381,6 +1382,10 @@ export class View {
         const at = g.party.spellAt;
         this.crownFar.update(this.camera, W.o, W.ex, W.ez, at === null ? 1e9 : at === undefined ? -1e9 : at, this.crown.indoors);
       }
+      // (wholly behind the bend from far off, the real crown and its lights aren't drawn: the landmark stands in for them)
+      // (set as it changes only, so tools/bench/crown-cost.cjs can hide its parts)
+      const drawn = !this.crownFar?.realHidden;
+      if (drawn !== this.crownDrawn) { this.crownDrawn = drawn; for (const m of [...this.crown.meshes, ...(this.strings?.crownMeshes ?? [])]) m.visible = drawn; }
     }
     this.time("witch");
     refresh(this);
