@@ -394,7 +394,11 @@ export interface Tuning {
   sail?: { inPlace: boolean };
   /** The opening (app/opening.ts): bedroom, a plain first load waking in her bedroom on home's night; ?opening=bedroom|old for one load. */
   opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
-  arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number };
+  arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
+    /** the sea chart's flight waiting for a sail's night (app/chartView.ts, render/chart/seaChart.ts FlyOptions): its pace down to rate, eased over ease seconds, for at most cap seconds */
+    hold?: { rate: number; ease: number; cap: number };
+    /** where the chart's flight hands over: sea metres out to sea off the south coast, its camera dist metres back, pitchDeg down */
+    handoff?: { sea: number; dist: number; pitchDeg: number } };
   treehouse: { /** metres from the speaker ring's outer edge to its footprint's nearest edge */ gap: number; angle: number; clear: number; lightReach: number; lightStrength: number;
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };

@@ -34,15 +34,19 @@ export function southCoast(map: ForestMap): number {
   return z;
 }
 
+/** The hand-off as a shot: the chart's camera, its target where its line of sight meets the sea (or a long way out, near level). */
+export function handoffShot(rec: Handoff, map: ForestMap): Shot {
+  const d = map.dancefloor, p = Math.max(0.02, rec.cam.pitch), back = Math.min(1200, rec.cam.height / Math.sin(p));
+  const x0 = d.x + rec.cam.x, z0 = d.z + rec.cam.z;
+  return { tx: x0, ty: rec.cam.height - Math.sin(p) * back, tz: z0 - Math.cos(p) * back, angle: (p * 180) / Math.PI, distance: back, fov: rec.cam.fov };
+}
+
 /** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks, or her in her bedroom): over the sea to the south coast and
  *  low over the forest north at `A.speed` m/s, then up to frame the dancefloor and the treehouse's spot (where the island's
  *  legend will carry the Ent) together, then down into `end`. `ground(x, z)`: the ground's height there. */
 export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }): ArrivePlan {
   const d = map.dancefloor, th = map.treehouse, fov = end.fov;
-  // the hand-off: the chart's camera, its target where its line of sight meets the sea (or a long way out, near level)
-  const p = Math.max(0.02, rec.cam.pitch), back = Math.min(1200, rec.cam.height / Math.sin(p));
-  const x0 = d.x + rec.cam.x, z0 = d.z + rec.cam.z;
-  const k0: Shot = { tx: x0, ty: rec.cam.height - Math.sin(p) * back, tz: z0 - Math.cos(p) * back, angle: (p * 180) / Math.PI, distance: back, fov: rec.cam.fov };
+  const k0 = handoffShot(rec, map);
   // low over the land: aimed `ahead` metres north of the camera's ground point
   const low = (z: number): Shot => { const a = (A.low.angle * Math.PI) / 180, tz = z - Math.cos(a) * A.low.distance; return { tx: d.x, ty: ground(d.x, tz), tz, angle: A.low.angle, distance: A.low.distance, fov }; };
   const coast = southCoast(map), kf = low((coast + A.low.offshore + d.z) / 2 + A.low.distance * 0.5);
@@ -61,6 +65,24 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   for (let i = 1; i <= lows.length; i++) times.push(times[i - 1] + Math.max(A.minLeg, leg(keys[i - 1], keys[i])));
   times.push(times[times.length - 1] + A.rise, times[times.length - 1] + A.rise + A.settle);
   return { keys, times, v0: Math.max(0, rec.cam.speed ?? 0) };
+}
+
+/** How far a spot is from the dive's view (Ed, 2026-10-24, the sail's transition: "we only really need the scenery south of the
+ *  treehouse for the dive"): metres from its track over the land, due north from the south coast below the dancefloor (where the
+ *  flight comes in low, looking north) to the frame over the dancefloor and the treehouse (arrivePlan's). For the art drawn first (render/view.ts
+ *  prepare): the areas the dive will see, nearest first; the rest under the loading mist, after. */
+export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: number) => number {
+  const d = map.dancefloor, th = map.treehouse, coast = southCoast(map), fx = (d.x + th.x) / 2, fz = (d.z + th.z) / 2;
+  const track: [number, number, number, number][] = [[d.x, coast + A.low.offshore, d.x, fz], [d.x, fz, fx, fz], [fx, fz, th.x, th.z]];
+  return (x, z) => {
+    let best = Infinity;
+    for (const [ax, az, bx, bz] of track) {
+      const vx = bx - ax, vz = bz - az, L = vx * vx + vz * vz, u = L > 0 ? Math.max(0, Math.min(1, ((x - ax) * vx + (z - az) * vz) / L)) : 0;
+      const px = ax + vx * u, pz = az + vz * u, dx = x - px, dz = z - pz;
+      best = Math.min(best, Math.hypot(dx, dz));
+    }
+    return best;
+  };
 }
 
 /** The flight's length (seconds). */

@@ -16,6 +16,8 @@ export class ArrivalFlight {
   private plan: ArrivePlan | null = null;
   private clock: FlightClock = newFlightClock();
   private skipped = false;
+  /** The warm-up's knobs (the tuning's, or none to wait for: begin's `warmed`). */
+  private warmT: Pick<ArriveTuning, "warm" | "maxStep">;
   /** Landed: the flight over (or skipped), the game's camera its own again. */
   done = false;
   /** The last moment the island isn't seen: the still about to fade, or a skip straight to her decks (main.ts revealArt). */
@@ -23,6 +25,7 @@ export class ArrivalFlight {
 
   /** `frameAt`: where the rise frames before the last shot (rules/arrive.ts arrivePlan): the new opening's bedroom (app/opening.ts). */
   constructor(readonly rec: Arrival, private readonly A: ArriveTuning, private readonly still: HTMLImageElement | null, private readonly frameAt?: { x: number; z: number }) {
+    this.warmT = A;
     const img = still;
     if (!img) return;
     if (!img.src && rec.still) img.src = rec.still; // (no still, too big for the storage: a plain dark screen instead)
@@ -35,9 +38,11 @@ export class ArrivalFlight {
     return { tx: p.tx, ty: p.ty + groundHeight(p.tx, p.tz), tz: p.tz, angle: p.angle, distance: p.distance, fov: g.tuning.camera.fov };
   }
 
-  /** The start's art is ready: the camera takes over at the chart's behind the still (from the next frame). */
-  begin(g: Game): void {
+  /** The start's art is ready: the camera takes over at the chart's behind the still (from the next frame). `warmed`: its first frames
+   *  drawn there ahead already (a night made under the chart's flight, main.ts warmAt): no wait behind the still, it fades at once. */
+  begin(g: Game, warmed = false): void {
     if (this.plan || this.done) return;
+    if (warmed) this.warmT = { ...this.A, warm: { ...this.A.warm, frames: 0 } };
     this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
     if (this.skipped) this.land();
   }
@@ -51,7 +56,7 @@ export class ArrivalFlight {
     if (!this.plan) return false;
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
     if (this.skipped) { this.land(v); return true; }
-    if (stepFlightClock(this.clock, now, this.A).faded) this.fadeStill();
+    if (stepFlightClock(this.clock, now, this.warmT).faded) this.fadeStill();
     if (this.clock.s >= planLength(this.plan)) { this.land(v); return true; }
     v.fly = shotAt(this.plan, this.clock.s); // (warming up: the hand-off's own shot, behind the still)
     return false;

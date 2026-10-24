@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, poseOf } from "./game";
-import { arrivePlan, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, diveReach, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
 
@@ -57,5 +57,21 @@ describe("arriving from the sea chart", () => {
     const d = newFlightClock(); let t = 0; stepFlightClock(d, t, A);
     while (d.phase === "warm") { t += 700; stepFlightClock(d, t, A); }
     expect(t).toBeGreaterThanOrEqual(A.warm.max * 1000); expect(t).toBeLessThan(A.warm.max * 1000 + 701);
+  });
+});
+
+describe("the dive's view first (Ed, 2026-10-24: \"we only really need the scenery south of the treehouse for the dive\")", () => {
+  it("counts the land along the dive's track, south of the treehouse, nearer than the land north of it", () => {
+    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, near = diveReach(map, A), coast = southCoast(map);
+    // on the track: the coast below the dancefloor, halfway up, the treehouse itself
+    expect(near(d.x, coast)).toBeLessThan(1);
+    expect(near(d.x, (coast + d.z) / 2)).toBeLessThan(1);
+    expect(near(th.x, th.z)).toBeLessThan(1);
+    // a spot as far north of the treehouse as the coast is south of it is well off the track
+    const north = near(th.x, th.z - (coast - th.z));
+    expect(north).toBeGreaterThan((coast - th.z) * 0.9);
+    // and the treehouse is read from the map: move it and the track follows
+    const moved = { ...map, treehouse: { ...th, x: th.x - 200, z: th.z - 150 } } as typeof map;
+    expect(diveReach(moved, A)(th.x - 200, th.z - 150)).toBeLessThan(1);
   });
 });

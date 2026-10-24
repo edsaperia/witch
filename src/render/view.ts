@@ -761,7 +761,10 @@ export class View {
   }
 
   /** Make the art and ground round the start before the first frame (each night's: run again after setGame). */
-  async prepare(): Promise<void> {
+  /** `o.dive` (a sail's, Ed 2026-10-24: "Don't wait for the trees"; "we only really need the scenery south of the treehouse for the
+   *  dive"): metres from the dive's view (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, and the
+   *  start not waiting on the trees the view asked for (they come under the loading mist, as each type lands). */
+  async prepare(o: { dive?: (x: number, z: number) => number } = {}): Promise<void> {
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
@@ -776,7 +779,7 @@ export class View {
     performance.mark("witch:prep-ground");
     await this.assets.homeArt(); // (the start's own art, drawn by the art workers: play never starts without her, home or the soundsystems)
     performance.mark("witch:prep-home");
-    await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
+    if (!o.dive) await this.assets.whenIdle(true); // (what the view asked for as needed now; the scenery kits and creatures draw on and fade in: the first-load hunt, 2026-10-20, half the cold load)
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
@@ -788,12 +791,13 @@ export class View {
     const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
     for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
       if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
-      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - h.x, s.z - h.z);
+      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
       if (!(near.get(t)! <= d)) near.set(t, d);
     }
     this.prepared = true;
+    if (o.dive) this.askIsland(near); // (a sail's: the workers drawing the dive's areas while the shaders link)
     await this.compileAll();
-    this.askIsland(near);
+    if (!o.dive) this.askIsland(near);
   }
 
   /** The loading mist for this night (render/loadingMist.ts): over every area of the grid but home's, each type's reach from the

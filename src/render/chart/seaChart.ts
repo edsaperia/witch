@@ -308,7 +308,15 @@ void main() {
 
 /** One island's meshes and where it is. */
 /** A sail's flight (fly): its legs' ends (the camera's focus, distance and tilt, in chart units) and their seconds; how far in. */
-interface Flight { id: string; t: number; keys: { x: number; z: number; dist: number; pitch: number; at: number; ease: (u: number) => number }[]; done: (end: FlightEnd) => void; speed: number; floor: THREE.Group; size: number }
+interface Flight { id: string; t: number; keys: { x: number; z: number; dist: number; pitch: number; at: number; ease: (u: number) => number }[]; done: (end: FlightEnd) => void; speed: number; floor: THREE.Group; size: number;
+  /** the flight's own pace (1 its seconds), eased down while `hold` says the game isn't ready, and the wall's seconds since it set off */
+  rate: number; wall: number; held?: boolean; hold?: FlyOptions["hold"]; slow: FlyOptions["slow"] }
+/** A sail's flight's options (Ed, 2026-10-24, the sail's transition: "we can make the zoom into chart as slow as we need to so that
+ *  the transition to the dive is smooth"): `hold` true while the next night isn't ready for the dive (its ground, the house, the
+ *  shaders: main.ts), the flight easing down to `slow.rate` of its pace from the end of its glide in, for at most `slow.cap` seconds
+ *  of the wall's (then on as ever), its pace easing over `slow.ease` seconds each way; `sea` metres: the hand-off that far out to sea
+ *  off the south coast (negative: inland, as the first flight's 40), its camera `dist` metres back and tilted `pitchDeg` down. */
+export interface FlyOptions { hold?: () => boolean; slow?: { rate: number; ease: number; cap: number }; sea?: number; dist?: number; pitchDeg?: number }
 const smoothstep = (u: number) => u * u * (3 - 2 * u), easeIn = (u: number) => u * u;
 /** The flight: the glide to frame the island (s), the swoop down and round to the sea off its south coast (s), then the run on north
  *  (s) `onward` metres, ending looking down just `inland` of the shore below its dancefloor (the camera `dist` m back, tilted `pitchDeg` down:
@@ -643,9 +651,22 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
    *  at its middle, where the chart's island has its dancefloor), swoops down and round to the sea off its south coast, its land
    *  easing to its true heights, and runs on north toward the coast; then `done` with the camera in the game's terms and the last
    *  frame, for the game to carry on from. False if it's not an island here. */
-  fly(id: string, done: (end: FlightEnd) => void): boolean {
+  fly(id: string, done: (end: FlightEnd) => void, o: FlyOptions = {}): boolean {
     const i = this.isles.get(id); if (!i) return false;
     this.select(id); this.orbit = 0; this.yaw = 0;
+    const { keys, G } = this.flightKeys(i, o);
+    // its dancefloor: a ring of party light at its middle (about the real one's size, a little more to show from up high)
+    const floor = new THREE.Group(), y = G ? (() => { const r = Math.round(-G.z0 / G.step), c = Math.round(-G.x0 / G.step); return 0.06 + Math.max(0, G.h[r * G.cols + c] ?? 0) * K * RELIEF; })() : i.top;
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.5, 1.2), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
+    const halo = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(0.7, 0.4, 1), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
+    floor.add(disc, halo); floor.position.y = y + 0.05; floor.scale.setScalar(22 * K); i.group.add(floor);
+    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1, rate: 1, wall: 0, hold: o.hold, slow: o.slow };
+    return true;
+  }
+
+  /** A flight's legs to island `i` (fly): from the camera now, framing it, swooping down to the sea off its south coast, and the run
+   *  on north to the hand-off; and its heights' grid. */
+  private flightKeys(i: Isle, o: FlyOptions): { keys: Flight["keys"]; G: NonNullable<ChartIsland["outline"]>["ground"] | undefined } {
     // the south coast below the dancefloor: the southmost land in the grid's columns round its middle, else its box
     const G = i.d.outline?.ground; let coast = i.d.outline ? i.d.outline.box.maxZ : i.reach / K;
     if (G) {
@@ -653,28 +674,36 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       const c0 = Math.round(-G.x0 / G.step);
       for (let r = Math.max(0, Math.round(-G.z0 / G.step)); r < G.rows; r++) if (!(G.h[r * G.cols + c0] > 0)) { coast = G.z0 + r * G.step; break; }
     }
-    const pitch = THREE.MathUtils.degToRad(FLY.pitchDeg), z3 = i.z + (coast - FLY.inland) * K, z2 = z3 + FLY.onward * K;
+    const pitch = THREE.MathUtils.degToRad(o.pitchDeg ?? FLY.pitchDeg), dist = (o.dist ?? FLY.dist) * K, z3 = i.z + (coast + (o.sea ?? -FLY.inland)) * K, z2 = z3 + FLY.onward * K;
     const keys: Flight["keys"] = [
       { x: this.focus.x, z: this.focus.z, dist: this.dist, pitch: this.pitch, at: 0, ease: smoothstep },
       { x: i.x, z: i.z, dist: Math.max(CLOSEST, i.reach * 4.2), pitch: 0.95, at: FLY.frame, ease: smoothstep },
-      { x: i.x, z: z2, dist: FLY.dist * K, pitch, at: FLY.frame + FLY.swoop, ease: smoothstep },
-      { x: i.x, z: z3, dist: FLY.dist * K, pitch, at: FLY.frame + FLY.swoop + FLY.run, ease: easeIn },
+      { x: i.x, z: z2, dist, pitch, at: FLY.frame + FLY.swoop, ease: smoothstep },
+      { x: i.x, z: z3, dist, pitch, at: FLY.frame + FLY.swoop + FLY.run, ease: easeIn },
     ];
-    // its dancefloor: a ring of party light at its middle (about the real one's size, a little more to show from up high)
-    const floor = new THREE.Group(), y = G ? (() => { const r = Math.round(-G.z0 / G.step), c = Math.round(-G.x0 / G.step); return 0.06 + Math.max(0, G.h[r * G.cols + c] ?? 0) * K * RELIEF; })() : i.top;
-    const disc = new THREE.Mesh(new THREE.CircleGeometry(1, 32).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.5, 1.2), transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false }));
-    const halo = new THREE.Mesh(new THREE.PlaneGeometry(5, 5).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(0.7, 0.4, 1), transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false }));
-    floor.add(disc, halo); floor.position.y = y + 0.05; floor.scale.setScalar(22 * K); i.group.add(floor);
-    this.flight = { id, t: 0, keys, done, speed: (FLY.onward * 2) / FLY.run, floor, size: i.size ?? 1 };
-    return true;
+    return { keys, G };
+  }
+
+  /** Where a flight to `id` would hand over (fly's `done`'s camera, at its full pace), before it's flown: for the game to draw its
+   *  first frames there ahead, under the chart (main.ts). Null if it's not an island here. */
+  flightEnd(id: string, o: FlyOptions = {}): FlightEnd["cam"] | null {
+    const i = this.isles.get(id); if (!i) return null;
+    const e = this.flightKeys(i, o).keys.at(-1)!;
+    return { x: 0, z: (e.z + Math.cos(e.pitch) * e.dist - i.z) / K, height: (Math.sin(e.pitch) * e.dist) / K, pitch: e.pitch, fov: this.camera.fov, speed: (FLY.onward * 2) / FLY.run };
   }
   /** Any key or tap during a flight: straight to its end. */
-  skipFlight(): void { if (this.flight) this.flight.t = this.flight.keys.at(-1)!.at; }
+  skipFlight(): void { if (this.flight) { this.flight.t = this.flight.keys.at(-1)!.at; this.flight.rate = 1; this.flight.slow = undefined; this.flight.held = false; } }
 
   /** The flight's frame: the camera along its legs; the island's land easing to its true heights; its sigil settling. */
   private flyFrame(dt: number, time: number): void {
     const f = this.flight!, i = this.isles.get(f.id)!, end = f.keys.at(-1)!.at;
-    f.t = Math.min(end, f.t + dt);
+    // (its pace: down to slow.rate from the end of the glide in while the game isn't ready, for at most slow.cap seconds; eased)
+    f.wall += dt;
+    const S = f.slow, held = !!S && f.t >= f.keys[1].at && f.wall < S.cap && !!f.hold?.();
+    // (held to its last second, it slows on into a hover short of the hand-off, the sea still moving under it, and goes on as it's ready)
+    if (S) f.rate += ((held ? S.rate * Math.min(1, (end - f.t) / 1) : 1) - f.rate) * (1 - Math.exp(-dt / Math.max(0.01, S.ease)));
+    f.held = held;
+    f.t = Math.min(end, f.t + dt * f.rate);
     let n = 1; while (n < f.keys.length - 1 && f.t > f.keys[n].at) n++;
     const a = f.keys[n - 1], b = f.keys[n], u = b.ease(Math.min(1, Math.max(0, (f.t - a.at) / (b.at - a.at))));
     const L = (p: number, q: number) => p + (q - p) * u;
@@ -790,10 +819,10 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     this.moonFrame(time);
     this.post.render(this.scene, this.camera);
     const f = this.flight;
-    if (f && f.t >= f.keys.at(-1)!.at) { // (landed: hand over, in the game's terms, with this frame)
+    if (f && f.t >= f.keys.at(-1)!.at && !f.held) { // (landed: hand over, in the game's terms, with this frame)
       const i = this.isles.get(f.id)!, p = this.camera.position;
       this.flight = null;
-      f.done({ cam: { x: (p.x - i.x) / K, z: (p.z - i.z) / K, height: p.y / K, pitch: this.pitch, fov: this.camera.fov, speed: f.speed }, still: this.canvas.toDataURL("image/jpeg", 0.88) });
+      f.done({ cam: { x: (p.x - i.x) / K, z: (p.z - i.z) / K, height: p.y / K, pitch: this.pitch, fov: this.camera.fov, speed: f.speed * f.rate }, still: this.canvas.toDataURL("image/jpeg", 0.88) });
     }
   }
 }

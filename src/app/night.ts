@@ -177,6 +177,12 @@ function nightArrival(spec: NightSpec, tuning: Tuning): ArrivalFlight | null {
   return new ArrivalFlight(r, tuning.arrive, stillEl);
 }
 
+/** A night made under the sea chart as it flew (a sail in place, main.ts): its arrival once the chart hands over, the chart's last
+ *  frame up (showStill) for the flight to take over from. */
+export function flyIn(n: Night, r: Arrival): ArrivalFlight | null {
+  return (n.arrival = nightArrival({ ...n.spec, arrival: r }, n.tuning));
+}
+
 /** The night over (a sail in place, before the next is made; the sea chart is recorded where the night ends, in main.ts): its own
  *  listeners undone and the page's per-night DOM put back; kept as `page.last` till the next is on. `strict` (?debug=sail): its game
  *  marked disposed, so a reader left on it that steps it throws (rules/game.ts stepGame). */
