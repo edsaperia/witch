@@ -8302,6 +8302,34 @@
             "pitchDeg"
           ],
           "additionalProperties": false
+        },
+        "tree": {
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fill": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "height",
+            "angle",
+            "fill",
+            "time"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8315,7 +8343,8 @@
         "rise",
         "settle",
         "hold",
-        "handoff"
+        "handoff",
+        "tree"
       ],
       "additionalProperties": false
     },

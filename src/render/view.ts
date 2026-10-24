@@ -812,6 +812,10 @@ export class View {
     this.homeDone = true;
   }
 
+  /** The treehouse tree's height (metres from its foot, its art's), or null till its art has come (app/arrive.ts: the dive's look
+   *  at the whole tree). */
+  treeHeight(): number | null { const a = this.assets; return a.home.treehouse ? a.treehouse.base.y * this.mpp : null; }
+
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
    *  Before a sail's dive it may not be yet (prepare's `dive`): made on through it, by buildHome. */
   homeDone = true;

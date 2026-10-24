@@ -7,7 +7,7 @@
 // skips it). Any key or tap skips to the end. main.ts starts the night (her clock, the party spell's cast) when it lands.
 import type { Game } from "../rules/game";
 import { poseOf } from "../rules/game";
-import { arrivePlan, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
+import { arrivePlan, dueAt, dueRate, newFlightClock, planLength, shotAt, stepFlightClock, treeShot, type ArrivePlan, type ArriveTuning, type FlightClock, type Shot } from "../rules/arrive";
 import type { Arrival } from "./arrival";
 import { groundHeight } from "../render/height";
 import type { View } from "../render/view";
@@ -63,6 +63,8 @@ export class ArrivalFlight {
     if (this.done) { v.fly = null; return true; }
     if (!this.plan) return false;
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
+    const th = v.treeHeight(); // (the whole tree's shot by its art's height, once it's come: rules/arrive.ts treeShot)
+    if (this.A.tree && th !== null && this.plan.keys.length >= 3) this.plan.keys[this.plan.keys.length - 2] = treeShot(g.map, this.A.tree, groundHeight, this.end(g).fov, th);
     if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
     if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
     if (this.skipped && v.homeDone) { this.land(v); return true; }

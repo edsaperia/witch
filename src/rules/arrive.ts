@@ -44,7 +44,7 @@ export function handoffShot(rec: Handoff, map: ForestMap): Shot {
 /** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks, or her in her bedroom): over the sea to the south coast and
  *  low over the forest north at `A.speed` m/s, then up to frame the dancefloor and the treehouse's spot (where the island's
  *  legend will carry the Ent) together, then down into `end`. `ground(x, z)`: the ground's height there. */
-export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }): ArrivePlan {
+export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }, treeHeight?: number): ArrivePlan {
   const d = map.dancefloor, th = map.treehouse, fov = end.fov;
   const k0 = handoffShot(rec, map);
   // low over the land: aimed `ahead` metres north of the camera's ground point
@@ -55,7 +55,8 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   // the frame: the dancefloor and the treehouse's spot together, from the south and up (or `frameAt`: the new opening's bedroom window)
   const fx = frameAt?.x ?? (d.x + th.x) / 2, fz = frameAt?.z ?? (d.z + th.z) / 2;
   const k3: Shot = { tx: fx, ty: ground(fx, fz) + A.frame.lift, tz: fz, angle: A.frame.angle, distance: A.frame.distance, fov };
-  const keys = [k0, ...lows, k3, end];
+  const tree = A.tree ? treeShot(map, A.tree, ground, fov, treeHeight ?? A.tree.height) : null;
+  const keys = tree ? [k0, ...lows, k3, tree, end] : [k0, ...lows, k3, end];
   // the times: the legs down to the forest by their length at A.speed (at least the chart's own pace), the rise and the
   // settle their own seconds
   const cam = (s: Shot) => { const c = shotCamera(s); return c; };
@@ -63,8 +64,18 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   const leg = (a: Shot, b: Shot) => { const p = cam(a), q = cam(b); return Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z) / pace; };
   const times = [0];
   for (let i = 1; i <= lows.length; i++) times.push(times[i - 1] + Math.max(A.minLeg, leg(keys[i - 1], keys[i])));
-  times.push(times[times.length - 1] + A.rise, times[times.length - 1] + A.rise + A.settle);
+  times.push(times[times.length - 1] + A.rise);
+  if (tree) times.push(times[times.length - 1] + A.tree!.time);
+  times.push(times[times.length - 1] + A.settle);
   return { keys, times, v0: Math.max(0, rec.cam.speed ?? 0) };
+}
+
+/** The whole treehouse tree, from the south (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her
+ *  bedroom"): aimed at its middle, `height` metres tall from its foot (its art's, else the tuning's), `angle` degrees up, back far
+ *  enough that it fills `fill` of the frame's height. */
+export function treeShot(map: ForestMap, T: NonNullable<ArriveTuning["tree"]>, ground: (x: number, z: number) => number, fov: number, height: number): Shot {
+  const th = map.treehouse, h = Math.max(1, height), distance = (h / Math.max(0.05, T.fill)) / (2 * Math.tan(((fov * Math.PI) / 180) / 2));
+  return { tx: th.x, ty: ground(th.x, th.z) + h / 2, tz: th.z, angle: T.angle, distance, fov };
 }
 
 /** How far a spot is from the dive's view (Ed, 2026-10-24, the sail's transition: "we only really need the scenery south of the
