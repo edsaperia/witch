@@ -24,7 +24,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
   try {
     const page = await browser.newPage({ viewport: { width: W, height: H } });
     page.on("pageerror", e => errors.push(e.message));
-    const link = `http://127.0.0.1:${server.address().port}/?creator=0&loadmist=1&mistgate=0${DELAY > 0 ? `&artdelay=${DELAY}` : ""}${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
+    const link = `http://127.0.0.1:${server.address().port}/?loadmist=1&mistgate=0${DELAY > 0 ? `&artdelay=${DELAY}` : ""}${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
     log("loading", link.replace(/^http:\/\/[^/]+/, ""));
     await page.goto(link);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
