@@ -11,23 +11,23 @@ const FORE = Math.sin(24 * Math.PI / 180); // the floor's foreshortening indoors
 let VIEW = "plan"; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
 
 // ---- the plan ----
-const TRUNK = [ // bottom to top, weaving left and right; r: its size (about its radius, m)
-  { id: "dining", label: "Dining Room", x: -20, z: 30, r: 14, side: -1 },
-  { id: "terrace", label: "Terrace", x: 14, z: 4, r: 12.5, side: 1 },
-  { id: "parlour", label: "Parlour", x: -18, z: -24, r: 11, side: -1 },
-  { id: "boudoir", label: "Boudoir", x: 13, z: -48, r: 9.5, side: 1 },
-  { id: "bedroom", label: "Bedroom 1", x: -14, z: -70, r: 8.5, side: -1 },
+const TRUNK = [ // bottom to top, a soft S; r: its size (about its radius, m)
+  { id: "dining", label: "Dining Room", x: -8, z: 34, r: 14, side: -1 },
+  { id: "terrace", label: "Terrace", x: 10, z: 8, r: 12.5, side: 1 },
+  { id: "parlour", label: "Parlour", x: -6, z: -16, r: 11, side: -1 },
+  { id: "boudoir", label: "Boudoir", x: 8, z: -36, r: 9.5, side: 1 },
+  { id: "bedroom", label: "Bedroom 1", x: -6, z: -53, r: 8.5, side: -1 },
+  { id: "turret", label: "Turret", x: 6, z: -67, r: 6.5, side: 1 },
 ];
-const BRANCH = [ // a room on a branch off a trunk room, out on that room's outer side: its middle and size, the branch's bend
-  { id: "kitchen", label: "Kitchen", from: "dining", x: -66, z: 38, r: 7.5, bend: -2 },
-  { id: "workshop", label: "Workshop", from: "dining", x: -60, z: 6, r: 8, bend: 2 },
-  { id: "cloakroom", label: "Cloakroom", from: "terrace", x: 60, z: 10, r: 7, bend: 2 },
-  { id: "studio", label: "Studio", from: "terrace", x: 52, z: -20, r: 7.5, bend: -2 },
-  { id: "bestiary", label: "Bestiary", from: "parlour", x: -62, z: -22, r: 7.5, bend: -2 },
-  { id: "solarium", label: "Solarium", from: "parlour", x: -54, z: -52, r: 7, bend: 2 },
-  { id: "bedroom2", label: "Bedroom 2", from: "boudoir", x: 56, z: -44, r: 7, bend: 2, locked: true },
-  { id: "bedroom3", label: "Bedroom 3", from: "boudoir", x: 48, z: -74, r: 7, bend: -2, locked: true },
-  { id: "turret", label: "Turret", from: "bedroom", x: -14, z: -98, r: 5.5, bend: 1.5 },
+const BRANCH = [ // a pair off each trunk room, out on its outer side: the upper close on a short branch, the lower further out, its branch curving down
+  { id: "workshop", label: "Workshop", from: "dining", x: -40, z: 20, r: 8, bend: .5 },
+  { id: "kitchen", label: "Kitchen", from: "dining", x: -60, z: 52, r: 7.5, bend: 4 },
+  { id: "cloakroom", label: "Cloakroom", from: "terrace", x: 41, z: -4, r: 7, bend: -.5 },
+  { id: "studio", label: "Studio", from: "terrace", x: 60, z: 28, r: 7.5, bend: -4 },
+  { id: "solarium", label: "Solarium", from: "parlour", x: -37, z: -30, r: 7, bend: .5 },
+  { id: "bestiary", label: "Bestiary", from: "parlour", x: -57, z: -2, r: 7.5, bend: 4 },
+  { id: "bedroom2", label: "Bedroom 2", from: "boudoir", x: 38, z: -50, r: 7, bend: -.5, locked: true },
+  { id: "bedroom3", label: "Bedroom 3", from: "boudoir", x: 56, z: -20, r: 7, bend: -4, locked: true },
 ];
 // the furniture: the room configs' own footprints (w along x, d along z, m), placed afresh; h only for the close-ups
 const OBJ = [
@@ -48,11 +48,11 @@ const OBJ = [
 const OLD = { dining: [-15, 22, 12], kitchen: [-40, 18, 6], workshop: [-30, 46, 7], terrace: [0, 0, 10.5], studio: [27, -6, 6.5], cloakroom: [-25, -6, 5.5],
   parlour: [7, -22, 9], bestiary: [31, -27, 6], solarium: [-19, -27, 6], boudoir: [-3, -41, 7.5], bedroom: [7, -57, 7], turret: [24, -68, 4.5] };
 // the Terrace's furniture placed afresh: its decks and records on its open east rim, the circle in its middle
-const TERRACE_AT = { decks: [5.5, 8], recordShelf: [-1, 9.5], circle: [-1.5, -2] };
+const TERRACE_AT = { decks: [6, 8], recordShelf: [0, 9.5], circle: [-1, -2] };
 for (const o of OBJ) { const [id, room, x, z] = o, R = TRUNK.concat(BRANCH).find(q => q.id === room), q = OLD[room];
   if (room === "terrace" && TERRACE_AT[id]) { o[2] = R.x + TERRACE_AT[id][0]; o[3] = R.z + TERRACE_AT[id][1]; continue; }
   const k = R.r / q[2]; o[2] = R.x + (x - q[0]) * k; o[3] = R.z + (z - q[1]) * k; }
-const TAKEOFF = { x: 14 + 12.5 * Math.cos(.95), z: 4 + 12.5 * Math.sin(.95), a: .95 }; // the Terrace's open outer rim, south-east (below its branches): where she steps off (and flies back on)
+const TAKEOFF = { x: 10 + 12.5 * Math.cos(1.05), z: 8 + 12.5 * Math.sin(1.05), a: 1.05 }; // the Terrace's open outer rim, south-east (below its branches): where she steps off (and flies back on)
 
 // ---- shapes ----
 const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -78,7 +78,7 @@ function limb(a, b, bend, w0, w1, x, z) {
 function field(x, z) {
   let d = 1e9, parts = [];
   for (const r of TRUNK) { const s = blob(r, x, z); parts.push({ kind: "ring", r, s }); d = smin(d, s, 6); }
-  for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i], [s, t, side] = limb(a, b, (i % 2 ? 1 : -1) * 1.5, a.r * .62, b.r * .62, x, z); parts.push({ kind: "spine", s, side, t, a, b }); d = smin(d, s, 6); }
+  for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i], [s, t, side] = limb(a, b, (i % 2 ? 1 : -1) * 1, a.r * .82, b.r * .82, x, z); parts.push({ kind: "spine", s, side, t, a, b }); d = smin(d, s, 6); }
   for (const r of BRANCH) { const p = byId[r.from], [s, t, side] = limb(p, r, r.bend, Math.min(5.5, p.r * .45), Math.max(2.8, r.r * .42), x, z), sb = blob(r, x, z);
     parts.push({ kind: "branch", r, s, side, t }, { kind: "ring", r, s: sb }); d = smin(d, smin(s, sb, 3.5), 5); }
   return { d, parts };
@@ -156,7 +156,7 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
       ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#e8c070"; ctx.textAlign = "center"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("locked door", dx, dz + 12 * scale); ctx.fillText("locked door", dx, dz + 12 * scale); }
     // the walk from her bed to the take-off, along the trunk
     { const pts = WALK.map(([x, z]) => P(x, z)); ctx.setLineDash([4 * scale, 3 * scale]); ctx.strokeStyle = "rgba(160,255,255,.85)"; ctx.lineWidth = Math.max(2, scale * 1.2); ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke(); ctx.setLineDash([]);
-      const [mx, mz] = P(-24, -40); ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.fillStyle = "#9ff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.textAlign = "right"; const t = `bed to take-off: about ${Math.round(walk())} m`; ctx.strokeText(t, mx, mz); ctx.fillText(t, mx, mz); }
+      const [mx, mz] = P(-22, -44); ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.fillStyle = "#9ff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.textAlign = "right"; const t = `bed to take-off: about ${Math.round(walk())} m`; ctx.strokeText(t, mx, mz); ctx.fillText(t, mx, mz); }
     // the take-off
     const [tx, tz] = P(TAKEOFF.x, TAKEOFF.z); ctx.fillStyle = "#9ff"; ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.lineWidth = 4;
     ctx.textAlign = "left"; ctx.strokeText("← take-off (open south-east rim)", tx + 6 * scale, tz + 4 * scale); ctx.fillText("← take-off (open south-east rim)", tx + 6 * scale, tz + 4 * scale);
@@ -169,7 +169,7 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
 function TAKEOFF_OPEN(x, z) { const dx = x - TRAC.x, dz = z - TRAC.z, a = Math.atan2(dz, dx); return Math.hypot(dx, dz) < TRAC.r + 3 && Math.abs(((a - TAKEOFF.a + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < .55; }
 const TRAC = byId.terrace;
 // the walk: bed to the take-off, along the trunk's rooms (bed, Bedroom 1, Boudoir, Parlour, Terrace's middle, the open rim)
-const WALK = [[-10, -73], [-14, -70], [0, -60], [13, -48], [0, -36], [-18, -24], [-4, -10], [14, 4], [TAKEOFF.x, TAKEOFF.z]];
+const WALK = [[-2.4, -56.6], [-6, -53], [8, -36], [-6, -16], [10, 8], [TAKEOFF.x, TAKEOFF.z]];
 function walk() { let L = 0; for (let i = 1; i < WALK.length; i++) L += Math.hypot(WALK[i][0] - WALK[i - 1][0], WALK[i][1] - WALK[i - 1][1]); return L; }
 window.mock = { render, walk, TRUNK, BRANCH, OBJ };
 </script></body></html>
