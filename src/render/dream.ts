@@ -32,19 +32,25 @@ export interface DreamArt { home: HTMLCanvasElement | null; find: HTMLCanvasElem
 /** Its home's furniture and the find's own art, baked and lit now (a piece is tens of milliseconds: once, as she falls asleep). */
 export function dreamArt(d: Pick<DreamOf, "home" | "piece">, st: Style): DreamArt {
   let home: HTMLCanvasElement | null = null;
-  const find = findCanvas(d.piece, st);
+  const find = findCanvas(d.piece, st, 4);
   try {
     const o = HOUSE_ROOMS.objects.find(q => q.id === d.home);
-    if (o) { const { foot } = standing(o); home = litCanvas(furnitureSprite(o.id, foot, st, { ppm: 22, pitch: 0.62, yaw: 0, curve: 0 }) as Drawn, o.room, st, 1, o.id); }
+    if (o) { const { foot } = standing(o); home = litCanvas(furnitureSprite(o.id, foot, st, { ppm: 44, pitch: 0.62, yaw: 0, curve: 0 }) as Drawn, o.room, st, 1, o.id); }
   } catch { home = null; }
   return { home, find };
 }
 
-/** A find's own art (art/country.js's find pieces, rules/finds.ts findPiece), baked and lit in the house's light, or null. */
-export function findCanvas(piece: string, st: Style): HTMLCanvasElement | null {
+/** A find's own art (art/country.js's find pieces, rules/finds.ts findPiece), baked and lit in the house's light, or null; `fine`
+ *  times finer than the game draws it (at the witch's own scale a find is a few pixels), for the dream's close look. */
+const FINE = new WeakMap<Style, Map<number, Style>>();
+export function findCanvas(piece: string, st: Style, fine = 1): HTMLCanvasElement | null {
   try {
-    const p = (Art.scenePiece as (id: string, st: Style) => { sprite: { whole: Drawn["sp"]; origin: { x: number; y: number } }; colours: Record<string, number[]> })(piece, st);
-    return litCanvas({ sp: p.sprite.whole, origin: p.sprite.origin, lights: [] }, "bedroom", st, 1, "", p.colours);
+    let m = FINE.get(st);
+    if (!m) FINE.set(st, (m = new Map()));
+    if (!m.has(fine)) m.set(fine, fine === 1 ? st : ({ ...st, pixel: ((st as Style & { pixel?: number }).pixel ?? 3) / fine } as Style)); // (one style a fineness: the art's caches are keyed by it)
+    const sf = m.get(fine)!;
+    const p = (Art.scenePiece as (id: string, st: Style) => { sprite: { whole: Drawn["sp"]; origin: { x: number; y: number } }; colours: Record<string, number[]> })(piece, sf);
+    return litCanvas({ sp: p.sprite.whole, origin: p.sprite.origin, lights: [] }, "bedroom", sf, 1, "", p.colours);
   } catch { return null; }
 }
 
@@ -154,7 +160,7 @@ export class DreamView {
         const g = x.createRadialGradient(B.cx, fy + h / 2, 0, B.cx, fy + h / 2, w);
         g.addColorStop(0, "rgba(255,236,190,0.35)"); g.addColorStop(1, "rgba(255,236,190,0)");
         x.fillStyle = g; x.fillRect(B.cx - w, fy - h / 2, w * 2, h * 2);
-        x.drawImage(a.find, fx, fy, w, h);
+        x.filter = "brightness(1.4)"; x.drawImage(a.find, fx, fy, w, h); x.filter = "none";
         for (let i = 0; i < 6; i++) glint(x, B.cx + Math.cos(i * 1.05 + t) * w * 0.8, fy + h / 2 + Math.sin(i * 1.05 + t) * h * 0.7, Math.max(0, Math.sin(t * 3 + i * 1.7)), B.P);
       }
       x.restore();
@@ -172,12 +178,12 @@ export class DreamView {
     const x = this.x, d = ease((t - 1.4) / 2.6), f = this.art.find;
     if (f) {
       const k = Math.max(B.P, Math.floor((B.n * 0.26) / Math.max(f.width, f.height))), w = f.width * k, h = f.height * k;
-      x.save(); x.globalAlpha *= 0.6 * (1 - ease((t - 1.6) / 1.8)); x.drawImage(f, Math.round(B.cx - w / 2), Math.round(B.cy - h / 2), w, h); x.restore();
+      x.save(); x.globalAlpha *= 0.7 * (1 - ease((t - 1.6) / 1.8)); x.filter = "brightness(1.4)"; x.drawImage(f, Math.round(B.cx - w / 2), Math.round(B.cy - h / 2), w, h); x.restore();
     }
     const P2 = stars.map(([sx, sy], i) => { const a = Math.atan2(sy - B.cy, sx - B.cx) + (hash(i, 1) - 0.5) * 0.9, r = d * B.n * (0.6 + 0.6 * hash(i, 2)); return [sx + Math.cos(a) * r, sy + Math.sin(a) * r - d * B.n * 0.12 * hash(i, 4)] as [number, number]; });
     for (const [i, j] of lines) line(x, P2[i], P2[j], 0.6 * Math.max(0, 1 - d * 3));
     P2.forEach((p, i) => star(x, p[0], p[1], Math.max(0, 1 - d * d * 1.1) * (0.85 + 0.15 * Math.sin(t * 3.4 + i)), B.P));
-    if (t > 2.2) words(x, `${cap(this.d.name)} went back to the stars`, right + B.P * 4, by + B.n * 0.5, ease((t - 2.2) / 0.6), "#c9b8e8");
+    if (t > 2.2) words(x, `${cap(this.d.name)}|went back to the stars`, right + B.P * 4, by + B.n * 0.5, ease((t - 2.2) / 0.6), "#c9b8e8");
   }
 }
 
@@ -209,8 +215,8 @@ function words(x: CanvasRenderingContext2D, text: string, px: number, py: number
   x.save(); x.globalAlpha *= a;
   x.font = "600 15px ui-monospace, Menlo, Consolas, monospace"; x.textBaseline = "middle"; x.textAlign = "left";
   // (beside the cloud; past the screen's edge, under it instead)
-  const w = x.measureText(text).width, W = x.canvas.width, X = px + w < W - 12 ? px : Math.max(12, (W - w) / 2), Y = px + w < W - 12 ? py : Math.min(x.canvas.height - 150, py + 160);
-  x.fillStyle = "rgba(0,0,0,0.6)"; x.fillText(text, X + 1, Y + 1);
-  x.fillStyle = col; x.fillText(text, X, Y);
+  const lines = text.split("|"), w = Math.max(...lines.map(l => x.measureText(l).width)), W = x.canvas.width, fits = px + w < W - 12;
+  const X = fits ? px : Math.max(12, (W - w) / 2), Y = (fits ? py : Math.min(x.canvas.height - 150, py + 160)) - (lines.length - 1) * 10;
+  lines.forEach((l, i) => { x.fillStyle = "rgba(0,0,0,0.6)"; x.fillText(l, X + 1, Y + i * 20 + 1); x.fillStyle = col; x.fillText(l, X, Y + i * 20); });
   x.restore();
 }
