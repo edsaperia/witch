@@ -742,15 +742,36 @@ async function main() {
   // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
   // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full
   // opacity against none, the mist at strength 0 against none. The circle bug was the first differing in a disc round her. Where
-  // it showed: an Old oaks wood, on the ground among tall trees in front of her.
+  // it showed: an Old oaks wood, on the ground among tall trees in front of her. The spot is found by the rules each run, so it
+  // can't go stale as the maps change (a fixed 2327,2569 went treeless with the islands, 2026-10-23): over the wild areas round
+  // home, every 8 m, clear ground (no trunk within 2.5 m) with 4 or more trees just south of her (between her and the camera), in
+  // the lightest wood round her (fewest trees within 40 m: the software renderer here drew 2 to 3 frames a second with under 120,
+  // none in 30 s with 350, which timed the section out), ties to the most in front.
   await run("neutral", { width: 1000, height: 663 }, async page => {
+    const spot = await page.evaluate(() => {
+      const g = window.witch.game, m = g.map, c = m.dancefloor, home = m.areaAt(c.x, c.z).cell;
+      let best = null;
+      for (let dz = -700; dz <= 700; dz += 8) for (let dx = -700; dx <= 700; dx += 8) {
+        const x = c.x + dx, z = c.z + dz, a = m.areaAt(x, z);
+        if (!m.playable(a.cell[0], a.cell[1]) || (a.cell[0] === home[0] && a.cell[1] === home[1])) continue;
+        const trees = g.forest.treesNear(x, z + 8, 9);
+        if (trees.some(t => Math.hypot(t.x - x, t.z - z) < 2.5)) continue;
+        const front = trees.filter(t => t.z > z + 2 && t.z < z + 14 && Math.abs(t.x - x) < 7).length;
+        if (front < 4) continue;
+        const wood = g.forest.treesNear(x, z, 40).length;
+        if (!best || wood < best.wood || (wood === best.wood && front > best.front)) best = { x, z, front, wood };
+      }
+      return best;
+    });
+    if (!spot) throw new Error("neutral: no spot round home with trees in front of her");
+    // (placed as tools/smoke's circle shots were: on the ground; a step north to settle the camera, then back on the spot)
+    const place = () => page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x, z: s.z, mode: "ground", lift: 0, seated: false, perch: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, spot);
+    await place();
     // (the art and the forest round the spot all in first: once the game runs the forest's count keeps moving)
     await settleArt(page, { forest: true, trees: true, timeout: 600000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 250 }); // (started: she's drawn)
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 300000, polling: 250 });
-    // (placed as tools/smoke's circle shots were: on the ground, a step north to settle the camera, then back on the spot)
-    const place = () => page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, x: 2327, z: 2569, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; });
     await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
     await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 }); // (settled: four seconds of play there)
     await sleep(10000);
@@ -759,12 +780,12 @@ async function main() {
     const at = await page.evaluate(() => { const g = window.witch.game; return `${g.witch.x | 0},${g.witch.z | 0} ${g.witch.mode}${g.witch.seated ? " seated" : ""}, zoom step ${g.camera.zoomStep}`; });
     await shot(page, "neutral.png");
     await page.keyboard.press("Escape");
-    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at})`);
+    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at}, ${spot.front} trees in front, ${spot.wood} within 40 m)`);
     // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
     // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
     const allow = r.still * 2 + Math.round(r.pixels * 0.005);
     for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
-  }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
+  }, "&seed=886806&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
