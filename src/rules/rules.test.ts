@@ -1335,7 +1335,7 @@ describe("the dancefloor's speakers (Ed, v160)", () => {
     // More of them, further out: still outside.
     const T2 = withTuning({ dancefloor: { ...D, speakers: { ...S, count: 20, radiusFactor: 3 } } }), m = generateMap(1, T2);
     expect(Math.hypot(m.treehouse.x - m.dancefloor.x, m.treehouse.z - m.dancefloor.z) - T2.treehouse.clear).toBeGreaterThan(speakerRadius(T2) + S.footprint);
-  }, 60000); // (nine maps; seed 4's ley route takes about 25 s to plan with the oak north-west of the floor: its curves' untangling, rules/leyroute.ts curved, runs all its tries)
+  }, 30000); // (nine maps)
   it("are the dancefloor's only sound: no soundsystem stands in their ring or the floor's clearing, over seeds (Ed, v183)", () => {
     for (const seed of [1, 2, 3, 123]) {
       const m = generateMap(seed, TUNING), d = m.dancefloor;
