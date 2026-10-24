@@ -3,8 +3,8 @@
 // on its own (loadingFront.test.ts); render/loadingMist.ts draws it. Every area whose type's trees aren't drawn yet lies under the
 // mist. When a type's art lands, the mist rolls back off that type's areas as a front moving out from the treehouse: a radius
 // from the house growing over time, the mist kept only beyond it (with a soft, noisy edge in the shader), so the near edge of each
-// area clears first and the nearer of a type's areas finish sooner. Its speed is the tuning's `speed`, raised as needed so the
-// whole type is clear within `cap` seconds of its art landing (never the mist hanging on long after the trees are there).
+// area clears first and the nearer of a type's areas finish sooner. Its speed is the tuning's `speed`; what it hasn't reached `cap`
+// seconds after the art landed fades out (never the mist hanging on long after the trees are there).
 
 export interface LoadingMistTuning {
   on: boolean;
@@ -15,7 +15,8 @@ export interface LoadingMistTuning {
   density: number;
   /** How bright it glows (times the night's mist colour). */
   glow: number;
-  /** The front's speed out from the treehouse (m/s), and the most seconds a type takes to clear once its art lands. */
+  /** The front's speed out from the treehouse (m/s), and the seconds after a type's art lands that what's left of its mist fades
+   *  out (over FADE more). */
   speed: number;
   cap: number;
   /** The front's soft edge (m either side) and its noise's size (m). */
@@ -43,14 +44,23 @@ export const FRONT_CLEAR = 1e5, FRONT_FULL = -1e5;
 
 /** A type's front now (m from the treehouse, the mist kept beyond it), `since` seconds after its art landed (undefined: not yet,
  *  so all of it under the mist). The front starts a soft edge short of the type's nearest ground, so nothing of it clears before
- *  its art is in, and passes its furthest by a soft edge and the noise within `cap` seconds. */
+ *  its art is in, and moves out at `speed` (a nearby area clear in a couple of seconds); whatever of the type's mist the front
+ *  hasn't reached by `cap` seconds (its far areas, out in the island's rim) fades out over the next FADE seconds (fadeAt), so it
+ *  never hangs on long after the trees are there. */
 export function frontAt(reach: TypeReach | undefined, since: number | undefined, T: Pick<LoadingMistTuning, "speed" | "cap" | "soft">): number {
   if (since === undefined) return FRONT_FULL;
-  if (!reach) return FRONT_CLEAR;
-  const start = reach.near - 2 * T.soft, end = reach.far + 2 * T.soft;
-  const speed = Math.max(T.speed, (end - start) / Math.max(0.1, T.cap));
-  const r = start + speed * Math.max(0, since);
+  if (!reach || since >= T.cap + FADE) return FRONT_CLEAR;
+  const start = reach.near - 2 * T.soft, end = reach.far + 2 * T.soft, r = start + T.speed * Math.max(0, since);
   return r >= end ? FRONT_CLEAR : r;
+}
+
+/** Seconds the mist left at the cap takes to fade out. */
+export const FADE = 1;
+
+/** How much of a type's mist is left beyond its front (1 all, fading to 0 over FADE seconds after `cap`). */
+export function fadeAt(since: number | undefined, T: Pick<LoadingMistTuning, "cap">): number {
+  if (since === undefined) return 1;
+  return Math.min(1, Math.max(0, 1 - (since - T.cap) / FADE));
 }
 
 /** Whether the front has passed all of a type (its mist gone for the night). */
