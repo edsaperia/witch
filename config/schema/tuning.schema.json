@@ -11040,6 +11040,10 @@
         "size": {
           "type": "number",
           "minimum": 0
+        },
+        "sea": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -11051,7 +11055,8 @@
         "speed",
         "cap",
         "soft",
-        "size"
+        "size",
+        "sea"
       ],
       "additionalProperties": false
     },
