@@ -39,14 +39,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const KNOWN = {
   "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish": { issue: 1090, why: "Ed's window sizes take tens of seconds a frame in the software renderer: they fly only on a real GPU (SMOKE_GPU=1)" },
+  "neutral-see-through": { issue: 1091, why: "the see-through at full opacity draws a few hundred px unlike the see-through off (381 to 440 measured)" },
 };
+// SMOKE_GPU=1: launch on the machine's own GPU, not SwiftShader (the vanish flights at Ed's sizes run only there, #1090).
+const GPU = process.env.SMOKE_GPU === "1";
 
 async function main() {
   fs.mkdirSync(out, { recursive: true });
   const server = await serve(), port = server.address().port;
   const browser = await playwright.chromium.launch({
     executablePath: fs.existsSync("/opt/pw-browsers/chromium") ? undefined : undefined,
-    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+    args: GPU ? ["--ignore-gpu-blocklist"] : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
   });
   const errors = [];
   const results = [];
@@ -742,15 +746,36 @@ async function main() {
   // Neutral pairs (Ed, 2026-10-14, after the circle bug: "neutral settings are no-ops"): two settings that must draw the same
   // picture, compared pixel for pixel by the pause page's Report (src/ui/visualReport.ts NEUTRAL_PAIRS): the see-through at full
   // opacity against none, the mist at strength 0 against none. The circle bug was the first differing in a disc round her. Where
-  // it showed: an Old oaks wood, on the ground among tall trees in front of her.
+  // it showed: an Old oaks wood, on the ground among tall trees in front of her. The spot is found by the rules each run, so it
+  // can't go stale as the maps change (a fixed 2327,2569 went treeless with the islands, 2026-10-23): over the wild areas round
+  // home, every 8 m, clear ground (no trunk within 2.5 m) with 4 or more trees just south of her (between her and the camera), in
+  // the lightest wood round her (fewest trees within 40 m: the software renderer here drew 2 to 3 frames a second with under 120,
+  // none in 30 s with 350, which timed the section out), ties to the most in front.
   await run("neutral", { width: 1000, height: 663 }, async page => {
+    const spot = await page.evaluate(() => {
+      const g = window.witch.game, m = g.map, c = m.dancefloor, home = m.areaAt(c.x, c.z).cell;
+      let best = null;
+      for (let dz = -700; dz <= 700; dz += 8) for (let dx = -700; dx <= 700; dx += 8) {
+        const x = c.x + dx, z = c.z + dz, a = m.areaAt(x, z);
+        if (!m.playable(a.cell[0], a.cell[1]) || (a.cell[0] === home[0] && a.cell[1] === home[1])) continue;
+        const trees = g.forest.treesNear(x, z + 8, 9);
+        if (trees.some(t => Math.hypot(t.x - x, t.z - z) < 2.5)) continue;
+        const front = trees.filter(t => t.z > z + 2 && t.z < z + 14 && Math.abs(t.x - x) < 7).length;
+        if (front < 4) continue;
+        const wood = g.forest.treesNear(x, z, 40).length;
+        if (!best || wood < best.wood || (wood === best.wood && front > best.front)) best = { x, z, front, wood };
+      }
+      return best;
+    });
+    if (!spot) throw new Error("neutral: no spot round home with trees in front of her");
+    // (placed as tools/smoke's circle shots were: on the ground; a step north to settle the camera, then back on the spot)
+    const place = () => page.evaluate(s => { const g = window.witch.game; g.witch = { ...g.witch, x: s.x, z: s.z, mode: "ground", lift: 0, seated: false, perch: false, vx: 0, vz: 0 }; g.introFocus = undefined; }, spot);
+    await place();
     // (the art and the forest round the spot all in first: once the game runs the forest's count keeps moving)
     await settleArt(page, { forest: true, trees: true, timeout: 600000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 250 }); // (started: she's drawn)
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 300000, polling: 250 });
-    // (placed as tools/smoke's circle shots were: on the ground, a step north to settle the camera, then back on the spot)
-    const place = () => page.evaluate(() => { const g = window.witch.game; g.witch = { ...g.witch, x: 2327, z: 2569, mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 }; g.introFocus = undefined; });
     await place(); await page.keyboard.down("ArrowUp"); await sleep(300); await page.keyboard.up("ArrowUp"); await sleep(1000); await place();
     await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 }); // (settled: four seconds of play there)
     await sleep(10000);
@@ -759,12 +784,12 @@ async function main() {
     const at = await page.evaluate(() => { const g = window.witch.game; return `${g.witch.x | 0},${g.witch.z | 0} ${g.witch.mode}${g.witch.seated ? " seated" : ""}, zoom step ${g.camera.zoomStep}`; });
     await shot(page, "neutral.png");
     await page.keyboard.press("Escape");
-    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at})`);
+    check(r.seeThroughInUse > 200, `the neutral pairs' spot has things in front of her for the see-through to fade (${r.seeThroughInUse} px it changes; her at ${at}, ${spot.front} trees in front, ${spot.wood} within 40 m)`);
     // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
     // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
     const allow = r.still * 2 + Math.round(r.pixels * 0.005);
-    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
-  }, "&seed=886806&at=2327,2569&mode=ground&spell=auto&wave=off");
+    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`, p.name.startsWith("see-through") ? "neutral-see-through" : undefined);
+  }, "&seed=886806&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
   // sprite's (trees, plants, walls, set pieces, decor, the treehouse) lowest drawn pixel, read from the atlas itself, sits on the ground. Close-up in a
@@ -857,8 +882,13 @@ async function main() {
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
   // a batch three.js capped), and nothing may appear or vanish anywhere on screen.
+  // Only on a real GPU (#1090): on the software renderer a frame at these sizes takes tens of seconds, so they're reported known.
+  const soft = (w, h) => check(false, `${w}x${h}: the vanish flights need a real GPU (SMOKE_GPU=1); not flown on the software renderer`, "vanish");
   for (const [w, h, dpr] of [[1900, 1240, 1], [2000, 1076, 2]]) {
+    if (!GPU) { if (!process.env.ONLY || process.env.ONLY.split(",").includes(`vanish-${w}x${h}`)) soft(w, h); continue; }
     await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
+      const gl = await page.evaluate(() => { const c = document.createElement("canvas").getContext("webgl2"), e = c && c.getExtension("WEBGL_debug_renderer_info"); return c ? String(c.getParameter(e ? e.UNMASKED_RENDERER_WEBGL : c.RENDERER)) : ""; });
+      if (/swiftshader|llvmpipe|software/i.test(gl)) { soft(w, h); return; }
       await page.keyboard.press("Enter");
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "ArrowRight", 4, 600000);
