@@ -77,7 +77,7 @@ export class FindsPanel {
     let html = `<h2>🧪 Finds (dev) <span><button data-act="reset" title="Let every find go">reset everything</button> <button data-act="close">✕</button></span></h2>`;
     for (const k of FIND_KINDS) {
       const keep = KEEPERS[k.id], has = keep.has(c), n = k.items.filter(id => has.has(id)).length;
-      html += `<h3>${esc(k.id)} <span class="n">${n}/${k.items.length} · in a ${esc(k.name)}</span><button data-kind="${k.id}" data-act="all">all</button><button data-kind="${k.id}" data-act="none">none</button></h3><div class="items">`;
+      html += `<h3>${esc(k.id)} <span class="n">${n}/${k.items.length} · each a ${esc(k.name)}</span><button data-kind="${k.id}" data-act="all">all</button><button data-kind="${k.id}" data-act="none">none</button></h3><div class="items">`;
       for (const id of k.items) html += `<button data-kind="${k.id}" data-id="${esc(id)}" aria-pressed="${has.has(id)}" title="${esc(id)}">${esc(keep.label(id))}</button>`;
       html += `</div>`;
       if (k.id === "part") html += `<div class="line">on her broom: ${esc(fittedLine(c))}</div>`;
