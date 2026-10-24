@@ -10916,6 +10916,63 @@
       ],
       "additionalProperties": false
     },
+    "loadingMist": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "layers": {
+          "type": "number",
+          "minimum": 0
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0
+        },
+        "density": {
+          "type": "number",
+          "minimum": 0
+        },
+        "glow": {
+          "type": "number",
+          "minimum": 0
+        },
+        "speed": {
+          "type": "number",
+          "minimum": 0
+        },
+        "cap": {
+          "type": "number",
+          "minimum": 0
+        },
+        "soft": {
+          "type": "number",
+          "minimum": 0
+        },
+        "size": {
+          "type": "number",
+          "minimum": 0
+        },
+        "sea": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "layers",
+        "height",
+        "density",
+        "glow",
+        "speed",
+        "cap",
+        "soft",
+        "size",
+        "sea"
+      ],
+      "additionalProperties": false
+    },
     "lightRings": {
       "type": "object",
       "properties": {
@@ -11414,6 +11471,7 @@
     "haze",
     "shadows",
     "mist",
+    "loadingMist",
     "lightRings",
     "holograms",
     "watching",

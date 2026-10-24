@@ -10,6 +10,9 @@
 // spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up
 // (`short`: later loads and after the bed, Ed's decisions 4 and 10) has any key or move get her straight up, and the mirror waits
 // to be used. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
+// A dream first (Ed, 2026-10-24, finds on loan: "when she's asleep ... we can communicate through her dreams"): after a night with a
+// find on loan she dreams its verdict (render/dream.ts) while still asleep, beat "dream", nothing ringing; when the dream ends by
+// itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
@@ -17,7 +20,7 @@ import { HOUSE_ROOMS, keepInRoom, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
 import { dressed, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
-export type WakeBeat = "alarm" | "snooze" | "stretch" | "up";
+export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
 export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed" | /** at the door undressed */ "dressFirst";
 
@@ -54,14 +57,23 @@ function inBed(g: Game): { x: number; z: number } | null {
 }
 
 /** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
- *  in bed, the alarm ringing; `short`, the shorter one. False without the house's bedroom. */
-export function startWake(g: Game, ht: number, short = false): boolean {
+ *  in bed, in her nightie, last night's clothes all in the pile, the alarm ringing; `short`, the shorter one; `dreaming`, still
+ *  asleep in her dream first (beat "dream": the alarm when it ends). False without the house's bedroom. */
+export function startWake(g: Game, ht: number, short = false, dreaming = false): boolean {
   const at = inBed(g);
   if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === "bedroom")) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
-  g.wake = { beat: "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], pile: [...PILE_SLOTS], ...(short ? { short } : {}) };
+  g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], pile: [...PILE_SLOTS], ...(short ? { short } : {}) };
   return true;
+}
+
+/** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her
+ *  phone's alarm goes off, the wake-up's own first beat. Nothing if she isn't dreaming. */
+export function endDream(g: Game, ht: number): void {
+  const w = g.wake;
+  if (w?.beat !== "dream") return;
+  w.beat = "alarm"; w.at = ht; w.events.push("ring");
 }
 
 /** The bedroom's door shut: till she's dressed (the oak, 2026-10-24: nothing else; it waited on the curtains, and they on the build). */
@@ -89,6 +101,8 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
   const to = (beat: WakeBeat, e: WakeEvent) => { w.beat = beat; w.at = ht; w.events.push(e); };
   const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } w.open = true; to("up", "up"); };
   // (shorter: any key or move, ringing or snoozing, and she's up)
+  // (dreaming: any key or move ends the dream, and the alarm rings; the press is the dream's, nothing else's)
+  if (w.beat === "dream") { if (moving || press || c.spell || c.castParty) endDream(g, ht); return held; }
   if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || press || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
   if (w.beat === "alarm") {
     if (moving) to("stretch", "stretch");
