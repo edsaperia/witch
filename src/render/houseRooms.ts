@@ -98,6 +98,11 @@ function objects(q: Quad[]): void {
 
 /** A hat lying on the hats' floor: a cone and its brim, standing up off the floor, turned to the camera (in its slot's spell's band
  *  colour); (x, z) its slot on the plan. */
+/** How tall a hat lying on the hats' floor is drawn (m): its label goes above it (tagHeight). */
+export const HAT_TALL = 0.5;
+/** How high over an object's middle its label sits (m): above the clothes pile, and above the hats lying on the hats' floor (Golf,
+ *  2026-10-24: at 0.5 it lay across their row and hid them); 0.5 for the rest. */
+export const tagHeight = (kind: string | undefined): number => (kind === "pile" ? 1.6 : kind === "hats" ? HAT_TALL + 0.7 : 0.5);
 function hatQuads(x: number, z: number, i: number): Quad[] {
   const band: [number, number, number] = [[0.9, 0.5, 0.2], [0.4, 0.8, 0.9], [0.9, 0.35, 0.7], [0.5, 0.9, 0.4]][i % 4] as [number, number, number], dark: [number, number, number] = [0.16, 0.11, 0.24];
   const a = fromPlan({ x: 0, z: 0 }, 1, 0), b = fromPlan({ x: 0, z: 0 }, 0, 1), ex = [a.x, b.x]; // (the world's east on the plan: across the screen)
@@ -105,7 +110,7 @@ function hatQuads(x: number, z: number, i: number): Quad[] {
   return [
     quad([at(-0.32, 0), at(0.32, 0), at(0.32, 0.06), at(-0.32, 0.06)], dark, 3),
     quad([at(-0.17, 0.06), at(0.17, 0.06), at(0.15, 0.13), at(-0.15, 0.13)], band, 3),
-    quad([at(-0.15, 0.13), at(0.15, 0.13), at(0.04, 0.5), at(-0.02, 0.5)], dark, 3),
+    quad([at(-0.15, 0.13), at(0.15, 0.13), at(0.04, HAT_TALL), at(-0.02, HAT_TALL)], dark, 3),
   ];
 }
 
@@ -117,6 +122,15 @@ const BAKE_NEAR = 30;
 
 /** North of this (m, the hub's centre 0), a quad is behind the hub: drawn first. */
 const BEHIND = -3;
+/** The rooms' drawing order (three.js's renderOrder: no depth, so what's drawn later is in front): behind the hub its floors and walls,
+ *  then its furniture (furnitureOrder), then its near rails and rims (layer 3); the same again in front of it. */
+export const ROOMS_ORDER = { back: 19.93, backNear: 19.934, front: 19.94, frontNear: 19.944 };
+/** A piece of furniture's order: after its half's floors and walls, before its near rails; nearer pieces later (dz: plan metres south
+ *  of the hub); a room's dressing before all furniture. */
+export const furnitureOrder = (dz: number, decor = false): number => (dz < BEHIND ? 19.931 : 19.941) + (decor ? 0 : 0.001) + 0.0009 * (0.5 + Math.atan(dz / 30) / Math.PI);
+/** The hats lying on the hats' floor (Golf, 2026-10-24: they didn't show; drawn with the floors, their own furniture, the rug, went over
+ *  them): just after that piece, else after their half's furniture, and before its near rails, so a rail in front still hides them. */
+export const hatsOrder = (dz: number, rug: number | null): number => (rug !== null ? rug + 1e-6 : dz < BEHIND ? ROOMS_ORDER.backNear - 1e-4 : ROOMS_ORDER.frontNear - 1e-4);
 
 /** One of the two halves of the rooms' drawing: behind the hub (drawn first) or in front of it. */
 class Part {
@@ -145,8 +159,9 @@ export class HouseRoomsView {
   // hide it nor it her; no depth, their own quads in order, the far ones first, floors, walls, then the objects)
   private readonly mat = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, depthWrite: false, depthTest: false });
   // (the rooms' quads in four parts: behind the hub and in front of it, each split again round its furniture, so what stands in
-  // front of a room's floor and pieces, its near rail and its rim, layer 3, is drawn after them)
-  private readonly parts: [Part, Part, Part, Part];
+  // front of a room's floor and pieces, its near rail and its rim, layer 3, is drawn after them; and a fifth, the hats lying on
+  // the hats' floor, on top of their own piece: hatsOrder)
+  private readonly parts: [Part, Part, Part, Part, Part];
   private quads: Quad[] = [];
   private hub = -1;
   private hatsKey = "";
@@ -184,7 +199,8 @@ export class HouseRoomsView {
   private pile: { key: string; mesh: THREE.Mesh; pos: Float32Array; w: number; h: number } | null = null;
 
   constructor() {
-    this.parts = [new Part(this.mat, 19.93), new Part(this.mat, 19.934), new Part(this.mat, 19.94), new Part(this.mat, 19.944)];
+    const R = ROOMS_ORDER;
+    this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.roofs.visible = false;
     this.furniture.add(this.spot.mesh);
@@ -241,9 +257,10 @@ export class HouseRoomsView {
       const slots = hatSlots({ x: 0, z: 0 }).map(p => toPlanAt0(p.x, p.z)), base = this.quads.filter(q => !q.obj?.startsWith("hat:"));
       hats.forEach((s, i) => { if (s) for (const q of hatQuads(slots[i].x, slots[i].z, i)) base.push({ ...q, obj: `hat:${i}` }); });
       this.quads = inOrder(base);
-      const behind = (q: Quad) => q.depth < BEHIND, near = (q: Quad) => q.layer === 3;
-      this.parts[0].set(base.filter(q => behind(q) && !near(q))); this.parts[1].set(base.filter(q => behind(q) && near(q)));
-      this.parts[2].set(base.filter(q => !behind(q) && !near(q))); this.parts[3].set(base.filter(q => !behind(q) && near(q)));
+      const behind = (q: Quad) => q.depth < BEHIND, near = (q: Quad) => q.layer === 3, hat = (q: Quad) => !!q.obj?.startsWith("hat:"), room = this.quads.filter(q => !hat(q));
+      this.parts[0].set(room.filter(q => behind(q) && !near(q))); this.parts[1].set(room.filter(q => behind(q) && near(q)));
+      this.parts[2].set(room.filter(q => !behind(q) && !near(q))); this.parts[3].set(room.filter(q => !behind(q) && near(q)));
+      this.parts[4].set(this.quads.filter(hat));
     }
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
     const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
@@ -326,7 +343,7 @@ export class HouseRoomsView {
         const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
         // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
         const mesh = new THREE.Mesh(geo, mat), dz = south(todo.x, todo.z), decor = todo.key.startsWith("decor:");
-        mesh.frustumCulled = false; mesh.renderOrder = (dz < BEHIND ? 19.931 : 19.941) + (decor ? 0 : 0.001) + 0.0009 * (0.5 + Math.atan(dz / 30) / Math.PI);
+        mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(dz, decor);
         this.furniture.add(mesh); this.pieces.set(todo.key, { art, mesh, pos, id: todo.id, x: todo.x, z: todo.z });
       }
     }
@@ -345,6 +362,9 @@ export class HouseRoomsView {
     // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
     // only in or near the Workshop (its pieces baked: they're baked as she nears them)
     const piece = (id: string) => { for (const p of this.pieces.values()) if (p.id === id && p.mesh.visible) return p; return null; };
+    // (the hats on top of the hats' floor's own piece, wherever the house puts it)
+    const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
+    if (floorOf) this.parts[4].mesh.renderOrder = hatsOrder(south(floorOf.x, floorOf.z), piece(floorOf.id)?.mesh.renderOrder ?? null);
     if (piece("broomBay") || piece("pegboard") || piece("lathe")) {
       const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
       this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
@@ -402,7 +422,7 @@ export class HouseRoomsView {
     }
     if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, at?.use.kind === "pile" ? 1.6 : 0.5, at ? tagOf(at, W, D, w) : "");
+    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
