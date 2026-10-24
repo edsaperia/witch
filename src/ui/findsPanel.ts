@@ -25,6 +25,10 @@ const CSS = `
 #finds-dev .note { color: #7d739f; margin-top: 10px; line-height: 1.4; }
 `;
 
+/** Tonight's loan (app/loan.ts; Ed, 2026-10-24) for the panel: its name or null, and settling it now as a win or a loss (its dream
+ *  played over the game: main.ts). */
+export interface LoanControl { now(): string | null; keep(): void; back(): void }
+
 export class FindsPanel {
   private readonly el = document.createElement("div");
 
@@ -34,7 +38,7 @@ export class FindsPanel {
   /** `ctx` gives the keepers tonight's spells and what she owns, each time (a new night, a new game); `spawn` puts a find (or
    *  tonight's, item null) on clear ground in front of her (Ed, 2026-10-23: "a way to spawn the collectible near the player"),
    *  saying what it did. */
-  constructor(private readonly ctx: () => FindsCtx, private readonly spawn: (kind: FindKindId | null, item: string | null) => string) {
+  constructor(private readonly ctx: () => FindsCtx, private readonly spawn: (kind: FindKindId | null, item: string | null) => string, private readonly loan?: LoanControl) {
     const style = document.createElement("style");
     style.textContent = CSS;
     document.head.append(style);
@@ -65,6 +69,7 @@ export class FindsPanel {
       this.said = b.dataset.act === "tonight" ? this.spawn(null, null) : this.spawn(k, it);
       return this.draw();
     }
+    if (b.dataset.act === "keep" || b.dataset.act === "back") { (b.dataset.act === "keep" ? this.loan?.keep : this.loan?.back)?.(); return this.draw(); }
     if (b.dataset.act === "reset") for (const k of FIND_KINDS) grantAll(c, k.id, false);
     else if (kind && b.dataset.act === "all") grantAll(c, kind, true);
     else if (kind && b.dataset.act === "none") grantAll(c, kind, false);
@@ -82,6 +87,9 @@ export class FindsPanel {
       html += `</div>`;
       if (k.id === "part") html += `<div class="line">on her broom: ${esc(fittedLine(c))}</div>`;
     }
+    // Tonight's loan: settled now as a win (kept) or a loss (sent back), its dream played over the game.
+    const lent = this.loan?.now() ?? null;
+    html += `<div class="spawn"><h3>Tonight's loan</h3><div class="row">${lent ? `${esc(lent)} <button data-act="keep" title="Settle it now as a won night: kept for good, its dream shown">keep (won)</button><button data-act="back" title="Settle it now as a lost night: gone back to the stars, its dream shown">send back (lost)</button>` : "nothing on loan (take tonight's find first)"}</div></div>`;
     // Spawn a find near her: a kind, then its items (the ones she hasn't got first), placed as tonight's find.
     const kind = this.pick?.kind ?? FIND_KINDS[0].id, K = FIND_KINDS.find(k => k.id === kind)!, keepK = KEEPERS[kind], hasK = keepK.has(c);
     const items = [...K.items].sort((a, b) => Number(hasK.has(a)) - Number(hasK.has(b)));
