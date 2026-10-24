@@ -764,7 +764,14 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
 async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
   const c = newFlightClock();
   view.fly = shot;
-  try { while (!stepFlightClock(c, performance.now(), A).faded) { view.render(n.game.clock.time); await nextFrame(); } } finally { view.fly = null; }
+  try {
+    while (!stepFlightClock(c, performance.now(), A).faded) {
+      const t0 = performance.now();
+      view.render(n.game.clock.time);
+      if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
+      await nextFrame();
+    }
+  } finally { view.fly = null; }
 }
 /** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
  *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as

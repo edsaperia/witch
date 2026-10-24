@@ -3,7 +3,8 @@
 // to with Enter, as she does; then the page's own marks (?timing=1, app/timing.ts) from the press: the chart's flight done
 // (chart:flown), the next night made (witch:game), its start ready (witch:prep-*), the game's camera taking over (sail:dive, else
 // the still's fade, witch:landed), landed (game:arrived) and the alarm (opening:alarm); and the page's frames meanwhile (a
-// requestAnimationFrame loop's gaps: the longest, and the time lost in gaps over GAP ms, the frozen frames). STRIP=<ms>: a picture
+// requestAnimationFrame loop's gaps: the longest, and the time lost in gaps over GAP ms, the frozen frames), the longest tasks and
+// every mark to the dive in order (steps, in the .json). STRIP=<ms>: a picture
 // every that many ms from the press to the alarm too (slows the run: time it without). Writes <out>.json (and <out>-NNN.png).
 //   npm run build && node tools/view/sail-timing.cjs [out] [dist]
 // ISLAND (fox), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1).
@@ -28,6 +29,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
     for (let run = 0; run < RUNS; run++) {
       const page = await browser.newPage({ viewport: { width: W, height: H } });
       page.on("pageerror", e => errors.push(e.message));
+      page.on("console", m => { const t = m.text(); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
         window.__f = []; const f = t => { window.__f.push(t); requestAnimationFrame(f); }; requestAnimationFrame(f);
@@ -71,7 +73,8 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         // (the longest main-thread tasks from the press to the dive, each with the last mark before it)
         const all = performance.getEntriesByType("mark").filter(e => e.startTime >= s0).sort((a, b) => a.startTime - b.startTime);
         const tasks = window.__lt.filter(([t]) => t >= s0 && t < dive).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, d]) => ({ at: Math.round(t - s0), ms: Math.round(d), after: all.filter(e => e.startTime <= t).at(-1)?.name ?? "" }));
-        return { sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), tasks };
+        const steps = all.filter(e => e.startTime < dive).map(e => [e.name, Math.round(e.startTime - s0)]); // (every mark to the dive, in order)
+        return { sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), tasks, steps };
       }, [MARKS, GAP * THR, sail]);
       r.shots = shots;
       runs.push(r);
