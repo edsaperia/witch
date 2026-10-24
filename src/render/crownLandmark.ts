@@ -100,11 +100,20 @@ export class CrownLandmark {
   bake(renderer: THREE.WebGLRenderer): void {
     if (this.baked) return;
     const C = this.crown, d = C.crown.dome, U = C.uniforms, floor = 0;
-    const x0 = d.cx - d.rx * 1.08, x1 = d.cx + d.rx * 1.08, y0 = -C.crown.floor * 0.15, y1 = d.top + 14, w = x1 - x0, h = (y1 - y0) * 1.15;
-    this.frame = { x: (x0 + x1) / 2, w, h, y0 };
-    const cam = new THREE.OrthographicCamera(-w / 2, w / 2, h / 2, -h / 2, 1, 2000);
-    cam.position.set((x0 + x1) / 2, (y0 + y1) / 2 + Math.sin(PITCH) * 600, d.cz + d.rz + Math.cos(PITCH) * 600);
-    cam.lookAt((x0 + x1) / 2, (y0 + y1) / 2, d.cz); cam.updateMatrixWorld();
+    // (its frame: everything of it as this camera sees it, pitched, so the far side's lobes stand higher than the near side's and
+    // the near side's lower; the trunk and roots from a little below the floor down left out, as the woods in front hide them)
+    const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 1, 4000);
+    cam.position.set(d.cx, d.base + Math.sin(PITCH) * 1500, d.cz + Math.cos(PITCH) * 1500);
+    cam.lookAt(d.cx, d.base, d.cz); cam.updateMatrixWorld();
+    const M = cam.matrixWorldInverse, q = new THREE.Vector3();
+    let l = Infinity, r = -Infinity, b = Infinity, t = -Infinity;
+    const take = (x: number, y: number, z: number, rad: number) => { q.set(x, y, z).applyMatrix4(M); l = Math.min(l, q.x - rad); r = Math.max(r, q.x + rad); b = Math.min(b, q.y - rad); t = Math.max(t, q.y + rad); };
+    for (const o of C.crown.lobes) take(o.x, o.y, o.z, o.r * 1.05);
+    for (const limb of C.crown.limbs) for (const k of limb.knots) if (k[1] > -C.crown.floor * 0.15) take(k[0], k[1], k[2], k[3]);
+    const yf = q.set(d.cx, floor, d.cz).applyMatrix4(M).y, pad = 2;
+    cam.left = l - pad; cam.right = r + pad; cam.bottom = b; cam.top = t + pad; cam.updateProjectionMatrix();
+    // (its middle across, its size, and its bottom edge in metres over the floor where it stands)
+    this.frame = { x: d.cx + (l + r) / 2, w: r - l + 2 * pad, h: t + pad - b, y0: b - yf };
     // (the crown's own map set to its plan's own frame for the bake, then put back)
     const keep = ["uMapO", "uMapX", "uMapY", "uMapZ"].map(k => (U[k].value as THREE.Vector3).clone()), keepS = [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value];
     const occ = SPRITE_UNIFORMS.uOcc.value.w, right = SPRITE_UNIFORMS.uRight.value.clone(), up = SPRITE_UNIFORMS.uUp.value.clone();
