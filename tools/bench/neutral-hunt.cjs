@@ -38,7 +38,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
   try {
     const page = await browser.newPage({ viewport: { width: 1000, height: 663 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${SEED}&creator=0&spell=auto&wave=off&at=${AT[0]},${AT[1]}&mode=ground`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${SEED}&creator=0&spell=auto&wave=off&at=${AT[0]},${AT[1]}&mode=ground${process.env.QUERY ? "&" + process.env.QUERY : ""}`); // (QUERY=pixels=keep: as the smoke loads it)
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 600000, polling: 500 });
