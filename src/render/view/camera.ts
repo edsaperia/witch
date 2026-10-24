@@ -8,7 +8,7 @@ import { witchHeight } from "../../rules/witch";
 import { deckOf } from "../../rules/treehouse";
 import { moonInView } from "../../rules/telescope";
 import { constellationFor } from "../../rules/constellations";
-import { nightFind } from "../../rules/finds";
+import { loanFind, nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
 import { SPRITE_UNIFORMS } from "../sprites";
 import { updateFrustum } from "./culling";
@@ -69,9 +69,12 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     HEIGHT_UNIFORMS.uBendFwd.value.set(0, -1); // the camera always looks north (toward -z)
     const far = t.haze.far;
     moonNow = v.updateMoon(g);
-    // (the game's sky: the stars as if looking north just over the horizon; tonight's constellation only through the telescope)
+    // (the game's sky: the stars as if looking north just over the horizon; tonight's constellation only through the telescope, but
+    // once she's taken its find, lit in the game's own sky too, at its true bearing: Ed, 2026-10-24, finds on loan)
     v.sky.look(0, -12, fov, v.width, v.height);
-    v.sky.constellation(NO_STARS, NO_LINES, 0, 0);
+    const lit = litConstellation(v, { fov, pitch: 12 });
+    if (lit) v.sky.constellation(lit.stars, lit.lines, lit.lineStrength, 1);
+    else v.sky.constellation(NO_STARS, NO_LINES, 0, 0);
     v.sky.update(Math.max(k, V.coast + V.gaze > 0.01 ? 1e-5 : 0), pose.tx, pose.tz, far, // (by the sea the sky shows over the flat water even unbent)
       2 * far * Math.tan((t.camera.fov * Math.PI) / 360) * (v.width / v.height), moonNow);
     v.ground.moonRoad(moonNow.x, v.width, moonNow.lit > 0.02);
@@ -136,10 +139,27 @@ function placeTelescope(v: View, look: { heading: number; fov: number; pitch: nu
 
 const NO_STARS: { bearing: number; elevation: number; b: number }[] = [], NO_LINES: [number, number][] = [];
 
+/** Tonight's find's constellation once she's taken it (on loan till she sleeps: rules/finds.ts loanFind; Ed, 2026-10-24): lit in
+ *  full, its stars brighter than through the telescope before, its lines drawn whole, at its true bearing; null with no loan. */
+function litConstellation(v: View, low?: { fov: number; pitch: number }): { stars: { bearing: number; elevation: number; b: number }[]; lines: [number, number][]; lineStrength: number } | null {
+  const g = v.game, T = g.tuning.telescope, C = T ? constellationFor(loanFind(g, g.map.treehouse.x, g.map.treehouse.z)) : null;
+  if (!C || !T) return null;
+  // (in the game's own sky, a strip just over the horizon looking north, it stands at its true bearing but low and smaller, near
+  // the strip's top, so it's seen there at all: the telescope shows it at its true height; Ed's round-1 mock, "low in the sky")
+  const key = `${C.item}${C.bearing}${low ? `:${low.fov}` : ""}`, k = low ? LOW_SCALE : 1, up = low ? low.pitch + low.fov * 0.38 : C.elevation;
+  const cache = low ? "litLow" : "litStars";
+  if (v[cache]?.key !== key) v[cache] = { key, stars: C.stars.map(q => ({ bearing: C.bearing + (((q.bearing - C.bearing + 540) % 360) - 180) * k, elevation: up + (q.elevation - C.elevation) * k, b: T.consBright * 1.25 })) };
+  return { stars: v[cache]!.stars, lines: C.lines, lineStrength: Math.min(1, T.consLines * 1.4) };
+}
+/** How much smaller the lit constellation is drawn low in the game's own sky than its true size (through the telescope). */
+const LOW_SCALE = 0.4;
+
 /** Tonight's constellation through the telescope (rules/constellations.ts; Ed, 2026-10-22): its stars a little brighter than their
  *  neighbours, its faint dotted lines fading in once she's held the view on it telescope.consHold seconds (real time: the house's
  *  tenth would make it ten), out again as she looks away. None tonight, or found: no stars. */
 function lookAtConstellation(v: View, look: { heading: number; fov: number; pitch: number }, fovX: number): void {
+  const lit = litConstellation(v);
+  if (lit) { v.sky.constellation(lit.stars, lit.lines, lit.lineStrength, 1); return; } // (taken: lit in full, no holding the view on it)
   const g = v.game, T = g.tuning.telescope!, C = constellationFor(nightFind(g, g.map.treehouse.x, g.map.treehouse.z));
   const now = performance.now(), dt = v.consAt ? Math.min(0.1, (now - v.consAt) / 1000) : 0;
   v.consAt = now;

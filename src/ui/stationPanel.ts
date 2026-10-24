@@ -55,6 +55,8 @@ export class StationPanel {
   private shelves: Shelf[] = [];
   private g!: Genome;
   private owned = new Set<string>();
+  /** Tonight's find on loan (app/loan.ts), its card sparkling (Ed, 2026-10-24: no words, "sparkly somehow"), or null. */
+  private loaned: string | null = null;
   private ws: WorkshopCtx | null = null;
   private banner = "";
   private st: Style;
@@ -138,6 +140,8 @@ export class StationPanel {
   /** The Workshop's state changed elsewhere (a part found, her broom changed): the panel follows. */
   setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }
   /** Her look changed elsewhere (her room, a hat put on): the panel's copy follows. */
+  /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
+  setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
   /** Each frame while open: the pad's d-pad or right stick moves, its bottom or left face button chooses (the left stick walks her:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
@@ -255,14 +259,14 @@ export class StationPanel {
         html += `<div class="sp-shelf${L[at.line]?.shelf === l.shelf ? " on" : ""}"><div class="sp-lab">${esc(s.label)}${worn ? `<span> · ${esc(worn)}</span>` : ""}${note ? `<em>${esc(note)}</em>` : ""}</div>`;
       }
       const f = (c: number) => at.line === i && at.col === c ? " focus" : "";
-      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
+      if (l.kind === "items") html += `<div class="sp-row">${shownItems(s).map((it, c) => { const own = this.owned.has(it.id); return `<div class="sp-card${own ? "" : " locked"}${wears(this.g, it) ? " worn" : ""}${it.id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${none(it) ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.thumbKey(it, s)}"></span>`}${wears(this.g, it) ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`; }).join("")}</div>`;
       else if (l.kind === "cards" && s.board) html += `<div class="sp-row sp-board">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c)!, cell = BOARD[(l.row ?? 0) * 3 + c], own = this.found_().has(id), tonight = !own && this.ws?.tonight === id;
-        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)}<br>${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
+        return `<div class="sp-cell${own ? "" : " locked"}${tonight ? " tonight" : ""}${id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}"><small>${esc(cell.point)}<br>${esc(cell.biome)}</small><span data-thumb="${this.partKey(id)}"></span><b>${own ? esc(partById(id)!.name) : "?"}</b></div>`;
       }).join("")}</div>`;
       else if (l.kind === "cards") html += `<div class="sp-row">${Array.from({ length: l.n }, (_, c) => {
         const id = cardAt(s, l, c), own = id === null || this.found_().has(id), on = (this.ws?.fitted[s.slot!] ?? null) === id;
-        return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
+        return `<div class="sp-card sp-wide${own ? "" : " locked"}${on ? " worn" : ""}${id !== null && id === this.loaned ? " loaned" : ""}${f(c)}" data-line="${i}" data-col="${c}">${id === null ? `<i class="sp-none">∅</i>` : `<span data-thumb="${this.partKey(id)}"></span>`}${on ? `<b class="sp-tick">✓</b>` : ""}${own ? "" : `<b class="sp-lock">🔒</b>`}</div>`;
       }).join("")}</div>`;
       else if (l.kind === "chips") html += `<div class="sp-chips">${setChips(this.ws?.fitted ?? { tip: null, chassis: null, exhaust: null }).map((x, c) => `<span class="${x.whole ? "whole" : x.fitted ? "some" : ""}${f(c)}" data-line="${i}" data-col="${c}">${x.whole ? "✦ " : ""}${esc(x.name)} ${x.fitted}/${x.of} · ${esc(x.spell)}</span>`).join("")}</div>`;
       else if (l.kind === "parts") html += `<div class="sp-parts">${s.colour!.map((p, c) => `<span class="${p === this.partOf(s) ? "on" : ""}${f(c)}" data-line="${i}" data-col="${c}"><i style="background:${css(this.colourOf(p))}"></i>${esc(PART_NAMES[p] ?? p)}</span>`).join("")}</div>`;
@@ -405,6 +409,12 @@ function installCss(): void {
 #station-panel .sp-cell.locked canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 rgba(232,226,244,.45)) drop-shadow(-1px 0 0 rgba(232,226,244,.45)) drop-shadow(0 1px 0 rgba(232,226,244,.45)) drop-shadow(0 -1px 0 rgba(232,226,244,.45)); }
 #station-panel .sp-cell.tonight { border-color: rgba(255,214,120,.9); box-shadow: 0 0 10px rgba(255,214,120,.55), inset 0 0 8px rgba(255,214,120,.3); } #station-panel .sp-cell.tonight canvas { filter: brightness(0) invert(.12) drop-shadow(1px 0 0 #ffd678) drop-shadow(-1px 0 0 #ffd678) drop-shadow(0 1px 0 #ffd678) drop-shadow(0 -1px 0 #ffd678) drop-shadow(0 0 4px rgba(255,214,120,.9)); animation: sp-glow 1.6s ease-in-out infinite; }
 @keyframes sp-glow { 50% { opacity: .65; } }
+#station-panel .loaned { box-shadow: inset 0 0 12px rgba(255,236,190,.3); }
+#station-panel .loaned::before, #station-panel .loaned::after { content: ""; position: absolute; width: 2px; height: 2px; background: #fff4d6; pointer-events: none; z-index: 1;
+  box-shadow: 2px 0 0 #ffe2a0, -2px 0 0 #ffe2a0, 0 2px 0 #ffe2a0, 0 -2px 0 #ffe2a0, 4px 0 0 rgba(255,226,160,.6), -4px 0 0 rgba(255,226,160,.6), 0 4px 0 rgba(255,226,160,.6), 0 -4px 0 rgba(255,226,160,.6);
+  animation: sp-glint 1.7s steps(5) infinite; }
+#station-panel .loaned::before { top: 7px; left: 8px; } #station-panel .loaned::after { bottom: 9px; right: 7px; animation-delay: -.85s; }
+@keyframes sp-glint { 0%, 100% { opacity: 0; transform: scale(.6); } 50% { opacity: 1; transform: scale(1); } }
 #station-panel .sp-chips { display: flex; flex-wrap: wrap; gap: 4px; } #station-panel .sp-chips span { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid rgba(232,226,244,.35); opacity: .75; }
 #station-panel .sp-chips span.some { opacity: .95; } #station-panel .sp-chips span.whole { opacity: 1; color: #1d1408; background: var(--accent, #e8b46a); text-shadow: none; border-color: var(--accent, #e8b46a); }
 #station-panel .sp-detail h3 small { font-size: 11px; font-weight: normal; margin-left: 6px; opacity: .8; } #station-panel .sp-detail p.up, #station-panel .sp-sum .up b { color: #8fe39a; } #station-panel .sp-detail p.down, #station-panel .sp-sum .down b { color: #ff9a8a; }

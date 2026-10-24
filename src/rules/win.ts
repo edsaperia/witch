@@ -24,6 +24,7 @@ import { islandSigilOf } from "./dancefloor";
 import { allReached, cellKey } from "./party";
 import { leyChain } from "./leylines";
 import { pulseProgress } from "./leypulse";
+import { goneAtWin } from "./finds";
 
 /** A point on one of the lap's pulses' runs: a stone (its key; "" for where it set off), where it stands, when the pulse passes
  *  it, and its place along the ley route as drawn (links: home's stone 0, the route's j-th stone j). */
@@ -222,6 +223,7 @@ export function legendPlaces(g: Game, n: number): { x: number; z: number }[] {
 function win(g: Game, time: number): void {
   const w = g.win!, d0 = g.map.dancefloor;
   w.phase = "won"; w.wonAt = time; w.sigil = islandSigil(g);
+  goneAtWin(g); // (a find not yet taken is gone; one on loan stays hers till she sleeps: rules/finds.ts)
   // Her leash let go: every one of them dances in the line now.
   for (const W of g.witches) { for (const id of [...W.leash.stack, ...W.leash.placed.map(p => p.id)]) g.creatures[id].leashed = false; W.leash.stack = []; W.leash.placed = []; W.leash.talk = null; }
   g.combat.busy.clear();

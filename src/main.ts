@@ -3,7 +3,7 @@ import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
 import { openingWay, opensInBedroom } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
-import { startWake } from "./rules/wakeUp";
+import { endDream, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
@@ -37,14 +37,17 @@ import type { DecidePanel } from "./ui/decide";
 import { saveLoadout } from "./app/loadout";
 import { castable, hatSpell, setParts } from "./rules/spells";
 import { changeLoadout } from "./rules/hatSpells";
-import { HOUSE_ROOMS } from "./rules/houseRooms";
+import { HOUSE_ROOMS, addFloorHat } from "./rules/houseRooms";
 import { stationOf, tableOf } from "./rules/stations";
 import { itemById, shelfOf, shelvesAt, stationsShowing } from "./rules/wardrobe";
-import { fillTrunk, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
+import { FIND_KINDS, fillTrunk, findKind, loanFind, spawnFind, spawnSpot, type FindKindId } from "./rules/finds";
 import { fitBroom, loadBroom, migrateBroom } from "./app/broomSave";
 import { partById } from "./rules/broomParts";
 import { loadOwned } from "./app/owned";
 import { foundAll, keepFound, type FindsCtx } from "./app/finds";
+import { dreamsAfter, homeOf, hatWithoutLoan, lend, loanName, lookWithoutLoan, partsWithoutLoan, settle, withLoan, type Loan } from "./app/loan";
+import { DreamView, dreamArt, findCanvas } from "./render/dream";
+import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
@@ -146,9 +149,21 @@ const style = styleFromLink(params, bootTuning); // (app/viewParams.ts)
 const loadTimes = { viewStart: performance.now(), view: 0, ready: 0, mapPrep: prepUsed === "worker" ? 1 : prepUsed === "stale" ? -1 : prepUsed === "unsound" ? -2 : prepUsed === "failed" ? -3 : 0, mapPrepMs: Math.round(hydrateMs) }; // (mapPrep: the map made from the worker's prep, 1; one there for another night, -1; unsound, -2; failed to hydrate, -3. mapPrepMs: the hydrate's own time)
 /** Her hat on or not by her look (app/night.ts). */
 const wearHat = (g: unknown) => wear(N().game, g);
+/** Tonight's find on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): held here, never written; settled as she sleeps. */
+let loan: Loan | null = null;
+/** Her dream of a settled loan (render/dream.ts), playing over the sleep's dark; as it ends (by itself, or a key), her alarm rings
+ *  in the next night's wake-up (rules/wakeUp.ts endDream), or, the night not made yet, as soon as it is. */
+let dream: DreamView | null = null, dreamAsleep = false;
+/** The settled loan she dreams of as she sleeps in place (the bed's way), or null. */
+let dreamNext: { loan: Loan; won: boolean } | null = null;
+/** The settled loan she dreams of after a sail (Ed, 2026-10-24: "the chart's flight in lands her asleep in bed, the dream plays there
+ *  exactly as after a night in bed, and the alarm ends it"), or null: the flight lands in her bedroom, the dream as it lands. */
+let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
+/** The broom parts she has tonight: those she's found, and a part on loan. */
+const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
 loadTimes.view = performance.now();
-view.partsFound = new Set(loadBroom().found); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
+view.partsFound = partsNow(); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
 performance.mark("witch:view");
 viewFromLink(view, params); // (app/viewParams.ts)
 void installPixelUi(); // (the pixel font, for the HUD's edge cues' labels too: render/indicator.ts)
@@ -294,6 +309,10 @@ function arrived(): void {
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
+  // (a sail with a loan settled: landed asleep in her bed, dreaming it, the alarm when it ends: rules/wakeUp.ts, render/dream.ts)
+  const dd = dreamAfterDive;
+  dreamAfterDive = null;
+  if (dd && startWake(N().game, N().game.herTime, true, true)) startDream(dd);
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -309,7 +328,7 @@ creator.version = typeof __BUILD__ === "string" ? __BUILD__.split(" ")[0] : "dev
 (window as unknown as { __creator: Creator }).__creator = creator; // (the creator's smoke scripts read her place in the room)
 // Her hat's spell (rules/spells.ts, app/loadout.ts): the creator's Hat box chooses it from the hats she owns, kept on this browser.
 creator.loadout = { hat: N().game.spells.hat }; creator.hats = N().game.spells.hats;
-creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: game.spells.hat }); wearHat(page.look()); }; // (a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
+creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], l.hat); saveLoadout({ hat: hatWithoutLoan(game.spells.hat, loan) as typeof game.spells.hat }); wearHat(page.look()); }; // (a loaned hat never saved: app/loan.ts; a hat swapped while hers lies elsewhere leaves that one lying: rules/hatSpells.ts)
 // Her room mid-night from the treehouse's rooms (rules/houseRooms.ts; Ed, 2026-10-19): E at a dressing station, the bags or the broom
 // stand opens it at only that station's choices (config/house/), the world running on at the house's tenth; its way out brings
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
@@ -326,7 +345,7 @@ let owned: Set<string> | null = null, stillAt = 0;
 /** What the finds' keepers work on (app/finds.ts): tonight's spells and what she owns to wear, kept. */
 const findsCtx = (): FindsCtx => ({ spells: N().game.spells, owned: () => (owned ??= loadOwned((page.look() ?? creator.genome()) as Record<string, unknown>)) });
 stations.onLook = g => {
-  saveGenome(g as never); creator.adopt(g);
+  saveGenome(lookWithoutLoan(g as Record<string, unknown>, loan) as never); creator.adopt(g); // (saved without the loan: app/loan.ts)
   // (not yet dressed: a station's choice puts its piece on her, out of last night's pile: rules/clothesPile.ts; Ed, 2026-10-23)
   const w = N().game.wake; if (w && stations.station) wearFromStation(w, stations.station);
   if (JSON.stringify(g) !== lookNow) { lookNow = JSON.stringify(g); wearHat(g); }
@@ -335,9 +354,51 @@ stations.onLook = g => {
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
-stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(f); };
+stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }; // (kept without a part on loan: app/loan.ts)
 /** What the Workshop's stations show (ui/stationPanel.ts): the parts found, her broom, tonight's part to find, her tuning. */
-const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: new Set(loadBroom().found), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+const workshopNow = (): WorkshopCtx => { const { game, tuning } = N(), t = game.trunk; return { found: partsNow(), fitted: game.witches[0].spells.parts, tonight: t && t.kind === "part" && !t.found ? t.item : null, tuning }; };
+/** Tonight's find taken (the "found" event): on loan till she sleeps (app/loan.ts), hers to wear or use at once, never written. */
+function lendFind(kind: FindKindId, id: string): void {
+  const { game } = N();
+  loan = lend(kind, id, { look: (page.look() ?? creator.genome()) as Record<string, unknown> | null, hat: game.spells.hat, parts: game.witches[0].spells.parts });
+  if (kind === "wearable" || kind === "bag") findsCtx().owned().add(id); // (in what she owns tonight, not in her save)
+  view.partsFound = partsNow();
+}
+/** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she
+ *  has on of it with it); not, gone back to the sky, what she has on of it back to what she had before. What her dream shows, or
+ *  null with nothing on loan. */
+function settleLoan(won: boolean): { loan: Loan; won: boolean } | null {
+  const l = loan, { game } = N();
+  if (!l) return null;
+  loan = null;
+  const look = (page.look() ?? creator.genome()) as Record<string, unknown> | null;
+  const woke = settle(l, won, { look, hat: game.spells.hat, parts: game.witches[0].spells.parts }, {
+    keep: (kind, id) => keepFound(findsCtx(), kind, id), look: g => saveGenome(g as never), hat: h => saveLoadout({ hat: h as typeof game.spells.hat }), parts: f => fitBroom(f),
+  });
+  if (woke && woke !== look) { creator.adopt(woke); lookNow = JSON.stringify(woke); }
+  if (!won) owned = null; // (read afresh from her save, the loan not in it)
+  view.partsFound = partsNow();
+  return { loan: l, won };
+}
+/** Her dream of a settled loan shown (`veil`: over a night not asleep, its own dark under it). */
+function startDream(s: { loan: Loan; won: boolean }, veil = false): void {
+  dream?.dispose();
+  const of = { item: s.loan.id, name: loanName(s.loan), piece: findKind(s.loan.kind).piece(s.loan.id), won: s.won, home: homeOf(s.loan, id => stationsShowing(shelfOf(id)?.id ?? "")) };
+  dream = new DreamView(of, dreamArt(of, view.assets.style), veil, herHead).play(veil && params.has("shot"));
+  dreamAsleep = !veil; // (asleep: its end rings the next night's alarm; shown over a night, ?dream= or the dev panel, nothing)
+  dream.onOver = () => { const n = page.night; if (dreamAsleep && n?.game.wake) endDream(n.game, n.game.herTime); };
+  (window as unknown as { __dream?: DreamView }).__dream = dream; // (the shot tools draw it at a time: tools/loan/dream-shots.cjs)
+}
+/** Her head's top on the page (CSS px) as last drawn (render/view/witch.ts herHead), for her dream's cloud to rise from; null
+ *  before she's drawn. */
+function herHead(): { x: number; y: number } | null {
+  const H = view.herHouseHead, w = N().game.witch;
+  if (w.perch && H.at > 0) return { x: H.x, y: H.y }; // (in the house: as its labels are placed; kept while the next island is made)
+  const h = view.herHead, r = canvas.getBoundingClientRect();
+  return h.on ? { x: r.left + h.x * r.width, y: r.top + (1 - h.y) * r.height } : null;
+}
+/** The on-loan icon, top left (render/loanIcon.ts). */
+const loanIcon = new LoanIcon();
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
@@ -572,7 +633,15 @@ function spawnHere(kind: FindKindId | null, item: string | null): string {
   return `tonight's ${g.trunk.kind} ${g.trunk.item} moved next to her`;
 }
 // (it redraws after each give or take, asking again: the pegboard's parts kept up with it)
-const findsPanel = new FindsPanel(() => { view.partsFound = new Set(loadBroom().found); return findsCtx(); }, spawnHere);
+const findsPanel = new FindsPanel(() => { view.partsFound = partsNow(); return findsCtx(); }, spawnHere, {
+  now: () => (loan ? loanName(loan) : null),
+  keep: () => { const s = settleLoan(true); if (s) startDream(s, true); },
+  back: () => { const s = settleLoan(false); if (s) startDream(s, true); },
+});
+// ?dream=won:hat:sentry (or lost:wearable:top-cape, ...): her dream of such a loan over the night, at once, its own dark under it
+// (for a look at it; under ?shot= it's drawn only when asked, window.__dream.draw(seconds): tools/loan/dream-shots.cjs).
+{ const [v, k, ...r] = (params.get("dream") ?? "").split(":"), id = r.join(":");
+  if ((v === "won" || v === "lost") && FIND_KINDS.some(q => q.id === k && q.items.includes(id))) startDream({ loan: lend(k as FindKindId, id, { look: null, hat: "none", parts: N().game.witches[0].spells.parts }), won: v === "won" }, true); }
 document.getElementById("finds-dev-btn")?.addEventListener("click", () => findsPanel.toggle());
 const devFinds = new URLSearchParams(location.search).get("dev") === "finds";
 if (devFinds) findsPanel.toggle(true);
@@ -665,6 +734,8 @@ function chartWorldArg(): number | undefined { return new URLSearchParams(locati
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
 function sailFromChart(href: string, to: Sailed): Promise<boolean> {
+  // (she sleeps as she sails: tonight's loan settled, and its dream after the dive, in bed: Ed, 2026-10-24)
+  dreamAfterDive = dreamsAfter("sail") ? settleLoan(N().game.win?.phase === "won") : null;
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
   if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
   carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
@@ -714,6 +785,7 @@ async function sailInPlace(to: Sailed): Promise<void> {
   armBack();
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
+  if (dreamAfterDive && !wakeInBedroom(n.game)) dreamAfterDive = null; // (a dream to come: the flight in ends on her bedroom, rules/opening.ts)
   if (n.arrival) n.arrival.onReveal = revealArt;
   lastDraw = 0;
   await view.prepare();
@@ -728,6 +800,9 @@ async function sailInPlace(to: Sailed): Promise<void> {
  *  before (app/sail.ts nightHref's), quietly. */
 function newNight(how: NightWay): void {
   if (sailing) return;
+  // (she sleeps: tonight's loan settled, won or not, and on the bed's way she dreams it: app/loan.ts, render/dream.ts)
+  const settled = settleLoan(N().game.win?.phase === "won");
+  dreamNext = dreamsAfter(how) ? settled : null;
   const n = N(), href = nightHref(how, location.href);
   const reload = (h: string) => { location.href = h; };
   if ((botKind && how !== "bot") || sailWay(n.params, n.tuning) === "reload") { reload(href); return; }
@@ -759,6 +834,8 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.style.display = room || wakes ? "none" : ""; // (the start card only for a run without the creator, as at the boot)
   if (room) { dressCreator(); creator.show(); }
   if (wakes) (wakeCard ??= new WakeCard()).sleep();
+  if (wakes && dreamNext) startDream(dreamNext);
+  dreamNext = null;
   const n = await startNight(page, spec);
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   creator.loadout = { hat: n.game.spells.hat }; creator.hats = n.game.spells.hats;
@@ -768,7 +845,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true)) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over)) { mark("opening:bed"); start(); }
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -829,19 +906,14 @@ function frame(now: number): void {
   // "Sail anytime"); mid-night that ends the night unwon: played, nothing found (app/chartSave.ts), as a loss.
   if (!bot) for (const e of game.leashEvents) if (e.kind === "house" && e.obj) useHouse(e.obj);
   // Tonight's find (rules/finds.ts): the night's one draw over everything she hasn't found, a wearable (the trunk) or a broom part
-  // (a wreck), made once a night; taken, it's hers for good (app/owned.ts, app/broomSave.ts), even if the night's then lost.
+  // (a wreck), made once a night; taken, it's hers for the night, on loan till she sleeps (app/loan.ts; Ed, 2026-10-24): to wear
+  // or use at once, never saved unless the night's won.
   if (game.trunk && game.trunk.item === null) fillTrunk(game, foundAll(findsCtx()));
-  for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find === "part") {
-    keepFound(findsCtx(), "part", e.obj);
-    view.partsFound = new Set(loadBroom().found); // (hers, not fitted: it waits at the Workshop, the bay to fit it)
-    hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`);
-  } else if (e.kind === "found" && e.obj && e.find === "hat") {
-    keepFound(findsCtx(), "hat", e.obj); // (hers for good; the rules laid it on the hats' floor: rules/houseRooms.ts addFloorHat)
-    hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`);
-  } else if (e.kind === "found" && e.obj) {
-    keepFound(findsCtx(), e.find === "bag" ? "bag" : "wearable", e.obj);
-    const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase();
-    hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`);
+  for (const e of game.leashEvents) if (e.kind === "found" && e.obj && e.find) {
+    lendFind(e.find, e.obj);
+    if (e.find === "part") hud.found(`found: ${partById(e.obj)?.name.toLowerCase() ?? e.obj} · at the Workshop`); // (not fitted: the bay fits it)
+    else if (e.find === "hat") hud.found(`found: the ${hatSpell(e.obj)?.name.toLowerCase() ?? e.obj} hat · on the hats' floor`); // (the rules laid it there: rules/houseRooms.ts addFloorHat)
+    else { const it = itemById(e.obj), at = stationsShowing(shelfOf(e.obj)?.id ?? "")[0], where = HOUSE_ROOMS.objects.find(q => q.id === at)?.label.toLowerCase(); hud.found(`found: ${it?.name.toLowerCase() ?? e.obj}${where ? ` · at the ${where}` : ""}`); }
   }
   if (spawnWanted && !game.witch.perch && game.witch.mode === "ground" && !game.witch.seated) {
     const [k, i] = spawnWanted.includes(":") ? spawnWanted.split(":") : [null, null];
@@ -850,6 +922,7 @@ function frame(now: number): void {
   }
   // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
+  stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
@@ -862,6 +935,14 @@ function frame(now: number): void {
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
   if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
+  // Her dream of tonight's loan (render/dream.ts): a key the rules took (the pad's too) ends it; ended, the alarm rings (endDream).
+  if (dream && dreamAsleep) {
+    if (game.wake?.beat === "dream" && dream.over) endDream(game, game.herTime);
+    else if (game.wake && game.wake.beat !== "dream" && !dream.over) dream.end();
+  }
+  if (dream && !dream.canvas.isConnected) dream = null;
+  // The on-loan icon, top left (render/loanIcon.ts): tonight's find once she's taken it, till she sleeps.
+  { const lf = loanFind(game, game.map.treehouse.x, game.map.treehouse.z); loanIcon.set(bot ? null : lf?.item ?? null, () => (lf ? findCanvas(findKind(lf.kind).piece(lf.item), view.assets.style) : null)); loanIcon.draw(now / 1000); }
   if (game.wake) {
     for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "curtains") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
@@ -964,6 +1045,25 @@ requestAnimationFrame(frame);
 
 // For the smoke test, the tools and for poking at in the console (app/hooks.ts).
 installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop });
+// witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
+// for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
+(window as unknown as { witch: Record<string, unknown> }).witch.take = (kind: FindKindId, id: string): boolean => {
+  const { game } = N(), k = FIND_KINDS.find(q => q.id === kind), W = game.witches[0];
+  if (!k?.items.includes(id)) return false;
+  const c = game.map.cellSafe(game.witch.x, game.witch.z).cell;
+  game.trunk = { x: game.witch.x, z: game.witch.z, cell: [c[0], c[1]], kind, item: id, found: true };
+  k.claim?.(W.spells, id);
+  if (kind === "hat") addFloorHat(W, id);
+  lendFind(kind, id);
+  return true;
+};
+// witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
+// drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
+(window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
+  if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;
+  startDream({ loan: lend(kind, id, { look: null, hat: "none", parts: N().game.witches[0].spells.parts }), won: v === "won" }, true);
+  return true;
+};
 // ?debug=sail (docs/plans/sail-without-reload.md, PR 4b): another night in place, made as a sail will make one (app/night.ts
 // startNight, the view taking it: View.setGame), its start's art made and play started as the start screen's would; for
 // tools/sail/swap.cjs.
@@ -972,6 +1072,7 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
   p.set("seed", String(seed));
   if (island !== undefined) p.set("island", island);
   sailing = true;
+  loan = null; // (a debug swap: tonight's loan, if any, just gone)
   endNight(page, true); // (its game marked disposed: a reader left on it that steps it throws)
   const n = await startNight(page, { how: "debug", island: island ?? was.island, seed, world: was.world, params: p });
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
