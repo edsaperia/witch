@@ -2,7 +2,7 @@
 // in a minute or two on the cloud's software renderer, where a whole night's art took 15 to 45 minutes): the night as ?quick=1 makes
 // it (only the art the view needs, as it needs it), the start's card skipped and the waves held, and her put where the scene is, so
 // the view asks only for that spot's art. tools/shot/shot.cjs loads it, waits for the art and saves the frame.
-//   object:<id>  (or station:<id>) in front of a house object (config/house.json), on foot, at the stations' reach
+//   object:<id>  (or station:<id>) in front of a house object (config/house/), on foot, at the stations' reach
 //   room:<id>    in the middle of a house room
 //   area:<type>  on foot at the middle of the nearest area of that type (art/areas.js ids; an island lacking it says so)
 //   creature:<species>[@level]  one of that species (0 baby .. 3 legend; 2 by default) 6 m east of her by the dancefloor, friendly

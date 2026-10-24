@@ -145,7 +145,7 @@ describe("never past the build", () => {
   });
 });
 
-/** By the bedroom's door, just inside it (the branch to the Boudoir's end in the bedroom: config/house.json). */
+/** By the bedroom's door, just inside it (the branch to the Boudoir's end in the bedroom: config/house/). */
 const doorBranch = () => HOUSE_ROOMS.corridors.find(c => c.id === "boudoir-bedroom")!.pts!;
 const atDoor = (g: Game) => { const p = doorBranch(), [x, z] = p[p.length - 1], at = fromPlan(g.map.treehouse, x, z); g.witches[0].body = { ...g.witches[0].body, x: at.x, z: at.z, vx: 0, vz: 0 }; };
 /** Walking out of the door, along its branch to the Boudoir. */
