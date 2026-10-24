@@ -1,13 +1,13 @@
 // The great oak's crown over the treehouse (Ed, 2026-10-24: "one great crown sounds good. it should have thicker and thinner
 // patches. Perhaps there's also a layer that shows the bark of the tree underneath"; the mock, previews/ed/treehouse-layout-v4/crown/
 // on claude/treehouse-trunk-mock): one canopy over the whole house in place of a dome of leaves per room. Where its lobes, limbs and
-// string lights are, from the house's plan (config/house/) and a seed, so it follows the rooms wherever they go; no drawing here
+// string lights are, from the house's outline (config/house/outline.json, traced from its shape by tools/house/organic.mjs --outline) and a seed, so it
+// follows the rooms wherever they go; no drawing here
 // (render/crown.ts draws it, render/strings.ts its lights, render/sky.ts its far landmark).
 //
-// Every point is on the house's plan: x and z metres from the hub's centre (rules/houseRooms.ts fromPlan turns them into the
+// Every point is on the house's plan: x and z metres from the Terrace's middle (rules/houseRooms.ts fromPlan turns them into the
 // world), y metres over the house's floor (negative below it), so the same crown is laid over the floors indoors and stands in the
 // world outside.
-import type { HouseConfig, Rect } from "./houseRooms";
 import { hash2, rng, vnoise } from "./random";
 
 export type V3 = [number, number, number];
@@ -26,16 +26,26 @@ export type CrownString =
   | { kind: "swag" | "drape" | "ring"; spans: { a: V3; b: V3; sag: number }[] }
   | { kind: "garland"; x: number; y: number; z: number; r: number; el: number; o: number };
 
-/** What the crown is grown from: the house's plan, the Terrace (the hub's disc and the balcony's, on the plan), the floor's height
- *  over the ground and a seed. */
-export interface CrownInput { house: HouseConfig; hub: number; balcony: { x: number; z: number; r: number }; floor: number; seed: number }
+/** The house's floor as traced for the crown (config/house/outline.json, written by tools/house/organic.mjs --outline: metres on the
+ *  plan, x east, z south, the Terrace's middle 0): each room (its middle, size, its own outline, a trunk room or the trunk room its
+ *  branch leaves), each branch's middle line and width, the stubs where each branch room's limb carries on past its floor, and the
+ *  Terrace's open rim (its point, its span in degrees round from east, clockwise). */
+export interface HouseOutline {
+  rooms: { id: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean; outline: [number, number][] }[];
+  branches: { id: string; w: number; pts: [number, number][] }[];
+  stubs: { room: string; from: [number, number]; to: [number, number]; w0: number; w1: number }[];
+  takeoff: { x: number; z: number; from: number; to: number };
+}
+/** What the crown is grown from: the house's outline, the floor's height over the ground and a seed. */
+export interface CrownInput { outline: HouseOutline; floor: number; seed: number }
 
 export interface Crown {
   lobes: Lobe[]; limbs: Limb[]; strings: CrownString[];
   /** The crown's dome on the plan: its middle and half-widths (its ragged edge lies about there). */
   dome: { cx: number; cz: number; rx: number; rz: number; base: number; top: number };
-  /** The Terrace on the plan (the hub's disc and the balcony's) and the way she takes off from it (a unit vector on the plan). */
-  terrace: { x: number; z: number; r: number }[]; takeoff: [number, number];
+  /** The Terrace on the plan (its disc), where its open rim is (the take-off's point) and the way she takes off from it (a unit
+   *  vector on the plan). */
+  terrace: { x: number; z: number; r: number }[]; notchFrom: [number, number]; takeoff: [number, number];
   /** The floor's height over the ground (m). */
   floor: number;
 }
@@ -49,61 +59,61 @@ const DEG = Math.PI / 180;
 /** The Terrace's notch (Ed, 2026-10-24: "perhaps terrace crown gap should be a cutout extending from the terrace to the edge of the
  *  crown, not just a hole"): how far (x, z) on the plan is from the open ground over the Terrace and the channel running from it out
  *  to the crown's edge the way she takes off (negative inside). `width` the channel's half-width. */
-export function notchDistance(c: Pick<Crown, "terrace" | "takeoff">, x: number, z: number, width: number): number {
+export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom">, x: number, z: number, width: number): number {
   let d = Infinity;
   for (const t of c.terrace) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
-  const o = c.terrace[c.terrace.length - 1], [tx, tz] = c.takeoff, along = (x - o.x) * tx + (z - o.z) * tz;
-  if (along > 0) d = Math.min(d, Math.abs((x - o.x) * tz - (z - o.z) * tx) - width);
+  const [ox, oz] = c.notchFrom, [tx, tz] = c.takeoff, along = (x - ox) * tx + (z - oz) * tz;
+  if (along > -width) d = Math.min(d, Math.abs((x - ox) * tz - (z - oz) * tx) - width);
   return d;
 }
 /** The channel's half-width: as wide as the Terrace's widest disc, so the clearing reads as one open way out to the crown's edge. */
-export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.terrace.map(t => t.r)) + 2;
+export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.terrace.map(t => t.r)) * 0.6 + 2;
 
 /** How clear a point over the plan (y over the floor) keeps the Terrace: the least, over the camera's lines of sight, of how far the
  *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). */
-export function sightClearance(c: Pick<Crown, "terrace" | "takeoff">, x: number, y: number, z: number): number {
+export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom">, x: number, y: number, z: number): number {
   const w = notchWidth(c);
   let m = notchDistance(c, x, z, w);
   for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - Math.max(0, y) / Math.tan(p * DEG), w)); // (slid back down the line of sight to the floor: further north)
   return m;
 }
 
-/** The house's floor shapes (rooms and branches) and its bounds on the plan. */
-function bounds(H: HouseConfig, terrace: { x: number; z: number; r: number }[]) {
+/** The house's bounds on the plan: its rooms and branches. */
+function bounds(O: HouseOutline) {
   let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
-  for (const r of [...H.rooms, ...H.corridors] as Rect[]) { x0 = Math.min(x0, r.x0); x1 = Math.max(x1, r.x1); z0 = Math.min(z0, r.z0); z1 = Math.max(z1, r.z1); }
-  for (const t of terrace) { x0 = Math.min(x0, t.x - t.r); x1 = Math.max(x1, t.x + t.r); z0 = Math.min(z0, t.z - t.r); z1 = Math.max(z1, t.z + t.r); }
+  for (const r of O.rooms) { x0 = Math.min(x0, r.x - r.r); x1 = Math.max(x1, r.x + r.r); z0 = Math.min(z0, r.z - r.r); z1 = Math.max(z1, r.z + r.r); }
+  for (const b of O.branches) for (const [x, z] of b.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
   return { x0, x1, z0, z1 };
 }
-const mid = (r: Rect): [number, number] => [(r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2];
 
 /** The great oak's crown for a house. The same house and seed always grow the same crown. */
-export function makeCrown({ house: H, hub, balcony, floor, seed }: CrownInput): Crown {
+export function makeCrown({ outline: O, floor, seed }: CrownInput): Crown {
   const R = rng(seed * 7919 + 4111), U = (a: number, b: number) => a + (b - a) * R();
-  const terrace = [{ x: 0, z: 0, r: hub }, { x: balcony.x, z: balcony.z, r: balcony.r }];
-  const bl = Math.hypot(balcony.x, balcony.z), takeoff: [number, number] = bl > 1e-6 ? [balcony.x / bl, balcony.z / bl] : [0, 1];
-  const shape = { terrace, takeoff };
-  const B = bounds(H, terrace), margin = 26;
+  const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10 }, terrace = [{ x: T.x, z: T.z, r: T.r }];
+  const ta = ((O.takeoff.from + O.takeoff.to) / 2) * DEG, takeoff: [number, number] = [Math.cos(ta), Math.sin(ta)], notchFrom: [number, number] = [O.takeoff.x, O.takeoff.z];
+  const shape = { terrace, takeoff, notchFrom };
+  const B = bounds(O), margin = 26;
   const dome = { cx: (B.x0 + B.x1) / 2, cz: (B.z0 + B.z1) / 2, rx: (B.x1 - B.x0) / 2 + margin, rz: (B.z1 - B.z0) / 2 + margin, base: 14, top: 0 };
   const size = Math.max(dome.rx, dome.rz), RY = size * 0.45, K = size / 92; // (K: the mock's lobes, for its 185 m crown, scaled to this one)
   dome.top = dome.base + RY;
   const lobes: Lobe[] = [], limbs: Limb[] = [], strings: CrownString[] = [];
   const clear = (x: number, y: number, z: number, r: number) => sightClearance(shape, x, y, z) > r * 0.8;
+  const trunkRooms = O.rooms.filter(r => r.trunk).sort((a, b) => b.z - a.z), base = trunkRooms[0] ?? T; // (the trunk's foot: under its lowest room, the furthest south)
 
-  // ---- the bark: the trunk under the hub, its roots on the ground, its great limbs up into the crown ----
-  const g = -floor; // the ground, on the plan's heights
-  limbs.push({ kind: "trunk", knots: [[0, g - 2, 0, 9], [0, g + floor * 0.4, 0, 7], [0.8, g + floor * 0.75, -0.8, 6], [0, -4, 0, 5.5]] });
+  // ---- the bark: the trunk under its lowest room, its roots on the ground, its great limbs up into the crown ----
+  const g = -floor, bx = base.x, bz = base.z; // the ground, on the plan's heights
+  limbs.push({ kind: "trunk", knots: [[bx, g - 2, bz, 11], [bx, g + floor * 0.4, bz, 8.5], [bx + 0.8, g + floor * 0.75, bz - 0.8, 7.5], [bx, -4, bz, 7]] });
   for (let i = 0; i < 5; i++) { // five roots flaring out under it, with a smaller one off each
-    const a = (i / 5) * Math.PI * 2 + 0.35 + U(-0.2, 0.2), c = Math.cos(a), s = Math.sin(a), L = U(18, 26);
-    limbs.push({ kind: "root", knots: [[c * 4, g + 5, s * 4, 4.2], [c * L * 0.45, g + 1.5, s * L * 0.45, 3], [c * L, g - 0.5, s * L, 1.4], [c * (L + 6), g - 1, s * (L + 6), 0.6]] });
-    const b = a + U(-0.7, 0.7);
-    limbs.push({ kind: "root", knots: [[c * L * 0.45, g + 1, s * L * 0.45, 1.6], [c * L * 0.45 + Math.cos(b) * 9, g - 0.5, s * L * 0.45 + Math.sin(b) * 9, 0.5]] });
+    const a = (i / 5) * Math.PI * 2 + 0.35 + U(-0.2, 0.2), c = Math.cos(a), s = Math.sin(a), L = U(20, 28);
+    limbs.push({ kind: "root", knots: [[bx + c * 5, g + 5, bz + s * 5, 4.6], [bx + c * L * 0.45, g + 1.5, bz + s * L * 0.45, 3.2], [bx + c * L, g - 0.5, bz + s * L, 1.5], [bx + c * (L + 6), g - 1, bz + s * (L + 6), 0.6]] });
+    const b2 = a + U(-0.7, 0.7);
+    limbs.push({ kind: "root", knots: [[bx + c * L * 0.45, g + 1, bz + s * L * 0.45, 1.6], [bx + c * L * 0.45 + Math.cos(b2) * 9, g - 0.5, bz + s * L * 0.45 + Math.sin(b2) * 9, 0.5]] });
   }
   const shell = (th: number, f: number): [number, number] => [dome.cx + dome.rx * f * Math.cos(th), dome.cz + dome.rz * f * Math.sin(th)];
   const ends: V3[] = []; // (each fork's end, under a clump)
   for (let i = 0; i < 6; i++) { // the great limbs: up in a V from the low split, out nearly level, dipping and rising, forking towards the edge
-    const th = (i / 6) * Math.PI * 2 + 0.5 + U(-0.25, 0.25), [ex, ez] = shell(th, 0.92), [mx, mz] = shell(th, 0.55), [qx, qz] = shell(th, 0.25);
-    const k: Knot[] = [[0, -6, 0, 5.2], [qx * 0.6, U(4, 9), qz * 0.6, 4.2], [mx, U(8, 14), mz, 3.2], [ex, U(12, 18), ez, 1.6]];
+    const th = (i / 6) * Math.PI * 2 + 0.5 + U(-0.25, 0.25), [ex, ez] = shell(th, 0.92), [mx, mz] = shell(th, 0.55);
+    const k: Knot[] = [[bx, -6, bz, 5.6], [(bx + mx) / 2, U(4, 9), (bz + mz) / 2, 4.4], [mx, U(8, 14), mz, 3.3], [ex, U(12, 18), ez, 1.7]];
     limbs.push({ kind: "great", knots: k });
     for (let j = 1; j < k.length - 1; j++) for (let f = 0; f < 2; f++) {
       const [x, y, z, r] = k[j], out = Math.atan2(z - dome.cz, x - dome.cx) + U(-0.9, 0.9), len = U(14, 24) * K * 1.3, up = U(6, 18);
@@ -113,37 +123,29 @@ export function makeCrown({ house: H, hub, balcony, floor, seed }: CrownInput): 
     }
   }
   // the house's own limbs: each branch under its walk, the rooms riding on them, the bark showing below their floors
-  for (const c of H.corridors) {
-    const p = c.pts ?? [[c.x0, (c.z0 + c.z1) / 2], [c.x1, (c.z0 + c.z1) / 2]], w = c.w ?? 3, n = p.length - 1;
-    limbs.push({ kind: "house", knots: [p[0], p[Math.floor(n / 2)], p[n]].map(([x, z], i) => [x, -2.6 - w * 0.4 + (i === 1 ? -0.4 : 0), z, w * 0.55] as Knot) });
+  for (const c of O.branches) {
+    const p = c.pts, n = p.length - 1, r = Math.min(5, c.w * 0.3);
+    limbs.push({ kind: "house", knots: [p[0], p[Math.floor(n / 2)], p[n]].map(([x, z], i) => [x, -2.5 - r + (i === 1 ? -0.5 : 0), z, r] as Knot) });
   }
-  // revision 4 (Ed, 2026-10-24: "The branch rooms themselves are not the ends of the branches"): each room's limb carries on past it
-  // as bark, the way its branch was heading, rising a little, forking twice into smaller branches and twigs out to the crown's edge;
-  // a second, smaller twig leaves it a little way out
-  const way = (r: Rect): [number, number] => {
-    const [cx, cz] = mid(r);
-    let best: [number, number] | null = null, bd = Infinity;
-    for (const c of H.corridors) { const p = c.pts; if (!p || p.length < 2) continue;
-      for (const [a, b] of [[p[p.length - 2], p[p.length - 1]], [p[1], p[0]]] as [number, number][][]) { const d = Math.hypot(b[0] - cx, b[1] - cz); if (d < bd) { bd = d; best = [b[0] - a[0], b[1] - a[1]]; } } }
-    const v = best && bd < (r.r ?? 8) + 4 ? best : [cx, cz], L = Math.hypot(v[0], v[1]) || 1;
-    return [v[0] / L, v[1] / L];
-  };
-  for (const r of H.rooms) {
-    const [cx, cz] = mid(r), [ux, uz] = way(r), rr = r.r ?? Math.max(r.x1 - r.x0, r.z1 - r.z0) / 2;
-    const L = rr + U(10, 18), bend = U(-0.35, 0.35), dir = (a: number): [number, number] => [ux * Math.cos(a) - uz * Math.sin(a), ux * Math.sin(a) + uz * Math.cos(a)];
-    const [dx, dz] = dir(bend), e: V3 = [cx + dx * L, U(4, 9), cz + dz * L], m: V3 = [cx + ux * L * 0.5, 0.5, cz + uz * L * 0.5];
-    limbs.push({ kind: "branch", knots: [[cx, -3, cz, 1.9], [m[0], m[1], m[2], 1.3], [e[0], e[1], e[2], 0.8]] });
-    for (const at of [m, e]) for (const s of [-1, 1]) { // forking twice: smaller branches, then twigs
-      const [fx, fz] = dir(bend + s * U(0.45, 0.8)), len = U(8, 14), f: V3 = [at[0] + fx * len, at[1] + U(3, 8), at[2] + fz * len];
-      limbs.push({ kind: "fork", knots: [[at[0], at[1], at[2], at === m ? 0.9 : 0.6], [(at[0] + f[0]) / 2, (at[1] + f[1]) / 2 + 0.6, (at[2] + f[2]) / 2, 0.5], [f[0], f[1], f[2], 0.25]] });
+  // revision 4 (Ed, 2026-10-24: "The branch rooms themselves are not the ends of the branches"): each branch room's limb carries on
+  // past it as bark from its stub (the way its branch was heading), rising a little, forking twice into smaller branches and twigs
+  // out to the crown's edge; a second, smaller twig leaves it a little way out
+  for (const st of O.stubs) {
+    const [fx, fz] = st.from, [sx, sz] = st.to, L0 = Math.hypot(sx - fx, sz - fz) || 1, ux = (sx - fx) / L0, uz = (sz - fz) / L0;
+    const L = U(10, 18), bend = U(-0.35, 0.35), dir = (a: number): [number, number] => [ux * Math.cos(a) - uz * Math.sin(a), ux * Math.sin(a) + uz * Math.cos(a)];
+    const [dx, dz] = dir(bend), e: V3 = [sx + dx * L, U(4, 9), sz + dz * L], m: V3 = [sx + ux * L * 0.5, 0.5, sz + uz * L * 0.5];
+    limbs.push({ kind: "branch", knots: [[fx, -3, fz, Math.max(1.2, st.w0 * 0.6)], [sx, -1.5, sz, Math.max(0.9, st.w1 * 0.8)], [m[0], m[1], m[2], 0.9], [e[0], e[1], e[2], 0.6]] });
+    for (const at of [m, e]) for (const sg of [-1, 1]) { // forking twice: smaller branches, then twigs
+      const [gx, gz] = dir(bend + sg * U(0.45, 0.8)), len = U(8, 14), f: V3 = [at[0] + gx * len, at[1] + U(3, 8), at[2] + gz * len];
+      limbs.push({ kind: "fork", knots: [[at[0], at[1], at[2], at === m ? 0.75 : 0.5], [(at[0] + f[0]) / 2, (at[1] + f[1]) / 2 + 0.6, (at[2] + f[2]) / 2, 0.4], [f[0], f[1], f[2], 0.22]] });
       ends.push(f);
     }
-    const [tx, tz] = dir(bend + (R() < 0.5 ? -1 : 1) * 1.1), t0: V3 = [cx + ux * (rr + 2), -1, cz + uz * (rr + 2)];
-    limbs.push({ kind: "fork", knots: [[t0[0], t0[1], t0[2], 0.7], [t0[0] + tx * 7, t0[1] + 4, t0[2] + tz * 7, 0.3]] });
+    const [tx, tz] = dir(bend + (R() < 0.5 ? -1 : 1) * 1.1);
+    limbs.push({ kind: "fork", knots: [[sx, -1, sz, 0.6], [sx + tx * 7, 3, sz + tz * 7, 0.25]] });
   }
   // the top: over the topmost room (the furthest north), three limbs up into the crown, each forking once
-  const top = [...H.rooms].sort((a, b) => mid(a)[1] - mid(b)[1])[0];
-  if (top) { const [cx, cz] = mid(top);
+  const top = trunkRooms[trunkRooms.length - 1]; // (the trunk's topmost room, the furthest north: the Turret)
+  if (top) { const cx = top.x, cz = top.z;
     for (let i = 0; i < 3; i++) {
       const a = -Math.PI / 2 + (i - 1) * 0.9 + U(-0.2, 0.2), e: V3 = [cx + Math.cos(a) * U(12, 18), U(18, 26), cz + Math.sin(a) * U(10, 16)];
       limbs.push({ kind: "top", knots: [[cx, -2, cz, 2.6], [(cx + e[0]) / 2, e[1] * 0.45, (cz + e[2]) / 2, 1.8], [e[0], e[1], e[2], 1]] });
@@ -192,11 +194,11 @@ export function makeCrown({ house: H, hub, balcony, floor, seed }: CrownInput): 
     strings.push({ kind: "drape", spans: [{ a: [a.x + dx * a.r * 0.55, a.y + a.r * 0.9, a.z + dz * a.r * 0.55], b: [best.x - dx * best.r * 0.55, best.y + best.r * 0.9, best.z - dz * best.r * 0.55], sag: 1.5 }] });
   }
   for (const a of tops) if (hash2(a.seed, 3, seed) < 0.45) strings.push({ kind: "garland", x: a.x, y: a.y, z: a.z, r: a.r * 1.02, el: 0.25 + 0.45 * hash2(a.seed, 5, seed), o: hash2(a.seed, 7, seed) * Math.PI * 2 });
-  { const o = terrace[0], rr = Math.max(hub, Math.hypot(balcony.x, balcony.z) + balcony.r) + 9, pts: V3[] = [];
+  { const o = terrace[0], rr = o.r + 9, pts: V3[] = [];
     for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([o.x + Math.cos(a) * rr, 14 + 3 * Math.sin(a * 3), o.z + Math.sin(a) * rr]); }
     strings.push({ kind: "ring", spans: pts.slice(1).map((b, i) => ({ a: pts[i], b, sag: 2.2 })) }); }
 
-  return { lobes, limbs, strings, dome, terrace, takeoff, floor };
+  return { lobes, limbs, strings, dome, terrace, notchFrom, takeoff, floor };
 }
 
 /** A bulb of the crown's lights: where (on the plan, y over the floor), its colour's place in the palette, how far along its string

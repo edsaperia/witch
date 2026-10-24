@@ -10,18 +10,6 @@ import { fbm, field, roomAt, outline } from "../../config/house/shape.js";
 type RGB = [number, number, number];
 export interface FloorArt { canvas: HTMLCanvasElement; x0: number; z0: number; w: number; h: number }
 
-const hex = (s: string): RGB => [parseInt(s.slice(1, 3), 16), parseInt(s.slice(3, 5), 16), parseInt(s.slice(5, 7), 16)];
-const LEAF = ["#26402a", "#335533", "#43703d", "#5a8c48"].map(hex);
-
-/** A small hash of integers to 0..1 (the art's own noise: seeded by place, the same every load). */
-const ihash = (a: number, b: number, c = 0) => { let h = (a * 374761393 + b * 668265263 + c * 2147483647) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
-/** Smooth value noise at (x, z) metres, `s` metres a cell. */
-function noise(x: number, z: number, s: number, k = 0): number {
-  const fx = x / s, fz = z / s, ix = Math.floor(fx), iz = Math.floor(fz), u = fx - ix, v = fz - iz, a = ihash(ix, iz, k), b = ihash(ix + 1, iz, k), c = ihash(ix, iz + 1, k), d = ihash(ix + 1, iz + 1, k);
-  const su = u * u * (3 - 2 * u), sv = v * v * (3 - 2 * v);
-  return a + (b - a) * su + (c - a) * sv + (a - b - c + d) * su * sv;
-}
-
 /** The floor's foreshortening as the game draws it (the house's plane, 24 degrees: render/houseRooms.ts), so the rings, stretched
  *  on the plan by its inverse, read round on screen (the mock's FORE). */
 const FORE = Math.sin((24 * Math.PI) / 180);

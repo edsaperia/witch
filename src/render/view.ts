@@ -15,7 +15,9 @@ import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
 import { CrownView, type PlanMap } from "./crown";
 import { CrownLandmark } from "./crownLandmark";
-import { makeCrown } from "../rules/crown";
+import { makeCrown, type HouseOutline } from "../rules/crown";
+// (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
+import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
 import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
@@ -419,7 +421,8 @@ export class View {
   private ensureCrown(game: Game): void {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
     if (want && !this.crown && H) {
-      this.crown = new CrownView(makeCrown({ house: HOUSE_ROOMS, hub: H.hub, balcony: { x: 0, z: H.balcony.out, r: H.balcony.r }, floor: H.height, seed: H.crown!.seed }), t.stringLights.bulbSpacing);
+      const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
+      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed }), t.stringLights.bulbSpacing, outline);
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
       this.crownFar = new CrownLandmark(this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);

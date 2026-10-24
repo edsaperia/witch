@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { crownBulbs, makeCrown, notchDistance, notchWidth, sightClearance } from "./crown";
-import { HOUSE_ROOMS, nearestIn } from "./houseRooms";
+import { crownBulbs, makeCrown, notchDistance, notchWidth, sightClearance, type HouseOutline } from "./crown";
 import { TUNING } from "./tuning";
+import OUTLINE from "../../config/house/outline.json";
 
-const H = TUNING.treehouse.house!;
-const input = (seed = 1) => ({ house: HOUSE_ROOMS, hub: H.hub, balcony: { x: 0, z: H.balcony.out, r: H.balcony.r }, floor: H.height, seed });
+const H = TUNING.treehouse.house!, O = OUTLINE as unknown as HouseOutline;
+const input = (seed = 1) => ({ outline: O, floor: H.height, seed });
+const inPoly = (p: [number, number][], x: number, z: number) => { let c = false; for (let i = 0, j = p.length - 1; i < p.length; j = i++) if ((p[i][1] > z) !== (p[j][1] > z) && x < ((p[j][0] - p[i][0]) * (z - p[i][1])) / (p[j][1] - p[i][1]) + p[i][0]) c = !c; return c; };
 
 describe("the great oak's crown", () => {
   const c = makeCrown(input());
@@ -23,10 +24,9 @@ describe("the great oak's crown", () => {
 
   it("stands over every room: each room's floor is inside the dome, under its leaves", () => {
     const { cx, cz, rx, rz } = c.dome;
-    for (const r of HOUSE_ROOMS.rooms) {
-      const x = (r.x0 + r.x1) / 2, z = (r.z0 + r.z1) / 2;
-      expect(((x - cx) / rx) ** 2 + ((z - cz) / rz) ** 2, r.id).toBeLessThan(1);
-      expect(c.lobes.some(l => Math.hypot(l.x - x, l.z - z) < l.r + (r.r ?? 6) + 6), r.id).toBe(true);
+    for (const r of O.rooms) {
+      expect(((r.x - cx) / rx) ** 2 + ((r.z - cz) / rz) ** 2, r.id).toBeLessThan(1);
+      if (r.id !== "terrace") expect(c.lobes.some(l => Math.hypot(l.x - r.x, l.z - r.z) < l.r + r.r + 6), r.id).toBe(true);
     }
   });
 
@@ -34,21 +34,24 @@ describe("the great oak's crown", () => {
     for (const l of c.lobes) expect(sightClearance(c, l.x, l.y, l.z)).toBeGreaterThan(l.r * 0.8);
     for (const limb of c.limbs) if (limb.kind !== "root" && limb.kind !== "trunk") for (const k of limb.knots) if (k[1] > -k[3]) expect(sightClearance(c, k[0], k[1], k[2])).toBeGreaterThan(k[3]);
     // the notch reaches the crown's edge: along the take-off way, past the dome's edge, it's still open
-    const o = c.terrace[c.terrace.length - 1], far = Math.max(c.dome.rx, c.dome.rz) * 1.2;
-    expect(notchDistance(c, o.x + c.takeoff[0] * far, o.z + c.takeoff[1] * far, notchWidth(c))).toBeLessThan(0);
+    const [ox, oz] = c.notchFrom, far = Math.max(c.dome.rx, c.dome.rz) * 2.2;
+    expect(notchDistance(c, ox + c.takeoff[0] * far, oz + c.takeoff[1] * far, notchWidth(c))).toBeLessThan(0);
   });
 
-  it("takes off the way the balcony opens (south of the hub today)", () => {
-    expect(c.takeoff[1]).toBeCloseTo(1);
+  it("opens its notch the way she takes off: the Terrace's open south-east rim, towards the dancefloor", () => {
+    const a = ((O.takeoff.from + O.takeoff.to) / 2) * (Math.PI / 180);
+    expect(c.takeoff[0]).toBeCloseTo(Math.cos(a)); expect(c.takeoff[1]).toBeCloseTo(Math.sin(a));
+    expect(c.takeoff[0]).toBeGreaterThan(0); expect(c.takeoff[1]).toBeGreaterThan(0); // (east and south)
   });
 
   it("carries each room's limb on past it, forking, with roots on the ground and top limbs over the topmost room", () => {
-    expect(c.limbs.filter(l => l.kind === "branch").length).toBe(HOUSE_ROOMS.rooms.length);
+    expect(c.limbs.filter(l => l.kind === "branch").length).toBe(O.stubs.length);
     expect(c.limbs.filter(l => l.kind === "root").length).toBe(10);
     expect(c.limbs.filter(l => l.kind === "top").length).toBe(3);
     c.limbs.filter(l => l.kind === "branch").forEach((l, i) => {
-      const [x, , z] = l.knots[l.knots.length - 1], room = HOUSE_ROOMS.rooms[i];
-      expect(nearestIn(room, x, z).d, room.id).toBeGreaterThan(5); // (out past its room, not ending in it)
+      const [x, , z] = l.knots[l.knots.length - 1], room = O.rooms.find(r => r.id === O.stubs[i].room)!;
+      expect(inPoly(room.outline, x, z), room.id).toBe(false); // (out past its room, not ending in it)
+      expect(Math.hypot(x - room.x, z - room.z), room.id).toBeGreaterThan(room.r);
     });
     for (const l of c.limbs.filter(l => l.kind === "root")) for (const k of l.knots) expect(k[1]).toBeLessThan(-c.floor + 6);
   });

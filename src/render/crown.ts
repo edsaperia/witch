@@ -10,8 +10,7 @@
 // distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
 // circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
 import * as THREE from "three";
-import { crownBulbs, type Bulb, type Crown, type Knot } from "../rules/crown";
-import { nearestIn, HOUSE_ROOMS, type Rect } from "../rules/houseRooms";
+import { crownBulbs, type Bulb, type Crown, type HouseOutline, type Knot } from "../rules/crown";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
@@ -28,6 +27,22 @@ function noiseTexture(): THREE.DataTexture {
   const t = new THREE.DataTexture(data, N, N, THREE.RGBAFormat);
   t.wrapS = t.wrapT = THREE.RepeatWrapping; t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
+}
+
+/** Whether (x, z) is inside a closed outline. */
+function inPoly(p: [number, number][], x: number, z: number): boolean {
+  let c = false;
+  for (let i = 0, j = p.length - 1; i < p.length; j = i++) if ((p[i][1] > z) !== (p[j][1] > z) && x < ((p[j][0] - p[i][0]) * (z - p[i][1])) / (p[j][1] - p[i][1]) + p[i][0]) c = !c;
+  return c;
+}
+/** How far (x, z) is from a line through points (closed: back to its first). */
+function polyDist(p: [number, number][], x: number, z: number, closed = false): number {
+  let d = Infinity;
+  for (let i = 1; i < p.length + (closed ? 1 : 0); i++) {
+    const [ax, az] = p[i - 1], [bx, bz] = p[i % p.length], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / Math.max(1e-9, dx * dx + dz * dz)));
+    d = Math.min(d, Math.hypot(x - ax - dx * t, z - az - dz * t));
+  }
+  return d;
 }
 
 /** The mask's side (texels) over the crown's dome: about a metre a texel. */
@@ -253,7 +268,7 @@ export class CrownView {
   /** The bulbs of its lights (rules/crown.ts crownBulbs), for render/strings.ts and the far landmark. */
   readonly bulbs: Bulb[];
 
-  constructor(readonly crown: Crown, spacing: number) {
+  constructor(readonly crown: Crown, spacing: number, private readonly outline: HouseOutline) {
     this.maskTex.magFilter = THREE.LinearFilter; this.maskTex.minFilter = THREE.LinearFilter; this.maskTex.needsUpdate = true;
     const { cx, cz, rx, rz } = crown.dome;
     this.uniforms = {
@@ -295,18 +310,21 @@ export class CrownView {
     // opaque list it came first and the floors painted over it)
     for (const m of this.meshes) { const mt = m.material as THREE.ShaderMaterial; mt.depthTest = !indoors; mt.depthWrite = !indoors; mt.transparent = indoors; }
     this.bark.renderOrder = indoors ? 19.96 : 0.5; this.lobes.renderOrder = indoors ? 19.97 : 0.5;
-    // her room's (or branch's) floor, as a distance field, when she moves into another
-    const at = indoors && here ? HOUSE_ROOMS.rooms.find(r => !r.locked && nearestIn(r, here.x, here.z).d <= 0) ?? HOUSE_ROOMS.corridors.find(r => nearestIn(r, here.x, here.z).d <= 0) ?? null : null;
-    U.uClearOn.value = at ? 1 : 0;
-    if (at && (at as { id: string }).id !== this.maskFor) { this.maskFor = (at as { id: string }).id; this.fill(at); }
+    // her room's floor (its own outline), or the branch she's on, as a distance field, when she moves into another
+    const O = this.outline, room = indoors && here ? O.rooms.find(r => !r.locked && inPoly(r.outline, here.x, here.z)) ?? null : null;
+    let branch = null as HouseOutline["branches"][number] | null;
+    if (indoors && here && !room) { let bd = Infinity; for (const b of O.branches) { const d = polyDist(b.pts, here.x, here.z) - b.w / 2; if (d < bd) { bd = d; branch = b; } } if (bd > 2) branch = null; }
+    const key = room ? `room:${room.id}` : branch ? `branch:${branch.id}` : "";
+    U.uClearOn.value = key ? 1 : 0;
+    if (key && key !== this.maskFor) { this.maskFor = key; this.fill(room ? (x, z) => (inPoly(room.outline, x, z) ? 0 : polyDist(room.outline, x, z, true)) : (x, z) => Math.max(0, polyDist(branch!.pts, x, z) - branch!.w / 2)); }
   }
 
   /** The distance field of one floor shape (its plan's metres, 0 to 16 m in 0 to 1). */
-  private fill(r: Rect): void {
+  private fill(dist: (x: number, z: number) => number): void {
     const B = this.uniforms.uClearBox.value as THREE.Vector4, w = 1 / B.z, d = 1 / B.w;
     for (let j = 0; j < MASK; j++) for (let i = 0; i < MASK; i++) {
       const x = B.x + ((i + 0.5) / MASK) * w, z = B.y + ((j + 0.5) / MASK) * d;
-      this.mask[j * MASK + i] = Math.min(255, Math.round((nearestIn(r, x, z).d / 16) * 255));
+      this.mask[j * MASK + i] = Math.min(255, Math.round((dist(x, z) / 16) * 255));
     }
     this.maskTex.needsUpdate = true;
   }
