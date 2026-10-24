@@ -5,7 +5,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
 // Issue #1091 (Foxtrot's neutral pair, 2026-10-24): the see-through at full opacity (occlusion.fadeOpacity 1) should draw what the
 // see-through off (occlusion.on false) draws; at seed 886806, on the ground at 3250,2698, it differed by 440 px. One frame held (the
 // game's time still), drawn with each, then again with each suspect switched off, to bisect; where they differ saved as a PNG.
-//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her)
+//   npm run build && node tools/bench/neutral-hunt.cjs [out dir]   (DIST=, SEED=, AT=x,z, ONLY=base,nohiz,...; FOX=0 placed straight, not as the smoke places her; RAF=1 each picture taken as the smoke's check takes it)
 const SEED = process.env.SEED || "886806", AT = (process.env.AT || "3250,2698").split(",").map(Number);
 const uni = (name, v) => `{ let u = null; v.scene.traverse(o => { u ??= o.material?.uniforms?.${name} ?? null; }); if (!u) throw new Error("no ${name}"); u.value = ${v}; }`;
 const SUSPECTS = {
@@ -26,6 +26,7 @@ const SUSPECTS = {
   nomist: "t.suspects.mist = false;",
   nocull: "t.suspects.seeCull = false;", // (uSeeDbg is set from the suspects every frame: frameUniforms.ts)
 };
+const RAF = process.env.RAF === "1";
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPECTS);
 (async () => {
   const outDir = process.argv[2] || "previews/neutral-hunt";
@@ -57,9 +58,29 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
       await page.evaluate(([x, z]) => { const g = window.witch.game; Object.assign(g.witch, { x, z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }); g.camera.intro = null; g.introFocus = null; }, AT);
       await step(60);
     }
-    let last = -1, same = 0; for (let i = 0; i < 60 && same < 3; i++) { await step(2); await new Promise(r => setTimeout(r, 2000)); const t = await page.evaluate(() => window.witch.view.renderer.info.render.triangles); same = t === last ? same + 1 : 0; last = t; }
+    let last = -1, same = 0; for (let i = 0; i < 60 && same < 3 && !RAF; i++) { await step(2); await new Promise(r => setTimeout(r, 2000)); const t = await page.evaluate(() => window.witch.view.renderer.info.render.triangles); same = t === last ? same + 1 : 0; last = t; }
     // One frame drawn with these knobs over the game's, read back as drawn, the knobs put back.
-    const grab = (setup, knobs) => page.evaluate(([setup, knobs, NONE]) => {
+    // RAF=1: each picture taken as the smoke's check takes it (ui/visualReport.ts drawn): the knobs set, four real frames, the canvas
+    // read, the knobs put back; the game's own loop drawing, not a frame stepped by hand at no time.
+    const grabRaf = (setup, knobs) => page.evaluate(async ([setup, knobs]) => {
+      const w = window.witch, v = w.view, t = w.game.tuning, canvas = v.renderer.domElement;
+      const at = k => k.split(".").reduce((o, p) => o[p], t), put = (k, val) => { const ps = k.split("."), last = ps.pop(); ps.reduce((o, p) => o[p], t)[last] = val; };
+      const keptT = JSON.stringify(t.suspects ?? {}), hiz = v.hizOff, was = w.manual; w.manual = false;
+      const kept = Object.entries(knobs).map(([k, val]) => { const old = at(k); put(k, val); return [k, old]; });
+      try {
+        new Function("v", "t", setup)(v, t);
+        await new Promise(ok => { let n = 4; const f = () => (--n <= 0 ? ok() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+        const c = document.createElement("canvas"); c.width = canvas.width; c.height = canvas.height;
+        const x = c.getContext("2d"); x.drawImage(canvas, 0, 0);
+        const d = x.getImageData(0, 0, c.width, c.height).data, W = c.width, H = c.height, px = new Array(W * H * 4);
+        for (let y = 0; y < H; y++) for (let i = 0; i < W * 4; i++) px[(H - 1 - y) * W * 4 + i] = d[y * W * 4 + i]; // (bottom up, as readPixels gives)
+        return { W, H, px };
+      } finally {
+        for (const [k, old] of kept) put(k, old);
+        Object.assign(t.suspects ??= {}, JSON.parse(keptT)); v.hizOff = hiz; w.manual = was; for (const f of (window.__undo ?? []).splice(0)) f();
+      }
+    }, [setup, knobs]);
+    const grabHand = (setup, knobs) => page.evaluate(([setup, knobs, NONE]) => {
       const w = window.witch, v = w.view, t = w.game.tuning, undo = [];
       const at = k => k.split(".").reduce((o, p) => o[p], t), put = (k, val) => { const ps = k.split("."), last = ps.pop(); ps.reduce((o, p) => o[p], t)[last] = val; };
       const kept = Object.entries(knobs).map(([k, val]) => { const was = at(k); put(k, val); return [k, was]; });
@@ -77,6 +98,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
         v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const [n, val] of unis) if (u[n]) { if (u[n].value?.copy) u[n].value.copy(val); else u[n].value = val; } });
       }
     }, [setup, knobs, NONE]);
+    const grab = (setup, knobs) => (RAF ? grabRaf(setup, knobs) : grabHand(setup, knobs));
     const count = (a, b) => { let n = 0, max = 0; for (let i = 0; i < a.px.length; i += 4) { const d = Math.max(Math.abs(a.px[i] - b.px[i]), Math.abs(a.px[i + 1] - b.px[i + 1]), Math.abs(a.px[i + 2] - b.px[i + 2])); if (d) { n++; if (d > max) max = d; } } return { n, max }; };
     const A = { "occlusion.fadeOpacity": 1 }, B = { "occlusion.on": false };
     for (const id of ONLY) {
