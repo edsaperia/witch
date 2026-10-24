@@ -7,6 +7,7 @@
 import raw from "../../config/legend-buffs.json";
 import { sectionOf } from "./creatureConfig";
 import { LEGEND, type Creature } from "./creatures";
+import { buffing } from "./legends";
 import type { Tuning } from "./tuning";
 
 /** The behaviours a buff can count (config/legend-buffs.json "how" has their numbers). */
@@ -76,12 +77,13 @@ export function newBuffs(t: Tuning, forced: string[] = []): BuffState {
   return { active: [], mods: noMods(), tuning: t, events: [], base: t, forced };
 }
 
-/** The legends giving their buffs now: only a legend in the party (following her or at a sigil: none since legends stopped
- *  evolving, kept for later). A happy legend, a done quest and a flask give none (Ed, 2026-10-18: "Finishing quests no longer
- *  gives boons"); config/legend-buffs.json stays for whatever grants them next. */
+/** The legends giving their buffs now: a legend in her party (following her or at a sigil), and only while rules/legends.ts
+ *  `buffing` says legends give powers, which it never does now: a happy legend, a done quest and a flask give none (Ed,
+ *  2026-10-18: "Finishing quests no longer gives boons"), nor a legend on her leash (Ed, 2026-10-24: "switch it off").
+ *  config/legend-buffs.json stays for whatever grants them next; ?buffs= still forces some on (BuffState.forced). */
 export function partyLegends(creatures: readonly Creature[], partyIds: Iterable<number>): Creature[] {
   const out: Creature[] = [];
-  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && c.leashed) out.push(c); }
+  for (const id of partyIds) { const c = creatures[id]; if (c && c.level >= LEGEND && c.leashed && buffing(c)) out.push(c); }
   return out;
 }
 
