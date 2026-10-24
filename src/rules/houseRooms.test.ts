@@ -1,4 +1,4 @@
-// The treehouse's placeholder rooms (Ed, 2026-10-19; rules/houseRooms.ts, config/house.json): walked into from the hub and out
+// The treehouse's placeholder rooms (Ed, 2026-10-19; rules/houseRooms.ts, config/house/): walked into from the hub and out
 // again by the balcony, each object's E, the hats' floor, and the bed's hold.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
@@ -22,7 +22,7 @@ function inHouse(dx: number, dz: number): Game {
   return g;
 }
 const put = (g: Game, dx: number, dz: number) => { const d = deck(g); g.witches[0].body = { ...g.witches[0].body, x: d.x + dx, z: d.z + dz, vx: 0, vz: 0 }; };
-/** A point on the house's plan (config/house.json: turned about the hub) as metres from the hub's centre in the world. */
+/** A point on the house's plan (config/house/: turned about the hub) as metres from the hub's centre in the world. */
 const plan = (x: number, z: number) => fromPlan({ x: 0, z: 0 }, x, z);
 /** In front of an object (its near side along the plan's z), as metres from the hub's centre in the world. */
 const before = (o: ReturnType<typeof obj>, by = 0.4) => objectWorld(o, { x: 0, z: 0 }, 0, o.d / 2 + by);

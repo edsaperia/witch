@@ -3,7 +3,7 @@
 // not lived in yet, their furniture under dust sheets. A bare bed frame with a folded sheet on its slats, a wardrobe and a chest under
 // sheets, and a stack of packing crates. Built as art/furniture.js's pieces are (its model space: x along the wall it backs on, z out
 // into the room, y up, the real piece's metres), and joined into its pieces by object id: `bedroom2Bed`, `bedroom3Crates` and so on
-// (config/house.json, placed by tools/house/organic.mjs). No lights, nothing glowing: nobody lives here yet.
+// (config/house/, placed by tools/house/organic.mjs). No lights, nothing glowing: nobody lives here yet.
 import { M, hash2 } from "./core.js";
 
 /** A dust sheet over a box of half-sizes [hw, hh, hd] standing on the floor at x, z: the sheet's top rounded over it, folds falling

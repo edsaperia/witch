@@ -12,7 +12,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outDir = "previews/workshop-room", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const FOUND = (process.env.FOUND ?? "missile,fairing,nozzles,ladder,twigs,canoe").split(",").filter(Boolean);
 const [tip = null, chassis = null, exhaust = null] = (process.env.FITTED ?? "missile,fairing,nozzles").split(",").map(s => s || null);
 const TONIGHT = process.env.TONIGHT ?? "curl";

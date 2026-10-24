@@ -29,7 +29,7 @@ export interface Deck {
   /** The house (treehouse.house.on): the balcony hung off the hub's south side (its centre and radius), the magic circle on the hub's
    *  floor, how long the landing onto the balcony takes, and the fall off its open rim (on: with no broom; time: seconds to the ground). */
   house?: { balcony: { x: number; z: number; r: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; fall: { on: boolean; time: number };
-    /** The placeholder rooms' and corridors' floor (rules/houseRooms.ts, config/house.json; Ed, 2026-10-19), inside their walls, on
+    /** The placeholder rooms' and corridors' floor (rules/houseRooms.ts, config/house/; Ed, 2026-10-19), inside their walls, on
      *  the house's turned plan; null with them off. */
     rooms: RoomFloor | null };
 }

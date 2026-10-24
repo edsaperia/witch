@@ -1,0 +1,20 @@
+{
+  "id": "bedroom",
+  "label": "Bedroom",
+  "order": 130,
+  "parent": "boudoir",
+  "bearing": 2.5,
+  "branch": 2.5,
+  "radius": 9,
+  "bend": -0.8,
+  "objects": [
+    {"id":"wardrobe","label":"Wardrobe","use":{"kind":"creator","axes":["top"],"wear":[],"parts":["jacket","top","jeans"]},"bearing":-62,"foot":[4,1.2,4.4]},
+    {"id":"dressingTable","label":"Dressing table","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"bearing":-25,"foot":[2.8,1.2,3.4]},
+    {"id":"curtains","label":"Curtains","use":{"kind":"curtains"},"bearing":8,"foot":[3.6,0.6,4.2]},
+    {"id":"bed","label":"Bed","use":{"kind":"bed"},"bearing":45,"in":3.4,"foot":[4,5.2,1.6]},
+    {"id":"phone","label":"Phone","use":{"kind":"say","line":"Your phone. The alarm's set for tomorrow night."},"bearing":85,"in":1.2,"foot":[1.2,1.2,1.2]},
+    {"id":"cloakPegs","label":"Cloak pegs","use":{"kind":"creator","axes":["cloak","cloakLength","scarfLength"],"wear":["patches","scarf"],"parts":["cloak","scarf"]},"bearing":-100,"foot":[2.6,0.6,4]},
+    {"id":"shoeRack","label":"Shoe rack","use":{"kind":"creator","axes":[],"wear":["chunky"],"parts":["sneakers"]},"bearing":-138,"foot":[3,1.1,1.6]},
+    {"id":"clothesPile","label":"Last night's clothes","use":{"kind":"pile"},"bearing":110,"in":5,"foot":[2,1.6,0.6]}
+  ]
+}

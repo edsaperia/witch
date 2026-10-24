@@ -1,5 +1,5 @@
 // The treehouse's furniture drawn as art (Ed, 2026-10-23; art/furniture.js) in place of render/houseRooms.ts's plain boxes: every
-// object of the house baked by its id and its footprint (config/house.json: w, d, h), never by where it stands, so the house's layout
+// object of the house baked by its id and its footprint (config/house/: w, d, h), never by where it stands, so the house's layout
 // can move it; turned to face its room's middle (`standing`), drawn in its state (`furnitureState`: the curtains open or shut). Baked
 // and lit once (the creator's room's way, ui/creator.ts roomSteps: art/core.js bake, then art/lighting.js shade with its own lights),
 // a piece a frame, the nearest her first, then drawn as a flat picture in the house's plane (as the boxes were: render/houseRooms.ts

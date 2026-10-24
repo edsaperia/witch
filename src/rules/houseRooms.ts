@@ -1,20 +1,20 @@
 // The treehouse's placeholder rooms (Ed, 2026-10-19: "we should start working on building this into the island so you can enter
-// and exit during the party ... stick with placeholder rooms for now"; config/house.json, the mock previews/ed/big-room-mock): plank
+// and exit during the party ... stick with placeholder rooms for now"; config/house/, the mock previews/ed/big-room-mock): plank
 // rooms joined by corridors off the hub (rules/treehouse.ts), walked as one floor with it, each holding objects she walks up to and
 // uses: the dressing stations, the bags and the Workshop's bay, lathe and pegboard slide in their panels as she nears them
 // (rules/stations.ts), and with E (the sigil button) the hats' floor holds her hats as objects, the bed (E held) ends the night, the bestiary's book opens the zoo over the night,
 // and the rest are placeholders that say a line. The rules know where the floor is and which object she's at; what an object's E
 // opens is main.ts's (the "house" leash event). No drawing here (render/houseRooms.ts).
-import HOUSE from "../../config/house.json";
+import { HOUSE_CONFIG as HOUSE } from "./houseConfig";
 import { HAT_SPELLS, ownsHat, setLoadout } from "./spells";
 import { hatButton, leaveHat, wearing } from "./hat";
 import type { Witch } from "./game";
 import type { LeashEvent } from "./leash";
 
-/** A rectangle of floor on the house's plan (config/house.json): metres from the hub's centre along the plan's axes (x, z: east and
+/** A rectangle of floor on the house's plan (config/house/): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
 export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a round room (Ed, 2026-10-23: "the rooms are probably round"): its radius about the rectangle's middle */ r?: number; /** a branch (Ed: "the corridors are tree branches"): its middle line on the plan and its width, the rectangle its bounds */ pts?: [number, number][]; w?: number; /** a room drawn but not walked yet (Bedrooms 2 and 3: Ed, 2026-10-23, "locked. The branch stops at the door") */ locked?: boolean }
-/** What E does at an object (config/house.json `use`). */
+/** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
   | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }

@@ -1,4 +1,4 @@
-// The treehouse's placeholder rooms (Ed, 2026-10-19; rules/houseRooms.ts, render/houseRooms.ts, config/house.json) in the built game
+// The treehouse's placeholder rooms (Ed, 2026-10-19; rules/houseRooms.ts, render/houseRooms.ts, config/house/) in the built game
 // (DIST, default dist/) at 1600×900: she's put in the house mid-night and stood in each room (shot `<room>.png`, in front of its
 // object, on the house's turned plan), then walked along the corridor from the hub to the dressing room (`corridor-<n>.png`). Fails on a
 // page error. ONLY=dressing,bedroom shoots only those rooms.
@@ -8,7 +8,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outDir = "previews/treehouse-rooms", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 // (the house's plan is turned about the hub: rules/houseRooms.ts fromPlan)
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];

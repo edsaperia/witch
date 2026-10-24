@@ -1,0 +1,13 @@
+{
+  "id": "kitchen",
+  "label": "Kitchen",
+  "order": 20,
+  "parent": "terrace",
+  "bearing": 0,
+  "branch": 2.5,
+  "radius": 6.5,
+  "bend": -1,
+  "objects": [
+    {"id":"cauldron","label":"Cauldron","use":{"kind":"say","line":"The cauldron is cold. Brewing comes later."},"bearing":0,"in":5,"foot":[2.8,2.8,1.8]}
+  ]
+}
