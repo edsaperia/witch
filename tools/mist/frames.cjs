@@ -76,7 +76,8 @@ function report(rows, file, extra = {}) {
       report(s.rows, path.join(out, "order.json"), { link: link.replace(/^http:\/\/[^/]+/, "") });
     } else {
       await page.evaluate(() => { window.witch.manual = true; });
-      const scene = await page.evaluate(spot => { const h = window.witch.game.map.treehouse; return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 60},treetop` : `at:${spot}`); }, SPOT);
+      // (out of her bed and room: the wake-up over, its card and dark gone, as once she's walked out with the gate off)
+      const scene = await page.evaluate(spot => { const g = window.witch.game, h = g.map.treehouse; g.wake = undefined; return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 60},treetop` : `at:${spot}`); }, SPOT);
       log("scene:", scene.say);
       const frames = [];
       let s = await state(page);
