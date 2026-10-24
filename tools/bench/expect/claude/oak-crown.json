@@ -1,0 +1,8 @@
+{
+  "reason": "The great oak's crown over the treehouse (render/crown.ts, its string lights in render/strings.ts, its far landmark in render/crownLandmark.ts) in place of the rooms' leaf roofs: drawing only, no rules state changes",
+  "frames": {
+    "boot": "the crown, its bark and its lights over the house by the decks, in place of the leaf roofs; the dancefloor and the Terrace's notch kept open",
+    "wave-fight": "the crown's edge or its far landmark in view from the debug arena by the dancefloor",
+    "bedroom": "the crown laid over the house's floors indoors (cleared over her room) in place of the rooms' leaf roofs"
+  }
+}
