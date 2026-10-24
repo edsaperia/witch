@@ -19,6 +19,11 @@ const SUSPECTS = {
   solid: "t.suspects.seeSolid = 'all';", // (their alpha forced to 1)
   write: "t.suspects.seeWrite = true;", // (the half-faded pass writing its depth)
   early: "t.suspects.seeEarly = true;", // (the see-through passes drawn right after the scenery: renderOrder 0.6)
+  // (hidden by their layers, which the view never resets as it does .visible: what's drawn between the solid scenery, 0.5, and the front pass, 10.9, that isn't a sprite pass, hidden: all of it, the blob
+  // shadows alone, the mist alone)
+  between: "v.scene.traverse(o => { if (o.renderOrder > 0.5 && o.renderOrder < 10.9 && !o.material?.uniforms?.uFadePass && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
+  noshadow: "v.scene.traverse(o => { if (o.renderOrder === 1 && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
+  nomist: "t.suspects.mist = false;",
   nocull: "t.suspects.seeCull = false;", // (uSeeDbg is set from the suspects every frame: frameUniforms.ts)
 };
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPECTS);
@@ -68,7 +73,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
         return { W, H, px: Array.from(px) };
       } finally {
         for (const [k, was] of kept) put(k, was);
-        Object.assign(t.suspects ??= {}, JSON.parse(keptT)); v.hizOff = hiz;
+        Object.assign(t.suspects ??= {}, JSON.parse(keptT)); v.hizOff = hiz; for (const f of (window.__undo ?? []).splice(0)) f();
         v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const [n, val] of unis) if (u[n]) { if (u[n].value?.copy) u[n].value.copy(val); else u[n].value = val; } });
       }
     }, [setup, knobs, NONE]);
@@ -83,7 +88,7 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
         v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const n of ["uSeeEarly", "uCullByPass"]) if (u[n] && !unis.has(n)) unis.set(n, u[n].value); });
         const was = w.manual; w.manual = false;
         try { new Function("v", "t", setup)(v, t); const r = await window.__neutralCheck(); return { changed: r.pairs[0].changed, max: r.pairs[0].maxDiff, still: r.still, inUse: r.seeThroughInUse }; }
-        finally { w.manual = was; Object.assign(t.suspects, JSON.parse(keptT)); v.hizOff = hiz; v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const [n, val] of unis) if (u[n]) u[n].value = val; }); }
+        finally { w.manual = was; Object.assign(t.suspects, JSON.parse(keptT)); v.hizOff = hiz; for (const f of (window.__undo ?? []).splice(0)) f(); v.scene.traverse(o => { const u = o.material?.uniforms; if (u) for (const [n, val] of unis) if (u[n]) u[n].value = val; }); }
       }, s);
       const r = { check, diff: count(a, b), driftA: count(a0, a).n, driftB: count(b, b1).n, inUse: count(base, b).n };
       out[id] = r; console.log(id, JSON.stringify(r));
