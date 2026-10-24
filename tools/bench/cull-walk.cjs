@@ -12,6 +12,8 @@ const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 // (seed 123's home: the muddy forest about 100 m off and the fern forest about 260 m, found by scanning the map round home)
 const ALL = { decks: null, muddy: [3127, 2772, "ground"], muddyTop: [3127, 2772, "treetop"], fern: [3392, 2645, "ground"] };
+// CONTROL=1: the same grabs with it never switched on, so a change in the off after is the frame settling late, not the cull
+const CONTROL = process.env.CONTROL === "1";
 const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
@@ -31,7 +33,7 @@ const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
     const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, true); }, [n, NONE]);
     const settle = async () => { let last = -1, same = 0; for (let i = 0; i < 60 && same < 3; i++) { await step(2); await new Promise(r => setTimeout(r, 2000)); const t = await page.evaluate(() => window.witch.view.renderer.info.render.triangles); same = t === last ? same + 1 : 0; last = t; } };
     const grab = () => page.evaluate(NONE => { const w = window.witch, gl = w.view.renderer.getContext(); w.frame(NONE, 0, true); const W = gl.drawingBufferWidth, H = gl.drawingBufferHeight, px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return Array.from(px); }, NONE);
-    const setOn = on => page.evaluate(on => { let u = null; window.witch.view.scene.traverse(o => { u ??= o.material?.uniforms?.uCullByPass ?? null; }); if (!u) throw new Error("no uCullByPass"); u.value = on ? 1 : 0; }, on);
+    const setOn = on => page.evaluate(([on, CONTROL]) => { let u = null; window.witch.view.scene.traverse(o => { u ??= o.material?.uniforms?.uCullByPass ?? null; }); if (!u) throw new Error("no uCullByPass"); u.value = on && !CONTROL ? 1 : 0; }, [on, CONTROL]);
     const count = (a, b) => { let n = 0; for (let i = 0; i < a.length; i += 4) if (a[i] !== b[i] || a[i + 1] !== b[i + 1] || a[i + 2] !== b[i + 2]) n++; return n; };
     for (const spot of SPOTS) {
       const s = ALL[spot];
