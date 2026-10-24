@@ -1,0 +1,637 @@
+{
+ "_": "The treehouse's placeholder rooms (Ed, 2026-10-19: \"we should start working on building this into the island so you can enter and exit during the party ... stick with placeholder rooms for now\"; the mock, previews/ed/big-room-mock): plain plank rooms joined by corridors off today's hub and balcony, drawn by the game (render/houseRooms.ts), walked as one floor with them (rules/houseRooms.ts). Metres from the hub's centre on the house's plan, turned `turn` degrees about it (Ed, 2026-10-21: \"more of an isometric view\"; at 45 the plan's x runs north-east and its z south-east, so each room shows as a diamond with two walls behind it; the hub, the balcony and her keys stay the world's: rules/houseRooms.ts fromPlan). Sized for her on foot (Ed, 2026-10-21: \"the treehouse is too small for the witch to move inside\"). Rooms and corridors are rectangles (x0..x1, z0..z1); a corridor overlaps what it joins, so the walk runs on through. wall: the walls' height (m). Each object: its room, its middle (x, z on the plan), its footprint (w along the plan's x, d along its z) and height (h), its label, and what E does there (use): creator (the creator opened at only these choices: axes, wear and parts, as ui/creator.ts BOXES names them; spell: the Hat or Broom box's power row too), hats (the hats' floor: hats lie there as objects, E picks one up or puts hers down), bed (held E ends the night), curtains (the bedroom's window: shut while she wakes, E opens them once the island's ready; rules/wakeUp.ts), zoo (the bestiary's book: the zoo over the night), telescope (the crow's nest's: looking round the island through it, rules/telescope.ts), ball (the crystal ball: what tonight's trunk holds and which way it lies, rules/finds.ts), or say (a placeholder: a one-line bubble). reach: how far past an object's edge E reaches it (m). The bedrooms (Ed, 2026-10-21: \"We will have three bedrooms, one for each witch (multiplayer). Hats, brooms, and satchels are shared between witches\"; \"bedrooms should be larger to fit everything\"): each witch's own dressing is in her bedroom (the dressing table, the wardrobe, the cloak pegs, the shoe rack), the shared things past its door (the hat room's mirror and hats' floor, the bags, the broom stand); one bedroom built, the host's, off the landing between it and the hat room; reserved: the other two, either side of it along the landing (their floors and their doors off it, kept clear of everything; built later, the landing run out to them).",
+ "on": true,
+ "turn": 45,
+ "wall": 3,
+ "reach": 1.2,
+ "rooms": [
+  {
+   "id": "workshop",
+   "label": "Workshop",
+   "x0": -8,
+   "x1": 8,
+   "z0": -32,
+   "z1": -16
+  },
+  {
+   "id": "studio",
+   "label": "Studio",
+   "x0": -31,
+   "x1": -17,
+   "z0": -7,
+   "z1": 7
+  },
+  {
+   "id": "kitchen",
+   "label": "Kitchen",
+   "x0": -7,
+   "x1": 7,
+   "z0": 17,
+   "z1": 31
+  },
+  {
+   "id": "atrium",
+   "label": "Atrium",
+   "x0": 19,
+   "x1": 29,
+   "z0": -5,
+   "z1": 5
+  },
+  {
+   "id": "drawingRoom",
+   "label": "Drawing Room",
+   "x0": 41,
+   "x1": 55,
+   "z0": -7,
+   "z1": 7
+  },
+  {
+   "id": "bestiary",
+   "label": "Bestiary",
+   "x0": 17,
+   "x1": 31,
+   "z0": 17,
+   "z1": 31
+  },
+  {
+   "id": "parlour",
+   "label": "Parlour",
+   "x0": 18,
+   "x1": 30,
+   "z0": -54,
+   "z1": -42
+  },
+  {
+   "id": "solarium",
+   "label": "Solarium",
+   "x0": 17,
+   "x1": 31,
+   "z0": -79,
+   "z1": -65
+  },
+  {
+   "id": "study",
+   "label": "Study",
+   "x0": -7,
+   "x1": 7,
+   "z0": -55,
+   "z1": -41
+  },
+  {
+   "id": "boudoir",
+   "label": "Boudoir",
+   "x0": 43,
+   "x1": 53,
+   "z0": -53,
+   "z1": -43
+  },
+  {
+   "id": "bedroom2",
+   "label": "Bedroom 2",
+   "x0": 63,
+   "x1": 81,
+   "z0": -57,
+   "z1": -39
+  },
+  {
+   "id": "bedroom3",
+   "label": "Bedroom 3",
+   "x0": 39,
+   "x1": 57,
+   "z0": -33,
+   "z1": -15
+  },
+  {
+   "id": "bedroom",
+   "label": "Bedroom",
+   "x0": 39,
+   "x1": 57,
+   "z0": -81,
+   "z1": -63
+  },
+  {
+   "id": "crowsNest",
+   "label": "Crow's nest",
+   "x0": 43,
+   "x1": 53,
+   "z0": -101,
+   "z1": -91
+  }
+ ],
+ "corridors": [
+  {
+   "id": "terrace-atrium",
+   "x0": 5.5,
+   "x1": 20.5,
+   "z0": -2,
+   "z1": 2
+  },
+  {
+   "id": "terrace-workshop",
+   "x0": -2,
+   "x1": 2,
+   "z0": -17.5,
+   "z1": -5.5
+  },
+  {
+   "id": "terrace-studio",
+   "x0": -18.5,
+   "x1": -5.5,
+   "z0": -2,
+   "z1": 2
+  },
+  {
+   "id": "terrace-kitchen",
+   "x0": -2,
+   "x1": 2,
+   "z0": 5.5,
+   "z1": 18.5
+  },
+  {
+   "id": "atrium-drawingRoom",
+   "x0": 27.5,
+   "x1": 42.5,
+   "z0": -2,
+   "z1": 2
+  },
+  {
+   "id": "atrium-bestiary",
+   "x0": 22,
+   "x1": 26,
+   "z0": 3.5,
+   "z1": 18.5
+  },
+  {
+   "id": "atrium-parlour",
+   "x0": 22,
+   "x1": 26,
+   "z0": -43.5,
+   "z1": -3.5
+  },
+  {
+   "id": "parlour-solarium",
+   "x0": 22,
+   "x1": 26,
+   "z0": -66.5,
+   "z1": -52.5
+  },
+  {
+   "id": "parlour-study",
+   "x0": 5.5,
+   "x1": 19.5,
+   "z0": -50,
+   "z1": -46
+  },
+  {
+   "id": "parlour-boudoir",
+   "x0": 28.5,
+   "x1": 44.5,
+   "z0": -50,
+   "z1": -46
+  },
+  {
+   "id": "boudoir-bedroom",
+   "x0": 46,
+   "x1": 50,
+   "z0": -64.5,
+   "z1": -51.5
+  },
+  {
+   "id": "boudoir-bedroom2",
+   "x0": 51.5,
+   "x1": 64.5,
+   "z0": -50,
+   "z1": -46
+  },
+  {
+   "id": "boudoir-bedroom3",
+   "x0": 46,
+   "x1": 50,
+   "z0": -44.5,
+   "z1": -31.5
+  },
+  {
+   "id": "bedroom-crowsNest",
+   "x0": 46,
+   "x1": 50,
+   "z0": -92.5,
+   "z1": -79.5
+  }
+ ],
+ "objects": [
+  {
+   "id": "bed",
+   "room": "bedroom",
+   "label": "Bed",
+   "x": 55.7,
+   "z": -77.5,
+   "w": 2.6,
+   "d": 2,
+   "h": 0.8,
+   "use": {
+    "kind": "bed"
+   }
+  },
+  {
+   "id": "phone",
+   "room": "bedroom",
+   "label": "Phone",
+   "x": 56.6,
+   "z": -79.8,
+   "w": 0.6,
+   "d": 0.6,
+   "h": 0.6,
+   "use": {
+    "kind": "say",
+    "line": "Your phone. The alarm's set for tomorrow night."
+   }
+  },
+  {
+   "id": "dressingTable",
+   "room": "bedroom",
+   "label": "Dressing table",
+   "x": 53,
+   "z": -80.6,
+   "w": 1.4,
+   "d": 0.6,
+   "h": 1.7,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "hair"
+    ],
+    "wear": [
+     "earrings"
+    ],
+    "parts": [
+     "hair",
+     "skin"
+    ]
+   }
+  },
+  {
+   "id": "wardrobe",
+   "room": "bedroom",
+   "label": "Wardrobe",
+   "x": 42.5,
+   "z": -80.6,
+   "w": 2,
+   "d": 0.6,
+   "h": 2.2,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "top"
+    ],
+    "wear": [],
+    "parts": [
+     "jacket",
+     "top",
+     "jeans"
+    ]
+   }
+  },
+  {
+   "id": "cloakPegs",
+   "room": "bedroom",
+   "label": "Cloak pegs",
+   "x": 56.8,
+   "z": -73,
+   "w": 0.3,
+   "d": 1.3,
+   "h": 2,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "cloak",
+     "cloakLength",
+     "scarfLength"
+    ],
+    "wear": [
+     "patches",
+     "scarf"
+    ],
+    "parts": [
+     "cloak",
+     "scarf"
+    ]
+   }
+  },
+  {
+   "id": "curtains",
+   "room": "bedroom",
+   "label": "Curtains",
+   "x": 56.8,
+   "z": -69,
+   "w": 0.3,
+   "d": 1.8,
+   "h": 2.1,
+   "use": {
+    "kind": "curtains"
+   }
+  },
+  {
+   "id": "shoeRack",
+   "room": "bedroom",
+   "label": "Shoe rack",
+   "x": 56.7,
+   "z": -65.5,
+   "w": 0.6,
+   "d": 1.6,
+   "h": 0.8,
+   "use": {
+    "kind": "creator",
+    "axes": [],
+    "wear": [
+     "chunky"
+    ],
+    "parts": [
+     "sneakers"
+    ]
+   }
+  },
+  {
+   "id": "crystalBall",
+   "room": "boudoir",
+   "label": "Crystal ball",
+   "x": 51,
+   "z": -51.6,
+   "w": 0.7,
+   "d": 0.7,
+   "h": 1.3,
+   "use": {
+    "kind": "ball"
+   }
+  },
+  {
+   "id": "telephone",
+   "room": "boudoir",
+   "label": "Telephone",
+   "x": 45,
+   "z": -52.6,
+   "w": 0.5,
+   "d": 0.5,
+   "h": 1.1,
+   "use": {
+    "kind": "say",
+    "line": "The line's quiet. Friends can call later."
+   }
+  },
+  {
+   "id": "mirror",
+   "room": "parlour",
+   "label": "Mirror",
+   "x": 21,
+   "z": -53.7,
+   "w": 1.1,
+   "d": 0.3,
+   "h": 2.1,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "hair"
+    ],
+    "wear": [
+     "earrings"
+    ],
+    "parts": [
+     "hair",
+     "skin"
+    ]
+   }
+  },
+  {
+   "id": "hats",
+   "room": "parlour",
+   "label": "Hats",
+   "x": 26,
+   "z": -46.5,
+   "w": 3.6,
+   "d": 1.8,
+   "h": 0,
+   "use": {
+    "kind": "hats"
+   }
+  },
+  {
+   "id": "bags",
+   "room": "study",
+   "label": "Bags",
+   "x": 2.5,
+   "z": -54.7,
+   "w": 1.8,
+   "d": 0.4,
+   "h": 1.6,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "bagSize",
+     "backpackSize"
+    ],
+    "wear": [
+     "satchel",
+     "bumbag"
+    ],
+    "parts": [
+     "satchel",
+     "backpack"
+    ]
+   }
+  },
+  {
+   "id": "invitations",
+   "room": "study",
+   "label": "Invitations desk",
+   "x": -3,
+   "z": -54,
+   "w": 1.8,
+   "d": 1,
+   "h": 0.9,
+   "use": {
+    "kind": "say",
+    "line": "The invitations aren't written yet."
+   }
+  },
+  {
+   "id": "broomStand",
+   "room": "workshop",
+   "label": "Broom stand",
+   "x": 3,
+   "z": -31.6,
+   "w": 1.2,
+   "d": 0.4,
+   "h": 1.8,
+   "use": {
+    "kind": "creator",
+    "axes": [
+     "broom",
+     "broomLength",
+     "broomThickness",
+     "broomBend",
+     "bristles"
+    ],
+    "wear": [],
+    "parts": [
+     "broom",
+     "bristles"
+    ],
+    "spell": "broom"
+   }
+  },
+  {
+   "id": "pegboard",
+   "room": "workshop",
+   "label": "Pegboard",
+   "x": -2,
+   "z": -31.75,
+   "w": 2.8,
+   "d": 0.25,
+   "h": 2.2,
+   "use": {
+    "kind": "say",
+    "line": "The pegboard waits for broom parts."
+   }
+  },
+  {
+   "id": "recordShelf",
+   "room": "studio",
+   "label": "Record shelf",
+   "x": -24,
+   "z": -6.65,
+   "w": 2.2,
+   "d": 0.5,
+   "h": 2,
+   "use": {
+    "kind": "say",
+    "line": "The shelf waits for records."
+   }
+  },
+  {
+   "id": "cauldron",
+   "room": "kitchen",
+   "label": "Cauldron",
+   "x": 1.5,
+   "z": 22.5,
+   "w": 1.4,
+   "d": 1.4,
+   "h": 0.9,
+   "use": {
+    "kind": "say",
+    "line": "The cauldron is cold. Brewing comes later."
+   }
+  },
+  {
+   "id": "teaTable",
+   "room": "solarium",
+   "label": "Tea table",
+   "x": 24,
+   "z": -73,
+   "w": 1.4,
+   "d": 1.4,
+   "h": 0.7,
+   "use": {
+    "kind": "say",
+    "line": "The tea's not brewed yet."
+   }
+  },
+  {
+   "id": "cardTable",
+   "room": "drawingRoom",
+   "label": "Card table",
+   "x": 48,
+   "z": -1,
+   "w": 1.7,
+   "d": 1.7,
+   "h": 0.75,
+   "use": {
+    "kind": "say",
+    "line": "The cards come later."
+   }
+  },
+  {
+   "id": "book",
+   "room": "bestiary",
+   "label": "Bestiary book",
+   "x": 24,
+   "z": 24,
+   "w": 0.8,
+   "d": 0.6,
+   "h": 1.1,
+   "use": {
+    "kind": "zoo"
+   }
+  },
+  {
+   "id": "specimens",
+   "room": "bestiary",
+   "label": "Skeletons and skulls",
+   "x": 30.6,
+   "z": 24,
+   "w": 0.4,
+   "d": 4,
+   "h": 2,
+   "use": {
+    "kind": "say",
+    "line": "The skeletons and skulls come later."
+   }
+  },
+  {
+   "id": "telescope",
+   "room": "crowsNest",
+   "label": "Telescope",
+   "x": 48,
+   "z": -97.5,
+   "w": 0.8,
+   "d": 0.8,
+   "h": 1.6,
+   "use": {
+    "kind": "telescope"
+   }
+  },
+  {
+   "id": "mapTable",
+   "room": "atrium",
+   "label": "Map table",
+   "x": 24,
+   "z": 0,
+   "w": 3.1,
+   "d": 3.1,
+   "h": 0.9,
+   "use": {
+    "kind": "say",
+    "line": "(the sea chart)"
+   }
+  },
+  {
+   "id": "bed2",
+   "room": "bedroom2",
+   "label": "Bedroom 2",
+   "x": 72,
+   "z": -53,
+   "w": 2.6,
+   "d": 2,
+   "h": 0.8,
+   "use": {
+    "kind": "say",
+    "line": "Someone else's room. Locked for now."
+   }
+  },
+  {
+   "id": "bed3",
+   "room": "bedroom3",
+   "label": "Bedroom 3",
+   "x": 48,
+   "z": -29,
+   "w": 2.6,
+   "d": 2,
+   "h": 0.8,
+   "use": {
+    "kind": "say",
+    "line": "Someone else's room. Locked for now."
+   }
+  }
+ ],
+ "bed": {
+  "hold": 1.5
+ }
+}

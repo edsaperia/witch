@@ -1,0 +1,126 @@
+{
+ "seed": "123",
+ "res": "auto",
+ "shots": [
+  {
+   "name": "n-wide",
+   "heading": 0,
+   "zoom": 0,
+   "renderMs": 1734.5,
+   "calls": 168,
+   "triangles": 389685,
+   "picture": "427×267",
+   "top": [
+    "draw 1730.9",
+    "creatures 0.8",
+    "grass+lights 0.6",
+    "witch 0.5",
+    "markers 0.4"
+   ]
+  },
+  {
+   "name": "e-wide",
+   "heading": 90,
+   "zoom": 0,
+   "renderMs": 2061.9,
+   "calls": 157,
+   "triangles": 436975,
+   "picture": "427×267",
+   "top": [
+    "draw 2058.1",
+    "creatures 1.0",
+    "grass+lights 0.7",
+    "hud 0.5",
+    "witch 0.4"
+   ]
+  },
+  {
+   "name": "s-wide",
+   "heading": 180,
+   "zoom": 0,
+   "renderMs": 1670.2,
+   "calls": 208,
+   "triangles": 438497,
+   "picture": "427×267",
+   "top": [
+    "draw 1666.8",
+    "grass+lights 0.9",
+    "creatures 0.7",
+    "witch 0.5",
+    "hud 0.3"
+   ]
+  },
+  {
+   "name": "w-wide",
+   "heading": 270,
+   "zoom": 0,
+   "renderMs": 1340,
+   "calls": 195,
+   "triangles": 327895,
+   "picture": "427×267",
+   "top": [
+    "draw 1336.9",
+    "grass+lights 0.7",
+    "creatures 0.6",
+    "hud 0.4",
+    "witch 0.3"
+   ]
+  },
+  {
+   "name": "n-zoom",
+   "heading": 0,
+   "zoom": 0.7,
+   "renderMs": 3544,
+   "calls": 153,
+   "triangles": 330295,
+   "picture": "427×267",
+   "top": [
+    "draw 3540.6",
+    "grass+lights 0.7",
+    "leash 0.5",
+    "creatures 0.4",
+    "markers 0.4"
+   ]
+  },
+  {
+   "name": "s-zoom",
+   "heading": 180,
+   "zoom": 0.55,
+   "renderMs": 2285.6,
+   "calls": 159,
+   "triangles": 328675,
+   "picture": "427×267",
+   "top": [
+    "draw 2282.7",
+    "grass+lights 0.8",
+    "creatures 0.5",
+    "hud 0.3",
+    "markers 0.3"
+   ]
+  }
+ ],
+ "game": {
+  "renderMs": 344.5,
+  "calls": 91,
+  "triangles": 118518,
+  "picture": "427×267",
+  "top": [
+   "draw 342.5",
+   "grass+lights 0.5",
+   "hud 0.3",
+   "markers 0.3",
+   "witch 0.2"
+  ]
+ },
+ "after": {
+  "on": false,
+  "right": {
+   "x": 1,
+   "y": 0,
+   "z": 0
+  },
+  "picture": "427×267",
+  "far": 900
+ },
+ "errors": []
+}
