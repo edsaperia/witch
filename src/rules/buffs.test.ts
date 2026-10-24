@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEGEND_BUFFS, MOD_KINDS, buffedTuning, modsOf, newBuffs, noMods, stepBuffs, type BuffDef, type BuffMods } from "./buffs";
+import { LEGEND_BUFFS, MOD_KINDS, buffedTuning, modsOf, newBuffs, noMods, partyLegends, stepBuffs, type BuffDef, type BuffMods } from "./buffs";
 import { LEGEND, spawnCreatures, type Creature } from "./creatures";
 import { AREA_TYPES, generateMap } from "./map";
 import { newGame, stepGame, STEP, type Controls } from "./game";
@@ -73,20 +73,23 @@ describe("legend buffs, redesigned (Ed, 2026-10-05; #87)", () => {
     expect(mods()).toEqual(noMods());
   });
 
-  it("is on while a legend in her party gives it, gained and lost; a happy or quest-done legend gives none (Ed, 2026-10-18); ?buffs= forces some on", () => {
+  it("no legend gives a power: not one on her leash (Ed, 2026-10-24), nor a happy or quest-done one (Ed, 2026-10-18); ?buffs= still forces some on, gained and lost", () => {
     const map = generateMap(123, t), cs = spawnCreatures(map), s = newBuffs(t), [a, happy, done] = cs;
     Object.assign(a, { leashed: true, level: LEGEND, species: "snake" }); Object.assign(happy, { leashed: false, level: LEGEND, legendState: "happy" }); Object.assign(done, { leashed: false, level: LEGEND, legendState: "asleep", buffed: true });
+    expect(partyLegends(cs, [a.id, happy.id, done.id])).toEqual([]);
     stepBuffs(s, cs, [a.id, happy.id, done.id], t);
-    expect(s.active.map(x => x.id)).toEqual([a.id]);
-    expect(s.events).toEqual([{ kind: "gained", id: a.id, species: "snake", label: B.species.snake.label }]);
-    expect(s.tuning.invites.speed).toBeGreaterThan(t.invites.speed);
-    a.leashed = false;
-    stepBuffs(s, cs, [a.id, happy.id, done.id], t);
-    expect(s.events.map(e => e.kind)).toEqual(["lost"]);
-    const f = newBuffs(t, ["fox", "toad", "stag"]);
-    stepBuffs(f, cs, [], t);
-    expect(f.active.map(x => x.species)).toEqual(["fox", "toad", "stag"]);
+    expect(s.active).toEqual([]);
+    expect(s.events).toEqual([]);
+    expect(s.tuning).toBe(t);
+    const f = newBuffs(t, ["fox", "toad", "stag", "snake"]);
+    stepBuffs(f, cs, [a.id], t);
+    expect(f.active.map(x => x.species)).toEqual(["fox", "toad", "stag", "snake"]);
+    expect(f.events.map(e => e.kind)).toEqual(["gained", "gained", "gained", "gained"]);
     expect(f.mods.charm + f.mods.split + f.mods.pierce).toBe(3);
+    expect(f.tuning.invites.speed).toBeGreaterThan(t.invites.speed);
+    f.forced = [];
+    stepBuffs(f, cs, [a.id], t);
+    expect(f.events.map(e => e.kind)).toEqual(["lost", "lost", "lost", "lost"]);
   });
 
   // The 💌 shots.

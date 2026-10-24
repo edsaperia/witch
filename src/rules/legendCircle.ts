@@ -48,6 +48,7 @@ export interface CircleLine { text: string; done?: boolean }
 /** What a legend's boon does, in its own plain words (Ed, 2026-10-06: "The legend circle text should tell you what the boon
  *  will be"): its buff's name and line from config/legend-buffs.json (the label after its "Species's Name: "), so it says
  *  what the game gives; null for a species with no buff. */
+// (Unused since Ed's 2026-10-18 change, the panel naming no boon: kept for when legends' powers come back, rules/legends.ts buffing.)
 export function boonWords(species: string): string | null {
   const def = LEGEND_BUFFS.species[species];
   if (!def) return null;
