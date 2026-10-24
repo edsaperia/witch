@@ -8257,6 +8257,79 @@
         "settle": {
           "type": "number",
           "minimum": 0
+        },
+        "hold": {
+          "type": "object",
+          "properties": {
+            "rate": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ease": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cap": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "rate",
+            "ease",
+            "cap"
+          ],
+          "additionalProperties": false
+        },
+        "handoff": {
+          "type": "object",
+          "properties": {
+            "sea": {
+              "type": "number"
+            },
+            "dist": {
+              "type": "number",
+              "minimum": 0
+            },
+            "pitchDeg": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "sea",
+            "dist",
+            "pitchDeg"
+          ],
+          "additionalProperties": false
+        },
+        "tree": {
+          "type": "object",
+          "properties": {
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "fill": {
+              "type": "number",
+              "minimum": 0
+            },
+            "time": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "height",
+            "angle",
+            "fill",
+            "time"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -8268,7 +8341,10 @@
         "low",
         "frame",
         "rise",
-        "settle"
+        "settle",
+        "hold",
+        "handoff",
+        "tree"
       ],
       "additionalProperties": false
     },

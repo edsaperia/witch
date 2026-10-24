@@ -1745,7 +1745,7 @@ The opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude
 
 ### `arrive`, `camera`
 
-Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed).
+Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart hands off over the open sea south of the island (its last frame and camera in sessionStorage, Charlie's chart side), the page shows that still pushing in (a CSS animation in index.html, from the first paint) while the night builds, then cross-fades it away over fade seconds into the game's camera at the same place, and flies on, looking north: over the sea and low over the forest at speed m/s (low: angle degrees down, distance metres back, aimed offshore metres past the south coast at first; each low leg at least minLeg seconds), then up over rise seconds to frame the dancefloor and the treehouse's spot together (frame: angle, distance, lift metres over the ground), then down over settle seconds into the opening shot at her decks. It waits behind the still (Ed's playtest, 2026-10-12: the first frames at a new spot are heavy) until warm.frames frames in a row come within warm.ms ms, or warm.max seconds pass, then flies on the frames' own time, each counting at most maxStep seconds, so a stall holds the flight rather than skipping it. Any key skips to the decks. The chart's record (app/arrival.ts) is read once, and ignored if it's stale or for another island; with no still (too big for the storage) a plain dark screen fades instead. The flight starts at the chart's own speed north (its cam.speed). A sail in place (Ed, 2026-10-24, the sail's transition: "Never a frozen frame"): the next night is made under the chart from the moment she sails, and the chart's flight waits for it (hold): from the end of its glide in, while the night isn't ready, its pace eases (over hold.ease seconds) down to hold.rate of its own, slowing on into a hover short of the hand-off, the sea still moving, for at most hold.cap seconds; then on, as it's ready, into the dive. handoff: where the chart hands over, sea metres out to sea off the south coast below the dancefloor (negative: inland), its camera dist metres back and pitchDeg degrees down (the first flight's: -40, 600, 50); ?dive=near\|far\|skim for one load (app/chartView.ts DIVES). tree (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her bedroom"): after framing the dancefloor, the camera comes round to the whole treehouse tree from the south, angle degrees up at its middle, far enough back that it fills fill of the frame's height (its height in metres from its art once drawn, height till then), time seconds after the frame, then settle seconds on into her bedroom.
 
 | knob | type | range |
 |---|---|---|
@@ -1764,6 +1764,16 @@ Arriving on an island from the sea chart (Ed, 2026-10-12, the zoom-to-island pla
 | `arrive.frame.lift` | number | 0 to … |
 | `arrive.rise` | number | 0 to … |
 | `arrive.settle` | number | 0 to … |
+| `arrive.hold.rate` | number | 0 to … |
+| `arrive.hold.ease` | number | 0 to … |
+| `arrive.hold.cap` | number | 0 to … |
+| `arrive.handoff.sea` | number |  |
+| `arrive.handoff.dist` | number | 0 to … |
+| `arrive.handoff.pitchDeg` | number | 0 to … |
+| `arrive.tree.height` | number | 0 to … |
+| `arrive.tree.angle` | number | 0 to … |
+| `arrive.tree.fill` | number | 0 to … |
+| `arrive.tree.time` | number | 0 to … |
 | `camera.fov` | number | 0 to … |
 | `camera.ground.angleIn` | number | 0 to … |
 | `camera.ground.angleOut` | number | 0 to … |

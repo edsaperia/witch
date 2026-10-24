@@ -325,6 +325,10 @@ export interface View extends NightState {}
 /** The area types on a map (its cells' types, by their look's index): the ones whose tufts take its biome (GrassView.tufts). */
 const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>([HOME_LOOK]); for (const c of map.cells) s.add(map.typeOf(c[0], c[1])); return s; }; // (and home's meadow)
 
+/** A sail's dive's ground drawn before it (prepare's `track`): this many metres each side of its track, and this far along it in
+ *  from the sea (where the island first comes into view). */
+const TRACK_REACH = 140, TRACK_AHEAD = 320;
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -768,14 +772,49 @@ export class View {
   }
 
   /** Make the art and ground round the start before the first frame (each night's: run again after setGame). */
-  async prepare(): Promise<void> {
+  /** `o.dive` (a sail's, Ed 2026-10-24: "Don't wait for the trees"; "we only really need the scenery south of the treehouse for the
+   *  dive"; "the treehouse doesn't have to be ready at the start of the dive - only once it's in view"): metres from the dive's view
+   *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
+   *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
+   *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
+  async prepare(o: { dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
+    performance.mark("witch:prep-start");
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
       const m = this.game.map, types = new Set<number>();
       for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) types.add(m.typeOf(x, y));
       this.assets.tonight(types);
     }
+    // Every area type the map has, drawn in the background so the forest ahead is ready however fast she flies; the
+    // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
+    // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for by the house), not its type's trees.
+    // By the treehouse, where she wakes and sits at her decks (Ed, 2026-10-24, the loading mist: "If loading starts with areas
+    // closer to the treehouse, this will look fine"): each type by its nearest area to the house; a sail's, to the dive's view.
+    const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
+    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
+      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
+      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = o.dive ? o.dive(s.x, s.z) : Math.hypot(s.x - h.x, s.z - h.z);
+      if (!(near.get(t)! <= d)) near.set(t, d);
+    }
+    if (o.dive) {
+      this.homeDone = false;
+      this.prepared = true;
+      this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
+      await this.compileAll();
+      // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
+      // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
+      // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
+      const leg = o.track?.[0];
+      if (leg) {
+        const [x0, z0] = leg, r = { minX: x0 - TRACK_REACH, maxX: x0 + TRACK_REACH, minZ: z0 - TRACK_AHEAD, maxZ: z0 + TRACK_REACH };
+        while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
+      }
+      performance.mark("witch:prep-track");
+      void this.buildHome().catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { this.homeDone = true; });
+      return;
+    }
     await runSliced(this.warmSteps(), "warm"); // (the first frame's own lazy work made ahead, a slice at a time)
+    performance.mark("witch:prep-warm");
     this.render(0, false);
     drawCreatures(this);
     { const rect = viewRect(this, this.game.tuning.haze.near, 20), w = this.game.witch; // (the ground round the start, a few tiles a frame: render/slices.ts)
@@ -787,20 +826,33 @@ export class View {
     performance.mark("witch:prep-idle");
     this.render(0, false);
     await runSliced(refreshSteps(this), "refresh"); // (refresh(this, true), a slice at a time)
-    // Every area type the map has, drawn in the background now so the forest ahead is ready however fast she flies; the
-    // nearest her first. Only the map's own (Ed, 2026-10-12: an island grows only its roster's species, rules/map.ts): a type
-    // it hasn't is never drawn, and home's area is its meadow (HOME_LOOK, asked for above), not its type's trees.
-    // By the treehouse, where she wakes and sits at her decks (Ed, 2026-10-24, the loading mist: "If loading starts with areas
-    // closer to the treehouse, this will look fine"): each type by its nearest area to the house.
-    const m = this.game.map, h = m.treehouse, near = new Map<number, number>();
-    for (let y = m.first; y < m.first + m.n; y++) for (let x = m.first; x < m.first + m.n; x++) {
-      if (x === m.centreCell[0] && y === m.centreCell[1]) continue;
-      const s = m.siteOf(x, y), t = m.typeOf(x, y), d = Math.hypot(s.x - h.x, s.z - h.z);
-      if (!(near.get(t)! <= d)) near.set(t, d);
-    }
     this.prepared = true;
     await this.compileAll();
     this.askIsland(near);
+    this.homeDone = true;
+  }
+
+  /** The treehouse tree's height (metres from its foot, its art's), or null till its art has come (app/arrive.ts: the dive's look
+   *  at the whole tree). The one measure of it (the coordinator, 2026-10-24): when the oak's crown lands (claude/oak-crown,
+   *  render/crown.ts), its extents, not the Ent's sprite. */
+  treeHeight(): number | null { const a = this.assets; return a.home.treehouse ? a.treehouse.base.y * this.mpp : null; }
+
+  /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
+   *  Before a sail's dive it may not be yet (prepare's `dive`): made on through it, by buildHome. */
+  homeDone = true;
+
+  /** A sail's house made through the dive (prepare's `dive`): the forest round it, its art (drawn by the art workers, not on the
+   *  page: the dive's frames go on), the ground round it, a few tiles a frame, and the view's batches made again with it. */
+  private async buildHome(): Promise<void> {
+    await runSliced(this.warmSteps(), "warm");
+    performance.mark("witch:prep-warm");
+    while (!this.assets.homeReady) { this.assets.work(4); await nextFrame(); } // (its jobs sent to the workers a little a frame, under the chart too)
+    performance.mark("witch:prep-home");
+    { const w = this.game.witch, R = this.game.tuning.haze.near + 20, r = { minX: w.x - R, maxX: w.x + R, minZ: w.z - R, maxZ: w.z + R }; // (round her, not the dive's view)
+      while (this.ground.fill(this.renderer, r, w.x, w.z, 3) > 0) await nextFrame(); }
+    performance.mark("witch:prep-ground");
+    await runSliced(refreshSteps(this), "refresh");
+    performance.mark("witch:prep-house");
   }
 
   /** The loading mist for this night (render/loadingMist.ts): over every area of the grid but home's, each type's reach from the
@@ -873,6 +925,7 @@ export class View {
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
     const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
     await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
+    performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
     // finds them on the GPU. The hidden too, as above.
@@ -880,7 +933,9 @@ export class View {
     this.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
     const R = this.renderer;
     await runSliced((function* () { for (const t of textures) { if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
+    performance.mark("witch:prep-textures");
     await this.warmDraws();
+    performance.mark("witch:prep-draws");
   }
 
   /** The first frame drawn ahead, a pass a step, its targets a few pixels across (render/post.ts renderSteps): a GL's first draw
