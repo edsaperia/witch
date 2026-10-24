@@ -1,0 +1,14 @@
+{
+  "id": "boudoir",
+  "label": "Boudoir",
+  "order": 100,
+  "parent": "parlour",
+  "bearing": 43,
+  "branch": 3.1,
+  "radius": 4.5,
+  "bend": 0.8,
+  "objects": [
+    {"id":"crystalBall","label":"Crystal ball","use":{"kind":"say","line":"The crystal ball is clouded for now."},"bearing":-30,"in":2.4,"foot":[1.4,1.4,2.6]},
+    {"id":"telephone","label":"Telephone","use":{"kind":"say","line":"The line's quiet. Friends can call later."},"bearing":100,"foot":[1,1,2.2]}
+  ]
+}

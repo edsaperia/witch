@@ -12,9 +12,9 @@ const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/opening"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
-// The house's objects, on its plan turned about the hub (config/house.json; rules/houseRooms.ts fromPlan, objectFront): where she
+// The house's objects, on its plan turned about the hub (config/house/; rules/houseRooms.ts fromPlan, objectFront): where she
 // stands `by` metres in front of one, on the side facing its room's middle, in metres from the hub's centre in the world.
-const HOUSE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), TURN = ((HOUSE.turn || 0) * Math.PI) / 180;
+const HOUSE = require("../../config/house/load.mjs").loadHouse(), TURN = ((HOUSE.turn || 0) * Math.PI) / 180;
 const plan = (x, z) => [x * Math.cos(TURN) + z * Math.sin(TURN), -x * Math.sin(TURN) + z * Math.cos(TURN)];
 function front(id, by) {
   const o = HOUSE.objects.find(q => q.id === id), r = HOUSE.rooms.find(q => q.id === o.room), dx = (r.x0 + r.x1) / 2 - o.x, dz = (r.z0 + r.z1) / 2 - o.z;

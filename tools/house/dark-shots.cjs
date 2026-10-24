@@ -10,7 +10,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outDir = "previews/dark", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const ROOMS = (process.env.ROOMS ?? "bedroom,study,kitchen").split(",").filter(Boolean), TIME = process.env.TIME !== "0", SETTLE = Number(process.env.SETTLE || 60), REVEAL = process.env.REVEAL !== "0";
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
 const mid = id => { const r = H.rooms.find(q => q.id === id); return plan((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2); };

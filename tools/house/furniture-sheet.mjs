@@ -5,7 +5,7 @@ import zlib from "zlib"; import fs from "fs";
 const R = new URL("../..", import.meta.url).pathname;
 const { furnitureSprite, furnitureColours, FURNITURE_IDS } = await import(R + "/art/furniture.js");
 const { EMISSIVE } = await import(R + "/art/core.js");
-const H = JSON.parse(fs.readFileSync(R + "/config/house.json"));
+const H = (await import(R + "/config/house/load.mjs")).loadHouse();
 const ppm = Number(process.argv[2] || 32 / 3), up = Number(process.argv[3] || 4), pitch = Number(process.argv[4] || .6);
 function png(w, h, rgba) { const crc = b => { let c, t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } c = 0xffffffff; for (const x of b) c = t[(c ^ x) & 255] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; };
   const chunk = (ty, d) => { const l = Buffer.alloc(4); l.writeUInt32BE(d.length); const td = Buffer.concat([Buffer.from(ty), d]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([l, td, c]); };

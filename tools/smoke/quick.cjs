@@ -139,8 +139,8 @@ async function main() {
       const over = await page.evaluate(() => { window.witch.lose("home"); return true; });
       await page.waitForFunction(() => !!window.witch.game.partyOver, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const po = await page.evaluate(() => !!window.witch.game.partyOver);
-      // (config/house.json's bed, 0.4 m off its near side, on the house's plan turned about the hub: rules/houseRooms.ts fromPlan)
-      const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), bed = H.objects.find(o => o.use.kind === "bed");
+      // (config/house/'s bed, 0.4 m off its near side, on the house's plan turned about the hub: rules/houseRooms.ts fromPlan)
+      const H = require("../../config/house/load.mjs").loadHouse(), bed = H.objects.find(o => o.use.kind === "bed");
       const A = ((H.turn || 0) * Math.PI) / 180, u = bed.x, v = bed.z + bed.d / 2 + 0.4, by = [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)];
       await page.evaluate(([bx, bz]) => {
         const g = window.witch.game, W = g.witches[0], t = g.map.treehouse;
