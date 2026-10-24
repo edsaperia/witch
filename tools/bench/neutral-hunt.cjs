@@ -24,6 +24,9 @@ const SUSPECTS = {
   between: "v.scene.traverse(o => { if (o.renderOrder > 0.5 && o.renderOrder < 10.9 && !o.material?.uniforms?.uFadePass && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
   noshadow: "v.scene.traverse(o => { if (o.renderOrder === 1 && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
   nomist: "t.suspects.mist = false;",
+  // (the wild creatures' batches, uFind 1, and everything drawn at renderOrder 12, her silhouette's place, hidden by their layers)
+  nofind: "v.scene.traverse(o => { if (o.material?.uniforms?.uFind?.value === 1 && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
+  nosil: "v.scene.traverse(o => { if (o.renderOrder === 12 && o.layers.mask) { const m = o.layers.mask; o.layers.mask = 0; (window.__undo ??= []).push(() => { o.layers.mask = m; }); } });",
   nocull: "t.suspects.seeCull = false;", // (uSeeDbg is set from the suspects every frame: frameUniforms.ts)
 };
 const RAF = process.env.RAF === "1";
@@ -59,6 +62,12 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
       await page.waitForFunction(t => window.witch.game.clock.time > t, (await page.evaluate(() => window.witch.game.clock.time)) + 4, { timeout: 300000, polling: 250 });
       await sleep(10000);
       await page.keyboard.press("Escape"); await sleep(3000);
+    }
+    // CREATURE=dx,dz: the nearest creature put that far from her (the smoke's picture had one 4 m west, 6 m south: among the trees in front)
+    if (process.env.CREATURE) {
+      const [dx, dz] = process.env.CREATURE.split(",").map(Number);
+      out.creature = await page.evaluate(([x, z]) => { const g = window.witch.game; let best = null, bd = Infinity; for (const c of g.creatures) { const d = Math.hypot(c.x - x, c.z - z); if (d < bd) { bd = d; best = c; } } if (!best) return null; Object.assign(best, { x, z, tx: x, tz: z }); return { species: best.species, level: best.level, state: best.state, was: bd }; }, [AT[0] + dx, AT[1] + dz]);
+      console.log("creature", JSON.stringify(out.creature));
     }
     const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, true); }, [n, NONE]);
     if (process.env.FOX === "0") {
