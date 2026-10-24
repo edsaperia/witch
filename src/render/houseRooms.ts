@@ -157,6 +157,9 @@ export class HouseRoomsView {
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
+  // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
+  // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
+  private readonly terraceFloor = new THREE.Mesh(this.floor.geometry, new THREE.MeshBasicMaterial({ alphaTest: 0.5, side: THREE.DoubleSide }));
   // (each room's roof, a canopy of leaves: hidden while she's in it or near; render/houseArt.ts paintRoof)
   private readonly roofs = new THREE.Group();
   private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean; door?: { x: number; z: number } }[] = [];
@@ -172,9 +175,10 @@ export class HouseRoomsView {
     const R = ROOMS_ORDER;
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
+    this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.roofs.visible = false;
     this.furniture.add(this.spot.mesh);
-    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
+    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -210,11 +214,11 @@ export class HouseRoomsView {
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
-    const shown = !!(d?.house?.rooms && T.ent && w.perch && !w.seated && (w.mode === "ground" || w.mode === "descending"));
+    const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
-    this.floor.visible = shown;
+    this.floor.visible = this.terraceFloor.visible = shown;
     this.roofs.visible = this.floor.visible;
     if (!shown) { this.box.style.display = "none"; this.sparkle?.draw([], 0, 1); return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
@@ -234,13 +238,16 @@ export class HouseRoomsView {
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
     const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
-    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); }; // (slid up the plane with her: render/view/witch.ts houseShift)
     if (this.floor.visible) {
       const N = 48;
       if (!this.floorArt) {
-        const A = (this.floorArt = paintFloor(HOUSE_ROOMS, v.mpp)), tex = new THREE.CanvasTexture(A.canvas);
-        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; // (its colours as the quads' vertex colours are: as they are)
-        (this.floor.material as THREE.MeshBasicMaterial).map = tex; (this.floor.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        const A = (this.floorArt = paintFloor(HOUSE_ROOMS, v.mpp, "rest"));
+        for (const [mesh, art] of [[this.floor, A], [this.terraceFloor, paintFloor(HOUSE_ROOMS, v.mpp, "terrace")]] as const) {
+          const tex = new THREE.CanvasTexture(art.canvas);
+          tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; // (its colours as the quads' vertex colours are: as they are)
+          (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        }
         const uv: number[] = [], idx: number[] = [];
         for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) uv.push(i / N, j / N);
         for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + 1, a + N + 2, a, a + N + 2, a + N + 1); }
@@ -316,7 +323,7 @@ export class HouseRoomsView {
         this.furniture.add(mesh); this.pieces.set(todo.key, { art, mesh, pos, id: todo.id, x: todo.x, z: todo.z });
       }
     }
-    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       mesh.visible = !o || k === pieceKey(o); // (a piece in another state than now's, hidden; a room's dressing always)

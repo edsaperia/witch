@@ -7,6 +7,7 @@ import { houseFiles, loadHouse } from "../../config/house/load.mjs";
 import { roomPlaces } from "../../config/house/assemble.js";
 import { inRoom } from "../../config/house/shape.js";
 import { houseOutline, houseWalk } from "../../config/house/outline.js";
+import { OAK_TERRACE } from "../../art/ent.js";
 
 type House = { rooms: { id: string }[]; corridors: { id: string }[]; objects: { id: string; room: string }[] } & Record<string, unknown>;
 const H = HOUSE_CONFIG as House;
@@ -51,6 +52,10 @@ describe("the house, a file a room (config/house/)", () => {
       expect(Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r, `${a.id} and ${b.id} crowd`).toBeGreaterThanOrEqual(3);
     }
     expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m; the mock's 93)").toBe(93);
+  });
+  it("its Terrace's layout is the Ent's art's own (art/ent.js OAK_TERRACE: the lab draws it as the game does)", () => {
+    const T = (H as unknown as { terrace: Record<string, unknown> }).terrace;
+    for (const k of ["seat", "decks", "circle"] as const) expect(OAK_TERRACE[k], k).toEqual(T[k]);
   });
   it("its outline for the crown's builder (config/house/outline.json) is up to date: node tools/house/organic.mjs --outline", () => {
     const f = JSON.parse(readFileSync(new URL("../../config/house/outline.json", import.meta.url), "utf8"));

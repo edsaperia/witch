@@ -510,6 +510,9 @@ export class View {
   readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
+  /** How far up the Ent's plane (its art's pixels, negative up) the oak's rooms are drawn this frame, so the room she's in sits at the
+   *  Terrace's height (render/view/witch.ts sets it, render/houseRooms.ts draws by it). */
+  houseShift = 0;
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
   witchTall = 0;
   shadowList: ShadowInstance[] = [];

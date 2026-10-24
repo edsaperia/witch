@@ -5,7 +5,7 @@
 // once into one pixel-art texture, an art pixel a texel (`paintFloor`), seen top-down on the house's plan; what stands up off it is
 // quads (`standing`), traced from the same shape's outline.
 import type { HouseConfig } from "../rules/houseRooms";
-import { fbm, field, roomAt, outline } from "../../config/house/shape.js";
+import { fbm, field, inRoom, roomAt, outline } from "../../config/house/shape.js";
 
 type RGB = [number, number, number];
 export interface FloorArt { canvas: HTMLCanvasElement; x0: number; z0: number; w: number; h: number }
@@ -53,8 +53,9 @@ function grain(x: number, z: number, parts: Part[]): number {
 }
 const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
 
-/** The floor painted, an art pixel (`mpp` metres) a texel, top-down on the plan: the mock's floor, rim and take-off. */
-export function paintFloor(H: HouseConfig, mpp: number): FloorArt {
+/** The floor painted, an art pixel (`mpp` metres) a texel, top-down on the plan: the mock's floor, rim and take-off. `part`: only the
+ *  Terrace's own floor (its room's outline), or all but it (render/houseRooms.ts draws the two in different passes), or all. */
+export function paintFloor(H: HouseConfig, mpp: number, part: "terrace" | "rest" | "all" = "all"): FloorArt {
   const S = H.shape, [ox, oz] = S.noiseAt, pad = 2;
   const x0 = Math.min(...H.rooms.map(r => r.x0)) - pad, x1 = Math.max(...H.rooms.map(r => r.x1)) + pad, z0 = Math.min(...H.rooms.map(r => r.z0)) - pad, z1 = Math.max(...H.rooms.map(r => r.z1)) + pad;
   const W = Math.ceil((x1 - x0) / mpp), Hh = Math.ceil((z1 - z0) / mpp), canvas = document.createElement("canvas");
@@ -63,7 +64,7 @@ export function paintFloor(H: HouseConfig, mpp: number): FloorArt {
   const set = (o: number, c: RGB) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) {
     const x = x0 + (i + 0.5) * mpp, z = z0 + (j + 0.5) * mpp, o = (j * W + i) * 4, parts: Part[] = [], d = field(S, x, z, false, parts);
-    if (d >= 0) { px[o + 3] = 0; continue; }
+    if (d >= 0 || (part !== "all" && (inRoom(S, "terrace", x, z) <= 0) !== (part === "terrace"))) { px[o + 3] = 0; continue; }
     const mx = x + ox, mz = z + oz;
     if (d > -0.45 && onTakeoff(H, x, z)) { set(o, WOOD.floor[3]); continue; } // (the open rim where she steps off: worn pale, no lip)
     if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
