@@ -105,9 +105,11 @@ The rooms she isn't in stay under the leaves, and only her room, its stretch of 
 - That is two draw calls and a few thousand pixels, with no scenery beyond the haze and no change to the culling.
 - **Kept honest:** it is just the tree. There is no map marker, outline or glow beyond its own lights. It is not shown when its bearing is off-screen, and it is behind every wood.
 
-**Questions for Ed.**
-- At its true size the far crown is big. At 500 m and even 1.1 km it fills the sky band and is cut by the top of the frame (the mock is true size). Keep it true, or shrink it a little so the whole dome fits the band?
-- With the camera always looking north, it shows only when home is roughly north of her. Is that enough?
+**Decided (Ed, 2026-10-24): "keep for now, I will test in gameplay".**
+- It shows only when home is within about 17° of due north of her, since the camera always looks north.
+- It is drawn at its true size, even where that fills the sky band and the top of the frame cuts it off.
+
+Both are to be revisited once Ed has flown with it.
 
 ## Source
 
