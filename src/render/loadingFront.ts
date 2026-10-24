@@ -22,6 +22,8 @@ export interface LoadingMistTuning {
   /** The front's soft edge (m either side) and its noise's size (m). */
   soft: number;
   size: number;
+  /** How far out to sea it lies past the island's furthest ground (m; 0 none over the water). */
+  sea: number;
 }
 
 /** One area type's areas as the front sees them: the nearest and furthest of their ground from the treehouse (m). */

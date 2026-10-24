@@ -2325,7 +2325,7 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 
 ### `loadingMist`
 
-The loading mist (Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"; "make the mist roll away progressively away from the treehouse instead of all at once"; render/loadingMist.ts): while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second; soft: the front's soft edge (m either side), size: its rolling noise (m). Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
+The loading mist (Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"; "make the mist roll away progressively away from the treehouse instead of all at once"; render/loadingMist.ts): while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second; soft: the front's soft edge (m either side), size: its rolling noise (m). sea: it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in (Ed: "Maybe it should also appear over the water and burn off there too"); 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
 
 | knob | type | range |
 |---|---|---|
@@ -2338,6 +2338,7 @@ The loading mist (Ed, 2026-10-24: "Mist sounds ideal, which rolls away when load
 | `loadingMist.cap` | number | 0 to … |
 | `loadingMist.soft` | number | 0 to … |
 | `loadingMist.size` | number | 0 to … |
+| `loadingMist.sea` | number | 0 to … |
 
 ### `lightRings`
 

@@ -26,6 +26,8 @@ import { witchLookOf } from "./artBuild";
 import { dressed } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
+import { LoanSparkle } from "./loanSparkle";
+import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
 /** A quad of the rooms in metres on the house's plan (x, z from the hub's centre, rules/houseRooms.ts; h up off the floor) and its
@@ -148,6 +150,8 @@ export class HouseRoomsView {
   private quads: Quad[] = [];
   private hub = -1;
   private hatsKey = "";
+  /** A hat on loan lying on the hats' floor, sparkling (render/loanSparkle.ts; Ed, 2026-10-24). */
+  private sparkle: LoanSparkle | null = null;
   private readonly box: HTMLDivElement;
   private readonly tag: HTMLDivElement;
   private readonly bubble: HTMLDivElement;
@@ -214,6 +218,7 @@ export class HouseRoomsView {
     for (const { art, mesh } of this.pieces.values()) { art.tex.dispose(); mesh.geometry.dispose(); (mesh.material as THREE.Material).dispose(); }
     this.workshop.dispose();
     this.spot.dispose();
+    this.sparkle?.canvas.remove();
   }
 
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
@@ -225,7 +230,7 @@ export class HouseRoomsView {
     this.workshop.group.visible = shown;
     this.floor.visible = shown && !!(HOUSE_ROOMS as { organic?: boolean }).organic;
     this.roofs.visible = this.floor.visible;
-    if (!shown) { this.box.style.display = "none"; return; }
+    if (!shown) { this.box.style.display = "none"; this.sparkle?.draw([], 0, 1); return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
     const Tz = (HOUSE_ROOMS as { organic?: boolean }).organic ? { r: D.r, bz: D.house.balcony.z - D.z, br: D.house.balcony.r } : undefined;
     if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(D.r, Tz); this.hatsKey = ""; }
@@ -386,6 +391,16 @@ export class HouseRoomsView {
     };
     this.box.style.display = "block";
     for (const L of this.labels) { const p = toWorld(L.x, L.z, 0), s = v.v3.set(p.x, p.y, p.z).project(v.camera); L.el.style.left = `${cv.left + (s.x + 1) / 2 * cv.width}px`; L.el.style.top = `${cv.top + (1 - s.y) / 2 * cv.height}px`; }
+    // her head on the page in the house, as its labels are placed (her dream's cloud rises from it: render/dream.ts; her own drawing's
+    // world point lies elsewhere in the house's plane)
+    { const me = toPlanAt0(w.x - D.x, w.z - D.z), p = toWorld(me.x, me.z, v.witchTall || 1.8), q = v.v3.set(p.x, p.y, p.z).project(v.camera); v.herHouseHead.x = cv.left + (q.x + 1) / 2 * cv.width; v.herHouseHead.y = cv.top + (1 - q.y) / 2 * cv.height; v.herHouseHead.at = performance.now(); }
+    // a hat on loan lying on the hats' floor sparkles (Ed, 2026-10-24: no words, sparkly), till she sleeps on it
+    const lf = loanFind(g, g.map.treehouse.x, g.map.treehouse.z), li = lf?.kind === "hat" ? hats.indexOf(lf.item) : -1, glints: { x: number; y: number; r: number }[] = [];
+    if (li >= 0) {
+      const sl = toPlanAt0(hatSlots({ x: 0, z: 0 })[li].x, hatSlots({ x: 0, z: 0 })[li].z), p = toWorld(sl.x, sl.z, 0.2), q = v.v3.set(p.x, p.y, p.z).project(v.camera), px = cv.width / v.width / v.mpp;
+      glints.push({ x: cv.left + (q.x + 1) / 2 * cv.width, y: cv.top + (1 - q.y) / 2 * cv.height, r: Math.max(18, px * 0.45) });
+    }
+    if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
     place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, at?.use.kind === "pile" ? 1.6 : 0.5, at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");

@@ -9,7 +9,8 @@
 // island has is in (or TIMEOUT s), then each type by its nearest area to the treehouse, when it landed, whether from the art cache
 // (an older build's too: the order comes from the view's art timings) and, where the build logs them, when and how it was asked.
 // SIZE (960x540), ARTDELAY (s, 20), FRAMES (frames to step, 300), EVERY (a picture every N frames, 20), SPOT
-// ("treetop": over the treetops 160 m south of the treehouse, clear of its rooms; "x,z[,treetop]"), MIST (1; 0: ?loadmist=0, to time the frames
+// ("treetop": over the treetops 160 m south of the treehouse, clear of its rooms; "x,z[,treetop]"; or any shot scene, e.g.
+// "object:recordShelf" on the Terrace), MIST (1; 0: ?loadmist=0, to time the frames
 // without it), TIMEOUT (s, 3600), EXTRA (more of the link). Writes <out>/frame-NNN.png and <out>/order.json.
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -77,7 +78,7 @@ function report(rows, file, extra = {}) {
     } else {
       await page.evaluate(() => { window.witch.manual = true; });
       // (out of her bed and room: the wake-up over, its card and dark gone, as once she's walked out with the gate off)
-      const scene = await page.evaluate(spot => { const g = window.witch.game, h = g.map.treehouse; g.wake = undefined; for (const id of ["wake-veil", "wake-card"]) document.getElementById(id)?.remove(); /* (the wake card and its dark: the page loop hides them, not the stepped frames) */ return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 160},treetop` : `at:${spot}`); }, SPOT);
+      const scene = await page.evaluate(spot => { const g = window.witch.game, h = g.map.treehouse; g.wake = undefined; for (const id of ["wake-veil", "wake-card"]) document.getElementById(id)?.remove(); /* (the wake card and its dark: the page loop hides them, not the stepped frames) */ return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 160},treetop` : spot.includes(":") ? spot : `at:${spot}`); }, SPOT);
       log("scene:", scene.say);
       const frames = [];
       let s = await state(page);

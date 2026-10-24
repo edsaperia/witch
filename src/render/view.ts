@@ -187,6 +187,9 @@ function nightState(t: Tuning) {
     consLines: 0,
     consAt: 0,
     consStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
+    /** Tonight's loan's lit constellation's stars (render/view/camera.ts litConstellation), kept while it's the same. */
+    litStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
+    litLow: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
     markerCache: { wave: -1, n: -1, list: [] as SpawnMarker[] },
     /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
     seatK: 1,
@@ -501,6 +504,10 @@ export class View {
   readonly subpixel = { x: 0, y: 0 };
   /** Her sprite's base this frame (world, before the bend), for the frame-feel trace. */
   readonly witchBase = { x: 0, y: 0, z: 0 };
+  /** Her hat's top on screen as last drawn (shares of the view, y up; on: drawn), for her dream's cloud (render/dream.ts). */
+  readonly herHead = { x: 0.5, y: 0.5, on: false };
+  /** In the house's rooms, her head on the page (CSS px) as the house places it (render/houseRooms.ts) and when (ms). */
+  readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
   /** Her height as drawn (metres: her frame's, times her scale on the treehouse's floor): what a station's aim is a share of. */
@@ -813,7 +820,8 @@ export class View {
   }
 
   /** The treehouse tree's height (metres from its foot, its art's), or null till its art has come (app/arrive.ts: the dive's look
-   *  at the whole tree). */
+   *  at the whole tree). The one measure of it (the coordinator, 2026-10-24): when the oak's crown lands (claude/oak-crown,
+   *  render/crown.ts), its extents, not the Ent's sprite. */
   treeHeight(): number | null { const a = this.assets; return a.home.treehouse ? a.treehouse.base.y * this.mpp : null; }
 
   /** Whether the start's house is made: its art (her, home, the soundsystems, the treehouse), the ground and the forest round it.
@@ -1402,7 +1410,7 @@ export class View {
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
       const now = performance.now(); this.mistClock += this.mistLast ? Math.min(0.1, (now - this.mistLast) / 1000) : 0; this.mistLast = now;
-      this.loadingMist.update(this.mistClock, ty => !this.assets.hasType(ty) ? 0 : this.assets.typeLog.get(ty)?.cached ? 2 : 1);
+      this.loadingMist.update(this.mistClock, ty => this.assets.hasType(ty));
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);

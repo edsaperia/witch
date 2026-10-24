@@ -4,7 +4,7 @@
 // forest to her decks, app/arrive.ts), the page's own loop running, a picture every EVERY seconds of the wall's clock from the
 // sail on, each logged with the flight's state and each area type's mist front. Writes <out>/dive-NNN.png and <out>/dive.json.
 //   npm run build && node tools/mist/dive.cjs [out] [dist]
-// ISLAND (fox), SEED (4242), ARTDELAY (s, 30), EVERY (s, 3), SECONDS (after the sail, 240), SIZE (960x540), EXTRA (more of the link).
+// ISLAND (fox), SEED (4242), MIST (1; 0 to film it without), ARTDELAY (s, 30), EVERY (s, 3), SECONDS (after the sail, 240), SIZE (960x540), EXTRA (more of the link).
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/mist/dive", distArg] = process.argv.slice(2);
@@ -24,7 +24,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
   try {
     const page = await browser.newPage({ viewport: { width: W, height: H } });
     page.on("pageerror", e => errors.push(e.message));
-    const link = `http://127.0.0.1:${server.address().port}/?creator=0&loadmist=1&mistgate=0${DELAY > 0 ? `&artdelay=${DELAY}` : ""}${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
+    const link = `http://127.0.0.1:${server.address().port}/?loadmist=${process.env.MIST ?? 1}&mistgate=0${DELAY > 0 ? `&artdelay=${DELAY}` : ""}${process.env.EXTRA ? "&" + process.env.EXTRA : ""}`;
     log("loading", link.replace(/^http:\/\/[^/]+/, ""));
     await page.goto(link);
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });

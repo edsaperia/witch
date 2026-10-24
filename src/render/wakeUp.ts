@@ -46,7 +46,7 @@ export class WakeCard {
     if (w.events.includes("notYet")) this.notYetAt = ht;
     if (w.events.includes("dressFirst")) this.dressFirstAt = ht;
     // the dark: in bed, then lit as she stretches; the curtains opening let the night in
-    const want = w.open ? 0 : w.beat === "alarm" || w.beat === "snooze" ? 1 : w.beat === "stretch" ? 1 - Math.min(1, (ht - w.at) / 1.5) * 0.75 : 0.25;
+    const want = w.open ? 0 : w.beat === "dream" || w.beat === "alarm" || w.beat === "snooze" ? 1 : w.beat === "stretch" ? 1 - Math.min(1, (ht - w.at) / 1.5) * 0.75 : 0.25;
     this.dark += (want - this.dark) * Math.min(1, dt * 3);
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
@@ -62,6 +62,7 @@ export class WakeCard {
   private text(w: WakeState, ht: number, build: { done: number; total: number }, snooze: number): string {
     if (ht - this.notYetAt < NOT_YET_FOR) return `🪟 Not yet: the island's still being made${build.total ? ` (${build.done} of ${build.total})` : ""}…`;
     switch (w.beat) {
+      case "dream": return "💤 … zzz …"; // (still asleep, dreaming: render/dream.ts; the alarm when it ends)
       case "alarm": return w.short ? `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>any key: up` : `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "snooze": return `💤 five more minutes…${w.snoozes > 1 ? ` (snoozed ×${w.snoozes})` : ""} · rings again in ${Math.max(1, Math.ceil(snooze - (ht - w.at)))} s<br>${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "stretch": return "*yaaawn* … *stretch*";
