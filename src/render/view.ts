@@ -325,8 +325,9 @@ export interface View extends NightState {}
 /** The area types on a map (its cells' types, by their look's index): the ones whose tufts take its biome (GrassView.tufts). */
 const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>([HOME_LOOK]); for (const c of map.cells) s.add(map.typeOf(c[0], c[1])); return s; }; // (and home's meadow)
 
-/** How far each side of a sail's dive's track its ground is drawn before the dive (prepare's `track`), metres. */
-const TRACK_REACH = 160;
+/** A sail's dive's ground drawn before it (prepare's `track`): this many metres each side of its track, and this far along it in
+ *  from the sea (where the island first comes into view). */
+const TRACK_REACH = 140, TRACK_AHEAD = 320;
 
 export class View {
   readonly renderer: THREE.WebGLRenderer;
@@ -800,10 +801,12 @@ export class View {
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
       await this.compileAll();
-      // The ground along the dive's track (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through the descent,
-      // its tiles not drawn yet): leg by leg, the first seen first, TRACK_REACH metres each side, a few tiles a frame under the chart.
-      for (const [x0, z0, x1, z1] of o.track ?? []) {
-        const r = { minX: Math.min(x0, x1) - TRACK_REACH, maxX: Math.max(x0, x1) + TRACK_REACH, minZ: Math.min(z0, z1) - TRACK_REACH, maxZ: Math.max(z0, z1) + TRACK_REACH };
+      // The ground where the dive first sees the island (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through
+      // the descent, its tiles not drawn yet): the first TRACK_AHEAD metres of its track in from the sea, TRACK_REACH each side, a few
+      // tiles a frame under the chart; the rest of it as the dive goes, the view's own each frame (render/view/ahead.ts).
+      const leg = o.track?.[0];
+      if (leg) {
+        const [x0, z0] = leg, r = { minX: x0 - TRACK_REACH, maxX: x0 + TRACK_REACH, minZ: z0 - TRACK_AHEAD, maxZ: z0 + TRACK_REACH };
         while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
       }
       performance.mark("witch:prep-track");
