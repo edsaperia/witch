@@ -325,6 +325,9 @@ export interface View extends NightState {}
 /** The area types on a map (its cells' types, by their look's index): the ones whose tufts take its biome (GrassView.tufts). */
 const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>([HOME_LOOK]); for (const c of map.cells) s.add(map.typeOf(c[0], c[1])); return s; }; // (and home's meadow)
 
+/** How far each side of a sail's dive's track its ground is drawn before the dive (prepare's `track`), metres. */
+const TRACK_REACH = 160;
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -773,7 +776,7 @@ export class View {
    *  (rules/arrive.ts diveReach): the area types drawn in that order, nearest first, under the loading mist; and the start waits only
    *  for the shaders (the hand-off's own ground is drawn by its first frames, main.ts warmAt): the house's art, the ground and the
    *  forest round it are made on through the dive (`homeDone`; app/arrive.ts eases the dive if they're due in view before then). */
-  async prepare(o: { dive?: (x: number, z: number) => number } = {}): Promise<void> {
+  async prepare(o: { dive?: (x: number, z: number) => number; track?: [number, number, number, number][] } = {}): Promise<void> {
     performance.mark("witch:prep-start");
     this.makeLoadingMist();
     { // tonight's own trees, if drawn ahead and kept (app/landingBake.ts), for the swap before she sees the island (retype)
@@ -797,6 +800,13 @@ export class View {
       this.prepared = true;
       this.askIsland(near); // (the workers drawing the dive's areas while the shaders link)
       await this.compileAll();
+      // The ground along the dive's track (Ed, 2026-10-24: the dive's view needs the ground; Echo's island black through the descent,
+      // its tiles not drawn yet): leg by leg, the first seen first, TRACK_REACH metres each side, a few tiles a frame under the chart.
+      for (const [x0, z0, x1, z1] of o.track ?? []) {
+        const r = { minX: Math.min(x0, x1) - TRACK_REACH, maxX: Math.max(x0, x1) + TRACK_REACH, minZ: Math.min(z0, z1) - TRACK_REACH, maxZ: Math.max(z0, z1) + TRACK_REACH };
+        while (this.ground.fill(this.renderer, r, x0, z0, 6) > 0) await nextFrame();
+      }
+      performance.mark("witch:prep-track");
       void this.buildHome().catch(e => { console.error("the house's start after a sail went wrong", e); }).finally(() => { this.homeDone = true; });
       return;
     }

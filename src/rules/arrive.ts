@@ -83,8 +83,7 @@ export function treeShot(map: ForestMap, T: NonNullable<ArriveTuning["tree"]>, g
  *  flight comes in low, looking north) to the frame over the dancefloor and the treehouse (arrivePlan's). For the art drawn first (render/view.ts
  *  prepare): the areas the dive will see, nearest first; the rest under the loading mist, after. */
 export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: number) => number {
-  const d = map.dancefloor, th = map.treehouse, coast = southCoast(map), fx = (d.x + th.x) / 2, fz = (d.z + th.z) / 2;
-  const track: [number, number, number, number][] = [[d.x, coast + A.low.offshore, d.x, fz], [d.x, fz, fx, fz], [fx, fz, th.x, th.z]];
+  const track = diveTrack(map, A);
   return (x, z) => {
     let best = Infinity;
     for (const [ax, az, bx, bz] of track) {
@@ -94,6 +93,13 @@ export function diveReach(map: ForestMap, A: ArriveTuning): (x: number, z: numbe
     }
     return best;
   };
+}
+
+/** The dive's track over the land (diveReach's): its legs, [x0, z0, x1, z1], from the sea off the south coast below the dancefloor
+ *  north to the frame over the dancefloor and the treehouse, and on to the treehouse; the first seen first. */
+export function diveTrack(map: ForestMap, A: ArriveTuning): [number, number, number, number][] {
+  const d = map.dancefloor, th = map.treehouse, coast = southCoast(map), fx = (d.x + th.x) / 2, fz = (d.z + th.z) / 2;
+  return [[d.x, coast + A.low.offshore, d.x, fz], [d.x, fz, fx, fz], [fx, fz, th.x, th.z]];
 }
 
 /** Whether a point (the world's metres) is on screen in shot `s` (a pinhole looking from shotCamera(s) at its target, `aspect` the

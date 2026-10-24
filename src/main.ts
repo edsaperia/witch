@@ -13,7 +13,7 @@ import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame } from "./rules/game";
 import { TUNING, type Tuning } from "./rules/tuning";
-import { diveReach, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
+import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
 import { nextFrame } from "./render/slices";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
@@ -796,7 +796,7 @@ const armBack = () => { if (backArmed) return; backArmed = true; addEventListene
  *  carried), its start's art made, then the flight in from the chart's camera (passed in memory), landing as a sail's does. */
 async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
   const arrival: Arrival | undefined = to.end ? { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end } : undefined;
-  if (arrival) { showStill(arrival); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip(); }
+  if (arrival) { showStill(arrival, !made); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip(); } // (made under the flight: no "landing…", the still goes at once)
   const n = await (made ?? makeSailNight(to, arrival));
   if (made && arrival) flyIn(n, arrival); // (made under the chart's flight: its hand-off, the still its last frame)
   if (n.arrival) n.arrival.onReveal = revealArt;
@@ -826,7 +826,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   if (dreamAfterDive && !wakeInBedroom(n.game)) dreamAfterDive = null; // (a dream to come: the flight in ends on her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
-  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
+  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
   if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
   mark("sail:ready");
   return n;
