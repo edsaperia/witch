@@ -71,7 +71,7 @@ Design only: **nothing here is built, and nothing is to be started without Ed's 
 - **A witch who leaves** (hanging up, the pause menu, kicked or a dropped line) leaves her leashed creatures behind as **happy creatures**: each idles where it is, with its sigil on the ground at its feet, which any witch can pick up. Sigils she had already put down stay where they are. **Her hat falls where she stood** (it's one of the host's shared hats, so it stays in the game, glowing, for anyone to pick up):
   - **in the treetops**, it flutters down like a falling leaf, spinning slowly and glowing, through the canopy to the ground below her;
   - **over a lake** (where no one can come down), it sinks and reappears on the hats' floor in the Cloakroom;
-  - **in the treehouse**, it drops on the floor where she stood (the same rule as anywhere else).
+  - **in the treehouse**, it drops on the floor where she stood (the same rule as anywhere else), except **in her bedroom**: that room shuts when she leaves, so the hat reappears on the hats' floor in the Cloakroom.
 - **Ending the night:** only when **every witch is in bed**.
 
 ## Technical-debt cleanup (before the port)
