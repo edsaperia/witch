@@ -262,7 +262,7 @@ The young's moves are weaker and slower (`young`: wind-ups 1.3 times as long, bo
 **Happy legends.** A legend is made happy by doing its quest. It gives **no buff** (Ed, 2026-10-18). It defends its area, shooting enraged animals from up to **420 m** (`legends.happyRange`), and heals to full over **120 s** (`legends.json` `healTime`).
 - **The party-legend Easter egg** (`legends.partyEgg` on): 100 💌s (`legends.partyHits`) turn a happy legend into a **party legend**. You can pick up its rune, but it never moves, and it pins you within 6.8 m of it (`legends.partyReach`). Totally useless, as intended.
 
-**Buffs** (`config/legend-buffs.json`): 32 of them, one per species. Each changes **only your 💌s or your movement**. **Nothing grants them now** (Ed, 2026-10-18: no quest boons, and flasks and happy legends give none); the file and the code stay, and `?buffs=` still forces some on for testing. Buffs stack, within limits. Examples:
+**Buffs** (`config/legend-buffs.json`): 32 of them, one per species. Each changes **only your 💌s or your movement**. **Nothing grants them now** (Ed, 2026-10-18: no quest boons, and flasks and happy legends give none; 2026-10-24: nor a legend on her leash); the file and the code stay, and `?buffs=` still forces some on for testing. Buffs stack, within limits. Examples:
 - Fox, *Charm*: 💌s home in hard.
 - Stag, *Pierce*: 💌s fly through the first animal.
 - Toad, *Spawn*: a 💌 that lands splits into three.

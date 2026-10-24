@@ -229,7 +229,8 @@ export function lull(c: Creature, time: number): void {
 }
 
 /** Whether a legend gives its buff: never now (Ed, 2026-10-18: "Finishing quests no longer gives boons"; a happy legend and a
- *  flask give none either). Kept as the one place to turn them back on. */
+ *  flask give none either; Ed, 2026-10-24: nor a legend on her leash, rules/buffs.ts partyLegends). Kept as the one place to
+ *  turn every legend's power back on. */
 export const buffing = (_c: Creature): boolean => false;
 
 /** The flask (a party relic, Ed 2026-10-18: "All flasks give growth spurt"): the one lying within pickRadius of (x, z), whose

@@ -1,11 +1,11 @@
 // The zoo's nameplates (?zoo; rules/zoo.ts; Ed, 2026-10-13: "they have nameplates and descriptions under each"): a small sign on
 // the path under each block (its south edge, so it faces the camera, which always looks north), for the blocks near her: its
-// creature's name, its area's and its row's, the area's own line (art/areas.js layout.feel) and its legend's boon
-// (config/legend-buffs.json); a block of a kind not yet designed, a "?". DOM over the game, as the legend circle's explainer.
+// creature's name, its area's and its row's and the area's own line (art/areas.js layout.feel); a block of a kind not yet designed,
+// a "?". DOM over the game, as the legend circle's explainer. (No legend's boon line: legends give no boons since Ed's change of
+// 2026-10-18, docs/notes/gameplay.md "Legend buff".)
 import * as THREE from "three";
 import { SPECIES_BY_ID } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
-import { LEGEND_BUFFS } from "../rules/buffs";
 import { placed } from "./height";
 import type { Game } from "../rules/game";
 import type { ZooBlock } from "../rules/zoo";
@@ -28,10 +28,8 @@ export class ZooPlates {
     if (!area) el.append(line("name", "?"), line("where", `Not designed yet · ${b.row}`));
     else {
       const name = (SPECIES_BY_ID as Record<string, { name?: string }>)[area.creature]?.name ?? area.creature;
-      const buff = (LEGEND_BUFFS as unknown as { species: Record<string, { label?: string }> }).species[area.creature]?.label;
       el.append(line("name", name), line("where", `${area.name} · ${b.row}`));
       if (area.layout.feel) el.append(line("feel", area.layout.feel));
-      if (buff) el.append(line("boon", `Legend's boon: ${buff}`));
     }
     this.host.append(el);
     return el;

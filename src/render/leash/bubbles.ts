@@ -282,7 +282,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
       if (l.done) p.className = "done"; else if (l === brought) p.className = "wrong";
       l.text.split(/(\{sigil\}|\{relic\}|\{boon\})/).forEach(part => {
         if (part === "{sigil}" && c.quest) p.append(icon(c.quest.species, null, sigilColour(c.quest.species)));
-        else if (part === "{boon}") p.append(icon(c.species, null, sigilColour(c.species))); // (its own sigil: the buff's icon in the HUD)
+        else if (part === "{boon}") p.append(icon(c.species, null, sigilColour(c.species))); // (its own sigil: the buff's icon in the HUD; no line asks for it since Ed's 2026-10-18 change, kept with boonWords)
         else if (part === "{relic}") p.append(icon("relic", null, [255, 205, 90]));
         else if (part) p.append(document.createTextNode(part));
       });
