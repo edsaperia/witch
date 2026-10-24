@@ -22,6 +22,7 @@ export interface ReportHost {
   /** her place in the world, her mode and the camera, as the game holds them */ world: () => Record<string, unknown>;
   /** the repro link (app/repro.ts) */ link: () => string;
   /** the settings changed from the build's */ changed: () => [string, unknown][];
+  /** the blob shadows shown or hidden (issue #1091: see neutralCheck) */ blobShadows?: (on: boolean) => void;
 }
 
 const frames = (n: number) => new Promise<void>(ok => { const f = () => (--n <= 0 ? ok() : requestAnimationFrame(f)); requestAnimationFrame(f); });
@@ -69,14 +70,24 @@ export async function measure(h: ReportHost, pairs: NeutralPair[] = NEUTRAL_PAIR
 }
 
 /** The smoke test's check: each pair's numbers alone. */
-export async function neutralCheck(h: ReportHost): Promise<{ pairs: { name: string; changed: number; maxDiff: number }[]; seeThroughInUse: number; still: number; pixels: number }> {
+export async function neutralCheck(h: ReportHost): Promise<{ pairs: { name: string; changed: number; maxDiff: number }[]; seeThroughInUse: number; still: number; pixels: number; shadowless?: { changed: number; maxDiff: number } }> {
   const { frame, pairs } = await measure(h);
   // (and how much the paused frame changes by itself, drawn again as it is: anything still moving while paused)
   const still = compare("still", frame, await drawn(h, {}), [0, 0]).changed;
   // (and that the frame has something in front of her for the see-through to fade: the frame as it is against none, else the
   // see-through pair proves nothing)
   const used = compare("in use", frame, await drawn(h, NEUTRAL_PAIRS[0].b), [0, 0]).changed;
-  return { pairs: pairs.map(({ name, changed, maxDiff }) => ({ name, changed, maxDiff })), seeThroughInUse: used, still, pixels: frame.width * frame.height };
+  // (and the see-through pair again with the blob shadows hidden: issue #1091, a known residue. The shadows draw before the
+  // see-through's front pass, multiplying what's under them and pulled a little toward the camera, so they also tint the lowest
+  // pixels of a low bush standing in one; see-through, even at full opacity, that bush is drawn after them and covers it, a few
+  // pixels a few levels brighter. With them hidden the pair must draw the same: anything else is a new difference.)
+  let shadowless: { changed: number; maxDiff: number } | undefined;
+  if (h.blobShadows) {
+    h.blobShadows(false);
+    try { const p = NEUTRAL_PAIRS[0], r = compare(p.name, await drawn(h, p.a), await drawn(h, p.b), [0, 0]); shadowless = { changed: r.changed, maxDiff: r.maxDiff }; }
+    finally { h.blobShadows(true); }
+  }
+  return { pairs: pairs.map(({ name, changed, maxDiff }) => ({ name, changed, maxDiff })), seeThroughInUse: used, still, pixels: frame.width * frame.height, shadowless };
 }
 
 function save(name: string, blob: Blob): void {

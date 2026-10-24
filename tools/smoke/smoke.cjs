@@ -40,7 +40,6 @@ const KNOWN = {
   "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
   "vanish": { issue: 1090, why: "Ed's window sizes take tens of seconds a frame in the software renderer: they fly only on a real GPU (SMOKE_GPU=1)" },
-  "neutral-see-through": { issue: 1091, why: "the see-through at full opacity draws a few hundred px unlike the see-through off (381 to 440 measured)" },
 };
 // SMOKE_GPU=1: launch on the machine's own GPU, not SwiftShader (the vanish flights at Ed's sizes run only there, #1090).
 const GPU = process.env.SMOKE_GPU === "1";
@@ -788,7 +787,15 @@ async function main() {
     // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
     // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
     const allow = r.still * 2 + Math.round(r.pixels * 0.005);
-    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`, p.name.startsWith("see-through") ? "neutral-see-through" : undefined);
+    // (the see-through pair is judged with the blob shadows hidden: with them it keeps a known residue, issue #1091, the shadows'
+    // order against the see-through's front pass at the foot of low bushes in front of her, ~30 px a few levels brighter in a settled
+    // frame; that residue is reported, not counted. Hidden, the pair must draw the same as any other. The mist pair as it is.)
+    for (const p of r.pairs) {
+      if (p.name.startsWith("see-through") && r.shadowless) {
+        check(r.shadowless.changed <= allow, `neutral pair draws the same: ${p.name}, the blob shadows hidden (${r.shadowless.changed} px differ, max ${r.shadowless.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
+        console.log(`     (with the blob shadows: ${p.changed} px differ, max ${p.maxDiff}: #1091's residue, reported, not counted)`);
+      } else check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
+    }
   }, "&seed=886806&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
