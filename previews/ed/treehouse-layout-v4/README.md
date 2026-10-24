@@ -66,31 +66,35 @@ Gone: the Atrium, the Drawing Room and the Study. Also gone: the crystal ball, t
 | Cloakroom | (none) | 11 m |
 | Bestiary | 13 m | 12 m |
 | Solarium | 13 m | 12 m |
-| Bedrooms 2 and 3 | 18 m each | 11 m each |
+| Bedrooms 2 and 3 | 18 m each | 11 m each (Ed: smaller is fine, as long as hers' set of furniture fits; no Turret branch) |
 | Turret (Crow's nest) | 9 m | 9 m |
 
 The house overall spans about 80 m by 125 m; today's is about 80 m by 75 m.
 
 **The walk from her bed to the take-off is about 77 m**, measured in straight lines through the rooms' middles: Bedroom 1, Boudoir, Parlour, the Terrace, then its open rim. Today's is about the same, also 77 m (Bedroom, Boudoir, Parlour, Atrium, Terrace, the balcony's rim). At her walking speed of 5 m/s that's about 15 s. The Dining Room adds nothing to it, being below the Terrace.
 
-## Conflicts with Ed's earlier decisions (flagged, not resolved)
+**From her bed to the Terrace is about 66 m to its middle (about 13 s at 5 m/s), or 55 m to where she first steps onto it (about 11 s).** With no loading gate (Ed's decision, below), the build can use that to judge whether her walk usually covers the island's loading.
 
-1. **The other two bedrooms are smaller than hers.** On 2026-10-23 Ed said Bedrooms 2 and 3 are "as big as hers". Here hers is a trunk room (14 m) and theirs are branch rooms (11 m), because branch rooms are smaller than trunk rooms. Should they stay as big as hers, at least one would break the trunk-largest rule.
-2. **Her bedroom shrinks.** It goes from 18 m to 14 m, the smallest trunk room. On 2026-10-21 Ed doubled the rooms ("the treehouse is too small for the witch to move inside"). Everything fits in 14 m, but it's tighter than today.
-3. **The Dining Room is "below" the Terrace, where the take-off was.**
+## Decided since (Ed, 2026-10-24)
+
+- **Bedrooms 2 and 3 are smaller branch rooms.** Ed: "bedrooms 2 and 3 just need to have enough space to hold the same items; they can be smaller because they don't have a turret. Since they're at the top, the trunk is becoming smaller anyway."
+  - At 11 m across, each holds her room's set: bed, wardrobe, shoe rack, dressing table and so on, as they will one day. Today they hold sheeted placeholders.
+  - Neither needs room for a Turret's branch.
+- **No curtains and no loading gate.** Ed: "hopefully the house is large enough that by the time she gets to the terrace it's loaded already. If she sees some stuff pop in, it's not the end of the world."
+  - The bedroom's door waits only on her being dressed.
+  - She can go anywhere, the Terrace included, while the island is still drawing.
+- **The cloak pegs move to the Cloakroom.** Her cloak comes from the clothes pile; the Cloakroom is only for changing it.
+
+## Conflicts still open (flagged, not resolved)
+
+1. **Her bedroom shrinks.** It goes from 18 m to 14 m, the smallest trunk room. On 2026-10-21 Ed doubled the rooms ("the treehouse is too small for the witch to move inside"). Everything fits in 14 m, but it's tighter than today.
+2. **The Dining Room is "below" the Terrace, where the take-off was.**
    - Today the Terrace's front (its south rim, the balcony) is open air, with her decks on it, and that's where she steps off.
    - With the Dining Room at the bottom of the trunk, the mock bends the trunk: the Dining Room sits to the south-west, and the take-off and decks move to the Terrace's south-east rim.
    - Ed may want them elsewhere.
-4. **No curtains, but the wake-up waits on them.**
-   - The bedroom's door waits for her to be dressed and for the curtains to open once the island is ready (`rules/wakeUp.ts`, `doorShut`; the curtains are in `src/rules/houseRooms.ts`, `render/wakeUp.ts`, `app/opening.ts`, `main.ts` and elsewhere).
-   - Without curtains, something else has to hold her until the island's art is drawn. It could be the door alone, saying "not yet".
-5. **The cloak pegs move out of her bedroom.**
-   - Ed said on 2026-10-21 that everything but her hat, bag and broom should be choosable "before the locked door".
-   - The nightie's clothes pile also treats the cloak pegs as a bedroom station (`STATION_SLOT` cloak, `rules/clothesPile.ts`).
-   - In v4 she can still put her cloak on from the pile, but she can only change it in the Cloakroom.
-6. **The bags move from the Study to the Parlour.** They stay a dressing station past her door, as now, so this isn't a conflict, just noted.
-7. **The crystal ball is gone.** It's already only a placeholder since the telescope's constellation took its job. Its object and the `ball` use go.
-8. **The take-off direction.** Flying back onto the house, she lands where she flies over the balcony's half-disc today (`flyOnto`). That would need to become the Terrace's open rim on its south-east.
+3. **The take-off direction.** Flying back onto the house, she lands where she flies over the balcony's half-disc today (`flyOnto`). That would need to become the Terrace's open rim on its south-east.
+4. **The bags move from the Study to the Parlour.** They stay a dressing station past her door, as now, so this isn't a conflict, just noted.
+5. **The crystal ball is gone.** It's already only a placeholder since the telescope's constellation took its job. Its object and the `ball` use go.
 
 ## What the build would touch
 
@@ -119,7 +123,13 @@ The house overall spans about 80 m by 125 m; today's is about 80 m by 75 m.
   - the decks moved to it.
 - **Rules around the take-off and the wake-up:**
   - `rules/treehouse.ts` (`flyOnto`, `keepInHouse`, the balcony's half-disc, `atMapTable` for the Solarium);
-  - `rules/wakeUp.ts` and `rules/clothesPile.ts` (curtains, cloak pegs).
+  - **No curtains, no loading gate** (`rules/wakeUp.ts`):
+    - Drop the `curtains` object (`config/house/rooms/bedroom.json`) and its use kind (`houseRooms.ts`, `configSchemas.ts`), and its drawing (`render/houseFurniture.ts`, `render/houseRooms.ts`).
+    - Drop the curtains' states: `WakeState.open` set by `ready`, and the "curtains" event.
+    - Make `doorShut` depend on `dressed` only. Something else then ends the wake-up: being dressed, or stepping out of the door.
+    - Remove the `notYet` event (E at the curtains before the island's ready), or replace it, along with what plays or shows it (`render/wakeUp.ts`, `app/opening.ts`, `main.ts`).
+    - `g.islandReady` stays for the art's own swap, but no longer holds her.
+  - **The cloak pegs:** `rules/clothesPile.ts` keeps `cloakPegs: "cloak"` in `STATION_SLOT` (choosing at the pegs before she's dressed still takes the cloak out of the pile); only the station's room changes.
 - **Tools and checks:**
   - `tools/house/*-shots.cjs`;
   - `tools/stations/check.cjs` (the bedroom's stations);
