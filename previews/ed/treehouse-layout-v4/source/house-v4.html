@@ -1,0 +1,163 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body style="margin:0;background:#111">
+<canvas id="c"></canvas>
+<script>
+// Treehouse layout v4 mock (Ed, 2026-10-24): the Ent as a large old oak, a thick winding trunk (Dining Room, Terrace, Parlour,
+// Boudoir, Bedroom 1, bottom to top, largest to smallest) with rooms on wide, low branches. One floor seen from above, metres
+// x east, z south (up the screen is north, as in the game). Everything is one shape (rooms and branches smooth-unioned, no seams),
+// its floor the tree's own grain: growth rings round each trunk room's heart, long grain along each branch, blended where they meet.
+const PPM = 32 / 3; // art pixels a metre at the game's art pixel (tuning: artPixelsPerMetre 16 x 2 / pixelSize 3)
+
+// ---- the plan ----
+const TRUNK = [ // bottom to top; r: its size (about its radius, m)
+  { id: "dining", label: "Dining Room", x: -15, z: 22, r: 12 },
+  { id: "terrace", label: "Terrace", x: 0, z: 0, r: 10.5 },
+  { id: "parlour", label: "Parlour", x: 7, z: -22, r: 9 },
+  { id: "boudoir", label: "Boudoir", x: -3, z: -41, r: 7.5 },
+  { id: "bedroom", label: "Bedroom 1", x: 7, z: -57, r: 7 },
+];
+const BRANCH = [ // a room on a branch off a trunk room: the room's middle and size, the branch's bend (m sideways at its middle)
+  { id: "kitchen", label: "Kitchen", from: "dining", x: -40, z: 18, r: 6, bend: 2 },
+  { id: "workshop", label: "Workshop", from: "dining", x: -30, z: 46, r: 7, bend: -3 },
+  { id: "studio", label: "Studio", from: "terrace", x: 27, z: -6, r: 6.5, bend: -2 },
+  { id: "cloakroom", label: "Cloakroom", from: "terrace", x: -25, z: -6, r: 5.5, bend: 2 },
+  { id: "bestiary", label: "Bestiary", from: "parlour", x: 31, z: -27, r: 6, bend: 2 },
+  { id: "solarium", label: "Solarium", from: "parlour", x: -19, z: -27, r: 6, bend: -2 },
+  { id: "bedroom2", label: "Bedroom 2", from: "boudoir", x: -27, z: -48, r: 5.5, bend: 2, locked: true },
+  { id: "bedroom3", label: "Bedroom 3", from: "boudoir", x: 19, z: -39, r: 5.5, bend: -1.5, locked: true },
+  { id: "turret", label: "Turret", from: "bedroom", x: 24, z: -68, r: 4.5, bend: 1.5 },
+];
+// the furniture: the room configs' own footprints (w along x, d along z, m), placed afresh; h only for the close-ups
+const OBJ = [
+  ["teaTable", "dining", -21, 20, 2.8, 2.8, "Tea table"], ["cardTable", "dining", -9, 26, 3.4, 3.4, "Card table"],
+  ["cauldron", "kitchen", -41, 18, 2.8, 2.8, "Cauldron"],
+  ["broomBay", "workshop", -32, 49, 6, 2.4, "Broom bay"], ["pegboard", "workshop", -30, 40.5, 5, 0.5, "Pegboard"], ["lathe", "workshop", -25, 47, 1.6, 4.8, "Lathe"],
+  ["decks", "terrace", 2.5, 8.5, 5, 1.6, "DJ decks"], ["recordShelf", "terrace", -5.5, 6.5, 1.2, 3.2, "Records"], ["circle", "terrace", 0, -3, 4, 4, "Magic circle"],
+  ["drumKit", "studio", 25, -9, 4.4, 4, "Drum kit"], ["synthRack", "studio", 30.5, -9.5, 4.8, 1.4, "Synth rack"], ["microphone", "studio", 27.5, -3.5, 1, 1, "Mic"],
+  ["mirror", "cloakroom", -27.5, -9.5, 2.2, 0.6, "Hat mirror"], ["hats", "cloakroom", -24, -5, 3.6, 1.8, "Hats' floor"], ["cloakPegs", "cloakroom", -29.5, -4, 0.6, 2.6, "Cloak pegs"],
+  ["bags", "parlour", 3, -27, 3.6, 0.8, "Bags"], ["invitations", "parlour", 10, -26, 3.4, 1.8, "Invitations desk"],
+  ["book", "bestiary", 30, -29.5, 1.6, 1.2, "Bestiary book"], ["specimens", "bestiary", 35, -26, 0.8, 5, "Specimens"],
+  ["mapTable", "solarium", -19, -27, 2.6, 2.6, "Map table"],
+  ["telephone", "boudoir", -6, -44, 1, 1, "Telephone"],
+  ["bed", "bedroom", 10, -60, 4, 5.2, "Bed"], ["wardrobe", "bedroom", 1.5, -59, 1.2, 4, "Wardrobe"], ["dressingTable", "bedroom", 5, -62.5, 2.8, 1.2, "Dressing table"],
+  ["shoeRack", "bedroom", 2.5, -53.5, 3, 1.1, "Shoe rack"], ["clothesPile", "bedroom", 9.5, -55, 1.6, 2, "Clothes pile"],
+  ["telescope", "turret", 24.5, -69, 1.6, 1.6, "Telescope"],
+];
+const TAKEOFF = { x: 9.5, z: 7, a: Math.PI / 4 }; // the Terrace's open rim, south-east: where she steps off (and flies back on)
+
+// ---- shapes ----
+const hash = (x, y) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
+function noise(x, y) { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1); return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v; }
+const fbm = (x, y) => noise(x, y) * .55 + noise(x * 2.1, y * 2.1) * .3 + noise(x * 4.3, y * 4.3) * .15;
+const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * .25; };
+const byId = Object.fromEntries([...TRUNK, ...BRANCH].map(r => [r.id, r]));
+// a room: a lumpy blob (its radius wobbling with the angle and a little noise, so no two are round)
+function blob(r, x, z) { const dx = x - r.x, dz = z - r.z, a = Math.atan2(dz, dx), seed = r.x * .37 + r.z * .21;
+  const rr = r.r * (1 + .10 * Math.sin(3 * a + seed) + .07 * Math.sin(5 * a + seed * 2.3) + .05 * (fbm(dx * .15 + seed, dz * .15) - .5) * 2); return Math.hypot(dx, dz) - rr; }
+// a bent limb from a to b: a quadratic curve, its half-width easing from w0 to w1; returns [distance, t along, signed side]
+function limb(a, b, bend, w0, w1, x, z) {
+  const mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2, L = Math.hypot(b.x - a.x, b.z - a.z), nx = -(b.z - a.z) / L, nz = (b.x - a.x) / L, cx = mx + nx * bend * 2, cz = mz + nz * bend * 2;
+  let best = 1e9, bt = 0, side = 0;
+  for (let i = 0; i <= 24; i++) { const t = i / 24, px = (1 - t) * (1 - t) * a.x + 2 * (1 - t) * t * cx + t * t * b.x, pz = (1 - t) * (1 - t) * a.z + 2 * (1 - t) * t * cz + t * t * b.z, d = Math.hypot(x - px, z - pz);
+    if (d < best) { best = d; bt = t; const tx = 2 * (1 - t) * (cx - a.x) + 2 * t * (b.x - cx), tz = 2 * (1 - t) * (cz - a.z) + 2 * t * (b.z - cz); side = ((x - px) * -tz + (z - pz) * tx) / Math.hypot(tx, tz); } }
+  const w = w0 + (w1 - w0) * bt + .35 * (fbm(x * .2, z * .2) - .5); return [best - w, bt, side];
+}
+// the whole floor's distance (negative inside) and, for the grain, which part it's nearest and how far along
+function field(x, z) {
+  let d = 1e9, parts = [];
+  for (const r of TRUNK) { const s = blob(r, x, z); parts.push({ kind: "ring", r, s }); d = smin(d, s, 6); }
+  for (let i = 1; i < TRUNK.length; i++) { const a = TRUNK[i - 1], b = TRUNK[i], [s, t, side] = limb(a, b, (i % 2 ? 1 : -1) * 1.5, a.r * .62, b.r * .62, x, z); parts.push({ kind: "spine", s, side, t, a, b }); d = smin(d, s, 6); }
+  for (const r of BRANCH) { const p = byId[r.from], [s, t, side] = limb(p, r, r.bend, Math.min(4.2, p.r * .45), Math.max(1.9, r.r * .42), x, z), sb = blob(r, x, z);
+    parts.push({ kind: "branch", r, s, side, t }, { kind: "ring", r, s: sb }); d = smin(d, smin(s, sb, 3.5), 5); }
+  return { d, parts };
+}
+
+// ---- the grain: no planks, the tree's own wood ----
+const WOOD = { // heartwood, polished: 4 tones, darkest first (the bold style's few tones a material, no anti-aliasing)
+  floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]],
+  ring: [62, 36, 22], bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]], moss: [[46, 66, 38], [70, 96, 50]], night: [14, 20, 22], leaf: [[22, 38, 30], [30, 52, 38]],
+  locked: [[52, 40, 34], [64, 50, 40]],
+};
+// the grain coordinate: rings about the nearest trunk or branch room's heart, long grain along limbs, weighted by nearness so they flow
+function grain(x, z, parts) {
+  let wsum = 0, g = 0;
+  for (const p of parts) { const w = Math.exp(-Math.max(0, p.s + 2) * .45); if (w < 1e-4) continue; let v;
+    if (p.kind === "ring") v = Math.hypot(x - p.r.x, z - p.r.z) * 1.1 + 1.0 * Math.sin(Math.atan2(z - p.r.z, x - p.r.x) * 3 + p.r.x);
+    else v = p.side * 1.3 + 1.0 * Math.sin(p.t * 9 + (p.r ? p.r.x : p.a.x)); // (lines along the limb)
+    g += v * w; wsum += w; }
+  return wsum ? g / wsum : 0;
+}
+function floorTone(x, z, parts, lockedRoom) {
+  const g = grain(x, z, parts) + (fbm(x * .9, z * .9) - .5) * 1.1, f = g - Math.floor(g); // (a ring every 1/1.6 m, warped)
+  if (lockedRoom) return WOOD.locked[(hash(Math.floor(x * PPM), Math.floor(z * PPM)) < .5) ? 0 : 1];
+  if (f < .09) return WOOD.ring; // (a growth line, a pixel or two)
+  const lit = fbm(x * .12 + 7, z * .12) * .9 + (1 - f) * .25, k = lit > .66 ? 3 : lit > .5 ? 2 : lit > .36 ? 1 : 0;
+  return WOOD.floor[k];
+}
+
+// ---- drawing ----
+const cv = document.getElementById("c"), ctx = cv.getContext("2d");
+function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture = true, grid = false, title = "" }) {
+  const W = Math.round((x1 - x0) * PPM), H = Math.round((z1 - z0) * PPM), WALL = Math.round(2.2 * PPM); // a wall's height as drawn (m tilted)
+  const img = new ImageData(W, H), inside = new Uint8Array(W * H), info = new Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { const x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, f = field(x, z); info[j * W + i] = f; inside[j * W + i] = f.d < 0 ? 1 : 0; }
+  const roomAt = (x, z) => { let best = null, bd = 1e9; for (const r of [...TRUNK, ...BRANCH]) { const d = blob(r, x, z); if (d < bd) { bd = d; best = r; } } return bd < 0 ? best : null; };
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+    const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, f = info[k]; let c;
+    if (!inside[k]) { // the night under the house: the canopy's dark leaves
+      const n = fbm(x * .35, z * .35); c = n > .55 ? WOOD.leaf[1] : n > .35 ? WOOD.leaf[0] : WOOD.night;
+    } else if (f.d > -.45 && TAKEOFF_OPEN(x, z)) { c = WOOD.floor[3]; // the open rim where she steps off: worn pale, no lip
+    } else if (f.d > -.45) { // the rim: bark, mossy on top
+      const n = hash(i * 3 + 1, j * 7); c = fbm(x * .8, z * .8) > .6 ? WOOD.moss[n > .5 ? 1 : 0] : WOOD.bark[n > .66 ? 2 : n > .33 ? 1 : 0];
+    } else { const rm = roomAt(x, z); c = floorTone(x, z, f.parts, rm && rm.locked); }
+    img.data.set([...c, 255], k * 4);
+  }
+  // walls: the far (north) edges stand up a wall of living wood, the near (south) ones only the low bark rim, as the game draws its rooms
+  if (walls) for (let i = 0; i < W; i++) for (let j = 1; j < H; j++) {
+    const k = j * W + i; if (!(inside[k] && !inside[k - W])) continue; // (outside above, inside here: a north edge)
+    const x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / PPM, rm = roomAt(x, z + .6); if (!rm || TAKEOFF_OPEN(x, z)) continue;
+    for (let t = 0; t < WALL; t++) { const y = j - 1 - t; if (y < 0) break; const kk = y * W + i, furrow = Math.sin(i * 1.7 + Math.floor(i / 3) * 2.1) > .3, top = t >= WALL - 2;
+      const c = top ? WOOD.moss[1] : t < 2 ? WOOD.bark[0] : furrow ? WOOD.bark[0] : (t % 7 === 3 && hash(i, 9) > .7 ? WOOD.bark[2] : WOOD.bark[1]);
+      img.data.set([...c, 255], kk * 4); }
+  }
+  cv.width = W * scale; cv.height = H * scale; ctx.imageSmoothingEnabled = false;
+  const tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; tmp.getContext("2d").putImageData(img, 0, 0);
+  ctx.drawImage(tmp, 0, 0, W * scale, H * scale);
+  const P = (x, z) => [(x - x0) * PPM * scale, (z - z0) * PPM * scale];
+  if (furniture) for (const [id, room, x, z, w, d, label] of OBJ) {
+    const [a, b] = P(x - w / 2, z - d / 2), [c2, e] = P(x + w / 2, z + d / 2);
+    ctx.fillStyle = id === "circle" ? "rgba(200,40,40,.55)" : "rgba(236,214,170,.92)"; ctx.strokeStyle = "#2a1a10"; ctx.lineWidth = Math.max(1, scale * .6);
+    if (id === "circle") { ctx.beginPath(); ctx.arc((a + c2) / 2, (b + e) / 2, (c2 - a) / 2, 0, 7); ctx.fill(); ctx.stroke(); } else { ctx.fillRect(a, b, c2 - a, e - b); ctx.strokeRect(a, b, c2 - a, e - b); }
+    if (labels) { ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#fff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.textAlign = "center";
+      const ty = e + 6 * scale; ctx.strokeText(label, (a + c2) / 2, ty); ctx.fillText(label, (a + c2) / 2, ty); }
+  }
+  if (labels) {
+    for (const r of [...TRUNK, ...BRANCH]) { const [px, pz] = P(r.x, r.z - r.r * .55), big = TRUNK.includes(r);
+      ctx.font = `bold ${Math.round((big ? 9 : 7) * scale)}px sans-serif`; ctx.textAlign = "center"; ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.fillStyle = big ? "#ffe9b0" : "#cfe8ff";
+      const t = `${r.label}${r.locked ? " (locked)" : ""}`; ctx.strokeText(t, px, pz); ctx.fillText(t, px, pz);
+      ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#ddd"; const s = `about ${Math.round(r.r * 2)} m across`; ctx.strokeText(s, px, pz + 7 * scale); ctx.fillText(s, px, pz + 7 * scale); }
+    // the doors of the locked rooms: where each one's branch meets it
+    for (const r of BRANCH.filter(q => q.locked)) { const p = byId[r.from], L = Math.hypot(r.x - p.x, r.z - p.z), ux = (p.x - r.x) / L, uz = (p.z - r.z) / L;
+      const [dx, dz] = P(r.x + ux * (r.r - .3), r.z + uz * (r.r - .3)); ctx.fillStyle = "#3a2414"; ctx.strokeStyle = "#e8c070"; ctx.lineWidth = 2;
+      ctx.fillRect(dx - 5 * scale, dz - 5 * scale, 10 * scale, 10 * scale); ctx.strokeRect(dx - 5 * scale, dz - 5 * scale, 10 * scale, 10 * scale);
+      ctx.font = `${Math.round(5 * scale)}px sans-serif`; ctx.fillStyle = "#e8c070"; ctx.textAlign = "center"; ctx.strokeStyle = "#000"; ctx.lineWidth = 3; ctx.strokeText("locked door", dx, dz + 12 * scale); ctx.fillText("locked door", dx, dz + 12 * scale); }
+    // the walk from her bed to the take-off, along the trunk
+    { const pts = WALK.map(([x, z]) => P(x, z)); ctx.setLineDash([4 * scale, 3 * scale]); ctx.strokeStyle = "rgba(160,255,255,.85)"; ctx.lineWidth = Math.max(2, scale * 1.2); ctx.beginPath(); pts.forEach(([a, b], i) => i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)); ctx.stroke(); ctx.setLineDash([]);
+      const [mx, mz] = P(-6, -30); ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.fillStyle = "#9ff"; ctx.strokeStyle = "#000"; ctx.lineWidth = 4; ctx.textAlign = "right"; const t = `bed to take-off: about ${Math.round(walk())} m`; ctx.strokeText(t, mx, mz); ctx.fillText(t, mx, mz); }
+    // the take-off
+    const [tx, tz] = P(TAKEOFF.x, TAKEOFF.z); ctx.fillStyle = "#9ff"; ctx.font = `bold ${Math.round(6 * scale)}px sans-serif`; ctx.lineWidth = 4;
+    ctx.strokeText("take-off (open rim) ↘", tx + 8 * scale, tz + 18 * scale); ctx.fillText("take-off (open rim) ↘", tx + 8 * scale, tz + 18 * scale);
+    if (grid) { ctx.strokeStyle = "rgba(255,255,255,.12)"; ctx.lineWidth = 1; for (let m = Math.ceil(x0 / 10) * 10; m < x1; m += 10) { const [g] = P(m, 0); ctx.beginPath(); ctx.moveTo(g, 0); ctx.lineTo(g, cv.height); ctx.stroke(); }
+      for (let m = Math.ceil(z0 / 10) * 10; m < z1; m += 10) { const [, g] = P(0, m); ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(cv.width, g); ctx.stroke(); }
+      const [sx, sz] = P(x0 + 3, z1 - 4); ctx.fillStyle = "#fff"; ctx.fillRect(sx, sz, 10 * PPM * scale, 3 * scale); ctx.font = `${Math.round(6 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.fillText("10 m (grid 10 m; north is up)", sx, sz - 3 * scale); }
+  }
+  if (title) { ctx.font = `bold ${Math.round(8 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.fillStyle = "#fff"; ctx.strokeText(title, 8 * scale, 12 * scale); ctx.fillText(title, 8 * scale, 12 * scale); }
+}
+function TAKEOFF_OPEN(x, z) { const dx = x - TRAC.x, dz = z - TRAC.z, a = Math.atan2(dz, dx); return Math.hypot(dx, dz) < TRAC.r + 3 && Math.abs(((a - Math.PI / 4 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < .9; }
+const TRAC = byId.terrace;
+// the walk: bed to the take-off, along the trunk's rooms (bed, Bedroom 1, Boudoir, Parlour, Terrace's middle, the open rim)
+const WALK = [[10, -57], [7, -55], [1, -48], [-3, -41], [1, -32], [7, -22], [3, -11], [0, 0], [TAKEOFF.x, TAKEOFF.z]];
+function walk() { let L = 0; for (let i = 1; i < WALK.length; i++) L += Math.hypot(WALK[i][0] - WALK[i - 1][0], WALK[i][1] - WALK[i - 1][1]); return L; }
+window.mock = { render, walk, TRUNK, BRANCH, OBJ };
+</script></body></html>
