@@ -40,7 +40,8 @@
     "Two voices to A/B, live in the Music Lab: the alto sample set (the woman's note shifted with its formants kept, every two semitones, built offline from `samples/sources.json`'s derived entries) and a vocal-tract voice (Pink Trombone's tract in an AudioWorklet, an alto's length), with a breath slider and a chain choice",
     "The biome forests (`art/flora/biomes.js`, #1026): each biome a look over any species at bake time (leaves, bark and moss tinted after the night palette, the tree knobs nudged, snow, the jungle's flowering vines, the swamp's Spanish moss), an island blending its two by bearing, carried on the area art job and its cache key; nothing per frame",
     "Trees moved home in nine areas: no hawthorns in the savanna or the badlands, no wild olives on the glacier crags, no boreal aspen on the mangrove mudflat",
-    "A fresh game's first screen: asleep in the dark while home's night is made, then the wake-up in her bedroom; What's new and Options on the pause page (#1063)"
+    "A fresh game's first screen: asleep in the dark while home's night is made, then the wake-up in her bedroom; What's new and Options on the pause page (#1063)",
+    "The ground's cost measured part by part (tools/bench/ground.cjs) and its unused lake and beach code compiled out: a fifth off the forest floor's draw, the picture the same to the pixel"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
@@ -52,7 +53,8 @@
     "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too.",
     "Measure a voice before judging it: a pitch tracker over the sung line said in numbers what Ed heard (out of tune), and found the cause in a sample's first quarter second singing 20 cents flat.",
     "A physical-model voice drifts on purpose: Pink Trombone's glottis wanders a few cents by design, which reads as a singer solo and as out of tune in a chord; one knob scaling the wander turned 46 cents off into 13.",
-    "Tinting a tree by hue does nothing: the night palette squeezes every green into a narrow band, so a biome's colour has to go in after it, in RGB. And the per-tree autumn jitter that makes a temperate wood lively turns a snowy fir pink, so each biome keeps only its share of it"
+    "Tinting a tree by hue does nothing: the night palette squeezes every green into a narrow band, so a biome's colour has to go in after it, in RGB. And the per-tree autumn jitter that makes a temperate wood lively turns a snowy fir pink, so each biome keeps only its share of it",
+    "On the cloud's software renderer, shader code behind a uniform that's switched off still costs: measure by switching parts off in the page, and prove a saving by drawing old and new back to back in one call, since a live frame never quite stands still"
   ],
   "previews": [
     {
