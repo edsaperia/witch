@@ -92,6 +92,29 @@ const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPEC
         }
         const url = await page.evaluate(([W, H, img]) => { const c = document.createElement("canvas"); c.width = W; c.height = H; c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(img), W, H), 0, 0); return c.toDataURL("image/png"); }, [W, H, img]);
         fs.writeFileSync(path.join(outDir, "diff-base.png"), Buffer.from(url.split(",")[1], "base64"));
+        // (each differing pixel, from the top left, with both colours; and both pictures round them, 4x, side by side)
+        const list = [];
+        let x0 = W, y0 = H, x1 = 0, y1 = 0;
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const i = ((H - 1 - y) * W + x) * 4;
+          if (a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2]) {
+            if (list.length < 60) list.push(`${x},${y} full[${a.px[i]},${a.px[i + 1]},${a.px[i + 2]},${a.px[i + 3]}] off[${b.px[i]},${b.px[i + 1]},${b.px[i + 2]},${b.px[i + 3]}]`);
+            x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+          }
+        }
+        fs.writeFileSync(path.join(outDir, "diff-pixels.txt"), list.join("\n") + "\n");
+        if (list.length) {
+          const pad = 12, cx0 = Math.max(0, x0 - pad), cy0 = Math.max(0, y0 - pad), cw = Math.min(W, x1 + pad + 1) - cx0, ch = Math.min(H, y1 + pad + 1) - cy0, Z = 4;
+          const crop = new Array(cw * Z * 3 * ch * Z * 4).fill(255), CW = cw * Z * 3;
+          for (let y = 0; y < ch; y++) for (let x = 0; x < cw; x++) {
+            const i = ((H - 1 - (cy0 + y)) * W + cx0 + x) * 4, d = a.px[i] !== b.px[i] || a.px[i + 1] !== b.px[i + 1] || a.px[i + 2] !== b.px[i + 2];
+            for (let k = 0; k < 3; k++) { const c = k === 0 ? a.px.slice(i, i + 3) : k === 1 ? b.px.slice(i, i + 3) : d ? [255, 0, 255] : [a.px[i] >> 2, a.px[i + 1] >> 2, a.px[i + 2] >> 2];
+              for (let dy = 0; dy < Z; dy++) for (let dx = 0; dx < Z; dx++) { const o = ((y * Z + dy) * CW + k * cw * Z + x * Z + dx) * 4; crop[o] = c[0]; crop[o + 1] = c[1]; crop[o + 2] = c[2]; crop[o + 3] = 255; } }
+          }
+          const curl = await page.evaluate(([W, H, img]) => { const c = document.createElement("canvas"); c.width = W; c.height = H; c.getContext("2d").putImageData(new ImageData(new Uint8ClampedArray(img), W, H), 0, 0); return c.toDataURL("image/png"); }, [CW, ch * Z, crop]);
+          fs.writeFileSync(path.join(outDir, "diff-crop.png"), Buffer.from(curl.split(",")[1], "base64"));
+          console.log(`differing pixels within ${x0},${y0} to ${x1},${y1}; crop (full, off, where) in diff-crop.png`);
+        }
       }
     }
   } finally {
