@@ -177,7 +177,9 @@ async function main() {
     if (s.frozen) await page.addInitScript("window.__benchClock(1e7);");
     page.on("pageerror", e => errors.push(`${s.name}: ${e.message}`));
     const t0 = Date.now();
-    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${s.query ?? ""}`);
+    // (?loadmist=0: the loading mist, render/loadingMist.ts, shows what the art workers haven't drawn yet, by their timing, not the
+    // game's; off as ?quick=1 has it, so two runs of a build still match. An older build ignores it.)
+    await page.goto(`http://127.0.0.1:${port}/?seed=${seed}${s.query ?? ""}&loadmist=0`);
     const lap = what => { if (process.env.BENCH_LAPS) console.log(`  ${s.name} ${what} ${Math.round((Date.now() - t0) / 1000)} s`); };
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 }); // (the cloud's software renderer can take minutes, more when the machine is busy)
     lap("ready");
