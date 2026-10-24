@@ -13,6 +13,9 @@ import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
+import { Hiz, HIZ_LAYER } from "./hiz";
+/** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
+const HIZ_NEAR = 120;
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
@@ -102,7 +105,7 @@ import { checkPops, drawGhosts } from "./view/pops";
 import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
-import { drawFinds } from "./view/finds";
+import { drawFinds, findClear } from "./view/finds";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse } from "./view/home";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
@@ -367,6 +370,19 @@ export class View {
       const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
     } else P.behindAt = null;
+  }
+
+  /** What the treehouse hides of the forest, left undrawn (render/hiz.ts; the perf pass, 2026-10-23): the Ent's solid pass on its
+   *  occluder layer, the chain built while the camera is within HIZ_NEAR metres of the treehouse (the decks, the balcony, the house,
+   *  flying round it), off elsewhere. `?hiz=0` never builds it (to compare). */
+  private hiz: Hiz | null = null;
+  private readonly hizOff = new URLSearchParams(globalThis.location?.search ?? "").get("hiz") === "0";
+  private occluders(): void {
+    const T = this.game.map.treehouse, cp = this.camera.position, m = this.treehouseBatch.meshes[0];
+    const on = !this.hizOff && !!m && (cp.x - T.x) ** 2 + (cp.z - T.z) ** 2 < HIZ_NEAR * HIZ_NEAR;
+    if (on && !this.hiz) this.hiz = new Hiz(this.renderer);
+    if (m) m.layers.enable(HIZ_LAYER);
+    this.hiz?.render(this.renderer, this.scene, this.camera, this.width, this.height, on);
   }
 
   /** The hot springs' steam (render/lakeLooks.ts steamVents): smoke's puffs, whiter, lower and slower; its vents the map's. */
@@ -719,7 +735,7 @@ export class View {
 
   /** The haze's range before the telescope widened it (restored as she looks away). */
   private hazeBeforeTelescope: THREE.Vector2 | null = null;
-  /** The picture's pixels this many times the pixel size (the telescope at half resolution on a weak GPU: 2; main.ts resizes). */
+  /** The picture's pixels this many times the pixel size (the telescope: 1 over its resolution, finer below 1; main.ts resizes). */
   pixelScale = 1;
   /** Fit the canvas to the window: the scene at low resolution, shown scaled up by the pixel size. */
   resize(cssW: number, cssH: number): void {
@@ -1284,6 +1300,7 @@ export class View {
     { const W0 = g.witches[0].hat, H = W0.down; if (H && W0.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); for (const q of W0.left) clear.push({ x: q.x + HAT_BESIDE, z: q.z, r: t.groundCover.sigilClear }); } // (her hats where they lie)
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
     for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
+    { const F = findClear(this); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge
     const partyObjectLights = this.partyObjects.update(g, time, this.camera, (x, z, ww, hh) => inView(this, x, z, ww, hh, 4), this.worldFires, this.lastView);
@@ -1346,6 +1363,7 @@ export class View {
     this.behindHouse(this.game);
     // (the cast-shadow map is the forest's: none while only the house is drawn)
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
+    this.occluders();
     this.post.render(this.scene, this.camera);
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");

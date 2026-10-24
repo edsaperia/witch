@@ -2,6 +2,7 @@
 // Each sprite stands on the ground at its base, faces the camera (tilted back toward it by
 // spriteTilt), and is lit per pixel from its normal map. Tree tops carry a flag so the canopy
 // can dither in and out as the witch rises and descends.
+import { HIZ_GLSL, HIZ_UNIFORMS } from "./hiz";
 import * as THREE from "three";
 import { PIXEL_SNAP_GLSL, WIND_GUST_GLSL } from "./shaders";
 import type { Atlas, Frame } from "./atlas";
@@ -70,6 +71,8 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  /** The see-through passes ask passOf first (1; 0: where they always did, to compare: tools/bench/early-diff.cjs). */
+  uSeeEarly: { value: 1 },
   uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
   uSeeDither: { value: 0 }, // (the circle hunt: the see-through as a dither in the solid pass, no second pass)
   uSeeShowA: { value: 0 }, // (the circle hunt: the see-through pass shows its own opacity, grey, white solid)
@@ -124,7 +127,7 @@ varying vec2 vLocal;
 varying float vSizeY;
 varying vec2 vGround; // its ground spot under this pixel: its foot, across its width (the cast shadows: render/castShadows.ts)
 ${HEIGHT_VERT_GLSL}
-${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}
+${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
@@ -208,6 +211,9 @@ void main() {
   // its pixels might be drawn, so the picture is the same to the pixel (tools/bench).
   float pxm = 2.0 * hh / max(iSize.y, 0.01); // (screen pixels a metre, up the sprite)
   vec2 halfPx = vec2(hw, hh) + 4.0 + pxm * (abs(uWind.x) * abs(iFlags.w) * 1.3 * min(1.0, iSize.y / 8.0) + abs(uLean.x) * iSize.y + abs(uLean.y) * iSize.x + abs(uWatch.w) * abs(iFlags.w));
+  // Behind the treehouse's own solid pixels, every pixel of it (render/hiz.ts: the perf pass, 2026-10-23): its nearest point (its
+  // foot or its top: across, it's square to the camera) farther than the farthest occluder pixel its rectangle could touch.
+  if (uIsScenery > 0.5 && uHizOn > 0.5 && hizHidden(cc - halfPx, cc + halfPx, min(c0.z / c0.w, c1.z / c1.w) * 0.5 + 0.5)) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   // A crown wholly inside the hole (every pixel of it cut away, in either pass): its farthest corner still within the hole's inner edge.
   if (iFlags.y > 0.5 && uTopFade < 0.004) {
     vec2 far = abs(uCutout.xy - cc) + halfPx;
@@ -282,6 +288,7 @@ uniform float uLegendAwake; // a dark-coated legend awake: the share of its own 
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
 uniform vec4 uSeeDbg;
+uniform float uSeeEarly;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
 uniform float uDebugTrunks; // smoke: trunks drawn flat magenta
 uniform vec3 uEyeRgb;
@@ -329,7 +336,70 @@ vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
 // The distance in screen pixels between two points, safe at mediump: scaled down before it's squared (a 16-bit float tops out
 // near 65504, so length() of a difference over about 256 pixels overflowed) and clamped, so nothing far off can overflow either.
 float screenDist(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
+// Which pass draws this pixel, and how see-through (Ed, 2026-10-06 on: the cut-away, the see-through circle, the two see-through
+// passes): false where it's another pass's or cut away. Nothing here reads the art, so the see-through passes ask it first, before
+// the sway's and the art's taps (the perf pass, 2026-10-23: in a dense wood those passes kept most quads, and each pixel paid every
+// tap before it was thrown away); the solid pass asks it where it always has.
+float occl, shown, trunkA;
+bool passOf() {
+  float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+  occl = uFlat > 0.5 ? 0.0 : uOcc.w * uSeeDbg.x * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
+  // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
+  // (Ed: no dithering). A crown partly shown in the hole
+  // is drawn see-through in the second pass where it's over her, after her, like whatever stands
+  // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
+  // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
+  // Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode": a fade by
+  // each pixel's distance drew the same circular gradient across every crown, lining up into rings; by each crown's
+  // middle (uCutWhole of the way), a crown fades much as a whole.
+  // Ed, round 14: "canopy cut-out circle is still very sharp": by the crown's middle, a big crown near the camera (its
+  // middle far off) stood whole right up to her and its edge read as a hard ring. So mostly by each pixel again, the
+  // line wobbled by a slow noise on the ground (world space: it doesn't crawl as she moves) so the fade's lines aren't
+  // circles, and fading over a wide band past the radius too (uCutShape: the wobble, and how far out the fade reaches).
+  float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
+  float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
+  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
+  shown = 1.0;
+  if (vFlags.y > 0.5) {
+    shown = max(hole, uTopFade);
+    if (shown < 0.004) return false;
+  }
+  // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
+  // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
+  // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
+  // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
+  // all), so every trunk keeps a solid base. Smooth (Ed: no dithering), its top fades out in alpha (trunkA).
+  trunkA = 1.0;
+  if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
+    float crown = max(hole, uTopFade);
+    float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
+    float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
+    float keep = max(t, crown);
+    if (keep < 0.004) return false;
+    trunkA = keep * keep * (3.0 - 2.0 * keep);
+  }
+  // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
+  // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree
+  // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
+  // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
+  // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
+  float edgeK = uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0; // (a crown: out to the canopy's reach)
+  bool part = shown * trunkA * edgeK < 0.996;
+  bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
+  if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) return false; } // (the circle hunt)
+  // Two see-through passes (Ed, 2026-10-14, the circle bug, measured by the pause page's Circle report): what's in front of her
+  // alone (uFadePass 3) first, writing its depth, so where it overlaps itself or what's half faded behind it the nearer wins as in
+  // the solid pass; then whatever is half faded anyway (crowns at the cut-away's edge, trunk tops: uFadePass 1), blended over it.
+  // In one pass, unsorted, a half-faded crown drawn before the trunk behind it lost or covered that trunk, but only inside her
+  // circle, where the trunks were in that pass too: a hard round edge with the drawing jumbled inside it. (uSeeTwo 0: one pass, as before.)
+  bool occOnly = see && !seePart, two = uSeeTwo > 0.5;
+  bool mine = uFadePass < 0.5 ? !(uSeeDbg.w > 0.5 ? seePart : see) : uFadePass > 2.5 ? two && occOnly : uFadePass > 1.5 ? see : (two ? seePart : see); // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
+  return mine;
+}
 void shade() {
+  // (the see-through passes: whether this pixel is theirs at all, first: passOf)
+  bool early = uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeEarly > 0.5;
+  if (early && !passOf()) discard;
   // Swaying by its mask (#34): each pixel samples from where the wind has pushed the leaves; a
   // second tap lets leaf edges move out over empty pixels. Trunks and rocks (mask 0) stay still.
   // The mask is the art's pixel-wind code (art/sway.js swayCode): 0 rigid, else a region's phase (top 3 bits) and how far it moves
@@ -379,59 +449,7 @@ void shade() {
   // centre, easing smoothly to opaque at the edge (uOcc.y: how far the edge reaches, a share of it).
   // (screenDist, not length(a - b): at mediump, the 16-bit floats some GPUs run this shader at, the square of a distance over about 256
   // screen pixels overflows, and everything further from her than that came out wrong: the circle bug, Ed, 2026-10-14, isolated to this fade)
-  float e = screenDist(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
-  float occl = uFlat > 0.5 ? 0.0 : uOcc.w * uSeeDbg.x * vFront * (1.0 - smoothstep(0.3, 1.0 + uOcc.y, e));
-  // Crowns: hidden in a hole round the witch, which closes as she rises; its edge a smooth fade
-  // (Ed: no dithering). A crown partly shown in the hole
-  // is drawn see-through in the second pass where it's over her, after her, like whatever stands
-  // in front of her: in the opaque pass it hid her (Ed, v289: she showed only as her silhouette inside a crisp disc).
-  // The hole: a wide soft band at this tree's own radius (vHole); the pass by the whole crown (vOverHer).
-  // Ed, 2026-10-06: "I still see concentric circles while moving through dense forests in ground mode": a fade by
-  // each pixel's distance drew the same circular gradient across every crown, lining up into rings; by each crown's
-  // middle (uCutWhole of the way), a crown fades much as a whole.
-  // Ed, round 14: "canopy cut-out circle is still very sharp": by the crown's middle, a big crown near the camera (its
-  // middle far off) stood whole right up to her and its edge read as a hard ring. So mostly by each pixel again, the
-  // line wobbled by a slow noise on the ground (world space: it doesn't crawl as she moves) so the fade's lines aren't
-  // circles, and fading over a wide band past the radius too (uCutShape: the wobble, and how far out the fade reaches).
-  float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
-  float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
-  float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
-  float shown = 1.0;
-  if (vFlags.y > 0.5) {
-    shown = max(hole, uTopFade);
-    if (shown < 0.004) discard;
-  }
-  // A trunk cut from its crown (Ed, v149: "fade out instead of just stop"): where the crowns are
-  // hidden, its top fades out over uTrunkFade.x metres in a clustered ordered dither on the art's own
-  // pixel grid; where the crowns show, it stays whole under them. The fade covers at most
-  // uTrunkFade.z of the trunk's visible height (Ed, v233: short tangly trees kept no trunk at
-  // all), so every trunk keeps a solid base. Smooth (Ed: no dithering), its top fades out in alpha (trunkA).
-  float trunkA = 1.0;
-  if (vFlags.y < -0.001 && uTrunkFade.x > 0.0) {
-    float crown = max(hole, uTopFade);
-    float topY = 1.0 + vFlags.y, band = min(uTrunkFade.x / max(vSizeY, 0.01), topY * uTrunkFade.z);
-    float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
-    float keep = max(t, crown);
-    if (keep < 0.004) discard;
-    trunkA = keep * keep * (3.0 - 2.0 * keep);
-  }
-  // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
-  // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree
-  // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
-  // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
-  // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
-  float edgeK = uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0; // (a crown: out to the canopy's reach)
-  bool part = shown * trunkA * edgeK < 0.996;
-  bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
-  if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) discard; } // (the circle hunt)
-  // Two see-through passes (Ed, 2026-10-14, the circle bug, measured by the pause page's Circle report): what's in front of her
-  // alone (uFadePass 3) first, writing its depth, so where it overlaps itself or what's half faded behind it the nearer wins as in
-  // the solid pass; then whatever is half faded anyway (crowns at the cut-away's edge, trunk tops: uFadePass 1), blended over it.
-  // In one pass, unsorted, a half-faded crown drawn before the trunk behind it lost or covered that trunk, but only inside her
-  // circle, where the trunks were in that pass too: a hard round edge with the drawing jumbled inside it. (uSeeTwo 0: one pass, as before.)
-  bool occOnly = see && !seePart, two = uSeeTwo > 0.5;
-  bool mine = uFadePass < 0.5 ? !(uSeeDbg.w > 0.5 ? seePart : see) : uFadePass > 2.5 ? two && occOnly : uFadePass > 1.5 ? see : (two ? seePart : see); // (uSeeDbg.w, the circle hunt: the solid pass keeps what's in front of her too)
-  if (!mine) discard;
+  if (!early && !passOf()) discard;
   if (uFadePass > 1.5 && uSeeDepth < 0.5) discard; // (the depth pass, switched off: tuning suspects.seeDepth)
   float alpha = (uFadePass > 0.5 ? mix(1.0, uOcc.x, occl) : 1.0) * shown * trunkA;
   if (uFadePass > 0.5 && (uSeeSolid > 2.5 ? occl <= 0.001 : uSeeSolid > 1.5 ? occl > 0.001 : uSeeSolid > 0.5)) alpha = 1.0; // (the circle hunt: 1 all, 2 only her circle's, 3 only the rest)
@@ -621,7 +639,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
