@@ -36,8 +36,39 @@ Ed: investigate https://github.com/ahwootech/BRUTAL as the port's foundation. Lo
 
 - **Host-authoritative:** the host simulates; clients send inputs, receive nearby state at about 20 Hz and predict their own witch.
 - **Steam lobbies**, invites and relays (GodotSteam).
-- Joining mid-game is already supported by the design (one area per witch per wave).
-- In the treehouse, the computer room / telephone is where she calls friends to the party (journey.md).
+- Joining is any time she can be at the phone: before the party, mid-night or after it. Waves run as normal, whatever the number of witches (Ed, 2026-10-24; the old "one area per witch per wave" is dropped).
+- In the treehouse, the telephone is where she calls friends to the party: see **Multiplayer design** below.
+
+## Multiplayer design (Ed, 2026-10-24)
+
+Design only: **nothing here is built, and nothing is to be started without Ed's go.** The tech could be prototyped in the browser (WebRTC between the players' browsers; a tiny introductions server, since GitHub Pages can't run one; a relay for the roughly one connection in ten that can't go direct), but the plan above still puts real co-op after the port.
+
+**Who and where**
+- Up to three witches, one per bedroom: the host's own and Bedrooms 2 and 3 in the host's treehouse.
+- The **caller is the host**: a friend who answers comes to the host's island and treehouse.
+- No map markers or indicators for other witches. They find each other by reading the island, and by **hats**, which all **glow** (hats are magical); a hat left lying is the way to mark a spot.
+
+**The telephone (the lobby)**
+- A **classic red rotary landline** on the telephone table in the Boudoir. Walking up to it, its menu rises from the bottom, as the map table's does.
+- The menu shows a **rotary dial**, with **floating magic numbers** showing the digits dialled so far, and **her own number on a post-it**.
+- **Her number:** 7 digits, made up at random the first time she plays and kept on that browser. It's her address on the introductions server, and she's listed there only while she stands at the telephone table.
+- **An address book** on the post-it pad: numbers she's called or been called from, each with that witch's face, picked with one press. New numbers are dialled by hand.
+- **Sounds do the work:** dial tone, the dial's whirr and clicks, ringing, "the number you have dialled has not been recognised", an engaged tone, ringing out. When a call connects, the two witches have a short exchange in their babble voices.
+- **Answering:** her friend waits near her own telephone table and answers when it rings.
+- **Connected:** after a short fade, the friend **wakes up in her bedroom** in the host's treehouse, with the usual wake-up (nightie, clothes pile). When the host steps away from the phone and the menu closes, that bedroom's door is open. A second call fills the third bedroom.
+- **Who's in:** a magic floating bubble above the host's phone for each connection, with that witch's face in it; the open bedroom doors; the address book. Witches have no names: faces and numbers only.
+- **Kicking:** the host kicks from the telephone table, with the X at the bottom right of a witch's bubble. A kicked witch can ring straight back; the host sees a flickering bubble appear, so they know who's calling.
+- **Leaving:** from the host's telephone (she hangs up) or from the pause menu. Either way she's back in her own treehouse.
+- **A dropped line** (the host leaves or the connection fails): the friend hears the line go dead and appears in her own treehouse beside her own phone, the host's number pre-filled to dial again at once.
+- **The friend's own night** is left behind: she starts fresh at home next time.
+
+**Shared rules**
+- **One night clock** for everyone. Time slows (the treehouse's tenth, a legend circle's slow) **only when every witch is in a slow place**: the house, a legend circle, or the pause menu, mixed in any way. If anyone is elsewhere, the night runs at full speed. Alone, it's as today.
+- **The pause menu** never stops the world on its own; it counts as a slow place.
+- **Tonight's find** goes to everyone in the house that night, in each witch's own collection.
+- **Hats, brooms and bags** are the host's and shared (treehouse.md, unlocks.md); each broom part is on one witch's broom at a time.
+- **Sigils** on the ground belong to no one: any witch can pick one up. Creatures, soundsystems and waves are shared.
+- **Ending the night:** only when **every witch is in bed**.
 
 ## Technical-debt cleanup (before the port)
 
