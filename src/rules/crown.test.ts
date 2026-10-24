@@ -38,6 +38,13 @@ describe("the great oak's crown", () => {
     expect(notchDistance(c, ox + c.takeoff[0] * far, oz + c.takeoff[1] * far, notchWidth(c))).toBeLessThan(0);
   });
 
+  it("keeps open ground it's given (the dancefloor) open to the sky as the Terrace: no lobe over it or on a line of sight to it", () => {
+    const open = [{ x: 40, z: 40, r: 28 }], d = makeCrown({ ...input(), open });
+    expect(d.lobes.length).toBeGreaterThan(200);
+    for (const l of d.lobes) { expect(Math.hypot(l.x - 40, l.z - 40)).toBeGreaterThan(28 + l.r * 0.8); expect(sightClearance(d, l.x, l.y, l.z)).toBeGreaterThan(l.r * 0.8); }
+    expect(c.lobes.some(l => Math.hypot(l.x - 40, l.z - 40) < 28)).toBe(true); // (without it, the crown reaches over it)
+  });
+
   it("opens its notch the way she takes off: the Terrace's open south-east rim, towards the dancefloor", () => {
     const a = ((O.takeoff.from + O.takeoff.to) / 2) * (Math.PI / 180);
     expect(c.takeoff[0]).toBeCloseTo(Math.cos(a)); expect(c.takeoff[1]).toBeCloseTo(Math.sin(a));

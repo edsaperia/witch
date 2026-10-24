@@ -19,6 +19,7 @@ import { makeCrown, type HouseOutline } from "../rules/crown";
 // (the house's outline for the crown: only what it reads, so the floor's traced rings stay out of the bundle)
 import { rooms as OUTLINE_ROOMS, branches as OUTLINE_BRANCHES, stubs as OUTLINE_STUBS, takeoff as OUTLINE_TAKEOFF } from "../../config/house/outline.json";
 import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
+import { speakerRadius } from "../rules/speakers";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
 const HIZ_NEAR = 120;
@@ -422,7 +423,10 @@ export class View {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
     if (want && !this.crown && H) {
       const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
-      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed }), t.stringLights.bulbSpacing, outline);
+      // (the dancefloor and its speakers stay open to the sky as the Terrace does: it stands south-east of the house, under the crown's edge)
+      const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
+      const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
+      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open }), t.stringLights.bulbSpacing, outline);
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
       this.crownFar = new CrownLandmark(this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);

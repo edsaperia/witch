@@ -37,7 +37,8 @@ export interface HouseOutline {
   takeoff: { x: number; z: number; from: number; to: number };
 }
 /** What the crown is grown from: the house's outline, the floor's height over the ground and a seed. */
-export interface CrownInput { outline: HouseOutline; floor: number; seed: number }
+/** `open`: ground the crown keeps open to the sky as it does the Terrace (the dancefloor and its speakers, on the plan). */
+export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[] }
 
 export interface Crown {
   lobes: Lobe[]; limbs: Limb[]; strings: CrownString[];
@@ -46,6 +47,8 @@ export interface Crown {
   /** The Terrace on the plan (its disc), where its open rim is (the take-off's point) and the way she takes off from it (a unit
    *  vector on the plan). */
   terrace: { x: number; z: number; r: number }[]; notchFrom: [number, number]; takeoff: [number, number];
+  /** Ground kept open as the Terrace is (CrownInput.open). */
+  open: { x: number; z: number; r: number }[];
   /** The floor's height over the ground (m). */
   floor: number;
 }
@@ -59,9 +62,10 @@ const DEG = Math.PI / 180;
 /** The Terrace's notch (Ed, 2026-10-24: "perhaps terrace crown gap should be a cutout extending from the terrace to the edge of the
  *  crown, not just a hole"): how far (x, z) on the plan is from the open ground over the Terrace and the channel running from it out
  *  to the crown's edge the way she takes off (negative inside). `width` the channel's half-width. */
-export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom">, x: number, z: number, width: number): number {
+export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"] }, x: number, z: number, width: number): number {
   let d = Infinity;
   for (const t of c.terrace) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
+  for (const t of c.open ?? []) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
   const [ox, oz] = c.notchFrom, [tx, tz] = c.takeoff, along = (x - ox) * tx + (z - oz) * tz;
   if (along > -width) d = Math.min(d, Math.abs((x - ox) * tz - (z - oz) * tx) - width);
   return d;
@@ -71,7 +75,7 @@ export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.t
 
 /** How clear a point over the plan (y over the floor) keeps the Terrace: the least, over the camera's lines of sight, of how far the
  *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). */
-export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom">, x: number, y: number, z: number): number {
+export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"] }, x: number, y: number, z: number): number {
   const w = notchWidth(c);
   let m = notchDistance(c, x, z, w);
   for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - Math.max(0, y) / Math.tan(p * DEG), w)); // (slid back down the line of sight to the floor: further north)
@@ -87,11 +91,11 @@ function bounds(O: HouseOutline) {
 }
 
 /** The great oak's crown for a house. The same house and seed always grow the same crown. */
-export function makeCrown({ outline: O, floor, seed }: CrownInput): Crown {
+export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): Crown {
   const R = rng(seed * 7919 + 4111), U = (a: number, b: number) => a + (b - a) * R();
   const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10 }, terrace = [{ x: T.x, z: T.z, r: T.r }];
   const ta = ((O.takeoff.from + O.takeoff.to) / 2) * DEG, takeoff: [number, number] = [Math.cos(ta), Math.sin(ta)], notchFrom: [number, number] = [O.takeoff.x, O.takeoff.z];
-  const shape = { terrace, takeoff, notchFrom };
+  const shape = { terrace, takeoff, notchFrom, open };
   const B = bounds(O), margin = 26;
   const dome = { cx: (B.x0 + B.x1) / 2, cz: (B.z0 + B.z1) / 2, rx: (B.x1 - B.x0) / 2 + margin, rz: (B.z1 - B.z0) / 2 + margin, base: 14, top: 0 };
   const size = Math.max(dome.rx, dome.rz), RY = size * 0.45, K = size / 92; // (K: the mock's lobes, for its 185 m crown, scaled to this one)
@@ -198,7 +202,7 @@ export function makeCrown({ outline: O, floor, seed }: CrownInput): Crown {
     for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([o.x + Math.cos(a) * rr, 14 + 3 * Math.sin(a * 3), o.z + Math.sin(a) * rr]); }
     strings.push({ kind: "ring", spans: pts.slice(1).map((b, i) => ({ a: pts[i], b, sag: 2.2 })) }); }
 
-  return { lobes, limbs, strings, dome, terrace, notchFrom, takeoff, floor };
+  return { lobes, limbs, strings, dome, terrace, notchFrom, takeoff, open, floor };
 }
 
 /** A bulb of the crown's lights: where (on the plan, y over the floor), its colour's place in the palette, how far along its string
