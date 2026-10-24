@@ -1,5 +1,5 @@
 // The new opening's wake-up spot (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): the chart's
-// dive ends in her bedroom in the treehouse (config/house.json's bedroom), so the night starts there, beside her bed, not
+// dive ends in her bedroom in the treehouse (config/house/'s bedroom), so the night starts there, beside her bed, not
 // behind the decks. Here: where that is, and her put there, with the camera settled indoors on her (rules/camera.ts camera.house)
 // so the dive (app/arrive.ts) has its last shot. Pure: no clock, no page.
 import type { Game } from "./game";

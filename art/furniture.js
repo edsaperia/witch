@@ -1,4 +1,4 @@
-// The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, config/house.json, in place of the plain boxes
+// The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, config/house/, in place of the plain boxes
 // render/houseRooms.ts drew). Ed's style: "a charming mismatched combination ... cozy cottage vibes sprouting leaves, occasional
 // gothic pieces, and random modern clutter"; a palette per room; its lights "a mix of magic, candles, gas lamps, modern lamps, fairy
 // lights, neon lamps". From the mock (#1017), his answers: twice the size it was (as big as her creator bedroom's: house.json's

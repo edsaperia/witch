@@ -1,0 +1,14 @@
+{
+  "id": "bestiary",
+  "label": "Bestiary",
+  "order": 60,
+  "parent": "atrium",
+  "bearing": 160,
+  "branch": 4.5,
+  "radius": 6.5,
+  "bend": -1,
+  "objects": [
+    {"id":"book","label":"Bestiary book","use":{"kind":"zoo"},"bearing":0,"in":4.5,"foot":[1.6,1.2,2.2]},
+    {"id":"specimens","label":"Skeletons and skulls","use":{"kind":"say","line":"The skeletons and skulls come later."},"bearing":70,"in":1.9,"foot":[6,0.8,4]}
+  ]
+}

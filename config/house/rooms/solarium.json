@@ -1,0 +1,13 @@
+{
+  "id": "solarium",
+  "label": "Solarium",
+  "order": 80,
+  "parent": "parlour",
+  "bearing": -70,
+  "branch": 4.5,
+  "radius": 6.5,
+  "bend": 1,
+  "objects": [
+    {"id":"teaTable","label":"Tea table","use":{"kind":"say","line":"The tea's not brewed yet."},"bearing":0,"in":5.4,"foot":[2.8,2.8,1.4]}
+  ]
+}

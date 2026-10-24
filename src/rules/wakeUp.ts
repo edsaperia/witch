@@ -5,7 +5,7 @@
 // curtains stay shut until the island's ready (the night's art drawn: main.ts says so through `ready`), then open by themselves
 // as soon as she's up (Ed, 2026-10-21: "The curtains should open as soon as they've loaded"); E at them before then says "not
 // yet". Until they're open she stays in the bedroom (its door kept shut), so nothing she does gets ahead of the build: and she
-// dresses meanwhile, everything but her hat, bag and broom being in the bedroom (config/house.json; Ed: "all of the customisation
+// dresses meanwhile, everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation
 // options (except for broom, hat, and bag) should be before the locked door"). Then out through the house to her decks, where E starts the party (Ed, 2026-10-20: "The DJ intro replaces
 // the party spell before the party has started"): she's seated behind them and the spell's cast there, its needle-drop routine
 // (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up (`short`: later loads and after the bed, Ed's

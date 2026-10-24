@@ -31,7 +31,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     const shot = async (name, extra = {}) => { out.shots.push({ name, ...extra, ...(await cost()) }); await page.screenshot({ path: path.join(outDir, `${name}.png`), timeout: 300000 }); };
     await page.evaluate(() => { window.witch.manual = true; });
     for (let w = 0; w < 2; w++) { await page.evaluate(c => window.witch.frame({ ...c, nextWave: true }, 1 / 60, true), C); await step(240); }
-    // The crystal ball's placeholder: E at it in the hub (config/house.json, the plan turned 45°: rules/houseRooms.ts fromPlan).
+    // The crystal ball's placeholder: E at it in the hub (config/house/, the plan turned 45°: rules/houseRooms.ts fromPlan).
     await page.evaluate(() => { const g = window.witch.game, h = g.map.treehouse, c = Math.SQRT1_2, x = -4.38, z = -0.71; g.witch = { ...g.witch, x: h.x + x * c + z * c, z: h.z - x * c + z * c, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: g.witch.perch }; });
     await step(30);
     await page.evaluate(c => window.witch.frame({ ...c, sigil: true }, 1 / 60, true), C);

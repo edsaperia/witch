@@ -1,4 +1,4 @@
-// Her hats and her broom from the treehouse's rooms (Ed, 2026-10-19: rules/houseRooms.ts, config/house.json; the Bedroom button and
+// Her hats and her broom from the treehouse's rooms (Ed, 2026-10-19: rules/houseRooms.ts, config/house/; the Bedroom button and
 // F are gone): the built game (DIST, default dist/) at 1600×900. She's put in the house mid-night with her Helmet lying in the hub
 // (it stays there, drawn: Ed, 2026-10-12); E on the hats' floor (no rack: hats are objects there) puts another hat on her; E at the
 // broom stand opens her room at only the broom's choices, its power is changed, and the way out brings her back with it.
@@ -24,7 +24,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 4, null, { timeout: 600000, polling: 500 });
     // into the house: landed in the hub, off her decks, her Helmet lying by the map
-    const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8")), at = id => H.objects.find(o => o.id === id);
+    const H = require("../../config/house/load.mjs").loadHouse(), at = id => H.objects.find(o => o.id === id);
     // (on the house's turned plan: rules/houseRooms.ts fromPlan)
     const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
     const stand = (o, dz) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, plan(o.x, o.z + dz));

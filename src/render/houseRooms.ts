@@ -1,5 +1,5 @@
 // The treehouse's placeholder rooms (Ed, 2026-10-19: "Plain plank boxes and corridors drawn by the game; the Ent's branches are left
-// as they are"; rules/houseRooms.ts, config/house.json): plank floors, walls (the front two, towards the camera, cut down to a
+// as they are"; rules/houseRooms.ts, config/house/): plank floors, walls (the front two, towards the camera, cut down to a
 // skirting, as the hub's front is cut away), doorways where the corridors meet, and each object a plain box in its colour (working,
 // the bed, placeholder), the hats' floor a rug with her hats lying on it. Isometric boxes (Ed, 2026-10-21: "more of an isometric
 // view"): the plan's turned 45 degrees (rules/houseRooms.ts fromPlan), so each floor is a diamond, its two far walls standing behind

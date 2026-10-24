@@ -8,7 +8,7 @@ const playwright = require("/opt/node22/lib/node_modules/playwright");
 const [outDir = "previews/bedrooms", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const mid = r => [(r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2];
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });

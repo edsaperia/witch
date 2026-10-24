@@ -9,7 +9,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outDir = "previews/ed/treehouse-v2", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const T = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/tuning.json"), "utf8")).treehouse.house;
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null, want = k => !ONLY || ONLY.includes(k);
 // (the house's plan is turned about the hub: rules/houseRooms.ts fromPlan)

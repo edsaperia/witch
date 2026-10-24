@@ -1,5 +1,5 @@
 // The treehouse's furniture (Ed, 2026-10-23: real art for the house's objects, art/furniture.js) in the built game (DIST, default
-// dist/) at 1600×900: she's put in each room of the house (config/house.json) a little south of its middle and the camera zoomed
+// dist/) at 1600×900: she's put in each room of the house (config/house/) a little south of its middle and the camera zoomed
 // out ZOOM steps (default 1), a shot each (`<room>.png`).
 // BROOM: her broom's save (localStorage witch.broom, as app/broomSave.ts keeps it: {"v":1,"found":[...],"fitted":{...}}).
 // QUERY adds to the link (QUERY=furniture=0: the plain boxes, to compare). ONLY=bedroom,boudoir shoots only those. Fails on a page
@@ -10,7 +10,7 @@ let playwright; try { playwright = require("playwright"); } catch { playwright =
 const [outDir = "previews/house-furniture", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
-const H = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/house.json"), "utf8"));
+const H = require("../../config/house/load.mjs").loadHouse();
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null, want = k => !ONLY || ONLY.includes(k), QUERY = process.env.QUERY ? `&${process.env.QUERY}` : "", ZOOM = Number(process.env.ZOOM ?? 1);
 // (the house's plan is turned about the hub: rules/houseRooms.ts fromPlan)
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
