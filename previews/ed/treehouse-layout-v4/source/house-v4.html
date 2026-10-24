@@ -112,10 +112,10 @@ const cv = document.getElementById("c"), ctx = cv.getContext("2d");
 function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture = true, grid = false, title = "", view = "plan" }) {
   VIEW = view; const ZK = view === "game" ? FORE : 1;
   const W = Math.round((x1 - x0) * PPM), H = Math.round((z1 - z0) * PPM * ZK), WALL = Math.round(2.2 * PPM * (view === "game" ? Math.cos(24 * Math.PI / 180) : 1)); // a wall's height as drawn (m tilted)
-  const img = new ImageData(W, H), inside = new Uint8Array(W * H);
+  const img = new ImageData(W, H), inside = new Uint8Array(W * H), dist = new Float32Array(W * H);
   const roomAt = (x, z) => { let best = null, bd = 1e9; for (const r of [...TRUNK, ...BRANCH]) { const d = blob(r, x, z); if (d < bd) { bd = d; best = r; } } return bd < 0 ? best : null; };
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
-    const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), f = field(x, z); inside[k] = f.d < 0 ? 1 : 0; let c;
+    const k = j * W + i, x = x0 + (i + .5) / PPM, z = z0 + (j + .5) / (PPM * ZK), f = field(x, z); dist[k] = f.d; inside[k] = f.d < 0 ? 1 : 0; let c;
     if (!inside[k]) { // the night under the house: the canopy's dark leaves
       const n = fbm(x * .35, z * .35); c = n > .55 ? WOOD.leaf[1] : n > .35 ? WOOD.leaf[0] : WOOD.night;
     } else if (f.d > -.45 && TAKEOFF_OPEN(x, z)) { c = WOOD.floor[3]; // the open rim where she steps off: worn pale, no lip
@@ -132,6 +132,7 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
       const c = top ? WOOD.moss[1] : t < 2 ? WOOD.bark[0] : furrow ? WOOD.bark[0] : (t % 7 === 3 && hash(i, 9) > .7 ? WOOD.bark[2] : WOOD.bark[1]);
       img.data.set([...c, 255], kk * 4); }
   }
+  if (window.crownPass) window.crownPass(img, W, H, x0, z0, ZK, dist);
   cv.width = W * scale; cv.height = H * scale; ctx.imageSmoothingEnabled = false;
   const tmp = document.createElement("canvas"); tmp.width = W; tmp.height = H; tmp.getContext("2d").putImageData(img, 0, 0);
   ctx.drawImage(tmp, 0, 0, W * scale, H * scale);
@@ -164,6 +165,7 @@ function render({ x0, x1, z0, z1, scale, walls = true, labels = true, furniture 
       for (let m = Math.ceil(z0 / 10) * 10; m < z1; m += 10) { const [, g] = P(0, m); ctx.beginPath(); ctx.moveTo(0, g); ctx.lineTo(cv.width, g); ctx.stroke(); }
       const [sx, sz] = P(x0 + 3, z1 - 4); ctx.fillStyle = "#fff"; ctx.fillRect(sx, sz, 10 * PPM * scale, 3 * scale); ctx.font = `${Math.round(6 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.fillText("10 m (grid 10 m; north is up)", sx, sz - 3 * scale); }
   }
+  if (window.crownAfter) window.crownAfter(P, scale);
   if (title) { ctx.font = `bold ${Math.round(8 * scale)}px sans-serif`; ctx.textAlign = "left"; ctx.lineWidth = 4; ctx.strokeStyle = "#000"; ctx.fillStyle = "#fff"; ctx.strokeText(title, 8 * scale, 12 * scale); ctx.fillText(title, 8 * scale, 12 * scale); }
 }
 function TAKEOFF_OPEN(x, z) { const dx = x - TRAC.x, dz = z - TRAC.z, a = Math.atan2(dz, dx); return Math.hypot(dx, dz) < TRAC.r + 3 && Math.abs(((a - TAKEOFF.a + 3 * Math.PI) % (2 * Math.PI)) - Math.PI) < .55; }
@@ -172,4 +174,5 @@ const TRAC = byId.terrace;
 const WALK = [[-2.4, -56.6], [-6, -53], [8, -36], [-6, -16], [10, 8], [TAKEOFF.x, TAKEOFF.z]];
 function walk() { let L = 0; for (let i = 1; i < WALK.length; i++) L += Math.hypot(WALK[i][0] - WALK[i - 1][0], WALK[i][1] - WALK[i - 1][1]); return L; }
 window.mock = { render, walk, TRUNK, BRANCH, OBJ };
+</script><script src="../crown/source/crown.js">
 </script></body></html>
