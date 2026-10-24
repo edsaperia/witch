@@ -6,7 +6,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { HOUSE_ROOMS, fromPlan, objectFront, toPlan } from "./houseRooms";
 import { wakeInBedroom } from "./opening";
-import { atDecks, doorShut, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
+import { atDecks, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, PILE_SLOTS, wearFromStation, wornGenome } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { heldByRoutine } from "./djSet";
@@ -306,5 +306,72 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     run(g, 20, { moveX: -1, moveZ: 1 });
     expect(inRoom(g)).toBe(true);
     expect(g.party.spellAt).toBeNull();
+  });
+});
+
+describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
+  /** Asleep after a night with a find on loan: dreaming, in bed. */
+  function dreaming(): Game {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false;
+    wakeInBedroom(g);
+    startWake(g, g.herTime, true, true);
+    return g;
+  }
+  it("she sleeps through it in bed, held, nothing ringing", () => {
+    const g = dreaming(), p = rel(g), seen = run(g, 4);
+    expect(g.wake!.beat).toBe("dream");
+    expect(seen).not.toContain("ring");
+    expect(rel(g)).toEqual(p);
+  });
+  it("its end rings the alarm (the page's: it played to its end), and the wake-up goes on as ever", () => {
+    const g = dreaming();
+    run(g, 1);
+    endDream(g, g.herTime);
+    expect(g.wake!.beat).toBe("alarm");
+    expect(g.wake!.events).toContain("ring");
+    run(g, K.alarmMin + 0.1); run(g, 0.1, { moveX: 1 }); // (the shorter wake-up after the bed: once it's rung a moment, any key or move, and she's up)
+    expect(g.wake!.beat).toBe("up");
+  });
+  it("any key or move ends it: the alarm rings, and that press doesn't also get her up", () => {
+    for (const c of [{ place: true, sigil: true }, { moveX: 1 }, { toggleMode: true }] as Partial<Controls>[]) {
+      const g = dreaming();
+      run(g, 0.5);
+      const seen = run(g, STEP, c);
+      expect(seen).toContain("ring");
+      expect(g.wake!.beat).toBe("alarm");
+    }
+  });
+  it("after a sail's flight in (Ed, 2026-10-24: one dream, always in bed): landed in her bedroom asleep, the same dream, the alarm when it ends", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false;
+    expect(wakeInBedroom(g)).toBe(true); // (before the flight: its last shot is her bedroom's)
+    expect(startWake(g, g.herTime, true, true)).toBe(true); // (as it lands: main.ts arrived)
+    expect(g.wake!.beat).toBe("dream");
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+    const seen = run(g, 2);
+    expect(seen).not.toContain("ring");
+    endDream(g, g.herTime);
+    expect(g.wake!.beat).toBe("alarm");
+    expect(g.party.spellAt).toBeNull(); // (the party not started: out to her decks after, as ever)
+  });
+  it("no dream with nothing on loan: the alarm at once, as before", () => {
+    const g = newGame(123, TUNING);
+    wakeInBedroom(g);
+    startWake(g, g.herTime, true);
+    expect(g.wake!.beat).toBe("alarm");
+  });
+});
+
+describe("she always wakes in her nightie, last night's clothes in the pile (Ed, 2026-10-24)", () => {
+  it("on every way in: the first load's whole wake-up, the shorter one after the bed or a sail, and after a dream", () => {
+    for (const [short, dreams] of [[false, false], [true, false], [true, true]]) {
+      const g = newGame(123, TUNING);
+      wakeInBedroom(g);
+      expect(startWake(g, g.herTime, short, dreams)).toBe(true);
+      expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+      expect(dressed(g.wake)).toBe(false);
+      expect(wornGenome({ top: "jacket", accessories: {} }, g.wake!.pile).accessories).toMatchObject({ nightie: true });
+    }
   });
 });

@@ -2,8 +2,8 @@
 // permanent upgrades. Hints are given by the crystal ball"; his answers on the proposal, the same day): each night the island
 // she's on holds one wearable she hasn't found yet (the night's seed picks it from rules/wardrobe.ts's: never the brooms, which
 // come from the Workshop's parts, docs/backlog/workshop.md), in an old travel trunk half-sunk in a wild area's woods, under the
-// canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers at once (the
-// "found" leash event; app/owned.ts keeps it, even if the night's then lost). Its hint is written in the stars (Ed, 2026-10-22):
+// canopy (a ground-mode find, like the garage's wrecks: no glint). E at it while the party's on, and it's hers for the night (the
+// "found" leash event): on loan from the stars till she sleeps (Ed, 2026-10-24, below). Its hint is written in the stars (Ed, 2026-10-22):
 // the wearable's outline as a constellation, seen through the telescope at the trunk's bearing from the treehouse, never how far
 // (rules/constellations.ts; the crystal ball's vision is gone, the ball a placeholder again). Where the trunk stands is the night's (map.seed); what's in it
 // is the page's to say (what she owns is this browser's), so the rules place it empty and the page fills it (fillTrunk).
@@ -13,7 +13,7 @@
 // what claiming one does in the rules), and the night's one find is a single seeded draw over every item of every kind she hasn't
 // found (nightPick): the kind drawn decides the find, a wearable in the trunk or a broom part in a wreck (an old witch's crashed
 // broom, the Workshop's: docs/backlog/workshop.md), placed alike (placeTrunk), a ground-mode find, E taking it at once, only while
-// the party's on, kept even if the night's then lost. No forced early wreck, no biome weighting (Ed, 2026-10-23). A new kind (hats,
+// the party's on. No forced early wreck, no biome weighting (Ed, 2026-10-23). A new kind (hats,
 // records) joins by adding its FindKind: its items, its piece, its claim.
 //
 // Hats and bags (Ed, 2026-10-23, the mock previews/ed/hat-bag-finds: "Own objects each - all permanent upgrades will have their
@@ -22,6 +22,11 @@
 // How every find looks (Ed, 2026-10-23, the finds style guide, docs/art-guide/FINDS.md): one flask-sized object, no setting
 // round it, on a clear patch in its own pale gold-white light (render/view/finds.ts); clothes a folded bundle, a bag a little bag,
 // a hat a pointed hat, a broom part the part itself (art/country.js's find pieces). Taken, it's gone, its patch and light too.
+//
+// On loan till dawn (Ed, 2026-10-24, previews/ed/finds-on-loan): taken, it's hers to wear or use at once, but kept only if the night
+// is won. Its constellation lights up in full (loanFind: in the telescope and the game's own sky, at its true bearing), and the
+// page holds the loan (app/loan.ts) till she sleeps, when her dream tells her: won, it's hers for good; not, it goes back to the
+// sky, to be drawn again another night. Once the night is won, a find not yet taken is gone (goneAtWin, rules/win.ts).
 import type { ForestMap } from "./map";
 import { isInside } from "./mapShape";
 import type { Plant } from "./forest";
@@ -134,6 +139,20 @@ export function nightFind(g: { trunk: Trunk | null }, fromX: number, fromZ: numb
   const t = g.trunk;
   if (!t || !t.item || t.found) return null;
   return { kind: t.kind, item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+}
+
+/** Tonight's find once she's taken it (on loan till she sleeps; Ed, 2026-10-24): what it is and its bearing from (fromX, fromZ), the
+ *  treehouse, for its lit constellation (rules/constellations.ts) and the page's on-loan icon; null before she's taken it, or none. */
+export function loanFind(g: { trunk: Trunk | null }, fromX: number, fromZ: number): NightFind | null {
+  const t = g.trunk;
+  if (!t || !t.item || !t.found) return null;
+  return { kind: t.kind, item: t.item, bearing: (wayTo(fromX, fromZ, t.x, t.z).bearing * 180) / Math.PI };
+}
+
+/** The night won (rules/win.ts): a find not yet taken is gone from the map, its constellation with it (Ed, 2026-10-24: "once the
+ *  night is won, finds disappear"); one she's taken stays on loan, its constellation lit, till she sleeps. */
+export function goneAtWin(g: { trunk: Trunk | null }): void {
+  if (g.trunk && !g.trunk.found) g.trunk = null;
 }
 
 /** Where a find spawned by her stands (the dev spawn, Ed 2026-10-23: "a way to spawn the collectible near the player"): a few

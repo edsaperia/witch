@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, type Controls, type Game } from "./game";
-import { BAG_ITEMS, FINDABLE, FIND_KINDS, HAT_FINDS, fillTrunk, findPiece, nightFind, nightPick, spawnFind, spawnSpot, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
+import { BAG_ITEMS, FINDABLE, FIND_KINDS, HAT_FINDS, fillTrunk, findPiece, goneAtWin, loanFind, nightFind, nightPick, spawnFind, spawnSpot, trunkAt, wayTo, TRUNK_CLEAR } from "./finds";
 import { HAT_FLOOR, floorHats, hatsOnFloor } from "./houseRooms";
 import { newSpells, ownsHat } from "./spells";
 import { COUNTRY_BY_ID } from "../../art/country.js";
@@ -210,5 +210,28 @@ describe("a find spawned near her (the dev spawn; Ed, 2026-10-23: \"a way to spa
     expect(nf.bearing).toBeCloseTo((wayTo(g.map.treehouse.x, g.map.treehouse.z, p.x, p.z).bearing * 180) / Math.PI);
     expect(spawnFind(g, "part", "no-such-part", p)).toBeNull();
     expect(g.trunk!.item).toBe("ladder");
+  });
+});
+
+describe("on loan till she sleeps (Ed, 2026-10-24)", () => {
+  it("taken, its constellation's find is the loan's (lit), not tonight's to find; before, none on loan", () => {
+    const g = game();
+    fillTrunk(g, {});
+    const T = g.trunk!, th = g.map.treehouse;
+    expect(loanFind(g, th.x, th.z)).toBeNull();
+    expect(nightFind(g, th.x, th.z)?.item).toBe(T.item);
+    at(g, T.x, T.z); press(g);
+    expect(T.found).toBe(true);
+    expect(nightFind(g, th.x, th.z)).toBeNull();
+    const L = loanFind(g, th.x, th.z)!;
+    expect(L.item).toBe(T.item);
+    expect(L.bearing).toBeCloseTo(nightFind({ trunk: { ...T, found: false } }, th.x, th.z)!.bearing, 6);
+  });
+  it("the night won: one not yet taken is gone; one on loan stays (its constellation lit till she sleeps)", () => {
+    const a = game(); fillTrunk(a, {}); goneAtWin(a);
+    expect(a.trunk).toBeNull();
+    const b = game(); fillTrunk(b, {}); at(b, b.trunk!.x, b.trunk!.z); press(b); goneAtWin(b);
+    expect(b.trunk?.found).toBe(true);
+    expect(loanFind(b, 0, 0)).not.toBeNull();
   });
 });

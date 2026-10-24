@@ -16,6 +16,7 @@ import { floorInputs } from "./game";
 import { congaPlace, congaRadius, finalStone, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
 import { cellKey, clearArea, wavePlan } from "./party";
 import { leyChain } from "./leylines";
+import { fillTrunk } from "./finds";
 import { pulseLinks } from "./leypulse";
 
 const idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -80,6 +81,17 @@ describe("the end of the route (rules/win.ts)", () => {
     expect(planBlock(style, cue, bar).section).toBe(style.victory && style.sections[style.victory] ? style.victory : "drop");
     expect(fired).toEqual(waves);
     expect(g.win?.phase).toBe("won");
+  }, 60000);
+
+  it("finds disappear once the night is won (Ed, 2026-10-24): one not yet taken is gone, E taking nothing after", () => {
+    const { g } = toTheEnd();
+    fillTrunk(g, {});
+    expect(g.trunk?.item).toBeTruthy();
+    run(g, 0.2); calmAll(g); run(g, 0.2);
+    const lap = g.win!.lap;
+    run(g, (lap[lap.length - 1].at - g.clock.time) + 0.5);
+    expect(g.win?.phase).toBe("won");
+    expect(g.trunk).toBeNull();
   }, 60000);
 
   it("the island cleared before the route's end (Ed, 2026-10-12): the lap sets off at once, from where the wave's pulse is, one pulse home and one on to the route's end, each stone firing once; the waves stop", () => {

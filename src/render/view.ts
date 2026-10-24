@@ -185,6 +185,8 @@ function nightState(t: Tuning) {
     consLines: 0,
     consAt: 0,
     consStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
+    /** Tonight's loan's lit constellation's stars (render/view/camera.ts litConstellation), kept while it's the same. */
+    litStars: null as { key: string; stars: { bearing: number; elevation: number; b: number }[] } | null,
     markerCache: { wave: -1, n: -1, list: [] as SpawnMarker[] },
     /** 1 while she sits on the treehouse terrace, easing to 0 as she takes off. */
     seatK: 1,
