@@ -1,0 +1,294 @@
+// The great oak's crown over the treehouse (rules/crown.ts places it; Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/):
+// its leaves one instanced mesh of lobes (each an octagon facing the camera, alpha-cut: a ragged edge, and a thin lobe broken into
+// sprays by a finer noise, the bark behind it), its bark one merged mesh of tubes. Both are given on the house's plan (x, z from the
+// hub's centre, y over the floor) and laid into the world by one affine map (uMap*), so the same crown stands in the world outside
+// (depth-tested with the forest, bent with it) and lies over the floors indoors in the house's own plane (render/houseRooms.ts, where
+// the rooms' leaf roofs were: after the house, no depth, far to near), eased between the two as she lands or takes off.
+//
+// Indoors (Ed: "indoors, whole room opens up; these holes should match the irregular shape of the room") it clears over the room
+// she's in, its floor's outline and its far wall, with a ragged dithered edge 1 to 3.5 m out, or over her stretch of branch: a small
+// distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
+// circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
+import * as THREE from "three";
+import { crownBulbs, type Crown, type Knot } from "../rules/crown";
+import { nearestIn, HOUSE_ROOMS, type Rect } from "../rules/houseRooms";
+import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
+import { SPRITE_UNIFORMS } from "./sprites";
+
+/** The plan → world map: world = O + x Ex + y Ey + z Ez (y over the floor). */
+export interface PlanMap { o: THREE.Vector3; ex: THREE.Vector3; ey: THREE.Vector3; ez: THREE.Vector3 }
+
+/** The mask's side (texels) over the crown's dome: about a metre a texel. */
+const MASK = 128;
+
+const SHARED_GLSL = /* glsl */ `
+uniform vec3 uMapO, uMapX, uMapY, uMapZ;
+uniform float uBendOn;
+vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
+`;
+const CLEAR_GLSL = /* glsl */ `
+uniform sampler2D uClear;
+uniform vec4 uClearBox; // the mask's plan box: x0, z0, 1/width, 1/depth
+uniform float uClearOn; // 1 indoors with a room (or branch) to clear
+uniform vec4 uWitch, uOcc;
+uniform float uWitchDepth;
+float hash12(vec2 p) { vec3 q = fract(vec3(p.xyx) * 0.1031); q += dot(q, q.yzx + 33.33); return fract((q.x + q.y) * q.z); }
+float vnoise2(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x), mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y); }
+float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
+  return (i == 0.0 ? 0.0 : i == 1.0 ? 8.0 : i == 2.0 ? 2.0 : i == 3.0 ? 10.0 : i == 4.0 ? 12.0 : i == 5.0 ? 4.0 : i == 6.0 ? 14.0 : i == 7.0 ? 6.0 : i == 8.0 ? 3.0 : i == 9.0 ? 11.0 : i == 10.0 ? 1.0 : i == 11.0 ? 9.0 : i == 12.0 ? 15.0 : i == 13.0 ? 7.0 : i == 14.0 ? 13.0 : 5.0) / 16.0 + 1.0 / 32.0; }
+float screenDistC(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
+// Cleared away here? Her room's (or branch's) floor and its far wall, a ragged dithered edge 1 to 3.5 m out (vFloor: the floor's plan
+// point under this pixel); and the forest's hole round her, where this stands in front of her (depth: its distance from the camera).
+bool cleared(vec2 floorP, float depth) {
+  if (uClearOn > 0.5) {
+    vec2 uv = (floorP - uClearBox.xy) * uClearBox.zw, uv2 = (floorP + vec2(0.0, 5.0) - uClearBox.xy) * uClearBox.zw;
+    float d = 1e3;
+    if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) d = texture2D(uClear, uv).r * 16.0;
+    if (all(greaterThan(uv2, vec2(0.0))) && all(lessThan(uv2, vec2(1.0)))) d = min(d, texture2D(uClear, uv2).r * 16.0);
+    float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
+    if (o < 0.0 || (o < 2.5 && bayer4(gl_FragCoord.xy) > o / 2.5)) return true;
+  }
+  if (uOcc.w > 0.0 && depth < uWitchDepth - 0.5) {
+    float e = screenDistC(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
+    float occl = 1.0 - smoothstep(0.3, 1.0 + uOcc.y, e);
+    if (bayer4(gl_FragCoord.xy) < occl) return true;
+  }
+  return false;
+}
+`;
+
+const LOBE_VERT = /* glsl */ `
+attribute vec2 corner;
+attribute vec4 iLobe; // plan x, y over the floor, plan z, radius
+attribute vec2 iData; // thin, seed
+uniform vec3 uRight, uUp;
+uniform float uLobeK; // the lobes' size: 1 outside, smaller laid over the floors
+varying vec2 vUv;
+varying vec2 vData;
+varying vec3 vWorld;
+varying vec2 vFloor;
+varying float vDepth;
+${SHARED_GLSL}
+${HEIGHT_VERT_GLSL}
+void main() {
+  vec3 c = mapPlan(iLobe.xyz), p = c + (corner.x * uRight + corner.y * uUp) * iLobe.w * uLobeK;
+  vWorld = c + (corner.x * uRight + corner.y * uUp) * iLobe.w;
+  vUv = corner; vData = iData;
+  // the floor's plan point under this pixel (indoors: the house's plane, its right the plan's east and its up the plan's north)
+  vec3 q = p - uMapO;
+  vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
+  vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+}`;
+
+// The night's leaves (the mock's five tones, darkest a lobe's underside to its moonlit top) and its bark (furrow to lit ridge) and moss.
+const LOBE_FRAG = /* glsl */ `
+varying vec2 vUv;
+varying vec2 vData;
+varying vec3 vWorld;
+varying vec2 vFloor;
+varying float vDepth;
+uniform vec3 uBack, uRight, uUp;
+${LIGHT_GLSL}
+${CLEAR_GLSL}
+vec3 leafTone(float t) {
+  return t < 0.5 ? vec3(0.047, 0.086, 0.078) : t < 1.5 ? vec3(0.078, 0.141, 0.110) : t < 2.5 ? vec3(0.118, 0.204, 0.141) : t < 3.5 ? vec3(0.188, 0.298, 0.188) : vec3(0.329, 0.439, 0.282);
+}
+void main() {
+  float s = vData.y, rr = length(vUv);
+  // a ragged edge: the clump's outline broken by a coarse noise; a thin lobe broken into sprays by a finer one
+  float rag = vnoise2(vUv * 3.2 + s) * 0.28 + vnoise2(vUv * 7.0 + s * 1.7) * 0.12;
+  if (rr > 1.0 - rag) discard;
+  if (vData.x > 0.0 && vnoise2(vUv * 6.5 + s * 3.1) + vnoise2(vUv * 13.0 - s) * 0.4 < vData.x * 1.5) discard;
+  if (cleared(vFloor, vDepth)) discard;
+  // a billowing clump: a sphere's normal, lumped by its leaves
+  vec2 b = vec2(vnoise2(vUv * 5.0 + s * 0.3), vnoise2(vUv * 5.0 + s * 0.3 + 19.0)) - 0.5;
+  vec2 u = vUv + b * 0.45;
+  vec3 N = normalize(u.x * uRight + u.y * uUp + uBack * sqrt(max(0.05, 1.0 - dot(u, u))));
+  vec3 L = nightLight(N, vWorld);
+  float y = dot(L, vec3(0.3, 0.55, 0.15)), speck = vnoise2(gl_FragCoord.xy * 0.45) * 0.6 + vnoise2(gl_FragCoord.xy * 0.9 + 7.0) * 0.4;
+  float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
+  vec3 tint = L / max(y, 1e-3);
+  vec3 c = leafTone(t) * mix(vec3(1.0), clamp(tint, 0.0, 2.0), 0.12) * (0.85 + 0.4 * min(1.0, y * 2.0));
+  gl_FragColor = vec4(haze(c, vWorld), 1.0);
+}`;
+
+const BARK_VERT = /* glsl */ `
+attribute vec3 aNormal; // on the plan
+attribute vec2 aBark; // metres along the limb, angle round it (0 to 1)
+varying vec3 vWorld, vN;
+varying vec2 vBark;
+varying vec2 vFloor;
+varying float vDepth;
+uniform vec3 uRight, uUp;
+${SHARED_GLSL}
+${HEIGHT_VERT_GLSL}
+void main() {
+  vec3 p = mapPlan(position);
+  vWorld = p; vBark = aBark;
+  vN = normalize(aNormal.x * normalize(uMapX) + aNormal.y * normalize(uMapY) + aNormal.z * normalize(uMapZ));
+  vec3 q = p - uMapO;
+  vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
+  vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+}`;
+
+const BARK_FRAG = /* glsl */ `
+varying vec3 vWorld, vN;
+varying vec2 vBark;
+varying vec2 vFloor;
+varying float vDepth;
+${LIGHT_GLSL}
+${CLEAR_GLSL}
+void main() {
+  if (cleared(vFloor, vDepth)) discard;
+  vec3 N = normalize(vN);
+  vec3 L = nightLight(N, vWorld);
+  float y = dot(L, vec3(0.3, 0.55, 0.15));
+  // furrows running along the limb, the ridges between them lit
+  float fur = vnoise2(vec2(vBark.x * 0.7, vBark.y * 9.0)) * 0.7 + vnoise2(vec2(vBark.x * 2.1, vBark.y * 21.0)) * 0.3;
+  float t = clamp(floor(y * 5.0 + (fur - 0.5) * 2.4), 0.0, 3.0);
+  vec3 c = t < 0.5 ? vec3(0.094, 0.078, 0.078) : t < 1.5 ? vec3(0.157, 0.129, 0.118) : t < 2.5 ? vec3(0.227, 0.188, 0.165) : vec3(0.314, 0.267, 0.220);
+  if (fur < 0.3) c = vec3(0.094, 0.078, 0.078);
+  if (N.y > 0.35 && vnoise2(vBark * vec2(0.35, 4.0)) > 0.55) c = vnoise2(gl_FragCoord.xy * 0.7) < 0.5 ? vec3(0.133, 0.196, 0.118) : vec3(0.204, 0.282, 0.157); // moss on its top
+  gl_FragColor = vec4(haze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), 1.0);
+}`;
+
+/** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
+function barkGeometry(c: Crown): THREE.BufferGeometry {
+  const pos: number[] = [], nrm: number[] = [], bark: number[] = [], idx: number[] = [];
+  for (const l of c.limbs) {
+    const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], sides = l.knots[0][3] > 2.5 ? 10 : l.knots[0][3] > 0.8 ? 7 : 5;
+    const ring: { p: number[]; t: number[]; r: number; s: number }[] = [];
+    let along = 0, prev: number[] | null = null;
+    for (let i = 1; i < k.length - 2; i++) {
+      const [p0, p1, p2, p3] = [k[i - 1], k[i], k[i + 1], k[i + 2]], L = Math.hypot(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]);
+      const n = Math.max(2, Math.ceil(L / Math.max(0.8, Math.min(p1[3], p2[3]) * 1.1)));
+      for (let s = 0; s < n + (i === k.length - 3 ? 1 : 0); s++) {
+        const t = s / n, t2 = t * t, t3 = t2 * t, q = [0, 1, 2, 3].map(j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3));
+        if (prev) along += Math.hypot(q[0] - prev[0], q[1] - prev[1], q[2] - prev[2]);
+        ring.push({ p: q, t: [0, 0, 0], r: Math.max(0.15, q[3]), s: along }); prev = q;
+      }
+    }
+    if (ring.length < 2) continue;
+    for (let i = 0; i < ring.length; i++) { const a = ring[Math.max(0, i - 1)].p, b = ring[Math.min(ring.length - 1, i + 1)].p, L = Math.hypot(b[0] - a[0], b[1] - a[1], b[2] - a[2]) || 1; ring[i].t = [(b[0] - a[0]) / L, (b[1] - a[1]) / L, (b[2] - a[2]) / L]; }
+    const base = pos.length / 3;
+    for (const R of ring) {
+      // a frame round the tangent: across it level, then up
+      const T = R.t; let ax = [-T[2], 0, T[0]], al = Math.hypot(ax[0], ax[2]);
+      if (al < 1e-3) { ax = [1, 0, 0]; al = 1; }
+      ax = [ax[0] / al, 0, ax[2] / al];
+      const up = [T[1] * ax[2] - T[2] * ax[1], T[2] * ax[0] - T[0] * ax[2], T[0] * ax[1] - T[1] * ax[0]];
+      for (let j = 0; j < sides; j++) {
+        const a = (j / sides) * Math.PI * 2, cs = Math.cos(a), sn = Math.sin(a), n = [ax[0] * cs + up[0] * sn, ax[1] * cs + up[1] * sn, ax[2] * cs + up[2] * sn];
+        pos.push(R.p[0] + n[0] * R.r, R.p[1] + n[1] * R.r, R.p[2] + n[2] * R.r); nrm.push(n[0], n[1], n[2]); bark.push(R.s, j / sides);
+      }
+    }
+    for (let i = 0; i < ring.length - 1; i++) for (let j = 0; j < sides; j++) {
+      const a = base + i * sides + j, b = base + i * sides + ((j + 1) % sides), c2 = a + sides, d = b + sides;
+      idx.push(a, c2, b, b, c2, d);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aNormal", new THREE.Float32BufferAttribute(nrm, 3));
+  g.setAttribute("aBark", new THREE.Float32BufferAttribute(bark, 2));
+  g.setIndex(idx);
+  return g;
+}
+
+/** The lobes: an octagon each (fewer empty pixels than a square reach the shader), one instance a lobe, far (north) first so the
+ *  floors' layer is drawn far to near indoors. */
+function lobeGeometry(c: Crown): THREE.InstancedBufferGeometry {
+  const g = new THREE.InstancedBufferGeometry(), cs: number[] = [0, 0], idx: number[] = [];
+  for (let i = 0; i < 8; i++) { const a = ((i + 0.5) / 8) * Math.PI * 2, r = 1 / Math.cos(Math.PI / 8); cs.push(Math.cos(a) * r, Math.sin(a) * r); idx.push(0, i + 1, ((i + 1) % 8) + 1); }
+  g.setAttribute("corner", new THREE.Float32BufferAttribute(cs, 2));
+  g.setIndex(idx);
+  const L = [...c.lobes].sort((a, b) => a.z - b.z || a.y - b.y), lobe = new Float32Array(L.length * 4), data = new Float32Array(L.length * 2);
+  L.forEach((l, i) => { lobe.set([l.x, l.y, l.z, l.r], i * 4); data.set([l.thin, (l.seed % 997) * 0.37], i * 2); });
+  g.setAttribute("iLobe", new THREE.InstancedBufferAttribute(lobe, 4));
+  g.setAttribute("iData", new THREE.InstancedBufferAttribute(data, 2));
+  g.instanceCount = L.length;
+  return g;
+}
+
+export class CrownView {
+  readonly meshes: THREE.Mesh[];
+  readonly lobes: THREE.Mesh;
+  readonly bark: THREE.Mesh;
+  /** 0 outside (the world), 1 indoors (laid over the floors), eased between. */
+  private k = 0;
+  private readonly uniforms: Record<string, THREE.IUniform>;
+  private readonly mask = new Uint8Array(MASK * MASK);
+  private readonly maskTex = new THREE.DataTexture(this.mask, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType);
+  private maskFor = "";
+  private readonly back = new THREE.Vector3();
+  /** The bulbs of its lights (rules/crown.ts crownBulbs), for render/strings.ts and the far landmark. */
+  readonly bulbs;
+
+  constructor(readonly crown: Crown, spacing: number) {
+    this.maskTex.magFilter = THREE.LinearFilter; this.maskTex.minFilter = THREE.LinearFilter; this.maskTex.needsUpdate = true;
+    const { cx, cz, rx, rz } = crown.dome;
+    this.uniforms = {
+      ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
+      uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc,
+      uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
+      uBendOn: { value: 1 }, uLobeK: { value: 1 }, uBack: { value: this.back },
+      uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
+    };
+    const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
+    const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
+    this.lobes = new THREE.Mesh(lobeGeometry(crown), lobeMat);
+    this.bark = new THREE.Mesh(barkGeometry(crown), barkMat);
+    for (const m of [this.lobes, this.bark]) { m.frustumCulled = false; m.name = "crown"; }
+    this.meshes = [this.bark, this.lobes];
+    this.bulbs = crownBulbs(crown, spacing);
+  }
+
+  /** How many triangles and lobes it draws (for ?perf and the report). */
+  get stats() { return { lobes: (this.lobes.geometry as THREE.InstancedBufferGeometry).instanceCount, barkTris: (this.bark.geometry.index?.count ?? 0) / 3 }; }
+
+  /** A frame: `world` the true map (the hub on the ground, the floor's height), `house` the floors' own (null when she isn't
+   *  indoors), `here` her place on the plan indoors, `dt` her clock's step. */
+  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number): void {
+    const want = house ? 1 : 0;
+    this.k += (want - this.k) * (1 - Math.exp(-8 * Math.max(0, dt)));
+    if (Math.abs(this.k - want) < 0.01 || dt <= 0) this.k = want;
+    const k = this.k, h = house ?? world, U = this.uniforms;
+    // indoors the crown is a layer a few metres over the floors (the mock's 5 m): its heights flattened, its lobes smaller
+    const base = this.crown.dome.base, flat = 0.12, lift = 5 - base * flat;
+    const mix = (a: THREE.Vector3, b: THREE.Vector3, out: THREE.Vector3) => out.copy(a).lerp(b, k);
+    const hy = new THREE.Vector3().copy(h.ey).multiplyScalar(flat), ho = new THREE.Vector3().copy(h.o).addScaledVector(h.ey, lift);
+    mix(world.o, ho, U.uMapO.value); mix(world.ex, h.ex, U.uMapX.value); mix(world.ey, hy, U.uMapY.value); mix(world.ez, h.ez, U.uMapZ.value);
+    U.uBendOn.value = k > 0.5 ? 0 : 1; U.uLobeK.value = 1 - 0.35 * k;
+    camera.getWorldDirection(this.back).negate();
+    const indoors = k > 0.5;
+    // (indoors in three.js's transparent list, so after the house's floors and walls, which are drawn there with no depth: in the
+    // opaque list it came first and the floors painted over it)
+    for (const m of this.meshes) { const mt = m.material as THREE.ShaderMaterial; mt.depthTest = !indoors; mt.depthWrite = !indoors; mt.transparent = indoors; }
+    this.bark.renderOrder = indoors ? 19.96 : 0.5; this.lobes.renderOrder = indoors ? 19.97 : 0.5;
+    // her room's (or branch's) floor, as a distance field, when she moves into another
+    const at = indoors && here ? HOUSE_ROOMS.rooms.find(r => !r.locked && nearestIn(r, here.x, here.z).d <= 0) ?? HOUSE_ROOMS.corridors.find(r => nearestIn(r, here.x, here.z).d <= 0) ?? null : null;
+    U.uClearOn.value = at ? 1 : 0;
+    if (at && (at as { id: string }).id !== this.maskFor) { this.maskFor = (at as { id: string }).id; this.fill(at); }
+  }
+
+  /** The distance field of one floor shape (its plan's metres, 0 to 16 m in 0 to 1). */
+  private fill(r: Rect): void {
+    const B = this.uniforms.uClearBox.value as THREE.Vector4, w = 1 / B.z, d = 1 / B.w;
+    for (let j = 0; j < MASK; j++) for (let i = 0; i < MASK; i++) {
+      const x = B.x + ((i + 0.5) / MASK) * w, z = B.y + ((j + 0.5) / MASK) * d;
+      this.mask[j * MASK + i] = Math.min(255, Math.round((nearestIn(r, x, z).d / 16) * 255));
+    }
+    this.maskTex.needsUpdate = true;
+  }
+
+  dispose(): void {
+    for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
+    this.maskTex.dispose();
+  }
+}

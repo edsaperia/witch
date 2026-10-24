@@ -13,6 +13,9 @@ import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
+import { CrownView, type PlanMap } from "./crown";
+import { makeCrown } from "../rules/crown";
+import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { Hiz, HIZ_LAYER } from "./hiz";
 /** How near the treehouse (m, the camera) its occluders are built (render/hiz.ts). */
 const HIZ_NEAR = 120;
@@ -365,7 +368,7 @@ export class View {
     P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
     if (D.k >= 1) return;
     // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
-    for (const o of [...(this.houseRooms?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
+    for (const o of [...(this.houseRooms?.meshes ?? []), ...(this.crown?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
     if (D.door) {
       const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
@@ -405,6 +408,18 @@ export class View {
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
+  crown: CrownView | null = null;
+  private crownAt = Number.NaN;
+  private readonly crownWorld: PlanMap = { o: new THREE.Vector3(), ex: new THREE.Vector3(), ey: new THREE.Vector3(0, 1, 0), ez: new THREE.Vector3() };
+  /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
+  private ensureCrown(game: Game): void {
+    const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
+    if (want && !this.crown && H) {
+      this.crown = new CrownView(makeCrown({ house: HOUSE_ROOMS, hub: H.hub, balcony: { x: 0, z: H.balcony.out, r: H.balcony.r }, floor: H.height, seed: H.crown!.seed }), t.stringLights.bulbSpacing);
+      this.scene.add(...this.crown.meshes);
+    } else if (!want && this.crown) { this.scene.remove(...this.crown.meshes); this.crown.dispose(); this.crown = null; }
+  }
   /** The broom parts she's found (this browser's, app/broomSave.ts: main.ts keeps it): the Workshop's pegboard hangs them in colour
    *  (render/workshopArt.ts). */
   partsFound: ReadonlySet<string> = new Set();
@@ -641,6 +656,7 @@ export class View {
       this.island.buildTreehouse();
       // The house's placeholder rooms off the hub (render/houseRooms.ts; Ed, 2026-10-19).
       if (deckOn?.house?.rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
+      this.ensureCrown(game); // (the great oak's crown over it: render/crown.ts)
     }
     // Spawn markers: gameplay (always drawn in range, never budget-culled).
     yield* this.island.markerSteps();
@@ -946,6 +962,7 @@ export class View {
     if (rooms && this.houseRooms) this.houseRooms.reset();
     else if (rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     else if (this.houseRooms) { this.scene.remove(...this.houseRooms.meshes); this.houseRooms.dispose(); this.houseRooms = null; }
+    this.ensureCrown(game);
     // Every other part that keeps something of a night.
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
     this.partyObjects.reset(); this.rig?.reset(); this.holograms.reset(); this.glades.reset(); this.wisps?.reset();
@@ -1337,6 +1354,13 @@ export class View {
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
     this.houseRooms?.update(this, onTreehouse, ht);
+    if (this.crown && deck) { // (the crown: in the world, or laid over the floors with her indoors: render/crown.ts)
+      const W = this.crownWorld, a = ((HOUSE_ROOMS.turn ?? 0) * Math.PI) / 180, c = Math.cos(a), s = Math.sin(a);
+      W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
+      const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
+      const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
+      this.crown.update(this.camera, W, plan, here, dt);
+    }
     this.time("witch");
     refresh(this);
     this.time("refresh");
