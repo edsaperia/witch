@@ -15,6 +15,10 @@ const SUSPECTS = {
   nobypass: uni("uCullByPass", 0),
   onepass: "t.suspects.seeTwo = false;",
   nodepth: "t.suspects.seeDepth = false;",
+  noblend: "t.suspects.seeNoBlend = true;", // (the see-through passes unblended)
+  solid: "t.suspects.seeSolid = 'all';", // (their alpha forced to 1)
+  write: "t.suspects.seeWrite = true;", // (the half-faded pass writing its depth)
+  early: "t.suspects.seeEarly = true;", // (the see-through passes drawn right after the scenery: renderOrder 0.6)
   nocull: "t.suspects.seeCull = false;", // (uSeeDbg is set from the suspects every frame: frameUniforms.ts)
 };
 const ONLY = process.env.ONLY ? process.env.ONLY.split(",") : Object.keys(SUSPECTS);
