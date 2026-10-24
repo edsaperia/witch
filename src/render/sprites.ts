@@ -71,6 +71,7 @@ export const SPRITE_UNIFORMS = {
   uAreaAvg: { value: 1 },
   uSeeDepth: { value: 1 },
   uSeeDbg: { value: new THREE.Vector4(1, 0, 1, 0) },
+  uCullDbg: { value: 7 }, // (the perf pass: which of the see-through cull's keep-rules are live, 1 her circle, 2 the hole's band, 4 the budget's edge; 7 as the game)
   /** The see-through passes ask passOf first (1; 0: where they always did, to compare: tools/bench/early-diff.cjs). */
   uSeeEarly: { value: 1 },
   uSeeTwo: { value: 1 }, // (her see-through in a pass of its own, before the half-faded things: suspects.seeTwo)
@@ -106,6 +107,7 @@ varying float vOverHer; // over her on screen and nearer the camera: it could hi
 uniform float uCutWhole, uTopFade, uFadePass, uIsScenery, uAppear, uFlat;
 uniform vec4 uSilhouette;
 uniform vec2 uScenery, uHazeCentre;
+uniform float uCullDbg;
 uniform float uCanopyReach;
 attribute vec3 iPos;
 attribute vec2 iSize;
@@ -224,18 +226,19 @@ void main() {
   // batch still appearing). Anything else is wholly the opaque pass's.
   if (uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeDbg.z > 0.5) { // (uSeeDbg.z: the circle hunt's switch for this cull)
     bool need = uIsScenery > 0.5 && uAppear < 0.996;
+    float dbg = uCullDbg;
     if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
       float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
       vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
-      if (dot(d, d) < R * R) need = true;
+      if (dot(d, d) < R * R && mod(floor(dbg), 2.0) > 0.5) need = true;
     }
     if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
       vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
-      if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0) need = true;
+      if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0 && mod(floor(dbg / 2.0), 2.0) > 0.5) need = true;
     }
     if (uIsScenery > 0.5) {
       float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
-      if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y) need = true;
+      if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y && mod(floor(dbg / 4.0), 2.0) > 0.5) need = true;
     }
     if (!need) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
