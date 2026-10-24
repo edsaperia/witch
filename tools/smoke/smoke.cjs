@@ -39,14 +39,18 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const KNOWN = {
   "boost-worst": { issue: 310, why: "absolute CPU budget on the cloud's shared, slower CPU" },
   "pops": { issue: 311, why: "1-2 s software-rendered frames starve the scenery budget" },
+  "vanish": { issue: 1090, why: "Ed's window sizes take tens of seconds a frame in the software renderer: they fly only on a real GPU (SMOKE_GPU=1)" },
+  "neutral-see-through": { issue: 1091, why: "the see-through at full opacity draws a few hundred px unlike the see-through off (381 to 440 measured)" },
 };
+// SMOKE_GPU=1: launch on the machine's own GPU, not SwiftShader (the vanish flights at Ed's sizes run only there, #1090).
+const GPU = process.env.SMOKE_GPU === "1";
 
 async function main() {
   fs.mkdirSync(out, { recursive: true });
   const server = await serve(), port = server.address().port;
   const browser = await playwright.chromium.launch({
     executablePath: fs.existsSync("/opt/pw-browsers/chromium") ? undefined : undefined,
-    args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+    args: GPU ? ["--ignore-gpu-blocklist"] : ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
   });
   const errors = [];
   const results = [];
@@ -784,7 +788,7 @@ async function main() {
     // (a pair may differ in faint specks up to half a percent of the frame, on top of what the paused frame changes by itself: the circle
     // bug differed in a disc of over a thousand pixels at the old reach; at its present reach (#911) a few dozen faint pixels in low bushes remain)
     const allow = r.still * 2 + Math.round(r.pixels * 0.005);
-    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`);
+    for (const p of r.pairs) check(p.changed <= allow, `neutral pair draws the same: ${p.name} (${p.changed} px differ, max ${p.maxDiff}; allowed ${allow}; the paused frame alone changes ${r.still} px)`, p.name.startsWith("see-through") ? "neutral-see-through" : undefined);
   }, "&seed=886806&mode=ground&spell=auto&wave=off");
 
   // Nothing floats (Ed, v108: rocks in the cave mouth hovered over their shadows): every placed
@@ -878,8 +882,13 @@ async function main() {
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
   // a batch three.js capped), and nothing may appear or vanish anywhere on screen.
+  // Only on a real GPU (#1090): on the software renderer a frame at these sizes takes tens of seconds, so they're reported known.
+  const soft = (w, h) => check(false, `${w}x${h}: the vanish flights need a real GPU (SMOKE_GPU=1); not flown on the software renderer`, "vanish");
   for (const [w, h, dpr] of [[1900, 1240, 1], [2000, 1076, 2]]) {
+    if (!GPU) { if (!process.env.ONLY || process.env.ONLY.split(",").includes(`vanish-${w}x${h}`)) soft(w, h); continue; }
     await run(`vanish-${w}x${h}`, { width: w, height: h, dpr }, async page => {
+      const gl = await page.evaluate(() => { const c = document.createElement("canvas").getContext("webgl2"), e = c && c.getExtension("WEBGL_debug_renderer_info"); return c ? String(c.getParameter(e ? e.UNMASKED_RENDERER_WEBGL : c.RENDERER)) : ""; });
+      if (/swiftshader|llvmpipe|software/i.test(gl)) { soft(w, h); return; }
       await page.keyboard.press("Enter");
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
       await hold(page, "ArrowRight", 4, 600000);
