@@ -10,7 +10,7 @@
 // distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
 // circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
 import * as THREE from "three";
-import { crownBulbs, type Crown, type Knot } from "../rules/crown";
+import { crownBulbs, type Bulb, type Crown, type Knot } from "../rules/crown";
 import { nearestIn, HOUSE_ROOMS, type Rect } from "../rules/houseRooms";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -22,12 +22,14 @@ export interface PlanMap { o: THREE.Vector3; ex: THREE.Vector3; ey: THREE.Vector
 /** The mask's side (texels) over the crown's dome: about a metre a texel. */
 const MASK = 128;
 
-const SHARED_GLSL = /* glsl */ `
+export const SHARED_GLSL = /* glsl */ `
 uniform vec3 uMapO, uMapX, uMapY, uMapZ;
 uniform float uBendOn;
 vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
 `;
-const CLEAR_GLSL = /* glsl */ `
+export const CLEAR_GLSL = /* glsl */ `
+uniform float uIndoor; // laid over the floors: no haze nor slowed time's grey (the floors' own colours aren't graded)
+vec3 crownHaze(vec3 c, vec3 P) { return uIndoor > 0.5 ? c : haze(c, P); }
 uniform sampler2D uClear;
 uniform vec4 uClearBox; // the mask's plan box: x0, z0, 1/width, 1/depth
 uniform float uClearOn; // 1 indoors with a room (or branch) to clear
@@ -113,7 +115,7 @@ void main() {
   float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
   vec3 tint = L / max(y, 1e-3);
   vec3 c = leafTone(t) * mix(vec3(1.0), clamp(tint, 0.0, 2.0), 0.12) * (0.85 + 0.4 * min(1.0, y * 2.0));
-  gl_FragColor = vec4(haze(c, vWorld), 1.0);
+  gl_FragColor = vec4(crownHaze(c, vWorld), 1.0);
 }`;
 
 const BARK_VERT = /* glsl */ `
@@ -155,7 +157,7 @@ void main() {
   vec3 c = t < 0.5 ? vec3(0.094, 0.078, 0.078) : t < 1.5 ? vec3(0.157, 0.129, 0.118) : t < 2.5 ? vec3(0.227, 0.188, 0.165) : vec3(0.314, 0.267, 0.220);
   if (fur < 0.3) c = vec3(0.094, 0.078, 0.078);
   if (N.y > 0.35 && vnoise2(vBark * vec2(0.35, 4.0)) > 0.55) c = vnoise2(gl_FragCoord.xy * 0.7) < 0.5 ? vec3(0.133, 0.196, 0.118) : vec3(0.204, 0.282, 0.157); // moss on its top
-  gl_FragColor = vec4(haze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), 1.0);
+  gl_FragColor = vec4(crownHaze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), 1.0);
 }`;
 
 /** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
@@ -222,13 +224,16 @@ export class CrownView {
   readonly bark: THREE.Mesh;
   /** 0 outside (the world), 1 indoors (laid over the floors), eased between. */
   private k = 0;
-  private readonly uniforms: Record<string, THREE.IUniform>;
+  /** Drawn laid over the floors (indoors), with no depth, after the house. */
+  get indoors(): boolean { return this.k > 0.5; }
+  /** Its uniforms (the map, the clearing): shared with its string lights (render/strings.ts). */
+  readonly uniforms: Record<string, THREE.IUniform>;
   private readonly mask = new Uint8Array(MASK * MASK);
   private readonly maskTex = new THREE.DataTexture(this.mask, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType);
   private maskFor = "";
   private readonly back = new THREE.Vector3();
   /** The bulbs of its lights (rules/crown.ts crownBulbs), for render/strings.ts and the far landmark. */
-  readonly bulbs;
+  readonly bulbs: Bulb[];
 
   constructor(readonly crown: Crown, spacing: number) {
     this.maskTex.magFilter = THREE.LinearFilter; this.maskTex.minFilter = THREE.LinearFilter; this.maskTex.needsUpdate = true;
@@ -237,7 +242,7 @@ export class CrownView {
       ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
       uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc,
       uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
-      uBendOn: { value: 1 }, uLobeK: { value: 1 }, uBack: { value: this.back },
+      uBendOn: { value: 1 }, uIndoor: { value: 0 }, uLobeK: { value: 1 }, uBack: { value: this.back },
       uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
     };
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
@@ -264,7 +269,7 @@ export class CrownView {
     const mix = (a: THREE.Vector3, b: THREE.Vector3, out: THREE.Vector3) => out.copy(a).lerp(b, k);
     const hy = new THREE.Vector3().copy(h.ey).multiplyScalar(flat), ho = new THREE.Vector3().copy(h.o).addScaledVector(h.ey, lift);
     mix(world.o, ho, U.uMapO.value); mix(world.ex, h.ex, U.uMapX.value); mix(world.ey, hy, U.uMapY.value); mix(world.ez, h.ez, U.uMapZ.value);
-    U.uBendOn.value = k > 0.5 ? 0 : 1; U.uLobeK.value = 1 - 0.35 * k;
+    U.uBendOn.value = k > 0.5 ? 0 : 1; U.uIndoor.value = k > 0.5 ? 1 : 0; U.uLobeK.value = 1 - 0.35 * k;
     camera.getWorldDirection(this.back).negate();
     const indoors = k > 0.5;
     // (indoors in three.js's transparent list, so after the house's floors and walls, which are drawn there with no depth: in the

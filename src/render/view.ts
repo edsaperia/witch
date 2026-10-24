@@ -14,6 +14,7 @@ import { islandArtSeed } from "./artCache";
 import { biomeKey } from "../rules/lakeLooks";
 import { HouseRoomsView } from "./houseRooms";
 import { CrownView, type PlanMap } from "./crown";
+import { CrownLandmark } from "./crownLandmark";
 import { makeCrown } from "../rules/crown";
 import { HOUSE_ROOMS, toPlan } from "../rules/houseRooms";
 import { Hiz, HIZ_LAYER } from "./hiz";
@@ -368,7 +369,7 @@ export class View {
     P.behind = D.k < 1 ? D.k * D.k * (3 - 2 * D.k) : 1; // (eased in and out)
     if (D.k >= 1) return;
     // The house's own meshes on its layer as well as the scene's (they come and go: each frame).
-    for (const o of [...(this.houseRooms?.meshes ?? []), ...(this.crown?.meshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
+    for (const o of [...(this.houseRooms?.meshes ?? []), ...(this.crown?.meshes ?? []), ...(this.strings?.crownMeshes ?? []), ...this.treehouseBatch.meshes, ...this.witchBatch.meshes, ...(this.bareBatch?.meshes ?? [])]) o.traverse(c => c.layers.enable(HOUSE_LAYER));
     if (D.door) {
       const p = this.v3.set(D.door.x, this.witchFeetY, D.door.z).project(this.camera);
       P.behindAt = D.uv.set(p.x * 0.5 + 0.5, p.y * 0.5 + 0.5);
@@ -410,6 +411,8 @@ export class View {
   houseRooms: HouseRoomsView | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
+  /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
+  private crownFar: CrownLandmark | null = null;
   private crownAt = Number.NaN;
   private readonly crownWorld: PlanMap = { o: new THREE.Vector3(), ex: new THREE.Vector3(), ey: new THREE.Vector3(0, 1, 0), ez: new THREE.Vector3() };
   /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
@@ -418,7 +421,12 @@ export class View {
     if (want && !this.crown && H) {
       this.crown = new CrownView(makeCrown({ house: HOUSE_ROOMS, hub: H.hub, balcony: { x: 0, z: H.balcony.out, r: H.balcony.r }, floor: H.height, seed: H.crown!.seed }), t.stringLights.bulbSpacing);
       this.scene.add(...this.crown.meshes);
-    } else if (!want && this.crown) { this.scene.remove(...this.crown.meshes); this.crown.dispose(); this.crown = null; }
+      this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
+      this.crownFar = new CrownLandmark(this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);
+    } else if (!want && this.crown) {
+      this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null;
+      if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; }
+    }
   }
   /** The broom parts she's found (this browser's, app/broomSave.ts: main.ts keeps it): the Workshop's pegboard hangs them in colour
    *  (render/workshopArt.ts). */
@@ -683,6 +691,7 @@ export class View {
     yield "party";
     this.partyView = new PartyView(this.assets.soundsystems, this.mpp, new SoundsystemGenView(this.scene, this.assets, this.mpp, this.renderer, this.camera, this.trunkShadowBatches));
     this.strings = new StringLightsView(this.scene, game);
+    this.strings.setCrown(this.crown); // (the crown's lights, made before the strings were)
     this.leashView = new LeashView(this.scene, game);
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
@@ -1360,6 +1369,11 @@ export class View {
       const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
       this.crown.update(this.camera, W, plan, here, dt);
+      if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
+        this.crownFar.bake(this.renderer);
+        const at = g.party.spellAt;
+        this.crownFar.update(this.camera, W.o, W.ex, W.ez, at === null ? 1e9 : at === undefined ? -1e9 : at, this.crown.indoors);
+      }
     }
     this.time("witch");
     refresh(this);

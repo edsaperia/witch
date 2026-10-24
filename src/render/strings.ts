@@ -11,6 +11,7 @@ import { SPRITE_UNIFORMS } from "./sprites";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { areaNeons } from "../rules/partyDressing";
 import { NEON } from "../../art/sigils.js";
+import { CLEAR_GLSL, SHARED_GLSL, type CrownView } from "./crown";
 
 const BULB_VERT = /* glsl */ `
 attribute vec3 aColour;
@@ -76,6 +77,82 @@ void main() {
   gl_FragColor = vec4(haze(vec3(0.03, 0.025, 0.04), vWorld), 1.0);
 }`;
 
+// The great oak's crown's lights (render/crown.ts; Ed, 2026-10-24: "strewn with colourful string lights, which switch on when the
+// party starts and switch off when it finishes"): the same bulbs and wire, from a second source of lines, the crown's (rules/crown.ts
+// strings: swags under its limbs, strings draped from clump to clump, garlands round them, a ring round the Terrace's gap), laid by
+// the crown's own map (in the world, or over the floors indoors) and cut away with it where it clears. Each string switches on
+// running along from its start when the party starts at the decks (uOnAt: the party spell's time, aBulb.z each bulb's delay).
+const CROWN_BULB_VERT = /* glsl */ `
+attribute vec3 aColour;
+attribute vec4 aBulb; // phase, index along the line, its delay after the party starts, sway (0 at the ends)
+uniform float uWind, uNear, uTime, uOnAt;
+uniform vec2 uRes;
+uniform vec3 uRight, uUp;
+varying vec3 vColour;
+varying vec3 vWorld;
+varying float vOn, vDepth;
+varying vec2 vB, vFloor;
+${SHARED_GLSL}
+${HEIGHT_VERT_GLSL}
+void main() {
+  vec3 p = mapPlan(position);
+  p.x += sin(uTime * uWind + aBulb.x * 6.0) * 0.18 * aBulb.w;
+  vec3 q = p - uMapO;
+  vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
+  vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+  vOn = uTime >= uOnAt + aBulb.z ? 1.0 : 0.0;
+  float size = vOn > 0.5 ? (-mv.z < uNear ? 2.0 : 1.0) : 0.0;
+  if (uBendOn > 0.5) size *= overBend(p);
+  gl_PointSize = size;
+  vec2 px = (gl_Position.xy / gl_Position.w * 0.5 + 0.5) * uRes;
+  px = size > 1.5 ? floor(px + 0.5) : floor(px) + 0.5;
+  gl_Position.xy = (px / uRes * 2.0 - 1.0) * gl_Position.w;
+  vColour = aColour; vWorld = p; vB = aBulb.xy;
+}`;
+const CROWN_BULB_FRAG = /* glsl */ `
+uniform float uTwinkle, uChase;
+varying vec3 vColour;
+varying vec3 vWorld;
+varying float vOn, vDepth;
+varying vec2 vB, vFloor;
+${LIGHT_GLSL}
+${CLEAR_GLSL}
+void main() {
+  if (vOn < 0.5 || cleared(vFloor, vDepth)) discard;
+  if (partyOff(vWorld) > fract(vB.x * 7.31 + vB.y * 0.37)) discard; // the party's over: bulb by bulb out as the front passes
+  float b = 1.0 - uTwinkle * 0.5 * (1.0 + sin(uTime * (1.3 + vB.x) + vB.x * 40.0));
+  if (fract((vB.y - uTime * uChase) / 60.0) < 0.06) b = 1.4;
+  gl_FragColor = vec4(crownHaze(vColour * b * 1.6, vWorld), 1.0);
+}`;
+const CROWN_WIRE_VERT = /* glsl */ `
+varying vec3 vWorld;
+varying vec2 vFloor;
+varying float vDepth;
+uniform vec3 uRight, uUp;
+${SHARED_GLSL}
+${HEIGHT_VERT_GLSL}
+void main() {
+  vec3 p = mapPlan(position);
+  vWorld = p;
+  vec3 q = p - uMapO;
+  vFloor = vec2(dot(q, uRight) / max(1e-4, dot(uMapX, uRight)), dot(q, uUp) / min(-1e-4, dot(uMapZ, uUp)));
+  vec4 mv = viewMatrix * vec4(uBendOn > 0.5 ? bendW(p) : p, 1.0);
+  vDepth = -mv.z;
+  gl_Position = projectionMatrix * mv;
+}`;
+const CROWN_WIRE_FRAG = /* glsl */ `
+varying vec3 vWorld;
+varying vec2 vFloor;
+varying float vDepth;
+${LIGHT_GLSL}
+${CLEAR_GLSL}
+void main() {
+  if (cleared(vFloor, vDepth)) discard;
+  gl_FragColor = vec4(crownHaze(vec3(0.03, 0.025, 0.04), vWorld), 1.0);
+}`;
+
 const MOTE_VERT = /* glsl */ `
 attribute vec4 aMote; // phase, rise speed, drift, time it appears
 attribute vec3 aColour; // its area's neon
@@ -116,6 +193,10 @@ export class StringLightsView {
   private bulbMat: THREE.ShaderMaterial;
   private wireMat: THREE.ShaderMaterial;
   private moteMat: THREE.ShaderMaterial;
+
+  /** The crown's lights (setCrown), and how long each string takes to light from its start to its end (s). */
+  private crown: { view: CrownView; bulbs: THREE.Points; wire: THREE.LineSegments } | null = null;
+  private static readonly CROWN_RUN = 3;
 
   constructor(private scene: THREE.Scene, private game: Game) {
     const L = game.tuning.stringLights;
@@ -179,6 +260,7 @@ export class StringLightsView {
   /** Build the lights of newly partified areas, a couple per frame so a big wave doesn't stall. */
   update(): void {
     const g = this.game, L = g.tuning.stringLights;
+    this.updateCrown();
     if (!L.on) return;
     // From the treetops the bulbs hang under the canopy: let them glimmer through it as specks.
     this.bulbMat.depthTest = g.witch.lift < 0.5;
@@ -208,6 +290,42 @@ export class StringLightsView {
       if (g.forest.prefetch(s.x, s.z, g.map.areaSize * 1.3, 1) > 0) break;
       this.warmed.add(k);
     }
+  }
+
+  /** The great oak's crown's lights, a second source of lines (render/crown.ts), or none. */
+  setCrown(view: CrownView | null): void {
+    if (this.crown) { this.scene.remove(this.crown.bulbs, this.crown.wire); for (const o of [this.crown.bulbs, this.crown.wire]) { o.geometry.dispose(); (o.material as THREE.Material).dispose(); } this.crown = null; }
+    if (!view) return;
+    const L = this.game.tuning.stringLights, pos: number[] = [], cols: number[] = [], data: number[] = [], wire: number[] = [];
+    for (const b of view.bulbs) {
+      const c = this.palette[b.colour % this.palette.length];
+      pos.push(b.x, b.y, b.z); cols.push(c.r, c.g, c.b); data.push(b.phase, b.string * 40 + b.u * 60, b.u * StringLightsView.CROWN_RUN, 4 * b.u * (1 - b.u));
+    }
+    // (the wires: each span's sag in eight pieces, each garland round its clump)
+    for (const s of view.crown.strings) {
+      if (s.kind === "garland") { const n = 24, at = (i: number) => { const th = s.o + (i / n) * Math.PI * 2, w = s.el + 0.12 * Math.sin(th * 3); return [s.x + s.r * Math.cos(w) * Math.cos(th), s.y + s.r * Math.sin(w), s.z + s.r * Math.cos(w) * Math.sin(th)]; }; for (let i = 0; i < n; i++) wire.push(...at(i), ...at(i + 1)); continue; }
+      for (const p of s.spans) { const at = (u: number) => [p.a[0] + (p.b[0] - p.a[0]) * u, p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u), p.a[2] + (p.b[2] - p.a[2]) * u]; for (let i = 0; i < 8; i++) wire.push(...at(i / 8), ...at((i + 1) / 8)); }
+    }
+    const U = view.uniforms, shared = { ...U, uWind: { value: this.game.tuning.canopyShadow.wind * 1.5 }, uRes: SPRITE_UNIFORMS.uRes };
+    const bulbMat = new THREE.ShaderMaterial({ vertexShader: CROWN_BULB_VERT, fragmentShader: CROWN_BULB_FRAG, uniforms: { ...shared, uNear: { value: 240 }, uTwinkle: { value: L.twinkle }, uChase: { value: L.chaseSpeed }, uOnAt: { value: 1e9 } } });
+    const wireMat = new THREE.ShaderMaterial({ vertexShader: CROWN_WIRE_VERT, fragmentShader: CROWN_WIRE_FRAG, uniforms: shared });
+    const bg = new THREE.BufferGeometry();
+    bg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); bg.setAttribute("aColour", new THREE.Float32BufferAttribute(cols, 3)); bg.setAttribute("aBulb", new THREE.Float32BufferAttribute(data, 4));
+    const wg = new THREE.BufferGeometry(); wg.setAttribute("position", new THREE.Float32BufferAttribute(wire, 3));
+    const bulbs = new THREE.Points(bg, bulbMat), wireL = new THREE.LineSegments(wg, wireMat);
+    for (const o of [bulbs, wireL]) { o.frustumCulled = false; o.name = "crown"; }
+    this.scene.add(wireL, bulbs);
+    this.crown = { view, bulbs, wire: wireL };
+  }
+  /** The crown's lights' meshes (for the house's layer indoors: render/view.ts). */
+  get crownMeshes(): THREE.Object3D[] { return this.crown ? [this.crown.wire, this.crown.bulbs] : []; }
+  /** A frame of the crown's lights: lit from the party spell's time (before it, off; a game without the spell, from the start),
+   *  drawn as the crown is, in the world or over the floors. */
+  private updateCrown(): void {
+    const C = this.crown; if (!C) return;
+    const at = this.game.party.spellAt, indoors = C.view.indoors;
+    (C.bulbs.material as THREE.ShaderMaterial).uniforms.uOnAt.value = at === null ? 1e9 : at === undefined ? -1e9 : at;
+    for (const o of [C.bulbs, C.wire]) { const m = o.material as THREE.ShaderMaterial; m.depthTest = !indoors; m.transparent = indoors; o.renderOrder = indoors ? 19.98 : 0.6; }
   }
 
   /** Forget everything (a new game): each area's lines taken out and their geometry let go (the materials are shared, kept). */
