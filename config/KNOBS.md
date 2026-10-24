@@ -2313,6 +2313,23 @@ trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones p
 | `mist.wind` | number | 0 to … |
 | `mist.gain` | number | 0 to … |
 
+### `loadingMist`
+
+The loading mist (Ed, 2026-10-24: "Mist sounds ideal, which rolls away when loading finishes. If loading starts with areas closer to the treehouse, this will look fine"; "make the mist roll away progressively away from the treehouse instead of all at once"; render/loadingMist.ts): while the island is still being drawn (its trees one set an area type, nearest the treehouse first), every area whose trees aren't in yet lies under a low glowing night mist, in layers sheets up to height metres over the ground, each at most density opaque (the low ones thickest), in hard steps, glow times as bright as the night's mist. When a type's trees land, its mist rolls back off its areas as a front moving out from the treehouse at speed m/s, and what it hasn't reached cap seconds after the trees landed (the far rim) fades out over a second; soft: the front's soft edge (m either side), size: its rolling noise (m). sea: it lies over the water too, out to sea metres past the island's furthest ground, thinning, and burns off last, as its own front from the treehouse once the land's all in (Ed: "Maybe it should also appear over the water and burn off there too"); 0 none. Areas drawn before the first frame (a revisit's, from the art cache) never have any. Off under ?quick=1; ?loadmist=1\|0 for one load, ?artdelay=<s> to land the trees drawn ahead of need one every that many seconds and watch it.
+
+| knob | type | range |
+|---|---|---|
+| `loadingMist.on` | boolean |  |
+| `loadingMist.layers` | number | 0 to … |
+| `loadingMist.height` | number | 0 to … |
+| `loadingMist.density` | number | 0 to … |
+| `loadingMist.glow` | number | 0 to … |
+| `loadingMist.speed` | number | 0 to … |
+| `loadingMist.cap` | number | 0 to … |
+| `loadingMist.soft` | number | 0 to … |
+| `loadingMist.size` | number | 0 to … |
+| `loadingMist.sea` | number | 0 to … |
+
 ### `lightRings`
 
 Light rings in the canopy (Ed, 2026-10-07, making the wild forest eerier: "a halo / circle optical illusion: faint concentric rings of moonlight in the canopy, visible from treetop view"; render/lightRings.ts): one pass over the screen in the half-size effects layer that lights only what stands at crown height (above metres or more over the ground), never the floor. Centres seeded on a spacing-metre grid (a share of its cells has one), each count faint bands of moonlight out to radius metres, breathing outward at speed bands a second, laid on a level sheet plane metres up (about the crowns' tops: the crowns are upright sprites, so it's where the line of sight crosses that sheet that is ringed); strength: a band at its brightest (in the moon's hue, paled), added as light. They fade out between fadeNear and fadeFar metres from her. And the glory: rings of moonlight round her own shadow on the leaves (the halo you see round your shadow on dewy foliage), glory metres across at gloryStrength, faintly prismatic, going with her; off (gloryStrength 0) since Ed, 2026-10-08: "there's now concentric circles under the witch on the canopy ... I think we should remove them". Treetops only (fading in as she rises). Scattered rings off (Ed, 2026-10-11: strength 0); the glory is off too (gloryStrength 0), and the pass is skipped while both are 0.

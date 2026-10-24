@@ -82,6 +82,9 @@ import type { FlightEnd } from "./render/chart/seaChart";
 performance.mark("witch:main"); // (the load's steps, for timing the arrival: witch:main, :game, :view, :ready; app/arrive.ts :landed)
 prewarmArtWorkers(); // (the art workers load their code while the night is made: render/assets.ts)
 const params = new URLSearchParams(location.search);
+/** ?mistgate=0 (a builder's, the loading mist: render/loadingMist.ts): the bedroom's curtains and door don't wait for the island's
+ *  art, so she can go out while it's still drawing (with ?artdelay=<s>, slowly) and see the mist roll away. */
+const mistGateOff = params.get("mistgate") === "0";
 /** The link as it came (before the boot puts its own ?seed= in): whether this load opens on the sea chart (app/opening.ts). */
 const bootLink = new URLSearchParams(location.search);
 // ?timing=1 (Ed, 2026-10-19): the sail's steps and the main thread's long tasks into the L log (app/timing.ts), kept for the tab.
@@ -933,7 +936,7 @@ function frame(now: number): void {
   input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): the curtains wait on the island's art; its card, the dark and
   // her phone; its beats marked for ?timing=1, and the dressing table's mirror opened by itself the first time.
-  if (!game.islandReady && F.ready && F.artRevealed && view.islandDrawn()) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
+  if (!game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) game.islandReady = true; // (latched: the island's own art drawn, render/view.ts islandDrawn; nothing later shuts the curtains again)
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   // Her dream of tonight's loan (render/dream.ts): a key the rules took (the pad's too) ends it; ended, the alarm rings (endDream).
   if (dream && dreamAsleep) {

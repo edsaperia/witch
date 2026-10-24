@@ -775,6 +775,13 @@ export class Ground {
 
   /** Let go of all of it: the area texture, the land's, the floors, the carvings, the dancefloor's looks and tiles and the lakes'
    *  map (the height field's texture is the HeightField's own, left alone). */
+  /** The area texture and its extent (each texel's area look in red), and how many looks the shaders' tables hold: for the layers
+   *  that read the areas (render/loadingMist.ts). */
+  get areaUniforms(): { uAreas: { value: THREE.Texture }; uExtent: { value: THREE.Vector4 }; slots: number } {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
+    return { uAreas: u.uAreas as { value: THREE.Texture }, uExtent: u.uExtent as { value: THREE.Vector4 }, slots: TYPE_SLOTS };
+  }
+
   dispose(): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
