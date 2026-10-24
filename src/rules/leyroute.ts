@@ -29,6 +29,8 @@ export interface LeyRoute {
   links: P2[][];
   /** The same links straight from stone to stone, as the order was planned on. */
   straight?: P2[][];
+  /** What curving it cost (fitWays' work, all its tries: kept under CURVE_WORK). */
+  curveWork?: number;
 }
 
 const ROUTES = new WeakMap<ForestMap, LeyRoute>();
@@ -78,11 +80,11 @@ export function leyRoute(map: ForestMap, initial: () => string[], fallback?: () 
 export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
   if (!r.stones.length) return r;
   const R = leyRadius(map), ways = new Map<string, number>();
-  let heads: number[] = [];
+  let heads: number[] = [], spent = 0; // (the line compared so far, fitWays' work: kept under CURVE_WORK)
   const own = new Set(crossingPairs(r.links).map(([i, j]) => `${i},${j}`)); // (the straight line's own few crossings, Ed's)
   const make = (o: LeyRoute, only?: [number, number]): LeyRoute => {
     const f = fitWays(o.links[0], o.stones, R, { keep: (i, j) => own.has(`${i},${j}`), from: only ? o.order.map(k => ways.get(k) ?? NaN) : undefined, only });
-    heads = f.heads;
+    heads = f.heads; spent += f.work;
     return { ...o, straight: o.links, links: f.links };
   };
   const keepWays = (o: LeyRoute) => o.order.forEach((k, i) => ways.set(k, heads[i])); // (the ways the kept route goes through its stones)
@@ -98,47 +100,62 @@ export function curved(map: ForestMap, r: LeyRoute): LeyRoute {
   // round (2-opt, as untangle does on the straight line) and curved again, kept if it meets less and is no worse a shape.
   const dip = routeShape(map, r.stones).lateDip;
   let bestOk = withinCrossingRules(best.links, CROSSING_RULES, bestPairs);
-  for (let round = 0, tried = 0; round < 6 && !bestOk && tried < 60; round++) {
+  for (let round = 0, tried = 0; round < 6 && !bestOk && tried < 60 && spent < CURVE_WORK; round++) {
     let improved = false;
     // (the curves' own crossings first; then, if the rules still fail (two of the straight line's own few curved closer
     // together than CROSSING_RULES.apart), those too; the first stone stays first: the departure leads to it)
-    for (const [i, j] of [...bestPairs].sort((p, q) => +own.has(`${p[0]},${p[1]}`) - +own.has(`${q[0]},${q[1]}`))) {
-      // the stones between them turned round, or one stone swapped with its neighbour near either link (two hairpins
-      // close together: a stone taken in the other order)
-      // (or a few round them turned round, or the stone at the crossing taken a few waves sooner or later)
-      const N = best.stones.length, tries: { a: number; b: number; move?: number; perm?: number[] }[] = [[i, j], [i - 1, i + 1], [i, i + 2], [j - 1, j + 1], [j, j + 2], [i - 1, i + 2], [i - 2, i + 2], [i - 2, i + 3]].map(([a, b]) => ({ a, b }));
-      for (const at of [i, j]) for (const d of [-3, -2, 2, 3]) tries.push({ a: at, b: at + d, move: 1 });
-      // (at the start, where the departure fixes the first stone's way and the first stones lie close together: every
-      // order of the next four)
-      if (i <= 1) for (const perm of PERMS4) tries.push({ a: 1, b: 5, perm });
-      for (const { a, b, move, perm } of tries) {
-        let st: P2[], keys: string[];
-        if (perm) {
-          if (N < 6) continue;
-          st = [...best.stones]; keys = [...best.order];
-          perm.forEach((p, k) => { st[1 + k] = best.stones[1 + p]; keys[1 + k] = best.order[1 + p]; });
-        } else if (move) {
-          if (a < 1 || b < 1 || a >= N || b >= N) continue;
-          st = [...best.stones]; keys = [...best.order];
-          const [sv] = st.splice(a, 1), [kv] = keys.splice(a, 1); st.splice(b, 0, sv); keys.splice(b, 0, kv);
-        } else {
-          if (a < 1 || b > N || b - a < 2) continue;
-          st = [...best.stones.slice(0, a), ...best.stones.slice(a, b).reverse(), ...best.stones.slice(b)]; keys = [...best.order.slice(0, a), ...best.order.slice(a, b).reverse(), ...best.order.slice(b)];
+    const pairs = [...bestPairs].sort((p, q) => +own.has(`${p[0]},${p[1]}`) - +own.has(`${q[0]},${q[1]}`));
+    // (every crossing's few tries before the start's orders: refitting the first stones' long loops round home, each
+    // meeting the rest there, is far the dearest try, and a cheap fix elsewhere first often lets one of them pass; the
+    // oak's north-west house on seed 4: 25 s of them that way round, under a second this)
+    for (const late of [false, true]) {
+      for (const [i, j] of pairs) {
+        if (late && i > 1) continue;
+        // the stones between them turned round, or one stone swapped with its neighbour near either link (two hairpins
+        // close together: a stone taken in the other order)
+        // (or a few round them turned round, or the stone at the crossing taken a few waves sooner or later)
+        const N = best.stones.length, tries: { a: number; b: number; move?: number; perm?: number[] }[] = [];
+        if (!late) {
+          tries.push(...[[i, j], [i - 1, i + 1], [i, i + 2], [j - 1, j + 1], [j, j + 2], [i - 1, i + 2], [i - 2, i + 2], [i - 2, i + 3]].map(([a, b]) => ({ a, b })));
+          for (const at of [i, j]) for (const d of [-3, -2, 2, 3]) tries.push({ a: at, b: at + d, move: 1 });
         }
-        const straight: P2[][] = [best.straight![0] as P2[]];
-        for (let k = 1; k < st.length; k++) straight.push([st[k - 1], st[k]]);
-        if (++tried > 60) break;
-        const lo = Math.min(a, b) - 2, hi = Math.max(a, b) + 1, o = make({ order: keys, stones: st, links: straight }, [lo, hi]), ps = pairsAfter(o.links, lo, hi + 1), c = ps.length;
-        const ok = withinCrossingRules(o.links, CROSSING_RULES, ps);
-        if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
+        // (at the start, where the departure fixes the first stone's way and the first stones lie close together: every
+        // order of the next four)
+        else for (const perm of PERMS4) tries.push({ a: 1, b: 5, perm });
+        for (const { a, b, move, perm } of tries) {
+          let st: P2[], keys: string[];
+          if (perm) {
+            if (N < 6) continue;
+            st = [...best.stones]; keys = [...best.order];
+            perm.forEach((p, k) => { st[1 + k] = best.stones[1 + p]; keys[1 + k] = best.order[1 + p]; });
+          } else if (move) {
+            if (a < 1 || b < 1 || a >= N || b >= N) continue;
+            st = [...best.stones]; keys = [...best.order];
+            const [sv] = st.splice(a, 1), [kv] = keys.splice(a, 1); st.splice(b, 0, sv); keys.splice(b, 0, kv);
+          } else {
+            if (a < 1 || b > N || b - a < 2) continue;
+            st = [...best.stones.slice(0, a), ...best.stones.slice(a, b).reverse(), ...best.stones.slice(b)]; keys = [...best.order.slice(0, a), ...best.order.slice(a, b).reverse(), ...best.order.slice(b)];
+          }
+          const straight: P2[][] = [best.straight![0] as P2[]];
+          for (let k = 1; k < st.length; k++) straight.push([st[k - 1], st[k]]);
+          if (++tried > 60 || spent >= CURVE_WORK) break;
+          const lo = Math.min(a, b) - 2, hi = Math.max(a, b) + 1, o = make({ order: keys, stones: st, links: straight }, [lo, hi]), ps = pairsAfter(o.links, lo, hi + 1), c = ps.length;
+          const ok = withinCrossingRules(o.links, CROSSING_RULES, ps);
+          if (((ok && !bestOk) || (ok === bestOk && c < bestC)) && routeShape(map, st).lateDip <= Math.max(dip, SPIRAL_RULES.dip)) { best = o; bestPairs = ps; bestC = c; bestOk = ok; improved = true; keepWays(o); break; }
+        }
+        if (improved) break;
       }
       if (improved) break;
     }
     if (!improved) break;
   }
   if (globalThis.process?.env?.LEYPROF) console.log("all", Math.round(performance.now() - T0));
-  return best;
+  return { ...best, curveWork: spent };
 }
+/** The most line curved's untangling compares (fitWays' work, pieces of line against pieces), a bound on its time:
+ *  about a second (most maps' whole route fits in 3e7; seed 4 with the oak once took 5e9, 25 s). Counted, never timed,
+ *  so every machine plans the same route. */
+export const CURVE_WORK = 1e9;
 /** Every order of four (but the one they're in). */
 const PERMS4 = ((): number[][] => { const out: number[][] = [], go = (p: number[], rest: number[]) => { if (!rest.length) { if (p.join() !== "0,1,2,3") out.push(p); return; } rest.forEach((r, k) => go([...p, r], [...rest.slice(0, k), ...rest.slice(k + 1)])); }; go([], [0, 1, 2, 3]); return out; })();
 /** The tightest the ley line turns (metres; leyLines.minRadius, 30 by default). */
