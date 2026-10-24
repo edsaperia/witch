@@ -77,7 +77,7 @@ function report(rows, file, extra = {}) {
     } else {
       await page.evaluate(() => { window.witch.manual = true; });
       // (out of her bed and room: the wake-up over, its card and dark gone, as once she's walked out with the gate off)
-      const scene = await page.evaluate(spot => { const g = window.witch.game, h = g.map.treehouse; g.wake = undefined; return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 60},treetop` : `at:${spot}`); }, SPOT);
+      const scene = await page.evaluate(spot => { const g = window.witch.game, h = g.map.treehouse; g.wake = undefined; for (const id of ["wake-veil", "wake-card"]) document.getElementById(id)?.remove(); /* (the wake card and its dark: the page loop hides them, not the stepped frames) */ return window.witch.shot(spot === "treetop" ? `at:${h.x},${h.z + 60},treetop` : `at:${spot}`); }, SPOT);
       log("scene:", scene.say);
       const frames = [];
       let s = await state(page);
