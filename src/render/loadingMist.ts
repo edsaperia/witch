@@ -149,15 +149,15 @@ export class LoadingMist {
     this.mesh.renderOrder = 3; // (over the low mist)
   }
 
-  /** A frame: the page's clock (s) and each type's art: 0 not in, 1 drawn, 2 from the art cache (a revisit's: clear at once, never rolled,
-   *  as one drawn before the first frame). Returns whether any mist is still showing. */
-  update(now: number, drawn: (t: number) => number): boolean {
+  /** A frame: the page's clock (s) and whether each type's art is in. A type in before the first frame (a revisit's, from the art
+   *  cache) has no mist; one that lands later rolls back as any does, from the cache or not (cleared at once, mist on screen would
+   *  vanish: the dive, where the sail's bake ahead fills the cache as she flies in). Returns whether any mist is still showing. */
+  update(now: number, drawn: (t: number) => boolean): boolean {
     if (this.done) return false;
     let left = false;
     for (const [t, reach] of this.reaches) {
       if (t >= this.fronts.length || cleared(this.fronts[t])) continue;
-      const k = this.landed.has(t) ? 0 : drawn(t);
-      if (k) this.landed.set(t, this.first || k === 2 ? -1e9 : now); // (in before she's seen anything, or kept from a visit before: clear already)
+      if (!this.landed.has(t) && drawn(t)) this.landed.set(t, this.first ? -1e9 : now); // (in before she's seen anything: clear already)
       const at = this.landed.get(t);
       const since = at === undefined ? undefined : now - at;
       this.fronts[t] = frontAt(reach, since, this.T); this.fades[t] = fadeAt(since, this.T);

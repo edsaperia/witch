@@ -1364,7 +1364,7 @@ export class View {
     this.mist?.follow(pose.tx, pose.tz);
     if (this.loadingMist && draw) { // (on the page's own clock, a frame counting at most a tenth of a second: not the house's slowed time)
       const now = performance.now(); this.mistClock += this.mistLast ? Math.min(0.1, (now - this.mistLast) / 1000) : 0; this.mistLast = now;
-      this.loadingMist.update(this.mistClock, ty => !this.assets.hasType(ty) ? 0 : this.assets.typeLog.get(ty)?.cached ? 2 : 1);
+      this.loadingMist.update(this.mistClock, ty => this.assets.hasType(ty));
     }
     this.lightRings?.update(this.camera, w.x, witchHeight(w, t) + this.rideOff, w.z, canopyShown(w), time);
     const hatTop = drawWitch(this, time, ht, onTreehouse);
