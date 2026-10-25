@@ -187,7 +187,7 @@ async function main() {
     check(groundSpeed > tuning.groundSpeed * 0.6 && groundSpeed <= tuning.groundSpeed * 1.01, `flies east on the ground (${groundSpeed.toFixed(1)} m/s)`);
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
-    await page.keyboard.press("Space");
+    await rise(page); // (past the landing's riseCooldown: the 2 s flight is shorter than its 3 s)
     // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     s = await state(page);
