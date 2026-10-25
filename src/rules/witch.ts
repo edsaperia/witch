@@ -6,7 +6,7 @@ import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
 import { NO_LOAD, type LeashLoad } from "./leashWeight";
-import { flyOnto, keepInHouse, keepOnDeck, noRiseAt, overDeck, type Deck } from "./treehouse";
+import { flyOnto, keepInHouse, keepOnDeck, landsOn, noRiseAt, overDeck, type Deck } from "./treehouse";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -111,7 +111,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   // (in the house's rooms and on its branches she can't rise, only on the Terrace: rules/treehouse.ts noRiseAt)
   if (intent.toggleMode && !(perch && mode === "ground" && deck && noRiseAt(deck, w.x, w.z))) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
-  if (deck && intent.toggleMode && mode === "descending" && overDeck(deck, w.x, w.z)) perch = true;
+  if (deck && intent.toggleMode && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
   // The house's balcony (Ed, 2026-10-14): flying in over it at treetop height, she lands on it, no button (below, once this step's
   // move is known: she must come onto it from outside, so rising straight up off it doesn't land her again at once).
   const wasOver = !!deck?.house && flyOnto(deck, w.x, w.z);

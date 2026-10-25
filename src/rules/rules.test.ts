@@ -223,9 +223,10 @@ describe("the map", () => {
     expect(map.treeWeight(d.x, d.z)).toBe(0);
     const th = map.treehouse, far = Math.hypot(th.x - d.x, th.z - d.z);
     expect(far).toBeGreaterThan(floorClearing(TUNING)); // outside the speakers and the clearing
-    expect(far).toBeLessThan(floorClearing(TUNING) + 20);
+    expect(far).toBeLessThan(floorClearing(TUNING) + 30); // (the oak's rooms, up in its crown, clear of the dancefloor's clearing: tuning treehouse.gap)
+    expect(th.x).toBeLessThan(d.x); expect(th.z).toBeLessThan(d.z); // (north-west of the dancefloor: Ed, 2026-10-24)
     expect(map.hardClear(th.x, th.z)).toBe(true);
-    expect(Math.hypot(map.start.x - th.x, map.start.z - th.z - seatOffset(TUNING))).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
+    expect(Math.hypot(map.start.x - th.x - seatOffset(TUNING).x, map.start.z - th.z - seatOffset(TUNING).z)).toBeLessThan(1e-9); // (at her decks: on the balcony or the deck, rules/treehouse.ts)
   });
   it("starts the witch seated on the terrace; she stays put till the first move or rise", () => {
     const g = newGame(5, TUNING);
@@ -631,8 +632,8 @@ describe("the party", () => {
   it("boots the home speakers up first, one by one, at the boot's own speed, then the pulse sets off for the first wave (Ed, 2026-10-04; the first speaker about 3 s off the decks, 2026-10-06; the pulse's speed, 2026-10-09; the boot's own, 2026-10-18)", () => {
     const p = newParty(map), v = TUNING.leyLines.pulseSpeed, vb = TUNING.boot.speed!, P = bootPath(map), B = bootSeconds(map), n = map.dancefloor.speakers.length;
     const F = P.stoneAt[P.order[0]] / vb, last = P.stoneAt[P.order[n - 1]] / vb;
-    expect(vb).toBe(4); expect(P.length).toBeCloseTo(179, 0); expect(B).toBeCloseTo(P.length / vb, 9); // (179 m at 4 m/s: about 45 s)
-    expect(F).toBeGreaterThan(2.5); expect(F).toBeLessThan(3.5); // (about three seconds off the decks)
+    expect(vb).toBe(4); expect(P.length).toBeCloseTo(195, 0); expect(B).toBeCloseTo(P.length / vb, 9); // (195 m at 4 m/s: about 49 s)
+    expect(F).toBeGreaterThan(8); expect(F).toBeLessThan(9.5); // (about three seconds off the decks while the treehouse stood due north; the oak stands farther out, north-west, and its front's 25 m from the ring: DECISION FOR ED)
     stepParty(p, map, 0, 0); // (off the decks at once)
     expect(p.bootFrom).toBe(0); expect(p.bootUntil).toBeCloseTo(B, 9);
     expect(speakersOn(p, map, 0, n)).toBe(0);
@@ -1402,6 +1403,8 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
     for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    for (let i = 0; i < 90 && g.witch.mode === "ground"; i++) stepGame(g, { ...NO_INTENT, moveX: 0.6, moveZ: 0.8, zoom: 0 }, 1 / 60); // (out off the Terrace's open rim, south-east past the decks: flying, the world's time her own again)
+    expect(g.witch.mode).not.toBe("ground");
     expect(g.party.wave).toBe(0);
     expect(g.floor.on).toBeNull(); // off the decks, but no wave yet: the moon
     const m = colours();

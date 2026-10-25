@@ -1,6 +1,6 @@
 // The treehouse's furniture drawn as art (Ed, 2026-10-23; art/furniture.js) in place of render/houseRooms.ts's plain boxes: every
 // object of the house baked by its id and its footprint (config/house/: w, d, h), never by where it stands, so the house's layout
-// can move it; turned to face its room's middle (`standing`), drawn in its state (`furnitureState`: the curtains open or shut). Baked
+// can move it; turned to face its room's middle (`standing`), drawn in its state (`furnitureState`: none now). Baked
 // and lit once (the creator's room's way, ui/creator.ts roomSteps: art/core.js bake, then art/lighting.js shade with its own lights),
 // a piece a frame, the nearest her first, then drawn as a flat picture in the house's plane (as the boxes were: render/houseRooms.ts
 // toWorld), its floor's middle on the object's middle. `?furniture=0` draws the boxes as before, to compare.
@@ -75,9 +75,8 @@ export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: num
   return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 
-/** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the bedroom's curtains shut while she wakes (rules/wakeUp.ts:
- *  until they've opened), open after. */
-export function furnitureState(id: string, g: Pick<Game, "wake">): string | undefined {
-  if (id === "curtains") return g.wake && !g.wake.open ? "shut" : "open";
+/** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): none in the oak's house (its bedroom's curtains, shut
+ *  while she woke, are gone: Ed, 2026-10-24), each piece as it is. */
+export function furnitureState(_id: string, _g: Pick<Game, "wake">): string | undefined {
   return undefined;
 }

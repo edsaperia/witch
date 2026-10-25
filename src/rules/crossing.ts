@@ -48,6 +48,7 @@ export function polylinesMeet(p: readonly P2[], q: readonly P2[]): boolean {
   for (let i = 0; i + 1 < p.length; i++) {
     const a = p[i], b = p[i + 1];
     const x0 = Math.min(a[0], b[0]), x1 = Math.max(a[0], b[0]), z0 = Math.min(a[1], b[1]), z1 = Math.max(a[1], b[1]);
+    if (x1 < bq[0] - 1e-6 || x0 > bq[2] + 1e-6 || z1 < bq[1] - 1e-6 || z0 > bq[3] + 1e-6) continue; // (this piece nowhere near q)
     for (let j = 0; j + 1 < q.length; j++) {
       const c = q[j], d = q[j + 1];
       if (Math.max(c[0], d[0]) < x0 || Math.min(c[0], d[0]) > x1 || Math.max(c[1], d[1]) < z0 || Math.min(c[1], d[1]) > z1) continue;

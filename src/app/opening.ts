@@ -1,5 +1,5 @@
 // The opening (Ed, 2026-10-20; previews/ed/opening-mock/NOTES.md on claude/ed-shots): she wakes in her bedroom in the treehouse
-// (rules/wakeUp.ts: the alarm, the clothes pile, the curtains, the DJ intro at her decks). Ed, 2026-10-23: "When you start a fresh
+// (rules/wakeUp.ts: the alarm, the clothes pile, the DJ intro at her decks). Ed, 2026-10-23: "When you start a fresh
 // game, the first screen should be the witch waking up in her bedroom on the home island instead of the map": a plain load goes
 // straight to home's night, asleep in the dark while it's made, and wakes there (the sea chart that came first till then is the
 // treehouse's map table's alone now). On by default (the tuning's opening.bedroom); ?opening=old keeps the old start for a load

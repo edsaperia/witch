@@ -95,17 +95,19 @@ export function curvedLinks(depart: readonly P2[], stones: readonly P2[], R: num
 /** curvedLinks, with the ways it chose. `from`: ways to start from (NaN: worked out afresh), and `only`: the stones whose
  *  ways may change (the rest kept), for a route changed in one place (rules/leyroute.ts curved). Which links meet is kept
  *  in a table, worked out once and then only for the links a change touches. */
-export function fitWays(depart: readonly P2[], stones: readonly P2[], R: number, o: { step?: number; passes?: number; keep?: (i: number, j: number) => boolean; from?: readonly number[]; only?: [number, number] } = {}): { links: [number, number][][]; heads: number[] } {
+export function fitWays(depart: readonly P2[], stones: readonly P2[], R: number, o: { step?: number; passes?: number; keep?: (i: number, j: number) => boolean; from?: readonly number[]; only?: [number, number] } = {}): { links: [number, number][][]; heads: number[]; work: number } {
   const step = o.step ?? 4, passes = o.passes ?? 3, keep = o.keep ?? (() => false), lo = Math.max(1, o.only?.[0] ?? 1), hi = o.only?.[1] ?? Infinity, free = (s: number) => s >= lo && s <= hi;
   const heads = stoneWays(depart, stones).map((h, i) => (o.from && Number.isFinite(o.from[i]) ? o.from[i] : h)), n = stones.length;
   const links: [number, number][][] = [depart.map(p => [p[0], p[1]] as [number, number])];
   const FIT = Math.max(step, 8), link = (i: number, at = FIT) => curveLink(stones[i - 1], heads[i - 1], stones[i], heads[i], R, at); // (links[i] runs into stones[i]; fitted coarser, drawn at `step`)
   for (let i = 1; i < n; i++) links.push(link(i));
+  let work = 0; // (the pieces of line compared, at most: what the fit cost, for rules/leyroute.ts curved's budget)
   const box = links.map(boxOf), lenOf = (l: readonly P2[]) => { let t = 0; for (let k = 1; k < l.length; k++) t += Math.hypot(l[k][0] - l[k - 1][0], l[k][1] - l[k - 1][1]); return t; };
   const meet = (i: number, j: number, li = links[i], bi = box[i]) => {
     if (i === j || keep(Math.min(i, j), Math.max(i, j))) return false;
     const q = box[j];
     if (bi[2] < q[0] || q[2] < bi[0] || bi[3] < q[1] || q[3] < bi[1]) return false;
+    work += li.length * links[j].length;
     return i < j ? polylinesMeet(li, links[j]) : polylinesMeet(links[j], li);
   };
   // The table: which links each meets (only links that can change, and what they meet, when `only`).
@@ -169,7 +171,7 @@ export function fitWays(depart: readonly P2[], stones: readonly P2[], R: number,
     if (!fixed) break;
   }
   for (let i = 1; i < n; i++) links[i] = link(i, step);
-  return { links, heads };
+  return { links, heads, work };
 }
 
 /** The ways through a stone tried (turns off its bisector): near it first, then all round. */

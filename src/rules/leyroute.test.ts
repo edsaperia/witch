@@ -7,7 +7,7 @@ import { generateMap } from "./map";
 import { TUNING, type Tuning } from "./tuning";
 import { newParty, spreadWave, wavePlan, cellKey, routeOf } from "./party";
 import { polylinesMeet, segmentsMeet, crossings } from "./crossing";
-import { CROSSING_RULES, crossingPairs, meetPoint, overHome, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
+import { CROSSING_RULES, CURVE_WORK, crossingPairs, meetPoint, overHome, routeShape, spiralOrder, withinCrossingRules } from "./leyroute";
 import { TIP_PACE } from "./leypulse";
 
 describe("lines meeting", () => {
@@ -51,6 +51,21 @@ describe("the ley line's route (Ed, 2026-10-06)", () => {
     }
     expect(seen.size, "a few crossings on some maps, none on others").toBeGreaterThan(1);
   }, 180_000);
+  it("plans quickly on every seed: the curves' untangling kept within its budget (the oak's seed 4 once took 25 s)", () => {
+    // (the slowest seeds of 200 before, 7 to 32 s each with the oak north-west of the floor, and some ordinary ones; the
+    // budget is counted work, so the same on every machine, checked before each try: at most one try past it)
+    const SLOW = [4, 84, 125, 135, 183, 185, 188];
+    for (const seed of [...SLOW, ...Array.from({ length: 10 }, (_, i) => i + 1)]) {
+      const r = routeOf(generateMap(seed, TUNING));
+      expect(r.curveWork, `seed ${seed}`).toBeLessThan(2 * CURVE_WORK);
+    }
+    // and the cheap tries first find the ones that keep Ed's rules well inside it
+    for (const seed of [4, 84, 125, 183]) {
+      const r = routeOf(generateMap(seed, TUNING));
+      expect(withinCrossingRules(r.links), `seed ${seed}`).toBe(true);
+      expect(r.curveWork, `seed ${seed}`).toBeLessThan(CURVE_WORK);
+    }
+  }, 120_000);
   it("(the rules themselves: too many, drawn ahead of the pulse, too close together)", () => {
     expect(CROSSING_RULES.pace).toBe(TIP_PACE);
     const x = (i: number): [number, number][] => [[i * 100, 0], [i * 100 + 50, 10]]; // (a link far from the others)

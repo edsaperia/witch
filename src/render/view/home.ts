@@ -274,9 +274,9 @@ export function nearerCamera(v: View, p: { x: number; y: number; z: number }, d:
  *  between them (metres: past the deck's radius and its rail). The DJ table's frames, her hands over it and the candles go in
  *  front of the near half as DJ_DEPTH says. */
 export const ENT_DEPTH = { far: 8, near: 7.6 };
-/** The halves' depths for the house (rules/treehouse.ts): the far half past the hub's wall, the near half past the balcony's rim, so
- *  she stands between them anywhere on its floor; the deck's as ever. */
-export const entDepth = (d: Deck | null): { far: number; near: number } => (d?.house ? { far: d.r + 4, near: d.house.balcony.z - d.z + d.house.balcony.r + 0.3 } : ENT_DEPTH); // (the far half's wall stands up the sprite, its top tilted toward the camera: a few metres more, so she's in front of it at the back wall)
+/** The halves' depths for the house (rules/treehouse.ts): the far half past the Terrace's back, the near half past the decks' desk
+ *  on its open rim, so she stands between them on its floor; the deck's as ever. */
+export const entDepth = (d: Deck | null): { far: number; near: number } => (d?.house ? { far: d.r + 4, near: d.house.desk.z - d.z + d.house.desk.d / 2 + 0.3 } : ENT_DEPTH); // (the far half's wall stands up the sprite, its top tilted toward the camera: a few metres more, so she's in front of it at the back wall)
 /** The Ent's carrier (art/carrier.js): a breath's seconds and how much taller it stands at its top (its height's share). */
 const CARRIER_BREATH = 4, CARRIER_SWELL = 0.006;
 /** A point `d` metres nearer the camera along the ray from it, and how much smaller to draw what stands there to cover the same

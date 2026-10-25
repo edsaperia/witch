@@ -1,8 +1,12 @@
 {
   "id": "terrace",
   "label": "Terrace",
-  "order": 0,
+  "order": 10,
+  "trunk": true,
+  "x": 0,
+  "z": 0,
+  "r": 12.5,
   "objects": [
-    {"id":"recordShelf","label":"Record shelf","use":{"kind":"say","line":"The shelf waits for records."},"bearing":146,"in":0.73,"foot":[4.4,1,4],"box":{"w":1.2,"d":3.2,"h":3.2}}
+    {"id":"recordShelf","label":"Record shelf","use":{"kind":"say","line":"The shelf waits for records."},"offset":[0,9.5],"box":{"w":1.2,"d":3.2,"h":3.2}}
   ]
 }

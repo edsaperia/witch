@@ -1,15 +1,15 @@
 {
   "id": "workshop",
   "label": "Workshop",
-  "order": 40,
-  "parent": "terrace",
-  "bearing": -100,
-  "branch": 4.5,
-  "radius": 7.5,
-  "bend": -1,
+  "order": 60,
+  "from": "dining",
+  "bend": 0.5,
+  "x": -50,
+  "z": 12,
+  "r": 8,
   "objects": [
-    {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":25,"in":0.9,"foot":[5,0.5,4.4]},
-    {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":-38,"foot":[6,2.4,2.2]},
-    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"bearing":88,"foot":[4.8,1.6,2]}
+    {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[0,-6.29],"box":{"w":5,"d":0.5,"h":4.4}},
+    {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2.29,3.43],"box":{"w":6,"d":2.4,"h":2.2}},
+    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[5.71,1.14],"box":{"w":1.6,"d":4.8,"h":2}}
   ]
 }

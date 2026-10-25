@@ -13,7 +13,7 @@ const fail = [];
 const check = (ok, what) => { console.log(`${ok ? "ok  " : "FAIL"} ${what}`); if (!ok) fail.push(what); };
 /** Where she stands to use object `id`: on its side facing its room's middle (the hub's for the hub's), `gap` m off it. */
 const front = (id, gap = 0.7) => {
-  const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => o.x >= q.x0 && o.x <= q.x1 && o.z >= q.z0 && o.z <= q.z1);
+  const o = H.objects.find(q => q.id === id), r = H.rooms.find(q => q.id === o.room); // (the oak's rooms' boxes overlap: its own)
   const cx = r ? (r.x0 + r.x1) / 2 : 0, cz = r ? (r.z0 + r.z1) / 2 : 0, dx = cx - o.x, dz = cz - o.z, side = Math.abs(dx) > Math.abs(dz);
   return side ? [o.x + Math.sign(dx || 1) * (o.w / 2 + gap), o.z] : [o.x, o.z + Math.sign(dz || 1) * (o.d / 2 + gap)];
 };
