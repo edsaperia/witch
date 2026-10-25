@@ -223,7 +223,7 @@ async function main() {
   // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the moth's island: the home
   // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14), and the old
   // radius map (?island=off, 98 areas of every classic type) bakes so much art ahead that its assets never settle here within
-  // the wait; the moth's (21 areas, 8 types on seed 123, the heath plentiful) carries three heaths and three cave mouths.
+  // the wait; the moth's (20 areas, 7 kinds since #1024's compass biomes, the heath plentiful) carries three heaths.
   await run("heath", { width: 1280, height: 720 }, async page => {
     await page.keyboard.press("Enter");
     await sleep(300);
@@ -891,7 +891,10 @@ async function main() {
       return out;
     });
     check(hr.n > 50 && hr.bad.length === 0, `on the rolling ground nothing floats or sinks past 1 art px at its foot's ends (${hr.n} checked, ${hr.hilly} off the flat, worst ${hr.worst.toFixed(2)} px)${hr.bad.length ? ": " + hr.bad.join("; ") : ""}`);
-  }, "&debug&island=moth"); // (the moth's island: the home island's roster is the ten home kinds, so no seed puts a cave mouth on it, and the old radius map's art never settles here; see the heath scene)
+  }, "&debug&island=bat"); // (the bat's island, its kind's cave mouths plentiful: the home island's roster is the ten home kinds, so no seed puts a cave mouth on
+  // it, and the old radius map's art never settles here. It was the moth's until the kinds were sorted into Ed's compass biomes (#1024,
+  // 2026-10-23): the moth's island is a heath-and-woods one now, no bat on its roster, and no island but the bat's own and those of
+  // 30 areas or more carries a cave mouth)
 
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:
