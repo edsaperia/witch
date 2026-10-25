@@ -6,7 +6,7 @@
 // seed (&seed=), finds them kept. What isn't done by the time she lands the game draws as before.
 import type { ArtJob, ArtResult } from "../render/artBuild";
 import { artCacheKey, hashText, islandArtSeed } from "../render/artCache";
-import { biomeKey } from "../rules/lakeLooks";
+import { biomeKey, type BiomeLooks } from "../rules/lakeLooks";
 import { AREA_TYPES, HOME_LOOK } from "../rules/map";
 import { homeIsland, islandOf, knownKinds } from "../rules/rosters";
 import { loadSave } from "./chartSave";
@@ -42,8 +42,8 @@ export interface LandingBake {
 /** The sets drawn ahead for a landing on `island` for night `seed`: its area types (landingTypes) under the island's own seed first
  *  (kept for every night: what the game draws at once, render/artCache.ts islandArtSeed), then under the night's (swapped in
  *  unseen as she lands, main.ts revealArt). */
-export function landingJobs(island: string, world: number, seed: number, style: ArtJob["style"], K: number): ArtJob[] {
-  const types = landingTypes(island, world), own = islandArtSeed(world, island), biome = biomeKey(island, world); // (biome: its forests' look, as the view asks: render/view.ts)
+export function landingJobs(island: string, world: number, seed: number, style: ArtJob["style"], K: number, looks?: BiomeLooks): ArtJob[] {
+  const types = landingTypes(island, world), own = islandArtSeed(world, island), biome = biomeKey(island, world, looks); // (biome: its forests' look, as the view asks: render/view.ts)
   return [...types.map(t => ({ kind: "type", id: t, style, seed: own, K, biome }) as ArtJob), ...types.map(t => ({ kind: "type", id: t, style, seed, K, biome }) as ArtJob)];
 }
 
@@ -51,7 +51,7 @@ export function landingJobs(island: string, world: number, seed: number, style: 
 export function bakeLanding(island: string, world: number | undefined, seed = nightSeed()): LandingBake {
   const params = linkFor(island, world, seed), tuning = tuningFromLink(params).tuning, w = world ?? loadSave().world;
   const style = gameStyle(styleFromLink(params, tuning), tuning), styleHash = hashText(JSON.stringify(style)), K = 2 / tuning.pixelSize;
-  const jobs = landingJobs(island, w, seed, style, K); // (a set kept before comes back at once)
+  const jobs = landingJobs(island, w, seed, style, K, tuning.biomeLooks); // (a set kept before comes back at once)
   let stopped = false;
   const workers: Worker[] = [];
   const state = {

@@ -35,12 +35,14 @@ The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather t
 | `map.coast.harmonics` | number | 0 to … |
 | `map.coast.detail` | number | 0 to … |
 
-### `lakes`
+### `biomeLooks`, `lakes`
 
-Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED). biomeFrom: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier": 3, it was 4, the first uncharted islands). biomeFirstShare: the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none (Ed, 2026-10-12: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"). The biome lakes in play (Ed, 2026-10-23: render/lakeLooks.ts, each lake the sea chart's look for it): the north's glacier's peaks kept glacierClear metres under her treetop flight (treetopHeight), and the hot springs' (the rust pools') steam: on, puffs rising rise metres over life seconds, size metres across, at opacity, a vent every spacing metres over their deep water.
+How strongly an island's forests take its biome's look (art/flora/biomes.js), by its ring (Ed, 2026-10-25: "Lower phase non-home biome areas can be semi-temperate looking; higher phase biomes are more extreme; so there's a smoother transition between phases"): strength[0] for phase from's islands, strength[1] the next ring out, and so on, the last for any further; each mixes the biome's look toward temperate's by 1 - strength (1 the full look). Rings nearer in are temperate. Its own art: a ring's strength is in its key (rules/lakeLooks.ts biomeKey).
 
 | knob | type | range |
 |---|---|---|
+| `biomeLooks.from` | number | 0 to … |
+| `biomeLooks.strength` | array of number |  |
 | `lakes.shore` | number | 0 to … |
 | `lakes.pad` | number | 0 to … |
 | `lakes.koi` | number | 0 to … |
