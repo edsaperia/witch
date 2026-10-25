@@ -43,7 +43,7 @@ export class ArrivalFlight {
   begin(g: Game, warmed = false): void {
     if (this.plan || this.done) return;
     if (warmed) this.warmT = { ...this.A, warm: { ...this.A.warm, frames: 0 } };
-    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt);
+    this.plan = arrivePlan(this.rec, g.map, this.A, groundHeight, this.end(g), this.frameAt, null, innerWidth / Math.max(1, innerHeight));
   }
 
   /** Any key or tap: straight to her decks (once the art is ready, and the house, if they aren't yet). */
@@ -63,8 +63,8 @@ export class ArrivalFlight {
     if (this.done) { v.fly = null; return true; }
     if (!this.plan) return false;
     this.plan.keys[this.plan.keys.length - 1] = this.end(g); // (the opening shot as the game's camera has it now)
-    const th = v.treeHeight(); // (the whole tree's shot by its art's height, once it's come: rules/arrive.ts treeShot)
-    if (this.A.tree && th !== null && this.plan.keys.length >= 3) this.plan.keys[this.plan.keys.length - 2] = treeShot(g.map, this.A.tree, groundHeight, this.end(g).fov, th);
+    const tree = v.treeExtent(); // (the whole tree's shot by the tree as it's measured once it's there, the crown or the Ent's art: rules/arrive.ts treeShot)
+    if (this.A.tree && tree && this.plan.keys.length >= 3) this.plan.keys[this.plan.keys.length - 2] = treeShot(this.A.tree, groundHeight, this.end(g).fov, tree, innerWidth / Math.max(1, innerHeight));
     if (this.due === Infinity) this.due = dueAt(this.plan, homeSpots(g), innerWidth / Math.max(1, innerHeight));
     if (v.homeDone && !this.readyMarked) { this.readyMarked = true; performance.mark("dive:house-ready"); }
     if (this.skipped && v.homeDone) { this.land(v); return true; }

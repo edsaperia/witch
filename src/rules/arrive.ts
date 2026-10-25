@@ -44,7 +44,7 @@ export function handoffShot(rec: Handoff, map: ForestMap): Shot {
 /** The flight from the chart's hand-off to `end` (the game's own opening shot at her decks, or her in her bedroom): over the sea to the south coast and
  *  low over the forest north at `A.speed` m/s, then up to frame the dancefloor and the treehouse's spot (where the island's
  *  legend will carry the Ent) together, then down into `end`. `ground(x, z)`: the ground's height there. */
-export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }, treeHeight?: number): ArrivePlan {
+export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground: (x: number, z: number) => number, end: Shot, frameAt?: { x: number; z: number }, tree0?: TreeExtent | null, aspect = 16 / 9): ArrivePlan {
   const d = map.dancefloor, th = map.treehouse, fov = end.fov;
   const k0 = handoffShot(rec, map);
   // low over the land: aimed `ahead` metres north of the camera's ground point
@@ -55,7 +55,7 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   // the frame: the dancefloor and the treehouse's spot together, from the south and up (or `frameAt`: the new opening's bedroom window)
   const fx = frameAt?.x ?? (d.x + th.x) / 2, fz = frameAt?.z ?? (d.z + th.z) / 2;
   const k3: Shot = { tx: fx, ty: ground(fx, fz) + A.frame.lift, tz: fz, angle: A.frame.angle, distance: A.frame.distance, fov };
-  const tree = A.tree ? treeShot(map, A.tree, ground, fov, treeHeight ?? A.tree.height) : null;
+  const tree = A.tree ? treeShot(A.tree, ground, fov, tree0 ?? defaultTree(map, A.tree), aspect) : null;
   const keys = tree ? [k0, ...lows, k3, tree, end] : [k0, ...lows, k3, end];
   // the times: the legs down to the forest by their length at A.speed (at least the chart's own pace), the rise and the
   // settle their own seconds
@@ -70,12 +70,20 @@ export function arrivePlan(rec: Handoff, map: ForestMap, A: ArriveTuning, ground
   return { keys, times, v0: Math.max(0, rec.cam.speed ?? 0) };
 }
 
+/** The treehouse tree as the dive sees it (the whole-tree shot's): its middle on the ground (x, z), its height from the ground and
+ *  its width east to west (metres). render/view.ts treeExtent measures it: the great oak's crown (rules/crown.ts) where there is one,
+ *  else the Ent's art; till either's known, defaultTree. */
+export interface TreeExtent { x: number; z: number; height: number; width: number }
+/** Before the tree's measured: at the treehouse, the tuning's height, as wide as it's tall. */
+export const defaultTree = (map: ForestMap, T: NonNullable<ArriveTuning["tree"]>): TreeExtent => ({ x: map.treehouse.x, z: map.treehouse.z, height: T.height, width: T.height });
+
 /** The whole treehouse tree, from the south (Ed, 2026-10-24: "pan up to see the whole treehouse tree before we fly into her
- *  bedroom"): aimed at its middle, `height` metres tall from its foot (its art's, else the tuning's), `angle` degrees up, back far
- *  enough that it fills `fill` of the frame's height. */
-export function treeShot(map: ForestMap, T: NonNullable<ArriveTuning["tree"]>, ground: (x: number, z: number) => number, fov: number, height: number): Shot {
-  const th = map.treehouse, h = Math.max(1, height), distance = (h / Math.max(0.05, T.fill)) / (2 * Math.tan(((fov * Math.PI) / 180) / 2));
-  return { tx: th.x, ty: ground(th.x, th.z) + h / 2, tz: th.z, angle: T.angle, distance, fov };
+ *  bedroom"): aimed at its middle, `angle` degrees up, back far enough that it fills `fill` of the frame, its height or its width
+ *  (on a screen `aspect` wide), whichever needs the further. */
+export function treeShot(T: NonNullable<ArriveTuning["tree"]>, ground: (x: number, z: number) => number, fov: number, tree: TreeExtent, aspect = 16 / 9): Shot {
+  const t = Math.tan(((fov * Math.PI) / 180) / 2), f = Math.max(0.05, T.fill), h = Math.max(1, tree.height);
+  const distance = Math.max(h / f / (2 * t), Math.max(1, tree.width) / f / (2 * t * Math.max(0.2, aspect)));
+  return { tx: tree.x, ty: ground(tree.x, tree.z) + h / 2, tz: tree.z, angle: T.angle, distance, fov };
 }
 
 /** How far a spot is from the dive's view (Ed, 2026-10-24, the sail's transition: "we only really need the scenery south of the

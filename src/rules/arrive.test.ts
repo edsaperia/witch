@@ -99,16 +99,18 @@ describe("the house due in view (Ed, 2026-10-24: \"the treehouse doesn't have to
 });
 
 describe("the whole treehouse tree (Ed, 2026-10-24: \"pan up to see the whole treehouse tree before we fly into her bedroom\")", () => {
-  it("comes round to the whole tree, its foot and its top on screen, between the frame and her decks, by the art's own height", () => {
-    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), T = A.tree!;
+  it("comes round to the whole tree, its foot, top and sides on screen, between the frame and her decks, by the tree as measured", () => {
+    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), T = A.tree!, aspect = 16 / 9;
     const pitch = 0.66, back = 520, hand: Handoff = { cam: { x: 0, z: coast + 420 - d.z + Math.cos(pitch) * back, height: Math.sin(pitch) * back, pitch, fov: 20, speed: 100 } };
     const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
-    for (const height of [18, 34]) { // (fox's tree and home's, as their art has them)
-      const plan = arrivePlan(hand, map, A, () => 0, end, undefined, height), n = plan.keys.length, tree = plan.keys[n - 2];
-      expect(tree).toEqual(treeShot(map, T, () => 0, end.fov, height));
+    // (the Ent's art as it was, and the great oak's crown: about 185 m across, rules/crown.ts)
+    for (const tree of [{ x: th.x, z: th.z, height: 18, width: 24 }, { x: th.x + 10, z: th.z - 20, height: 90, width: 190 }]) {
+      const plan = arrivePlan(hand, map, A, () => 0, end, undefined, tree, aspect), n = plan.keys.length, shot = plan.keys[n - 2];
+      expect(shot).toEqual(treeShot(T, () => 0, end.fov, tree, aspect));
       expect(plan.times[n - 2] - plan.times[n - 3]).toBeCloseTo(T.time, 6);
-      for (const y of [0.5, height - 0.5]) expect(inShot(tree, { x: th.x, y, z: th.z }, 16 / 9, 1)).toBe(true);
-      expect(tree.angle).toBeLessThan(A.frame.angle); // (lower than the frame's: the camera's come down and looks up the tree)
+      for (const p of [{ x: tree.x, y: 0.5, z: tree.z }, { x: tree.x, y: tree.height - 0.5, z: tree.z }, { x: tree.x - tree.width / 2 + 1, y: tree.height / 2, z: tree.z }, { x: tree.x + tree.width / 2 - 1, y: tree.height / 2, z: tree.z }])
+        expect(inShot(shot, p, aspect, 1)).toBe(true);
+      expect(shot.angle).toBeLessThan(A.frame.angle); // (lower than the frame's: the camera's come down and looks up the tree)
       expect(shotAt(plan, planLength(plan))).toEqual(end);
     }
   });
