@@ -13,6 +13,6 @@ export const PLAINS = {
     terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .6, freak: .15, lake: .25, modern: 0 },
     feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast.",
   },
-  flora: { species: [["acacia", .7], ["baobab", .15], ["datePalm", .15]], palette: { sat: .85, val: 1 } },
+  flora: { species: [["acacia", .65], ["baobab", .25], ["acacia", .1, { variant: "windbent" }]] /* (the flora check: Ed, 2026-10-25, ring 4: no date palm out on the grass) */, palette: { sat: .85, val: 1 } },
   settings: { treeDensity: .14, groundCover: { density: .7, kinds: ["blades"] } },
 };

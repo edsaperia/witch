@@ -14,6 +14,6 @@ export const MUDFLAT = {
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
   },
-  flora: { species: [["mangrove", .7], ["datePalm", .2], ["willow", .1]] /* (for the alder and the boreal aspen: India 2026-10-23, biome forests) */, palette: { sat: .7, val: .85 } },
+  flora: { species: [["mangrove", .7], ["mangrove", .2, { variant: "windbent" }], ["mangrove", .1, { variant: "ancient" }]] /* (the flora check: Ed, 2026-10-25, ring 5: mangroves only, for the date palm and willow) */, palette: { sat: .7, val: .85 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };

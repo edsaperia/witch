@@ -14,6 +14,6 @@ export const WARREN = {
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
-  flora: { species: [["juniper", .6], ["acacia", .25], ["pine", .15]] /* (Kalahari thorn for the hawthorn: India 2026-10-23, biome forests) */, palette: { sat: .6, val: .8 } },
+  flora: { species: [["juniper", .6], ["paloVerde", .25], ["pine", .15]] /* (the flora check: Ed, 2026-10-25, ring 3: palo verde for the African thorn; the pine a pinyon) */, palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .25, groundCover: { density: .4, kinds: ["pebbles", "blades"] } },
 };

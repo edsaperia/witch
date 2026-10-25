@@ -14,6 +14,6 @@ export const TEMPLE_JUNGLE = {
     terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
     feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
   },
-  flora: { species: [["strangler", .45], ["kapok", .3], ["datePalm", .15], ["bamboo", .1]], palette: { sat: .95, val: .9 } },
+  flora: { species: [["strangler", .45], ["kapok", .3], ["vinewood", .15], ["bamboo", .1]] /* (the flora check: Ed, 2026-10-25, ring 5: vinewood for the date palm) */, palette: { sat: .95, val: .9 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "fern"] } },
 };
