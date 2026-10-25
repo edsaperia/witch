@@ -16,7 +16,7 @@ compare against an older look were retired on 2026-10-07 (the list at the end).
 | `wave=<s>` / `wave=off` | seconds between waves (0 or off: none); otherwise the start screen's last pick, else the tuning's | app/gameParams.ts |
 | `spell=auto` / `spell=wait` | the party spell: `auto` starts at once anywhere; `wait` keeps her at the decks even with `creator=0` | app/gameParams.ts |
 | `creator=0` | no character creator: the plain start card (the tools and the smoke runs) | main.ts, app/gameParams.ts |
-| `opening=old` / `opening=chart` | the first load's start: `old`, the bedroom as the loading cover (the creator); `chart`, the new opening's sea chart (the default since 2026-10-21, the tuning's `opening.chart`). A link naming a seed, island, bot or the zoo, or with `creator=0`, keeps the old start anyway | app/opening.ts, main.ts |
+| `opening=old` / `opening=chart` | the first load's start: `old`, the bedroom as the loading cover (the creator); `chart`, the new opening's sea chart (the default since 2026-10-21, the tuning's `opening.chart`). A link naming a seed or island wakes her in her bedroom too (Ed, 2026-10-25); one starting a bot game or the zoo, or with `creator=0`, keeps the old start anyway; the tools that drive the old start (the creator, the start card) put `opening=old` in their links | app/opening.ts, main.ts |
 | `bot=skilled\|crude\|…` | a bot plays the run (rules/bot.ts), with a seeded witch | main.ts |
 | `dev=0` | hides the bedroom's dev "Player:" pick | app/playerPick.ts |
 | `room=<S>` | the creator's room drawn at this scale | ui/creator.ts |

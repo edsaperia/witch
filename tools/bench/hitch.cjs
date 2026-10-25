@@ -60,7 +60,7 @@ async function main() {
   const page = await context.newPage(), errors = [];
   page.on("pageerror", e => errors.push(e.message));
   const t0 = Date.now(), lap = what => console.log(`  ${what} ${Math.round((Date.now() - t0) / 1000)} s`);
-  await page.goto(`http://127.0.0.1:${port}/?seed=${seed}`);
+  await page.goto(`http://127.0.0.1:${port}/?opening=old&seed=${seed}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 });
   await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
   // FINISH=1: the GPU drained inside each draw (gl.finish), so in the cloud's software renderer its backlog isn't waited on

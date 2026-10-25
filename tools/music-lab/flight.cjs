@@ -25,7 +25,7 @@ server.listen(0, "127.0.0.1", async () => {
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
   const page = await browser.newPage({ viewport: { width: 640, height: 360 } }), errors = [];
   page.on("pageerror", e => errors.push(e.message));
-  await page.goto(`http://127.0.0.1:${server.address().port}/?seed=123&spell=auto`);
+  await page.goto(`http://127.0.0.1:${server.address().port}/?opening=old&seed=123&spell=auto`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.mouse.click(320, 200);

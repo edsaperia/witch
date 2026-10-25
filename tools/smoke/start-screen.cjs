@@ -19,7 +19,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
     for (const [w, h, dpr] of [[1280, 720, 1], [1900, 1240, 1]]) {
       const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: dpr });
       page.on("pageerror", e => errors.push(e.message));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?seed=123`, { waitUntil: "domcontentloaded" });
+      await page.goto(`http://127.0.0.1:${server.address().port}/?opening=old&seed=123`, { waitUntil: "domcontentloaded" });
       const card = await page.evaluate(() => getComputedStyle(document.getElementById("start")).display);
       if (card !== "none") throw new Error(`the old start card shows first (${card})`);
       await page.waitForSelector("#creator-start", { timeout: 120000 });
