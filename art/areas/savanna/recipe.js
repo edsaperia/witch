@@ -13,6 +13,6 @@ export const SAVANNA = {
     terrain: ["mounds", "rocky"], decor: { rate: .2, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud.",
   },
-  flora: { species: [["acacia", .7], ["baobab", .2], ["datePalm", .1]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["acacia", .6], ["baobab", .25], ["acacia", .15, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 4: no date palm out on the grass) */, palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .25, groundCover: { density: .9, kinds: ["blades"] } },
 };
