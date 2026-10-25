@@ -200,7 +200,9 @@ export class AssetLibrary {
       this.promoted.add(k); this.urgentKeys.add(k);
       if (job.kind === "type") { const L = this.typeLog.get(job.id as number); if (L && L.landed === undefined) L.urgent = true; } // (asked ahead, then wanted on screen)
       const i = this.queue.findIndex(q => this.key(q) === k);
+      if (i >= 0) (this.queue[i] as ArtJob & { urgent?: boolean }).urgent = true; // (urgent now: while the night plays, past the art ahead's share of the workers only an urgent job goes, dispatch; the zoo's 64 area types, all asked ahead, waited behind one long job: none of its trees came)
       if (i > this.front) { const [q] = this.queue.splice(i, 1); this.queue.splice(this.front, 0, q); }
+      this.dispatch();
       return;
     }
     this.inFlight.add(k);
