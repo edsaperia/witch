@@ -113,6 +113,9 @@ async function main() {
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
       const n = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused }));
       check(inPlace && n.island === "fox" && /^\?island=fox&seed=4242&/.test(n.url) && !n.paused, `sails in place to another island (${n.island}, ${n.url}, in ${((Date.now() - ts) / 1000).toFixed(0)} s)`);
+      // (Ed, 2026-10-25, his 2a: a sail always ends with her asleep in bed: the flight in lands in her bedroom and the wake-up starts)
+      const slept = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { wake: g.wake?.beat ?? null, short: !!g.wake?.short, pile: g.wake?.pile?.length ?? 0, seated: W.body.seated, spell: g.party.spellAt }; });
+      check(!!slept.wake && slept.short && slept.pile > 0 && !slept.seated && slept.spell === null, `the sail lands her asleep in her bed, the wake-up on (${JSON.stringify(slept)})`);
       // The chart over the night (the map table's), its own island chosen (Ed, 2026-10-21): back to the night as it was, no sail.
       const tc = Date.now();
       await page.evaluate(() => { window.__nightGame = window.witch.game; window.__nightT = window.witch.game.clock.time; window.witch.chart(); });

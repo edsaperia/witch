@@ -46,8 +46,10 @@ export interface NightSpec {
 export interface NightFlags {
   /** The start's art made (view.prepare): play can begin. */
   ready: boolean;
-  /** Arriving from the chart: the flight has landed at her decks. */
+  /** Arriving from the chart: the flight has landed (in her bedroom, or with ?opening=old at her decks). */
   landed: boolean;
+  /** Arriving from the chart into her bedroom: put in bed before the dive (its last shot there), she wakes as it lands (main.ts arrived). */
+  inBed: boolean;
   wonShown: boolean;
   overShown: boolean;
   /** The night recorded on the sea chart (won, or the afterparty). */
@@ -78,7 +80,7 @@ export interface Night {
   game: Game;
   playtest: PlaytestLog;
   hud: Hud;
-  /** Arriving from the chart: the flight from its camera to her decks (app/arrive.ts); null otherwise. */
+  /** Arriving from the chart: the flight from its camera to her bedroom (app/arrive.ts; her decks under ?opening=old); null otherwise. */
   arrival: ArrivalFlight | null;
   flags: NightFlags;
   /** The night's own listeners and timers, undone as it ends (gameParams' arena key). */
@@ -108,7 +110,7 @@ export const hasHat = (game: Game, look: unknown): boolean => (look as { hat?: {
 /** Her hat on or not by her look; none, none lying about either. */
 export function wearHat(game: Game, look: unknown): void { const H = game.witches[0].hat; H.has = hasHat(game, look); if (!H.has) H.down = null; }
 
-const freshFlags = (): NightFlags => ({ ready: false, landed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
+const freshFlags = (): NightFlags => ({ ready: false, landed: false, inBed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
 
 /** The playtest log's hooks main.ts sets (they read the holder, so they carry to the next night's log as they are). */
 const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugText", "stalls"] as const;
@@ -169,7 +171,8 @@ export async function startNight(page: Page, spec: NightSpec): Promise<Night> {
 }
 
 /** Arriving from the sea chart (?arrive=1; Ed, 2026-10-12, the zoom-to-island plan; rules/arrive.ts, app/arrive.ts): the chart's
- *  last frame (index.html put it up) while the night builds, then the flight from the chart's camera to her decks; no bedroom. */
+ *  last frame (index.html put it up) while the night builds, then the flight from the chart's camera down to her asleep in her bed
+ *  (Ed, 2026-10-25: main.ts puts her there first, app/opening.ts sailLandsInBed; her decks under ?opening=old). */
 function nightArrival(spec: NightSpec, tuning: Tuning): ArrivalFlight | null {
   const stillEl = typeof document === "undefined" ? null : document.getElementById("arrive-still") as HTMLImageElement | null;
   const r = spec.arrival ?? (spec.params.get("arrive") === "1" && tuning.arrive ? readArrival(tuning.map?.island ?? "") : null); // (read once: a reload doesn't fly again)

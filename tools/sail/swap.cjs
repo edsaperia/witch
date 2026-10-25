@@ -130,7 +130,7 @@ async function main() {
     await page.addInitScript(CLOCK);
     page.on("pageerror", e => errors.push(`seed ${seed}: ${e.message}`));
     page.on("console", m => { if (m.type() === "error") errors.push(`seed ${seed} console: ${m.text()}`); });
-    await page.goto(`http://127.0.0.1:${port}/?${island ? `island=${island}&` : ""}seed=${seed}&quick=1&creator=0&debug=sail`);
+    await page.goto(`http://127.0.0.1:${port}/?${island ? `island=${island}&` : ""}seed=${seed}&quick=1&creator=0&debug=sail${SAIL ? "&opening=old" : ""}`); // (SAIL: the old landing at her decks, as the fresh page starts: a sail lands her in bed now, app/opening.ts sailLandsInBed)
     await ready(page);
     await steady(page);
     await page.keyboard.press("Enter");
