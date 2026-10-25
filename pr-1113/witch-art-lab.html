@@ -3860,6 +3860,10 @@ const ENT = { deckY: 22, deckR: 7, railH: 1.1, tableR: 1.25, tableH: .85, deskAr
  *  (radians either side of the camera side, the wall cut away there); where the clockwork moon stands tonight (radians round from the
  *  far side). The hub's radius is the deck's (deckR), its floor the deck's. */
 const HOUSE = { balcony: { out: 6.3, r: 5 }, wallH: 3.4, domeH: 3.2, poolR: 2.6, flagR: 4.3, tableR: 1.55, tableH: .9, circle: { out: 4.2, r: 1.3 }, openArc: 1.2, moonAt: .5 };
+/** The oak's Terrace (organic: config/house/base.json terrace, which the game passes in; the same here for the lab and the checks,
+ *  rules/houseConfig.test.ts keeping them one): her seat behind the decks, the decks' desk on its open south-east rim (its middle, w
+ *  along x, d along z), the magic circle, metres east and south of its middle; r, the round of wood drawn for the outside view. */
+const OAK_TERRACE = { seat: { x: 6, z: 6.4 }, decks: { x: 6, z: 8, w: 5, d: 1.6 }, circle: { x: 2, z: 2, r: 2 }, r: 10 };
 /** Its colours: the treehouse's (the giant's bark and leaves, wood, iron, warm light, the party's neons). */
 const entColours = st => ({ ...treehouseColours(st), [M.WATER]: [38, 92, 128], [M.STONED]: [52, 50, 56] }); // (the map's sea and the pool; the flagstones' seams)
 
@@ -4106,7 +4110,48 @@ function entModel(st, facing, E) {
     return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, tt, 0), circle: H(0, top, CIRC.dz), balcony: H(0, top, OUT), lights,
       desk: { inner: +standR.toFixed(2), front: +deskFront.toFixed(2), from: +(S - E.deskArc).toFixed(3), to: +(S + E.deskArc).toFixed(3), mid: +S.toFixed(3) }, aCam, RR: RRb };
   };
-  return E.house ? houseParts() : deckParts();
+  // ---- The oak (Ed, 2026-10-24, the treehouse layout v4: config/house/): the Terrace one of the trunk's rooms, its floor the game's
+  // (render/houseArt.ts paints the oak's whole floor from its shape while she's in the house); here a round of the tree's own wood
+  // for the outside view (no planks: growth rings, a mossy bark rim), the magic circle's candles, and her decks on the Terrace's
+  // open south-east rim: the DJ table where she stands, a straight desk either side of it, a lantern at each end. In the rules'
+  // frame (x east, z south, metres from the Terrace's middle: config/house/base.json terrace, HOUSE.terrace here). ----
+  const oakParts = () => {
+    const HS = E.house, Tt = HS.terrace, top = D, Rt = Tt.r;
+    const south = [Math.cos(aCam), Math.sin(aCam)], east = [Math.sin(aCam), -Math.cos(aCam)];
+    const H = (dx, y, dz) => P(east[0] * dx + south[0] * dz, y, east[1] * dx + south[1] * dz);
+    const inHouse = p => { const x = p[0] / k, z = p[2] / k; return { dx: east[0] * x + east[1] * z, dz: south[0] * x + south[1] * z }; };
+    const floorPaint = p => { const { dx, dz } = inHouse(p), r = Math.hypot(dx, dz), y = p[1] / k;
+      if (y < top - .35) return M.BARK2; // its underside
+      if (r > Rt - .45) return entHash(Math.floor(Math.atan2(dz, dx) * Rt * 2), 3) < .4 ? M.MOSS : M.BARK2; // the bark rim, mossy
+      const g2 = r * 1.6 + .5 * Math.sin(Math.atan2(dz, dx) * 3), f = g2 - Math.floor(g2); // (growth rings round its heart, a little warped)
+      return f < .09 ? M.BARKD : f > .7 ? M.HAT2 : undefined; };
+    both(mm => mm.ell(P(0, top - .25, 0), [U(Rt), U(.25), U(Rt)], M.WOOD, { group: g(), paint: floorPaint }));
+    // the magic circle's candles, five round it, lit
+    const C = Tt.circle;
+    for (let i = 0; i < 5; i++) { const a = -Math.PI / 2 + i * Math.PI * 2 / 5, gc = g(), base = H(C.x + Math.cos(a) * C.r * 1.02, top, C.z + Math.sin(a) * C.r * 1.02);
+      both(mm => { mm.seg(base, v3.add(base, [0, U(.22), 0]), U(.045), U(.04), M.BELLY, { group: gc }); mm.ell(v3.add(base, [0, U(.28), 0]), [U(.035), U(.06), U(.035)], M.MAGIC2, { group: gc + 1 }); }); g();
+      lights.push({ at: v3.add(base, [0, U(.3), 0]), rgb: [255, 170, 80], kind: "candle" }); }
+    // her decks: the DJ table at her seat, the desk's two wings either side of it along the rim, a lantern at each end
+    const D0 = DJ_DECKS, S0 = Tt.seat, DK = Tt.decks, stand = H(S0.x, top, S0.z);
+    const dj = djTable(near, { facing, stand }); djTable(m, { facing, stand });
+    const half = D0.width / k + .02, deskTop = D0.top / k, x0 = DK.x - DK.w / 2, x1 = DK.x + DK.w / 2;
+    for (const [a, b] of [[x0, S0.x - half], [S0.x + half, x1]]) { if (b - a < .1) continue;
+      nearAlso(mm => mm.box(H((a + b) / 2, top + deskTop / 2, DK.z), [U((b - a) / 2), U(deskTop / 2), U(DK.d / 2)], M.WOOD, { dir: [east[0], 0, east[1]], up: [0, 1, 0], group: 80 + (a < S0.x ? 0 : 1), round: U(.02), paint: p => {
+        const { dx, dz } = inHouse(p), y = p[1] / k - top;
+        if (y > deskTop - .02) return M.SHADES;
+        if (dz < DK.z + DK.d / 2 - .04) return M.BARKL; // (its back and ends)
+        if (y > deskTop - .1 || y < .09) return ENT_FAIRY[((Math.floor(dx * 9) % 4) + 4) % 4]; // the LED strips
+        return ((dx * 5) % 1 + 1) % 1 < .08 ? M.BARK2 : undefined; } })); }
+    for (const x of [x0 - .15, x1 + .15]) { const b = H(x, top, DK.z), gp = g();
+      nearAlso(mm => { mm.box(v3.add(b, [0, U(.6), 0]), [U(.12), U(.62), U(.12)], M.WOOD, { group: gp, round: U(.03) }); mm.ell(v3.add(b, [0, U(1.3), 0]), [U(.14), U(.17), U(.14)], M.GLOW, { group: gp + 1, paint: p => (Math.abs(p[1] - b[1] - U(1.3)) < U(.05) ? M.MAGIC2 : undefined) }); }); g();
+      lights.push({ at: v3.add(b, [0, U(1.3), 0]), rgb: [255, 190, 96], kind: "lantern" }); }
+    lights.push({ at: dj.to([D0.platter.a, D0.top + .03, D0.platter.c]), rgb: [255, 80, 200], kind: "decks" }, { at: dj.to([D0.platter.a, D0.top + .03, -D0.platter.c]), rgb: [80, 230, 255], kind: "decks" });
+    const S = Math.PI / 2, standR = Math.hypot(S0.x, S0.z);
+    return { m, far, near, dj, stand, standR, k, top, deck: P(0, top, 0), table: P(0, top, 0), circle: H(C.x, top, C.z), balcony: H(DK.x, top, DK.z), lights, seat: { x: S0.x, z: S0.z },
+      candleRow: { x0: S0.x - 1.4, x1: S0.x + 1.4, z: DK.z + DK.d / 2 - .12, at: (dx, y, dz) => H(dx, y, dz) },
+      desk: { inner: +standR.toFixed(2), front: +(standR + DK.d).toFixed(2), from: +(S - .3).toFixed(3), to: +(S + .3).toFixed(3), mid: +S.toFixed(3) }, aCam, RR: Rt };
+  };
+  return E.house ? (E.house.organic ? oakParts() : houseParts()) : deckParts();
 }
 
 /** The treehouse Ent at the witch's scale, for `facing` ("towards" or "away") and its sizes (ENT, overridable: { deckY, deckR }):
@@ -4125,7 +4170,7 @@ function entModel(st, facing, E) {
  *    mid: the camera side's angle; radians in the deck's plane, 0 along +x (east), π/2 along +z (south, towards the camera) });
  *    seat ({ x, z } her standing spot from the deck's centre); trunk (its diameter at the hip), footprint (its roots' reach). */
 function entSprite(st = {}, { facing = "towards", ppm = 16, deckY = ENT.deckY, deckR = ENT.deckR, house = /** @type {boolean | { organic?: boolean }} */ (false) } = {}) {
-  const E = { ...ENT, deckY, deckR, house: house ? { ...HOUSE, ...(typeof house === "object" ? house : {}) } : null }, T = entModel(st, facing, E), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp;
+  const E = { ...ENT, deckY, deckR, house: house ? { ...HOUSE, terrace: OAK_TERRACE, ...(typeof house === "object" ? house : {}) } : null }, T = entModel(st, facing, E), ppu = witchPixelsPerUnit(st), r = render(T.m, { scale: ppu, facing }), full = r.sp;
   let x0 = full.w, x1 = -1, y0 = full.h; for (let y = 0; y < full.h; y++) for (let x = 0; x < full.w; x++) if (full.m[y * full.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); }
   const W = x1 - x0 + 1, H = full.h - y0, crop = s => { const o = new Sprite(W, H); for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * full.w + x + x0; if (s.m[i]) o.put(x, y, s.m[i], s.n[i * 3], s.n[i * 3 + 1], s.n[i * 3 + 2]); } return o; };
   const whole = crop(full), REF = T.deck, [ax, ay] = r.project(REF);
@@ -4147,14 +4192,14 @@ function entSprite(st = {}, { facing = "towards", ppm = 16, deckY = ENT.deckY, d
   const foreFrames = frames.map(fs => { const c = new Sprite(fx1 - fx0 + 1, fy1 - fy0 + 1); for (let y = 0; y < c.h; y++) for (let x = 0; x < c.w; x++) { const i = (y + fy0) * W + x + fx0; if (fs.m[i]) c.put(x, y, fs.m[i], fs.n[i * 3], fs.n[i * 3 + 1], fs.n[i * 3 + 2]); } return c; });
   const at = p => { const [x, y] = r.project(p); return { x: +(x - x0).toFixed(1), y: +(y - y0).toFixed(1) }; };
   // the candles' row: along the desk's top front edge, CANDLE.samples points across its middle, screen left to right
-  const k = T.k, cr = T.desk.front - .12, candles = [];
-  for (let i = 0; i < CANDLE.samples; i++) { const a = T.aCam - .32 + .64 * i / (CANDLE.samples - 1); candles.push(at([Math.cos(a) * cr * k, (T.top + DJ_DECKS.top / k) * k, Math.sin(a) * cr * k])); }
+  const k = T.k, cr = T.desk.front - .12, candles = [], CR = T.candleRow;
+  for (let i = 0; i < CANDLE.samples; i++) { const u = i / (CANDLE.samples - 1), a = T.aCam - .32 + .64 * u; candles.push(at(CR ? CR.at(CR.x0 + (CR.x1 - CR.x0) * u, T.top + DJ_DECKS.top / k, CR.z) : [Math.cos(a) * cr * k, (T.top + DJ_DECKS.top / k) * k, Math.sin(a) * cr * k])); }
   candles.sort((p, q) => p.x - q.x);
   const seat = at(T.stand), cam = at(v3.add(T.stand, [0, .55, 0]));
   return { whole, far, near, fore, foreFrames, foreBox: { x: fx0, y: fy0 }, candles,
     anchors: { base: at([0, 0, 0]), deck: at(T.deck), table: at(T.table), seat, ...(T.circle ? { circle: at(T.circle), balcony: at(T.balcony) } : {}), platter: at(T.dj.to([DJ_DECKS.platter.a, DJ_DECKS.top, DJ_DECKS.platter.c])), camera: cam, lights: T.lights.map(L => ({ ...at(L.at), rgb: L.rgb, kind: L.kind })) },
     metres: { height: +(H / ppm).toFixed(1), width: +(W / ppm).toFixed(1), deckY: E.deckY, deckR: E.deckR, railH: E.railH, tableR: E.tableR, tableH: E.tableH, desk: T.desk,
-      seat: { x: 0, z: +((E.house ? E.house.balcony.out : 0) + T.standR).toFixed(2) }, trunk: 5.6, footprint: 7.6,
+      seat: T.seat ?? { x: 0, z: +((E.house ? E.house.balcony.out : 0) + T.standR).toFixed(2) }, trunk: 5.6, footprint: 7.6,
       ...(E.house ? { house: { hub: E.deckR, balcony: E.house.balcony, wallH: E.house.wallH, domeH: E.house.domeH, poolR: E.house.poolR, table: { r: E.house.tableR, h: E.house.tableH }, circle: E.house.circle, openArc: E.house.openArc } } : {}) } };
 }
 
