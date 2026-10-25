@@ -33,7 +33,7 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(n.game.seed).toBe(4321);
     expect(n.game.tuning).toBe(n.tuning);
     expect(n.tuning.map?.island).toBe("home");
-    expect(n.flags).toEqual({ ready: false, landed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
+    expect(n.flags).toEqual({ ready: false, landed: false, inBed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
     expect(n.arrival).toBeNull();
   });
 
