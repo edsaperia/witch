@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, poseOf } from "./game";
-import { arrivePlan, newFlightClock, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
+import { arrivePlan, diveReach, dueAt, dueRate, inShot, newFlightClock, treeShot, planLength, shotAt, shotCamera, southCoast, stepFlightClock, type Handoff, type Shot } from "./arrive";
 
 const A = TUNING.arrive!;
 
@@ -27,12 +27,13 @@ describe("arriving from the sea chart", () => {
     expect(shotAt(plan, T)).toEqual(end);
     // north all the way to the frame (the camera never turns back south), and never into the ground
     let lastZ = Infinity;
-    for (let s = 0; s <= plan.times[plan.times.length - 2]; s += 0.1) { const c = shotCamera(shotAt(plan, s)); expect(c.z).toBeLessThanOrEqual(lastZ + 1e-6); lastZ = c.z; }
+    const fi = plan.times.length - (A.tree ? 3 : 2); // (the frame's key: then the whole tree's, if it's on, then her decks)
+    for (let s = 0; s <= plan.times[fi]; s += 0.1) { const c = shotCamera(shotAt(plan, s)); expect(c.z).toBeLessThanOrEqual(lastZ + 1e-6); lastZ = c.z; }
     for (let s = 0; s <= T; s += 0.1) expect(shotCamera(shotAt(plan, s)).y).toBeGreaterThan(8);
     // down to treetop height over the forest: low there (the chart hands over high, over the coast)
     expect(shotCamera(shotAt(plan, plan.times[1])).y).toBeLessThan(60);
     // the frame: the dancefloor and the treehouse's spot both inside the picture (its vertical half-angle, a margin kept)
-    const f = shotAt(plan, plan.times[plan.times.length - 2]), c = shotCamera(f), half = (TUNING.camera.fov / 2) * 0.9;
+    const f = shotAt(plan, plan.times[fi]), c = shotCamera(f), half = (TUNING.camera.fov / 2) * 0.9;
     for (const p of [{ x: d.x, y: 0, z: d.z }, { x: th.x, y: 22, z: th.z }]) {
       const along = Math.atan2(c.y - p.y, c.z - p.z) * 180 / Math.PI; // (down from level to the point)
       expect(Math.abs(along - f.angle)).toBeLessThan(half);
@@ -57,5 +58,60 @@ describe("arriving from the sea chart", () => {
     const d = newFlightClock(); let t = 0; stepFlightClock(d, t, A);
     while (d.phase === "warm") { t += 700; stepFlightClock(d, t, A); }
     expect(t).toBeGreaterThanOrEqual(A.warm.max * 1000); expect(t).toBeLessThan(A.warm.max * 1000 + 701);
+  });
+});
+
+describe("the dive's view first (Ed, 2026-10-24: \"we only really need the scenery south of the treehouse for the dive\")", () => {
+  it("counts the land along the dive's track, south of the treehouse, nearer than the land north of it", () => {
+    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, near = diveReach(map, A), coast = southCoast(map);
+    // on the track: the coast below the dancefloor, halfway up, the treehouse itself
+    expect(near(d.x, coast)).toBeLessThan(1);
+    expect(near(d.x, (coast + d.z) / 2)).toBeLessThan(1);
+    expect(near(th.x, th.z)).toBeLessThan(1);
+    // a spot as far north of the treehouse as the coast is south of it is well off the track
+    const north = near(th.x, th.z - (coast - th.z));
+    expect(north).toBeGreaterThan((coast - th.z) * 0.9);
+    // and the treehouse is read from the map: move it and the track follows
+    const moved = { ...map, treehouse: { ...th, x: th.x - 200, z: th.z - 150 } } as typeof map;
+    expect(diveReach(moved, A)(th.x - 200, th.z - 150)).toBeLessThan(1);
+  });
+});
+
+describe("the house due in view (Ed, 2026-10-24: \"the treehouse doesn't have to be ready at the start of the dive - only once it's in view\")", () => {
+  it("sees what's ahead of the camera and not what's behind or off to the side, and finds when the house comes on screen", () => {
+    const shot: Shot = { tx: 0, ty: 0, tz: 0, angle: 30, distance: 100, fov: 20 };
+    expect(inShot(shot, { x: 0, y: 0, z: 0 }, 16 / 9)).toBe(true); // (its own target)
+    expect(inShot(shot, { x: 0, y: 0, z: 200 }, 16 / 9)).toBe(false); // (behind the camera)
+    expect(inShot(shot, { x: 300, y: 0, z: 0 }, 16 / 9)).toBe(false); // (far off to the side)
+    expect(inShot(shot, { x: 0, y: 0, z: -1000 }, 16 / 9)).toBe(false); // (far ahead, above the top of the frame at this tilt)
+    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map);
+    const pitch = 0.66, back = 520, hand: Handoff = { cam: { x: 0, z: coast + 420 - d.z + Math.cos(pitch) * back, height: Math.sin(pitch) * back, pitch, fov: 20, speed: 100 } };
+    const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
+    const plan = arrivePlan(hand, map, A, () => 0, end), T = planLength(plan), house = { x: th.x, y: 8, z: th.z };
+    const due = dueAt(plan, [house], 16 / 9);
+    expect(due).toBeGreaterThan(0.5); // (not on screen as the dive starts, far out at sea)
+    expect(due).toBeLessThan(T);
+    expect(inShot(shotAt(plan, due), house, 16 / 9)).toBe(true);
+    expect(inShot(shotAt(plan, Math.max(0, due - 0.2)), house, 16 / 9)).toBe(false);
+    // the guard's pace: full well before it's due, slowing in, stopped at it
+    expect(dueRate(due - 5, due, 2)).toBe(1); expect(dueRate(due - 1, due, 2)).toBeCloseTo(0.5, 6); expect(dueRate(due, due, 2)).toBe(0);
+  });
+});
+
+describe("the whole treehouse tree (Ed, 2026-10-24: \"pan up to see the whole treehouse tree before we fly into her bedroom\")", () => {
+  it("comes round to the whole tree, its foot, top and sides on screen, between the frame and her decks, by the tree as measured", () => {
+    const g = newGame(123, TUNING), map = g.map, d = map.dancefloor, th = map.treehouse, coast = southCoast(map), T = A.tree!, aspect = 16 / 9;
+    const pitch = 0.66, back = 520, hand: Handoff = { cam: { x: 0, z: coast + 420 - d.z + Math.cos(pitch) * back, height: Math.sin(pitch) * back, pitch, fov: 20, speed: 100 } };
+    const p0 = poseOf(g), end: Shot = { tx: p0.tx, ty: p0.ty, tz: p0.tz, angle: p0.angle, distance: p0.distance, fov: TUNING.camera.fov };
+    // (the Ent's art as it was, and the great oak's crown: about 185 m across, rules/crown.ts)
+    for (const tree of [{ x: th.x, z: th.z, height: 18, width: 24 }, { x: th.x + 10, z: th.z - 20, height: 90, width: 190 }]) {
+      const plan = arrivePlan(hand, map, A, () => 0, end, undefined, tree, aspect), n = plan.keys.length, shot = plan.keys[n - 2];
+      expect(shot).toEqual(treeShot(T, () => 0, end.fov, tree, aspect));
+      expect(plan.times[n - 2] - plan.times[n - 3]).toBeCloseTo(T.time, 6);
+      for (const p of [{ x: tree.x, y: 0.5, z: tree.z }, { x: tree.x, y: tree.height - 0.5, z: tree.z }, { x: tree.x - tree.width / 2 + 1, y: tree.height / 2, z: tree.z }, { x: tree.x + tree.width / 2 - 1, y: tree.height / 2, z: tree.z }])
+        expect(inShot(shot, p, aspect, 1)).toBe(true);
+      expect(shot.angle).toBeLessThan(A.frame.angle); // (lower than the frame's: the camera's come down and looks up the tree)
+      expect(shotAt(plan, planLength(plan))).toEqual(end);
+    }
   });
 });

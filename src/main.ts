@@ -12,7 +12,9 @@ import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the ol
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
 import { areaUnderWitch, interpolated, STEP, stepGame } from "./rules/game";
-import { TUNING } from "./rules/tuning";
+import { TUNING, type Tuning } from "./rules/tuning";
+import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
+import { nextFrame } from "./render/slices";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
 import { awaitingSpell } from "./rules/leypulse";
@@ -72,7 +74,7 @@ import { debugBlows } from "./rules/alarms";
 import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
-import { endNight, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
+import { endNight, flyIn, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
 import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, overBedLine, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
@@ -719,7 +721,7 @@ function chartOverNight(table?: string): void {
   const n = N(), island = chartIsland(n.tuning.map?.island);
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
-  openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
+  openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
     ...(table ? { table: { onLeave: () => { tableShut = chartAt; chartAt = null; closeChart(); } } } : {}) });
 }
 /** The map table's chart by nearness (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes
@@ -737,16 +739,35 @@ function chartWorldArg(): number | undefined { return new URLSearchParams(locati
  *  or the page loaded anew on the island's link as before; in place, anything going wrong loads it anew all the same, quietly
  *  (Ed's decision 2). Resolves once the new night's start is ready (true) or the page is going (false). */
 function sailFromChart(href: string, to: Sailed): Promise<boolean> {
-  // (she sleeps as she sails: tonight's loan settled, and its dream after the dive, in bed: Ed, 2026-10-24)
-  dreamAfterDive = dreamsAfter("sail") ? settleLoan(N().game.win?.phase === "won") : null;
-  const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
-  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown)); // (in the campaign's world only, as nightOver)
-  carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
-  if (sailWay(n.params, n.tuning) === "reload") { location.href = href; return Promise.resolve(false); }
-  return sailOrReload(() => sailInPlace(to), href, h => { location.href = h; }, e => {
+  const d = departing?.island === to.island && departing.seed === to.seed ? departing : null;
+  departing = null;
+  if (!d) recordSail();
+  if (sailWay(N().params, N().tuning) === "reload") { location.href = href; return Promise.resolve(false); }
+  return sailOrReload(() => sailInPlace(to, d?.night), href, h => { location.href = h; }, e => {
     console.error("sail in place: it went wrong, so the island's page loads instead", e);
     N().playtest.sail(String((e as Error)?.stack ?? e).slice(0, 600));
   });
+}
+/** The night she's leaving recorded on the chart, unwon if it's still on (in the campaign's world only, as nightOver). */
+function recordSail(): void {
+  // (she sleeps as she sails: tonight's loan settled, and its dream after the dive, in bed: Ed, 2026-10-24)
+  dreamAfterDive = dreamsAfter("sail") ? settleLoan(N().game.win?.phase === "won") : null;
+  const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
+  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown));
+  carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
+}
+/** The next night made under the sea chart as it flies (Ed, 2026-10-24, the sail's transition: "Start the dive as soon as what it
+ *  really needs is ready", "Never a frozen frame"): from the moment she sails (the chart's onDepart), the night she's leaving
+ *  recorded and ended and the next made as a sail's is (makeSailNight), its first frames drawn ahead at the chart's hand-off; the
+ *  chart's flight slows to wait for it (app/chartView.ts), then hands over (sailFromChart, with this night). Resolves once it's ready,
+ *  or has gone wrong (the hand-off then loads the island's page, as ever). */
+let departing: { island: string; seed: number; night: Promise<Night> } | null = null;
+function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void> {
+  if (sailWay(N().params, N().tuning) === "reload") return Promise.resolve();
+  recordSail();
+  const night = makeSailNight(to, undefined, at);
+  departing = { island: to.island, seed: to.seed, night };
+  return night.then(() => undefined, () => undefined);
 }
 /** Whether she's been through the whole wake-up on this browser before (Ed's decision 4: the first game plays it all, later loads
  *  the shorter one); set as the curtains first open. */
@@ -773,30 +794,57 @@ const armBack = () => { if (backArmed) return; backArmed = true; addEventListene
  *  ended (its game marked disposed under ?debug=sail), the chart's last frame up while the next is made, the night's link pushed
  *  (and Back's guard), the next night made as the boot makes one (app/night.ts startNight: the view taking it, the sliders
  *  carried), its start's art made, then the flight in from the chart's camera (passed in memory), landing as a sail's does. */
-async function sailInPlace(to: Sailed): Promise<void> {
+async function sailInPlace(to: Sailed, made?: Promise<Night>): Promise<void> {
+  const arrival: Arrival | undefined = to.end ? { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end } : undefined;
+  if (arrival) { showStill(arrival, !made); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip(); } // (made under the flight: no "landing…", the still goes at once)
+  const n = await (made ?? makeSailNight(to, arrival));
+  if (made && arrival) flyIn(n, arrival); // (made under the chart's flight: its hand-off, the still its last frame)
+  if (n.arrival) n.arrival.onReveal = revealArt;
+  n.flags.ready = true;
+  input.clearPresses();
+  sailing = false;
+  if (n.arrival) n.arrival.begin(n.game, !!made); // (the camera takes over from the chart's still, at once if it's drawn there already; it lands as a sail's does: arrived)
+  else arrived(); // (no flight: the chart couldn't fly)
+}
+/** A sail's night made (sailInPlace, or under the chart's flight: departFromChart): the old night's music fading to the sea and the
+ *  wind, the old night ended, the night's link pushed (and Back's guard), the night made (startNight) and its start readied: the
+ *  ground, the house and the shaders, not the trees (Ed, 2026-10-24: "Don't wait for the trees": they come under the loading mist,
+ *  the dive's own areas first, rules/arrive.ts diveReach); `at`, the chart's hand-off, its first frames drawn there ahead. */
+async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"] | null): Promise<Night> {
   if (sailFail) throw new Error("?debug=sail: the sail in place made to fail"); // (window.witch.sail's test of the fallback)
   sailing = true;
   gestured = true; // (she's played: the sound's woken already)
   sound.sailing(1);
-  const arrival: Arrival | undefined = to.end ? { v: 1, island: to.island, world: to.world ?? loadSave().world, at: Date.now(), ...to.end } : undefined;
   forgetArrival(); // (the reload's copy, sessionStorage's: a reload later doesn't fly again)
-  chartHeld = false; view.assets.hold(false); // (the chart closed: the art workers free for the next island)
+  chartHeld = false; view.assets.hold(false); // (the chart closed, or flying in: the art workers free for the next island)
   endNight(page, params.get("debug") === "sail");
-  if (arrival) { showStill(arrival); hudFade(HUD_IDS); document.body.classList.add("arriving"); armSkip(); }
   const p = sailParams(new URLSearchParams(location.search), to.island, to.seed, to.world);
   backGuard.sailed("?" + p.toString() + location.hash);
   armBack();
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
   if (dreamAfterDive && !wakeInBedroom(n.game)) dreamAfterDive = null; // (a dream to come: the flight in ends on her bedroom, rules/opening.ts)
-  if (n.arrival) n.arrival.onReveal = revealArt;
   lastDraw = 0;
-  await view.prepare();
-  n.flags.ready = true;
-  input.clearPresses();
-  sailing = false;
-  if (n.arrival) n.arrival.begin(n.game); // (the camera takes over from the chart's still; it lands as a sail's does: arrived)
-  else arrived(); // (no flight: the chart couldn't fly)
+  const A = n.tuning.arrive;
+  await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
+  if (at && A) await warmAt(n, handoffShot({ cam: at }, n.game.map), A);
+  mark("sail:ready");
+  return n;
+}
+/** The night's first frames drawn at `shot` (the chart's hand-off), under the chart, until they come calm as the flight's warm-up
+ *  waits for (rules/arrive.ts stepFlightClock): the heavy ones over before the dive, not at its start. */
+async function warmAt(n: Night, shot: Shot, A: NonNullable<Tuning["arrive"]>): Promise<void> {
+  const c = newFlightClock();
+  view.fly = shot;
+  view.assets.hold(true); // (the art workers paused for them: the first draws not fighting them for the machine)
+  try {
+    while (!stepFlightClock(c, performance.now(), A).faded) {
+      const t0 = performance.now();
+      view.render(n.game.clock.time);
+      if (TIMING) console.info(`sail-timing: warm frame ${Math.round(performance.now() - t0)} ms`, JSON.stringify(Object.fromEntries(Object.entries(view.ms).filter(([, v]) => v > 20).map(([k, v]) => [k, Math.round(v)]))));
+      await nextFrame();
+    }
+  } finally { view.fly = null; view.assets.hold(false); }
 }
 /** Another way to a new night (the plan's PR 6: the bed, the bot game's exit): in place as a sail is (the tuning's sail.inPlace,
  *  ?sail=), else, in a bot game for any but its exit (the bot's on the old night), or on anything going wrong, the link loaded as
