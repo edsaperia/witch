@@ -3,8 +3,8 @@
 // as often as she likes; moving (WASD, a rise) gets her up: she stretches, then stands beside the bed and walks (WASD, taught in
 // a safe room). The first time she comes to the dressing table its mirror opens by itself (her skin, hair and earrings). Up, the
 // wake-up's over (`open`; the oak, Ed 2026-10-24: no curtains, and nothing waits on the island's build, which carries on behind
-// her): the bedroom's door opens as soon as she's dressed (last night's clothes in their pile by the bed, rules/clothesPile.ts),
-// everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
+// her): the bedroom's door opens as soon as she's up (Ed, 2026-10-25: "I should be able to leave regardless" of dressing; last
+// night's clothes wait in their pile by the bed, rules/clothesPile.ts, for whenever she wants them), everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
 // broom, hat, and bag) should be before the locked door"). Then down the trunk to her decks on the Terrace, where E starts the
 // party (Ed, 2026-10-20: "The DJ intro replaces the party spell before the party has started"): she's seated behind them and the
 // spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up
@@ -22,7 +22,7 @@ import { dressed, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
-export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed" | /** at the door undressed */ "dressFirst";
+export type WakeEvent = "snooze" | "ring" | "stretch" | "up" | "mirror" | "decks" | /** E at the pile: dressed */ "dressed";
 
 export interface WakeState {
   beat: WakeBeat;
@@ -30,7 +30,7 @@ export interface WakeState {
   at: number;
   /** How many times she's snoozed. */
   snoozes: number;
-  /** She's up: the wake-up's over (the door opens once she's dressed). */
+  /** She's up: the wake-up's over (the door's open). */
   open: boolean;
   /** The dressing table's mirror opened by itself already (or, short, never by itself). */
   mirror: boolean;
@@ -39,10 +39,8 @@ export interface WakeState {
   /** This frame's happenings, for the page (cleared as each frame's steps begin: rules/game.ts stepGame). */
   events: WakeEvent[];
   /** Last night's clothes still in the pile by her bed (rules/clothesPile.ts; Ed, 2026-10-23): she's in her nightie till it's empty,
-   *  and the door waits on it. Absent (an older wake-up): dressed. */
+   *  dressed or not, she can leave (Ed, 2026-10-25). Absent (an older wake-up): dressed. */
   pile?: PileSlot[];
-  /** When she was last told to get dressed at the door (her clock), so it's said now and then, not every step. */
-  nagAt?: number;
 }
 
 /** The wake-up's knobs (the tuning's opening.wake): a snooze's seconds (Ed: 5), the stretch's, and how long the alarm rings before E
@@ -76,10 +74,9 @@ export function endDream(g: Game, ht: number): void {
   w.beat = "alarm"; w.at = ht; w.events.push("ring");
 }
 
-/** The bedroom's door shut: till she's dressed (the oak, 2026-10-24: nothing else; it waited on the curtains, and they on the build). */
-export const doorShut = (g: { wake?: WakeState }): boolean => !!g.wake && !dressed(g.wake);
-/** How often the door says to get dressed while she walks at it (s, her clock). */
-const NAG_EVERY = 3;
+/** The bedroom's door shut: till she's up (asleep, dreaming, snoozing, stretching). Not on her clothes (Ed, 2026-10-25, his playtest
+ *  of v4497: "I should be able to leave regardless"; it waited on her being dressed, and before the oak on the curtains). */
+export const doorShut = (g: { wake?: WakeState }): boolean => !!g.wake && !g.wake.open;
 
 /** A step of the wake-up, before her own (rules/game.ts): her controls as the beat lets them through. */
 export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Controls {
@@ -122,7 +119,7 @@ export function atDecks(g: Game): boolean {
   return !!d && b.mode === "ground" && Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= DECKS_REACH;
 }
 /** Up, the party not started: out to her decks, where E seats her and casts the spell (its routine the DJ intro); no other key
- *  casts it meanwhile. (Undressed she can't leave the bedroom: keepInBedroom.) */
+ *  casts it meanwhile, dressed or in her nightie. */
 function toDecks(g: Game, c: Controls, press: boolean): Controls {
   if (press && atDecks(g)) {
     const d = deckOf(g.map, g.tuning)!, W = g.witches[0];
@@ -134,13 +131,10 @@ function toDecks(g: Game, c: Controls, press: boolean): Controls {
   return { ...c, castParty: false, spell: false };
 }
 
-/** After her step: the bedroom's door shut till she's dressed (she's kept on its floor, its own blob: rules/houseRooms.ts
- *  keepInRoom); walking at it up but the pile still there, it says to get dressed first (now and then). */
+/** After her step: the bedroom's door shut till she's up (she's kept on its floor, its own blob: rules/houseRooms.ts keepInRoom). */
 export function keepInBedroom(g: Game): void {
   if (!doorShut(g)) return;
   const W = g.witches[0], b = W.body, k = keepInRoom(g.map.treehouse, "bedroom", b.x, b.z);
   if (!k || k.inside) return;
   W.body = { ...b, x: k.x, z: k.z };
-  const w = g.wake!;
-  if (w.open && !dressed(w) && !(g.herTime - (w.nagAt ?? -Infinity) < NAG_EVERY)) { w.nagAt = g.herTime; w.events.push("dressFirst"); }
 }

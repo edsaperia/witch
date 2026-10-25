@@ -1,15 +1,16 @@
 // The new opening's wake-up (rules/wakeUp.ts; Ed, 2026-10-20): each beat's input (the alarm, E snoozing it five seconds a time as
 // often as she likes, moving getting her up, the stretch, walking, the mirror the first time), and the bedroom's door: shut till
-// she's dressed, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build).
+// she's up, and on nothing else (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build; Ed 2026-10-25: not on
+// her clothes either, "I should be able to leave regardless").
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { HOUSE_ROOMS, fromPlan, objectFront, toPlan } from "./houseRooms";
+import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
 import { atDecks, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
 import { dressed, PILE_SLOTS, wearFromStation, wornGenome } from "./clothesPile";
-import { deckOf } from "./treehouse";
+import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
@@ -106,16 +107,29 @@ describe("the dressing table", () => {
 });
 
 describe("the door, and nothing waiting on the build (the oak, Ed 2026-10-24: \"No curtains, and no loading gate\")", () => {
-  it("undressed, the bedroom's door stays shut however long she walks at it, the island built or not", () => {
+  it("up, she walks out of the bedroom's door in her nightie, the island built or not (Ed, 2026-10-25: \"I should be able to leave regardless\")", () => {
     for (const ready of [false, true]) {
       const g = up(ready);
       expect(g.wake!.open).toBe(true);
-      expect(doorShut(g)).toBe(true);
-      atDoor(g); run(g, 6, outward());
-      expect(outOfBedroom(g)).toBe(false);
-      run(g, 10, { moveX: -1 }); run(g, 10, { moveZ: -1 }); run(g, 10, { moveX: 1 }); run(g, 10, { moveZ: 1 });
-      expect(inRoom(g)).toBe(true);
+      expect(dressed(g.wake)).toBe(false);
+      expect(doorShut(g)).toBe(false);
+      atDoor(g); run(g, 4, outward());
+      expect(outOfBedroom(g)).toBe(true);
+      expect(g.wake!.pile).toEqual([...PILE_SLOTS]); // (last night's clothes still by her bed, for whenever she wants them)
     }
+  });
+
+  it("the door's shut only till she's up: asleep, ringing, snoozing and stretching (held in bed then too)", () => {
+    const g = woken();
+    expect(doorShut(g)).toBe(true);
+    run(g, K.alarmMin); press(g);
+    expect(g.wake!.beat).toBe("snooze"); expect(doorShut(g)).toBe(true);
+    run(g, STEP, { moveX: 1 });
+    expect(g.wake!.beat).toBe("stretch"); expect(doorShut(g)).toBe(true);
+    atDoor(g); run(g, STEP); // (put at the door mid-stretch: kept on the bedroom's floor)
+    expect(outOfBedroom(g)).toBe(false);
+    run(g, K.stretch + 0.1);
+    expect(g.wake!.open).toBe(true); expect(doorShut(g)).toBe(false);
   });
 
   it("nor does the bed end the night meanwhile, nor any key cast the spell", () => {
@@ -156,6 +170,22 @@ const atDoor = (g: Game) => {
 };
 /** Walking out of the door, along its branch to the Boudoir. */
 const outward = (): Partial<Controls> => { const p = doorBranch(), [x0, z0] = p[p.length - 1], [x1, z1] = p[0], L = Math.hypot(x1 - x0, z1 - z0); return { moveX: (x1 - x0) / L, moveZ: (z1 - z0) / L }; };
+/** A limb's middle line on the plan, from `a`'s end to `b`'s. */
+const limb = (a: string, b: string): [number, number][] => {
+  const c = HOUSE_ROOMS.corridors.find(q => q.id === `${a}-${b}`) ?? HOUSE_ROOMS.corridors.find(q => q.id === `${b}-${a}`)!;
+  return c.id === `${a}-${b}` ? c.pts! : [...c.pts!].reverse();
+};
+/** Walks her through the plan's points in turn (steered at each); whether she got to the last within `limit` seconds. */
+function follow(g: Game, pts: [number, number][], limit = 60): boolean {
+  const W = g.witches[0];
+  let t = 0, i = 0;
+  while (i < pts.length && t < limit) {
+    const p = fromPlan(g.map.treehouse, pts[i][0], pts[i][1]), dx = p.x - W.body.x, dz = p.z - W.body.z, L = Math.hypot(dx, dz);
+    if (L < (i === pts.length - 1 ? 0.4 : 1.2)) { i++; continue; }
+    stepGame(g, { ...idle, moveX: dx / L, moveZ: dz / L }, STEP); t += STEP;
+  }
+  return i === pts.length;
+}
 /** Out of the bedroom: past its own floor's edge (on the house's plan). */
 const outOfBedroom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.shape, "bedroom", p.x, p.z) > 0.3; };
 
@@ -210,21 +240,22 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     expect(wornGenome(null, w.pile)).toBeNull(); // (dressed: her own look, as it is)
   });
 
-  it("the door waits till she's dressed (Ed: \"get dressed first\"); dressed by the stations alone counts", () => {
+  it("in her nightie, a hat taken off the Cloakroom's hats' floor is on her head, out of the pile (so she's drawn in it)", () => {
+    const g = up(), W = g.witches[0], hats = floorHats(W), slots = hatSlots(g.map.treehouse), i = hats.findIndex(h => h !== "");
+    const took = hats[i];
+    W.body = { ...W.body, x: slots[i].x, z: slots[i].z, vx: 0, vz: 0 };
+    run(g, STEP, { place: true, sigilHeld: true });
+    expect(W.spells.hat).toBe(took);
+    expect(g.wake!.pile).toEqual(PILE_SLOTS.filter(p => p !== "hat"));
+  });
+
+  it("half dressed by the stations, she walks out as she is, the rest left in the pile", () => {
     const g = up();
-    expect(g.wake!.open).toBe(true);
-    expect(doorShut(g)).toBe(true);
-    atDoor(g);
-    const seen = run(g, 6, outward());
-    expect(outOfBedroom(g)).toBe(false);
-    expect(seen).toContain("dressFirst");
-    expect(seen.filter(e => e === "dressFirst").length).toBeLessThanOrEqual(2); // (now and then, not every step)
-    for (const st of ["wardrobe", "shoeRack", "cloakPegs"]) wearFromStation(g.wake!, st);
-    expect(doorShut(g)).toBe(true); // (her hat and bits still in the pile)
-    g.wake!.pile = []; // (all on by the stations: the bags' a station too, past the door, so here as if picked up)
+    for (const st of ["wardrobe", "shoeRack"]) wearFromStation(g.wake!, st);
     expect(doorShut(g)).toBe(false);
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);
+    expect(g.wake!.pile).toEqual(["cloak", "hat", "bits"]);
   });
 });
 
@@ -298,12 +329,12 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     expect(run(g, 0.5)).not.toContain("mirror");
   });
 
-  it("and the door waits on her being dressed all the same", () => {
+  it("and the door's open as soon as she's up, dressed or not; the party waits for her decks all the same", () => {
     const g = short(false);
     run(g, K.alarmMin); press(g);
     expect(g.wake!.open).toBe(true);
-    atDoor(g); run(g, 6, outward());
-    expect(inRoom(g)).toBe(true);
+    atDoor(g); run(g, 4, outward());
+    expect(outOfBedroom(g)).toBe(true);
     expect(g.party.spellAt).toBeNull();
   });
 });
@@ -384,18 +415,33 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
     run(g, 1);
     expect(rel(g)).toEqual(p); // (held in bed while it rings)
   });
-  it("then the wake-up as every morning: up at a move, dressed at the pile before the door opens, out to her decks for the party", () => {
+  it("then the wake-up as every morning: up at a move, the door open at once, dressing at the pile if she likes", () => {
     const g = sailed(false);
     run(g, K.alarmMin + 0.05);
     const seen = run(g, 0.1, { moveX: 1 });
     expect(seen).toContain("up");
     expect(g.wake!.open).toBe(true);
-    expect(doorShut(g)).toBe(true); // (undressed: the door waits)
+    expect(doorShut(g)).toBe(false); // (undressed: the door's open all the same)
     standAt(g, "clothesPile");
     press(g);
     expect(dressed(g.wake)).toBe(true);
-    expect(doorShut(g)).toBe(false);
     expect(g.party.spellAt).toBeNull(); // (the party waits for her decks, as after the bed)
+  });
+  it("undressed, she walks from her bed down the trunk to the Terrace and starts the party at her decks in her nightie (Ed, 2026-10-25, his playtest of a sail)", () => {
+    const g = sailed(false);
+    run(g, K.alarmMin + 0.05); run(g, 0.1, { moveX: 1 });
+    expect(g.wake!.open).toBe(true);
+    const R = HOUSE_ROOMS.rooms.find(q => q.id === "bedroom")!, T = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")!;
+    const down: [number, number][] = [[R.x, R.z], ...limb("bedroom", "boudoir"), ...limb("boudoir", "parlour"), ...limb("parlour", "terrace"), [T.x, T.z]];
+    expect(follow(g, down)).toBe(true);
+    const d = deckOf(g.map, g.tuning)!;
+    expect(onTerrace(d, g.witch.x, g.witch.z)).toBe(true);
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]); // (never dressed)
+    const seat = d.seat, W = g.witches[0];
+    for (let i = 0; i < 10 / STEP && !atDecks(g); i++) { const dx = seat.x - W.body.x, dz = seat.z - W.body.z, L = Math.hypot(dx, dz) || 1; stepGame(g, { ...idle, moveX: dx / L, moveZ: dz / L }, STEP); }
+    expect(atDecks(g)).toBe(true);
+    expect(press(g)).toContain("decks");
+    expect(g.party.spellAt).not.toBeNull();
   });
   it("with a find on loan: the same bed, dreaming first, the alarm as the dream ends", () => {
     const g = sailed(true);
