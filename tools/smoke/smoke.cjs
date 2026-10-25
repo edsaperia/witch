@@ -106,7 +106,12 @@ async function main() {
   // "players rise to the treetops instead of dodging"; the plain broom halves it), so wait that out on her own clock first.
   // A press can also be dropped while she's staggered by a blow or knocked out, so press again until she leaves the ground,
   // and say what state she was in if she never does.
+  // On the house she rises only from its Terrace, never in its rooms (#1075, Ed 2026-10-23): the zoom path can end with her flown
+  // in over the Terrace (landing on it) and walked on into a room (on seed 123 the house stands in the Holly thicket, about 80 m
+  // across; she then "wouldn't rise", the world at a tenth: 2026-10-25). So on the house she's put back by her decks on the
+  // Terrace first, as a player would walk out to it.
   const rise = async page => {
+    if (await page.evaluate(() => { const g = window.witch.game, W = g.witches[0], b = W.body, s = g.map.start; if (!b.perch || b.mode !== "ground" || b.seated || Math.hypot(b.x - s.x, b.z - s.z) < 1) return false; W.body = { ...b, x: s.x, z: s.z, vx: 0, vz: 0 }; return true; })) results.push("on the house: put back on its Terrace by her decks to rise");
     for (let i = 0; i < 6; i++) {
       await page.waitForFunction(() => {
         const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
@@ -115,7 +120,7 @@ async function main() {
       await page.keyboard.press("Space");
       if (await page.waitForFunction(() => window.witch.game.witch.mode !== "ground", null, { timeout: 60000, polling: 100 }).then(() => true, () => false)) return;
     }
-    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, ko: !!W.ko, knock: W.knock, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
+    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, perch: W.body.perch, x: W.body.x, z: W.body.z, ko: !!W.ko, knock: W.knock, cool: W.cool, stack: W.leash.stack.length, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
     throw new Error(`she wouldn't rise from the ground: ${JSON.stringify(st)}`);
   };
   // Hold a key for `secs` of her time (a slow headless renderer runs fewer, capped frames). Her own clock (g.herTime), not the
