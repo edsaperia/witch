@@ -1,0 +1,13 @@
+{
+  "id": "dining",
+  "label": "Dining Room",
+  "order": 0,
+  "trunk": true,
+  "x": -18,
+  "z": 26,
+  "r": 14,
+  "objects": [
+    {"id":"teaTable","label":"Tea table","use":{"kind":"say","line":"The tea's not brewed yet."},"offset":[-7,-2.33],"box":{"w":2.8,"d":2.8,"h":1.4}},
+    {"id":"cardTable","label":"Card table","use":{"kind":"say","line":"The cards come later."},"offset":[7,4.67],"box":{"w":3.4,"d":3.4,"h":1.5}}
+  ]
+}

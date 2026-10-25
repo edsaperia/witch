@@ -11,6 +11,9 @@ import { hash2, rng, smoothstep, vnoise } from "./random";
 import type { Tuning } from "./tuning";
 import { floorClearing, speakerRadius, speakerRing, type Speaker } from "./speakers";
 
+/** The treehouse's front, where the ley line leaves it: `clear` metres from its foot towards the dancefloor (the oak's Terrace opens
+ *  that way: Ed, 2026-10-24; due south while it stood due north). */
+const frontOf = (t: { x: number; z: number }, d: { x: number; z: number }, clear: number) => { const L = Math.hypot(d.x - t.x, d.z - t.z) || 1; return { x: t.x + ((d.x - t.x) / L) * clear, z: t.z + ((d.z - t.z) / L) * clear }; };
 /** How far the treehouse's foot stands from the dancefloor's middle (Ed, 2026-10-05: "5m due north of
  *  the dance floor, outside the speaker ring"): past the ring's outer edge by gap, plus its footprint. */
 export const treehouseDistance = (t: Tuning) => speakerRadius(t) + t.dancefloor.speakers.footprint + t.treehouse.gap + t.treehouse.clear;
@@ -717,8 +720,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   const map = {
     seed, tuning, n, first, margin, shape, cells, playable, inBuffer, isLake, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
-    treehouse, treehouseFront: { x: treehouse.x, z: treehouse.z + tuning.treehouse.clear }, grounds, scenes,
-    start: { x: treehouse.x, z: treehouse.z + seatOffset(tuning) }, // (her decks: on the balcony or the deck, rules/treehouse.ts)
+    treehouse, treehouseFront: frontOf(treehouse, centre, tuning.treehouse.clear), grounds, scenes,
+    start: { x: treehouse.x + seatOffset(tuning).x, z: treehouse.z + seatOffset(tuning).z }, // (her decks: on the Terrace's open rim, or the deck: rules/treehouse.ts)
     bounds,
     extent: ext ? (land ? { minX: Math.min(ext.minX, land.box.minX - edgeK * A), maxX: Math.max(ext.maxX, land.box.maxX + edgeK * A), minZ: Math.min(ext.minZ, land.box.minZ - edgeK * A), maxZ: Math.max(ext.maxZ, land.box.maxZ + edgeK * A) } : ext) : { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A }, // (the forest past the coast all round)
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,

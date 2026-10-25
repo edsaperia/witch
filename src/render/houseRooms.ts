@@ -11,13 +11,13 @@
 import * as THREE from "three";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
-import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject, type Rect } from "../rules/houseRooms";
+import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
 import type { Witch } from "../rules/game";
 import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { paintFloor, paintRoof, standing, type FloorArt, type Terrace } from "./houseArt";
-import { nearestIn } from "../rules/houseRooms";
+import { paintFloor, standing, type FloorArt } from "./houseArt";
+import type { PlanMap } from "./crown";
 import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
@@ -35,14 +35,9 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const PLANK: [number, number, number] = [0.36, 0.25, 0.16], PLANK2: [number, number, number] = [0.31, 0.21, 0.13], SEAM: [number, number, number] = [0.2, 0.13, 0.08];
-const WALL: [number, number, number] = [0.3, 0.2, 0.12], WALL_R: [number, number, number] = [0.22, 0.145, 0.085], WALL_TOP: [number, number, number] = [0.42, 0.3, 0.19];
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], curtains: [0.55, 0.18, 0.26], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
-const SKIRT = 0.35, PLANK_W = 0.5, STEP_X = 2;
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
-
-const inside = (r: Rect, x: number, z: number) => x > r.x0 + 1e-6 && x < r.x1 - 1e-6 && z > r.z0 + 1e-6 && z < r.z1 - 1e-6;
 
 /** How far south a point of the plan lies in the world (the hub's centre 0): the drawing's depth. */
 const south = (x: number, z: number) => fromPlan({ x: 0, z: 0 }, x, z).z;
@@ -50,35 +45,11 @@ const quad = (p: [number, number, number][], rgb: [number, number, number], laye
 /** In the drawing's order: floors, then walls, then objects; each far to near. */
 const inOrder = (q: Quad[]) => q.sort((a, b) => a.layer - b.layer || a.depth - b.depth);
 
-/** The rooms' quads, once: floors in planks, walls with their doorways cut, the objects' boxes. */
-function buildQuads(hub: number, T?: Terrace): Quad[] {
-  const H = HOUSE_ROOMS, all: Rect[] = [...H.rooms, ...H.corridors], q: Quad[] = [];
-  const open = (x: number, z: number, self: Rect) => Math.hypot(x, z) < hub || all.some(r => r !== self && inside(r, x, z)); // (a wall's spot inside another room or corridor, or the hub: a doorway)
-  if ((H as { organic?: boolean }).organic) {
-    // the Ent's own (render/houseArt.ts): the floors a painted texture (FloorMesh), here what stands up off them, and the objects
-    for (const u of standing(H, (x, z) => H.corridors.some(c => nearestIn(c, x, z).d <= 0) || (!T && Math.hypot(x, z) < hub + 0.3), T)) q.push(quad(u.p, u.rgb, u.layer));
-    objects(q);
-    return inOrder(q);
-  }
-  // floors: boards running along the plan's x, half a metre each, a seam between
-  for (const r of all) for (let z = r.z0, i = 0; z < r.z1 - 1e-6; z += PLANK_W, i++) {
-    const z1 = Math.min(r.z1, z + PLANK_W);
-    for (let x = r.x0; x < r.x1 - 1e-6; x += STEP_X) { const x1 = Math.min(r.x1, x + STEP_X); q.push(quad([[x, z, 0], [x1, z, 0], [x1, z1 - 0.04, 0], [x, z1 - 0.04, 0]], i % 2 ? PLANK : PLANK2, 0), quad([[x, z1 - 0.04, 0], [x1, z1 - 0.04, 0], [x1, z1, 0], [x, z1, 0]], SEAM, 0)); }
-  }
-  // walls: along each edge, in 0.5 m pieces, left out where another room, a corridor or the hub opens onto it
-  const wall = (r: Rect, a: [number, number], b: [number, number], h: number, rgb: [number, number, number]) => {
-    const n = Math.max(1, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.5));
-    for (let i = 0; i < n; i++) {
-      const u0 = i / n, u1 = (i + 1) / n, x0 = a[0] + (b[0] - a[0]) * u0, z0 = a[1] + (b[1] - a[1]) * u0, x1 = a[0] + (b[0] - a[0]) * u1, z1 = a[1] + (b[1] - a[1]) * u1;
-      const mx = (x0 + x1) / 2, mz = (z0 + z1) / 2, nx = (b[1] - a[1]) === 0 ? 0 : 0.3, nz = (b[1] - a[1]) === 0 ? 0.3 : 0;
-      if (open(mx + nx, mz + nz, r) || open(mx - nx, mz - nz, r)) continue;
-      q.push(quad([[x0, z0, 0], [x1, z1, 0], [x1, z1, h - 0.12], [x0, z0, h - 0.12]], rgb, 1), quad([[x0, z0, h - 0.12], [x1, z1, h - 0.12], [x1, z1, h], [x0, z0, h]], WALL_TOP, 1));
-    }
-  };
-  for (const r of all) {
-    wall(r, [r.x0, r.z0], [r.x1, r.z0], H.wall, WALL); wall(r, [r.x1, r.z0], [r.x1, r.z1], H.wall, WALL_R); // the far two, standing: up-left and up-right on the screen
-    wall(r, [r.x0, r.z0], [r.x0, r.z1], SKIRT, WALL); wall(r, [r.x0, r.z1], [r.x1, r.z1], SKIRT, WALL_R); // the near two, cut down (the camera's side)
-  }
+/** The rooms' quads, once: what stands up off the floor (render/houseArt.ts: the floor itself a painted texture, FloorMesh), and the
+ *  objects' boxes. */
+function buildQuads(): Quad[] {
+  const q: Quad[] = [];
+  for (const u of standing(HOUSE_ROOMS)) q.push(quad(u.p, u.rgb, u.layer));
   objects(q);
   return inOrder(q);
 }
@@ -187,10 +158,12 @@ export class HouseRoomsView {
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
   private floorArt: FloorArt | null = null;
-  // (each room's roof, a canopy of leaves: hidden while she's in it or near; render/houseArt.ts paintRoof)
-  private readonly roofs = new THREE.Group();
-  private roofList: { mesh: THREE.Mesh; cx: number; cz: number; R: number; a: number; locked: boolean; door?: { x: number; z: number } }[] = [];
-  private lastT = 0;
+  // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
+  // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
+  private readonly terraceFloor = new THREE.Mesh(this.floor.geometry, new THREE.MeshBasicMaterial({ alphaTest: 0.5, side: THREE.DoubleSide }));
+  /** The floors' own map from the house's plan into the world this frame (render/crown.ts lays the great oak's crown over them by
+   *  it, in place of the rooms' leaf roofs: Ed, 2026-10-24), null while she isn't in the house. */
+  plan: PlanMap | null = null;
   /** Her whole outfit (her genome, as the creator and the stations keep it), for last night's clothes in their pile: she herself is
    *  drawn in what she has on (main.ts: rules/clothesPile.ts wornGenome). */
   outfit: unknown = null;
@@ -202,9 +175,9 @@ export class HouseRoomsView {
     const R = ROOMS_ORDER;
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
-    this.roofs.visible = false;
+    this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh);
-    this.meshes = [this.floor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, this.roofs];
+    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
@@ -214,10 +187,10 @@ export class HouseRoomsView {
     this.ring = document.createElement("div"); this.ring.style.cssText = "position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border-radius:50%";
     this.box.append(this.tag, this.bubble, this.ring);
     // (?rooms=labels: each room's name on its floor, for the plan's shots)
-    if (typeof location !== "undefined" && /[?&]rooms=labels/.test(location.search)) for (const r of [{ id: "terrace", label: "Terrace", x0: 0, x1: 0, z0: 0, z1: 0 }, ...HOUSE_ROOMS.rooms]) {
+    if (typeof location !== "undefined" && /[?&]rooms=labels/.test(location.search)) for (const r of HOUSE_ROOMS.rooms) {
       const el = document.createElement("div"); el.textContent = r.label;
       el.style.cssText = "position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font:700 15px/1.1 inherit;padding:2px 7px;border-radius:6px;background:rgba(255,236,190,.92);color:#2a1d38";
-      this.box.append(el); this.labels.push({ el, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+      this.box.append(el); this.labels.push({ el, x: r.x, z: r.z });
     }
     document.body.append(this.box);
   }
@@ -240,16 +213,14 @@ export class HouseRoomsView {
   /** A frame: `onTreehouse` takes a point of the Ent's art (pixels) into the world (render/view.ts); `ht`, her clock. */
   update(v: View, onTreehouse: (px: number, py: number) => V3, ht: number): void {
     const g = v.game, w = g.witch, t = g.tuning, T = v.assets.treehouse, d = deckOf(g.map, t);
-    const shown = !!(d?.house?.rooms && T.ent && w.perch && !w.seated && (w.mode === "ground" || w.mode === "descending"));
+    const shown = !!(d?.house?.rooms && T.ent && w.perch && (w.mode === "ground" || w.mode === "descending")); // (at her decks too: the Terrace the oak's floor, render/houseArt.ts)
     for (const p of this.parts) p.mesh.visible = shown;
     this.furniture.visible = shown;
     this.workshop.group.visible = shown;
-    this.floor.visible = shown && !!(HOUSE_ROOMS as { organic?: boolean }).organic;
-    this.roofs.visible = this.floor.visible;
-    if (!shown) { this.box.style.display = "none"; this.sparkle?.draw([], 0, 1); return; }
+    this.floor.visible = this.terraceFloor.visible = shown;
+    if (!shown) { this.box.style.display = "none"; this.plan = null; this.sparkle?.draw([], 0, 1); return; }
     const D = d as Deck & { house: NonNullable<Deck["house"]> };
-    const Tz = (HOUSE_ROOMS as { organic?: boolean }).organic ? { r: D.r, bz: D.house.balcony.z - D.z, br: D.house.balcony.r } : undefined;
-    if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(D.r, Tz); this.hatsKey = ""; }
+    if (this.hub !== D.r) { this.hub = D.r; this.quads = buildQuads(); this.hatsKey = ""; }
     // her hats on the hats' floor (rules/houseRooms.ts floorHats: laid out the first time she comes in)
     const W = g.witches[0], hats = hatsOnFloor(W), key = hats.join();
     if (key !== this.hatsKey) {
@@ -265,13 +236,16 @@ export class HouseRoomsView {
     // the house's plane (render/view/witch.ts): x across the Ent's art in its pixels, z down it, h up it; along the ray by z
     const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
-    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); }; // (slid up the plane with her: render/view/witch.ts houseShift)
     if (this.floor.visible) {
       const N = 48;
       if (!this.floorArt) {
-        const A = (this.floorArt = paintFloor(HOUSE_ROOMS, v.mpp)), tex = new THREE.CanvasTexture(A.canvas);
-        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; // (its colours as the quads' vertex colours are: as they are)
-        (this.floor.material as THREE.MeshBasicMaterial).map = tex; (this.floor.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        const A = (this.floorArt = paintFloor(HOUSE_ROOMS, v.mpp, "rest"));
+        for (const [mesh, art] of [[this.floor, A], [this.terraceFloor, paintFloor(HOUSE_ROOMS, v.mpp, "terrace")]] as const) {
+          const tex = new THREE.CanvasTexture(art.canvas);
+          tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; // (its colours as the quads' vertex colours are: as they are)
+          (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
+        }
         const uv: number[] = [], idx: number[] = [];
         for (let j = 0; j <= N; j++) for (let i = 0; i <= N; i++) uv.push(i / N, j / N);
         for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const a = j * (N + 1) + i; idx.push(a, a + 1, a + N + 2, a, a + N + 2, a + N + 1); }
@@ -282,35 +256,10 @@ export class HouseRoomsView {
       for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.w * i) / N, A.z0 + (A.h * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
       pos.needsUpdate = true;
     }
-    if (this.roofs.visible) {
-      const M = 16, dt = Math.min(0.1, Math.max(0, ht - this.lastT)); this.lastT = ht;
-      if (!this.roofList.length) HOUSE_ROOMS.rooms.forEach((r, n) => {
-        if (!r.r) return;
-        const R = r.r + 1.3, tex = new THREE.CanvasTexture(paintRoof(R, v.mpp, n + 1));
-        tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace;
-        const geo = new THREE.BufferGeometry(), uv: number[] = [], idx: number[] = [];
-        for (let j = 0; j <= M; j++) for (let i = 0; i <= M; i++) uv.push(i / M, j / M);
-        for (let j = 0; j < M; j++) for (let i = 0; i < M; i++) { const a = j * (M + 1) + i; idx.push(a, a + 1, a + M + 2, a, a + M + 2, a + M + 1); }
-        geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array((M + 1) * (M + 1) * 3), 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geo.setIndex(idx);
-        const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
-        mesh.frustumCulled = false; mesh.renderOrder = 19.97; this.roofs.add(mesh);
-        this.roofList.push({ mesh, cx: (r.x0 + r.x1) / 2, cz: (r.z0 + r.z1) / 2, R, a: 1, locked: !!r.locked, door: HOUSE_ROOMS.objects.find(o => o.id === `${r.id}Door`) });
-      });
-      const me = toPlanAt0(w.x - D.x, w.z - D.z);
-      for (const f of this.roofList) {
-        // hidden while she's in the room or near its door (its rim and a little past), eased (as the forest's canopy over her); a locked
-        // room's only while she's at its door, peeking in at its sheeted furniture (art/sheeted.js), the door still shut
-        const near = f.locked ? !!f.door && Math.hypot(me.x - f.door.x, me.z - f.door.z) < 3.5 : Math.hypot(me.x - f.cx, me.z - f.cz) < f.R + 1.5, want = near ? 0 : 1;
-        f.a += (want - f.a) * (1 - Math.exp(-6 * dt)); if (dt === 0) f.a = want;
-        (f.mesh.material as THREE.MeshBasicMaterial).opacity = f.a; f.mesh.visible = f.a > 0.02;
-        const pos = f.mesh.geometry.getAttribute("position") as THREE.BufferAttribute;
-        for (let j = 0, k = 0; j <= M; j++) for (let i = 0; i <= M; i++, k++) {
-          const x = f.cx - f.R + (2 * f.R * i) / M, z = f.cz - f.R + (2 * f.R * j) / M, d = Math.min(1, Math.hypot(x - f.cx, z - f.cz) / f.R);
-          const p = toWorld(x, z, 2.7 + 2.2 * (1 - d * d)); pos.setXYZ(k, p.x, p.y, p.z);
-        }
-        pos.needsUpdate = true;
-      }
-    }
+    // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their
+    // plane, the crown, is drawn after them with no depth)
+    { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
+      const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
     const at = objectAt(D, w.x, w.z), lit = at?.id;
     for (const P of this.parts) {
       let k = 0;
@@ -324,7 +273,7 @@ export class HouseRoomsView {
     // the furniture: a piece baked a frame (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
     // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, after its part's
     // floors and walls and before its near rails (nearer pieces later)
-    // (each piece keyed by its id and the state it's drawn in now: the curtains baked again, once, the first time they open)
+    // (each piece keyed by its id and the state it's drawn in now)
     const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
     // (the nearest first, and only those within BAKE_NEAR of her: a piece is tens of milliseconds to bake, so a frame takes one; a
     // room's dressing, render/houseDecor.ts, is one more, at the room's middle)
@@ -347,7 +296,7 @@ export class HouseRoomsView {
         this.furniture.add(mesh); this.pieces.set(todo.key, { art, mesh, pos, id: todo.id, x: todo.x, z: todo.z });
       }
     }
-    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       mesh.visible = !o || k === pieceKey(o); // (a piece in another state than now's, hidden; a room's dressing always)
@@ -421,8 +370,8 @@ export class HouseRoomsView {
       glints.push({ x: cv.left + (q.x + 1) / 2 * cv.width, y: cv.top + (1 - q.y) / 2 * cv.height, r: Math.max(18, px * 0.45) });
     }
     if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
-    const waking = !!g.wake && !g.wake.open; // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !(waking && (g.wake!.beat !== "up" || at.use.kind === "bed")) && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
+    const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
+    place(this.tag, at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {

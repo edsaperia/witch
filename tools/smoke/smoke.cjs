@@ -129,6 +129,16 @@ async function main() {
     await page.keyboard.up(key);
     return [from, to];
   };
+  // Off the house onto the forest floor (the oak, 2026-10-24: walking off her decks keeps her in the house, its limbs running on to
+  // its rooms): up off the Terrace, south over the trees, and down.
+  const offHouse = async (page, timeout = 240000) => {
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout });
+    await hold(page, "ArrowDown", 1.5, timeout);
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch, null, { timeout });
+    await page.waitForFunction(() => !(window.witch.game.witches[0].cool?.left > 0.01), null, { timeout, polling: 100 }).catch(() => {}); // (the take-off's cooldown spent, as quick.cjs waits)
+  };
   const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file), timeout: 300000 }); /* big windows: seconds a frame in the software renderer */ results.push(`shot previews/${file}`); };
 
   // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
@@ -164,7 +174,7 @@ async function main() {
       await rise(page);
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "treetop" && !window.witch.game.witch.perch), "space rises off the treehouse deck");
-      await hold(page, "ArrowLeft", 1.5);
+      await hold(page, "ArrowDown", 1.5); // (south, as the quick smoke: the oak's rooms spread west, north and east of the Terrace)
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch), "lands on the ground away from the deck");
@@ -177,7 +187,7 @@ async function main() {
     check(groundSpeed > tuning.groundSpeed * 0.6 && groundSpeed <= tuning.groundSpeed * 1.01, `flies east on the ground (${groundSpeed.toFixed(1)} m/s)`);
     check(s.mode === "ground", "still in ground mode");
     await shot(page, "02-ground-flying.png");
-    await page.keyboard.press("Space");
+    await rise(page); // (past the landing's riseCooldown: the 2 s flight is shorter than its 3 s)
     // The rise takes riseTime of game time: wait for it to finish, however slow the frames here.
     await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 400000, polling: 50 }).catch(() => {});
     s = await state(page);
@@ -248,6 +258,9 @@ async function main() {
     await page.touchscreen.tap(200, 400);
     await sleep(300);
     check(!(await state(page)).paused, "a tap starts the game");
+    // (on the forest floor south of the dancefloor: from her decks the joystick would walk her out along the oak's limbs, where she can't rise)
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z + 45, vx: 0, vz: 0, mode: "ground", lift: 0, perch: undefined, seated: false }; });
+    await sleep(1500);
     await shot(page, "10-phone-ground.png");
     // Drag the joystick up and to the right with touch pointer events, as a thumb would.
     const touch = (type, x, y) => page.evaluate(([type, x, y]) => {
@@ -316,6 +329,7 @@ async function main() {
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
+      await offHouse(page);
       await hold(page, "ArrowRight", 1.5);
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
@@ -381,9 +395,9 @@ async function main() {
     await sleep(1500);
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, flat: [], through: [] };
-      v.scene.traverse(o => {
+      v.scene.traverseVisible(o => { // (what's drawn: a hidden group's meshes aren't, the house's furniture while she's out of it)
         const m = o.material;
-        if (!m || !o.visible) return;
+        if (!m) return;
         for (const mat of Array.isArray(m) ? m : [m]) {
           if (mat === v.sky?.mesh.material || o.renderOrder >= 20) continue; // the sky; debug overlays
           const vs = mat.vertexShader || "";
@@ -576,6 +590,7 @@ async function main() {
   // flying and zooming through every step in both modes.
   await run("cull", { width: 640, height: 360 }, async page => {
     await page.keyboard.press("Enter");
+    await offHouse(page); // (on the forest floor first: east of her decks the oak's limbs run on to the Studio, where she can't rise)
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
       if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
@@ -890,6 +905,7 @@ async function main() {
       if (/swiftshader|llvmpipe|software/i.test(gl)) { soft(w, h); return; }
       await page.keyboard.press("Enter");
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
+      await offHouse(page, 600000);
       await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
       await page.keyboard.press("Space");

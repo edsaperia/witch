@@ -1,6 +1,6 @@
 // The ley pulse at a constant speed (Ed, 2026-10-09: "Pure constant speed"; 1 m/s since 2026-10-18; rules/pulseRoute.ts): its
 // distance along the route grows at leyLines.pulseSpeed times the party's tempo, a wave lands as it reaches its stone, and the
-// boot runs its 179 m path at its own speed (boot.speed, 4 m/s).
+// boot runs its 195 m path at its own speed (boot.speed, 4 m/s).
 import { describe, expect, it } from "vitest";
 import { newGame, stepGame, type Game } from "./game";
 import { TUNING } from "./tuning";
@@ -21,11 +21,11 @@ function game(): Game {
 const run = (g: Game, secs: number) => { for (let i = 0; i < Math.round(secs * 60); i++) stepGame(g, still, 1 / 60); };
 
 describe("the ley pulse at a constant speed (Ed, 2026-10-09)", () => {
-  it("is 1 m/s (Ed, 2026-10-18), and the boot runs its 179 m path at its own 4 m/s: about 45 s, whatever the waves' speed", () => {
+  it("is 1 m/s (Ed, 2026-10-18), and the boot runs its 195 m path at its own 4 m/s: about 49 s, whatever the waves' speed", () => {
     const g = game();
     expect(V).toBe(1); expect(TUNING.boot.speed).toBe(4);
-    expect(bootPath(g.map).length).toBeCloseTo(179, 0);
-    expect(bootSeconds(g.map)).toBeCloseTo(179 / 4, 0);
+    expect(bootPath(g.map).length).toBeCloseTo(195, 0); // (179 m while the treehouse stood due north; the oak's front is farther out, north-west)
+    expect(bootSeconds(g.map)).toBeCloseTo(195 / 4, 0);
     run(g, 0.05);
     expect(g.party.bootUntil - g.party.bootFrom!).toBeCloseTo(bootPath(g.map).length / 4, 9);
     const slow = { ...g.map, tuning: { ...g.map.tuning, leyLines: { ...g.map.tuning.leyLines, pulseSpeed: 0.25 } } } as typeof g.map;

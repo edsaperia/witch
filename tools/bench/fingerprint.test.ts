@@ -4,11 +4,12 @@ import { TUNING, type Tuning } from "../../src/rules/tuning";
 import { fingerprint } from "./fingerprint";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
-/** A short game on a tuning: off the seat and a few seconds' flight east, then its fingerprint. */
+/** A short game on a tuning: off the seat, out off the Terrace's open south-east rim (past the decks' end) and a few seconds'
+ *  flight, then its fingerprint. */
 function play(t: Tuning): Record<string, string> {
   const g = newGame(7, t);
   g.clock.paused = false;
-  for (let i = 0; i < 240; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
+  for (let i = 0; i < 240; i++) stepGame(g, { ...idle, moveX: i < 40 ? 1 : 0.6, moveZ: i < 40 ? 0 : 0.8 }, STEP);
   return fingerprint(g);
 }
 

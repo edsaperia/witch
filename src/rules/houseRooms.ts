@@ -1,7 +1,7 @@
-// The treehouse's placeholder rooms (Ed, 2026-10-19: "we should start working on building this into the island so you can enter
-// and exit during the party ... stick with placeholder rooms for now"; config/house/, the mock previews/ed/big-room-mock): plank
-// rooms joined by corridors off the hub (rules/treehouse.ts), walked as one floor with it, each holding objects she walks up to and
-// uses: the dressing stations, the bags and the Workshop's bay, lathe and pegboard slide in their panels as she nears them
+// The treehouse's rooms (Ed, 2026-10-19: "we should start working on building this into the island so you can enter and exit
+// during the party"; the oak since 2026-10-24, the layout v4: config/house/): the trunk's rooms in a soft S and a pair of branch rooms
+// off each of the first four, one floor smooth-unioned from them all (config/house/shape.js: she walks exactly the drawn shape), each
+// room holding objects she walks up to and uses: the dressing stations, the bags and the Workshop's bay, lathe and pegboard slide in their panels as she nears them
 // (rules/stations.ts), and with E (the sigil button) the hats' floor holds her hats as objects, the bed (E held) ends the night, the bestiary's book opens the zoo over the night,
 // and the rest are placeholders that say a line. The rules know where the floor is and which object she's at; what an object's E
 // opens is main.ts's (the "house" leash event). No drawing here (render/houseRooms.ts).
@@ -10,6 +10,7 @@ import { HAT_SPELLS, ownsHat, setLoadout } from "./spells";
 import { hatButton, leaveHat, wearing } from "./hat";
 import type { Witch } from "./game";
 import type { LeashEvent } from "./leash";
+import { field, inRoom, nearestFloor, nearestInRoom, roomAt as shapeRoomAt } from "../../config/house/shape.js";
 
 /** A rectangle of floor on the house's plan (config/house/): metres from the hub's centre along the plan's axes (x, z: east and
  *  south, turned by the plan's `turn`: fromPlan). */
@@ -17,18 +18,26 @@ export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a ro
 /** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "curtains" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
-  /** The map table (Ed, 2026-10-23: in the middle of the Atrium): E opens the sea chart (rules/treehouse.ts atMapTable). */
+  | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
+  /** The map table (Ed, 2026-10-24: the Solarium's): E opens the sea chart (rules/treehouse.ts atMapTable). */
   | { kind: "chart" }
   /** A treehouse Studio instrument (Ed, 2026-10-23): she's at it by nearness, its menu in and every key playing it (rules/studio.ts). */
   | { kind: "instrument"; instrument: "drums" | "synth" | "mic" }
   /** Last night's clothes, in a pile by her bed (rules/clothesPile.ts): E puts on all that's still in it, on a wake-up. */
   | { kind: "pile" };
 export interface HouseObject { id: string; room: string; label: string; x: number; z: number; w: number; d: number; h: number; use: HouseUse }
+/** A room of the oak (config/house/rooms/): its middle and size, a trunk room or the trunk room its branch leaves, its bounds. */
+export type HouseRoom = Rect & { id: string; label: string; x: number; z: number; r: number; trunk?: boolean; from?: string; locked?: boolean };
+/** The floor's one shape (config/house/shape.js; assemble.js makes it): the trunk's rooms, the branch rooms, the stubs, and where the
+ *  plan's 0 lay on the mock's own plan (its noise seeded there). */
+export interface HouseShape { noiseAt: [number, number]; trunk: { id: string; x: number; z: number; r: number }[]; branches: { id: string; from: string; x: number; z: number; r: number; bend: number; locked?: boolean }[]; stubs: { room: string; a: { x: number; z: number }; b: { x: number; z: number }; w0: number; w1: number }[] }
+/** The Terrace's own layout (config/house/base.json terrace), metres from its middle: the open rim's angle and half-span (degrees round
+ *  from east, clockwise), the decks' desk, her seat behind it, the magic circle. */
+export interface TerraceLayout { takeoff: { angle: number; half: number }; decks: { x: number; z: number; w: number; d: number }; seat: { x: number; z: number }; circle: { x: number; z: number; r: number } }
 export interface HouseConfig {
-  on: boolean; wall: number; reach: number; /** the plan's turn about the hub (degrees; fromPlan) */ turn?: number;
-  /** the Ent's own (Ed, 2026-10-23): round rooms on its branches, the hub's walls and map gone (art/ent.js), the map table an object */ organic?: boolean;
-  rooms: (Rect & { id: string; label: string })[]; corridors: (Rect & { id: string })[];
+  on: boolean; wall: number; reach: number; /** the plan's turn about the Terrace's middle (degrees; fromPlan) */ turn?: number;
+  /** the Ent's own (Ed, 2026-10-23): rooms on its limbs, the map table an object */ organic?: boolean;
+  rooms: HouseRoom[]; corridors: (Rect & { id: string })[]; shape: HouseShape; terrace: TerraceLayout;
   objects: HouseObject[]; bed: { hold: number };
   /** Rooms to come, their floor and their door kept clear on the plan (the guests' bedrooms: Ed, 2026-10-21, docs/backlog/treehouse.md); not walked or drawn yet. */
   reserved?: (Rect & { id: string; label: string; door: Rect })[];
@@ -56,11 +65,12 @@ export function toPlan(at: At, x: number, z: number, turn = HOUSE_ROOMS.turn ?? 
   return { x: dx * c - dz * s, z: dx * s + dz * c };
 }
 
-/** The rooms' and corridors' floor: the hub's centre in the world, the plan's turn, and each rectangle on the plan. */
-export interface RoomFloor { at: At; turn: number; rects: Rect[] }
-/** The rooms' and corridors' floor at a hub, each rectangle pulled in by `inset` metres (her rail's keep-in). */
+/** The house's floor in the world: the Terrace's middle (the plan's 0), the plan's turn, the shape, and how far in from its edge she's
+ *  kept (her rail's keep-in, m). */
+export interface RoomFloor { at: At; turn: number; shape: HouseShape; inset: number }
+/** The house's floor at the Terrace's middle `at`, kept `inset` metres in from its edge. */
 export function floorRects(at: At, inset = 0, H = HOUSE_ROOMS): RoomFloor {
-  return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, rects: [...H.rooms.filter(r => !r.locked), ...H.corridors].map(r => ({ x0: r.x0 + inset, x1: r.x1 - inset, z0: r.z0 + inset, z1: r.z1 - inset, ...(r.r ? { r: r.r - inset } : {}), ...(r.pts ? { pts: r.pts, w: (r.w ?? 3) - 2 * inset } : {}) })) };
+  return { at: { x: at.x, z: at.z }, turn: H.turn ?? 0, shape: H.shape, inset };
 }
 /** The nearest point of a floor shape to (x, z) on the plan, and how far (0 inside). */
 export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number; d: number } {
@@ -77,23 +87,27 @@ export function nearestIn(r: Rect, x: number, z: number): { x: number; z: number
   const px = Math.min(r.x1, Math.max(r.x0, x)), pz = Math.min(r.z1, Math.max(r.z0, z));
   return { x: px, z: pz, d: Math.hypot(px - x, pz - z) };
 }
-const inRect = (r: Rect, x: number, z: number, pad = 0) => (r.r || r.pts ? nearestIn(r, x, z).d <= pad : x >= r.x0 - pad && x <= r.x1 + pad && z >= r.z0 - pad && z <= r.z1 + pad);
-/** On a room's or a corridor's floor (`pad` metres past its edges), standing at (x, z) in the world. */
-export const onRoomFloor = (f: RoomFloor, x: number, z: number, pad = 0): boolean => { const p = toPlan(f.at, x, z, f.turn); return f.rects.some(r => inRect(r, p.x, p.z, pad)); };
-/** The nearest point to (x, z) on any of the rooms' and corridors' floors (in the world), and how far it is. */
+/** How far (x, z) in the world is past the edge of what she walks (negative: inside, by that much), on the shape (config/house/shape.js). */
+export const floorDistance = (f: RoomFloor, x: number, z: number): number => { const p = toPlan(f.at, x, z, f.turn); return field(f.shape, p.x, p.z, true); };
+/** On the house's floor (`pad` metres past its keep-in), standing at (x, z) in the world. */
+export const onRoomFloor = (f: RoomFloor, x: number, z: number, pad = 0): boolean => floorDistance(f, x, z) <= pad - f.inset;
+/** The nearest point to (x, z) on the house's floor, inside its keep-in (in the world), and how far it is. */
 export function nearestRoomFloor(f: RoomFloor, x: number, z: number): { x: number; z: number; d: number } | null {
-  const p = toPlan(f.at, x, z, f.turn);
-  let best: { x: number; z: number; d: number } | null = null;
-  for (const r of f.rects) { const n = nearestIn(r, p.x, p.z); if (!best || n.d < best.d) best = n; }
-  return best && { ...fromPlan(f.at, best.x, best.z, f.turn), d: best.d };
+  const p = toPlan(f.at, x, z, f.turn), n = nearestFloor(f.shape, p.x, p.z, f.inset);
+  return { ...fromPlan(f.at, n.x, n.z, f.turn), d: n.d };
 }
-/** A room's floor (house.json's room by id), kept to it: (x, z) in the world, put back inside its walls `inset` metres in; null without it. */
+/** The room (x, z) in the world stands in (its own outline), or null on a limb between rooms. */
+export function roomAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseRoom | null {
+  const p = toPlan(at, x, z, H.turn ?? 0), r = shapeRoomAt(H.shape, p.x, p.z) as { id: string } | null;
+  return r ? H.rooms.find(q => q.id === r.id) ?? null : null;
+}
+/** A room's own floor (its outline alone), kept to it: (x, z) in the world, put back inside it `inset` metres in; null without it. */
 export function keepInRoom(at: At, room: string, x: number, z: number, inset = 0, H = HOUSE_ROOMS): { x: number; z: number; inside: boolean } | null {
-  const r = H.rooms.find(q => q.id === room);
-  if (!r) return null;
-  const p = toPlan(at, x, z, H.turn ?? 0), n = r.r ? nearestIn({ ...r, r: r.r - inset }, p.x, p.z) : null;
-  const px = n ? n.x : Math.min(r.x1 - inset, Math.max(r.x0 + inset, p.x)), pz = n ? n.z : Math.min(r.z1 - inset, Math.max(r.z0 + inset, p.z));
-  return px === p.x && pz === p.z ? { x, z, inside: true } : { ...fromPlan(at, px, pz, H.turn ?? 0), inside: false };
+  if (!H.rooms.some(q => q.id === room)) return null;
+  const p = toPlan(at, x, z, H.turn ?? 0);
+  if (inRoom(H.shape, room, p.x, p.z) <= -inset) return { x, z, inside: true };
+  const n = nearestInRoom(H.shape, room, p.x, p.z, inset);
+  return { ...fromPlan(at, n.x, n.z, H.turn ?? 0), inside: false };
 }
 /** Where on the plan's (x, z) an object's middle is, in the world (or any point given on the plan relative to it: dx along its w, dz along its d). */
 export const objectWorld = (o: HouseObject, at: At, dx = 0, dz = 0, H = HOUSE_ROOMS): { x: number; z: number } => fromPlan(at, o.x + dx, o.z + dz, H.turn ?? 0);
@@ -114,7 +128,7 @@ export const fromObject = (o: HouseObject, at: At, x: number, z: number, H = HOU
 /** A spot `gap` metres in front of an object, the hub's centre at `at`: where she'd stand to use it (tests, tools; objectFront). */
 export const objectFrontAt = (o: HouseObject, at: At, gap: number): { x: number; z: number } => objectFront(o, at, gap);
 /** Whether the deck is the house with its rooms (a floor to walk, objects to be at). */
-export const hasRooms = (d: { house?: { rooms: RoomFloor | null } } | null | undefined): boolean => !!d?.house?.rooms?.rects.length;
+export const hasRooms = (d: { house?: { rooms: RoomFloor | null } } | null | undefined): boolean => !!d?.house?.rooms?.shape;
 /** The object she's at, standing at (x, z) in the world: the nearest within reach of its edge, or null. */
 export function objectAt(at: At, x: number, z: number, H = HOUSE_ROOMS): HouseObject | null {
   let best: HouseObject | null = null, bd = H.reach;

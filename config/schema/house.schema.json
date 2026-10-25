@@ -16,6 +16,121 @@
       "type": "number",
       "minimum": 0
     },
+    "bed": {
+      "type": "object",
+      "properties": {
+        "hold": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "hold"
+      ],
+      "additionalProperties": false
+    },
+    "organic": {
+      "type": "boolean"
+    },
+    "terrace": {
+      "type": "object",
+      "properties": {
+        "takeoff": {
+          "type": "object",
+          "properties": {
+            "angle": {
+              "type": "number",
+              "minimum": 0
+            },
+            "half": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "angle",
+            "half"
+          ],
+          "additionalProperties": false
+        },
+        "decks": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "z": {
+              "type": "number",
+              "minimum": 0
+            },
+            "w": {
+              "type": "number",
+              "minimum": 0
+            },
+            "d": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "x",
+            "z",
+            "w",
+            "d"
+          ],
+          "additionalProperties": false
+        },
+        "seat": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "z": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "x",
+            "z"
+          ],
+          "additionalProperties": false
+        },
+        "circle": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number",
+              "minimum": 0
+            },
+            "z": {
+              "type": "number",
+              "minimum": 0
+            },
+            "r": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "x",
+            "z",
+            "r"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "takeoff",
+        "decks",
+        "seat",
+        "circle"
+      ],
+      "additionalProperties": false
+    },
     "rooms": {
       "type": "array",
       "items": {
@@ -26,6 +141,12 @@
           },
           "label": {
             "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "z": {
+            "type": "number"
           },
           "x0": {
             "type": "number"
@@ -43,6 +164,12 @@
             "type": "number",
             "minimum": 0
           },
+          "trunk": {
+            "type": "boolean"
+          },
+          "from": {
+            "type": "string"
+          },
           "locked": {
             "type": "boolean"
           }
@@ -50,6 +177,8 @@
         "required": [
           "id",
           "label",
+          "x",
+          "z",
           "x0",
           "x1",
           "z0",
@@ -113,29 +242,8 @@
           "id": {
             "type": "string"
           },
-          "room": {
-            "type": "string"
-          },
           "label": {
             "type": "string"
-          },
-          "x": {
-            "type": "number"
-          },
-          "z": {
-            "type": "number"
-          },
-          "w": {
-            "type": "number",
-            "minimum": 0
-          },
-          "d": {
-            "type": "number",
-            "minimum": 0
-          },
-          "h": {
-            "type": "number",
-            "minimum": 0
           },
           "use": {
             "type": "object",
@@ -146,7 +254,6 @@
                   "creator",
                   "hats",
                   "bed",
-                  "curtains",
                   "zoo",
                   "telescope",
                   "say",
@@ -154,6 +261,9 @@
                   "instrument",
                   "pile"
                 ]
+              },
+              "line": {
+                "type": "string"
               },
               "axes": {
                 "type": "array",
@@ -173,12 +283,6 @@
                   "type": "string"
                 }
               },
-              "line": {
-                "type": "string"
-              },
-              "spell": {
-                "type": "string"
-              },
               "instrument": {
                 "type": "string",
                 "enum": [
@@ -192,37 +296,823 @@
               "kind"
             ],
             "additionalProperties": false
+          },
+          "room": {
+            "type": "string"
+          },
+          "x": {
+            "type": "number"
+          },
+          "z": {
+            "type": "number"
+          },
+          "w": {
+            "type": "number",
+            "minimum": 0
+          },
+          "d": {
+            "type": "number",
+            "minimum": 0
+          },
+          "h": {
+            "type": "number",
+            "minimum": 0
           }
         },
         "required": [
           "id",
-          "room",
           "label",
+          "use",
+          "room",
           "x",
           "z",
           "w",
           "d",
-          "h",
-          "use"
+          "h"
         ],
         "additionalProperties": false
       }
     },
-    "bed": {
+    "shape": {
       "type": "object",
       "properties": {
-        "hold": {
-          "type": "number",
-          "minimum": 0
+        "noiseAt": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "trunk": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              },
+              "r": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "id",
+              "x",
+              "z",
+              "r"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "branches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "z": {
+                "type": "number"
+              },
+              "r": {
+                "type": "number",
+                "minimum": 0
+              },
+              "from": {
+                "type": "string"
+              },
+              "bend": {
+                "type": "number"
+              },
+              "locked": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "x",
+              "z",
+              "r",
+              "from",
+              "bend"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "stubs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "room": {
+                "type": "string"
+              },
+              "a": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "z"
+                ],
+                "additionalProperties": false
+              },
+              "b": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "x",
+                  "z"
+                ],
+                "additionalProperties": false
+              },
+              "w0": {
+                "type": "number",
+                "minimum": 0
+              },
+              "w1": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "room",
+              "a",
+              "b",
+              "w0",
+              "w1"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "m": {
+          "type": "object",
+          "properties": {
+            "ox": {
+              "type": "number",
+              "minimum": 0
+            },
+            "oz": {
+              "type": "number",
+              "minimum": 0
+            },
+            "trunk": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  },
+                  "r": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "id",
+                  "x",
+                  "z",
+                  "r"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "branches": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "x": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  },
+                  "r": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "from": {
+                    "type": "string"
+                  },
+                  "bend": {
+                    "type": "number"
+                  },
+                  "locked": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "id",
+                  "x",
+                  "z",
+                  "r",
+                  "from",
+                  "bend"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "byId": {
+              "type": "object",
+              "properties": {
+                "dining": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "terrace": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "parlour": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "boudoir": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "bedroom": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "turret": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r"
+                  ],
+                  "additionalProperties": false
+                },
+                "workshop": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "kitchen": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "cloakroom": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "studio": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "solarium": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "bestiary": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number"
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend"
+                  ],
+                  "additionalProperties": false
+                },
+                "bedroom2": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend",
+                    "locked"
+                  ],
+                  "additionalProperties": false
+                },
+                "bedroom3": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "z": {
+                      "type": "number"
+                    },
+                    "r": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "from": {
+                      "type": "string"
+                    },
+                    "bend": {
+                      "type": "number"
+                    },
+                    "locked": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "x",
+                    "z",
+                    "r",
+                    "from",
+                    "bend",
+                    "locked"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "dining",
+                "terrace",
+                "parlour",
+                "boudoir",
+                "bedroom",
+                "turret",
+                "workshop",
+                "kitchen",
+                "cloakroom",
+                "studio",
+                "solarium",
+                "bestiary",
+                "bedroom2",
+                "bedroom3"
+              ],
+              "additionalProperties": false
+            },
+            "box": {
+              "type": "object",
+              "properties": {
+                "x0": {
+                  "type": "number"
+                },
+                "x1": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "z0": {
+                  "type": "number"
+                },
+                "z1": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "x0",
+                "x1",
+                "z0",
+                "z1"
+              ],
+              "additionalProperties": false
+            },
+            "stubs": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "room": {
+                    "type": "string"
+                  },
+                  "a": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "b": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "z"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "w0": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "w1": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "room",
+                  "a",
+                  "b",
+                  "w0",
+                  "w1"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "ox",
+            "oz",
+            "trunk",
+            "branches",
+            "byId",
+            "box",
+            "stubs"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
-        "hold"
+        "noiseAt",
+        "trunk",
+        "branches",
+        "stubs",
+        "m"
       ],
       "additionalProperties": false
-    },
-    "organic": {
-      "type": "boolean"
     }
   },
   "required": [
@@ -230,11 +1120,13 @@
     "turn",
     "wall",
     "reach",
+    "bed",
+    "organic",
+    "terrace",
     "rooms",
     "corridors",
     "objects",
-    "bed",
-    "organic"
+    "shape"
   ],
   "additionalProperties": false
 }

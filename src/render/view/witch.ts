@@ -1,7 +1,7 @@
 // Her, each frame (moved out of view.ts's render, unchanged): her pose (hover, lean, rise and descend, brake and fast, her
 // headings, on foot, the treehouse's seat, a knockout, mid-blink), her hat knocked off, her sprite stood by its frame's ground,
 // the party's and the beach's views of her, where she is on screen, and her shadow.
-import { deckOf } from "../../rules/treehouse";
+import { deckOf, onTerrace } from "../../rules/treehouse";
 import { onRoomFloor } from "../../rules/houseRooms";
 import { broomWhere, stationOf } from "../../rules/stations";
 import type { View } from "../view";
@@ -107,11 +107,17 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // ellipse is the art's view, not the camera's) in the plane through the deck's middle, then moved along the ray from the camera
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
-  const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && Math.hypot(w.x - deck.x, w.z - deck.z) > deck.r && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the hub, rules/houseRooms.ts)
-  v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
+  const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && !onTerrace(deck, w.x, w.z) && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the Terrace, rules/houseRooms.ts)
+  v.houseCam.x = v.houseCam.y = v.houseCam.z = 0; v.houseShift = 0;
   if (T.ent && deck && w.perch) {
     const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
-    const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky), g0 = groundHeight(deck.x, deck.z);
+    // (off the Terrace, the house's drawing slid up the Ent's plane by her own place on it, so the room she's in is drawn at the
+    // Terrace's height: the oak's rooms run 75 m north and 50 south of it, and down the plane the south ones were drawn under the
+    // ground, the camera climbing away; eased in over the first metres past the Terrace, as the camera's following; render/houseRooms.ts
+    // draws the rooms by it too)
+    const off = deck.house?.rooms ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) : 0;
+    v.houseShift = -dz * ky * off;
+    const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky + v.houseShift), g0 = groundHeight(deck.x, deck.z);
     // (in a room off the hub, rules/houseRooms.ts: in the plane through the hub's middle, the same pixels, never out over the forest
     // behind it, where the bend and the fade round her lose her; drawn over everything there, below)
     const q = alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, inRoom ? 0 : dz);
@@ -138,8 +144,15 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     v.leashView.seatAt = seat; // (where she sparkles back in after a knockout)
     const cam = deckSeat ? { ...deckSeat, y: deck!.h + 1.2 } : onTreehouse(T.camera.x, T.camera.y); // (the rules' heights: the camera stands it on the smoothed ground)
     g.introFocus = { x: cam.x, y: cam.y, z: cam.z }; // the opening shot frames the studio (the art's camera anchor)
-    // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts)
-    const near = nearerCamera(v, seat, DJ_DEPTH.her);
+    // (a touch nearer the camera than the house, along the ray to it, so she lands on the seat's own pixel: render/view/home.ts; on the
+    // oak, as far along the ray as its floor under her seat is drawn, render/houseRooms.ts, and that touch more, so the floor's behind her)
+    const dzSeat = deck?.house ? deck.seat.z - deck.z : 0;
+    let near: { x: number; y: number; z: number } = nearerCamera(v, seat, DJ_DEPTH.her);
+    if (dzSeat) { // (the ray in the world's heights, as her own place on the floor: then back over the ground where it lands)
+      const g0 = groundHeight(deck!.x, deck!.z), q = alongRay(v, { ...seat, y: seat.y + g0 }, dzSeat + DJ_DEPTH.her);
+      near = { x: q.x, y: q.y - groundHeight(q.x, q.z), z: q.z };
+      herScale += (q.scale - herScale) * k;
+    }
     wx += (near.x - wx) * k; wyy += (near.y - wyy) * k; wz += (near.z - wz) * k;
     if (w.seated) {
       // Behind the decks (Ed, 2026-10-06: "The witch should have a 'DJing' animation for when she's standing behind the decks"):
@@ -204,7 +217,7 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   if (djUpper >= 0 && her.length) {
     const b = her[0];
     if (T.ent && deck) { // (over the Ent's desk, brought forward with its near half: render/view/home.ts ENT_DEPTH; scaled to land on her own pixels)
-      const up = alongRay(v, b, entDepth(deck).near + DJ_DEPTH.upper - 2 * DJ_DEPTH.her); // (her batch's heights are the world's)
+      const up = alongRay(v, b, entDepth(deck).near + DJ_DEPTH.upper - 2 * DJ_DEPTH.her - (deck?.house ? deck.seat.z - deck.z : 0)); // (her batch's heights are the world's; from where she's drawn: on the oak, already as far along the ray as her seat)
       her.push({ x: up.x, y: up.y, z: up.z, frame: watlas.frames[djUpper], flip: false, scale: up.scale } as typeof b);
     } else { const up = nearerCamera(v, b, DJ_DEPTH.upper - DJ_DEPTH.her); her.push({ ...up, frame: watlas.frames[djUpper], flip: false }); }
   }
