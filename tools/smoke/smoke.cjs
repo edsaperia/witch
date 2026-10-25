@@ -481,16 +481,26 @@ async function main() {
       }
       check(there, `the witch is moved to the ${id}'s densest wooded spot for the trunk shots`);
       if (!there) continue;
-      await settleArt(page, { forest: true, soft: true });
+      // Measured only once her spot's forest and art are all in: the old oaks read 1.15-1.24x when other smoke runs shared the
+      // cloud's CPU (Hotel, 2026-10-25), the soft wait having given up with the spot's forest half built (14 chunks missing, 6 art
+      // jobs pending: their stand-ins drawn) and 1.21x measured on that; 1.34-1.36x every time it was all in, then and since.
+      await settleArt(page, { forest: true, timeout: 2400000, soft: true });
       await sleep(1500);
+      const ready = await page.evaluate(() => { const v = window.witch.view; return { pending: v.assets.pending, missing: v.stats.forestMissing }; });
+      check(ready.pending === 0 && ready.missing === 0, `the ${id}'s spot is drawn whole before its trunks are measured (${ready.pending} art jobs pending, ${ready.missing} forest chunks missing)`);
+      if (ready.pending || ready.missing) continue;
+      // Both frames from one still moment (the loop stood still, each drawn with no time passing), so nothing moves, grows in or
+      // is baked between the lit frame and its mask.
+      const still = () => page.evaluate(() => { window.witch.manual = true; window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); });
+      await still();
       const lit = await page.screenshot({ timeout: 300000 });
       // The mask frame drawn plain: the bloom, the tilt-shift's blur and the mist layer smeared the flat magenta over the
       // ground round the trunks (the old oaks' "trunks" were half the screen, their sides compared across the blur:
       // 2026-10-07), so they're off for that one frame.
       await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning; v.trunkMaskSaved = { bloom: T.bloom.on, tilt: T.tiltShift.on, fx: P.fxScene }; T.bloom.on = false; T.tiltShift.on = false; P.fxScene = null; v.debugTrunks = true; });
-      await sleep(1000);
+      await still();
       const mask = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; });
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; window.witch.manual = false; });
       fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit); fs.writeFileSync(path.join(out, `trunks-${id}-mask.png`), mask);
       const r = await page.evaluate(async ([a, m]) => {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
