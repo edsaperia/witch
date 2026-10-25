@@ -14004,7 +14004,7 @@ const HERONRY = {
 // The erg (a journey kind: unknown-07's, the hot south; Ed approved the mock, 2026-10-12): golden dunes and an oasis of date palms, the fennec fox its creature.
 const ERG = {
   slot: 2, id: "erg", name: "Erg", creature: "fennec", by: "recipe", leaf: .2, floor: ["sand", .11, .42, .64],
-  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
+  text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, wild olives, a few thorn trees and junipers", set: "a ring of wind-worn stones round an old hearth" },
   wall: [["water", { w: 1.2 }], ["reeds", {}]], small: [["grass", { h: .8 }], ["shrub", { spiky: true }]],
   big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: .8 }]],
   ponds: true, pathKinds: ["track"],
@@ -14013,9 +14013,9 @@ const ERG = {
     pattern: "rings", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
     heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
     terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
-    feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
+    feel: "Long gold dunes rippled by the wind, date palms and wild olives clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
-  flora: { species: [["datePalm", .65], ["acacia", .25], ["baobab", .1]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["datePalm", .5], ["olive", .2], ["acacia", .2], ["juniper", .1]] /* (the flora check: Ed, 2026-10-25, ring 3: olive and juniper in with the palms, the ring half temperate) */, palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .3, groundCover: { density: .35, kinds: ["blades"] } },
 };
 
@@ -14037,7 +14037,7 @@ const WARREN = {
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
-  flora: { species: [["juniper", .6], ["acacia", .25], ["pine", .15]] /* (Kalahari thorn for the hawthorn: India 2026-10-23, biome forests) */, palette: { sat: .6, val: .8 } },
+  flora: { species: [["juniper", .6], ["paloVerde", .25], ["pine", .15]] /* (the flora check: Ed, 2026-10-25, ring 3: palo verde for the African thorn; the pine a pinyon) */, palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .25, groundCover: { density: .4, kinds: ["pebbles", "blades"] } },
 };
 
@@ -14058,7 +14058,7 @@ const SAVANNA = {
     terrain: ["mounds", "rocky"], decor: { rate: .2, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud.",
   },
-  flora: { species: [["acacia", .7], ["baobab", .2], ["datePalm", .1]], palette: { sat: .8, val: .95 } },
+  flora: { species: [["acacia", .6], ["baobab", .25], ["acacia", .15, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 4: no date palm out on the grass) */, palette: { sat: .8, val: .95 } },
   settings: { treeDensity: .25, groundCover: { density: .9, kinds: ["blades"] } },
 };
 
@@ -14079,7 +14079,7 @@ const PLAINS = {
     terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .6, freak: .15, lake: .25, modern: 0 },
     feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast.",
   },
-  flora: { species: [["acacia", .7], ["baobab", .15], ["datePalm", .15]], palette: { sat: .85, val: 1 } },
+  flora: { species: [["acacia", .65], ["baobab", .25], ["acacia", .1, { variant: "windbent" }]] /* (the flora check: Ed, 2026-10-25, ring 4: no date palm out on the grass) */, palette: { sat: .85, val: 1 } },
   settings: { treeDensity: .14, groundCover: { density: .7, kinds: ["blades"] } },
 };
 
@@ -14090,9 +14090,9 @@ const PLAINS = {
 // sun-split stones; the armadillo its creature.
 const SCRUB_WASH = {
   slot: 6, id: "scrub-wash", name: "Scrub wash", creature: "armadillo", by: "recipe", leaf: .24, floor: ["mud", .08, .32, .52],
-  text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+  text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted junipers, palo verde and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
   wall: [["rockwall", {}]], small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-  big: [["tree", { type: "olive", variant: "stunted", scale: .65, gnarl: 1, lean: .25 }], ["tree", { type: "juniper", minor: true, scale: .75, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
+  big: [["tree", { type: "juniper", variant: "stunted", scale: .75, gnarl: 1, lean: .25 }], ["tree", { type: "paloVerde", minor: true, scale: .65, lean: .25 }], ["boulder", { sparse: .2 }], ["snag", { sparse: .15, bleached: true }]],
   setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: .8, stone: [.07, .3, .62] }],
   pathKinds: ["animal", "dirt"],
   layout: {
@@ -14101,7 +14101,7 @@ const SCRUB_WASH = {
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },
-  flora: { species: [["olive", .55], ["juniper", .3], ["pine", .15]] /* (wild olive for the hawthorn, a temperate tree; the pine a pinyon: India 2026-10-23, biome forests) */, palette: { sat: .6, val: .75 } },
+  flora: { species: [["juniper", .55], ["paloVerde", .3], ["pine", .15]] /* (the flora check: Ed, 2026-10-25, ring 4: juniper for the Mediterranean olive; the pine a pinyon) */, palette: { sat: .6, val: .75 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
 
@@ -14130,21 +14130,21 @@ const MOSSY_CREEK = {
 
 // ---- inlined from art/areas/frostcave/recipe.js ----
 // The frost cave (a journey kind: unknown-17's, mountains and glaciers; Ed approved the mock, 2026-10-13): blue glacier ice, frozen falls and the mouth of
-// an ice cave, stunted wind-killed pines and crystal-leaf trees, the frost wyrm its creature.
+// an ice cave, stunted snowy spruces, junipers and crystal-leaf trees, the frost wyrm its creature.
 const FROSTCAVE = {
   slot: 8, id: "frostcave", name: "Frost cave", creature: "frostwyrm", by: "recipe", leaf: .45, floor: ["ice", .6, .45, .85],
-  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted frost-pale whitebeams, firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
+  text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted snowy spruces, junipers and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
   wall: [["waterfall", {}], ["rockwall", {}]], small: [["stones", {}], ["mound", { small: true }]],
-  big: [["tree", { type: "whitebeam", scale: .55 }], ["tree", { type: "fir", minor: true, scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
+  big: [["tree", { type: "fir", variant: "snowy", scale: .55 }], ["tree", { type: "juniper", minor: true, scale: .5 }], ["tree", { type: "crystal", minor: true, scale: .8 }]],
   steep: true, pathKinds: ["animal"],
   setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
   layout: {
     pattern: "lone", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .3, lean: { dir: .8, amount: .35 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .05, rocks: .55, freak: .15, lake: .25, modern: 0 },
-    feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering.",
+    feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few stunted snowy spruces, junipers and crystal trees, silent and glittering.",
   },
-  flora: { species: [["whitebeam", .45], ["fir", .3], ["crystal", .25]], palette: { sat: .6, val: .85 } },
+  flora: { species: [["fir", .5], ["juniper", .25], ["crystal", .25]] /* (the flora check: Ed, 2026-10-25, ring 5: spruce and juniper for the whitebeam) */, palette: { sat: .6, val: .85 } },
   settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["blades"] } },
 };
 
@@ -14209,7 +14209,7 @@ const MANGROVE_POOLS = {
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
   },
-  flora: { species: [["mangrove", .65], ["willow", .2], ["strangler", .15]] /* (strangler fig for the alder: India 2026-10-23, biome forests) */, palette: { sat: .85, val: .8 } },
+  flora: { species: [["mangrove", .65], ["strangler", .2], ["mangrove", .15, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 4: young mangroves for the willow) */, palette: { sat: .85, val: .8 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };
 
@@ -14231,7 +14231,7 @@ const MUDFLAT = {
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
   },
-  flora: { species: [["mangrove", .7], ["datePalm", .2], ["willow", .1]] /* (for the alder and the boreal aspen: India 2026-10-23, biome forests) */, palette: { sat: .7, val: .85 } },
+  flora: { species: [["mangrove", .7], ["mangrove", .2, { variant: "windbent" }], ["mangrove", .1, { variant: "ancient" }]] /* (the flora check: Ed, 2026-10-25, ring 5: mangroves only, for the date palm and willow) */, palette: { sat: .7, val: .85 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["pebbles", "blades"] } },
 };
 
@@ -14260,12 +14260,12 @@ const TERRACES = {
 
 // ---- inlined from art/areas/mangrove/recipe.js ----
 // The mangrove swamp (Ed's later islands, phase 3): the crocodile's. A drowned forest of mangroves on their stilt roots over
-// brown tidal water and mud, a few date palms on the higher ground; the crocodile lurks at the water's edge.
+// brown tidal water and mud, a few strangler figs on the higher ground; the crocodile lurks at the water's edge.
 const MANGROVE = {
   slot: 14, id: "mangrove", name: "Mangrove swamp", creature: "crocodile", by: "recipe", leaf: .3, floor: ["mud", .1, .45, .28],
-  text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few date palms", set: "a dugout sunk among the roots" },
+  text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few strangler figs", set: "a dugout sunk among the roots" },
   wall: [["water", { w: 2 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.3 }]],
-  big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: .95 }]],
+  big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "strangler", minor: true, scale: .95 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["punt", "a dugout sunk among the mangrove roots", 1, { seed: 3 }],
   layout: {
@@ -14274,7 +14274,7 @@ const MANGROVE = {
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .15, rocks: .05, freak: .15, lake: .6, modern: .05 },
     feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge.",
   },
-  flora: { species: [["mangrove", .65], ["datePalm", .2], ["willow", .15]], palette: { sat: .9, val: .85 } },
+  flora: { species: [["mangrove", .65], ["strangler", .2], ["mangrove", .15, { variant: "windbent" }]] /* (the flora check: Ed, 2026-10-25, ring 4: strangler fig and young mangroves for the date palm and willow) */, palette: { sat: .9, val: .85 } },
   settings: { treeDensity: .55, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };
 
@@ -14285,9 +14285,9 @@ const MANGROVE = {
 // plains, it is close and thorny: you come on a rhino before you see it.
 const BUSHVELD = {
   slot: 15, id: "bushveld", name: "Bushveld", creature: "rhino", by: "recipe", leaf: .22, floor: ["sand", .05, .5, .45],
-  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
+  text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "clumps of umbrella acacias and thorn, the odd old baobab", set: "a ring of old boma posts round a cold hearth" },
   wall: [["bush", {}]], small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-  big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+  big: [["tree", { type: "baobab", variant: "ancient", scale: 1.1 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
   ponds: true, pathKinds: ["track"],
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
@@ -14296,7 +14296,7 @@ const BUSHVELD = {
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .15, rocks: .45, freak: .1, lake: .2, modern: .1 },
     feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight.",
   },
-  flora: { species: [["flat", .55], ["acacia", .3], ["baobab", .15]] /* (baobab for the hawthorn: India 2026-10-23, biome forests) */, palette: { sat: .75, val: .85 } },
+  flora: { species: [["baobab", .2], ["acacia", .55], ["acacia", .25, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 5: baobab for the field maple) */, palette: { sat: .75, val: .85 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "grass"] } },
 };
 
@@ -14348,22 +14348,22 @@ const CACTUS_FLATS = {
 
 // ---- inlined from art/areas/red-canyon/recipe.js ----
 // The red canyon (Ed, 2026-10-13: more animals for the later islands; unknown-22, the badlands, bearing 145): an area type as a recipe
-// (art/recipes.js says what each field is). Red rock ledges and scree under palo verde and desert ironwood, ocotillo whips flaring red
+// (art/recipes.js says what each field is). Red rock ledges and scree under palo verde and juniper, ocotillo whips flaring red
 // at their tips; the scorpion its creature, out on the rocks under the moon. Distinct from the cactus flats and Golf's warren.
 const RED_CANYON = {
   slot: 18, id: "red-canyon", name: "Red canyon", creature: "scorpion", by: "recipe", leaf: .2, floor: ["scree", .03, .5, .5],
-  text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and desert ironwood among the rocks", set: "a heap of red stones" },
+  text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and juniper among the rocks", set: "a heap of red stones" },
   wall: [["rockwall", {}]], small: [["grass", { h: .8, leafHue: .12, leafSat: .3 }], ["bush", { small: true }]],
-  big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "ironwood", minor: true, scale: 1 }], ["boulder", { sparse: .3 }]],
+  big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "juniper", minor: true, scale: .9 }], ["boulder", { sparse: .3 }]],
   steep: true, pathKinds: ["track"],
   setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "groves", density: .3, clump: .7, glades: { count: 2, size: [14, 22] },
     heightMix: { sapling: .25, mature: .55, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: 0, amount: .15 },
     terrain: ["rocky", "ridges"], decor: { rate: .35, ruins: .2, rocks: .7, freak: .05, lake: 0, modern: .05 },
-    feel: "Red rock ledges and scree, palo verde and ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark.",
+    feel: "Red rock ledges and scree, palo verde and juniper in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark.",
   },
-  flora: { species: [["paloVerde", .5], ["ironwood", .3], ["ocotillo", .2]], palette: { sat: .75, val: .85 } },
+  flora: { species: [["paloVerde", .5], ["juniper", .3], ["ocotillo", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: juniper for the rainforest ironwood) */, palette: { sat: .75, val: .85 } },
   settings: { treeDensity: .35, groundCover: { density: .3, kinds: ["pebbles", "blades"] } },
 };
 
@@ -14406,7 +14406,7 @@ const TEMPLE_JUNGLE = {
     terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
     feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
   },
-  flora: { species: [["strangler", .45], ["kapok", .3], ["datePalm", .15], ["bamboo", .1]], palette: { sat: .95, val: .9 } },
+  flora: { species: [["strangler", .45], ["kapok", .3], ["vinewood", .15], ["bamboo", .1]] /* (the flora check: Ed, 2026-10-25, ring 5: vinewood for the date palm) */, palette: { sat: .95, val: .9 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "fern"] } },
 };
 
@@ -14459,22 +14459,22 @@ const ROOKERY = {
 
 // ---- inlined from art/areas/moonpool-glade/recipe.js ----
 // The moonpool glade (Ed, 2026-10-13: magical creatures for the last outer islands; the unicorn's, unknown-31, the cold
-// rainforest): silver birches and old yews round a still, moonlit pool, a ring of white stones in the clearing; the unicorn its
+// rainforest): old cedars, spruces and alders round a still, moonlit pool, a ring of white stones in the clearing; the unicorn its
 // creature. Not the Mistwood, the Mossy creek, the Misty terraces or the Mossy dell: pale bark, dark yew and bright water.
 const MOONPOOL = {
   slot: 23, id: "moonpool-glade", name: "Moonpool glade", creature: "unicorn", by: "recipe", leaf: .28, floor: ["grass", .3, .3, .58],
-  text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "silver birches and old yews", set: "a ring of white stones by the pool" },
+  text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "old cedars, spruces and alders", set: "a ring of white stones by the pool" },
   wall: [["water", { w: 1.6 }]], small: [["fern", {}], ["flowers", {}]],
-  big: [["tree", { type: "birch", variant: "mossy", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
+  big: [["tree", { type: "cedar", variant: "ancient", scale: 1.1 }], ["tree", { type: "fir", minor: true, scale: 1 }]],
   ponds: true, pathKinds: ["magic"],
   setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
   layout: {
     pattern: "stands", density: .45, clump: .7, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .15, mature: .45, tall: .3, giant: .1 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .15, rocks: .15, freak: .1, lake: .6, modern: 0 },
-    feel: "Silver birches and old dark yews round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright.",
+    feel: "Old mossy cedars, spruces and alders round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright.",
   },
-  flora: { species: [["birch", .5], ["yew", .3], ["weepingBirch", .2]], palette: { sat: .75, val: 1 } },
+  flora: { species: [["cedar", .5], ["fir", .3], ["alder", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: cedar, spruce and alder for the birches and yew) */, palette: { sat: .75, val: 1 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["blades", "clover"] } },
 };
 
@@ -14549,23 +14549,23 @@ const CRAGS = {
 // ---- inlined from art/areas/icefall/recipe.js ----
 // The icefall (the north-north-east's island of high glaciers, phase 4): an area type as a recipe (art/recipes.js says what each
 // field is). High on a glacier: blue-white ice and old snow, its stones and moraine, cairns and standing stones the herders left,
-// stunted pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area), a ring of weathered posts round a stone
+// wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area), a ring of weathered posts round a stone
 // where the prayer flags flew; the snow leopard its creature. (Kept apart from the crags' lichen and rock spires: ice and snow,
 // no spires.)
 const ICEFALL = {
   slot: 27, id: "icefall", name: "Icefall", creature: "snowleopard", by: "recipe", leaf: .38, floor: ["ice", .56, .12, .8], snow: .8,
-  text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
+  text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, wind-bent spruces, junipers and larch", set: "a ring of weathered posts round a stone" },
   wall: [["stones", {}]], small: [["stones", {}]],
-  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: .6 }], ["tree", { type: "pine", minor: true, scale: .6 }], ["tree", { type: "birch", minor: true, scale: .5 }]],
+  big: [["cairn", { sparse: .12, tall: true }], ["standingstone", { sparse: .12 }], ["boulder", { big: true }], ["tree", { type: "fir", variant: "windbent", scale: .6 }], ["tree", { type: "juniper", minor: true, scale: .6 }], ["tree", { type: "larch", minor: true, scale: .5 }]],
   pathKinds: ["footpath"],
   setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
   layout: {
     pattern: "lone", density: .15, clump: .4, glades: { count: 1, size: [22, 32] },
     heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
     terrain: ["rocky", "hollows"], decor: { rate: .25, ruins: .1, rocks: .7, freak: .05, lake: .1, modern: .05 },
-    feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, stunted wind-bent pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
+    feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
   },
-  flora: { species: [["rowan", .4], ["pine", .4], ["birch", .2]], palette: { sat: .6, val: .78 } },
+  flora: { species: [["fir", .45], ["juniper", .35], ["larch", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: spruce, juniper and larch for the rowan, pine and birch) */, palette: { sat: .6, val: .78 } },
   settings: { treeDensity: .2, groundCover: { density: .3, kinds: ["moss", "blades"] } },
 };
 
@@ -14594,68 +14594,68 @@ const MISTWOOD = {
 
 // ---- inlined from art/areas/trollwood/recipe.js ----
 // The trollwood (the frozen north's magical island, phase 4): an area type as a recipe (art/recipes.js says what each field is).
-// A frozen forest of weeping birch and pine in stands, an iced stream winding through, snow-capped boulders among the trees that
+// A frozen forest of old spruce and larch in stands, an iced stream winding through, snow-capped boulders among the trees that
 // might be sleeping trolls, frosted bracken; the frost troll its creature. (Kept apart from the snowfield's open snow and lone
 // junipers and the icefall's bare glacier: a forest, frozen.)
 const TROLLWOOD = {
   slot: 29, id: "trollwood", name: "Trollwood", creature: "frosttroll", by: "recipe", leaf: .32, floor: ["snow", .6, .08, .78], snow: .9,
-  text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
+  text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "old frozen spruces and larch, snow-capped boulders", set: "a troll bridge over an iced stream" },
   wall: [["stones", {}]], small: [["fern", {}], ["stones", {}]],
-  big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
+  big: [["tree", { type: "fir", variant: "ancient", scale: 1.05 }], ["tree", { type: "larch", minor: true, scale: .95 }], ["boulder", { big: true, sparse: .18 }]],
   pathKinds: ["footpath"],
   setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: .3, top: "slab" }],
   layout: {
     pattern: "stands", density: .55, clump: .7, glades: { count: 1, size: [16, 24] },
     heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "mounds"], decor: { rate: .25, ruins: .15, rocks: .7, freak: .1, lake: 0, modern: .05 },
-    feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls.",
+    feel: "A frozen forest, hushed: old spruces hung with frost and larches in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls.",
   },
-  flora: { species: [["weepingBirch", .5], ["pine", .3], ["birch", .2]], palette: { sat: .6, val: .8 } },
+  flora: { species: [["fir", .5], ["larch", .3], ["birch", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: spruce and larch for the weeping birch and pine; the birch a boreal one) */, palette: { sat: .6, val: .8 } },
   settings: { treeDensity: .55, groundCover: { density: .5, kinds: ["fern", "moss", "blades"] } },
 };
 
 
 // ---- inlined from art/areas/cinder-slopes/recipe.js ----
 // The cinder slopes (Ed, 2026-10-12: "stegosaurus (good for volcano)", unknown-20's island, the rocky east at bearing 105, made
-// volcanic): black basalt and ash with lava glowing in its cracks, tree ferns, cycad-like palms and stunted pines in the
+// volcanic): black basalt and ash with lava glowing in its cracks, tree ferns, cycad-like palms and a few date palms in the
 // hollows, a smoking cinder cone; the stegosaurus its creature. Ed's columns as for the 30.
 const CINDER_SLOPES = {
   slot: 30, id: "cinder-slopes", name: "Cinder slopes", creature: "stegosaurus", by: "recipe", leaf: .27, floor: ["basalt", .62, .1, .2],
-  text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and stunted pines", set: "a cinder cone, its crater glowing, lava trickling down its side" },
+  text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and a few palms", set: "a cinder cone, its crater glowing, lava trickling down its side" },
   wall: [["boulder", {}], ["rockwall", {}]], small: [["fern", {}], ["stones", {}]],
-  big: [["tree", { type: "cycad", scale: .9 }], ["tree", { type: "pine", minor: true, scale: .8, gnarl: .8 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
+  big: [["tree", { type: "cycad", scale: .9 }], ["tree", { type: "datePalm", minor: true, scale: .8 }], ["tree", { type: "palm", minor: true, scale: .8 }]],
   steep: true, pathKinds: ["stairs"],
   setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.0],
   layout: {
     pattern: "stands", density: .3, clump: .8, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .2, lake: 0, modern: .1 },
-    feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, stunted pines on the ridges, a little cinder cone smoking in the clearing.",
+    feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, a few palms on the ridges, a little cinder cone smoking in the clearing.",
   },
-  flora: { species: [["cycad", .45], ["pine", .35], ["datePalm", .2]], palette: { sat: .7, val: .8 } },
+  flora: { species: [["cycad", .55], ["datePalm", .25], ["cycad", .2, { variant: "burnt" }]] /* (the flora check: Ed, 2026-10-25, ring 5: more cycads, some scorched, for the pine; the tree ferns stay in its big) */, palette: { sat: .7, val: .8 } },
   settings: { treeDensity: .35, groundCover: { density: .5, kinds: ["fern", "moss"] } },
 };
 
 
 // ---- inlined from art/areas/drowned-wood/recipe.js ----
-// The drowned wood (a journey kind: unknown-25's, phase 4, the south-west's swamps; the hydra's): a forest of tall larches drowned
-// standing in black water, their roots knuckled up out of it, willows trailing, the tops of old walls and pillars breaking the
+// The drowned wood (a journey kind: unknown-25's, phase 4, the south-west's swamps; the hydra's): a forest of old mangroves drowned
+// standing in black water, their roots knuckled up out of it, strangler figs among them, the tops of old walls and pillars breaking the
 // surface. Unlike the crocodile's tidal mangrove (brown, tangled, warm), the dragonfly's pools and the crab's mudflat, it is still,
 // deep and cold: black water under a high dark canopy, and something with many heads under it.
 const DROWNED_WOOD = {
   slot: 31, id: "drowned-wood", name: "Drowned wood", creature: "hydra", by: "recipe", leaf: .28, floor: ["mud", .3, .25, .17],
-  text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
+  text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "old mangroves drowned standing, strangler figs", set: "the drowned stones of an old wall" },
   wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: .9 }]],
-  big: [["tree", { type: "larch", variant: "drowned", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+  big: [["tree", { type: "mangrove", variant: "drowned", scale: 1.25 }], ["tree", { type: "strangler", minor: true, scale: 1 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
   layout: {
     pattern: "stands", density: .55, clump: .6, glades: { count: 2, size: [16, 24] },
     heightMix: { sapling: .05, mature: .35, tall: .45, giant: .15 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
     terrain: ["pools", "hollows"], decor: { rate: .3, ruins: .6, rocks: .1, freak: .1, lake: .2, modern: 0 },
-    feel: "Tall drowned larches standing in still black water, roots knuckled up out of it, willows trailing, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be.",
+    feel: "Old drowned mangroves standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be.",
   },
-  flora: { species: [["larch", .6], ["willow", .25], ["alder", .15]], palette: { sat: .6, val: .7 } },
+  flora: { species: [["mangrove", .6], ["strangler", .25], ["mangrove", .15, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 5: mangrove and strangler fig for the larch, willow and alder) */, palette: { sat: .6, val: .7 } },
   settings: { treeDensity: .5, groundCover: { density: .5, kinds: ["reeds", "blades"] } },
 };
 
@@ -14677,7 +14677,7 @@ const DESERT_RUIN = {
     terrain: ["mounds", "ridges"], decor: { rate: .45, ruins: .75, rocks: .2, freak: 0, lake: .05, modern: 0 },
     feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched.",
   },
-  flora: { species: [["datePalm", .5], ["acacia", .3], ["olive", .2]], palette: { sat: .75, val: .92 } },
+  flora: { species: [["datePalm", .5], ["acacia", .3], ["baobab", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: baobab for the olive) */, palette: { sat: .75, val: .92 } },
   settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["pebbles", "blades"] } },
 };
 

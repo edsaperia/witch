@@ -10106,7 +10106,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.2,
     floor: ["sand", 0.11, 0.42, 0.64],
-    text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
+    text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, wild olives, a few thorn trees and junipers", set: "a ring of wind-worn stones round an old hearth" },
     wall: [["water", { w: 1.2 }], ["reeds", {}]],
     small: [["grass", { h: 0.8 }], ["shrub", { spiky: true }]],
     big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: 0.8 }]],
@@ -10123,9 +10123,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.3, amount: 0.2 },
       terrain: ["ridges", "mounds"],
       decor: { rate: 0.2, ruins: 0.3, rocks: 0.4, freak: 0, lake: 0.3, modern: 0 },
-      feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening."
+      feel: "Long gold dunes rippled by the wind, date palms and wild olives clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening."
     },
-    flora: { species: [["datePalm", 0.65], ["acacia", 0.25], ["baobab", 0.1]], palette: { sat: 0.8, val: 0.95 } },
+    flora: { species: [["datePalm", 0.5], ["olive", 0.2], ["acacia", 0.2], ["juniper", 0.1]], palette: { sat: 0.8, val: 0.95 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.35, kinds: ["blades"] } }
   };
 
@@ -10156,7 +10156,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0, lake: 0, modern: 0.1 },
       feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock."
     },
-    flora: { species: [["juniper", 0.6], ["acacia", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["juniper", 0.6], ["paloVerde", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.4, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10187,7 +10187,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.6, freak: 0.1, lake: 0.2, modern: 0 },
       feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud."
     },
-    flora: { species: [["acacia", 0.7], ["baobab", 0.2], ["datePalm", 0.1]], palette: { sat: 0.8, val: 0.95 } },
+    flora: { species: [["acacia", 0.6], ["baobab", 0.25], ["acacia", 0.15, { variant: "stunted" }]], palette: { sat: 0.8, val: 0.95 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.9, kinds: ["blades"] } }
   };
 
@@ -10218,7 +10218,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.1, ruins: 0, rocks: 0.6, freak: 0.15, lake: 0.25, modern: 0 },
       feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast."
     },
-    flora: { species: [["acacia", 0.7], ["baobab", 0.15], ["datePalm", 0.15]], palette: { sat: 0.85, val: 1 } },
+    flora: { species: [["acacia", 0.65], ["baobab", 0.25], ["acacia", 0.1, { variant: "windbent" }]], palette: { sat: 0.85, val: 1 } },
     settings: { treeDensity: 0.14, groundCover: { density: 0.7, kinds: ["blades"] } }
   };
 
@@ -10231,10 +10231,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.24,
     floor: ["mud", 0.08, 0.32, 0.52],
-    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted junipers, palo verde and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
     wall: [["rockwall", {}]],
     small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-    big: [["tree", { type: "olive", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
+    big: [["tree", { type: "juniper", variant: "stunted", scale: 0.75, gnarl: 1, lean: 0.25 }], ["tree", { type: "paloVerde", minor: true, scale: 0.65, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
     setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: 0.8, stone: [0.07, 0.3, 0.62] }],
     pathKinds: ["animal", "dirt"],
     layout: {
@@ -10249,7 +10249,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.3, rocks: 0.5, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly."
     },
-    flora: { species: [["olive", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
+    flora: { species: [["juniper", 0.55], ["paloVerde", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10296,10 +10296,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.45,
     floor: ["ice", 0.6, 0.45, 0.85],
-    text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted frost-pale whitebeams, firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
+    text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted snowy spruces, junipers and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
     wall: [["waterfall", {}], ["rockwall", {}]],
     small: [["stones", {}], ["mound", { small: true }]],
-    big: [["tree", { type: "whitebeam", scale: 0.55 }], ["tree", { type: "fir", minor: true, scale: 0.5 }], ["tree", { type: "crystal", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "fir", variant: "snowy", scale: 0.55 }], ["tree", { type: "juniper", minor: true, scale: 0.5 }], ["tree", { type: "crystal", minor: true, scale: 0.8 }]],
     steep: true,
     pathKinds: ["animal"],
     setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
@@ -10313,9 +10313,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.8, amount: 0.35 },
       terrain: ["ridges", "rocky"],
       decor: { rate: 0.25, ruins: 0.05, rocks: 0.55, freak: 0.15, lake: 0.25, modern: 0 },
-      feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering."
+      feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few stunted snowy spruces, junipers and crystal trees, silent and glittering."
     },
-    flora: { species: [["whitebeam", 0.45], ["fir", 0.3], ["crystal", 0.25]], palette: { sat: 0.6, val: 0.85 } },
+    flora: { species: [["fir", 0.5], ["juniper", 0.25], ["crystal", 0.25]], palette: { sat: 0.6, val: 0.85 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.3, kinds: ["blades"] } }
   };
 
@@ -10410,7 +10410,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.1, freak: 0.1, lake: 0.65, modern: 0.05 },
       feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming."
     },
-    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["strangler", 0.15]], palette: { sat: 0.85, val: 0.8 } },
+    flora: { species: [["mangrove", 0.65], ["strangler", 0.2], ["mangrove", 0.15, { variant: "stunted" }]], palette: { sat: 0.85, val: 0.8 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -10443,7 +10443,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.4, freak: 0.05, lake: 0.35, modern: 0.1 },
       feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs."
     },
-    flora: { species: [["mangrove", 0.7], ["datePalm", 0.2], ["willow", 0.1]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["mangrove", 0.7], ["mangrove", 0.2, { variant: "windbent" }], ["mangrove", 0.1, { variant: "ancient" }]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10488,10 +10488,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.3,
     floor: ["mud", 0.1, 0.45, 0.28],
-    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few date palms", set: "a dugout sunk among the roots" },
+    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few strangler figs", set: "a dugout sunk among the roots" },
     wall: [["water", { w: 2 }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 1.3 }]],
-    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: 0.95 }]],
+    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "strangler", minor: true, scale: 0.95 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -10508,7 +10508,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.05, freak: 0.15, lake: 0.6, modern: 0.05 },
       feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge."
     },
-    flora: { species: [["mangrove", 0.65], ["datePalm", 0.2], ["willow", 0.15]], palette: { sat: 0.9, val: 0.85 } },
+    flora: { species: [["mangrove", 0.65], ["strangler", 0.2], ["mangrove", 0.15, { variant: "windbent" }]], palette: { sat: 0.9, val: 0.85 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -10521,10 +10521,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.05, 0.5, 0.45],
-    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
+    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "clumps of umbrella acacias and thorn, the odd old baobab", set: "a ring of old boma posts round a cold hearth" },
     wall: [["bush", {}]],
     small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-    big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+    big: [["tree", { type: "baobab", variant: "ancient", scale: 1.1 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
     ponds: true,
     pathKinds: ["track"],
     setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
@@ -10540,7 +10540,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.45, freak: 0.1, lake: 0.2, modern: 0.1 },
       feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight."
     },
-    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["baobab", 0.15]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["baobab", 0.2], ["acacia", 0.55], ["acacia", 0.25, { variant: "stunted" }]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "grass"] } }
   };
 
@@ -10617,10 +10617,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.2,
     floor: ["scree", 0.03, 0.5, 0.5],
-    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and desert ironwood among the rocks", set: "a heap of red stones" },
+    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and juniper among the rocks", set: "a heap of red stones" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 0.8, leafHue: 0.12, leafSat: 0.3 }], ["bush", { small: true }]],
-    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "ironwood", minor: true, scale: 1 }], ["boulder", { sparse: 0.3 }]],
+    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "juniper", minor: true, scale: 0.9 }], ["boulder", { sparse: 0.3 }]],
     steep: true,
     pathKinds: ["track"],
     setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }],
@@ -10635,9 +10635,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.15 },
       terrain: ["rocky", "ridges"],
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0.05, lake: 0, modern: 0.05 },
-      feel: "Red rock ledges and scree, palo verde and ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
+      feel: "Red rock ledges and scree, palo verde and juniper in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
     },
-    flora: { species: [["paloVerde", 0.5], ["ironwood", 0.3], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["paloVerde", 0.5], ["juniper", 0.3], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10701,7 +10701,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.55, rocks: 0.15, freak: 0.1, lake: 0.2, modern: 0 },
       feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow."
     },
-    flora: { species: [["strangler", 0.45], ["kapok", 0.3], ["datePalm", 0.15], ["bamboo", 0.1]], palette: { sat: 0.95, val: 0.9 } },
+    flora: { species: [["strangler", 0.45], ["kapok", 0.3], ["vinewood", 0.15], ["bamboo", 0.1]], palette: { sat: 0.95, val: 0.9 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "fern"] } }
   };
 
@@ -10779,10 +10779,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.28,
     floor: ["grass", 0.3, 0.3, 0.58],
-    text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "silver birches and old yews", set: "a ring of white stones by the pool" },
+    text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "old cedars, spruces and alders", set: "a ring of white stones by the pool" },
     wall: [["water", { w: 1.6 }]],
     small: [["fern", {}], ["flowers", {}]],
-    big: [["tree", { type: "birch", variant: "mossy", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
+    big: [["tree", { type: "cedar", variant: "ancient", scale: 1.1 }], ["tree", { type: "fir", minor: true, scale: 1 }]],
     ponds: true,
     pathKinds: ["magic"],
     setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
@@ -10796,9 +10796,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["pools"],
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.15, freak: 0.1, lake: 0.6, modern: 0 },
-      feel: "Silver birches and old dark yews round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright."
+      feel: "Old mossy cedars, spruces and alders round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright."
     },
-    flora: { species: [["birch", 0.5], ["yew", 0.3], ["weepingBirch", 0.2]], palette: { sat: 0.75, val: 1 } },
+    flora: { species: [["cedar", 0.5], ["fir", 0.3], ["alder", 0.2]], palette: { sat: 0.75, val: 1 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "clover"] } }
   };
 
@@ -10908,10 +10908,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.38,
     floor: ["ice", 0.56, 0.12, 0.8],
     snow: 0.8,
-    text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
+    text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, wind-bent spruces, junipers and larch", set: "a ring of weathered posts round a stone" },
     wall: [["stones", {}]],
     small: [["stones", {}]],
-    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
+    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "fir", variant: "windbent", scale: 0.6 }], ["tree", { type: "juniper", minor: true, scale: 0.6 }], ["tree", { type: "larch", minor: true, scale: 0.5 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
     layout: {
@@ -10924,9 +10924,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.8, amount: 0.2 },
       terrain: ["rocky", "hollows"],
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.7, freak: 0.05, lake: 0.1, modern: 0.05 },
-      feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, stunted wind-bent pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area); bright, cold and still."
+      feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area); bright, cold and still."
     },
-    flora: { species: [["rowan", 0.4], ["pine", 0.4], ["birch", 0.2]], palette: { sat: 0.6, val: 0.78 } },
+    flora: { species: [["fir", 0.45], ["juniper", 0.35], ["larch", 0.2]], palette: { sat: 0.6, val: 0.78 } },
     settings: { treeDensity: 0.2, groundCover: { density: 0.3, kinds: ["moss", "blades"] } }
   };
 
@@ -10972,10 +10972,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.32,
     floor: ["snow", 0.6, 0.08, 0.78],
     snow: 0.9,
-    text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
+    text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "old frozen spruces and larch, snow-capped boulders", set: "a troll bridge over an iced stream" },
     wall: [["stones", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
+    big: [["tree", { type: "fir", variant: "ancient", scale: 1.05 }], ["tree", { type: "larch", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
     pathKinds: ["footpath"],
     setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: 0.3, top: "slab" }],
     layout: {
@@ -10988,9 +10988,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["stream", "mounds"],
       decor: { rate: 0.25, ruins: 0.15, rocks: 0.7, freak: 0.1, lake: 0, modern: 0.05 },
-      feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
+      feel: "A frozen forest, hushed: old spruces hung with frost and larches in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
     },
-    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["fir", 0.5], ["larch", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.5, kinds: ["fern", "moss", "blades"] } }
   };
 
@@ -11003,10 +11003,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.27,
     floor: ["basalt", 0.62, 0.1, 0.2],
-    text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and stunted pines", set: "a cinder cone, its crater glowing, lava trickling down its side" },
+    text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and a few palms", set: "a cinder cone, its crater glowing, lava trickling down its side" },
     wall: [["boulder", {}], ["rockwall", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "cycad", scale: 0.9 }], ["tree", { type: "pine", minor: true, scale: 0.8, gnarl: 0.8 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "cycad", scale: 0.9 }], ["tree", { type: "datePalm", minor: true, scale: 0.8 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
     steep: true,
     pathKinds: ["stairs"],
     setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1],
@@ -11020,9 +11020,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["hollows"],
       decor: { rate: 0.3, ruins: 0.1, rocks: 0.6, freak: 0.2, lake: 0, modern: 0.1 },
-      feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, stunted pines on the ridges, a little cinder cone smoking in the clearing."
+      feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, a few palms on the ridges, a little cinder cone smoking in the clearing."
     },
-    flora: { species: [["cycad", 0.45], ["pine", 0.35], ["datePalm", 0.2]], palette: { sat: 0.7, val: 0.8 } },
+    flora: { species: [["cycad", 0.55], ["datePalm", 0.25], ["cycad", 0.2, { variant: "burnt" }]], palette: { sat: 0.7, val: 0.8 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["fern", "moss"] } }
   };
 
@@ -11035,10 +11035,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.28,
     floor: ["mud", 0.3, 0.25, 0.17],
-    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
+    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "old mangroves drowned standing, strangler figs", set: "the drowned stones of an old wall" },
     wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 0.9 }]],
-    big: [["tree", { type: "larch", variant: "drowned", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+    big: [["tree", { type: "mangrove", variant: "drowned", scale: 1.25 }], ["tree", { type: "strangler", minor: true, scale: 1 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -11053,9 +11053,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.05 },
       terrain: ["pools", "hollows"],
       decor: { rate: 0.3, ruins: 0.6, rocks: 0.1, freak: 0.1, lake: 0.2, modern: 0 },
-      feel: "Tall drowned larches standing in still black water, roots knuckled up out of it, willows trailing, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
+      feel: "Old drowned mangroves standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
     },
-    flora: { species: [["larch", 0.6], ["willow", 0.25], ["alder", 0.15]], palette: { sat: 0.6, val: 0.7 } },
+    flora: { species: [["mangrove", 0.6], ["strangler", 0.25], ["mangrove", 0.15, { variant: "stunted" }]], palette: { sat: 0.6, val: 0.7 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.5, kinds: ["reeds", "blades"] } }
   };
 
@@ -11088,7 +11088,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.45, ruins: 0.75, rocks: 0.2, freak: 0, lake: 0.05, modern: 0 },
       feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched."
     },
-    flora: { species: [["datePalm", 0.5], ["acacia", 0.3], ["olive", 0.2]], palette: { sat: 0.75, val: 0.92 } },
+    flora: { species: [["datePalm", 0.5], ["acacia", 0.3], ["baobab", 0.2]], palette: { sat: 0.75, val: 0.92 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
   };
 
