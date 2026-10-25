@@ -587,6 +587,7 @@ async function main() {
   // flying and zooming through every step in both modes.
   await run("cull", { width: 640, height: 360 }, async page => {
     await page.keyboard.press("Enter");
+    await offHouse(page); // (on the forest floor first: east of her decks the oak's limbs run on to the Studio, where she can't rise)
     let k = 0;
     for (const mode of ["ground", "treetop"]) {
       if (mode === "treetop") { await page.keyboard.press("Space"); await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000 }); }
