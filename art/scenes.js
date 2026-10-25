@@ -54,7 +54,7 @@ const SMALL = {
 const rows = (piece, x0, x1, dx, zs, skip = () => false, kinds = [piece]) => zs.flatMap((z, j) => { const out = []; for (let x = x0, i = 0; x <= x1 + 1e-6; x += dx, i++) if (!skip(x, z)) out.push([kinds[(i * 7 + j * 3) % kinds.length], +(x + ((i * 37 + j * 11) % 5 - 2) * .04).toFixed(2), +(z + ((i * 13 + j * 7) % 5 - 2) * .05).toFixed(2), (i + j) % 3 ? undefined : "left"]); return out; });
 const GRAVES = ["headstone", "headstone", "headstone-lean", "grave-cross", "headstone-sunk", "headstone"];
 const LARGE = {
-  "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "holly-thicket", "ancient", "deadwood", "wispy-forest"], pieces: [
+  "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "ancient", "deadwood", "wispy-forest"], pieces: [
     ["lychgate", 0, 4.4], ["mausoleum", -3.4, -3.4], ["yew", 3.6, -3.2], ["stone-angel", .2, -.7], ["obelisk", 2.6, 1.0],
     ...rows("headstone", -3.6, 3.6, .9, [-1.9, .5, 2.4], (x, z) => (Math.abs(x - .2) < .9 && Math.abs(z + .7) < 1.5) || (Math.abs(x - 2.6) < .6 && Math.abs(z - 1.0) < .8) || (x < -2.3 && z > 1.5), GRAVES),
     ["iron-railing", -3.4, 1.4], ["iron-railing", -3.4, 3.3], ["grave-lantern", -1.7, .7], ["grave-lantern", 1.0, 2.6]] },

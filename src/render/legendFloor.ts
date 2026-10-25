@@ -65,7 +65,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "old-pinewood": look("redSandstone", "needles", "moss", 0.55, false, 0.65),
   "ravine": look("slate", "pebbles", "moss", 0.65, true),
   "bluebell-glade": look("limestone", "bluebells", "moss", 0.5),
-  "holly-thicket": look("slate", "darkLeaves", "moss", 0.55),
+  "thorn-scrub": look("buffSandstone", "pebbles", "lichen", 0.3), // dry red earth, thorny litter (the holly thicket's till the roster)
   "honeysuckle-tangle": look("limestone", "flowers", "lichen", 0.5),
   "mossy-dell": look("granite", "leaves", "moss", 0.7, false, 0.6),
   "misty-terraces": look("granite", "needles", "moss", 0.6, false, 0.5),

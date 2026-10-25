@@ -26,7 +26,7 @@
   {
    "name": "Temperate deep woods",
    "biomes": [],
-   "areas": ["muddy-forest", "fern-forest", "holly-thicket", "norway", "old-pinewood", "deadwood", "tangly-forest", "berry-thicket"]
+   "areas": ["muddy-forest", "fern-forest", "norway", "old-pinewood", "deadwood", "tangly-forest", "berry-thicket"]
   },
   {
    "name": "Temperate wetland",
@@ -41,7 +41,7 @@
   {
    "name": "Badlands & volcanic",
    "biomes": ["badlands", "volcanic"],
-   "areas": ["red-canyon", "cactus-flats", "scrub-wash", "warren", "dragon-scrub"]
+   "areas": ["red-canyon", "cactus-flats", "thorn-scrub", "scrub-wash", "warren", "dragon-scrub"]
   },
   {
    "name": "Hot",

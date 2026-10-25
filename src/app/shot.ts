@@ -11,6 +11,7 @@
 import { deckOf } from "../rules/treehouse";
 import { HOUSE_ROOMS, fromPlan, objectFront } from "../rules/houseRooms";
 import { AREA_TYPES } from "../rules/map";
+import { areaIdOf } from "../../art/areaRenames.js";
 import { newCamera } from "../rules/camera";
 import { witchHeight } from "../rules/witch";
 import { spawnFind, spawnSpot, type FindKindId } from "../rules/finds";
@@ -48,7 +49,7 @@ export function applyShot(g: Game, scene: string): ShotResult {
       return { ok: true, say: `at the ${o.label}`, ...p };
     }
     case "area": {
-      const t = AREA_TYPES.findIndex(a => a.id === arg);
+      const t = AREA_TYPES.findIndex(a => a.id === areaIdOf(arg)); // (an old id finds its renamed area: art/areaRenames.js)
       if (t < 0) return { ok: false, say: `no area type ${arg}` };
       const m = g.map, d = m.dancefloor;
       let best: { x: number; z: number } | null = null, bd = Infinity;
