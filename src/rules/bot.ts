@@ -15,7 +15,7 @@
 //     for the win's stragglers, gathering her posse first: without that no bot ever won).
 // She flies between areas over the treetops and fights on the ground, as a player does. Seeded and deterministic: no
 // clock, no Math.random; the same game and the same steps give the same controls.
-import { deckOf, overDeck } from "./treehouse";
+import { deckOf, landsOn } from "./treehouse";
 import { runeOffset } from "./runeOffset";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
@@ -574,7 +574,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     // treetops she doesn't come down over it.
     const deck = deckOf(g.map, t);
     if (deck && !b.seated && b.perch && b.mode === "ground") toggle = true;
-    else if (deck && toggle && b.mode === "treetop" && overDeck(deck, b.x, b.z)) toggle = false;
+    else if (deck && toggle && b.mode === "treetop" && landsOn(deck, b.x, b.z)) toggle = false;
     return { moveX: mx, moveZ: mz, toggleMode: toggle, zoom: 0, fire, aimX, aimZ, dash, sigil, place, ...(cycle ? { cycle } : {}), castParty: g.party.spellAt === null };
   }
 }

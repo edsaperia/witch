@@ -1278,10 +1278,6 @@
             "on": {
               "type": "boolean"
             },
-            "hub": {
-              "type": "number",
-              "minimum": 0
-            },
             "height": {
               "type": "number",
               "minimum": 0
@@ -1293,82 +1289,6 @@
             "rail": {
               "type": "number",
               "minimum": 0
-            },
-            "table": {
-              "type": "number",
-              "minimum": 0
-            },
-            "tableUse": {
-              "type": "number",
-              "minimum": 0
-            },
-            "balcony": {
-              "type": "object",
-              "properties": {
-                "out": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "r": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "out",
-                "r"
-              ],
-              "additionalProperties": false
-            },
-            "decks": {
-              "type": "object",
-              "properties": {
-                "inner": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "outer": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "from": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "to": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "inner",
-                "outer",
-                "from",
-                "to"
-              ],
-              "additionalProperties": false
-            },
-            "seat": {
-              "type": "number",
-              "minimum": 0
-            },
-            "circle": {
-              "type": "object",
-              "properties": {
-                "out": {
-                  "type": "number",
-                  "minimum": 0
-                },
-                "r": {
-                  "type": "number",
-                  "minimum": 0
-                }
-              },
-              "required": [
-                "out",
-                "r"
-              ],
-              "additionalProperties": false
             },
             "landTime": {
               "type": "number",
@@ -1411,24 +1331,35 @@
                 "fade"
               ],
               "additionalProperties": false
+            },
+            "crown": {
+              "type": "object",
+              "properties": {
+                "on": {
+                  "type": "boolean"
+                },
+                "seed": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "on",
+                "seed"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
             "on",
-            "hub",
             "height",
             "grace",
             "rail",
-            "table",
-            "tableUse",
-            "balcony",
-            "decks",
-            "seat",
-            "circle",
             "landTime",
             "walk",
             "fall",
-            "dark"
+            "dark",
+            "crown"
           ],
           "additionalProperties": false
         },

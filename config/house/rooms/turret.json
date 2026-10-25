@@ -1,0 +1,12 @@
+{
+  "id": "turret",
+  "label": "Turret",
+  "order": 50,
+  "trunk": true,
+  "x": -4,
+  "z": -75,
+  "r": 6.5,
+  "objects": [
+    {"id":"telescope","label":"Telescope","use":{"kind":"telescope"},"offset":[0.72,-1.44],"box":{"w":1.6,"d":1.6,"h":3.2}}
+  ]
+}

@@ -1,14 +1,13 @@
 {
   "id": "parlour",
   "label": "Parlour",
-  "order": 70,
-  "parent": "atrium",
-  "bearing": 1.5,
-  "branch": 4.5,
-  "radius": 5.5,
-  "bend": -0.8,
+  "order": 20,
+  "trunk": true,
+  "x": -16,
+  "z": -24,
+  "r": 11,
   "objects": [
-    {"id":"mirror","label":"Mirror","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"bearing":-25,"foot":[2.2,0.6,4.2]},
-    {"id":"hats","label":"Hats","use":{"kind":"hats"},"bearing":0,"in":0,"foot":[3.6,1.8,0],"offset":[0,1]}
+    {"id":"bags","label":"Bags","use":{"kind":"creator","axes":["bagSize","backpackSize"],"wear":["satchel","bumbag"],"parts":["satchel","backpack"]},"offset":[-4.89,-6.11],"box":{"w":3.6,"d":0.8,"h":3.2}},
+    {"id":"invitations","label":"Invitations desk","use":{"kind":"say","line":"The invitations aren't written yet."},"offset":[3.67,-4.89],"box":{"w":3.4,"d":1.8,"h":1.8}}
   ]
 }

@@ -35,7 +35,7 @@ export function guardSpots(map: ForestMap): { x: number; z: number }[] {
   for (let i = 0; out.length < SPOTS && i < SPOTS * 8; i++) {
     let v = 0, f = 0.5; for (let k = i + 1; k > 0; k >>= 1, f /= 2) if (k & 1) v += f; // (van der Corput, base 2)
     const a = i * 2.399963, r = ring + (home.r - ring) * Math.sqrt(v), x = D.x + Math.cos(a) * r, z = D.z + Math.sin(a) * r;
-    const deep = [[0, 0], [EDGE, 0], [-EDGE, 0], [0, EDGE], [0, -EDGE]].every(([dx, dz]) => home.inside(x + dx, z + dz));
+    const deep = home.inside(x, z) && Array.from({ length: 8 }, (_, k) => (k * Math.PI) / 4).every(b => home.inside(x + Math.cos(b) * EDGE, z + Math.sin(b) * EDGE)); // (all round: the border's ragged)
     if (!deep || Math.hypot(x - T.x, z - T.z) < HOUSE_GAP || !isInside(map.bounds, x, z, EDGE)) continue;
     out.push({ x, z });
   }

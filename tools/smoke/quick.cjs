@@ -59,12 +59,13 @@ async function main() {
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
     check(true, "a key press starts the game");
-    // She starts at her decks on the treehouse deck, 22 m up (rules/treehouse.ts): up off it, out over the forest, down.
+    // She starts at her decks on the treehouse's Terrace, 22 m up (rules/treehouse.ts): up off it, out over the forest (south,
+    // towards the camera: the oak's rooms spread west, north and east of the Terrace), down.
     if (await page.evaluate(() => !!window.witch.game.witch.perch)) {
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 120000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "treetop" && !window.witch.game.witch.perch), "space rises off the treehouse deck");
-      await hold("ArrowLeft", 1.5);
+      await hold("ArrowDown", 1.5);
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 120000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch), "lands on the ground away from the deck");

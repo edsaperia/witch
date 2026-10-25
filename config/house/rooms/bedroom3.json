@@ -1,18 +1,18 @@
 {
   "id": "bedroom3",
   "label": "Bedroom 3",
-  "order": 120,
-  "parent": "boudoir",
-  "bearing": 133,
-  "branch": 2.5,
-  "radius": 9,
-  "bend": 1,
+  "order": 130,
+  "from": "boudoir",
+  "bend": -4,
+  "x": 46,
+  "z": -28,
+  "r": 7,
   "locked": true,
-  "door": {"label":"Door","foot":[1.4,1.4,4.4],"use":{"kind":"say","line":"A friend's room. Locked for now."}},
+  "door": {"label": "Door", "foot": [1.4, 1.4, 4.4], "use": {"kind": "say", "line": "A friend's room. Locked for now."}},
   "objects": [
-    {"id":"bedroom3Bed","label":"A bare bed frame","use":{"kind":"say","line":"Waiting for its witch."},"bearing":133,"in":3.4,"foot":[4,5.2,1.2]},
-    {"id":"bedroom3Wardrobe","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"bearing":-135,"foot":[4,1.4,4.4]},
-    {"id":"bedroom3Chest","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"bearing":40,"foot":[2.8,1.6,1.8]},
-    {"id":"bedroom3Crates","label":"Packing crates","use":{"kind":"say","line":"Waiting for its witch."},"bearing":85,"foot":[3,1.6,2.6]}
+    {"id":"bedroom3Bed","label":"A bare bed frame","use":{"kind":"say","line":"Waiting for its witch."},"offset":[2.6,-2.6],"box":{"w":4,"d":5.2,"h":1.2}},
+    {"id":"bedroom3Wardrobe","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[4.2,2.2],"box":{"w":1.4,"d":4,"h":4.4}},
+    {"id":"bedroom3Chest","label":"Something under a dust sheet","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-1.6,-4.9],"box":{"w":2.8,"d":1.6,"h":1.8}},
+    {"id":"bedroom3Crates","label":"Packing crates","use":{"kind":"say","line":"Waiting for its witch."},"offset":[-2.8,2.9],"box":{"w":3,"d":1.6,"h":2.6}}
   ]
 }

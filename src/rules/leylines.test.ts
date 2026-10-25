@@ -93,7 +93,7 @@ describe("the whole route, the whole time (Ed, 2026-10-06: \"I think the leyline
   });
 });
 
-describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-10-05)", () => {
+describe("the first ley line leaves the treehouse's front, towards the dancefloor (Ed, 2026-10-05; the oak north-west of it, 2026-10-24)", () => {
   const D = TUNING.leyLines.depart;
   it("starts at the treehouse's front at the start of a run", () => {
     const m = generateMap(123, TUNING), p = newParty(m), first = ahead(p, m, 2)[0];
@@ -101,11 +101,11 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
     expect([first.x, first.z]).toEqual([m.treehouseFront.x, m.treehouseFront.z]);
     expect(m.treehouseFront.z).toBeGreaterThan(m.treehouse.z); // (south: towards the camera)
   });
-  it("stands due north of the dancefloor, its footprint gap metres outside the ring of speakers (Ed, 2026-10-05)", () => {
+  it("stands north-west of the dancefloor (Ed, 2026-10-24; due north from 2026-10-05), its footprint gap metres outside the ring of speakers", () => {
     for (const seed of [123, 293912, 31337]) {
-      const m = generateMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers;
-      expect(th.x).toBeCloseTo(d.x, 6);
-      expect(th.z).toBeLessThan(d.z); // (north: up the screen)
+      const m = generateMap(seed, TUNING), d = m.dancefloor, th = m.treehouse, S = TUNING.dancefloor.speakers, a = (TUNING.treehouse.angle * Math.PI) / 180, L = Math.hypot(th.x - d.x, th.z - d.z);
+      expect((th.x - d.x) / L).toBeCloseTo(Math.cos(a), 6); expect((th.z - d.z) / L).toBeCloseTo(Math.sin(a), 6);
+      expect(th.x).toBeLessThan(d.x); expect(th.z).toBeLessThan(d.z); // (north-west: up the screen and to the left)
       const edge = Math.hypot(th.x - d.x, th.z - d.z) - TUNING.treehouse.clear, ring = TUNING.dancefloor.radius * S.radiusFactor + S.footprint;
       expect(edge - ring).toBeCloseTo(TUNING.treehouse.gap, 6);
     }
@@ -121,8 +121,11 @@ describe("the first ley line leaves the treehouse's front, due south (Ed, 2026-1
       expect(Math.hypot(last[0] - b.x, last[1] - b.z)).toBeLessThan(1);
       // Never over the dancefloor, nor inside its ring of speakers.
       for (const q of pts) expect(Math.hypot(q[0] - d.x, q[1] - d.z), `seed ${seed}`).toBeGreaterThanOrEqual(R - 1e-6);
-      // Round the ring on the objective's side: clockwise on the screen (eastward first) for one east of home.
-      const k = Math.min(4, pts.length - 1), goesEast = pts[k][0] > pts[0][0];
+      // Round the ring on the objective's side: clockwise on the screen (eastward first, from the treehouse's front up the screen)
+      // for one east of home. (From where it meets the ring: the front stands off it, to the north-west, so the way in drops
+      // towards home either way.)
+      const ang = (q: readonly number[]) => Math.atan2(q[0] - d.x, q[1] - d.z), on = Math.max(0, pts.findIndex(q => Math.hypot(q[0] - d.x, q[1] - d.z) <= R + 2));
+      const k = Math.min(on + 4, pts.length - 1), turn = Math.atan2(Math.sin(ang(pts[k]) - ang(pts[on])), Math.cos(ang(pts[k]) - ang(pts[on]))), goesEast = turn < 0; // (clockwise on the screen: the angle round home, 0 south, falling)
       expect(goesEast, `seed ${seed}`).toBe(b.x >= d.x);
       if (goesEast) east++; else west++;
       // Smooth: no sharp corners.
