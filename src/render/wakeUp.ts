@@ -44,7 +44,7 @@ export class WakeCard {
     if (!w || (w.open && this.dark < 0.01 && !toDecks)) { this.hide(); return; }
     if (w.events.includes("dressFirst")) this.dressFirstAt = ht;
     // the dark: in bed, then lit as she stretches and gets up
-    const want = w.open ? 0 : w.beat === "alarm" || w.beat === "snooze" ? 1 : w.beat === "stretch" ? 1 - Math.min(1, (ht - w.at) / 1.5) * 0.75 : 0.25;
+    const want = w.open ? 0 : w.beat === "dream" || w.beat === "alarm" || w.beat === "snooze" ? 1 : w.beat === "stretch" ? 1 - Math.min(1, (ht - w.at) / 1.5) * 0.75 : 0.25;
     this.dark += (want - this.dark) * Math.min(1, dt * 3);
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
@@ -59,6 +59,7 @@ export class WakeCard {
 
   private text(w: WakeState, ht: number, snooze: number): string {
     switch (w.beat) {
+      case "dream": return "💤 … zzz …"; // (still asleep, dreaming: render/dream.ts; the alarm when it ends)
       case "alarm": return w.short ? `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>any key: up` : `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "snooze": return `💤 five more minutes…${w.snoozes > 1 ? ` (snoozed ×${w.snoozes})` : ""} · rings again in ${Math.max(1, Math.ceil(snooze - (ht - w.at)))} s<br>${k("W")}${k("A")}${k("S")}${k("D")} get up`;
       case "stretch": return "*yaaawn* … *stretch*";
