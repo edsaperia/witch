@@ -129,6 +129,16 @@ async function main() {
     await page.keyboard.up(key);
     return [from, to];
   };
+  // Off the house onto the forest floor (the oak, 2026-10-24: walking off her decks keeps her in the house, its limbs running on to
+  // its rooms): up off the Terrace, south over the trees, and down.
+  const offHouse = async (page, timeout = 240000) => {
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout });
+    await hold(page, "ArrowDown", 1.5, timeout);
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch, null, { timeout });
+    await page.waitForFunction(() => !(window.witch.game.witches[0].cool?.left > 0.01), null, { timeout, polling: 100 }).catch(() => {}); // (the take-off's cooldown spent, as quick.cjs waits)
+  };
   const shot = async (page, file) => { await sleep(400); await page.screenshot({ path: path.join(out, file), timeout: 300000 }); /* big windows: seconds a frame in the software renderer */ results.push(`shot previews/${file}`); };
 
   // Fly a fixed path through every zoom level in both modes; nothing of any kind may appear or
@@ -316,6 +326,7 @@ async function main() {
   for (const [name, q] of [["effects-off", "&shadows=off&canopy=off&mist=off"], ["effects-on", ""]]) {
     await run(name, { width: 1280, height: 720 }, async page => {
       await page.keyboard.press("Enter");
+      await offHouse(page);
       await hold(page, "ArrowRight", 1.5);
       await sleep(300);
       await shot(page, `30-ground-${name}.png`);
@@ -890,6 +901,7 @@ async function main() {
       if (/swiftshader|llvmpipe|software/i.test(gl)) { soft(w, h); return; }
       await page.keyboard.press("Enter");
       await page.evaluate(() => { const v = window.witch.view; v.pops = []; v.trackPops = true; window.maxDropped = 0; setInterval(() => { window.maxDropped = Math.max(window.maxDropped, v.stats.dropped); }, 50); });
+      await offHouse(page, 600000);
       await hold(page, "ArrowRight", 4, 600000);
       await shot(page, `vanish-${w}x${h}-ground.png`);
       await page.keyboard.press("Space");
