@@ -23,15 +23,20 @@ describe("the first load waking in her bedroom", () => {
     expect(opensInBedroom(link(""), TUNING)).toBe(true);
     expect(opensInBedroom(link("quick=1"), TUNING)).toBe(true);
     expect(opensInBedroom(link("opening=old"), TUNING)).toBe(false);
-    for (const q of ["creator=0", "seed=123", "island=home", "arrive=1", "bot=skilled", "zoo"]) expect(opensInBedroom(link(q), TUNING)).toBe(false);
+    for (const q of ["creator=0", "arrive=1", "bot=skilled", "zoo"]) expect(opensInBedroom(link(q), TUNING)).toBe(false);
   });
 
-  it("wakes in her bedroom only for a plain start of the game", () => {
+  it("wakes her in her bedroom on a link naming its night too (Ed, 2026-10-25, on ?seed=497831: \"it should be loading straight to her bedroom in the treehouse, not the character creation screen\")", () => {
+    for (const q of ["seed=497831", "island=home", "island=fox&seed=4242", "seed=123&quick=1"]) expect(opensInBedroom(link(q), TUNING), q).toBe(true);
+    expect(opensInBedroom(link("seed=123&opening=old"), TUNING)).toBe(false);
+  });
+
+  it("wakes in her bedroom for any start of a night she plays", () => {
     expect(opensInBedroom(link(""), on)).toBe(true);
     expect(opensInBedroom(link("opening=bedroom&timing=1"), off)).toBe(true);
     expect(opensInBedroom(link(""), off)).toBe(false);
-    // a link naming its night, arriving from the chart, a bot game, the room skipped or the zoo: its own start
-    for (const q of ["seed=123", "island=home", "island=marten&seed=4&arrive=1", "bot=skilled", "creator=0", "zoo=1"]) expect(opensInBedroom(link(q), on), q).toBe(false);
+    // arriving from the chart (the sail's own landing), a bot game, the room skipped or the zoo: its own start
+    for (const q of ["island=marten&seed=4&arrive=1", "bot=skilled", "creator=0", "zoo=1"]) expect(opensInBedroom(link(q), on), q).toBe(false);
   });
 
   it("a sail lands her asleep in her bed (Ed, 2026-10-25, his 2a), in place or by the island's link (&arrive=1); only ?opening=old at her decks", () => {

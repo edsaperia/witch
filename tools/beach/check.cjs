@@ -32,7 +32,7 @@ async function open(browser, port, seed) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } }), errors = [];
   page.on("pageerror", e => errors.push(e.message));
   page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-  await page.goto(`http://127.0.0.1:${port}/?seed=${seed}&spell=auto`);
+  await page.goto(`http://127.0.0.1:${port}/?opening=old&seed=${seed}&spell=auto`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 300000, polling: 500 });
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });

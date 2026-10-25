@@ -18,7 +18,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/cs
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto(`http://127.0.0.1:${server.address().port}/?seed=${seed}`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/?opening=old&seed=${seed}`);
     await page.waitForSelector("#creator-start", { timeout: 120000 });
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.waitForTimeout(1500);
