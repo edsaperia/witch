@@ -1,7 +1,7 @@
 // The biome looks' contact sheet (Ed, 2026-10-23: art/flora/biomes.js): a row per biome (and temperate), each on a
 // floor of one of its areas, lit by the game's night: three shared species (oak, pine, birch) in its look, then four of its own
 // species in its look, then a 3 x 3 patch of its own crowns as the treetops see them; then border islands blending two.
-//   node tools/biomes/sheet.mjs <png> [scale]   (MODE=trees, the default; canopy: the treetops; blends: border islands; ground: the tufts and the decor's rocks; areas: a real
+//   node tools/biomes/sheet.mjs <png> [scale]   (MODE=trees, the default; canopy: the treetops; blends: border islands; ground: the tufts and the decor's rocks; rings: each biome at rings 3, 4 and 5's strengths; areas: a real
 //   area's own trees today and in a biome's look; ROWS=jungle,cold only those; COLS=n panels to a row)
 import { writeFileSync } from "node:fs";
 import { openBrowser } from "../../art/headless.mjs";
@@ -70,6 +70,14 @@ const url = await b.page.evaluate(async ({ scale }) => {
     for (const [blend, area, ids] of BLENDS) {
       const look = B.biomeLook(blend), [pa, pb] = [B.biomeLook(blend.a), B.biomeLook(blend.b)];
       rows.push({ label: `Border island: ${look.name}`, floor: G.areaAssets(area, st).floor.sp, items: [tree(ids[0], pa, 41), { gap: 12 }, ...ids.map((id, i) => tree(id, look, 41 + i * 13).whole), { gap: 12 }, tree(ids[0], pb, 41)].map(v => v.whole || v) });
+    }
+  } else if (mode === "rings") { // each biome at each ring's strength (Ed, 2026-10-25; the tuning's biomeLooks: rules/lakeLooks.ts biomeStrength): ring 3, ring 4, ring 5 (full: every ring before)
+    for (const [biome, area, own] of ROWS) {
+      if (biome === "temperate" || (pick && !pick.includes(biome))) continue;
+      for (const [ring, k] of [[3, .55], [4, .8], [5, 1]]) {
+        const look = B.biomeLook(k >= 1 ? biome : `${biome}|${biome}|1.00|${k.toFixed(2)}`), mk = (ids, s) => ids.map((id, i) => tree(id, look, s + i * 13));
+        rows.push({ label: `${B.BIOME_LOOKS[biome].name}: ring ${ring} (${Math.round(k * 100)}%)${k >= 1 ? ", and every ring before" : ""}`, floor: G.areaAssets(area, st).floor.sp, items: [...mk(SHARED, 41).map(v => v.whole), { gap: 14 }, ...mk(own.slice(0, 2), 71).map(v => v.whole)] });
+      }
     }
   } else for (const [biome, area, own] of ROWS) {
     if (pick && !pick.includes(biome)) continue;

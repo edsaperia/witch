@@ -161,6 +161,27 @@
       ],
       "additionalProperties": false
     },
+    "biomeLooks": {
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "number",
+          "minimum": 0
+        },
+        "strength": {
+          "type": "array",
+          "items": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      },
+      "required": [
+        "from",
+        "strength"
+      ],
+      "additionalProperties": false
+    },
     "lakes": {
       "type": "object",
       "properties": {
@@ -11409,6 +11430,7 @@
   "required": [
     "mapAreas",
     "map",
+    "biomeLooks",
     "lakes",
     "chart",
     "islands",
