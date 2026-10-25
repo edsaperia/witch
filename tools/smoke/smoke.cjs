@@ -174,7 +174,7 @@ async function main() {
       await rise(page);
       await page.waitForFunction(() => window.witch.game.witch.mode === "treetop", null, { timeout: 240000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "treetop" && !window.witch.game.witch.perch), "space rises off the treehouse deck");
-      await hold(page, "ArrowLeft", 1.5);
+      await hold(page, "ArrowDown", 1.5); // (south, as the quick smoke: the oak's rooms spread west, north and east of the Terrace)
       await page.keyboard.press("Space");
       await page.waitForFunction(() => window.witch.game.witch.mode === "ground", null, { timeout: 240000, polling: 100 }).catch(() => {});
       check(await page.evaluate(() => window.witch.game.witch.mode === "ground" && !window.witch.game.witch.perch), "lands on the ground away from the deck");
@@ -258,6 +258,9 @@ async function main() {
     await page.touchscreen.tap(200, 400);
     await sleep(300);
     check(!(await state(page)).paused, "a tap starts the game");
+    // (on the forest floor south of the dancefloor: from her decks the joystick would walk her out along the oak's limbs, where she can't rise)
+    await page.evaluate(() => { const g = window.witch.game, d = g.map.dancefloor; g.witch = { ...g.witch, x: d.x, z: d.z + 45, vx: 0, vz: 0, mode: "ground", lift: 0, perch: undefined, seated: false }; });
+    await sleep(1500);
     await shot(page, "10-phone-ground.png");
     // Drag the joystick up and to the right with touch pointer events, as a thumb would.
     const touch = (type, x, y) => page.evaluate(([type, x, y]) => {
@@ -392,9 +395,9 @@ async function main() {
     await sleep(1500);
     const r = await page.evaluate(() => {
       const v = window.witch.view, out = { n: 0, flat: [], through: [] };
-      v.scene.traverse(o => {
+      v.scene.traverseVisible(o => { // (what's drawn: a hidden group's meshes aren't, the house's furniture while she's out of it)
         const m = o.material;
-        if (!m || !o.visible) return;
+        if (!m) return;
         for (const mat of Array.isArray(m) ? m : [m]) {
           if (mat === v.sky?.mesh.material || o.renderOrder >= 20) continue; // the sky; debug overlays
           const vs = mat.vertexShader || "";
