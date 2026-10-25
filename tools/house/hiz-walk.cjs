@@ -1,9 +1,9 @@
 // The treehouse's occluders (render/hiz.ts) change no pixel: the built game (DIST, default dist/) at spots all round the house (the
-// decks, the balcony, its sides and back, on its floors and in the air round it, from the camera's own view at each), each frame drawn
+// decks, the Terrace's take-off, its sides and back, the Kitchen, on its floors and in the air round it, from the camera's own view at each), each frame drawn
 // with them on and then off in the same page and compared pixel by pixel (the canvas as drawn, before anything is scaled). Fails on
 // any pixel that differs, and on a blind comparison (the area types' scenery hidden by its layers, which the view never resets as it does .visible each time it lists them, must change some pixel at some spot: else the
 // frames weren't drawn; in the enclosed rooms it's dark behind the house anyway). Its cost: tools/bench/gpu.cjs (QUERY=hiz=0 against the default).
-//   npm run build && node tools/house/hiz-walk.cjs [out dir] [seed]   (DIST=, SPOTS=decks,balcony,...)
+//   npm run build && node tools/house/hiz-walk.cjs [out dir] [seed]   (DIST=, SPOTS=decks,takeoff,...)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outDir = "previews/hiz-walk", seed = "123"] = process.argv.slice(2);
@@ -11,8 +11,8 @@ const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist")
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 // (metres from the treehouse's spot, south +z; mode; the house's floor or the air)
 const ALL = {
-  decks: null, balcony: [0, 12, "ground", true], terrace: [0, 0, "ground", true], east: [8, 4, "ground", true], west: [-8, 4, "ground", true],
-  back: [0, -8, "ground", true], kitchen: [0, -16, "ground", true], flyS: [0, 40, "treetop", false], flyE: [45, 0, "treetop", false], flyW: [-45, 0, "treetop", false], flyN: [0, -60, "treetop", false],
+  decks: null, takeoff: [9.5, 9.5, "ground", true], terrace: [0, 0, "ground", true], east: [8, 4, "ground", true], west: [-8, 4, "ground", true],
+  back: [0, -8, "ground", true], kitchen: [-70, 44, "ground", true], flyS: [0, 40, "treetop", false], flyE: [45, 0, "treetop", false], flyW: [-45, 0, "treetop", false], flyN: [0, -60, "treetop", false],
 };
 const SPOTS = (process.env.SPOTS || Object.keys(ALL).join(",")).split(",");
 (async () => {

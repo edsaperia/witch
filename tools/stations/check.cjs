@@ -1,6 +1,6 @@
 // The dressing stations in the built game (Ed's playtest of v4273, 2026-10-23: "When the camera zooms in on the witch, it aims at her
 // feet, and so when you're zoomed close her head is off screen"; "When choosing clothes etc I can't select them, I can only move the
-// selector around"). For each station in her bedroom (?shot=object:<id>, app/shot.ts), the loop running as in play:
+// selector around"). For each of her dressing stations (the bedroom's, and the cloak pegs in the Cloakroom; ?shot=object:<id>, app/shot.ts), the loop running as in play:
 //  - framing: once she's choosing, all of her is on screen and the part being chosen near the middle (camera.station.parts), at the
 //    start's zoom and again with the zoom all the way in (Z);
 //  - choosing: the arrow keys and a click each put an owned item on her, and her drawn look follows (the view's assets: her look now,
