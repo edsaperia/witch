@@ -1,7 +1,7 @@
 // The opening's first load (app/opening.ts; Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the
 // home island instead of the map"): which loads wake in her bedroom, and that a first game's chart has only home to sail to.
 import { describe, expect, it } from "vitest";
-import { openingWay, opensInBedroom } from "./opening";
+import { openingWay, opensInBedroom, sailLandsInBed } from "./opening";
 import { emptySave, recordNight, unlocked } from "./chartSave";
 import { TUNING } from "../rules/tuning";
 
@@ -32,6 +32,14 @@ describe("the first load waking in her bedroom", () => {
     expect(opensInBedroom(link(""), off)).toBe(false);
     // a link naming its night, arriving from the chart, a bot game, the room skipped or the zoo: its own start
     for (const q of ["seed=123", "island=home", "island=marten&seed=4&arrive=1", "bot=skilled", "creator=0", "zoo=1"]) expect(opensInBedroom(link(q), on), q).toBe(false);
+  });
+
+  it("a sail lands her asleep in her bed (Ed, 2026-10-25, his 2a), in place or by the island's link (&arrive=1); only ?opening=old at her decks", () => {
+    expect(sailLandsInBed(link(""), TUNING)).toBe(true);
+    expect(sailLandsInBed(link("island=fox&seed=4242&arrive=1"), TUNING)).toBe(true);
+    expect(sailLandsInBed(link("island=fox&seed=4242&arrive=1&creator=0&quick=1"), TUNING)).toBe(true); // (the tools' and smoke runs' links too)
+    expect(sailLandsInBed(link("island=fox&arrive=1&opening=old"), TUNING)).toBe(false);
+    expect(sailLandsInBed(link("arrive=1"), off)).toBe(false);
   });
 
   it("a first game's chart has only home to sail to; what she finds opens more", () => {

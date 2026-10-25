@@ -1,7 +1,7 @@
 // The loading mist through the dive (Ed, 2026-10-24: "the dive might now interact with loading mist, in a good way - please
 // check"): the built game loaded at home (its gate off and its trees drawn ahead of need held back, ?mistgate=0&artdelay=), then
 // sailed in place to another island (window.witch.sail: the night ended, the next made, the chart's flight in over the sea and the
-// forest to her decks, app/arrive.ts), the page's own loop running, a picture every EVERY seconds of the wall's clock from the
+// forest down to her asleep in her bed, app/arrive.ts), the page's own loop running, a picture every EVERY seconds of the wall's clock from the
 // sail on, each logged with the flight's state and each area type's mist front. Writes <out>/dive-NNN.png and <out>/dive.json.
 //   npm run build && node tools/mist/dive.cjs [out] [dist]
 // ISLAND (fox), SEED (4242), MIST (1; 0 to film it without), ARTDELAY (s, 30), EVERY (s, 3), SECONDS (after the sail, 240), SIZE (960x540), EXTRA (more of the link).

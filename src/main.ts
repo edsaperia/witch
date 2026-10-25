@@ -1,7 +1,7 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
-import { openingWay, opensInBedroom } from "./app/opening";
+import { openingWay, opensInBedroom, sailLandsInBed } from "./app/opening";
 import { wakeInBedroom } from "./rules/opening";
 import { endDream, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
@@ -245,8 +245,9 @@ const warmWhenSettled = warmOn ? setInterval(() => {
   warmChart(chartWorld(), loadSave().found, (made, kept) => console.info(`sea chart made ahead: ${made} islands made, ${kept} already kept, ${((performance.now() - t0) / 1000).toFixed(1)} s`), log ? (id, made) => console.info(`sea chart: ${id} ${made ? "made" : "kept"} at ${((performance.now() - t0) / 1000).toFixed(1)} s`) : undefined);
 }, 3000) : 0;
 requestAnimationFrame(() => setTimeout(async () => {
-  await view.prepare();
   const night = N();
+  if (night.arrival) bedFirst(night); // (the island's link loaded anew, &arrive=1: in bed before the dive, as a sail in place)
+  await view.prepare();
   night.flags.ready = true;
   // The sea chart's renderer and shaders made ahead, while the start screen shows (ui/chartOverlay.ts prepareChart): E at the map
   // table then opens it without seconds of waiting. Not under automation (the smoke and bench runs), unless ?prepChart=1.
@@ -267,9 +268,10 @@ const freeze = page.freeze = new Freeze(N().game, N().seed, BUILD);
 freeze.started = () => (startEl.style.display === "none" || creator.open) && !studio.at; // (in the bedroom too: Ed, 2026-10-14, "Can we pause from the bedroom?")
 freeze.ownsEsc = () => !bot; // (the bot game's Esc is its way back to the start screen: ui/botGame.ts)
 
-// Arriving from the sea chart (?arrive=1; the night's arrival, app/night.ts): the chart's last frame while the night builds, then
-// the flight from the chart's camera to her decks; no bedroom. Any key or tap skips to the decks; the night starts (the party
-// spell cast) as it lands, and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
+// Arriving from the sea chart (?arrive=1, or a sail in place; the night's arrival, app/night.ts): the chart's last frame while the
+// night builds, then the flight from the chart's camera down to her asleep in her bed (Ed, 2026-10-25: "a sail always ends with her
+// asleep in bed"; bedFirst; at her decks under ?opening=old, the party spell cast as it lands). Any key or tap skips to its end; as
+// it lands she wakes (arrived), and if no key or tap has come by then (browsers keep sound off till one does) a small note asks for one.
 const bootArrival = N().arrival;
 // (Ed, 2026-10-12: the HUD hidden through the flight, fading in as she settles at her decks)
 const HUD_IDS = ["clock", "seed", "version", "buffs", "aim", "touch", "bubbles", "invites"];
@@ -308,23 +310,31 @@ function revealArt(): void {
   mark("game:reveal");
 }
 if (bootArrival) bootArrival.onReveal = revealArt;
-/** It's landed at her decks: the night starts, the party spell cast, as the bedroom's scroll would. */
+/** A sail's night put to bed before its dive (Ed, 2026-10-25, 2a: every sail ends with her asleep in bed; app/opening.ts
+ *  sailLandsInBed): her in her bedroom, the camera settled on her there, so the flight's last shot is her room (app/arrive.ts end). Not
+ *  under ?opening=old, or without the house's rooms: then her decks as before, and no dream after the dive. */
+function bedFirst(n: Night): void {
+  n.flags.inBed = sailLandsInBed(n.params, n.tuning) && wakeInBedroom(n.game);
+  if (!n.flags.inBed) dreamAfterDive = null;
+}
+/** It's landed: in her bed, she wakes as after the bed (the shorter wake-up: she's played tonight already, Ed's decision 10), dreaming
+ *  first of a find on loan; at her decks (?opening=old), the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
   logTiming(); clearCarried(); // (?timing=1: the whole sail, from the chart to her decks)
   N().flags.landed = true;
   document.body.classList.remove("arriving"); // (the HUD fades in)
   sound.sailing(0); // (sailed in place: the sea and the wind fade as the night's start comes in)
-  // (a sail with a loan settled: landed asleep in her bed, dreaming it, the alarm when it ends: rules/wakeUp.ts, render/dream.ts)
+  // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (dd && startWake(N().game, N().game.herTime, true, true)) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd) && dd) startDream(dd);
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
 }
 
 // The character creator (Ed, 2026-10-05; "dressing up" to the player, the house's Bedroom being the room with the bed): at every
-// load but a sail's arrival (&arrive=1 lands at her decks), from the hidden start card's button, and mid-night from the treehouse's
+// load but a sail's arrival (&arrive=1 lands in her bed), from the hidden start card's button, and mid-night from the treehouse's
 // stations (below); ?creator=0 skips it (tests, the smoke run), and loading is the start screen's as before.
 // It's also the loading screen (Ed, 2026-10-05): it opens at once and the forest grows behind it;
 // Start waits ("getting ready") until play can begin.
@@ -823,7 +833,7 @@ async function makeSailNight(to: Sailed, arrival?: Arrival, at?: FlightEnd["cam"
   armBack();
   const n = await startNight(page, { how: "sail", island: to.island, seed: to.seed, world: to.world, arrival, params: p });
   seedEl.innerHTML = `seed <a href="?seed=${n.seed}">${n.seed}</a>`;
-  if (dreamAfterDive && !wakeInBedroom(n.game)) dreamAfterDive = null; // (a dream to come: the flight in ends on her bedroom, rules/opening.ts)
+  bedFirst(n); // (the flight in ends on her asleep in her bedroom, rules/opening.ts)
   lastDraw = 0;
   const A = n.tuning.arrive;
   await view.prepare(A && at !== undefined ? { dive: diveReach(n.game.map, A), track: diveTrack(n.game.map, A) } : {}); // (under the chart's flight only: window.witch.sail's, the still's, waits for it all as ever)
