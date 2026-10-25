@@ -14,6 +14,6 @@ export const DESERT_RUIN = {
     terrain: ["mounds", "ridges"], decor: { rate: .45, ruins: .75, rocks: .2, freak: 0, lake: .05, modern: 0 },
     feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched.",
   },
-  flora: { species: [["datePalm", .5], ["acacia", .3], ["olive", .2]], palette: { sat: .75, val: .92 } },
+  flora: { species: [["datePalm", .5], ["acacia", .3], ["baobab", .2]] /* (the flora check: Ed, 2026-10-25, ring 5: baobab for the olive) */, palette: { sat: .75, val: .92 } },
   settings: { treeDensity: .25, groundCover: { density: .3, kinds: ["pebbles", "blades"] } },
 };
