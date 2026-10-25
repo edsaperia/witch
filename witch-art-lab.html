@@ -13562,11 +13562,20 @@ BIOME_LOOKS.rocky = BIOME_LOOKS.volcanic; // (the east's old name: lakeLooks.ts 
 
 const NUM = ["sat", "val", "snow", "jitter"], KNOB_ADD = ["lean", "gnarl", "hang"];
 const mixArr = (a, b, w) => a && b ? a.map((v, i) => v * w + b[i] * (1 - w)) : a ? a.map((v, i) => i === 3 ? v * w : v) : b ? b.map((v, i) => i === 3 ? v * (1 - w) : v) : undefined;
-/** A biome's look, or two blended (`{ a, b, w }`, a's share w): every number mixed by share, crown extras kept at their share. */
+/** A biome's look, or two blended (`{ a, b, w }`, a's share w): every number mixed by share, crown extras kept at their share; at
+ *  strength `s` (Ed, 2026-10-25: "Lower phase non-home biome areas can be semi-temperate looking; higher phase biomes are more
+ *  extreme"; its ring's, rules/lakeLooks.ts biomeKey), that look mixed toward temperate's by 1 - s. A key: "a", or "a|b|w", or
+ *  "a|b|w|s". */
 function biomeLook(blend) {
-  if (typeof blend === "string") { const [a, b = a, w = "1"] = blend.split("|"); blend = { a, b, w: +w }; } // (a name, or a blend's key: "a|b|w", rules/lakeLooks.ts biomeKey)
+  if (typeof blend === "string") { const [a, b = a, w = "1", s = "1"] = blend.split("|"); blend = { a, b, w: +w, s: +s }; } // (a name, or a blend's key: rules/lakeLooks.ts biomeKey)
   if (!blend || (blend.a === "temperate" && blend.b === "temperate")) return null;
-  const A = BIOME_LOOKS[blend.a] || BIOME_LOOKS.temperate, B = BIOME_LOOKS[blend.b] || BIOME_LOOKS.temperate, w = blend.w ?? 1, out = { name: blend.a === blend.b ? A.name : `${A.name} ${Math.round(w * 100)}% · ${B.name}` };
+  const A = BIOME_LOOKS[blend.a] || BIOME_LOOKS.temperate, B = BIOME_LOOKS[blend.b] || BIOME_LOOKS.temperate, w = blend.w ?? 1, s = Math.max(0, Math.min(1, blend.s ?? 1));
+  const look = mixLooks(A, B, w, blend.a === blend.b ? A.name : `${A.name} ${Math.round(w * 100)}% · ${B.name}`);
+  return s >= 1 ? look : mixLooks(look, BIOME_LOOKS.temperate, s, `${look.name} at ${Math.round(s * 100)}%`);
+}
+/** Two looks mixed, A's share w (a look's missing number its temperate value: 1 for sat, val and jitter, else 0). */
+function mixLooks(A, B, w, name) {
+  const out = { name };
   for (const k of NUM) out[k] = (A[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * w + (B[k] ?? (k === "sat" || k === "val" || k === "jitter" ? 1 : 0)) * (1 - w);
   for (const k of ["leaf", "lit", "bark", "stone"]) out[k] = mixArr(A[k], B[k], w);
   for (const k of ["moss", "flower"]) out[k] = A[k] && B[k] ? A[k].map((v, i) => v * w + B[k][i] * (1 - w)) : (w >= .5 ? A[k] : B[k]) || A[k] || B[k];
