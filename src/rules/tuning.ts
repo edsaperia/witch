@@ -394,6 +394,8 @@ export interface Tuning {
   sail?: { inPlace: boolean };
   /** The opening (app/opening.ts): bedroom, a plain first load waking in her bedroom on home's night; ?opening=bedroom|old for one load. */
   opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
+  /** The forests' biome looks by ring (rules/lakeLooks.ts biomeStrength): strength[0] for phase from, the next ring the next, the last further out. */
+  biomeLooks?: { from: number; strength: number[] };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
     /** the sea chart's flight waiting for a sail's night (app/chartView.ts, render/chart/seaChart.ts FlyOptions): its pace down to rate, eased over ease seconds, for at most cap seconds */
     hold?: { rate: number; ease: number; cap: number };

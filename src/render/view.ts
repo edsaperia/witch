@@ -627,7 +627,7 @@ export class View {
     // (sliced: the island build's own art workers' drawings asked ahead of the start's own, so the build doesn't wait behind them)
     this.assets = new AssetLibrary(style, game.seed, t.pixelSize, witchGenome, treehouseArtId(game), sliced ? [discoJob(style), MarkerArt.stoneJob(style, t, game.map).job] : []);
     this.assets.typeSeed = islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home");
-    this.assets.typeBiome = biomeKey(t.map?.island ?? "home", t.map?.world ?? 0); // (the island's biome: its forests' look, art/flora/biomes.js) // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
+    this.assets.typeBiome = biomeKey(t.map?.island ?? "home", t.map?.world ?? 0, t.biomeLooks); // (the island's biome: its forests' look, art/flora/biomes.js) // (the island's own trees: kept, so a revisit draws them at once; tonight's swapped in unseen, revealArt)
     this.assets.crownShare = t.trunkFade.crownShare;
     this.assets.stoneScale = t.runeMarkers.scale;
     if (!sliced) runSync(this.build());
@@ -1057,7 +1057,7 @@ export class View {
     this.trunkShadowBatches.delete("markers"); // (the old island's runestones': let go with it)
     this.partyView.gen?.reset();
     for (const b of this.appearing.keys()) b.appearU.value = 1; // (a kept batch caught fading in shows whole)
-    this.assets.reseat({ seed: game.seed, typeSeed: islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"), typeBiome: biomeKey(t.map?.island ?? "home", t.map?.world ?? 0), treehouse: treehouseArtId(game) });
+    this.assets.reseat({ seed: game.seed, typeSeed: islandArtSeed(t.map?.world ?? 0, t.map?.island ?? "home"), typeBiome: biomeKey(t.map?.island ?? "home", t.map?.world ?? 0, t.biomeLooks), treehouse: treehouseArtId(game) });
     this.game = game;
     Object.assign(this, nightState(t));
     const M = moodOf(t);
