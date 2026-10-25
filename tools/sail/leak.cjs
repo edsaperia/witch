@@ -42,7 +42,7 @@ function serve() {
 
 const settled = page => page.waitForFunction(() => window.witch && window.witch.ready && window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 500 });
 async function play(page) {
-  // a few drawn frames where she stands (the island's own GPU resources made), then about 5 s of play stepped, off the decks and back
+  // a few drawn frames where she stands (the island's own GPU resources made), then about 5 s of play stepped, there and back (after a sail: up out of bed and about her bedroom)
   await page.evaluate(async ({ DT, idle }) => {
     window.witch.manual = true;
     for (let i = 0; i < 4; i++) { window.witch.frame(idle, DT, true); await new Promise(r => setTimeout(r, 0)); }
@@ -124,7 +124,7 @@ async function main() {
     const inPlace = await page.evaluate(({ island, seed }) => window.witch.sail(island, seed), { island, seed });
     if (!inPlace) throw new Error(`sail ${s}: not in place`);
     await settled(page);
-    await page.keyboard.press("Shift"); // (skips the flight in to her decks: it lands and the night starts)
+    await page.keyboard.press("Shift"); // (skips the flight in: it lands her asleep in her bed, and the wake-up starts)
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000 });
     const ms = Date.now() - ts;
     await play(page);

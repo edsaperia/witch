@@ -362,6 +362,50 @@ describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
   });
 });
 
+describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", () => {
+  /** A sail's night as main.ts lands it: put in bed before the dive (bedFirst), then as it lands the shorter wake-up (arrived). */
+  function sailed(onLoan: boolean): Game {
+    const g = newGame(4242, TUNING);
+    g.party.spellAt = null; g.clock.paused = false;
+    expect(g.witch.seated).toBe(true); // (a night starts her at her decks: the sail moves her)
+    expect(wakeInBedroom(g)).toBe(true);
+    expect(startWake(g, g.herTime, true, onLoan)).toBe(true);
+    return g;
+  }
+  it("with nothing on loan: in her bed in her bedroom, not at her decks, asleep with the alarm ringing, in her nightie", () => {
+    const g = sailed(false);
+    expect(inRoom(g)).toBe(true);
+    expect(atDecks(g)).toBe(false);
+    expect(g.witch.seated).toBe(false);
+    expect(g.wake!.beat).toBe("alarm");
+    expect(g.wake!.short).toBe(true); // (the shorter wake-up, as after the bed: she's played tonight already)
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+    const p = rel(g);
+    run(g, 1);
+    expect(rel(g)).toEqual(p); // (held in bed while it rings)
+  });
+  it("then the wake-up as every morning: up at a move, dressed at the pile before the door opens, out to her decks for the party", () => {
+    const g = sailed(false);
+    run(g, K.alarmMin + 0.05);
+    const seen = run(g, 0.1, { moveX: 1 });
+    expect(seen).toContain("up");
+    expect(g.wake!.open).toBe(true);
+    expect(doorShut(g)).toBe(true); // (undressed: the door waits)
+    standAt(g, "clothesPile");
+    press(g);
+    expect(dressed(g.wake)).toBe(true);
+    expect(doorShut(g)).toBe(false);
+    expect(g.party.spellAt).toBeNull(); // (the party waits for her decks, as after the bed)
+  });
+  it("with a find on loan: the same bed, dreaming first, the alarm as the dream ends", () => {
+    const g = sailed(true);
+    expect(inRoom(g)).toBe(true);
+    expect(g.wake!.beat).toBe("dream");
+    endDream(g, g.herTime);
+    expect(g.wake!.beat).toBe("alarm");
+  });
+});
+
 describe("she always wakes in her nightie, last night's clothes in the pile (Ed, 2026-10-24)", () => {
   it("on every way in: the first load's whole wake-up, the shorter one after the bed or a sail, and after a dream", () => {
     for (const [short, dreams] of [[false, false], [true, false], [true, true]]) {
