@@ -4,7 +4,7 @@
 // wake-up's state; then, landed, the alarm ringing in her bedroom, a step up out of bed, and her by last night's clothes. LOAN=1
 // takes the night's find first (window.witch.take), so she dreams it as she lands. Writes <out>/bed-NNN.png and <out>/bed.json.
 //   npm run build && node tools/sail/bed-shots.cjs [out] [dist]
-// ISLAND (fox), SEED (4242), LOAN (0), EVERY (s, 4), SECONDS (most for the flight, 400), SIZE (960x540).
+// ISLAND (fox), SEED (4242), LOAN (0), EVERY (s, 4), SECONDS (most of the flight filmed, 400; it waits for the landing all the same), SIZE (960x540).
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/bed", distArg] = process.argv.slice(2);
@@ -53,6 +53,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       if (wait > 0) await page.waitForTimeout(wait);
     }
     await sailed;
+    await page.waitForFunction(s => window.witch.game.seed === s && !!window.witch.game.wake && !document.body.classList.contains("arriving"), SEED, { timeout: 1800000, polling: 500 }); // (landed: a slow renderer's flight outlasts SECONDS)
     await page.waitForTimeout(3000);
     await shoot(LOAN ? "landed: dreaming" : "landed: the alarm");
     if (LOAN) { await page.keyboard.press("KeyW"); await page.waitForTimeout(2500); await shoot("the dream over: the alarm"); }
