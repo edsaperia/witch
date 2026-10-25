@@ -17,7 +17,7 @@ import { islandCoast } from "../rules/islandShape";
 import { coastSpec, homeIsland, isPlaceholder, islandOf, KIND_NAMES, knownKinds, REAL_KINDS } from "../rules/rosters";
 import { TUNING } from "../rules/tuning";
 import { islandSigil } from "../../art/sigils.js";
-import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd } from "../render/chart/seaChart";
+import { CHART_PIXEL, releaseSeaChart, SeaChart, takeSeaChart, type ChartIsland, type FlightEnd, type FlyOptions } from "../render/chart/seaChart";
 import { loadSave, unlocked, type ChartSave } from "./chartSave";
 import { islandAt } from "./chartLayout";
 import { stepTo } from "./chartNav";
@@ -27,6 +27,14 @@ import { chartOrder, islandPhase, OUTLINE_STEP } from "./chartWarm";
 import { chartChoice, type ChartHere } from "./sail";
 
 export type ChartMode = "look" | "sail" | "miniature";
+/** Where the chart's flight hands over to the game's dive (the tuning's arrive.handoff; Ed, 2026-10-24: "maybe it comes from further
+ *  away across the sea?"), or one of the variants by name for one load, ?dive=near|far|skim: near, the first flight's (just inland
+ *  of the south coast, high); far, a long way out to sea, the dive coming in across the water; skim, as far and low over it. */
+export const DIVES: Record<string, FlyOptions> = { near: { sea: -40, dist: 600, pitchDeg: 50 }, far: { sea: 420, dist: 520, pitchDeg: 38 }, skim: { sea: 520, dist: 360, pitchDeg: 24 } };
+const diveOptions = (): FlyOptions => {
+  const named = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("dive");
+  return (named && DIVES[named]) || TUNING.arrive?.handoff || {};
+};
 /** The testing toggle's key (this browser): sail to any island with a creature. */
 const SAIL_ANY = "witch.chart.sailAnywhere";
 export interface ChartViewOptions {
@@ -41,6 +49,11 @@ export interface ChartViewOptions {
   onSail?: (island: string, seed: number, end?: FlightEnd) => void;
   /** Sail mode: the flight in to the island has begun (the chart over the game fills the screen for it). */
   onFly?: () => void;
+  /** Sail mode, a sail in place (Ed, 2026-10-24, the sail's transition: "Never a frozen frame"): the next night made under the chart
+   *  as it flies, from the moment the island is chosen, with the night's seed and where the flight will hand over (`at`, for its
+   *  first frames to be drawn there ahead); resolves once it's ready for the dive. The flight slows to wait for it (seaChart.ts
+   *  FlyOptions, the tuning's arrive.hold), then `onSail` as ever. */
+  onDepart?: (island: string, seed: number, at: FlightEnd["cam"] | null) => Promise<void>;
   /** Look and sail modes: a Close button and Esc. */
   onClose?: () => void;
   /** Sail mode over a night (the map table's, the cards'): the island she's on, and its button's words ("Back to the party"):
@@ -184,6 +197,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   // chooses; each island keeps its night's seed for the chart's whole visit, so what was drawn for it before a change of mind is
   // still hers when she comes back to it)
   const seeds = new Map<string, number>();
+  const dive = diveOptions(); // (where its flights hand over: the tuning's, or ?dive='s)
   const seedOf = (id: string) => { let s = seeds.get(id); if (s === undefined) { s = Math.floor(Math.random() * 1000000); seeds.set(id, s); } return s; };
   const bakeFor = (id: string | null) => {
     if (!sailing || mini || bake?.island === id) return;
@@ -201,8 +215,20 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     found.sort((a, b) => Math.hypot(a.x - (home?.x ?? 0), a.y - (home?.y ?? 0)) - Math.hypot(b.x - (home?.x ?? 0), b.y - (home?.y ?? 0)));
     return found[0]?.id ?? "home";
   };
+  // The night made under the chart as it flies (onDepart): the island and seed it's for, and whether it's ready for the dive.
+  let departed: { island: string; seed: number; ready: boolean } | null = null;
+  const depart = async (id: string) => {
+    const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
+    await b?.settle();
+    const m = bake?.island === id ? await bake.map : null; // (its map, made in a worker: the night takes it, as go's does)
+    if (m) await Promise.race([m.done, new Promise(res => setTimeout(res, 8000))]);
+    const d: NonNullable<typeof departed> = departed = { island: id, seed, ready: false };
+    performance.mark("chart:depart");
+    try { await opts.onDepart!(id, seed, chart.flightEnd(id, dive)); } finally { d.ready = true; performance.mark("chart:ready"); }
+  };
   const go = async (id: string, end?: FlightEnd) => {
     performance.mark("chart:flown");
+    if (departed?.island === id) { performance.mark("chart:go"); opts.onSail?.(id, departed.seed, end); return; } // (made already, under the flight)
     const b = bake?.island === id ? await bake.job : null, seed = b?.seed ?? seedOf(id);
     await b?.settle(); // (what's drawn, written before the page goes)
     // (its map, if it's still being made: the page would only make it again, on its main thread; never more than 8 s)
@@ -219,7 +245,10 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     const w = worldNow();
     performance.mark("chart:sail");
     bakeFor(id); // (sailing straight there: drawn through the flight)
-    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); })) { void go(id!); return; }
+    const early = !!opts.onDepart && !!opts.onSail && chart.flightEnd(id!, dive) !== null;
+    const hold = early ? { hold: () => departed?.island !== id || !departed.ready, slow: TUNING.arrive?.hold } : {};
+    if (!chart.fly(id!, end => { writeArrival(id!, w, end); void go(id!, end); }, { ...dive, ...hold })) { void go(id!); return; }
+    if (early) void depart(id!);
     root.classList.add("flying");
     opts.onFly?.();
     requestAnimationFrame(() => resize());

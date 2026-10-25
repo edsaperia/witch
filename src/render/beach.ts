@@ -88,12 +88,15 @@ export class BeachView {
   /** Another night's ground (View.setGame): gone from the last one's beach, the new island's found as she nears it. */
   setGround(ground: Ground): void { this.leave(); this.gazing = false; this.at = null; this.decor = null; this.items = []; this.nextHeart = 0; this.turn = 0; this.ground = ground; }
 
-  /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. */
-  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number): boolean {
+  /** Each frame; true while she's drawn here (lying on the sand, or with a beach witch), so the view leaves her out. `fly`: the
+   *  camera's aim on a sail's dive in from the sea (View.fly; Ed, 2026-10-24, "it comes from further away across the sea"): the
+   *  sand and sea on while it's within `fly.reach` metres of the sand, wherever she is. */
+  update(g: Game, time: number, visible: (x: number, z: number, w: number, h: number) => boolean, camera: THREE.Camera, width: number, height: number, fly?: { x: number; z: number; reach: number }): boolean {
     if (this.at?.map !== g.map) { this.leave(); this.at = { map: g.map, beach: beachOf(g.map.bounds, g.tuning) }; this.decor = null; }
     const b = this.at.beach, w = g.witch;
     if (!b) return false;
-    if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0)) { this.leave(); this.gazing = false; return false; }
+    const seen = !!fly && b.intoSand(fly.x, fly.z) >= -fly.reach;
+    if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0) && !seen) { this.leave(); this.gazing = false; return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);

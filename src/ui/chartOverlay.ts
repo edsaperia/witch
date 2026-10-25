@@ -26,9 +26,9 @@ let leaving: (() => void) | null = null;
 export interface Sailed { island: string; seed: number; world?: number; end?: FlightEnd }
 
 /** Open the chart over the game; `onSail` with the island's link (to load) and what she sailed to (a night in place: app/sail.ts)
- *  when she sails; `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
+ *  when she sails (`o.onDepart` first, as its flight sets off: the night in place made under it, app/chartView.ts); `world`, a world the game's link gave (?world=), carried on as chart.html's links do. Does nothing if it's
  *  already open. `o.here`: the island she's on: choosing it closes the chart as Close does (then `o.onStay`), never a sail (app/sail.ts chartChoice). */
-export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"] } = {}): void {
+export function openChart(onSail: (href: string, sailed: Sailed) => void, world?: number, o: { here?: ChartViewOptions["here"]; onStay?: () => void; table?: ChartViewOptions["table"]; onDepart?: (sailed: Sailed, at: FlightEnd["cam"] | null) => Promise<void> } = {}): void {
   if (open) return;
   leaving?.(); // (the last table's chart still sliding away: gone now, its chart free for this one)
   performance.mark("chart:open");
@@ -54,13 +54,14 @@ export function openChart(onSail: (href: string, sailed: Sailed) => void, world?
     mode: "sail", world,
     onSail: (island, seed, end) => { closeChart(); onSail(sailHref(island, seed, world, location.href), { island, seed, world, end }); },
     onFly: () => { wrap.style.inset = "0"; wrap.style.border = "0"; wrap.style.borderRadius = "0"; host.style.maskImage = host.style.webkitMaskImage = "none"; if (moon) moon.style.display = "none"; }, // (the flight fills the screen, edge to edge)
+    onDepart: o.onDepart ? (island, seed, at) => o.onDepart!({ island, seed, world }, at) : undefined, // (the next night made under the flight: main.ts)
     onClose: closeChart,
     here: o.here,
     onStay: () => { closeChart(); o.onStay?.(); }, // (as Close: the night held behind it goes on as it was, main.ts)
     table: o.table,
   });
   let last = performance.now();
-  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); };
+  const loop = (now: number) => { if (!open) return; const dt = Math.min(0.1, (now - last) / 1000); last = now; view.update(dt, now / 1000); if (!open) return; if (moon && host.style.maskImage !== "none") drawMoon(moon, view, wrap); open.raf = requestAnimationFrame(loop); }; // (closed by its own frame: a flight handing over to a night made under it)
   open = { wrap, view, raf: requestAnimationFrame(loop), slide, moon };
   slide?.in();
   performance.mark("chart:mounted");
