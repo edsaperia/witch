@@ -2124,7 +2124,7 @@ label.check input { accent-color: var(--accent); }
     }
     // A rounded blob: each pixel's normal points out from the blob's centre.
     ellipse(cx, cy, rx, ry, v, opts = {}) {
-      const { onlyOn, density = 1, noise = 0, seed: seed2 = 0, round = 1 } = opts;
+      const { onlyOn, density = 1, noise: noise2 = 0, seed: seed2 = 0, round = 1 } = opts;
       cx *= this.sx;
       rx *= this.sx;
       for (let y = Math.max(0, Math.floor(cy - ry - 1)); y < Math.min(this.h, cy + ry + 1); y++)
@@ -2134,7 +2134,7 @@ label.check input { accent-color: var(--accent); }
           const i = y * this.w + x;
           if (onlyOn && !onlyOn.has(this.m[i])) continue;
           if (density < 1) {
-            const nz = noise ? vnoise2(x / 3.2, y / 3.2, seed2) * noise + (1 - noise) * 0.5 : 0.5;
+            const nz = noise2 ? vnoise2(x / 3.2, y / 3.2, seed2) * noise2 + (1 - noise2) * 0.5 : 0.5;
             if (hash22(x, y, seed2 + 77) > density * (0.4 + nz * 1.2) * (1.15 - d2 * 0.5)) continue;
           }
           const nx = dx * round, ny = dy * round, l = Math.hypot(nx, ny, Math.sqrt(Math.max(0, 1 - d2)) + 0.15);
@@ -12494,99 +12494,139 @@ label.check input { accent-color: var(--accent); }
 
   // config/house/base.json
   var base_default = {
-    _: `The treehouse is the Ent's own (Ed, 2026-10-23: "The layout doesn't have to be all right-angles; the corridors are tree branches, the rooms are probably round"; the mock he OKd, previews/ed/treehouse-layout-v3/mock2): round plank rooms on the Ent, joined by bark-covered branches, off the Terrace (the hub and its balcony, its walls and map gone: art/ent.js), drawn by the game (render/houseRooms.ts, render/houseArt.ts) and walked as one floor with the Terrace (rules/houseRooms.ts). A file a room (housekeeping, Ed 2026-10-23: so pull requests on different rooms stop colliding): config/house/rooms/<id>.json holds a room's place on the plan (by its parent: a bearing, a branch, a radius; Ed's room graph, previews/ed/treehouse-layout-v3/ed-graph.md) and its objects, this file the house's own numbers (hub: the Terrace's radius; branchWidth), put together by config/house/assemble.js (which says what each holds); node tools/house/organic.mjs checks no rooms crowd. Metres from the hub's centre, x east, z south (turn 0: the plan unturned; organic: the Ent's own house). Each room: its bounds (x0..x1, z0..z1) and its radius r about their middle; locked: drawn but shut, its branch ending at its door (Bedrooms 2 and 3, one for each other witch: Ed, 2026-10-21, "We will have three bedrooms, one for each witch"; 2026-10-23, "locked. The branch stops at the door"). Each branch: its middle line (pts), its width (w) and its bounds; it runs 1.4 m into the floors it joins, so the walk runs on through. wall: the walls' height (m), as drawn. Each object: a box on the plan (Alpha draws furniture by id and footprint): its room, its middle (x, z), its footprint (w along x, d along z) and height (h), its label, and what E does there (use): creator (the creator opened at only these choices: axes, wear and parts, as ui/creator.ts BOXES names them; spell: the Hat or Broom box's power row too), hats (the hats' floor: hats lie there as objects, E picks one up or puts hers down), bed (held E ends the night), curtains (the bedroom's window: shut while she wakes, open by themselves once the island's ready; rules/wakeUp.ts), zoo (the bestiary's book: the zoo over the night), telescope (the crow's nest's: looking round the island through it, rules/telescope.ts), chart (the Atrium's map table: the sea chart; Ed, 2026-10-23), or say (a placeholder: a one-line bubble). reach: how far past an object's edge E reaches it (m). Each witch's own dressing is in her bedroom (the dressing table, the wardrobe, the cloak pegs, the shoe rack); the shared things are past its door (the Parlour's mirror and hats' floor, the Study's bags, the Workshop's broom stand).`,
+    _: `The treehouse is the Ent as an old oak (Ed, 2026-10-24: "it is a large old oak tree with wide, thick, decumbent branches. The trunk rooms are the largest, getting smaller towards to the top. The other rooms sit upon branches. The room and corridor shapes are irregular, and don't have clear joins between them. The floors are wooden but not planks"; the layout v4 he approved, previews/ed/treehouse-layout-v4 on claude/treehouse-trunk-mock): a trunk of rooms in a soft S (rooms/*.json with trunk, bottom to top by order: the Dining Room, the Terrace, the Parlour, the Boudoir, her Bedroom, the Turret) and a pair of branch rooms off each of the first four (from, bend), one floor smooth-unioned from them all (config/house/shape.js; drawn by render/houseArt.ts, walked by rules/houseRooms.ts). on, turn (the plan's turn: none), wall, reach (how near an object counts as at it, m), bed.hold (s). noiseAt: where the plan's 0 (the Terrace's middle) lay on the mock's own plan, so the field's noise and each room's wobble are seeded as the mock's were and the shapes are its shapes. terrace: the Terrace's own layout, metres from its middle: takeoff, the open rim she steps off (and flies back on) its angle (degrees round from east, clockwise: 60 is south-east, towards the dancefloor) and half its span; decks, her DJ desk on that rim (its middle and w along x, d along z) and seat, where she stands behind it; circle, the magic circle (its middle, its radius), where a knockout brings her back.`,
     on: true,
     turn: 0,
     wall: 3,
     reach: 1.2,
-    bed: {
-      hold: 1.5
-    },
+    bed: { hold: 1.5 },
     organic: true,
-    hub: 7,
-    branchWidth: 3.2
+    noiseAt: [10, 8],
+    terrace: { takeoff: { angle: 60.2, half: 31.5 }, decks: { x: 6, z: 8, w: 5, d: 1.6 }, seat: { x: 6, z: 6.4 }, circle: { x: 2, z: 2, r: 2 } }
   };
+
+  // config/house/shape.js
+  var hash = (x, y) => {
+    const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return s - Math.floor(s);
+  };
+  function noise(x, y) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
+    const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1);
+    return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+  }
+  var fbm = (x, y) => noise(x, y) * 0.55 + noise(x * 2.1, y * 2.1) * 0.3 + noise(x * 4.3, y * 4.3) * 0.15;
+  function blob(r, x, z) {
+    const dx = x - r.x, dz = z - r.z, a = Math.atan2(dz, dx), seed2 = r.x * 0.37 + r.z * 0.21;
+    const rr = r.r * (1 + 0.1 * Math.sin(3 * a + seed2) + 0.07 * Math.sin(5 * a + seed2 * 2.3) + 0.05 * (fbm(dx * 0.15 + seed2, dz * 0.15) - 0.5) * 2);
+    return Math.hypot(dx, dz) - rr;
+  }
+  function limbCurve(a, b, bend) {
+    const L2 = Math.hypot(b.x - a.x, b.z - a.z), nx = -(b.z - a.z) / L2, nz = (b.x - a.x) / L2;
+    return { a, b, c: { x: (a.x + b.x) / 2 + nx * bend * 2, z: (a.z + b.z) / 2 + nz * bend * 2 } };
+  }
+  var curveAt = (q, t) => ({ x: (1 - t) * (1 - t) * q.a.x + 2 * (1 - t) * t * q.c.x + t * t * q.b.x, z: (1 - t) * (1 - t) * q.a.z + 2 * (1 - t) * t * q.c.z + t * t * q.b.z });
+  var spineLimb = (a, b, i) => ({ a, b, bend: (i % 2 ? 1 : -1) * 1, w0: a.r * 0.82, w1: b.r * 0.82 });
+  var branchLimb = (p, r) => ({ a: p, b: r, bend: r.bend, w0: Math.min(5.5, p.r * 0.45), w1: Math.max(2.8, r.r * 0.42) });
+  function inMock(S) {
+    if (S.m) return S.m;
+    const [ox, oz] = S.noiseAt ?? [0, 0], mv = (r) => ({ ...r, x: r.x + ox, z: r.z + oz }), pt = (p) => ({ x: p.x + ox, z: p.z + oz });
+    const trunk = S.trunk.map(mv), branches = S.branches.map(mv), byId = Object.fromEntries([...trunk, ...branches].map((r) => [r.id, r]));
+    const all = [...trunk, ...branches], pad = 12;
+    const box = { x0: Math.min(...all.map((r) => r.x - r.r * 1.3)) - pad, x1: Math.max(...all.map((r) => r.x + r.r * 1.3)) + pad, z0: Math.min(...all.map((r) => r.z - r.r * 1.3)) - pad, z1: Math.max(...all.map((r) => r.z + r.r * 1.3)) + pad };
+    return S.m = { ox, oz, trunk, branches, byId, box, stubs: S.stubs.map((l) => ({ ...l, a: pt(l.a), b: pt(l.b) })) };
+  }
+  function inRoom(S0, id, x0, z0) {
+    const S = inMock(S0), r = S.byId[id];
+    return r ? blob(r, x0 + S.ox, z0 + S.oz) : 1e9;
+  }
 
   // config/house/assemble.js
   var f2 = (v) => +v.toFixed(2);
-  function assemble(base, files) {
-    const HUB = base.hub, BW = base.branchWidth;
-    const byId = Object.fromEntries(files.map((f) => [f.id, f]));
-    const placed = files.filter((f) => f.parent).sort((a, b) => a.order - b.order);
-    const P2 = { terrace: { id: "terrace", x: 0, z: 0, r: HUB } };
-    for (const f of placed) {
-      const q = P2[f.parent];
-      if (!q) throw new Error(`house: ${f.id}'s parent ${f.parent} isn't placed before it (its order)`);
-      const d = q.r + f.branch + f.radius, a = f.bearing * Math.PI / 180;
-      P2[f.id] = { id: f.id, label: f.label, parent: f.parent, x: f2(q.x + d * Math.sin(a)), z: f2(q.z - d * Math.cos(a)), r: f.radius, bend: f.bend, locked: !!f.locked };
-    }
-    const L2 = placed.map((f) => P2[f.id]);
-    const rooms = L2.map((p) => ({ id: p.id, label: p.label, x0: f2(p.x - p.r), x1: f2(p.x + p.r), z0: f2(p.z - p.r), z1: f2(p.z + p.r), r: p.r, ...p.locked ? { locked: true } : {} }));
-    const doors = {};
-    const corridors = L2.map((p) => {
-      const q = P2[p.parent], dx = p.x - q.x, dz = p.z - q.z, len = Math.hypot(dx, dz), ux = dx / len, uz = dz / len;
-      const a = [q.x + ux * (q.r - 1.4), q.z + uz * (q.r - 1.4)], b = p.locked ? [p.x - ux * (p.r + 1.45), p.z - uz * (p.r + 1.45)] : [p.x - ux * (p.r - 1.4), p.z - uz * (p.r - 1.4)];
-      if (p.locked) doors[p.id] = { x: f2(p.x - ux * (p.r - 0.15)), z: f2(p.z - uz * (p.r - 0.15)) };
-      const c = [(a[0] + b[0]) / 2 - uz * p.bend * 1.5, (a[1] + b[1]) / 2 + ux * p.bend * 1.5], pts = [];
-      for (let i = 0; i <= 8; i++) {
-        const t = i / 8, m = (1 - t) * (1 - t), n = 2 * t * (1 - t), o = t * t;
-        pts.push([f2(m * a[0] + n * c[0] + o * b[0]), f2(m * a[1] + n * c[1] + o * b[1])]);
-      }
-      const xs = pts.map((v) => v[0]), zs = pts.map((v) => v[1]);
-      return { id: `${p.parent}-${p.id}`, x0: f2(Math.min(...xs) - BW / 2), x1: f2(Math.max(...xs) + BW / 2), z0: f2(Math.min(...zs) - BW / 2), z1: f2(Math.max(...zs) + BW / 2), w: BW, pts };
+  function houseShape(base, files) {
+    const sorted = [...files].sort((a, b) => a.order - b.order), room = (f) => ({ id: f.id, x: f.x, z: f.z, r: f.r });
+    const trunk = sorted.filter((f) => f.trunk).map(room), byId = Object.fromEntries(trunk.map((r) => [r.id, r]));
+    const branches = sorted.filter((f) => f.from).map((f) => {
+      if (!byId[f.from]) throw new Error(`house: ${f.id}'s branch leaves ${f.from}, which isn't a trunk room`);
+      return { ...room(f), from: f.from, bend: f.bend ?? 0, ...f.locked ? { locked: true } : {} };
     });
+    const stubs = branches.map((r) => {
+      const q = limbCurve(byId[r.from], r, r.bend), a = Math.atan2(r.z - q.c.z, r.x - q.c.x), w = Math.max(2.8, r.r * 0.42), L2 = r.r + 2.5;
+      return { room: r.id, a: { x: r.x, z: r.z }, b: { x: f2(r.x + Math.cos(a) * L2), z: f2(r.z + Math.sin(a) * L2) }, w0: f2(w * 0.9), w1: 1.4 };
+    });
+    return { noiseAt: base.noiseAt ?? [0, 0], trunk, branches, stubs };
+  }
+  function assemble(base, files) {
+    const S = houseShape(base, files), byId = Object.fromEntries([...S.trunk, ...S.branches].map((r) => [r.id, r]));
+    const sorted = [...files].sort((a, b) => a.order - b.order);
+    const rooms = sorted.map((f) => ({
+      id: f.id,
+      label: f.label,
+      x: f.x,
+      z: f.z,
+      x0: f2(f.x - f.r),
+      x1: f2(f.x + f.r),
+      z0: f2(f.z - f.r),
+      z1: f2(f.z + f.r),
+      r: f.r,
+      ...f.trunk ? { trunk: true } : { from: f.from },
+      ...f.locked ? { locked: true } : {}
+    }));
+    const doors = {}, corridors = [];
+    const stretch = (id, l, upTo = 1) => {
+      const q = limbCurve(l.a, l.b, l.bend), pts = [];
+      for (let i = 0; i <= 8; i++) {
+        const p = curveAt(q, i / 8 * upTo);
+        pts.push([f2(p.x), f2(p.z)]);
+      }
+      const xs = pts.map((v) => v[0]), zs = pts.map((v) => v[1]), w = f2(l.w0 + l.w1);
+      corridors.push({ id, x0: f2(Math.min(...xs) - w / 2), x1: f2(Math.max(...xs) + w / 2), z0: f2(Math.min(...zs) - w / 2), z1: f2(Math.max(...zs) + w / 2), w, pts });
+    };
+    for (let i = 1; i < S.trunk.length; i++) stretch(`${S.trunk[i - 1].id}-${S.trunk[i].id}`, spineLimb(S.trunk[i - 1], S.trunk[i], i));
+    for (const r of S.branches) {
+      const l = branchLimb(byId[r.from], r);
+      if (!r.locked) {
+        stretch(`${r.from}-${r.id}`, l);
+        continue;
+      }
+      const q = limbCurve(l.a, l.b, l.bend);
+      let t = 0;
+      while (t < 1 && inRoom(S, r.id, curveAt(q, t).x, curveAt(q, t).z) > 0) t += 2e-3;
+      const p = curveAt(q, t);
+      doors[r.id] = { x: f2(p.x), z: f2(p.z) };
+      stretch(`${r.from}-${r.id}`, l, t);
+    }
     const objects = [];
-    for (const f of [byId.terrace, ...placed].filter(Boolean)) {
-      const p = P2[f.id];
+    for (const f of sorted) {
+      const p = byId[f.id];
       for (const o of f.objects ?? []) {
-        const { bearing, in: inn, foot, offset, box, ...own } = o, [W, D2, Hh] = foot, a = bearing * Math.PI / 180, side = Math.abs(Math.sin(a)) > Math.abs(Math.cos(a));
-        const R5 = p.r - (inn ?? D2 / 2 + 0.35);
-        const at2 = offset ? { x: f2(p.x + offset[0]), z: f2(p.z + offset[1]) } : { x: f2(p.x + R5 * Math.sin(a)), z: f2(p.z - R5 * Math.cos(a)) };
-        objects.push({ ...own, room: f.id, ...at2, w: side ? D2 : W, d: side ? W : D2, h: Hh, ...box ?? {} });
+        const { offset, box, ...own } = o;
+        objects.push({ ...own, room: f.id, x: f2(p.x + offset[0]), z: f2(p.z + offset[1]), w: box.w, d: box.d, h: box.h });
       }
       if (f.locked && f.door) {
         const { foot: [w, d, h], ...door } = f.door;
-        objects.push({ id: `${f.id}Door`, room: f.parent, ...door, ...doors[f.id], w, d, h });
+        objects.push({ id: `${f.id}Door`, room: f.from, ...door, ...doors[f.id], w, d, h });
       }
     }
-    const { hub: _h, branchWidth: _b, ...rest } = base;
-    return { ...rest, rooms, corridors, objects };
+    const { _: _note, noiseAt: _n, ...rest } = base;
+    return { ...rest, rooms, corridors, objects, shape: S };
   }
-
-  // config/house/rooms/atrium.json
-  var atrium_default = {
-    id: "atrium",
-    label: "Atrium",
-    order: 10,
-    parent: "terrace",
-    bearing: 48,
-    branch: 3.2,
-    radius: 4.5,
-    bend: 0.8,
-    objects: [
-      { id: "mapTable", label: "Map table", use: { kind: "chart" }, bearing: 0, in: 4.5, foot: [2.6, 2.6, 0.9] }
-    ]
-  };
 
   // config/house/rooms/bedroom.json
   var bedroom_default = {
     id: "bedroom",
     label: "Bedroom",
-    order: 130,
-    parent: "boudoir",
-    bearing: 2.5,
-    branch: 2.5,
-    radius: 9,
-    bend: -0.8,
+    order: 40,
+    trunk: true,
+    x: -16,
+    z: -61,
+    r: 8.5,
     objects: [
-      { id: "wardrobe", label: "Wardrobe", use: { kind: "creator", axes: ["top"], wear: [], parts: ["jacket", "top", "jeans"] }, bearing: -62, foot: [4, 1.2, 4.4] },
-      { id: "dressingTable", label: "Dressing table", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, bearing: -25, foot: [2.8, 1.2, 3.4] },
-      { id: "curtains", label: "Curtains", use: { kind: "curtains" }, bearing: 8, foot: [3.6, 0.6, 4.2] },
-      { id: "bed", label: "Bed", use: { kind: "bed" }, bearing: 45, in: 3.4, foot: [4, 5.2, 1.6] },
-      { id: "phone", label: "Phone", use: { kind: "say", line: "Your phone. The alarm's set for tomorrow night." }, bearing: 85, in: 1.2, foot: [1.2, 1.2, 1.2] },
-      { id: "cloakPegs", label: "Cloak pegs", use: { kind: "creator", axes: ["cloak", "cloakLength", "scarfLength"], wear: ["patches", "scarf"], parts: ["cloak", "scarf"] }, bearing: -100, foot: [2.6, 0.6, 4] },
-      { id: "shoeRack", label: "Shoe rack", use: { kind: "creator", axes: [], wear: ["chunky"], parts: ["sneakers"] }, bearing: -138, foot: [3, 1.1, 1.6] },
-      { id: "clothesPile", label: "Last night's clothes", use: { kind: "pile" }, bearing: 110, in: 5, foot: [2, 1.6, 0.6] }
+      { id: "wardrobe", label: "Wardrobe", use: { kind: "creator", axes: ["top"], wear: [], parts: ["jacket", "top", "jeans"] }, offset: [-6.68, -2.43], box: { w: 1.2, d: 4, h: 4.4 } },
+      { id: "dressingTable", label: "Dressing table", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-2.43, -6.68], box: { w: 2.8, d: 1.2, h: 3.4 } },
+      { id: "bed", label: "Bed", use: { kind: "bed" }, offset: [3.64, -3.64], box: { w: 4, d: 5.2, h: 1.6 } },
+      { id: "shoeRack", label: "Shoe rack", use: { kind: "creator", axes: [], wear: ["chunky"], parts: ["sneakers"] }, offset: [-5.46, 4.25], box: { w: 3, d: 1.1, h: 1.6 } },
+      { id: "clothesPile", label: "Last night's clothes", use: { kind: "pile" }, offset: [3.04, 2.43], box: { w: 1.6, d: 2, h: 0.6 } }
     ]
   };
 
@@ -12594,19 +12634,19 @@ label.check input { accent-color: var(--accent); }
   var bedroom2_default = {
     id: "bedroom2",
     label: "Bedroom 2",
-    order: 110,
-    parent: "boudoir",
-    bearing: 76,
-    branch: 10,
-    radius: 9,
-    bend: -1,
+    order: 120,
+    from: "boudoir",
+    bend: -0.5,
+    x: 28,
+    z: -58,
+    r: 7,
     locked: true,
     door: { label: "Door", foot: [1.4, 1.4, 4.4], use: { kind: "say", line: "A friend's room. Locked for now." } },
     objects: [
-      { id: "bedroom2Bed", label: "A bare bed frame", use: { kind: "say", line: "Waiting for its witch." }, bearing: 76, in: 3.4, foot: [4, 5.2, 1.2] },
-      { id: "bedroom2Wardrobe", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, bearing: 150, foot: [4, 1.4, 4.4] },
-      { id: "bedroom2Chest", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, bearing: 10, foot: [2.8, 1.6, 1.8] },
-      { id: "bedroom2Crates", label: "Packing crates", use: { kind: "say", line: "Waiting for its witch." }, bearing: -170, foot: [3, 1.6, 2.6] }
+      { id: "bedroom2Bed", label: "A bare bed frame", use: { kind: "say", line: "Waiting for its witch." }, offset: [2.6, -2.6], box: { w: 4, d: 5.2, h: 1.2 } },
+      { id: "bedroom2Wardrobe", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, offset: [4, 1.6], box: { w: 1.4, d: 4, h: 4.4 } },
+      { id: "bedroom2Chest", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, offset: [-1.2, -4.1], box: { w: 2.8, d: 1.6, h: 1.8 } },
+      { id: "bedroom2Crates", label: "Packing crates", use: { kind: "say", line: "Waiting for its witch." }, offset: [-0.6, 4.3], box: { w: 3, d: 1.6, h: 2.6 } }
     ]
   };
 
@@ -12614,19 +12654,19 @@ label.check input { accent-color: var(--accent); }
   var bedroom3_default = {
     id: "bedroom3",
     label: "Bedroom 3",
-    order: 120,
-    parent: "boudoir",
-    bearing: 133,
-    branch: 2.5,
-    radius: 9,
-    bend: 1,
+    order: 130,
+    from: "boudoir",
+    bend: -4,
+    x: 46,
+    z: -28,
+    r: 7,
     locked: true,
     door: { label: "Door", foot: [1.4, 1.4, 4.4], use: { kind: "say", line: "A friend's room. Locked for now." } },
     objects: [
-      { id: "bedroom3Bed", label: "A bare bed frame", use: { kind: "say", line: "Waiting for its witch." }, bearing: 133, in: 3.4, foot: [4, 5.2, 1.2] },
-      { id: "bedroom3Wardrobe", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, bearing: -135, foot: [4, 1.4, 4.4] },
-      { id: "bedroom3Chest", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, bearing: 40, foot: [2.8, 1.6, 1.8] },
-      { id: "bedroom3Crates", label: "Packing crates", use: { kind: "say", line: "Waiting for its witch." }, bearing: 85, foot: [3, 1.6, 2.6] }
+      { id: "bedroom3Bed", label: "A bare bed frame", use: { kind: "say", line: "Waiting for its witch." }, offset: [2.6, -2.6], box: { w: 4, d: 5.2, h: 1.2 } },
+      { id: "bedroom3Wardrobe", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, offset: [4.2, 2.2], box: { w: 1.4, d: 4, h: 4.4 } },
+      { id: "bedroom3Chest", label: "Something under a dust sheet", use: { kind: "say", line: "Waiting for its witch." }, offset: [-1.6, -4.9], box: { w: 2.8, d: 1.6, h: 1.8 } },
+      { id: "bedroom3Crates", label: "Packing crates", use: { kind: "say", line: "Waiting for its witch." }, offset: [-2.8, 2.9], box: { w: 3, d: 1.6, h: 2.6 } }
     ]
   };
 
@@ -12634,15 +12674,15 @@ label.check input { accent-color: var(--accent); }
   var bestiary_default = {
     id: "bestiary",
     label: "Bestiary",
-    order: 60,
-    parent: "atrium",
-    bearing: 160,
-    branch: 4.5,
-    radius: 6.5,
-    bend: -1,
+    order: 110,
+    from: "parlour",
+    bend: 4,
+    x: -67,
+    z: -10,
+    r: 7.5,
     objects: [
-      { id: "book", label: "Bestiary book", use: { kind: "zoo" }, bearing: 0, in: 4.5, foot: [1.6, 1.2, 2.2] },
-      { id: "specimens", label: "Skeletons and skulls", use: { kind: "say", line: "The skeletons and skulls come later." }, bearing: 70, in: 1.9, foot: [6, 0.8, 4] }
+      { id: "book", label: "Bestiary book", use: { kind: "zoo" }, offset: [-1.25, -3.13], box: { w: 1.6, d: 1.2, h: 2.2 } },
+      { id: "specimens", label: "Skeletons and skulls", use: { kind: "say", line: "The skeletons and skulls come later." }, offset: [5, 1.25], box: { w: 0.8, d: 5, h: 4 } }
     ]
   };
 
@@ -12650,45 +12690,45 @@ label.check input { accent-color: var(--accent); }
   var boudoir_default = {
     id: "boudoir",
     label: "Boudoir",
-    order: 100,
-    parent: "parlour",
-    bearing: 43,
-    branch: 3.1,
-    radius: 4.5,
-    bend: 0.8,
+    order: 30,
+    trunk: true,
+    x: -2,
+    z: -44,
+    r: 9.5,
     objects: [
-      { id: "crystalBall", label: "Crystal ball", use: { kind: "say", line: "The crystal ball is clouded for now." }, bearing: -30, in: 2.4, foot: [1.4, 1.4, 2.6] },
-      { id: "telephone", label: "Telephone", use: { kind: "say", line: "The line's quiet. Friends can call later." }, bearing: 100, foot: [1, 1, 2.2] }
+      { id: "telephone", label: "Telephone", use: { kind: "say", line: "The line's quiet. Friends can call later." }, offset: [-3.8, -3.8], box: { w: 1, d: 1, h: 2.2 } }
     ]
   };
 
-  // config/house/rooms/crowsNest.json
-  var crowsNest_default = {
-    id: "crowsNest",
-    label: "Crow's nest",
-    order: 140,
-    parent: "bedroom",
-    bearing: 76,
-    branch: 2.5,
-    radius: 4.5,
-    bend: 0.6,
+  // config/house/rooms/cloakroom.json
+  var cloakroom_default = {
+    id: "cloakroom",
+    label: "Cloakroom",
+    order: 80,
+    from: "terrace",
+    bend: -0.5,
+    x: 31,
+    z: -12,
+    r: 7,
     objects: [
-      { id: "telescope", label: "Telescope", use: { kind: "telescope" }, bearing: 30, in: 2, foot: [1.6, 1.6, 3.2] }
+      { id: "mirror", label: "Mirror", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-3.18, -4.45], box: { w: 2.2, d: 0.6, h: 4.2 } },
+      { id: "hats", label: "Hats", use: { kind: "hats" }, offset: [1.27, 1.27], box: { w: 3.6, d: 1.8, h: 0 } },
+      { id: "cloakPegs", label: "Cloak pegs", use: { kind: "creator", axes: ["cloak", "cloakLength", "scarfLength"], wear: ["patches", "scarf"], parts: ["cloak", "scarf"] }, offset: [-5.73, 2.55], box: { w: 0.6, d: 2.6, h: 4 } }
     ]
   };
 
-  // config/house/rooms/drawingRoom.json
-  var drawingRoom_default = {
-    id: "drawingRoom",
-    label: "Drawing Room",
-    order: 50,
-    parent: "atrium",
-    bearing: 103,
-    branch: 4.5,
-    radius: 6.5,
-    bend: 1,
+  // config/house/rooms/dining.json
+  var dining_default = {
+    id: "dining",
+    label: "Dining Room",
+    order: 0,
+    trunk: true,
+    x: -18,
+    z: 26,
+    r: 14,
     objects: [
-      { id: "cardTable", label: "Card table", use: { kind: "say", line: "The cards come later." }, bearing: 0, in: 5.4, foot: [3.4, 3.4, 1.5] }
+      { id: "teaTable", label: "Tea table", use: { kind: "say", line: "The tea's not brewed yet." }, offset: [-7, -2.33], box: { w: 2.8, d: 2.8, h: 1.4 } },
+      { id: "cardTable", label: "Card table", use: { kind: "say", line: "The cards come later." }, offset: [7, 4.67], box: { w: 3.4, d: 3.4, h: 1.5 } }
     ]
   };
 
@@ -12696,14 +12736,14 @@ label.check input { accent-color: var(--accent); }
   var kitchen_default = {
     id: "kitchen",
     label: "Kitchen",
-    order: 20,
-    parent: "terrace",
-    bearing: 0,
-    branch: 2.5,
-    radius: 6.5,
-    bend: -1,
+    order: 70,
+    from: "dining",
+    bend: 4,
+    x: -70,
+    z: 44,
+    r: 7.5,
     objects: [
-      { id: "cauldron", label: "Cauldron", use: { kind: "say", line: "The cauldron is cold. Brewing comes later." }, bearing: 0, in: 5, foot: [2.8, 2.8, 1.8] }
+      { id: "cauldron", label: "Cauldron", use: { kind: "say", line: "The cauldron is cold. Brewing comes later." }, offset: [-1.25, 0], box: { w: 2.8, d: 2.8, h: 1.8 } }
     ]
   };
 
@@ -12711,15 +12751,14 @@ label.check input { accent-color: var(--accent); }
   var parlour_default = {
     id: "parlour",
     label: "Parlour",
-    order: 70,
-    parent: "atrium",
-    bearing: 1.5,
-    branch: 4.5,
-    radius: 5.5,
-    bend: -0.8,
+    order: 20,
+    trunk: true,
+    x: -16,
+    z: -24,
+    r: 11,
     objects: [
-      { id: "mirror", label: "Mirror", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, bearing: -25, foot: [2.2, 0.6, 4.2] },
-      { id: "hats", label: "Hats", use: { kind: "hats" }, bearing: 0, in: 0, foot: [3.6, 1.8, 0], offset: [0, 1] }
+      { id: "bags", label: "Bags", use: { kind: "creator", axes: ["bagSize", "backpackSize"], wear: ["satchel", "bumbag"], parts: ["satchel", "backpack"] }, offset: [-4.89, -6.11], box: { w: 3.6, d: 0.8, h: 3.2 } },
+      { id: "invitations", label: "Invitations desk", use: { kind: "say", line: "The invitations aren't written yet." }, offset: [3.67, -4.89], box: { w: 3.4, d: 1.8, h: 1.8 } }
     ]
   };
 
@@ -12727,14 +12766,14 @@ label.check input { accent-color: var(--accent); }
   var solarium_default = {
     id: "solarium",
     label: "Solarium",
-    order: 80,
-    parent: "parlour",
-    bearing: -70,
-    branch: 4.5,
-    radius: 6.5,
-    bend: 1,
+    order: 100,
+    from: "parlour",
+    bend: 0.5,
+    x: -47,
+    z: -38,
+    r: 7,
     objects: [
-      { id: "teaTable", label: "Tea table", use: { kind: "say", line: "The tea's not brewed yet." }, bearing: 0, in: 5.4, foot: [2.8, 2.8, 1.4] }
+      { id: "mapTable", label: "Map table", use: { kind: "chart" }, offset: [0, 0], box: { w: 2.6, d: 2.6, h: 0.9 } }
     ]
   };
 
@@ -12742,32 +12781,16 @@ label.check input { accent-color: var(--accent); }
   var studio_default = {
     id: "studio",
     label: "Studio",
-    order: 30,
-    parent: "terrace",
-    bearing: -50,
-    branch: 4.5,
-    radius: 6.5,
-    bend: 1,
-    objects: [
-      { id: "drumKit", label: "Drum kit", use: { kind: "instrument", instrument: "drums" }, bearing: -45, in: 2.5, foot: [4.4, 4, 2.6] },
-      { id: "synthRack", label: "Modular synth", use: { kind: "instrument", instrument: "synth" }, bearing: 45, in: 2, foot: [4.8, 1.4, 3.8] },
-      { id: "microphone", label: "Microphone", use: { kind: "instrument", instrument: "mic" }, bearing: 0, in: 6.5, foot: [1, 1, 3.4] }
-    ]
-  };
-
-  // config/house/rooms/study.json
-  var study_default = {
-    id: "study",
-    label: "Study",
     order: 90,
-    parent: "parlour",
-    bearing: -14,
-    branch: 2.6,
-    radius: 6.5,
-    bend: -1,
+    from: "terrace",
+    bend: -4,
+    x: 50,
+    z: 20,
+    r: 7.5,
     objects: [
-      { id: "bags", label: "Bags", use: { kind: "creator", axes: ["bagSize", "backpackSize"], wear: ["satchel", "bumbag"], parts: ["satchel", "backpack"] }, bearing: -40, foot: [3.6, 0.8, 3.2] },
-      { id: "invitations", label: "Invitations desk", use: { kind: "say", line: "The invitations aren't written yet." }, bearing: 32, foot: [3.4, 1.8, 1.8] }
+      { id: "drumKit", label: "Drum kit", use: { kind: "instrument", instrument: "drums" }, offset: [-2.31, -3.46], box: { w: 4.4, d: 4, h: 2.6 } },
+      { id: "synthRack", label: "Modular synth", use: { kind: "instrument", instrument: "synth" }, offset: [3.4, -3.6], box: { w: 4.8, d: 1.4, h: 3.8 } },
+      { id: "microphone", label: "Microphone", use: { kind: "instrument", instrument: "mic" }, offset: [0.58, 2.88], box: { w: 1, d: 1, h: 3.4 } }
     ]
   };
 
@@ -12775,9 +12798,27 @@ label.check input { accent-color: var(--accent); }
   var terrace_default = {
     id: "terrace",
     label: "Terrace",
-    order: 0,
+    order: 10,
+    trunk: true,
+    x: 0,
+    z: 0,
+    r: 12.5,
     objects: [
-      { id: "recordShelf", label: "Record shelf", use: { kind: "say", line: "The shelf waits for records." }, bearing: 146, in: 0.73, foot: [4.4, 1, 4], box: { w: 1.2, d: 3.2, h: 3.2 } }
+      { id: "recordShelf", label: "Record shelf", use: { kind: "say", line: "The shelf waits for records." }, offset: [0, 9.5], box: { w: 1.2, d: 3.2, h: 3.2 } }
+    ]
+  };
+
+  // config/house/rooms/turret.json
+  var turret_default = {
+    id: "turret",
+    label: "Turret",
+    order: 50,
+    trunk: true,
+    x: -4,
+    z: -75,
+    r: 6.5,
+    objects: [
+      { id: "telescope", label: "Telescope", use: { kind: "telescope" }, offset: [0.72, -1.44], box: { w: 1.6, d: 1.6, h: 3.2 } }
     ]
   };
 
@@ -12785,21 +12826,21 @@ label.check input { accent-color: var(--accent); }
   var workshop_default = {
     id: "workshop",
     label: "Workshop",
-    order: 40,
-    parent: "terrace",
-    bearing: -100,
-    branch: 4.5,
-    radius: 7.5,
-    bend: -1,
+    order: 60,
+    from: "dining",
+    bend: 0.5,
+    x: -50,
+    z: 12,
+    r: 8,
     objects: [
-      { id: "pegboard", label: "Pegboard", use: { kind: "creator", axes: [], wear: [], parts: [] }, bearing: 25, in: 0.9, foot: [5, 0.5, 4.4] },
-      { id: "broomBay", label: "Broom bay", use: { kind: "creator", axes: [], wear: [], parts: [] }, bearing: -38, foot: [6, 2.4, 2.2] },
-      { id: "lathe", label: "Lathe", use: { kind: "creator", axes: [], wear: [], parts: [] }, bearing: 88, foot: [4.8, 1.6, 2] }
+      { id: "pegboard", label: "Pegboard", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [0, -6.29], box: { w: 5, d: 0.5, h: 4.4 } },
+      { id: "broomBay", label: "Broom bay", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [-2.29, 3.43], box: { w: 6, d: 2.4, h: 2.2 } },
+      { id: "lathe", label: "Lathe", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [5.71, 1.14], box: { w: 1.6, d: 4.8, h: 2 } }
     ]
   };
 
   // src/rules/houseConfig.ts
-  var ROOM_FILES = [atrium_default, bedroom_default, bedroom2_default, bedroom3_default, bestiary_default, boudoir_default, crowsNest_default, drawingRoom_default, kitchen_default, parlour_default, solarium_default, studio_default, study_default, terrace_default, workshop_default];
+  var ROOM_FILES = [bedroom_default, bedroom2_default, bedroom3_default, bestiary_default, boudoir_default, cloakroom_default, dining_default, kitchen_default, parlour_default, solarium_default, studio_default, terrace_default, turret_default, workshop_default];
   var HOUSE_CONFIG = assemble(base_default, ROOM_FILES);
 
   // config/broom-parts.json
@@ -16758,8 +16799,8 @@ label.check input { accent-color: var(--accent); }
     _glades: `The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.`,
     wisps: { _: "Will-o'-the-wisps in the wild areas (Ed, 2026-10-07): a seeded chance per square of ground (cell m) within reach of her; none within partyNear of a partified area, the full chance from partyFar; height [low, high] m, drift m, a cycle of period s (fade in, linger, fade out, gone); core and halo size in art pixels; colour.", on: true, cell: 26, reach: 75, chance: 0.4, partyNear: 40, partyFar: 140, height: [1.2, 3], drift: 3, period: 22, size: 3, halo: 9, hue: 0.47, sat: 0.4, bright: 1.6 },
     glades: { on: true, radius: 14, top: 0.55, reach: 160, hue: 0.76, sat: 0.5, light: 0.9, edge: 0.5, edgeEase: 2, dark: 0.6, glowOff: 1, fade: 1, motes: { per: 40, rise: 0.55, height: 8, size: 1, hue: 0.55, sat: 0.3, bright: 1.3 } },
-    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"): its footprint's nearest edge (clear metres round its foot) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them), at angle degrees (-90: due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts): the hub, a round room where the deck was (hub its radius, height its floor's, rail its wall's keep-in, table and tableUse the map's radius and reach: E there opens the chart), and the balcony hung off its south side (balcony.out its centre south of the hub's, balcony.r its radius), open at its rim either side of the decks' desk (decks, round the balcony's centre; seat her standing place behind them, from the balcony's centre): at treetop height she flies straight onto it and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed. The dark behind the rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"): with dark.on, in a room or on a branch off the Terrace only the house, the Ent's crowns and her are drawn, over black; stepping onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds (and goes again as she goes back in), and through the telescope it fades in over the same.`,
-    treehouse: { gap: 5, angle: -90, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, hub: 7, height: 22, grace: 2, rail: 0.45, table: 1.55, tableUse: 1.6, balcony: { out: 6.3, r: 5 }, decks: { inner: 3.47, outer: 4.33, from: 54.5, to: 125.5 }, seat: 3.47, circle: { out: 4.2, r: 1.3 }, landTime: 0.35, walk: 5, fall: { on: false, time: 0.9 }, dark: { on: true, fade: 0.6 } }, carrier: "island" },
+    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"; the oak since 2026-10-24, Ed: "put the treehouse north-west of the dancefloor", its Terrace's open south-east rim towards it): its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts; the oak since 2026-10-24, config/house/): its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed. The dark behind the rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"): with dark.on, in a room or on a branch off the Terrace only the house, the Ent's crowns and her are drawn, over black; stepping onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds (and goes again as she goes back in), and through the telescope it fades in over the same. The great oak's crown (Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/; rules/crown.ts, render/crown.ts): with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark.`,
+    treehouse: { gap: 22, angle: -135, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, height: 22, grace: 2, rail: 0.45, landTime: 0.35, walk: 5, fall: { on: false, time: 0.9 }, dark: { on: true, fade: 0.6 }, crown: { on: true, seed: 1 } }, carrier: "island" },
     _home: `Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"): the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle.`,
     home: { margin: 10, gap: 0.3 },
     _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows. Kinds (Ed, 2026-10-11, the small islands): only the playground; the sports grounds are left out of kinds.",
