@@ -4,6 +4,7 @@
 // and lit once (the creator's room's way, ui/creator.ts roomSteps: art/core.js bake, then art/lighting.js shade with its own lights),
 // a piece a frame, the nearest her first, then drawn as a flat picture in the house's plane (as the boxes were: render/houseRooms.ts
 // toWorld), its floor's middle on the object's middle. `?furniture=0` draws the boxes as before, to compare.
+import { broomsLeft } from "../rules/kit";
 import * as THREE from "three";
 import * as Art from "../../art/generator.js";
 import { furnitureSprite, furnitureColours, FURNITURE_IDS } from "../../art/furniture.js";
@@ -75,8 +76,11 @@ export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: num
   return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
 }
 
-/** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): none in the oak's house (its bedroom's curtains, shut
- *  while she woke, are gone: Ed, 2026-10-24), each piece as it is. */
-export function furnitureState(_id: string, _g: Pick<Game, "wake">): string | undefined {
+/** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the invitations desk's three piles, each witch's empty
+ *  once she's taken it, and the brooms left at the lathe (rules/kit.ts); the rest each as it is (the bedroom's curtains, shut while
+ *  she woke, are gone: Ed, 2026-10-24). */
+export function furnitureState(id: string, g: Pick<Game, "wake" | "witches">): string | undefined {
+  if (id === "invitations") return [0, 1, 2].map(i => (g.witches[i]?.kit?.invites ? 0 : 8)).join(",");
+  if (id === "lathe") return String(broomsLeft(g));
   return undefined;
 }

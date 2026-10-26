@@ -282,6 +282,7 @@ The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due nor
 | `treehouse.house.stride` | number | 0 to … |
 | `treehouse.house.fall.on` | boolean |  |
 | `treehouse.house.fall.time` | number | 0 to … |
+| `treehouse.house.fall.beat` | number | 0 to … |
 | `treehouse.house.dark.on` | boolean |  |
 | `treehouse.house.dark.fade` | number | 0 to … |
 | `treehouse.house.crown.on` | boolean |  |
@@ -1485,6 +1486,8 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `sfx.land.gap` | number | 0 to … |
 | `sfx.nope.volume` | number | 0 to … |
 | `sfx.nope.gap` | number | 0 to … |
+| `sfx.thud.volume` | number | 0 to … |
+| `sfx.thud.gap` | number | 0 to … |
 | `sfx.alarm.volume` | number | 0 to … |
 | `sfx.alarm.gap` | number | 0 to … |
 | `sfx.refused.volume` | number | 0 to … |

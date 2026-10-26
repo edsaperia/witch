@@ -259,7 +259,8 @@
                   "say",
                   "chart",
                   "instrument",
-                  "pile"
+                  "pile",
+                  "invites"
                 ]
               },
               "line": {

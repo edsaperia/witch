@@ -3,6 +3,7 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
+import { takeBroom, takeInvites } from "./kit";
 import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
@@ -62,7 +63,11 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     const at = inHouse ? objectAt(deck!, x, z) : null;
     if ((sigil || place) && deck && g.witch.mode === "ground" && !g.witch.seated && atMapTable(deck, x, z)) relicEvents.push({ kind: "chart", id: W.id, x: deck.x, z: deck.z, at: ht });
     else if ((sigil || place) && at && at.use.kind === "hats") { const e = useHats(W, deck!, x, z, ht, t.leash.runeRadius); if (e) relicEvents.push(e); }
-    else if ((sigil || place) && at && at.use.kind !== "bed") relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
+    else if ((sigil || place) && at && at.use.kind !== "bed") {
+      // her night's kit (rules/kit.ts): E at the invitations desk, tonight's invitations; at the lathe, a broom
+      if (at.use.kind === "invites" ? takeInvites(W) : at.id === "lathe" && takeBroom(g, W)) relicEvents.push({ kind: "kit", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.use.kind === "invites" ? "invites" : "broom" });
+      relicEvents.push({ kind: "house", id: W.id, x: deck!.x + at.x, z: deck!.z + at.z, at: ht, obj: at.id });
+    }
     if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;

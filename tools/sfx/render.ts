@@ -68,6 +68,7 @@ const SOUNDS: [string, number, Play][] = [
   ["creator-room", 12, () => {}],
   ["letter-land", 1.6, () => {}],
   ["sigil-nope", 1.4, () => {}],
+  ["fall-thud", 1.6, () => {}],
   ["area-cleared", 1.8, () => {}],
   ["boot-stir", 6, s => s.stir()],
   ["legend-sleep", 5, s => s.legends(1, 1, 0)],
@@ -133,6 +134,9 @@ async function render(name: string, seconds: number, play: Play) {
     for (let i = 0; i < 14; i++) at(2.75 + i * 0.13, () => s.twinkle(i));
   } else if (name === "area-cleared") {
     void oc.suspend(Math.round(0.1 * rate) / rate).then(() => { s.cleared(0.2); return oc.resume(); });
+  } else if (name === "fall-thud") {
+    // off the Terrace without a broom: the thud below, twice, the gap apart (rules/kit.ts)
+    for (let i = 0; i < 2; i++) void oc.suspend(Math.round((0.1 + i * 0.7) * rate) / rate).then(() => { s.thud(i ? 0.3 : -0.3); return oc.resume(); });
   } else if (name === "sigil-nope") {
     for (let i = 0; i < 2; i++) void oc.suspend(Math.round((0.1 + i * 0.6) * rate) / rate).then(() => { s.nope(i ? 0.4 : -0.4); return oc.resume(); });
   } else if (name === "letter-land") {

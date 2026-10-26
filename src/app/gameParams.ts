@@ -11,12 +11,16 @@ import type { Game } from "../rules/game";
 import type { Tuning } from "../rules/tuning";
 import { applyRepro } from "./repro";
 import { takeShot } from "./shot";
+import { newKit } from "../rules/kit";
 
 /** Returns what undoes its listeners (the arena's J), for the night's end (app/night.ts). */
 export function gameFromLink(game: Game, tuning: Tuning, params: URLSearchParams): () => void {
   // The party spell (Ed, 2026-10-06): she stands behind her decks until it's cast (the button, or Enter). ?creator=0 (the
   // tools and smoke runs) starts at once, as before, unless ?spell=wait; ?spell=auto starts at once anywhere.
   if (params.get("spell") !== "auto" && !(params.get("creator") === "0" && params.get("spell") !== "wait")) game.party.spellAt = null;
+  // Her night's kit (rules/kit.ts; Ed, 2026-10-26): a night that waits for her spell starts with her invitations on the Parlour's desk
+  // and the brooms at the Workshop's lathe; ?kit=full gives her both from the start.
+  if (game.party.spellAt === null && params.get("kit") !== "full") for (const W of game.witches) W.kit = newKit(true);
   // ?buffs=fox,toad,stag (debug): these legends' buffs on from the start, whatever the legends do (a
   // species twice stacks it). ?buffs=all: every one.
   const buffsParam = params.get("buffs");

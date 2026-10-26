@@ -18,7 +18,7 @@ export interface Rect { x0: number; x1: number; z0: number; z1: number; /** a ro
 /** What E does at an object (config/house/ `use`). */
 export type HouseUse =
   | { kind: "creator"; axes: string[]; wear: string[]; parts: string[]; spell?: "hat" | "broom" }
-  | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string }
+  | { kind: "hats" } | { kind: "bed" } | { kind: "zoo" } | { kind: "telescope" } | { kind: "say"; line: string } | /** the invitations desk (rules/kit.ts) */ { kind: "invites" }
   /** The map table (Ed, 2026-10-24: the Solarium's): E opens the sea chart (rules/treehouse.ts atMapTable). */
   | { kind: "chart" }
   /** A treehouse Studio instrument (Ed, 2026-10-23): she's at it by nearness, its menu in and every key playing it (rules/studio.ts). */

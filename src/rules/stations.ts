@@ -6,6 +6,7 @@
 // and whether there are rooms are houseRooms.ts's (fromObject, hasRooms), never worked out here, so a new plan for the rooms
 // moves the stations' reach with them. Stations are known by their `use` alone. No E: the page
 // (main.ts, ui/creator.ts dock) slides its panel in and out as this changes. The rules don't change for it.
+import { hasBroom } from "./kit";
 import type { Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, fromObject, hasRooms, onRoomFloor, type HouseObject } from "./houseRooms";
@@ -55,6 +56,7 @@ export function broomWhere(g: Game, station: string | null, tuning: Tuning = g.t
   if (!w.perch || w.mode !== "ground" || w.seated) return "none";
   const d = deckOf(g.map, tuning);
   if (!d || !hasRooms(d)) return "none";
+  if (!hasBroom(g.witches[0])) return "none"; // (no broom of hers yet tonight: the lathe's brooms are its own, rules/kit.ts)
   if (station === "broomBay") return "bay";
   if (station === "lathe") return "lathe";
   const inRoom = Math.hypot(w.x - d.x, w.z - d.z) > d.r && onRoomFloor(d.house!.rooms!, w.x, w.z);
