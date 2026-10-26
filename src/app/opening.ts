@@ -22,12 +22,14 @@ export function sailLandsInBed(params: URLSearchParams, tuning: { opening?: { be
   return openingWay(params, tuning) === "bedroom";
 }
 
-/** Whether this load wakes in her bedroom: the opening's way is the bedroom's, and the link is a plain start of the game. A link
- *  that names its night (?seed=, ?island=: a shared seed, a reload of an island), arrives from the chart (?arrive=1), starts a bot
- *  game (?bot=), skips the room (?creator=0: the tools, the smoke runs) or opens the zoo keeps its own start. `link` is the page's
- *  link as it came, before the boot adds its own ?seed=. */
+/** Whether this load wakes in her bedroom: the opening's way is the bedroom's, and the link starts a night she plays. A link naming
+ *  its night (?seed=, ?island=: a shared seed, a reload of an island) wakes her there too, in that island's treehouse (Ed, 2026-10-25,
+ *  playtesting ?seed=497831: "it should be loading straight to her bedroom in the treehouse, not the character creation screen").
+ *  One that arrives from the chart (?arrive=1: the sail's landing, sailLandsInBed), starts a bot game (?bot=), skips the room
+ *  (?creator=0: the tools, the smoke runs) or opens the zoo keeps its own start; ?opening=old the old one (the creator as the loading
+ *  cover). `link` is the page's link as it came, before the boot adds its own ?seed=. */
 export function opensInBedroom(link: URLSearchParams, tuning: { opening?: { bedroom?: boolean } }): boolean {
   if (openingWay(link, tuning) !== "bedroom") return false;
-  for (const k of ["seed", "island", "arrive", "bot", "zoo"]) if (link.has(k)) return false;
+  for (const k of ["arrive", "bot", "zoo"]) if (link.has(k)) return false;
   return link.get("creator") !== "0";
 }

@@ -8,6 +8,8 @@
 // order is 0, as the scene's, and its matrix the identity).
 import * as THREE from "three";
 import type { Game } from "../rules/game";
+import { ZooFall, ZooFences } from "./zooFences";
+import { ZOO_CONFIG } from "../rules/zoo";
 import type { Deck } from "../rules/treehouse";
 import type { AssetLibrary } from "./assets";
 import { Dancefloor } from "./dancefloor";
@@ -46,6 +48,10 @@ export class IslandLayers {
   heights!: HeightField;
   ground!: Ground;
   paths!: PathView;
+  /** The zoo's gold fences (laid out like the chart only). */
+  zooFences?: ZooFences;
+  /** The zoo's edge pouring off into space (render/zooFences.ts). */
+  zooFall?: ZooFall;
   treehouseBatch!: SpriteBatch;
   mapTable: MapTable | null = null;
   minimap!: Minimap;
@@ -110,6 +116,8 @@ export class IslandLayers {
     yield;
     this.paths = new PathView(game.map, style, mpp, game.tuning.pathFade.metres, made);
     this.root.add(this.paths.group);
+    // (the zoo's gold fences round its islands: render/zooFences.ts)
+    if (game.map.zoo?.layout) { this.zooFences = new ZooFences(game.map); this.zooFall = new ZooFall(game.map, ZOO_CONFIG.lip ?? 110); this.root.add(this.zooFences.mesh, this.zooFall.mesh); }
   }
 
   /** The treehouse's batch (placed each frame by placeTreehouse) and the deck's map table, with the deck on. */
@@ -161,6 +169,8 @@ export class IslandLayers {
     this.scene.remove(this.root);
     this.root.clear();
     this.heights?.dispose();
+    this.zooFences?.dispose();
+    this.zooFall?.dispose();
     this.ground?.dispose();
     this.paths?.dispose();
     this.treehouseBatch?.release();

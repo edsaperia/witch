@@ -8,6 +8,8 @@
 //   creature:<species>[@level]  one of that species (0 baby .. 3 legend; 2 by default) 6 m east of her by the dancefloor, friendly
 //   find:<kind>:<item> | find:tonight   that find on clear ground a few metres in front of her by the dancefloor (rules/finds.ts)
 //   at:<x>,<z>[,treetop]   anywhere, on foot or in the treetops
+//   legend[:<n>[,<south>[,treetop]]]   south of a legend's circle (the nth biggest, 0 by default), <south> m from its middle (its
+//                radius and 12 m more by default: outside its ring of trees, looking in), on foot or in the treetops
 import { deckOf } from "../rules/treehouse";
 import { HOUSE_ROOMS, fromPlan, objectFront } from "../rules/houseRooms";
 import { AREA_TYPES } from "../rules/map";
@@ -82,6 +84,14 @@ export function applyShot(g: Game, scene: string): ShotResult {
       const [kind, item] = arg.split(":");
       return spawnFind(g, kind as FindKindId, item, spot) ? { ok: true, say: `a ${kind} find: ${item}`, ...spot } : { ok: false, say: `no ${kind} ${item}` };
     }
+    case "legend": {
+      const [n = "0", south, mode] = arg.split(","), all = [...g.map.legendClearings].sort((a, b) => b.r - a.r), c = all[Math.max(0, Math.round(+n) || 0)];
+      if (!c) return { ok: false, say: `no legend circle ${n} on this island (it has ${all.length})` };
+      const d = south !== undefined && south !== "" && Number.isFinite(+south) ? +south : c.r + 12, x = c.x, z = c.z + d;
+      put(x, z, { treetop: mode === "treetop" });
+      const t = g.map.typeOf(c.cell[0], c.cell[1]);
+      return { ok: true, say: `${d.toFixed(0)} m south of the ${AREA_TYPES[t]?.creature ?? "?"} legend's circle (radius ${c.r.toFixed(1)} m)`, x, z };
+    }
     case "at": {
       const [x, z, mode] = arg.split(",");
       if (!Number.isFinite(+x) || !Number.isFinite(+z)) return { ok: false, say: `at needs x,z (got ${arg})` };
@@ -89,7 +99,7 @@ export function applyShot(g: Game, scene: string): ShotResult {
       return { ok: true, say: `at ${x}, ${z}`, x: +x, z: +z };
     }
   }
-  return { ok: false, say: `no scene ${what} (object, room, area, creature, find, at)` };
+  return { ok: false, say: `no scene ${what} (object, room, area, creature, find, at, legend)` };
 }
 
 /** The last shot applied (the page's ?shot=, or window.witch.shot): what tools/shot/shot.cjs reports. */

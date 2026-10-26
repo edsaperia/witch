@@ -35,7 +35,7 @@ export interface Deck {
    *  clockwise from east), the decks' desk on it (its middle in the world, w along x, d along z), the magic circle on its floor, how
    *  long the landing onto it takes, and the fall off its open rim (on: with no broom; time: seconds to the ground). The Terrace's
    *  middle and size are the deck's own (x, z, r). */
-  house?: { takeoff: { angle: number; half: number }; desk: { x: number; z: number; w: number; d: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; fall: { on: boolean; time: number };
+  house?: { takeoff: { angle: number; half: number }; desk: { x: number; z: number; w: number; d: number }; circle: { x: number; z: number; r: number }; landTime: number; /** on foot in it, her walking speed (m/s) */ walk: number; /** the walking speed her walk cycle is drawn for (m/s) */ stride: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number };
     /** The house's floor (rules/houseRooms.ts, config/house/: the oak's one shape), kept the rail in from its edge; null with the
      *  house's rooms off. */
     rooms: RoomFloor | null };
@@ -44,12 +44,13 @@ export interface Deck {
 const DEG = Math.PI / 180;
 
 /** The house (tuning treehouse.house.on) or the deck (treehouse.deck.on) at a map's treehouse, or null with both off (the old treehouse). */
-export function deckOf(map: { treehouse: { x: number; z: number } }, t: Tuning): Deck | null {
+export function deckOf(map: { treehouse: { x: number; z: number }; zoo?: { layout?: unknown } }, t: Tuning): Deck | null {
+  if (map.zoo?.layout) return null; // (the zoo has no treehouse: Ed, 2026-10-26)
   const { x, z } = map.treehouse, H = t.treehouse.house, D = t.treehouse.deck;
   if (H?.on) {
     const T = HOUSE_ROOMS.terrace, at = { x, z }, P = (p: { x: number; z: number }) => fromPlan(at, p.x, p.z), r = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")?.r ?? 12.5;
     return { x, z, r, h: H.height, grace: H.grace, rail: H.rail, table: { r: 0, use: 0 }, decks: { inner: 0, outer: 0, from: 0, to: 0 }, seat: P(T.seat),
-      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, fall: { on: !!H.fall.on, time: H.fall.time }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null } };
+      house: { takeoff: { angle: T.takeoff.angle * DEG, half: T.takeoff.half * DEG }, desk: { ...P(T.decks), w: T.decks.w, d: T.decks.d }, circle: { ...P(T.circle), r: T.circle.r }, landTime: H.landTime, walk: H.walk ?? 5, stride: H.stride ?? 5, fall: { on: !!H.fall.on, time: H.fall.time, beat: H.fall.beat ?? 0 }, rooms: HOUSE_ROOMS.on ? floorRects(at, H.rail) : null } };
   }
   if (!D?.on) return null;
   return { x, z, r: D.radius, h: D.height, grace: D.grace, rail: D.rail, table: { r: D.table, use: D.tableUse }, decks: { ...D.decks }, seat: { x, z: z + D.seat } };

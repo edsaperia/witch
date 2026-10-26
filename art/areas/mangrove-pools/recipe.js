@@ -14,6 +14,6 @@ export const MANGROVE_POOLS = {
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
   },
-  flora: { species: [["mangrove", .65], ["willow", .2], ["strangler", .15]] /* (strangler fig for the alder: India 2026-10-23, biome forests) */, palette: { sat: .85, val: .8 } },
+  flora: { species: [["mangrove", .65], ["strangler", .2], ["mangrove", .15, { variant: "stunted" }]] /* (the flora check: Ed, 2026-10-25, ring 4: young mangroves for the willow) */, palette: { sat: .85, val: .8 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };

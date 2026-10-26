@@ -44,6 +44,7 @@ const CASES = [
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
+  await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000, polling: 500 });
   const put = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
@@ -51,8 +52,9 @@ const CASES = [
   const paused = () => page.evaluate(() => !!document.querySelector("#pause-sliders.open"));
   for (const C of CASES) {
     // open it
-    if (C.at) await put(front(C.at)); else await C.open(page);
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
+    // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
+    if (C.at) { await put(front(C.at)); for (let i = 0; i < 20 && (await isOpen()); i++) await page.waitForTimeout(500); /* (the last station's panel out as she leaves it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
     try { await page.waitForFunction(C.on ? C.on : ([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, C.on ? null : [C.sel, !!C.shown], { timeout: 120000, polling: 250 }); }
     catch { check(false, `${C.id}: opens`); continue; }
     await page.waitForTimeout(1500); // (slid in)
@@ -75,6 +77,14 @@ const CASES = [
       return { sliders: !!atSliders?.closest("#pause-sliders"), at: tag(atSliders), box: s ? [s.left, s.top, s.width, s.height].map(Math.round).join(",") : "none", middle: under.find(q => atMiddle?.closest(q)) ?? null, what: atMiddle ? `${atMiddle.tagName}#${atMiddle.id}.${atMiddle.className}` : "none" };
     });
     check(top.sliders, `${C.id}: the pause page's sliders are on top where they stand (${top.at}; sliders at ${top.box})`);
+    if (!top.sliders) { // (what kept them out: a sighting on CI that doesn't happen here; the next one says why)
+      const why = await page.evaluate(() => new Promise(res => {
+        const el = document.getElementById("pause-sliders"), t0 = document.timeline.currentTime, p0 = performance.now(); let frames = 0;
+        const tick = () => { frames++; if (performance.now() - p0 < 2000) requestAnimationFrame(tick); else res({ cls: el?.className, transform: el ? getComputedStyle(el).transform : null, transition: el ? getComputedStyle(el).transition : null, anims: el ? el.getAnimations().map(a => `${a.playState} ${a.currentTime}`) : [], timeline: [t0, document.timeline.currentTime], frames, left: el?.getBoundingClientRect().left, frozen: !!document.querySelector("#pause-shield")?.offsetParent, panel: document.getElementById("station-panel")?.className, hidden: document.hidden, visibility: document.visibilityState }); };
+        requestAnimationFrame(tick);
+      }));
+      console.log(`  ${C.id}: sliders out: ${JSON.stringify(why)}`);
+    }
     check(top.middle === null, `${C.id}: nothing under the pause takes a click in the middle (${top.what})`);
     if (process.env.SHOTS) { fs.mkdirSync("previews", { recursive: true }); await page.screenshot({ path: `previews/pause-on-top-${C.id}.png` }); }
     // keys and the pad reach nothing under it
@@ -94,7 +104,7 @@ const CASES = [
     check(await isOpen(), `${C.id}: back to the overlay on resume`);
     // close it for the next one
     if (C.id === "sea-chart") await page.evaluate(() => document.querySelector("#chart-overlay button[title*='lose'], #chart-overlay .close")?.click());
-    if (C.id === "map-table") { await page.keyboard.down("KeyS"); await page.waitForTimeout(600); await page.keyboard.up("KeyS"); } // (she walks: it's put away)
+    if (C.id === "map-table") { await page.keyboard.press("KeyE"); await page.waitForTimeout(600); } // (E again: it's put away; walking doesn't, Ed 2026-10-26)
     if (C.on) await page.evaluate(() => window.witch.telescope.close());
     if (C.id === "finds-dev") await page.evaluate(() => document.getElementById("finds-dev-btn")?.click());
     await away(); await page.waitForTimeout(1500);

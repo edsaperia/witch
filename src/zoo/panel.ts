@@ -7,7 +7,7 @@ import { SPECIES_BY_ID } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
 import { newCamera } from "../rules/camera";
 import { witchHeight } from "../rules/witch";
-import { ZOO_MOODS, setZooMood, zooAdd, zooBlockAt, zooCount, zooMood, zooRemove, zooSleep, type ZooMood } from "../rules/zooControls";
+import { ZOO_MOODS, blockFront, setZooMood, zooAdd, zooBlockAt, zooCount, zooMood, zooRemove, zooSleep, type ZooMood } from "../rules/zooControls";
 import type { Level } from "../rules/creatures";
 import type { Game } from "../rules/game";
 import type { ZooBlock } from "../rules/zoo";
@@ -65,7 +65,7 @@ export class ZooPanel {
       const n = document.createElement("div"); n.className = "row-name"; n.textContent = row;
       const bs = document.createElement("div"); bs.className = "blocks";
       for (const b of Z.blocks.filter(k => k.row === row)) {
-        const a = document.createElement("button"); a.textContent = nameOf(b); a.disabled = !b.area;
+        const a = document.createElement("button"); a.textContent = nameOf(b); a.disabled = !b.area || b.found === false; // (an island not found yet: its lake, nothing to see)
         a.addEventListener("click", () => { this.jump(b); this.toggleList(false); });
         bs.append(a);
       }
@@ -82,7 +82,7 @@ export class ZooPanel {
 
   /** Flies her to a block: on the path under it, facing in, the camera with her (as the quest demo puts her down). */
   private jump(b: ZooBlock): void {
-    const g = this.game, A = g.map.areaSize, x = (b.cell[0] + 0.5) * A, z = (b.cell[1] + 1) * A - 12;
+    const g = this.game, { x, z } = blockFront(g.map, b);
     g.witch = { ...g.witch, x, z, vx: 0, vz: 0, seated: false };
     g.camera = newCamera(g.tuning, x, witchHeight(g.witch, g.tuning), z);
     g.introFocus = undefined;

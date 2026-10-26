@@ -1,62 +1,160 @@
 {
- "_": "The zoo (?zoo; Ed, 2026-10-13: \"a flat grid of city blocks with paths between, each block the terrain of the area, with a lit runestone at the centre. One row for each biome, and then creatures ordered by size left to right\"): rules/zoo.ts. rows: top (north) to bottom, cold to hot; each a name, the biomes (config/kinds.json) whose placeholder kinds follow as empty '?' blocks, and its areas left to right: by the swarm class (population.swarm.classes: light, medium, strong; Ed: \"use the parameter that sets how big the swarms are\") and within a class by the adult's drawn size (tools/zoo/order.mjs prints it). An area type a row doesn't name yet joins the end of the first row whose biomes include its creature's (the first temperate row takes the temperate ones) till order.mjs --write puts it in its place. group: the creatures each block starts with. pathHalf: half a path's width (m).",
- "group": { "babies": 1, "young": 2, "adults": 1 },
+ "_": "The zoo (?zoo; Ed, 2026-10-13: \"a flat grid of city blocks with paths between, each block the terrain of the area, with a lit runestone at the centre. One row for each biome, and then creatures ordered by size left to right\"): rules/zoo.ts. rows: top (north) to bottom, cold to hot; each a name, the biomes (config/kinds.json) whose placeholder kinds follow as empty '?' blocks, and its areas left to right: by the swarm class (population.swarm.classes: light, medium, strong; Ed: \"use the parameter that sets how big the swarms are\") and within a class by the adult's drawn size (tools/zoo/order.mjs prints it). An area type a row doesn't name yet joins the end of the first row whose biomes include its creature's (the first temperate row takes the temperate ones) till order.mjs --write puts it in its place. group: the creatures each block starts with. pathHalf: half a path's width (m). Laid out like the sea chart (Ed, 2026-10-26; rules/zooMap.ts): each kind's island where the chart has it, its outline one area across, the chart spread till the nearest two islands' middles are an area and gap metres apart; the streets (the chart's sea, in the dancefloor plaza's flagstones) out margin metres past the furthest coast to the edge water, lip metres of water past them pouring off the disc into space; a found island its area, one not found its biome's lake (?all finds them all: the map's see-all); home the Ent's plaza: a legend circle's floor plaza metres across its middle with the World Tree carved in, no treehouse or dancefloor (Ed, 2026-10-26); the zoo is flat (no hills); each island's legend asleep at its middle, its circle sized as play sizes it (rules/legendFit.ts) but up to legendCap metres. pathHalf: the old grid's paths (unused).",
+ "group": {
+  "babies": 1,
+  "young": 2,
+  "adults": 1
+ },
  "pathHalf": 4,
+ "gap": 12,
+ "margin": 120,
+ "legendCap": 45,
+ "plaza": 60,
+ "lip": 30,
  "rows": [
   {
    "name": "Cold",
-   "biomes": ["cold"],
-   "areas": ["rookery", "snowfield", "packice"]
+   "biomes": [
+    "cold"
+   ],
+   "areas": [
+    "rookery",
+    "snowfield",
+    "packice"
+   ]
   },
   {
    "name": "Mountains & glaciers",
-   "biomes": ["mountains and glaciers"],
-   "areas": ["misty-terraces", "crags", "icefall", "frostcave", "eyrie"]
+   "biomes": [
+    "mountains and glaciers"
+   ],
+   "areas": [
+    "misty-terraces",
+    "crags",
+    "icefall",
+    "frostcave",
+    "eyrie"
+   ]
   },
   {
    "name": "Cold rainforest",
-   "biomes": ["cold rainforest"],
-   "areas": ["mistwood", "mossy-creek", "mossy-dell", "moonpool-glade"]
+   "biomes": [
+    "cold rainforest"
+   ],
+   "areas": [
+    "mistwood",
+    "mossy-creek",
+    "mossy-dell",
+    "moonpool-glade"
+   ]
   },
   {
    "name": "Temperate woodland",
-   "biomes": ["temperate"],
-   "areas": ["honeysuckle-tangle", "hazel-forest", "alder-forest", "twiggy-forest", "bluebell-glade", "old-oaks", "garden", "wispy-forest", "ancient"]
+   "biomes": [
+    "temperate"
+   ],
+   "areas": [
+    "honeysuckle-tangle",
+    "hazel-forest",
+    "alder-forest",
+    "twiggy-forest",
+    "bluebell-glade",
+    "old-oaks",
+    "garden",
+    "wispy-forest",
+    "ancient"
+   ]
   },
   {
    "name": "Temperate deep woods",
    "biomes": [],
-   "areas": ["muddy-forest", "fern-forest", "norway", "old-pinewood", "deadwood", "tangly-forest", "berry-thicket"]
+   "areas": [
+    "muddy-forest",
+    "fern-forest",
+    "norway",
+    "old-pinewood",
+    "deadwood",
+    "tangly-forest",
+    "berry-thicket"
+   ]
   },
   {
    "name": "Temperate wetland",
    "biomes": [],
-   "areas": ["fen", "wetland", "stream", "heronry", "beaver-pond", "bog"]
+   "areas": [
+    "fen",
+    "wetland",
+    "stream",
+    "heronry",
+    "beaver-pond",
+    "bog"
+   ]
   },
   {
    "name": "Temperate open & rocky",
    "biomes": [],
-   "areas": ["heath", "moor", "cave-mouth", "ravine", "log-pile", "meadow", "stone-shrine", "rocky-slope", "grassland"]
+   "areas": [
+    "heath",
+    "moor",
+    "cave-mouth",
+    "ravine",
+    "log-pile",
+    "meadow",
+    "stone-shrine",
+    "rocky-slope",
+    "grassland"
+   ]
   },
   {
    "name": "Badlands & volcanic",
-   "biomes": ["badlands", "volcanic"],
-   "areas": ["red-canyon", "cactus-flats", "thorn-scrub", "scrub-wash", "warren", "dragon-scrub"]
+   "biomes": [
+    "badlands",
+    "volcanic"
+   ],
+   "areas": [
+    "red-canyon",
+    "cactus-flats",
+    "thorn-scrub",
+    "scrub-wash",
+    "warren",
+    "dragon-scrub"
+   ]
   },
   {
    "name": "Hot",
-   "biomes": ["hot"],
-   "areas": ["erg", "plains", "bushveld", "savanna", "desert-ruin"]
+   "biomes": [
+    "hot"
+   ],
+   "areas": [
+    "erg",
+    "plains",
+    "bushveld",
+    "savanna",
+    "desert-ruin"
+   ]
   },
   {
    "name": "Jungle",
-   "biomes": ["jungle"],
-   "areas": ["river-jungle", "bamboo-jungle", "temple-jungle", "step-pyramid"]
+   "biomes": [
+    "jungle"
+   ],
+   "areas": [
+    "river-jungle",
+    "bamboo-jungle",
+    "temple-jungle",
+    "step-pyramid"
+   ]
   },
   {
    "name": "Mangrove swamp",
-   "biomes": ["mangrove swamp"],
-   "areas": ["mudflat", "mangrove-pools", "mangrove"]
+   "biomes": [
+    "mangrove swamp"
+   ],
+   "areas": [
+    "mudflat",
+    "mangrove-pools",
+    "mangrove"
+   ]
   }
  ]
 }

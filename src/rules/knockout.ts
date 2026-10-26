@@ -129,7 +129,7 @@ export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, c
     // from the first time she left.)
     // In the house (rules/treehouse.ts; Ed, 2026-10-14) she comes back at the magic circle behind her decks, standing, and walks to them.
     const d = deckOf(map, map.tuning), spot = d?.house && k.riseUntil !== undefined ? d.house.circle : map.start;
-    body = { ...body, x: spot.x, z: spot.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: spot === map.start, facing: 1, away: false, heading: "side", lean: false, ...(d ? { perch: true } : {}) }; // (her decks, or the circle: on the treehouse's floor)
+    body = { ...body, x: spot.x, z: spot.z, vx: 0, vz: 0, mode: "ground", lift: 0, boost: 0, seated: spot === map.start && !map.zoo?.layout, facing: 1, away: false, heading: "side", lean: false, ...(d ? { perch: true } : {}) }; // (her decks, or the circle: on the treehouse's floor)
     events.push({ kind: "sparkleIn", at: time, x: body.x, z: body.z });
     events.push({ kind: "cut", at: time, x: body.x, z: body.z }); // (the cut from the hat to the decks: render/koIris.ts, and the music's scratch)
     // Loyal legends come home with her.

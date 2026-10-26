@@ -7,11 +7,11 @@ import { blockCreatures, setZooMood, zooAdd, zooBlockAt, zooCount, zooMood, zooR
 const zooTuning = (): Tuning => ({ ...TUNING, map: { ...TUNING.map!, shape: "zoo", island: "", islandAreas: 0 } });
 
 describe("the zoo's block bar (rules/zooControls.ts)", () => {
-  const g = newGame(7, zooTuning()), Z = g.map.zoo!, A = g.map.areaSize;
+  const g = newGame(7, zooTuning()), Z = g.map.zoo!;
   const fox = Z.blocks.find(b => b.area === "old-oaks")!, cell = fox.cell;
 
   it("finds the block she's in", () => {
-    expect(zooBlockAt(g, (cell[0] + 0.5) * A, (cell[1] + 0.5) * A)?.area).toBe("old-oaks");
+    expect(zooBlockAt(g, fox.x!, fox.z!)?.area).toBe("old-oaks"); // (its island's middle: laid out like the chart, rules/zooMap.ts)
     expect(zooBlockAt(g, -10, -10)).toBeNull();
   });
 

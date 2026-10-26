@@ -11,7 +11,8 @@ import type { FloorLook } from "./legendFloor";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
 import type { Forest } from "../rules/forest";
-import { LOOKS } from "../rules/map";
+import { HOME_LOOK, LOOKS } from "../rules/map";
+import { ZOO_CONFIG } from "../rules/zoo";
 import { speakerRadius } from "../rules/speakers";
 import type { Beach } from "../rules/mapShape";
 import { koiPonds, lakeKnobs } from "../rules/lakes";
@@ -86,6 +87,10 @@ uniform int uLegendRingCount;
 // on, overgrowth (0.5 as drawn; more covers more), the flagstones' size (metres); uLegendGlint: each one's grooves
 // catching the light (0 off: the tuning's knob, only while its legend sleeps).
 uniform sampler2D uLegendCarve;
+// The zoo's undiscovered islands (rules/zooMap.ts; Ed, 2026-10-26: "the animal's sigil drawn faintly on the water"): the nearest
+// four lakes' middles, the sigil's radius (0: none), and their sigils' masks side by side in uLakeCarve.
+uniform vec4 uLakeSigil[4];
+uniform sampler2D uLakeCarve;
 uniform vec4 uLegendFloor;
 uniform float uLegendGlint[6];
 // Each one's character, by its area (render/legendFloor.ts): its stone (rgb; a: wet, puddles), its debris (rgb; a: shape,
@@ -108,6 +113,7 @@ uniform float uDiscoRim;
 // uPave: inner and outer radius, course depth, stone length (metres); uPave2: ragged edge (metres),
 // share of the outer stones missing, share mossy, the speakers' radius; on when uPave.y > 0.
 uniform vec4 uPave, uPave2;
+uniform vec4 uZooStreet; // the zoo (rules/zooMap.ts): on, home's look (its streets), how far past the disc's coast its water falls off (m)
 uniform vec3 uPaveStone, uPaveDark, uPaveMoss, uPaveGrout;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
 uniform float uHillShade; // the hills' slopes in the light, exaggerated this much
@@ -121,6 +127,18 @@ ${VALUE_NOISE_GLSL}${BAYER_GLSL}vec3 hsv(float h, float s, float v) {
 }
 #ifdef GROUND_LAKES
 ${LAKE_LOOKS_GLSL}
+/** How much of a zoo lake's sigil is under p (0 to 1): faint, its lines wavering with the water. */
+float lakeSigil(vec2 p) {
+  for (int i = 0; i < 4; i++) {
+    vec4 S = uLakeSigil[i];
+    if (S.z <= 0.0) continue;
+    vec2 q = p - S.xy + vec2(sin(p.y * 0.35 + uTime * 0.8), sin(p.x * 0.3 + uTime * 0.7)) * 0.35; // (rippled)
+    vec2 uv = q / S.z * 0.5 + 0.5;
+    if (uv.x <= 0.0 || uv.x >= 1.0 || uv.y <= 0.0 || uv.y >= 1.0) continue;
+    return texture2D(uLakeCarve, vec2((float(i) + uv.x) / 4.0, uv.y)).r;
+  }
+  return 0.0;
+}
 #endif
 void main() {
   vec2 px = floor(vWorld.xz / uPixel);           // the art pixel this fragment is in
@@ -147,7 +165,19 @@ void main() {
     // grass on the woods' side, and on the sand a soft dappled shadow under them before the clean pale sand.
     float into = bd - sand - ((vnoise(cpt / 7.0 + 3.0) - 0.5) * 7.0 + (vnoise(cpt / 2.3 + 11.0) - 0.5) * 2.0) * clamp(sandW / 24.0, 0.3, 1.0); // metres past the line, sand side (scalloped less where the sand's narrow: render/beachEdge.ts scallop)
     shoreNear = 1.0 - smoothstep(0.0, 16.0, -into);
-    if (into <= 0.0 && into > -2.6) {
+    // (the zoo's edge, Ed 2026-10-26: "all around the flagstones give way to water, which falls off the disc as a waterfall, and
+    // behind that is space": past its lip, space, its stars fixed to the sky, not the ground; the fall is render/zooFences.ts)
+    if (uZooStreet.x > 0.5 && bd > uZooStreet.z) {
+      if (bd < uZooStreet.z + 55.0) discard; // (the water pouring over the lip shows here, curving down below: render/zooFences.ts ZooFall)
+      vec3 V = normalize(vec3(p.x, vWorld.y, p.y) - cameraPosition);
+      vec2 sc = floor(V.xz / max(0.05, -V.y + 0.3) * 90.0);
+      float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
+      vec3 sp = vec3(0.016, 0.015, 0.035) + vec3(0.03, 0.03, 0.06) * vnoise(V.xz * 6.0);
+      if (hs > 0.993) sp += vec3(0.55, 0.58, 0.7) * (0.6 + 0.4 * sin(uTime * 1.7 + hs * 80.0));
+      gl_FragColor = vec4(sp, 1.0);
+      return;
+    }
+    if (uZooStreet.x < 0.5 && into <= 0.0 && into > -2.6) {
       // The beach grass: a strip of tussocks, blades lighter and darker, sand showing through at its outer edge.
       vec2 bp = floor(px / vec2(1.0, 2.0));
       float hb = fract(sin(dot(bp, vec2(12.9898, 78.233))) * 43758.5453), tuft = vnoise(p / 1.3 + 41.0);
@@ -172,6 +202,10 @@ void main() {
         float up = clamp(R.y, 0.0, 1.0);
         col = mix(uHazeColour * 0.9 + vec3(0.1, 0.17, 0.22), vec3(0.09, 0.18, 0.26), smoothstep(0.0, 0.3, up)); // (the sky's glow low down, the deep blue-teal over most of it)
         col *= 0.9 + 0.25 * (rip.x + 0.5); // (its ripples, lighter and darker)
+        if (uZooStreet.x > 0.5) { float lip = smoothstep(uZooStreet.z - 14.0, uZooStreet.z, bd); col = mix(col, vec3(0.36, 0.5, 0.6) * (0.85 + 0.3 * vnoise(p / vec2(1.5, 0.6) + vec2(0.0, uTime * 1.5))), lip * 0.7);
+          // (its foam the last few metres, streaming out over the edge)
+          float foam = step(0.52, vnoise(vec2(p.x + p.y, bd * 1.6 - uTime * 2.2) / 1.1)) * smoothstep(uZooStreet.z - 4.0, uZooStreet.z - 0.5, bd);
+          col = mix(col, vec3(0.78, 0.87, 0.93), foam * 0.85); } // (the zoo's lip: lighter where the water gathers to pour off)
         vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
         float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
         if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
@@ -281,6 +315,24 @@ void main() {
       float bump = T.x * smoothstep(0.45, 0.75, n0) - T.y * smoothstep(0.5, 0.8, 1.0 - n0);
       c *= 1.0 + bump * slope * 0.45 - T.y * smoothstep(0.62, 0.9, 1.0 - n0) * 0.3;
       if (T.z > 0.0) c *= 1.0 + T.z * 0.14 * sin((p.x * 0.55 + p.y) / 4.0 + vnoise(p / 30.0) * 6.0);
+    }
+  }
+  // The zoo's streets (Ed, 2026-10-26: "the sea are flagstone streets"; "The flagstones look like the ones around the dancefloor";
+  // rules/zooMap.ts): home's ground, the plaza and every street out to the edge, laid in the dancefloor plaza's flagstones (its
+  // stone, joints, moss and grain: uPave), in straight courses east to west, each course's joints staggered.
+  if (uZooStreet.x > 0.5 && area.a > 0.5 && t == int(uZooStreet.y)) {
+    float ci = floor(p.y / uPave.z), u = p.x / uPave.w + fract(sin(ci * 12.9898) * 43758.5453), si = floor(u);
+    float depth = p.y - ci * uPave.z, arc = (u - si) * uPave.w;
+    float h = fract(sin(dot(vec2(ci, si), vec2(12.9898, 78.233))) * 43758.5453);
+    bool joint = depth < uPixel * 1.01 || arc < uPixel * 1.01;
+    float grain = vnoise(px / 2.0) * 0.6 + vnoise(px / 0.7 + 11.0) * 0.4;
+    if (joint) c = vnoise(px / 1.5 + 5.0) > 0.55 ? uPaveMoss * 0.7 : uPaveGrout;
+    else {
+      vec3 s = mix(uPaveStone, uPaveDark, h * 0.45);
+      s *= grain < 0.3 ? 0.88 : grain > 0.72 ? 1.08 : 1.0;
+      if (depth < uPixel * 2.01 || arc < uPixel * 2.01) s *= 1.12; // (the lit edge of the stone)
+      if (h > 1.0 - uPave2.z && vnoise(p / 1.2 + h * 40.0) > 0.55) s = mix(s, uPaveMoss, 0.75);
+      c = s;
     }
   }
   // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
@@ -407,7 +459,7 @@ void main() {
       if (LK > 0.5 && ld > -lakeRim(LK)) {
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
         if (ld < (LK > 1.5 && LK < 2.5 ? -0.6 : 0.0)) c = lakeShore(LK, ld, p, c);
-        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
+        else { float hz; vec3 w = lakeWater(LK, ld, p, px, c, lit, hz); w = mix(w, w * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4); gl_FragColor = vec4(mix(w, haze(w, vWorld), hz), 1.0); return; }
       } else if (ld > -2.6) {
         float lap = 0.5 + 0.5 * sin(uTime * 1.1 + vnoise(p / 30.0 + 5.0) * 6.0), front = 0.35 * lap - 0.1; // (the edge laps in and out)
         vec3 lit = nightLightShaded(vec3(0.0, 1.0, 0.0), vWorld, 1.0);
@@ -460,6 +512,7 @@ void main() {
             }
           }
           if (ld < front + uPixel * 2.0 && mod(px.x + px.y, 2.0) < 1.0) water = mix(water, vec3(0.5, 0.6, 0.64), 0.25); // (the edge's thin shine, broken)
+          water = mix(water, water * 1.25 + vec3(0.06, 0.08, 0.09), lakeSigil(p) * 0.4 * deep); // (a zoo lake's sigil, faint)
           gl_FragColor = vec4(mix(water, haze(water, vWorld), 0.6), 1.0);
           return;
         }
@@ -553,6 +606,8 @@ export class Ground {
   private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
   /** The nearby legend circles' carving masks, side by side (one slot a ring), and which species each slot holds. */
+  private lakeCarve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 4 * CARVING_SIZE * 4), CARVING_SIZE * 4, CARVING_SIZE));
+  private lakeSlots: string[] = ["", "", "", ""];
   private carve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 6 * CARVING_SIZE * 4), CARVING_SIZE * 6, CARVING_SIZE));
   private carveSlots: (string | null)[] = new Array(6).fill(null);
 
@@ -589,7 +644,7 @@ export class Ground {
         uTile: { value: new THREE.Vector2(64, 48) },
         uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS) },
         uSat: { value: st.sat },
-        uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
+        uFloor: { value: map.zoo?.layout ? new THREE.Vector3(1e7, 1e7, 0) : new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) }, // (the zoo has no dancefloor, nor its paving: Ed 2026-10-26)
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
         uBeach: { value: new THREE.Vector4() },
@@ -601,6 +656,7 @@ export class Ground {
         uLegendGlow: { value: new Array(6).fill(0) },
         uLegendRingCount: { value: 0 },
         uLegendCarve: { value: this.carve },
+        uLakeSigil: { value: [0, 1, 2, 3].map(() => new THREE.Vector4()) }, uLakeCarve: { value: this.lakeCarve },
         uLegendFloor: { value: new THREE.Vector4(map.tuning.legendClearing.floor?.on ? 1 : 0, map.tuning.legendClearing.floor?.overgrowth ?? 0.5, map.tuning.legendClearing.floor?.slab ?? 1.3, 0) },
         uLegendGlint: { value: new Array(6).fill(0) },
         uLegendStone: { value: Array.from({ length: 6 }, () => new THREE.Vector4()) },
@@ -652,6 +708,21 @@ export class Ground {
 
   /** Each nearby legend circle's floor: its carving's species (its mask copied into its slot only when that changes:
    *  lazily, for the nearest few) and its grooves' glint (0 off). */
+  /** The zoo's undiscovered islands' sigils on their lakes (rules/zooMap.ts): up to four, the nearest; each its middle, the sigil's
+   *  radius and its kind (its legend sigil's mask, render/legendCarving.ts). */
+  setLakeSigils(items: readonly { x: number; z: number; r: number; species: string }[]): void {
+    const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, S = u.uLakeSigil.value as THREE.Vector4[], data = this.lakeCarve.image.data as Uint8Array, W = CARVING_SIZE * 4;
+    for (let i = 0; i < 4; i++) {
+      const f = items[i];
+      if (!f) { S[i].set(0, 0, 0, 0); continue; }
+      S[i].set(f.x, f.z, f.r, 1);
+      if (this.lakeSlots[i] === f.species) continue;
+      this.lakeSlots[i] = f.species;
+      const m = carvingMask(f.species);
+      for (let y = 0; y < CARVING_SIZE; y++) for (let x = 0; x < CARVING_SIZE; x++) { const v = m[y * CARVING_SIZE + x], o = (y * W + i * CARVING_SIZE + x) * 4; data[o] = data[o + 1] = data[o + 2] = v; data[o + 3] = 255; }
+      this.lakeCarve.needsUpdate = true;
+    }
+  }
   setLegendFloors(floors: readonly { species: string; glint: number; look: FloorLook }[], count = floors.length): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms, glint = u.uLegendGlint.value as number[], data = this.carve.image.data as Uint8Array, W = CARVING_SIZE * 6;
     const stone = u.uLegendStone.value as THREE.Vector4[], debris = u.uLegendDebris.value as THREE.Vector4[], growth = u.uLegendGrowth.value as THREE.Vector4[];
@@ -785,7 +856,7 @@ export class Ground {
   dispose(): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
-    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.discoTiles.dispose();
+    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.discoTiles.dispose();
     this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
   }
 }
@@ -797,6 +868,7 @@ function paving(map: ForestMap, disco: { tileM: number; pitch: number; rimOuter:
   return {
     uPave: { value: new THREE.Vector4(inner, P.on ? outer : 0, P.course, P.stone) },
     uPave2: { value: new THREE.Vector4(P.ragged, P.missing, P.moss, R) },
+    uZooStreet: { value: new THREE.Vector4(map.zoo?.layout ? 1 : 0, HOME_LOOK, ZOO_CONFIG.lip ?? 110, 0) }, // (the zoo laid out like the chart: its streets in this stone, its edge's lip)
     uPaveStone: { value: rgb(L.rim) }, uPaveDark: { value: rgb(L.rimDark) }, uPaveMoss: { value: rgb(L.moss) }, uPaveGrout: { value: rgb(L.grout) },
   };
 }

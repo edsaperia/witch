@@ -143,6 +143,7 @@ export function drawCreatures(v: View, time = 0): void {
     // (its species' art asked for only once it may be on screen, by the biggest a creature is drawn, a legend's: the first
     // frame's creatures first, not every one within the haze; the island's own come ahead of need, view.ts askIsland)
     if (!v.assets.hasCreature(c.species) && !inView(v, c.x, c.z, 40, 50, 4)) continue;
+    if (g.map.zoo?.layout && !v.assets.hasCreature(c.species)) v.assets.hurryCreature(c.species); // (the zoo: on screen, ahead of all its islands' art asked ahead)
     // Invited creatures are party animals: their party gear once it's drawn (the wild look till then).
     // Happy ones (issue #87) in party clothes without the collar; legends never dressed up (render/looks.ts).
     const look = lookOf(c), party = look === "leashed" && !c.boss ? v.assets.partyArt(c.species, c.id, sigilColour(c.species)) : look === "happy" ? v.assets.happyArt(c.species, c.id) : undefined;

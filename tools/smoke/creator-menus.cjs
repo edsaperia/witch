@@ -14,7 +14,7 @@ const root = path.join(__dirname, "../.."), out = path.join(root, "previews/menu
   try {
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
-    await page.goto("http://localhost:4183/?quick=1&seed=123", { waitUntil: "load" });
+    await page.goto("http://localhost:4183/?opening=old&quick=1&seed=123", { waitUntil: "load" });
     await page.waitForSelector("#creator-start", { timeout: 60000 });
     await page.waitForFunction(() => window.__creator.progress().ready, null, { timeout: 240000 }); // (screenshots are quick once the forest is grown)
     await page.waitForTimeout(1500);

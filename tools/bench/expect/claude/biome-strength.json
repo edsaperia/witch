@@ -1,0 +1,6 @@
+{
+  "reason": "The forests' biome look by ring (Ed, 2026-10-25: lower phases semi-temperate, higher more extreme): an island at ring 3 takes its biome's look at 55%, ring 4 at 80%, ring 5 in full (the tuning's biomeLooks, rules/lakeLooks.ts biomeStrength). Home and the temperate rings are as before.",
+  "frames": {
+    "*": "a scene on a ring 3 or 4 biome island: its trees, bushes and props nearer their temperate colours and shapes (less snow, tint and lean); home's and a temperate island's unchanged"
+  }
+}

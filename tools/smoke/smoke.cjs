@@ -106,7 +106,12 @@ async function main() {
   // "players rise to the treetops instead of dodging"; the plain broom halves it), so wait that out on her own clock first.
   // A press can also be dropped while she's staggered by a blow or knocked out, so press again until she leaves the ground,
   // and say what state she was in if she never does.
+  // On the house she rises only from its Terrace, never in its rooms (#1075, Ed 2026-10-23): the zoom path can end with her flown
+  // in over the Terrace (landing on it) and walked on into a room (on seed 123 the house stands in the Holly thicket, about 80 m
+  // across; she then "wouldn't rise", the world at a tenth: 2026-10-25). So on the house she's put back by her decks on the
+  // Terrace first, as a player would walk out to it.
   const rise = async page => {
+    if (await page.evaluate(() => { const g = window.witch.game, W = g.witches[0], b = W.body, s = g.map.start; if (!b.perch || b.mode !== "ground" || b.seated || Math.hypot(b.x - s.x, b.z - s.z) < 1) return false; W.body = { ...b, x: s.x, z: s.z, vx: 0, vz: 0 }; return true; })) results.push("on the house: put back on its Terrace by her decks to rise");
     for (let i = 0; i < 6; i++) {
       await page.waitForFunction(() => {
         const g = window.witch.game, W = g.witches[0], t = g.tuning, cd = (t.riseCooldown ?? 0) * (W.spells?.broom === "none" ? t.spells?.plain?.riseCooldown ?? 1 : 1);
@@ -115,7 +120,7 @@ async function main() {
       await page.keyboard.press("Space");
       if (await page.waitForFunction(() => window.witch.game.witch.mode !== "ground", null, { timeout: 60000, polling: 100 }).then(() => true, () => false)) return;
     }
-    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, ko: !!W.ko, knock: W.knock, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
+    const st = await page.evaluate(() => { const g = window.witch.game, W = g.witches[0]; return { mode: W.body.mode, seated: W.body.seated, perch: W.body.perch, x: W.body.x, z: W.body.z, ko: !!W.ko, knock: W.knock, cool: W.cool, stack: W.leash.stack.length, landedAt: W.landedAt, herTime: g.herTime, time: g.clock.time, timeScale: g.timeScale, paused: g.clock.paused, area: window.witch.areaUnderWitch() }; });
     throw new Error(`she wouldn't rise from the ground: ${JSON.stringify(st)}`);
   };
   // Hold a key for `secs` of her time (a slow headless renderer runs fewer, capped frames). Her own clock (g.herTime), not the
@@ -223,7 +228,7 @@ async function main() {
   // The pop check again in a Heath (gorse: small bright details), where Ed saw bushes blink. On the moth's island: the home
   // island's roster is the ten home kinds, so no seed puts a heath on it (India's full run on #928, 2026-10-14), and the old
   // radius map (?island=off, 98 areas of every classic type) bakes so much art ahead that its assets never settle here within
-  // the wait; the moth's (21 areas, 8 types on seed 123, the heath plentiful) carries three heaths and three cave mouths.
+  // the wait; the moth's (20 areas, 7 kinds since #1024's compass biomes, the heath plentiful) carries three heaths.
   await run("heath", { width: 1280, height: 720 }, async page => {
     await page.keyboard.press("Enter");
     await sleep(300);
@@ -481,16 +486,26 @@ async function main() {
       }
       check(there, `the witch is moved to the ${id}'s densest wooded spot for the trunk shots`);
       if (!there) continue;
-      await settleArt(page, { forest: true, soft: true });
+      // Measured only once her spot's forest and art are all in: the old oaks read 1.15-1.24x when other smoke runs shared the
+      // cloud's CPU (Hotel, 2026-10-25), the soft wait having given up with the spot's forest half built (14 chunks missing, 6 art
+      // jobs pending: their stand-ins drawn) and 1.21x measured on that; 1.34-1.36x every time it was all in, then and since.
+      await settleArt(page, { forest: true, timeout: 2400000, soft: true });
       await sleep(1500);
+      const ready = await page.evaluate(() => { const v = window.witch.view; return { pending: v.assets.pending, missing: v.stats.forestMissing }; });
+      check(ready.pending === 0 && ready.missing === 0, `the ${id}'s spot is drawn whole before its trunks are measured (${ready.pending} art jobs pending, ${ready.missing} forest chunks missing)`);
+      if (ready.pending || ready.missing) continue;
+      // Both frames from one still moment (the loop stood still, each drawn with no time passing), so nothing moves, grows in or
+      // is baked between the lit frame and its mask.
+      const still = () => page.evaluate(() => { window.witch.manual = true; window.witch.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 0); });
+      await still();
       const lit = await page.screenshot({ timeout: 300000 });
       // The mask frame drawn plain: the bloom, the tilt-shift's blur and the mist layer smeared the flat magenta over the
       // ground round the trunks (the old oaks' "trunks" were half the screen, their sides compared across the blur:
       // 2026-10-07), so they're off for that one frame.
       await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning; v.trunkMaskSaved = { bloom: T.bloom.on, tilt: T.tiltShift.on, fx: P.fxScene }; T.bloom.on = false; T.tiltShift.on = false; P.fxScene = null; v.debugTrunks = true; });
-      await sleep(1000);
+      await still();
       const mask = await page.screenshot({ timeout: 300000 });
-      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; });
+      await page.evaluate(() => { const v = window.witch.view, P = v.post, T = P.tuning, s = v.trunkMaskSaved; v.debugTrunks = false; T.bloom.on = s.bloom; T.tiltShift.on = s.tilt; P.fxScene = s.fx; window.witch.manual = false; });
       fs.writeFileSync(path.join(out, `trunks-${id}.png`), lit); fs.writeFileSync(path.join(out, `trunks-${id}-mask.png`), mask);
       const r = await page.evaluate(async ([a, m]) => {
         const load = src => new Promise(res => { const i = new Image(); i.onload = () => { const c = document.createElement("canvas"); c.width = i.width; c.height = i.height; const x = c.getContext("2d"); x.drawImage(i, 0, 0); res(x.getImageData(0, 0, i.width, i.height).data); }; i.src = "data:image/png;base64," + src; });
@@ -891,7 +906,10 @@ async function main() {
       return out;
     });
     check(hr.n > 50 && hr.bad.length === 0, `on the rolling ground nothing floats or sinks past 1 art px at its foot's ends (${hr.n} checked, ${hr.hilly} off the flat, worst ${hr.worst.toFixed(2)} px)${hr.bad.length ? ": " + hr.bad.join("; ") : ""}`);
-  }, "&debug&island=moth"); // (the moth's island: the home island's roster is the ten home kinds, so no seed puts a cave mouth on it, and the old radius map's art never settles here; see the heath scene)
+  }, "&debug&island=bat"); // (the bat's island, its kind's cave mouths plentiful: the home island's roster is the ten home kinds, so no seed puts a cave mouth on
+  // it, and the old radius map's art never settles here. It was the moth's until the kinds were sorted into Ed's compass biomes (#1024,
+  // 2026-10-23): the moth's island is a heath-and-woods one now, no bat on its roster, and no island but the bat's own and those of
+  // 30 areas or more carries a cave mouth)
 
   // Ed's windows (v53-v57: trees vanished flying the treetops): big, both pixel ratios, long
   // straight flights at full speed in both modes. Nothing set may go undrawn (view.stats.dropped:

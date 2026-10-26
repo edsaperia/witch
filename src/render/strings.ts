@@ -10,6 +10,7 @@ import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { SPRITE_UNIFORMS } from "./sprites";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { areaNeons } from "../rules/partyDressing";
+import { partyZones } from "../rules/party";
 import { NEON } from "../../art/sigils.js";
 import { CLEAR_GLSL, SHARED_GLSL, type CrownView } from "./crown";
 
@@ -265,7 +266,7 @@ export class StringLightsView {
     // From the treetops the bulbs hang under the canopy: let them glimmer through it as specks.
     this.bulbMat.depthTest = g.witch.lift < 0.5;
     let builds = 0;
-    for (const [k, a] of g.party.areas) {
+    for (const [k, a] of partyZones(g.party, g.map)) { // (a legend area's lights with its pair's: they partify together)
       let b = this.built.get(k);
       if (!b) {
         if (builds++ >= 2) break;

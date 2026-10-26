@@ -13,14 +13,19 @@
 //  - Her hat (Ed, 2026-10-06: "when you are killed, you drop your hat, and there's a direction marker for it, so you can
 //    go back and find it"): the same ring, whole, a 🎩 in the middle (HAT), pointing at it while it lies on the ground
 //    (rules/hat.ts), hovering over it once it's on screen.
+//  - On screen, every one of them is a map pin over its subject (Ed, 2026-10-26): its arrow turned straight down at it, its
+//    tip just over the subject's top, bobbing gently, kept on the screen, side by side with another over the same spot.
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
 import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
+import { pixelEmojiData } from "./bubbles";
 
 export const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 const RING_R = 13; // the ring's radius (art pixels)
+/** An emoji's size in the ring (art pixels across). */
+export const EMOJI_PX = 17;
 
 let RING: number[] | null = null;
 /** The ring's pixels (x, y, turn: 0 at 12 o'clock, clockwise), in row order, worked out once (a hypot and an atan2 a pixel a frame
@@ -114,6 +119,7 @@ export class PixelCue {
     this.img = this.g.createImageData(N, N);
   }
   hide(): void { this.canvas.style.display = "none"; this.label.style.display = "none"; }
+  dispose(): void { this.canvas.remove(); this.label.remove(); }
   private text = ""; private textW = 0;
   /** Its label, `text` in `colour`, centred out from (cx, cy) along (ux, uy) (a unit vector), its near edge `clear` pixels
    *  out, so it never lies over the cue's own ring or arrow. */
@@ -226,6 +232,11 @@ export const FLASK = [
   "...#########...",
 ];
 
+/** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
+const PIN_GAP = 20, PIN_BOB = 3;
+/** Angle `a` turned toward `b` by share `k`, the short way round. */
+const turnToward = (a: number, b: number, k: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -235,6 +246,8 @@ export class StoneIndicator {
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
   constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
   private shown = -1;
+  /** Off the page for good (render/pins.ts Pin.dispose). */
+  dispose(): void { this.cue.dispose(); }
   /** Its label pulses up (the wave pointer's tempo rising on a knockdown: index.html's bpm-up). */
   pop(): void { const L = this.cue.label; L.style.animation = "none"; void L.offsetWidth; L.style.animation = "bpm-up 1.4s ease-out"; }
   /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
@@ -247,21 +260,27 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3 } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
     this.lastFill = fill;
     if (!at) { c.hide(); return; }
     // Off screen: on the edge, pointing the way; on screen (Ed, v256: "runestone UI markers
-    // shouldn't disappear"): gliding from the edge to hover over the stone, without the arrow,
-    // smaller when she's close so it doesn't cover her, the distance gone within 20 m.
-    const e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, 3.2);
+    // shouldn't disappear"): gliding from the edge to hover over its subject as a map pin (Ed, 2026-10-26: "When you get close to
+    // the subject of a pointer, instead of disappearing it should float above that thing and point downwards, like a map pin"):
+    // its arrow turning from the way to straight down, its tip just over the subject's top (`top` metres up), bobbing gently,
+    // kept on the screen (it slid off the top as a subject came in there), smaller when she's close so it doesn't cover her, the
+    // distance gone within 20 m.
+    const top = at.top ?? 3.2, e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, top);
     const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
     const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
-    const lift = (N * c.scale * size) / 2 + 6; // above the stone's top, clear of it
-    let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (e.sy - lift - e.ey) * ease;
-    ({ x: cx, y: cy } = edgeLayout.claim(cx, cy, e.angle, (N * c.scale * size) * 0.42, e.show > 0.5));
+    const px = c.scale * size, half = (N * px) / 2, bob = ease * PIN_BOB * Math.sin(time * Math.PI); // (a bob every two beats)
+    const pinY = Math.max(half + 4, e.sy - (at.gap ?? PIN_GAP) - (RING_R + 7) * px) + bob; // (the arrow's tip the gap over its top)
+    let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (pinY - e.ey) * ease;
+    // (pins side by side where they'd overlap, as the edge's cues are along the edge)
+    const arrow = turnToward(e.angle, Math.PI / 2, ease);
+    ({ x: cx, y: cy } = edgeLayout.claim(cx, cy, arrow, (N * c.scale * size) * 0.42));
     c.place(cx, cy, size);
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
@@ -275,23 +294,28 @@ export class StoneIndicator {
       else c.dot(ring[k], ring[k + 1], dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
-    if (at.notes || at.glyph) {
+    const E = at.emoji ? pixelEmojiData(at.emoji, EMOJI_PX) : null;
+    if (E && E.data.some((v, i) => i % 4 === 3 && v > 0)) {
+      const o = Math.floor((N - EMOJI_PX) / 2), d = E.data;
+      for (let y = 0; y < EMOJI_PX; y++) for (let x = 0; x < EMOJI_PX; x++) { const i = (y * EMOJI_PX + x) * 4; if (d[i + 3]) c.dot(o + x, o + y, [d[i], d[i + 1], d[i + 2]], 1); }
+    } else if (at.notes || at.glyph) {
       const ink = at.glyphColour ? calm([at.glyphColour.x * 255, at.glyphColour.y * 255, at.glyphColour.z * 255]).map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)) : bright;
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
       for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }
-    } else {
+    } else if (at.species) {
       let g = this.glyphs.get(at.species);
       if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
       const o = Math.floor((N - g.w) / 2);
       for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
     }
-    // The arrowhead outside the ring, toward the stone (fading as it comes over the stone).
-    drawArrow(c, e.angle, N, R + 2, R + 7, 3.5, bright, e.show);
+    // The arrowhead outside the ring: toward the subject at the edge, straight down at it as a pin.
+    drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);
     c.flush();
-    // The distance on the far side of the ring from the arrow (or under the ring, over the stone).
-    const showLabel = !!label || dist > 20;
+    // The distance on the far side of the ring from the arrow (or beside it, as a pin).
+    const showLabel = label !== "" && (!!label || dist > 20); // ("": no words at all, render/pins.ts)
     if (!showLabel) { c.label.style.display = "none"; return; }
-    const ax = -Math.cos(e.angle) * e.show, ay = -Math.sin(e.angle) * e.show + (1 - e.show), al = Math.hypot(ax, ay) || 1;
+    // (opposite the arrow on the edge; beside the ring as a pin, clear of its arrow below and the clock above at the screen's top)
+    const ax = -Math.cos(arrow) * (1 - ease) + ease, ay = -Math.sin(arrow) * (1 - ease), al = Math.hypot(ax, ay) || 1;
     c.say(label ?? `${Math.round(dist)} m`, `rgb(${neon.map(Math.round).join(",")})`, cx, cy, ax / al, ay / al, (R + 1.5) * c.scale * size);
   }
 }

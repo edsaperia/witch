@@ -16,7 +16,7 @@ const query = process.argv[2] || "";
     const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
     page.on("pageerror", e => errors.push(e.message));
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
-    await page.goto(`http://localhost:4182/?quick=1&seed=123${query ? "&" + query : ""}`, { waitUntil: "load" });
+    await page.goto(`http://localhost:4182/?opening=old&quick=1&seed=123${query ? "&" + query : ""}`, { waitUntil: "load" });
     await page.waitForSelector("#creator-start", { timeout: 60000 });
     await page.waitForFunction(() => !!window.__creator?.walker, null, { timeout: 120000, polling: 250 }); // (the room's made a step a frame)
     await page.waitForTimeout(4000); // (her walking frames bake once her look is still)

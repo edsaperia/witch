@@ -11,10 +11,11 @@ describe("padControls", () => {
     expect(padControls(pressed(...PAD.sigil), still, none, false, false).sigil).toBe(true);
     expect(padControls(none, [0, 0, 1, 0], none, false, false).aim).toEqual({ x: 20, z: 0 });
   });
-  it("at a station's panel (Ed's playtest, 2026-10-23: the bottom face button flew her off from the bedroom): no button, d-pad or right stick reaches the game; the left stick still walks her", () => {
+  it("at a station's panel (Ed's playtest, 2026-10-23: the bottom face button flew her off from the bedroom): no button but square, d-pad or right stick reaches the game; the left stick still walks her", () => {
     for (let i = 0; i < 17; i++) {
       const c = padControls(pressed(i), still, none, false, true);
-      expect({ ...c, moveX: 0, moveZ: 0 }, `button ${i}`).toEqual({ moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: false, sigilHeld: false, hat: false, spell: false, cycle: false, dash: false, fire: false, aim: null });
+      // (square, the use button, closes it as E does: Ed, 2026-10-26, "E should also close ... (square and X on controller)")
+      expect({ ...c, moveX: 0, moveZ: 0 }, `button ${i}`).toEqual({ moveX: 0, moveZ: 0, zoom: 0, toggleMode: false, debug: false, sigil: i === 2, sigilHeld: false, hat: false, spell: false, cycle: false, dash: false, fire: false, aim: null });
       expect([c.moveX, c.moveZ], `button ${i}`).toEqual([0, 0]); // (the d-pad's the panel's)
     }
     expect(padControls(none, [0, 0, 1, 1], none, false, true).aim).toBeNull();

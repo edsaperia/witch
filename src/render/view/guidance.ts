@@ -1,0 +1,159 @@
+// Her guidance pin (rules/guidance.ts): one pin on her view (render/pins.ts), moved to whatever's next and given its icon (Ed's:
+// guideIcon), in the HUD's amber ring so it reads as the house showing her round and never as a stone. Icons only (Ed, 2026-10-26).
+import * as THREE from "three";
+import type { View } from "../view";
+import { HAT_INK } from "../view";
+import type { Pin, PinTarget } from "../pins";
+import type { Guide, GuideKind } from "../../rules/guidance";
+import { EMOJI_PX, HAT, NOTES } from "../indicator";
+import { pixelSprite } from "../bubbles";
+
+const INK = new THREE.Vector3(1, 0.94, 0.82);
+
+/** A shirt: the dressing stations' glyph where the browser has no emoji for them. */
+export const SHIRT = [
+  "....##...##....",
+  "..####+++####..",
+  ".######+######.",
+  "###.#######.###",
+  "##..#######..##",
+  "....#######....",
+  "....#######....",
+  "....#######....",
+  "....#######....",
+  "....#######....",
+  "....#######....",
+  "....#######....",
+];
+/** A sealed letter: the invitations desk. */
+export const LETTER = [
+  "...............",
+  "###############",
+  "##+.........+##",
+  "#.+.......+..##",
+  "#...+...+....##",
+  "#.....+......##",
+  "#....+.+.....##",
+  "#...+...+....##",
+  "#..+.....+...##",
+  "#.+.......+..##",
+  "###############",
+  "...............",
+];
+/** A bed: after a lost night. */
+export const BED = [
+  "...............",
+  "#..............",
+  "#..............",
+  "#.+++..........",
+  "#++++##########",
+  "###############",
+  "###############",
+  "#+++++++++++++#",
+  "#.............#",
+  "#.............#",
+  "#.............#",
+  "...............",
+];
+/** A folded map: the map table. */
+export const MAP = [
+  "...............",
+  "####...####...#",
+  "#..####...####.",
+  "#.+..#..+.#..#.",
+  "#.++.#.+++#..#.",
+  "#..+.#..+.#.+#.",
+  "#....#....#.++.",
+  "#.+..#....#..#.",
+  "#.++.#..+.#..#.",
+  "####.####.####.",
+  "....####...####",
+  "...............",
+];
+
+/** A wrapped present: something new (a find). */
+export const GIFT = [
+  "....##...##....",
+  ".....##.##.....",
+  "......###......",
+  "###############",
+  "#++++++#++++++#",
+  "###############",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#############.",
+];
+
+/** A pair of wings spread (the lathe: her broom; Ed's "Broom should be a pair of wings"), where the browser has no 🪽. */
+export const WINGS = [
+  "...............",
+  "##...........##",
+  "###.........###",
+  "#+##.......##+#",
+  "#++##.....##++#",
+  ".#++##...##++#.",
+  ".#+++##.##+++#.",
+  "..#++++#++++#..",
+  "..##+++#+++##..",
+  "...##++#++##...",
+  "....###.###....",
+  "...............",
+];
+
+/** Each pin's icon (Ed, 2026-10-26): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe ("Broom should be a pair of
+ *  wings"), 🎁 anything new ("new find will be 🎁"), 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶, in cream: the emoji's black notes were lost on the dark floor); on her first night 👗 the wardrobe, 👠 the shoe
+ *  rack, 🧥 the cloak pegs, 👜 the bags and the hats' floor the hat pointers' own hat. Emoji drawn in pixels as the thrown 💌 is
+ *  (render/indicator.ts emoji), each with a glyph of ours in its place where the browser has no such emoji. */
+const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", hat: "🎁", part: "🎁", wearable: "🎁" };
+const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: NOTES };
+const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
+/** The pair of wings: 🪽 and 🪽 mirrored, spread either side, one pixel sprite (render/bubbles.ts pixelSprite, served as an emoji is). */
+const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
+  x.font = `${Math.round(n * 0.62)}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText("🪽", n * 0.72, n / 2 + 0.5);
+  x.save(); x.translate(n, 0); x.scale(-1, 1); x.fillText("🪽", n * 0.72, n / 2 + 0.5); x.restore();
+});
+/** A guide's icon: its emoji (none: the glyph alone) and its glyph. */
+export function guideIcon(guide: Guide): { emoji?: string; glyph: readonly string[] } {
+  if (guide.kind === "dress" && "object" in guide.target) return DRESS[guide.target.object] ?? { glyph: SHIRT };
+  if (guide.kind === "lathe") return { emoji: wings(), glyph: WINGS };
+  return { emoji: EMOJI[guide.kind], glyph: GLYPH[guide.kind] };
+}
+
+/** Over the floor-level hats' floor (its height 0), the pin hovers as over a hat lying there. */
+const TOPS: Record<string, number> = { hats: 1 };
+/** Over her seat at the decks, the pin's tip just over the tempo shown there (2.5 m up). */
+const DECKS_TOP = 3;
+
+/** Her one guidance pin, on her view. */
+export class GuidePin {
+  private pin: (Pin & { remove(): void }) | null = null;
+  private key = "";
+  constructor(private view: View) {}
+  /** This frame's guide (or null), and whether it shows (rules/guidance.ts guideShows, not at its target): the pin moved to it and
+   *  shown, or hidden, eased (render/pins.ts). */
+  update(guide: Guide | null, shows: boolean): void {
+    if (guide) {
+      const T = guide.target, target: PinTarget = "object" in T ? { object: T.object, top: TOPS[T.object] } : { x: T.x, z: T.z, top: 1.2, house: true };
+      const key = `${guide.kind}:${JSON.stringify(target)}`;
+      if (key !== this.key) {
+        // (a new guide: the old pin gone, the new eased in from nothing)
+        this.pin?.remove();
+        this.pin = this.view.pin(target, { colour: HAT_INK, glyphColour: INK, ...guideIcon(guide) });
+        this.pin.hide();
+        this.key = key;
+      }
+    }
+    if (!this.pin) return;
+    // The decks: over them as drawn, slid with the house's drawing as they are, just over the tempo there (render/leash/deckBpm.ts).
+    const L = this.view.leashView, seat = L.seatAt;
+    if (guide?.kind === "decks" && seat) this.pin.target = { x: seat.x + L.seatSlide.x, z: seat.z + L.seatSlide.z, top: seat.y + L.seatSlide.y + DECKS_TOP };
+    if (guide && shows) this.pin.show(); else this.pin.hide();
+  }
+  /** Its kind now and its strength (tools, the shots). */
+  get state(): { key: string; strength: number } { return { key: this.key, strength: this.pin?.strength ?? 0 }; }
+  dispose(): void { this.pin?.remove(); this.pin = null; this.key = ""; }
+}

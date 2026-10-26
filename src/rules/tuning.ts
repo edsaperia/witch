@@ -74,6 +74,9 @@ export interface GladeTuning {
   motes: { per: number; rise: number; height: number; size: number; hue: number; sat: number; bright: number };
 }
 
+/** A kind of place kept clear (Tuning.reveal). */
+export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number; /** only the scenery within radius metres of it fades (the runestone's: Ed, 2026-10-26) */ bounded?: boolean }
+
 export interface Tuning {
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
   wisps?: WispTuning;
@@ -103,7 +106,7 @@ export interface Tuning {
   /** The density field: a patch noise patchScale metres across ranging patchMin to patchMax times an area's density, and a floor of lone trees. */
   density: { patchScale: number; patchMin: number; patchMax: number; lone: number };
   /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
-  areaEdgeBlend: { width: number; scale: number; stray: number };
+  areaEdgeBlend: { width: number; scale: number; stray: number; /** the band's own wander (m) and its noise's size (m) */ warp?: number; warpScale?: number; /** the share of the band the tufts blend over */ tufts?: number };
   /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */
@@ -231,6 +234,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** Her fall off the Terrace with no broom hitting the ground, unseen below (rules/kit.ts): a soft, comic thud (chimes.ts thud). */
+    thud?: { volume: number; gap: number };
     /** Her phone's alarm in the new opening's wake-up (chimes.ts alarm): a ring at most every gap seconds. */
     alarm?: { volume: number; gap: number };
     /** A 💌 refused by an enraged animal (Ed, 2026-10-12): its angry whine (chimes.ts refused). */
@@ -246,7 +251,7 @@ export interface Tuning {
     meadow: { volume: number; breeze: number; bees: number; birds: number; birdEvery: number; fade: number; murmur: number; clinks: number; clinkEvery: number; balloons: number; squeakEvery: number };
     whale: { volume: number; speed: number; depth: number; reverb: number; sleepEvery: number };
   };
-  music: { on: boolean; volume: number; /** The audio context's latencyHint (Ed, 2026-10-07: "the music is still cutting out"): "interactive" the smallest output buffer, "balanced" more room for the audio thread, "playback" the most (under-runs least likely, sound effects latest); ?latency= tries one for a load. */ latency?: "interactive" | "balanced" | "playback"; /** The output buffer to ask for, in seconds (Ed's v3167 playtest: "music is still cutting out", 474 device under-runs on a 10 ms buffer; "balanced" gives Chrome the same 10 ms as "interactive"); 0: the latency category instead. A browser that under-runs anyway asks for twice as much next load (platform/audio/buffer.ts). */ buffer?: number; /** the intro's layers that drop as her needle-drop routine ends (Ed, 2026-10-07), before any speaker: rules/musicPlan.ts bootLayers */ dropLayers?: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
+  music: { on: boolean; volume: number; /** The audio context's latencyHint (Ed, 2026-10-07: "the music is still cutting out"): "interactive" the smallest output buffer, "balanced" more room for the audio thread, "playback" the most (under-runs least likely, sound effects latest); ?latency= tries one for a load. */ latency?: "interactive" | "balanced" | "playback"; /** The output buffer to ask for, in seconds (Ed's v3167 playtest: "music is still cutting out", 474 device under-runs on a 10 ms buffer; "balanced" gives Chrome the same 10 ms as "interactive"); 0: the latency category instead. A browser that under-runs anyway asks for twice as much next load (platform/audio/buffer.ts). */ buffer?: number; /** the intro's layers that drop as her needle-drop routine ends (Ed, 2026-10-07), before any speaker: rules/musicPlan.ts bootLayers */ dropLayers?: number; nearDist: number; farDist: number; floor: number; muffle: number; /** The most (dB, as a laptop plays it) the music may fall from by a soundsystem to anywhere far off: checked by tools/music-lab/check.cjs. */ audible: number; /** A sleeping legend's clearing on the ground (Ed, 2026-10-06): the muffle (Hz), quiet (its share of the volume), ease (seconds), the layer's level, and the clearing's radius where the map has none. */ circle: { muffle: number; quiet: number; ease: number; level: number; radius: number }; /** The world slowed in a legend's circle (Ed, 2026-10-06: "the music audibly slows down"): the music follows the game's time scale, its notes' pitch dropping with it as a tape slows (the time scale to the power pitch, never under floor of it); on false, the tempo still follows (it must, to keep in step with the waves) but the pitch doesn't drop. */ slow?: { on: boolean; pitch: number; floor: number }; /** In the treehouse (Ed, 2026-10-26: "the house music slows and muffles. Other sounds stay the same"): its low-pass (Hz) as its world slows, eased with the slowing; lighter than a circle's. */ house?: { muffle: number }; /** The party's over (Ed, 2026-10-06: "the dance music stops"): the music winds down like a tape stopping over the first `stop` of the party-over ease, its pitch falling with it to `floor`, then is silent. */ over?: { stop: number; floor: number }; /** by the sea the party gives way to the waves: within `fade` metres of the water, down to `quiet` of its volume at the water's edge */ beach?: { fade: number; quiet: number }; clear: number; distort: number; src: string };
   /** The home speaker ring's boot-up at the start (Ed, 2026-10-04): its pulse runs at `speed` m/s (rules/bootRing.ts bootSeconds). */
   boot: { /** The boot's pulse speed (m/s; 4, the ley pulse's before Ed set the waves' to 1 on 2026-10-18). */ speed?: number; /** Seconds a home speaker takes to turn from its runestone into the speaker when the boot pulse reaches it. */ transform: number };
   groundCover: { on: boolean; density: number; radius: number; cap: number; spacing: number; cell: number; budgetMs: number; sway: number; part: number; sigilClear: number };
@@ -375,11 +380,13 @@ export interface Tuning {
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
    *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
-  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; minFromOtherStones?: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number> };
+  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; minFromOtherStones?: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number>; /** Sized to fit its legend (rules/legendFit.ts): metres to spare round its sleeping body, and the most a radius may be. */ fit?: { margin: number; max: number; /** the most in a legend area of its own (Ed, 2026-10-26; rules/map.ts) */ areaMax?: number } };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number; /** one scene placed on most maps (Ed, 2026-10-11: the temple ruins), at this chance a map, suited areas first, then any */ featured?: { ids: string[]; chance: number } };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
+  /** The HUD's pointers as map pins (render/indicator.ts): gap screen pixels between the arrow's tip and its subject's drawn top. */
+  pins?: { gap: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
   /** The live rig (#79, render/rig/): on by default (?rig=0 off); creatures in the treetops, or drawn smaller than minPx art pixels, keep their baked frames, except the levels in alwaysLevels ("baby", "young", "adult", "legend"), rigged at any size (Ed, 2026-10-05: legends always). */
@@ -394,6 +401,8 @@ export interface Tuning {
   sail?: { inPlace: boolean };
   /** The opening (app/opening.ts): bedroom, a plain first load waking in her bedroom on home's night; ?opening=bedroom|old for one load. */
   opening?: { bedroom: boolean; wake?: { snooze: number; stretch: number; alarmMin: number } };
+  /** The forests' biome looks by ring (rules/lakeLooks.ts biomeStrength): strength[0] for phase from, the next ring the next, the last further out. */
+  biomeLooks?: { from: number; strength: number[] };
   arrive?: { warm: { frames: number; ms: number; max: number }; maxStep: number; fade: number; speed: number; minLeg: number; low: { angle: number; distance: number; offshore: number }; frame: { angle: number; distance: number; lift: number }; rise: number; settle: number;
     /** the sea chart's flight waiting for a sail's night (app/chartView.ts, render/chart/seaChart.ts FlyOptions): its pace down to rate, eased over ease seconds, for at most cap seconds */
     hold?: { rate: number; ease: number; cap: number };
@@ -405,7 +414,7 @@ export interface Tuning {
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
     /** The house on the Ent (rules/treehouse.ts, docs/backlog/treehouse.md step 1; on: in place of the deck; the oak since 2026-10-24, its floor and the Terrace's layout config/house/'s): its floor height (m), the landing grace, the edge's keep-in; landTime: seconds to come down onto the Terrace flying onto it; fall: with no broom she falls off the Terrace's open rim (on: for now a switch, the brooms as objects to come; time: seconds till she's back at the circle). */
-    house?: { on: boolean; height: number; grace: number; rail: number; landTime: number; /** on foot in the house: her walking speed (m/s) */ walk: number; fall: { on: boolean; time: number }; /** the forest behind the enclosed rooms black (render/view.ts behindHouse), back over `fade` seconds */ dark?: { on: boolean; fade: number }; /** the great oak's crown over the house (rules/crown.ts, render/crown.ts), grown from `seed` */ crown?: { on: boolean; seed: number } };
+    house?: { on: boolean; height: number; grace: number; rail: number; landTime: number; /** on foot in the house: her walking speed (m/s; Ed, 2026-10-25: half again as fast, 5 to 7.5, her broom's ground speed apart) */ walk: number; /** the walking speed (m/s) her walk cycle is drawn for (render/view/witch.ts): faster than this, her steps quicken with her pace, so her feet don't slide */ stride?: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number }; /** the forest behind the enclosed rooms black (render/view.ts behindHouse), back over `fade` seconds */ dark?: { on: boolean; fade: number }; /** the great oak's crown over the house (rules/crown.ts, render/crown.ts), grown from `seed`; indoors a room's cut, and the hole round her, open and close over `cutFade` seconds (0 at once) */ crown?: { on: boolean; seed: number; cutFade?: number } };
     /** Who carries the Ent (drawing only; art/carrier.js): "island" the island's own kind's legend (none at home), a kind's id that kind's, "none" no one. */
     carrier?: string };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; /** each family's share times this (1 as authored; 0 none) */ mix?: { ruins?: number; rocks?: number; freak?: number }; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
@@ -425,6 +434,11 @@ export interface Tuning {
   /** The circle-bug suspects (Ed, 2026-10-14): each effect centred on her with a round edge, on as ever or off (the pause page's toggles). */
   suspects: { seeThrough: boolean; holeCut: boolean; trunkFade: boolean; groundCover: boolean; glow: boolean; effectsLayer: boolean; haze: boolean; areaAverage: boolean; seeDepth: boolean; cutWhole: boolean; seeSplit: boolean; seeMark: boolean; mist: boolean; lightRings: boolean; seeWrite: boolean; seeCull: boolean; seeKeep: boolean; seeStencil: boolean; seeEarly: boolean; seeSolid: "off" | "all" | "circle" | "rest"; seeNoBlend: boolean; seeShowAlpha: boolean; showBroken: boolean; seeDither: boolean; seeTwo: boolean };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
+  /** The places she stands in kept clear of the scenery in front of them (Ed, 2026-10-26; render/view/reveal.ts): the seconds each fades over in
+   *  and out, the soft edge (a share of the screen's width) and the depth (m) the fade eases over; and each kind on or off, the radius
+   *  (m) she stands within, the ring (m) boxed with it, and the width and height (m) of what stands at its centre (a legend's circle:
+   *  its own radius and legend, its ring pad m wider). */
+  reveal?: { seconds: number; edge: number; depth: number; legend: { on: boolean; pad?: number }; runestone: RevealKind; find: RevealKind; flask: RevealKind };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number; /** Its sigils more visible (Ed, 2026-10-15): each drawn at bright times leash.sigilGlyph, over a near-black disc at backing (0 none) backSize times its width, and with over drawn over the scenery (no depth test), so no crown hides the stack. */ bright?: number; backing?: number; backSize?: number; over?: boolean };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };
@@ -465,6 +479,10 @@ export interface Tuning {
     questLater?: boolean;
     /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
     earlyQuest: boolean;
+    /** Legend areas (Ed, 2026-10-26: all legends in "additional areas that have legend circles where runestones usually are", each
+     *  grown beside an area of its kind, counting as one area with it; rules/map.ts): on (the default), or false for legends in their
+     *  own kind's areas as before. */
+    areas?: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
     bombard: { on: boolean; range: number; damage: number };
     /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */

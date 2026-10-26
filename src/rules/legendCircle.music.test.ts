@@ -58,6 +58,15 @@ describe("a sleeping legend's clearing in the music (Ed, 2026-10-06)", () => {
     expect(M.circle.muffle).toBeLessThan(500); // ("very muffled")
   });
 
+  it("in the treehouse muffles more lightly, its volume kept (Ed, 2026-10-26: \"the house music slows and muffles\")", () => {
+    const M = TUNING.music, mix = mixAt(M, 1, 0, 10), house = M.house!.muffle;
+    expect(muffled(M, mix, 0, house, 1)).toEqual(mix);
+    const full = muffled(M, mix, 1, house, 1);
+    expect(full.cutoff).toBeCloseTo(house, 3);
+    expect(full.volume).toBe(mix.volume);
+    expect(house).toBeGreaterThan(M.circle.muffle); // (lighter than a legend's circle)
+  });
+
   /** The layer's notes over a block of `bars` bars of wave 1's forest, as part:midi strings. */
   const layer = (species: string | null, bars = 8) => {
     const plan: BlockPlan = { section: "forest", start: 0, bars, wave: 1, arc: 1 }, out: string[] = [];

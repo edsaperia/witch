@@ -99,6 +99,7 @@ export class BeachView {
     if (b.intoSand(w.x, w.z) < -(g.tuning.beach?.shown ?? 0) && !seen) { this.leave(); this.gazing = false; return false; }
     if (!this.on) { this.on = true; this.ground.setBeach(b); this.assets.partyWitchArt(null); } // (her lying-down art asked for ahead)
     this.ground.sandGrain(g.tuning.beach?.grain ?? 0); // (live: the pause page's slider)
+    if (g.map.zoo) return false; // (the zoo's edge is a band of water pouring off the disc, render/zooFences.ts ZooFall: no woods' edge, decorations, dolphins or kraken)
     this.edge.update(b, this.assets.beachEdgeArt(), w.x, w.z, g.tuning.beach?.decor?.clear);
     this.drawDecor(g, b, visible, camera);
     (this.dolphins ??= new DolphinView(this.scene, this.mpp, this.assets.style, this.light, job => this.assets.oneOff(job))).update(g, b, time); // (off the east coast: render/dolphins.ts)

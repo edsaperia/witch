@@ -70,14 +70,16 @@ export function sigilWords(species: string, bare = false): string {
  *  line, the action said exactly). A dream asks for a kind's sigil put down inside the circle, any age (Ed, 2026-10-18), named in
  *  words beside its icon (Ed's playtest, 2026-10-07: a look-alike kind was easy to bring); only the drop does it (Ed, 2026-10-19).
  *  Done, the legend fights for her and shows her its island (found tonight, kept if the night is won). Once the party's over no
- *  quest is taken (its dream closed: c.questOpen false while it sleeps). */
-export function circleLines(c: Creature): CircleLine[] {
+ *  quest is taken (its dream closed: c.questOpen false while it sleeps), nor before it (`before`: Ed, 2026-10-26), nor in the zoo
+ *  (`before` "zoo": its legends sleep for show, Ed 2026-10-26). */
+export function circleLines(c: Creature, before: boolean | "zoo" = false): CircleLine[] {
   const st = c.legendState ?? "asleep", q = c.quest, done = q?.done !== undefined, name = nameOf(c.species);
   const found: CircleLine = { text: "Its island is found: win the night to keep it.", done: true };
   if (st === "happy") return [{ text: `Your ally: the ${name}.` }, { text: "It fights for you and guards its area." }, ...(done ? [found] : [])];
   if (st === "angry") return [{ text: `An angry legend: the ${name}!` }, { text: "Wear it down, or bring one of its kind back to its area, and it will settle." }];
   const head: CircleLine = { text: st === "restless" ? `A restless legend: the ${name}.` : `A sleeping legend: the ${name}.` };
-  if (q && !done && c.questOpen === false) return [head, { text: "The party's over: it sleeps on." }]; // (Ed, 2026-10-18: no quest taken then)
+  if (before === "zoo") return [head, { text: "In the zoo it sleeps on, for you to see." }];
+  if (q && !done && c.questOpen === false) return [head, { text: before ? "It sleeps till the party starts." : "The party's over: it sleeps on." }]; // (Ed, 2026-10-18: no quest taken then)
   const ask: CircleLine[] = q && !done ? [{ text: `Put down {sigil} ${sigilWords(q.species)}, any age, inside this circle.` }, { text: "It will wake, fight for you and show you its island." }] : [];
   if (st === "restless") return [head, ...ask, { text: "Bring one of its kind back to its area to calm it." }];
   return [head, ...ask, { text: "Leave none of its kind in its area and it grows restless." }];

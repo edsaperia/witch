@@ -5,7 +5,7 @@
 // legend is happy at once (it fights for her: rules/legends.ts cheer), its area friendly while wild, and its island found
 // tonight (g.islandsTonight: kept on the sea chart only if the night is won, Ed's correction, 2026-10-18). A quest gives no boon
 // (Ed, 2026-10-18: "Finishing quests no longer gives boons"). No drawing here.
-import { AREA_TYPES, inLegendClearing, type ForestMap } from "./map";
+import { AREA_TYPES, areaCellAt, inLegendClearing, type ForestMap } from "./map";
 import { LEGENDS, cheer } from "./legends";
 import type { Creature } from "./creatures";
 import { cellKey, routeOf } from "./party";
@@ -86,7 +86,7 @@ export const legendOf = (creatures: Creature[], ids: number[], key: string): Cre
  *  or null. Open while the legend sleeps (Ed, 2026-10-06), and only while the party is on (Ed, 2026-10-18: permanent unlocks
  *  happen only then: the caller doesn't ask once it's over). */
 function questFor_(map: ForestMap, creatures: Creature[], legendIds: number[], _partified: (key: string) => boolean, id: number, x: number, z: number): Creature | null {
-  const c = creatures[id], cell = map.cellSafe(x, z).cell as [number, number], key = cellKey(cell);
+  const c = creatures[id], cell = areaCellAt(map, x, z) as [number, number], key = cellKey(cell); // (in a legend area: its pair's legend)
   if (!c) return null;
   const L = legendOf(creatures, legendIds, key), q = L?.quest;
   if (!L || !q || q.done !== undefined || (L.legendState !== "asleep" && L.legendState !== "restless")) return null;

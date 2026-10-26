@@ -2,7 +2,9 @@
 // (pick all up with x/e)"): on every wake-up she's in her nightie, her outfit in a pile by her bed, piece by piece. E at the pile
 // puts on whatever's still in it. A dressing station before then puts its own piece on her (Ed: "Changing her look at the station
 // puts that item on her; the pile then doesn't have it (e.g. if she puts on a top via the menu, the pile then puts on everything else
-// except yesterday's top)"). She's dressed when the pile's empty, and only then does the bedroom's door let her out (rules/wakeUp.ts).
+// except yesterday's top)"). She's dressed when the pile's empty; dressed or not, the bedroom's door lets her out once she's up (Ed,
+// 2026-10-25: "I should be able to leave regardless"; rules/wakeUp.ts), and a hat she picks up off the hats' floor meanwhile is on her
+// head, out of the pile (rules/game.ts).
 // Rules only: how she's drawn meanwhile is `wornGenome` (her look with what's still in the pile taken off), which the page shows.
 import { WITCH_GENOME } from "../../art/witchGenome.js";
 
@@ -18,11 +20,20 @@ export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
+/** Last night's clothes lie by her bed, to put on with E: on every wake-up but her first (Ed, 2026-10-26: "if it's the first night,
+ *  there won't be any last night's clothes"; the coordinator: no pile on the first wake-up, `short` false). On the first she's in
+ *  her nightie all the same, `pile` the pieces still to put on, each at its station (her first night's guidance pins lead her round
+ *  them: rules/guidance.ts). */
+export const pileOut = (w: { pile?: PileSlot[]; short?: boolean } | null | undefined): boolean => !!w?.short && !dressed(w);
 
 /** A station's choice before she's dressed: its piece goes on her, out of the pile. True when the pile changed. */
 export function wearFromStation(w: { pile?: PileSlot[] }, station: string): boolean {
   const slot = STATION_SLOT[station];
-  if (!slot || !w.pile?.includes(slot)) return false;
+  return !!slot && wearPiece(w, slot);
+}
+/** A piece put on her before she's dressed (a station's, or a hat picked up): out of the pile. True when the pile changed. */
+export function wearPiece(w: { pile?: PileSlot[] }, slot: PileSlot): boolean {
+  if (!w.pile?.includes(slot)) return false;
   w.pile = w.pile.filter(s => s !== slot);
   return true;
 }

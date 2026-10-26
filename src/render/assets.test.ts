@@ -83,3 +83,38 @@ describe("AssetLibrary.reseat (another island on the page)", () => {
     expect(islandBound({ kind: "party" } as ArtJob)).toBe(false);
   });
 });
+
+// While the night plays, the art asked ahead of need keeps to half the workers, and past that only an urgent job is handed out
+// (render/assets.ts dispatch). An area's set asked ahead and then wanted on screen (typeArt) must go as urgent: the zoo's area
+// types are all asked ahead at its start, and with one worker on a long job none of its trees ever came (Lima, 2026-10-25).
+describe("AssetLibrary: a set asked ahead, then wanted on screen", () => {
+  const style = loadStyle();
+  type Slot = { w: { postMessage(j: ArtJob): void }; busy: boolean; job?: ArtJob };
+  type Pool = { useWorkers: boolean; workers: Slot[]; playing: boolean };
+  /** A library with `n` fake workers, the first busy on a long job, the night playing; what each worker was handed. */
+  function pool(n: number): { a: AssetLibrary; sent: ArtJob[] } {
+    const a = new AssetLibrary(style, 11, 4), sent: ArtJob[] = [], p = a as unknown as Pool;
+    inner(a).queue.length = 0;
+    p.useWorkers = true; p.playing = true;
+    p.workers = Array.from({ length: n }, (_, i) => ({ w: { postMessage: (j: ArtJob) => void sent.push(j) }, busy: i === 0, job: i === 0 ? ({ kind: "witch", id: "long" } as unknown as ArtJob) : undefined }));
+    return { a, sent };
+  }
+
+  it("goes to a free worker at once, though the art ahead's share is full", () => {
+    const { a, sent } = pool(3); // (3 workers: the art ahead's share is 1, and the long job has it)
+    for (const t of [20, 28, 27, 59]) a.prefetchType(t);
+    expect(sent).toEqual([]); // (asked ahead: waiting while the share is full)
+    expect(a.typeArt(59)).toBeUndefined();
+    expect(sent.map(j => `${j.kind}:${j.id}`)).toEqual(["type:59"]);
+    expect(a.typeArt(27)).toBeUndefined();
+    expect(sent.map(j => `${j.kind}:${j.id}`)).toEqual(["type:59", "type:27"]);
+  });
+
+  it("and the others asked ahead still wait their turn", () => {
+    const { a, sent } = pool(3);
+    for (const t of [20, 28]) a.prefetchType(t);
+    a.typeArt(28);
+    expect(sent.map(j => `${j.kind}:${j.id}`)).toEqual(["type:28"]);
+    expect(inner(a).queue.map(j => `${j.kind}:${j.id}`)).toEqual(["type:20"]);
+  });
+});

@@ -70,6 +70,11 @@ export function tuningFromLink(params: URLSearchParams) {
   if (cutBy === "pixel") tuning.suspects.cutWhole = false;
   else if (cutBy === "whole") tuning.canopyCutout = { ...TUNING.canopyCutout, whole: 1 };
   if (params.get("occ") === "off") tuning.occlusion = { ...TUNING.occlusion, on: false };
+  const reveal = params.get("reveal"); // ?reveal=legend,runestone,find,flask (all, none): which places she stands in are kept clear (render/view/reveal.ts)
+  if (reveal !== null && TUNING.reveal) {
+    const R = TUNING.reveal, on = new Set(reveal.split(",")), all = on.has("all");
+    tuning.reveal = { ...R, legend: { ...R.legend, on: all || on.has("legend") }, runestone: { ...R.runestone, on: all || on.has("runestone") }, find: { ...R.find, on: all || on.has("find") }, flask: { ...R.flask, on: all || on.has("flask") } };
+  }
   const hole = params.get("hole");
   if (hole === "off" || hole === "all") tuning.canopyCutout = { ...TUNING.canopyCutout, screenFraction: hole === "off" ? 0 : 8 };
   const tilt = params.get("tilt");
@@ -200,14 +205,21 @@ export function tuningFromLink(params: URLSearchParams) {
 
   // The zoo (?zoo; rules/zoo.ts, Ed 2026-10-13): every area a block of a square grid, a row per biome; no island, no roster.
   if (params.has("zoo") && tuning.map) tuning.map = { ...tuning.map, shape: "zoo", island: "", islandAreas: 0 };
+  // (its edge, rules/zooMap.ts: the flagstones straight into the water, no sand to speak of, nothing on it, no one about)
+  if (params.has("zoo") && tuning.beach) { const B = tuning.beach; tuning.beach = { ...B, width: 2, vary: B.vary && { ...B.vary, amp: 0, min: 2 }, decor: B.decor && { ...B.decor, on: false }, witchChance: 0 }; }
+  // (flat: no hills, no rises under its runestones or dells under its legends; Ed, 2026-10-26: "The zoo is flat, no hills")
+  // (no treehouse: Ed, 2026-10-26, "The zoo doesn't have a treehouse or a dancefloor; just an ent sigil legend circle at the centre")
+  if (params.has("zoo")) tuning.treehouse = { ...tuning.treehouse, deck: tuning.treehouse.deck && { ...tuning.treehouse.deck, on: false }, house: tuning.treehouse.house && { ...tuning.treehouse.house, on: false } };
+  if (params.has("zoo")) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: false }, layout: tuning.ground.layout && { ...tuning.ground.layout, on: false } };
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
   tuning.paths = { ...tuning.paths, fingerposts: true };
   applyKnobParams(tuning, params); // (Ed's decisions panel: its knobs' choices kept in the URL as d_<id>)
   // The sea chart's save (app/chartSave.ts): the islands she's found, so the night's legends favour the others (rules/rosters.ts).
   // and the campaign's world seed (every island's shape), unless ?world= names one for this load
-  // (?found=a,b: those islands found for this load, whatever this browser's save says: the debug overlay's repro link, app/repro.ts)
-  if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
+  // (?found=a,b: those islands found for this load, whatever this browser's save says: the debug overlay's repro link, app/repro.ts;
+  // the zoo's ?all every one, "*": the map's see-all, rules/zooMap.ts)
+  if (tuning.map) { const save = loadSave(), w = params.get("world"), f = params.get("found"); tuning.map = { ...tuning.map, found: params.has("zoo") && params.has("all") ? ["*"] : f !== null ? f.split(",").filter(Boolean) : save.found, world: w ? worldSeed(w) : save.world }; }
   // ?own= (app/finds.ts; Ed, 2026-10-23, the dev control's switch): finds given or let go on this browser's saves, as the dev
   // control does (all, none, kind:item, kind:*), before the night reads them (her hats too: app/hatSave.ts, read just below).
   { const own = params.get("own"); if (own !== null) applyOwn(own); }

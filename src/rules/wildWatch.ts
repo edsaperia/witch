@@ -12,6 +12,7 @@
 // time, none comes after her (rules/combat/targeting.ts acquire); once they've attacked they follow her out to combat.leaveArea
 // past their edge; and a 💌 of hers provokes a wild one for wildWatch.provoked seconds, so it comes out after her across its edge.
 import { cellKey } from "./party";
+import { areaCellAt } from "./map";
 import { LEGEND, type Creature } from "./creatures";
 import type { Game } from "./game";
 import type { Tuning } from "./tuning";
@@ -34,7 +35,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
   for (const w of g.witches) {
     if (w.body.mode !== "ground" || w.body.seated || w.body.perch || w.ko) continue; // (up on the treehouse deck: not in any area)
     if (stealthed(w.spells, g.herTime)) continue; // (her Stealth broom: unseen, nothing notices her; rules/brooms.ts)
-    const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell), e = g.wildEntry.get(k);
+    const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)), e = g.wildEntry.get(k);
     if (here === null) here = k; else here2 = k;
     if (e) { e.last = time; continue; }
     if (k === home || g.party.areas.has(k) || g.friendly.has(k)) continue;
@@ -56,7 +57,7 @@ export function stepWildWatch(g: Game, t: Tuning): void {
 export function aggroOf(g: Game, i = 0): { k: number; danger: number } | null {
   const w = g.witches[i];
   if (!w || w.body.mode !== "ground" || w.ko || !g.wildEntry.size) return null;
-  const e = g.wildEntry.get(cellKey(g.map.cellSafe(w.body.x, w.body.z).cell)), time = g.clock.time;
+  const e = g.wildEntry.get(cellKey(areaCellAt(g.map, w.body.x, w.body.z))), time = g.clock.time;
   return e && time < e.until ? { k: Math.max(0, (time - e.at) / Math.max(1e-6, e.until - e.at)), danger: e.danger } : null;
 }
 

@@ -13,7 +13,7 @@ const LIFT = 2.5;
 export function drawDeckBpm(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game, seat = lv.seatAt;
   let el = lv.deckBpmEl;
-  if (!host || !seat || g.partyOver) { if (el) el.style.display = "none"; return; }
+  if (!host || !seat || g.partyOver || g.map.zoo?.layout) { if (el) el.style.display = "none"; return; } // (the zoo has no decks: Ed, 2026-10-26)
   if (!el) {
     el = document.createElement("div"); el.className = "deck-bpm";
     el.innerHTML = `<span class="n"></span><span class="u">BPM</span>`;
@@ -23,7 +23,8 @@ export function drawDeckBpm(lv: LeashView, camera: THREE.Camera, width: number, 
   if (num.textContent !== n) num.textContent = n;
   const bonus = g.beat.bonus ?? 0;
   if (bonus > lv.deckBonus) { lv.deckBonus = bonus; el.classList.remove("up"); void el.offsetWidth; el.classList.add("up"); } // (a knockdown's rise: it pulses)
-  placed(v.set(seat.x, seat.y + LIFT, seat.z)).project(camera);
+  const sl = lv.seatSlide; // (slid with the house's drawing, as the decks are: render/view/home.ts placeTreehouse)
+  placed(v.set(seat.x + sl.x, seat.y + LIFT + sl.y, seat.z + sl.z)).project(camera);
   el.style.display = v.z > 1 ? "none" : "";
   el.style.left = `${((v.x + 1) / 2) * width}px`;
   el.style.top = `${((1 - v.y) / 2) * height}px`;

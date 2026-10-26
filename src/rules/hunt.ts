@@ -13,6 +13,7 @@
 // left, it hunts her again at once while it's remembered (wildWatch.forget seconds after she was last on the ground in it),
 // else its watch plays again. Hunters are stepped by combat wherever they are (its busy set). No drawing here.
 import type { Game } from "./game";
+import { areaCellAt } from "./map";
 import type { Tuning } from "./tuning";
 import { LEGEND, type Creature } from "./creatures";
 import { cellKey } from "./party";
@@ -28,7 +29,7 @@ export function stepHunts(g: Game, t: Tuning): void {
   const time = g.clock.time, hunts = (g.hunts ??= new Set<number>()), W = t.wildWatch;
   if (t.hunt?.on === false) { for (const id of hunts) g.creatures[id].hunting = undefined; hunts.clear(); return; } // (off: the old rule)
   // A witch knocked out: her hunters give up and go home, and the areas they came from are forgotten.
-  const at = hunts.size ? g.witches.map(w => g.map.cellSafe(w.body.x, w.body.z).cell) : [];
+  const at = hunts.size ? g.witches.map(w => areaCellAt(g.map, w.body.x, w.body.z)) : [];
   for (const id of hunts) {
     const c = g.creatures[id], v = c.hunting === undefined ? undefined : g.witches[c.hunting];
     if (c.hunting !== undefined && v?.ko) {

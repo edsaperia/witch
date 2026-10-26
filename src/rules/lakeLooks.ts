@@ -4,7 +4,7 @@
 // (render/lakeLooks.ts), so a lake in play is the one the chart drew. Looks only: every lake plays as water (rules/lakes.ts).
 import type { LandMap } from "./land";
 import { lakeKnobs, type LakeKnobs } from "./lakes";
-import { bearingOf, KINDS, worldOf } from "./rosters";
+import { bearingOf, islandOf, KINDS, worldOf } from "./rosters";
 
 /** What a biome's lakes become (Ed, 2026-10-12: "In the cold biomes lakes become frozen. In the volcano biome lakes become lava.
  *  In the desert biome lakes become oases. In the jungle biome, lakes become sinkholes."): ice (in play a glacier: Ed,
@@ -54,12 +54,26 @@ export function islandBlend(id: string, world: number): Blend {
   const biome = id === "home" ? "temperate" : KINDS[id]?.biome ?? "temperate";
   return biome === "temperate" ? TEMPERATE : blendAt(islandBearing(id, world));
 }
+/** How strongly an island's forests take its biome's look, by its ring (Ed, 2026-10-25: "Lower phase non-home biome areas can be
+ *  semi-temperate looking; higher phase biomes are more extreme; so there's a smoother transition between phases"): the tuning's
+ *  biomeLooks.strength, its first for phase `from`, the next for the ring after and so on, the last for any further out; 1 nearer
+ *  in (those are temperate) or without the knob. */
+export function biomeStrength(phase: number, T?: BiomeLooks): number {
+  if (!T || !T.strength.length || phase < T.from) return 1;
+  return Math.max(0, Math.min(1, T.strength[Math.min(T.strength.length - 1, phase - T.from)]));
+}
+/** The tuning's biomeLooks (rules/tuning.ts). */
+export interface BiomeLooks { from: number; strength: number[] }
+
 /** The key of island `id`'s biome blend, for its forests' look (art/flora/biomes.js biomeLook; the area art's jobs and their cache,
- *  render/artBuild.ts): "a|b|w", its share to two places; undefined on a temperate island (its art as it always was). */
-export function biomeKey(id: string, world: number): string | undefined {
+ *  render/artBuild.ts): "a|b|w", its share to two places, then "|s" at a strength under full (its ring's, biomeStrength: so a
+ *  ring's art is kept apart from another's); undefined on a temperate island (its art as it always was). */
+export function biomeKey(id: string, world: number, T?: BiomeLooks): string | undefined {
   const B = islandBlend(id, world);
   if (B.a === "temperate" && B.b === "temperate") return undefined;
-  return B.a === B.b ? B.a : `${B.a}|${B.b}|${B.w.toFixed(2)}`;
+  const s = biomeStrength(islandOf(id, world)?.phase ?? 0, T);
+  if (s >= 1) return B.a === B.b ? B.a : `${B.a}|${B.b}|${B.w.toFixed(2)}`;
+  return `${B.a}|${B.b}|${B.w.toFixed(2)}|${s.toFixed(2)}`;
 }
 
 /** A seeded number in 0..1 from two integers. */
@@ -105,3 +119,7 @@ export function lakesOf(L: LandMap, seed: number, b: IslandBiome): { lake: Int32
 export function mapBiome(island: { kind: string; phase: number } | null, tuning: { map?: { world?: number }; lakes?: Partial<LakeKnobs> }): IslandBiome {
   return island ? islandBiome(island.kind, tuning.map?.world ?? 0, island.phase, lakeKnobs(tuning)) : { blend: TEMPERATE, lakeBlend: null, lakeShare: 0 };
 }
+
+/** An undiscovered island's lake in the zoo (Ed, 2026-10-26: "Islands that are not discovered yet appear as that biome's lake"):
+ *  its biome's lake look, by its bearing on the chart (the first of the two biomes it lies between), water where the biome has none. */
+export const zooLakeLook = (kind: string, world: number): LakeLook => LAKE_LOOKS[blendAt(islandBearing(kind, world)).a] ?? "water";

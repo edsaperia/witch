@@ -200,7 +200,9 @@ export class AssetLibrary {
       this.promoted.add(k); this.urgentKeys.add(k);
       if (job.kind === "type") { const L = this.typeLog.get(job.id as number); if (L && L.landed === undefined) L.urgent = true; } // (asked ahead, then wanted on screen)
       const i = this.queue.findIndex(q => this.key(q) === k);
+      if (i >= 0) (this.queue[i] as ArtJob & { urgent?: boolean }).urgent = true; // (urgent now: while the night plays, past the art ahead's share of the workers only an urgent job goes, dispatch; the zoo's 64 area types, all asked ahead, waited behind one long job: none of its trees came)
       if (i > this.front) { const [q] = this.queue.splice(i, 1); this.queue.splice(this.front, 0, q); }
+      this.dispatch();
       return;
     }
     this.inFlight.add(k);
@@ -465,6 +467,13 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
     return a;
   }
+  /** The zoo (rules/zooMap.ts): a species near her asked for now, ahead of the whole zoo's art asked ahead (every island's trees,
+   *  creatures and legends: hundreds of sets), its plain look and its sleeping form. */
+  hurryCreature(species: string): void {
+    if (!this.creatures.has(species)) this.ask({ kind: "creature", id: species, style: this.style }, true);
+    const k = `nap-${species}`;
+    if (!this.creatures.has(k)) this.ask({ kind: "nap", id: k, species, style: this.style }, true);
+  }
   /** An area legend asleep (art/legends.js: sunk in its area's earth, mossed over, eyes shut; 2 breathing frames), or undefined (and asked for). */
   sleepArt(species: string): CreatureArt | undefined {
     const k = `sleep-${species}`, a = this.creatures.get(k);
@@ -612,6 +621,9 @@ export class AssetLibrary {
   }
 
   get pending(): number { return this.inFlight.size; }
+  /** Other work the view waits for as for art (render/houseFloor.ts, the house's floor painted off the page's thread): pending, as a
+   *  set being drawn is, until it's done, so the shots and the bench step past it only once it's in. */
+  track(key: string, p: Promise<unknown>): void { this.inFlight.add(key); p.then(() => this.inFlight.delete(key), () => this.inFlight.delete(key)); }
   /** Area type `t`'s art held (drawn, or kept and read back). */
   hasType(t: number): boolean { return this.types.has(t); }
 
