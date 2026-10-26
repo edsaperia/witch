@@ -3,8 +3,8 @@
 // in place of the floating nameplates (render/zooPlates.ts), each island's words carved into the street just south of its fence,
 // where she walks past (the camera looks north, so they read the right way up): its animal, its area's name and its biome, and its
 // line (art/areas.js layout.feel); a lake, its animal and its biome. Tiny5 (ui/pixelUi.ts's pixel font) at whole texels, laid flat,
-// in the plaza's weathered mint (render/ground.ts): thin grooves with a faint light in them, worn, chipped and mossed in places, the
-// light uneven along a line. Each as wide as it needs, as deep as the street lets it (to the street's middle before the next island
+// in the plaza's mint (render/ground.ts), restrained (Ed, "it should still seem diegetic"): a faint light in the grooves, uneven
+// along a line, an occasional chip, moss and dirt in the stone round the letters rather than through them. Each as wide as it needs, as deep as the street lets it (to the street's middle before the next island
 // south). Made as she comes near (NEAR m), let go far off. Drawing only.
 import * as THREE from "three";
 import tiny5 from "../ui/fonts/Tiny5.woff2?url";
@@ -18,7 +18,7 @@ import { VALUE_NOISE_GLSL } from "./shaders";
 const NEAR = 260, FAR = 340;
 /** Metres a texel (the name's twice as tall), and how much longer north to south (the camera looks along the street: floor
  *  lettering stretched so it reads); the gap from the fence (m); the most it reaches south (m); the line's width in characters. */
-export const INSCRIPTION = { texel: 0.32, stretch: 1.7, gap: 2.2, deepest: 26, feelChars: 40 };
+export const INSCRIPTION = { texel: 0.4, stretch: 1.6, gap: 2.2, deepest: 40, feelChars: 38 };
 
 const VERT = /* glsl */ `
 varying vec2 vUv; varying vec2 vWorld;
@@ -30,16 +30,22 @@ ${VALUE_NOISE_GLSL}
 void main() {
   vec2 px = floor(vec2(vUv.x, 1.0 - vUv.y) * uSize) + 0.5; // (the texture's first row, the text's top, to the north)
   float t = texture2D(uText, px / uSize).r;
-  if (t < 0.5) discard;
-  vec2 fp = t < 0.9 ? floor(px / 2.0) * 2.0 : px; // (the name, its pixels doubled: chipped by whole font pixels)
-  // (weathered as the plaza's lines: worn gaps, chips, moss and dirt in the grooves, the light uneven along a line)
   vec2 cell = floor(vWorld / uTexel) * uTexel;
-  float wear = vnoise(cell / 2.2 + 31.0), chip = hash(fp + 7.0), moss = vnoise(cell / 4.0 + 57.0);
-  float name = step(t, 0.9);
-  float keep = step(0.17 - 0.12 * name, wear) * step(0.05 * (1.0 - name), chip) * (1.0 - step(0.74 + 0.14 * name, moss) * step(0.5, hash(fp + 13.0))); // (lighter than the plaza's, the name lightest: words must still read)
-  if (keep < 0.5) { gl_FragColor = moss > 0.62 ? vec4(0.16, 0.24, 0.14, 0.55) : vec4(0.03, 0.03, 0.04, 0.35); return; } // (the groove dark: moss or dirt)
-  float b = 0.45 + 0.55 * vnoise(cell / 6.0 + 3.0);
-  gl_FragColor = vec4(mix(vec3(0.12, 0.2, 0.17), vec3(0.42, 0.72, 0.6), b), 0.5 + 0.35 * b);
+  float moss = vnoise(cell / 4.0 + 57.0);
+  if (t < 0.5) {
+    // (round the letters, not through them: moss and dirt gathered in the stone at a groove's edge; Ed, "restrained, it should
+    // still seem diegetic")
+    vec2 o = 1.0 / uSize;
+    float near = max(max(texture2D(uText, (px + vec2(1, 0)) * o).r, texture2D(uText, (px - vec2(1, 0)) * o).r), max(texture2D(uText, (px + vec2(0, 1)) * o).r, texture2D(uText, (px - vec2(0, 1)) * o).r));
+    if (near < 0.5 || moss < 0.55 || hash(px + 21.0) < 0.35) discard;
+    gl_FragColor = moss > 0.66 ? vec4(0.15, 0.23, 0.13, 0.5) : vec4(0.03, 0.03, 0.04, 0.3);
+    return;
+  }
+  vec2 fp = t < 0.9 ? floor(px / vec2(2.0, 3.0)) : px; // (the name, its pixels 2 by 3: chipped by whole font pixels)
+  // (an old carving: an occasional chip in a stroke, the faint light in the grooves uneven along a line)
+  if (hash(fp + 7.0) < 0.03) { gl_FragColor = vec4(0.03, 0.03, 0.04, 0.35); return; }
+  float b = 0.6 + 0.4 * vnoise(cell / 6.0 + 3.0);
+  gl_FragColor = vec4(mix(vec3(0.14, 0.24, 0.2), vec3(0.47, 0.78, 0.65), b), 0.55 + 0.3 * b);
 }`;
 
 /** An inscription's lines: [text, scale] (2 the name). */
@@ -72,7 +78,8 @@ function textTexture(lines: [string, number][]): { tex: THREE.DataTexture; w: nu
   const c = document.createElement("canvas"), x = c.getContext("2d", { willReadFrequently: true })!, LH = 9;
   x.font = "8px Tiny5";
   const ws = lines.map(([t]) => Math.ceil(x.measureText(t).width) + 2);
-  const w = Math.max(...lines.map(([, s], k) => ws[k] * s)) + 4, h = lines.reduce((a, [, s]) => a + (LH + 1) * s, 0) + 2;
+  const tall = (s: number) => (s > 1 ? s + 1 : 1); // (the name 2 wide by 3 tall: crisp where the street's foreshortened by the fence)
+  const w = Math.max(...lines.map(([, s], k) => ws[k] * s)) + 4, h = lines.reduce((a, [, s]) => a + (LH + 1) * tall(s), 0) + 2;
   c.width = Math.max(...ws); c.height = LH;
   const data = new Uint8Array(w * h * 4);
   for (let k = 3; k < data.length; k += 4) data[k] = 255;
@@ -81,8 +88,8 @@ function textTexture(lines: [string, number][]): { tex: THREE.DataTexture; w: nu
     x.clearRect(0, 0, c.width, c.height); x.font = "8px Tiny5"; x.fillStyle = "#fff"; x.textBaseline = "top"; x.fillText(t, 1, 0);
     const src = x.getImageData(0, 0, c.width, LH).data, x0 = Math.floor((w - ws[k] * s) / 2);
     for (let j = 0; j < LH; j++) for (let i = 0; i < ws[k]; i++) if (src[(j * c.width + i) * 4 + 3] > 110)
-      for (let a = 0; a < s; a++) for (let b = 0; b < s; b++) { const q = ((y0 + j * s + b) * w + x0 + i * s + a) * 4; data[q] = data[q + 1] = data[q + 2] = s > 1 ? 180 : 255; } // (the name's a shade lower: the shader wears it by its own font pixels)
-    y0 += (LH + 1) * s;
+      for (let a = 0; a < s; a++) for (let b = 0; b < tall(s); b++) { const q = ((y0 + j * tall(s) + b) * w + x0 + i * s + a) * 4; data[q] = data[q + 1] = data[q + 2] = s > 1 ? 180 : 255; } // (the name's a shade lower: the shader chips it by its own font pixels)
+    y0 += (LH + 1) * tall(s);
   });
   const tex = new THREE.DataTexture(data, w, h);
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.needsUpdate = true;
