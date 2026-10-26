@@ -1,0 +1,6 @@
+{
+  "reason": "Ed's tuned pause-page values as the built defaults (2026-10-26, v4522): leafJitter autumn 0.25 to 0.2, value 0.12 to 0.15, hue 8 to 0; light.spooky.grade 0.9 to 0 (the post grade off, and the areas' grade tints with it).",
+  "frames": {
+    "*": "every scene: the post grade off (no cold blue-green tint or drain over the dark and middle tones), and the trees' leaf jitter (less autumn drift, more value, no hue turn)"
+  }
+}
