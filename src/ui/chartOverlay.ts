@@ -3,7 +3,7 @@
 // time (Ed: "Sail anytime"): its sail asks `onSail` (the game records the night, unwon if it's still on, then sails). Esc, the
 // pad's B or Close shuts it; while it's open the game's own controls are held still (main.ts, chartOpen). At the Atrium's map table
 // (Ed, 2026-10-23: "'Tables' slide in from the bottom and have a soft edge (they're more diegetic)", "It can fill the screen once
-// risen"): `table`, it comes by nearness (rules/stations.ts tableOf, main.ts), slides up from the bottom (ui/slideIn.ts) to fill
+// risen"): `table`, it comes on E there (Ed's playtest, 2026-10-26; rules/stations.ts tableOf, main.ts), slides up from the bottom (ui/slideIn.ts) to fill
 // the screen, no frame, its edges fading to the night held behind it; she moves and it slides away (app/chartView.ts `table`).
 import { mountChart, type ChartView, type ChartViewOptions } from "../app/chartView";
 import { sailHref } from "../app/sail";
