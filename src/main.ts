@@ -425,7 +425,8 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
 // till Esc (the pad's B) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
 const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tuning.music.volume * sound.level, new StudioPanel());
-let studioAt: string | null = null;
+/** What takes the keys now (the frame loop: input.release() as it changes). */
+let keysTaken = "";
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
 let scopeAt: string | null = null, scopeShut: string | null = null; // (the telescope it's open at, and the one she left it at)
 telescope.onWalk = () => { scopeShut = scopeAt; }; // (and any closing while she's there: below, onChange)
@@ -935,7 +936,10 @@ function frame(now: number): void {
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
   studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt);
-  if (studio.at !== studioAt) { studioAt = studio.at; input.clearPresses(); }
+  // (a menu or overlay that takes the keys opening or closing, the Studio's, the chart, the telescope, the creator or the zoo:
+  // everything held let go, so a key-up it took doesn't leave her walking after; Ed's playtest of v4515, the Studio's mic)
+  const takes = `${studio.at}|${chartOpen()}|${telescope.on}|${creator.open}|${zoo.isOpen}`;
+  if (takes !== keysTaken) { keysTaken = takes; input.release(); }
   const raw = input.read(), human = chartOpen() || telescope.on || studio.at ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;

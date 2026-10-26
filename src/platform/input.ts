@@ -63,8 +63,12 @@ export class Input {
       if (this.isGameKey(e.code)) e.preventDefault();
       if (!this.onAny?.()) this.pressed.add(e.code);
     });
-    target.addEventListener("keyup", e => this.keys.delete(e.code));
-    target.addEventListener("blur", () => { this.keys.clear(); this.mouseDown = false; });
+    // (let go seen first, in the capture phase: a panel taking the keys while it's open, the Studio's instruments, app/studio.ts, stops
+    // the key-up after this; else a key held as it opened and let go inside it stays held for her after, as Ed's playtest of v4515
+    // found walking into the Studio's mic: "it is as if the down key is permanently held". Input is made before the panels.)
+    target.addEventListener("keyup", e => this.keys.delete(e.code), { capture: true });
+    target.addEventListener("blur", () => this.release());
+    if (typeof document !== "undefined") document.addEventListener("visibilitychange", () => { if (document.hidden) this.release(); });
     // The mouse: where the cursor is, and the left button over the game (not its panels and buttons).
     target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") this.pointer = { x: e.clientX, y: e.clientY }; });
     target.addEventListener("pointerdown", e => {
@@ -101,6 +105,13 @@ export class Input {
     this.rightClicked = false; this.wheel = 0;
     const t = this.touch;
     t.toggle = false; t.zoom = 0; t.debug = false;
+  }
+
+  /** Let go of everything held and not yet read (a menu or overlay that takes the keys opening or closing, the page losing focus or
+   *  hidden): a key-up it took, or one lost behind a frame, can't leave her walking. A key still down presses again. */
+  release(): void {
+    this.keys.clear(); this.mouseDown = false; this.mouseClicked = false;
+    this.clearPresses();
   }
 
   /** This frame's controls; button presses are reported once. */
