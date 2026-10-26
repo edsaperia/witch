@@ -48,7 +48,15 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
   if (!F) target.add(v.houseCam as THREE.Vector3Like); // (off the treehouse's hub: where she's drawn, render/view/witch.ts)
   // At a station, aimed up her to the part being chosen (rules/camera.ts aim: a share of her height as drawn), along the way her
   // sprite stands (up the screen), so that part stays in the middle at any zoom.
-  if (!F && pose.aim) target.addScaledVector(up, pose.aim * v.witchTall);
+  // From her feet as she's drawn (the last frame's: she stands still at a station), not the rules' height: indoors that's
+  // groundHeight over the floor while the house's art draws her feet on it (render/view/witch.ts), so every station aimed 1.4 m up
+  // her too high, her 105 px low on screen and at the dressing table her feet off it (tools/stations/check.cjs; the coordinator,
+  // 2026-10-26). Eased in with the station's own ease.
+  if (!F && pose.aim) {
+    const s = Math.min(1, Math.max(0, g.camera.station ?? 0)), sk = s * s * (3 - 2 * s);
+    const feet = new THREE.Vector3(v.witchBase.x, v.witchBase.y, v.witchBase.z).sub(target).dot(up);
+    target.addScaledVector(up, feet * sk + pose.aim * v.witchTall);
+  }
   // The world's bend: only over the treetops (Ed, 2026-10-04), eased in as she rises; from the
   // camera's focus, along its forward on the ground.
   let moonNow!: ReturnType<View["updateMoon"]>;
