@@ -69,6 +69,65 @@
       "apply": {
         "knob": "occlusion.minHeight"
       }
+    },
+    {
+      "id": "glowHue",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow colour (hue)",
+      "note": "Her own glow's colour round the colour wheel (light.spooky.glowHue, the spooky mood's; render/lighting.ts uGlowRgb): 0.08 as built, a warm amber-orange; 0 red, 0.17 yellow, 0.33 green, 0.5 cyan, 0.67 blue, 0.83 magenta. Her pool on the ground, its light on what's near her and her silhouette all take it; the swatch is the colour. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "swatch": {
+          "hue": "light.spooky.glowHue",
+          "sat": "light.spooky.glowSat"
+        }
+      },
+      "default": 0.08,
+      "apply": {
+        "knob": "light.spooky.glowHue"
+      }
+    },
+    {
+      "id": "glowSat",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow colour (saturation)",
+      "note": "How coloured her glow is (light.spooky.glowSat): 0.55 as built; 0 white light, 1 the hue at its deepest. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "swatch": {
+          "hue": "light.spooky.glowHue",
+          "sat": "light.spooky.glowSat"
+        }
+      },
+      "default": 0.55,
+      "apply": {
+        "knob": "light.spooky.glowSat"
+      }
+    },
+    {
+      "id": "glowPower",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow strength",
+      "note": "Her own glow at its brightest (glowPower): 0.95 as built; 0 no glow (her silhouette keeps its colour); over 1 the bright middle of her pool spreads wider, as the light is capped at full. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.95,
+      "apply": {
+        "knob": "glowPower"
+      }
     }
   ]
 }
