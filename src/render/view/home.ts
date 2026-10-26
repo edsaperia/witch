@@ -67,7 +67,7 @@ export function drawMarkers(v: View, time: number): ForestLight[] {
   // (its times ahead are by the pulse's speed now, which a knockdown's BPM raises).
   const lp = v.leyParty ?? g.party, rk = `${leyKey(lp)}:${g.party.spellAt ?? "-"}:${g.party.bootUntil}:${Math.floor(g.clock.time * 2)}`; // (the line's own party: leyLines.advance)
   if (v.leyReach.key !== rk) v.leyReach = { key: rk, times: leyReachTimes(lp, g.map, g.clock.time) };
-  const FLARE = R.flare.time, allSeen = routeSeen(g); // (the Route-seer hat worn: every beacon up, rules/hatSpells.ts)
+  const FLARE = R.flare.time, allSeen = g.party.spellAt !== null && routeSeen(g); // (the Route-seer hat worn: every beacon up, rules/hatSpells.ts; none before the party, as the line: Ed, 2026-10-26)
   for (const m of mc.list) {
     const d = Math.hypot(m.x - w.x, m.z - w.z);
     if (d > range) continue;

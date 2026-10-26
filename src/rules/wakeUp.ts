@@ -91,7 +91,8 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
     if (press && !dressed(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
     if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
     if (g.party.spellAt !== null) return c;
-    if (here?.use.kind === "bed") return used; // (no sleeping the night away before it's begun)
+    // (her bed before the party: held, she sleeps and the night counts as lost, as the bed after a loss does; main.ts "slept": Ed,
+    // 2026-10-26, Q-e. Sleeping again and again till tonight's find in the sky is one she wants is fine: Ed)
     return toDecks(g, c, press);
   }
   const held: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };

@@ -29,6 +29,7 @@ import type { Steps } from "../slices";
 import { focusOf, inView, viewRect } from "./culling";
 import { checkPops, mark } from "./pops";
 import { BarkFaces } from "../barkFaces";
+import { relicsOut } from "../../rules/partyOver";
 
 /** The scenery's own trunk-shadow batches, by the key they're kept under in View.trunkShadowBatches (the area types' by number). */
 const SCENERY_CASTS = new Set(["decor", "relics", "scenes"]);
@@ -93,7 +94,7 @@ const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
 /** The tallest trees' squeeze (treeCap) as one number, to see it change. */
 const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
 /** Which quest relics lie in the world, as a bit mask (their bottles are scenery). */
-const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of g.relics) if (r.state === "lying") m |= 1 << (r.id % 30); return m; };
+const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of relicsOut(g)) if (r.state === "lying") m |= 1 << (r.id % 30); return m; };
 
 /** What a rebuild needs, if one is due now (she has moved, turned or zoomed, the scenery's radius has grown, or new art is in), else null; `force`: anyway. */
 function due(v: View, force = false) {
@@ -293,7 +294,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
     if (ra.modern.length) for (const r of g.forest.relicsNear(cx, cz, half)) put(ra.modern[r.variant % ra.modern.length], r.x, r.z, r.flip);
     // The quest relics still lying where they were found: each its party relic bottle in its mound, standing on its lowest drawn
     // pixel like the rest (its gold rune, the pickup marker, lies sigilOffset metres south: render/leash.ts).
-    for (const r of g.relics) {
+    for (const r of relicsOut(g)) { // (none before the party: rules/partyOver.ts)
       if (r.state !== "lying" || Math.abs(r.x - cx) > half || Math.abs(r.z - cz) > half) continue;
       const a = ra.byId[relicArtId(r.kind)] ?? ra.byId[`party:${relicBottle(r.kind)}`];
       if (a) put(a, r.x, r.z, relicFlipped(r.kind));

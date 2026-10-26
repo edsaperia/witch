@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import type { View } from "../view";
 import { findPiece } from "../../rules/finds";
+import { worldAsleep } from "../../rules/partyOver";
 import { SpriteBatch, type SpriteInstance } from "../sprites";
 
 /** How near (m) she is before the trunk's drawn at all (a find on foot, under the canopy). */
@@ -23,7 +24,7 @@ const FIND_PATCH = 2.2;
 const FIND_GOLD = new THREE.Vector3(1, 0.96, 0.84);
 
 /** Tonight's find while it's there to take: on the map, not yet taken, the party not lost. */
-const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !v.game.partyOver ? T : null; };
+const findThere = (v: View) => { const T = v.game.trunk; return T && T.item && !T.found && !worldAsleep(v.game) ? T : null; }; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
 
 /** Where the cover is cleared for tonight's find (view.ts, with the placed sigils'), or null. */
 export function findClear(v: View): { x: number; z: number; r: number } | null {
@@ -42,7 +43,7 @@ export function drawFinds(v: View): void {
   const T = v.game.trunk, id = T?.item ? findPiece(T) : "", key = `finds:${id}`;
   for (const [k, b] of v.decorBatches) if (k.startsWith("finds:") && k !== key) b.set([]);
   const batch = v.decorBatches.get(key);
-  if (!T || !T.item || T.found || v.game.partyOver) { batch?.set([]); return; }
+  if (!T || !T.item || T.found || worldAsleep(v.game)) { batch?.set([]); return; }
   const w = v.game.witch, d = Math.hypot(w.x - T.x, w.z - T.z);
   if (d > TRUNK_ASK) { batch?.set([]); return; }
   const fa = v.assets.findArt(id, d <= TRUNK_SEEN), a = fa?.pieces[id];

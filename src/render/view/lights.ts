@@ -15,6 +15,7 @@ import * as Art from "../../../art/generator.js";
 import { LEGENDS } from "../../rules/legends";
 import { beachFires } from "../beach";
 import { findLight } from "./finds";
+import { relicsOut } from "../../rules/partyOver";
 
 const SOURCE_ITEMS: SpriteInstance[] = []; // (the sources' sprites: one list, emptied each frame)
 
@@ -148,7 +149,7 @@ export const relicArtId = (kind: string): string => { const g = relicGlass(kind)
  *  reads as magic and not scenery. Only those near her. */
 export function relicLights(v: View, time: number): ForestLight[] {
   const g = v.game, w = g.witch, out: ForestLight[] = [], S = g.tuning.lights.stone;
-  for (const r of g.relics) {
+  for (const r of relicsOut(g)) {
     if (r.state !== "lying" || Math.abs(r.x - w.x) > 160 || Math.abs(r.z - w.z) > 160) continue;
     const id = relicBottle(r.kind), glass = relicGlass(r.kind), L = (Art.partyRelicLight as (id: string, glass?: string) => { rgb: number[]; radius: number; height: number; pulse: number })(id, glass), key = relicArtId(r.kind);
     let rgb = relicRgb.get(key);
