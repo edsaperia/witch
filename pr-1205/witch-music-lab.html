@@ -5571,7 +5571,7 @@ label.check input { accent-color: var(--accent); }
       "old-pinewood": { treeDensity: 1, groundCover: { density: 0.5, kinds: ["moss", "heather"] } },
       ravine: { treeDensity: 0.75, groundCover: { density: 0.15, kinds: ["moss", "fern"] } },
       "bluebell-glade": { treeDensity: 0.8, groundCover: { density: 0.7, kinds: ["blades", "clover"] } },
-      "holly-thicket": { treeDensity: 1, groundCover: { density: 0.4, kinds: ["moss", "fern"] } },
+      "thorn-scrub": { treeDensity: 0.55, groundCover: { density: 0.45, kinds: ["pebbles", "blades"] } },
       "honeysuckle-tangle": { treeDensity: 1, groundCover: { density: 0.6, kinds: ["blades", "fern"] } }
     }
   };
@@ -5902,7 +5902,7 @@ label.check input { accent-color: var(--accent); }
     r: 6.5,
     objects: [
       { id: "telescope", label: "Telescope", use: { kind: "telescope" }, offset: [0.4, -3.78], box: { w: 2.56, d: 2.56, h: 5.12 } },
-      { id: "bed", label: "Bed", use: { kind: "bed" }, offset: [1.89, 2.33], box: { w: 4, d: 5.2, h: 1.6 } }
+      { id: "bed", label: "Bed", use: { kind: "bed" }, offset: [-2.33, 8.82], box: { w: 4, d: 5.2, h: 1.6 } }
     ]
   };
 
@@ -12005,9 +12005,6 @@ label.check input { accent-color: var(--accent); }
   // art/areas/heath/flora.js
   var AREA_FLORA_HEATH = { species: [["birch", 0.4], ["pine", 0.25], ["hawthorn", 0.2], ["rowan", 0.15]], palette: { sat: 0.9, val: 0.95 } };
 
-  // art/areas/holly-thicket/flora.js
-  var AREA_FLORA_HOLLY_THICKET = { species: [["holly", 0.45], ["yew", 0.3], ["vinewood", 0.25]], palette: { sat: 0.9, val: 0.8 } };
-
   // art/areas/honeysuckle-tangle/flora.js
   var AREA_FLORA_HONEYSUCKLE_TANGLE = { species: [["hazel", 0.4], ["rowan", 0.25], ["elder", 0.2], ["crabApple", 0.15]], palette: { sat: 1.05, val: 1.02 } };
 
@@ -12047,6 +12044,9 @@ label.check input { accent-color: var(--accent); }
   // art/areas/tangly-forest/flora.js
   var AREA_FLORA_TANGLY_FOREST = { species: [["hawthorn", 0.45], ["elder", 0.25], ["crabApple", 0.2], ["hazel", 0.1]], palette: { sat: 1.05, val: 0.9 } };
 
+  // art/areas/thorn-scrub/flora.js
+  var AREA_FLORA_THORN_SCRUB = { species: [["acacia", 0.35], ["hawthorn", 0.35], ["juniper", 0.3]], palette: { sat: 0.7, val: 0.8 } };
+
   // art/areas/twiggy-forest/flora.js
   var AREA_FLORA_TWIGGY_FOREST = { species: [["ash", 0.5], ["elm", 0.25], ["aspen", 0.25]], palette: { sat: 0.9, val: 1.05 } };
 
@@ -12058,7 +12058,7 @@ label.check input { accent-color: var(--accent); }
 
   // art/areas/index.js
   var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
     { "kind": "squirrel", "slot": 1, "phase": 0, "bearing": 285, "dir": "WNW", "biome": "temperate" },
@@ -12829,17 +12829,20 @@ label.check input { accent-color: var(--accent); }
       small: [P("fern")],
       big: [tree("beech", { gnarl: 0.2, scale: 1.1 }), tree("holly", { minor: true, scale: 0.7 })]
     },
+    // (the holly thicket till the roster moved the spider to the badlands, Ed 2026-10-23/25; ring 3, so semi-temperate: dry brown
+    // earth, the scrub wash's thorny scrub, wind-bent thorn trees (the savanna's acacia and the plains' stunted one are theirs) and junipers from the badlands' list with hawthorn among them; the cobwebs and
+    // the web-hung dead tree kept, the spider's own)
     {
-      id: "holly-thicket",
-      name: "Holly thicket",
+      id: "thorn-scrub",
+      name: "Thorn scrub",
       creature: "spider",
       by: "draft",
-      leaf: 0.36,
-      floor: ["leaves", 0.08, 0.35, 0.28],
-      text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
-      wall: [P("hedge", { berries: true })],
-      small: [P("web")],
-      big: [tree("holly", { scale: 0.9 }), tree("yew", { minor: true, scale: 0.7 })],
+      leaf: 0.22,
+      floor: ["mud", 0.07, 0.3, 0.45],
+      text: { floor: "dry brown earth", wall: "the scrub's rocky banks", small: "thorny scrub and cobwebs", big: "thorn trees, hawthorns and junipers", set: "a web-hung dead tree" },
+      wall: [P("rockwall", {})],
+      small: [P("shrub", { spiky: true, flower: [214, 190, 120] }), P("web")],
+      big: [tree("acacia", { variant: "windbent", scale: 0.8 }), tree("hawthorn", { scale: 0.85, gnarl: 0.6 }), tree("juniper", { minor: true, scale: 0.7, lean: 0.2 }), P("snag", { sparse: 0.15, bleached: true })],
       set: tree("broad", { bare: true, webs: true })
     },
     {
@@ -13262,17 +13265,17 @@ label.check input { accent-color: var(--accent); }
       [0.35, [0.4, 0, 0.3, 0.3, 0]],
       "Beech groves round open glades carpeted in bluebells; soft, bright and airy."
     ),
-    "holly-thicket": LAY(
+    "thorn-scrub": LAY(
       "thicket",
-      0.9,
-      0.3,
-      [1, [6, 9]],
-      [0.3, 0.6, 0.1, 0],
-      0.7,
+      0.55,
+      0.5,
+      [1, [8, 12]],
+      [0.35, 0.55, 0.1, 0],
+      0.75,
       NO_LEAN,
-      ["hollows"],
-      [0.25, [0.3, 0, 0.5, 0, 0.2]],
-      "Dark hollies packed close, cobwebs strung between, one clearing round the web-hung tree."
+      ["rocky", "hollows"],
+      [0.3, [0.25, 0.55, 0.1, 0, 0.1]],
+      "Low thorn trees and junipers packed in tangles on dry red earth, cobwebs strung between them, one clearing round the web-hung tree."
     ),
     "honeysuckle-tangle": LAY(
       "stands",
@@ -16562,7 +16565,7 @@ label.check input { accent-color: var(--accent); }
   });
   var GRAVES = ["headstone", "headstone", "headstone-lean", "grave-cross", "headstone-sunk", "headstone"];
   var LARGE = {
-    "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "holly-thicket", "ancient", "deadwood", "wispy-forest"], pieces: [
+    "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "ancient", "deadwood", "wispy-forest"], pieces: [
       ["lychgate", 0, 4.4],
       ["mausoleum", -3.4, -3.4],
       ["yew", 3.6, -3.2],
