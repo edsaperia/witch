@@ -6,7 +6,8 @@ import { TUNING, withTuning, type Tuning } from "./tuning";
 import { AREA_TYPES } from "./map";
 import { canEat, feed } from "./berries";
 import { invitable } from "./leash";
-import { hasRune } from "./creatureStates";
+import { hasRune, stateOf, STATES } from "./creatureStates";
+import { runeOffset } from "./runeOffset";
 import { candleCount, candleMelt, candleRed, hurt, knockOut, newHealth, nextStreak, repair, respawnWait } from "./knockout";
 import { isHomeKey } from "./speakers";
 import { FIGHT, MOVEMENT } from "./movement";
@@ -167,11 +168,11 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     return { g, a, b, l, parked };
   }
 
-  it("puts her carried sigils down where their animals stand, bottom first, a second each with knockout.releaseEach 1 (#87: leashed is for good); then she's back at the treehouse, whole", () => {
+  it("lets her carried ones go happy where they stand, bottom first, a second each with knockout.releaseEach 1 (Ed, 2026-10-26: no floor sigils); a parked one stays parked; then she's back at the treehouse, whole", () => {
     const { g, a, b, l, parked } = setUp(withTuning(t => { t.knockout.releaseEach = 1; })), W = g.witches[0];
     expect(W.ko).not.toBeNull();
     const down = g.clock.time, bottomFirst = [l.id, b.id, a.id]; // stack order a, b, l: l is the bottom
-    const put = new Map<number, number>();
+    const put = new Map<number, number>(), hurtBefore = a.hp;
     for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) {
       stepGame(g, { moveX: 1, moveZ: 0, toggleMode: true, zoom: 0, dash: true }, STEP); // input is ignored meanwhile
       for (const c of [a, b, l]) if (!g.leash.stack.includes(c.id) && !put.has(c.id)) put.set(c.id, g.clock.time - down);
@@ -179,15 +180,49 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect([...put.keys()]).toEqual(bottomFirst);
     bottomFirst.map(id => put.get(id)!).forEach((s, i) => expect(s).toBeCloseTo(i + 1, 1));
     for (const c of [a, b, l]) {
-      expect(c.leashed).toBe(true); // still hers
-      const p = g.leash.placed.find(q => q.id === c.id)!;
-      expect(p).toBeDefined();
-      expect(c.wanderTo).toBeUndefined();
+      expect(c.leashed, "off her leash").toBe(false);
+      expect(stateOf(c)).toBe("happy");
+      expect(g.leash.placed.some(q => q.id === c.id), "no sigil made").toBe(false);
+      expect(c.gone).toBeFalsy();
     }
+    for (const c of [a, b]) expect(hasRune(c, g.clock.time), "its rune at its feet").toBe(true);
+    expect(hasRune(l, g.clock.time), "a legend has none").toBe(false);
+    expect(a.hp, "a knockout doesn't heal them").toBe(hurtBefore);
     expect(g.leash.placed.map(p => p.id)).toContain(parked.id);
+    expect(parked.leashed).toBe(true);
     expect(W.ko).toBeNull();
     expect(Math.hypot(g.witch.x - g.map.start.x, g.witch.z - g.map.start.z)).toBeLessThan(0.5);
     expect(W.health.hp).toBe(TUNING.witchHealth.hits);
+  }, 120000);
+
+  it("lets her leash one again by its rune once she's back (Ed, 2026-10-26)", () => {
+    const { g, a } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0];
+    for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
+    expect(W.ko).toBeNull();
+    run(g, (STATES.pickupDelay ?? 0) + 0.5);
+    expect(stateOf(a)).toBe("happy");
+    // stood on its rune, the sigil button picks it up: hers again, on her stack
+    a.x = a.homeX; a.z = a.homeZ; a.tx = a.x; a.tz = a.z;
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "ground", lift: 0, x: a.x, z: a.z + runeOffset(a, g.tuning) };
+    for (let i = 0; i < 30 && !a.leashed; i++) { stepGame(g, { ...idle, place: i % 2 === 0 }, STEP); a.x = a.homeX; a.z = a.homeZ; }
+    expect(a.leashed).toBe(true);
+    expect(g.leash.stack).toContain(a.id);
+  }, 120000);
+
+  it("sends one let go out of its own area back home to it once she's near, not standing where she went down (Ed, 2026-10-26)", () => {
+    const { g, a } = setUp(withTuning(t => { t.knockout.releaseEach = 0; })), W = g.witches[0];
+    // her leashed wolf is from an area some way off: its home's there, its anchor (from following her) here
+    const far = g.creatures.find(c => !c.gone && !c.leashed && Math.hypot(c.x - a.x, c.z - a.z) > 70 && Math.hypot(c.x - a.x, c.z - a.z) < 140 && (c.cell[0] !== g.map.cellSafe(a.x, a.z).cell[0] || c.cell[1] !== g.map.cellSafe(a.x, a.z).cell[1]))!;
+    Object.assign(a, { cell: far.cell, homeX: far.homeX, homeZ: far.homeZ, range: far.range, anchorX: a.x, anchorZ: a.z });
+    const sameCell = (x: number, z: number) => { const k = g.map.cellSafe(x, z).cell; return k[0] === a.cell[0] && k[1] === a.cell[1]; };
+    expect(sameCell(a.x, a.z), "set up out of its area").toBe(false);
+    for (let i = 0; i < (10 + RESPAWN) / STEP && W.ko; i++) stepGame(g, idle, STEP);
+    expect(stateOf(a)).toBe("happy");
+    expect(sameCell(a.anchorX, a.anchorZ), "its anchor in its own area").toBe(true);
+    // (creatures are stepped only near her, as ever: with her over it in the treetops, it sets off home)
+    g.witch = { ...g.witch, seated: false, perch: false, mode: "treetop", lift: 1, x: a.x, z: a.z };
+    for (let k = 0; k < 15 && !sameCell(a.x, a.z); k++) run(g, 10);
+    expect(sameCell(a.x, a.z), "walked home").toBe(true);
   }, 120000);
 
   it("brings her back behind her decks, seated as at the start but at the game's zoom, near home or far off; her first move gets her up", () => {
@@ -288,17 +323,6 @@ describe("knocked out (Ed, 2026-10-04)", () => {
     expect(Math.hypot(l.x - g.map.start.x, l.z - g.map.start.z)).toBeLessThan(8);
   }, 120000);
 
-  it("leaves her carried animals as a parked group where they stood, near their own sigils, hers (#87)", () => {
-    const { g, a, b } = setUp(), W = g.witches[0], at = new Map([a, b].map(c => [c.id, { x: c.x, z: c.z }]));
-    for (let i = 0; i < 30 / STEP && (W.ko || g.clock.time < 1); i++) stepGame(g, idle, STEP);
-    run(g, 5);
-    for (const c of [a, b]) {
-      const p = g.leash.placed.find(q => q.id === c.id)!, was = at.get(c.id)!;
-      expect(Math.hypot(p.x - was.x, p.z - was.z)).toBeLessThan(TUNING.leash.spacing * 3); // put down about where it stood
-      expect(Math.hypot(c.x - p.x, c.z - p.z)).toBeLessThan(TUNING.leash.length * 2 + 5); // and it keeps to it
-      expect(c.leashed).toBe(true);
-    }
-  }, 120000);
 });
 
 describe("a hit at her last point", () => {
