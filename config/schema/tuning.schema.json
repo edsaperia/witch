@@ -1355,7 +1355,8 @@
               },
               "required": [
                 "on",
-                "time"
+                "time",
+                "beat"
               ],
               "additionalProperties": false
             },
@@ -1389,14 +1390,21 @@
                 "cutFade": {
                   "type": "number",
                   "minimum": 0
+                },
+                "whole": {
+                  "type": "boolean"
                 }
               },
               "required": [
                 "on",
                 "seed",
-                "cutFade"
+                "cutFade",
+                "whole"
               ],
               "additionalProperties": false
+            },
+            "terraceRoom": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -1409,7 +1417,8 @@
             "stride",
             "fall",
             "dark",
-            "crown"
+            "crown",
+            "terraceRoom"
           ],
           "additionalProperties": false
         },
@@ -7334,6 +7343,7 @@
         "spell",
         "land",
         "nope",
+        "thud",
         "alarm",
         "refused",
         "cleared",

@@ -346,6 +346,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     at = { x: deckAt.x - R0.x * ox - U.x * oy, y: deckAt.y - R0.y * ox - U.y * oy, z: deckAt.z - R0.z * ox - U.z * oy };
   }
   const items: SpriteInstance[] = deckAt ? [ent(at, -ED.far, f[0]), ent(at, ED.near, f[1])] : [{ ...at, frame: f[0], flip: false }, { ...at, frame: f[1], flip: false, top: true }];
+  const terrace = new Set<SpriteInstance>(items); // (the Terrace's own art: the Ent's two halves, and below its DJ table)
   // The island's legend carrying the Ent (art/carrier.js; Ed, 2026-10-10): its back's top under the Ent's roots' foot (the base
   // anchor), its roots' foot planted T.carrier.sink pixels down in its fur, its feet on the ground (the art grows the Ent's trunk
   // to fit): in front of the Ent's far half (pushed back along the rays with it, it would sink into the ground). Breathing slowly (drawing only): a touch taller and shorter about
@@ -369,6 +370,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     // (lit while E there starts the party, as the house's objects she can use are: Ed's playtest, 2026-10-26; render/useGlow.ts's breath)
     const g = v.game, lit = !!g.wake?.open && g.party.spellAt === null && atDecks(g) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * performance.now()) / 1400) : 0;
     items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true, glow: lit }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true, glow: lit });
+    terrace.add(items[items.length - 1]);
   }
   // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
@@ -394,6 +396,12 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
       items.push(deckAt ? ent(c0, ED.near + DJ_DEPTH.candles - DJ_DEPTH.her, fr, { overlay: true }) : { ...nearerCamera(v, c0, DJ_DEPTH.candles), frame: fr, flip: false, overlay: true });
     }
   }
+  // (the Terrace one of the house's rooms, treehouse.house.terraceRoom: Ed, 2026-10-26, "not having the terrace drawn separately":
+  // its art, its round of wood, her decks and the DJ table, drawn only while the house is, as render/houseRooms.ts shows its rooms;
+  // a knockout's candles stay, as she waits there)
+  const w = v.game.witch, hide = !!(deckAt && deck?.house && v.game.tuning.treehouse.house?.terraceRoom && !(w.perch && (w.mode === "ground" || w.mode === "descending")) && !ko);
+  if (v.leashView) v.leashView.decksHidden = hide; // (their tempo with them: render/leash/deckBpm.ts)
+  if (hide) { v.treehouseBatch.set(items.filter(it => !terrace.has(it))); return at; }
   v.treehouseBatch.set(items);
   return at;
 }

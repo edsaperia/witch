@@ -1,0 +1,34 @@
+{
+  "pr": 1233,
+  "group": "Oak crown",
+  "decisions": [
+    {
+      "id": "crownWhole",
+      "pr": 1233,
+      "group": "Oak crown",
+      "label": "Crown whole over the Terrace",
+      "note": "On, the great oak's crown is whole over the Terrace as over every room: no gap over it, no notch out to the crown's edge and no ring of lights round them (Ed, 2026-10-26: \"I'd like to try the treehouse canopy not being cut-through while she's in treehouse mode - this will make it easier for her to land in the treehouse successfully, as the area is bigger\"). Indoors it's cleared over the room she's in and round her, the Terrace too, as ever. Off: the gap and its notch as before (#1172). The crown's grown again as it's flipped.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "treehouse.house.crown.whole"
+      }
+    },
+    {
+      "id": "terraceRoom",
+      "pr": 1233,
+      "group": "Oak crown",
+      "label": "Terrace drawn as one of the rooms",
+      "note": "On, the Terrace is one of the house's rooms under the crown, not drawn on its own (Ed, 2026-10-26: \"I also want to try not having the terrace drawn separately\"): from outside its art (its round of wood, her decks, the DJ table, the tempo over them) isn't drawn, only the crown over it, and it shows when she's in the house as every room does (a knockout's candles still show). In the house it's as before, the forest showing behind it. Off: the Terrace drawn on its own from outside, as before (#1172).",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "treehouse.house.terraceRoom"
+      }
+    }
+  ]
+}
