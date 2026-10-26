@@ -9,6 +9,6 @@
   "r": 7.5,
   "objects": [
     {"id":"book","label":"Bestiary book","use":{"kind":"zoo"},"offset":[-1.25,-3.13],"box":{"w":2.72,"d":2.04,"h":3.74}},
-    {"id":"specimens","label":"Skeletons and skulls","use":{"kind":"say","line":"The skeletons and skulls come later."},"offset":[5.07,0.96],"box":{"w":2,"d":3.2,"h":5.4}}
+    {"id":"specimens","label":"Skeletons and skulls","use":{"kind":"say","line":"The skeletons and skulls come later."},"offset":[3.45,2.92],"box":{"w":2,"d":3.2,"h":5.4}}
   ]
 }

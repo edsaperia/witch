@@ -10,6 +10,6 @@
   "objects": [
     {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2,-5.99],"box":{"w":7,"d":1.8,"h":6.2}},
     {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2.04,3.6],"box":{"w":6.4,"d":3.2,"h":3}},
-    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[6,-0.33],"box":{"w":2.2,"d":5.4,"h":2.8}}
+    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[3,-3.3],"box":{"w":4.8,"d":2.2,"h":2.8}}
   ]
 }

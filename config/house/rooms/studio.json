@@ -8,8 +8,8 @@
   "z": 20,
   "r": 7.5,
   "objects": [
-    {"id":"drumKit","label":"Drum kit","use":{"kind":"instrument","instrument":"drums"},"offset":[-2.56,-3.29],"box":{"w":5.4,"d":5,"h":3.4}},
-    {"id":"synthRack","label":"Modular synth","use":{"kind":"instrument","instrument":"synth"},"offset":[4.42,-2.5],"box":{"w":2,"d":4.6,"h":4.8}},
+    {"id":"drumKit","label":"Drum kit","use":{"kind":"instrument","instrument":"drums"},"offset":[-2.31,-3.46],"box":{"w":5.28,"d":4.8,"h":3.12}},
+    {"id":"synthRack","label":"Modular synth","use":{"kind":"instrument","instrument":"synth"},"offset":[3.4,-3.6],"box":{"w":5.04,"d":1.47,"h":3.99}},
     {"id":"microphone","label":"Microphone","use":{"kind":"instrument","instrument":"mic"},"offset":[0.58,2.88],"box":{"w":1.6,"d":1.6,"h":5.44}}
   ]
 }

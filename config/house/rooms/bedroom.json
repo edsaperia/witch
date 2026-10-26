@@ -7,10 +7,10 @@
   "z": -61,
   "r": 8.5,
   "objects": [
-    {"id":"wardrobe","label":"Wardrobe","use":{"kind":"creator","axes":["top"],"wear":[],"parts":["jacket","top","jeans"]},"offset":[-5.56,-1.7],"box":{"w":2.2,"d":4.8,"h":6.2}},
+    {"id":"wardrobe","label":"Wardrobe","use":{"kind":"creator","axes":["top"],"wear":[],"parts":["jacket","top","jeans"]},"offset":[-4.6,5],"box":{"w":4.8,"d":2.2,"h":6.2}},
     {"id":"dressingTable","label":"Dressing table","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"offset":[-2.19,-6.02],"box":{"w":3.6,"d":1.8,"h":5}},
     {"id":"bed","label":"Bed","use":{"kind":"bed"},"offset":[3.22,-4.06],"box":{"w":4.6,"d":5.98,"h":1.84}},
-    {"id":"shoeRack","label":"Shoe rack","use":{"kind":"creator","axes":[],"wear":["chunky"],"parts":["sneakers"]},"offset":[-5.64,4.01],"box":{"w":4.5,"d":1.65,"h":2.4}},
+    {"id":"shoeRack","label":"Shoe rack","use":{"kind":"creator","axes":[],"wear":["chunky"],"parts":["sneakers"]},"offset":[5.1,4.7],"box":{"w":3.8,"d":1.6,"h":2.4}},
     {"id":"clothesPile","label":"Last night's clothes","use":{"kind":"pile"},"offset":[3.04,2.43],"box":{"w":1.6,"d":2,"h":0.6}}
   ]
 }
