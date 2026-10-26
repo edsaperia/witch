@@ -1745,12 +1745,19 @@ Sailing from the map table's sea chart (docs/plans/sail-without-reload.md, app/s
 |---|---|---|
 | `sail.inPlace` | boolean |  |
 
-### `opening`
+### `loading`, `opening`
 
-The opening (Ed, 2026-10-20; app/opening.ts, previews/ed/opening-mock/ on claude/ed-shots): bedroom, a plain first load (its link naming no seed or island, no arrival, no bot, the room not skipped) going straight to home's night and waking her in her bedroom there (Ed, 2026-10-23: "the first screen should be the witch waking up in her bedroom on the home island instead of the map"; the sea chart came first from 2026-10-20 till then), asleep in the dark while the night is made. On by default; ?opening=old keeps the old start for a load (the character creator as the loading cover), ?opening=bedroom forces the wake-up; false here turns it off for every load. wake: the wake-up in her bedroom (rules/wakeUp.ts): snooze, a snooze's seconds (Ed: 5, as often as she likes); stretch, her stretch's seconds before she stands; alarmMin, the seconds the alarm rings before E can snooze it.
+The loading screen (Ed, 2026-10-26; src/ui/loadingScreen.js, before main.ts loads): the World Tree and COVEN RUSH in gold stars, lighting as the game loads, edge first by edge (0 plain random), at most rate stars a second, each flashing for flash seconds; ghost how bright the stars not yet lit show (0: an empty sky, Ed's call); the heart's star last, its supernova to white over nova seconds and the white clearing over clear seconds into the bedroom. It draws fps frames a second while the game loads (each frame costs the load a little), about 20 once it's ready. Read as the page opens, so the pause page's sliders (remembered on this browser) take effect on the next load.
 
 | knob | type | range |
 |---|---|---|
+| `loading.edge` | number | 0 to … |
+| `loading.rate` | number | 0 to … |
+| `loading.flash` | number | 0 to … |
+| `loading.ghost` | number | 0 to … |
+| `loading.nova` | number | 0 to … |
+| `loading.clear` | number | 0 to … |
+| `loading.fps` | number | 0 to … |
 | `opening.bedroom` | boolean |  |
 | `opening.wake.snooze` | number | 0 to … |
 | `opening.wake.stretch` | number | 0 to … |
@@ -1934,18 +1941,14 @@ The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in 
 | `reveal.runestone.bounded` | boolean |  |
 | `reveal.find.on` | boolean |  |
 | `reveal.find.radius` | number | 0 to … |
-| `reveal.find.ring` | number | 0 to … |
 | `reveal.find.width` | number | 0 to … |
 | `reveal.find.height` | number | 0 to … |
 | `reveal.find.keep` | number | 0 to … |
-| `reveal.find.bounded` | boolean |  |
 | `reveal.flask.on` | boolean |  |
 | `reveal.flask.radius` | number | 0 to … |
-| `reveal.flask.ring` | number | 0 to … |
 | `reveal.flask.width` | number | 0 to … |
 | `reveal.flask.height` | number | 0 to … |
 | `reveal.flask.keep` | number | 0 to … |
-| `reveal.flask.bounded` | boolean |  |
 | `canopyShadow.on` | boolean |  |
 | `canopyShadow.strength` | number | 0 to … |
 | `canopyShadow.height` | number | 0 to … |
