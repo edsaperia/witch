@@ -14030,7 +14030,7 @@ const FEN = {
   setPiece: ["punt", "a punt sunk among the sedge", 1],
   layout: {
     pattern: "edgeOnly", density: .6, clump: .85, glades: { count: 2, size: [12, 18] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
     terrain: ["pools", "hollows"], decor: { rate: .25, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
     feel: "Black peaty pools between tussocks of sedge, alder and willow carr round the rim; still, low and full of small lives.",
   },
@@ -14053,7 +14053,7 @@ const MANGROVE_HERONRY = {
   setPiece: ["jetty", "an old jetty out over the mere", 1],
   layout: {
     pattern: "stands", density: .45, clump: .75, glades: { count: 1, size: [18, 26] },
-    heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .175, giant: .1 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
     feel: "A wide still mere ringed with reeds, tall mangroves and old elms standing round it in stands, their crowns heaped with herons' nests; open, grey-green and watchful.",
   },
@@ -14073,7 +14073,7 @@ const ERG = {
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
   layout: {
     pattern: "rings", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
     terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms and wild olives clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
@@ -14095,7 +14095,7 @@ const WARREN = {
   pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "groves", density: .25, clump: .5, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },
@@ -14116,7 +14116,7 @@ const SAVANNA = {
   setPiece: ["heap", "a kopje of sun-warmed boulders", 1.3, { of: "stones", top: "none", moss: -1, rock: "sandstone" }],
   layout: {
     pattern: "groves", density: .2, clump: .3, glades: { count: 2, size: [24, 36] },
-    heightMix: { sapling: .15, mature: .55, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .15, mature: .7, tall: .125, giant: .025 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "rocky"], decor: { rate: .2, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud.",
   },
@@ -14137,7 +14137,7 @@ const PLAINS = {
   setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 5, width: 8, rock: "laterite" }],
   layout: {
     pattern: "lone", density: .14, clump: .25, glades: { count: 1, size: [40, 60] },
-    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .65, tall: .05, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .6, freak: .15, lake: .25, modern: 0 },
     feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast.",
   },
@@ -14159,7 +14159,7 @@ const SCRUB_WASH = {
   pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "edgeOnly", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
-    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .65, tall: .05, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },
@@ -14181,7 +14181,7 @@ const MOSSY_CREEK = {
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
     pattern: "rows", along: "stream", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
-    heightMix: { sapling: .1, mature: .35, tall: .4, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .2, giant: .075 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .1, lake: .3, modern: 0 },
     feel: "A cold green gloom under towering mossy spruces and cedars, a creek chattering over stones, ferns waist-deep; dripping, soft and old.",
   },
@@ -14202,7 +14202,7 @@ const FROSTCAVE = {
   setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
   layout: {
     pattern: "lone", density: .25, clump: .7, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .3, lean: { dir: .8, amount: .35 },
+    heightMix: { sapling: .4, mature: .55, tall: .05, giant: 0 }, undergrowth: .3, lean: { dir: .8, amount: .35 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .05, rocks: .55, freak: .15, lake: .25, modern: 0 },
     feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few stunted snowy spruces, junipers and crystal trees, silent and glittering.",
   },
@@ -14223,7 +14223,7 @@ const EYRIE = {
   setPiece: ["heap", "a griffin's great nest of branches", 1.4, { of: "brush", top: "none", height: 2, width: 5.4 }],
   layout: {
     pattern: "lone", density: .22, clump: .35, glades: { count: 1, size: [24, 34] },
-    heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .4, lean: { dir: 1.6, amount: .7 },
+    heightMix: { sapling: .2, mature: .7, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 1.6, amount: .7 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: .1, modern: 0 },
     feel: "High bare peaks in hard light and wind, cedars and pines all leaning one way, feathers caught in the scree; a great nest on the highest ledge.",
   },
@@ -14245,7 +14245,7 @@ const DELL = {
   setPiece: ["ring", "an old ring in a glade, where the roe gather at dusk", 1],
   layout: {
     pattern: "groves", density: .55, clump: .7, glades: { count: 3, size: [12, 20] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .15, lake: .15, modern: .1 },
     feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks.",
   },
@@ -14267,7 +14267,7 @@ const MANGROVE_POOLS = {
   setPiece: ["jetty", "a sagging boardwalk out over the pools", 1, { end: "lantern", rail: "one", missing: 2 }],
   layout: {
     pattern: "edgeOnly", density: .5, clump: .7, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
   },
@@ -14289,7 +14289,7 @@ const MUDFLAT = {
   setPiece: ["punt", "an old canoe stranded on the mud, crab pots in it", 1, { state: "broken", cargo: "trap", pole: 1 }],
   layout: {
     pattern: "edgeOnly", treeShare: .9, density: .35, clump: .6, glades: { count: 2, size: [18, 26] },
-    heightMix: { sapling: .35, mature: .5, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: .15 },
+    heightMix: { sapling: .35, mature: .575, tall: .075, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: .15 },
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
   },
@@ -14311,7 +14311,7 @@ const TERRACES = {
   setPiece: ["heap", "a cairn of flat stones on a ledge", 1],
   layout: {
     pattern: "rows", along: "paths", density: .5, clump: .7, glades: { count: 2, size: [12, 18] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .6, lean: { dir: 0, amount: .05 },
     terrain: ["hollows"], decor: { rate: .25, ruins: .25, rocks: .45, freak: .1, lake: .15, modern: .05 },
     feel: "Stepped mossy ledges under fir, rowan and birch, mist lying in the hollows; high, cool and green, a red panda curled on a bough.",
   },
@@ -14332,7 +14332,7 @@ const MANGROVE = {
   setPiece: ["punt", "a dugout sunk among the mangrove roots", 1, { seed: 3 }],
   layout: {
     pattern: "stands", density: .5, clump: .7, glades: { count: 2, size: [14, 20] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .15, rocks: .05, freak: .15, lake: .6, modern: .05 },
     feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge.",
   },
@@ -14354,7 +14354,7 @@ const BUSHVELD = {
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
     pattern: "rings", density: .55, clump: .75, glades: { count: 3, size: [14, 22] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .15, rocks: .45, freak: .1, lake: .2, modern: .1 },
     feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight.",
   },
@@ -14376,7 +14376,7 @@ const PACKICE = {
   setPiece: ["heap", "a pressure ridge of broken ice", 1, { seed: 7, of: "stones", moss: 0, top: "slab", stone: [.55, .18, .9] }],
   layout: {
     pattern: "edgeOnly", density: .2, clump: .7, glades: { count: 2, size: [24, 32] },
-    heightMix: { sapling: .45, mature: .5, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
+    heightMix: { sapling: .45, mature: .525, tall: .025, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
     terrain: ["pools"], decor: { rate: .15, ruins: .05, rocks: .3, freak: .1, lake: .5, modern: .05 },
     feel: "White floes and slabs of sea ice split by black leads of open water, a pressure ridge heaved up in the middle, a few wind-bent larches, firs and birch crouched along the shore; bitter, bright and silent.",
   },
@@ -14399,7 +14399,7 @@ const CACTUS_FLATS = {
   setPiece: ["heap", "a heap of pale stones", 1, { of: "stones", moss: 0 }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "lone", density: .3, clump: .35, glades: { count: 2, size: [16, 26] },
-    heightMix: { sapling: .25, mature: .5, tall: .25, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .25, mature: .625, tall: .125, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "mounds"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: 0, modern: .1 },
     feel: "Pale flats of gravelly sand, saguaros standing alone with their arms raised, Joshua trees and prickly pear between; open, dry and rattling.",
   },
@@ -14421,7 +14421,7 @@ const RED_CANYON = {
   setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "groves", density: .3, clump: .7, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .25, mature: .55, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: 0, amount: .15 },
+    heightMix: { sapling: .25, mature: .65, tall: .1, giant: 0 }, undergrowth: .45, lean: { dir: 0, amount: .15 },
     terrain: ["rocky", "ridges"], decor: { rate: .35, ruins: .2, rocks: .7, freak: .05, lake: 0, modern: .05 },
     feel: "Red rock ledges and scree, palo verde and desert ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark.",
   },
@@ -14442,7 +14442,7 @@ const BAMBOO_JUNGLE = {
   setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
   layout: {
     pattern: "thicket", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
-    heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .15, mature: .675, tall: .125, giant: .05 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["paths", "hollows"], decor: { rate: .2, ruins: .5, rocks: .25, freak: .15, lake: 0, modern: .1 },
     feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
   },
@@ -14464,7 +14464,7 @@ const TEMPLE_JUNGLE = {
   setPiece: ["heap", "a tumbled heap of temple stones under the figs", 1.2, { of: "rubble", top: "post", moss: .4, rock: "sandstone" }],
   layout: {
     pattern: "lone", density: .45, clump: .6, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .175, giant: .1 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
     feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
   },
@@ -14486,7 +14486,7 @@ const RIVER_JUNGLE = {
   setPiece: ["heap", "a heap of fallen giants by the river, mossed over", 1.1, { of: "logs", top: "none", moss: .5 }],
   layout: {
     pattern: "thicket", density: .8, clump: .5, glades: { count: 1, size: [14, 20] },
-    heightMix: { sapling: .15, mature: .35, tall: .35, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .15, mature: .6, tall: .175, giant: .075 }, undergrowth: .9, lean: { dir: 0, amount: .05 },
     terrain: ["stream", "pools"], decor: { rate: .15, ruins: .2, rocks: .3, freak: .2, lake: .3, modern: 0 },
     feel: "A dark river under a closed canopy of rainforest giants hung with lianas, vinewood glowing in the gloom; still, deep and watched from above.",
   },
@@ -14532,7 +14532,7 @@ const MOONPOOL = {
   setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
   layout: {
     pattern: "stands", density: .45, clump: .7, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .15, mature: .45, tall: .3, giant: .1 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .15, mature: .65, tall: .15, giant: .05 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .15, rocks: .15, freak: .1, lake: .6, modern: 0 },
     feel: "Old mossy cedars, spruces and alders round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright.",
   },
@@ -14554,7 +14554,7 @@ const DRAGON_SCRUB = {
   setPiece: ["heap", "a great sun-warmed basking rock", 1.2, { of: "stones", moss: .02, top: "slab", height: 2.6 }],
   layout: {
     pattern: "lone", density: .22, clump: .3, glades: { count: 3, size: [16, 24] },
-    heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: .3, amount: .15 },
+    heightMix: { sapling: .2, mature: .7, tall: .1, giant: 0 }, undergrowth: .45, lean: { dir: .3, amount: .15 },
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .15, rocks: .7, freak: .05, lake: 0, modern: .1 },
     feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock.",
   },
@@ -14576,7 +14576,7 @@ const SNOWFIELD = {
   setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
   layout: {
     pattern: "lone", density: .3, clump: .6, glades: { count: 2, size: [20, 30] },
-    heightMix: { sapling: .25, mature: .5, tall: .25, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .25, mature: .625, tall: .125, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .1, rocks: .55, freak: .05, lake: .25, modern: .05 },
     feel: "A wide white quiet: deep snow and lone snow-laden firs standing out of it, dwarf birch bent low, old stones showing through the drifts.",
   },
@@ -14599,7 +14599,7 @@ const CRAGS = {
   setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [.74, .14, .62], dark: [.72, .16, .34], lichen: [.74, .08, .84] } }],
   layout: {
     pattern: "lone", density: .25, clump: .5, glades: { count: 1, size: [18, 26] },
-    heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .5, lean: { dir: .8, amount: .25 },
+    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .5, lean: { dir: .8, amount: .25 },
     terrain: ["rocky", "ridges"], decor: { rate: .3, ruins: .05, rocks: .75, freak: .05, lake: .1, modern: .05 },
     feel: "High, bare and bright: lichened rock and fingers of glacier ice, rock spires standing over the scree, larch bent by the wind and old wild olives in the lee of the rocks, broom and juniper scrub and heather among the stones.",
   },
@@ -14623,7 +14623,7 @@ const ICEFALL = {
   setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
   layout: {
     pattern: "lone", density: .15, clump: .4, glades: { count: 1, size: [22, 32] },
-    heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
+    heightMix: { sapling: .4, mature: .55, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
     terrain: ["rocky", "hollows"], decor: { rate: .25, ruins: .1, rocks: .7, freak: .05, lake: .1, modern: .05 },
     feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
   },
@@ -14645,7 +14645,7 @@ const MISTWOOD = {
   setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", .95],
   layout: {
     pattern: "groves", density: .7, clump: .4, glades: { count: 1, size: [10, 14] },
-    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .6, tall: .2, giant: .1 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .2, ruins: .1, rocks: .2, freak: .2, lake: .4, modern: .1 },
     feel: "Dim and dripping: giant mossy spruce and cedar trunks rising out of sight, tree ferns and sword ferns beneath, nurse logs green with saplings, mist between the trunks.",
   },
@@ -14668,7 +14668,7 @@ const TROLLWOOD = {
   setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: .3, top: "slab" }],
   layout: {
     pattern: "stands", density: .55, clump: .7, glades: { count: 1, size: [16, 24] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "mounds"], decor: { rate: .25, ruins: .15, rocks: .7, freak: .1, lake: 0, modern: .05 },
     feel: "A frozen forest, hushed: old spruces hung with frost and larches in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls.",
   },
@@ -14690,7 +14690,7 @@ const CINDER_SLOPES = {
   setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.0],
   layout: {
     pattern: "stands", density: .3, clump: .8, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .2, lake: 0, modern: .1 },
     feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, a few palms on the ridges, a little cinder cone smoking in the clearing.",
   },
@@ -14713,7 +14713,7 @@ const DROWNED_WOOD = {
   setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
   layout: {
     pattern: "stands", density: .55, clump: .6, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .05, mature: .35, tall: .45, giant: .15 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .05, mature: .65, tall: .225, giant: .075 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
     terrain: ["pools", "hollows"], decor: { rate: .3, ruins: .6, rocks: .1, freak: .1, lake: .2, modern: 0 },
     feel: "Tall drowned bald cypresses standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be.",
   },
@@ -14735,7 +14735,7 @@ const DESERT_RUIN = {
   setPiece: ["heap", "a heap of fallen sandstone blocks", 1.2, { of: "rubble", top: "post", moss: 0, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "grid", along: .4, density: .22, clump: .5, glades: { count: 3, size: [16, 26] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .25, lean: { dir: .4, amount: .1 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .25, lean: { dir: .4, amount: .1 },
     terrain: ["mounds", "ridges"], decor: { rate: .45, ruins: .75, rocks: .2, freak: 0, lake: .05, modern: 0 },
     feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched.",
   },
@@ -14758,7 +14758,7 @@ const STEP_PYRAMID = {
   setPiece: ["heap", "a heap of carved stones under the figs", 1.2, { of: "rubble", top: "post", moss: .6, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13; the pyramid is its scene, art/scenes.js step-pyramid)
   layout: {
     pattern: "glades", density: .6, clump: .55, glades: { count: 3, size: [18, 30] },
-    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .75, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .6, tall: .2, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "pools"], decor: { rate: .3, ruins: .6, rocks: .15, freak: .15, lake: .1, modern: 0 },
     feel: "Tall rainforest, kapoks and figs on great buttresses, broken by round clearings of mossy paving; a stepped pyramid in one, green-gold light, bright feathers in the ferns.",
   },
@@ -15288,65 +15288,65 @@ const LAY = (pattern, density, clump, glades, heightMix, undergrowth, lean, terr
 const NO_LEAN = [0, 0];
 // decor weights in the order ruins, rocks, freak, lake, modern
 const AREA_LAYOUTS = {
-  "moor": LAY("scatter", .2, .6, [2, [14, 24]], [.15, .5, .3, .05], .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
+  "moor": LAY("scatter", .2, .6, [2, [14, 24]], [.15, .675, .15, .025], .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
     "Open rolling moss, low mounds and dark pools, long grass combed one way by the wind; you can see a long way.", { treeShare: 0.22 }),
-  "fern-forest": LAY("groves", .65, .6, [2, [8, 12]], [.2, .5, .25, .05], .9, NO_LEAN, ["hollows", "paths"], [.25, [.4, .3, .3, 0, 0]],
+  "fern-forest": LAY("groves", .65, .6, [2, [8, 12]], [.2, .65, .125, .025], .9, NO_LEAN, ["hollows", "paths"], [.25, [.4, .3, .3, 0, 0]],
     "Pine groves standing waist-deep in ferns, with green sunken hollows between them."),
-  "muddy-forest": LAY("scatter", .7, .3, [1, [6, 9]], [.25, .55, .17, .03], .4, NO_LEAN, ["pools", "paths"], [.3, [.3, .1, .2, .1, .3]],
+  "muddy-forest": LAY("scatter", .7, .3, [1, [6, 9]], [.25, .65, .085, .015], .4, NO_LEAN, ["pools", "paths"], [.3, [.3, .1, .2, .1, .3]],
     "Squelching mud between many-trunked trees, puddled ruts winding through, broken stumps everywhere."),
-  "stone-shrine": LAY("rings", .35, .8, [1, [10, 14]], [.1, .4, .35, .15], .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
+  "stone-shrine": LAY("rings", .35, .8, [1, [10, 14]], [.1, .65, .175, .075], .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
     "Big stones stand in rings round the shrine on stony grass; it feels deliberate and old.", { treeShare: 0.3 }),
-  "tangly-forest": LAY("thicket", .9, .2, [1, [5, 8]], [.35, .55, .1, 0], .9, NO_LEAN, ["hollows"], [.2, [.2, 0, .6, 0, .2]],
+  "tangly-forest": LAY("thicket", .9, .2, [1, [5, 8]], [.35, .6, .05, 0], .9, NO_LEAN, ["hollows"], [.2, [.2, 0, .6, 0, .2]],
     "Short tangled trees packed close over nettles, low and claustrophobic, with one small clearing."),
-  "wispy-forest": LAY("stands", .55, .7, [2, [6, 10]], [.15, .45, .3, .1], .5, NO_LEAN, ["ridges"], [.3, [.4, .2, .3, 0, .1]],
+  "wispy-forest": LAY("stands", .55, .7, [2, [6, 10]], [.15, .65, .15, .05], .5, NO_LEAN, ["ridges"], [.3, [.4, .2, .3, 0, .1]],
     "Stands of thick many-trunked trees, thin wispy saplings drifting between them over dry leaves."),
-  "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .55, .12, .03], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
+  "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .625, .06, .015], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
     "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."),
-  "garden": LAY("rows", .45, 0, [3, [6, 10]], [.1, .7, .2, 0], .6, NO_LEAN, ["paths", "pools"], [.4, [.7, 0, 0, .2, .1]],
+  "garden": LAY("rows", .45, 0, [3, [6, 10]], [.1, .8, .1, 0], .6, NO_LEAN, ["paths", "pools"], [.4, [.7, 0, 0, .2, .1]],
     "A lost formal garden: willows in avenues along straight paths, lawns and flower beds, a pavilion at the heart.", { along: "paths" }),
-  "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .5, .2, .05], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
+  "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .625, .1, .025], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
     "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
-  "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .35, .4, .2], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
+  "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .65, .2, .1], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
     "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."),
-  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .45, .35, .05], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
+  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .65, .175, .025], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
     "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."),
-  "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .4, .35, .05], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
+  "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .6, .175, .025], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
     "Tall slanted alders at every height over long grass and stumps, a little stream wandering through."),
-  "meadow": LAY("lone", .2, .15, [0], [.15, .45, .25, .15], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
+  "meadow": LAY("lone", .2, .15, [0], [.15, .65, .125, .075], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
     "Wide-open wildflower grass with lone trees, a great field oak, and a few small copses for its wildcats to hunt from; the sky does the work."),
-  "old-oaks": LAY("groves", .5, .5, [2, [10, 16]], [.1, .35, .4, .15], .5, NO_LEAN, ["mounds", "hollows"], [.4, [.5, .1, .4, 0, 0]],
+  "old-oaks": LAY("groves", .5, .5, [2, [10, 16]], [.1, .625, .2, .075], .5, NO_LEAN, ["mounds", "hollows"], [.4, [.5, .1, .4, 0, 0]],
     "Groves of huge hollow oaks with broad clearings of leaf litter between; slow and grand."),
-  "berry-thicket": LAY("thicket", .85, .5, [2, [4, 7]], [.2, .4, .35, .05], 1, NO_LEAN, ["paths"], [.15, [.3, 0, .4, 0, .3]],
+  "berry-thicket": LAY("thicket", .85, .5, [2, [4, 7]], [.2, .6, .175, .025], 1, NO_LEAN, ["paths"], [.15, [.3, 0, .4, 0, .3]],
     "Tall pines over solid berry bushes and brambles, only narrow animal paths and a couple of pockets of space."),
-  "wetland": LAY("stands", .5, .7, [1, [16, 24]], [.25, .55, .15, .05], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
+  "wetland": LAY("stands", .5, .7, [1, [16, 24]], [.25, .65, .075, .025], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
     "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."),
-  "mangrove-channel": LAY("rows", .68, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
+  "mangrove-channel": LAY("rows", .68, .2, [1, [6, 10]], [.3, .575, .1, .025], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
     "Drowned willows and young mangroves lining both banks of a brackish channel, alders among them, seedlings and reeds at the water's edge, soft mud away from it.", { along: "stream" }),
-  "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .5, .18, .02], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
+  "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .6, .09, .01], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
     "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."),
-  "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .5, .1, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
+  "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .55, .05, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
     "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."),
-  "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .3, .45, .2], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
+  "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .625, .225, .1], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
     "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."),
-  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .5, .3, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
+  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .65, .15, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
     "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
-  "grassland": LAY("lone", .16, .8, [0], [.3, .5, .2, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
+  "grassland": LAY("lone", .16, .8, [0], [.3, .6, .1, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
     "Short turf to the horizon, rooted up in mounds, birches alone or in twos and threes."),
-  "beaver-pond": LAY("edgeOnly", .65, .4, [1, [14, 20]], [.4, .45, .15, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
+  "beaver-pond": LAY("edgeOnly", .65, .4, [1, [14, 20]], [.4, .525, .075, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
     "A pond in the middle, young birch and aspen round it, gnawed stumps where the big ones were felled."),
-  "log-pile": LAY("groves", .5, .7, [2, [6, 10]], [.45, .45, .1, 0], .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, 0, .4, 0, .3]],
+  "log-pile": LAY("groves", .5, .7, [2, [6, 10]], [.45, .5, .05, 0], .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, 0, .4, 0, .3]],
     "Rotting logs heaped in piles, fungi everywhere, damp hollows between the heaps.", { treeShare: 0.3 }),
-  "heath": LAY("scatter", .26, .3, [1, [12, 18]], [.5, .45, .05, 0], .8, [30, .6], ["ridges", "paths"], [.4, [.4, .4, 0, 0, .2]],
+  "heath": LAY("scatter", .26, .3, [1, [12, 18]], [.5, .475, .025, 0], .8, [30, .6], ["ridges", "paths"], [.4, [.4, .4, 0, 0, .2]],
     "Purple heather and gorse, small birches bent hard by the wind, all the same way."),
-  "old-pinewood": LAY("scatter", .5, .3, [2, [8, 14]], [.1, .35, .4, .15], .15, NO_LEAN, ["mounds", "paths"], [.35, [.4, .3, .3, 0, 0]],
+  "old-pinewood": LAY("scatter", .5, .3, [2, [8, 14]], [.1, .625, .2, .075], .15, NO_LEAN, ["mounds", "paths"], [.35, [.4, .3, .3, 0, 0]],
     "Cathedral-tall old pines on a clear floor of needles; you can see between the trunks a long way."),
-  "ravine": LAY("edgeOnly", .55, .6, [1, [6, 9]], [.2, .5, .25, .05], .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
+  "ravine": LAY("edgeOnly", .55, .6, [1, [6, 9]], [.2, .65, .125, .025], .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
     "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle.", { treeShare: 0.3 }),
-  "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
+  "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .7, .175, .025], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
     "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
-  "thorn-scrub": LAY("thicket", .55, .5, [1, [8, 12]], [.35, .55, .1, 0], .75, NO_LEAN, ["rocky", "hollows"], [.3, [.25, .55, .1, 0, .1]],
+  "thorn-scrub": LAY("thicket", .55, .5, [1, [8, 12]], [.35, .6, .05, 0], .75, NO_LEAN, ["rocky", "hollows"], [.3, [.25, .55, .1, 0, .1]],
     "Low thorn trees and junipers packed in tangles on dry red earth, cobwebs strung between them, one clearing round the web-hung tree."),
-  "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
+  "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .525, .025, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
 Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
@@ -15593,9 +15593,9 @@ function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defaultCanva
 // rather than taller, dead trees into tall snags.
 const TREE_HEIGHT_CLASSES = [
   { id: "sapling", range: [.45, .7], weight: .25, count: 3 },
-  { id: "mature", range: [.85, 1.15], weight: .5, count: 4 },
-  { id: "tall", range: [1.3, 1.6], weight: .2, count: 2 },
-  { id: "giant", range: [1.8, 2.2], weight: .05, count: 1 },
+  { id: "mature", range: [.85, 1.15], weight: .625, count: 4 },
+  { id: "tall", range: [1.3, 1.6], weight: .1, count: 2 }, // (Ed, 2026-10-26, the trees at their full height: "Halve the number of tall trees"; .2 and
+  { id: "giant", range: [1.8, 2.2], weight: .025, count: 1 }, // .05 before, their share to the mature trees)
 ];
 const ART_PIXELS_PER_METRE = 16; // the prototype's (config/tuning.json, artPixelsPerMetre)
 // An area's tree variants, baked: [{ heightClass, scale, weight (a share of the area's trees),
