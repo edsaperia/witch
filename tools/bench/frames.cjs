@@ -11,6 +11,7 @@
 //   it needs): the bedroom (the character creator as it opens), the boot (off the decks, the home ring booting) and a wave
 //   fight (a debug arena below the dancefloor, a wave called in). Compare a quick run only with a quick run.
 const http = require("http");
+const { pageKey } = require("./comparable.cjs");
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -217,6 +218,8 @@ async function main() {
     // (the party spell cast long since, so she isn't held at the decks: every scene a run under way, the same each time)
     await page.evaluate(() => { const p = window.witch.game.party; if (p.spellAt === null) p.spellAt = -100; });
     lap("started");
+    // (the run's comparability key, from its first scene: tools/bench/comparable.cjs; compare.cjs refuses two runs whose keys differ in more than the build)
+    if (!("key" in result)) result.key = await pageKey(page, { scene: (QUICK ? QUICK_SCENES : SCENES).map(q => q.name).join(","), spot: QUICK ? "bench:quick scenes" : "bench scenes" });
     const times = await s.steps(page);
     lap("stepped");
     const shot = await settle(page, path.join(out, `${s.name}.png`));

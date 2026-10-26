@@ -17,6 +17,7 @@ import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
 import { nextFrame } from "./render/slices";
+import { compareKey, rendererOf, sceneMode } from "./app/compareKey";
 import { debugText, machineLines, precisionLines, reproLine, reproQuery, reproState, tuningDiff } from "./app/repro";
 import { currentValue, DECISION_LIST, valuesText } from "./ui/decisions";
 import { awaitingSpell } from "./rules/leypulse";
@@ -723,6 +724,11 @@ const reportHost = () => {
 };
 (window as unknown as { __neutralCheck: () => Promise<unknown> }).__neutralCheck = () => import("./ui/visualReport").then(({ neutralCheck }) => neutralCheck(reportHost()));
 N().playtest.viewState = () => { const { game } = N(), w = game.witch; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, area: areaUnderWitch(game), zoom: game.camera.zoomStep, timeScale: Math.round((game.timeScale ?? 1) * 100) / 100 }; };
+// The comparability key (app/compareKey.ts; Ed, 2026-10-26: "only compare like with like"): with the playtest log's run and its
+// samples' scenes, and for the browser tools (window.witch.compareKey(spot): tools/bench/comparable.cjs pageKey).
+const keyNow = (spot?: string) => compareKey({ build: BUILD, game: N().game, canvas, window: { width: innerWidth, height: innerHeight }, renderer: rendererOf(view.renderer.getContext()), changed: repro.changed(), params: N().params, spot, dpr: devicePixelRatio, nav: navigator as Navigator & { deviceMemory?: number } });
+N().playtest.keyState = () => keyNow();
+N().playtest.sceneState = () => sceneMode(N().game);
 // The measured output (Ed, round 16: "Is there a way for the game to know if anything is being sent to the speakers or not?";
 // platform/audio/outputMeter.ts): what leaves the game for the speakers, read a few times a second; silence while the music
 // should be heard goes in the playtest log (L) with where she was and the nearest stall. ?micCheck=1 (debug only) also
@@ -1176,6 +1182,7 @@ requestAnimationFrame(frame);
 installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop });
 // witch.take(kind, item): tonight's find taken where she stands, as E at it takes it (the kind's claim, the hats' floor, the loan):
 // for the tools (tools/loan/shots.cjs) to look at a night with a find on loan without walking to it.
+(window as unknown as { witch: Record<string, unknown> }).witch.compareKey = keyNow;
 (window as unknown as { witch: Record<string, unknown> }).witch.take = (kind: FindKindId, id: string): boolean => {
   const { game } = N(), k = FIND_KINDS.find(q => q.id === kind), W = game.witches[0];
   if (!k?.items.includes(id)) return false;

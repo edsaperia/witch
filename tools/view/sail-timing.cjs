@@ -9,6 +9,8 @@
 //   npm run build && node tools/view/sail-timing.cjs [out] [dist]
 // ISLAND (fox), THEN (islands to sail on to after it, on the same page: a warm sail, "fox,owl"), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1), AFTER (ms after landing whose frames are counted as `settle`: the island's art coming in, 15000).
 const http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
+let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
 const out = path.resolve(outArg), root = path.resolve(distArg || path.join(__dirname, "../../dist"));
@@ -40,6 +42,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       log(`run ${run + 1}: loading`, link.replace(/^http:\/\/[^/]+/, ""), THR > 1 ? `(CPU ×${THR})` : "");
       await page.goto(link);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
+      KEY ??= await pageKey(page, { spot: `sail-timing.cjs: home to ${ISLAND0}` });
       await page.waitForTimeout(3000);
       for (const [leg, ISLAND] of [ISLAND0, ...THEN].entries()) { // (THEN: on the same page after, warm: its art, programs and workers the last island's)
       if (leg) await page.waitForTimeout(5000);
@@ -89,7 +92,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       }
       await page.close();
     }
-    fs.writeFileSync(out + ".json", JSON.stringify({ island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
+    fs.writeFileSync(out + ".json", JSON.stringify({ key: KEY, island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
   } catch (e) { console.error(e); code = 1; } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }

@@ -6,6 +6,8 @@
 //   PROF=1: a CPU profile of any start whose first frame passes 5 s)
 // A frame here (the cloud's software renderer) is 2.3 to 3 s on its own; a held start's first one was 8 to 9.3 s.
 const { chromium } = require("playwright"), http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
+let KEY = null;
 const [dist = path.join(__dirname, "../../dist"), runs = "8", out] = process.argv.slice(2);
 const types = { ".js": "text/javascript", ".html": "text/html", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".ogg": "audio/ogg", ".woff2": "font/woff2" };
 const server = http.createServer((q, r) => { let f = path.join(dist, decodeURIComponent(q.url.split("?")[0])); if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, "index.html"); if (!fs.existsSync(f)) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(r); });
@@ -33,6 +35,7 @@ server.listen(0, async () => {
     if (cdp) { await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); await cdp.send("Profiler.start"); }
     await p.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123${process.env.NOENTER ? "&noenter" : ""}${process.env.FENCE ? "&fence" : ""}`);
     await p.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 200 });
+    KEY ??= await pageKey(p, { spot: "start-hold.cjs: a cold start, the start key at ready" });
     const progs = () => p.evaluate(() => window.witch.view.renderer.info.programs.length);
     const names = () => p.evaluate(() => window.witch.view.renderer.info.programs.map(q => `${q.id}:${q.name}:${q.cacheKey}`));
     const n0 = await names();
@@ -50,7 +53,7 @@ server.listen(0, async () => {
     res.push(r);
     await b.close();
   }
-  if (out) fs.writeFileSync(out, JSON.stringify(res, null, 1));
+  if (out) fs.writeFileSync(out, JSON.stringify({ key: KEY, runs: res }, null, 1));
   console.log(`programs made after the start key: ${res.map(r => r.added).join(" ")}; fence ${res.map(r => r.fence).join(" ")} ms; first frame after it: ${res.map(r => r.first ? (r.first.ms / 1000).toFixed(1) : "-").join(" ")} s; longest: ${res.map(r => (r.max / 1000).toFixed(1)).join(" ")} s`);
   server.close();
 });
