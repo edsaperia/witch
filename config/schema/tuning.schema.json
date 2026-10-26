@@ -9074,6 +9074,9 @@
             "keep": {
               "type": "number",
               "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -9107,6 +9110,9 @@
             "keep": {
               "type": "number",
               "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
             }
           },
           "required": [
@@ -9140,6 +9146,9 @@
             "keep": {
               "type": "number",
               "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
             }
           },
           "required": [

@@ -75,7 +75,7 @@ export interface GladeTuning {
 }
 
 /** A kind of place kept clear (Tuning.reveal). */
-export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number }
+export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number; /** only the scenery within radius metres of it fades (the runestone's: Ed, 2026-10-26) */ bounded?: boolean }
 
 export interface Tuning {
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */

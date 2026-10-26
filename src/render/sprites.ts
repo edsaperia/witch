@@ -58,8 +58,9 @@ export const SPRITE_UNIFORMS = {
   uCircleBox: { value: new THREE.Vector4(0, 0, 0, 0) },
   uCircleFade: { value: new THREE.Vector4(0, 0, 1, 1) },
   /** And what stands at its centre, never faded: anything standing within z metres of (x, y) on the ground (a relic, the trunk and a
-   *  runestone are stood toward the camera by part of their height, nearer than the centre they mark). */
-  uCircleKeep: { value: new THREE.Vector3(0, 0, 0) },
+   *  runestone are stood toward the camera by part of their height, nearer than the centre they mark); and nothing standing more than
+   *  w metres from it fades (0: no limit), easing back over the last uCircleFade.w metres. */
+  uCircleKeep: { value: new THREE.Vector4(0, 0, 0, 0) },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
   uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
@@ -108,7 +109,7 @@ uniform vec4 uOcc;
 uniform float uNearCut;
 varying float vNear;
 uniform vec4 uCircleBox, uCircleFade;
-uniform vec3 uCircleKeep;
+uniform vec4 uCircleKeep;
 uniform float uHasFade;
 varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
@@ -212,10 +213,12 @@ void main() {
   // nearer the camera than its centre whose rectangle covers its box on screen (the grove's south trees, the rim's stones, crowns) fades out
   // whole, easing over a few pixels of the boxes' gap and a few metres of depth, so nothing snaps at the line.
   vCircle = 1.0;
-  if (uCircleFade.y > 0.0 && uHasFade > 0.5 && uFlat < 0.5 && length(iPos.xz - uCircleKeep.xy) >= uCircleKeep.z) {
+  float keepD = length(iPos.xz - uCircleKeep.xy);
+  if (uCircleFade.y > 0.0 && uHasFade > 0.5 && uFlat < 0.5 && keepD >= uCircleKeep.z) {
     vec2 bc = (uCircleBox.xy + uCircleBox.zw) * 0.5, bh = (uCircleBox.zw - uCircleBox.xy) * 0.5;
     float gap = length(max(abs(cc - bc) - bh - vec2(hw, hh), 0.0));
-    vCircle = 1.0 - uCircleFade.y * (1.0 - smoothstep(0.0, uCircleFade.z, gap)) * smoothstep(0.0, uCircleFade.w, uCircleFade.x + (viewMatrix * vec4(base, 1.0)).z);
+    float within = uCircleKeep.w > 0.0 ? 1.0 - smoothstep(uCircleKeep.w - uCircleFade.w, uCircleKeep.w, keepD) : 1.0; // (only so far from it)
+    vCircle = 1.0 - uCircleFade.y * within * (1.0 - smoothstep(0.0, uCircleFade.z, gap)) * smoothstep(0.0, uCircleFade.w, uCircleFade.x + (viewMatrix * vec4(base, 1.0)).z);
     if (vCircle < 0.004) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (wholly gone: in no pass)
   }
   if (abs(iFlags.y) > 0.001) {

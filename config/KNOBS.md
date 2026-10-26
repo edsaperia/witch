@@ -1905,7 +1905,7 @@ The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that dr
 
 ### `reveal`, `canopyShadow`
 
-The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; "we might want this for other important points of interest, such as runestone areas, finds, flasks"; render/view/reveal.ts): while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. legend: a legend's circle (its own radius, its ring pad metres wider for the rim's stones, and its legend as drawn, asleep or awake). runestone: an area's runestone and its fight's open middle (within radius metres of the stone; ring metres round it boxed). For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). find: tonight's trunk or wreck, until it's taken. flask: a lying relic flask. Each on or off (the last three the pause page's toggles). A place fades over seconds as she walks in and back over seconds as she leaves; edge (a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on.
+The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; "we might want this for other important points of interest, such as runestone areas, finds, flasks"; render/view/reveal.ts): while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. legend: a legend's circle (its own radius, its ring pad metres wider for the rim's stones, and its legend as drawn, asleep or awake). runestone: an area's runestone and its fight's open middle (within radius metres of the stone; ring metres round it boxed; 30 m since Ed, 2026-10-26: "the fading area around a runestone is relatively small (say a 30m radius)"). bounded (the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). find: tonight's trunk or wreck, until it's taken. flask: a lying relic flask. Each on or off (all four on since Ed, 2026-10-26: "All four on"; the last three the pause page's toggles, and the runestone's radius its slider). A place fades over seconds as she walks in and back over seconds as she leaves; edge (a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on.
 
 | knob | type | range |
 |---|---|---|
@@ -1920,18 +1920,21 @@ The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in 
 | `reveal.runestone.width` | number | 0 to … |
 | `reveal.runestone.height` | number | 0 to … |
 | `reveal.runestone.keep` | number | 0 to … |
+| `reveal.runestone.bounded` | boolean |  |
 | `reveal.find.on` | boolean |  |
 | `reveal.find.radius` | number | 0 to … |
 | `reveal.find.ring` | number | 0 to … |
 | `reveal.find.width` | number | 0 to … |
 | `reveal.find.height` | number | 0 to … |
 | `reveal.find.keep` | number | 0 to … |
+| `reveal.find.bounded` | boolean |  |
 | `reveal.flask.on` | boolean |  |
 | `reveal.flask.radius` | number | 0 to … |
 | `reveal.flask.ring` | number | 0 to … |
 | `reveal.flask.width` | number | 0 to … |
 | `reveal.flask.height` | number | 0 to … |
 | `reveal.flask.keep` | number | 0 to … |
+| `reveal.flask.bounded` | boolean |  |
 | `canopyShadow.on` | boolean |  |
 | `canopyShadow.strength` | number | 0 to … |
 | `canopyShadow.height` | number | 0 to … |
