@@ -634,7 +634,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     let spot: { x: number; z: number } | null = null;
     if (rollsSetPiece(cx, cy)) {
       const R = tuning.setPieceFootprint * tuning.setPieceScale, gap = tuning.reserveMargin;
-      const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => { const [x, y] = k.split(",").map(Number); return soundsystemSpot(x, y); });
+      const sounds = [cellKey(cx, cy), ...(neighbours.get(cellKey(cx, cy)) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y)).map(([x, y]) => soundsystemSpot(x, y));
       const clear = (x: number, z: number) => inCell(x, z, cx, cy)
         && sounds.every(p => Math.hypot(x - p.x, z - p.z) >= R + tuning.soundsystemFootprint + gap)
         && Math.hypot(x - centre.x, z - centre.z) >= R + floorClear + gap
@@ -664,7 +664,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     for (const c of scenes) if (Math.hypot(x - c.x, z - c.z) < r + c.r + gap) return true;
     for (const k of [cellKey(cell[0], cell[1]), ...(neighbours.get(cellKey(cell[0], cell[1])) ?? [])]) {
       const [cx, cy] = k.split(",").map(Number);
-      if (!(cx === centreCell[0] && cy === centreCell[1])) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
+      if (!(cx === centreCell[0] && cy === centreCell[1]) && playable(cx, cy)) { const q = soundsystemSpot(cx, cy); if (Math.hypot(x - q.x, z - q.z) < r + tuning.soundsystemFootprint + gap) return true; }
       const p = setPieceSpot(cx, cy);
       if (p && Math.hypot(x - p.x, z - p.z) < r + tuning.setPieceFootprint * tuning.setPieceScale + gap) return true;
     }
@@ -689,6 +689,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const p = setPieceSpot(cell[0], cell[1]);
     if (p && Math.hypot(x - p.x, z - p.z) < tuning.setPieceClear * tuning.setPieceScale) return true;
     if (cell[0] === centreCell[0] && cell[1] === centreCell[1]) return false;
+    if (!playable(cell[0], cell[1])) return false; // (no soundsystem ever stands in the buffer's areas)
     const q = soundsystemSpot(cell[0], cell[1]);
     return Math.hypot(x - q.x, z - q.z) < tuning.soundsystemFootprint + tuning.treeMarginFromSoundsystem;
   };
@@ -698,9 +699,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // smoother"): mostly open within arena.radius metres of its centre and its soundsystem, the woods
   // thickening along a smooth curve over a band arena.band metres wide beyond, its distance
   // wobbled by noise (arena.noise of the band) so the edge is no ring; both times the fight's scale.
+  // Only the playable areas have one: the buffer's by the beach never get a runestone, soundsystem or
+  // fight, so an arena there was an empty hole in the woods (Ed, 2026-10-26).
   const arenaIn = (x: number, z: number, cell: Cell) => {
     const R = tuning.arena;
-    if (!R || R.radius <= 0) return 1;
+    if (!R || R.radius <= 0 || !playable(cell[0], cell[1])) return 1;
     const k = tuning.fight?.scale ?? 1, s = siteXZ(cell[0], cell[1]), q = soundsystemSpot(cell[0], cell[1]);
     const d = Math.min(Math.hypot(x - s[0], z - s[1]), Math.hypot(x - q.x, z - q.z)), band = R.band * k;
     const wob = (vnoise(x / 14, z / 14, seed + 71) - 0.5) * 2 * R.noise * band;
