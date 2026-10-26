@@ -5,7 +5,7 @@
 // by the art workers (render/housePieces.ts, the "housePiece" job), all asked as the house first shows, the nearest her first, then
 // drawn as a flat picture in the house's plane (as the boxes were: render/houseRooms.ts toWorld), its floor's middle on the object's
 // middle. `?furniture=0` draws the boxes as before, to compare.
-import { broomsLeft } from "../rules/kit";
+import { broomsLeft, KIT_BROOMS } from "../rules/kit";
 import * as THREE from "three";
 import { FURNITURE_IDS } from "../../art/furniture.js";
 import type { Game } from "../rules/game";
@@ -61,6 +61,13 @@ export function bakePieceHere(key: string, st: Style, ppm: number, pitch: number
 /** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): the invitations desk's three piles, each witch's empty
  *  once she's taken it, and the brooms left at the lathe (rules/kit.ts); the rest each as it is (the bedroom's curtains, shut while
  *  she woke, are gone: Ed, 2026-10-24). */
+/** Every state an object can be drawn in (furnitureState's), so the house asks the art workers for them all up front: a piece in a
+ *  new state (E at the desk or the lathe) is there at once, not baked while she watches it vanish. */
+export function furnitureStates(id: string): string[] {
+  if (id === "invitations") return [0, 1, 2, 3, 4, 5, 6, 7].map(b => [0, 1, 2].map(i => (b >> i) & 1 ? 0 : 8).join(","));
+  if (id === "lathe") return Array.from({ length: KIT_BROOMS + 1 }, (_, i) => String(KIT_BROOMS - i));
+  return [];
+}
 export function furnitureState(id: string, g: Pick<Game, "wake" | "witches">): string | undefined {
   if (id === "invitations") return [0, 1, 2].map(i => (g.witches[i]?.kit?.invites ? 0 : 8)).join(",");
   if (id === "lathe") return String(broomsLeft(g));
