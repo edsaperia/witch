@@ -389,6 +389,14 @@ function lendFind(kind: FindKindId, id: string): void {
  *  chart's save, read a second at most). */
 const guide = loadGuide(), guidePin = new GuidePin(view);
 let chartFound: { at: number; found: string[] } = { at: -Infinity, found: [] };
+/** Her guidance pin this frame (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it. */
+function stepGuide(now: number): void {
+  const { game } = N();
+  if (seeGuide(game, 0, guide)) storeGuide(guide);
+  if (now - chartFound.at > 1000) chartFound = { at: now, found: loadSave().found };
+  const G = guidanceOf(game, 0, guide, chartFound.found);
+  guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !chartOpen() && !sailing);
+}
 /** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she
  *  has on of it with it); not, gone back to the sky, what she has on of it back to what she had before. What her dream shows, or
  *  null with nothing on loan. */
@@ -1023,13 +1031,7 @@ function frame(now: number): void {
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
-  // Her guidance pin (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it.
-  if (!bot) {
-    if (seeGuide(game, 0, guide)) storeGuide(guide);
-    if (now - chartFound.at > 1000) chartFound = { at: now, found: loadSave().found };
-    const G = guidanceOf(game, 0, guide, chartFound.found);
-    guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !charting && !sailing);
-  }
+  if (!bot) stepGuide(now);
   // The tables (the map table's sea chart) by nearness, as the stations; E at one brings it back after she's put it away there.
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
   if (!table) tableShut = null;
@@ -1141,8 +1143,8 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 };
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
-// window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) and the pickups' hooks (shots).
-(window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS };
+// window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
+(window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;
   startDream({ loan: lend(kind, id, { look: null, hat: "none", parts: N().game.witches[0].spells.parts }), won: v === "won" }, true);
