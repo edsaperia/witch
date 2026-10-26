@@ -62,8 +62,11 @@ export const AREAS = [
     wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { variant: "stunted", scale: 1.2 }), tree("rowan", { minor: true })] },
   { id: "wetland", name: "Wetland", creature: "toad", by: "draft", leaf: .2, floor: ["mud", .15, .45, .3], text: { floor: "wet mud", wall: "puddles, reeds", small: "reeds and rushes", big: "willows" },
     wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow", { variant: "pollard" }), tree("alder", { minor: true, scale: .9 })] },
-  { id: "stream", name: "Stream", creature: "otter", by: "draft", leaf: .27, floor: ["pebbles", .25, .3, .45], text: { floor: "pebbles and grass", wall: "a stream or pond", small: "alder saplings", big: "alders", set: "a fallen-log bridge" },
-    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("alder", { variant: "windbent", scale: .95, gnarl: .3 }), tree("willow", { minor: true, scale: .8 })], set: P("bridge") },
+  // (the stream till the roster moved the otter, a smooth-coated otter now, to the mangrove swamp, Ed 2026-10-23/25; ring 3, so
+  // semi-temperate: a brackish channel, drowned willows and young mangroves from the swamp's list along it with alders, a third, soft
+  // grey mud for its pebbles, reeds and mangrove seedlings at the water)
+  { id: "mangrove-channel", name: "Mangrove channel", creature: "otter", by: "draft", leaf: .28, floor: ["mud", .18, .3, .4], text: { floor: "soft grey mud", wall: "a brackish channel", small: "reeds and mangrove seedlings", big: "drowned willows, young mangroves and alders", set: "a fallen-log bridge" },
+    wall: [P("water", { w: 2 }), P("reeds", { tall: true })], small: [P("reeds"), tree("mangrove", { scale: .4 })], big: [tree("willow", { variant: "drowned", scale: 1 }), tree("mangrove", { minor: true, scale: .8 })], set: P("bridge") },
   { id: "rocky-slope", name: "Rocky slope", creature: "lynx", by: "draft", leaf: .34, floor: ["scree", .2, .2, .42], text: { floor: "scree and moss", wall: "boulders", small: "rocks", big: "pines", set: "a rocky outcrop" },
     wall: [P("boulder", { big: true })], small: [P("stones", { big: true })], big: [tree("rowan", { scale: 1.1 }), tree("pine", { minor: true })], set: P("outcrop") },
   { id: "bog", name: "Bog", creature: "elk", by: "draft", leaf: .38, floor: ["moss", .18, .55, .4], text: { floor: "sphagnum moss", wall: "bog pools", small: "cotton grass", big: "spruce" },
@@ -96,7 +99,7 @@ export const AREAS = [
 ];
 // Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
 // and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
-const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
+const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, "mangrove-channel": { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
   ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
 for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
 // The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
@@ -191,8 +194,8 @@ export const AREA_LAYOUTS = {
     "Tall pines over solid berry bushes and brambles, only narrow animal paths and a couple of pockets of space."),
   "wetland": LAY("stands", .5, .7, [1, [16, 24]], [.25, .55, .15, .05], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
     "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."),
-  "stream": LAY("rows", .68, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
-    "Alders lining both banks of a pebbly stream, saplings at the water's edge, open grass away from it.", { along: "stream" }),
+  "mangrove-channel": LAY("rows", .68, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
+    "Drowned willows and young mangroves lining both banks of a brackish channel, alders among them, seedlings and reeds at the water's edge, soft mud away from it.", { along: "stream" }),
   "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .5, .18, .02], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
     "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."),
   "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .5, .1, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
@@ -223,7 +226,7 @@ export const AREA_LAYOUTS = {
 Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
 // Hanging moss and vines in the eerie woods (Ed, 2026-10-07: "moss and vines only"): how much hangs from their trees'
 // crowns and low boughs, 0 to 1 (art/trees.js lowLife, st.treeHang): the wet, old and tangled woods.
-const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "stream": .4 };
+const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "mangrove-channel": .4 };
 for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
