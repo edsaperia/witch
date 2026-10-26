@@ -954,10 +954,10 @@ function frame(now: number): void {
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
   // button (E, the pad's □, a tap on touch) closes it, as it opened it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
-  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !!raw.sigil && (openNow || openPrev);
+  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's □ and a tap `sigil`)
   if (shutTap) { if (stations.station) stations.close(); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
-  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step(raw, dt, tuning.telescope); }
+  if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or □ leaves it)
   view.telescope = tuning.telescope ? telescope.look(tuning.telescope) : null;
   // The sea chart over the night (the transition review, 2026-10-19: the night ran and drew on behind it, and its art workers drew
   // on, so the chart's islands and the next island's art drawn ahead got what was left): while it's open the night is paused,
