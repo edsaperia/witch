@@ -6,17 +6,18 @@ import type { Game } from "./game";
 import { coastOf } from "./game";
 import { stepCamera } from "./camera";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS, objectWorld } from "./houseRooms";
+import { HOUSE_ROOMS, objectFront } from "./houseRooms";
 import { witchHeight } from "./witch";
 
-/** How far in front of the bed (its long side, along the plan's z: towards the camera) she stands as she wakes (m). */
+/** How far in front of the bed (its side towards its room's middle, where she'd stand to use it: rules/houseRooms.ts objectFront)
+ *  she stands as she wakes (m). */
 const BEDSIDE = 1.4;
 
 /** Her spot as she wakes: in front of her bed (the house's "bed" object), in the world; null without the house's rooms. */
 export function bedside(g: Pick<Game, "map" | "tuning">, H = HOUSE_ROOMS): { x: number; z: number } | null {
   const d = deckOf(g.map, g.tuning), bed = H.objects.find(o => o.use.kind === "bed");
   if (!d?.house?.rooms || !bed) return null;
-  return objectWorld(bed, g.map.treehouse, 0, bed.d / 2 + BEDSIDE, H);
+  return objectFront(bed, g.map.treehouse, BEDSIDE, H);
 }
 
 /** She wakes in her bedroom: put beside her bed on the house's floor, standing (no longer seated at the decks), and the camera

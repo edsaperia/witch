@@ -8,8 +8,8 @@
   "z": -12,
   "r": 7,
   "objects": [
-    {"id":"mirror","label":"Mirror","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"offset":[-3.18,-4.45],"box":{"w":2.2,"d":0.6,"h":4.2}},
+    {"id":"mirror","label":"Mirror","use":{"kind":"creator","axes":["hair"],"wear":["earrings"],"parts":["hair","skin"]},"offset":[-3.18,-4.45],"box":{"w":3.3,"d":0.9,"h":6.3}},
     {"id":"hats","label":"Hats","use":{"kind":"hats"},"offset":[1.27,1.27],"box":{"w":3.6,"d":1.8,"h":0}},
-    {"id":"cloakPegs","label":"Cloak pegs","use":{"kind":"creator","axes":["cloak","cloakLength","scarfLength"],"wear":["patches","scarf"],"parts":["cloak","scarf"]},"offset":[-5.73,2.55],"box":{"w":0.6,"d":2.6,"h":4}}
+    {"id":"cloakPegs","label":"Cloak pegs","use":{"kind":"creator","axes":["cloak","cloakLength","scarfLength"],"wear":["patches","scarf"],"parts":["cloak","scarf"]},"offset":[-2.72,5.35],"box":{"w":1.9,"d":1.9,"h":5.6}}
   ]
 }

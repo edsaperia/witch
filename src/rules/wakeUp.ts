@@ -16,7 +16,7 @@
 import type { Controls, Game } from "./game";
 import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
-import { HOUSE_ROOMS, keepInRoom, objectAt, objectWorld } from "./houseRooms";
+import { HOUSE_ROOMS, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
 import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
@@ -59,7 +59,7 @@ function inBed(g: Game): { x: number; z: number } | null {
  *  asleep in her dream first (beat "dream": the alarm when it ends). False without the house's bedroom. */
 export function startWake(g: Game, ht: number, short = false, dreaming = false): boolean {
   const at = inBed(g);
-  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === "bedroom")) return false;
+  if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
   g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], pile: [...PILE_SLOTS], ...(short ? { short } : {}) };
@@ -132,10 +132,17 @@ function toDecks(g: Game, c: Controls, press: boolean): Controls {
   return { ...c, castParty: false, spell: false };
 }
 
-/** After her step: the bedroom's door shut till she's up (she's kept on its floor, its own blob: rules/houseRooms.ts keepInRoom). */
+/** The room her bed stands in (Ed, 2026-10-26: "Move the bed to the turret"; it was her Bedroom): where she wakes. */
+export const bedRoom = (): string => HOUSE_ROOMS.objects.find(o => o.use.kind === "bed")?.room ?? "bedroom";
+
+/** How far from her spot by the bed (m) she may be while she's still in bed: the hold, past which she's put back by it. */
+const BED_HOLD = 6;
+/** After her step: held by her bed till she's up (asleep, ringing, snoozing, stretching: `doorShut`), wherever it stands (her Bedroom
+ *  once, the Turret, the corridor up to it since Ed, 2026-10-26: "bring the bed closer to the bedroom (it can go in the corridor)"):
+ *  past BED_HOLD from beside it, she's put back there. */
 export function keepInBedroom(g: Game): void {
   if (!doorShut(g)) return;
-  const W = g.witches[0], b = W.body, k = keepInRoom(g.map.treehouse, "bedroom", b.x, b.z);
-  if (!k || k.inside) return;
-  W.body = { ...b, x: k.x, z: k.z };
+  const at = bedside(g), W = g.witches[0], b = W.body;
+  if (!at || Math.hypot(b.x - at.x, b.z - at.z) <= BED_HOLD) return;
+  W.body = { ...b, x: at.x, z: at.z, vx: 0, vz: 0 };
 }

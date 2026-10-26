@@ -7,7 +7,7 @@
   "z": 26,
   "r": 14,
   "objects": [
-    {"id":"teaTable","label":"Tea table","use":{"kind":"say","line":"The tea's not brewed yet."},"offset":[-7,-2.33],"box":{"w":2.8,"d":2.8,"h":1.4}},
-    {"id":"cardTable","label":"Card table","use":{"kind":"say","line":"The cards come later."},"offset":[7,4.67],"box":{"w":3.4,"d":3.4,"h":1.5}}
+    {"id":"teaTable","label":"Tea table","use":{"kind":"say","line":"The tea's not brewed yet."},"offset":[-4.99,2.54],"box":{"w":3.92,"d":3.92,"h":1.96}},
+    {"id":"cardTable","label":"Card table","use":{"kind":"say","line":"The cards come later."},"offset":[7,4.67],"box":{"w":4.76,"d":4.76,"h":2.1}}
   ]
 }
