@@ -90,6 +90,8 @@ export function* refreshSteps(v: View): Steps {
 
 const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
 
+/** The tallest trees' squeeze (treeCap) as one number, to see it change. */
+const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
 /** Which quest relics lie in the world, as a bit mask (their bottles are scenery). */
 const lyingRelics = (g: View["game"]): number => { let m = 0; for (const r of g.relics) if (r.state === "lying") m |= 1 << (r.id % 30); return m; };
 
@@ -113,7 +115,8 @@ function due(v: View, force = false) {
   const TW = t.telescope, tele = v.telescope && TW ? 1 + Math.round(v.telescope.heading / Math.max(1, TW.wedge / 2)) * 1000 + Math.round(v.telescope.fov) : 0;
   const turned = Math.abs(pose.distance - lp.distance) > 2 || Math.abs(pose.angle - lp.angle) > 0.5 || g.camera.zoomStep !== lp.zoomStep || lift !== lp.lift || tele !== (lp.tele ?? 0);
   const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
-  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics) return null;
+  const cap = treeCapKey(t); // (the tallest trees' squeeze changed on the pause page's sliders: drawn again at once, on the frozen frame too)
+  if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics && cap === v.lastBuild.cap) return null;
   return { margin, pose, key, lift, radius, reach, canopy, tele };
 }
 
@@ -121,7 +124,7 @@ function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tel
   let t0 = performance.now();
   const sliceDone = () => performance.now() - t0 > SLICE_MS, resume = () => { t0 = performance.now(); };
   const g = v.game, t = g.tuning;
-  v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game) };
+  v.lastBuild = { ...key, version: v.assets.version, radius, canopy, relics: lyingRelics(v.game), cap: treeCapKey(t) };
   v.lastPose = { distance: pose.distance, angle: pose.angle, zoomStep: g.camera.zoomStep, lift, tele };
   // Through the telescope, the whole circle round her at once (it pans with nothing listed again; inView passes all within reach).
   const round = (far: number) => { const f = focusOf(v); return { minX: f.x - far - margin, maxX: f.x + far + margin, minZ: f.z - far - margin, maxZ: f.z + far + margin }; };

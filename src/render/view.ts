@@ -214,7 +214,7 @@ function nightState(t: Tuning) {
     trailAt: -1,
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
-    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number },
+    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
     budget: newBudget(t) as SceneryBudget,
     /** The last drawn frame's real time (ms), for the budget. */
