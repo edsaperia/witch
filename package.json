@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node tools/making-of/build.mjs && node tools/music-lab/live/build.mjs && node tools/music-studio/build.mjs && node tools/labs/publish.mjs",
+    "build": "vite build && node tools/making-of/build.mjs && node tools/music-lab/live/build.mjs && node tools/music-studio/build.mjs && node tools/labs/publish.mjs && node tools/audio-test/build.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
