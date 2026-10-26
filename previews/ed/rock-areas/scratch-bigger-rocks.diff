@@ -1,0 +1,81 @@
+diff --git a/art/areas.js b/art/areas.js
+index 72aeef719..a5eec3ce9 100644
+--- a/art/areas.js
++++ b/art/areas.js
+@@ -31,13 +31,13 @@ const P = (kind, o = {}) => [kind, o];
+ // floor: [texture, hue, saturation, value]; leaf: leaf hue for this area's plants.
+ export const AREAS = [
+   { id: "moor", name: "Moor", creature: "woodlouse", by: "Ed", leaf: .24, floor: ["heather", .95, .28, .36], ground: { patches: [{ mat: "TRUNK", n: 3, r: [4, 7] }, { mat: "MOSS", n: 3, r: [3, 6] }], details: [{ stamp: "moss", n: 18, mats: ["LEAF3", "LEAF", "LEAF2"] }, { stamp: "sprig", n: 34, mats: ["LEAF3", "BODY", "FLOWER"] }] } /* violet-brown heather and moss (the art director, round 1) */, text: { floor: "moss", wall: "puddles, a lake", small: "long grass", big: "moss mounds" },
+-    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true }), P("cairn", { sparse: .12 }), P("standingstone", { sparse: .12 }), tree("hawthorn", { variant: "windbent", scale: .9, lean: .5 }), tree("rowan", { minor: true, scale: .9 })] }, // (lone wind-bent hawthorns and rowans among the mounds: Ed, 2026-10-13, "trees into areas with no trees")
++    wall: [P("water", { w: 1.6 })], small: [P("grass", { h: 1.4, leafHue: .97, leafSat: .55 })], big: [P("mound", { moss: true, scaleUp: 1.8 }), P("cairn", { sparse: .12, scaleUp: 1.6 }), P("standingstone", { sparse: .12, scaleUp: 1.5 }), tree("hawthorn", { variant: "windbent", scale: .9, lean: .5 }), tree("rowan", { minor: true, scale: .9 })] }, // (lone wind-bent hawthorns and rowans among the mounds: Ed, 2026-10-13, "trees into areas with no trees")
+   { id: "fern-forest", name: "Fern forest", creature: "mole", by: "Ed", leaf: .3, floor: ["needles", .3, .4, .3], text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+     small: [P("fern")], big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })] },
+   { id: "muddy-forest", name: "Muddy forest", creature: "snail", by: "Ed", leaf: .22, floor: ["mud", .07, .5, .28], text: { floor: "mud and leaves", small: "short trunks with broken branches", big: "trees with many trunks and branches" },
+     small: [P("stump", { snag: true })], big: [tree("sycamore", { trunks: 3, gnarl: .9 }), tree("alder", { minor: true })] },
+   { id: "stone-shrine", name: "Stone shrine", creature: "owl", by: "Ed", leaf: .28, floor: ["stony", .6, .07, .48], ground: { details: [{ stamp: "slab", n: 16, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "pebble", n: 12, mats: ["STONED", "STONE", "BELLY"] }, { stamp: "tuft", n: 14, mats: ["LEAF3", "LEAF", "LEAF2"] }] }, text: { floor: "grassy, stony", wall: "mossy henges", small: "little stones", big: "big stones", set: "a shrine" },
+-    wall: [P("henge")], small: [P("stones")], big: [P("standingstone", { big: true }), P("boulder", { sparse: .15 }), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true }), tree("yew", { scale: 1.2, gnarl: .8 }), tree("holly", { minor: true })], set: P("shrine") }, // (and a ring of old yews round the stones: Ed, 2026-10-13) // (its tree-equivalents great standing stones: Ed, 2026-10-06)
++    wall: [P("henge")], small: [P("stones")], big: [P("standingstone", { big: true, scaleUp: 1.3 }), P("boulder", { sparse: .15, scaleUp: 1.8 }), P("pillar", { sparse: .1 }), P("pillar", { sparse: .08, broken: true, lean: .14 }), P("cairn", { sparse: .08, tall: true }), tree("yew", { scale: 1.2, gnarl: .8 }), tree("holly", { minor: true })], set: P("shrine") }, // (and a ring of old yews round the stones: Ed, 2026-10-13) // (its tree-equivalents great standing stones: Ed, 2026-10-06)
+   { id: "tangly-forest", name: "Tangly forest", creature: "ram", by: "Ed", leaf: .27, floor: ["nettles", .28, .5, .3], text: { floor: "nettles and earth", small: "tangled branches", big: "fairly short tangly trees" },
+     small: [P("bramble", { bare: true })], big: [tree("hawthorn", { scale: .9, gnarl: 1 })] },
+   { id: "wispy-forest", name: "Wispy forest", creature: "badger", by: "Ed", leaf: .2, floor: ["leaves", .09, .55, .45], text: { floor: "dry leaves", small: "tall thin wispy trees", big: "thick trees with several trunks" },
+@@ -83,7 +83,7 @@ export const AREAS = [
+   { id: "old-pinewood", name: "Old pinewood", creature: "marten", by: "draft", leaf: .35, floor: ["needles", .07, .4, .3], text: { floor: "pine needles", small: "pine cones", big: "tall old pines with knotholes" },
+     small: [P("cones")], big: [tree("pine", { scale: 1.35 }), tree("rowan", { minor: true, scale: .8 })] },
+   { id: "ravine", name: "Ravine", creature: "salamander", by: "draft", leaf: .3, floor: ["stone", .6, .1, .42], text: { floor: "wet moss and rock", wall: "rock walls", small: "ferns", big: "mossy boulders", set: "a waterfall" },
+-    wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { variant: "windbent", scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
++    wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true, scaleUp: 1.8 }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { variant: "windbent", scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
+   { id: "bluebell-glade", name: "Bluebell glade", creature: "hare", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
+     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
+   { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
+@@ -156,14 +156,14 @@ const LAY = (pattern, density, clump, glades, heightMix, undergrowth, lean, terr
+ const NO_LEAN = [0, 0];
+ // decor weights in the order ruins, rocks, freak, lake, modern
+ export const AREA_LAYOUTS = {
+-  "moor": LAY("scatter", .2, .6, [2, [14, 24]], [.15, .5, .3, .05], .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
+-    "Open rolling moss, low mounds and dark pools, long grass combed one way by the wind; you can see a long way.", { treeShare: 0.22 }),
++  "moor": LAY("groves", .09, .85, [2, [14, 24]], [.15, .5, .3, .05], .7, [30, .2], ["pools", "mounds", "hollows"], [.5, [.3, .4, 0, .3, 0]],
++    "Open rolling moss, low mounds and dark pools, long grass combed one way by the wind; you can see a long way.", { treeShare: 0.35 }),
+   "fern-forest": LAY("groves", .65, .6, [2, [8, 12]], [.2, .5, .25, .05], .9, NO_LEAN, ["hollows", "paths"], [.25, [.4, .3, .3, 0, 0]],
+     "Pine groves standing waist-deep in ferns, with green sunken hollows between them."),
+   "muddy-forest": LAY("scatter", .7, .3, [1, [6, 9]], [.25, .55, .17, .03], .4, NO_LEAN, ["pools", "paths"], [.3, [.3, .1, .2, .1, .3]],
+     "Squelching mud between many-trunked trees, puddled ruts winding through, broken stumps everywhere."),
+-  "stone-shrine": LAY("rings", .35, .8, [1, [10, 14]], [.1, .4, .35, .15], .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
+-    "Big stones stand in rings round the shrine on stony grass; it feels deliberate and old.", { treeShare: 0.3 }),
++  "stone-shrine": LAY("rings", .15, .9, [1, [10, 14]], [.1, .4, .35, .15], .3, NO_LEAN, ["rocky", "mounds"], [.5, [.6, .4, 0, 0, 0]],
++    "Big stones stand in rings round the shrine on stony grass; it feels deliberate and old.", { treeShare: 0.35 }),
+   "tangly-forest": LAY("thicket", .9, .2, [1, [5, 8]], [.35, .55, .1, 0], .9, NO_LEAN, ["hollows"], [.2, [.2, 0, .6, 0, .2]],
+     "Short tangled trees packed close over nettles, low and claustrophobic, with one small clearing."),
+   "wispy-forest": LAY("stands", .55, .7, [2, [6, 10]], [.15, .45, .3, .1], .5, NO_LEAN, ["ridges"], [.3, [.4, .2, .3, 0, .1]],
+@@ -208,8 +208,8 @@ export const AREA_LAYOUTS = {
+     "Purple heather and gorse, small birches bent hard by the wind, all the same way."),
+   "old-pinewood": LAY("scatter", .5, .3, [2, [8, 14]], [.1, .35, .4, .15], .15, NO_LEAN, ["mounds", "paths"], [.35, [.4, .3, .3, 0, 0]],
+     "Cathedral-tall old pines on a clear floor of needles; you can see between the trunks a long way."),
+-  "ravine": LAY("edgeOnly", .55, .6, [1, [6, 9]], [.2, .5, .25, .05], .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
+-    "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle.", { treeShare: 0.3 }),
++  "ravine": LAY("edgeOnly", .22, .85, [1, [6, 9]], [.2, .5, .25, .05], .8, NO_LEAN, ["stream", "ridges", "rocky"], [.4, [.3, .5, 0, .2, 0]],
++    "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle.", { treeShare: 0.35 }),
+   "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
+     "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
+   "holly-thicket": LAY("thicket", .9, .3, [1, [6, 9]], [.3, .6, .1, 0], .7, NO_LEAN, ["hollows"], [.25, [.3, 0, .5, 0, .2]],
+@@ -442,7 +442,7 @@ export function areaAssets(id, st, { K = 2 / (st.pixel || 2), makeCanvas = defau
+   const ft = floorTile(def, st);
+   // ?props=gen (st.propGen): each hand-made prop the prop generator stands in for (propFor) becomes `variants` of it (3; a sparse one's
+   // share split among them), each its own shape from its own seed, so a pool or a stone isn't one sprite placed again and again
+-  const gen = list => !st.propGen ? (list || []).map(([kind, o], i) => [kind, { ...o, from: i }]) : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, { ...o, from: i }]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, from: i, share: 1 / n, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0 }, (r() * 1e6 | 0) + i * 7 + k] }]); });
++  const gen = list => !st.propGen ? (list || []).map(([kind, o], i) => [kind, { ...o, from: i }]) : (list || []).flatMap(([kind, o], i) => { const g = propFor(kind, o); if (!g) return [[kind, { ...o, from: i }]]; const n = o.variants || 3; return [...Array(n).keys()].map(k => [kind, { ...o, from: i, share: 1 / n, ...(o.sparse ? { sparse: o.sparse / n } : {}), gen: [g[0], { ...g[1], lead: k === 0, ...(o.scaleUp ? { scaleUp: o.scaleUp } : {}) }, (r() * 1e6 | 0) + i * 7 + k] }]); });
+   const col = list => (gen(list) || []).map(([kind, o]) => { const p = prop(kind, o, def, st, r, K), b = bk(p, kind, ""); if (SWAYING_PROPS.has(kind)) b.sway = bakeSway(p.sp, makeCanvas); if (p.metres) b.metres = p.metres; if (o.sparse) b.sparse = o.sparse; b.from = o.from; if (o.share) b.share = o.share; return b; }); // leafy props carry their sway mask; tall pieces their size and how sparse they stand; each its entry in the area's list (from: a generated prop is n variants of one) and its part of that entry's weight (share)
+   const out = { def, floor: { sp: bake(ft.sp, ft.colours, st, "none", makeCanvas), kind: def.floor[0], text: def.text.floor }, walls: col(def.wall), small: col(def.small), big: col(def.big), setPiece: null, rim: [] };
+   out.walls.forEach(a => a.text = def.text.wall); out.small.forEach(a => a.text = def.text.small); out.big.forEach(a => a.text = def.text.big);
+diff --git a/art/props/generator.js b/art/props/generator.js
+index 7c1fb1d66..75fadd79a 100644
+--- a/art/props/generator.js
++++ b/art/props/generator.js
+@@ -232,7 +232,7 @@ export function propPiece(kind, o = {}, def = null, st = {}, ppm = 16) {
+   if (kind === "standingStone") { v.lichenMat = M.BELLY; if (o.lead) { v.shape = "tall"; v.height = Math.max(v.height, 5.2); v.lean *= .5; if (v.top === "broken" || v.top === "notch") v.top = "flat"; } } // lead: an area's first stone stands tall and whole (the moor's something 4 m tall)
+   const m = new Model({ blend: kind === "brokenTrunk" ? .06 : .035 });
+   PR_BUILD[kind](m, v);
+-  let sp = cropTight(render(m, { scale: witchPixelsPerUnit(st) }).sp).sp;
++  let sp = cropTight(render(m, { scale: witchPixelsPerUnit(st) * (o.scaleUp ?? 1) }).sp).sp; // (SCRATCH: o.scaleUp, the rocks variant)
+   if (kind === "pool") { // its shore breaks into the floor: the outermost rim pixels (touching nothing) dropped in 2 x 1 clusters, by hash (agreed with art builder 1, #156)
+     const rim = new Set([M.BODY, M.BARK2, M.MOSS]), at = (x, y) => x < 0 || y < 0 || x >= sp.w || y >= sp.h ? 0 : sp.m[y * sp.w + x], drop = [];
+     for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) { const m0 = at(x, y); if (!rim.has(m0) || (at(x - 1, y) && at(x + 1, y) && at(x, y - 1) && at(x, y + 1))) continue; if (hash2(x >> 1, y, v.seed + 77) < .5) drop.push(y * sp.w + x, y * sp.w + (x ^ 1)); }
