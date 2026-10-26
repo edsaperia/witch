@@ -224,6 +224,42 @@ export class ZooFall {
     this.mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: FALL_VERT, fragmentShader: FALL_FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, uniforms: { ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime, uCols: { value: Math.round((Math.PI * 2 * R) / 1.2) } } }));
     this.mesh.name = "zooFall";
     this.mesh.frustumCulled = false;
+    // (and the spray thrown up where it goes over: a curtain of mist rising off the lip, so the fall reads from the ground too,
+    // where the sheet itself hides below the lip)
+    const sp: number[] = [], sb: number[] = [], ss: number[] = [], si: number[] = [];
+    for (let k = 0; k <= n; k++) {
+      const a = (k / n) * Math.PI * 2;
+      for (const v of [0, 1]) { sp.push(0, v * SPRAY_H, 0); sb.push(cx + Math.cos(a) * (R + 1.5), cz + Math.sin(a) * (R + 1.5)); ss.push(k / n, v); }
+    }
+    for (let k = 0; k < n; k++) { const a = k * 2; si.push(a, a + 2, a + 3, a, a + 3, a + 1); }
+    const sg = new THREE.BufferGeometry();
+    sg.setAttribute("position", new THREE.Float32BufferAttribute(sp, 3));
+    sg.setAttribute("base", new THREE.Float32BufferAttribute(sb, 2));
+    sg.setAttribute("st", new THREE.Float32BufferAttribute(ss, 2));
+    sg.setIndex(si);
+    this.spray = new THREE.Mesh(sg, new THREE.ShaderMaterial({ vertexShader: FALL_VERT, fragmentShader: SPRAY_FRAG, transparent: true, depthWrite: false, side: THREE.DoubleSide, uniforms: { ...HEIGHT_UNIFORMS, uTime: LIGHT_UNIFORMS.uTime, uCols: { value: Math.round((Math.PI * 2 * R) / 0.4) } } }));
+    this.spray.name = "zooSpray";
+    this.spray.frustumCulled = false;
+    this.mesh.add(this.spray);
   }
-  dispose(): void { this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); }
+  private spray: THREE.Mesh;
+  dispose(): void { this.mesh.geometry.dispose(); (this.mesh.material as THREE.Material).dispose(); this.spray.geometry.dispose(); (this.spray.material as THREE.Material).dispose(); }
 }
+
+/** The spray's height over the lip (m). */
+const SPRAY_H = 7;
+const SPRAY_FRAG = /* glsl */ `
+uniform float uTime;
+uniform float uCols;
+varying vec3 vWorld;
+varying vec2 vSt;
+float h(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+void main() {
+  // (whole pixels of mist and droplets drifting up and thinning, densest at the lip)
+  vec2 cell = vec2(floor(vSt.x * uCols), floor(vSt.y * 28.0 - uTime * 7.0));
+  float k = 1.0 - vSt.y, drop = step(1.0 - 0.55 * k * k, h(cell)), mist = 0.28 * k * k * (0.6 + 0.4 * h(cell * 0.37));
+  float a = max(drop * 0.8 * k, mist);
+  if (a < 0.02) discard;
+  gl_FragColor = vec4(mix(vec3(0.62, 0.74, 0.84), vec3(0.9, 0.95, 1.0), drop), a);
+}
+`;
