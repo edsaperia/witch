@@ -8,8 +8,8 @@
 // broom, hat, and bag) should be before the locked door"). Then down the trunk to her decks on the Terrace, where E starts the
 // party (Ed, 2026-10-20: "The DJ intro replaces the party spell before the party has started"): she's seated behind them and the
 // spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up
-// (`short`: later loads and after the bed, Ed's decisions 4 and 10) has any key or move get her straight up, and the mirror waits
-// to be used. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
+// (`short`: later loads and after the bed, Ed's decisions 4 and 10) has a move or any key but E get her straight up (E snoozes it
+// there too: Ed's playtest of v4821), and the mirror waits to be used. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
 // A dream first (Ed, 2026-10-24, finds on loan: "when she's asleep ... we can communicate through her dreams"): after a night with a
 // find on loan she dreams its verdict (render/dream.ts) while still asleep, beat "dream", nothing ringing; when the dream ends by
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
@@ -34,7 +34,7 @@ export interface WakeState {
   open: boolean;
   /** She's come to the dressing table already (or, short, never marked). */
   mirror: boolean;
-  /** The shorter wake-up: any key or move gets her up at once (later loads, after the bed). */
+  /** The shorter wake-up: a move or any key but E gets her up at once, no stretch (later loads, after the bed); E snoozes. */
   short?: boolean;
   /** This frame's happenings, for the page (cleared as each frame's steps begin: rules/game.ts stepGame). */
   events: WakeEvent[];
@@ -98,10 +98,11 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
   const held: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const to = (beat: WakeBeat, e: WakeEvent) => { w.beat = beat; w.at = ht; w.events.push(e); };
   const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } w.open = true; to("up", "up"); };
-  // (shorter: any key or move, ringing or snoozing, and she's up)
+  // (shorter: a move or any other key, ringing or snoozing, and she's up; E, as ever, snoozes it: Ed's playtest of v4821, 2026-10-26,
+  // "I couldn't snooze; pressing E when the alarm was playing woke me up", the keys beside the bed saying "E snooooze")
   // (dreaming: any key or move ends the dream, and the alarm rings; the press is the dream's, nothing else's)
   if (w.beat === "dream") { if (moving || press || c.spell || c.castParty) endDream(g, ht); return held; }
-  if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || press || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
+  if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
   if (w.beat === "alarm") {
     if (moving) to("stretch", "stretch");
     else if (press && ht - w.at >= K.alarmMin) { w.snoozes++; to("snooze", "snooze"); }

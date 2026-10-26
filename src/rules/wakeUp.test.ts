@@ -329,7 +329,7 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     wakeInBedroom(g); startWake(g, g.herTime, true);
     return g;
   }
-  for (const [what, c] of [["E", { place: true, sigil: true }], ["a move", { moveX: 1 }], ["R", { spell: true }]] as const) it(`any key (${what}) gets her straight up, no stretch`, () => {
+  for (const [what, c] of [["a move", { moveX: 1 }], ["R", { spell: true }], ["Enter", { castParty: true }]] as const) it(`a move or any key but E (${what}) gets her straight up, no stretch`, () => {
     const g = short();
     run(g, K.alarmMin);
     expect(run(g, STEP, c)).toContain("up");
@@ -337,16 +337,31 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     expect(g.party.spellAt).toBeNull();
   });
 
+  // (Ed's playtest of v4821, 2026-10-26: "I couldn't snooze; pressing E when the alarm was playing woke me up": every later load's
+  // wake-up is this one, and E got her up; the keys beside the bed say "E snooooze")
+  for (const [what, c] of [["E", { place: true }], ["the pad's square", { sigil: true }]] as const) it(`${what} snoozes it, as on the first load, and never gets her up`, () => {
+    const g = short();
+    run(g, K.alarmMin);
+    const seen = run(g, STEP, c);
+    expect(seen).toContain("snooze"); expect(seen).not.toContain("up");
+    expect(g.wake).toMatchObject({ beat: "snooze", snoozes: 1, open: false });
+    run(g, K.snooze + 0.1);
+    expect(g.wake!.beat).toBe("alarm"); // (it rings again)
+    run(g, K.alarmMin); run(g, STEP, c);
+    expect(g.wake).toMatchObject({ beat: "snooze", snoozes: 2, open: false });
+    run(g, K.alarmMin); expect(run(g, STEP, { moveX: 1 })).toContain("up"); // (a move from the snooze: straight up)
+  });
+
   it("the mirror waits to be used", () => {
     const g = short();
-    run(g, K.alarmMin); press(g);
+    run(g, K.alarmMin); run(g, STEP, { moveX: 1 });
     standAt(g, "dressingTable", 0.3);
     expect(run(g, 0.5)).not.toContain("mirror");
   });
 
   it("and the door's open as soon as she's up, dressed or not; the party waits for her decks all the same", () => {
     const g = short(false);
-    run(g, K.alarmMin); press(g);
+    run(g, K.alarmMin); run(g, STEP, { moveX: 1 });
     expect(g.wake!.open).toBe(true);
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);
