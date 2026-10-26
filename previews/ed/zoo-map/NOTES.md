@@ -111,3 +111,13 @@ The brief: gilded railings about 1–1.2 m, close-set bars with spearhead finial
 **Flying over.** The fence stops walking only (her on foot, every creature). Rising and flying cross it, and her leashed followers follow her over, as they would anywhere (tested: `src/rules/zooFence.test.ts`).
 
 **Knocked out in the zoo** she comes back on home's plaza (tested).
+
+## The build (PR #1184, v4738): frames in `build/`
+
+- `fence.png`: on a street by the wolf island's gold fence (placeholder strip until the Versailles railings are approved), its runestone and nameplate.
+- `legend.png`: the wolf island, its wolves at every age, the legend asleep in its circle at the middle, sigil carved in the floor.
+- `plaza.png`: the Ent's circle at the zoo's middle, the World Tree carved in the flagstones. No treehouse, dancefloor or speakers (Ed, 2026-10-26).
+- `edge.png`, `edge-above.png`: the flagstones give way to water, which ends 30 m out where it pours off into space.
+- `above.png`: an island from the treetops, its fence and the streets round it.
+- `lake.png`, `lake-above.png`: an undiscovered island's lake inside its fence (shot on the build before the islands were brought closer).
+- The zoo is flat; islands are 12 m of street apart at the nearest (was 30).
