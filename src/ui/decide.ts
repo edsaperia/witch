@@ -7,7 +7,7 @@
 // panel; Ed submits it and the coordinator acts on it. The page holds no secret: the issue is Ed's to send. Copy puts the
 // same line on the clipboard instead.
 import { button, h } from "./dom";
-import { byPr, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, setKnob, currentValue, valuesText, type Decision } from "./decisions";
+import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
 import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
@@ -155,7 +155,13 @@ const PAUSE_CSS = `
 #pause-sliders .list::-webkit-scrollbar { width: 8px; }
 #pause-sliders .list::-webkit-scrollbar-track { background: rgba(0,0,0,.35); }
 #pause-sliders .list::-webkit-scrollbar-thumb { background: var(--accent, #e8b46a); border-radius: 4px; border: 1px solid #000; }
-#pause-sliders h3 { margin: 10px 0 2px; font-size: 12px; color: var(--accent, #e8b46a); letter-spacing: .04em; }
+#pause-sliders .gh { display: flex; width: 100%; gap: 6px; align-items: baseline; margin: 6px 0 0; padding: 3px 4px; font: inherit; font-size: 12px; font-weight: 700; text-shadow: inherit; text-align: left; color: var(--accent, #e8b46a); letter-spacing: .04em; background: none; border: 0; border-bottom: 1px solid rgba(232,180,106,.35); cursor: pointer; }
+#pause-sliders .gh:hover, #pause-sliders .gh:focus-visible { background: rgba(232,180,106,.14); outline: none; }
+#pause-sliders .gh .mark { width: 1em; flex: none; }
+#pause-sliders .gh .name { flex: 1; }
+#pause-sliders .gh .count { color: #fff3dc; font-weight: 400; font-size: 11px; white-space: nowrap; }
+#pause-sliders .grp.folded .rows { display: none; }
+#pause-sliders .rows { padding: 0 0 4px 4px; }
 #pause-sliders .s { padding: 4px 0 5px; }
 #pause-sliders .label { font-weight: 700; }
 #pause-sliders .label.changed { color: var(--accent, #e8b46a); }
@@ -176,6 +182,7 @@ export class PauseSliders {
   private findsBtn: HTMLButtonElement | null = null;
   private readonly stamp = h("pre", { class: "stamp" });
   private readonly paints: (() => void)[] = [];
+  private readonly heads: (() => void)[] = [];
 
   constructor(private host: DecideHost, private readonly list: readonly Decision[] = DECISION_LIST) {
     const style = document.createElement("style"); style.textContent = PAUSE_CSS; document.head.append(style);
@@ -187,10 +194,21 @@ export class PauseSliders {
     const body = h("div", { class: "list" });
     // (by the PR that added them, newest first: Ed, 2026-10-12, "The panel shows all the sliders in PR order")
     const ordered = byPr(list);
+    // (each PR's group under a header that folds it, every one folded at first: Ed, 2026-10-26, "Can all the menu settings be grouped
+    // by their title with the ability to fold, and start folded?"; the ones opened remembered on this browser)
+    const open = openGroups();
     for (const g of [...new Set(ordered.map(groupOf))]) {
-      body.append(h("h3", { text: g }));
-      for (const d of ordered.filter(x => groupOf(x) === g)) body.append(this.row(d));
+      const mine = ordered.filter(x => groupOf(x) === g), rows = h("div", { class: "rows" }, ...mine.map(d => this.row(d)));
+      const mark = h("span", { class: "mark" }), name = h("span", { class: "name", text: g }), count = h("span", { class: "count" });
+      const head = button("", () => { if (open.has(g)) open.delete(g); else open.add(g); saveOpenGroups(open); fold(); }, { class: "gh", title: `Show or hide ${g}'s sliders` });
+      head.append(mark, name, count);
+      const box = h("section", { class: "grp", data: { group: g } }, head, rows);
+      const fold = () => { const on = open.has(g); box.classList.toggle("folded", !on); head.setAttribute("aria-expanded", String(on)); mark.textContent = on ? "▾" : "▸"; };
+      this.heads.push(() => { const n = changedIn(mine, this.values); count.textContent = n ? ` ● ${n} changed` : ""; box.classList.toggle("changed", n > 0); });
+      fold();
+      body.append(box);
     }
+    this.paintHeads();
     this.el.append(top, body, this.stamp);
     for (const ev of ["pointerdown", "keydown", "keyup", "wheel", "contextmenu"]) this.el.addEventListener(ev, e => { if (!(e instanceof KeyboardEvent && (e.code === "Escape" || e.code === "Period"))) e.stopPropagation(); }); // (its own presses don't fly her; Esc and . still go to the freeze)
     document.body.append(this.el);
@@ -208,7 +226,10 @@ export class PauseSliders {
     const params = new URLSearchParams(location.search);
     for (const d of this.list) this.values.set(d.id, currentValue(d, this.host.tuning, params));
     for (const p of this.paints) p();
+    this.paintHeads();
   }
+  /** Each group's header: how many of its sliders differ from built. */
+  private paintHeads(): void { for (const p of this.heads) p(); }
   /** The freeze's stamp (version, seed, time, where she is), at the panel's foot. */
   setStamp(text: string): void { if (this.stamp.textContent !== text) this.stamp.textContent = text; }
   /** Every value as plain text (Copy values). */
@@ -235,7 +256,7 @@ export class PauseSliders {
       if (r && document.activeElement !== r) r.value = String(v);
       if (out) out.textContent = String(v);
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); paint(); this.status.textContent = ""; }; // (a persisted one, the volumes, remembered: app/settings.ts)
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); paint(); this.paintHeads(); this.status.textContent = ""; }; // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
