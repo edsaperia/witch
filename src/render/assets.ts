@@ -158,14 +158,8 @@ export class AssetLibrary {
       const n = Math.max(1, Math.min(6, (navigator.hardwareConcurrency || 2) - 1));
       try {
         for (let i = 0; i < n; i++) {
-          const w = prewarmed.shift() ?? new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" }); // (one started ahead, if it was: prewarmArtWorkers)
-          const slot: { w: Worker; busy: boolean; job?: ArtJob } = { w, busy: false };
-          w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
-          w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
-            this.useWorkers = false;
-            if (slot.job) this.queue.unshift(slot.job);
-            slot.busy = false; slot.job = undefined;
-          };
+          const slot: { w: Worker; busy: boolean; job?: ArtJob } = { w: null as never, busy: false };
+          this.hire(slot, prewarmed.shift()); // (one started ahead, if it was: prewarmArtWorkers)
           this.workers.push(slot);
         }
       } catch { this.useWorkers = false; }
@@ -180,6 +174,16 @@ export class AssetLibrary {
     this.ask({ kind: "props", id: "home", style }, true, true);
   }
 
+  /** A worker for `slot` (a new one unless given). */
+  private hire(slot: { w: Worker; busy: boolean; job?: ArtJob }, w = new Worker(new URL("./artWorker.ts", import.meta.url), { type: "module" })): void {
+    slot.w = w;
+    w.onmessage = (e: MessageEvent<Reply>) => { slot.busy = false; slot.job = undefined; this.receive(e.data); this.dispatch(); };
+    w.onerror = () => { // the worker itself failed (no module workers, say): draw on the page
+      this.useWorkers = false;
+      if (slot.job) this.queue.unshift(slot.job);
+      slot.busy = false; slot.job = undefined;
+    };
+  }
   private key = (j: ArtJob) => j.kind + ":" + j.id + (j.kind === "type" && j.seed !== this.typeSeed ? `@${j.seed}` : ""); // (tonight's sets apart from the island's)
   /** Where a set is kept between visits (render/artCache.ts). */
   private cacheKey = (j: ArtJob) => artCacheKey(j, this.styleHash);
@@ -298,12 +302,19 @@ export class AssetLibrary {
     if (r.job.kind === "witch") {
       // (her hat-off frames only for the look she has now: a job for a look she's since changed from, at a station where she's drawn
       // from them, would put the old look back on her, the new one never showing: Ed's playtest, 2026-10-23, "I can't select them")
-      if (r.job.bare) { if (JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null)) { this.bare = { ...atlas, grounds: r.result.ours!.grounds }; this.witchHatFrame = r.result.ours!.hat; } }
+      const hers = JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null);
+      if (r.job.bare) {
+        if (hers && (!r.job.quick || !this.bare)) { // (a preview never over the whole set)
+          if (r.job.quick) this.ask(this.witchJob(r.job.genome, true), true);
+          this.bare = { ...atlas, grounds: r.result.ours!.grounds };
+          this.witchHatFrame = r.job.quick ? -1 : r.result.ours!.hat; // (the preview has no hat on the ground)
+        }
+      } else if (r.job.quick) { if (hers && !this.witchLooks.has(JSON.stringify(r.job.genome ?? null))) { this.dropPreview(); this.preview = atlas; this.witch = atlas; this.applyWitchTables(r.result.ours!); this.home.witch = true; this.lookOn = true; this.ask(this.witchJob(r.job.genome, false), true); } else { atlas.albedo.dispose(); atlas.normal.dispose(); } } // (her preview: worn till the whole set lands, never kept)
       else {
         const look = { atlas: { ...atlas, grounds: r.result.ours!.grounds }, art: r.result.ours! }, k = JSON.stringify(r.job.genome ?? null);
         this.witchLooks.delete(k); this.witchLooks.set(k, look);
         if (this.witchLooks.size > 4) this.witchLooks.delete(this.witchLooks.keys().next().value!);
-        if (k === JSON.stringify(this.witchGenome ?? null)) this.wearLook(look); // (a look since replaced by the creator's next: kept, not hers)
+        if (k === JSON.stringify(this.witchGenome ?? null)) { this.wearLook(look); this.lookOn = true; } // (a look since replaced by the creator's next: kept, not hers)
       }
     } else if (r.job.kind === "props") { this.props = atlas; this.home.props = true; }
     else if (r.job.kind === "soundsystems") { this.soundsystems = atlas; this.home.soundsystems = true; }
@@ -367,7 +378,7 @@ export class AssetLibrary {
     else { const G = walkGait("species" in r.job ? r.job.species : r.job.id); // (its walk's frames: a party look's, woken or a face's are its species')
       this.creatures.set(r.job.id, { atlas, frame: (l: number, f: number, away?: boolean) => creatureFrame(l, f, away, G.frames), walk: G }); }
     this.inFlight.delete(this.key(r.job)); this.promoted.delete(this.key(r.job)); this.urgentKeys.delete(this.key(r.job));
-    this.version++;
+    if (r.job.kind !== "witch") this.version++; // (her frames aren't the scenery's: a bump rebuilt the whole scenery, 130-190 ms at a time below 30 fps, at every look a station's choice drew; Ed's log of v4821)
   }
 
   /** Whether a species' plain art is in (nothing asked for): render/view/creatures.ts asks only for the ones that may be on screen. */
@@ -530,8 +541,8 @@ export class AssetLibrary {
     return this.party;
   }
   /** Her frames' job: drawn by an art worker (render/homeArt.ts), kept in the browser's store by her genome. */
-  private witchJob(genome: unknown, bare: boolean): ArtJob {
-    return { kind: "witch", id: `${hashText(JSON.stringify(genome ?? null))}${bare ? "-bare" : ""}`, style: this.style, genome, bare };
+  private witchJob(genome: unknown, bare: boolean, quick = false): ArtJob {
+    return { kind: "witch", id: `${hashText(JSON.stringify(genome ?? null))}${bare ? "-bare" : ""}${quick ? "-quick" : ""}`, style: this.style, genome, bare, quick };
   }
   /** Where each of her poses' frames are (kept objects: the view holds them). */
   private applyWitchTables(W: WitchArt): void {
@@ -548,20 +559,39 @@ export class AssetLibrary {
   djFrame(beat: number, cast = false, scratch = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast, scratch }); } // (scratch: her respawn wait after a knockout; art/witch.js's frames for it, else she DJs as ever)
   /** The character creator changed her look: her frames again, from an art worker (her old ones until they arrive; then onWitch). */
   rebakeWitch(genome: unknown): void {
-    this.witchGenome = genome; this.bare = null; this.bareAsked = false;
-    const had = this.witchLooks.get(JSON.stringify(genome ?? null));
-    if (had) this.wearLook(had); else this.ask(this.witchJob(genome, false), true);
+    this.witchGenome = genome; this.bare = null; this.bareAsked = false; this.lookOn = false;
+    // (a look she's since moved past, still waiting in the queue, is dropped: stepping through a station's choices queued one a
+    // step, each ahead of the next, and the one she'd landed on came last; Ed's playtest of v4821, "I don't see changes on the
+    // witch immediately")
+    const mine = JSON.stringify(genome ?? null);
+    const stale = (q?: ArtJob) => q?.kind === "witch" && JSON.stringify(q.genome ?? null) !== mine;
+    const forget = (q: ArtJob) => { const k = this.key(q); this.inFlight.delete(k); this.promoted.delete(k); this.urgentKeys.delete(k); };
+    this.queue = this.queue.filter(q => !stale(q) || (forget(q), false));
+    // and one already drawing, if it's a whole set (seconds of a worker's time; tens in the cloud): its worker let go for another
+    for (const slot of this.workers) if (stale(slot.job) && !(slot.job as { quick?: boolean }).quick) {
+      forget(slot.job!); slot.w.terminate(); slot.busy = false; slot.job = undefined; this.hire(slot);
+    }
+    const had = this.witchLooks.get(mine);
+    if (had) { this.wearLook(had); this.lookOn = true; return; }
+    // a preview first (a standing frame a facing, a tenth of the drawing), her whole set once it's on her and she's still in that look
+    // (receive): a run of steps keeps the workers on previews, never on whole sets for looks she's passed
+    this.ask(this.witchJob(genome, false, true), true);
   }
-  private wearLook(look: { atlas: Atlas; art: WitchArt }): void { this.witch = look.atlas; this.applyWitchTables(look.art); this.home.witch = true; }
+  private wearLook(look: { atlas: Atlas; art: WitchArt }): void { this.dropPreview(); this.witch = look.atlas; this.applyWitchTables(look.art); this.home.witch = true; }
+  /** Her preview's frames, worn till her whole set lands (rebakeWitch). */
+  private preview: Atlas | null = null;
+  private dropPreview(): void { if (this.preview) { this.preview.albedo.dispose(); this.preview.normal.dispose(); this.preview = null; } } // (her batch takes the next set before the frame draws: view.ts swapHomeArt)
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
    *  ground (`witchHatFrame`): asked for the first time they're wanted (the view asks once the game is up); a stand-in
    *  till they arrive (then onWitch). */
   witchBare(): Atlas {
-    if (!this.bare && !this.bareAsked) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true), true); } // (urgent: her own frames, one job, needed at her first knockdown; behind the art drawn ahead they came minutes late on a slow machine, and she was drawn from the stand-in: invisible)
+    if (!this.bare && !this.bareAsked && this.lookOn) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true, true), true); } // (urgent, and after her look: this one's preview, then its whole set, receive; her own frames, one job, needed at her first knockdown; behind the art drawn ahead they came minutes late on a slow machine, and she was drawn from the stand-in: invisible)
     return this.bare ?? this.bareStandIn;
   }
   private bare: Atlas | null = null;
   private bareAsked = false;
+  /** Her look (its preview or whole set) is on her: her hat-off frames are asked after it (witchBare). */
+  private lookOn = true;
   /** Her frames without her hat are in (not the stand-in): always her look now (onResult drops one for a look she's left). */
   get bareReady(): boolean { return !!this.bare; }
   private bareStandIn = placeholderAtlas(256);

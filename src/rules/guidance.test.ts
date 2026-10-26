@@ -14,12 +14,12 @@ import { atGuide, emptyGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS, 
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
-/** Up in her bedroom: the first night's whole wake-up, or (`later`) the shorter one of the nights after. */
+/** Up in her bedroom: a game's first morning, or (`later`) after a night played (one wake-up for every morning: Ed, 2026-10-26). */
 function up(later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false;
   wakeInBedroom(g);
-  startWake(g, g.herTime, later);
+  startWake(g, g.herTime, { yesterday: later }); // (later: after a night played, last night's clothes in their pile)
   run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
   return g;
 }
@@ -46,10 +46,19 @@ describe("guidance pins", () => {
     expect(of(g)).toEqual({ kind: "decks", target: { x: d.house!.desk.x, z: d.house!.desk.z } });
   });
 
-  it("no dressing pin on the nights after: straight to the decks, last night's clothes or not", () => {
+  it("no dressing pin after a night played: last night's clothes are in their pile; straight to the decks", () => {
     const g = up(true);
     expect(g.wake!.pile!.length).toBeGreaterThan(0);
     expect(of(g)?.kind).toBe("decks");
+  });
+
+  it("a game's first morning on a later load (no night played yet): no pile, so the dressing pins, her hat last on the hats' floor", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, { mirrored: true });
+    run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
+    for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
   });
 
   it("the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)", () => {
@@ -100,6 +109,28 @@ describe("guidance pins", () => {
     expect(G).toEqual({ kind: "bed", target: { object: "bed" } });
     g.witches[0].body = { ...g.witches[0].body, perch: null as never };
     expect(guideShows(g, 0, G!)).toBe(true);
+  });
+
+  it("after a won night, once its finale's over: the map table for an island found tonight not yet seen on the chart, then the bed; shown from anywhere, leading her home (Ed, 2026-10-26)", () => {
+    const g = up(true), W = g.witches[0];
+    g.party.spellAt = 1;
+    const win = (found: string[], card: boolean) => { g.win = { phase: "won", card, found, lost: [] } as unknown as Game["win"]; };
+    win(["lion"], false);
+    expect(of(g)).toBeNull(); // (the finale still on: nothing yet)
+    win(["lion"], true);
+    const s: GuideSave = { unseen: [{ kind: "hat", id: "h", at: "hats" }], chartSeen: ["tiger"] };
+    expect(of(g, s)).toEqual({ kind: "chart", target: { object: "mapTable" } }); // (over anything new in the house)
+    s.chartSeen = ["tiger", "lion"];
+    expect(of(g, s)).toEqual({ kind: "bed", target: { object: "bed" } });
+    win([], true);
+    expect(of(g)).toEqual({ kind: "bed", target: { object: "bed" } }); // (no island found tonight: to bed)
+    // (out in the world, off the treehouse: still shown, pointing her home)
+    W.body = { ...W.body, perch: null as never };
+    win(["lion"], true);
+    expect(guideShows(g, 0, of(g)!)).toBe(true);
+    // (a new night: none of it)
+    g.win = null;
+    expect(of(g)).toBeNull();
   });
 
   it("shows only in the treehouse, and hides at its target", () => {

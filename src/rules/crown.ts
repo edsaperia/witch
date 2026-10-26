@@ -37,8 +37,12 @@ export interface HouseOutline {
   takeoff: { x: number; z: number; from: number; to: number };
 }
 /** What the crown is grown from: the house's outline, the floor's height over the ground and a seed. */
-/** `open`: ground the crown keeps open to the sky as it does the Terrace (the dancefloor and its speakers, on the plan). */
-export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[] }
+/** `open`: ground the crown keeps open to the sky as it does the Terrace (the dancefloor and its speakers, on the plan). `gap`
+ *  (true unless false): the Terrace's gap and its notch out to the crown's edge, with the ring of lights round them; false, the crown
+ *  whole over the Terrace as over every room (Ed, 2026-10-26: "I'd like to try the treehouse canopy not being cut-through while she's
+ *  in treehouse mode - this will make it easier for her to land in the treehouse successfully, as the area is bigger"; the tuning's
+ *  treehouse.house.crown.gap, a switch on the pause page). */
+export interface CrownInput { outline: HouseOutline; floor: number; seed: number; open?: { x: number; z: number; r: number }[]; gap?: boolean }
 
 export interface Crown {
   lobes: Lobe[]; limbs: Limb[]; strings: CrownString[];
@@ -51,6 +55,8 @@ export interface Crown {
   terraceOutline: [number, number][];
   /** Ground kept open as the Terrace is (CrownInput.open). */
   open: { x: number; z: number; r: number }[];
+  /** The Terrace's gap and notch kept open (CrownInput.gap): false, the crown's whole over it. */
+  gap: boolean;
   /** The floor's height over the ground (m). */
   floor: number;
 }
@@ -66,8 +72,9 @@ const DEG = Math.PI / 180;
 /** The Terrace's notch (Ed, 2026-10-24: "perhaps terrace crown gap should be a cutout extending from the terrace to the edge of the
  *  crown, not just a hole"): how far (x, z) on the plan is from the open ground over the Terrace and the channel running from it out
  *  to the crown's edge the way she takes off (negative inside). `width` the channel's half-width. */
-export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"] }, x: number, z: number, width: number): number {
+export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"]; gap?: boolean }, x: number, z: number, width: number): number {
   let d = Infinity;
+  if (c.gap === false) { for (const t of c.open ?? []) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r); return d; } // (no gap: only the open ground)
   for (const t of c.terrace) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
   // (the Terrace's own outline, GAP_MARGIN past it: Ed, 2026-10-26, the gap "doesn't seem to surround the balcony": its disc, r 12.5,
   // left its floor's bulges, out to 15 m, and the desk on its rim under the leaves)
@@ -94,7 +101,7 @@ export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.t
  *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). Under the floor (y negative), the floor
  *  point in front of it on the line of sight: the house's floors are drawn in a plane of their own, not in front of the bark by
  *  depth, so bark under the Terrace showed over it (Ed, 2026-10-26: "there are branches in front of the balcony"). */
-export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"] }, x: number, y: number, z: number): number {
+export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"]; gap?: boolean }, x: number, y: number, z: number): number {
   const w = notchWidth(c);
   let m = notchDistance(c, x, z, w);
   for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - y / Math.tan(p * DEG), w)); // (slid along the line of sight to the floor: back, north, from over it; forward, south, from under it)
@@ -137,11 +144,11 @@ function bounds(O: HouseOutline) {
 }
 
 /** The great oak's crown for a house. The same house and seed always grow the same crown. */
-export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): Crown {
+export function makeCrown({ outline: O, floor, seed, open = [], gap = true }: CrownInput): Crown {
   const R = rng(seed * 7919 + 4111), U = (a: number, b: number) => a + (b - a) * R();
   const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10, outline: [] as [number, number][] }, terrace = [{ x: T.x, z: T.z, r: T.r }], terraceOutline = T.outline;
   const ta = ((O.takeoff.from + O.takeoff.to) / 2) * DEG, takeoff: [number, number] = [Math.cos(ta), Math.sin(ta)], notchFrom: [number, number] = [O.takeoff.x, O.takeoff.z];
-  const shape = { terrace, takeoff, notchFrom, open, terraceOutline };
+  const shape = { terrace, takeoff, notchFrom, open, terraceOutline, gap };
   const B = bounds(O), margin = 26;
   const dome = { cx: (B.x0 + B.x1) / 2, cz: (B.z0 + B.z1) / 2, rx: (B.x1 - B.x0) / 2 + margin, rz: (B.z1 - B.z0) / 2 + margin, base: 14, top: 0 };
   const size = Math.max(dome.rx, dome.rz), RY = size * 0.45, K = size / 92; // (K: the mock's lobes, for its 185 m crown, scaled to this one)
@@ -253,7 +260,7 @@ export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): C
     strings.push({ kind: "drape", spans: [{ a: [a.x + dx * a.r * 0.55, a.y + a.r * 0.9, a.z + dz * a.r * 0.55], b: [best.x - dx * best.r * 0.55, best.y + best.r * 0.9, best.z - dz * best.r * 0.55], sag: 1.5 }] });
   }
   for (const a of tops) if (hash2(a.seed, 3, seed) < 0.45) strings.push({ kind: "garland", x: a.x, y: a.y, z: a.z, r: a.r * 1.02, el: 0.25 + 0.45 * hash2(a.seed, 5, seed), o: hash2(a.seed, 7, seed) * Math.PI * 2 });
-  { const o = terrace[0], rr = o.r + 9, pts: V3[] = [];
+  if (gap) { const o = terrace[0], rr = o.r + 9, pts: V3[] = [];
     for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2, y = 14 + 3 * Math.sin(a * 3); let d = rr; // (out past every line of sight down to the gap)
       while (d < rr + 80 && sightClearance(shape, o.x + Math.cos(a) * d, y, o.z + Math.sin(a) * d) < 1.5) d += 1;
       pts.push([o.x + Math.cos(a) * d, y, o.z + Math.sin(a) * d]); }
@@ -262,7 +269,7 @@ export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): C
   // (no string across the gap either: a span whose wire would hang on a line of sight to the Terrace is left out)
   for (const s of strings) if (s.kind !== "garland") s.spans = s.spans.filter(p => spanClear(shape, p));
   const kept = strings.filter(s => s.kind === "garland" || s.spans.length);
-  return { lobes, limbs, strings: kept, dome, terrace, terraceOutline, notchFrom, takeoff, open, floor };
+  return { lobes, limbs, strings: kept, dome, terrace, terraceOutline, notchFrom, takeoff, open, gap, floor };
 }
 
 /** A bulb of the crown's lights: where (on the plan, y over the floor), its colour's place in the palette, how far along its string

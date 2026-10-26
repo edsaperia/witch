@@ -10,6 +10,7 @@ const smoothstep01 = (x: number) => x * x * (3 - 2 * x);
 import { groundHeight, placed } from "../height";
 import { focusOf } from "./culling";
 import { LIGHT_UNIFORMS } from "../lighting";
+import { hsvInto, moodOf } from "../mood";
 import { biomeJitter } from "../../../art/flora/biomes.js";
 import { FADE_MATERIALS, FADE_MESHES, SPRITE_UNIFORMS } from "../sprites";
 
@@ -53,6 +54,8 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  { const M = moodOf(t); if (M && !t.bare) hsvInto(LIGHT_UNIFORMS.uGlowRgb.value, M.glowHue, M.glowSat, 1); } // (her glow's colour, every frame: the pause page's Hidden witch sliders)
+  for (const b of [v.witchBatch, v.bareBatch]) if (b) { b.silhouetteOpacity = t.occlusion.silhouette; b.silhouetteColour = LIGHT_UNIFORMS.uGlowRgb.value; } // (her silhouette's strength and colour, live too)
   for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
   for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;
   SPRITE_UNIFORMS.uSeeSolid.value = ({ off: 0, all: 1, circle: 2, rest: 3 } as Record<string, number>)[S.seeSolid] ?? 0;

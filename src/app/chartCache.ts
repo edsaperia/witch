@@ -64,3 +64,50 @@ export async function cachePrune(prefix: string): Promise<void> {
     q.onsuccess = () => { const c = q.result; if (!c) return; if (!String(c.key).startsWith(prefix)) store.delete(c.key); c.continue(); };
   } catch { /* nothing to prune */ }
 }
+
+/** An island's coast for the zoo (Ed, 2026-10-26: "We already know the real coastline shapes, can't we reuse them in the zoo
+ *  without calculating anything?"; rules/zooMap.ts ZooLayoutKnobs.coasts): kept beside its outline, small, by the world and the
+ *  island alone, under this build's prefix (the night's tuning's, as the chart's own keys: the zoo's page has its own tuning, so
+ *  it looks up these, never keys of its own). */
+export const coastKey = (id: string, world: number): string => `${CACHE_PREFIX}coast1|${world}|${id}`;
+
+/** The most points a kept coast has (evenly round it). */
+export const COAST_POINTS = 240;
+
+/** An outline's coast for the zoo: its biggest sea loop (an islet off it, and its lakes, left out), its points spaced evenly round
+ *  it (at most COAST_POINTS), its longer side 1 across, centred on its box; x, z pairs. Null if it has none. */
+export function compactCoast(loops: readonly { pts: ArrayLike<number>; sea: boolean }[]): number[] | null {
+  let best: ArrayLike<number> | null = null, area = 0;
+  for (const l of loops) {
+    if (!l.sea || l.pts.length < 6) continue;
+    let a = 0;
+    for (let i = 0, n = l.pts.length, j = n - 2; i < n; j = i, i += 2) a += l.pts[j] * l.pts[i + 1] - l.pts[i] * l.pts[j + 1];
+    if (Math.abs(a) > area) { area = Math.abs(a); best = l.pts; }
+  }
+  if (!best) return null;
+  const P = best, m = P.length >> 1, cum = [0];
+  for (let i = 0; i < m; i++) { const j = (i + 1) % m; cum.push(cum[i] + Math.hypot(P[j * 2] - P[i * 2], P[j * 2 + 1] - P[i * 2 + 1])); }
+  const n = Math.min(COAST_POINTS, m), per = cum[m], out: number[] = [];
+  let seg = 0;
+  for (let k = 0; k < n; k++) {
+    const d = (k / n) * per;
+    while (seg < m - 1 && cum[seg + 1] < d) seg++;
+    const j = (seg + 1) % m, t = (d - cum[seg]) / Math.max(1e-9, cum[seg + 1] - cum[seg]);
+    out.push(P[seg * 2] + (P[j * 2] - P[seg * 2]) * t, P[seg * 2 + 1] + (P[j * 2 + 1] - P[seg * 2 + 1]) * t);
+  }
+  // (one gentle pass of smoothing: the land's sampled on a grid, its coast stepped at its samples)
+  const sm = out.map((v, i) => { const k = i >> 1, o = i & 1, a = out[(((k - 1 + n) % n) << 1) + o], b = out[(((k + 1) % n) << 1) + o]; return (a + 2 * v + b) / 4; });
+  out.splice(0, out.length, ...sm);
+  let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+  for (let k = 0; k < n; k++) { x0 = Math.min(x0, out[k * 2]); x1 = Math.max(x1, out[k * 2]); z0 = Math.min(z0, out[k * 2 + 1]); z1 = Math.max(z1, out[k * 2 + 1]); }
+  const cx = (x0 + x1) / 2, cz = (z0 + z1) / 2, size = Math.max(1e-9, x1 - x0, z1 - z0);
+  return out.map((v, i) => Math.round(((v - (i % 2 ? cz : cx)) / size) * 1e5) / 1e5);
+}
+
+/** Keep an island's coast for the zoo, if it isn't kept yet (the chart's worker, as it keeps or reads back an outline). */
+export async function keepCoast(id: string, world: number, loops: readonly { pts: ArrayLike<number>; sea: boolean }[]): Promise<void> {
+  if (id === "home") return; // (the zoo's home is the plaza)
+  const key = coastKey(id, world), c = compactCoast(loops); // (read now: its buffers may be sent on straight after)
+  if (!c || (await cacheGet(key))) return;
+  await cachePut(key, c);
+}
