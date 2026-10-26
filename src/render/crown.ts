@@ -45,6 +45,9 @@ function polyDist(p: [number, number][], x: number, z: number, closed = false): 
   return d;
 }
 
+/** How fast the oak dithers away as she goes behind it and back as she comes out (1/s). */
+const BEHIND_EASE = 4;
+
 /** The mask's side (texels) over the crown's dome: about a metre a texel. */
 const MASK = 128;
 
@@ -61,6 +64,7 @@ uniform vec4 uClearBox; // the mask's plan box: x0, z0, 1/width, 1/depth
 uniform float uClearOn; // 1 indoors with a room (or branch) to clear
 uniform vec4 uWitch, uOcc;
 uniform float uWitchDepth;
+uniform float uBehind; // she's behind the oak, north of it (0 to 1, eased): what of it stands nearer than her dithers away
 uniform sampler2D uNoise; // a tiling value noise, 64 cells across (one lookup in place of four hashes: the crown is a lot of pixels)
 float vnoise2(vec2 p) { return texture2D(uNoise, (p + 0.5) / 64.0).r; }
 float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
@@ -77,6 +81,10 @@ bool cleared(vec2 floorP, float depth) {
     float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
     if (o < 0.0 || (o < 2.5 && bayer4(gl_FragCoord.xy) > o / 2.5)) return true;
   }
+  // (Ed, 2026-10-26: "from the north of the oak, hide the crown and trunk of the treehouse as well, when you're behind them": the
+  // camera looks north, so north of the oak it stands between the camera and her, its lobes filling the screen; everything of it
+  // nearer than her goes, dithered in and out as she comes and goes)
+  if (uBehind > 0.0 && uIndoor < 0.5 && depth < uWitchDepth - 1.0 && bayer4(gl_FragCoord.xy) < uBehind) return true;
   if (uOcc.w > 0.0 && depth < uWitchDepth - 0.5) {
     float e = screenDistC(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
     float occl = 1.0 - smoothstep(0.3, 1.0 + uOcc.y, e);
@@ -277,7 +285,7 @@ export class CrownView {
       uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
       uBendOn: { value: 1 }, uIndoor: { value: 0 }, uLobeK: { value: 1 }, uBack: { value: this.back },
       uNoise: { value: noiseTexture() },
-      uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
+      uBehind: { value: 0 }, uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
     };
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
@@ -292,8 +300,9 @@ export class CrownView {
   get stats() { return { lobes: (this.lobes.geometry as THREE.InstancedBufferGeometry).instanceCount, barkTris: (this.bark.geometry.index?.count ?? 0) / 3 }; }
 
   /** A frame: `world` the true map (the hub on the ground, the floor's height), `house` the floors' own (null when she isn't
-   *  indoors), `here` her place on the plan indoors, `dt` her clock's step. */
-  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number): void {
+   *  indoors), `here` her place on the plan indoors, `dt` her clock's step, `her` where she is in the world (for hiding the oak when
+   *  she's behind it). */
+  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number, her: { x: number; y: number; z: number } | null = null): void {
     const want = house ? 1 : 0;
     this.k += (want - this.k) * (1 - Math.exp(-8 * Math.max(0, dt)));
     if (Math.abs(this.k - want) < 0.01 || dt <= 0) this.k = want;
@@ -304,6 +313,11 @@ export class CrownView {
     const hy = new THREE.Vector3().copy(h.ey).multiplyScalar(flat), ho = new THREE.Vector3().copy(h.o).addScaledVector(h.ey, lift);
     mix(world.o, ho, U.uMapO.value); mix(world.ex, h.ex, U.uMapX.value); mix(world.ey, hy, U.uMapY.value); mix(world.ez, h.ez, U.uMapZ.value);
     U.uBendOn.value = k > 0.5 ? 0 : 1; U.uIndoor.value = k > 0.5 ? 1 : 0; U.uLobeK.value = 1 - 0.35 * k;
+    // behind the oak: north of its middle, with the oak on her line of sight from the camera; eased over about a quarter of a second
+    const behind = k < 0.5 && her ? this.behindOak(camera.position, her, world) : 0;
+    this.behind += (behind - this.behind) * (1 - Math.exp(-BEHIND_EASE * Math.max(0, dt)));
+    if (Math.abs(this.behind - behind) < 0.01 || dt <= 0) this.behind = behind;
+    U.uBehind.value = this.behind;
     camera.getWorldDirection(this.back).negate();
     const indoors = k > 0.5;
     // (indoors in three.js's transparent list, so after the house's floors and walls, which are drawn there with no depth: in the
@@ -318,6 +332,24 @@ export class CrownView {
     U.uClearOn.value = key ? 1 : 0;
     if (key && key !== this.maskFor) { this.maskFor = key; this.fill(room ? (x, z) => (inPoly(room.outline, x, z) ? 0 : polyDist(room.outline, x, z, true)) : (x, z) => Math.max(0, polyDist(branch!.pts, x, z) - branch!.w / 2)); }
   }
+
+  /** How much she's behind the oak (0 or 1): north of the crown's middle on its plan, and the line from the camera to her passing
+   *  through the crown (its dome on the plan, from its lowest sagging lobes to its top). */
+  behindOak(cam: THREE.Vector3, her: { x: number; y: number; z: number }, world: PlanMap): number {
+    const d = this.crown.dome, o = world.o, toPlan = (x: number, y: number, z: number) => {
+      const dx = x - o.x, dz = z - o.z, ex = world.ex, ez = world.ez;
+      return [(dx * ex.x + dz * ex.z) / Math.max(1e-6, ex.x * ex.x + ex.z * ex.z), y - o.y, (dx * ez.x + dz * ez.z) / Math.max(1e-6, ez.x * ez.x + ez.z * ez.z)];
+    };
+    const h = toPlan(her.x, her.y, her.z), c = toPlan(cam.x, cam.y, cam.z);
+    if (h[2] > d.cz) return 0; // (south of its middle: the crown is seen as it is from the south)
+    for (let i = 1; i < 32; i++) {
+      const u = i / 32, x = c[0] + (h[0] - c[0]) * u, y = c[1] + (h[1] - c[1]) * u, z = c[2] + (h[2] - c[2]) * u;
+      if (((x - d.cx) / d.rx) ** 2 + ((z - d.cz) / d.rz) ** 2 < 1 && y < d.top && y > -this.crown.floor) return 1;
+    }
+    return 0;
+  }
+  /** Eased 0 to 1 as she goes behind the oak (uBehind). */
+  private behind = 0;
 
   /** The distance field of one floor shape (its plan's metres, 0 to 16 m in 0 to 1). */
   private fill(dist: (x: number, z: number) => number): void {

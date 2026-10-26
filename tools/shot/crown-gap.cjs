@@ -44,7 +44,7 @@ const OUTLINE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/ho
           P.project(cam); return [(P.x * 0.5 + 0.5) * innerWidth, (0.5 - P.y * 0.5) * innerHeight, P.z];
         });
       }, OUTLINE);
-      const shot = async () => { await step(1); return page.screenshot({ type: "png" }); };
+      const shot = async () => { await step(1); return page.screenshot({ type: "png", timeout: 300000 }); };
       const hide = vis => page.evaluate(vis => window.witch.view.scene.traverse(o => { if (/^crown$/.test(o.name)) o.visible = vis; }), vis);
       const a = await shot(); await hide(false); const b = await shot(); await hide(true);
       const where = await page.evaluate(() => { const w = window.witch.game.witch, c = window.witch.view.crown; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, indoors: c ? c.indoors : null }; });

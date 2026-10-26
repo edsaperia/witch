@@ -1487,7 +1487,7 @@ export class View {
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
       const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
-      this.crown.update(this.camera, W, plan, here, dt);
+      this.crown.update(this.camera, W, plan, here, dt, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
