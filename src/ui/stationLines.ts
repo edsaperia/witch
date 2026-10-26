@@ -107,10 +107,10 @@ export type { BroomPart };
 
 /** A gamepad on a station's panel (Ed's playtest, 2026-10-23: "right stick is probably more natural"): which way it moves the
  *  selector (the d-pad, or the right stick pushed past half way, by its stronger axis; the left stick walks her) and whether it
- *  chooses (the bottom face button, or the left one: as E and Enter). */
+ *  chooses (the bottom face button, cross: as Space and Enter; the left one, square, is the use button that closes it, as E). */
 export function panelPad(buttons: readonly boolean[], axes: readonly number[]): { dir: "" | "up" | "down" | "left" | "right"; choose: boolean } {
   const b = (i: number) => !!buttons[i], rx = axes[2] ?? 0, ry = axes[3] ?? 0;
   const dir = b(12) ? "up" : b(13) ? "down" : b(14) ? "left" : b(15) ? "right"
     : Math.max(Math.abs(rx), Math.abs(ry)) < 0.5 ? "" : Math.abs(rx) > Math.abs(ry) ? (rx > 0 ? "right" : "left") : ry > 0 ? "down" : "up";
-  return { dir, choose: b(0) || b(2) };
+  return { dir, choose: b(0) }; // (cross: square, the use button, closes it, Ed 2026-10-26)
 }

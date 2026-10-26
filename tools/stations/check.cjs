@@ -72,9 +72,10 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         ok(!s.worn.includes(other), `${id}: an arrow key onto another owned item puts that on instead (worn ${s.worn})`);
         ok(s.saved && JSON.stringify(JSON.parse(s.saved)) === s.drawn, `${id}: her drawn look follows the arrow key's choice`);
       } else log(id, `fewer than two owned items in its first row (${owned.length}): click and arrows on items skipped`);
-      // Enter, E and Space: chosen in the panel, never the game's (no rise, nothing put down); on a locked item, not found yet.
+      // Enter and Space: chosen in the panel, never the game's (no rise, nothing put down); on a locked item, not found yet. (E closes
+      // it: Ed, 2026-10-26, "I think E should also close, and we can have spacebar to select"; below.)
       const locked = await page.evaluate(() => { const e = document.querySelector("#station-panel .sp-card.locked"); if (!e) return null; const r = e.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; });
-      for (const key of ["Enter", "KeyE", "Space"]) {
+      for (const key of ["Enter", "Space"]) {
         const before = await state();
         await page.keyboard.press(key); await page.waitForTimeout(800);
         const after = await state();
@@ -86,6 +87,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
         const s = await state();
         ok(/not found yet/i.test(s.detail), `${id}: Enter on a locked item says it's not found yet ("${s.detail.replace(/\s+/g, " ").trim()}")`);
       }
+      // E again: the panel slides out, she still stands there (and E once more brings it back)
+      await page.keyboard.press("KeyE");
+      for (let i = 0; i < 20 && (await panelIn()); i++) await page.waitForTimeout(500);
+      ok(!(await panelIn()), `${id}: E again closes its panel`);
+      for (let i = 0; i < 20 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); }
+      ok(await panelIn(), `${id}: and E there opens it again`);
       await page.close();
     }
   } finally { await browser.close(); server.close(); }

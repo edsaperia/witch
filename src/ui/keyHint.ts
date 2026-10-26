@@ -2,13 +2,17 @@
 // keycaps in the inverted T, drawn in the room's own art pixels on the floor in front of where she starts: a light face with
 // its letter, a darker bottom edge for depth, an outline. The key held goes down a pixel and lights up pink. Once she's walked
 // a few steps it fades away, coming back after a long while standing; used with the arrows, it shows arrows. Not on a touch
-// screen (no keys to show).
+// screen (no keys to show). The same keycaps, one at a time, are the use prompt over what she can use in the treehouse (Ed, 2026-10-26:
+// "We used to have little keys to show 'WASD', can we use these for E": `keycapCanvas`, render/houseRooms.ts).
 
 /** 3 × 5 glyphs: the letters and the arrows. */
 const GLYPH: Record<string, string[]> = {
   W: ["10001", "10001", "10101", "10101", "01010"], A: ["010", "101", "111", "101", "101"], S: ["111", "100", "111", "001", "111"], D: ["110", "101", "101", "101", "110"],
   U: ["010", "111", "010", "010", "010"], N: ["010", "010", "010", "111", "010"],
   L: ["00100", "01000", "11111", "01000", "00100"], R: ["00100", "00010", "11111", "00010", "00100"],
+  E: ["111", "100", "110", "100", "111"],
+  /** The pad's square (its use button) and, on touch, a fingertip: the key itself is tapped. */
+  SQ: ["11111", "10001", "10001", "10001", "11111"], TAP: ["01110", "11111", "11111", "11111", "01110"],
 };
 const KEY = 9, FACE = 7, GAP = 1;
 /** Seconds of walking before it fades, how long it takes, and how long standing still brings it back. */
@@ -42,19 +46,32 @@ export class KeyHint {
   draw(c: CanvasRenderingContext2D, x: number, y: number, held: Set<string>): void {
     if (this.touch || this.alpha <= 0) return;
     c.save(); c.globalCompositeOperation = "source-over"; c.globalAlpha = this.alpha;
-    for (const k of KEYS) {
-      const down = held.has(k.wasd) || held.has(k.arrow), kx = Math.round(x + k.at[0] * (KEY + GAP)), ky = Math.round(y + k.at[1] * (KEY + GAP)), d = down ? 1 : 0;
-      const rect = (col: string, ox: number, oy: number, w: number, h: number) => { c.fillStyle = col; c.fillRect(kx + ox, ky + oy, w, h); };
-      // outline (its corners cut), the bottom edge, the face
-      rect("#1a1022", 1, d, KEY - 2, KEY - d); rect("#1a1022", 0, 1 + d, KEY, KEY - 2 - d);
-      rect(down ? "#b4487e" : "#6d5f86", 1, 1 + d, KEY - 2, KEY - 2 - d);
-      rect(down ? "#ffd2ec" : "#e9e2f4", 1, 1 + d, KEY - 2, FACE - 2 - d + 1);
-      rect(down ? "#fff0f8" : "#fbf8ff", 1, 1 + d, KEY - 2, 1); // (its lit top)
-      // the glyph
-      const g = GLYPH[k.g[this.arrows ? 1 : 0]], gx = kx + Math.floor((KEY - g[0].length) / 2), gy = ky + 1 + d;
-      c.fillStyle = down ? "#5a1236" : "#2a1d3a";
-      g.forEach((row, j) => [...row].forEach((on, i) => { if (on === "1") c.fillRect(gx + i, gy + j, 1, 1); }));
-    }
+    for (const k of KEYS) drawKey(c, Math.round(x + k.at[0] * (KEY + GAP)), Math.round(y + k.at[1] * (KEY + GAP)), k.g[this.arrows ? 1 : 0], held.has(k.wasd) || held.has(k.arrow));
     c.restore();
   }
+}
+
+/** One keycap, its top left at (kx, ky) in art pixels, with glyph `glyph` (GLYPH's), pressed or not. */
+function drawKey(c: CanvasRenderingContext2D, kx: number, ky: number, glyph: string, down: boolean): void {
+  const d = down ? 1 : 0, rect = (col: string, ox: number, oy: number, w: number, h: number) => { c.fillStyle = col; c.fillRect(kx + ox, ky + oy, w, h); };
+  // outline (its corners cut), the bottom edge, the face
+  rect("#1a1022", 1, d, KEY - 2, KEY - d); rect("#1a1022", 0, 1 + d, KEY, KEY - 2 - d);
+  rect(down ? "#b4487e" : "#6d5f86", 1, 1 + d, KEY - 2, KEY - 2 - d);
+  rect(down ? "#ffd2ec" : "#e9e2f4", 1, 1 + d, KEY - 2, FACE - 2 - d + 1);
+  rect(down ? "#fff0f8" : "#fbf8ff", 1, 1 + d, KEY - 2, 1); // (its lit top)
+  // the glyph
+  const g = GLYPH[glyph], gx = kx + Math.floor((KEY - g[0].length) / 2), gy = ky + 1 + d;
+  c.fillStyle = down ? "#5a1236" : "#2a1d3a";
+  g.forEach((row, j) => [...row].forEach((on, i) => { if (on === "1") c.fillRect(gx + i, gy + j, 1, 1); }));
+}
+
+/** The keycaps a use prompt shows: E, the pad's square, a tap. */
+export type KeycapGlyph = "E" | "SQ" | "TAP";
+/** A lone keycap (KEY art pixels square) as a canvas, `scale` page pixels an art pixel, drawn sharp: the use prompt's. */
+export function keycapCanvas(glyph: KeycapGlyph, scale = 3, down = false): HTMLCanvasElement {
+  const cv = document.createElement("canvas");
+  cv.width = KEY; cv.height = KEY;
+  cv.style.cssText = `width:${KEY * scale}px;height:${KEY * scale}px;image-rendering:pixelated;display:block`;
+  drawKey(cv.getContext("2d")!, 0, 0, glyph, down);
+  return cv;
 }

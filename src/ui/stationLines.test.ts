@@ -105,9 +105,9 @@ describe("the stations", () => {
 
 describe("panelPad (a gamepad on a station's panel)", () => {
   const pressed = (...i: number[]) => { const b = Array(17).fill(false); for (const k of i) b[k] = true; return b; };
-  it("the bottom and left face buttons choose (Ed's playtest, 2026-10-23: he pressed the bottom one to choose)", () => {
+  it("the bottom face button chooses (Ed's playtest, 2026-10-23: he pressed it to choose; 2026-10-26: \"square and X on controller\", square closes)", () => {
     expect(panelPad(pressed(0), [0, 0, 0, 0]).choose).toBe(true);
-    expect(panelPad(pressed(2), [0, 0, 0, 0]).choose).toBe(true);
+    expect(panelPad(pressed(2), [0, 0, 0, 0]).choose).toBe(false);
     expect(panelPad(pressed(1), [0, 0, 0, 0]).choose).toBe(false);
   });
   it("the d-pad and the right stick move the selector (Ed: \"right stick is probably more natural\"); the left stick doesn't", () => {

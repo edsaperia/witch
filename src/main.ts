@@ -987,11 +987,12 @@ function frame(now: number): void {
   }
   // The station she's at (lit, E over it: render/houseRooms.ts); E there slides its panel in (Ed's playtest, 2026-10-26: "Menus should
   // open when she presses E near an interactive object ... instead of them opening automatically just through proximity"); walking
-  // off it, out (not over her room open full screen, the chart, or a bot's game). While it's open E chooses in it (ui/stationPanel.ts).
+  // off it, out (not over her room open full screen, the chart, or a bot's game). E again, or the pad's □, slides it out (Ed: "I think E should also close, and we can have spacebar to select"); Space chooses in it (ui/stationPanel.ts).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
-  if (stations.station && station?.id !== stations.station) stations.close(); // (walked off it, or on to another: that one waits for E)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  const used = usedAt(game), shut = !!stations.station && used === stations.station; // (E at the one that's open: it closes)
+  if (stations.station && (shut || station?.id !== stations.station)) stations.close(); // (E again; or walked off it, or on to another: that one waits for E)
+  if (!shut && station && shelves && station.id !== stations.station && used === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse), and it shuts once she walks off.

@@ -95,7 +95,7 @@ export class StationPanel {
     });
     // The arrow keys move through the panel while it's open (Ed, 2026-10-21: "the arrow keys move through the panel at a station;
     // WASD still walks her"): taken before the game's input sees them.
-    // Enter, Space or E chooses what's in focus (Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
+    // Space or Enter chooses what's in focus (E did, till Ed's 2026-10-26: "E should also close, and we can have spacebar to select"; Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
     // around"): landing on an owned item already wears it; choosing does too, and says when it's still to be found.
     window.addEventListener("keydown", e => {
       if (!this.id) return;
@@ -144,7 +144,7 @@ export class StationPanel {
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
-  /** Each frame while open: the pad's d-pad or right stick moves, its bottom or left face button chooses (the left stick walks her:
+  /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, square closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
@@ -275,7 +275,7 @@ export class StationPanel {
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click or <span class="k">← ↑ → ↓</span> <span class="k">✥</span> to wear · <span class="k">E</span> <span class="k">Enter</span> <span class="k">Ⓐ</span> choose · walk away to close</div>`;
+    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click or <span class="k">← ↑ → ↓</span> <span class="k">✥</span> to wear · <span class="k">Space</span> <span class="k">Enter</span> <span class="k">✕</span> choose · <span class="k">E</span> <span class="k">□</span> or walk away to close</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
@@ -362,7 +362,7 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 /** The keys and pad buttons (A, X) that choose what's in focus. */
-const CHOOSE = new Set(["Enter", "NumpadEnter", "Space", "KeyE"]);
+const CHOOSE = new Set(["Enter", "NumpadEnter", "Space"]); // (Space chooses, E closes it: Ed, 2026-10-26, "E should also close, and we can have spacebar to select")
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;

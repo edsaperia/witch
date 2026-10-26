@@ -12,8 +12,6 @@ import * as THREE from "three";
 import type { View } from "./view";
 import { deckOf, type Deck } from "../rules/treehouse";
 import { fromPlan, toPlan, HOUSE_ROOMS, hatsOnFloor, hatSlots, objectAt, type HouseObject } from "../rules/houseRooms";
-import type { Witch } from "../rules/game";
-import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
 import { standing, type FloorPixels } from "./houseArt";
@@ -29,6 +27,7 @@ import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
+import { keycapCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
 import { loanFind } from "../rules/finds";
 
@@ -143,7 +142,7 @@ export class HouseRoomsView {
   private sparkle: LoanSparkle | null = null;
   private readonly box: HTMLDivElement;
   private readonly tag: HTMLDivElement;
-  private tagHtml = "";
+  private tagKey = "";
   /** While the prompt is a tap target (touch): the view's onUse. */
   private tapUse: ((down: boolean) => void) | null = null;
   private readonly bubble: HTMLDivElement;
@@ -193,7 +192,7 @@ export class HouseRoomsView {
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
     const pill = "position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 14px/1.2 inherit;padding:3px 8px;border-radius:8px;";
-    this.tag = document.createElement("div"); this.tag.style.cssText = pill + "background:rgba(20,14,32,.82);color:#f3e8ff;border:1px solid rgba(255,214,140,.55)";
+    this.tag = document.createElement("div"); this.tag.style.cssText = "position:absolute;transform:translate(-50%,-100%);filter:drop-shadow(0 0 3px rgba(255,214,140,.55))"; // (a keycap alone: ui/keyHint.ts)
     // (on a touch screen the prompt is itself the button: a tap uses the object, as the touch sigil button does; ui/touch.ts)
     this.tag.addEventListener("pointerdown", e => { if (this.tapUse) { e.preventDefault(); this.tapUse(true); } });
     for (const ev of ["pointerup", "pointerleave", "pointercancel"]) this.tag.addEventListener(ev, () => this.tapUse?.(false));
@@ -395,17 +394,17 @@ export class HouseRoomsView {
     }
     if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    // the tag over it: its name and the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press
-    // to open it"): E, the pad's □, or on a touch screen the tag itself to tap; just its name while it's open. Up at her decks before
-    // the party, E there starts it (rules/wakeUp.ts atDecks).
+    // over it, the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press to open it"; then
+    // "Please remove words from the station tags. We used to have little keys to show 'WASD', can we use these for E"): a keycap
+    // alone, the old walking keys' (ui/keyHint.ts), E, the pad's □, or on a touch screen the keycap itself to tap; none while it's
+    // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
     const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null);
-    const say = decks ? { label: "Decks", act: "start the party" } : tagged ? tagOf(tagged, W, D, w) : null, open = !!tagged && tagged.id === v.houseOpen;
-    const html = say ? promptHtml(say, open ? null : v.useDevice) : "";
-    if (html !== this.tagHtml) { this.tagHtml = html; this.tag.innerHTML = html; }
-    this.tapUse = say && !open && v.useDevice === "touch" ? v.onUse : null;
+    const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = USE_GLYPH[v.useDevice], cap = `${glyph}|${px}`;
+    if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
+    this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;
     this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
-    place(this.tag, tagged, decks ? 1.9 : tagHeight(tagged?.use.kind));
+    place(this.tag, usable, decks ? 1.9 : tagHeight(usable?.use.kind));
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
@@ -417,36 +416,8 @@ export class HouseRoomsView {
   }
 }
 
-/** The tag's words: the object's name, and what its button does (`act`; "" its button alone; undefined, no button), held (`hold`). */
-export interface TagSay { label: string; act?: string; hold?: boolean }
-
-/** What the tag over an object says (the hats' floor: the hat nearest her). */
-export function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): TagSay {
-  if (o.use.kind === "bed") return { label: "Bed", act: "to sleep (ends the night)", hold: true };
-  if (o.use.kind === "zoo") return { label: "Bestiary book", act: "the zoo" };
-  if (o.use.kind === "telescope") return { label: "Telescope", act: "look" };
-  if (o.use.kind === "chart") return { label: o.label, act: "the sea chart" };
-  if (o.use.kind === "pile") return { label: o.label, act: "put them on" };
-  if (o.use.kind === "instrument") return { label: o.label, act: "play" };
-  if (o.use.kind === "hats") {
-    const hats = hatsOnFloor(W), slots = hatSlots(D);
-    let best = -1, bd = 0.9;
-    hats.forEach((s, i) => { const dd = Math.hypot(slots[i].x - w.x, slots[i].z - w.z); if (s && dd <= bd) { bd = dd; best = i; } });
-    return best >= 0 ? { label: `${hatSpell(hats[best])?.name ?? hats[best]} hat`, act: "wear it" } : { label: "Hats", act: "put yours down" };
-  }
-  return { label: o.label, act: "" };
-}
-
-/** The use button's face on each device: the key, the pad's left face button (the sigil's, platform/input.ts PAD), a tap. */
-export const USE_BUTTON = { keys: "E", pad: "□", touch: "tap" } as const;
-
-/** The tag's HTML: its name, then (on `device`, null while it's open: its name alone) the button in a key cap and what it does. */
-export function promptHtml(say: TagSay, device: keyof typeof USE_BUTTON | null): string {
-  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  if (!device || say.act === undefined) return esc(say.label);
-  const cap = `<b style="display:inline-block;min-width:1.1em;padding:0 4px;margin:0 2px;border-radius:4px;background:#f3e8ff;color:#2a1d3a;box-shadow:0 2px 0 #8a6fb0;text-align:center;font-weight:700">${USE_BUTTON[device]}</b>`;
-  return `${esc(say.label)} · ${say.hold ? "hold " : ""}${cap}${say.act ? ` ${esc(say.act)}` : ""}`;
-}
+/** The use prompt's keycap on each device: E, the pad's left face button (the sigil's, platform/input.ts PAD), a tap. */
+export const USE_GLYPH: Record<"keys" | "pad" | "touch", KeycapGlyph> = { keys: "E", pad: "SQ", touch: "TAP" };
 
 /** Her decks' spot for a tag, as a house object's (on the plan: rules/houseRooms.ts), just behind her seat. */
 function decksSpot(D: Deck): HouseObject {
