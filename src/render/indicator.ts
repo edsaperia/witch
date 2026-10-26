@@ -152,6 +152,21 @@ export class PixelCue {
   flush(): void { this.g.putImageData(this.img, 0, 0); }
 }
 
+/** A still pin onto a cue (the sea chart's 🧭, render/chart/chartPin.ts): the ring, the emoji in its middle (its pixels in its own
+ *  colours) and the arrowhead outside the ring pointing at `angle` (screen radians: π/2 straight down, as a map pin), in `rgb`. */
+export function paintPin(c: PixelCue, rgb: number[], emoji: string, angle = Math.PI / 2, glyph?: readonly string[]): void {
+  c.clear();
+  const ring = ringPixels();
+  for (let k = 0; k < ring.length; k += 3) c.dot(ring[k], ring[k + 1], rgb, 1);
+  const E = pixelEmojiData(emoji, EMOJI_PX);
+  if (E && E.data.some((v, i) => i % 4 === 3 && v > 0)) { const o = Math.floor((N - EMOJI_PX) / 2), d = E.data; for (let y = 0; y < EMOJI_PX; y++) for (let x = 0; x < EMOJI_PX; x++) { const i = (y * EMOJI_PX + x) * 4; if (d[i + 3]) c.dot(o + x, o + y, [d[i], d[i + 1], d[i + 2]], 1); } }
+  else if (glyph) { const ox = Math.floor((N - glyph[0].length) / 2), oy = Math.floor((N - glyph.length) / 2); for (let y = 0; y < glyph.length; y++) for (let x = 0; x < glyph[y].length; x++) if (glyph[y][x] !== ".") c.dot(ox + x, oy + y, rgb, 1); } // (the browser has no such emoji: the guidance pins' own glyph)
+  drawArrow(c, angle, N, RING_R + 2, RING_R + 7, 3.5, rgb, 1);
+  c.flush();
+}
+/** The pin's ring radius and its arrow's tip, from its middle (art pixels): where its tip lands. */
+export const PIN_TIP = RING_R + 7;
+
 /** An area's neon calmed for the HUD: a little less saturated and bright, so it sits on the dark forest. */
 export const calm = (c: number[]) => {
   // by saturation, not value (the art director, #188: "keep its value up … take the calm from lower saturation"): half way to

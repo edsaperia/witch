@@ -1,8 +1,9 @@
 // Guidance pins (Ed, 2026-10-26: "Pointers: let's work out what they help with and build it"; his list, approved the same day):
 // the house showing her what to do next, one pin at a time, icons only, no words (render/view/guidance.ts draws it with
 // render/pins.ts). What each pin is for, highest first:
-//   1. after a lost night: the bed (until she's slept); after a won night, once its finale's over, the map table if she found an
-//      island tonight she hasn't yet seen on the chart, else the bed (both shown from anywhere: they lead her home);
+//   1. after a night, lost or won (once its finale's settled): the map table while there's an island found she can sail to and
+//      hasn't been to, else the bed (both shown from anywhere: they lead her home; Ed, 2026-10-26: "No 💤 if there are new
+//      islands, just 🧭 towards islands the player can go to and hasn't visited yet");
 //   2. a game's first morning (no pile of last night's clothes: rules/wakeUp.ts yesterday): the dressing stations, the first whose
 //      piece she still has to put on (the wardrobe first; her hat on the hats' floor), until she's dressed (Ed: "if it's the first
 //      night, there won't be any last night's clothes"; with a pile, E there dresses her, and there's no dressing pin);
@@ -53,12 +54,11 @@ export const DRESS_ORDER: readonly [PileSlot, string][] = [["top", "wardrobe"], 
 const AT_DECKS = 2.5;
 
 /** What's in front of her, `w`'s pin, or null (nothing to guide). `found` the islands found (app/chartSave.ts). */
-export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly string[], hooks = GUIDANCE_HOOKS): Guide | null {
-  if (g.partyOver) return { kind: "bed", target: { object: "bed" } }; // (the afterparty: to bed, from anywhere; no card since Ed's 2026-10-26 "Remove the end cards")
-  // The night won, its finale settled (rules/win.ts settled), home (Ed, 2026-10-26: "After a night is won, the pointer should take
-  // you to bed, or if you found a new island, to the map"): the map table while an island found tonight isn't yet seen on the chart,
-  // then the bed.
-  if (wonOver(g)) return g.win!.found.some(i => !save.chartSeen.includes(i)) ? { kind: "chart", target: { object: "mapTable" } } : { kind: "bed", target: { object: "bed" } };
+export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly string[], hooks = GUIDANCE_HOOKS, unvisited: readonly string[] = []): Guide | null {
+  // The night over, lost (the afterparty) or won (its finale settled: rules/win.ts), home: the map table while there's an island
+  // found she can sail to and hasn't been to (`unvisited`: app/chartSave.ts unvisited; Ed, 2026-10-26: "No 💤 if there are new
+  // islands, just 🧭 towards islands the player can go to and hasn't visited yet"), even once she's looked at the chart; then the bed.
+  if (nightOver(g)) return unvisited.length ? { kind: "chart", target: { object: "mapTable" } } : { kind: "bed", target: { object: "bed" } };
   const k = g.wake;
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
   if (!pileOut(k) && !dressed(k)) { // (no pile to put on at once: a game's first morning)
@@ -84,11 +84,11 @@ export function atGuide(g: Game, w: number, guide: Guide): boolean {
   return !!b.perch && hasRooms(d) && objectAt(d, b.x, b.z)?.id === T.object;
 }
 
-/** Whether `w`'s guidance pin may show: in the treehouse (perched on it), or anywhere for the bed and once the night's won. */
-export const guideShows = (g: Game, w: number, guide: Guide): boolean => guide.kind === "bed" || wonOver(g) || !!g.witches[w]?.body.perch;
+/** Whether `w`'s guidance pin may show: in the treehouse (perched on it), or anywhere for the bed and once the night's over. */
+export const guideShows = (g: Game, w: number, guide: Guide): boolean => guide.kind === "bed" || nightOver(g) || !!g.witches[w]?.body.perch;
 
-/** The night's won and its finale settled (rules/win.ts settled): the pins lead her home from anywhere. */
-const wonOver = (g: Game): boolean => g.win?.phase === "won" && !!g.win.settled;
+/** The night's over: lost (the afterparty), or won and its finale settled (rules/win.ts settled): the pins lead her home from anywhere. */
+const nightOver = (g: Game): boolean => !!g.partyOver || (g.win?.phase === "won" && !!g.win.settled);
 
 /** Marks done what she's at: a new thing she's been to. True when the save changed. */
 export function seeGuide(g: Game, w: number, save: GuideSave): boolean {

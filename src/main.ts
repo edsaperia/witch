@@ -58,7 +58,7 @@ import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
-import { loadSave, nightOver, sailNight, storeSave, worldSeed } from "./app/chartSave";
+import { loadSave, nightOver, sailNight, storeSave, unvisited, worldSeed } from "./app/chartSave";
 import { readZooCoasts } from "./app/zooCoasts";
 import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
@@ -410,13 +410,13 @@ function lendFind(kind: FindKindId, id: string): void {
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the
  *  chart's save, read a second at most). */
 const guide = loadGuide(), guidePin = new GuidePin(view);
-let chartFound: { at: number; found: string[] } = { at: -Infinity, found: [] };
+let chartFound: { at: number; found: string[]; unvisited: string[] } = { at: -Infinity, found: [], unvisited: [] };
 /** Her guidance pin this frame (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it. */
 function stepGuide(now: number): void {
   const { game } = N();
   if (seeGuide(game, 0, guide)) storeGuide(guide);
-  if (now - chartFound.at > 1000) chartFound = { at: now, found: loadSave().found };
-  const G = guidanceOf(game, 0, guide, chartFound.found);
+  if (now - chartFound.at > 1000) { const s = loadSave(); chartFound = { at: now, found: s.found, unvisited: unvisited(s, N().tuning.map?.island ?? "home") }; } // (where she is counts as been to: app/chartSave.ts unvisited)
+  const G = guidanceOf(game, 0, guide, chartFound.found, GUIDANCE_HOOKS, chartFound.unvisited);
   guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !chartOpen() && !sailing);
 }
 /** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she

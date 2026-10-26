@@ -95,6 +95,8 @@ export interface ChartIsland {
   outline?: ChartOutline;
   /** Her island to sail to (a sigil on it); found but not sailable, bare land; unknown, a '?' placeholder (dimmest). */
   sail: boolean; unknown: boolean; won: boolean;
+  /** Found and sailable but not yet been to (app/chartSave.ts unvisited; Ed, 2026-10-26): a soft sparkle round its sigil, no words. */
+  fresh?: boolean;
   /** The sigil it carries (art/sigils.js id: a kind, or home's). */
   sigil: string;
 }
@@ -325,7 +327,7 @@ const FLY = { frame: 1.6, swoop: 2.8, run: 1.2, dist: 600, pitchDeg: 50, onward:
 /** How long (s) an island takes to rise out of the sea as its land arrives. */
 const RISE = 0.9;
 
-interface Isle { /** its heights' tile and its uniforms (once its real ground has come) */ tileU?: { uTile: { value: THREE.Texture }; uTileB: { value: THREE.Vector4 }; uTileN: { value: THREE.Vector2 }; uTileMax: { value: number }; uYScale: { value: number } }; d: ChartIsland; group: THREE.Group; /** its land, to pick (none till its land has come) */ pick?: THREE.Mesh; x: number; z: number; top: number; reach: number; /** when its land came (the time of that frame): it rises out of the sea for RISE seconds from then */ rose?: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; tier?: number; size?: number }
+interface Isle { /** its heights' tile and its uniforms (once its real ground has come) */ tileU?: { uTile: { value: THREE.Texture }; uTileB: { value: THREE.Vector4 }; uTileN: { value: THREE.Vector2 }; uTileMax: { value: number }; uYScale: { value: number } }; d: ChartIsland; group: THREE.Group; /** its land, to pick (none till its land has come) */ pick?: THREE.Mesh; x: number; z: number; top: number; reach: number; /** when its land came (the time of that frame): it rises out of the sea for RISE seconds from then */ rose?: number; sigil?: THREE.Mesh; glow?: THREE.Mesh; /** its sparkle while it's new to her (ChartIsland fresh) */ spark?: THREE.Mesh; tier?: number; size?: number }
 
 /** A sigil as a white texture, `px` across, whole pixels, at a detail tier (art/sigilDetail.js): its ink as the worker drew it
  *  with the island, else drawn here. */
@@ -503,6 +505,10 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       sg.position.y = top + 0.35; g.add(sg); isle.sigil = sg; isle.tier = 0; isle.size = s;
       const halo = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.6, s * 1.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: col(c, 0.16), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       halo.position.y = top + 0.25; g.add(halo); isle.glow = halo;
+      if (d.fresh) { // (new to her: a wider, whiter halo that twinkles, over the sigil's own: frame)
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(s * 2.6, s * 2.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(1, 0.93, 0.72), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+        sp.position.y = top + 0.3; g.add(sp); isle.spark = sp;
+      }
     }
     if (d.won) { // won: a gold ring on the water round it
       const r = reach * 1.3;
@@ -807,6 +813,11 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
         if (tier !== i.tier) { i.tier = tier; m.map = this.sigilArt(i.d.sigil, tier); m.needsUpdate = true; }
       }
       if (i.glow) { (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 0.85 : 0.7) * pulse * fade; i.glow.visible = i.sigil?.visible ?? true; }
+      if (i.spark) { // (a sparkle: brightening and dimming faster than the sigils' pulse, and growing a little as it does)
+        const tw = 0.5 + 0.5 * Math.sin(time * 4.2 + i.x * 0.3), m = i.spark.material as THREE.MeshBasicMaterial;
+        m.opacity = (0.25 + 0.45 * tw) * fade; i.spark.visible = i.sigil?.visible ?? true;
+        const s = 0.9 + 0.2 * tw * (i.sigil ? i.sigil.scale.x : 1); i.spark.scale.set(s, 1, s);
+      }
       // Its land just come (Ed, 2026-10-13: each island "emerges from under the sea"): the whole island, shallows and all, rises from
       // under the water plane over RISE seconds, easing out, the sea hiding what's still below; its shadows drawn once it's up.
       let lift = 0;

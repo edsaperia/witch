@@ -1,6 +1,6 @@
 // The sea chart's save (wave 2, part C; app/chartSave.ts): what a night unlocks, kept in the browser.
 import { describe, expect, it } from "vitest";
-import { allSave, clearSave, emptySave, loadSave, newCampaign, nightOver, recordNight, sailNight, SAVE_KEY, storeSave, unlocked, worldSeed } from "./chartSave";
+import { allSave, clearSave, emptySave, loadSave, newCampaign, nightOver, recordNight, sailNight, SAVE_KEY, storeSave, unlocked, unvisited, worldSeed } from "./chartSave";
 import { KIND_NAMES } from "../rules/rosters";
 
 function memory(items: Record<string, string> = {}) {
@@ -80,5 +80,16 @@ describe("the sea chart's save", () => {
     const fresh = sailNight(emptySave(), "home", true);
     expect(fresh.played).toEqual(["home"]); expect(fresh.won).toEqual([]); expect(fresh.found).toEqual([]);
     expect(sailNight(before, "home", false)).toBe(before); // (won or over: as it ended)
+  });
+
+  it("knows the islands she's found and not been to: found, no night played there, not where she is (Ed, 2026-10-26)", () => {
+    // (a night won at home finds the lion's and the fox's; she sails to the lion's)
+    let s = recordNight(emptySave(), "home", { won: true, found: ["lion", "fox"] });
+    expect(unvisited(s)).toEqual(["lion", "fox"]);
+    expect(unvisited(s, "lion")).toEqual(["fox"]); // (landed there: been to)
+    s = recordNight(s, "lion", { won: false }); // (a night played there, lost or won)
+    expect(unvisited(s)).toEqual(["fox"]);
+    s = sailNight(s, "fox", true); // (sailed off mid-night: played, as a loss)
+    expect(unvisited(s)).toEqual([]);
   });
 });
