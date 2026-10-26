@@ -7,7 +7,7 @@
   "z": -24,
   "r": 11,
   "objects": [
-    {"id":"bags","label":"Bags","use":{"kind":"creator","axes":["bagSize","backpackSize"],"wear":["satchel","bumbag"],"parts":["satchel","backpack"]},"offset":[-4.89,-6.11],"box":{"w":3.6,"d":0.8,"h":3.2}},
+    {"id":"bags","label":"Bags","use":{"kind":"creator","axes":["bagSize","backpackSize"],"wear":["satchel","bumbag"],"parts":["satchel","backpack"]},"offset":[-4.66,-6.3],"box":{"w":5.4,"d":1.8,"h":4.8}},
     {"id":"invitations","label":"Invitations desk","use":{"kind":"say","line":"The invitations aren't written yet."},"offset":[3.67,-4.89],"box":{"w":3.4,"d":1.8,"h":1.8}}
   ]
 }

@@ -18,6 +18,13 @@ import { SHEETED_PIECES, SHEETED_COLOURS } from "./sheeted.js";
 /** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
 export const SIZE = 2;
+/** Each piece drawn this much bigger again (Ed, 2026-10-26: "I think they're too small, which makes it hard to see what they are"):
+ *  house.json's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
+ *  The bed's already big; the small ones grow most. */
+export const GROW = { bed: 1.15, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.35, synthRack: 1.35, broomBay: 1.35, lathe: 1.4, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
+export const GROW_ALL = 1.5;
+/** A piece's own scale: its footprint's metres over the real piece's. */
+export const sizeOf = id => SIZE * (GROW[id] ?? (id.startsWith("bedroom") ? 1 : GROW_ALL));
 
 const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
 const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
@@ -92,7 +99,9 @@ const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.N
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
 /** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["lathe", "broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "invitations", "pegboard", "recordShelf", "specimens"]);
+/** (Ed, 2026-10-26: "the items were designed for being against walls, but her house doesn't really have walls, so we should design
+ *  things to look nice freestanding": they stand off the walls now, straight; the bend kept for a piece that's wanted against one.) */
+export const BEND = new Set(["curtains"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -193,6 +202,7 @@ const PIECES = {
     for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.chain([[x * (W / 2 - .06), top - .2, z * (D / 2 - .06), .035], [x * (W / 2 - .02), .35, z * (D / 2 - .04), .026], [x * (W / 2 - .07), .02, z * (D / 2 - .07), .03]], M.WOOD, { group: 4 });
     const mx = W * .4, my0 = top + .05, my1 = H, mz = -D / 2 + .06, mc = (my0 + my1) / 2, mh = (my1 - my0) / 2;
     m.box([0, mc, mz], [mx, mh, .035], M.BARKD, { round: .025, group: 5 });
+    for (const sx of [-1, 1]) { m.seg([sx * (mx + .04), top, mz], [sx * (mx + .04), my1 + .08, mz], .025, .022, M.WOOD, { group: 5 }); m.ell([sx * (mx + .04), my1 + .11, mz], [.04, .05, .04], M.FLOWER, { group: 5 }); } // (its own posts: it stands free)
     m.flat([0, mc + .02, mz + .06], X, Y, mx - .1, mh - .1, (s, tt) => (s + tt * .6 > .45 && s + tt * .6 < .7 ? M.BELLY : M.WEB), { group: 6, bend: 0 });
     const ring = [];
     for (let i = 0; i < 4; i++) ring.push([-mx + .05 + i * (2 * mx - .1) / 3, my1 - .03]);
@@ -281,23 +291,23 @@ const PIECES = {
     m.chain([[r * .5 + .04, sit + .08, -r * .4, .012], [r * .5 + .08, sit + .05, -r * .4, .012], [r * .5 + .04, sit + .02, -r * .4, .012]], M.HAT1, { group: 10 });
   },
 
-  // Cloak pegs: a mossy board of carved pegs on the wall, two cloaks and a scarf hanging, a witch's hat on the end peg, a sprig of leaves.
+  // A coat tree, freestanding (Ed, 2026-10-26: her house hasn't walls): a carved stem on three clawed feet, pegs branching all round
+  // its top, cloaks hanging off it front and back, a striped scarf, her witch's hat crowning it, ivy up the stem, a sprig at its top.
   cloakPegs(m, { W, D, H }) {
-    const zb = -D / 2 + .03, y = H * .85;
-    m.box([0, y, zb], [W / 2, .07, .025], M.BARKD, { round: .01, group: 1, paint: p => (p[1] > y + .04 ? M.MOSS : undefined) });
-    const pegs = 4;
-    for (let i = 0; i < pegs; i++) { const x = -W / 2 + .15 + i * (W - .3) / (pegs - 1); m.seg([x, y, zb], [x, y + .03, zb + .14], .025, .03, M.WOOD, { group: 2 }); m.ell([x, y + .04, zb + .15], [.04, .04, .04], M.WOOD, { group: 2 }); }
-    // two cloaks, long and short, hanging off their pegs; a scarf; her hat on the last peg
-    const px = i => -W / 2 + .15 + i * (W - .3) / (pegs - 1);
-    m.box([px(0), y - .5, zb + .12], [.2, .48, .05], M.HAT, { round: .06, group: 10, paint: p => (p[1] < y - .92 ? M.HAT2 : undefined) });
-    m.ell([px(0), y - .05, zb + .17], [.12, .07, .08], M.HAT, { group: 10 });
-    m.box([px(1), y - .32, zb + .12], [.19, .3, .05], M.CLOTH, { round: .06, group: 11, paint: p => (Math.abs(p[0] - px(1)) < .02 ? M.FLOWER : undefined) });
-    m.ell([px(1), y - .04, zb + .17], [.11, .06, .08], M.CLOTH, { group: 11 });
-    m.chain([[px(2) - .05, y + .02, zb + .17, .045], [px(2) - .08, y - .35, zb + .14, .04], [px(2) + .02, y - .65, zb + .12, .035]], M.ACCENT, { group: 12, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
-    m.chain([[px(2) + .05, y + .02, zb + .17, .045], [px(2) + .08, y - .25, zb + .14, .04]], M.ACCENT, { group: 12, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
-    m.ell([px(3), y + .02, zb + .18], [.18, .02, .16], M.HAT, { group: 13 });
-    m.seg([px(3), y + .02, zb + .18], [px(3) + .06, y + .42, zb + .14], .11, .01, M.HAT, { group: 13, paint: p => (p[1] < y + .09 ? M.FLOWER : undefined) });
-    sprig(m, [W / 2 - .05, y + .1, zb + .05], 5, .1, 14);
+    const top = H * .86, r = Math.min(W, D) / 2;
+    for (let i = 0; i < 3; i++) { const a = i * 2.1 + .3; m.chain([[0, .28, 0, .05], [Math.cos(a) * r * .55, .09, Math.sin(a) * r * .55, .04], [Math.cos(a) * r * .9, .02, Math.sin(a) * r * .9, .035]], M.BARKD, { group: 1 }); }
+    m.chain([[0, .22, 0, .075], [0, top * .5, 0, .045], [0, top + .05, 0, .055]], M.BARKD, { group: 2, paint: p => (Math.sin(p[1] * 40) > .75 ? M.HAIR : undefined) });
+    const pegs = 6, peg = i => { const a = (i / pegs) * Math.PI * 2 + .35; return { c: Math.cos(a), s: Math.sin(a), y: top - .08 - (i % 2) * .14 }; };
+    for (let i = 0; i < pegs; i++) { const { c, s: sn, y } = peg(i); m.seg([0, y, 0], [c * .22, y + .1, sn * .22], .026, .02, M.WOOD, { group: 3 }); m.ell([c * .24, y + .12, sn * .24], [.035, .035, .035], M.FLOWER, { group: 3 }); }
+    // a cloak off peg i: its hood over the peg, falling to len, its hem trimmed
+    const cloak = (i, mat, len, half, g, trim) => { const { c, s: sn, y } = peg(i), x = c * .26, z = sn * .26 + Math.sign(sn) * .05, y0 = y + .1; m.box([x, y0 - len / 2 - .04, z], [half, len / 2, .06], mat, { round: .07, group: g, paint: p => (p[1] < y0 - len + .04 ? trim : Math.abs(p[0] - x) < .02 ? M.FLOWER : undefined) }); m.ell([x, y0 - .03, z], [half * .7, .08, .09], mat, { group: g }); };
+    cloak(0, M.HAT, .95, .2, 10, M.HAT2); cloak(2, M.CLOTH, .7, .19, 11, M.ACCENT); cloak(4, M.IRIS, .8, .18, 12, M.BELLY);
+    const sc = peg(1);
+    m.chain([[sc.c * .26 - .05, sc.y + .12, sc.s * .26 + .04, .045], [sc.c * .3 - .08, sc.y - .3, sc.s * .3 + .06, .04], [sc.c * .3 + .02, sc.y - .62, sc.s * .3 + .08, .035]], M.ACCENT, { group: 13, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
+    m.ell([0, top + .1, 0], [.22, .02, .2], M.HAT, { group: 14 });
+    m.seg([0, top + .1, 0], [.07, top + .55, -.03], .13, .01, M.HAT, { group: 14, paint: p => (p[1] < top + .17 ? M.FLOWER : undefined) });
+    ivy(m, 0, 0, .3, top * .7, 15, .055);
+    sprig(m, [.05, top + .1, .12], 4, .09, 16, .6);
   },
 
   // A shoe rack: two chunky shelves of rough wood, her shoes on them (big trainers, boots, glitter platforms, light-up trainers with a
@@ -305,7 +315,9 @@ const PIECES = {
   shoeRack(m, { W, D, H }) {
     const sh = [.08, H * .55], top = H * .95;
     for (const y of [...sh, top]) m.box([0, y, 0], [W / 2, .03, D / 2 - .02], M.WOOD, { round: .01, group: 1, paint: planks(.25) });
-    for (const x of [-W / 2 + .03, W / 2 - .03]) m.box([x, top / 2, 0], [.03, top / 2, D / 2 - .02], M.BARKD, { group: 2 });
+    for (const x of [-W / 2 + .03, W / 2 - .03]) { m.box([x, top / 2 + .03, 0], [.03, top / 2, D / 2 - .02], M.BARKD, { group: 2 }); for (const z of [-D / 2 + .04, D / 2 - .04]) m.ell([x, .02, z], [.05, .03, .05], M.BARKD, { group: 2 }); }
+    m.seg([-W / 2 + .03, top + .18, -D / 2 + .05], [W / 2 - .03, top + .18, -D / 2 + .05], .02, .02, M.WOOD, { group: 3 });
+    for (const x of [-W / 2 + .03, W / 2 - .03]) m.seg([x, top, -D / 2 + .05], [x, top + .2, -D / 2 + .05], .02, .02, M.WOOD, { group: 3 });
     const shoe = (x, y, mat, sole, g, boot = false) => {
       m.ell([x, y + .07, .02], [.08, boot ? .14 : .06, .14], mat, { group: g, dir: [0, 0, 1] });
       if (boot) m.seg([x, y + .1, -.04], [x, y + .3, -.04], .07, .065, mat, { group: g });
@@ -365,8 +377,13 @@ const PIECES = {
 
   // The bags: a row of iron hooks on a plank, her satchel, a backpack, a bum bag and a tote of records hanging; a little lantern.
   bags(m, { W, D, H }) {
-    const zb = -D / 2 + .03, y = H * .8;
-    m.box([0, y, zb], [W / 2, .06, .025], M.WOOD, { round: .01, group: 1, paint: planks(.4) });
+    // (a hall stand, freestanding: two posts on sledge feet and a rail between them, its hooks forward; the bags hang off its front)
+    const zb = -.02, y = H * .8;
+    for (const x of [-W / 2 + .06, W / 2 - .06]) { m.seg([x, .03, 0], [x, y + .14, 0], .035, .03, M.WOOD, { group: 1 }); m.seg([x, .03, -.3], [x, .03, .3], .04, .04, M.WOOD, { group: 1 }); m.ell([x, y + .18, 0], [.05, .05, .05], M.FLOWER, { group: 1 }); }
+    m.box([0, y, zb], [W / 2 - .06, .05, .03], M.WOOD, { round: .01, group: 1, paint: planks(.4) });
+    // (its back: an umbrella and a long scarf off the rail's far side)
+    m.seg([-W * .2, y, -.08], [-W * .22, .05, -.12], .02, .02, M.SHADES, { group: 14 }); m.seg([-W * .2, y + .03, -.08], [-W * .2 + .06, y + .12, -.08], .012, .012, M.SHADES, { group: 14 });
+    m.chain([[W * .25, y, -.07, .04], [W * .27, y * .6, -.1, .035], [W * .24, y * .3, -.1, .03]], M.ACCENT, { group: 15, paint: p => (Math.floor(p[1] * 10) % 2 ? M.FLOWER : undefined) });
     const xs = [-W * .36, -W * .12, W * .12, W * .36];
     for (const x of xs) m.chain([[x, y, zb + .02, .018], [x, y - .02, zb + .12, .016], [x, y + .04, zb + .16, .014]], M.SHADES, { group: 2 });
     // the satchel (a flap, a buckle, its strap), the backpack (pockets), the bum bag, the tote
@@ -412,7 +429,10 @@ const PIECES = {
   // compass rose over it; a sprig sprouting from a corner. Each cell's middle is a mark (`cell0` to `cell8`, row by row from the top
   // left) for the parts Hotel hangs on it, which glow on tonight's cell.
   pegboard(m, { W, D, H }) {
-    const zb = -D / 2 + .02, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
+    // (freestanding: the board on two posts with sledge feet, braced at its back)
+    const zb = 0, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
+    for (const s of [-1, 1]) { const x = s * (W / 2 + .06); m.seg([x, 0, zb - .02], [x, y1 + .1, zb - .02], .04, .035, M.WOOD, { group: 3 }); m.seg([x, .03, -.32], [x, .03, .32], .045, .045, M.WOOD, { group: 3 }); m.seg([x, .05, -.28], [x, cy, zb - .04], .02, .02, M.WOOD, { group: 3 }); m.ell([x, y1 + .14, zb - .02], [.05, .05, .05], M.FLOWER, { group: 3 }); }
+    for (const s of [-1, 1]) m.seg([s * W * .45, y0, zb - .035], [-s * W * .45, y1, zb - .035], .02, .02, M.BARKD, { group: 3 });
     // (a dark board, oily green, so the parts hung on it stand out against it: art/workshop.js)
     m.box([0, cy, zb], [W / 2, hh, .02], M.CLOTH, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
     m.box([0, cy, zb - .012], [W / 2 + .05, hh + .05, .015], M.WOOD, { round: .01, group: 2 });
@@ -431,7 +451,7 @@ const PIECES = {
     m.ell(rc, [.16, .16, .02], M.FLOWER, { group: 30 });
     for (const [dx, dy, mat] of [[0, 1, M.ACCENT], [0, -1, M.BARKD], [1, 0, M.BARKD], [-1, 0, M.BARKD]]) m.seg([rc[0], rc[1], rc[2] + .02], [rc[0] + dx * .2, rc[1] + dy * .2, rc[2] + .02], .035, .005, mat, { group: 31 });
     sprig(m, [-W / 2, y1 + .05, zb + .05], 5, .12, 32);
-    sprig(m, [W / 2 - .05, y0, zb + .05], 4, .1, 33, .2);
+    sprig(m, [W / 2 + .06, y0 * .5, zb + .05], 4, .1, 33, .2);
   },
 
   // The broom bay (Hotel's Workshop): two trestles that hold her broom across them at waist height (the mark `rest`: Hotel draws her
@@ -490,7 +510,7 @@ const PIECES = {
     const zb = -D / 2 + .02, n = 4;
     for (let i = 0; i <= n; i++) m.box([0, .05 + i * (H - .1) / n, 0], [W / 2, .025, D / 2 - .02], M.WOOD, { round: .008, group: 1 });
     for (const s of [-1, 1]) m.box([s * (W / 2 - .02), H / 2, 0], [.025, H / 2, D / 2 - .02], M.BARKD, { group: 2 });
-    m.box([0, H / 2, zb], [W / 2, H / 2, .01], M.BARKD, { group: 2 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.ell([sx * (W / 2 - .02), .02, sz * (D / 2 - .04)], [.04, .03, .04], M.BARKD, { group: 2 }); // (open at the back, on feet: freestanding)
     const spines = [M.ACCENT, M.FLOWER, M.HAT1, M.BELLY, M.POM, M.IRIS, M.CLOTH, M.SHADES];
     for (let i = 0; i < n; i++) {
       const y0 = .075 + i * (H - .1) / n, ht = (H - .1) / n - .06;
@@ -592,7 +612,10 @@ const PIECES = {
     const zb = -D / 2 + .02, shelves = [.05, H * .4, H * .72];
     for (const y of shelves) m.box([0, y, 0], [W / 2, .03, D / 2 - .02], M.BARKD, { round: .01, group: 1 });
     for (const x of [-W / 2 + .03, -W / 6, W / 6, W / 2 - .03]) m.box([x, H * .37, 0], [.025, H * .37, D / 2 - .02], M.BARKD, { group: 2 });
-    m.box([0, H * .37, zb], [W / 2, H * .37, .01], M.BODY3, { group: 2 });
+    m.box([0, H * .37, zb], [W / 2, H * .37, .012], M.BODY3, { group: 2 });
+    m.box([0, H * .37, zb - .02], [W / 2 + .01, H * .37 + .01, .012], M.BARKD, { group: 2, paint: p => (Math.abs(((p[0] / .18) % 1 + 1) % 1 - .5) > .46 ? M.HAIR : undefined) }); // (its back, panelled: it stands free)
+    m.box([0, H * .755, 0], [W / 2 + .03, .025, D / 2 + .01], M.BARKD, { round: .01, group: 2 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.ell([sx * (W / 2 - .03), .02, sz * (D / 2 - .05)], [.045, .035, .045], M.BARKD, { group: 2 });
     const skull = (x, y, s, g, fern = false) => {
       m.ell([x, y + s * .9, 0], [s * .8, s * .75, s * .9], M.BELLY, { group: g });
       m.ell([x, y + s * .4, s * .35], [s * .5, s * .35, s * .45], M.BELLY, { group: g });
@@ -610,6 +633,7 @@ const PIECES = {
     can(m, -W * .05, 0, shelves[2] + .03, shelves[2] + .25, .07, M.CRYSTAL, { group: 32 });
     // the deer skull over it, antlers spread
     const dy = H * .95;
+    m.box([-W * .2, H * .79, 0], [.1, .04, .08], M.WOOD, { round: .01, group: 39 }); m.seg([-W * .2, H * .8, 0], [-W * .2, dy - .08, zb + .1], .02, .02, M.BARKD, { group: 39 }); // (on a plinth on the cabinet's top)
     m.ell([-W * .2, dy, zb + .1], [.1, .14, .1], M.BELLY, { group: 40 });
     for (const s of [-1, 1]) { const b = [-W * .2 + s * .06, dy + .12, zb + .1]; m.chain([[...b, .025], [b[0] + s * .18, b[1] + .2, b[2], .02], [b[0] + s * .25, b[1] + .45, b[2], .012]], M.BELLY, { group: 41 }); m.seg([b[0] + s * .18, b[1] + .2, b[2]], [b[0] + s * .35, b[1] + .3, b[2]], .015, .008, M.BELLY, { group: 41 }); }
   },
@@ -690,7 +714,7 @@ const PIECES = {
   synthRack(m, { W, D, H }) {
     const sh = [.08, H * .32, H * .62, H * .93], zf = D / 2 - .04;
     for (const y of sh) m.box([0, y, 0], [W / 2, .02, D / 2 - .02], M.FRAME, { group: 1 });
-    for (const x of [-W / 2 + .02, W / 2 - .02]) for (const z of [-D / 2 + .04, D / 2 - .04]) m.seg([x, 0, z], [x, H, z], .02, .02, M.FRAME, { group: 2 });
+    for (const x of [-W / 2 + .02, W / 2 - .02]) for (const z of [-D / 2 + .04, D / 2 - .04]) { m.seg([x, .05, z], [x, H, z], .02, .02, M.FRAME, { group: 2 }); m.ell([x, .03, z], [.03, .03, .02], M.SHADES, { group: 2 }); } // (on castors: it stands free)
     // the bottom: the reel-to-reel (two reels, a deck) and a speaker cab
     m.box([-W * .22, sh[0] + .2, 0], [.28, .2, D / 2 - .08], M.SHADES, { round: .02, group: 10 });
     for (const s of [-1, 1]) { m.ell([-W * .22 + s * .13, sh[0] + .26, zf - .02], [.1, .1, .015], M.FRAME, { group: 11, paint: p => (Math.hypot(p[0] - (-W * .22 + s * .13), p[1] - (sh[0] + .26)) < .03 ? M.SHADES : Math.sin(Math.atan2(p[1] - (sh[0] + .26), p[0] - (-W * .22 + s * .13)) * 3) > .7 ? M.SHADES : undefined) }); }
@@ -816,22 +840,23 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   const build = PIECES[id];
   if (!build || id === "door") throw new Error(`no furniture "${id}"`);
   const m = new Model({ blend: .025 });
-  build(m, { W: foot.w / SIZE, D: foot.d / SIZE, H: foot.h / SIZE }, state ?? FURNITURE_STATES[id]?.[0]);
-  if (curve > 0 && BEND.has(id)) bendModel(m, curve / SIZE, foot.d / SIZE);
-  return modelSprite(m, { ppm, pitch, yaw });
+  const k = sizeOf(id);
+  build(m, { W: foot.w / k, D: foot.d / k, H: foot.h / k }, state ?? FURNITURE_STATES[id]?.[0]);
+  if (curve > 0 && BEND.has(id)) bendModel(m, curve / k, foot.d / k);
+  return modelSprite(m, { ppm, pitch, yaw, size: k });
 }
 
 /** A model of the house's (metres of the real piece) drawn at the house's pixel, SIZE times over, turned by yaw: its sprite, cropped,
  *  where its middle on the floor lands (`origin`), its lights and its marks in pixels (furnitureSprite's; art/houseDecor.js's too). */
-export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0 } = {}) {
+export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0, size = SIZE } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
-  const { sp, project } = render(m, { scale: ppm * SIZE, yaw, pitch, lineGap: .1 });
+  const { sp, project } = render(m, { scale: ppm * size, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   const W = x1 - x0 + 1, Hh = y1 - y0 + 1, crop = new Sprite(W, Hh);
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (mm) crop.put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
   const [ox, oy] = project([0, 0, 0]);
-  const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * SIZE, R: L.R * SIZE, rgb: L.rgb, power: L.power }; });
+  const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * size, R: L.R * size, rgb: L.rgb, power: L.power }; });
   // (its marks: named points of it in pixels, for the view: the mic's spot lamp, where the music builder's cone of light hangs from)
   const marks = Object.fromEntries(Object.entries(m.marks ?? {}).map(([k, c]) => { const [mx, my] = project(c); return [k, { x: +(mx - x0).toFixed(1), y: +(my - y0).toFixed(1) }]; }));
   return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights, marks };
