@@ -11967,10 +11967,10 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/areas/alder-forest/flora.js
-  var AREA_FLORA_ALDER_FOREST = { species: [["alder", 0.55, { dark: true }], ["elm", 0.25], ["willow", 0.2]], palette: { sat: 0.95, val: 0.9 } };
+  var AREA_FLORA_ALDER_FOREST = { species: [["alder", 0.5, { dark: true }], ["elm", 0.25], ["weepingBirch", 0.15], ["willow", 0.1]], palette: { sat: 0.95, val: 0.9 } };
 
   // art/areas/ancient/flora.js
-  var AREA_FLORA_ANCIENT = { species: [["yew", 0.45], ["oak", 0.3], ["cedar", 0.25]], palette: { sat: 0.95, val: 0.82 } };
+  var AREA_FLORA_ANCIENT = { species: [["yew", 0.4], ["oak", 0.25], ["holly", 0.2], ["broad", 0.15, { variant: "mossy", bare: true }]], palette: { sat: 0.95, val: 0.82 } };
 
   // art/areas/beaver-pond/flora.js
   var AREA_FLORA_BEAVER_POND = { species: [["weepingBirch", 0.4], ["alder", 0.3], ["aspen", 0.3]], palette: { sat: 0.95, val: 1.05 } };
@@ -11988,7 +11988,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_DEADWOOD = { species: [["broad", 0.5, { bare: true }], ["elm", 0.25, { bare: true }], ["aspen", 0.25, { bare: true }]], palette: { sat: 0.7, val: 0.8 } };
 
   // art/areas/fern-forest/flora.js
-  var AREA_FLORA_FERN_FOREST = { species: [["larch", 0.45], ["fir", 0.25], ["aspen", 0.15], ["birch", 0.15]], palette: { sat: 1, val: 1.05 } };
+  var AREA_FLORA_FERN_FOREST = { species: [["birch", 0.45, { variant: "mossy" }], ["oak", 0.25], ["rowan", 0.2], ["aspen", 0.1]], palette: { sat: 1, val: 1.05 } };
 
   // art/areas/garden/flora.js
   var AREA_FLORA_GARDEN = { species: [["willow", 0.4], ["cherry", 0.3], ["crabApple", 0.15], ["vinewood", 0.15]], palette: { sat: 1.15, val: 1.05 } };
@@ -12030,7 +12030,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_OLD_OAKS = { species: [["oak", 0.5], ["holly", 0.2], ["elm", 0.15], ["whitebeam", 0.15]], palette: { sat: 1, val: 0.95 } };
 
   // art/areas/old-pinewood/flora.js
-  var AREA_FLORA_OLD_PINEWOOD = { species: [["pine", 0.55], ["rowan", 0.25], ["larch", 0.2]], palette: { sat: 0.9, val: 0.92 } };
+  var AREA_FLORA_OLD_PINEWOOD = { species: [["pine", 0.55], ["rowan", 0.25], ["juniper", 0.2]], palette: { sat: 0.9, val: 0.92 } };
 
   // art/areas/ravine/flora.js
   var AREA_FLORA_RAVINE = { species: [["rowan", 0.4], ["pine", 0.35], ["birch", 0.25]], palette: { sat: 0.9, val: 0.95 } };
@@ -12513,10 +12513,10 @@ label.check input { accent-color: var(--accent); }
       creature: "mole",
       by: "Ed",
       leaf: 0.3,
-      floor: ["needles", 0.3, 0.4, 0.3],
-      text: { floor: "pine needles", small: "ferns", big: "pine trees" },
+      floor: ["leaves", 0.3, 0.4, 0.32],
+      text: { floor: "leaf litter and moss", small: "ferns", big: "mossy birches, oaks and rowans" },
       small: [P("fern")],
-      big: [tree("larch", { scale: 1.1 }), tree("fir", { minor: true })]
+      big: [tree("birch", { variant: "mossy", scale: 1.1 }), tree("oak", { minor: true })]
     },
     {
       id: "muddy-forest",
@@ -12573,8 +12573,8 @@ label.check input { accent-color: var(--accent); }
       by: "Ed",
       leaf: 0.26,
       floor: ["grass", 0.24, 0.45, 0.45],
-      text: { floor: "short grass", small: "brown lumps", big: "crooked trees with many branches" },
-      small: [P("mound", { brown: true })],
+      text: { floor: "short grass", small: "brown lumps and red-berried shrubs", big: "crooked trees with many branches" },
+      small: [P("mound", { brown: true }), P("shrub", { flower: [200, 30, 60] })],
       big: [tree("hazel", { gnarl: 1, scale: 0.95 }), tree("oak", { minor: true, scale: 0.9 })]
     },
     {
@@ -12597,8 +12597,8 @@ label.check input { accent-color: var(--accent); }
       by: "Ed",
       leaf: 0.29,
       floor: ["plants", 0.3, 0.5, 0.38],
-      text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
-      small: [tree("broad", { trunks: 4, scale: 0.5, thin: true })],
+      text: { floor: "small leafy plants", small: "small trees with many thin trunks, saplings", big: "straight but slanted trees with many trunks" },
+      small: [tree("broad", { trunks: 4, scale: 0.5, thin: true }), tree("broad", { scale: 0.45 })],
       big: [tree("ash", { trunks: 3, lean: 0.3, gnarl: 0.1 })]
     },
     {
@@ -12834,10 +12834,12 @@ label.check input { accent-color: var(--accent); }
       by: "draft",
       leaf: 0.26,
       floor: ["bluebells", 0.27, 0.45, 0.4],
-      text: { floor: "bluebells", small: "ferns", big: "beeches" },
+      text: { floor: "bluebells", wall: "berried holly hedges", small: "ferns", big: "beeches" },
+      wall: [P("hedge", { berries: true })],
       small: [P("fern")],
       big: [tree("beech", { gnarl: 0.2, scale: 1.1 }), tree("holly", { minor: true, scale: 0.7 })]
     },
+    // (its berried holly hedges the holly thicket's, freed by the thorn scrub)
     // (the holly thicket till the roster moved the spider to the badlands, Ed 2026-10-23/25; ring 3, so semi-temperate: dry brown
     // earth, the scrub wash's thorny scrub, wind-bent thorn trees (the savanna's acacia and the plains' stunted one are theirs) and junipers from the badlands' list with hawthorn among them; the cobwebs and
     // the web-hung dead tree kept, the spider's own)
@@ -12955,7 +12957,7 @@ label.check input { accent-color: var(--accent); }
       NO_LEAN,
       ["hollows", "paths"],
       [0.25, [0.4, 0.3, 0.3, 0, 0]],
-      "Pine groves standing waist-deep in ferns, with green sunken hollows between them."
+      "Groves of mossy birches with oaks and rowans standing waist-deep in ferns, with green sunken hollows between them."
     ),
     "muddy-forest": LAY(
       "scatter",
