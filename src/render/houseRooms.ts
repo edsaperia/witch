@@ -24,7 +24,7 @@ import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
-import { dressed } from "../rules/clothesPile";
+import { pileOut } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
@@ -335,7 +335,7 @@ export class HouseRoomsView {
     if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }
     else this.spot.mesh.visible = false;
     // last night's clothes, in a pile by her bed (rules/clothesPile.ts): what's still in it, till she's dressed
-    const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = g.wake?.pile ?? [];
+    const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = pileOut(g.wake) ? g.wake!.pile! : []; // (none on her first wake-up)
     if (po && slots.length) {
       const key = `${JSON.stringify(this.outfit)}|${slots.join()}`;
       if (this.pile?.key !== key) {
@@ -380,7 +380,7 @@ export class HouseRoomsView {
     }
     if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
+    place(this.tag, at && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
