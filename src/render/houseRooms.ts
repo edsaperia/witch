@@ -16,7 +16,8 @@ import type { Witch } from "../rules/game";
 import { hatSpell } from "../rules/spells";
 import { groundHeight } from "./height";
 import { alongRay } from "./view/home";
-import { paintFloor, standing, type FloorArt } from "./houseArt";
+import { standing, type FloorPixels } from "./houseArt";
+import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
 import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
@@ -157,7 +158,10 @@ export class HouseRoomsView {
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
   private readonly floor = new THREE.Mesh(new THREE.BufferGeometry(), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }));
-  private floorArt: FloorArt | null = null;
+  private floorArt: FloorPixels | null = null;
+  /** The floor being painted off the page's thread (render/houseFloor.ts), and what came back. */
+  private floorAsked = false;
+  private floorCame: FloorPixels | null = null;
   // (the Terrace's own floor apart, in the solid pass, depth-tested, the same grid: she and the Ent's near half, its decks, stand on
   // it in front, where in the see-through pass it would be drawn over them; render/view/witch.ts draws her there, on the Terrace)
   private readonly terraceFloor = new THREE.Mesh(this.floor.geometry, new THREE.MeshBasicMaterial({ alphaTest: 0.5, side: THREE.DoubleSide }));
@@ -237,13 +241,18 @@ export class HouseRoomsView {
     const ky = (T.seat.y - T.ent!.deck.y) / Math.max(0.1, D.seat.z - D.z), g0 = groundHeight(D.x, D.z);
     // (each point of the plan turned into the house's metres first: rules/houseRooms.ts fromPlan)
     const toWorld = (px: number, pz: number, h: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); }; // (slid up the plane with her: render/view/witch.ts houseShift)
+    if (this.floor.visible && !this.floorArt) {
+      // (painted by workers, the first time it's shown: the boot freeze, 2026-10-25; the floor shows once it's come)
+      if (!this.floorAsked) { this.floorAsked = true; const p = paintFloorOff(v.mpp).then(F => { this.floorCame = F; }); v.assets.track("houseFloor", p); }
+      if (!this.floorCame) this.floor.visible = this.terraceFloor.visible = false;
+    }
     if (this.floor.visible) {
       const N = 48;
       if (!this.floorArt) {
-        const A = (this.floorArt = paintFloor(HOUSE_ROOMS, v.mpp, "rest"));
-        for (const [mesh, art] of [[this.floor, A], [this.terraceFloor, paintFloor(HOUSE_ROOMS, v.mpp, "terrace")]] as const) {
-          const tex = new THREE.CanvasTexture(art.canvas);
-          tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; // (its colours as the quads' vertex colours are: as they are)
+        const A = (this.floorArt = this.floorCame!);
+        for (const [mesh, px] of [[this.floor, A.rest], [this.terraceFloor, A.terrace]] as const) {
+          const tex = new THREE.DataTexture(px, A.w, A.h, THREE.RGBAFormat);
+          tex.magFilter = THREE.NearestFilter; tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.flipY = false; tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true; // (its colours as the quads' vertex colours are: as they are)
           (mesh.material as THREE.MeshBasicMaterial).map = tex; (mesh.material as THREE.MeshBasicMaterial).needsUpdate = true;
         }
         const uv: number[] = [], idx: number[] = [];
@@ -253,7 +262,7 @@ export class HouseRoomsView {
         this.floor.geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); this.floor.geometry.setIndex(idx);
       }
       const A = this.floorArt, pos = this.floor.geometry.getAttribute("position") as THREE.BufferAttribute;
-      for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.w * i) / N, A.z0 + (A.h * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
+      for (let j = 0, k = 0; j <= N; j++) for (let i = 0; i <= N; i++, k++) { const p = toWorld(A.x0 + (A.ww * i) / N, A.z0 + (A.hh * j) / N, 0); pos.setXYZ(k, p.x, p.y, p.z); }
       pos.needsUpdate = true;
     }
     // (the floors' map without the push along the camera's rays, which moves nothing on the screen: what's laid over them in their

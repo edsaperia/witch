@@ -179,6 +179,12 @@ export class Hiz {
     HIZ_UNIFORMS.uHizOn.value = 1;
   }
 
+  /** Its passes' programs made ahead (View.compileAll, in the Bedroom), not on its first build by the treehouse (the boot freeze,
+   *  2026-10-25: 6 s on the cloud's renderer, its three programs linked at first use in the first frame there). */
+  compile(r: THREE.WebGLRenderer): Promise<unknown> {
+    return Promise.all([this.copy, this.reduce, this.place].map(m => { const q = new THREE.Mesh(this.quad.geometry, m); q.frustumCulled = false; return r.compileAsync(q, this.cam); }));
+  }
+
   dispose(): void {
     this.depth.dispose(); this.atlas.dispose(); for (const t of this.levels) t.dispose();
     this.copy.dispose(); this.reduce.dispose(); this.place.dispose(); this.quad.geometry.dispose();
