@@ -1,87 +1,87 @@
 {
- "builder": "India",
- "phase": "The menagerie: how animals are generated",
- "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage; then the growth batch, Ed's review sheets and the six bodies he approved from them; then the music's singer (Ed's review, 2026-10-14): the plan, an alto in tune, and two voices to A/B in the Music Lab; then the biome forests (Ed, 2026-10-23): a look for each of the eight compass biomes over any species, baked once, so every island's woods belong to their part of the world; then the game's first screen (Ed, 2026-10-23): a fresh game wakes her in her bedroom on home rather than opening on the sea chart; then the sail's transition (Ed, 2026-10-24): the next island made while the chart flies her in, the chart's zoom waiting for it, so the dive follows with no frozen frame; then the biome looks by ring (Ed, 2026-10-25): semi-temperate near home, the full look furthest out",
- "prs": [
-  800,
-  812,
-  822,
-  823,
-  821,
-  819,
-  833,
-  834,
-  843,
-  849,
-  859,
-  866,
-  917,
-  920,
-  1026,
-  1043,
-  1063,
-  1110,
-  1149
- ],
- "built": [
-  "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
-  "Legs with real joints and a stance by species: shoulder, elbow, wrist, paw; hip, stifle, hock, paw; hooves, pads and flat soles (`quad3d`)",
-  "A frame under the coat: withers, a pelvis, a loin, a brisket, a nape and a throat",
-  "Faces with bones: a brow ridge, cheeks, a lower jaw with a mouth line, whiskers",
-  "The elder kit: grizzle, a torn ear, a broken tusk or horn, a torc, rings, earrings, leg bands, a garland, bells, for any legend (`evolve3d`)",
-  "The growth-not-scale check: each level's silhouette against the level before, scaled to one box",
-  "The body profile (`body.profile`): width and depth set apart at five stations along the body (shoulder, ribcage, waist, loin, hip), the torso lofted through them; a wide deep chest and a slim waist for the big cats, the canids and the deer",
-  "The spine (`body.spine`): a crest standing on the back line or a groove cut between the back muscles, by station; the boar's bristled crest, the cats' and the wolf's groove, the deer's shoulder line",
-  "A view from straight above for the tools (`TOP=1` on the lineup preview), so a body's girth can be judged on a sheet",
-  "The growth batch: levels that grow as animals, not as scaled copies, for the species the growth check warned on (#843, #849, #859)",
-  "Ed's animal review sheets: one a biome row as the zoo lays them out, each species on a line at game size from baby to legend with the adult zoomed, the witch for scale, its builder named and its known issues marked (on the shots branch, `previews/ed/review/`)",
-  "Six bodies from Ed's review (#866): the polar bear's head low on a longer neck over a high shoulder, the unicorn tall on long legs with a horse's head, the badger's shoulders, waist and wedge head, the rhino's horn growing by level and its own young, the crocodile's wide flat head with its jaw line and its legs out to the sides, the snow leopard's longer legs, thicker tail and bigger paws",
-  "The body knobs those needed (`quad3d`, each 1 or off as built): `body.tailK` (tail thickness), `body.pawK` (paw size), `body.sprawl` (how far a sprawler's legs go out), `head.skullY` and `head.skullZ` (a flatter or wider skull) and `head.jawLine` (a flat jaw's mouth as a dark line between the jaws, drawn while it's shut)",
-  "The singer's plan (#917, docs/backlog/music.md): the vocalise measured (its one G4 note retuned up to 16 semitones, so a chipmunk; its chorus, octave and shimmer smearing it up to 36 cents off), three slices, and Ed's choices from four rounds of questions",
-  "The alto (#920): the sung line an octave down, G3 to G4, stepwise within a fifth with its phrase ends bent to the root, sung only in the breakdowns and builds, with a swell into each note, breath, the recording's flat first quarter second skipped, and two effects chains by place (pure for the breakdowns, dark for the dark families); `node tools/music-lab/tune.cjs` pitch-tracks the line and fails over 20 cents",
-  "Two voices to A/B, live in the Music Lab: the alto sample set (the woman's note shifted with its formants kept, every two semitones, built offline from `samples/sources.json`'s derived entries) and a vocal-tract voice (Pink Trombone's tract in an AudioWorklet, an alto's length), with a breath slider and a chain choice",
-  "The biome forests (`art/flora/biomes.js`, #1026): each biome a look over any species at bake time (leaves, bark and moss tinted after the night palette, the tree knobs nudged, snow, the jungle's flowering vines, the swamp's Spanish moss), an island blending its two by bearing, carried on the area art job and its cache key; nothing per frame",
-  "Trees moved home in nine areas: no hawthorns in the savanna or the badlands, no wild olives on the glacier crags, no boreal aspen on the mangrove mudflat",
-  "A fresh game's first screen: asleep in the dark while home's night is made, then the wake-up in her bedroom; What's new and Options on the pause page (#1063)",
-  "The ground's cost measured part by part (tools/bench/ground.cjs) and its unused lake and beach code compiled out: a fifth off the forest floor's draw, the picture the same to the pixel",
-  "The sail's transition: the next night made under the sea chart's flight, the flight easing into a hover until the night's ground, house and shaders are ready, the dive's own areas drawn first and the dive coming in from far out to sea (`tools/view/sail-timing.cjs` times it)",
-  "Biome looks by ring: each island's forests take its biome at its ring's strength (55% at ring 3, 80% at ring 4, full at ring 5), mixed toward temperate, its art cached apart by ring",
-  "Softer area borders: neighbouring areas' trees mix over an 80 m band (it was 40) that itself wanders, with a pause-page slider for its width"
- ],
- "learned": [
-  "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
-  "A generator change lifts every animal at once, but every knob needs a default that keeps a species itself, or the forty records drift together.",
-  "At game scale the smooth union eats small holes: an earring reads as a ring only once its hole is wider than the blend.",
-  "Lofting a body through five stations looked right from the side and lumpy from above until the slices ran every tenth of the length with the stations interpolated: the smooth union only hides bumps smaller than its blend.",
-  "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine.",
-  "A review sheet is only useful if everything on it is on one scale: once every species stood beside the witch at game size, Ed could point at six bodies in one pass, and each fix was a few numbers in a genome record.",
-  "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too.",
-  "Measure a voice before judging it: a pitch tracker over the sung line said in numbers what Ed heard (out of tune), and found the cause in a sample's first quarter second singing 20 cents flat.",
-  "A physical-model voice drifts on purpose: Pink Trombone's glottis wanders a few cents by design, which reads as a singer solo and as out of tune in a chord; one knob scaling the wander turned 46 cents off into 13.",
-  "Tinting a tree by hue does nothing: the night palette squeezes every green into a narrow band, so a biome's colour has to go in after it, in RGB. And the per-tree autumn jitter that makes a temperate wood lively turns a snowy fir pink, so each biome keeps only its share of it",
-  "On the cloud's software renderer, shader code behind a uniform that's switched off still costs: measure by switching parts off in the page, and prove a saving by drawing old and new back to back in one call, since a live frame never quite stands still",
-  "A blend has a price in identity: areas are about 168 m across, so most ground is within 80 m of a border, and doubling the band took an area's own trees from about 77% to 59%. Measure that share with the test's own map before setting a threshold; a quick script on another seed told a different story"
- ],
- "previews": [
-  {
-   "src": "media/builders/india-legs.webp",
-   "caption": "Legs with joints and a stance by species: before above, after below (wolf, bear, stag, badger, cheetah, newt)"
-  },
-  {
-   "src": "media/builders/india-elder.webp",
-   "caption": "The elder kit on four legends: a torc and a torn ear, a broken tusk and bronze bands, a bellwether's rings and bells, a shrine fox's earrings"
-  },
-  {
-   "src": "media/builders/india-profile.webp",
-   "caption": "The body profile: the body as built above, with a width/depth profile below, from the side and from straight above (cheetah, lion, tiger, jaguar, wolf; fox, fennec, stag, roe, elk)"
-  },
-  {
-   "src": "media/builders/india-spine.webp",
-   "caption": "The spine: with the profile but no spine above, with a crest or a groove below (boar, lion, tiger, jaguar; cheetah, wolf, stag, elk)"
-  },
-  {
-   "src": "media/builders/india-bodies.webp",
-   "caption": "Ed's six bodies, before above and after below in the review format: polar bear, unicorn, badger, rhino, crocodile, snow leopard"
-  }
- ]
+  "builder": "India",
+  "phase": "The menagerie: how animals are generated",
+  "slice": "The creature generator reviewed and lifted at the root: jointed legs, a frame under the coat, faces with bones, an elder kit for legends, a growth check; then Ed's body profile and spine, so no animal is a sausage; then the growth batch, Ed's review sheets and the six bodies he approved from them; then the music's singer (Ed's review, 2026-10-14): the plan, an alto in tune, and two voices to A/B in the Music Lab; then the biome forests (Ed, 2026-10-23): a look for each of the eight compass biomes over any species, baked once, so every island's woods belong to their part of the world; then the game's first screen (Ed, 2026-10-23): a fresh game wakes her in her bedroom on home rather than opening on the sea chart; then the sail's transition (Ed, 2026-10-24): the next island made while the chart flies her in, the chart's zoom waiting for it, so the dive follows with no frozen frame; then the biome looks by ring (Ed, 2026-10-25): semi-temperate near home, the full look furthest out",
+  "prs": [
+    800,
+    812,
+    822,
+    823,
+    821,
+    819,
+    833,
+    834,
+    843,
+    849,
+    859,
+    866,
+    917,
+    920,
+    1026,
+    1043,
+    1063,
+    1110,
+    1149
+  ],
+  "built": [
+    "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
+    "Legs with real joints and a stance by species: shoulder, elbow, wrist, paw; hip, stifle, hock, paw; hooves, pads and flat soles (`quad3d`)",
+    "A frame under the coat: withers, a pelvis, a loin, a brisket, a nape and a throat",
+    "Faces with bones: a brow ridge, cheeks, a lower jaw with a mouth line, whiskers",
+    "The elder kit: grizzle, a torn ear, a broken tusk or horn, a torc, rings, earrings, leg bands, a garland, bells, for any legend (`evolve3d`)",
+    "The growth-not-scale check: each level's silhouette against the level before, scaled to one box",
+    "The body profile (`body.profile`): width and depth set apart at five stations along the body (shoulder, ribcage, waist, loin, hip), the torso lofted through them; a wide deep chest and a slim waist for the big cats, the canids and the deer",
+    "The spine (`body.spine`): a crest standing on the back line or a groove cut between the back muscles, by station; the boar's bristled crest, the cats' and the wolf's groove, the deer's shoulder line",
+    "A view from straight above for the tools (`TOP=1` on the lineup preview), so a body's girth can be judged on a sheet",
+    "The growth batch: levels that grow as animals, not as scaled copies, for the species the growth check warned on (#843, #849, #859)",
+    "Ed's animal review sheets: one a biome row as the zoo lays them out, each species on a line at game size from baby to legend with the adult zoomed, the witch for scale, its builder named and its known issues marked (on the shots branch, `previews/ed/review/`)",
+    "Six bodies from Ed's review (#866): the polar bear's head low on a longer neck over a high shoulder, the unicorn tall on long legs with a horse's head, the badger's shoulders, waist and wedge head, the rhino's horn growing by level and its own young, the crocodile's wide flat head with its jaw line and its legs out to the sides, the snow leopard's longer legs, thicker tail and bigger paws",
+    "The body knobs those needed (`quad3d`, each 1 or off as built): `body.tailK` (tail thickness), `body.pawK` (paw size), `body.sprawl` (how far a sprawler's legs go out), `head.skullY` and `head.skullZ` (a flatter or wider skull) and `head.jawLine` (a flat jaw's mouth as a dark line between the jaws, drawn while it's shut)",
+    "The singer's plan (#917, docs/backlog/music.md): the vocalise measured (its one G4 note retuned up to 16 semitones, so a chipmunk; its chorus, octave and shimmer smearing it up to 36 cents off), three slices, and Ed's choices from four rounds of questions",
+    "The alto (#920): the sung line an octave down, G3 to G4, stepwise within a fifth with its phrase ends bent to the root, sung only in the breakdowns and builds, with a swell into each note, breath, the recording's flat first quarter second skipped, and two effects chains by place (pure for the breakdowns, dark for the dark families); `node tools/music-lab/tune.cjs` pitch-tracks the line and fails over 20 cents",
+    "Two voices to A/B, live in the Music Lab: the alto sample set (the woman's note shifted with its formants kept, every two semitones, built offline from `samples/sources.json`'s derived entries) and a vocal-tract voice (Pink Trombone's tract in an AudioWorklet, an alto's length), with a breath slider and a chain choice",
+    "The biome forests (`art/flora/biomes.js`, #1026): each biome a look over any species at bake time (leaves, bark and moss tinted after the night palette, the tree knobs nudged, snow, the jungle's flowering vines, the swamp's Spanish moss), an island blending its two by bearing, carried on the area art job and its cache key; nothing per frame",
+    "Trees moved home in nine areas: no hawthorns in the savanna or the badlands, no wild olives on the glacier crags, no boreal aspen on the mangrove mudflat",
+    "A fresh game's first screen: asleep in the dark while home's night is made, then the wake-up in her bedroom; What's new and Options on the pause page (#1063)",
+    "The ground's cost measured part by part (tools/bench/ground.cjs) and its unused lake and beach code compiled out: a fifth off the forest floor's draw, the picture the same to the pixel",
+    "The sail's transition: the next night made under the sea chart's flight, the flight easing into a hover until the night's ground, house and shaders are ready, the dive's own areas drawn first and the dive coming in from far out to sea (`tools/view/sail-timing.cjs` times it)",
+    "Biome looks by ring: each island's forests take its biome at its ring's strength (55% at ring 3, 80% at ring 4, full at ring 5), mixed toward temperate, its art cached apart by ring",
+    "Softer area borders: neighbouring areas' trees mix over an 80 m band (it was 40) that itself wanders, with a pause-page slider for its width"
+  ],
+  "learned": [
+    "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
+    "A generator change lifts every animal at once, but every knob needs a default that keeps a species itself, or the forty records drift together.",
+    "At game scale the smooth union eats small holes: an earring reads as a ring only once its hole is wider than the blend.",
+    "Lofting a body through five stations looked right from the side and lumpy from above until the slices ran every tenth of the length with the stations interpolated: the smooth union only hides bumps smaller than its blend.",
+    "A groove down the back needs a waist first: cut into a tube it reads as a scratch, cut between two muscle masses it reads as a spine.",
+    "A review sheet is only useful if everything on it is on one scale: once every species stood beside the witch at game size, Ed could point at six bodies in one pass, and each fix was a few numbers in a genome record.",
+    "A longer-legged body lifts everything it carries: the snow leopard's nap failed the art check (its ground origin above the sprite's middle) until the curl was tightened, so a body change has to be checked asleep too.",
+    "Measure a voice before judging it: a pitch tracker over the sung line said in numbers what Ed heard (out of tune), and found the cause in a sample's first quarter second singing 20 cents flat.",
+    "A physical-model voice drifts on purpose: Pink Trombone's glottis wanders a few cents by design, which reads as a singer solo and as out of tune in a chord; one knob scaling the wander turned 46 cents off into 13.",
+    "Tinting a tree by hue does nothing: the night palette squeezes every green into a narrow band, so a biome's colour has to go in after it, in RGB. And the per-tree autumn jitter that makes a temperate wood lively turns a snowy fir pink, so each biome keeps only its share of it",
+    "On the cloud's software renderer, shader code behind a uniform that's switched off still costs: measure by switching parts off in the page, and prove a saving by drawing old and new back to back in one call, since a live frame never quite stands still",
+    "A blend has a price in identity: areas are about 168 m across, so most ground is within 80 m of a border, and doubling the band took an area's own trees from about 77% to 59%. Measure that share with the test's own map before setting a threshold; a quick script on another seed told a different story"
+  ],
+  "previews": [
+    {
+      "src": "media/builders/india-legs.webp",
+      "caption": "Legs with joints and a stance by species: before above, after below (wolf, bear, stag, badger, cheetah, newt)"
+    },
+    {
+      "src": "media/builders/india-elder.webp",
+      "caption": "The elder kit on four legends: a torc and a torn ear, a broken tusk and bronze bands, a bellwether's rings and bells, a shrine fox's earrings"
+    },
+    {
+      "src": "media/builders/india-profile.webp",
+      "caption": "The body profile: the body as built above, with a width/depth profile below, from the side and from straight above (cheetah, lion, tiger, jaguar, wolf; fox, fennec, stag, roe, elk)"
+    },
+    {
+      "src": "media/builders/india-spine.webp",
+      "caption": "The spine: with the profile but no spine above, with a crest or a groove below (boar, lion, tiger, jaguar; cheetah, wolf, stag, elk)"
+    },
+    {
+      "src": "media/builders/india-bodies.webp",
+      "caption": "Ed's six bodies, before above and after below in the review format: polar bear, unicorn, badger, rhino, crocodile, snow leopard"
+    }
+  ]
 }
