@@ -198,6 +198,8 @@ describe("the map", () => {
     for (let i = 0; i < 4000; i++) {
       const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
       if (!isInside(map.bounds, x, z, TUNING.beach?.on ? TUNING.beach.width : 0)) continue; // (the forest: not the beach round it, nor the sea)
+      const [cx, cy] = map.areaAt(x, z).cell;
+      if (!map.playable(cx, cy)) continue; // (the playable areas: the buffer's have no arena, so no gradient: Ed, 2026-10-26)
       const w = map.treeWeight(x, z) / TUNING.treeDensity;
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
@@ -1060,7 +1062,7 @@ describe("the density field", () => {
     const rings = [0, 0, 0], ringN = [0, 0, 0], lone = [0, 0, 0];
     let beyond = 0, outsideTrees = 0;
     for (let cy = 1; cy < map.n - 1; cy++) for (let cx = 1; cx < map.n - 1; cx++) {
-      if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
+      if ((cx === map.centreCell[0] && cy === map.centreCell[1]) || !map.playable(cx, cy)) continue; // (the buffer's areas have no arena: Ed, 2026-10-26)
       const s = map.siteOf(cx, cy), mine = (x: number, z: number) => map.areaAt(x, z).cell.join() === `${cx},${cy}`;
       for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2, d = open * hash2(cx * 31 + i, cy, 7), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;

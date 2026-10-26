@@ -50,7 +50,8 @@ describe("scenery placement", () => {
   }
   it("soundsystems stand in their own area, and trees keep clear of them", () => {
     const map = generateMap(123, t), forest = new Forest(map);
-    for (const [x, y] of [[3, 4], [10, 9], [12, 0]]) {
+    const cells = map.cells.filter(([x, y]) => x !== map.centreCell[0] || y !== map.centreCell[1]); // (playable areas: only they get a soundsystem)
+    for (const [x, y] of [cells[0], cells[cells.length >> 1], cells[cells.length - 1]]) {
       const s = soundsystemFor(map, [x, y]), c = map.areaAt(s.x, s.z).cell;
       expect(c).toEqual([x, y]);
       for (const tr of forest.treesNear(s.x, s.z, 12)) expect(Math.hypot(tr.x - s.x, tr.z - s.z)).toBeGreaterThanOrEqual(t.soundsystemFootprint + t.treeMarginFromSoundsystem);
