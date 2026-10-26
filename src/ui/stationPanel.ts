@@ -136,6 +136,7 @@ export class StationPanel {
     this.paint();
     this.slide.in(); // (another station's swapped in place: it's in already)
     this.root.classList.add("in"); // (a mark for the tools: tools/opening/shots.cjs)
+    this.root.dataset.station = station; // (whose it is: the tools tell one station's panel from the last one's, tools/smoke/pause-on-top.cjs)
   }
   /** Slides it away (her look sent first, if a change was waiting). */
   close(): void {
@@ -144,6 +145,7 @@ export class StationPanel {
     this.id = null; this.pointerIn = false; this.queue = [];
     this.slide.out();
     this.root.classList.remove("in");
+    delete this.root.dataset.station;
   }
   /** The Workshop's state changed elsewhere (a part found, her broom changed): the panel follows. */
   setWorkshop(ws: WorkshopCtx): void { if (this.id && this.ws && JSON.stringify([...ws.found, ws.fitted, ws.tonight]) !== JSON.stringify([...this.ws.found, this.ws.fitted, this.ws.tonight])) { this.ws = ws; this.paint(); } else if (this.ws) this.ws = ws; }

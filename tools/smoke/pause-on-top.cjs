@@ -3,10 +3,11 @@
 // Workshop's bay and pegboard, the telescope, the finds dev panel), then Esc: the pause page's sliders are
 // on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad (a stubbed one: the
 // d-pad, B) reach nothing under it, and Esc again comes back to the overlay as it was. Fails on any of those or a page error.
-// `node tools/smoke/pause-on-top.cjs [dist]`; SHOTS=1 saves previews/pause-on-top-<case>.png.
+// `node tools/smoke/pause-on-top.cjs [dist]`; SHOTS=1 saves previews/pause-on-top-<case>.png; ONLY=wardrobe,broom-bay runs those cases
+// alone; THROTTLE=2 slows the page's CPU (a slow runner: the broom-bay flake showed in about one run in four so).
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const root = path.resolve(process.argv[2] || "dist");
+const root = path.resolve(process.argv[2] || "dist"), ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".ogg": "audio/ogg", ".wasm": "application/wasm", ".woff2": "font/woff2" };
 const H = require("../../config/house/load.mjs").loadHouse();
 const fail = [];
@@ -21,9 +22,11 @@ const front = (id, gap = 0.7) => {
 const CASES = [
   { id: "sea-chart", open: p => p.evaluate(() => window.witch.chart()), sel: "#chart-overlay" },
   { id: "map-table", at: "mapTable", sel: "#chart-overlay" },
-  { id: "wardrobe", at: "wardrobe", sel: "#station-panel.in", state: true },
-  { id: "broom-bay", at: "broomBay", sel: "#station-panel.in", state: true },
-  { id: "pegboard", at: "pegboard", sel: "#station-panel.in", state: true },
+  // (a station's own panel, not the last one's: the wardrobe's, still in as she was put at the bay on a slow runner, read as the
+  // bay's and then shut by the game under the pause, she no longer at the wardrobe: the broom-bay flake, 2026-10-26)
+  { id: "wardrobe", at: "wardrobe", sel: '#station-panel.in[data-station="wardrobe"]', state: true },
+  { id: "broom-bay", at: "broomBay", sel: '#station-panel.in[data-station="broomBay"]', state: true },
+  { id: "pegboard", at: "pegboard", sel: '#station-panel.in[data-station="pegboard"]', state: true },
   // (at an instrument Esc is hers, Ed 2026-10-23: "Esc (a gamepad's B) steps her away, the next Esc pauses": so not here)
   { id: "telescope", open: p => p.evaluate(() => window.witch.telescope.look(0, 0.5)), on: () => window.witch.telescope.on },
   { id: "finds-dev", open: p => p.evaluate(() => document.getElementById("finds-dev-btn")?.click()), sel: "#finds-dev.on" },
@@ -33,6 +36,7 @@ const CASES = [
   await new Promise(r => server.listen(0, "127.0.0.1", r));
   const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+  if (process.env.THROTTLE) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: +process.env.THROTTLE }); } // (a slow runner's frames)
   const errors = [];
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   // A pad of our own (window.__pad: null, none; else its pressed buttons), and a count of the keys that reach the document.
@@ -50,11 +54,11 @@ const CASES = [
   const put = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
   const away = () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x, z: T.z + 1, vx: 0, vz: 0 }; });
   const paused = () => page.evaluate(() => !!document.querySelector("#pause-sliders.open"));
-  for (const C of CASES) {
+  for (const C of CASES.filter(c => !ONLY || ONLY.includes(c.id))) {
     // open it
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
     // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
-    if (C.at) { await put(front(C.at)); for (let i = 0; i < 20 && (await isOpen()); i++) await page.waitForTimeout(500); /* (the last station's panel out as she leaves it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
+    if (C.at) { await put(front(C.at)); try { await page.waitForFunction(at => { const p = document.querySelector("#station-panel.in"); return !p || p.dataset.station === at; }, C.at, { timeout: 120000, polling: 250 }); } catch { /* (checked below: it opens) */ } /* (the last station's panel out, however slow the frame that sees her leave it) */ for (let i = 0; i < 5 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await isOpen()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ } else await C.open(page);
     try { await page.waitForFunction(C.on ? C.on : ([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, C.on ? null : [C.sel, !!C.shown], { timeout: 120000, polling: 250 }); }
     catch { check(false, `${C.id}: opens`); continue; }
     await page.waitForTimeout(1500); // (slid in)
