@@ -1122,7 +1122,9 @@ export class View {
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
     // (the zoo, every island its own type and kind, dozens of them: each island's creatures and sleeping legend with its trees,
     // nearest first, not every type's trees ahead of any creature, or the island she's on waits behind the whole zoo's)
-    if (this.game.map.zoo?.layout) { for (const [t] of [...near].sort((a, b) => a[1] - b[1])) { this.assets.prefetchType(t); const sp = AREA_TYPES[t]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.sleepArt(sp); } } return; }
+    // (only its islands found: one not found yet is a lake, and the streets are bare, so their cells' types grow nothing; a typical
+    // player's zoo is home's ten and a few, not all 64: tools/zoo/perf.cjs)
+    if (this.game.map.zoo?.layout) { const m = this.game.map, shown = new Set(m.cells.map(([cx, cy]) => m.typeOf(cx, cy))); for (const [t] of [...near].filter(([t]) => shown.has(t)).sort((a, b) => a[1] - b[1])) { this.assets.prefetchType(t); const sp = AREA_TYPES[t]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.sleepArt(sp); } } return; }
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     // The island's own creatures' art ahead (the map's area types' and the night's legends'), not every species' (Ed's log,
     // 2026-10-14: the audio under-ran in bursts through the first ten minutes of every night; the workers were baking all sixty
@@ -1203,6 +1205,30 @@ export class View {
       const s = this.trunkShadowBatches.get(t);
       if (s) { this.scene.remove(...s.meshes); s.dispose(); this.trunkShadowBatches.delete(t); }
       this.noFade.add(t);
+    }
+  }
+
+  /** Each area type's trees last listed (performance.now), for letting the zoo's go (keepTypesUnder). */
+  private typeUsed = new Map<number, number>();
+  /** The zoo (rules/zooMap.ts), dozens of islands each its own type: the area types' tree atlases on the GPU kept under `mb` (the
+   *  types listed now, `listed`, always kept), the longest unlisted let go first: their batches and their art (AssetLibrary.forgetType: asked
+   *  for again from the art cache if she comes back, fading in as any set does). Flown over every island they came to 887 MB (tools/zoo/perf.cjs,
+   *  2026-10-26); a typical zoo's few stay under it and nothing goes. */
+  keepTypesUnder(listed: ReadonlySet<number>, mb: number): void {
+    const now = performance.now(), bytes = (b: SpriteBatch) => { const a = b.atlas.albedo.image as { width?: number; height?: number } | null; return (a?.width ?? 0) * (a?.height ?? 0) * 4 * 2; };
+    for (const t of listed) this.typeUsed.set(t, now);
+    let total = 0;
+    for (const b of this.typeBatches.values()) total += bytes(b);
+    if (total <= mb * 1048576) return;
+    const idle = [...this.typeBatches.keys()].filter(t => !listed.has(t)).sort((a, b) => (this.typeUsed.get(a) ?? 0) - (this.typeUsed.get(b) ?? 0));
+    for (const t of idle) {
+      if (total <= mb * 1048576) break;
+      const b = this.typeBatches.get(t)!;
+      total -= bytes(b);
+      this.scene.remove(...b.meshes); b.release(); this.typeBatches.delete(t);
+      const sh = this.trunkShadowBatches.get(t);
+      if (sh) { this.scene.remove(...sh.meshes); sh.dispose(); this.trunkShadowBatches.delete(t); } // (its own buffers: the atlas is the type's)
+      this.assets.forgetType(t); // (its atlas off the GPU; asked for again, from the art cache, when she comes back)
     }
   }
 

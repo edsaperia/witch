@@ -626,6 +626,14 @@ export class AssetLibrary {
   track(key: string, p: Promise<unknown>): void { this.inFlight.add(key); p.then(() => this.inFlight.delete(key), () => this.inFlight.delete(key)); }
   /** Area type `t`'s art held (drawn, or kept and read back). */
   hasType(t: number): boolean { return this.types.has(t); }
+  /** Let area type `t`'s art go (the zoo's far islands: View.keepTypesUnder): its atlas off the GPU (its pixels went once uploaded,
+   *  render/atlas.ts), asked for again when its trees are next listed: from the art cache, kept in this browser (render/artCache.ts). */
+  forgetType(t: number): void {
+    const a = this.types.get(t);
+    if (!a) return;
+    a.atlas.albedo.dispose(); a.atlas.normal.dispose();
+    this.types.delete(t);
+  }
 
   /** Another island takes the page (View.setGame; docs/plans/sail-without-reload.md B 3-5, decision 6: only this island's art in
    *  memory): a new generation, so the last island's sets waiting are dropped and those being drawn land to nothing; its sets let

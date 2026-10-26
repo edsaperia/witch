@@ -452,8 +452,10 @@ function herHead(): { x: number; y: number } | null {
 }
 /** The on-loan icon, top left (render/loanIcon.ts). */
 const loanIcon = new LoanIcon();
-let zooPaused = false;
-const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
+let zooPaused = false, zooHeld = false;
+// (the night under it held as under the sea chart: nothing drawn, its art workers stopped, so the zoo's own page, a whole second
+// game, has the machine; tools/zoo/perf.cjs)
+const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; zooHeld = on; view.assets.hold(on || chartHeld); input.clearPresses(); }), zooUrl(location.href));
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
 // playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
@@ -1124,7 +1126,7 @@ function frame(now: number): void {
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
   const flying = !!arrival && !F.landed && F.ready;
   if (flying && arrival!.frame(view, game, now)) arrived();
-  if (chartHeld) return; // (the sea chart over the night: its last frame kept, nothing drawn)
+  if (chartHeld || zooHeld) return; // (the sea chart or the zoo over the night: its last frame kept, nothing drawn)
   if (game.clock.paused && !freeze.frozen && !flying && now - lastDraw < 300) return;
   lastDraw = now;
   // Drawn between the last two fixed steps (game time: party transitions, sigils and waves are stamped in it).
@@ -1211,6 +1213,8 @@ if (params.get("debug") === "sail") (window as unknown as { witch: Record<string
 // (?debug=sail only) the sail in place made to throw, to see the fallback. Resolves once the night's start is ready.
 // window.witch.chart(): the sea chart over the night, as the map table opens it (tools/smoke/quick.cjs: choosing her own island).
 (window as unknown as { witch: Record<string, unknown> }).witch.chart = () => chartOverNight();
+// The bestiary book's zoo over the night, for the tools (tools/zoo/perf.cjs): open and close it as the book and its × do.
+(window as unknown as { witch: Record<string, unknown> }).witch.zooOverlay = zoo;
 // The Studio's instruments for the tools (tools/studio/check.cjs): where she's at and what it plays (its meter).
 (window as unknown as { witch: Record<string, unknown> }).witch.studio = studio;
 // The telescope for the tools (tools/telescope/shots.cjs, tools/stars/shots.cjs): look through it pointed at a bearing and zoom (0
