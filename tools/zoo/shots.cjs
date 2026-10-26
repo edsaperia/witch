@@ -42,6 +42,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     const L = await p.evaluate(() => { const Z = window.witch.game.map.zoo.layout, I = Z.islands.find(J => J.kind === "wolf") ?? Z.islands[0], at = a => { const n = I.reach.length, t = ((a + Math.PI) / (Math.PI * 2)) * n, i = Math.floor(t), f = t - i; return I.reach[((i % n) + n) % n] * (1 - f) + I.reach[(((i + 1) % n) + n) % n] * f; }; return { I: { x: I.x, z: I.z, south: at(Math.PI / 2), kind: I.kind }, home: Z.home, reach: Z.reach }; });
     log("island", JSON.stringify(L.I));
     await shoot(p, "fence", [L.I.x + 10, L.I.z + L.I.south + 7, "ground"]); // (on the street by its south shore, the fence before her)
+    await shoot(p, "words", [L.I.x + 4, L.I.z + L.I.south + 34, "ground"]); // (on the street just south of its fence, its inscription before her)
     await shoot(p, "fly-over", [L.I.x + 10, L.I.z + L.I.south, "treetop"]); // (in the treetops right over its fence)
     await shoot(p, "legend", [L.I.x, L.I.z + 34, "ground"]); // (south of its circle at the middle, its legend asleep in it)
     await shoot(p, "plaza", [L.home.x, L.home.z + 18, "ground"]); // (in the Ent's circle at the middle, its World Tree carving)
@@ -58,6 +59,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     const K = await q.evaluate(() => { const Z = window.witch.game.map.zoo.layout, w = window.witch.game.witch; const I = Z.islands.filter(J => !J.found).sort((a, b) => Math.hypot(a.x - Z.home.x, a.z - Z.home.z) - Math.hypot(b.x - Z.home.x, b.z - Z.home.z))[0]; return { x: I.x, z: I.z, most: I.most, kind: I.kind }; });
     log("lake", JSON.stringify(K));
     await shoot(q, "lake", [K.x, K.z + K.most + 18, "ground"]);
+    await shoot(q, "lake-words", [K.x + 3, K.z + K.most + 14, "ground"]);
     await shoot(q, "lake-above", [K.x, K.z + K.most + 30, "treetop"]);
     await q.close();
     // (the way out: E at the little treehouse, then flying on out past the edge; a ?zoo link with no night under it goes to the
