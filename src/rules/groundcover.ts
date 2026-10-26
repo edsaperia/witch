@@ -33,7 +33,7 @@ export function tuftsInCell(map: ForestMap, ci: number, cj: number, cell: number
     const gi = ci * n + i, gj = cj * n + j, roll = hash2(gi, gj, s + 1101);
     if (roll >= density * 3) continue; // out of the running even at a path's edge by a trunk's foot: skip the lookups
     const x = (gi + 0.15 + hash2(gi, gj, s + 1102) * 0.7) * spacing, z = (gj + 0.15 + hash2(gi, gj, s + 1103) * 0.7) * spacing;
-    const a = map.areaAt(x, z), look = plantType(map, x, z, gi, gj, s + 1107), G = LOOKS[look].groundCover; // (its look blended across the border as the trees' are: rules/forest.ts plantType; its cell the exact one)
+    const a = map.areaAt(x, z), look = plantType(map, x, z, gi, gj, s + 1107, map.tuning.areaEdgeBlend.tufts ?? 1), G = LOOKS[look].groundCover; // (its look blended across the border as the trees' are: rules/forest.ts plantType; its cell the exact one)
     let k = density * G.density, reed = false;
     for (const [px, pz, pr] of ponds) {
       const pd = Math.hypot(x - px, z - pz);

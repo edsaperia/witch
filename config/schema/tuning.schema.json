@@ -874,6 +874,10 @@
         "warpScale": {
           "type": "number",
           "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -881,7 +885,8 @@
         "scale",
         "stray",
         "warp",
-        "warpScale"
+        "warpScale",
+        "tufts"
       ],
       "additionalProperties": false
     },

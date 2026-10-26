@@ -305,8 +305,11 @@ describe("trees", () => {
       for (let a = 0; a < 32 && !near; a++) for (const r of [0.25, 0.5, 0.75, 1, 1.25, 1.5].map(k => k * W)) if (map.areaAt(t.x + Math.cos(a * 0.196) * r, t.z + Math.sin(a * 0.196) * r).type === t.type) near = true;
       expect(near).toBe(true);
     }
-    expect(own / trees.length).toBeGreaterThan(0.6);
     expect(strays).toBeGreaterThan(0);
+    // Each area keeps most of its own planting (Ed, 2026-10-26, the band doubled to 80 m and wandering: by a border a spot can be
+    // half its neighbour's, but over a wide stretch most trees are their area's own; about 0.59 here, 0.77 at the old 40 m).
+    const wide = forest.treesNear(map.dancefloor.x + 300, map.dancefloor.z + 300, 300), mine = wide.filter(t => t.type === map.areaAt(t.x, t.z).type).length;
+    expect(mine / wide.length).toBeGreaterThan(0.5);
   });
 });
 
@@ -1796,7 +1799,9 @@ describe("the dash (Ed, 2026-10-04)", () => {
       const W = g.witches[0];
       W.dash = newDash();
       g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: false };
+      const x0 = g.witch.x;
       run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+      if (Math.abs(g.witch.x - x0) < 1) continue; // (no blink: nowhere clear along the line, or her charges spent on the cooldown, so she only walked a step)
       for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
       tried++;
     }

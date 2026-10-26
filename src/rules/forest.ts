@@ -43,9 +43,11 @@ export function crownReach(map: ForestMap): number {
  *  neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise
  *  warpScale metres across, so a border reads as a ragged, gradual mixing rather than a line. Only the look blends:
  *  everything else (where creatures roam, partifying, the party border, which area you're in) uses the exact partition.
- *  The tufts take it too (rules/groundcover.ts). */
-export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number): number {
-  const E = map.tuning.areaEdgeBlend, s = map.seed, W = E.warp ?? 0, WS = Math.max(1, E.warpScale ?? 1);
+ *  The tufts take it too, over `share` of the band (rules/groundcover.ts: the tuning's areaEdgeBlend.tufts, as they lie on
+ *  the area's own floor). */
+export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number, share = 1): number {
+  const E0 = map.tuning.areaEdgeBlend, s = map.seed, W = (E0.warp ?? 0) * share, WS = Math.max(1, E0.warpScale ?? 1);
+  const E = share === 1 ? E0 : { ...E0, width: E0.width * share };
   if (E.width <= 0 && W <= 0) return map.areaAt(x, z).look;
   const k = Math.min(1, E.stray), own = (a: number) => 2 * hash2(i, j, salt + a) - 1;
   const wx = W > 0 ? (vnoise(x / WS, z / WS, s + 83) - 0.5) * 2 * W : 0, wz = W > 0 ? (vnoise(x / WS, z / WS, s + 84) - 0.5) * 2 * W : 0;

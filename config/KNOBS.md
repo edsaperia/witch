@@ -167,7 +167,7 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 
 ### `areaEdgeBlend`
 
-Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). The tufts take the blended look too (their kinds and colour); their cell (a legend circle's floor, an arena) stays the exact one. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
+Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
 
 | knob | type | range |
 |---|---|---|
@@ -176,6 +176,7 @@ Blended area edges: each tree and bush takes its look (its area type) from a poi
 | `areaEdgeBlend.stray` | number | 0 to … |
 | `areaEdgeBlend.warp` | number | 0 to … |
 | `areaEdgeBlend.warpScale` | number | 0 to … |
+| `areaEdgeBlend.tufts` | number | 0 to … |
 
 ### `groundBlend`
 
