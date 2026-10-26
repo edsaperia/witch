@@ -83,11 +83,14 @@ function front(id, by) {
     await until(s => s.beat === "up", "her up");
     await page.waitForTimeout(1500);
     await shot("09-up.png");
-    // to the dressing table (put by it: the walk itself is the rules' tests'): its mirror opens by itself
+    // to the dressing table (put by it: the walk itself is the rules' tests'): lit, E over it, and E opens its mirror (Ed's playtest,
+    // 2026-10-26: nothing opens by nearness)
     const goTo = (id, by) => page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, front(id, by));
+    const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel.in"));
+    const useIt = async () => { await page.waitForTimeout(1500); if (await panelIn()) fail("a station's panel opened by her being near it, before E"); for (let i = 0; i < 5 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ };
     await goTo("dressingTable", 0.5);
-    // (its panel by nearness, as every station's: rules/stations.ts)
-    for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
+    await shot("09b-mirror-lit.png"); // (lit, its prompt over it)
+    await useIt();
     await page.waitForTimeout(2500);
     await shot("10-mirror.png");
     // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
@@ -100,18 +103,25 @@ function front(id, by) {
       await shot("10a-bedroom-whole.png");
       await page.keyboard.press("KeyZ"); await page.waitForTimeout(1500); }
     // the rest of her dressing, in the bedroom before its door (Ed, 2026-10-21: "all of the customisation options (except for broom,
-    // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it
+    // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it and presses E
     for (const [id, name] of [["wardrobe", "10b-wardrobe.png"], ["shoeRack", "10d-shoe-rack.png"]]) { // (the cloak pegs: in the Cloakroom since the oak)
       await goTo(id, 0.5);
-      for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
+      await useIt();
       await page.waitForTimeout(1500);
       if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail(`the ${id}'s panel didn't dock`);
       await shot(name);
     }
     // up, the wake-up's over (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build): only her dressing keeps the door
+    // (she stands still at it, the movement keys its buttons: E again slides it out; Ed, 2026-10-26)
+    const at0 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    await page.keyboard.down("KeyD"); await page.waitForTimeout(800); await page.keyboard.up("KeyD");
+    const at1 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    if (Math.hypot(at1[0] - at0[0], at1[1] - at0[1]) > 0.05) fail(`she walked while the shoe rack's panel was open (${at0} to ${at1})`);
+    if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail("a movement key closed the shoe rack's panel");
+    await page.keyboard.press("KeyE");
+    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250);
+    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("E didn't slide the shoe rack's panel out");
     await goTo("clothesPile", 1.5);
-    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250); // (walking away slides it out)
-    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("the shoe rack's panel didn't slide out as she walked away");
     const before = await wake();
     log("up:", JSON.stringify(before));
     if (!before.open) fail("up, but the wake-up isn't over");
