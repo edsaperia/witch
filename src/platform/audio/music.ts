@@ -64,7 +64,7 @@ export class Music {
   /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
    *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
    *  `over`: the party's-over ease (0 to 1), winding it down. */
-  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1, over = 0): void {
+  update(mix0: MusicMix, cue: MusicCue, gameTime: number, clock: BeatClock, on: boolean, M?: Tuning["music"], rate = 1, over = 0, house = 0): void {
     const c = this.ctx, now = c.currentTime, k = 0.08;
     if (now < this.fadeEnd) on = false; // (fading out for a sail: silent till it's done)
     // The party's over (Ed, 2026-10-06: "the dance music stops"): over the first `over.stop` of the ease the music winds down
@@ -78,7 +78,8 @@ export class Music {
     const want = cue.circle && M ? 1 : 0, ease = M?.circle.ease ?? 0.35;
     this.circleAt += (want - this.circleAt) * (1 - Math.exp(-dt / Math.max(0.01, ease)));
     if (this.circleAt < 0.01 && !want) this.circleAt = 0;
-    const mix = M ? muffled(M, mix0, this.circleAt) : mix0;
+    // and in the treehouse, by how slowed its world is (`house`: eased with the slowing itself), muffled more lightly (music.house)
+    const mix = M ? muffled(M, muffled(M, mix0, this.circleAt), house, M.house?.muffle ?? M.circle.muffle, 1) : mix0;
     if (cue.circle) this.circleSpecies = cue.circle.species;
     const layer = this.circleAt > 0 && this.circleSpecies ? { species: this.circleSpecies, level: 1 } : undefined; // (its level is the layer's gain, not its notes')
     cue = { ...cue, circle: layer };

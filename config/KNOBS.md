@@ -1570,6 +1570,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.slow.on` | boolean |  |
 | `music.slow.pitch` | number | 0 to … |
 | `music.slow.floor` | number | 0 to … |
+| `music.house.muffle` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
