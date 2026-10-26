@@ -8,7 +8,7 @@ import { endDream, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
-import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
+import { carryTiming, clearCarried, mark, sinceSail, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -98,7 +98,7 @@ const bootLink = new URLSearchParams(location.search);
 const TIMING = timingOn(params);
 if (TIMING) watchLongTasks();
 /** The transition so far into the L log (?timing=1). */
-const logTiming = (): void => { if (TIMING) N().playtest.timing(transitionTiming()); };
+const logTiming = (): void => { N().playtest.timing(sinceSail(transitionTiming())); }; // (always: the long tasks only with ?timing=1)
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
 // A builder's quick shot (?shot=<scene>, app/shot.ts): only the art the view needs, no start card or bedroom, the waves held.
@@ -338,7 +338,7 @@ function arrived(): void {
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (N().flags.inBed && startWake(N().game, N().game.herTime, { mirrored: mirrored(), dreaming: !!dd }) && dd) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, { dreaming: !!dd, mirrored: mirrored(), yesterday: true }) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -814,12 +814,13 @@ function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void>
   departing = { island: to.island, seed: to.seed, night };
   return night.then(() => undefined, () => undefined);
 }
-/** Whether she's woken on this browser before: her very first morning has no pile of last night's clothes and her dressing guided
- *  (rules/wakeUp.ts `first`; the wake-up itself is one for every morning since Ed, 2026-10-26, replacing his decision 4's shorter
- *  one); set as she first gets up. */
+/** Whether she's woken on this browser before (set as she first gets up): her first-ever morning's dressing table carries the
+ *  "First night" banner (`firstEver`, read as the page's first wake-up starts). The wake-up itself is one for every morning since Ed,
+ *  2026-10-26, replacing his decision 4's shorter one on later loads. */
 const WOKEN_KEY = "witch.woken";
 const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
 const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } };
+let firstEver = false;
 /** Whether she's come to the dressing table before, ever (its first visit marked once: rules/wakeUp.ts `mirror`). */
 const MIRROR_KEY = "witch.mirrored";
 const mirrored = (): boolean => { try { return localStorage.getItem(MIRROR_KEY) === "1"; } catch { return false; } };
@@ -830,7 +831,8 @@ const sawMirror = (): void => { try { localStorage.setItem(MIRROR_KEY, "1"); } c
 function wakeFirst(): void {
   const n = N();
   bootAsleep = false;
-  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { first: !wokenBefore(), mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
+  firstEver = !wokenBefore();
+  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
   start();
   if (!gestured) soundNote(); else sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
@@ -946,7 +948,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { mirrored: mirrored(), dreaming: !!dream && !dream.over })) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { dreaming: !!dream && !dream.over, mirrored: mirrored(), yesterday: true })) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -1039,7 +1041,7 @@ function frame(now: number): void {
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) stations.close(); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake?.first && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && firstEver && !game.wake.yesterday && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or □ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
@@ -1180,6 +1182,9 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
 // window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
+// window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
+// played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
+(window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = N(); return wakeInBedroom(game) && startWake(game, game.herTime, { yesterday }); };
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;

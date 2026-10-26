@@ -62,7 +62,7 @@ function front(id, by) {
     await until(s => s.age > 1, "a second of ringing");
     await shot("06-alarm.png");
     if (process.env.LATER === "1") { // a later load: the one wake-up (Ed, 2026-10-26), a move, the stretch, and she's up
-      if (await page.evaluate(() => window.witch.game.wake.first)) fail("a later load's wake-up was her first morning's");
+      if ((await page.evaluate(() => window.witch.game.wake.beat)) !== "alarm") fail("a later load's wake-up didn't ring");
       await page.keyboard.down("KeyD"); await until(s => s.beat === "up", "her up"); await page.keyboard.up("KeyD");
       await page.waitForTimeout(1500);
       await shot("later-up.png");
@@ -174,9 +174,9 @@ function front(id, by) {
       await page.waitForTimeout(1500);
       await shot("17-asleep.png");
       for (let i = 0; i < 900 && !(await page.evaluate(() => !!window.witch.game.wake)); i++) await page.waitForTimeout(1000);
-      const w2 = await page.evaluate(() => ({ first: window.witch.game.wake?.first, beat: window.witch.game.wake?.beat }));
+      const w2 = await page.evaluate(() => ({ yesterday: window.witch.game.wake?.yesterday, beat: window.witch.game.wake?.beat }));
       log("after the bed:", JSON.stringify(w2));
-      if (w2.first || w2.beat !== "alarm") fail("after the bed she didn't wake in her bedroom, the alarm ringing");
+      if (!w2.yesterday || w2.beat !== "alarm") fail("after the bed she didn't wake in her bedroom, the alarm ringing");
       await page.waitForTimeout(3000);
       await shot("18-after-bed-alarm.png");
     }

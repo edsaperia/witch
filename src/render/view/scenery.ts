@@ -48,7 +48,7 @@ function pickWeighted(w: number[], seed: number): number {
 }
 
 /** A rebuild under way, for each view: the rest of it, a part each frame. */
-const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: number }>();
+const jobs = new WeakMap<View, { run: Generator<void, void, void>; frames: number; art: boolean }>();
 /** Another night in the view (View.setGame): a rebuild under way dropped (it lists the last night's island). */
 export function cancelRefresh(v: View): void { jobs.delete(v); }
 
@@ -67,17 +67,21 @@ const rimPieces = (l: TypeArt["layout"]): Piece[] => { let r = rimCache.get(l); 
 export function refresh(v: View, force = false): void {
   // Below SLICE_FPS a frame covers so much flight that a rebuild spread over frames would be
   // stale when handed over (pops): then it's done whole, as it always was.
-  const whole = force || (v.budget.fps > 0 && v.budget.fps < SLICE_FPS), job = jobs.get(v);
+  // (a rebuild for new art alone, with nothing moved: never stale however long it takes, so always sliced and given ART_FRAMES;
+  // whole, each set of a new island's art coming in was a whole rebuild a frame, 130 to 190 ms each on Ed's laptop after a sail,
+  // its frames slow so the next was whole too: his playtest of v4821, "sailing transition loading was slow")
+  const slow = v.budget.fps > 0 && v.budget.fps < SLICE_FPS, job = jobs.get(v);
   if (job) {
-    if (!whole && !due(v) && ++job.frames < MAX_FRAMES) { if (job.run.next().done) jobs.delete(v); return; }
+    const next = due(v);
+    if (!force && (!next || (job.art && next.art)) && ++job.frames < (job.art ? ART_FRAMES : MAX_FRAMES) && !(slow && !job.art)) { if (job.run.next().done) jobs.delete(v); return; }
     while (!job.run.next().done);
     jobs.delete(v);
   }
   const d = due(v);
   if (!d && !force) return;
-  const run = rebuild(v, d ?? due(v, true)!, force);
-  if (whole) { while (!run.next().done); return; }
-  if (!run.next().done) jobs.set(v, { run, frames: 1 });
+  const art = !force && !!d?.art, run = rebuild(v, d ?? due(v, true)!, force);
+  if (force || (slow && !art)) { while (!run.next().done); return; }
+  if (!run.next().done) jobs.set(v, { run, frames: 1, art });
 }
 
 /** refresh(v, true) in steps (render/slices.ts: the start's, View.prepare): the rebuild under way finished, then a whole one, a
@@ -89,7 +93,7 @@ export function* refreshSteps(v: View): Steps {
   while (!run.next().done) yield;
 }
 
-const SLICE_MS = 2.5, MAX_FRAMES = 4, SLICE_FPS = 30;
+const SLICE_MS = 2.5, MAX_FRAMES = 4, ART_FRAMES = 120, SLICE_FPS = 30;
 
 /** The tallest trees' squeeze (treeCap) as one number, to see it change. */
 const treeCapKey = (t: View["game"]["tuning"]): number => t.treeCap.from * 1e3 + t.treeCap.keep;
@@ -118,7 +122,8 @@ function due(v: View, force = false) {
   const relics = lyingRelics(g); // (one picked up or put back: its bottle goes or comes at once)
   const cap = treeCapKey(t); // (the tallest trees' squeeze changed on the pause page's sliders: drawn again at once, on the frozen frame too)
   if (!force && !moved && !turned && !regrown && v.assets.version === v.lastBuild.version && relics === v.lastBuild.relics && cap === v.lastBuild.cap) return null;
-  return { margin, pose, key, lift, radius, reach, canopy, tele };
+  const art = !force && !moved && !turned && !regrown && relics === v.lastBuild.relics && cap === v.lastBuild.cap; // (only new art in)
+  return { margin, pose, key, lift, radius, reach, canopy, tele, art };
 }
 
 function* rebuild(v: View, { margin, pose, key, lift, radius, reach, canopy, tele }: NonNullable<ReturnType<typeof due>>, force: boolean): Generator<void, void, void> {

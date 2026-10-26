@@ -9,9 +9,7 @@
 // night's clothes wait in their pile by the bed, rules/clothesPile.ts, for whenever she wants them), everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
 // broom, hat, and bag) should be before the locked door"). Then down the trunk to her decks on the Terrace, where E starts the
 // party (Ed, 2026-10-20: "The DJ intro replaces the party spell before the party has started"): she's seated behind them and the
-// spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. Her very first morning
-// on this browser (`first`) has no pile of last night's clothes (rules/clothesPile.ts) and her dressing guided (rules/guidance.ts);
-// the page knows which (main.ts wokenBefore). Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
+// spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
 // A dream first (Ed, 2026-10-24, finds on loan: "when she's asleep ... we can communicate through her dreams"): after a night with a
 // find on loan she dreams its verdict (render/dream.ts) while still asleep, beat "dream", nothing ringing; when the dream ends by
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
@@ -36,8 +34,10 @@ export interface WakeState {
   open: boolean;
   /** She's come to the dressing table already, ever (the page's save: main.ts), so it isn't marked again. */
   mirror: boolean;
-  /** Her very first morning on this browser: no pile of last night's clothes, her dressing guided (main.ts wokenBefore). */
-  first?: boolean;
+  /** A night played before this wake-up, in this game (after the bed, or a sail): last night's clothes lie in their pile by her
+   *  bed. Without one, the first morning of a game, there's no yesterday (Ed, 2026-10-26: "the hat she wore yesterday should be in
+   *  the clothes pile - but on the first, there was no yesterday"): no pile, and her hat lies on the hats' floor (startWake). */
+  yesterday?: boolean;
   /** This frame's happenings, for the page (cleared as each frame's steps begin: rules/game.ts stepGame). */
   events: WakeEvent[];
   /** Last night's clothes still in the pile by her bed (rules/clothesPile.ts; Ed, 2026-10-23): she's in her nightie till it's empty,
@@ -56,18 +56,31 @@ function inBed(g: Game): { x: number; z: number } | null {
   return bed ? objectWorld(bed, g.map.treehouse, bed.w * 0.15, 0) : null;
 }
 
-/** How a wake-up starts: `first`, her very first morning on this browser; `mirrored`, she's been to the dressing table before, ever
- *  (its first visit not marked again); `dreaming`, still asleep in her dream first (beat "dream": the alarm when it ends). */
-export interface WakeStart { first?: boolean; mirrored?: boolean; dreaming?: boolean }
-/** Start the wake-up (the dive's landing, a load, a night after the bed or a sail; rules/opening.ts wakeInBedroom having put her in
- *  the bedroom): in bed, in her nightie, last night's clothes all in the pile, the alarm ringing. False without the house's bedroom. */
-export function startWake(g: Game, ht: number, { first = false, mirrored = false, dreaming = false }: WakeStart = {}): boolean {
+/** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
+ *  in bed, in her nightie, the alarm ringing; `dreaming`, still asleep in her dream first (beat "dream": the alarm when it ends);
+ *  `mirrored`, she's been to the dressing table before, ever (its first visit not marked again); `yesterday`, a night played before
+ *  it in this game: last night's clothes all in the pile by her bed.
+ *  Without one (the game's first morning) there's no pile: every piece of her outfit is still to put on, each at its station, and
+ *  her hat lies on the hats' floor, hers to pick up there (rules/hat.ts: down). False without the house's bedroom. */
+export interface WakeStart { dreaming?: boolean; mirrored?: boolean; yesterday?: boolean }
+export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}): boolean {
   const at = inBed(g);
   if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
-  g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(first ? { first } : {}) };
+  g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
+  if (!yesterday) hatOnFloor(g, ht);
   return true;
+}
+
+/** The first morning's hat (startWake): hers, lying in the middle of the hats' floor (between its two rows of found hats), off her
+ *  head; picked up there, it's on (rules/houseRooms.ts useHats; rules/game.ts takes it out of what she has still to put on). No
+ *  hat at all (the creator's "none": rules/hat.ts has), or no hats' floor, nothing. */
+function hatOnFloor(g: Game, ht: number): void {
+  const W = g.witches[0], o = HOUSE_ROOMS.objects.find(q => q.use.kind === "hats");
+  if (!o || !W.hat.has) return;
+  const p = objectWorld(o, g.map.treehouse);
+  W.hat.down = { x: p.x, z: p.z, at: ht }; delete W.hat.hold;
 }
 
 /** The dream's over (the page's: it played to its end, or a key was pressed while the next island was still being made): her

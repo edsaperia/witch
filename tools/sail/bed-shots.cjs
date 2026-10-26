@@ -36,7 +36,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       const w = window.witch, g = w?.game;
       if (!g) return null;
       const W = g.witches[0];
-      return { seed: g.seed, flying: !!w.view?.fly, arriving: document.body.classList.contains("arriving"), wake: g.wake ? { beat: g.wake.beat, first: !!g.wake.first, open: g.wake.open, pile: g.wake.pile?.length ?? 0 } : null, seated: W.body.seated, x: Math.round(W.body.x), z: Math.round(W.body.z) };
+      return { seed: g.seed, flying: !!w.view?.fly, arriving: document.body.classList.contains("arriving"), wake: g.wake ? { beat: g.wake.beat, yesterday: !!g.wake.yesterday, open: g.wake.open, pile: g.wake.pile?.length ?? 0 } : null, seated: W.body.seated, x: Math.round(W.body.x), z: Math.round(W.body.z) };
     }).catch(() => null);
     const shoot = async tag => {
       const s = await state(), file = `bed-${String(shots.length).padStart(3, "0")}.png`;

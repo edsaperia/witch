@@ -20,11 +20,12 @@ export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
-/** Last night's clothes lie by her bed, to put on with E: on every wake-up but her first (Ed, 2026-10-26: "if it's the first night,
- *  there won't be any last night's clothes"; the coordinator: no pile on her very first wake-up, `first`). On the first she's in
- *  her nightie all the same, `pile` the pieces still to put on, each at its station (her first night's guidance pins lead her round
- *  them: rules/guidance.ts). */
-export const pileOut = (w: { pile?: PileSlot[]; first?: boolean } | null | undefined): boolean => !!w && !w.first && !dressed(w);
+/** Last night's clothes lie by her bed, to put on with E: only after a night played in this game (Ed, 2026-10-26: "if it's the
+ *  first night, there won't be any last night's clothes"; "the hat she wore yesterday should be in the clothes pile - but on the
+ *  first, there was no yesterday": rules/wakeUp.ts `yesterday`). On a game's first morning she's in her nightie all the same, `pile`
+ *  the pieces still to put on, each at its station (her guidance pins lead her round them: rules/guidance.ts), her hat on the hats'
+ *  floor. */
+export const pileOut = (w: { pile?: PileSlot[]; yesterday?: boolean } | null | undefined): boolean => !!w?.yesterday && !dressed(w);
 
 /** A station's choice before she's dressed: its piece goes on her, out of the pile. True when the pile changed. */
 export function wearFromStation(w: { pile?: PileSlot[] }, station: string): boolean {

@@ -325,7 +325,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // Laid out like the sea chart (Ed, 2026-10-26; rules/zooMap.ts): every island at its chart place, one area across, the
   // streets (the plaza's flagstones) between; a found island (map.found: the kinds she knows; "*" every one, ?all) its area,
   // one not found its biome's lake.
-  const zooAt = MS.shape === "zoo" ? zooLayout(MS.world ?? 0, (MS.found ?? []).includes("*") ? "all" : new Set(knownKinds(MS.found ?? [])), { across: A, gap: ZOO_CONFIG.gap ?? 30, margin: ZOO_CONFIG.margin ?? 120, areaSize: A }, tuning.islands?.coast ?? MS.coast) : null;
+  const zooAt = MS.shape === "zoo" ? zooLayout(MS.world ?? 0, (MS.found ?? []).includes("*") ? "all" : new Set(knownKinds(MS.found ?? [])), { across: A * (ZOO_CONFIG.size ?? 1), gap: ZOO_CONFIG.gap ?? 30, street: ZOO_CONFIG.street, plaza: ZOO_CONFIG.plaza, margin: ZOO_CONFIG.margin ?? 120, areaSize: A }, tuning.islands?.coast ?? MS.coast) : null;
   const zoo: ZooPlan | null = zooAt ? zooChartPlan(zooAt) : null;
   // The journey's islands by roster (Ed, 2026-10-11; rules/rosters.ts): map.island a kind plays that kind's island, its shape and
   // areas from its own seed (where it lies on the sea chart) and its size by phase; "home" plays home's (one area per kind she
