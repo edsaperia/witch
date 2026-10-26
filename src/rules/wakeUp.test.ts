@@ -9,7 +9,7 @@ import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectFront, toPlan } from 
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
 import { atDecks, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
-import { dressed, PILE_SLOTS, wearFromStation, wornGenome } from "./clothesPile";
+import { dressed, pileOut, PILE_SLOTS, wearFromStation, wearPiece, wornGenome } from "./clothesPile";
 import { deckOf, onTerrace } from "./treehouse";
 import { heldByRoutine } from "./djSet";
 
@@ -18,11 +18,12 @@ const K = WAKE_DEFAULT;
 const obj = (id: string) => HOUSE_ROOMS.objects.find(o => o.id === id)!;
 
 /** Woken by the dive: in bed in her bedroom, the alarm ringing, the night's spell not cast. */
-function woken(ready = false): Game {
+/** (`later`: a later wake-up, the shorter one, with last night's clothes in their pile by her bed) */
+function woken(ready = false, later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false; g.islandReady = ready;
   wakeInBedroom(g);
-  startWake(g, g.herTime);
+  startWake(g, g.herTime, later);
   return g;
 }
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { const seen: WakeEvent[] = []; for (let i = 0; i < Math.round(s / STEP); i++) { stepGame(g, { ...idle, ...c }, STEP); seen.push(...(g.wake?.events ?? [])); } return seen; };
@@ -30,7 +31,7 @@ const press = (g: Game) => run(g, STEP, { place: true, sigil: true });
 const rel = (g: Game) => toPlan(g.map.treehouse, g.witch.x, g.witch.z); // (where she is on the house's plan)
 const inRoom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.shape, "bedroom", p.x, p.z) <= 0.05; }; // (on its own floor: its blob)
 /** Up and walking: snoozed out of bed by a step of WASD, the stretch over. */
-function up(ready = false): Game { const g = woken(ready); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); return g; }
+function up(ready = false, later = false): Game { const g = woken(ready, later); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); return g; }
 const standAt = (g: Game, id: string, by = 0.6) => { const p = objectFront(obj(id), g.map.treehouse, by); g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z, vx: 0, vz: 0 }; };
 
 describe("the alarm", () => {
@@ -141,7 +142,7 @@ describe("the door, and nothing waiting on the build (the oak, Ed 2026-10-24: \"
   });
 
   it("dressed, the door opens with the island still being built; the spell waits for her decks", () => {
-    const g = up(false);
+    const g = up(false, true);
     expect(g.islandReady).toBe(false);
     standAt(g, "clothesPile", 0.4); expect(press(g)).toContain("dressed");
     expect(doorShut(g)).toBe(false);
@@ -193,14 +194,16 @@ const outOfBedroom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.
 function upAndDressed(): Game {
   const g = up();
   expect(g.wake!.open).toBe(true);
-  standAt(g, "clothesPile", 0.4); press(g);
+  for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st); // (her first night: no pile, each piece at its station)
+  wearPiece(g.wake!, "hat");
   expect(dressed(g.wake)).toBe(true);
   return g;
 }
 
 describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only a nightie; last night's clothes are in a pile on the floor (pick all up with x/e)\")", () => {
   it("she wakes in her nightie, every piece of her outfit in the pile by her bed", () => {
-    const g = woken();
+    const g = woken(false, true);
+    expect(pileOut(g.wake)).toBe(true);
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
     const pile = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile")!, bed = obj("bed");
     expect(pile.room).toBe("bedroom");
@@ -216,8 +219,19 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
   });
 
+  it("her first wake-up has no pile (Ed, 2026-10-26: \"if it's the first night, there won't be any last night's clothes\"): in her nightie all the same, dressing at the stations; E where it would lie does nothing", () => {
+    const g = up();
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]); // (the pieces still to put on)
+    expect(pileOut(g.wake)).toBe(false);
+    standAt(g, "clothesPile", 0.4);
+    expect(press(g)).not.toContain("dressed");
+    expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
+    wearFromStation(g.wake!, "wardrobe");
+    expect(g.wake!.pile).toEqual(PILE_SLOTS.filter(s => s !== "top"));
+  });
+
   it("E at the pile puts on all of it at once: dressed", () => {
-    const g = up(false);
+    const g = up(false, true);
     standAt(g, "clothesPile", 0.4);
     expect(press(g)).toContain("dressed");
     expect(g.wake!.pile).toEqual([]);
@@ -226,7 +240,7 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
   });
 
   it("a station's choice puts its piece on her, and the pile keeps the rest (Ed: \"if she puts on a top via the menu, the pile then puts on everything else except yesterday's top\")", () => {
-    const g = up(false), w = g.wake!;
+    const g = up(false, true), w = g.wake!;
     expect(wearFromStation(w, "wardrobe")).toBe(true);
     expect(w.pile).toEqual(PILE_SLOTS.filter(s => s !== "top"));
     expect(wearFromStation(w, "wardrobe")).toBe(false); // (on already)

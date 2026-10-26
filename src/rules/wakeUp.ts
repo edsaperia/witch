@@ -18,7 +18,7 @@ import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, keepInRoom, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
-import { dressed, PILE_SLOTS, type PileSlot } from "./clothesPile";
+import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
@@ -88,7 +88,7 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
     // Up: E at last night's clothes puts on all that's still in the pile (rules/clothesPile.ts); the dressing table's mirror the
     // first time she's at it; then out to her decks
     const d = deckOf(g.map, g.tuning), W = g.witches[0], here = d ? objectAt(d, W.body.x, W.body.z) : null;
-    if (press && !dressed(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
+    if (press && pileOut(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
     if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
     if (g.party.spellAt !== null) return c;
     // (her bed before the party: held, she sleeps and the night counts as lost, as the bed after a loss does; main.ts "slept": Ed,
