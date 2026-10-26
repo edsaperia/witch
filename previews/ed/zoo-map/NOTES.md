@@ -15,7 +15,7 @@ This is a mock. Nothing here is merged.
   - At the edge the flagstones give way to a band of water that pours off the disc, with space and stars beyond.
 - `map-all.png`: the same with `?all`, the map's "see all" switch: all 64 islands found.
 - `chart-edge.png`: the sea chart's own rim, the look the zoo's edge would copy. The sea darkens to the lip, pours off the disc (`seaChart.ts`'s `fall` skirt) and fades into the starfield.
-- `frame-street.png`, `frame-above.png`: in play on a street, on foot and from the treetops. The streets are painted by the ground shader in the dancefloor plaza's flagstones (the same courses, joints, moss and grain as `uPave`), laid in straight courses along the street. This is the mock's hack in `src/render/ground.ts`. `v1/` has the first try, the `flagstones` path strip, for comparison.
+- `frame-street.png`, `frame-above.png`: in play on a street, on foot and from the treetops. The streets are painted by the ground shader in the dancefloor plaza's flagstones (the same courses, joints, moss and grain as `uPave`), laid in straight courses along the street. This is the mock's hack in `src/render/ground.ts`. It paints today's zoo grid's streets, so it shows **the stone's look only**. The layout is the maps': as built, the flagstones fill the whole sea between the islands (Ed's answer below). `v1/` has the first try, the `flagstones` path strip, for comparison.
 - `frame-island.png`: inside an island's area on foot, today's zoo block (its own floor, flora, runestone and nameplate).
 - `lakes/lava-ground.png`, `lakes/ice-*.png`: two biome lakes as the game draws them today. An undiscovered island would be one of these in its outline.
 
@@ -74,8 +74,12 @@ To build it, reuse the chart's sea, lip and `fall` skirt shaders (render/chart/s
 - The lakes use the existing lake looks (`?lakelook`), whose cost is measured in `tools/lakes/looks.cjs`. The worst (lava, glacier) are a little dearer than water, and only the ones near her draw.
 - Fewer area types are loaded at once than in today's zoo, because fewer islands are near each other. Art bakes should drop.
 
+## Streets (Ed answered)
+
+Ed: "I think the streets should be the shape of the sea, and the areas should be the shape of the islands." The flagstones fill exactly the chart's sea, between the island outlines and out to the edge water, as `map.png` draws it. Each area is its island's outline, with no extra hint near the coasts.
+
 ## Questions for Ed
 
 1. **Q1 (streets)**: plain flagstone streets everywhere, or the sea's shape kept by darker, wetter stone near the coasts?
-2. **Q2 (lakes)**: an undiscovered island as just its biome's lake in its outline, or with a "?" sign or its sigil faint on the water?
-3. **Q3 (animals)**: only the island's own animal at every age, plus its sleeping legend? Its legend sleeps at the centre. Should its quest work in the zoo (bring it the sigil it dreams of and it wakes happy), or should it only sleep, for show?
+1. **Q1 (lakes)**: an undiscovered island as just its biome's lake in its outline, or with a "?" sign or its sigil faint on the water?
+2. **Q2 (animals)**: only the island's own animal at every age, plus its sleeping legend? Its legend sleeps at the centre. Should its quest work in the zoo (bring it the sigil it dreams of and it wakes happy), or should it only sleep, for show?
