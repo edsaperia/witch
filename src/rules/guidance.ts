@@ -4,8 +4,8 @@
 //   1. after a lost night: the bed (until she's slept);
 //   2. her first night only: the dressing stations, the first whose piece is still in the pile (the wardrobe first), until she's
 //      dressed (Ed: "if it's the first night, there won't be any last night's clothes"; no dressing pin on later nights);
-//   3. every night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (Lima's pickups:
-//      GUIDANCE_HOOKS; until those land both count as done, and the pins go straight on);
+//   3. every night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
+//      kit, rules/kit.ts, through GUIDANCE_HOOKS; a night with no kit, the tools' and the bots', has both, so those pins never show);
 //   4. something new in the treehouse (a find), each until she's been to where it is, newest first;
 //   5. the map table, while there's an island found she hasn't seen on the chart;
 //   6. the decks, until the party spell's cast.
@@ -17,6 +17,7 @@ import type { Game } from "./game";
 import { dressed, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { hasRooms, objectAt } from "./houseRooms";
+import { hasBroom, hasInvites } from "./kit";
 
 /** What a guidance pin is for (render/view/guidance.ts gives each its glyph). */
 export type GuideKind = "bed" | "dress" | "desk" | "lathe" | "hat" | "part" | "wearable" | "chart" | "decks";
@@ -35,11 +36,11 @@ export interface GuideSave { unseen: NewThing[]; chartSeen: string[] }
 
 export const emptyGuide = (): GuideSave => ({ unseen: [], chartSeen: [] });
 
-/** The pickups the getting-ready steps wait on (Lima's: the invitations written tonight, her broom taken off the lathe). Until
- *  they exist both say done, so those steps are skipped; Lima's state fills them in. */
+/** The pickups the getting-ready steps wait on: her night's kit (rules/kit.ts), tonight's invitations taken from the desk and her
+ *  broom taken off the lathe. */
 export const GUIDANCE_HOOKS = {
-  invitationsReady: (_g: Game, _w: number): boolean => true,
-  broomTaken: (_g: Game, _w: number): boolean => true,
+  invitationsReady: (g: Game, w: number): boolean => !g.witches[w] || hasInvites(g.witches[w]),
+  broomTaken: (g: Game, w: number): boolean => !g.witches[w] || hasBroom(g.witches[w]),
 };
 
 /** The dressing stations in the order her first night's pin takes them, by the piece each puts on (rules/clothesPile.ts

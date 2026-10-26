@@ -3,7 +3,10 @@
 import { describe, expect, it } from "vitest";
 import { furnitureSprite, FURNITURE_IDS, FURNITURE_STATES, SIZE } from "../../art/furniture.js";
 import { HOUSE_ROOMS } from "../rules/houseRooms";
-import { DRAWN_ELSEWHERE, PENDING, standing } from "./houseFurniture";
+import { DRAWN_ELSEWHERE, furnitureState, furnitureStates, PENDING, standing } from "./houseFurniture";
+import { newGame } from "../rules/game";
+import { TUNING } from "../rules/tuning";
+import { newKit, takeBroom, takeInvites } from "../rules/kit";
 
 type Drawn = { sp: { w: number; h: number; m: Uint8Array }; origin: { x: number; y: number }; lights: { x: number; y: number }[] };
 const PPM = 32 / 3; // (the house's art pixels a metre: tuning artPixelsPerMetre 16 at pixelSize 3)
@@ -30,6 +33,14 @@ describe("the treehouse's furniture", () => {
         for (const L of d.lights) { expect(L.x, `${at}: light`).toBeGreaterThan(-4); expect(L.x).toBeLessThan(sp.w + 4); expect(L.y).toBeGreaterThan(-4); expect(L.y).toBeLessThan(sp.h + 4); }
       }
     }
+  });
+  it("knows every state her kit can put the desk and the lathe in, so the house asks for them all up front (rules/kit.ts)", () => {
+    const g = newGame(123, TUNING);
+    g.witches.forEach(W => (W.kit = newKit(true)));
+    const seen = new Set<string>([`invitations|${furnitureState("invitations", g)}`, `lathe|${furnitureState("lathe", g)}`]);
+    for (const W of g.witches) { takeInvites(W); seen.add(`invitations|${furnitureState("invitations", g)}`); takeBroom(g, W); seen.add(`lathe|${furnitureState("lathe", g)}`); }
+    for (const k of seen) { const [id, st] = k.split("|"); expect(furnitureStates(id), k).toContain(st); }
+    expect(furnitureStates("bed")).toEqual([]);
   });
   it("draws the Studio's instruments (Ed, 2026-10-23: a glam-rock drum kit, a retro wall of synths, the mic under its spot lamp) at their planned footprints, the lamp marked for the view's light", () => {
     for (const [id, foot] of [["drumKit", { w: 4.4, d: 4, h: 2.6 }], ["synthRack", { w: 4.8, d: 1.4, h: 3.8 }], ["microphone", { w: 1, d: 1, h: 3.4 }]] as const) {

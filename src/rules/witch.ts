@@ -100,10 +100,12 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     w = { ...w, stargazing: false, beachPush: 0 };
   }
   // The fall (the house, rules/treehouse.ts): off the balcony's open rim with no broom, she drops out of sight (drawing only: her
-  // height stays the floor's, so the camera stays up) and, after house.fall.time, is back at the magic circle. No steering meanwhile.
+  // height stays the floor's, so the camera stays up), hits the ground below after house.fall.time (a thud: rules/game.ts) and, a
+  // beat (house.fall.beat) later, is back at the magic circle. No steering meanwhile.
   if (w.falling !== undefined && deck?.house) {
-    const f = w.falling + dt;
-    if (f >= deck.house.fall.time) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    const f = w.falling + dt, F = deck.house.fall;
+    if (f >= F.time + (F.beat ?? 0)) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    if (f >= F.time) return { ...w, vx: 0, vz: 0, falling: f, lean: false, boost: 0, braking: false }; // (down there, unseen, a moment)
     const k = Math.exp(-3 * dt);
     return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
   }
