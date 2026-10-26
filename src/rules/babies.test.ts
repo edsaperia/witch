@@ -5,8 +5,10 @@ import { describe, expect, it } from "vitest";
 import type { Creature, Level } from "./creatures";
 import { speedFactor, wanderRange } from "./creatures";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { babiesOf, trailPoint } from "./babies";
+import { babiesOf, scatterSpot, trailPoint } from "./babies";
 import { creatureWeight, freeOf, loadOf } from "./leashWeight";
+import { leashLoad } from "./game";
+import { isInside } from "./mapShape";
 import { toEvolve } from "./berries";
 import { TUNING, withTuning } from "./tuning";
 
@@ -82,6 +84,36 @@ describe("babies on her leash", () => {
     expect(g.leash.scatter).toBeUndefined();
     const w2 = g.witch;
     [...babies].reverse().forEach((c, k) => { const want = trailPoint(g.leash.trail, w2.x, w2.z, (k + 1) * B.gap); expect(Math.hypot(c.x - want.x, c.z - want.z)).toBeLessThan(1); });
+  }, 60000);
+
+  it("scatter off the screen (Ed, 2026-10-26: \"outside of my camera view\"): each at least babies.scatter from her, past the view's farthest edge (50 m at zoom 3 on his screen), pulling on her not at all, and on the island's land, even fleeing toward the sea", () => {
+    const B = babiesOf(TUNING);
+    expect(B.scatter).toBeGreaterThanOrEqual(50);
+    const fight = (g: Game, from: { x: number; z: number }) => {
+      const w = g.witch, boar = g.creatures.find(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - w.x, c.z - w.z) > 300)!;
+      Object.assign(boar, { species: "boar", level: 1 as Level, x: from.x, z: from.z, tx: from.x, tz: from.z, anchorX: from.x, anchorZ: from.z, cell: g.map.cellSafe(w.x, w.z).cell, gone: false, hp: undefined, hunting: 0, fight: { target: { kind: "witch", id: 0 }, readyAt: 1e9, windupUntil: 0, aimX: 0, aimZ: 0 } });
+      g.byArea = null;
+    };
+    // (in the open: all of them out past the edge, and her load nothing)
+    {
+      const { g, babies } = scene(4), w = g.witch;
+      fight(g, { x: w.x + 10, z: w.z });
+      run(g, 4);
+      for (const c of babies) expect(Math.hypot(c.x - g.witch.x, c.z - g.witch.z)).toBeGreaterThanOrEqual(B.scatter * 0.98);
+      expect(leashLoad(g).total).toBe(0);
+    }
+    // (by the coast, the fight coming from inland: they flee seaward, but stop on the land)
+    {
+      const { g, babies } = scene(4), b = g.map.bounds, [hx, hy] = g.map.centreCell, home = g.map.siteOf(hx, hy);
+      let p = { x: home.x, z: home.z };
+      for (let r = 0; r < 5000 && isInside(b, home.x + r, home.z, 20); r += 2) p = { x: home.x + r, z: home.z }; // (east, 20 m in from the coast)
+      g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z };
+      for (const c of babies) Object.assign(c, { x: p.x - 2, z: p.z, tx: p.x - 2, tz: p.z });
+      fight(g, { x: p.x - 10, z: p.z });
+      run(g, 4);
+      expect(babies.some(c => { const q = scatterSpot(c, g.witch.x, g.witch.z, g.leash.scatter!, B.scatter); return !isInside(b, q.x, q.z); })).toBe(true); // (unchecked, one would be in the sea)
+      for (const c of babies) expect(isInside(b, c.x, c.z)).toBe(true);
+    }
   }, 60000);
 
   it("one far off (200 m, out of sight) is back with her in seconds", () => {

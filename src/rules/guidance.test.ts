@@ -19,7 +19,7 @@ function up(later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false;
   wakeInBedroom(g);
-  startWake(g, g.herTime, later);
+  startWake(g, g.herTime, later, false, later); // (later: after a night played, last night's clothes in their pile)
   run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
   return g;
 }
@@ -46,10 +46,19 @@ describe("guidance pins", () => {
     expect(of(g)).toEqual({ kind: "decks", target: { x: d.house!.desk.x, z: d.house!.desk.z } });
   });
 
-  it("no dressing pin on the nights after: straight to the decks, last night's clothes or not", () => {
+  it("no dressing pin after a night played: last night's clothes are in their pile; straight to the decks", () => {
     const g = up(true);
     expect(g.wake!.pile!.length).toBeGreaterThan(0);
     expect(of(g)?.kind).toBe("decks");
+  });
+
+  it("a game's first morning on a later load (the shorter wake-up, no night played yet): no pile, so the dressing pins, her hat last on the hats' floor", () => {
+    const g = newGame(123, TUNING);
+    g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, true);
+    run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
+    for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);
+    expect(of(g)).toEqual({ kind: "dress", target: { object: "hats" } });
   });
 
   it("the invitations desk, then the lathe, each till it's done (Lima's pickups; skipped while they say done)", () => {

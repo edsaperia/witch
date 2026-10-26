@@ -338,7 +338,7 @@ function arrived(): void {
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd) && dd) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd, true) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -941,7 +941,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over)) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over, true)) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -1175,6 +1175,9 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
 // window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
+// window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
+// played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
+(window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = N(); return wakeInBedroom(game) && startWake(game, game.herTime, true, false, yesterday); };
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;

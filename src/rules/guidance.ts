@@ -3,8 +3,9 @@
 // render/pins.ts). What each pin is for, highest first:
 //   1. after a lost night: the bed (until she's slept); after a won night, once its finale's over, the map table if she found an
 //      island tonight she hasn't yet seen on the chart, else the bed (both shown from anywhere: they lead her home);
-//   2. her first night only: the dressing stations, the first whose piece is still in the pile (the wardrobe first), until she's
-//      dressed (Ed: "if it's the first night, there won't be any last night's clothes"; no dressing pin on later nights);
+//   2. a game's first morning (no pile of last night's clothes: rules/wakeUp.ts yesterday): the dressing stations, the first whose
+//      piece she still has to put on (the wardrobe first; her hat on the hats' floor), until she's dressed (Ed: "if it's the first
+//      night, there won't be any last night's clothes"; with a pile, E there dresses her, and there's no dressing pin);
 //   3. every night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
 //      kit, rules/kit.ts, through GUIDANCE_HOOKS; a night with no kit, the tools' and the bots', has both, so those pins never show);
 //   4. something new in the treehouse (a find), each until she's been to where it is, newest first;
@@ -15,7 +16,7 @@
 // witch has her own: guidanceOf is per witch, from the night and what her browser keeps (GuideSave, app/guideSave.ts).
 // Rules only: no three.js.
 import type { Game } from "./game";
-import { dressed, type PileSlot } from "./clothesPile";
+import { dressed, pileOut, type PileSlot } from "./clothesPile";
 import { deckOf } from "./treehouse";
 import { hasRooms, objectAt } from "./houseRooms";
 import { hasBroom, hasInvites } from "./kit";
@@ -60,7 +61,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly 
   if (wonOver(g)) return g.win!.found.some(i => !save.chartSeen.includes(i)) ? { kind: "chart", target: { object: "mapTable" } } : { kind: "bed", target: { object: "bed" } };
   const k = g.wake;
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
-  if (!k.short && !dressed(k)) {
+  if (!pileOut(k) && !dressed(k)) { // (no pile to put on at once: a game's first morning)
     const next = DRESS_ORDER.find(([slot]) => k.pile!.includes(slot));
     if (next) return { kind: "dress", target: { object: next[1] } };
   }
