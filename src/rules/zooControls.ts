@@ -19,8 +19,18 @@ const key = (cell: readonly [number, number]) => `${cell[0]},${cell[1]}`;
 export function zooBlockAt(g: Game, x: number, z: number): ZooBlock | null {
   const Z = g.map.zoo;
   if (!Z) return null;
+  // (laid out like the chart, rules/zooMap.ts: the island it's on; else the old grid's block)
+  if (Z.layout) { const c = g.map.areaAt(x, z).cell; return Z.blocks.find(b => b.cell[0] === c[0] && b.cell[1] === c[1]) ?? null; }
   const A = g.map.areaSize, cx = Math.floor(x / A), cy = Math.floor(z / A);
   return Z.blocks.find(b => b.cell[0] === cx && b.cell[1] === cy) ?? null;
+}
+
+/** Where a block's front is (m): its nameplate's place, and where the jump puts her. Laid out like the chart, by its runestone on
+ *  the south shore; on the old grid, its square's south edge. */
+export function blockFront(map: Pick<Game["map"], "areaSize" | "soundsystemSpot" | "zoo">, b: ZooBlock): { x: number; z: number } {
+  if (map.zoo?.layout) { const q = map.soundsystemSpot(b.cell[0], b.cell[1]); return { x: q.x, z: q.z + 6 }; }
+  const A = map.areaSize;
+  return { x: (b.cell[0] + 0.5) * A, z: (b.cell[1] + 1) * A - 12 };
 }
 
 /** A block's creatures as they stand: not gone, not hers. */

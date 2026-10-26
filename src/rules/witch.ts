@@ -169,6 +169,11 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
     if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
   }
+  // On foot, the zoo's gold fences stop her too (Ed, 2026-10-26: "the witch can fly over the fence, not walk"): sliding along.
+  if (mode === "ground" && bounds.fence) {
+    const q = bounds.fence.stop(w.x, w.z, x, z);
+    if (q) { const into = vx * q.nx + vz * q.nz; if (into > 0) { vx -= q.nx * into; vz -= q.nz * into; } x = q.x; z = q.z; }
+  }
   if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
   // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house
   // (rules/treehouse.ts keepInHouse): kept in by the hub's wall and the balcony's sides, but out over the balcony's open rim on
