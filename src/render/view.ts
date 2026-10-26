@@ -1368,7 +1368,7 @@ export class View {
   private legendRings(g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
-    const Z = g.map.zoo?.layout, plaza = Z && Math.hypot(g.witch.x - Z.home.x, g.witch.z - Z.home.z) < 400 ? Z.home : null;
+    const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
     const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
