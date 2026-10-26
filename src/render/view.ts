@@ -78,6 +78,7 @@ import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { StoneIndicator } from "./indicator";
+import { Pin, type PinLook, type PinTarget } from "./pins";
 import type { AlarmIndicators } from "./alarm";
 import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
@@ -120,6 +121,7 @@ import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn 
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
+import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
@@ -169,6 +171,8 @@ function nightState(t: Tuning) {
     /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
     holeLead: { x: 0, y: 0 },
     holeAt: 0,
+    /** The place of interest she stands in, kept clear of the scenery in front of it (render/view/reveal.ts), eased. */
+    reveal: newReveal(),
     /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
     bendTo: 0,
     /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
@@ -540,6 +544,16 @@ export class View {
   dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
   winPointer: StoneIndicator | null = null;
+  /** Pins anyone has put up (render/pins.ts: view.pin(target, look)), drawn with the pointers. */
+  readonly pins = new Set<Pin>();
+  pinsAt = Number.NaN;
+  /** A map pin toward `target` (a world point with a height, or a house object), looking `look`; shown at once, `hide()` and
+   *  `show()` to fade it, `remove()` for good. */
+  pin(target: PinTarget, look: PinLook): Pin & { remove(): void } {
+    const p = Object.assign(new Pin(target, look), { remove: () => { this.pins.delete(p); p.dispose(); } });
+    this.pins.add(p);
+    return p;
+  }
   alarmCues: AlarmIndicators | null = null;
   get minimap(): Minimap { return this.island.minimap; }
   /** Metre rulers and a ground grid (G). */
@@ -1367,6 +1381,7 @@ export class View {
 
     this.swapHomeArt();
     setFrameUniforms(this, time, up);
+    setReveal(this, time);
     const w = g.witch;
     this.time("uniforms");
     updateSources(this, time);
@@ -1538,7 +1553,7 @@ export class View {
       // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
       const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
       const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
-      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0);
+      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0, { x: w.x, y: groundHeight(w.x, w.z) + witchHeight(w, t), z: w.z }); // (her: the oak hidden when she's behind it)
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;

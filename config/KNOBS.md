@@ -167,7 +167,7 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 
 ### `areaEdgeBlend`
 
-Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
+Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). warp 0 since (Ed, 2026-10-26, on v4618: "I don't think tree blending borders need to wander, as the area edges themselves are already noisy"; it was 30), kept as a knob. tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
 
 | knob | type | range |
 |---|---|---|
@@ -497,7 +497,7 @@ Tree density is a field, not two states (Ed, 2026-10-03): each area's own densit
 | `bushClump` | number | 0 to … |
 | `treeHeight` | number | 0 to … |
 
-### `treeCap`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+### `treeCap`
 
 The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).
 
@@ -505,6 +505,14 @@ The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight
 |---|---|---|
 | `treeCap.from` | number | 0 to … |
 | `treeCap.keep` | number | 0 to … |
+
+### `pins`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+
+The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top (Ed, 2026-10-26: "pins should be a bit higher").
+
+| knob | type | range |
+|---|---|---|
+| `pins.gap` | number | 0 to … |
 | `crownWidth` | number | 0 to … |
 | `treeSpacingX` | number | 0 to … |
 | `treeSpacingZ` | number | 0 to … |
@@ -1562,6 +1570,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.slow.on` | boolean |  |
 | `music.slow.pitch` | number | 0 to … |
 | `music.slow.floor` | number | 0 to … |
+| `music.house.muffle` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
@@ -1868,7 +1877,7 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.creatures.happy` | number | 0 to … |
 | `sigilProjection.creatures.fade` | number | 0 to … |
 
-### `suspects`, `occlusion`, `canopyShadow`
+### `suspects`, `occlusion`
 
 The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896); cutWhole: the cut-away by each crown whole, as canopyCutout.whole has it (off: pixel by pixel); seeSplit: the see-through's fade itself (off: the soft circle's things stay solid and in the solid pass; the vertex side unchanged); seeMark: the pixels the see-through pass draws tinted magenta; mist: the low mist (in the effects layer); lightRings: the moonlight rings on the crowns (in the effects layer); seeWrite: the see-through pass writes its depth as it draws, so the nearer of two faded things wins where they overlap, as in the solid pass (off as ever: whichever is drawn last); seeCull: the see-through pass skipping, before drawing, every sprite it reckons can't reach her circle or the hole (off: it draws them all and lets each pixel decide); seeKeep: the solid pass keeps what's in front of her as well (the see-through pass drawn over it); seeStencil: the see-through pass marks scenery in the stencil as the solid pass does; seeEarly: the see-through pass drawn straight after the solid scenery (render order 0.6, not 11: she then shows through it whole); seeSolid: the see-through pass's pixels drawn at alpha 1: off, all, only those in her circle (circle) or only the rest (rest); seeNoBlend: the see-through pass drawn with no blending; seeShowAlpha: the see-through pass drawn as its own opacity in grey (white solid, black clear); showBroken: scene pixels that are not a number red, infinite magenta, negative yellow (before the post-process); seeDither: the see-through done in the solid pass as an ordered dither (no second pass for it); seeTwo: the fix (on): what's in front of her drawn in a see-through pass of its own, writing depth, before the half-faded things (off: one see-through pass, as before, the circle bug).
 
@@ -1904,6 +1913,39 @@ The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that dr
 | `occlusion.edge` | number | 0 to … |
 | `occlusion.minHeight` | number | 0 to … |
 | `occlusion.silhouette` | number | 0 to … |
+
+### `reveal`, `canopyShadow`
+
+The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; "we might want this for other important points of interest, such as runestone areas, finds, flasks"; render/view/reveal.ts): while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. legend: a legend's circle (its own radius, its ring pad metres wider for the rim's stones, and its legend as drawn, asleep or awake). runestone: an area's runestone and its fight's open middle (within radius metres of the stone; ring metres round it boxed; 30 m since Ed, 2026-10-26: "the fading area around a runestone is relatively small (say a 30m radius)"). bounded (the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). find: tonight's trunk or wreck, until it's taken. flask: a lying relic flask. Each on or off (all four on since Ed, 2026-10-26: "All four on"; the last three the pause page's toggles, and the runestone's radius its slider). A place fades over seconds as she walks in and back over seconds as she leaves; edge (a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on.
+
+| knob | type | range |
+|---|---|---|
+| `reveal.seconds` | number | 0 to … |
+| `reveal.edge` | number | 0 to … |
+| `reveal.depth` | number | 0 to … |
+| `reveal.legend.on` | boolean |  |
+| `reveal.legend.pad` | number | 0 to … |
+| `reveal.runestone.on` | boolean |  |
+| `reveal.runestone.radius` | number | 0 to … |
+| `reveal.runestone.ring` | number | 0 to … |
+| `reveal.runestone.width` | number | 0 to … |
+| `reveal.runestone.height` | number | 0 to … |
+| `reveal.runestone.keep` | number | 0 to … |
+| `reveal.runestone.bounded` | boolean |  |
+| `reveal.find.on` | boolean |  |
+| `reveal.find.radius` | number | 0 to … |
+| `reveal.find.ring` | number | 0 to … |
+| `reveal.find.width` | number | 0 to … |
+| `reveal.find.height` | number | 0 to … |
+| `reveal.find.keep` | number | 0 to … |
+| `reveal.find.bounded` | boolean |  |
+| `reveal.flask.on` | boolean |  |
+| `reveal.flask.radius` | number | 0 to … |
+| `reveal.flask.ring` | number | 0 to … |
+| `reveal.flask.width` | number | 0 to … |
+| `reveal.flask.height` | number | 0 to … |
+| `reveal.flask.keep` | number | 0 to … |
+| `reveal.flask.bounded` | boolean |  |
 | `canopyShadow.on` | boolean |  |
 | `canopyShadow.strength` | number | 0 to … |
 | `canopyShadow.height` | number | 0 to … |

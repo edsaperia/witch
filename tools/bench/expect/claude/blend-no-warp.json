@@ -1,0 +1,9 @@
+{
+  "reason": "The area blend's wander off (Ed, 2026-10-26, on v4618: \"I don't think tree blending borders need to wander, as the area edges themselves are already noisy\"): areaEdgeBlend.warp 30 to 0; the band stays 80 m wide.",
+  "frames": {
+    "*": "near an area border: which neighbouring-area trees and bushes stand where changes (the band no longer shifted by the warp)"
+  },
+  "rules": {
+    "forest": "the plants' types (look only) within about 80 m of a border, if the bench reads the forest"
+  }
+}

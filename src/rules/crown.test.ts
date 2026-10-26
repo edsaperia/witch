@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { crownBulbs, makeCrown, notchDistance, notchWidth, sightClearance, type HouseOutline } from "./crown";
+import { crownBulbs, GAP_MARGIN, limbSamples, makeCrown, notchDistance, notchWidth, polySigned, sightClearance, SIGHT_PITCHES, type HouseOutline } from "./crown";
 import { TUNING } from "./tuning";
+import { HOUSE_ROOMS } from "./houseRooms";
 import OUTLINE from "../../config/house/outline.json";
 
 const H = TUNING.treehouse.house!, O = OUTLINE as unknown as HouseOutline;
@@ -30,12 +31,26 @@ describe("the great oak's crown", () => {
     }
   });
 
-  it("leaves the Terrace and its notch out to the crown's edge open: no lobe or limb above the floor on any line of sight to them", () => {
-    for (const l of c.lobes) expect(sightClearance(c, l.x, l.y, l.z)).toBeGreaterThan(l.r * 0.8);
-    for (const limb of c.limbs) if (limb.kind !== "root" && limb.kind !== "trunk") for (const k of limb.knots) if (k[1] > -k[3]) expect(sightClearance(c, k[0], k[1], k[2])).toBeGreaterThan(k[3]);
+  it("leaves the Terrace and its notch out to the crown's edge open: no lobe, limb or string above the floor on any line of sight to them", () => {
+    for (const l of c.lobes) expect(sightClearance(c, l.x, l.y, l.z)).toBeGreaterThan(l.r); // (its whole disc)
+    // every limb's tube, all along it, not only its knots, over the floor or under it (the floors are drawn in a plane of their own, so
+    // bark under the Terrace showed over it; Ed, 2026-10-26: "there are branches in front of the balcony")
+    for (const limb of c.limbs) if (limb.kind !== "root" && limb.kind !== "trunk") for (const { p: [x, y, z, r] } of limbSamples(limb, 0.5))
+      expect(Math.min(sightClearance(c, x, y + r, z), sightClearance(c, x, y - r, z)), `${limb.kind} at ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`).toBeGreaterThan(r);
+    for (const s of c.strings) if (s.kind !== "garland") for (const p of s.spans) for (let i = 0; i <= 10; i++) { const u = i / 10, y = p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u);
+      if (y > 0) expect(sightClearance(c, p.a[0] + (p.b[0] - p.a[0]) * u, y, p.a[2] + (p.b[2] - p.a[2]) * u)).toBeGreaterThan(0); }
     // the notch reaches the crown's edge: along the take-off way, past the dome's edge, it's still open
     const [ox, oz] = c.notchFrom, far = Math.max(c.dome.rx, c.dome.rz) * 2.2;
     expect(notchDistance(c, ox + c.takeoff[0] * far, oz + c.takeoff[1] * far, notchWidth(c))).toBeLessThan(0);
+  });
+
+  it("frames the whole Terrace: its floor's outline, and her DJ desk on its rim, inside the gap with a margin to spare", () => {
+    const T = O.rooms.find(r => r.id === "terrace")!, w = notchWidth(c);
+    for (const [x, z] of T.outline) expect(notchDistance(c, x, z, w), `${x}, ${z}`).toBeLessThanOrEqual(-GAP_MARGIN + 1e-6);
+    const d = HOUSE_ROOMS.terrace.decks; // (the desk's four corners)
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) expect(notchDistance(c, d.x + sx * d.w / 2, d.z + sz * d.d / 2, w)).toBeLessThan(0);
+    expect(polySigned(T.outline, T.x, T.z)).toBeLessThan(0);
+    expect(SIGHT_PITCHES[0]).toBeLessThanOrEqual(TUNING.camera.ground.angleIn); // (down to the lowest the camera looks)
   });
 
   it("keeps open ground it's given (the dancefloor) open to the sky as the Terrace: no lobe over it or on a line of sight to it", () => {

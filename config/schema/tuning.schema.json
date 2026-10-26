@@ -2184,6 +2184,19 @@
       ],
       "additionalProperties": false
     },
+    "pins": {
+      "type": "object",
+      "properties": {
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "gap"
+      ],
+      "additionalProperties": false
+    },
     "crownWidth": {
       "type": "number",
       "minimum": 0
@@ -7418,6 +7431,19 @@
           ],
           "additionalProperties": false
         },
+        "house": {
+          "type": "object",
+          "properties": {
+            "muffle": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "muffle"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -7479,6 +7505,7 @@
         "audible",
         "circle",
         "slow",
+        "house",
         "clear",
         "distort",
         "src",
@@ -9024,6 +9051,157 @@
         "showBroken",
         "seeDither",
         "seeTwo"
+      ],
+      "additionalProperties": false
+    },
+    "reveal": {
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legend": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "pad": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on"
+          ],
+          "additionalProperties": false
+        },
+        "runestone": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "keep": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "find": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "keep": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "flask": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "keep": {
+              "type": "number",
+              "minimum": 0
+            },
+            "bounded": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "seconds",
+        "edge",
+        "depth",
+        "legend",
+        "runestone",
+        "find",
+        "flask"
       ],
       "additionalProperties": false
     },
@@ -11541,6 +11719,7 @@
     "bushClump",
     "treeHeight",
     "treeCap",
+    "pins",
     "crownWidth",
     "treeSpacingX",
     "treeSpacingZ",

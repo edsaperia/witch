@@ -70,6 +70,11 @@ export function tuningFromLink(params: URLSearchParams) {
   if (cutBy === "pixel") tuning.suspects.cutWhole = false;
   else if (cutBy === "whole") tuning.canopyCutout = { ...TUNING.canopyCutout, whole: 1 };
   if (params.get("occ") === "off") tuning.occlusion = { ...TUNING.occlusion, on: false };
+  const reveal = params.get("reveal"); // ?reveal=legend,runestone,find,flask (all, none): which places she stands in are kept clear (render/view/reveal.ts)
+  if (reveal !== null && TUNING.reveal) {
+    const R = TUNING.reveal, on = new Set(reveal.split(",")), all = on.has("all");
+    tuning.reveal = { ...R, legend: { ...R.legend, on: all || on.has("legend") }, runestone: { ...R.runestone, on: all || on.has("runestone") }, find: { ...R.find, on: all || on.has("find") }, flask: { ...R.flask, on: all || on.has("flask") } };
+  }
   const hole = params.get("hole");
   if (hole === "off" || hole === "all") tuning.canopyCutout = { ...TUNING.canopyCutout, screenFraction: hole === "off" ? 0 : 8 };
   const tilt = params.get("tilt");
