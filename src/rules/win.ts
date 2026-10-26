@@ -16,8 +16,9 @@
 //     you"): while she's on the ground in the home area (not up at the treehouse, nor in the treetops), the line's leader
 //     trails followLead m behind her along where she's walked and the rest follow single file, congaGap apart (its trail starts
 //     through the line as it stands, so they file after her from where they are); anywhere else, back round the dancefloor.
-//   Then the "Night won" card (card), listing the islands found tonight by quests (found: g.islandsTonight; Ed, 2026-10-18: the
-//     win itself finds none, and only a won night keeps them).
+//   Then it settles (settled; no card since Ed's 2026-10-26 "Remove the end cards"): the guidance pins lead her home, to the map
+//     table for the islands found tonight by quests (found: g.islandsTonight; Ed, 2026-10-18: the win itself finds none, and only a
+//     won night keeps them), then to bed (rules/guidance.ts).
 // The losing still comes first: home's speakers down before the win, the party's over as ever (rules/partyOver.ts). No drawing.
 import type { Game } from "./game";
 import type { Creature } from "./creatures";
@@ -59,11 +60,12 @@ export interface WinState {
   /** The island's sigil (islandSigil: a kind's island its kind's, home the World Tree's). */
   sigil: string;
   /** The islands found tonight by quests (Ed, 2026-10-18: "Just winning an island does not unlock more islands"; g.islandsTonight:
-   *  the card's, and the sea chart's), and the night's dealt legends still enraged at the end (calmed, back to sleep), by kind. */
+   *  the sea chart's), and the night's dealt legends still enraged at the end (calmed, back to sleep), by kind. */
   found: string[];
   lost: string[];
-  /** The "Night won" card is up (win.cardAfter seconds after the win). */
-  card: boolean;
+  /** The finale has settled (win.settleAfter seconds after the win): the guidance pins lead her home (rules/guidance.ts) and the
+   *  night is recorded on the sea chart. */
+  settled: boolean;
   /** The conga: the leader's starting angle round the dancefloor (towards her, as the night's won), and how many dance in it. */
   lead: number;
   congaSize: number;
@@ -98,12 +100,12 @@ export interface WinTuning {
   /** The island's sigil on the dancefloor as it's won: seconds to draw it on, and how long it holds. */
   flareDraw: number;
   flare: number;
-  /** Seconds from the win to the card; how often the stragglers' pointer re-picks. */
-  cardAfter: number;
+  /** Seconds from the win until it settles (the pins lead her home); how often the stragglers' pointer re-picks. */
+  settleAfter: number;
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, settleAfter: 20, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -298,7 +300,7 @@ export function stepWin(g: Game, dt: number): void {
   const time = g.clock.time, T = tuningOf(g);
   if (!g.win) {
     if (!routeDone(g) && !islandCleared(g)) return;
-    g.win = { phase: "stragglers", lastWaveAt: time, target: null, pickedAt: -Infinity, lap: [], fired: 0, sigil: islandSigil(g), found: [], lost: [], card: false, lead: 0, congaSize: 0 };
+    g.win = { phase: "stragglers", lastWaveAt: time, target: null, pickedAt: -Infinity, lap: [], fired: 0, sigil: islandSigil(g), found: [], lost: [], settled: false, lead: 0, congaSize: 0 };
   }
   const w = g.win;
   if (w.phase === "stragglers") {
@@ -320,7 +322,7 @@ export function stepWin(g: Game, dt: number): void {
     // fireworks from every standing soundsystem, home's ring among them
     for (const [key, h] of g.combat.sounds) if (h.hp > 0) g.waveEvents.push({ kind: "waveCelebrate", key, x: h.x, z: h.z, at: time, wave: g.party.wave });
   }
-  // Won: the line goes round (or follows her), the legends dance at home; the card comes up.
+  // Won: the line goes round (or follows her), the legends dance at home; then it settles.
   const n = w.congaSize, W = g.witch, follow = congaFollows(g);
   if (!follow) w.trail = undefined;
   else {
@@ -343,7 +345,7 @@ export function stepWin(g: Game, dt: number): void {
     } else if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
     else { toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T); if (!c.moving) c.away = false; } // (there: facing us, dancing in place)
   }
-  if (!w.card && time >= (w.wonAt ?? Infinity) + T.cardAfter) w.card = true;
+  if (!w.settled && time >= (w.wonAt ?? Infinity) + T.settleAfter) w.settled = true;
 }
 
 /** Whether the night's won (nothing fights, no waves, nothing hurts her). */

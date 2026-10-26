@@ -2,7 +2,7 @@
 // the knobs that link keeps from the sliders' carry, Back opening the pause menu, and the quiet fallback to today's reload.
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel, overBedLine } from "./sail";
+import { BackGuard, chartChoice, chartIsland, linkKnobs, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, SAIL_DROPS, stayLabel } from "./sail";
 import { newForestHref } from "./newForest";
 import { carryKnobs } from "./settings";
 import { DECISION_LIST, knobAt, setKnob } from "../ui/decisions";
@@ -70,15 +70,11 @@ describe("the other ways to a new night (PR 6)", () => {
   });
 });
 
-describe("the party's-over card (Ed, 2026-10-21: Play again and A new forest \"replace with the bed\")", () => {
-  const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8"), card = html.match(/<div id="over">[\s\S]*?<\/div><\/div>/)?.[0] ?? "";
-  it("has no Play again or A new forest, points her to the bed and keeps the Sea chart", () => {
-    expect(card).toContain("THE PARTY'S OVER");
-    expect(card).not.toMatch(/id="again"|id="fresh"|Play again|A new forest/);
-    expect(card).toContain('id="chart-open"');
-    expect(card).toContain(`<div id="over-bed">${overBedLine(false)}</div>`);
-    expect(overBedLine(false)).toMatch(/bed.*treehouse.*new night/);
-    expect(overBedLine(true)).toMatch(/Esc/); // (a bot game: its tag's way out)
+describe("no end cards (Ed, 2026-10-26: \"Remove the end cards\"): the guidance pins lead her home instead (rules/guidance.ts)", () => {
+  it("the page has neither the night won card nor the party's over card, nor their buttons", () => {
+    const html = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+    expect(html).not.toMatch(/id="(won|over|won-found|won-sail|won-close|over-stats|over-bed|over-close|chart-open)"|NIGHT WON|THE PARTY'S OVER/);
+    expect(html).not.toMatch(/#won\b|#over\b/);
   });
 });
 

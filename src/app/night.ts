@@ -42,7 +42,7 @@ export interface NightSpec {
   ready?: Promise<PrepRecord | null>;
 }
 
-/** The night's own flags, fresh each night (a second night left with the first's would never record to the chart or show its cards). */
+/** The night's own flags, fresh each night (a second night left with the first's would never record to the chart). */
 export interface NightFlags {
   /** The start's art made (view.prepare): play can begin. */
   ready: boolean;
@@ -50,8 +50,8 @@ export interface NightFlags {
   landed: boolean;
   /** Arriving from the chart into her bedroom: put in bed before the dive (its last shot there), she wakes as it lands (main.ts arrived). */
   inBed: boolean;
-  wonShown: boolean;
-  overShown: boolean;
+  /** The afterparty recorded on the sea chart (played, nothing found). */
+  overRecorded: boolean;
   /** The night recorded on the sea chart (won, or the afterparty). */
   chartRecorded: boolean;
   /** The party spell wanted until the rules have it. */
@@ -110,7 +110,7 @@ export const hasHat = (game: Game, look: unknown): boolean => (look as { hat?: {
 /** Her hat on or not by her look; none, none lying about either. */
 export function wearHat(game: Game, look: unknown): void { const H = game.witches[0].hat; H.has = hasHat(game, look); if (!H.has) H.down = null; }
 
-const freshFlags = (): NightFlags => ({ ready: false, landed: false, inBed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
+const freshFlags = (): NightFlags => ({ ready: false, landed: false, inBed: false, overRecorded: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
 
 /** The playtest log's hooks main.ts sets (they read the holder, so they carry to the next night's log as they are). */
 const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugText", "stalls"] as const;
@@ -205,12 +205,10 @@ function closeNight(n: Night): void {
   resetDom();
 }
 
-/** The DOM a night leaves behind, back as a fresh page has it: the won and over cards, the clock's classes and pops, the arrival's
+/** The DOM a night leaves behind, back as a fresh page has it: the clock's classes and pops, the arrival's
  *  hold on the HUD, the canvas's shake, the sound note. */
 export function resetDom(): void {
   if (typeof document === "undefined") return;
-  for (const id of ["won", "over"]) document.getElementById(id)?.classList.remove("on");
-  for (const id of ["won-found", "over-stats"]) { const el = document.getElementById(id); if (el) el.textContent = ""; }
   const clock = document.getElementById("clock");
   if (clock) { clock.classList.remove("on", "paused", "lost"); clock.querySelectorAll(".boot-pop, .loss-pop").forEach(p => p.remove()); }
   document.body.classList.remove("arriving");

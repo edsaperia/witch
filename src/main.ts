@@ -78,11 +78,10 @@ import { PerfHud } from "./app/perfHud";
 import { keepAtlasPixels } from "./render/atlas";
 import { installPixelUi } from "./ui/pixelUi";
 import { debugBlows } from "./rules/alarms";
-import { wonText } from "./app/wonCard";
 import { SHED_STEPS } from "./platform/audio/shed";
 import { hydrateMs, prepUsed, startBootMapPrep } from "./app/mapPrep";
 import { endNight, flyIn, startNight, wearHat as wear, type Night, type NightSpec, type Page } from "./app/night";
-import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, overBedLine, type NightWay } from "./app/sail";
+import { BackGuard, chartIsland, nightFromHref, nightHref, sailHref, sailOrReload, sailParams, sailWay, stayLabel, type NightWay } from "./app/sail";
 import { hudFade, showStill } from "./app/arrive";
 import { forgetArrival, type Arrival } from "./app/arrival";
 import { shotParams } from "./app/shot";
@@ -364,7 +363,7 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // her back where she stood, in her new look and broom: any hat lying about staying where it lies (Ed, 2026-10-12). They are the only
 // ways in mid-night (Ed: the Bedroom button and F are gone). The bestiary's book opens the zoo over the night, paused under it,
 // and closing it goes back to the night where she was; the bed, E held, ends the night and starts the next on this island, a new
-// seed (the only way to: Ed, 2026-10-21, the party's-over card points her here).
+// seed (the only way to: Ed, 2026-10-21; the afterparty's 💤 pin leads her here, rules/guidance.ts).
 // The stations' panels (Ed, 2026-10-21, the station menus: "The menu should open when she gets near, and mouse or gamepad direction
 // keys are used to navigate the options"; rules/stations.ts, rules/wardrobe.ts, ui/stationPanel.ts): walking up to a station slides
 // its shelves in over the game on E there, and E (the pad's □, Esc) slides them out, she standing still at it (Ed, 2026-10-26); no room. What she owns (app/owned.ts) is on its shelves, what's
@@ -477,8 +476,8 @@ telescope.onChange = on => {
   input.clearPresses();
 };
 const useHouse = (obj: string): void => {
-  const { game, tuning, flags: { chartRecorded, overShown } } = N();
-  if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
+  const { game, tuning, flags: { chartRecorded, overRecorded } } = N();
+  if (obj === "slept") { if (!chartRecorded && !overRecorded) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
   if (o.use.kind === "zoo") zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
@@ -756,18 +755,9 @@ const SLOW_AUDIO = 150; let slowAudioLogged = 0; // (ms: a frame's audio work wo
  *  window.witch.frame steps and draws one frame of a fixed length instead. */
 const loop = { manual: false, get bot() { return bot; }, get botTag() { return botTag; }, get ready() { return N().flags.ready; } };
 const spellButton = document.getElementById("spell");
-document.getElementById("won-close")?.addEventListener("click", () => document.getElementById("won")!.classList.remove("on"));
-/** The cards' Sea chart (Ed, 2026-10-11: after a loss, replay the island or pick another) and Sail on (its islands found now lit):
- *  the map table's chart over the game, so its sail is in place (the plan's PR 6); the old way (?sail=reload, a bot game), or
- *  anything going wrong, chart.html as before (app/chartPage.ts). */
-function chartFromCard(): void {
-  const n = N(), toPage = (h: string) => { location.href = h; };
-  if (botKind || sailing || sailWay(n.params, n.tuning) === "reload") { toPage("chart.html"); return; }
-  void sailOrReload(async () => chartOverNight(), "chart.html", toPage, e => console.error("sea chart: it couldn't open over the game, so chart.html loads instead", e));
-}
-/** The sea chart over the night (the map table's, and the cards'): choosing the island she's on never starts a new night (Ed,
+/** The sea chart over the night (the map table's): choosing the island she's on never starts a new night (Ed,
  *  2026-10-21: "choosing the same island after a night has ended shouldn't start a new night - going to bed does that"): the chart
- *  closes as Close does, nothing recorded, and the night (or its afterparty, its card up) goes on as it was; another sails. */
+ *  closes as Close does, nothing recorded, and the night (or its afterparty) goes on as it was; another sails. */
 function chartOverNight(table?: string): void {
   const n = N(), island = chartIsland(n.tuning.map?.island);
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
@@ -779,9 +769,6 @@ function chartOverNight(table?: string): void {
  *  his playtest of 2026-10-26, E at it: rules/stations.ts tableOf, ui/chartOverlay.ts `table`): up from the bottom, the night held
  *  behind it; she moves and it slides away. The table it's up at. */
 let chartAt: string | null = null;
-document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
-document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
-document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
 /** The world the chart is given: the link's own ?world=, carried on as chart.html's links do (else the save's). */
 function chartWorldArg(): number | undefined { return new URLSearchParams(location.search).has("world") ? N().tuning.map?.world : undefined; } // (a function: the first load's chart opens before this line runs)
 /** Sailing from the map table's sea chart (ui/chartOverlay.ts, and window.witch.sail under it): the night recorded on the chart,
@@ -803,7 +790,7 @@ function recordSail(): void {
   // (she sleeps as she sails: tonight's loan settled, and its dream after the dive, in bed: Ed, 2026-10-24)
   dreamAfterDive = dreamsAfter("sail") ? settleLoan(N().game.win?.phase === "won") : null;
   const n = N(), W = n.tuning.map?.world ?? 0, save = loadSave();
-  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overShown));
+  if (save.world === W) storeSave(sailNight(save, n.tuning.map?.island ?? "", !wavesOver(n.game) && !n.flags.chartRecorded && !n.flags.overRecorded));
   carryTiming(); // (?timing=1: the chart page's steps carried to the next, app/timing.ts)
 }
 /** The next night made under the sea chart as it flies (Ed, 2026-10-24, the sail's transition: "Start the dive as soon as what it
@@ -1079,25 +1066,18 @@ function frame(now: number): void {
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
   if (!bot && game.leashEvents.some(e => e.kind === "chart")) { guide.chartSeen = loadSave().found; storeGuide(guide); chartFound.at = -Infinity; } // (the islands found, seen: her guidance's map-table pin goes)
   if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
-  // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
-  // in, a small card under the clock says so, with the time she lasted, and a way to play again.
-  // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart
-  // (app/chartSave.ts), once, as its card comes up; the enraged legends' (win.lost) not.
-  if (game.win?.card && !F.wonShown) {
-    F.wonShown = true;
-    document.getElementById("won-found")!.textContent = wonText(game.win);
-    document.getElementById("won")!.classList.add("on");
-  }
-  if (game.win?.card && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
+  // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
+  // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
+  // finale settles; the enraged legends' (win.lost) not.
+  if (game.win?.settled && !F.chartRecorded) { F.chartRecorded = true; nightOver(tuning.map?.island ?? "", { won: true, found: game.win.found }, undefined, tuning.map?.world ?? 0); if (warmOn) warmChart(chartWorld(), loadSave().found); } // (in the campaign's world only; home grows with what she's found: made again ahead)
   // The touch spell button only with a broom that has a spell to cast (rules/spells.ts castable).
   { const want = castable(game.spells) ? "" : "none"; if (spellButton && spellButton.style.display !== want) spellButton.style.display = want; }
   newBuild.update(creator.open || freeze.frozen || menuGone); // (a newer build is out: in the bedroom and on the pause page)
-  if (game.partyOver && game.partyOver.ease >= 1 && !F.overShown) {
-    F.overShown = true;
-    nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); // (the sea chart: played; losing loses nothing)
-    document.getElementById("over-bed")!.textContent = overBedLine(!!botKind);
-    document.getElementById("over-stats")!.textContent = `You lasted ${Math.floor(game.partyOver.at / 60)} min ${Math.floor(game.partyOver.at % 60)} s and ${game.party.wave} waves.`;
-    document.getElementById("over")!.classList.add("on");
+  // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty; once it has eased in, the
+  // night recorded on the sea chart as played (losing loses nothing).
+  if (game.partyOver && game.partyOver.ease >= 1 && !F.overRecorded) {
+    F.overRecorded = true;
+    nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0);
   }
   const log0 = performance.now();
   playtest.update();
