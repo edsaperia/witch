@@ -1,9 +1,9 @@
 // The forest fading in behind the treehouse once the island has loaded (Ed, 2026-10-26: "When the forest has loaded, fade it in
 // gradually behind the whole treehouse"; render/view.ts behindHouse): from the built game (DIST, default dist/), she's stood in a
-// room (ROOM, default study) with the island not yet counted ready (g.islandReady false, its art held undrawn: the dark behind the whole house), shot;
+// room (ROOM, default parlour) with the island not yet counted ready (g.islandReady false, its art held undrawn: the dark behind the whole house), shot;
 // then it's ready (main.ts latches it as ever) and the fade's shot at its middle and after its end (dark.reveal, read from the tuning); then the Terrace with the
 // island not ready, as a night starts. Frames <out>/room-before.png, room-mid.png, room-after.png, terrace-start.png.
-//   npm run build && node tools/house/forest-fade.cjs <out dir> [seed]     (ROOM=study, SIZE=1600x900, SETTLE=frames)
+//   npm run build && node tools/house/forest-fade.cjs <out dir> [seed]     (ROOM=parlour, SIZE=1600x900, SETTLE=frames)
 // (the cloud's software renderer takes seconds a frame here: a run is some minutes)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -11,7 +11,7 @@ const [outDir = "previews/forest-fade", seed = "123"] = process.argv.slice(2);
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg", ".webp": "image/webp" };
 const H = require("../../config/house/load.mjs").loadHouse();
-const ROOM = process.env.ROOM || "study", SETTLE = Number(process.env.SETTLE || 60), [W, Ht] = (process.env.SIZE || "1600x900").split("x").map(Number);
+const ROOM = process.env.ROOM || "parlour", SETTLE = Number(process.env.SETTLE || 60), [W, Ht] = (process.env.SIZE || "1600x900").split("x").map(Number);
 const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z * Math.sin(A), -x * Math.sin(A) + z * Math.cos(A)];
 const mid = id => { const r = H.rooms.find(q => q.id === id); return plan(r.x ?? (r.x0 + r.x1) / 2, r.z ?? (r.z0 + r.z1) / 2); };
 
