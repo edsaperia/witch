@@ -22,7 +22,7 @@ import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
-import { dressed } from "../rules/clothesPile";
+import { pileOut } from "../rules/clothesPile";
 import { DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
@@ -354,6 +354,7 @@ export class HouseRoomsView {
       // (corners in the picture's pixels from its floor's middle: top-left, top-right, bottom-right, bottom-left; flipY off, so v 0 is its top)
       [[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => { const p = pxWorld(x, z, dx, dy); pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z; });
       for (const [name, q] of Object.entries(art.marks)) this.marks.set(`${id}.${name}`, pxWorld(x, z, q.x - art.ox, q.y - art.oy));
+      this.marks.set(`${id}.top`, pxWorld(x, z, art.top.x - art.ox, art.top.y - art.oy)); // (its top as drawn: pins clear it, render/pins.ts)
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
       if (id === lit) { this.glow.set(art.tex, art.w, art.h, -art.ox, -art.oy, (dx, dy) => pxWorld(x, z, dx, dy), mesh.renderOrder, now); glowed = true; }
@@ -379,7 +380,7 @@ export class HouseRoomsView {
     if (mic) { const s = mic.art.marks.spot; this.spot.place({ x: s.x - mic.art.ox, y: s.y - mic.art.oy }, 1 / v.mpp, ky, (dx, dy) => pxWorld(mic.x, mic.z, dx, dy), mic.mesh.renderOrder + 0.00001); }
     else this.spot.mesh.visible = false;
     // last night's clothes, in a pile by her bed (rules/clothesPile.ts): what's still in it, till she's dressed
-    const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = g.wake?.pile ?? [];
+    const po = HOUSE_ROOMS.objects.find(o => o.use.kind === "pile"), slots = pileOut(g.wake) ? g.wake!.pile! : []; // (none on her first wake-up)
     if (po && slots.length) {
       const key = `${JSON.stringify(this.outfit)}|${slots.join()}`;
       if (this.pile?.key !== key) {
@@ -431,7 +432,7 @@ export class HouseRoomsView {
     // alone, the old walking keys' (ui/keyHint.ts), E, the pad's □, or on a touch screen the keycap itself to tap; none while it's
     // open. Up at her decks before the party, E there starts it (rules/wakeUp.ts atDecks).
     const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
-    const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null);
+    const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && !pileOut(g.wake)) ? at : null);
     const usable = tagged && tagged.id !== v.houseOpen ? tagged : null, px = Math.max(2, Math.round(cv.width / Math.max(1, v.width))), glyph = USE_GLYPH[v.useDevice], cap = `${glyph}|${px}`;
     if (cap !== this.tagKey) { this.tagKey = cap; this.tag.replaceChildren(keycapCanvas(glyph, px)); }
     this.tapUse = usable && v.useDevice === "touch" ? v.onUse : null;

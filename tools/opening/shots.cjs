@@ -1,7 +1,7 @@
 // The new opening in the built game (app/opening.ts; Ed, 2026-10-20, previews/ed/opening-mock/ on claude/ed-shots), a shot per beat
 // into <out dir>: a fresh profile's first load (?opening=bedroom; Ed, 2026-10-23: no chart first), asleep in the dark while home's
 // night is made, then waking in her bedroom in the treehouse, the pause page's What's new and Options, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
-// mirror, the wardrobe and shoe rack in the bedroom, dressed at last night's clothes, out of its door: the oak's, no curtains, Ed 2026-10-24). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
+// mirror, the wardrobe and shoe rack in the bedroom, no pile of last night's clothes on her first wake-up (E there puts nothing on), out of its door: the oak's, no curtains, Ed 2026-10-24). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
 // that doesn't come. LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
@@ -125,14 +125,15 @@ function front(id, by) {
     const before = await wake();
     log("up:", JSON.stringify(before));
     if (!before.open) fail("up, but the wake-up isn't over");
-    // still in her nightie (Ed, 2026-10-23: rules/clothesPile.ts): the door waits; E at last night's clothes by the bed puts them on
-    if (!(await wake()).pile) fail("no clothes in the pile by her bed: she should wake in her nightie");
+    // still in her nightie (Ed, 2026-10-23: rules/clothesPile.ts), but her first wake-up has no pile of last night's clothes (Ed,
+    // 2026-10-26: "if it's the first night, there won't be any last night's clothes"): E where it would lie puts nothing on; she
+    // dresses at the stations, her guidance pins leading her round them (rules/guidance.ts), or walks out as she is
+    const undressed = (await wake()).pile;
+    if (!undressed) fail("she's dressed already: she should wake in her nightie");
     await goTo("clothesPile", 0.5); await page.waitForTimeout(1500);
-    await shot("12a-the-pile.png");
-    await page.keyboard.press("KeyE");
-    await until(s => !s.pile, "dressed at the pile");
-    await page.waitForTimeout(2500);
-    await shot("12b-dressed.png");
+    await shot("12a-no-pile.png");
+    await page.keyboard.press("KeyE"); await page.waitForTimeout(1500);
+    if ((await wake()).pile !== undressed) fail("E by her bed put clothes on her first wake-up: there's no pile on the first night");
     // and the door lets her out: from just inside it, out along the branch to the Boudoir (the Ent's own house: tools/house/organic.mjs)
     const bed = HOUSE.rooms.find(r => r.id === "bedroom"), bc = [(bed.x0 + bed.x1) / 2, (bed.z0 + bed.z1) / 2], br = HOUSE.corridors.find(c => c.id === "boudoir-bedroom").pts;
     const [ix, iz] = br[br.length - 1], [jx, jz] = br[0], L = Math.hypot(jx - ix, jz - iz), door = plan(ix, iz), [ox, oz] = plan((jx - ix) / L, (jz - iz) / L);
@@ -142,7 +143,7 @@ function front(id, by) {
     const left = () => page.evaluate(([cx, cz, r, A]) => { const g = window.witch.game, th = g.map.treehouse, dx = g.witch.x - th.x, dz = g.witch.z - th.z, px = dx * Math.cos(A) - dz * Math.sin(A), pz = dx * Math.sin(A) + dz * Math.cos(A); return Math.hypot(px - cx, pz - cz) > r + 0.5; }, [bc[0], bc[1], bed.r, TURN]); // (past the bedroom's rim, on the branch)
     for (let i = 0; i < 120 && !(await left()); i++) await page.waitForTimeout(500);
     for (const k of keys) await page.keyboard.up(k);
-    if (!(await left())) fail("the door didn't let her out of the bedroom once she was dressed");
+    if (!(await left())) fail("the door didn't let her out of the bedroom");
     await shot("12c-out-of-the-door.png");
     // out to her decks: E there seats her and casts the party spell, its needle-drop routine the DJ intro (Ed's decision 2)
     const spell = () => page.evaluate(() => window.witch.game.party.spellAt);

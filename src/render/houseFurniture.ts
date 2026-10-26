@@ -35,12 +35,21 @@ export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
 
 /** One object's picture, baked and lit: its texture, its size in art pixels, where its floor's middle is on it; marks: named points
  *  of the piece in its picture's pixels (art/furniture.js: the mic's spot lamp). */
-export interface FurnitureArt { tex: THREE.Texture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
+export interface FurnitureArt { tex: THREE.Texture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }>;
+  /** Its top as drawn: the highest row of its pixels, at the middle of its pixels' width (a pin over it clears it: render/pins.ts). */
+  top: { x: number; y: number } }
+/** A picture's top as drawn (its RGBA pixels, w across): its highest row with a pixel in it, at the middle of its pixels' width
+ *  (an empty one, its top's middle). */
+export function drawnTop(px: ArrayLike<number>, w: number, h: number): { x: number; y: number } {
+  let y0 = -1, x0 = w, x1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3]) { if (y0 < 0) y0 = y; x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+  return y0 < 0 ? { x: w / 2, y: 0 } : { x: (x0 + x1 + 1) / 2, y: y0 };
+}
 /** A piece's pixels (render/housePieces.ts, from the art workers) as the house's texture: an art pixel a texel, its colours as they are. */
 export function pieceArt(p: PiecePixels): FurnitureArt {
   const tex = new THREE.DataTexture(p.px, p.w, p.h, THREE.RGBAFormat);
   tex.magFilter = tex.minFilter = THREE.NearestFilter; tex.generateMipmaps = false; tex.colorSpace = THREE.NoColorSpace; tex.flipY = false; tex.needsUpdate = true;
-  return { tex, w: p.w, h: p.h, ox: p.ox, oy: p.oy, marks: p.marks };
+  return { tex, w: p.w, h: p.h, ox: p.ox, oy: p.oy, marks: p.marks, top: drawnTop(p.px, p.w, p.h) };
 }
 /** A piece (by its key: render/housePieces.ts housePiece) baked here on the page: without the art workers (the tests). */
 export function bakePieceHere(key: string, st: Style, ppm: number, pitch: number): FurnitureArt | null {
