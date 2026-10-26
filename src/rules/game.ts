@@ -40,6 +40,9 @@ import { COMBAT, marchOn, marchSpeed, maxHp, nearestHomeSpeaker, newCombat, star
 import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./simLod";
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, stepSigilButton } from "./sigilButton";
+
+/** Seconds of pushing on out against the zoo's edge before she leaves it (Game.zooPush). */
+export const ZOO_EDGE_PUSH = 0.5;
 import { keepInBedroom, stepWake, WAKE_DEFAULT, type WakeState } from "./wakeUp";
 import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
@@ -60,7 +63,7 @@ import { newPartyWitches, stepPartyWitches, type PartyWitches } from "./partyWit
 import { newBeachWitches, stepBeachWitches, type BeachWitches } from "./beach";
 import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
-import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
+import { newWitch, seaward, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
@@ -177,6 +180,11 @@ export interface Game {
   arena?: { spec: string; ids: number[] };
   /** The zoo's blocks' moods, as its block bar set them (rules/zooControls.ts; calm when not set). */
   zooMoods?: Map<string, import("./zooControls").ZooMood>;
+  /** When she left the zoo (Ed, 2026-10-26): E at its little treehouse (rules/zoo.ts atZooExit), or pushing on out past its edge
+   *  (over the waterfall, into space); the page then fades and takes her back (app/zooExit.ts). Unset while she's in it. */
+  zooExit?: number;
+  /** Seconds she's been pushing on out against the zoo's edge (ZOO_EDGE_PUSH takes her out). */
+  zooPush?: number;
   /** The party's over (Ed, 2026-10-06: every soundsystem and the home ring's speakers destroyed): the afterparty, when it
    *  began and how far it has eased in (rules/partyOver.ts). Null while the party's on. */
   partyOver: PartyOver | null;
@@ -565,6 +573,15 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   const deck = deckOf(g.map, t), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // (no broom: off the Terrace she falls, rules/kit.ts)
   W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  // (the zoo: flying or walking on out against its edge, over the waterfall, takes her out of it, Ed 2026-10-26: "If you fly off the
+  // edge of the map in the zoo you exit as well"): pushing on outward where the edge's soft hold has her (its last map.push metres,
+  // as the beach's stargazing reckons it: rules/witch.ts), for ZOO_EDGE_PUSH seconds, on foot or flying
+  if (g.map.zoo?.layout) {
+    const Ld = g.map.bounds.land, B = W.body;
+    const held = !!Ld && !B.seated && Ld.distAt(B.x, B.z) < (t.map?.push ?? 0) * 0.6 && seaward(B, c, g.map.bounds) === true;
+    g.zooPush = held ? (g.zooPush ?? 0) + hdt : 0;
+    if (g.zooPush >= ZOO_EDGE_PUSH) g.zooExit ??= ht;
+  }
   if (g.wake) keepInBedroom(g); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)

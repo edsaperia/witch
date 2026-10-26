@@ -119,6 +119,7 @@ import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creature
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
 import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
+import { miniTreehouse, ZooExitTag } from "./zooExit";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
@@ -447,6 +448,8 @@ export class View {
   entDeckDrawn(): { x: number; y: number; z: number } | null { return entDeckDrawn(this); }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
+  /** The zoo's little treehouse's "exit" prompt (render/zooExit.ts), made in the zoo. */
+  zooExitTag: ZooExitTag | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
   crown: CrownView | null = null;
   /** The crown seen over the horizon from far off (render/crownLandmark.ts). */
@@ -1181,6 +1184,7 @@ export class View {
     if (rooms && this.houseRooms) this.houseRooms.reset();
     else if (rooms) { this.houseRooms = new HouseRoomsView(); this.scene.add(...this.houseRooms.meshes); }
     else if (this.houseRooms) { this.scene.remove(...this.houseRooms.meshes); this.houseRooms.dispose(); this.houseRooms = null; }
+    if (!game.map.zoo?.layout && this.zooExitTag) { this.zooExitTag.dispose(); this.zooExitTag = null; }
     this.ensureCrown(game);
     // Every other part that keeps something of a night.
     this.strings.setGame(game); this.leashView.setGame(game); this.lasers.setGame(game); this.borders.setGame(game); this.inviteView.setGame(game);
@@ -1368,7 +1372,7 @@ export class View {
   private legendRings(g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
     // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
     // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
-    const Z = g.map.zoo?.layout, plaza = Z && Math.hypot(g.witch.x - Z.home.x, g.witch.z - Z.home.z) < 400 ? Z.home : null;
+    const plaza = null as { x: number; z: number } | null; // (the zoo's plaza draws its own sigil now: render/ground.ts uZooPlaza)
     const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
@@ -1573,10 +1577,14 @@ export class View {
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
     // (the zoo: no treehouse, dancefloor or speakers, only the Ent's circle on its plaza; Ed, 2026-10-26)
     const noHome = !!g.map.zoo?.layout, discoLight = this.dancefloor.update(time, this.ground, g, floorOff);
-    if (noHome) { for (const m of [...this.treehouseBatch.meshes, ...(this.speakerBatch?.meshes ?? []), this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes]) m.visible = false; thLights.length = 0; speakerLights.length = 0; }
+    if (noHome) { // (the treehouse's art only as the little one by the plaza, its way out: render/zooExit.ts)
+      for (const m of [...(this.speakerBatch?.meshes ?? []), this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes]) m.visible = false;
+      this.treehouseBatch.set(miniTreehouse(this, pose.angle)); thLights.length = 0; speakerLights.length = 0;
+      (this.zooExitTag ??= new ZooExitTag()).update(this);
+    }
     const zooF = this.island.zooFences; // (the zoo's railings: clear round her line of sight; the nearest lamps light the street, render/zooFences.ts)
     zooF?.update(w.x, witchHeight(w, t) + this.rideOff + 1, w.z);
-    if (t.bare) setLights(this, [], w.x, w.z); else setLights(this, [...(noHome ? [] : [discoLight]), ...(zooF ? zooF.lights(w.x, w.z, time) : []), ...(zooF && g.map.zoo?.layout && Math.hypot(w.x - g.map.zoo.layout.home.x, w.z - g.map.zoo.layout.home.z) < 160 ? [{ x: g.map.zoo.layout.home.x, y: 7, z: g.map.zoo.layout.home.z, reach: 75, rgb: PLAZA_RGB, strength: 1.8 }] : []), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    if (t.bare) setLights(this, [], w.x, w.z); else setLights(this, [...(noHome ? [] : [discoLight]), ...(zooF ? zooF.lights(w.x, w.z, time) : []), ...(zooF && g.map.zoo?.layout && Math.hypot(w.x - g.map.zoo.layout.home.x, w.z - g.map.zoo.layout.home.z) < 160 ? [{ x: g.map.zoo.layout.home.x, y: 7, z: g.map.zoo.layout.home.z, reach: 75, rgb: PLAZA_RGB, strength: 1.0 }] : []), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     SHADOW_TINT.value = t.shadows.tint ?? 0; // (every shadow's colour: render/shadows.ts, trunkShadows.ts)
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;

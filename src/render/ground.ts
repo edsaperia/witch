@@ -7,6 +7,7 @@
 import * as THREE from "three";
 import { BAYER_GLSL, VALUE_NOISE_GLSL } from "./shaders";
 import { CARVING_SIZE, carvingMask } from "./legendCarving";
+import { legendSigilStrokes } from "../../art/generator.js";
 import type { FloorLook } from "./legendFloor";
 import * as Art from "../../art/generator.js";
 import type { ForestMap } from "../rules/map";
@@ -113,6 +114,8 @@ uniform float uDiscoRim;
 // uPave: inner and outer radius, course depth, stone length (metres); uPave2: ragged edge (metres),
 // share of the outer stones missing, share mossy, the speakers' radius; on when uPave.y > 0.
 uniform vec4 uPave, uPave2;
+uniform vec4 uZooPlaza;       // the zoo's plaza (render/ground.ts plazaSigil): its middle (x, z), radius (m), on
+uniform sampler2D uPlazaSigil; // the World Tree's sigil, its lines 1
 uniform vec4 uZooStreet; // the zoo (rules/zooMap.ts): on, home's look (its streets), how far past the disc's coast its water falls off (m)
 uniform vec3 uPaveStone, uPaveDark, uPaveMoss, uPaveGrout;
 uniform vec3 uRelief; // the ground's relief: strength, scale (metres), shade
@@ -202,10 +205,22 @@ void main() {
         float up = clamp(R.y, 0.0, 1.0);
         col = mix(uHazeColour * 0.9 + vec3(0.1, 0.17, 0.22), vec3(0.09, 0.18, 0.26), smoothstep(0.0, 0.3, up)); // (the sky's glow low down, the deep blue-teal over most of it)
         col *= 0.9 + 0.25 * (rip.x + 0.5); // (its ripples, lighter and darker)
-        if (uZooStreet.x > 0.5) { float lip = smoothstep(uZooStreet.z - 14.0, uZooStreet.z, bd); col = mix(col, vec3(0.36, 0.5, 0.6) * (0.85 + 0.3 * vnoise(p / vec2(1.5, 0.6) + vec2(0.0, uTime * 1.5))), lip * 0.7);
-          // (its foam the last few metres, streaming out over the edge)
-          float foam = step(0.52, vnoise(vec2(p.x + p.y, bd * 1.6 - uTime * 2.2) / 1.1)) * smoothstep(uZooStreet.z - 4.0, uZooStreet.z - 0.5, bd);
-          col = mix(col, vec3(0.78, 0.87, 0.93), foam * 0.85); } // (the zoo's lip: lighter where the water gathers to pour off)
+        if (uZooStreet.x > 0.5) {
+          // The zoo's edge pouring off the disc (the coordinator, 2026-10-26: "the water visibly curving over the lip, falling
+          // streaks below it, and the space beyond"; from her height a fall beyond a far edge hides behind it, so the water shows
+          // its own pour): lines of current racing out to the lip, faster as it nears, the surface darkening as it tips over and its
+          // lines stretching down it, and a crisp white crest on the lip itself (the mist above it: render/zooFences.ts ZooFall).
+          vec2 out2 = normalize(p - uZooPlaza.xy);
+          float tang = dot(p - uZooPlaza.xy, vec2(-out2.y, out2.x)), toLip = uZooStreet.z - bd, k = 1.0 - smoothstep(0.0, 26.0, toLip);
+          vec2 cellP = floor(vec2(tang, bd) / (uPixel * sandCell)) * uPixel * sandCell; // (whole art pixels)
+          float lane = vnoise(vec2(cellP.x * 0.7, 3.0)), flow = fract(cellP.y * (0.18 - 0.1 * k) - uTime * (0.35 + 1.6 * k * k) + lane * 7.0);
+          float streak = step(1.0 - (0.12 + 0.35 * k * k), flow) * step(0.42, lane);
+          float tip = smoothstep(9.0, 0.0, toLip); // (the last metres: the surface bending down over the lip)
+          col *= 1.0 - 0.45 * tip;
+          col = mix(col, vec3(0.62, 0.76, 0.86), streak * (0.45 + 0.4 * k));
+          float crest = step(toLip, uPixel * sandCell.y * 2.5);
+          col = mix(col, vec3(0.9, 0.96, 1.0), crest * (0.75 + 0.25 * vnoise(vec2(tang * 0.8, uTime * 3.0))));
+        } // (the zoo's lip)
         vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
         float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
         if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star
@@ -333,6 +348,35 @@ void main() {
       if (depth < uPixel * 2.01 || arc < uPixel * 2.01) s *= 1.12; // (the lit edge of the stone)
       if (h > 1.0 - uPave2.z && vnoise(p / 1.2 + h * 40.0) > 0.55) s = mix(s, uPaveMoss, 0.75);
       c = s;
+    }
+  }
+  // The zoo's plaza (Ed, 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it"; the coordinator, "clean, continuous
+  // lines ... so the glow follows the strokes"; then Ed, "less strong and bright and thick, and be more weathered"): inside its ring
+  // the flagstones paler, the World Tree's sigil carved in thin grooves of whole art pixels with a faint mint light in them, worn.
+  float plazaLine = 0.0, plazaHalo = 0.0;
+  if (uZooPlaza.w > 0.5) {
+    vec2 q = p - uZooPlaza.xy;
+    float d = length(q), R = uZooPlaza.z;
+    if (d < R + 2.0) {
+      if (d < R) c = mix(c, uPaveStone * 1.15, 0.6);
+      vec2 cell = (floor(p / uPixel) + 0.5) * uPixel, uv = (cell - uZooPlaza.xy) / (R * 1.84) + 0.5;
+      if (uv.x > 0.0 && uv.x < 1.0 && uv.y > 0.0 && uv.y < 1.0) {
+        plazaLine = step(0.45, texture2D(uPlazaSigil, uv).r);
+        float o = 0.5 / (R * 1.84);
+        for (int k = 0; k < 8; k++) { float a = float(k) * 0.7854; plazaHalo += texture2D(uPlazaSigil, uv + vec2(cos(a), sin(a)) * o).r; }
+        plazaHalo /= 8.0;
+      }
+      float ring = 1.0 - step(uPixel * 1.0, abs(d - R));
+      plazaLine = max(plazaLine, ring);
+      plazaHalo = max(plazaHalo, (1.0 - smoothstep(0.0, 1.0, abs(d - R))) * 0.4);
+      // Weathered (Ed, 2026-10-26: "less strong and bright and thick, and be more weathered"): an old carving, faint light in its
+      // grooves, broken in places (worn gaps, chips), moss and dirt over stretches of it, its light uneven along a line.
+      float wear = vnoise(cell / 2.6 + 17.0), chip = hash(floor(p / uPixel) + 3.0), moss = vnoise(cell / 4.5 + 41.0);
+      float keep = step(0.3, wear) * step(0.12, chip) * (1.0 - step(0.68, moss) * step(0.35, hash(floor(p / uPixel) + 9.0)));
+      if (plazaLine > 0.0 && keep < 0.5) { c = moss > 0.62 ? mix(c, uPaveMoss, 0.7) : c * 0.78; } // (a groove filled with moss or dirt, dark)
+      plazaLine *= keep * (0.45 + 0.55 * vnoise(cell / 7.0 + 5.0));
+      plazaHalo *= 0.35 + 0.65 * smoothstep(0.25, 0.6, wear);
+      if (d < R) c *= 1.0 - 0.18 * plazaHalo * (1.0 - step(0.01, plazaLine)); // (the stone darker round the grooves)
     }
   }
   // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
@@ -586,7 +630,9 @@ void main() {
   }
   if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
   vec3 light = nightLightShaded(N, vWorld, moonK);
-  gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), c * light * 1.25), vWorld), vWorld), 1.0); // (her pool in her light's colour)
+  vec3 lit = glowPool(min(vec3(1.0), c * light * 1.25), vWorld);
+  if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
+  gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
 `;
 
@@ -606,6 +652,8 @@ export class Ground {
   private discoTiles = (t => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(32 * 32 * 4), 32, 32));
   private pendingFloors: [number, TilePixels][] = [];
   /** The nearby legend circles' carving masks, side by side (one slot a ring), and which species each slot holds. */
+  /** The zoo's plaza's World Tree (its legendary sigil, whole), PLAZA_SIGIL square; a 1-pixel blank one off the zoo. */
+  private plazaSigil: THREE.DataTexture;
   private lakeCarve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 4 * CARVING_SIZE * 4), CARVING_SIZE * 4, CARVING_SIZE));
   private lakeSlots: string[] = ["", "", "", ""];
   private carve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 6 * CARVING_SIZE * 4), CARVING_SIZE * 6, CARVING_SIZE));
@@ -613,6 +661,7 @@ export class Ground {
 
   /** maxTexture: the GPU's largest texture side (renderer.capabilities.maxTextureSize), held to AREA_TEXTURE_MAX. */
   constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = AREA_TEXTURE_MAX, made: DiscoArt = runSync(discoArt(st, map.dancefloor.radius)).art) {
+    this.plazaSigil = plazaSigil(!!map.zoo?.layout);
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
     const tpm = (this.tpm = areaTexelsPerMetre(Math.max(w, d), Math.min(maxTexture, AREA_TEXTURE_MAX)));
     const W = Math.ceil((w * tpm) / TILE) * TILE, H = Math.ceil((d * tpm) / TILE) * TILE;
@@ -666,6 +715,7 @@ export class Ground {
         uDiscoBase: { value: disco.base }, uDiscoLit: { value: disco.lit }, uDiscoTiles: { value: this.discoTiles },
         uDiscoGeom: { value: new THREE.Vector4(disco.tileM, disco.pitch, disco.size, disco.gridOrigin) }, uDiscoRim: { value: disco.rimOuter },
         ...paving(map, disco),
+        uZooPlaza: { value: new THREE.Vector4(map.zoo?.layout?.home.x ?? 0, map.zoo?.layout?.home.z ?? 0, ZOO_CONFIG.plaza ?? 60, map.zoo?.layout ? 1 : 0) }, uPlazaSigil: { value: this.plazaSigil },
         uBare: { value: map.tuning.bare ?? 0 }, uHillShade: { value: map.tuning.ground.hills.shade ?? 1 },
         uRelief: { value: new THREE.Vector3(map.tuning.ground.relief.strength, map.tuning.ground.relief.scale, map.tuning.ground.relief.shade) },
         uBlend: { value: (B => (B.on ? new THREE.Vector4(B.warp, B.fine, B.band, B.dither ? 1 : 0) : new THREE.Vector4()))(map.tuning.groundBlend) },
@@ -856,7 +906,7 @@ export class Ground {
   dispose(): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
-    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.discoTiles.dispose();
+    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
     this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
   }
 }
@@ -932,3 +982,35 @@ function lakeUniforms(map: ForestMap, share: number, koiSize: number): Record<st
  *  metres; over the shape's own length (1.12). About 4.2 m at today's numbers. */
 const BABY_PX = 30;
 export const koiScale = (st: Style, metresPerPixel: number): number => (BABY_PX * ((st as { creatureScale?: number }).creatureScale ?? 1) * metresPerPixel) / 1.12;
+
+/** The zoo's plaza's sigil mask, PLAZA_SIGIL square, its lines 1: the World Tree's legendary circle (art/sigils.js legendSigilStrokes,
+ *  its rings and runes whole) round the plain World Tree (its own sigil's strokes, without the legend's extra detail, at half the
+ *  legend's width: at full width and detail its crown fills in, a blob from her height; the coordinator, 2026-10-26). */
+const PLAZA_SIGIL = 512;
+type Stroke = { kind: string; dot: boolean; pts: [number, number][]; w: number; r: number };
+function plazaSigil(zoo: boolean): THREE.DataTexture {
+  const n = zoo ? PLAZA_SIGIL : 1, px = new Uint8Array(n * n * 4);
+  if (zoo) {
+    const S = legendSigilStrokes as (id: string, o: { tier: number }) => Stroke[];
+    const strokes = [...S("worldTree", { tier: 2 }).filter(s => s.kind !== "animal").map(s => ({ ...s, w: s.w * 0.5, r: s.r * 0.7 })), ...S("worldTree", { tier: 0 }).filter(s => s.kind === "animal").map(s => ({ ...s, w: s.w * 0.25, r: s.r * 0.45 }))]; // (half as thick: Ed, 2026-10-26)
+    const m = new Float32Array(n * n);
+    for (const st of strokes) {
+      const half = st.dot ? st.r * n : Math.max(1, (st.w * n) / 2), P = st.pts.map(([x, y]) => [x * n, y * n]);
+      const segs = st.dot ? [[P[0], P[0]]] : P.slice(1).map((b, k) => [P[k], b]);
+      for (const [a, b] of segs) {
+        const x0 = Math.max(0, Math.floor(Math.min(a[0], b[0]) - half - 1)), x1 = Math.min(n - 1, Math.ceil(Math.max(a[0], b[0]) + half + 1));
+        const y0 = Math.max(0, Math.floor(Math.min(a[1], b[1]) - half - 1)), y1 = Math.min(n - 1, Math.ceil(Math.max(a[1], b[1]) + half + 1));
+        const dx = b[0] - a[0], dy = b[1] - a[1], l2 = dx * dx + dy * dy;
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const qx = x + 0.5, qy = y + 0.5, t = l2 ? Math.max(0, Math.min(1, ((qx - a[0]) * dx + (qy - a[1]) * dy) / l2)) : 0;
+          const v = Math.max(0, Math.min(1, half + 0.5 - Math.hypot(qx - a[0] - dx * t, qy - a[1] - dy * t))), k = y * n + x;
+          if (v > m[k]) m[k] = v;
+        }
+      }
+    }
+    for (let k = 0; k < n * n; k++) { const v = Math.round(m[k] * 255); px[k * 4] = px[k * 4 + 1] = px[k * 4 + 2] = v; px[k * 4 + 3] = 255; }
+  }
+  const t = new THREE.DataTexture(px, n, n);
+  t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.flipY = false; t.needsUpdate = true;
+  return t;
+}

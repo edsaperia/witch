@@ -1,7 +1,9 @@
 // The bestiary's book (Ed, 2026-10-19: "E on the bestiary book opens the zoo (?zoo) over the game, mid-night. Closing it returns to
 // the night where she was"; rules/houseRooms.ts, the "house" event's "book"): the zoo, the game's own page with ?zoo, in a frame
 // over the night, the night paused under it. Closing it (its × or Esc) takes the frame away and the night goes on where she was.
+// Her way out inside it (its little treehouse, or flying off its edge: app/zooExit.ts) asks the night's page to close it the same way.
 // The page's side (the frame, the pause) is handed in, so the opening and closing is tested without one (zooOverlay.test.ts).
+import { ZOO_EXIT_MESSAGE } from "./zooExit";
 
 /** What the overlay needs of the page: a frame showing `url` over the game (and how to take it away), and the night's pause. */
 export interface ZooHost {
@@ -48,8 +50,11 @@ export function domZooHost(pause: (on: boolean) => void): ZooHost {
       const esc = (e: KeyboardEvent) => { if (e.code === "Escape") { e.stopPropagation(); e.preventDefault(); close(); } };
       window.addEventListener("keydown", esc, { capture: true });
       frame.addEventListener("load", () => { try { frame.contentWindow?.addEventListener("keydown", esc, { capture: true }); } catch { /* (another origin: the button's there) */ } });
+      // (the zoo's own way out, its little treehouse or its edge: app/zooExit.ts)
+      const left = (e: MessageEvent) => { if (e.source === frame.contentWindow && e.origin === location.origin && (e.data as { type?: string } | null)?.type === ZOO_EXIT_MESSAGE) close(); };
+      window.addEventListener("message", left);
       wrap.append(frame, x); document.body.append(wrap);
-      return { remove() { window.removeEventListener("keydown", esc, { capture: true }); wrap.remove(); } };
+      return { remove() { window.removeEventListener("keydown", esc, { capture: true }); window.removeEventListener("message", left); wrap.remove(); } };
     },
   };
 }

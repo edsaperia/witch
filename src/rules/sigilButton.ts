@@ -3,6 +3,7 @@
 // growth spurt: every animal following her an adult at once; Ed, 2026-10-18), else the leash's own (put a sigil down, pick one up, a happy creature's rune;
 // rules/leash.ts); and a happy creature's rune near her trotting over to her. Then, after the 💌s, a sigil put down in
 // a legend's clearing finishing its quest (rules/quest.ts).
+import { atZooExit } from "./zoo";
 import { takeBroom, takeInvites } from "./kit";
 import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
@@ -71,6 +72,8 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     if ((inHouse || W.house) && stepBed(W, at?.use.kind === "bed", !!c.sigilHeld && inHouse, ht).slept) relicEvents.push({ kind: "house", id: W.id, x, z, at: ht, obj: "slept" });
     sigil = false; place = false;
   } else if (W.house?.bedFrom !== undefined) delete W.house.bedFrom;
+  // E at the zoo's little treehouse takes her out of the zoo (Ed, 2026-10-26; rules/zoo.ts atZooExit; app/zooExit.ts does the leaving).
+  if (!perched && (sigil || place) && g.map.zoo?.layout && atZooExit(g.map, g.witch)) { g.zooExit ??= ht; sigil = false; place = false; }
   const onFoot = g.witch.mode === "ground" && !g.witch.seated && !perched && !W.ko;
   const pressed = (sigil || place) && g.witch.mode === "ground" && !g.witch.seated;
   // Her hat first (rules/hat.ts): lying on a sigil or a relic's, the press picks up the hat, and the next the sigil.
