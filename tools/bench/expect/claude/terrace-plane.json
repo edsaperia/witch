@@ -1,6 +1,6 @@
 {
   "reason": "In the oak house off the Terrace, the Ent's sprites (the Terrace's art, her decks and their candles) slide up the plane with the house's floors (render/view/witch.ts houseShiftOf, render/view/home.ts placeTreehouse): drawing only, no rules state changes",
   "frames": {
-    "bedroom": "she wakes in the Bedroom, off the Terrace: the Terrace's art and her decks are drawn where the house's floor has the Terrace, not where they stood"
+    "boot": "0.7 s in she's stepped toward the Terrace's rim (about 15 m from its middle), where the house's drawing has begun to slide: the Terrace's art and her decks now slide with its floors, as they didn't"
   }
 }
