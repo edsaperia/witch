@@ -148,6 +148,7 @@ const { tuning: bootTuning } = N();
 // instead of the map"): a plain first load is home's night, asleep in the dark while it's made, then she wakes in her bedroom
 // there (wakeFirst); ?opening=old for the old start (the character creator as the loading cover).
 const inBedroom = opensInBedroom(bootLink, bootTuning);
+if (!inBedroom) (window as unknown as { witchLoading?: { cancel(): void } }).witchLoading?.cancel();
 if (N().game.map.zoo) void import("./zoo/panel").then(({ ZooPanel }) => { zooPanel = new ZooPanel(N().game); });
 // The settings as built (the tuning file's), for the debug overlay's and the playtest log's list of what's changed (app/repro.ts).
 const BUILT = JSON.parse(JSON.stringify(TUNING)) as object;
@@ -171,6 +172,10 @@ let dreamAfterDive: { loan: Loan; won: boolean } | null = null;
 /** The broom parts she has tonight: those she's found, and a part on loan. */
 const partsNow = (): Set<string> => withLoan("part", new Set(loadBroom().found), loan);
 const view = page.view = await View.create(canvas, N().game, gameStyle(style, bootTuning), savedLook); // (built a frame's budget at a time: the bedroom's frames go on meanwhile, render/slices.ts)
+// The loading screen (src/loading.js, src/ui/loadingScreen.js), up since the first paint: given the view for its count of the art
+// and the shaders; gone at once for a start with no wake-up in the bedroom, its supernova into the bedroom's alarm otherwise (below).
+const loading = (window as unknown as { witchLoading?: { view: unknown; finish(): void; cancel(): void } }).witchLoading;
+if (loading) loading.view = view;
 loadTimes.view = performance.now();
 view.partsFound = partsNow(); // (the Workshop's pegboard hangs them: render/workshopArt.ts)
 performance.mark("witch:view");
@@ -260,7 +265,7 @@ requestAnimationFrame(() => setTimeout(async () => {
   performance.mark("witch:ready");
   startEl.classList.remove("loading");
   if (bot) start(); // (a bot game starts itself as soon as it can)
-  if (inBedroom) wakeFirst();
+  if (inBedroom) { loading?.finish(); wakeFirst(); }
   night.arrival?.begin(night.game); // (the camera takes over from the chart's still)
 }, 0));
 
