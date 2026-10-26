@@ -104,6 +104,8 @@ export const GUIDE_GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dre
 
 /** Over the floor-level hats' floor (its height 0), the pin hovers as over a hat lying there. */
 const TOPS: Record<string, number> = { hats: 1 };
+/** Over her seat at the decks, the pin's tip just over the tempo shown there (2.5 m up). */
+const DECKS_TOP = 3;
 
 /** Her one guidance pin, on her view. */
 export class GuidePin {
@@ -125,6 +127,9 @@ export class GuidePin {
       }
     }
     if (!this.pin) return;
+    // The decks: over them as drawn, slid with the house's drawing as they are, just over the tempo there (render/leash/deckBpm.ts).
+    const L = this.view.leashView, seat = L.seatAt;
+    if (guide?.kind === "decks" && seat) this.pin.target = { x: seat.x + L.seatSlide.x, z: seat.z + L.seatSlide.z, top: seat.y + L.seatSlide.y + DECKS_TOP };
     if (guide && shows) this.pin.show(); else this.pin.hide();
   }
   /** Its kind now and its strength (tools, the shots). */
