@@ -11,7 +11,7 @@ export const STEP_PYRAMID = {
   setPiece: ["heap", "a heap of carved stones under the figs", 1.2, { of: "rubble", top: "post", moss: .6, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13; the pyramid is its scene, art/scenes.js step-pyramid)
   layout: {
     pattern: "glades", density: .6, clump: .55, glades: { count: 3, size: [18, 30] },
-    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .75, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .6, tall: .2, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "pools"], decor: { rate: .3, ruins: .6, rocks: .15, freak: .15, lake: .1, modern: 0 },
     feel: "Tall rainforest, kapoks and figs on great buttresses, broken by round clearings of mossy paving; a stepped pyramid in one, green-gold light, bright feathers in the ferns.",
   },

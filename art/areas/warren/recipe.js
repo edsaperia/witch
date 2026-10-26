@@ -10,7 +10,7 @@ export const WARREN = {
   pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "groves", density: .25, clump: .5, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "ridges", "mounds"], decor: { rate: .35, ruins: .2, rocks: .7, freak: 0, lake: 0, modern: .1 },
     feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock.",
   },

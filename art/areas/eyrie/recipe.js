@@ -9,7 +9,7 @@ export const EYRIE = {
   setPiece: ["heap", "a griffin's great nest of branches", 1.4, { of: "brush", top: "none", height: 2, width: 5.4 }],
   layout: {
     pattern: "lone", density: .22, clump: .35, glades: { count: 1, size: [24, 34] },
-    heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .4, lean: { dir: 1.6, amount: .7 },
+    heightMix: { sapling: .2, mature: .7, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 1.6, amount: .7 },
     terrain: ["ridges", "rocky"], decor: { rate: .25, ruins: .2, rocks: .6, freak: .1, lake: .1, modern: 0 },
     feel: "High bare peaks in hard light and wind, cedars and pines all leaning one way, feathers caught in the scree; a great nest on the highest ledge.",
   },

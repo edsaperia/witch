@@ -11,7 +11,7 @@ export const CRAGS = {
   setPiece: ["heap", "a heap of glacier rubble with a slab on top", 1, { of: "stones", moss: 0, top: "slab", colour: { stone: [.74, .14, .62], dark: [.72, .16, .34], lichen: [.74, .08, .84] } }],
   layout: {
     pattern: "lone", density: .25, clump: .5, glades: { count: 1, size: [18, 26] },
-    heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .5, lean: { dir: .8, amount: .25 },
+    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .5, lean: { dir: .8, amount: .25 },
     terrain: ["rocky", "ridges"], decor: { rate: .3, ruins: .05, rocks: .75, freak: .05, lake: .1, modern: .05 },
     feel: "High, bare and bright: lichened rock and fingers of glacier ice, rock spires standing over the scree, larch bent by the wind and old wild olives in the lee of the rocks, broom and juniper scrub and heather among the stones.",
   },

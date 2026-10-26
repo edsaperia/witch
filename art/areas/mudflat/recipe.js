@@ -10,7 +10,7 @@ export const MUDFLAT = {
   setPiece: ["punt", "an old canoe stranded on the mud, crab pots in it", 1, { state: "broken", cargo: "trap", pole: 1 }],
   layout: {
     pattern: "edgeOnly", treeShare: .9, density: .35, clump: .6, glades: { count: 2, size: [18, 26] },
-    heightMix: { sapling: .35, mature: .5, tall: .15, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: .15 },
+    heightMix: { sapling: .35, mature: .575, tall: .075, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: .15 },
     terrain: ["stream", "pools"], decor: { rate: .25, ruins: .1, rocks: .4, freak: .05, lake: .35, modern: .1 },
     feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs.",
   },
