@@ -17,13 +17,18 @@ const FORE = Math.sin((24 * Math.PI) / 180);
 /** The Terrace's magic circle (Ed, 2026-10-26: "The magic circle should be larger and have the ent sigil on it"; config/house/base.json
  *  terrace.circle, where she comes back after a fall or a knockout): burnt into the boards, a double ring round the Ent's sigil, the
  *  World Tree (art/sigils.js), its lines the circle's red, the boards inside scorched. `mark(u, v)`: u, v -1 to 1 across it. */
-const CIRCLE = { line: [190, 40, 52] as RGB, glow: [226, 70, 74] as RGB, floor: [58, 30, 24] as RGB };
-const circleMark = (u: number, v: number): "line" | "glow" | "floor" | null => {
+export const CIRCLE = { line: [190, 40, 52] as RGB, glow: [226, 70, 74] as RGB, floor: [58, 30, 24] as RGB };
+export const circleMark = (u: number, v: number): "line" | "glow" | "floor" | null => {
   const r = Math.hypot(u, v);
   if (r > 1) return null;
   if (r > 0.9 || (r > 0.8 && r < 0.85)) return r > 0.95 || r < 0.82 ? "line" : "glow";
   if (r > 0.74) return "floor";
   return sigilHit("worldTree", 0.5 + u / 1.45, 0.5 + v / 1.45, 0.03) ? "line" : "floor"; // (the tree filling the inner ring)
+};
+/** The Terrace's magic circle on the house's plan: its middle and radius, metres (null: none). */
+export const terraceCircle = (H: HouseConfig): { x: number; z: number; r: number } | null => {
+  const tr = H.rooms.find(r => r.id === "terrace");
+  return tr && H.terrace?.circle ? { x: (tr.x0 + tr.x1) / 2 + H.terrace.circle.x, z: (tr.z0 + tr.z1) / 2 + H.terrace.circle.z, r: H.terrace.circle.r } : null;
 };
 const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]] as RGB[], ring: [62, 36, 22] as RGB, bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]] as RGB[], moss: [[46, 66, 38], [70, 96, 50]] as RGB[], locked: [[52, 40, 34], [64, 50, 40]] as RGB[] };
 const DEG = Math.PI / 180;
@@ -74,7 +79,7 @@ export function paintFloorRows(H: HouseConfig, mpp: number, j0: number, j1: numb
   j1 = Math.min(j1, Hh);
   const rest = new Uint8ClampedArray(W * Math.max(0, j1 - j0) * 4), terrace = new Uint8ClampedArray(rest.length);
   const locked = new Set(H.rooms.filter(r => r.locked).map(r => r.id));
-  const tr = H.rooms.find(r => r.id === "terrace"), circ = tr && H.terrace?.circle ? { x: (tr.x0 + tr.x1) / 2 + H.terrace.circle.x, z: (tr.z0 + tr.z1) / 2 + H.terrace.circle.z, r: H.terrace.circle.r } : null;
+  const circ = terraceCircle(H);
   const set = (px: Uint8ClampedArray, o: number, c: RGB) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   // (blocks about 2 m across; the field falls at most about 1.3 m a metre (a room's wobble), so 2 a metre and half a metre to spare)
   const reach = 2 * Math.SQRT1_2 * B * mpp + 0.5;
