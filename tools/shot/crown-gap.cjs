@@ -10,6 +10,8 @@ const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "160271", [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number), MAX = Number(process.env.MAX || 0.02);
+// (no tilt-shift blur nor bloom: either spreads the crown's pixels and lights into the Terrace's, counted as covering it)
+const LINK = process.env.LINK ?? "tilt=off&bloom=off";
 const SCENES = (process.env.SCENES || "at:3166,2850,treetop|at:3166,2900,treetop|room:terrace").split("|");
 const out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/shot/crown-gap"));
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
@@ -25,7 +27,7 @@ const OUTLINE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/ho
     for (const scene of SCENES) {
       const page = await browser.newPage({ viewport: { width: W, height: H } }), errors = [];
       page.on("pageerror", e => errors.push(e.message));
-      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}`);
+      await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}&${LINK}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       await page.evaluate(() => { window.witch.manual = true; });
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
@@ -47,9 +49,15 @@ const OUTLINE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/ho
       const shot = async () => { await step(1); return page.screenshot({ type: "png", timeout: 300000 }); };
       const hide = vis => page.evaluate(vis => window.witch.view.scene.traverse(o => { if (/^crown$/.test(o.name)) o.visible = vis; }), vis);
       const a = await shot(); await hide(false); const b = await shot(); await hide(true);
+      // PARTS=1: each part of the crown hidden alone (its leaves, its bark, its bulbs, its wire), to see which covers the Terrace
+      const parts = {};
+      if (process.env.PARTS) for (const [label, test] of [["leaves", "o.isMesh && o.geometry.isInstancedBufferGeometry"], ["bark", "o.isMesh && !o.geometry.isInstancedBufferGeometry"], ["bulbs", "o.isPoints"], ["wire", "o.isLineSegments"]]) {
+        await page.evaluate(test => { const f = new Function("o", "return " + test); window.witch.view.scene.traverse(o => { if (/^crown$/.test(o.name)) o.visible = !f(o); }); }, test);
+        parts[label] = (await shot()).toString("base64"); await hide(true);
+      }
       const where = await page.evaluate(() => { const w = window.witch.game.witch, c = window.witch.view.crown; return { x: Math.round(w.x), z: Math.round(w.z), mode: w.mode, indoors: c ? c.indoors : null }; });
       // the share of the Terrace's pixels the crown changes (decoded in the page: a canvas each)
-      const r = await page.evaluate(async ([A, B, poly]) => {
+      const measure = async ([A, B, poly]) => {
         const load = async s => { const im = new Image(); im.src = "data:image/png;base64," + s; await im.decode(); const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const x = cv.getContext("2d"); x.drawImage(im, 0, 0); return x.getImageData(0, 0, im.width, im.height); };
         const ia = await load(A), ib = await load(B), w = ia.width, h = ia.height;
         if (!poly || poly.some(p => p[2] > 1)) return { inView: 0, covered: 0 };
@@ -57,13 +65,15 @@ const OUTLINE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/ho
         let n = 0, changed = 0;
         for (let y = 0; y < h; y += 2) for (let x = 0; x < w; x += 2) { if (!inside(x, y)) continue; n++; const k = (y * w + x) * 4; if (Math.abs(ia.data[k] - ib.data[k]) + Math.abs(ia.data[k + 1] - ib.data[k + 1]) + Math.abs(ia.data[k + 2] - ib.data[k + 2]) > 24) changed++; }
         return { inView: n, covered: n ? changed / n : 0 };
-      }, [a.toString("base64"), b.toString("base64"), poly]);
+      };
+      const r = await page.evaluate(measure, [a.toString("base64"), b.toString("base64"), poly]);
+      for (const [label, img] of Object.entries(parts)) r[label] = (await page.evaluate(measure, [a.toString("base64"), img, poly])).covered;
       // the frame, its Terrace outlined
       const name = scene.replace(/[^a-z0-9]+/gi, "-");
       fs.writeFileSync(path.join(out, `${name}.png`), a);
       if (poly) { const marked = await page.evaluate(async ([A, poly]) => { const im = new Image(); im.src = "data:image/png;base64," + A; await im.decode(); const cv = document.createElement("canvas"); cv.width = im.width; cv.height = im.height; const x = cv.getContext("2d"); x.drawImage(im, 0, 0); x.strokeStyle = "#ff3df0"; x.lineWidth = 2; x.beginPath(); poly.forEach(([px, py], i) => i ? x.lineTo(px, py) : x.moveTo(px, py)); x.closePath(); x.stroke(); return cv.toDataURL("image/png").split(",")[1]; }, [a.toString("base64"), poly]); fs.writeFileSync(path.join(out, `${name}-outlined.png`), Buffer.from(marked, "base64")); }
       const bad = r.inView > 200 && r.covered > MAX && !where.indoors; if (bad) failed = true;
-      console.log(`${scene}: ${JSON.stringify(where)}; the Terrace ${r.inView ? `on screen (${r.inView * 4} px), ${(r.covered * 100).toFixed(1)}% of it covered by the crown` : "off the screen"}${bad ? "  FAIL" : ""}${errors.length ? `; page errors: ${errors.join(" | ")}` : ""}`);
+      console.log(`${scene}: ${JSON.stringify(where)}; the Terrace ${r.inView ? `on screen (${r.inView * 4} px), ${(r.covered * 100).toFixed(1)}% of it covered by the crown${Object.keys(parts).length ? ` (by its ${["leaves", "bark", "bulbs", "wire"].map(k => `${k} ${(r[k] * 100).toFixed(1)}%`).join(", ")})` : ""}` : "off the screen"}${bad ? "  FAIL" : ""}${errors.length ? `; page errors: ${errors.join(" | ")}` : ""}`);
       await page.close();
     }
   } finally { await browser.close(); server.close(); }
