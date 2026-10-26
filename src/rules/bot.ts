@@ -217,14 +217,16 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
     // Where to put a quest's sigil or a relic down: in the legend's clearing (#244: only there counts), in front of it; else beside it.
     const spotBy = (L: Creature): [number, number] => { const lc = map.legendClearing?.(L.cell[0], L.cell[1]); return lc ? [lc.x, lc.z] : [L.x + 4, L.z + 4]; };
 
-    /** Who she may invite in an area (careful: never its last one of the area's kind). */
+    /** Who she may invite in an area (careful: never its last one of the area's kind where the area has a legend, which grows
+     *  restless with none of its kind: rules/legends.ts. Where it has none, keeping its last one only kept the area from ever
+     *  being cleared (rules/clear.ts), and with nothing else to invite she stood idle with a full leash: seed 33, 2026-10-26). */
     const inviteable = (key: string, cell: Cell): Creature[] => {
-      const sp = species(cell), out: Creature[] = [];
+      const sp = species(cell), out: Creature[] = [], keepKin = careful && LO.has(key);
       let kin = 0;
       for (const c of g.creatures) if (!c.gone && !c.boss && !c.leashed && c.fleeUntil === undefined && cellKey(c.cell) === key && c.species === sp) kin++;
       for (const c of g.creatures) {
         if (c.gone || c.boss || c.leashed || c.fleeUntil !== undefined || c.enraged || cellKey(c.cell) !== key) continue;
-        if (careful && c.species === sp && kin <= K.kinKeep) continue;
+        if (keepKin && c.species === sp && kin <= K.kinKeep) continue;
         out.push(c);
       }
       return out;
@@ -501,8 +503,11 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
         const d0 = map.dancefloor, at = { x: d0.x, z: d0.z + K.homeStand };
         bot.doing = "posting guards at home";
         if (goTo(at.x, at.z, true, 8)) {
-          const st = w.leash.stack, id = [...st].filter(i => g.creatures[i].level > 0 && g.creatures[i].level < 3).sort((a, c) => g.creatures[a].level - g.creatures[c].level)[0], bt = stackBottom(w.leash);
-          if (id !== undefined) { if (bt?.kind === "creature" && bt.id === id) putDown(); else toBottom(w.leash, id); }
+          // (the bottom one if it's of the youngest level: picking the topmost of that level every step and cycling it down
+          // turned the stack over and over and never put one down, a fighter of the same level already at the bottom: seed 33)
+          const st = w.leash.stack, fit = (i: number) => g.creatures[i].level > 0 && g.creatures[i].level < 3, bt = stackBottom(w.leash);
+          const id = [...st].filter(fit).sort((a, c) => g.creatures[a].level - g.creatures[c].level)[0];
+          if (id !== undefined) { if (bt?.kind === "creature" && fit(bt.id) && g.creatures[bt.id].level === g.creatures[id].level) putDown(); else toBottom(w.leash, id); }
         }
       } else if (o.feed && careful && (feeding || (time >= feedAgain && w.leash.stack.filter(id => g.creatures[id].level === 0).length >= K.feedMin))) {
         // Feeding her babies (Ed, 2026-10-11: "Babies don't defend, but they can be easily moved and cheaply levelled up to

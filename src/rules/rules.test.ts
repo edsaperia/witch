@@ -198,6 +198,8 @@ describe("the map", () => {
     for (let i = 0; i < 4000; i++) {
       const x = map.bounds.minX + hash2(i, 1, 9) * (map.bounds.maxX - map.bounds.minX), z = map.bounds.minZ + hash2(i, 2, 9) * (map.bounds.maxZ - map.bounds.minZ);
       if (!isInside(map.bounds, x, z, TUNING.beach?.on ? TUNING.beach.width : 0)) continue; // (the forest: not the beach round it, nor the sea)
+      const [cx, cy] = map.areaAt(x, z).cell;
+      if (!map.playable(cx, cy)) continue; // (the playable areas: the buffer's have no arena, so no gradient: Ed, 2026-10-26)
       const w = map.treeWeight(x, z) / TUNING.treeDensity;
       n++;
       if (w > 0.95) dense++; else if (w < 0.05) open++; else between++;
@@ -305,8 +307,11 @@ describe("trees", () => {
       for (let a = 0; a < 32 && !near; a++) for (const r of [0.25, 0.5, 0.75, 1, 1.25, 1.5].map(k => k * W)) if (map.areaAt(t.x + Math.cos(a * 0.196) * r, t.z + Math.sin(a * 0.196) * r).type === t.type) near = true;
       expect(near).toBe(true);
     }
-    expect(own / trees.length).toBeGreaterThan(0.6);
     expect(strays).toBeGreaterThan(0);
+    // Each area keeps most of its own planting (Ed, 2026-10-26, the band doubled to 80 m and wandering: by a border a spot can be
+    // half its neighbour's, but over a wide stretch most trees are their area's own; about 0.59 here, 0.77 at the old 40 m).
+    const wide = forest.treesNear(map.dancefloor.x + 300, map.dancefloor.z + 300, 300), mine = wide.filter(t => t.type === map.areaAt(t.x, t.z).type).length;
+    expect(mine / wide.length).toBeGreaterThan(0.5);
   });
 });
 
@@ -1057,7 +1062,7 @@ describe("the density field", () => {
     const rings = [0, 0, 0], ringN = [0, 0, 0], lone = [0, 0, 0];
     let beyond = 0, outsideTrees = 0;
     for (let cy = 1; cy < map.n - 1; cy++) for (let cx = 1; cx < map.n - 1; cx++) {
-      if (cx === map.centreCell[0] && cy === map.centreCell[1]) continue;
+      if ((cx === map.centreCell[0] && cy === map.centreCell[1]) || !map.playable(cx, cy)) continue; // (the buffer's areas have no arena: Ed, 2026-10-26)
       const s = map.siteOf(cx, cy), mine = (x: number, z: number) => map.areaAt(x, z).cell.join() === `${cx},${cy}`;
       for (let i = 0; i < 24; i++) {
         const a = (i / 24) * Math.PI * 2, d = open * hash2(cx * 31 + i, cy, 7), x = s.x + Math.cos(a) * d, z = s.z + Math.sin(a) * d;
@@ -1796,7 +1801,9 @@ describe("the dash (Ed, 2026-10-04)", () => {
       const W = g.witches[0];
       W.dash = newDash();
       g.witch = { ...g.witch, x: tr.x - TUNING.dash.distance, z: tr.z, vx: 0, vz: 0, mode: "ground", lift: 0, seated: false, perch: false };
+      const x0 = g.witch.x;
       run(g, 1, { dash: true, moveX: 1, moveZ: 0 });
+      if (Math.abs(g.witch.x - x0) < 1) continue; // (no blink: nowhere clear along the line, or her charges spent on the cooldown, so she only walked a step)
       for (const p of g.forest.treesNear(g.witch.x, g.witch.z, 3)) expect(Math.hypot(p.x - g.witch.x, p.z - g.witch.z)).toBeGreaterThanOrEqual(TUNING.dash.clear.tree - 1e-6);
       tried++;
     }

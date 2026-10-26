@@ -269,6 +269,13 @@ export interface LeyBranch { share: number; at: number }
  *  stone as the first wave lands, then `reveal` links a wave, until it has drawn the whole route; with no wave clock, all
  *  of it once booted. Without a branch (the line not yet routed) it starts from the treehouse as the boot ends.
  *  rules/leypulse.ts leyReachTimes says when it reaches each stone, at the same pace. */
+/** How far the line's drawn (links; null for all of it): none at all before the party spell (Ed, 2026-10-26: "Before the party,
+ *  the ley line is not visible"), the Route-seer hat's whole route (`seen`) included, else as leyReveal. */
+export function leyDrawnTo(p: PartyState, map: ForestMap, time: number, reveal: number, branch: LeyBranch | null | undefined, seen: boolean): number | null {
+  if (p.spellAt === null) return 0;
+  return seen ? null : leyReveal(p, map, time, reveal, branch);
+}
+
 export function leyReveal(p: PartyState, map: ForestMap, time: number, reveal: number, branch?: LeyBranch | null): number | null {
   if (p.spellAt === null) return 0;
   if (time < p.bootUntil) {

@@ -39,14 +39,20 @@ export function crownReach(map: ForestMap): number {
  *  own, drawn independently of its neighbours' and as the sum of two draws (triangular), so across the band
  *  width metres either side of a border the share of the neighbour's plants ramps from about half at the border to
  *  none, the kinds interleaved plant by plant; a smooth noise (1 - stray of it, scale metres across) keeps the band
- *  from running dead straight. Only the look blends: everything else (where creatures roam, partifying, the party
- *  border, which area you're in) uses the exact partition. */
-export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number): number {
-  const E = map.tuning.areaEdgeBlend, s = map.seed;
-  if (E.width <= 0) return map.areaAt(x, z).look;
+ *  from running dead straight. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from
+ *  neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise
+ *  warpScale metres across, so a border reads as a ragged, gradual mixing rather than a line. Only the look blends:
+ *  everything else (where creatures roam, partifying, the party border, which area you're in) uses the exact partition.
+ *  The tufts take it too, over `share` of the band (rules/groundcover.ts: the tuning's areaEdgeBlend.tufts, as they lie on
+ *  the area's own floor). */
+export function plantType(map: ForestMap, x: number, z: number, i: number, j: number, salt: number, share = 1): number {
+  const E0 = map.tuning.areaEdgeBlend, s = map.seed, W = (E0.warp ?? 0) * share, WS = Math.max(1, E0.warpScale ?? 1);
+  const E = share === 1 ? E0 : { ...E0, width: E0.width * share };
+  if (E.width <= 0 && W <= 0) return map.areaAt(x, z).look;
   const k = Math.min(1, E.stray), own = (a: number) => 2 * hash2(i, j, salt + a) - 1;
-  const nx = ((vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * (1 - k) + own(1) * k) * E.width;
-  const nz = ((vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * (1 - k) + own(2) * k) * E.width;
+  const wx = W > 0 ? (vnoise(x / WS, z / WS, s + 83) - 0.5) * 2 * W : 0, wz = W > 0 ? (vnoise(x / WS, z / WS, s + 84) - 0.5) * 2 * W : 0;
+  const nx = ((vnoise(x / E.scale, z / E.scale, s + 81) - 0.5) * 2 * (1 - k) + own(1) * k) * E.width + wx;
+  const nz = ((vnoise(x / E.scale, z / E.scale, s + 82) - 0.5) * 2 * (1 - k) + own(2) * k) * E.width + wz;
   return map.areaAt(x + nx, z + nz).look;
 }
 
@@ -118,7 +124,8 @@ export function patternMask(map: ForestMap, x: number, z: number, L: AreaLayout)
 // The legends' groves (Ed, 2026-10-06: "an area of the tallest trees around each legend circle"; "It should blend back
 // smoothly into the rest of the forest around this area, so it doesn't stand out too much"): round each clearing's ragged
 // edge the forest swells, thicker and of its tallest kinds, easing out over legendClearing.grove.reach metres to the area's
-// own; open toward the camera (south) for the way in and the view of the sleeper. The clearings bucketed by 64 m squares,
+// own; all the way round (Ed, 2026-10-26: "legend circles should always be hidden by scenery around them"), the grove's knobs
+// still able to open it toward the camera (south). The clearings bucketed by 64 m squares,
 // once a map, for the lookup.
 const GROVE_CELL = 64, groveBuckets = new WeakMap<ForestMap, Map<number, LegendClearing[]>>();
 const groveKey = (i: number, j: number) => (i + 4096) * 8192 + (j + 4096); // (a number, not a string: it's asked for every tree spot)
@@ -149,7 +156,7 @@ export function legendGrove(map: ForestMap, x: number, z: number): number {
     const dx = x - lc.x, dz = z - lc.z, d = Math.hypot(dx, dz), out = d - lc.r - 1.5; // (past the ragged edge's furthest wobble)
     if (out < 0 || out > G.reach) continue;
     const fromSouth = (Math.acos(Math.max(-1, Math.min(1, dz / d))) * 180) / Math.PI; // 0 due south (toward the camera)
-    const s = (1 - smoothstep(out / G.reach)) * smoothstep((fromSouth - G.gap) / Math.max(1e-6, G.soft));
+    const s = (1 - smoothstep(out / G.reach)) * (G.gap <= 0 && G.soft <= 0 ? 1 : smoothstep((fromSouth - G.gap) / Math.max(1e-6, G.soft)));
     if (s > best) best = s;
   }
   return best;

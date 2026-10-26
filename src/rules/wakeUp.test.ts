@@ -464,3 +464,16 @@ describe("she always wakes in her nightie, last night's clothes in the pile (Ed,
     }
   });
 });
+
+describe("her bed before the party (Ed, 2026-10-26, Q-e: it counts as a lost night)", () => {
+  it("up, E held at her bed sleeps, the party never cast: main.ts's \"slept\" (the night lost, the next on a new seed)", () => {
+    const g = up();
+    standAt(g, "bed");
+    let slept = 0;
+    run(g, STEP, { place: true, sigil: true, sigilHeld: true });
+    for (let i = 0; i < (HOUSE_ROOMS.bed.hold * 1.3) / STEP; i++) { stepGame(g, { ...idle, sigilHeld: true }, STEP); slept += g.leashEvents.filter(e => e.kind === "house" && e.obj === "slept").length; }
+    expect(slept).toBe(1);
+    expect(g.party.spellAt).toBeNull(); // (never cast, nor won: nothing of the party's ran)
+    expect(g.win).toBeNull();
+  });
+});

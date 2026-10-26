@@ -6,7 +6,8 @@ import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
 import { deckOf } from "../../rules/treehouse";
-import { moonInView } from "../../rules/telescope";
+import { moonInSky, skyDirection, skyOnScreen } from "../../rules/telescope";
+import { moonKnobs, type ChartKnobs } from "../chart/moon";
 import { constellationFor } from "../../rules/constellations";
 import { loanFind, nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
@@ -130,9 +131,12 @@ function placeTelescope(v: View, look: { heading: number; fov: number; pitch: nu
   HEIGHT_UNIFORMS.uBend.value.set(T.bend, ex, ez, t.ground.hills.on ? t.ground.hills.amplitude : 0);
   HEIGHT_UNIFORMS.uBendFwd.value.set(s, -c);
   v.bendTo = T.bend;
-  // The moon by its bearing, and the stars a screen's width along for each field of view turned (sky.ts drifts them by uCam.x / 50).
+  // The moon at its bearing and elevation in the sky the stars are in (rules/telescope.ts moonInSky), projected through the same view
+  // (sky.look), so it keeps its place in the sky as the view pans, tilts and zooms (Ed's playtest, v4522: it rose and fell with the tilt).
   const fovX = (2 * Math.atan(Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height)) * 180) / Math.PI;
-  const mx = moonInView(moon.x, look.heading, fovX, T.moonSpread), shown = { ...moon, x: mx > -0.2 && mx < 1.2 ? mx : -2 };
+  const M = t.moon, sky = moonInSky(moon, T.moonSpread, M.low, M.high, moonKnobs(t as { chart?: ChartKnobs }).height);
+  const at = skyOnScreen(skyDirection(sky.bearing, sky.elevation), look.heading, look.pitch, look.fov, v.width / v.height);
+  const shown = at && at.x > -0.2 && at.x < 1.2 && at.y > -0.2 && at.y < 1.2 ? { ...moon, x: at.x, y: at.y } : { ...moon, x: -2 };
   v.sky.look(look.heading, look.pitch, look.fov, v.width, v.height);
   lookAtConstellation(v, look, fovX);
   v.sky.update(T.bend, ex + (look.heading / fovX) * v.width * 50, ez, T.hazeFar, 2 * T.hazeFar * Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height), shown);
