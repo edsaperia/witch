@@ -6,6 +6,7 @@ import { TUNING, type Tuning } from "./tuning";
 import { creatureInArea } from "./game";
 import { spawnCreatures, type Creature } from "./creatures";
 import { isInside } from "./mapShape";
+import { Forest } from "./forest";
 import { pastEdge } from "./combat/targeting";
 import type { CombatWorld } from "./combat/data";
 import { stepLegendStates } from "./legends";
@@ -25,7 +26,7 @@ const withLegend = (map: ForestMap) => [...map.legendAreas].find(([, p]) => map.
 describe("legend areas", () => {
   for (const [kind, seed] of MAPS) {
     it(`each of the night's legends lies in an area of its own beside one of its kind, off the route (${kind} island, seed ${seed})`, () => {
-      const map = generateMap(seed, islandOf(kind)), route = new Set(routeOf(map).order), home = map.centreCell.join(",");
+      const map = generateMap(seed, islandOf(kind)), route = new Set(routeOf(map).order), home = map.centreCell.join(","), forest = new Forest(map);
       expect(map.legendAreas.size).toBeGreaterThan(0);
       for (const [la, pair] of map.legendAreas) {
         const [lx, ly] = cellOf(la), [px, py] = cellOf(pair);
@@ -47,6 +48,8 @@ describe("legend areas", () => {
         expect(c).not.toBeNull();
         expect(c.cell).toEqual([lx, ly]);
         for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; expect(map.areaAt(c.x + Math.cos(b) * c.r, c.z + Math.sin(b) * c.r).cell).toEqual([lx, ly]); }
+        // (cleared of trees, its edge ragged by up to a metre and a half)
+        for (const t of forest.treesNear(c.x, c.z, c.r + 2)) expect(Math.hypot(t.x - c.x, t.z - c.z)).toBeGreaterThanOrEqual(c.r - 1.6);
         // her flight reaches it: its middle on the island's land, clear of its coast
         expect(isInside(map.bounds, c.x, c.z, 15)).toBe(true);
       }

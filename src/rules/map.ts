@@ -758,7 +758,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     if (beach && beach.intoSand(x, z) > 0) return true;
     if (lakes && lakeAt(x, z) > -lakeShore) return true; // (a lake and its bare shore: rules/lakes.ts)
     if (Math.hypot(x - centre.x, z - centre.z) < floorClear) return true;
-    const lc = clearings.get(cellKey(cell[0], cell[1]));
+    // (the circle lying in this cell: a legend area's is kept under its pair's key; a pair's legend lying next door isn't its own)
+    const key = cellKey(cell[0], cell[1]), held = clearings.get(key) ?? (legendAreas.size ? clearings.get(legendAreas.get(key) ?? "") : undefined);
+    const lc = held && held.cell[0] === cell[0] && held.cell[1] === cell[1] ? held : undefined;
     if (lc && Math.hypot(x - lc.x, z - lc.z) < lc.r + (vnoise(x / 4, z / 4, seed + 93) - 0.5) * 3) return true; // a sleeping legend's clearing (its edge ragged by a metre and a half either way: the art director on #235)
     if (Math.hypot(x - treehouse.x, z - treehouse.z) < TH.clear) return true;
     for (const g of grounds) if (Math.abs(x - g.x) < g.r && Math.abs(z - g.z) < g.r && Math.hypot(x - g.x, z - g.z) < g.r) return true;
