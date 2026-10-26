@@ -1,0 +1,6 @@
+{
+  "reason": "The ground's area texture as two wrapping windows round her (render/areaWindow.ts; Ed, 2026-10-26: 254 MB to 8.8 MB, looking the same). The same texels at the same density are read through areaAt, but in the wave-fight a scatter of single ground pixels in an area border's dithered blend (about 2% of the frame, each a level or two apart) take the other area's floor pixel; side by side the pictures are the same. Boot and bedroom are unchanged.",
+  "frames": {
+    "wave-fight": "a scatter of single ground pixels in the area borders' dithered blend take the other area's floor pixel (about 2%, a level or two each); the area lookup now goes through the two windows"
+  }
+}
