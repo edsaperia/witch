@@ -383,19 +383,30 @@ function underTrunk(sp, crownY, bot) {
   let kept = 0;
   for (let i = y1 * W; i < H * W; i++) if (bot.m[i]) kept++;
   if (H - crownY >= H * LOW_CROWN && kept >= (H - y1) * 2) return;
-  // (the highest row of it showing, from the carried trunk's top down: the trunk itself, not its foot flaring into roots)
+  // (the highest row of it showing, from the carried trunk's top down: the trunk itself, not its foot flaring into roots; only the run
+  // of wood over its foot, the middle of its lowest wood, not a limb crossing that row off to one side)
+  let foot = -1;
+  for (let y = H - 1; y >= y1 && foot < 0; y--) { let s = 0, k = 0; for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) { s += x; k++; } if (k) foot = s / k; }
   let row = -1, xs = [];
   for (let y = y1; y < H && xs.length < 2; y++) {
-    const here = [];
-    for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) here.push(x);
+    const runs = [];
+    for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) { const last = runs[runs.length - 1]; if (last && last[last.length - 1] === x - 1) last.push(x); else runs.push([x]); }
+    if (!runs.length) continue;
+    const off = run => (run[0] <= foot && run[run.length - 1] >= foot ? 0 : Math.min(Math.abs(run[0] - foot), Math.abs(run[run.length - 1] - foot)));
+    const here = foot < 0 ? runs.flat() : runs.reduce((a, b) => (off(b) < off(a) ? b : a));
     if (here.length > xs.length) { xs = here; row = y; }
   }
   const col = x => row >= 0 ? { m: sp.m[row * W + x], n: [sp.n[(row * W + x) * 3], sp.n[(row * W + x) * 3 + 1], sp.n[(row * W + x) * 3 + 2]] } : null;
   if (!xs.length) { const c = Math.floor(W / 2); xs = [c - 1, c]; } // (none showing at all: a plain trunk up its middle)
+  // Carried up from that row only; below it the wood that shows is the tree's own, bark and all, moved into the bottom half (it was
+  // the top half's, above the crown line). Ed, v4821, the old oaks' "trunks read as flat vertical stripes": that row's colours had been
+  // carried down to the ground too, wherever the bottom half was empty, a flat pillar under every limb crossing that row.
+  const to = row >= 0 ? row : H;
   for (const x of xs) {
     const c = col(x) ?? { m: M.TRUNK, n: x < W / 2 ? [-.6, 0, .8] : [.6, 0, .8] };
-    for (let y = y1; y < H; y++) if (!bot.m[y * W + x]) bot.px(x, y, c.m, c.n[0], c.n[1], c.n[2]);
+    for (let y = y1; y < to; y++) if (!bot.m[y * W + x]) bot.px(x, y, c.m, c.n[0], c.n[1], c.n[2]);
   }
+  for (let y = to; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, m = sp.m[i]; if (WOOD.has(m) && !bot.m[i]) bot.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
 }
 
 // ================= undergrowth =================
