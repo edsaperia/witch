@@ -142,3 +142,12 @@ Knock-ons:
 - **The camera:** from the street, she stands in front of it. Inside an island, with the fence between her and the camera, 5.5 m of gold would cover her. The final art fades the fence round her line of sight, as the scenery fade does trees.
 - **The lights:** the same budget as before. About 1,100 lamps over the whole zoo; every lantern glows (emissive); the pools are painted in the ground shader; only the nearest ~8 cast real point lights.
 - **Cost:** one mesh for all the railings (a textured ribbon), and the lamps one sprite batch, so no more draw calls than the 1.1 m fence.
+
+## The fence built (PR #1184): frames in `fence-built/`
+
+- `fence.png`: the Versailles railings in play, by the wolf island. 5.5 m, fleur-de-lis and spears, two scroll bands, urns on the pilasters, gilt lamps lighting the street. They stand as the sprites do (tilted to the camera's pitch), so they read at full height. They clear round her line of sight, so she always shows.
+- `fly-over.png`: her in the treetops over the island; the railing rings it with its lamps.
+- `legend.png`: inside the island, the wolf legend asleep in its circle, the wolves about; the railing and lamps along the bottom.
+- `plaza.png`: the Ent's circle at the middle, its World Tree grooves glowing, a soft light over it.
+- `edge.png`: from the flagstones, the water foams to the lip and the spray rises off it; past it the water curves down and away, and beyond, space.
+- No runestones on the islands now; each nameplate stands where its stone did.
