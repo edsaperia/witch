@@ -1673,6 +1673,7 @@ export class View {
     this.time("draw");
     this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("veil");
+    if (this.occlusion.readMs > 0) { this.ms.veilRead = this.occlusion.readMs; this.occlusion.readMs = 0; } // (its copy, read in the "witch" part: render/occlusion.ts)
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     DROPPED = this.propBatch.dropped + this.soundBatch.dropped + (this.speakerBatch?.dropped ?? 0);

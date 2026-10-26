@@ -97,6 +97,8 @@ export class OcclusionProbes {
   private veilPbo: WebGLBuffer | null = null;
   private veilFence: WebGLSync | null = null;
   private veilKeys: string[] = [];
+  /** How long the veil's pixels took to copy out since last asked (ms; View puts it in the stall log as `veilRead`). */
+  readMs = 0;
   private veilScene = new THREE.Scene();
   private veilCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private veilMat: THREE.ShaderMaterial | null = null;
@@ -155,9 +157,11 @@ export class OcclusionProbes {
     // the veil read last frame, once the GPU has signalled it's there (looked at, never waited on)
     if (this.veilFence && gl.getSyncParameter(this.veilFence, gl.SYNC_STATUS) === gl.SIGNALED) {
       gl.deleteSync(this.veilFence); this.veilFence = null;
+      const t0 = performance.now(); // (the copy timed, for the stall log: Chrome makes it a round trip to the GPU process, which may wait behind its queue)
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.veilPbo);
       gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, this.veilBuf);
       gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      this.readMs += performance.now() - t0;
       this.heardVeil(this.veilKeys);
     }
   }
