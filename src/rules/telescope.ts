@@ -64,3 +64,29 @@ export function moonInView(moonX: number, heading: number, fovX: number, spread:
   const bearing = (moonX - 0.5) * spread, off = ((bearing - heading + 540) % 360) - 180;
   return 0.5 + off / Math.max(1, fovX);
 }
+
+/** Where the moon stands in the sky the telescope looks at (Ed's playtest, v4522: "The moon does not stay the same height in the sky
+ *  as you move the telescope around"): a direction, not a place on the screen. Its bearing as above; its elevation (degrees) from its
+ *  place in the game's sky band (rules/moon.ts y, from `low`, behind the far forest, to `high`): on the horizon at the band's foot,
+ *  rising to `height` at its top (the sea chart's moon's, chart.moon.height). */
+export const moonInSky = (moon: { x: number; y: number }, spread: number, low: number, high: number, height: number): { bearing: number; elevation: number } =>
+  ({ bearing: wrapBearing((moon.x - 0.5) * spread), elevation: height * Math.min(1, Math.max(0, (moon.y - low) / Math.max(1e-6, high - low))) });
+
+/** The direction at `bearing` (degrees from north, clockwise) and `elevation` (degrees up) as a unit vector in the world's axes
+ *  (x east, y up, z south), as render/sky.ts reads the sky. */
+export function skyDirection(bearing: number, elevation: number): [number, number, number] {
+  const a = (bearing * Math.PI) / 180, e = (elevation * Math.PI) / 180;
+  return [Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)];
+}
+
+/** Where a direction in the sky falls in the telescope's view (`heading` degrees from north, `pitch` degrees down, `fov` its vertical
+ *  field of view in degrees, `aspect` its width over its height): x and y across the picture (0 to 1, from the left and the bottom),
+ *  as render/sky.ts shades it (its look()), or null behind the view. */
+export function skyOnScreen(dir: readonly [number, number, number], heading: number, pitch: number, fov: number, aspect: number): { x: number; y: number } | null {
+  const a = (heading * Math.PI) / 180, p = (pitch * Math.PI) / 180, s = Math.sin(a), c = Math.cos(a);
+  const F = [s * Math.cos(p), -Math.sin(p), -c * Math.cos(p)], R = [c, 0, s], U = [s * Math.sin(p), Math.cos(p), -c * Math.sin(p)];
+  const dot = (v: number[]) => v[0] * dir[0] + v[1] * dir[1] + v[2] * dir[2];
+  const f = dot(F), ty = Math.tan((fov * Math.PI) / 360);
+  if (f <= 1e-6) return null;
+  return { x: 0.5 + (dot(R) / f / (ty * aspect)) * 0.5, y: 0.5 + (dot(U) / f / ty) * 0.5 };
+}
