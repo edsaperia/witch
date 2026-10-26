@@ -9382,6 +9382,18 @@ label.check input { accent-color: var(--accent); }
     colour: { hue: -0.06, sat: 0.75, val: 1.18, trunk: [0.2, 0.1, 0.8] }
   };
 
+  // art/flora/species/baldCypress.js
+  var PLANT_BALDCYPRESS = {
+    name: "bald cypress",
+    form: "tree",
+    generator: "blob",
+    grow: "narrow",
+    crown: { envelope: "cone", clumps: "feathery tiers, a flat top" },
+    params: { w: 120, h: 190, narrow: 1, trunk: { w: 12, len: 0.9, taper: 0.22, bend: 0.4, lean: 0.05, roots: 2.4 }, levels: [], crown: { blobs: [1, 1], r: [6, 9], fill: { shape: "tiers", tiers: [6, 8], top: 26, bottom: 36, droop: 5, base: 0.3, per: 1.6 }, crownLine: 0.75, under: 0.5, flat: 0.6, stamp: "needle", stampSize: 2, back: 0.25, holes: 0.25, lift: 1 } },
+    low: { moss: 0.6, boughs: 0.2 },
+    colour: { hue: 0.05, sat: 0.75, val: 0.82, trunk: [0.06, 0.3, 0.4] }
+  };
+
   // art/flora/species/bamboo.js
   var PLANT_BAMBOO = {
     name: "bamboo",
@@ -9500,6 +9512,18 @@ label.check input { accent-color: var(--accent); }
     colour: { hue: -0.01, val: 1, dot: [244, 238, 226] }
   };
 
+  // art/flora/species/coconut.js
+  var PLANT_COCONUT = {
+    name: "coconut palm",
+    form: "palm",
+    generator: "blob",
+    grow: "narrow",
+    crown: { envelope: "umbrella", clumps: "fronds" },
+    params: { w: 210, wPad: 0, h: 260, trunk: { w: 5, len: 0.94, taper: 0.8, bend: 2.4, lean: 1.1, scars: 1, roots: 0.5 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [10, 12], len: [84, 104], leaflet: 6, droop: 2.1, spread: 2.9, fruit: { n: [5, 7], r: 3.2 } } } },
+    low: { sprigs: 0.1 },
+    colour: { hue: 0.04, sat: 1, val: 1.05, trunk: [0.08, 0.2, 0.6] }
+  };
+
   // art/flora/species/crabApple.js
   var PLANT_CRABAPPLE = {
     name: "crab apple",
@@ -9559,6 +9583,24 @@ label.check input { accent-color: var(--accent); }
     params: { w: 190, wPad: 0, h: 230, trunk: { w: 6, len: 0.9, taper: 0.75, bend: 1.6, lean: 0.7, scars: 2, roots: 0.4 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [13, 16], len: [70, 92], leaflet: 6, droop: 1.5, spread: 2.6, fruit: { n: [6, 9], r: 2.2 } } } },
     low: { sprigs: 0.2 },
     colour: { hue: -0.02, sat: 0.9, val: 0.95, trunk: [0.08, 0.25, 0.5] }
+  };
+
+  // art/flora/species/desertIronwood.js
+  var PLANT_DESERTIRONWOOD = {
+    name: "desert ironwood",
+    form: "tree",
+    generator: "blob",
+    grow: "wide",
+    crown: { envelope: "dome", clumps: "dense small grey-green blobs, lavender flowers" },
+    params: {
+      w: 200,
+      h: 140,
+      trunk: { w: 9, len: 0.3, taper: 0.6, bend: 1.3, lean: 0.35, stems: 3, fan: 0.8 },
+      levels: [{ n: [3, 4], at: [0.6, 1], len: [0.4, 0.55], angle: [0.6, 1], up: 0.15, bend: 1.3 }, { n: [2, 3], at: [0.4, 1], len: [0.3, 0.45], angle: [0.4, 0.8], up: 0.15 }],
+      crown: { blobs: [12, 15], r: [10, 13], flat: 0.55, stamp: "round", stampSize: 1.5, back: 0.3, holes: 0.12, dots: { mat: "FLOWER", share: 0.035, size: 2 } }
+    },
+    low: { sprigs: 0.5, boughs: 0.2 },
+    colour: { hue: -0.01, sat: 0.5, val: 0.75, trunk: [0.05, 0.25, 0.3], dot: [178, 140, 214] }
   };
 
   // art/flora/species/elder.js
@@ -9795,6 +9837,74 @@ label.check input { accent-color: var(--accent); }
     },
     low: { moss: 0.4, sprigs: 0.3 },
     colour: { hue: 0.04, sat: 0.85, val: 0.6, trunk: [0.07, 0.3, 0.38] }
+  };
+
+  // art/flora/species/marula.js
+  var PLANT_MARULA = {
+    name: "marula",
+    form: "tree",
+    generator: "blob",
+    grow: "wide",
+    crown: { envelope: "dome", clumps: "rounded heads of leaf" },
+    params: {
+      w: 230,
+      wPad: 30,
+      h: 170,
+      trunk: { w: 14, len: 0.5, taper: 0.6, bend: 0.6, lean: 0.1, roots: 0.6 },
+      levels: [{ n: [3, 4], at: [0.75, 1], len: [0.35, 0.5], angle: [0.6, 1.1], up: 0.2, bend: 0.9, w: 0.55 }, { n: [2, 3], at: [0.5, 1], len: [0.3, 0.4], angle: [0.4, 0.8], up: 0.2 }],
+      crown: { blobs: [8, 10], r: [16, 22], flat: 0.6, lift: 2, stamp: "leaf", stampSize: 3, back: 0.35, holes: 0.1 }
+    },
+    low: { sprigs: 0.3 },
+    colour: { hue: 0.04, sat: 0.8, val: 0.9, trunk: [0.08, 0.12, 0.62] }
+  };
+
+  // art/flora/species/mesquite.js
+  var PLANT_MESQUITE = {
+    name: "mesquite",
+    form: "tree",
+    generator: "blob",
+    grow: "wide",
+    crown: { envelope: "umbrella", clumps: "airy drooping fine leaf" },
+    params: {
+      w: 250,
+      h: 135,
+      trunk: { w: 9, len: 0.32, taper: 0.55, bend: 2, lean: 0.6, stems: 3, fan: 1.2 },
+      levels: [{ n: [3, 4], at: [0.5, 1], len: [0.45, 0.6], angle: [0.8, 1.25], up: 0.02, bend: 2, w: 0.5 }, { n: [2, 3], at: [0.4, 1], len: [0.3, 0.45], angle: [0.5, 0.9], up: -0.05 }],
+      crown: { blobs: [11, 14], r: [10, 13], flat: 0.3, stamp: "needle", stampSize: 2, back: 0.25, holes: 0.35, lift: -2 }
+    },
+    low: { sprigs: 0.5, boughs: 0.3 },
+    colour: { hue: 0.01, sat: 0.7, val: 0.72, trunk: [0.05, 0.3, 0.22] }
+  };
+
+  // art/flora/species/mopane.js
+  var PLANT_MOPANE = {
+    name: "mopane",
+    form: "tree",
+    generator: "blob",
+    grow: "normal",
+    crown: { envelope: "column", clumps: "upright, butterfly leaves" },
+    params: {
+      w: 130,
+      wPad: 20,
+      h: 180,
+      trunk: { w: 8, len: 0.7, taper: 0.55, bend: 0.5, lean: 0.1, roots: 0.3 },
+      levels: [{ n: [4, 5], at: [0.5, 1], len: [0.3, 0.42], angle: [0.35, 0.7], up: 0.35, bend: 0.6, w: 0.5 }],
+      crown: { blobs: [7, 9], r: [12, 16], flat: 0.9, lift: 2, stamp: "leaf", stampSize: 3, back: 0.3, holes: 0.15 }
+    },
+    low: { sprigs: 0.3 },
+    colour: { hue: 0.09, sat: 0.85, val: 0.88, trunk: [0.05, 0.35, 0.28] }
+  };
+
+  // art/flora/species/nipa.js
+  var PLANT_NIPA = {
+    name: "nipa palm",
+    form: "palm",
+    generator: "blob",
+    grow: "narrow",
+    crown: { envelope: "umbrella", clumps: "fronds" },
+    params: { w: 170, wPad: 0, h: 120, trunk: { w: 6, len: 0.24, taper: 0.7, bend: 0.2, lean: 0.1, scars: 0, roots: 0.5 }, levels: [], crown: { blobs: [1, 1], r: [1, 1], fronds: { n: [9, 12], len: [80, 100], leaflet: 6, droop: 0.5, spread: 1.4 } } },
+    low: { skirt: 0.5, sprigs: 0.6 },
+    colour: { hue: 0.02, sat: 0.95, val: 0.95, trunk: [0.08, 0.3, 0.4] }
   };
 
   // art/flora/species/oak.js
@@ -10046,7 +10156,7 @@ label.check input { accent-color: var(--accent); }
   };
 
   // art/flora/species/index.js
-  var FLORA_GENOMES = { acacia: PLANT_ACACIA, alder: PLANT_ALDER, ash: PLANT_ASH, aspen: PLANT_ASPEN, bamboo: PLANT_BAMBOO, baobab: PLANT_BAOBAB, beech: PLANT_BEECH, birch: PLANT_BIRCH, broad: PLANT_BROAD, cedar: PLANT_CEDAR, cherry: PLANT_CHERRY, chestnut: PLANT_CHESTNUT, crabApple: PLANT_CRABAPPLE, crystal: PLANT_CRYSTAL, cycad: PLANT_CYCAD, datePalm: PLANT_DATEPALM, elder: PLANT_ELDER, elm: PLANT_ELM, fir: PLANT_FIR, flat: PLANT_FLAT, glowcap: PLANT_GLOWCAP, hawthorn: PLANT_HAWTHORN, hazel: PLANT_HAZEL, holly: PLANT_HOLLY, ironwood: PLANT_IRONWOOD, joshua: PLANT_JOSHUA, juniper: PLANT_JUNIPER, kapok: PLANT_KAPOK, larch: PLANT_LARCH, lime: PLANT_LIME, mangrove: PLANT_MANGROVE, oak: PLANT_OAK, ocotillo: PLANT_OCOTILLO, olive: PLANT_OLIVE, palm: PLANT_PALM, paloVerde: PLANT_PALOVERDE, pine: PLANT_PINE, pricklyPear: PLANT_PRICKLYPEAR, rowan: PLANT_ROWAN, saguaro: PLANT_SAGUARO, strangler: PLANT_STRANGLER, sycamore: PLANT_SYCAMORE, vinewood: PLANT_VINEWOOD, weepingBirch: PLANT_WEEPINGBIRCH, whitebeam: PLANT_WHITEBEAM, willow: PLANT_WILLOW, yew: PLANT_YEW };
+  var FLORA_GENOMES = { acacia: PLANT_ACACIA, alder: PLANT_ALDER, ash: PLANT_ASH, aspen: PLANT_ASPEN, baldCypress: PLANT_BALDCYPRESS, bamboo: PLANT_BAMBOO, baobab: PLANT_BAOBAB, beech: PLANT_BEECH, birch: PLANT_BIRCH, broad: PLANT_BROAD, cedar: PLANT_CEDAR, cherry: PLANT_CHERRY, chestnut: PLANT_CHESTNUT, coconut: PLANT_COCONUT, crabApple: PLANT_CRABAPPLE, crystal: PLANT_CRYSTAL, cycad: PLANT_CYCAD, datePalm: PLANT_DATEPALM, desertIronwood: PLANT_DESERTIRONWOOD, elder: PLANT_ELDER, elm: PLANT_ELM, fir: PLANT_FIR, flat: PLANT_FLAT, glowcap: PLANT_GLOWCAP, hawthorn: PLANT_HAWTHORN, hazel: PLANT_HAZEL, holly: PLANT_HOLLY, ironwood: PLANT_IRONWOOD, joshua: PLANT_JOSHUA, juniper: PLANT_JUNIPER, kapok: PLANT_KAPOK, larch: PLANT_LARCH, lime: PLANT_LIME, mangrove: PLANT_MANGROVE, marula: PLANT_MARULA, mesquite: PLANT_MESQUITE, mopane: PLANT_MOPANE, nipa: PLANT_NIPA, oak: PLANT_OAK, ocotillo: PLANT_OCOTILLO, olive: PLANT_OLIVE, palm: PLANT_PALM, paloVerde: PLANT_PALOVERDE, pine: PLANT_PINE, pricklyPear: PLANT_PRICKLYPEAR, rowan: PLANT_ROWAN, saguaro: PLANT_SAGUARO, strangler: PLANT_STRANGLER, sycamore: PLANT_SYCAMORE, vinewood: PLANT_VINEWOOD, weepingBirch: PLANT_WEEPINGBIRCH, whitebeam: PLANT_WHITEBEAM, willow: PLANT_WILLOW, yew: PLANT_YEW };
 
   // art/flora/genomes.js
   var PLANT_GENOMES = {
@@ -10867,7 +10977,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.3,
     floor: ["stony", 0.05, 0.45, 0.52],
-    text: { floor: "red sand and pebbles", wall: "low rock ledges", small: "dry tussocks", big: "twisted junipers among red rock hoodoos", set: "a heap of red stones over the warren" },
+    text: { floor: "red sand and pebbles", wall: "low rock ledges", small: "dry tussocks", big: "twisted junipers and mesquite among red rock hoodoos", set: "a heap of red stones over the warren" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 1.1, leafHue: 0.12, leafSat: 0.35 }]],
     big: [["tree", { type: "juniper", scale: 1.15, lean: 0.2 }], ["spire", { sparse: 0.25, rock: [0.04, 0.55, 0.62], dry: true }], ["spire", { twin: true, sparse: 0.2, rock: [0.05, 0.5, 0.66], dry: true }], ["boulder", { sparse: 0.25 }], ["snag", { sparse: 0.12, bleached: true }]],
@@ -10885,7 +10995,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0, lake: 0, modern: 0.1 },
       feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock."
     },
-    flora: { species: [["juniper", 0.6], ["paloVerde", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["juniper", 0.5], ["mesquite", 0.25], ["paloVerde", 0.15], ["pine", 0.1]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.4, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10960,10 +11070,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.24,
     floor: ["mud", 0.08, 0.32, 0.52],
-    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted junipers, palo verde and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted junipers, mesquite and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
     wall: [["rockwall", {}]],
     small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-    big: [["tree", { type: "juniper", variant: "stunted", scale: 0.75, gnarl: 1, lean: 0.25 }], ["tree", { type: "paloVerde", minor: true, scale: 0.65, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
+    big: [["tree", { type: "juniper", variant: "stunted", scale: 0.75, gnarl: 1, lean: 0.25 }], ["tree", { type: "mesquite", minor: true, scale: 0.7, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
     setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: 0.8, stone: [0.07, 0.3, 0.62] }],
     pathKinds: ["animal", "dirt"],
     layout: {
@@ -10978,7 +11088,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.3, rocks: 0.5, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly."
     },
-    flora: { species: [["juniper", 0.55], ["paloVerde", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
+    flora: { species: [["juniper", 0.4], ["mesquite", 0.3], ["paloVerde", 0.15], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -11172,7 +11282,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.4, freak: 0.05, lake: 0.35, modern: 0.1 },
       feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs."
     },
-    flora: { species: [["mangrove", 0.7], ["mangrove", 0.2, { variant: "windbent" }], ["mangrove", 0.1, { variant: "ancient" }]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["mangrove", 0.6], ["nipa", 0.25], ["coconut", 0.15]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -11217,10 +11327,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.3,
     floor: ["mud", 0.1, 0.45, 0.28],
-    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few strangler figs", set: "a dugout sunk among the roots" },
+    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, coconut palms leaning out, nipa palms in the creeks", set: "a dugout sunk among the roots" },
     wall: [["water", { w: 2 }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 1.3 }]],
-    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "strangler", minor: true, scale: 0.95 }]],
+    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "coconut", minor: true, scale: 0.95 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -11237,7 +11347,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.05, freak: 0.15, lake: 0.6, modern: 0.05 },
       feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge."
     },
-    flora: { species: [["mangrove", 0.65], ["strangler", 0.2], ["mangrove", 0.15, { variant: "windbent" }]], palette: { sat: 0.9, val: 0.85 } },
+    flora: { species: [["mangrove", 0.55], ["coconut", 0.2], ["nipa", 0.15], ["strangler", 0.1]], palette: { sat: 0.9, val: 0.85 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -11250,10 +11360,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.05, 0.5, 0.45],
-    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "clumps of umbrella acacias and thorn, the odd old baobab", set: "a ring of old boma posts round a cold hearth" },
+    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "mopane and marula among umbrella acacias and thorn, the odd old baobab", set: "a ring of old boma posts round a cold hearth" },
     wall: [["bush", {}]],
     small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-    big: [["tree", { type: "baobab", variant: "ancient", scale: 1.1 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+    big: [["tree", { type: "mopane", scale: 1.1 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
     ponds: true,
     pathKinds: ["track"],
     setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
@@ -11269,7 +11379,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.45, freak: 0.1, lake: 0.2, modern: 0.1 },
       feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight."
     },
-    flora: { species: [["baobab", 0.2], ["acacia", 0.55], ["acacia", 0.25, { variant: "stunted" }]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["mopane", 0.4], ["acacia", 0.25], ["marula", 0.2], ["baobab", 0.15]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "grass"] } }
   };
 
@@ -11346,10 +11456,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.2,
     floor: ["scree", 0.03, 0.5, 0.5],
-    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and juniper among the rocks", set: "a heap of red stones" },
+    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and desert ironwood among the rocks", set: "a heap of red stones" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 0.8, leafHue: 0.12, leafSat: 0.3 }], ["bush", { small: true }]],
-    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "juniper", minor: true, scale: 0.9 }], ["boulder", { sparse: 0.3 }]],
+    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "desertIronwood", minor: true, scale: 1 }], ["boulder", { sparse: 0.3 }]],
     steep: true,
     pathKinds: ["track"],
     setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }],
@@ -11364,9 +11474,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.15 },
       terrain: ["rocky", "ridges"],
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0.05, lake: 0, modern: 0.05 },
-      feel: "Red rock ledges and scree, palo verde and juniper in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
+      feel: "Red rock ledges and scree, palo verde and desert ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
     },
-    flora: { species: [["paloVerde", 0.5], ["juniper", 0.3], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["paloVerde", 0.45], ["desertIronwood", 0.35], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
   };
 
@@ -11764,10 +11874,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.28,
     floor: ["mud", 0.3, 0.25, 0.17],
-    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "old mangroves drowned standing, strangler figs", set: "the drowned stones of an old wall" },
+    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall bald cypresses drowned standing, old mangroves, strangler figs", set: "the drowned stones of an old wall" },
     wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 0.9 }]],
-    big: [["tree", { type: "mangrove", variant: "drowned", scale: 1.25 }], ["tree", { type: "strangler", minor: true, scale: 1 }]],
+    big: [["tree", { type: "baldCypress", variant: "drowned", scale: 1.25 }], ["tree", { type: "strangler", minor: true, scale: 1 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -11782,9 +11892,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.05 },
       terrain: ["pools", "hollows"],
       decor: { rate: 0.3, ruins: 0.6, rocks: 0.1, freak: 0.1, lake: 0.2, modern: 0 },
-      feel: "Old drowned mangroves standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
+      feel: "Tall drowned bald cypresses standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
     },
-    flora: { species: [["mangrove", 0.6], ["strangler", 0.25], ["mangrove", 0.15, { variant: "stunted" }]], palette: { sat: 0.6, val: 0.7 } },
+    flora: { species: [["baldCypress", 0.6], ["mangrove", 0.2], ["strangler", 0.2]], palette: { sat: 0.6, val: 0.7 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.5, kinds: ["reeds", "blades"] } }
   };
 
@@ -17311,6 +17421,8 @@ label.check input { accent-color: var(--accent); }
     _suspects: `The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896); cutWhole: the cut-away by each crown whole, as canopyCutout.whole has it (off: pixel by pixel); seeSplit: the see-through's fade itself (off: the soft circle's things stay solid and in the solid pass; the vertex side unchanged); seeMark: the pixels the see-through pass draws tinted magenta; mist: the low mist (in the effects layer); lightRings: the moonlight rings on the crowns (in the effects layer); seeWrite: the see-through pass writes its depth as it draws, so the nearer of two faded things wins where they overlap, as in the solid pass (off as ever: whichever is drawn last); seeCull: the see-through pass skipping, before drawing, every sprite it reckons can't reach her circle or the hole (off: it draws them all and lets each pixel decide); seeKeep: the solid pass keeps what's in front of her as well (the see-through pass drawn over it); seeStencil: the see-through pass marks scenery in the stencil as the solid pass does; seeEarly: the see-through pass drawn straight after the solid scenery (render order 0.6, not 11: she then shows through it whole); seeSolid: the see-through pass's pixels drawn at alpha 1: off, all, only those in her circle (circle) or only the rest (rest); seeNoBlend: the see-through pass drawn with no blending; seeShowAlpha: the see-through pass drawn as its own opacity in grey (white solid, black clear); showBroken: scene pixels that are not a number red, infinite magenta, negative yellow (before the post-process); seeDither: the see-through done in the solid pass as an ordered dither (no second pass for it); seeTwo: the fix (on): what's in front of her drawn in a see-through pass of its own, writing depth, before the half-faded things (off: one see-through pass, as before, the circle bug).`,
     suspects: { seeThrough: true, holeCut: true, trunkFade: true, groundCover: true, glow: true, effectsLayer: true, haze: true, areaAverage: true, seeDepth: true, cutWhole: true, seeSplit: true, seeMark: false, mist: true, lightRings: true, seeWrite: false, seeCull: true, seeKeep: false, seeStencil: false, seeEarly: false, seeSolid: "off", seeNoBlend: false, seeShowAlpha: false, showBroken: false, seeDither: false, seeTwo: true },
     occlusion: { on: true, fadeOpacity: 0, edge: 3, minHeight: 2.5, silhouette: 0.55 },
+    _reveal: `The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; "we might want this for other important points of interest, such as runestone areas, finds, flasks"; render/view/reveal.ts): while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. legend: a legend's circle (its own radius, its ring pad metres wider for the rim's stones, and its legend as drawn, asleep or awake). runestone: an area's runestone and its fight's open middle (within radius metres of the stone; ring metres round it boxed; 30 m since Ed, 2026-10-26: "the fading area around a runestone is relatively small (say a 30m radius)"). bounded (the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). find: tonight's trunk or wreck, until it's taken. flask: a lying relic flask. Each on or off (all four on since Ed, 2026-10-26: "All four on"; the last three the pause page's toggles, and the runestone's radius its slider). A place fades over seconds as she walks in and back over seconds as she leaves; edge (a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on.`,
+    reveal: { seconds: 0.6, edge: 0.03, depth: 3, legend: { on: true, pad: 2 }, runestone: { on: true, radius: 30, ring: 10, width: 3, height: 5, keep: 4, bounded: true }, find: { on: true, radius: 10, width: 3, height: 2, keep: 4 }, flask: { on: true, radius: 8, width: 1.5, height: 1.5, keep: 4 } },
     canopyShadow: { on: true, strength: 0.45, height: 18, cover: 0.55, wind: 0.6 },
     _looks: `The creature states' looks (Ed, issue #87; render/looks.ts). enragedTint (Ed, 2026-10-05: "Enraged creatures should have a red tint so that they're easy to tell apart from the other states"): an enraged creature's whole sprite goes toward colour by amount (0 none, 1 all), by each pixel's lightness so its shading and shape still read; its angry brows and red eyes stay. No other state is tinted. anger (Ed, "or a \u{1F4A2}"): a pixel \u{1F4A2} beside an enraged creature's head on the side it faces, popping on a pulse, size times its level's bubble size (bubbles.levelScale). Tint and \u{1F4A2} each on its own (amount 0 or on false turns one off); both for now (Ed: "the red tint can be less strong": 0.38, with a floor so it never goes near-black). The angry brows are a stopgap for an expression the creature generator will draw (render/looks.ts expression()). partyGlow (Ed, 2026-10-05: "party animals could sparkle or glow a little"): every happy and leashed animal has sparkles twinkling pixels round it, each lit for a moment about rate times a second, size times three game pixels, at strength brightness (additive); leashed ones keep their collar on top.`,
     _rig: "The live rig (Ed, 2026-10-05): on by default, ?rig=0 turns it off. Creatures keep their baked frames in the treetops, and on the ground when drawn smaller than minPx art pixels, except the levels in alwaysLevels: legends are always rigged. A sleeping area legend is rigged too: lying down, legs folded, head on the ground, eyes shut, breathing slowly, sunk sink of its height into the earth (the baked frames sink wildLegends.sink), its legs paddling and head jerking in a nightmare while restless. Woken (angry or happy) it gets up drowsily over wakeSecs seconds (an angry one angryWake times as long): its head comes up first, sags once, then it heaves itself up out of the ground; lulled back to sleep it settles down over settleSecs.",
