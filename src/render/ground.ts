@@ -25,18 +25,16 @@ import type { Style } from "./style";
 import { later, runSync, settle, type Later, type Steps } from "./slices";
 import { discoDrawn, pixelCanvas, type DiscoDrawn } from "./islandArt";
 import type { ArtJob, ArtResult } from "./artBuild";
+import { AREA_GLSL, AREA_TILE, AreaWindow, areaTexel } from "./areaWindow";
 
 /** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
 const BEACH_POOL = 2.2;
 
-const TEXELS_PER_METRE = 2;
-/** The area texture's largest side (texels): GPUs commonly stop at 8192 (some at 4096), and the map at 2 a metre was 8352. */
-export const AREA_TEXTURE_MAX = 8192;
-/** Texels a metre for a map `size` metres across that fit in `max` texels a side (whole tiles): 2, or a little under on the biggest maps. */
-export function areaTexelsPerMetre(size: number, max = AREA_TEXTURE_MAX): number {
-  return Math.min(TEXELS_PER_METRE, ((Math.floor(max / TILE) - 1) * TILE) / Math.max(1, size));
-}
-const TILE = 32; // texels
+/** The area texture's windows (render/areaWindow.ts): the near one at 2 texels a metre (as the whole map's was), NEAR_TILES of its
+ *  32-texel tiles a side (1 km), moved NEAR_STEP tiles at a time, so it always holds 448 m round her, past the haze's far edge (the
+ *  ground beyond it is all haze: lighting.ts haze; tuning haze.far 360 m, the spooky mood's 200); and the far one, for the
+ *  telescope's view across the island (its haze at 1000 m), at 4 m a texel, FAR_TILES a side (2.6 km): 8 MB and 0.8 MB. */
+const NEAR_TPM = 2, NEAR_TILES = 64, NEAR_STEP = 4, FAR_TPM = 0.25, FAR_TILES = 20, FAR_STEP = 2;
 const FLOOR_COLS = 8;
 const TYPE_SLOTS = Math.max(32, LOOKS.length); // a slot per area type and home's look (area recipes can add types)
 const FLOOR_ROWS = Math.ceil(TYPE_SLOTS / FLOOR_COLS);
@@ -58,8 +56,7 @@ void main() {
 `;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uAreas;
-uniform vec4 uExtent; // minX, minZ, width, depth (metres)
+${AREA_GLSL}
 uniform float uPixel; // metres per art pixel
 uniform vec3 uTypeFloor[${TYPE_SLOTS}];      // each type's floor colour (hsv), until its tile is drawn
 uniform float uFloorReady[${TYPE_SLOTS}];
@@ -282,7 +279,7 @@ void main() {
     }
   }
 #endif
-  vec4 area = texture2D(uAreas, (p + j - uExtent.xy) / uExtent.zw);
+  vec4 area = areaAt(p + j);
   float open = area.a > 0.5 ? area.g : 1.0;
   int t = int(area.r * 255.0 + 0.5);
   // Which floor shows (Ed, v160: blend the ground textures): the area lookup warped in two
@@ -293,9 +290,9 @@ void main() {
   if (uBlend.x + uBlend.y > 0.0) {
     vec2 w1 = vec2(vnoise(p / 40.0), vnoise(p / 40.0 + 31.0)) - 0.5, w2 = vec2(vnoise(p / 6.0 + 7.0), vnoise(p / 6.0 + 53.0)) - 0.5;
     vec2 q = p + w1 * 2.0 * uBlend.x + w2 * 2.0 * uBlend.y;
-    vec4 a1 = texture2D(uAreas, (q - uExtent.xy) / uExtent.zw);
+    vec4 a1 = areaAt(q);
     vec2 off = (vec2(vnoise(px / 3.0 + 91.0), vnoise(px / 3.0 + 37.0)) - 0.5) * uBlend.z;
-    vec4 a2 = texture2D(uAreas, (q + off - uExtent.xy) / uExtent.zw);
+    vec4 a2 = areaAt(q + off);
     int t1 = int(a1.r * 255.0 + 0.5), t2 = int(a2.r * 255.0 + 0.5);
     if (a1.a > 0.5) t = t1;
     if (a2.a > 0.5 && t2 != t1) {
@@ -578,10 +575,10 @@ void main() {
       else if (mod(px.y, 4.0) < 1.0 && vnoise(px / 3.0 + uTime) > 0.62) water += vec3(0.06, 0.08, 0.12); // ripples
       // Never a rimless hole (the art director, #235): like the generated pools, a moonlit rim along the far shore (up the
       // screen), the sky's faint sheen across the far half, a dark muddy lip on the near and side banks, and a glint or two.
-      vec2 at = p + j - uExtent.xy;
-      float up1 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 2.0, 0.3))) / uExtent.zw).b, up2 = texture2D(uAreas, (at + vec2(0.0, -max(uPixel * 4.0, 0.6))) / uExtent.zw).b;
-      float far = texture2D(uAreas, (at + vec2(0.0, -1.3)) / uExtent.zw).b;
-      float lip = max(uPixel * 1.5, 0.25), side = min(min(texture2D(uAreas, (at + vec2(-lip, 0.0)) / uExtent.zw).b, texture2D(uAreas, (at + vec2(lip, 0.0)) / uExtent.zw).b), texture2D(uAreas, (at + vec2(0.0, lip)) / uExtent.zw).b);
+      vec2 at = p + j;
+      float up1 = areaAt(at + vec2(0.0, -max(uPixel * 2.0, 0.3))).b, up2 = areaAt(at + vec2(0.0, -max(uPixel * 4.0, 0.6))).b;
+      float far = areaAt(at + vec2(0.0, -1.3)).b;
+      float lip = max(uPixel * 1.5, 0.25), side = min(min(areaAt(at + vec2(-lip, 0.0)).b, areaAt(at + vec2(lip, 0.0)).b), areaAt(at + vec2(0.0, lip)).b);
       vec3 rim = mix(vec3(0.6, 0.66, 0.74), uMoon, 0.25);
       if (spec <= 0.965) {
         if (far < 0.5 && mod(px.x + px.y, 2.0) < 1.0) water += vec3(0.05, 0.07, 0.11); // the sky in the far water
@@ -638,14 +635,9 @@ void main() {
 
 export class Ground {
   readonly mesh: THREE.Mesh;
-  private texture: THREE.DataTexture;
-  /** One tile's texels, filled on the CPU and copied into the texture. */
-  private tile = new Uint8Array(TILE * TILE * 4);
-  private filled: Uint8Array;
-  private tilesX: number;
-  private tilesZ: number;
-  /** The area texture's texels a metre (areaTexelsPerMetre). */
-  private tpm: number;
+  /** The area texture's two windows round her (render/areaWindow.ts): the near one, and the far one for the telescope. */
+  private near: AreaWindow;
+  private far: AreaWindow;
   private initialised = false;
   private floorReady = new Array(TYPE_SLOTS).fill(0);
   private floors: THREE.DataTexture;
@@ -659,19 +651,14 @@ export class Ground {
   private carve = (t => { t.magFilter = t.minFilter = THREE.LinearFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; return t; })(new THREE.DataTexture(new Uint8Array(CARVING_SIZE * 6 * CARVING_SIZE * 4), CARVING_SIZE * 6, CARVING_SIZE));
   private carveSlots: (string | null)[] = new Array(6).fill(null);
 
-  /** maxTexture: the GPU's largest texture side (renderer.capabilities.maxTextureSize), held to AREA_TEXTURE_MAX. */
-  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = AREA_TEXTURE_MAX, made: DiscoArt = runSync(discoArt(st, map.dancefloor.radius)).art) {
+  /** maxTexture: the GPU's largest texture side (renderer.capabilities.maxTextureSize): the windows no bigger. */
+  constructor(private map: ForestMap, private forest: Forest, st: Style, metresPerPixel: number, maxTexture = 4096, made: DiscoArt = runSync(discoArt(st, map.dancefloor.radius)).art) {
     this.plazaSigil = plazaSigil(!!map.zoo?.layout);
-    const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ;
-    const tpm = (this.tpm = areaTexelsPerMetre(Math.max(w, d), Math.min(maxTexture, AREA_TEXTURE_MAX)));
-    const W = Math.ceil((w * tpm) / TILE) * TILE, H = Math.ceil((d * tpm) / TILE) * TILE;
-    this.tilesX = W / TILE; this.tilesZ = H / TILE;
-    this.filled = new Uint8Array(this.tilesX * this.tilesZ);
+    const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ, cap = Math.floor(maxTexture / AREA_TILE);
+    const window = (tpm: number, tiles: number, step: number) => new AreaWindow(Math.min(tiles, cap), tpm, step, { minX: e.minX, minZ: e.minZ, tilesX: Math.ceil((w * tpm) / AREA_TILE), tilesZ: Math.ceil((d * tpm) / AREA_TILE) }, (out, i, j, tpm) => this.areaTile(out, i, j, tpm));
+    this.near = window(NEAR_TPM, NEAR_TILES, NEAR_STEP);
+    this.far = window(FAR_TPM, FAR_TILES, FAR_STEP);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
-    // Made on the GPU only, never as one array here (it was W x H x 4 bytes: 279 MB on the biggest map): the tiles are
-    // copied into it as they're filled, and WebGL starts every texture at zero.
-    this.texture = nearest(new THREE.DataTexture(null, W, H));
-    this.texture.source.dataReady = false;
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
     const floors = Array.from({ length: TYPE_SLOTS }, (_, i) => new THREE.Vector3(...(LOOKS[i]?.floor ?? [0.25, 0.45, 0.4])));
     const disco = discoLooks(made);
@@ -683,8 +670,9 @@ export class Ground {
       vertexShader: VERT, fragmentShader: FRAG, defines: defines(false),
       uniforms: {
         ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
-        uAreas: { value: this.texture },
-        uExtent: { value: new THREE.Vector4(e.minX, e.minZ, W / tpm, H / tpm) },
+        uAreas: { value: this.near.texture }, uAreasFar: { value: this.far.texture },
+        uExtent: { value: this.near.extent }, uExtentFar: { value: this.far.extent },
+        uAreaWin: { value: this.near.box }, uAreaWinFar: { value: this.far.box },
         uPixel: { value: metresPerPixel },
         uTypeFloor: { value: floors },
         uFloorReady: { value: this.floorReady },
@@ -855,58 +843,45 @@ export class Ground {
     for (const [t, c] of [[u.uDiscoBase.value, base], [u.uDiscoLit.value, lit]] as [THREE.CanvasTexture, HTMLCanvasElement][]) { t.image = c; t.needsUpdate = true; }
   }
 
+  /** The area texture's tiles in `rect` round (x, z) (render/areaWindow.ts: the near window, then the far one), nearest first,
+   *  for about `budgetMs`: how many are left. */
   fill(renderer: THREE.WebGLRenderer, rect: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number, budgetMs: number): number {
-    if (!this.initialised) { renderer.initTexture(this.texture); renderer.initTexture(this.floors); this.initialised = true; }
+    if (!this.initialised) { renderer.initTexture(this.floors); this.initialised = true; }
     if (this.pendingFloors.length) this.placeFloors(renderer);
-    const e = this.map.extent, tm = TILE / this.tpm;
-    const i0 = Math.max(0, Math.floor((rect.minX - e.minX) / tm)), i1 = Math.min(this.tilesX - 1, Math.floor((rect.maxX - e.minX) / tm));
-    const j0 = Math.max(0, Math.floor((rect.minZ - e.minZ) / tm)), j1 = Math.min(this.tilesZ - 1, Math.floor((rect.maxZ - e.minZ) / tm));
-    const cx = (x - e.minX) / tm, cz = (z - e.minZ) / tm, todo: [number, number, number][] = [];
-    for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++)
-      if (!this.filled[j * this.tilesX + i]) todo.push([i, j, (i + 0.5 - cx) ** 2 + (j + 0.5 - cz) ** 2]);
-    todo.sort((a, b) => a[2] - b[2]);
-    const t0 = performance.now();
-    let done = 0;
-    for (const [i, j] of todo) {
-      if (done > 0 && performance.now() - t0 > budgetMs) break;
-      this.fillTile(renderer, i, j);
-      done++;
-    }
-    return todo.length - done;
+    const t0 = performance.now(), left = this.near.fill(renderer, rect, x, z, budgetMs);
+    return left + this.far.fill(renderer, rect, x, z, left ? 0 : Math.max(0, budgetMs - (performance.now() - t0)));
   }
 
-  private fillTile(renderer: THREE.WebGLRenderer, i: number, j: number): void {
-    const e = this.map.extent, data = this.tile, tm = TILE / this.tpm, tpm = this.tpm;
-    const x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
+  /** Map tile (i, j)'s texels at `tpm` (render/areaWindow.ts areaTexel): each one's area look, openness and pond. */
+  private areaTile(data: Uint8Array, i: number, j: number, tpm: number): void {
+    const e = this.map.extent, tm = AREA_TILE / tpm, x0 = e.minX + i * tm, z0 = e.minZ + j * tm;
     // Ponds are part of the ground: every one is marked in the tile, so none can pop.
     const ponds = this.forest.lightsNear(x0 + tm / 2, z0 + tm / 2, tm / 2 + 6).filter(l => l.kind === "pond");
-    for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) {
+    for (let y = 0; y < AREA_TILE; y++) for (let x = 0; x < AREA_TILE; x++) {
       const wx = x0 + (x + 0.5) / tpm, wz = z0 + (y + 0.5) / tpm;
-      const a = this.map.areaAt(wx, wz), o = (y * TILE + x) * 4;
-      let pond = 0;
-      for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = 255;
-      data[o] = a.look; data[o + 1] = Math.round(a.openness * 255); data[o + 2] = pond; data[o + 3] = 255;
+      const a = this.map.areaAt(wx, wz), o = (y * AREA_TILE + x) * 2;
+      let pond = false;
+      for (const p of ponds) if (Math.hypot(wx - p.x, wz - p.z) < 3 * p.size) pond = true;
+      [data[o], data[o + 1]] = areaTexel(a.look, a.openness, pond);
     }
-    // Copied from a texture three.js has never seen, so it's a plain texSubImage2D from these bytes:
-    // one it had uploaded went through framebuffers (copyTexSubImage2D), which waits on the GPU's
-    // queued work, up to hundreds of ms a tile (Ed, 2026-10-06: occasional half-second freezes).
-    renderer.copyTextureToTexture(new THREE.DataTexture(this.tile, TILE, TILE), this.texture, null, new THREE.Vector2(i * TILE, j * TILE));
-    this.filled[j * this.tilesX + i] = 1;
   }
+
+  /** The area textures' GPU memory (bytes): for the debug overlay and the tools. */
+  get areaBytes(): number { return this.near.bytes + this.far.bytes; }
 
   /** Let go of all of it: the area texture, the land's, the floors, the carvings, the dancefloor's looks and tiles and the lakes'
    *  map (the height field's texture is the HeightField's own, left alone). */
-  /** The area texture and its extent (each texel's area look in red), and how many looks the shaders' tables hold: for the layers
+  /** The area textures' uniforms (render/areaWindow.ts AREA_GLSL: read them with areaAt), and how many looks the shaders' tables hold: for the layers
    *  that read the areas (render/loadingMist.ts). */
-  get areaUniforms(): { uAreas: { value: THREE.Texture }; uExtent: { value: THREE.Vector4 }; slots: number } {
+  get areaUniforms(): { uniforms: Record<string, THREE.IUniform>; slots: number } {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
-    return { uAreas: u.uAreas as { value: THREE.Texture }, uExtent: u.uExtent as { value: THREE.Vector4 }, slots: TYPE_SLOTS };
+    return { uniforms: Object.fromEntries(["uAreas", "uAreasFar", "uExtent", "uExtentFar", "uAreaWin", "uAreaWinFar"].map(k => [k, u[k]])), slots: TYPE_SLOTS };
   }
 
   dispose(): void {
     const u = (this.mesh.material as THREE.ShaderMaterial).uniforms;
     for (const k of ["uDiscoBase", "uDiscoLit", "uLakes", "uLakeLooks"]) (u[k]?.value as THREE.Texture | null)?.dispose();
-    this.texture.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
+    this.near.dispose(); this.far.dispose(); this.landTex?.dispose(); this.floors.dispose(); this.carve.dispose(); this.lakeCarve.dispose(); this.plazaSigil.dispose(); this.discoTiles.dispose();
     this.mesh.geometry.dispose(); this.plain.dispose(); this.beach.dispose();
   }
 }
