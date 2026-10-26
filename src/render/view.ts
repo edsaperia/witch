@@ -437,6 +437,7 @@ export class View {
       const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
       const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
       this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open }), t.stringLights.bulbSpacing, outline);
+      this.crown.drawMask = (key, box) => { const p = this.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: this.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); this.assets.track(`crownMask:${key}`, p); return p; };
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
       this.crownFar = new CrownLandmark(this.crown, t.stringLights.palette.map(h => new THREE.Color(h))); this.scene.add(...this.crownFar.meshes);

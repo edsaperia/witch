@@ -19,13 +19,13 @@ import { alongRay } from "./view/home";
 import { standing, type FloorPixels } from "./houseArt";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
-import { bakeFurniture, furnitureState, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { bakePieceHere, furnitureState, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
 import { witchLookOf } from "./artBuild";
 import { dressed } from "../rules/clothesPile";
-import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
+import { DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { loanFind } from "../rules/finds";
@@ -89,8 +89,6 @@ function hatQuads(x: number, z: number, i: number): Quad[] {
 /** The plan's point under (x, z) metres from the hub's centre in the world. */
 const toPlanAt0 = (x: number, z: number) => toPlan({ x: 0, z: 0 }, x, z);
 
-/** How near her (m, on the plan) a piece of furniture is baked: the room she's in and the next ones, as she walks. */
-const BAKE_NEAR = 30;
 
 /** North of this (m, the hub's centre 0), a quad is behind the hub: drawn first. */
 const BEHIND = -3;
@@ -154,6 +152,11 @@ export class HouseRoomsView {
   private readonly workshop = new WorkshopArt();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
+  /** The pieces asked of the art workers (render/housePieces.ts), by key; those that came back, waiting for their meshes; and those
+   *  to bake here instead (no workers: the tests), a frame each. */
+  private readonly asked = new Set<string>();
+  private readonly came: { key: string; art: FurnitureArt | null }[] = [];
+  private readonly toBakeHere: string[] = [];
   /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
@@ -279,31 +282,39 @@ export class HouseRoomsView {
       (P.geo.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (P.geo.getAttribute("color") as THREE.BufferAttribute).needsUpdate = true;
     }
-    // the furniture: a piece baked a frame (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
+    // the furniture: each piece baked by the art workers (the house's pixel and its view's pitch: its plane takes plan depth z to z * ky pixels down,
     // so the view looks down at asin(ky * mpp)), each laid as a picture its floor's middle on the object's middle, after its part's
     // floors and walls and before its near rails (nearer pieces later)
     // (each piece keyed by its id and the state it's drawn in now)
     const pieceKey = (o: HouseObject) => `${o.id}|${furnitureState(o.id, g) ?? ""}`;
-    // (the nearest first, and only those within BAKE_NEAR of her: a piece is tens of milliseconds to bake, so a frame takes one; a
-    // room's dressing, render/houseDecor.ts, is one more, at the room's middle)
-    const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp)));
-    let todo: { key: string; x: number; z: number; bake: () => FurnitureArt | null; id: string } | null = null, td = BAKE_NEAR;
-    for (const o of HOUSE_ROOMS.objects) { const dd = Math.hypot(o.x - here.x, o.z - here.z), k = pieceKey(o); if (dd < td && FURNITURE.has(o.id) && !this.pieces.has(k) && !this.empty.has(k)) { td = dd; todo = { key: k, x: o.x, z: o.z, id: o.id, bake: () => bakeFurniture(o, v.assets.style, 1 / v.mpp, pitch, furnitureState(o.id, g)) }; } }
-    for (const r of DECOR_ROOMS) { const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, dd = Math.hypot(cx - here.x, cz - here.z), k = `decor:${r.id}`; if (dd < td && !this.pieces.has(k) && !this.empty.has(k)) { td = dd; todo = { key: k, x: cx, z: cz, id: k, bake: () => bakeRoomDecor(r, v.assets.style, 1 / v.mpp, pitch) }; } }
-    if (todo) {
-      const art = todo.bake();
-      if (!art) this.empty.add(todo.key);
-      else {
-        const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
-        geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-        geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
-        geo.setIndex([0, 1, 2, 0, 2, 3]);
-        const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
-        // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
-        const mesh = new THREE.Mesh(geo, mat), dz = south(todo.x, todo.z), decor = todo.key.startsWith("decor:");
-        mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(dz, decor);
-        this.furniture.add(mesh); this.pieces.set(todo.key, { art, mesh, pos, id: todo.id, x: todo.x, z: todo.z });
-      }
+    // (every piece asked of the art workers the first time the house shows, the nearest her first: a piece is tens of milliseconds to
+    // bake, a room's dressing hundreds, on Ed's laptop well over 100 ms a frame each when they were baked here as she came near (his
+    // playtest of v4515); each one tracked, so the shots and the bench wait for them; without workers, baked here, a frame each)
+    const here = toPlanAt0(w.x - D.x, w.z - D.z), pitch = Math.asin(Math.min(.95, Math.max(.2, ky * v.mpp))), ppm = 1 / v.mpp;
+    const wanted: { key: string; x: number; z: number }[] = [];
+    for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
+    for (const r of DECOR_ROOMS) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
+    for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => Math.hypot(a.x - here.x, a.z - here.z) - Math.hypot(b.x - here.x, b.z - here.z))) {
+      this.asked.add(q.key);
+      const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch })
+        .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
+      v.assets.track(`housePiece:${q.key}`, p);
+    }
+    const bakedHere = this.toBakeHere.shift();
+    if (bakedHere) this.came.push({ key: bakedHere, art: bakePieceHere(bakedHere, v.assets.style, ppm, pitch) });
+    for (const { key, art } of this.came.splice(0)) {
+      if (!art) { this.empty.add(key); continue; }
+      const decor = key.startsWith("decor:"), id = decor ? key : key.split("|")[0], at = wanted.find(q => q.key === key);
+      if (!at || this.pieces.has(key)) { art.tex.dispose(); continue; }
+      const geo = new THREE.BufferGeometry(), pos = new Float32Array(12);
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
+      geo.setIndex([0, 1, 2, 0, 2, 3]);
+      const mat = new THREE.MeshBasicMaterial({ map: art.tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false });
+      // (after its part's floors and walls, before its near rails; nearer pieces later; a room's dressing before all furniture)
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.frustumCulled = false; mesh.renderOrder = furnitureOrder(south(at.x, at.z), decor);
+      this.furniture.add(mesh); this.pieces.set(key, { art, mesh, pos, id, x: at.x, z: at.z });
     }
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
@@ -328,7 +339,8 @@ export class HouseRoomsView {
       this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
         id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },
         (id, mark, dx, dy) => { const p = piece(id), q = p?.art.marks[mark]; return p && q ? pxWorld(p.x, p.z, q.x - p.art.ox + dx, q.y - p.art.oy + dy) : null; },
-        id => piece(id)?.mesh.renderOrder ?? 19.94, ht);
+        id => piece(id)?.mesh.renderOrder ?? 19.94, ht,
+        (key, pic) => { const p = v.assets.oneOff({ kind: "workshopPic", id: key, style: v.assets.style, pic }).then(r => r.housePiece ?? Promise.reject(new Error("nothing drawn"))); v.assets.track(`workshopPic:${key}`, p); return p; });
     }
     // the mic's spotlight, from its lamp down to the floor round its foot (its `spot` mark: art/furniture.js)
     const mic = [...this.pieces.values()].find(p => p.id === "microphone" && p.mesh.visible && p.art.marks.spot);

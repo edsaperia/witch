@@ -2,7 +2,8 @@
 // game (dist/), loads it in headless Chromium at 960×540 (QUICK_SIZE=1280x720 for another) with ?quick=1 (only the art the
 // start needs), starts, hops off the treehouse deck, flies about 2.5 s on the ground, rises, flies about 2.5 s in the treetops
 // and descends: kept short, as the software renderer here takes 20 s or so a second of game time. Fails on any page or console error, a blank picture, or a witch that doesn't move,
-// rise or descend, or a page's thread held over 15 s while it loads (QUICK_STALL_MS). Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
+// rise or descend, or a page's thread held over 15 s while it loads (QUICK_STALL_MS), or a frame's drawing in the treehouse over 150 ms
+// as she walks its rooms (QUICK_HOUSE_MS). Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
 // test (smoke.cjs) still covers pops, floating, big windows and the rest. Then it sails in place to another island (the tuning's
 // sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
 // checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
@@ -66,6 +67,35 @@ async function main() {
       // 4 s and more (4 s tripped other PRs, 2026-10-26); the freeze it's here for held the page 50 to 75 s)
       const beat = await page.evaluate(() => window.__beat), budget = Number(process.env.QUICK_STALL_MS || 15000);
       check(beat.worst < budget, `no long freeze while it loads (the page's thread's longest wait ${(beat.worst / 1000).toFixed(1)} s, at ${(beat.at / 1000).toFixed(0)} s; under ${budget / 1000} s)`);
+    }
+    // A walk through the house (Ed's playtest of v4515, "stuck_walking_down": each piece of furniture and each room's dressing baked on
+    // the page's thread as she came near, 120 to 220 ms a frame on his laptop): from her decks down the Terrace to the Parlour, out to
+    // the Bestiary and back, and across to the Studio, a fixed frame at a time with the picture's draw left out (the software
+    // renderer's own time isn't the house's); the longest frame's drawing work in the house, the view's "witch" part (render/view.ts:
+    // her, the rooms and the crown), under QUICK_HOUSE_MS: 150 ms by default, for the runners' slow software renderer (about three
+    // times this cloud's), where an ordinary frame here is 3 to 45 ms; the page-thread bakes it's there to catch were 190 to 3700 ms here.
+    {
+      const H = require("../../config/house/load.mjs").loadHouse(), A = ((H.turn || 0) * Math.PI) / 180;
+      const room = id => H.rooms.find(r => r.id === id), limb = (a, b) => { const c = H.corridors.find(q => q.id === `${a}-${b}`) || H.corridors.find(q => q.id === `${b}-${a}`); return c.id === `${a}-${b}` ? c.pts : [...c.pts].reverse(); };
+      const plan = [[0, 0], ...limb("terrace", "parlour"), ...limb("parlour", "bestiary"), [room("bestiary").x, room("bestiary").z], ...limb("bestiary", "parlour"), ...limb("parlour", "terrace"), ...limb("terrace", "studio"), [room("studio").x, room("studio").z]];
+      const route = plan.map(([u, v]) => [u * Math.cos(A) + v * Math.sin(A), -u * Math.sin(A) + v * Math.cos(A)]), budget = Number(process.env.QUICK_HOUSE_MS || 150);
+      const walk = await page.evaluate(route => {
+        const W = window.witch, g = W.game, b = () => g.witches[0].body, t = g.map.treehouse, idle = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
+        W.manual = true;
+        let f = 0, i = 0, worst = 0, at = null;
+        for (; f < 60 * 8 && b().seated; f++) W.frame({ ...idle, moveZ: -1 }, 1 / 60, false); // (off her seat)
+        for (; i < route.length && f < 60 * 120; f++) {
+          const dx = t.x + route[i][0] - b().x, dz = t.z + route[i][1] - b().z, L = Math.hypot(dx, dz);
+          if (L < (i === route.length - 1 ? 0.6 : 1.2)) { i++; continue; }
+          const ms = W.frame({ ...idle, moveX: dx / L, moveZ: dz / L }, 1 / 60, false).ms.witch || 0;
+          if (ms > worst) { worst = ms; at = [+(b().x - t.x).toFixed(1), +(b().z - t.z).toFixed(1)]; }
+        }
+        const got = i === route.length;
+        g.witches[0].body = { ...b(), x: t.x, z: t.z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0, seated: false }; // (back on the Terrace for the rise)
+        W.manual = false;
+        return { got, worst, at, frames: f };
+      }, route);
+      check(walk.got && walk.worst < budget, `walks the house (Terrace, Parlour, Bestiary, Studio: ${walk.got ? "all the way" : "stopped short"}, ${walk.frames} frames), no frame's drawing in it over ${budget} ms (the longest ${walk.worst.toFixed(1)} ms, at ${JSON.stringify(walk.at)} on the plan)`);
     }
     // She starts at her decks on the treehouse's Terrace, 22 m up (rules/treehouse.ts): up off it, out over the forest (south,
     // towards the camera: the oak's rooms spread west, north and east of the Terrace), down.

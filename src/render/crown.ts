@@ -14,6 +14,7 @@ import { crownBulbs, type Bulb, type Crown, type HouseOutline, type Knot } from 
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { SPRITE_UNIFORMS } from "./sprites";
+import { clearMask, inPoly, maskKeys, MASK, polyDist } from "./crownMask";
 
 /** The plan → world map: world = O + x Ex + y Ey + z Ez (y over the floor). */
 export interface PlanMap { o: THREE.Vector3; ex: THREE.Vector3; ey: THREE.Vector3; ez: THREE.Vector3 }
@@ -29,25 +30,7 @@ function noiseTexture(): THREE.DataTexture {
   return t;
 }
 
-/** Whether (x, z) is inside a closed outline. */
-function inPoly(p: [number, number][], x: number, z: number): boolean {
-  let c = false;
-  for (let i = 0, j = p.length - 1; i < p.length; j = i++) if ((p[i][1] > z) !== (p[j][1] > z) && x < ((p[j][0] - p[i][0]) * (z - p[i][1])) / (p[j][1] - p[i][1]) + p[i][0]) c = !c;
-  return c;
-}
-/** How far (x, z) is from a line through points (closed: back to its first). */
-function polyDist(p: [number, number][], x: number, z: number, closed = false): number {
-  let d = Infinity;
-  for (let i = 1; i < p.length + (closed ? 1 : 0); i++) {
-    const [ax, az] = p[i - 1], [bx, bz] = p[i % p.length], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / Math.max(1e-9, dx * dx + dz * dz)));
-    d = Math.min(d, Math.hypot(x - ax - dx * t, z - az - dz * t));
-  }
-  return d;
-}
-
 const smooth01 = (t: number) => t * t * (3 - 2 * t);
-/** The mask's side (texels) over the crown's dome: about a metre a texel. */
-const MASK = 128;
 
 export const SHARED_GLSL = /* glsl */ `
 uniform vec3 uMapO, uMapX, uMapY, uMapZ;
@@ -287,6 +270,11 @@ export class CrownView {
   /** Two floors' masks: the room (or branch) she's in, clearing as it fades in, and the one she left, filling back in as it fades
    *  out (Ed, 2026-10-26: "Room canopy cuts should fade in rather than be instant"); each its key and how far it's cleared. */
   private readonly masks = [0, 1].map(() => { const data = new Uint8Array(MASK * MASK), tex = new THREE.DataTexture(data, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType); tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true; return { data, tex, key: "", w: 0 }; });
+  /** Each floor's clearing (render/crownMask.ts: its distance field), by its key, once drawn; and those asked of the art workers. */
+  private readonly fields = new Map<string, Uint8Array>();
+  private readonly fieldsAsked = new Set<string>();
+  /** Asks the art workers for a floor's clearing (render/view.ts: Assets.oneOff, tracked); unset or refused, it's drawn here. */
+  drawMask: ((key: string, box: readonly number[]) => Promise<Uint8Array>) | null = null;
   /** How far the hole round her is open indoors (0 to 1, by the same fade). */
   private herW = 0;
   private readonly back = new THREE.Vector3();
@@ -345,7 +333,17 @@ export class CrownView {
     // (a floor she moves into takes the mask that's least cleared, unless it's one of the two already: back into the room she
     // just left, its cut opens again from where its fade had got to)
     const M = this.masks, step = fade > 0 ? Math.max(0, dt) / fade : 1;
-    if (key && !M.some(m => m.key === key)) { const m = M[0].w <= M[1].w ? M[0] : M[1]; m.key = key; m.w = 0; this.fill(m, room ? (x, z) => (inPoly(room.outline, x, z) ? 0 : polyDist(room.outline, x, z, true)) : (x, z) => Math.max(0, polyDist(branch!.pts, x, z) - branch!.w / 2)); }
+    // (each floor's field asked of the art workers the first time she's indoors, kept as it comes: drawn here as she stepped into a
+    // room, it held the frame 190 to 360 ms under the cloud's software renderer, Ed's playtest of v4515; one not in yet waits a frame
+    // or two, its fade starting as it comes; with no workers, drawn here)
+    const B = this.uniforms.uClearBox.value as THREE.Vector4, box = [B.x, B.y, B.z, B.w];
+    if (indoors && this.drawMask) for (const k of maskKeys(O)) if (!this.fields.has(k) && !this.fieldsAsked.has(k)) {
+      this.fieldsAsked.add(k);
+      this.drawMask(k, box).then(f => { this.fields.set(k, f); }, () => { this.fieldsAsked.delete(k); this.drawMask = null; });
+    }
+    if (key && !this.fields.has(key) && !this.fieldsAsked.has(key)) { const f = clearMask(key, box, O); if (f) this.fields.set(key, f); }
+    const field = key ? this.fields.get(key) : undefined;
+    if (key && field && !M.some(m => m.key === key)) { const m = M[0].w <= M[1].w ? M[0] : M[1]; m.key = key; m.w = 0; m.data.set(field); m.tex.needsUpdate = true; }
     for (const m of M) { m.w = m.key && m.key === key ? Math.min(1, m.w + step) : Math.max(0, m.w - step); if (!m.w && m.key !== key) m.key = ""; }
     // (the room she's in is the shader's first mask, the other the second)
     const [a, b] = M[1].key === key && key ? [M[1], M[0]] : [M[0], M[1]];
@@ -360,16 +358,6 @@ export class CrownView {
   /** How far a floor's cut has opened (0 to 1), by its key (`room:<id>`, `branch:<id>`), and the hole round her: for the tests. */
   cutOf(key: string): number { return this.masks.find(m => m.key === key)?.w ?? 0; }
   get herHole(): number { return this.herW; }
-
-  /** The distance field of one floor shape into a mask (its plan's metres, 0 to 16 m in 0 to 1). */
-  private fill(m: { data: Uint8Array; tex: THREE.DataTexture }, dist: (x: number, z: number) => number): void {
-    const B = this.uniforms.uClearBox.value as THREE.Vector4, w = 1 / B.z, d = 1 / B.w;
-    for (let j = 0; j < MASK; j++) for (let i = 0; i < MASK; i++) {
-      const x = B.x + ((i + 0.5) / MASK) * w, z = B.y + ((j + 0.5) / MASK) * d;
-      m.data[j * MASK + i] = Math.min(255, Math.round((dist(x, z) / 16) * 255));
-    }
-    m.tex.needsUpdate = true;
-  }
 
   dispose(): void {
     for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
