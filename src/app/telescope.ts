@@ -12,6 +12,9 @@ const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRigh
 /** The compass strip: degrees across it, and its size in art pixels (drawn at 2 screen pixels each). */
 const STRIP = { span: 120, w: 240, h: 15, px: 2 };
 
+/** The vignette's CSS: dark toward the edges by `v` (0 none, 1 near black). */
+const vignetteCss = (v: number): string => `radial-gradient(ellipse 75% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(2,1,6,${v}) 100%)`;
+
 export class TelescopeView {
   private aim: Telescope | null = null;
   private readonly el: HTMLDivElement;
@@ -29,12 +32,16 @@ export class TelescopeView {
   /** Called as she starts and stops looking. */
   onChange: (on: boolean) => void = () => {};
 
+  /** Its vignette as drawn (telescope.vignette: how dark its edges). */
+  private vignette: number;
+
   constructor(host: HTMLElement, vignette: number) {
+    this.vignette = vignette;
     this.el = document.createElement("div");
     this.el.className = "telescope";
     Object.assign(this.el.style, {
       position: "fixed", inset: "0", pointerEvents: "none", zIndex: "6", display: "none",
-      background: `radial-gradient(ellipse 75% 80% at 50% 50%, rgba(0,0,0,0) 55%, rgba(2,1,6,${vignette}) 100%)`,
+      background: vignetteCss(vignette),
     });
     this.readout = document.createElement("div");
     Object.assign(this.readout.style, {
@@ -108,6 +115,7 @@ export class TelescopeView {
   /** The readout: its tilt and zoom, and the keys (its bearing is the compass strip's). */
   private show(T: TelescopeTuning): void {
     if (!this.aim) return;
+    if (T.vignette !== this.vignette) { this.vignette = T.vignette; this.el.style.background = vignetteCss(T.vignette); } // (live: the pause page's slider)
     const up = Math.round(this.aim.elevation);
     this.drawStrip(this.aim.heading);
     this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   walk away to leave`;
