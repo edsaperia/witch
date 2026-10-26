@@ -344,6 +344,19 @@ function glowTexture(): THREE.Texture {
   const t = new THREE.DataTexture(data, n, n); t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
   return t;
 }
+/** A ring of small four-point stars (a new island's sparkle, ChartIsland fresh): seven of them round the middle at about four
+ *  fifths out, of a few sizes, each a cross with a soft core, white on clear; whole pixels, as the sigils are. */
+function sparkleTexture(): THREE.Texture {
+  const n = 32, data = new Uint8Array(n * n * 4), STARS = 7; // (about one texel an art pixel at its smallest: frame)
+  const put = (x: number, y: number, a: number) => { if (x < 0 || y < 0 || x >= n || y >= n) return; const i = (y * n + x) * 4; data.set([255, 255, 255, Math.max(data[i + 3], Math.round(a * 255))], i); };
+  for (let s = 0; s < STARS; s++) {
+    const a = (s / STARS) * Math.PI * 2 + 0.4, r = n * (0.38 + 0.04 * Math.sin(s * 2.3)), cx = Math.round(n / 2 + Math.cos(a) * r), cy = Math.round(n / 2 + Math.sin(a) * r), len = 1 + (s % 2);
+    put(cx, cy, 1);
+    for (let k = 1; k <= len; k++) { const f = 1 - k / (len + 1); put(cx + k, cy, f); put(cx - k, cy, f); put(cx, cy + k, f); put(cx, cy - k, f); }
+  }
+  const t = new THREE.DataTexture(data, n, n); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.LinearFilter; t.needsUpdate = true;
+  return t;
+}
 type Loop = { pts: THREE.Vector2[]; sea: boolean };
 /** An island's loops in its shape's units about its middle (shape y is -z, as the extrusion is laid flat), scaled to its reach on
  *  the chart; and the scale (units a metre) and middle (m) its real land was put there with. Its real outline's (every other
@@ -382,6 +395,7 @@ export class SeaChart {
   private voyages: ChartVoyage[] = [];
   private uTime = { value: 0 };
   private glow = glowTexture();
+  private sparkle = sparkleTexture();
   private skyU: Record<string, THREE.IUniform>;
   private ring: THREE.Mesh;
   private focus = new THREE.Vector3();
@@ -505,8 +519,8 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
       sg.position.y = top + 0.35; g.add(sg); isle.sigil = sg; isle.tier = 0; isle.size = s;
       const halo = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.6, s * 1.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: col(c, 0.16), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
       halo.position.y = top + 0.25; g.add(halo); isle.glow = halo;
-      if (d.fresh) { // (new to her: a wider, whiter halo that twinkles, over the sigil's own: frame)
-        const sp = new THREE.Mesh(new THREE.PlaneGeometry(s * 2.6, s * 2.6).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.glow, color: new THREE.Color(1, 0.93, 0.72), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
+      if (d.fresh) { // (new to her: a ring of little stars round its sigil, turning slowly and twinkling: frame)
+        const sp = new THREE.Mesh(new THREE.PlaneGeometry(s * 1.9, s * 1.9).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ map: this.sparkle, color: new THREE.Color(1, 0.95, 0.78), transparent: true, blending: THREE.AdditiveBlending, depthWrite: false }));
         sp.position.y = top + 0.3; g.add(sp); isle.spark = sp;
       }
     }
@@ -648,7 +662,7 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
         mat.dispose();
       }
     });
-    this.glow.dispose();
+    this.glow.dispose(); this.sparkle.dispose();
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }
@@ -813,10 +827,12 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
         if (tier !== i.tier) { i.tier = tier; m.map = this.sigilArt(i.d.sigil, tier); m.needsUpdate = true; }
       }
       if (i.glow) { (i.glow.material as THREE.MeshBasicMaterial).opacity = (chosen ? 0.85 : 0.7) * pulse * fade; i.glow.visible = i.sigil?.visible ?? true; }
-      if (i.spark) { // (a sparkle: brightening and dimming faster than the sigils' pulse, and growing a little as it does)
+      if (i.spark) { // (the sparkle: twinkling faster than the sigils' pulse, the ring turning slowly, sized with the sigil)
         const tw = 0.5 + 0.5 * Math.sin(time * 4.2 + i.x * 0.3), m = i.spark.material as THREE.MeshBasicMaterial;
-        m.opacity = (0.25 + 0.45 * tw) * fade; i.spark.visible = i.sigil?.visible ?? true;
-        const s = 0.9 + 0.2 * tw * (i.sigil ? i.sigil.scale.x : 1); i.spark.scale.set(s, 1, s);
+        m.opacity = (0.45 + 0.55 * tw) * fade; i.spark.visible = i.sigil?.visible ?? true;
+        // (sized with the sigil, and never under 32 art pixels across, its texture's own, so far out its stars still show round it)
+        const px = (i.size! * 1.9 * this.h) / (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2) * this.camera.position.distanceTo(tmp.set(i.x, i.top, i.z)));
+        const s = (i.sigil ? i.sigil.scale.x : 1) * Math.max(1, 32 / Math.max(1, px)); i.spark.scale.set(s, 1, s); i.spark.rotation.y = time * 0.25;
       }
       // Its land just come (Ed, 2026-10-13: each island "emerges from under the sea"): the whole island, shallows and all, rises from
       // under the water plane over RISE seconds, easing out, the sea hiding what's still below; its shadows drawn once it's up.

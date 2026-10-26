@@ -23,7 +23,7 @@ export class ChartPin {
     const wantX = at.x, wantY = at.y - lift;
     const x = Math.max(EDGE, Math.min(box.width - EDGE, wantX)), y = Math.max(EDGE, Math.min(box.height - EDGE, wantY));
     const off = x !== wantX || y !== wantY, angle = off ? Math.atan2(at.y - y, at.x - x) : Math.PI / 2; // (off the canvas: toward it)
-    if (Math.abs(angle - this.angle) > 0.02) { paintPin(this.cue, AMBER, "🧭", angle, MAP); this.angle = angle; }
+    if (!(Math.abs(angle - this.angle) <= 0.02)) { paintPin(this.cue, AMBER, "🧭", angle, MAP); this.angle = angle; } // (NaN: not painted yet)
     this.cue.place(box.left + x, box.top + y);
   }
   dispose(): void { this.cue.dispose(); }
