@@ -25,7 +25,7 @@ export const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 const RING_R = 13; // the ring's radius (art pixels)
 /** An emoji's size in the ring (art pixels across). */
-const EMOJI_PX = 17;
+export const EMOJI_PX = 17;
 
 let RING: number[] | null = null;
 /** The ring's pixels (x, y, turn: 0 at 12 o'clock, clockwise), in row order, worked out once (a hypot and an atan2 a pixel a frame

@@ -1,14 +1,16 @@
-// Her guidance pin (rules/guidance.ts): one pin on her view (render/pins.ts), moved to whatever's next and given its glyph, in
-// the HUD's amber with a cream glyph so it reads as the house showing her round and never as a stone. Icons only (Ed, 2026-10-26).
+// Her guidance pin (rules/guidance.ts): one pin on her view (render/pins.ts), moved to whatever's next and given its icon (Ed's:
+// guideIcon), in the HUD's amber ring so it reads as the house showing her round and never as a stone. Icons only (Ed, 2026-10-26).
 import * as THREE from "three";
 import type { View } from "../view";
 import { HAT_INK } from "../view";
 import type { Pin, PinTarget } from "../pins";
 import type { Guide, GuideKind } from "../../rules/guidance";
+import { EMOJI_PX, HAT } from "../indicator";
+import { pixelSprite } from "../bubbles";
 
 const INK = new THREE.Vector3(1, 0.94, 0.82);
 
-/** A shirt: the dressing stations, and a new wearable at its station. */
+/** A shirt: the dressing stations' glyph where the browser has no emoji for them. */
 export const SHIRT = [
   "....##...##....",
   "..####+++####..",
@@ -37,21 +39,6 @@ export const LETTER = [
   "#.+.......+..##",
   "###############",
   "...............",
-];
-/** A broom: the lathe, and a new broom part at the Workshop's bay. */
-export const BROOM = [
-  "............##.",
-  "...........##..",
-  "..........##...",
-  ".........##....",
-  "........##.....",
-  ".......##......",
-  "......##.......",
-  "....+++++......",
-  "...#+#+#+#.....",
-  "..#+#+#+#+#....",
-  ".#+#+#+#+#+#...",
-  "#+#+#+#+#+#+#..",
 ];
 /** Two platters on a desk: her decks. */
 export const DECKS = [
@@ -115,12 +102,41 @@ export const GIFT = [
   ".#############.",
 ];
 
-/** Each pin's icon (Ed, 2026-10-26: "bed emoji is 💤, desk emoji is 💌, map table emoji is 🧭, decks emoji is 🎶"; "Broom should be
- *  'wings'"; "new find will be 🎁"), drawn in pixels as the thrown 💌 is (render/indicator.ts emoji); the dressing stations' a
- *  shirt of our own. */
-export const GUIDE_EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", decks: "🎶", lathe: "🪽", hat: "🎁", part: "🎁", wearable: "🎁" };
-/** Each pin's glyph: the shirt, and where the browser has no such emoji, what's drawn in its place. */
-export const GUIDE_GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: BROOM, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: DECKS };
+/** A pair of wings spread (the lathe: her broom; Ed's "Broom should be a pair of wings"), where the browser has no 🪽. */
+export const WINGS = [
+  "...............",
+  "##...........##",
+  "###.........###",
+  "#+##.......##+#",
+  "#++##.....##++#",
+  ".#++##...##++#.",
+  ".#+++##.##+++#.",
+  "..#++++#++++#..",
+  "..##+++#+++##..",
+  "...##++#++##...",
+  "....###.###....",
+  "...............",
+];
+
+/** Each pin's icon (Ed, 2026-10-26): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe ("Broom should be a pair of
+ *  wings"), 🎁 anything new ("new find will be 🎁"), 🧭 the map table, 🎶 the decks; on her first night 👗 the wardrobe, 👠 the shoe
+ *  rack, 🧥 the cloak pegs, 👜 the bags and the hats' floor the hat pointers' own hat. Emoji drawn in pixels as the thrown 💌 is
+ *  (render/indicator.ts emoji), each with a glyph of ours in its place where the browser has no such emoji. */
+const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", decks: "🎶", hat: "🎁", part: "🎁", wearable: "🎁" };
+const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: DECKS };
+const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
+/** The pair of wings: 🪽 and 🪽 mirrored, spread either side, one pixel sprite (render/bubbles.ts pixelSprite, served as an emoji is). */
+const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
+  x.font = `${Math.round(n * 0.62)}px sans-serif`; x.textAlign = "center"; x.textBaseline = "middle";
+  x.fillText("🪽", n * 0.72, n / 2 + 0.5);
+  x.save(); x.translate(n, 0); x.scale(-1, 1); x.fillText("🪽", n * 0.72, n / 2 + 0.5); x.restore();
+});
+/** A guide's icon: its emoji (none: the glyph alone) and its glyph. */
+export function guideIcon(guide: Guide): { emoji?: string; glyph: readonly string[] } {
+  if (guide.kind === "dress" && "object" in guide.target) return DRESS[guide.target.object] ?? { glyph: SHIRT };
+  if (guide.kind === "lathe") return { emoji: wings(), glyph: WINGS };
+  return { emoji: EMOJI[guide.kind], glyph: GLYPH[guide.kind] };
+}
 
 /** Over the floor-level hats' floor (its height 0), the pin hovers as over a hat lying there. */
 const TOPS: Record<string, number> = { hats: 1 };
@@ -141,7 +157,7 @@ export class GuidePin {
       if (key !== this.key) {
         // (a new guide: the old pin gone, the new eased in from nothing)
         this.pin?.remove();
-        this.pin = this.view.pin(target, { colour: HAT_INK, glyph: GUIDE_GLYPH[guide.kind], glyphColour: INK, emoji: GUIDE_EMOJI[guide.kind] });
+        this.pin = this.view.pin(target, { colour: HAT_INK, glyphColour: INK, ...guideIcon(guide) });
         this.pin.hide();
         this.key = key;
       }
