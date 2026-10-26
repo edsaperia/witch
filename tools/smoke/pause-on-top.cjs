@@ -76,6 +76,14 @@ const CASES = [
       return { sliders: !!atSliders?.closest("#pause-sliders"), at: tag(atSliders), box: s ? [s.left, s.top, s.width, s.height].map(Math.round).join(",") : "none", middle: under.find(q => atMiddle?.closest(q)) ?? null, what: atMiddle ? `${atMiddle.tagName}#${atMiddle.id}.${atMiddle.className}` : "none" };
     });
     check(top.sliders, `${C.id}: the pause page's sliders are on top where they stand (${top.at}; sliders at ${top.box})`);
+    if (!top.sliders) { // (what kept them out: a sighting on CI that doesn't happen here; the next one says why)
+      const why = await page.evaluate(() => new Promise(res => {
+        const el = document.getElementById("pause-sliders"), t0 = document.timeline.currentTime, p0 = performance.now(); let frames = 0;
+        const tick = () => { frames++; if (performance.now() - p0 < 2000) requestAnimationFrame(tick); else res({ cls: el?.className, transform: el ? getComputedStyle(el).transform : null, transition: el ? getComputedStyle(el).transition : null, anims: el ? el.getAnimations().map(a => `${a.playState} ${a.currentTime}`) : [], timeline: [t0, document.timeline.currentTime], frames, left: el?.getBoundingClientRect().left, frozen: !!document.querySelector("#pause-shield")?.offsetParent, panel: document.getElementById("station-panel")?.className, hidden: document.hidden, visibility: document.visibilityState }); };
+        requestAnimationFrame(tick);
+      }));
+      console.log(`  ${C.id}: sliders out: ${JSON.stringify(why)}`);
+    }
     check(top.middle === null, `${C.id}: nothing under the pause takes a click in the middle (${top.what})`);
     if (process.env.SHOTS) { fs.mkdirSync("previews", { recursive: true }); await page.screenshot({ path: `previews/pause-on-top-${C.id}.png` }); }
     // keys and the pad reach nothing under it
