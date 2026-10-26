@@ -10106,7 +10106,7 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.2,
     floor: ["sand", 0.11, 0.42, 0.64],
-    text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, a few thorn trees", set: "a ring of wind-worn stones round an old hearth" },
+    text: { floor: "rippled dune sand", wall: "the oasis's edge", small: "dry grass tussocks and saltbush", big: "date palms in clumps, wild olives, a few thorn trees and junipers", set: "a ring of wind-worn stones round an old hearth" },
     wall: [["water", { w: 1.2 }], ["reeds", {}]],
     small: [["grass", { h: 0.8 }], ["shrub", { spiky: true }]],
     big: [["tree", { type: "datePalm", scale: 1 }], ["tree", { type: "acacia", minor: true, scale: 0.8 }]],
@@ -10123,9 +10123,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.3, amount: 0.2 },
       terrain: ["ridges", "mounds"],
       decor: { rate: 0.2, ruins: 0.3, rocks: 0.4, freak: 0, lake: 0.3, modern: 0 },
-      feel: "Long gold dunes rippled by the wind, date palms clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening."
+      feel: "Long gold dunes rippled by the wind, date palms and wild olives clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening."
     },
-    flora: { species: [["datePalm", 0.65], ["acacia", 0.25], ["baobab", 0.1]], palette: { sat: 0.8, val: 0.95 } },
+    flora: { species: [["datePalm", 0.5], ["olive", 0.2], ["acacia", 0.2], ["juniper", 0.1]], palette: { sat: 0.8, val: 0.95 } },
     settings: { treeDensity: 0.3, groundCover: { density: 0.35, kinds: ["blades"] } }
   };
 
@@ -10156,7 +10156,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0, lake: 0, modern: 0.1 },
       feel: "Red sand flats under eroded hoodoos, twisted junipers, dry tussocks, burrow mouths everywhere; hot, open and watched from every rock."
     },
-    flora: { species: [["juniper", 0.6], ["acacia", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["juniper", 0.6], ["paloVerde", 0.25], ["pine", 0.15]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.4, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10187,7 +10187,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.6, freak: 0.1, lake: 0.2, modern: 0 },
       feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud."
     },
-    flora: { species: [["acacia", 0.7], ["baobab", 0.2], ["datePalm", 0.1]], palette: { sat: 0.8, val: 0.95 } },
+    flora: { species: [["acacia", 0.6], ["baobab", 0.25], ["acacia", 0.15, { variant: "stunted" }]], palette: { sat: 0.8, val: 0.95 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.9, kinds: ["blades"] } }
   };
 
@@ -10218,7 +10218,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.1, ruins: 0, rocks: 0.6, freak: 0.15, lake: 0.25, modern: 0 },
       feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast."
     },
-    flora: { species: [["acacia", 0.7], ["baobab", 0.15], ["datePalm", 0.15]], palette: { sat: 0.85, val: 1 } },
+    flora: { species: [["acacia", 0.65], ["baobab", 0.25], ["acacia", 0.1, { variant: "windbent" }]], palette: { sat: 0.85, val: 1 } },
     settings: { treeDensity: 0.14, groundCover: { density: 0.7, kinds: ["blades"] } }
   };
 
@@ -10231,10 +10231,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.24,
     floor: ["mud", 0.08, 0.32, 0.52],
-    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted wild olives, junipers and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
+    text: { floor: "cracked dry clay", wall: "the wash's sandy banks", small: "thorny scrub", big: "stunted junipers, palo verde and sun-split boulders", set: "a ring of sun-split stones round a dry hollow" },
     wall: [["rockwall", {}]],
     small: [["shrub", { spiky: true, flower: [214, 190, 120] }]],
-    big: [["tree", { type: "olive", variant: "stunted", scale: 0.65, gnarl: 1, lean: 0.25 }], ["tree", { type: "juniper", minor: true, scale: 0.75, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
+    big: [["tree", { type: "juniper", variant: "stunted", scale: 0.75, gnarl: 1, lean: 0.25 }], ["tree", { type: "paloVerde", minor: true, scale: 0.65, lean: 0.25 }], ["boulder", { sparse: 0.2 }], ["snag", { sparse: 0.15, bleached: true }]],
     setPiece: ["ring", "a ring of sun-split stones round a dry hollow", 1, { member: "stone", height: 1.1, width: 0.8, stone: [0.07, 0.3, 0.62] }],
     pathKinds: ["animal", "dirt"],
     layout: {
@@ -10249,7 +10249,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.3, ruins: 0.3, rocks: 0.5, freak: 0.1, lake: 0, modern: 0.1 },
       feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly."
     },
-    flora: { species: [["olive", 0.55], ["juniper", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
+    flora: { species: [["juniper", 0.55], ["paloVerde", 0.3], ["pine", 0.15]], palette: { sat: 0.6, val: 0.75 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10296,10 +10296,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.45,
     floor: ["ice", 0.6, 0.45, 0.85],
-    text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted frost-pale whitebeams, firs and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
+    text: { floor: "blue glacier ice, swept clean", wall: "frozen falls", small: "ice blocks and frosted stones", big: "stunted snowy spruces, junipers and crystal-leaf trees", set: "a ring of ice spires where the falls froze" },
     wall: [["waterfall", {}], ["rockwall", {}]],
     small: [["stones", {}], ["mound", { small: true }]],
-    big: [["tree", { type: "whitebeam", scale: 0.55 }], ["tree", { type: "fir", minor: true, scale: 0.5 }], ["tree", { type: "crystal", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "fir", variant: "snowy", scale: 0.55 }], ["tree", { type: "juniper", minor: true, scale: 0.5 }], ["tree", { type: "crystal", minor: true, scale: 0.8 }]],
     steep: true,
     pathKinds: ["animal"],
     setPiece: ["ring", "a ring of ice spires where the falls froze", 1.2, { member: "stone", centre: "stone", fallen: 1, height: 2, rock: "ice" }],
@@ -10313,9 +10313,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.8, amount: 0.35 },
       terrain: ["ridges", "rocky"],
       decor: { rate: 0.25, ruins: 0.05, rocks: 0.55, freak: 0.15, lake: 0.25, modern: 0 },
-      feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few twisted pines and crystal trees, silent and glittering."
+      feel: "Blue ice underfoot and frozen falls hanging off the rock, a cave mouth breathing cold; a few stunted snowy spruces, junipers and crystal trees, silent and glittering."
     },
-    flora: { species: [["whitebeam", 0.45], ["fir", 0.3], ["crystal", 0.25]], palette: { sat: 0.6, val: 0.85 } },
+    flora: { species: [["fir", 0.5], ["juniper", 0.25], ["crystal", 0.25]], palette: { sat: 0.6, val: 0.85 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.3, kinds: ["blades"] } }
   };
 
@@ -10410,7 +10410,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.1, rocks: 0.1, freak: 0.1, lake: 0.65, modern: 0.05 },
       feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming."
     },
-    flora: { species: [["mangrove", 0.65], ["willow", 0.2], ["strangler", 0.15]], palette: { sat: 0.85, val: 0.8 } },
+    flora: { species: [["mangrove", 0.65], ["strangler", 0.2], ["mangrove", 0.15, { variant: "stunted" }]], palette: { sat: 0.85, val: 0.8 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -10443,7 +10443,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.4, freak: 0.05, lake: 0.35, modern: 0.1 },
       feel: "Open shining mud between mangroves standing on their roots, crab holes everywhere, the tide's channels glinting; wide, wet and clicking with crabs."
     },
-    flora: { species: [["mangrove", 0.7], ["datePalm", 0.2], ["willow", 0.1]], palette: { sat: 0.7, val: 0.85 } },
+    flora: { species: [["mangrove", 0.7], ["mangrove", 0.2, { variant: "windbent" }], ["mangrove", 0.1, { variant: "ancient" }]], palette: { sat: 0.7, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10488,10 +10488,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.3,
     floor: ["mud", 0.1, 0.45, 0.28],
-    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few date palms", set: "a dugout sunk among the roots" },
+    text: { floor: "tidal mud and brackish pools", wall: "brown channels", small: "reeds and mangrove seedlings", big: "mangroves on stilt roots, a few strangler figs", set: "a dugout sunk among the roots" },
     wall: [["water", { w: 2 }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 1.3 }]],
-    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "datePalm", minor: true, scale: 0.95 }]],
+    big: [["tree", { type: "mangrove", variant: "ancient", scale: 1.1 }], ["tree", { type: "strangler", minor: true, scale: 0.95 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -10508,7 +10508,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.05, freak: 0.15, lake: 0.6, modern: 0.05 },
       feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge."
     },
-    flora: { species: [["mangrove", 0.65], ["datePalm", 0.2], ["willow", 0.15]], palette: { sat: 0.9, val: 0.85 } },
+    flora: { species: [["mangrove", 0.65], ["strangler", 0.2], ["mangrove", 0.15, { variant: "windbent" }]], palette: { sat: 0.9, val: 0.85 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -10521,10 +10521,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.22,
     floor: ["sand", 0.05, 0.5, 0.45],
-    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "flat-topped thorn trees in clumps, umbrella acacias, the odd baobab", set: "a ring of old boma posts round a cold hearth" },
+    text: { floor: "red earth and trampled dry grass", wall: "walls of thorn scrub", small: "thorn bushes and dry grass clumps", big: "clumps of umbrella acacias and thorn, the odd old baobab", set: "a ring of old boma posts round a cold hearth" },
     wall: [["bush", {}]],
     small: [["bush", { small: true }], ["grass", { h: 1.2 }]],
-    big: [["tree", { type: "flat", variant: "ancient", scale: 1.25 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
+    big: [["tree", { type: "baobab", variant: "ancient", scale: 1.1 }], ["tree", { type: "acacia", minor: true, scale: 1.1 }]],
     ponds: true,
     pathKinds: ["track"],
     setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
@@ -10540,7 +10540,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.45, freak: 0.1, lake: 0.2, modern: 0.1 },
       feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight."
     },
-    flora: { species: [["flat", 0.55], ["acacia", 0.3], ["baobab", 0.15]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["baobab", 0.2], ["acacia", 0.55], ["acacia", 0.25, { variant: "stunted" }]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "grass"] } }
   };
 
@@ -10617,10 +10617,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.2,
     floor: ["scree", 0.03, 0.5, 0.5],
-    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and desert ironwood among the rocks", set: "a heap of red stones" },
+    text: { floor: "red scree and slabs", wall: "red rock ledges", small: "ocotillo and dry grass", big: "palo verde and juniper among the rocks", set: "a heap of red stones" },
     wall: [["rockwall", {}]],
     small: [["grass", { h: 0.8, leafHue: 0.12, leafSat: 0.3 }], ["bush", { small: true }]],
-    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "ironwood", minor: true, scale: 1 }], ["boulder", { sparse: 0.3 }]],
+    big: [["tree", { type: "paloVerde", scale: 1.05 }], ["tree", { type: "juniper", minor: true, scale: 0.9 }], ["boulder", { sparse: 0.3 }]],
     steep: true,
     pathKinds: ["track"],
     setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }],
@@ -10635,9 +10635,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.15 },
       terrain: ["rocky", "ridges"],
       decor: { rate: 0.35, ruins: 0.2, rocks: 0.7, freak: 0.05, lake: 0, modern: 0.05 },
-      feel: "Red rock ledges and scree, palo verde and ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
+      feel: "Red rock ledges and scree, palo verde and juniper in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark."
     },
-    flora: { species: [["paloVerde", 0.5], ["ironwood", 0.3], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
+    flora: { species: [["paloVerde", 0.5], ["juniper", 0.3], ["ocotillo", 0.2]], palette: { sat: 0.75, val: 0.85 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
   };
 
@@ -10701,7 +10701,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.35, ruins: 0.55, rocks: 0.15, freak: 0.1, lake: 0.2, modern: 0 },
       feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow."
     },
-    flora: { species: [["strangler", 0.45], ["kapok", 0.3], ["datePalm", 0.15], ["bamboo", 0.1]], palette: { sat: 0.95, val: 0.9 } },
+    flora: { species: [["strangler", 0.45], ["kapok", 0.3], ["vinewood", 0.15], ["bamboo", 0.1]], palette: { sat: 0.95, val: 0.9 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "fern"] } }
   };
 
@@ -10779,10 +10779,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.28,
     floor: ["grass", 0.3, 0.3, 0.58],
-    text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "silver birches and old yews", set: "a ring of white stones by the pool" },
+    text: { floor: "short pale grass and moss", wall: "a still pool", small: "ferns and white flowers", big: "old cedars, spruces and alders", set: "a ring of white stones by the pool" },
     wall: [["water", { w: 1.6 }]],
     small: [["fern", {}], ["flowers", {}]],
-    big: [["tree", { type: "birch", variant: "mossy", scale: 1.1 }], ["tree", { type: "yew", minor: true, scale: 1 }]],
+    big: [["tree", { type: "cedar", variant: "ancient", scale: 1.1 }], ["tree", { type: "fir", minor: true, scale: 1 }]],
     ponds: true,
     pathKinds: ["magic"],
     setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
@@ -10796,9 +10796,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["pools"],
       decor: { rate: 0.2, ruins: 0.15, rocks: 0.15, freak: 0.1, lake: 0.6, modern: 0 },
-      feel: "Silver birches and old dark yews round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright."
+      feel: "Old mossy cedars, spruces and alders round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright."
     },
-    flora: { species: [["birch", 0.5], ["yew", 0.3], ["weepingBirch", 0.2]], palette: { sat: 0.75, val: 1 } },
+    flora: { species: [["cedar", 0.5], ["fir", 0.3], ["alder", 0.2]], palette: { sat: 0.75, val: 1 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["blades", "clover"] } }
   };
 
@@ -10908,10 +10908,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.38,
     floor: ["ice", 0.56, 0.12, 0.8],
     snow: 0.8,
-    text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, stunted pines, rowan and dwarf birch", set: "a ring of weathered posts round a stone" },
+    text: { floor: "glacier ice and old snow", wall: "moraine", small: "stones and ice", big: "cairns, standing stones, wind-bent spruces, junipers and larch", set: "a ring of weathered posts round a stone" },
     wall: [["stones", {}]],
     small: [["stones", {}]],
-    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "rowan", variant: "stunted", scale: 0.6 }], ["tree", { type: "pine", minor: true, scale: 0.6 }], ["tree", { type: "birch", minor: true, scale: 0.5 }]],
+    big: [["cairn", { sparse: 0.12, tall: true }], ["standingstone", { sparse: 0.12 }], ["boulder", { big: true }], ["tree", { type: "fir", variant: "windbent", scale: 0.6 }], ["tree", { type: "juniper", minor: true, scale: 0.6 }], ["tree", { type: "larch", minor: true, scale: 0.5 }]],
     pathKinds: ["footpath"],
     setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
     layout: {
@@ -10924,9 +10924,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0.8, amount: 0.2 },
       terrain: ["rocky", "hollows"],
       decor: { rate: 0.25, ruins: 0.1, rocks: 0.7, freak: 0.05, lake: 0.1, modern: 0.05 },
-      feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, stunted wind-bent pines, rowan and dwarf birch in the lee of the rocks (Ed: trees in every area); bright, cold and still."
+      feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area); bright, cold and still."
     },
-    flora: { species: [["rowan", 0.4], ["pine", 0.4], ["birch", 0.2]], palette: { sat: 0.6, val: 0.78 } },
+    flora: { species: [["fir", 0.45], ["juniper", 0.35], ["larch", 0.2]], palette: { sat: 0.6, val: 0.78 } },
     settings: { treeDensity: 0.2, groundCover: { density: 0.3, kinds: ["moss", "blades"] } }
   };
 
@@ -10972,10 +10972,10 @@ label.check input { accent-color: var(--accent); }
     leaf: 0.32,
     floor: ["snow", 0.6, 0.08, 0.78],
     snow: 0.9,
-    text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "frozen weeping birch and pine, snow-capped boulders", set: "a troll bridge over an iced stream" },
+    text: { floor: "frozen snow and needles", wall: "an iced stream's edge", small: "frosted bracken and stones", big: "old frozen spruces and larch, snow-capped boulders", set: "a troll bridge over an iced stream" },
     wall: [["stones", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "weepingBirch", variant: "ancient", scale: 1.05 }], ["tree", { type: "pine", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
+    big: [["tree", { type: "fir", variant: "ancient", scale: 1.05 }], ["tree", { type: "larch", minor: true, scale: 0.95 }], ["boulder", { big: true, sparse: 0.18 }]],
     pathKinds: ["footpath"],
     setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: 0.3, top: "slab" }],
     layout: {
@@ -10988,9 +10988,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["stream", "mounds"],
       decor: { rate: 0.25, ruins: 0.15, rocks: 0.7, freak: 0.1, lake: 0, modern: 0.05 },
-      feel: "A frozen forest, hushed: weeping birch hung with frost and dark pines in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
+      feel: "A frozen forest, hushed: old spruces hung with frost and larches in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls."
     },
-    flora: { species: [["weepingBirch", 0.5], ["pine", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
+    flora: { species: [["fir", 0.5], ["larch", 0.3], ["birch", 0.2]], palette: { sat: 0.6, val: 0.8 } },
     settings: { treeDensity: 0.55, groundCover: { density: 0.5, kinds: ["fern", "moss", "blades"] } }
   };
 
@@ -11003,10 +11003,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.27,
     floor: ["basalt", 0.62, 0.1, 0.2],
-    text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and stunted pines", set: "a cinder cone, its crater glowing, lava trickling down its side" },
+    text: { floor: "black basalt and ash, lava in its cracks", wall: "basalt boulders", small: "ferns and cinders", big: "cycads, tree ferns and a few palms", set: "a cinder cone, its crater glowing, lava trickling down its side" },
     wall: [["boulder", {}], ["rockwall", {}]],
     small: [["fern", {}], ["stones", {}]],
-    big: [["tree", { type: "cycad", scale: 0.9 }], ["tree", { type: "pine", minor: true, scale: 0.8, gnarl: 0.8 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
+    big: [["tree", { type: "cycad", scale: 0.9 }], ["tree", { type: "datePalm", minor: true, scale: 0.8 }], ["tree", { type: "palm", minor: true, scale: 0.8 }]],
     steep: true,
     pathKinds: ["stairs"],
     setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1],
@@ -11020,9 +11020,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["hollows"],
       decor: { rate: 0.3, ruins: 0.1, rocks: 0.6, freak: 0.2, lake: 0, modern: 0.1 },
-      feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, stunted pines on the ridges, a little cinder cone smoking in the clearing."
+      feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, a few palms on the ridges, a little cinder cone smoking in the clearing."
     },
-    flora: { species: [["cycad", 0.45], ["pine", 0.35], ["datePalm", 0.2]], palette: { sat: 0.7, val: 0.8 } },
+    flora: { species: [["cycad", 0.55], ["datePalm", 0.25], ["cycad", 0.2, { variant: "burnt" }]], palette: { sat: 0.7, val: 0.8 } },
     settings: { treeDensity: 0.35, groundCover: { density: 0.5, kinds: ["fern", "moss"] } }
   };
 
@@ -11035,10 +11035,10 @@ label.check input { accent-color: var(--accent); }
     by: "recipe",
     leaf: 0.28,
     floor: ["mud", 0.3, 0.25, 0.17],
-    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "tall larches drowned standing, trailing willows", set: "the drowned stones of an old wall" },
+    text: { floor: "black water and drowned leaf litter", wall: "deep black channels", small: "reeds, knuckled roots and floating weed", big: "old mangroves drowned standing, strangler figs", set: "the drowned stones of an old wall" },
     wall: [["water", { w: 2.4, dark: true }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 0.9 }]],
-    big: [["tree", { type: "larch", variant: "drowned", scale: 1.25 }], ["tree", { type: "willow", minor: true, scale: 1 }]],
+    big: [["tree", { type: "mangrove", variant: "drowned", scale: 1.25 }], ["tree", { type: "strangler", minor: true, scale: 1 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -11053,9 +11053,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0.05 },
       terrain: ["pools", "hollows"],
       decor: { rate: 0.3, ruins: 0.6, rocks: 0.1, freak: 0.1, lake: 0.2, modern: 0 },
-      feel: "Tall drowned larches standing in still black water, roots knuckled up out of it, willows trailing, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
+      feel: "Old drowned mangroves standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be."
     },
-    flora: { species: [["larch", 0.6], ["willow", 0.25], ["alder", 0.15]], palette: { sat: 0.6, val: 0.7 } },
+    flora: { species: [["mangrove", 0.6], ["strangler", 0.25], ["mangrove", 0.15, { variant: "stunted" }]], palette: { sat: 0.6, val: 0.7 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.5, kinds: ["reeds", "blades"] } }
   };
 
@@ -11088,7 +11088,7 @@ label.check input { accent-color: var(--accent); }
       decor: { rate: 0.45, ruins: 0.75, rocks: 0.2, freak: 0, lake: 0.05, modern: 0 },
       feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched."
     },
-    flora: { species: [["datePalm", 0.5], ["acacia", 0.3], ["olive", 0.2]], palette: { sat: 0.75, val: 0.92 } },
+    flora: { species: [["datePalm", 0.5], ["acacia", 0.3], ["baobab", 0.2]], palette: { sat: 0.75, val: 0.92 } },
     settings: { treeDensity: 0.25, groundCover: { density: 0.3, kinds: ["pebbles", "blades"] } }
   };
 
@@ -16773,6 +16773,8 @@ label.check input { accent-color: var(--accent); }
     _mapShape: `The map's shape (Ed, 2026-10-06: "The map as a whole should be circular rather than square, with a buffer zone with no runestones around the edge"). islandAreas (Ed, 2026-10-11, the journey's islands: 10, the home island for now; ?island=10|20|...|64|home, ?island=off for the radius map): the island is home and exactly this many more areas, those nearest home's, round, its radius halfway out to the next (0: the radius below). shape circle: the playable areas are those whose centres lie within radius areas of home's (5.6: about 96; Ed, 2026-10-07, for about 100 areas: the best bots wake about 20 in a run, and half the creatures and trees run faster; 7.9 gave about 196, as many as the old 14 x 14), and only they get runestones, soundsystems, legends, relics and creatures and wake in waves; past them a buffer ring buffer areas deep (1 to 1.5), forest she can fly over where nothing happens; her flight's edge is the island's coast (Ed, 2026-10-11: the land map, rules/land.ts: round the borders of the playable areas, the ring of areas round them and, where it's near, the ring past that), soft over its last push metres (her speed outward easing to nothing at the edge, and a drift of up to drift m/s taking her back in); the forest goes on edge areas past it, into the fog. coast (Ed, 2026-10-06: "The island shouldn't be a totally perfect circle; make the coast slightly irregular"): which areas are playable and which the buffer's goes by their centres' distance from home over the same seeded coast, up to amp of its radius in or out (0 for a perfect circle): harmonics gentle bays and headlands (from two round the island up), plus detail (a share) of finer wobble. shape square: mapAreas x mapAreas as before (?shape=square to compare). ?mapAreas=<n> on the circular map sets the radius for about n x n areas. phase and shapes (Ed, 2026-10-11, the journey's irregular islands: rules/islandGrowth.ts): an island grows out from home over its areas' neighbours, each step the area nearest home for the island's reach that way, by its phase's shape (shapes[phase], index 0 home: near-round; 1 gently lobed; 2 bays and a peninsula; 3 arms and inlets; 4 and 5 strongly irregular): lobes, how far its outline swells and shrinks round home (a share of its reach) over harmonics bumps; arms, how far its peninsulas reach past it (a share), armCount[0] to [1] of them, each armWidth radians across; bays, how deep its bays cut in, bayCount[0] to [1] of them; jitter, each area's own seeded nudge in areas (ragged edges). Home's neighbours are always its first. phase: an island's phase when it isn't one by roster (?phase=0 to 5; a kind's island takes its own).`,
     map: { shape: "circle", radius: 5.6, islandAreas: 10, island: "home", found: [], phase: 0, shapes: [{ lobes: 0.08, harmonics: 3, arms: 0, armCount: [0, 0], armWidth: 0.3, bays: 0, bayCount: [0, 0], jitter: 0.15, lakes: [0, 0], lakeSize: [1, 1] }, { lobes: 0.35, harmonics: 3, arms: 0, armCount: [0, 0], armWidth: 0.3, bays: 0.3, bayCount: [1, 1], jitter: 0.3, lakes: [1, 1], lakeSize: [1, 1] }, { lobes: 0.4, harmonics: 4, arms: 1.1, armCount: [1, 1], armWidth: 0.3, bays: 0.5, bayCount: [1, 2], jitter: 0.4, lakes: [1, 2], lakeSize: [1, 2] }, { lobes: 0.45, harmonics: 5, arms: 1.4, armCount: [2, 3], armWidth: 0.25, bays: 0.6, bayCount: [2, 3], jitter: 0.6, lakes: [1, 2], lakeSize: [1, 3] }, { lobes: 0.55, harmonics: 6, arms: 1.9, armCount: [3, 4], armWidth: 0.22, bays: 0.7, bayCount: [2, 4], jitter: 0.7, lakes: [2, 3], lakeSize: [1, 3] }, { lobes: 0.6, harmonics: 6, arms: 2.4, armCount: [3, 5], armWidth: 0.2, bays: 0.75, bayCount: [3, 5], jitter: 0.8, lakes: [2, 4], lakeSize: [2, 4] }], buffer: 1.25, push: 80, drift: 6, edge: 2, coast: { amp: 0.08, harmonics: 3, detail: 0.3 } },
     _lakes: `Lakes (Ed, 2026-10-11, the journey's islands: rules/lakes.ts): from phase 1 some of an island's areas are water, map.shapes[phase].lakes (fewest, most) of them, each lakeSize (fewest, most) areas, never home or its neighbours, the rest of the island still joined (rules/islandGrowth.ts placeLakes); no beaches but a small shore, their water lighter than the sea; she flies over them in the treetops but never lands on the water, and on foot she and every creature stop at the shore. shore: metres of bare shore round the water (no trees, nothing placed); pad: how far from the water anything on foot stops; koi: the share of lakes with koi in them (DECISION FOR ED). biomeFrom: the island phase from which its lakes take the look of its compass biomes on the sea chart (frozen, lava, oasis, sinkhole, glacial tarn, tar pit, rust pool, lily pond; app/chartOutlines.worker.ts), before it plain water (Ed, 2026-10-12: "biome lakes can start appearing one phase earlier": 3, it was 4, the first uncharted islands). biomeFirstShare: the share of that first phase's lakes that take them, each lake seeded, the rest plain water; further out all of them, further in none (Ed, 2026-10-12: "half the lakes in the third ring are special. Further out they're all special, further in they're all plain"). The biome lakes in play (Ed, 2026-10-23: render/lakeLooks.ts, each lake the sea chart's look for it): the north's glacier's peaks kept glacierClear metres under her treetop flight (treetopHeight), and the hot springs' (the rust pools') steam: on, puffs rising rise metres over life seconds, size metres across, at opacity, a vent every spacing metres over their deep water.`,
+    _biomeLooks: `How strongly an island's forests take its biome's look (art/flora/biomes.js), by its ring (Ed, 2026-10-25: "Lower phase non-home biome areas can be semi-temperate looking; higher phase biomes are more extreme; so there's a smoother transition between phases"): strength[0] for phase from's islands, strength[1] the next ring out, and so on, the last for any further; each mixes the biome's look toward temperate's by 1 - strength (1 the full look). Rings nearer in are temperate. Its own art: a ring's strength is in its key (rules/lakeLooks.ts biomeKey).`,
+    biomeLooks: { from: 3, strength: [0.55, 0.8, 1] },
     lakes: { shore: 4, pad: 1.5, koi: 0.5, biomeFrom: 3, biomeFirstShare: 0.5, glacierClear: 5, steam: { on: true, rise: 14, life: 7, size: 4, opacity: 0.4, spacing: 28 } },
     _chart: `The sea chart (the map table and chart.html; render/chart/seaChart.ts, render/chart/moon.ts). moon (Ed, 2026-10-12: "islands casting shadows from the moon orbiting the map screen"; #746: "have the moon rise over the North West edge of the map as you open the map screen"): each time the chart opens the moon rises over its edge at bearing from (degrees, 0 north, clockwise: -45 the north-west) over rise seconds, from just under the horizon to height degrees, then goes round once every turn seconds; every island's relief throws a shadow away from it, across the sea and into its own valleys, shadow its darkest (0 none, 1 black), the hills' shading following it; disc: its disc drawn in the sky past the rim at its bearing (hidden behind the world). edgeBand (#746: "add empty sea around the edge of the map"): the empty sea past the furthest islands, the disc's radius beyond theirs as a share of it (0 as before; at most 0.6).`,
     chart: { moon: { rise: 6, turn: 240, height: 22, from: -45, shadow: 0.6, disc: true }, edgeBand: 0.18, sailHold: 1.2, _sailHold: `Seconds the use button (E, Enter, the pad's square) or the mouse is held on an island at the map table's chart to sail there, its ring filling (Ed, 2026-10-23: "You have to hold the button to select a new island to sail to (ring fills)"); let go early, nothing. A click only chooses.` },
@@ -16799,8 +16801,8 @@ label.check input { accent-color: var(--accent); }
     _glades: `The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.`,
     wisps: { _: "Will-o'-the-wisps in the wild areas (Ed, 2026-10-07): a seeded chance per square of ground (cell m) within reach of her; none within partyNear of a partified area, the full chance from partyFar; height [low, high] m, drift m, a cycle of period s (fade in, linger, fade out, gone); core and halo size in art pixels; colour.", on: true, cell: 26, reach: 75, chance: 0.4, partyNear: 40, partyFar: 140, height: [1.2, 3], drift: 3, period: 22, size: 3, halo: 9, hue: 0.47, sat: 0.4, bright: 1.6 },
     glades: { on: true, radius: 14, top: 0.55, reach: 160, hue: 0.76, sat: 0.5, light: 0.9, edge: 0.5, edgeEase: 2, dark: 0.6, glowOff: 1, fade: 1, motes: { per: 40, rise: 0.55, height: 8, size: 1, hue: 0.55, sat: 0.3, bright: 1.3 } },
-    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"; the oak since 2026-10-24, Ed: "put the treehouse north-west of the dancefloor", its Terrace's open south-east rim towards it): its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts; the oak since 2026-10-24, config/house/): its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed. The dark behind the rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"): with dark.on, in a room or on a branch off the Terrace only the house, the Ent's crowns and her are drawn, over black; stepping onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds (and goes again as she goes back in), and through the telescope it fades in over the same. The great oak's crown (Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/; rules/crown.ts, render/crown.ts): with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark.`,
-    treehouse: { gap: 22, angle: -135, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, height: 22, grace: 2, rail: 0.45, landTime: 0.35, walk: 5, fall: { on: false, time: 0.9 }, dark: { on: true, fade: 0.6 }, crown: { on: true, seed: 1 } }, carrier: "island" },
+    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"; the oak since 2026-10-24, Ed: "put the treehouse north-west of the dancefloor", its Terrace's open south-east rim towards it): its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts; the oak since 2026-10-24, config/house/): its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed (Ed, 2026-10-25: half again as fast, 5 to 7.5: "walking without sitting on a broom ... is too slow"); her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"): with dark.on, in a room or on a branch off the Terrace only the house, the Ent's crowns and her are drawn, over black; stepping onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds (and goes again as she goes back in), and through the telescope it fades in over the same. The great oak's crown (Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/; rules/crown.ts, render/crown.ts): with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors (Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse", "Room canopy cuts should fade in rather than be instant"): the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever.`,
+    treehouse: { gap: 22, angle: -135, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, height: 22, grace: 2, rail: 0.45, landTime: 0.35, walk: 7.5, stride: 5, fall: { on: false, time: 0.9 }, dark: { on: true, fade: 0.6 }, crown: { on: true, seed: 1, cutFade: 0.4 } }, carrier: "island" },
     _home: `Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"): the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle.`,
     home: { margin: 10, gap: 0.3 },
     _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows. Kinds (Ed, 2026-10-11, the small islands): only the playground; the sports grounds are left out of kinds.",
@@ -16829,8 +16831,8 @@ label.check input { accent-color: var(--accent); }
     __forest: "The forest: trees, bushes, ground cover and the wind in them.",
     _trees: "treeHeight and crownWidth scale the art's trees (1 is the Art Lab's size; crowns widen with treeHeight too, crownWidth is the total). treeDensity (0-1): the chance of a tree on each spot outside the clearings; clearingSize (0-1): how far out from an area's centre the ground stays fully open; clearingFalloff (0-1): over how much of the way to the border trees thicken to full density (small: crisp clearing edges); gladeAmount (0-1) of the woods is open in random glades about gladeScale metres across; trees sit on a staggered grid treeSpacingX by treeSpacingZ metres, so no two crowns pile up. A tree is left out where its crown (crownHalfWidth either side, crownHeight up) would hang over a clearing seen from the treetops.",
     treeDensity: 1,
-    _leafJitter: `Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each). value: its leaves' brightness scaled by 1 + value times the second seed (on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike). autumn (Ed, 2026-10-19: "Why don't I see reds and oranges and purples from the jitter, only blue?", then of the two ways offered, a drift toward autumn colours over a plain hue turn): each tree's lit leaf colour drifts toward its own autumn colour (gold, orange, red, crimson or purple, by its first seed) by up to autumn of the way (its own share of it, some trees barely at all), kept at the brightness the night's moonlight gave it, so a red tree is as dark as its neighbours. hue: its lit leaf colour's hue turned either way by up to hue degrees times the first seed (Ed, 2026-10-19: "And also stretch the slider": 0 to 180, so any hue). Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, "bigger range"); no rebake. 0 and 0: every tree of a variant the same colour, as before.`,
-    leafJitter: { autumn: 0.25, value: 0.12, hue: 8 },
+    _leafJitter: `Each tree's own leaf colour (Ed, 2026-10-16, docs/ART-GUIDE.md section 3: "a small amount of per-tree colour jitter is wanted, so forests look less uniform"): every tree is dealt two fixed seeds from where it stands (-1 to 1 each). value: its leaves' brightness scaled by 1 + value times the second seed (on the pixels its sway mask marks as leaves: the wood is untouched; both halves alike). autumn (Ed, 2026-10-19: "Why don't I see reds and oranges and purples from the jitter, only blue?", then of the two ways offered, a drift toward autumn colours over a plain hue turn): each tree's lit leaf colour drifts toward its own autumn colour (gold, orange, red, crimson or purple, by its first seed) by up to autumn of the way (its own share of it, some trees barely at all), kept at the brightness the night's moonlight gave it, so a red tree is as dark as its neighbours. hue: its lit leaf colour's hue turned either way by up to hue degrees times the first seed (Ed, 2026-10-19: "And also stretch the slider": 0 to 180, so any hue). Ed's v3893 playtest found the hue turn had no visible effect: it was turned on the albedo and the night's coloured moonlight squeezed it to a third on screen (20 degrees moved the crowns 4.9 on average, less than the value's 0.12 alone); it and the autumn drift are applied to the lit colour now, so its degrees are the screen's. All three change live (the pause page's Leaf jitter sliders: autumn 0 to 1, hue 0 to 180, value 0 to 0.6, well past sense: Ed, "bigger range"); no rebake. 0 and 0: every tree of a variant the same colour, as before. Ed's tuned values from the pause page (2026-10-26, v4522): autumn 0.2, value 0.15, hue 0 (no hue turn; the autumn drift carries the variety).`,
+    leafJitter: { autumn: 0.2, value: 0.15, hue: 0 },
     _wind: "Wind sway on leafy things (Ed, v171): trees (both halves together, from the foot) and undergrowth lean with gusts that travel across the forest: strength metres at the top of a crown, gusts moving at speed m/s, gustScale metres across; treetop: the share of it seen over the treetops (gentler). Walls and set pieces stand still. ?wind=0 turns it off.",
     wind: { on: true, strength: 0.25, speed: 6, gustScale: 40, treetop: 0.6 },
     _groundCover: "Tufts of grass, fern, heather, reeds, moss and clover on the ground round the witch (Ed, v171: so the ground doesn't look flat), in ground mode only: density (times each area type's groundCover.density in area-types.json; ?grass=0..2 scales it live), out to the canopy hole round her, at most radius metres (fading out towards it), at most cap at once; one chance every spacing metres, worked out cell metres square at a time, within budgetMs of each frame; they sway in the wind by sway of their height and part round her and nearby creatures by part. None within sigilClear metres of a placed sigil (or over its rune, if bigger), trampled short just beyond (Ed, v233). None on paths, the dancefloor or ground kept clear; thicker along path edges.",
@@ -16840,8 +16842,8 @@ label.check input { accent-color: var(--accent); }
     bushDensity: 0.16,
     bushClump: 0.8,
     treeHeight: 2.25,
-    _treeCap: 'The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows 35 m). Ed, 2026-10-25 ("trees should be taller on average"; the taller-trees frames, previews/ed/taller-trees on claude/ed-shots): keep 0.35 to 0.6, the tall ones taller and the rest as they were, nothing baked again; the treetop flight and the oak left as they were.',
-    treeCap: { from: 20, keep: 0.6 },
+    _treeCap: "The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).",
+    treeCap: { from: 20, keep: 0.35 },
     crownWidth: 1.7,
     treeSpacingX: 4.6,
     treeSpacingZ: 2.8,
@@ -17089,8 +17091,8 @@ label.check input { accent-color: var(--accent); }
       ceiling: 1.1
     },
     glowPower: 0.95,
-    _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
-    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0.9, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, stream: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "cave-mouth": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, norway: { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
+    _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off: Ed's tuned value from the pause page, 2026-10-26, v4522, and so the areas' grade tints with it), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
+    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, stream: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "cave-mouth": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, norway: { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
     lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 5e-3, wetPond: 0.03 },
     haze: { near: 150, far: 360 },
     _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.`,
