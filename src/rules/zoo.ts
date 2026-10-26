@@ -46,7 +46,7 @@ export interface ZooPlan {
 }
 
 interface ZooRow { name: string; biomes: string[]; areas: string[] }
-interface ZooConfig { group: ZooPlan["group"]; pathHalf: number; gap?: number; margin?: number; legendCap?: number; plaza?: number; lip?: number; rows: ZooRow[] }
+interface ZooConfig { group: ZooPlan["group"]; pathHalf: number; gap?: number; size?: number; street?: number; margin?: number; legendCap?: number; plaza?: number; lip?: number; rows: ZooRow[] }
 /** The zoo's config (config/zoo.json). */
 export const ZOO_CONFIG = ZOO as ZooConfig;
 
