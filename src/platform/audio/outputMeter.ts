@@ -285,7 +285,7 @@ export class OutputMeter {
  *  file of its own): a block's mean square of each of its two channels, the output and the mic, posted every `size` frames.
  *  (It was a ScriptProcessorNode, run on the page's thread: the audio thread waited on the game's frames, and on Ed's
  *  machine under-ran nearly all the time, 2026-10-07.) */
-const MIC_WORKLET = `registerProcessor("witch-mic-levels", class extends AudioWorkletProcessor {
+export const MIC_WORKLET = `registerProcessor("witch-mic-levels", class extends AudioWorkletProcessor {
   constructor(o) { super(); this.size = o.processorOptions.size; this.n = 0; this.a = 0; this.b = 0; }
   process(inputs) {
     const i = inputs[0], a = i[0], b = i[1] || i[0];

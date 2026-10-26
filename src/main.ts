@@ -598,7 +598,7 @@ freeze.onToggle = on => {
   pauseLoading = true;
   void import("./ui/decide").then(({ PauseSliders }) => {
     const report = () => import("./ui/visualReport").then(({ report }) => report(reportHost()));
-    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds });
+    pauseSliders = new PauseSliders({ get tuning() { return N().game.tuning; }, get seed() { return N().game.seed; }, version: BUILD, live: knobLive, report, musicLab: openMusicLab, audioTest: () => { window.open("audio-test/", "_blank", "noopener"); }, finds: () => findsPanel.toggle(true), findsShown: () => N().hud.debugOn || devFinds });
     requestAnimationFrame(() => pauseSliders!.show(freeze.frozen, creator.open)); // (a frame shut first, so it slides in)
   }, () => { // (its files replaced under it: Ed, 2026-10-14, "the menu does not appear")
     pauseLoading = false;
