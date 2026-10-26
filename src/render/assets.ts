@@ -614,6 +614,9 @@ export class AssetLibrary {
   }
 
   get pending(): number { return this.inFlight.size; }
+  /** Other work the view waits for as for art (render/houseFloor.ts, the house's floor painted off the page's thread): pending, as a
+   *  set being drawn is, until it's done, so the shots and the bench step past it only once it's in. */
+  track(key: string, p: Promise<unknown>): void { this.inFlight.add(key); p.then(() => this.inFlight.delete(key), () => this.inFlight.delete(key)); }
   /** Area type `t`'s art held (drawn, or kept and read back). */
   hasType(t: number): boolean { return this.types.has(t); }
 
