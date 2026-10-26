@@ -12,7 +12,7 @@ import * as THREE from "three";
 import tiny5 from "../ui/fonts/Tiny5.woff2?url";
 import { SPECIES_BY_ID } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
-import { reachAt, type ZooIsland, type ZooLayout } from "../rules/zooMap";
+import { coastDist, reachAt, type ZooIsland, type ZooLayout } from "../rules/zooMap";
 import type { ZooBlock } from "../rules/zoo";
 import { VALUE_NOISE_GLSL } from "./shaders";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -109,7 +109,7 @@ function textTexture(lines: [string, number][]): { tex: THREE.DataTexture; w: nu
  *  coast by `clear` metres and inside `edge` metres of home; null if none fits even at INSCRIPTION.least. */
 export function inscriptionSpot(I: ZooIsland, all: readonly ZooIsland[], w: number, h: number, home: { x: number; z: number }, edge: number): { x: number; z: number; t: number } | null {
   const K = INSCRIPTION, near = all.filter(J => Math.hypot(J.x - I.x, J.z - I.z) < I.most + J.most + 60);
-  const wet = (x: number, z: number) => Math.hypot(x - home.x, z - home.z) > edge || near.some(J => Math.hypot(x - J.x, z - J.z) <= reachAt(J.reach, Math.atan2(z - J.z, x - J.x)) + K.clear);
+  const wet = (x: number, z: number) => Math.hypot(x - home.x, z - home.z) > edge || near.some(J => coastDist(J, x, z) > -K.clear); // (in an island, or within `clear` of its coast)
   const fits = (cx: number, top: number, W: number, H: number) => {
     for (let i = 0; i <= 8; i++) for (let j = 0; j <= 4; j++) if (wet(cx - W / 2 + (W * i) / 8, top + (H * j) / 4)) return false;
     return true;
@@ -118,7 +118,7 @@ export function inscriptionSpot(I: ZooIsland, all: readonly ZooIsland[], w: numb
   for (const sides of [[0, 0.2, -0.2, 0.4, -0.4, 0.6, -0.6, 0.8, -0.8, 1.0, -1.0], [1.3, -1.3, 1.6, -1.6, 1.9, -1.9, 2.2, -2.2, 2.6, -2.6, Math.PI]]) for (let t = K.texel; t >= K.least - 1e-6; t -= 0.01) {
     const W = w * t, H = h * t;
     for (const da of sides) {
-      const a = Math.PI / 2 + da, cx = I.x + Math.cos(a) * (reachAt(I.reach, a) + K.clear), cz = I.z + Math.sin(a) * (reachAt(I.reach, a) + K.clear);
+      const a = Math.PI / 2 + da, r = reachAt(I.reach, a) + K.clear, cx = I.x + Math.cos(a) * r, cz = I.z + Math.sin(a) * r; // (past its coast's furthest that way)
       // (its top middle at the coast there, then pushed further out; north of the island, the inscription's bottom at the coast)
       const below = Math.sin(a) >= 0;
       for (const out of [0, 3, 6, 10, 16]) { const top = below ? cz + out : cz - out - H; if (fits(cx, top, W, H)) return { x: cx, z: top, t }; }
