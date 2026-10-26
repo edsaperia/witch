@@ -48,6 +48,8 @@ CI (`.github/workflows/ci.yml`) runs on every push and pull request, in this ord
 
 **Push first, slow checks after** (Ed, 2026-10-04: "All the builders should push first and run checks afterwards"): when a change works, run the fast checks (`npm test`, `npm run typecheck`, `npm run build`, and `node art/check.mjs` if it touches art), then push straight away so the bot builds a playable version, and post a short REPORT with the version. Then run the slow checks (the smoke run, preview sheets); report any failure, fix it and push again. Post the FINAL once the slow checks are done. Never hold a playable build back waiting for the smoke run.
 
+**Previews go to `claude/ed-shots` only through `node tools/shots/push.mjs`** (2026-10-26): it adds or replaces just the files named and refuses to delete anything, so a stale staged deletion in a checkout can't take other builders' previews with it; never commit to that branch from a checkout (docs/notes/testing.md **Publishing previews**).
+
 The slower checks and the area tools moved to the notes (each still to be run as it says): before a FINAL the full smoke test and the proof shots (`docs/notes/testing.md`); the art check before every push that touches the art (`docs/notes/art-checks.md`); the music and sound checks before every push that touches them (`docs/notes/music.md`, `docs/notes/sound.md`); the balance tools after a rules change (`docs/notes/balance.md`); the performance hunts (`docs/notes/performance.md`).
 
 ## Glossary
