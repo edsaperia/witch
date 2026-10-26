@@ -30,7 +30,7 @@ const mid = id => { const r = H.rooms.find(q => q.id === id); return plan(r.x ??
     await page.waitForFunction(() => window.witch.game.clock.time > 1, null, { timeout: 600000, polling: 500 });
     const NONE = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
     const stand = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; Object.assign(g.witch, { x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }); }, [x, z]);
-    const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, true); }, [n, NONE]);
+    const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, i === n - 1); }, [n, NONE]); // (drawn only the last: the fade's 20 s are 1200 frames)
     // (not ready: the island's art held undrawn, so main.ts doesn't latch it again; ready: the real check back, and it latches)
     const ready = on => page.evaluate(on => { const w = window.witch; if (on) delete w.view.islandDrawn; else { w.view.islandDrawn = () => false; w.game.islandReady = false; } }, on);
     const behind = () => page.evaluate(() => window.witch.view.post.behind);
