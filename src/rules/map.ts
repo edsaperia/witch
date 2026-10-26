@@ -2,6 +2,7 @@
 // shares; the playable ones a circle of them round home (Ed, 2026-10-06; or, ?shape=square, the
 // old mapAreas x mapAreas square), then a buffer ring of forest she can fly over but where nothing
 // happens, then a margin of areas past it so the forest never visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
+import { legendRadius } from "./legendFit";
 import rawTypes from "../../config/area-types.json";
 import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
@@ -815,10 +816,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       }
     }
   }
-  const LC = tuning.legendClearing, nearStone: string[] = [];
+  const LC = tuning.legendClearing, nearStone: string[] = [], SHRINK = [1, 0.92, 0.85, 0.78, 0.72, 0.65];
   for (const [cx, cy] of cells) {
     if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
-    const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = LC.species[species] ?? LC.radius;
+    const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = legendRadius(species, LC); // (sized to fit its legend: rules/legendFit.ts)
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
     // Away from its area's runestone (where its soundsystem comes; Ed, 2026-10-06: "The legend circle shouldn't spawn
@@ -850,13 +851,13 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       for (let i = -14; i <= 14; i++) for (let j = -14; j <= 14; j++) { const x = ox + i * A * 0.08, z = oz + j * A * 0.08; grid.push([x, z, Math.abs(Math.hypot(x - ox, z - oz) - A * 0.4)]); }
       grid.sort((p, q) => p[2] - q[2]);
       pathK = 0.6;
-      // (and in a tight area, a smaller circle: the legend fills it more)
-      sized: for (const k of [1, 0.8, 0.65]) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
+      // (and in a tight area, a smaller circle: the legend fills it more; in fine steps, so a big legend's circle loses no more than it must)
+      sized: for (const k of SHRINK) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z)) { clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break sized; } }
       // A small area with no spot far enough from its stone: the farthest that fits (logged).
       if (!clearings.has(cellKey(cx, cy))) {
         farEnough = () => true;
         let best: [number, number, number, number] | null = null; // x, z, distance off the stone, radius
-        for (const k of [1, 0.8, 0.65]) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z) && (!best || fromStone(x, z) > best[2] + 2)) best = [x, z, fromStone(x, z), r]; } // (a smaller circle only for a clearly better spot)
+        for (const k of SHRINK) { r = r0 * k; for (const [x, z] of grid) if (fits(x, z) && (!best || fromStone(x, z) > best[2] + 2)) best = [x, z, fromStone(x, z), r]; } // (a smaller circle only for a clearly better spot)
         if (best) { const [x, z] = best; r = best[3]; clearings.set(cellKey(cx, cy), { cell: [cx, cy], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); nearStone.push(`${cx},${cy} ${best[2].toFixed(0)} m`); }
       }
     }

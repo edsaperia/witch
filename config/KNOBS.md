@@ -329,6 +329,8 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.grove.gap` | number | 0 to … |
 | `legendClearing.grove.soft` | number | 0 to … |
 | `legendClearing.grove.jitter` | number | 0 to … |
+| `legendClearing.fit.margin` | number | 0 to … |
+| `legendClearing.fit.max` | number | 0 to … |
 | `legendClearing.species` | record |  |
 
 ### `relics`
