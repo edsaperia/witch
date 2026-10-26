@@ -1,0 +1,74 @@
+{
+  "pr": 1227,
+  "group": "Hidden witch",
+  "decisions": [
+    {
+      "id": "occSilhouette",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Silhouette",
+      "note": "Where scenery still hides her, her shape drawn flat in her glow colour through it, at this strength: 0.55 as built, 0 none (she's simply hidden), 1 a solid glow-coloured cut-out. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.55,
+      "apply": {
+        "knob": "occlusion.silhouette"
+      }
+    },
+    {
+      "id": "occSeeThrough",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "See-through",
+      "note": "How clear the soft circle round her is at its middle, where tall things in front of her fade: 0 as built (fully see-through there), 1 not at all (solid: no circle, the silhouette alone shows her). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "occlusion.fadeOpacity"
+      }
+    },
+    {
+      "id": "occEdge",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Soft edge",
+      "note": "Where the circle eases back to solid, as a share of its radius past her body: 3 as built; lower, a smaller, harder-edged hole; higher, a wider, softer one. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 8,
+        "step": 0.25
+      },
+      "default": 3,
+      "apply": {
+        "knob": "occlusion.edge"
+      }
+    },
+    {
+      "id": "occMinHeight",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Fade things taller than (m)",
+      "note": "Only things taller than this (metres) standing in front of her fade round her: 2.5 as built, so bushes and props stay solid and trees, rocks and ruins fade; 0, everything in front of her fades. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 10,
+        "step": 0.5
+      },
+      "default": 2.5,
+      "apply": {
+        "knob": "occlusion.minHeight"
+      }
+    }
+  ]
+}
