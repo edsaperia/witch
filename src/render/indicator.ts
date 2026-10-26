@@ -211,6 +211,22 @@ export const PARTY = [
 ];
 
 /** 🎩 in pixels: her hat, a tall crown leaning back over a wide brim, its band (`+`) a lighter line (the dropped hat's pointer, rules/hat.ts). */
+/** A folded map: the map table. */
+export const MAP = [
+  "...............",
+  "####...####...#",
+  "#..####...####.",
+  "#.+..#..+.#..#.",
+  "#.++.#.+++#..#.",
+  "#..+.#..+.#.+#.",
+  "#....#....#.++.",
+  "#.+..#....#..#.",
+  "#.++.#..+.#..#.",
+  "####.####.####.",
+  "....####...####",
+  "...............",
+];
+
 export const HAT = [
   ".........###...",
   "........####...",

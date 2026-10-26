@@ -13,6 +13,7 @@ import { edgeBand, moonAt, moonKnobs, type ChartKnobs } from "./moon";
 import * as THREE from "three";
 import { islandPoints } from "../../../art/islands.js";
 import { sigilColour } from "../../../art/sigils.js";
+import { islandTop } from "./chartPinPlace";
 import { sigilDetail } from "../../../art/sigilDetail.js";
 import { Post, type PostTuning } from "../post";
 import { CHART_SCALE, K, SIGIL_TIERS } from "./chartScale";
@@ -767,6 +768,14 @@ const waterMat = (w: { deep: THREE.Color; pale: THREE.Color }, opaque: number) =
     if (d.x < 0 || d.x > 1 || d.y < 0 || d.y > 1) return null;
     const r = this.canvas.getBoundingClientRect();
     return { x: r.left + d.x * r.width, y: r.top + (1 - d.y) * r.height, r: 0.045 * r.height };
+  }
+  /** Where an island's drawing reaches highest on the screen (render/chart/chartPin.ts islandTop): its land's reach, or its sigil's
+   *  halo and sparkle where they're wider, at its land's top height. CSS pixels from the canvas's top left, as screenOf. */
+  screenTopOf(id: string): { x: number; y: number } | null {
+    const i = this.isles.get(id); if (!i) return null;
+    const r = this.canvas.getBoundingClientRect(), v = new THREE.Vector3();
+    const reach = Math.max(i.reach, (i.size ?? 0) * 0.8 * (i.glow?.scale.x ?? 1), (i.size ?? 0) * 0.95 * (i.spark?.scale.x ?? 0));
+    return islandTop((x, y, z) => { v.set(x, y + i.group.position.y, z).project(this.camera); return { x: ((v.x + 1) / 2) * r.width, y: ((1 - v.y) / 2) * r.height }; }, i.x, i.top, i.z, reach);
   }
   screenOf(id: string): { x: number; y: number } | null {
     const i = this.isles.get(id); if (!i) return null;

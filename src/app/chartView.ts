@@ -467,7 +467,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenOf(id) : null, box, time); },
+    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenTopOf(id) : null, box, time, id === chart.selected ? 0 : 1, dt); }, // (each 🧭 over its island's top, never on it; faded while its island's the one chosen)
     resize, choose,
     dispose() {
       disposed = true; waiting.clear();
