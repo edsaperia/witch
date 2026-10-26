@@ -2,7 +2,7 @@
 // game (dist/), loads it in headless Chromium at 960×540 (QUICK_SIZE=1280x720 for another) with ?quick=1 (only the art the
 // start needs), starts, hops off the treehouse deck, flies about 2.5 s on the ground, rises, flies about 2.5 s in the treetops
 // and descends: kept short, as the software renderer here takes 20 s or so a second of game time. Fails on any page or console error, a blank picture, or a witch that doesn't move,
-// rise or descend. Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
+// rise or descend, or a page's thread held over 4 s while it loads (QUICK_STALL_MS). Saves one screenshot (QUICK_OUT, default previews/quick.png). The full smoke
 // test (smoke.cjs) still covers pops, floating, big windows and the rest. Then it sails in place to another island (the tuning's
 // sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
 // checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
@@ -39,6 +39,9 @@ async function main() {
   const errors = [], results = [];
   const check = (ok, what) => { results.push(`${ok ? "ok  " : "FAIL"} ${what}`); log(ok ? "ok  " : "FAIL", what); if (!ok) errors.push(what); };
   const page = await browser.newPage({ viewport: { width: W, height: H } });
+  // A heartbeat on the page's thread from its first script: the longest it went without one while the game loaded and started (the
+  // boot freeze, 2026-10-25: the oak's floor painted on it held the page 50 to 75 s, "Page Unresponsive", and the run still passed).
+  await page.addInitScript(() => { const w = window; w.__beat = { last: performance.now(), worst: 0, at: 0 }; const tick = () => { const n = performance.now(), b = w.__beat; if (n - b.last > b.worst) { b.worst = n - b.last; b.at = b.last; } b.last = n; setTimeout(tick, 50); }; setTimeout(tick, 50); });
   page.on("pageerror", e => errors.push(`page error: ${e.message}`));
   page.on("console", m => { if (m.type() === "error") errors.push(`console error: ${m.text()}`); });
   try {
@@ -59,6 +62,10 @@ async function main() {
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 30000 });
     check(true, "a key press starts the game");
+    { // (the cloud's software renderer links a big shader program in a second or two; a real GPU in the background)
+      const beat = await page.evaluate(() => window.__beat), budget = Number(process.env.QUICK_STALL_MS || 4000);
+      check(beat.worst < budget, `no long freeze while it loads (the page's thread's longest wait ${(beat.worst / 1000).toFixed(1)} s, at ${(beat.at / 1000).toFixed(0)} s; under ${budget / 1000} s)`);
+    }
     // She starts at her decks on the treehouse's Terrace, 22 m up (rules/treehouse.ts): up off it, out over the forest (south,
     // towards the camera: the oak's rooms spread west, north and east of the Terrace), down.
     if (await page.evaluate(() => !!window.witch.game.witch.perch)) {

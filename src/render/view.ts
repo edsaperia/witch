@@ -959,7 +959,9 @@ export class View {
     const hidden: THREE.Object3D[] = [];
     const fx = this.post.fxScene; // (the smooth effects layer's own scene, and the post passes' quad: neither in the scene)
     for (const sc of fx ? [this.scene, fx] : [this.scene]) sc.traverse(o => { if (!o.visible) { hidden.push(o); o.visible = true; } });
-    const compiled = Promise.all([this.renderer.compileAsync(this.scene, this.camera), fx && this.renderer.compileAsync(fx, this.camera), this.post.compile()]).catch(() => { /* (drawn as before: compiled on first use) */ });
+    // (and the occlusion pyramid's passes, which aren't in the scene: render/hiz.ts, built by the treehouse, where she starts)
+    if (!this.hizOff && !this.hiz) this.hiz = new Hiz(this.renderer);
+    const compiled = Promise.all([this.renderer.compileAsync(this.scene, this.camera), fx && this.renderer.compileAsync(fx, this.camera), this.post.compile(), this.hiz?.ok && this.hiz.compile(this.renderer)]).catch(() => { /* (drawn as before: compiled on first use) */ });
     for (const o of hidden) o.visible = false;
     performance.mark("witch:prep-compile0");
     // Waited for till every program is ready (three asks the driver without waiting, KHR_parallel_shader_compile, every 10 ms):
