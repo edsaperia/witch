@@ -72,8 +72,10 @@ export interface ChartViewOptions {
   /** Buttons in the top right corner (the first load's chart: What's new, Options and the zoo; app/opening.ts). */
   corner?: { label: string; title?: string; onClick: () => void }[];
   /** Sail mode at a table (Ed, 2026-10-23: the Atrium's map table, its chart sliding up by nearness, ui/chartOverlay.ts): the
-   *  movement keys walk her, so they (WASD, the left stick, and Esc or the pad's circle) put it away (`onLeave`); the aiming keys
-   *  choose (the arrows, the d-pad, the right stick, the mouse); the use button sails (E, Enter or Space; the pad's square). No
+   *  movement keys choose too (she stands still at it: Ed, 2026-10-26, "walking away shouldn't work - then we can use the movement
+   *  keys as buttons in the menus"), as the aiming keys (the arrows, WASD, the d-pad, either stick, the mouse); Space or Enter (the
+   *  pad's cross) held sails; the use button (E, the pad's square) or the pad's circle puts it away (`onLeave`; Esc pauses over it, platform/freeze.ts taking it first), as E brought
+   *  it up (Ed, 2026-10-26: "E should also close, and we can have spacebar to select"). No
    *  title, Sail home or zoom buttons (the wheel and the shoulders zoom); the testing toggle in the top right; the island she's on
    *  says so, with no button (going to bed starts the next night there). */
   table?: { onLeave: () => void };
@@ -154,7 +156,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   let left = false; // (at a table, put away: it slides off and takes no more input meanwhile)
   const leave = () => { if (left) return; left = true; holdEnd(); table!.onLeave(); };
   // Sailing from a table is a hold (Ed, 2026-10-23: "You have to hold the button to select a new island to sail to (ring
-  // fills)"): the use button (E, Enter, Space, the pad's square) or the mouse held on an island, its ring filling (the bed's,
+  // fills)"): Space or Enter (the pad's cross) or the mouse held on an island, its ring filling (the bed's,
   // render/houseRooms.ts) over the tuning's chart.sailHold seconds; let go early and nothing happens. A click only chooses.
   const HOLD_S = (TUNING as unknown as { chart?: { sailHold?: number } }).chart?.sailHold ?? 1.2;
   let hold: { id: string; from: number; at: { x: number; y: number } | null; by: "pointer" | "key" | "pad" } | null = null;
@@ -176,7 +178,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
   if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
   $("hint").textContent = table
-    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, E or Enter (□ on a pad) on an island to sail · walk away to put it down · sigils: islands you can sail to · gold rings: won"
+    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, Space or Enter (✕ on a pad) on an island to sail · E (□) to put it down · sigils: islands you can sail to · gold rings: won"
     : sailing
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
@@ -387,36 +389,36 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     if (chart.flying) { e.preventDefault(); chart.skipFlight(); return; } // (any key: on to the end of the flight)
     if ((e.target as HTMLElement)?.closest?.("input")) return; // (typing a seed)
     if ((e.target as HTMLElement)?.closest?.("button, a") && (e.key === "Enter" || e.key === " ")) return; // (a focused button's own)
-    const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], ...(table ? {} : { w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] } as Record<string, [number, number]>) };
+    const dir: Record<string, [number, number]> = { ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0], w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0] };
     if (left) return;
-    if (table && (["KeyW", "KeyA", "KeyS", "KeyD"].includes(e.code) || e.key === "Escape")) { e.preventDefault(); if (!e.repeat) leave(); return; } // (she walks: it's put away; not a key still held from walking up to it)
+    if (table && (e.code === "KeyE" || e.key === "Escape")) { e.preventDefault(); if (!e.repeat) leave(); return; } // (E again, or Esc: it's put away; not the E that brought it up, still held)
     if (dir[e.key]) { e.preventDefault(); step(...dir[e.key]); }
-    else if (table && (e.key === "Enter" || e.key === " " || e.code === "KeyE")) { e.preventDefault(); if (!e.repeat) holdStart(chart.selected, "key"); }
+    else if (table && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); if (!e.repeat) holdStart(chart.selected, "key"); }
     else if (e.key === "Enter" || e.key === " ") { e.preventDefault(); sailTo(chart.selected); }
     else if (e.key === "+" || e.key === "=") chart.zoom(0.8);
     else if (e.key === "-" || e.key === "_") chart.zoom(1.25);
     else if (e.key === "Escape" && opts.onClose) { e.preventDefault(); opts.onClose(); }
   };
   if (!mini) addEventListener("keydown", onKey);
-  const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " " || e.code === "KeyE")) holdEnd("key"); };
+  const onKeyUp = (e: KeyboardEvent) => { if (table && (e.key === "Enter" || e.key === " ")) holdEnd("key"); };
   if (table) addEventListener("keyup", onKeyUp);
 
   // A gamepad: the d-pad or the left stick steps (repeating while held), A sails, B closes, the shoulders zoom.
-  let padWait = 0, stickBack = false;
+  let padWait = 0, squareWas = true; // (square: held, as it brought the chart up, till it's let go)
   function pad(dt: number): void {
     const p = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected); if (!p) return;
     padWait -= dt;
     if (chart.flying) { if (p.buttons.some(x => x.pressed)) chart.skipFlight(); return; }
     const b = (i: number) => !!p.buttons[i]?.pressed;
-    // (at a table the left stick walks her, so it puts the chart away, and the right stick (her aim) chooses; elsewhere the left)
+    // (at a table either stick chooses, she standing still at it; elsewhere the left)
     if (left) return;
-    const walk = Math.hypot(p.axes[0] ?? 0, p.axes[1] ?? 0);
-    if (table && walk < 0.3) stickBack = true; // (the stick let go since it came up: a push now is her walking off, not her walking up to it)
-    if (table && walk > 0.5 && stickBack) { leave(); return; }
-    const ax = p.axes[table ? 2 : 0] ?? 0, ay = p.axes[table ? 3 : 1] ?? 0;
+    const big = (i: number) => (table && Math.abs(p.axes[i + 2] ?? 0) > Math.abs(p.axes[i] ?? 0) ? p.axes[i + 2] : p.axes[i]) ?? 0;
+    const ax = big(0), ay = big(1);
     const dx = b(15) ? 1 : b(14) ? -1 : Math.abs(ax) > 0.5 ? Math.sign(ax) : 0, dy = b(13) ? 1 : b(12) ? -1 : Math.abs(ay) > 0.5 ? Math.sign(ay) : 0;
     if ((dx || dy) && padWait <= 0) { step(dx, dy); padWait = 0.28; } else if (!dx && !dy) padWait = 0;
-    if (table) { if (b(2)) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table the use button, square, held: cross rises in the game)
+    if (table && b(2) && !squareWas) { leave(); return; } // (square, the use button, again: put away)
+    squareWas = b(2);
+    if (table) { if (b(0)) holdStart(chart.selected, "pad"); else holdEnd("pad"); } // (at a table cross held sails, as Space)
     else if (b(0) && padWait <= 0) { sailTo(chart.selected); padWait = 0.5; }
     if (b(1) && padWait <= 0) { if (table) leave(); else if (opts.onClose) opts.onClose(); padWait = 0.5; }
     if (b(4)) chart.zoom(1 + dt); if (b(5)) chart.zoom(1 - dt * 0.8);
