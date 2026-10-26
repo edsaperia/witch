@@ -465,7 +465,7 @@ export class HouseRoomsView {
     // the wake-up in bed (rules/wakeUp.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed and 'E
     // snooooze' to the right", "or the equivalent for controller"), in place of the card at the foot of the screen: the walking keys
     // (a pad's left stick) beside the bed's left, its snooze key (a pad's □) and "snooooze" beside its right while it rings (not
-    // snoozing; the shorter wake-up's too, E snoozing there as ever: Ed's playtest of v4821); the keys follow the device she last played with
+    // snoozing; every morning alike since Ed's playtest of v4821, one wake-up); the keys follow the device she last played with
     const wk = g.wake, inBed = !!wk && !wk.open && (wk.beat === "alarm" || wk.beat === "snooze"), bedObj = inBed ? HOUSE_ROOMS.objects.find(o => o.use.kind === "bed") ?? null : null;
     const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm", wkey = `${pad}|${px}`;
     if (bedObj && wkey !== this.wakeKey) {

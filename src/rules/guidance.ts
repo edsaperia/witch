@@ -55,7 +55,7 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly 
   if (g.partyOver) return { kind: "bed", target: { object: "bed" } };
   const k = g.wake;
   if (!k?.open || g.party.spellAt !== null) return null; // (still in bed, or the party's on: the party's pointers guide her)
-  if (!k.short && !dressed(k)) {
+  if (k.first && !dressed(k)) {
     const next = DRESS_ORDER.find(([slot]) => k.pile!.includes(slot));
     if (next) return { kind: "dress", target: { object: next[1] } };
   }

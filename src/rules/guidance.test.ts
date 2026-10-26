@@ -14,12 +14,12 @@ import { atGuide, emptyGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS, 
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
-/** Up in her bedroom: the first night's whole wake-up, or (`later`) the shorter one of the nights after. */
+/** Up in her bedroom: her first night's wake-up, or (`later`) a night after it (one wake-up for every morning: Ed, 2026-10-26). */
 function up(later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false;
   wakeInBedroom(g);
-  startWake(g, g.herTime, later);
+  startWake(g, g.herTime, { first: !later });
   run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
   return g;
 }

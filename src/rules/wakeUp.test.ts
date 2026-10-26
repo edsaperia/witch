@@ -18,12 +18,13 @@ const K = WAKE_DEFAULT;
 const obj = (id: string) => HOUSE_ROOMS.objects.find(o => o.id === id)!;
 
 /** Woken by the dive: in bed in her bedroom, the alarm ringing, the night's spell not cast. */
-/** (`later`: a later wake-up, the shorter one, with last night's clothes in their pile by her bed) */
+/** (`later`: not her first morning, last night's clothes in their pile by her bed and the dressing table seen before; one wake-up
+ *  for every morning, Ed 2026-10-26) */
 function woken(ready = false, later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false; g.islandReady = ready;
   wakeInBedroom(g);
-  startWake(g, g.herTime, later);
+  startWake(g, g.herTime, { first: !later, mirrored: later });
   return g;
 }
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { const seen: WakeEvent[] = []; for (let i = 0; i < Math.round(s / STEP); i++) { stepGame(g, { ...idle, ...c }, STEP); seen.push(...(g.wake?.events ?? [])); } return seen; };
@@ -214,9 +215,9 @@ describe("last night's clothes (Ed, 2026-10-23: \"When waking up she wears only 
     expect(on.hat.shape).toBe("none"); expect(on.cloak).toBe("none");
   });
 
-  it("the shorter wake-up too (every wake-up: later loads, after the bed)", () => {
+  it("every morning after her first too (later loads, after the bed)", () => {
     const g = newGame(123, TUNING);
-    g.party.spellAt = null; wakeInBedroom(g); startWake(g, g.herTime, true);
+    g.party.spellAt = null; wakeInBedroom(g); startWake(g, g.herTime);
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
   });
 
@@ -322,25 +323,13 @@ describe("the DJ intro at her decks (in place of the party spell)", () => {
   });
 });
 
-describe("the shorter wake-up (later loads, after the bed)", () => {
-  function short(ready = false): Game {
-    const g = newGame(123, TUNING);
-    g.party.spellAt = null; g.clock.paused = false; g.islandReady = ready;
-    wakeInBedroom(g); startWake(g, g.herTime, true);
-    return g;
-  }
-  for (const [what, c] of [["a move", { moveX: 1 }], ["R", { spell: true }], ["Enter", { castParty: true }]] as const) it(`a move or any key but E (${what}) gets her straight up, no stretch`, () => {
-    const g = short();
-    run(g, K.alarmMin);
-    expect(run(g, STEP, c)).toContain("up");
-    expect(g.wake!.beat).toBe("up");
-    expect(g.party.spellAt).toBeNull();
-  });
-
+describe("one wake-up for every morning (Ed, 2026-10-26: \"yes, and keep 3 second stretch for both\"; it replaced the shorter one after the first)", () => {
+  /** A morning after her first: a later load (`dream` none), or after the bed. */
+  const later = (): Game => woken(false, true);
   // (Ed's playtest of v4821, 2026-10-26: "I couldn't snooze; pressing E when the alarm was playing woke me up": every later load's
-  // wake-up is this one, and E got her up; the keys beside the bed say "E snooooze")
-  for (const [what, c] of [["E", { place: true }], ["the pad's square", { sigil: true }]] as const) it(`${what} snoozes it, as on the first load, and never gets her up`, () => {
-    const g = short();
+  // wake-up was the shorter one, where E got her up)
+  for (const [what, c] of [["E", { place: true }], ["the pad's square", { sigil: true }]] as const) it(`after a load or the bed, ${what} snoozes it, as often as she likes, and never gets her up`, () => {
+    const g = later();
     run(g, K.alarmMin);
     const seen = run(g, STEP, c);
     expect(seen).toContain("snooze"); expect(seen).not.toContain("up");
@@ -349,19 +338,37 @@ describe("the shorter wake-up (later loads, after the bed)", () => {
     expect(g.wake!.beat).toBe("alarm"); // (it rings again)
     run(g, K.alarmMin); run(g, STEP, c);
     expect(g.wake).toMatchObject({ beat: "snooze", snoozes: 2, open: false });
-    run(g, K.alarmMin); expect(run(g, STEP, { moveX: 1 })).toContain("up"); // (a move from the snooze: straight up)
   });
 
-  it("the mirror waits to be used", () => {
-    const g = short();
-    run(g, K.alarmMin); run(g, STEP, { moveX: 1 });
+  for (const from of ["alarm", "snooze"] as const) it(`after a load or the bed, a move from the ${from} starts the ${K.stretch} s stretch, then she's up`, () => {
+    const g = later();
+    run(g, K.alarmMin); if (from === "snooze") press(g);
+    expect(run(g, STEP, { moveX: 1 })).toContain("stretch");
+    expect(run(g, K.stretch - 0.2)).not.toContain("up");
+    expect(g.wake).toMatchObject({ beat: "stretch", open: false });
+    expect(run(g, 0.4)).toContain("up");
+    expect(g.wake!.open).toBe(true);
+  });
+
+  for (const [what, c] of [["R", { spell: true }], ["Enter", { castParty: true }]] as const) it(`${what} does nothing in the wake-up`, () => {
+    for (const g of [woken(), later()]) {
+      run(g, K.alarmMin);
+      expect(run(g, 0.5, c)).toEqual([]);
+      expect(g.wake).toMatchObject({ beat: "alarm", open: false });
+      expect(g.party.spellAt).toBeNull();
+    }
+  });
+
+  it("the dressing table's first-ever visit is marked once: not again on a later morning (the page's save)", () => {
+    const g = later();
+    run(g, K.alarmMin); run(g, STEP, { moveX: 1 }); run(g, K.stretch + 0.1);
     standAt(g, "dressingTable", 0.3);
     expect(run(g, 0.5)).not.toContain("mirror");
   });
 
-  it("and the door's open as soon as she's up, dressed or not; the party waits for her decks all the same", () => {
-    const g = short(false);
-    run(g, K.alarmMin); run(g, STEP, { moveX: 1 });
+  it("the door's open as soon as she's up, dressed or not; the party waits for her decks all the same", () => {
+    const g = later();
+    run(g, K.alarmMin); run(g, STEP, { moveX: 1 }); run(g, K.stretch + 0.1);
     expect(g.wake!.open).toBe(true);
     atDoor(g); run(g, 4, outward());
     expect(outOfBedroom(g)).toBe(true);
@@ -375,7 +382,7 @@ describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false;
     wakeInBedroom(g);
-    startWake(g, g.herTime, true, true);
+    startWake(g, g.herTime, { dreaming: true });
     return g;
   }
   it("she sleeps through it in bed, held, nothing ringing", () => {
@@ -390,7 +397,7 @@ describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
     endDream(g, g.herTime);
     expect(g.wake!.beat).toBe("alarm");
     expect(g.wake!.events).toContain("ring");
-    run(g, K.alarmMin + 0.1); run(g, 0.1, { moveX: 1 }); // (the shorter wake-up after the bed: once it's rung a moment, any key or move, and she's up)
+    run(g, K.alarmMin + 0.1); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); // (a move, the stretch, and she's up: every morning)
     expect(g.wake!.beat).toBe("up");
   });
   it("any key or move ends it: the alarm rings, and that press doesn't also get her up", () => {
@@ -406,7 +413,7 @@ describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
     const g = newGame(123, TUNING);
     g.party.spellAt = null; g.clock.paused = false;
     expect(wakeInBedroom(g)).toBe(true); // (before the flight: its last shot is her bedroom's)
-    expect(startWake(g, g.herTime, true, true)).toBe(true); // (as it lands: main.ts arrived)
+    expect(startWake(g, g.herTime, { dreaming: true })).toBe(true); // (as it lands: main.ts arrived)
     expect(g.wake!.beat).toBe("dream");
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
     const seen = run(g, 2);
@@ -418,19 +425,19 @@ describe("the dream before the alarm (Ed, 2026-10-24: finds on loan)", () => {
   it("no dream with nothing on loan: the alarm at once, as before", () => {
     const g = newGame(123, TUNING);
     wakeInBedroom(g);
-    startWake(g, g.herTime, true);
+    startWake(g, g.herTime);
     expect(g.wake!.beat).toBe("alarm");
   });
 });
 
 describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", () => {
-  /** A sail's night as main.ts lands it: put in bed before the dive (bedFirst), then as it lands the shorter wake-up (arrived). */
+  /** A sail's night as main.ts lands it: put in bed before the dive (bedFirst), then as it lands the wake-up (arrived). */
   function sailed(onLoan: boolean): Game {
     const g = newGame(4242, TUNING);
     g.party.spellAt = null; g.clock.paused = false;
     expect(g.witch.seated).toBe(true); // (a night starts her at her decks: the sail moves her)
     expect(wakeInBedroom(g)).toBe(true);
-    expect(startWake(g, g.herTime, true, onLoan)).toBe(true);
+    expect(startWake(g, g.herTime, { dreaming: onLoan })).toBe(true);
     return g;
   }
   it("with nothing on loan: in her bed in her bedroom, not at her decks, asleep with the alarm ringing, in her nightie", () => {
@@ -439,16 +446,16 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
     expect(atDecks(g)).toBe(false);
     expect(g.witch.seated).toBe(false);
     expect(g.wake!.beat).toBe("alarm");
-    expect(g.wake!.short).toBe(true); // (the shorter wake-up, as after the bed: she's played tonight already)
+    expect(g.wake!.first).toBeUndefined(); // (not her first morning: last night's clothes in their pile)
     expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
     const p = rel(g);
     run(g, 1);
     expect(rel(g)).toEqual(p); // (held in bed while it rings)
   });
-  it("then the wake-up as every morning: up at a move, the door open at once, dressing at the pile if she likes", () => {
+  it("then the wake-up as every morning: up after a move and the stretch, the door open at once, dressing at the pile if she likes", () => {
     const g = sailed(false);
     run(g, K.alarmMin + 0.05);
-    const seen = run(g, 0.1, { moveX: 1 });
+    const seen = [...run(g, 0.1, { moveX: 1 }), ...run(g, K.stretch + 0.1)];
     expect(seen).toContain("up");
     expect(g.wake!.open).toBe(true);
     expect(doorShut(g)).toBe(false); // (undressed: the door's open all the same)
@@ -459,7 +466,7 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
   });
   it("undressed, she walks from her bed down the trunk to the Terrace and starts the party at her decks in her nightie (Ed, 2026-10-25, his playtest of a sail)", () => {
     const g = sailed(false);
-    run(g, K.alarmMin + 0.05); run(g, 0.1, { moveX: 1 });
+    run(g, K.alarmMin + 0.05); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1);
     expect(g.wake!.open).toBe(true);
     const R = HOUSE_ROOMS.rooms.find(q => q.id === "turret")!, T = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")!;
     const down: [number, number][] = [[R.x, R.z], ...limb("turret", "bedroom"), ...limb("bedroom", "boudoir"), ...limb("boudoir", "parlour"), ...limb("parlour", "terrace"), [T.x, T.z]];
@@ -483,11 +490,11 @@ describe("a sail always ends with her asleep in bed (Ed, 2026-10-25, his 2a)", (
 });
 
 describe("she always wakes in her nightie, last night's clothes in the pile (Ed, 2026-10-24)", () => {
-  it("on every way in: the first load's whole wake-up, the shorter one after the bed or a sail, and after a dream", () => {
-    for (const [short, dreams] of [[false, false], [true, false], [true, true]]) {
+  it("on every way in: her first morning, a later load, after the bed or a sail, and after a dream", () => {
+    for (const [first, dreaming] of [[true, false], [false, false], [false, true]]) {
       const g = newGame(123, TUNING);
       wakeInBedroom(g);
-      expect(startWake(g, g.herTime, short, dreams)).toBe(true);
+      expect(startWake(g, g.herTime, { first, dreaming })).toBe(true);
       expect(g.wake!.pile).toEqual([...PILE_SLOTS]);
       expect(dressed(g.wake)).toBe(false);
       expect(wornGenome({ top: "jacket", accessories: {} }, g.wake!.pile).accessories).toMatchObject({ nightie: true });

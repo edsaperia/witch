@@ -2,7 +2,7 @@
 // into <out dir>: a fresh profile's first load (?opening=bedroom; Ed, 2026-10-23: no chart first), asleep in the dark while home's
 // night is made, then waking in her bedroom in the treehouse, the pause page's What's new and Options, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
 // mirror, the wardrobe and shoe rack in the bedroom, no pile of last night's clothes on her first wake-up (E there puts nothing on), out of its door: the oak's, no curtains, Ed 2026-10-24). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
-// that doesn't come. LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
+// that doesn't come. LATER=1 plays a later load (the same wake-up, last night's clothes in their pile) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
 //   node tools/opening/shots.cjs [out dir] (default previews/opening/)
@@ -28,7 +28,7 @@ function front(id, by) {
   const errors = [], fail = m => { throw new Error(m); };
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-    if (process.env.LATER === "1") await page.addInitScript(() => localStorage.setItem("witch.woken", "1")); // (a later load: the shorter wake-up)
+    if (process.env.LATER === "1") await page.addInitScript(() => localStorage.setItem("witch.woken", "1")); // (a later load: not her first morning)
     page.on("pageerror", e => errors.push(e.message));
     const shot = async name => { await page.screenshot({ path: path.join(out, name), timeout: 300000 }); log("shot", name); };
     await page.goto(`http://127.0.0.1:${server.address().port}/?opening=bedroom&quick=1&timing=1&set=${encodeURIComponent("opening.wake.snooze=2;opening.wake.stretch=1")}`);
@@ -61,12 +61,12 @@ function front(id, by) {
     if ((await wake())?.beat !== "alarm") fail("no alarm as she landed");
     await until(s => s.age > 1, "a second of ringing");
     await shot("06-alarm.png");
-    if (process.env.LATER === "1") { // the shorter wake-up: any key and she's up, no stretch (Ed's decision 4)
-      if (!(await page.evaluate(() => window.witch.game.wake.short))) fail("a later load's wake-up wasn't the shorter one");
+    if (process.env.LATER === "1") { // a later load: the one wake-up (Ed, 2026-10-26), a move, the stretch, and she's up
+      if (await page.evaluate(() => window.witch.game.wake.first)) fail("a later load's wake-up was her first morning's");
       await page.keyboard.down("KeyD"); await until(s => s.beat === "up", "her up"); await page.keyboard.up("KeyD");
       await page.waitForTimeout(1500);
       await shot("later-up.png");
-      log("later load: up at once, no stretch");
+      log("later load: up after the stretch");
       fs.writeFileSync(path.join(out, "opening.json"), JSON.stringify({ later: true }, null, 1));
       return;
     }
@@ -163,7 +163,7 @@ function front(id, by) {
     await shot("15-pause-controls.png");
     await page.keyboard.press("Escape"); await page.waitForTimeout(1500); // (closes the panel and resumes: one Esc)
     if (await page.evaluate(() => window.witch.game.clock.paused)) fail("Esc didn't resume from the pause page");
-    if (process.env.BED === "1") { // after the bed (Ed's decision 10): asleep while the next island's made, then the shorter wake-up
+    if (process.env.BED === "1") { // after the bed (Ed's decision 10): asleep while the next island's made, then the wake-up
       const seed0 = await page.evaluate(() => window.witch.game.seed);
       await page.evaluate(by => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + by[0], z: th.z + by[1], vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0 }; }, (() => { const o = HOUSE.objects.find(q => q.id === "bed"); return plan(o.x, o.z + o.d / 2 + 0.4); })());
       await page.waitForTimeout(2000);
@@ -174,9 +174,9 @@ function front(id, by) {
       await page.waitForTimeout(1500);
       await shot("17-asleep.png");
       for (let i = 0; i < 900 && !(await page.evaluate(() => !!window.witch.game.wake)); i++) await page.waitForTimeout(1000);
-      const w2 = await page.evaluate(() => ({ short: window.witch.game.wake?.short, beat: window.witch.game.wake?.beat }));
+      const w2 = await page.evaluate(() => ({ first: window.witch.game.wake?.first, beat: window.witch.game.wake?.beat }));
       log("after the bed:", JSON.stringify(w2));
-      if (!w2.short || w2.beat !== "alarm") fail("after the bed she didn't wake in her bedroom, the shorter wake-up");
+      if (w2.first || w2.beat !== "alarm") fail("after the bed she didn't wake in her bedroom, the alarm ringing");
       await page.waitForTimeout(3000);
       await shot("18-after-bed-alarm.png");
     }

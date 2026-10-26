@@ -328,7 +328,7 @@ function bedFirst(n: Night): void {
   n.flags.inBed = sailLandsInBed(n.params, n.tuning) && wakeInBedroom(n.game);
   if (!n.flags.inBed) dreamAfterDive = null;
 }
-/** It's landed: in her bed, she wakes as after the bed (the shorter wake-up: she's played tonight already, Ed's decision 10), dreaming
+/** It's landed: in her bed, she wakes as after the bed (the one wake-up, every morning: Ed, 2026-10-26, in place of his decision 10's shorter one), dreaming
  *  first of a find on loan; at her decks (?opening=old), the night starts, the party spell cast, as the bedroom's scroll would. */
 function arrived(): void {
   logTiming(); clearCarried(); // (?timing=1: the whole sail, from the chart to her decks)
@@ -338,7 +338,7 @@ function arrived(): void {
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd) && dd) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, { mirrored: mirrored(), dreaming: !!dd }) && dd) startDream(dd);
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -813,18 +813,23 @@ function departFromChart(to: Sailed, at: FlightEnd["cam"] | null): Promise<void>
   departing = { island: to.island, seed: to.seed, night };
   return night.then(() => undefined, () => undefined);
 }
-/** Whether she's been through the whole wake-up on this browser before (Ed's decision 4: the first game plays it all, later loads
- *  the shorter one); set as the curtains first open. */
+/** Whether she's woken on this browser before: her very first morning has no pile of last night's clothes and her dressing guided
+ *  (rules/wakeUp.ts `first`; the wake-up itself is one for every morning since Ed, 2026-10-26, replacing his decision 4's shorter
+ *  one); set as she first gets up. */
 const WOKEN_KEY = "witch.woken";
 const wokenBefore = (): boolean => { try { return localStorage.getItem(WOKEN_KEY) === "1"; } catch { return false; } };
-const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: the whole wake-up again next time */ } };
+const woke = (): void => { try { localStorage.setItem(WOKEN_KEY, "1"); } catch { /* storage blocked: her first morning again next time */ } };
+/** Whether she's come to the dressing table before, ever (its first visit marked once: rules/wakeUp.ts `mirror`). */
+const MIRROR_KEY = "witch.mirrored";
+const mirrored = (): boolean => { try { return localStorage.getItem(MIRROR_KEY) === "1"; } catch { return false; } };
+const sawMirror = (): void => { try { localStorage.setItem(MIRROR_KEY, "1"); } catch { /* storage blocked: marked again next time */ } };
 /** The opening's wake-up on a plain first load (app/opening.ts opensInBedroom): home's night made (its start's art drawn, the rest
  *  drawing on behind her while she dresses and walks down: rules/wakeUp.ts), she wakes in her bedroom in the treehouse
- *  (rules/opening.ts), the whole wake-up in a first game, the shorter one after. Without the house's rooms, the old start. */
+ *  (rules/opening.ts), the one wake-up, as every morning. Without the house's rooms, the old start. */
 function wakeFirst(): void {
   const n = N();
   bootAsleep = false;
-  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, wokenBefore())) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
+  if (!wakeInBedroom(n.game) || !startWake(n.game, n.game.herTime, { first: !wokenBefore(), mirrored: mirrored() })) { wakeCard?.hide(); dressCreator(); creator.show(); return; }
   mark("opening:wake");
   start();
   if (!gestured) soundNote(); else sound.wake(); // (the alarm heard once she's pressed something: browsers keep sound off till then)
@@ -921,7 +926,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   const u = new URL(href);
   backGuard.sailed(u.search + u.hash);
   armBack();
-  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the shorter wake-up
+  // After the bed in the new opening (Ed's decision 10): asleep in the dark while the next island's made, then the wake-up (one for every morning since Ed, 2026-10-26)
   // in her bedroom, its curtains waiting on that island's build (rules/wakeUp.ts); else the bedroom as the loading screen, as before.
   const wakes = spec.how === "bed" && openingWay(spec.params, N().tuning) === "bedroom";
   const room = !wakes && spec.params.get("creator") !== "0";
@@ -940,7 +945,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over)) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, { mirrored: mirrored(), dreaming: !!dream && !dream.over })) { mark("opening:bed"); start(); }
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -1033,7 +1038,7 @@ function frame(now: number): void {
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) stations.close(); // (she's somehow off it: a knockout, a new night; E closes it above)
-  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake?.first && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
   // The telescope: E at it looks (useHouse); E or □ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
@@ -1057,7 +1062,7 @@ function frame(now: number): void {
   // The on-loan icon, top left (render/loanIcon.ts): tonight's find once she's taken it, till she sleeps.
   { const lf = loanFind(game, game.map.treehouse.x, game.map.treehouse.z); loanIcon.set(bot ? null : lf?.item ?? null, () => (lf ? findCanvas(findKind(lf.kind).piece(lf.item), view.assets.style) : null)); loanIcon.draw(now / 1000); }
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "mirror") sawMirror(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
