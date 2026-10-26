@@ -1,7 +1,7 @@
 // The new opening in the built game (app/opening.ts; Ed, 2026-10-20, previews/ed/opening-mock/ on claude/ed-shots), a shot per beat
 // into <out dir>: a fresh profile's first load (?opening=bedroom; Ed, 2026-10-23: no chart first), asleep in the dark while home's
 // night is made, then waking in her bedroom in the treehouse, the pause page's What's new and Options, and the wake-up's beats (the alarm, a snooze, the stretch, up, the
-// mirror, the wardrobe and shoe rack in the bedroom, dressed at last night's clothes, out of its door: the oak's, no curtains, Ed 2026-10-24). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
+// mirror, the wardrobe and shoe rack in the bedroom, no pile of last night's clothes on her first wake-up (E there puts nothing on), out of its door: the oak's, no curtains, Ed 2026-10-24). Fails on a page error, the creator's bedroom or the sea chart shown, her anywhere but her bedroom, or a beat
 // that doesn't come. LATER=1 plays a later load (the shorter wake-up) and stops once she's up; BED=1 goes on to the bed and the next night's wake-up. The snooze and the stretch are shortened (?set=: 2 s and 1 s of her clock), this
 // machine's software-drawn frames making her seconds minutes.
 // Run `npm run build` first. Playwright from the machine's global install.
@@ -83,11 +83,14 @@ function front(id, by) {
     await until(s => s.beat === "up", "her up");
     await page.waitForTimeout(1500);
     await shot("09-up.png");
-    // to the dressing table (put by it: the walk itself is the rules' tests'): its mirror opens by itself
+    // to the dressing table (put by it: the walk itself is the rules' tests'): lit, E over it, and E opens its mirror (Ed's playtest,
+    // 2026-10-26: nothing opens by nearness)
     const goTo = (id, by) => page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, front(id, by));
+    const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel.in"));
+    const useIt = async () => { await page.waitForTimeout(1500); if (await panelIn()) fail("a station's panel opened by her being near it, before E"); for (let i = 0; i < 5 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ };
     await goTo("dressingTable", 0.5);
-    // (its panel by nearness, as every station's: rules/stations.ts)
-    for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
+    await shot("09b-mirror-lit.png"); // (lit, its prompt over it)
+    await useIt();
     await page.waitForTimeout(2500);
     await shot("10-mirror.png");
     // (its panel docked over the running game since the station panels, #996: ui/creator.ts docked; the full-screen room is `open`)
@@ -100,29 +103,37 @@ function front(id, by) {
       await shot("10a-bedroom-whole.png");
       await page.keyboard.press("KeyZ"); await page.waitForTimeout(1500); }
     // the rest of her dressing, in the bedroom before its door (Ed, 2026-10-21: "all of the customisation options (except for broom,
-    // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it
+    // hat, and bag) should be before the locked door"): each station's panel docks as she stands at it and presses E
     for (const [id, name] of [["wardrobe", "10b-wardrobe.png"], ["shoeRack", "10d-shoe-rack.png"]]) { // (the cloak pegs: in the Cloakroom since the oak)
       await goTo(id, 0.5);
-      for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(500);
+      await useIt();
       await page.waitForTimeout(1500);
       if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail(`the ${id}'s panel didn't dock`);
       await shot(name);
     }
     // up, the wake-up's over (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build): only her dressing keeps the door
+    // (she stands still at it, the movement keys its buttons: E again slides it out; Ed, 2026-10-26)
+    const at0 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    await page.keyboard.down("KeyD"); await page.waitForTimeout(800); await page.keyboard.up("KeyD");
+    const at1 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    if (Math.hypot(at1[0] - at0[0], at1[1] - at0[1]) > 0.05) fail(`she walked while the shoe rack's panel was open (${at0} to ${at1})`);
+    if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail("a movement key closed the shoe rack's panel");
+    await page.keyboard.press("KeyE");
+    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250);
+    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("E didn't slide the shoe rack's panel out");
     await goTo("clothesPile", 1.5);
-    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250); // (walking away slides it out)
-    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("the shoe rack's panel didn't slide out as she walked away");
     const before = await wake();
     log("up:", JSON.stringify(before));
     if (!before.open) fail("up, but the wake-up isn't over");
-    // still in her nightie (Ed, 2026-10-23: rules/clothesPile.ts): the door waits; E at last night's clothes by the bed puts them on
-    if (!(await wake()).pile) fail("no clothes in the pile by her bed: she should wake in her nightie");
+    // still in her nightie (Ed, 2026-10-23: rules/clothesPile.ts), but her first wake-up has no pile of last night's clothes (Ed,
+    // 2026-10-26: "if it's the first night, there won't be any last night's clothes"): E where it would lie puts nothing on; she
+    // dresses at the stations, her guidance pins leading her round them (rules/guidance.ts), or walks out as she is
+    const undressed = (await wake()).pile;
+    if (!undressed) fail("she's dressed already: she should wake in her nightie");
     await goTo("clothesPile", 0.5); await page.waitForTimeout(1500);
-    await shot("12a-the-pile.png");
-    await page.keyboard.press("KeyE");
-    await until(s => !s.pile, "dressed at the pile");
-    await page.waitForTimeout(2500);
-    await shot("12b-dressed.png");
+    await shot("12a-no-pile.png");
+    await page.keyboard.press("KeyE"); await page.waitForTimeout(1500);
+    if ((await wake()).pile !== undressed) fail("E by her bed put clothes on her first wake-up: there's no pile on the first night");
     // and the door lets her out: from just inside it, out along the branch to the Boudoir (the Ent's own house: tools/house/organic.mjs)
     const bed = HOUSE.rooms.find(r => r.id === "bedroom"), bc = [(bed.x0 + bed.x1) / 2, (bed.z0 + bed.z1) / 2], br = HOUSE.corridors.find(c => c.id === "boudoir-bedroom").pts;
     const [ix, iz] = br[br.length - 1], [jx, jz] = br[0], L = Math.hypot(jx - ix, jz - iz), door = plan(ix, iz), [ox, oz] = plan((jx - ix) / L, (jz - iz) / L);
@@ -132,7 +143,7 @@ function front(id, by) {
     const left = () => page.evaluate(([cx, cz, r, A]) => { const g = window.witch.game, th = g.map.treehouse, dx = g.witch.x - th.x, dz = g.witch.z - th.z, px = dx * Math.cos(A) - dz * Math.sin(A), pz = dx * Math.sin(A) + dz * Math.cos(A); return Math.hypot(px - cx, pz - cz) > r + 0.5; }, [bc[0], bc[1], bed.r, TURN]); // (past the bedroom's rim, on the branch)
     for (let i = 0; i < 120 && !(await left()); i++) await page.waitForTimeout(500);
     for (const k of keys) await page.keyboard.up(k);
-    if (!(await left())) fail("the door didn't let her out of the bedroom once she was dressed");
+    if (!(await left())) fail("the door didn't let her out of the bedroom");
     await shot("12c-out-of-the-door.png");
     // out to her decks: E there seats her and casts the party spell, its needle-drop routine the DJ intro (Ed's decision 2)
     const spell = () => page.evaluate(() => window.witch.game.party.spellAt);

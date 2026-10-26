@@ -19,12 +19,18 @@ import type { Tuning } from "../rules/tuning";
 export type PinTarget = { x: number; z: number; top?: number; house?: boolean } | { object: string; top?: number };
 /** How a pin looks: its ring's colour (rgb 0-1), the glyph in its middle (rows of `#` and `+`, render/indicator.ts HAT and the
  *  rest) or a creature's sigil (`species`), the glyph's own colour, and a label beside it: none by default (Ed, 2026-10-26: guidance pins are "icons only, no words"; not even its distance). */
-export interface PinLook { colour: THREE.Vector3; glyph?: readonly string[]; glyphColour?: THREE.Vector3; species?: string; label?: string }
+export interface PinLook { colour: THREE.Vector3; glyph?: readonly string[]; glyphColour?: THREE.Vector3; species?: string; label?: string; /** an emoji in pixels in its own colours, over the glyph (the glyph its fallback where the browser has no such emoji) */ emoji?: string }
 
 /** Where a target is to be drawn: x, z and its top over the ground there (as render/height.ts placed takes it), or null (an object
- *  the house hasn't). In the house (her there: `her.on`), a house target as she's drawn; outside, on the house's floor. */
-export function pinSpot(target: PinTarget, map: ForestMap, tuning: Tuning, her: HerOffset, ground: (x: number, z: number) => number): { x: number; z: number; top: number } | null {
+ *  the house hasn't). In the house (her there: `her.on`), a house target as she's drawn; outside, on the house's floor. A house
+ *  object's top is its art's as drawn (`drawnTop`, by its id) once its art's made. */
+export function pinSpot(target: PinTarget, map: ForestMap, tuning: Tuning, her: HerOffset, ground: (x: number, z: number) => number, drawnTop?: (id: string) => { x: number; y: number; z: number } | null | undefined): { x: number; z: number; top: number } | null {
   let x: number, z: number, top: number, house: boolean;
+  // (a house object's top as drawn this frame, its art's highest pixel, where it's drawn (render/houseRooms.ts marks "<id>.top"), so
+  // the pin's tip clears it, a bed's canopy and all (Ed, 2026-10-26: "the pointer should be not overlapping with the item they're
+  // indicating"); its config height until its art's baked)
+  const T = "object" in target && target.top === undefined ? drawnTop?.(target.object) : null;
+  if (T) return { x: T.x, z: T.z, top: T.y - ground(T.x, T.z) };
   if ("object" in target) {
     const o = HOUSE_ROOMS.objects.find(q => q.id === target.object), deck = deckOf(map, tuning);
     if (!o || !deck) return null;
@@ -50,7 +56,7 @@ export class Pin {
     if (Math.abs(this.shown - this.want) < 0.01) this.shown = this.want;
     this.ind.fade(this.shown * calm);
     const L = this.look;
-    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, gap, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour } : null, wx, wz, beat, bpm, 1, L.label ?? "");
+    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, gap, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour, emoji: L.emoji } : null, wx, wz, beat, bpm, 1, L.label ?? "");
   }
   /** Gone for good (its canvas and label off the page). */
   dispose(): void { this.ind.dispose(); }
