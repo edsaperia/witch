@@ -25,8 +25,11 @@ const THINGS = {
   sock(m, x, z, a, k, g) { const d = rotY(X, a); m.chain([[x - d[0] * .1, .02, z - d[2] * .1, .03], [x, .025, z, .03], [x + d[0] * .06, .02, z + d[2] * .08, .028]], [M.BELLY, M.POM, M.IRIS][k % 3], { group: g, paint: p => (Math.floor((p[0] + p[2]) * 30) % 3 ? undefined : M.ACCENT) }); },
   // a garment dropped in a heap: a crumpled body, a sleeve thrown out
   clothes(m, x, z, a, k, g) { const mat = [M.HAT2, M.POM, M.JACKET, M.IRIS, M.CLOTH, M.HAT1][Math.floor(hash2(k, 4, 3) * 6)], d = rotY(X, a);
-    m.ell([x, .04, z], [.26, .05, .2], mat, { group: g, rough: .015, dir: d });
-    m.seg([x + d[0] * .15, .03, z + d[2] * .15], [x + d[0] * .38, .02, z + d[2] * .3 + .05], .055, .045, mat, { group: g }); },
+    // (a top flung down: its body flat and creased, both sleeves out, its neck a darker ring; so it reads as clothes, not a cushion)
+    const e = [-d[2], 0, d[0]];
+    m.box([x, .025, z], [.17, .022, .2], mat, { round: .03, group: g, dir: d, rough: .01, paint: p => (Math.abs(((p[0] - x) * d[0] + (p[2] - z) * d[2]) * 9 % 1) < .12 ? M.BODY : undefined) });
+    for (const s of [-1, 1]) m.chain([[x + d[0] * s * .15 - e[0] * .12, .03, z + d[2] * s * .15 - e[2] * .12, .05], [x + d[0] * s * .3, .025, z + d[2] * s * .3 + .02, .045], [x + d[0] * s * .36 + e[0] * .1 * s, .02, z + d[2] * s * .36 + e[2] * .1 * s, .04]], mat, { group: g + 1 });
+    m.ell([x - e[0] * .17, .05, z - e[2] * .17], [.07, .02, .05], M.BODY, { group: g + 2, dir: d }); },
   // a hanger dropped
   hanger(m, x, z, a, k, g) { const d = rotY(X, a); m.seg([x - d[0] * .16, .01, z - d[2] * .16], [x + d[0] * .16, .01, z + d[2] * .16], .012, .012, M.WOOD, { group: g }); m.seg([x, .01, z], [x - d[2] * .08, .01, z + d[0] * .08], .008, .008, M.FRAME, { group: g }); },
   // a book lying open or shut; a stack of them
