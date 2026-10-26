@@ -10,7 +10,7 @@ export const MISTWOOD = {
   setPiece: ["nurse-log", "a nurse log, a fallen giant with young spruce growing out of its back", .95],
   layout: {
     pattern: "groves", density: .7, clump: .4, glades: { count: 1, size: [10, 14] },
-    heightMix: { sapling: .1, mature: .3, tall: .4, giant: .2 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .6, tall: .2, giant: .1 }, undergrowth: .95, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .2, ruins: .1, rocks: .2, freak: .2, lake: .4, modern: .1 },
     feel: "Dim and dripping: giant mossy spruce and cedar trunks rising out of sight, tree ferns and sword ferns beneath, nurse logs green with saplings, mist between the trunks.",
   },

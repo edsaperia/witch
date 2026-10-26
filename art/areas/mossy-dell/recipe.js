@@ -10,7 +10,7 @@ export const DELL = {
   setPiece: ["ring", "an old ring in a glade, where the roe gather at dusk", 1],
   layout: {
     pattern: "groves", density: .55, clump: .7, glades: { count: 3, size: [12, 20] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .15, lake: .15, modern: .1 },
     feel: "A damp, mossy hollow under rowan, birch and oak, its glades deep in fern; soft, green and quiet, roe slipping between the trunks.",
   },

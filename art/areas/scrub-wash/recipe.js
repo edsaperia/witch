@@ -10,7 +10,7 @@ export const SCRUB_WASH = {
   pathKinds: ["animal", "dirt"],
   layout: {
     pattern: "edgeOnly", density: .35, clump: .55, glades: { count: 2, size: [12, 18] },
-    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .65, tall: .05, giant: 0 }, undergrowth: .7, lean: { dir: 0, amount: 0 },
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .3, rocks: .5, freak: .1, lake: 0, modern: .1 },
     feel: "Cracked clay and sand in a dry wash, thorny scrub and stunted thorn trees bent by the heat; dusty, low and prickly.",
   },

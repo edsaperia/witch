@@ -502,7 +502,7 @@ Tree density is a field, not two states (Ed, 2026-10-03): each area's own densit
 
 ### `treeCap`
 
-The tallest tree variants (tall, giant) can be drawn squeezed: any height over from metres keeps only keep of the rest. keep 1 since Ed, 2026-10-26 ("treecap.keep should be 1. Tall trees look awesome. If it hurts performance we can lower the proportion of tall trees"): every tree stands at its art's own height, so a 45 m giant stands 45 m, over her 24 m treetop flight (treetopHeight) and over the oak's 32.3 m crown. 0.35 before, which squeezed a 45 m giant to about 29 m.
+The tallest tree variants (tall, giant) can be drawn squeezed: any height over from metres keeps only keep of the rest. keep 1 since Ed, 2026-10-26 ("treecap.keep should be 1. Tall trees look awesome. If it hurts performance we can lower the proportion of tall trees"): every tree stands at its art's own height, so a 45 m giant stands 45 m, over her 24 m treetop flight (treetopHeight) and over the oak's 32.3 m crown. 0.35 before, which squeezed a 45 m giant to about 29 m. With it, half as many tall and giant trees (Ed, the same day: "Halve the number of tall trees"): art/areas.js TREE_HEIGHT_CLASSES and every area's heightMix, their tall and giant shares halved and given to the mature trees (frame time at keep 1 went from +60 to 85% over 0.35 to +30 to 45%).
 
 | knob | type | range |
 |---|---|---|

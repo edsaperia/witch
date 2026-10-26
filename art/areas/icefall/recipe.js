@@ -12,7 +12,7 @@ export const ICEFALL = {
   setPiece: ["ring", "a ring of weathered posts round a stone", 1, { member: "post", centre: "stone", fallen: 1 }],
   layout: {
     pattern: "lone", density: .15, clump: .4, glades: { count: 1, size: [22, 32] },
-    heightMix: { sapling: .4, mature: .5, tall: .1, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
+    heightMix: { sapling: .4, mature: .55, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: .8, amount: .2 },
     terrain: ["rocky", "hollows"], decor: { rate: .25, ruins: .1, rocks: .7, freak: .05, lake: .1, modern: .05 },
     feel: "High on the ice: blue-white glacier ice and old snow, moraine stones, cairns and leaning standing stones, wind-bent spruces, junipers and larch in the lee of the rocks (Ed: trees in every area); bright, cold and still.",
   },

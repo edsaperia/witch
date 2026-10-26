@@ -9,7 +9,7 @@ export const SAVANNA = {
   setPiece: ["heap", "a kopje of sun-warmed boulders", 1.3, { of: "stones", top: "none", moss: -1, rock: "sandstone" }],
   layout: {
     pattern: "groves", density: .2, clump: .3, glades: { count: 2, size: [24, 36] },
-    heightMix: { sapling: .15, mature: .55, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .15, mature: .7, tall: .125, giant: .025 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "rocky"], decor: { rate: .2, ruins: .1, rocks: .6, freak: .1, lake: .2, modern: 0 },
     feel: "Wide gold grass to the horizon, flat-topped acacias standing apart, a baobab or two and a kopje of warm boulders to watch from; lazy, hot and proud.",
   },
