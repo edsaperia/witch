@@ -3,6 +3,7 @@
 import { TUNING } from "../rules/tuning";
 import { playableIsland } from "../rules/rosters";
 import { loadSave, worldSeed } from "./chartSave";
+import { zooCoastsHeld } from "./zooCoasts";
 import { applySet } from "./repro";
 import { loadoutFrom } from "./loadout";
 import { hatsFrom } from "./hatSave";
@@ -204,7 +205,8 @@ export function tuningFromLink(params: URLSearchParams) {
   }
 
   // The zoo (?zoo; rules/zoo.ts, Ed 2026-10-13): every area a block of a square grid, a row per biome; no island, no roster.
-  if (params.has("zoo") && tuning.map) tuning.map = { ...tuning.map, shape: "zoo", island: "", islandAreas: 0 };
+  // (its islands in their real shapes where the chart has made them: app/zooCoasts.ts, read before its map is made)
+  if (params.has("zoo") && tuning.map) { const coasts = zooCoastsHeld(); tuning.map = { ...tuning.map, shape: "zoo", island: "", islandAreas: 0, ...(coasts ? { coasts } : {}) }; }
   // (its edge, rules/zooMap.ts: the flagstones straight into the water, no sand to speak of, nothing on it, no one about)
   if (params.has("zoo") && tuning.beach) { const B = tuning.beach; tuning.beach = { ...B, width: 2, vary: B.vary && { ...B.vary, amp: 0, min: 2 }, decor: B.decor && { ...B.decor, on: false }, witchChance: 0 }; }
   // (flat: no hills, no rises under its runestones or dells under its legends; Ed, 2026-10-26: "The zoo is flat, no hills")

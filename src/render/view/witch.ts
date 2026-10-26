@@ -23,6 +23,7 @@ import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
+import { letterAt } from "../invites";
 import { atDecksFrom, koIris } from "../koIris";
 import { spinAt, spinFacing, spinLift } from "../spin";
 
@@ -193,9 +194,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
   // (not at a knockout, mid-fight), if she has a hat to lose.
   const Hat = g.witches[0].hat;
-  if (!v.bareAsked && Hat.has && !g.clock.paused && ht > 1) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
+  // (asked at once when her hat's already off: a game's first morning starts with it on the hats' floor, rules/wakeUp.ts)
+  if (!v.bareAsked && Hat.has && (!!Hat.down || (!g.clock.paused && ht > 1))) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
   // At a station for her head and face (ui/stationPanel.ts bareHead; Ed, 2026-10-23), drawn without it too, once those frames are in.
-  const bare = Hat.has && (!!Hat.down || (v.hatOff && !!v.assets.witchBare() && v.assets.bareReady)) ? // (her hat off at a station: witchBare asks for the bare frames, hat on till they're in)
+  const bare = Hat.has && (!!Hat.down || v.hatOff) && !!v.assets.witchBare() && v.assets.bareReady ? // (her hat off, down or at a station: witchBare asks for the bare frames, hat on till they're in, never her drawn with none)
     (v.bareBatch ??= v.makeWitchBatch(true)) : null;
 
   // (her frames from the atlas her batch draws: through a twirl that is still the clothes she had, render/spin.ts)
@@ -248,12 +250,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
   const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
-  const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  let hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  // (lying on the house's floor, the hats' floor on a first morning: drawn where the house is, slid with her in it, on its floor
+  // outside it, as the house's pins are: render/pins.ts pinSpot)
+  const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
+  if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
   v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
   const lying = drawLeftHats(v);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
-  if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  if (hat && !inHouse) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
   for (const q of lying) v.witchShadows.push({ x: q.x, z: q.z, w: q.w * 0.9, d: q.w * 0.35 });
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.
