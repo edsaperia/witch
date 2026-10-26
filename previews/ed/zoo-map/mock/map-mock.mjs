@@ -71,7 +71,10 @@ for (const k of ["home", ...kinds]) {
   } else {
     const L = lookOf(k);
     svg += `<path d="${d}" fill="${hex(LOOK[L])}" stroke="#4f4a40" stroke-width="3" opacity=".95"/>`;
-    svg += `<text x="${mx}" y="${my + 4}" text-anchor="middle" font-family="monospace" font-size="10" fill="#ddd" opacity=".7">${ros.isPlaceholder(k) ? "?" : L}</text>`;
+    // its animal's sigil faint on the water (Ed, 2026-10-26: like the legend floor's, but faint and watery)
+    const sr = 30 * sc;
+    for (const st of S.SIGILS[k] ?? []) if (st.l) svg += `<polyline points="${st.l.map(([u, v]) => `${(mx + (u - .5) * sr * 1.6).toFixed(1)},${(my + (v - .5) * sr * 1.6).toFixed(1)}`).join(" ")}" fill="none" stroke="#e8f4ff" stroke-width="1.6" stroke-linecap="round" opacity=".28"/>`;
+    svg += `<text x="${mx}" y="${my + sr + 12}" text-anchor="middle" font-family="monospace" font-size="10" fill="#ddd" opacity=".6">${L}</text>`;
     rows.push({ id: k, state: "lake", look: L });
   }
 }

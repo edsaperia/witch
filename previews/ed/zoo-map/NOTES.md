@@ -9,7 +9,7 @@ This is a mock. Nothing here is merged.
 - `map.png`: the whole zoo from above, drawn from the game's own data for world 0, using a sample save with 24 of 64 islands found (home's 10 kinds and the 14 nearest).
   - Every island is its chart outline scaled to one area (168 m across) at its chart place. The layout is spread so the nearest two are 198 m apart; the disc is 2.9 km across.
   - A found island is its area's floor colour, with its legend circle at the middle and its sigil carved in.
-  - An undiscovered island is its biome's lake (`lakeLooks`: ice, tarn, lava, rust, oasis, lily, sinkhole, tar).
+  - An undiscovered island is its biome's lake (`lakeLooks`: ice, tarn, lava, rust, oasis, lily, sinkhole, tar), with its animal's sigil faint on the water (Ed's answer).
   - Home is the Ent's plaza: pale flagstones with the World Tree carved in.
   - The streets are the dancefloor plaza's stone (art/dancefloor.js `DISCO_LOOK`: rim, rimDark, grout).
   - At the edge the flagstones give way to a band of water that pours off the disc, with space and stars beyond.
@@ -78,8 +78,11 @@ To build it, reuse the chart's sea, lip and `fall` skirt shaders (render/chart/s
 
 Ed: "I think the streets should be the shape of the sea, and the areas should be the shape of the islands." The flagstones fill exactly the chart's sea, between the island outlines and out to the edge water, as `map.png` draws it. Each area is its island's outline, with no extra hint near the coasts.
 
+## Undiscovered islands (Ed answered)
+
+An undiscovered island is its biome's lake in the island's outline, with the animal's sigil drawn faintly on the water: like the legend floor's carving, but faint and watery. To build it, the lake shader takes the sigil's mask (`legendSigilMask`, as the carving does) at low strength, rippled by the water's own wobble.
+
 ## Questions for Ed
 
 1. **Q1 (streets)**: plain flagstone streets everywhere, or the sea's shape kept by darker, wetter stone near the coasts?
-1. **Q1 (lakes)**: an undiscovered island as just its biome's lake in its outline, or with a "?" sign or its sigil faint on the water?
-2. **Q2 (animals)**: only the island's own animal at every age, plus its sleeping legend? Its legend sleeps at the centre. Should its quest work in the zoo (bring it the sigil it dreams of and it wakes happy), or should it only sleep, for show?
+1. **Q1 (animals)**: only the island's own animal at every age, plus its sleeping legend? Its legend sleeps at the centre. Should its quest work in the zoo (bring it the sigil it dreams of and it wakes happy), or should it only sleep, for show?
