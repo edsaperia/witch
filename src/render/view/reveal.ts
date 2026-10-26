@@ -16,13 +16,13 @@ import { groundHeight } from "../height";
 
 /** A place kept clear: its centre and the radius she stands within (m), the ring on the ground boxed with it (m), and what stands
  *  at (tx, tz) to be seen whole: its width and height (m). */
-export interface Interest { kind: string; x: number; z: number; r: number; ring: number; tx: number; tz: number; w: number; h: number }
+export interface Interest { kind: string; x: number; z: number; r: number; ring: number; tx: number; tz: number; w: number; h: number; /** metres round (tx, tz) never faded: the thing itself */ keep: number }
 
 /** The place being kept clear (the last she stood in, while it fades back) and how far it's faded in. */
 export interface Reveal { k: number; at: number; poi: Interest | null }
 export const newReveal = (): Reveal => ({ k: 0, at: NaN, poi: null });
 
-type Kind = { on: boolean; radius?: number; ring?: number; height?: number; width?: number; pad?: number };
+type Kind = { on: boolean; radius?: number; ring?: number; height?: number; width?: number; keep?: number; pad?: number };
 
 const STONES = new WeakMap<object, { x: number; z: number }[]>();
 /** The runestones (each playable area's but home's, where its soundsystem comes), once a map. */
@@ -44,14 +44,14 @@ export function interestAt(g: Game): Interest | null {
     if (c) {
       // (the legend as drawn, the larger of asleep and awake, standing where it lies; the circle's ring, its rim stones just past it)
       const sz = LEGEND_SIZES[c.legend.species], k = g.tuning.wildLegends.scale ?? 1;
-      return { kind: "legend", x: c.x, z: c.z, r: c.r, ring: c.r + (L.pad ?? 0), tx: c.legend.x, tz: c.legend.z, w: sz ? Math.max(sz.asleep[0], sz.awake[0]) * k : c.r, h: sz ? Math.max(sz.asleep[1], sz.awake[1]) * k : c.r * 0.5 };
+      return { kind: "legend", x: c.x, z: c.z, r: c.r, ring: c.r + (L.pad ?? 0), tx: c.legend.x, tz: c.legend.z, w: sz ? Math.max(sz.asleep[0], sz.awake[0]) * k : c.r, h: sz ? Math.max(sz.asleep[1], sz.awake[1]) * k : c.r * 0.5, keep: 0 }; // (a legend is a creature: never faded)
     }
   }
   let best: Interest | null = null, bd = Infinity;
   const near = (kind: string, K: Kind | undefined, x: number, z: number) => {
     if (!K?.on) return;
     const r = K.radius ?? 0, d = Math.hypot(w.x - x, w.z - z);
-    if (d <= r && d < bd) { bd = d; best = { kind, x, z, r, ring: K.ring ?? r, tx: x, tz: z, w: K.width ?? 2, h: K.height ?? 2 }; }
+    if (d <= r && d < bd) { bd = d; best = { kind, x, z, r, ring: K.ring ?? r, tx: x, tz: z, w: K.width ?? 2, h: K.height ?? 2, keep: K.keep ?? 0 }; }
   };
   if ((R.runestone as Kind | undefined)?.on) for (const s of stonesOf(g)) near("runestone", R.runestone, s.x, s.z);
   if (g.trunk && !g.trunk.found) near("find", R.find, g.trunk.x, g.trunk.z);
@@ -82,6 +82,7 @@ export function setReveal(v: View, time: number): void {
   const Rt = SPRITE_UNIFORMS.uRight.value, Up = SPRITE_UNIFORMS.uUp.value;
   for (const e of [-0.5, 0.5]) for (const up of [0, 1]) add(p.tx + Rt.x * p.w * e + Up.x * p.h * up, Up.y * p.h * up, p.tz + Rt.z * p.w * e + Up.z * p.h * up);
   SPRITE_UNIFORMS.uCircleBox.value.set(x0, y0, x1, y1);
+  SPRITE_UNIFORMS.uCircleKeep.value.set(p.tx, p.tz, p.keep);
   // (its centre's depth: as the sprites' bases are measured, unbent, from the camera)
   P.set(p.x, groundHeight(p.x, p.z), p.z).applyMatrix4(v.camera.matrixWorldInverse);
   const e = s.k * s.k * (3 - 2 * s.k);

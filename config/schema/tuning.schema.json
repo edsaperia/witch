@@ -9070,6 +9070,10 @@
             "height": {
               "type": "number",
               "minimum": 0
+            },
+            "keep": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -9099,6 +9103,10 @@
             "height": {
               "type": "number",
               "minimum": 0
+            },
+            "keep": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
@@ -9126,6 +9134,10 @@
               "minimum": 0
             },
             "height": {
+              "type": "number",
+              "minimum": 0
+            },
+            "keep": {
               "type": "number",
               "minimum": 0
             }
