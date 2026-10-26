@@ -35,7 +35,12 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const W = g.witch, rdt = Number.isNaN(v.rideTime) ? 0 : time - v.rideTime, full = W.mode === "ground" ? t.groundSpeed : t.treetopSpeed;
     v.rideTime = time;
     v.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
-    v.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
+    // (no floor: just the smoothed ground. In the treehouse, the ground at its middle: the oak's rooms are drawn over that, on the Ent's
+    // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
+    // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
+    // the witch is")
+    const D = v.herOffset.on ? deckOf(g.map, t) : null;
+    v.camRide.update(rdt, D ? D.x : pose.tx, D ? D.z : pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)

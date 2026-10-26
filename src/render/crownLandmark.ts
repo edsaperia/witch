@@ -120,6 +120,7 @@ export class CrownLandmark {
     const keep = ["uMapO", "uMapX", "uMapY", "uMapZ"].map(k => (U[k].value as THREE.Vector3).clone()), keepS = [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value];
     const occ = SPRITE_UNIFORMS.uOcc.value.w, right = SPRITE_UNIFORMS.uRight.value.clone(), up = SPRITE_UNIFORMS.uUp.value.clone();
     (U.uMapO.value as THREE.Vector3).set(0, floor, 0); (U.uMapX.value as THREE.Vector3).set(1, 0, 0); (U.uMapY.value as THREE.Vector3).set(0, 1, 0); (U.uMapZ.value as THREE.Vector3).set(0, 0, 1);
+    const hole = (U.uHerHole.value as THREE.Vector4).z; (U.uHerHole.value as THREE.Vector4).z = 0; // (and no hole round her in its picture)
     U.uBendOn.value = 0; U.uIndoor.value = 1; U.uClearOn.value = 0; U.uLobeK.value = 1; SPRITE_UNIFORMS.uOcc.value.w = 0;
     SPRITE_UNIFORMS.uRight.value.set(1, 0, 0); SPRITE_UNIFORMS.uUp.value.set(0, Math.cos(PITCH), Math.sin(PITCH));
     const prev = renderer.getRenderTarget(), auto = renderer.autoClear, cc = renderer.getClearColor(new THREE.Color()), ca = renderer.getClearAlpha();
@@ -131,7 +132,7 @@ export class CrownLandmark {
       renderer.setRenderTarget(prev); renderer.autoClear = auto; renderer.setClearColor(cc, ca);
       C.meshes.forEach((m, i) => { const mt = m.material as THREE.ShaderMaterial; [mt.depthTest, mt.depthWrite, mt.transparent] = mats[i]; });
       ["uMapO", "uMapX", "uMapY", "uMapZ"].forEach((k, i) => (U[k].value as THREE.Vector3).copy(keep[i]));
-      [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value] = keepS; SPRITE_UNIFORMS.uOcc.value.w = occ;
+      [U.uBendOn.value, U.uIndoor.value, U.uClearOn.value, U.uLobeK.value] = keepS; SPRITE_UNIFORMS.uOcc.value.w = occ; (U.uHerHole.value as THREE.Vector4).z = hole;
       SPRITE_UNIFORMS.uRight.value.copy(right); SPRITE_UNIFORMS.uUp.value.copy(up);
     }
     const uv = this.bulbs.geometry.getAttribute("aUv") as THREE.BufferAttribute;
