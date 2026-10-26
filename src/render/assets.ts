@@ -467,6 +467,13 @@ export class AssetLibrary {
     if (!a) this.ask({ kind: "creature", id: species, style: this.style });
     return a;
   }
+  /** The zoo (rules/zooMap.ts): a species near her asked for now, ahead of the whole zoo's art asked ahead (every island's trees,
+   *  creatures and legends: hundreds of sets), its plain look and its sleeping form. */
+  hurryCreature(species: string): void {
+    if (!this.creatures.has(species)) this.ask({ kind: "creature", id: species, style: this.style }, true);
+    const k = `nap-${species}`;
+    if (!this.creatures.has(k)) this.ask({ kind: "nap", id: k, species, style: this.style }, true);
+  }
   /** An area legend asleep (art/legends.js: sunk in its area's earth, mossed over, eyes shut; 2 breathing frames), or undefined (and asked for). */
   sleepArt(species: string): CreatureArt | undefined {
     const k = `sleep-${species}`, a = this.creatures.get(k);
