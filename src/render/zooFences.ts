@@ -15,6 +15,7 @@ import { reachAt } from "../rules/zooMap";
 import { ZOO_CONFIG } from "../rules/zoo";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
+import { SPRITE_UNIFORMS } from "./sprites";
 import type { ForestLight } from "./view";
 
 /** A section's width (m) and its art: TW x TH art pixels a tile, two tiles (plain, with a lamp) side by side. */
@@ -83,11 +84,12 @@ export function fenceAtlas(): Uint8Array {
 const VERT = /* glsl */ `
 attribute vec2 base; // the ground point under this corner (x, z)
 attribute vec3 st;   // along the section (0-1), up (0 at the foot, 1 at the top), its tile (0 plain, 1 with a lamp)
+uniform vec3 uUp;    // the sprites' up (render/sprites.ts): it stands as they do, facing the camera's pitch, so it reads at its full height
 varying vec3 vWorld;
 varying vec3 vSt;
 ${HEIGHT_VERT_GLSL}
 void main() {
-  vec3 w = vec3(base.x, groundH(base) + position.y, base.y);
+  vec3 w = vec3(base.x, groundH(base), base.y) + uUp * position.y;
   vWorld = w;
   vSt = st;
   gl_Position = clipOf(w);
@@ -147,7 +149,7 @@ export class ZooFences {
     g.setIndex(idx);
     const t = (this.texture = new THREE.DataTexture(fenceAtlas(), TW * 2, TH));
     t.magFilter = t.minFilter = THREE.NearestFilter; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true;
-    this.material = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, side: THREE.DoubleSide, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uStrip: { value: t }, uHer: { value: new THREE.Vector4(0, -1e4, 0, 3) } } });
+    this.material = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG, side: THREE.DoubleSide, uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uUp: SPRITE_UNIFORMS.uUp, uStrip: { value: t }, uHer: { value: new THREE.Vector4(0, -1e4, 0, 3) } } });
     this.mesh = new THREE.Mesh(g, this.material);
     this.mesh.name = "zooFences";
     this.mesh.frustumCulled = false; // (its corners' places are in base, not position)
