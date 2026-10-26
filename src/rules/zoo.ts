@@ -102,3 +102,17 @@ export function zooChartPlan(L: ZooLayout, cfg: ZooConfig = ZOO as ZooConfig): Z
   }
   return { ...base, n: L.n, cols: L.n, rows: base.rows, home: [L.homeCell[0], L.homeCell[1]], blocks, layout: L };
 }
+
+/** The zoo's way out (Ed, 2026-10-26: "Near the top of the ent circle there is a mini treehouse tree, about twice her height; if you go
+ *  up to it there is a use key prompt and 'exit' which takes her back"): the little treehouse oak just north of the Ent's circle (the far
+ *  side from the camera, so it hides none of it), and how near her feet must be to use it (m). */
+export const ZOO_EXIT_REACH = 4;
+export function zooExitSpot(map: { zoo?: { layout?: { home: { x: number; z: number } } } }): { x: number; z: number } | null {
+  const L = map.zoo?.layout;
+  return L ? { x: L.home.x, z: L.home.z - (ZOO_CONFIG.plaza ?? 60) - 7 } : null;
+}
+/** Is she on foot by the zoo's little treehouse (its use prompt shows; E takes her out of the zoo)? */
+export function atZooExit(map: { zoo?: { layout?: { home: { x: number; z: number } } } }, w: { x: number; z: number; mode: string; seated?: boolean }): boolean {
+  const s = zooExitSpot(map);
+  return !!s && w.mode === "ground" && !w.seated && Math.hypot(w.x - s.x, w.z - s.z) <= ZOO_EXIT_REACH;
+}

@@ -8,7 +8,7 @@ import { TUNING } from "./tuning";
 import { insideIsland, reachAt, type ZooIsland } from "./zooMap";
 import { knockOut } from "./knockout";
 import { deckOf } from "./treehouse";
-import { ZOO_CONFIG } from "./zoo";
+import { ZOO_CONFIG, zooExitSpot } from "./zoo";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
@@ -87,5 +87,26 @@ describe("the zoo's gold fences (Ed, 2026-10-26)", () => {
     expect(deckOf(g.map, g.tuning)).toBeNull();
     expect(g.witch.seated).toBeFalsy();
     expect(Math.hypot(g.witch.x - H.x, g.witch.z - H.z)).toBeLessThan(ZOO_CONFIG.plaza ?? 60);
+  });
+  it("E at the little treehouse north of the Ent's circle takes her out of the zoo; E anywhere else doesn't (Ed, 2026-10-26)", () => {
+    const g = zoo(["*"]), s = zooExitSpot(g.map)!, H = g.map.zoo!.layout!.home;
+    expect(s.z).toBeLessThan(H.z - (ZOO_CONFIG.plaza ?? 60)); // (north of the circle: its far side from the camera)
+    at(g, H.x + 20, H.z + 10); run(g, 0.1, { place: true }); run(g, 0.1);
+    expect(g.zooExit).toBeUndefined();
+    at(g, s.x + 1, s.z + 1); run(g, 0.1, { place: true });
+    expect(g.zooExit).toBeDefined();
+  });
+  it("walking or flying on out against the zoo's edge, over the waterfall, takes her out of it too (Ed, 2026-10-26)", () => {
+    // (with the page's zoo beach, two metres of sand and no stargazing: app/linkParams.ts)
+    const B = TUNING.beach!, T = { ...TUNING, beach: { ...B, width: 2, vary: B.vary && { ...B.vary, amp: 0, min: 2 } }, map: { ...TUNING.map!, shape: "zoo" as const, island: "", islandAreas: 0, found: ["*"] } };
+    for (const fly of [false, true]) {
+      const g = newGame(7, T), L = g.map.zoo!.layout!; g.clock.paused = false;
+      at(g, L.home.x, L.home.z - (L.reach + 20));
+      if (fly) g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+      run(g, 1, { moveZ: -1 });
+      expect(g.zooExit).toBeUndefined(); // (not yet: still on her way)
+      run(g, 40, { moveZ: -1 });
+      expect(g.zooExit).toBeDefined();
+    }
   });
 });

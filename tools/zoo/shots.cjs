@@ -2,7 +2,7 @@
 // asleep in its circle at an island's middle, by an undiscovered island's lake (its sigil faint on the water), at the edge where the
 // water pours off into space, on the Ent's plaza, and from the treetops over the streets. Each waits for its art (the view's trees,
 // the art queue empty) or WAIT seconds. Fails on a page error.
-//   npm run build && node tools/zoo/shots.cjs [out] [dist]   WAIT (s, 120), SIZE (1280x720), ONLY (names: fence,legend,...)
+//   npm run build && node tools/zoo/shots.cjs [out] [dist]   WAIT (s, 120), SIZE (1280x720), ONLY (names: fence,legend,exit,leave-tree,leave-edge,...)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/zoo/shots", distArg] = process.argv.slice(2);
@@ -46,6 +46,9 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await shoot(p, "legend", [L.I.x, L.I.z + 34, "ground"]); // (south of its circle at the middle, its legend asleep in it)
     await shoot(p, "plaza", [L.home.x, L.home.z + 18, "ground"]); // (in the Ent's circle at the middle, its World Tree carving)
     await shoot(p, "plaza-above", [L.home.x, L.home.z + 40, "treetop"]);
+    // (its little treehouse, the way out, just north of the circle: from a way off, then at it with its "exit" prompt)
+    await shoot(p, "exit-far", [L.home.x + 3, L.home.z - 60 + 10, "ground"]);
+    await shoot(p, "exit", [L.home.x + 1.5, L.home.z - 67 + 3, "ground"]);
     await shoot(p, "above", [L.I.x, L.I.z + L.I.south + 40, "treetop"]);
     await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 + 4), "ground"]); // (on the water's band by the north edge, the lip and the fall ahead)
     await shoot(p, "edge-above", [L.home.x, L.home.z - (L.reach + 120 - 10), "treetop"]);
@@ -57,6 +60,22 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await shoot(q, "lake", [K.x, K.z + K.most + 18, "ground"]);
     await shoot(q, "lake-above", [K.x, K.z + K.most + 30, "treetop"]);
     await q.close();
+    // (the way out: E at the little treehouse, then flying on out past the edge; a ?zoo link with no night under it goes to the
+    // game's ordinary start, the same page without ?zoo)
+    for (const [name, how] of [["leave-tree", "tree"], ["leave-edge", "edge"]]) {
+      if (ONLY && !ONLY.includes(name)) continue;
+      const r = await load("zoo&seed=7");
+      await r.waitForTimeout(4000);
+      const H = await r.evaluate(() => window.witch.game.map.zoo.layout.home), R = await r.evaluate(() => window.witch.game.map.zoo.layout.reach);
+      if (how === "tree") { await r.evaluate(([x, z]) => { const Wb = window.witch.game.witches[0]; Wb.body = { ...Wb.body, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; }, [H.x, H.z - 67 + 2]); await r.waitForTimeout(1500); await r.keyboard.press("KeyE"); }
+      else { await r.evaluate(([x, z]) => { const Wb = window.witch.game.witches[0]; Wb.body = { ...Wb.body, x, z, vx: 0, vz: 0, seated: false, mode: "ground", lift: 0 }; }, [H.x, H.z - (R + 120 - 12)]); await r.keyboard.down("KeyW"); }
+      await r.waitForTimeout(how === "tree" ? 300 : 3000);
+      await r.screenshot({ path: path.join(out, `${name}-fade.png`) });
+      await r.waitForURL(u => !/[?&]zoo\b/.test(String(u)), { timeout: 30000 }).catch(() => {});
+      const url = r.url(); log(name, "→", url);
+      if (/[?&]zoo\b/.test(url)) errors.push(`${name}: still in the zoo (${url})`);
+      await r.close();
+    }
   } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); process.exit(1); }
 })().catch(e => { console.error(e); process.exit(1); });

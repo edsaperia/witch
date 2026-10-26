@@ -54,6 +54,7 @@ import { LoanIcon } from "./render/loanIcon";
 import { FindsPanel } from "./ui/findsPanel";
 import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
+import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
 import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
 import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
@@ -104,6 +105,7 @@ if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
 shotParams(params); shotParams(bootLink);
 // (its controls, src/zoo/panel.ts, loaded only for it, once the game is made)
 let zooPanel: import("./zoo/panel").ZooPanel | null = null;
+let zooLeaving = false;
 let bootSeed = parseSeed(params.get("seed"));
 if (bootSeed === null) {
   bootSeed = Math.floor(Math.random() * 1000000);
@@ -1112,6 +1114,7 @@ function frame(now: number): void {
   hud.losses();
   hud.clock();
   zooPanel?.update(); // (the zoo's block bar: src/zoo/panel.ts)
+  if (game.zooExit !== undefined && !zooLeaving) { zooLeaving = true; leaveZoo(); } // (her way out of the zoo: its little treehouse, or its edge; app/zooExit.ts)
   // Behind the start screen, a frame every 0.3 s is plenty: the CPU goes to drawing the forest's
   // art in the background instead (and so slow a frame doesn't count against the scenery budget).
   // (arriving: the flight's shot on the view, every frame; landed, the night starts)
