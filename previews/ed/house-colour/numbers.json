@@ -1,0 +1,6 @@
+{
+ "_": "#1175, seed 123, 960x600; mean HSV saturation of the frame (p90 for rooms); slow = uSlow (x, z, radius, grey strength w)",
+ "telescope": { "30": [0.533, 0.584], "120": [0.531, 0.663], "210": [0.482, 0.532], "300": [0.564, 0.584], "_": "[before, after]; uSlow.w 1 before, 0 after" },
+ "parlour": { "before": {"meanSat": 0.668, "p90": 0.789, "slow": [0,0,0,1]}, "after": {"meanSat": 0.668, "p90": 0.789, "slow": [0,0,0,0]} },
+ "terrace": { "before": {"meanSat": 0.675, "p90": 0.804, "slow": [0,0,0,1]}, "after": {"meanSat": 0.681, "p90": 0.804, "slow": [0,0,0,0]} }
+}
