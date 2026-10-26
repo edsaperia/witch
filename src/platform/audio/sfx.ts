@@ -91,6 +91,8 @@ export class Sfx {
   cleared(pan = 0, near = 1): void { chimes.cleared(this.k, pan, near); }
   /** A sigil refused (too near one already down). */
   nope(pan = 0): void { chimes.nope(this.k, pan); }
+  /** Her fall off the Terrace hitting the ground, unseen below (chimes.ts thud). */
+  thud(pan = 0): void { chimes.thud(this.k, pan); }
   /** Her phone's alarm ringing once (the wake-up: chimes.ts alarm). */
   alarm(): void { chimes.alarm(this.k); }
   /** A 💌 refused by an enraged animal: its whine (chimes.ts refused). */

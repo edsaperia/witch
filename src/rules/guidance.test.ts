@@ -1,6 +1,7 @@
 // Guidance pins (rules/guidance.ts; Ed's list, 2026-10-26): one at a time, in order: the bed after a lost night; her first night's
-// dressing, station by station; the invitations desk and the lathe (Lima's pickups, skipped till they land); something new till
+// dressing, station by station; the invitations desk and the lathe (her night's kit, rules/kit.ts); something new till
 // she's been to it; the map table for an island found she hasn't seen; the decks. Each gone once it's done, hidden at its target.
+import { newKit, takeBroom, takeInvites } from "./kit";
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
@@ -60,8 +61,14 @@ describe("guidance pins", () => {
     expect(guidanceOf(g, 0, emptyGuide(), [], hooks)).toEqual({ kind: "lathe", target: { object: "lathe" } });
     broom = true;
     expect(guidanceOf(g, 0, emptyGuide(), [], hooks)?.kind).toBe("decks");
-    // (till Lima's land: both done)
+    // (the hooks are her night's kit, rules/kit.ts: a night with none has both; one that waits for her spell, each till she takes it)
     expect(GUIDANCE_HOOKS.invitationsReady(g, 0) && GUIDANCE_HOOKS.broomTaken(g, 0)).toBe(true);
+    g.witches[0].kit = newKit(true);
+    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "desk", target: { object: "invitations" } });
+    takeInvites(g.witches[0]);
+    expect(guidanceOf(g, 0, emptyGuide(), [])).toEqual({ kind: "lathe", target: { object: "lathe" } });
+    takeBroom(g, g.witches[0]);
+    expect(guidanceOf(g, 0, emptyGuide(), [])?.kind).toBe("decks");
   });
 
   it("something new, newest first, till she's been to it; then the map table for an island she hasn't seen, till she has", () => {

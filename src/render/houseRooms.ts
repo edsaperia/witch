@@ -17,7 +17,7 @@ import { alongRay } from "./view/home";
 import { standing, type FloorPixels } from "./houseArt";
 import { paintFloorOff } from "./houseFloor";
 import type { PlanMap } from "./crown";
-import { bakePieceHere, furnitureState, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
+import { bakePieceHere, furnitureState, furnitureStates, pieceArt, standing as facing, DRAWN_ELSEWHERE, FURNITURE, type FurnitureArt } from "./houseFurniture";
 import { WorkshopArt } from "./workshopArt";
 import { broomWhere, stationOf } from "../rules/stations";
 import * as Art from "../../art/generator.js";
@@ -37,7 +37,7 @@ type V3 = { x: number; y: number; z: number };
  *  within it, `depth`: how far south its nearest point is in the world (the far drawn first). */
 interface Quad { p: [number, number, number][]; rgb: [number, number, number]; obj?: string; layer: number; depth: number }
 
-const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], pile: [0.32, 0.62, 0.45] };
+const KIND: Record<HouseObject["use"]["kind"], [number, number, number]> = { creator: [0.32, 0.62, 0.45], hats: [0.32, 0.62, 0.45], zoo: [0.32, 0.62, 0.45], telescope: [0.32, 0.62, 0.45], bed: [0.82, 0.62, 0.3], say: [0.48, 0.42, 0.56], chart: [0.32, 0.62, 0.45], instrument: [0.62, 0.36, 0.7], invites: [0.32, 0.62, 0.45], pile: [0.32, 0.62, 0.45] };
 /** How long a placeholder's line stays up (s). */
 const SAY_FOR = 3.5;
 
@@ -182,6 +182,8 @@ export class HouseRoomsView {
   /** The pieces asked of the art workers (render/housePieces.ts), by key; those that came back, waiting for their meshes; and those
    *  to bake here instead (no workers: the tests), a frame each. */
   private readonly asked = new Set<string>();
+  /** Each object's piece last shown (its key), shown on while a new state's piece is still being baked. */
+  private readonly shownState = new Map<string, string>();
   private readonly came: { key: string; art: FurnitureArt | null }[] = [];
   private readonly toBakeHere: string[] = [];
   /** The light round the piece she can use (render/useGlow.ts), drawn just after it. */
@@ -329,7 +331,11 @@ export class HouseRoomsView {
     const wanted: { key: string; x: number; z: number }[] = [];
     for (const o of HOUSE_ROOMS.objects) if (FURNITURE.has(o.id)) wanted.push({ key: pieceKey(o), x: o.x, z: o.z });
     for (const r of DECOR_ROOMS) wanted.push({ key: `decor:${r.id}`, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 });
-    for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => Math.hypot(a.x - here.x, a.z - here.z) - Math.hypot(b.x - here.x, b.z - here.z))) {
+    // (and every other state a piece can be in, after the rest: rules/kit.ts's desk and lathe, swapped at once when she takes from them)
+    const spare = HOUSE_ROOMS.objects.filter(o => FURNITURE.has(o.id)).flatMap(o => furnitureStates(o.id).map(st => ({ key: `${o.id}|${st}`, x: o.x, z: o.z })).filter(q => !wanted.some(w => w.key === q.key)));
+    const near = (a: { x: number; z: number }) => Math.hypot(a.x - here.x, a.z - here.z);
+    wanted.push(...spare);
+    for (const q of wanted.filter(q => !this.asked.has(q.key)).sort((a, b) => (spare.includes(a) ? 1e6 : 0) + near(a) - (spare.includes(b) ? 1e6 : 0) - near(b))) {
       this.asked.add(q.key);
       const p = v.assets.oneOff({ kind: "housePiece", id: `${q.key}@${ppm.toFixed(4)}:${pitch.toFixed(4)}`, style: v.assets.style, ppm, pitch })
         .then(r => { this.came.push({ key: q.key, art: r.housePiece ? pieceArt(r.housePiece) : null }); }, () => { this.toBakeHere.push(q.key); });
@@ -356,7 +362,10 @@ export class HouseRoomsView {
     const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
-      mesh.visible = !o || k === pieceKey(o); // (a piece in another state than now's, hidden; a room's dressing always)
+      // (a piece in another state than now's, hidden, unless now's isn't in yet: the last one shown stays till it is; a room's dressing always)
+      const cur = o ? pieceKey(o) : k;
+      if (o && this.pieces.has(cur)) this.shownState.set(id, cur);
+      mesh.visible = !o || k === (this.pieces.has(cur) ? cur : this.shownState.get(id) ?? cur);
       if (!mesh.visible) continue;
       // (corners in the picture's pixels from its floor's middle: top-left, top-right, bottom-right, bottom-left; flipY off, so v 0 is its top)
       [[-art.ox, -art.oy], [art.w - art.ox, -art.oy], [art.w - art.ox, art.h - art.oy], [-art.ox, art.h - art.oy]].forEach(([dx, dy], i) => { const p = pxWorld(x, z, dx, dy); pos[i * 3] = p.x; pos[i * 3 + 1] = p.y; pos[i * 3 + 2] = p.z; });

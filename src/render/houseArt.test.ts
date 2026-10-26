@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { floorFrame, onFloor, onTakeoff, paintFloorPixels, paintFloorRows } from "./houseArt";
+import { CIRCLE, circleMark, floorFrame, onFloor, terraceCircle, onTakeoff, paintFloorPixels, paintFloorRows } from "./houseArt";
 import { HOUSE_ROOMS, type HouseConfig } from "../rules/houseRooms";
 import { fbm, field, inRoom, outline, roomAt } from "../../config/house/shape.js";
 
 // The floor as it was painted before the boot freeze's fix (2026-10-25): a whole pass over the house for each part, the field with its
-// parts and roomAt at every pixel. The one-pass painter must give the same pixels.
+// parts and roomAt at every pixel (and the Terrace's magic circle since, 2026-10-26). The one-pass painter must give the same pixels.
 const FORE = Math.sin((24 * Math.PI) / 180);
 const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]], ring: [62, 36, 22], bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]], moss: [[46, 66, 38], [70, 96, 50]], locked: [[52, 40, 34], [64, 50, 40]] };
 const hash = (x: number, y: number) => { const s = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return s - Math.floor(s); };
@@ -23,6 +23,7 @@ function paintBefore(H: HouseConfig, mpp: number, part: "terrace" | "rest"): Uin
   const S = H.shape, [ox, oz] = S.noiseAt, pad = 2;
   const x0 = Math.min(...H.rooms.map(r => r.x0)) - pad, x1 = Math.max(...H.rooms.map(r => r.x1)) + pad, z0 = Math.min(...H.rooms.map(r => r.z0)) - pad, z1 = Math.max(...H.rooms.map(r => r.z1)) + pad;
   const W = Math.ceil((x1 - x0) / mpp), Hh = Math.ceil((z1 - z0) / mpp), px = new Uint8ClampedArray(W * Hh * 4);
+  const circ = terraceCircle(H);
   const set = (o: number, c: number[]) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   for (let j = 0; j < Hh; j++) for (let i = 0; i < W; i++) {
     const x = x0 + (i + 0.5) * mpp, z = z0 + (j + 0.5) * mpp, o = (j * W + i) * 4, parts: P[] = [], d = field(S, x, z, false, parts);
@@ -31,6 +32,8 @@ function paintBefore(H: HouseConfig, mpp: number, part: "terrace" | "rest"): Uin
     if (d > -0.45 && onTakeoff(H, x, z)) { set(o, WOOD.floor[3]); continue; }
     if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
     if (H.rooms.find(r => r.id === roomAt(S, x, z)?.id)?.locked) { set(o, WOOD.locked[hash(i, j) < 0.5 ? 0 : 1]); continue; }
+    const m = part === "terrace" && circ ? circleMark((x - circ.x) / circ.r, (z - circ.z) / circ.r) : null;
+    if (m) { set(o, CIRCLE[m]); continue; }
     const gr = grain(mx, mz, parts) + (fbm(mx * 0.9, (mz / FORE) * 0.9) - 0.5) * 1.1, f = gr - Math.floor(gr);
     if (f < 0.09) { set(o, WOOD.ring); continue; }
     const lit = fbm(mx * 0.12 + 7, (mz / FORE) * 0.12) * 0.9 + (1 - f) * 0.25;
