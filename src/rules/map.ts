@@ -2,7 +2,7 @@
 // shares; the playable ones a circle of them round home (Ed, 2026-10-06; or, ?shape=square, the
 // old mapAreas x mapAreas square), then a buffer ring of forest she can fly over but where nothing
 // happens, then a margin of areas past it so the forest never visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
-import { legendRadius, radiusToFit } from "./legendFit";
+import { legendRadius } from "./legendFit";
 import rawTypes from "../../config/area-types.json";
 import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
@@ -542,7 +542,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const pool = [...new Set(rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort();
     const order = [...pool.filter(k => early.includes(k)), ...pool.filter(k => !early.includes(k)).sort((a, b) => hash2(pool.indexOf(a), 3, shapeSeed + 6153) - hash2(pool.indexOf(b), 3, shapeSeed + 6153))];
     order.forEach((kind, ki) => {
-      const want = Math.min(areaMax, Math.max(LC0.species[kind] ?? LC0.radius, radiusToFit(kind, LC0)));
+      const want = legendRadius(kind, LC0, areaMax);
       let best: { k: string; pair: string; room: number; h: number } | null = null;
       for (const [x, y] of others) {
         const pair = cellKey(x, y);
@@ -911,7 +911,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     const la = legendAreaOfPair.get(cellKey(cx, cy));
     if (la) {
       const [lx, ly] = la.split(",").map(Number), species = AREA_TYPES[typeOf(cx, cy)].creature, site = siteOf(lx, ly), a0 = hash2(lx, ly, seed + 893) * Math.PI * 2;
-      const r0 = Math.max(LC.species[species] ?? LC.radius, Math.min(areaMax, radiusToFit(species, LC)));
+      const r0 = legendRadius(species, LC, areaMax);
       const stones = [...(neighbours.get(la) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y) && !(x === centreCell[0] && y === centreCell[1])).map(([x, y]) => soundsystemSpot(x, y));
       const B = map.bounds, fits = (x: number, z: number, r: number) => {
         if (!isInside(B, x, z, 15) || !inCell(x, z, lx, ly)) return false;
