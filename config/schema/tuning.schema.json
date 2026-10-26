@@ -10585,7 +10585,7 @@
                   ],
                   "additionalProperties": false
                 },
-                "stream": {
+                "mangrove-channel": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11054,7 +11054,7 @@
                 "bog",
                 "wetland",
                 "beaver-pond",
-                "stream",
+                "mangrove-channel",
                 "deadwood",
                 "ancient",
                 "log-pile",

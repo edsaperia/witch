@@ -2268,11 +2268,11 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `light.spooky.areas.beaver-pond.haze` | number | 0 to … |
 | `light.spooky.areas.beaver-pond.mist` | number | 0 to … |
 | `light.spooky.areas.beaver-pond.gradeHue` | number | 0 to … |
-| `light.spooky.areas.stream.hazeHue` | number | 0 to … |
-| `light.spooky.areas.stream.hazeSat` | number | 0 to … |
-| `light.spooky.areas.stream.haze` | number | 0 to … |
-| `light.spooky.areas.stream.mist` | number | 0 to … |
-| `light.spooky.areas.stream.gradeHue` | number | 0 to … |
+| `light.spooky.areas.mangrove-channel.hazeHue` | number | 0 to … |
+| `light.spooky.areas.mangrove-channel.hazeSat` | number | 0 to … |
+| `light.spooky.areas.mangrove-channel.haze` | number | 0 to … |
+| `light.spooky.areas.mangrove-channel.mist` | number | 0 to … |
+| `light.spooky.areas.mangrove-channel.gradeHue` | number | 0 to … |
 | `light.spooky.areas.deadwood.hazeHue` | number | 0 to … |
 | `light.spooky.areas.deadwood.hazeSat` | number | 0 to … |
 | `light.spooky.areas.deadwood.haze` | number | 0 to … |

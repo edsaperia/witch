@@ -22,6 +22,8 @@
 //   - a freed tree, prop or ground no longer used anywhere: say so in the PR, for the temperate PR to rehome
 export const AREA_RENAMES = {
   "holly-thicket": "thorn-scrub",
+  stream: "mangrove-channel",
+  heronry: "mangrove-heronry",
 };
 
 /** Today's id for an area id, old or new (a rename of a rename followed to its end). */
