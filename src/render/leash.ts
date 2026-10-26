@@ -52,6 +52,9 @@ const PARTY_HAT = [[1, 0.35, 0.72], [0.35, 0.95, 1], [1, 0.85, 0.3], [0.7, 0.45,
 export class LeashView {
   /** Her seat behind the decks, as drawn (the view sets it): where she sparkles back in after a knockout. */
   seatAt: { x: number; y: number; z: number } | null = null;
+  /** How far her decks are slid this frame with the house's drawing, off the Terrace (render/view/home.ts placeTreehouse): the tempo
+   *  over them goes with them. */
+  seatSlide = { x: 0, y: 0, z: 0 };
   canvas = document.createElement("canvas");
   tex: THREE.CanvasTexture;
   slots = new Map<string, number>();
