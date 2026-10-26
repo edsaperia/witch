@@ -10,8 +10,9 @@
 //   3. every night, before the party: the invitations desk, then the lathe (her broom), each until it's done tonight (her night's
 //      kit, rules/kit.ts, through GUIDANCE_HOOKS; a night with no kit, the tools' and the bots', has both, so those pins never show);
 //   4. something new in the treehouse (a find), each until she's been to where it is, newest first;
-//   5. the map table, while there's an island found she hasn't seen on the chart;
-//   6. the decks, until the party spell's cast.
+//   5. the decks, until the party spell's cast.
+// The map table's 🧭 is never shown during the night, only once it's over (Ed, 2026-10-26: "you only see 🧭 when the party is over
+// or if the night is won, and there are islands you haven't visited yet. You don't see it all night").
 // The party's own pointers (render/view/hud.ts) are unchanged: this is about the house, so its pin shows only while she's in the
 // treehouse (the bed's, after a lost night, anywhere), and goes while she's at its target, where its tag says what to do. Each
 // witch has her own: guidanceOf is per witch, from the night and what her browser keeps (GuideSave, app/guideSave.ts).
@@ -33,11 +34,10 @@ export interface Guide { kind: GuideKind; target: GuideTarget }
 /** Something new in the treehouse she hasn't been to: a find's kind and the object it's at. */
 export interface NewThing { kind: "hat" | "part" | "wearable"; id: string; at: string }
 
-/** What her browser keeps for guidance (app/guideSave.ts): the new things she hasn't been to (oldest first), and the islands
- *  found she has seen on the chart. */
-export interface GuideSave { unseen: NewThing[]; chartSeen: string[] }
+/** What her browser keeps for guidance (app/guideSave.ts): the new things she hasn't been to (oldest first). */
+export interface GuideSave { unseen: NewThing[] }
 
-export const emptyGuide = (): GuideSave => ({ unseen: [], chartSeen: [] });
+export const emptyGuide = (): GuideSave => ({ unseen: [] });
 
 /** The pickups the getting-ready steps wait on: her night's kit (rules/kit.ts), tonight's invitations taken from the desk and her
  *  broom taken off the lathe. */
@@ -53,8 +53,9 @@ export const DRESS_ORDER: readonly [PileSlot, string][] = [["top", "wardrobe"], 
 /** How near the decks' seat she's at them (m): rules/wakeUp.ts atDecks's reach. */
 const AT_DECKS = 2.5;
 
-/** What's in front of her, `w`'s pin, or null (nothing to guide). `found` the islands found (app/chartSave.ts). */
-export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly string[], hooks = GUIDANCE_HOOKS, unvisited: readonly string[] = []): Guide | null {
+/** What's in front of her, `w`'s pin, or null (nothing to guide). `unvisited` the islands found she can sail to and hasn't been to
+ *  (app/chartSave.ts unvisited). */
+export function guidanceOf(g: Game, w: number, save: GuideSave, unvisited: readonly string[] = [], hooks = GUIDANCE_HOOKS): Guide | null {
   // The night over, lost (the afterparty) or won (its finale settled: rules/win.ts), home: the map table while there's an island
   // found she can sail to and hasn't been to (`unvisited`: app/chartSave.ts unvisited; Ed, 2026-10-26: "No 💤 if there are new
   // islands, just 🧭 towards islands the player can go to and hasn't visited yet"), even once she's looked at the chart; then the bed.
@@ -69,7 +70,6 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly 
   if (!hooks.broomTaken(g, w)) return { kind: "lathe", target: { object: "lathe" } };
   const n = save.unseen[save.unseen.length - 1];
   if (n) return { kind: n.kind, target: { object: n.at } };
-  if (found.some(i => !save.chartSeen.includes(i))) return { kind: "chart", target: { object: "mapTable" } };
   const d = deckOf(g.map, g.tuning);
   const at = d?.house?.desk ?? d?.seat; // (over the decks' desk in the house; her seat behind it is where she's at them)
   return at ? { kind: "decks", target: { x: at.x, z: at.z } } : null;

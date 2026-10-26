@@ -1,6 +1,6 @@
 // The sea chart's 🧭 (Ed, 2026-10-26: "the 🧭 to point at those islands on the chart"): the guidance pins' own pin (render/pins.ts
 // look: the HUD's amber ring, the emoji in pixels, icons only) over an island she's found and not yet been to, its tip on the
-// island; one island at a time (app/chartView.ts picks which). Off the canvas, it waits at the canvas's edge pointing the way.
+// island; one for each such island (app/chartView.ts). Off the canvas, it waits at the canvas's edge pointing the way.
 // The chart's DOM only: where the island is comes from SeaChart.screenOf.
 import { N, PIN_TIP, PixelCue, calm, paintPin } from "../indicator";
 import { MAP } from "../view/guidance";

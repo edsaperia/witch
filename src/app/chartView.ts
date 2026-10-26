@@ -138,8 +138,8 @@ const HTML = `
 
 
 /** Mount the sea chart in `host` (which it fills: give it a size and a position). */
-/** The islands the chart's 🧭 points at, in turn: the new ones (ChartIsland fresh), nearest `from` (the island she's on) first. */
-export function chartPinQueue(islands: readonly ChartIsland[], from: string): string[] {
+/** The islands the chart's 🧭s point at, one each: the new ones (ChartIsland fresh), nearest `from` (the island she's on) first. */
+export function chartPinIslands(islands: readonly ChartIsland[], from: string): string[] {
   const o = islands.find(i => i.id === from) ?? { x: 0, y: 0 };
   return islands.filter(i => i.fresh).sort((a, b) => Math.hypot(a.x - o.x, a.y - o.y) - Math.hypot(b.x - o.x, b.y - o.y)).map(i => i.id);
 }
@@ -192,10 +192,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
 
   if (mini) chart.orbit = 0.12;
   let save = opts.save ?? loadSave(), islands: ChartIsland[] = [];
-  // The 🧭 over the islands she's found and not been to (Ed, 2026-10-26), one at a time, nearest first; one she chooses is passed
-  // to the next (render/chart/chartPin.ts). Not on the map table's miniature.
-  const pin = mini ? null : new ChartPin(root);
-  let pinQueue: string[] = [];
+  // A 🧭 over each island she's found and not been to (Ed, 2026-10-26: "you see one per unvisited island"; render/chart/chartPin.ts),
+  // till she's been there. Not on the map table's miniature.
+  const pins = new Map<string, ChartPin>();
   let sailAny = (() => { try { return localStorage.getItem(SAIL_ANY) === "1"; } catch { return false; } })();
   const worldNow = () => opts.world ?? save.world;
   /** The island she's on (in the world shown): choosing it takes her back to the night, not a new one. */
@@ -329,7 +328,9 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
     islands = [one("home", islandCoast(coastSpec(homeIsland(w, knownKinds(save.found))), TUNING.map?.coast).radii, islandSigil("home"))];
     for (const k of KIND_NAMES) islands.push(one(k, islandCoast(coastSpec(islandOf(k, w)!), TUNING.islands?.coast).radii, k));
     chart.set(islands, save.voyages);
-    pinQueue = chartPinQueue(islands, opts.here?.island ?? save.voyages.at(-1)?.to ?? "home");
+    for (const p of pins.values()) p.dispose();
+    pins.clear();
+    if (!mini) for (const id of chartPinIslands(islands, opts.here?.island ?? save.voyages.at(-1)?.to ?? "home")) pins.set(id, new ChartPin(root));
     waiting.clear(); ranked();
     outlines();
     const n = save.found.filter(k => !isPlaceholder(k)).length;
@@ -343,7 +344,6 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   function choose(id: string | null, instant = false, aim = true): void {
     chart.select(id, instant); ranked();
     if (aim) bakeFor(id); // (her choice: drawn ahead; the chart's own first selection isn't hers, likely() is)
-    if (aim && id) pinQueue = pinQueue.filter(k => k !== id); // (the 🧭 on to the next new island)
     if (id && worker && !islands.find(i => i.id === id)?.outline && !waiting.has(id)) worker.postMessage({ first: id } satisfies OutlineAsk);
     // and its fine grid for the close zoom, made next (only the chosen island's: about 0.5 to 2 s)
     if (id && !mini && !((waiting.get(id) ?? islands.find(i => i.id === id)?.outline) as OutlineDone | undefined)?.detail) detail(id);
@@ -467,7 +467,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   return {
     canvas, chart,
     islands: () => islands,
-    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); pin?.update(pinQueue[0] && !chart.flying && !left ? chart.screenOf(pinQueue[0]) : null, canvas.getBoundingClientRect(), time); },
+    update(dt, time) { if (!mini) pad(dt); holdFrame(); wrapOne(); chart.frame(dt, time); const box = canvas.getBoundingClientRect(); for (const [id, p] of pins) p.update(!chart.flying && !left ? chart.screenOf(id) : null, box, time); },
     resize, choose,
     dispose() {
       disposed = true; waiting.clear();
@@ -475,7 +475,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
       if (poll) { clearInterval(poll); poll = null; }
       worker?.terminate(); worker = null;
       listening.abort();
-      pin?.dispose();
+      for (const p of pins.values()) p.dispose();
       if (mini) chart.dispose(); else releaseSeaChart(chart); // (the full chart kept for the next opening)
       root.remove();
     },

@@ -410,13 +410,13 @@ function lendFind(kind: FindKindId, id: string): void {
 /** Her guidance (rules/guidance.ts): what's kept of it on this browser (app/guideSave.ts), her pin, and the islands found (the
  *  chart's save, read a second at most). */
 const guide = loadGuide(), guidePin = new GuidePin(view);
-let chartFound: { at: number; found: string[]; unvisited: string[] } = { at: -Infinity, found: [], unvisited: [] };
+let chartFound: { at: number; unvisited: string[] } = { at: -Infinity, unvisited: [] };
 /** Her guidance pin this frame (rules/guidance.ts): what's next, over it, while she's in the treehouse and not at it. */
 function stepGuide(now: number): void {
   const { game } = N();
   if (seeGuide(game, 0, guide)) storeGuide(guide);
-  if (now - chartFound.at > 1000) { const s = loadSave(); chartFound = { at: now, found: s.found, unvisited: unvisited(s, N().tuning.map?.island ?? "home") }; } // (where she is counts as been to: app/chartSave.ts unvisited)
-  const G = guidanceOf(game, 0, guide, chartFound.found, GUIDANCE_HOOKS, chartFound.unvisited);
+  if (now - chartFound.at > 1000) chartFound = { at: now, unvisited: unvisited(loadSave(), N().tuning.map?.island ?? "home") }; // (where she is counts as been to: app/chartSave.ts unvisited)
+  const G = guidanceOf(game, 0, guide, chartFound.unvisited);
   guidePin.update(G, !!G && guideShows(game, 0, G) && !atGuide(game, 0, G) && !creator.open && !chartOpen() && !sailing);
 }
 /** The loan settled as she sleeps (the bed, a sail; Ed, 2026-10-24): the night won, kept for good (its kind's own save, and what she
@@ -1072,7 +1072,6 @@ function frame(now: number): void {
   if (!bot) stepGuide(now);
   // The tables (the map table's sea chart): E at one brings its chart up, as the stations' panels (Ed's playtest, 2026-10-26).
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) { guide.chartSeen = loadSave().found; storeGuide(guide); chartFound.at = -Infinity; } // (the islands found, seen: her guidance's map-table pin goes)
   if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
   // The night's end (Ed, 2026-10-26: "Remove the end cards"): no card, won or lost; the guidance pins lead her home (rules/guidance.ts).
   // The night won (rules/win.ts): the islands its woken legends showed recorded on the sea chart (app/chartSave.ts), once, as its
