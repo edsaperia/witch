@@ -20,3 +20,13 @@ Ed: "Please remove words from the station tags. We used to have little keys to s
 - `v2-2-wardrobe-open.png`: E has opened the wardrobe; there's no keycap while it's open. E again closes it. Space or Enter (✕ on a pad) chooses, as the menu's footer says.
 - `v2-3-drum-kit-lit.png`: the drum kit with its E keycap.
 - `v2-4-shoe-rack-pad.png`: on a pad, the shoe rack with the □ keycap.
+
+## v3: round pad buttons, E leaves the instruments, no walking off
+
+Ed: "square and X can appear on a circular button"; "instruments: leave with E"; "Actually I think walking away shouldn't work - then we can use the movement keys as buttons in the menus".
+
+- `v3-sheet.png`: the frames below on one page, with close-ups of the round □ and the hint line.
+- `v3-1-wardrobe-lit.png`: the E keycap alone over the lit wardrobe.
+- `v3-2-wardrobe-open.png`: open. She stands still. The hint line is keycaps: W A S D and the arrows move the focus; Space, Enter or the round ✕ choose; E or the round □ close it.
+- `v3-3-drum-kit-open.png`: the drum kit. E leaves it, so its pad in the grid shows ⏏. The foot reads E, □, Esc ⏏.
+- `v3-4-shoe-rack-pad.png`: on a pad, the shoe rack with a round □ face button.
