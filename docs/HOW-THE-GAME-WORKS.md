@@ -28,8 +28,8 @@ You're a witch throwing a rave in a magical forest. The party starts at your hom
      - The **curtains** stay shut until the island is ready (its art drawn once). E there says "not yet" until then; after that, E opens them.
      - Until the curtains open she can't leave the bedroom, the bed doesn't end the night, and no key casts the spell. Nothing gets her ahead of the build.
    - **The DJ intro** (Ed's decision 2) replaces the party spell before the party has started. Out through the house to her decks, she presses **E** behind them: she's seated, the spell is cast there, and its 6.5 s needle-drop routine plays. As she steps off the decks the party is on. After a knockout, everything is as it was.
-   - **Later loads** (once she's been through it all on this browser): the shorter wake-up. Any key or move gets her straight up, no stretch, and the mirror waits to be used. The curtains still wait on the build.
-   - **After the bed:** she sleeps in the dark while the next island is made, then wakes in her bedroom with the shorter wake-up, the curtains waiting on that island's build.
+   - **Every morning is the same wake-up** (Ed, 2026-10-26, replacing the shorter one he'd chosen for later loads and after the bed): the alarm rings, E snoozes it, a move starts the 3-second stretch and then she's up. Only a game's first morning (a fresh load, no night played yet) differs: no pile of last night's clothes, her hat on the hats' floor, and her dressing guided. The dressing table's mirror is marked only on her first-ever visit.
+   - **After the bed:** she sleeps in the dark while the next island is made, then wakes in her bedroom, the same wake-up.
    - **Controls** live on the pause page (a ❔ Controls button while paused). What's new and Options are in the chart's corner, and the zoo is reached through the bestiary's book.
    - Rooms are all lit alike; no path is lit to the decks.
    - Any other island (on a later game) starts its night in place, as a sail does. Nothing is recorded on the chart, since the boot's night under it was never played.

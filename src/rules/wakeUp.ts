@@ -1,15 +1,15 @@
 // The new opening's wake-up (Ed, 2026-10-20; previews/ed/opening-mock/ on claude/ed-shots, beats 3a–5a): the chart's dive lands
 // in her bedroom (rules/opening.ts) with her in bed, her phone's alarm ringing in the dark. E snoozes it, five seconds a time,
 // as often as she likes; moving (WASD, a rise) gets her up: she stretches, then stands beside the bed and walks (WASD, taught in
-// a safe room). The first time she comes to the dressing table it's marked ("mirror"; E there opens it, her skin, hair and earrings, as every station since Ed's playtest of 2026-10-26). Up, the
+// a safe room). One wake-up every morning (Ed, 2026-10-26, "yes, and keep 3 second stretch for both": the first load, later loads,
+// after the bed and after a sail alike; it replaced his decisions 4 and 10, a shorter wake-up after the first, where any key or move
+// got her straight up). The first time ever she comes to the dressing table it's marked ("mirror"; E there opens it, her skin, hair and earrings, as every station since Ed's playtest of 2026-10-26). Up, the
 // wake-up's over (`open`; the oak, Ed 2026-10-24: no curtains, and nothing waits on the island's build, which carries on behind
 // her): the bedroom's door opens as soon as she's up (Ed, 2026-10-25: "I should be able to leave regardless" of dressing; last
 // night's clothes wait in their pile by the bed, rules/clothesPile.ts, for whenever she wants them), everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
 // broom, hat, and bag) should be before the locked door"). Then down the trunk to her decks on the Terrace, where E starts the
 // party (Ed, 2026-10-20: "The DJ intro replaces the party spell before the party has started"): she's seated behind them and the
-// spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. A shorter wake-up
-// (`short`: later loads and after the bed, Ed's decisions 4 and 10) has any key or move get her straight up, and the mirror waits
-// to be used. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
+// spell's cast there, its needle-drop routine (rules/djSet.ts) playing as it did after the bedroom's scroll. Rules only: the alarm's sound, the dark and the cards are the page's (render/wakeUp.ts), reading `g.wake`.
 // A dream first (Ed, 2026-10-24, finds on loan: "when she's asleep ... we can communicate through her dreams"): after a night with a
 // find on loan she dreams its verdict (render/dream.ts) while still asleep, beat "dream", nothing ringing; when the dream ends by
 // itself (the page's endDream) or any key or move is pressed, her phone's alarm goes off and the wake-up goes on as ever.
@@ -32,10 +32,8 @@ export interface WakeState {
   snoozes: number;
   /** She's up: the wake-up's over (the door's open). */
   open: boolean;
-  /** She's come to the dressing table already (or, short, never marked). */
+  /** She's come to the dressing table already, ever (the page's save: main.ts), so it isn't marked again. */
   mirror: boolean;
-  /** The shorter wake-up: any key or move gets her up at once (later loads, after the bed). */
-  short?: boolean;
   /** A night played before this wake-up, in this game (after the bed, or a sail): last night's clothes lie in their pile by her
    *  bed. Without one, the first morning of a game, there's no yesterday (Ed, 2026-10-26: "the hat she wore yesterday should be in
    *  the clothes pile - but on the first, there was no yesterday"): no pile, and her hat lies on the hats' floor (startWake). */
@@ -59,16 +57,18 @@ function inBed(g: Game): { x: number; z: number } | null {
 }
 
 /** Start the wake-up (the dive's landing, or a night after the bed; rules/opening.ts wakeInBedroom having put her in the bedroom):
- *  in bed, in her nightie, the alarm ringing; `short`, the shorter one; `dreaming`, still asleep in her dream first (beat "dream":
- *  the alarm when it ends); `yesterday`, a night played before it in this game: last night's clothes all in the pile by her bed.
+ *  in bed, in her nightie, the alarm ringing; `dreaming`, still asleep in her dream first (beat "dream": the alarm when it ends);
+ *  `mirrored`, she's been to the dressing table before, ever (its first visit not marked again); `yesterday`, a night played before
+ *  it in this game: last night's clothes all in the pile by her bed.
  *  Without one (the game's first morning) there's no pile: every piece of her outfit is still to put on, each at its station, and
  *  her hat lies on the hats' floor, hers to pick up there (rules/hat.ts: down). False without the house's bedroom. */
-export function startWake(g: Game, ht: number, short = false, dreaming = false, yesterday = false): boolean {
+export interface WakeStart { dreaming?: boolean; mirrored?: boolean; yesterday?: boolean }
+export function startWake(g: Game, ht: number, { dreaming = false, mirrored = false, yesterday = false }: WakeStart = {}): boolean {
   const at = inBed(g);
   if (!at || !HOUSE_ROOMS.rooms.some(q => q.id === bedRoom())) return false;
   const W = g.witches[0];
   W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0, seated: false, perch: true, mode: "ground", lift: 0, facing: 1, away: false, heading: "side" };
-  g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: short, events: [], pile: [...PILE_SLOTS], ...(short ? { short } : {}), ...(yesterday ? { yesterday } : {}) };
+  g.wake = { beat: dreaming ? "dream" : "alarm", at: ht, snoozes: 0, open: false, mirror: mirrored, events: [], pile: [...PILE_SLOTS], ...(yesterday ? { yesterday } : {}) };
   if (!yesterday) hatOnFloor(g, ht);
   return true;
 }
@@ -115,10 +115,10 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
   const held: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: c.zoom };
   const to = (beat: WakeBeat, e: WakeEvent) => { w.beat = beat; w.at = ht; w.events.push(e); };
   const up = () => { const at = bedside(g); if (at) { const W = g.witches[0]; W.body = { ...W.body, x: at.x, z: at.z, vx: 0, vz: 0 }; } w.open = true; to("up", "up"); };
-  // (shorter: any key or move, ringing or snoozing, and she's up)
   // (dreaming: any key or move ends the dream, and the alarm rings; the press is the dream's, nothing else's)
+  // (ringing or snoozing, E snoozes and a move starts the stretch, every morning; no other key does anything: Ed's playtest of v4821,
+  // 2026-10-26, "I couldn't snooze; pressing E when the alarm was playing woke me up", in the shorter wake-up that's gone)
   if (w.beat === "dream") { if (moving || press || c.spell || c.castParty) endDream(g, ht); return held; }
-  if (w.short && (w.beat === "alarm" || w.beat === "snooze") && (moving || press || c.spell || c.castParty) && ht - w.at >= K.alarmMin) { up(); return held; }
   if (w.beat === "alarm") {
     if (moving) to("stretch", "stretch");
     else if (press && ht - w.at >= K.alarmMin) { w.snoozes++; to("snooze", "snooze"); }
