@@ -2,12 +2,12 @@
 // asleep in its circle at an island's middle, by an undiscovered island's lake (its sigil faint on the water), at the edge where the
 // water pours off into space, on the Ent's plaza, and from the treetops over the streets. Each waits for its art (the view's trees,
 // the art queue empty) or WAIT seconds. Fails on a page error.
-//   npm run build && node tools/zoo/shots.cjs [out] [dist]   WAIT (s, 120), SIZE (1280x720)
+//   npm run build && node tools/zoo/shots.cjs [out] [dist]   WAIT (s, 120), SIZE (1280x720), ONLY (names: fence,legend,...)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/zoo/shots", distArg] = process.argv.slice(2);
 const out = path.resolve(outArg), root = path.resolve(distArg || path.join(__dirname, "../../dist"));
-const [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number), WAIT = Number(process.env.WAIT || 120);
+const [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number), WAIT = Number(process.env.WAIT || 120), ONLY = process.env.ONLY ? process.env.ONLY.split(",") : null;
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 
@@ -26,6 +26,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     return page;
   };
   const shoot = async (page, name, where) => {
+    if (ONLY && !ONLY.includes(name)) return;
     await page.evaluate(([x, z, mode]) => { const g = window.witch.game, Wb = g.witches[0]; Wb.body = { ...Wb.body, x, z, vx: 0, vz: 0, seated: false, perch: false, mode, lift: mode === "ground" ? 0 : 1 }; }, where);
     const tb = Date.now();
     await page.waitForTimeout(8000);
@@ -45,8 +46,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await shoot(p, "plaza", [L.home.x, L.home.z + 18, "ground"]); // (in the Ent's circle at the middle, its World Tree carving)
     await shoot(p, "plaza-above", [L.home.x, L.home.z + 40, "treetop"]);
     await shoot(p, "above", [L.I.x, L.I.z + L.I.south + 40, "treetop"]);
-    await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 + 15), "ground"]); // (on the water's band by the north edge, the lip and the fall ahead)
-    await shoot(p, "edge-above", [L.home.x, L.home.z - (L.reach + 120 + 50), "treetop"]);
+    await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 + 4), "ground"]); // (on the water's band by the north edge, the lip and the fall ahead)
+    await shoot(p, "edge-above", [L.home.x, L.home.z - (L.reach + 120 - 10), "treetop"]);
     await p.close();
     // (a fresh save: the islands she hasn't found, lakes)
     const q = await load("zoo&found=");

@@ -10,7 +10,7 @@
  "margin": 120,
  "legendCap": 45,
  "plaza": 60,
- "lip": 110,
+ "lip": 30,
  "rows": [
   {
    "name": "Cold",

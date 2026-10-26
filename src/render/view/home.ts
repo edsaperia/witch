@@ -198,7 +198,7 @@ const STAND = { x: 0, z: 0 };
 const SPEAKER_LIST: SpriteInstance[] = [];
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
-  if (!A) return lights;
+  if (!A || g.map.zoo?.layout) { v.leashView.ringGlows.length = 0; return lights; } // (the zoo has no speakers: Ed, 2026-10-26)
   // The boot-up (Ed, 2026-10-06): each starts as a runestone (as tall as an area's, half as wide: Ed, 2026-10-08), and when the boot pulse reaches it (g.speakerBoot,
   // rules/game.ts) it turns into its speaker: the stone glows white and stretches up, then the speaker springs up out of
   // the ground with a flare, overshooting a little and settling, its glow fading.
