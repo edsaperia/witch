@@ -1487,7 +1487,11 @@ export class View {
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
       const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
-      this.crown.update(this.camera, W, plan, here, dt);
+      // (indoors, the forest's hole round her as it would be outdoors, its middle where she's drawn: render/view/witch.ts set uWitch
+      // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
+      const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
+      const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
+      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0);
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;
