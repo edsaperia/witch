@@ -8,7 +8,7 @@ import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";
-import { endParty, relicsOut, worldAsleep } from "./partyOver";
+import { endParty, nightEase, relicsOut, worldAsleep } from "./partyOver";
 import type { Creature } from "./creatures";
 import { circleLines } from "./legendCircle";
 
@@ -139,6 +139,20 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
     expect(relicsOut(g)).toBe(g.relics);
     const L = lost();
     expect(relicsOut(L)).toBe(L.relics); // (a lost night's are as today's: its relics still lie where they lay)
+  });
+
+  it("the night sounds as after a loss before the party (Ed, 2026-10-26, Q-c), easing out as it's cast; a night that never waited has none", () => {
+    const g = beforeParty();
+    expect(nightEase(g, 0)).toBe(1); // (all the way in, as the afterparty's eased in)
+    stepGame(g, { ...C, castParty: true }, STEP);
+    const at = g.party.spellAt as number;
+    expect(nightEase(g, 0)).toBeGreaterThan(0.9);
+    g.clock.time = at + 2; expect(nightEase(g, 0)).toBeCloseTo(0.5);
+    g.clock.time = at + 10; expect(nightEase(g, 0)).toBe(0);
+    expect(nightEase(g, 0.7)).toBe(0.7); // (a lost night later on: the party's over's own ease)
+    const never = newGame(123, TUNING);
+    expect(nightEase(never, 0)).toBe(0);
+    expect(nightEase(lost(), 1)).toBe(1);
   });
 
   it("a night that never waits for the spell (the tools, the bots) is as before: awake from the start", () => {

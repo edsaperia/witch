@@ -18,7 +18,7 @@
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
 //  - Home's meadow; each other area's own ambience (night.ts, quiet near the party).
 import { affectionOf, type Game } from "../../rules/game";
-import { relicsOut } from "../../rules/partyOver";
+import { nightEase, relicsOut } from "../../rules/partyOver";
 import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
@@ -430,12 +430,12 @@ export class SfxCues {
     const A = g.tuning.sfx.ambience;
     if (!A) return;
     const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];
-    const music = Math.max(0, Math.min(1, musicMix(g, w).volume)), level = (1 - partyOverEase(g, OVER_DEBUG)) * (A.quiet + (1 - A.quiet) * (1 - music));
+    const music = Math.max(0, Math.min(1, musicMix(g, w).volume)), level = (1 - nightEase(g, partyOverEase(g, OVER_DEBUG))) * (A.quiet + (1 - A.quiet) * (1 - music));
     this.sfx.ambience(home || g.map.zoo ? null : nightKind(T.id, !!T.wet), home || g.map.zoo ? 0 : level); // (the zoo: its night instead, below)
   }
 
   private night({ g, pan }: Here): void {
-    const N = g.tuning.sfx.night, ease = g.map.zoo ? 1 : partyOverEase(g, OVER_DEBUG); // (the zoo, rules/zoo.ts: each area's night all the while; Ed, 2026-10-13)
+    const N = g.tuning.sfx.night, ease = g.map.zoo ? 1 : nightEase(g, partyOverEase(g, OVER_DEBUG)); // (the zoo, rules/zoo.ts: each area's night all the while; Ed, 2026-10-13; and before the party, as after a loss: Ed, 2026-10-26)
     if (!N) return;
     const level = ease <= N.from ? 0 : Math.min(1, (ease - N.from) / Math.max(0.01, 1 - N.from));
     const w = g.witch, a = g.map.areaAt(w.x, w.z), home = a.cell[0] === g.map.centreCell[0] && a.cell[1] === g.map.centreCell[1], T = AREA_TYPES[a.type];

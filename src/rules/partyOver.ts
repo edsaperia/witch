@@ -76,6 +76,14 @@ function calm(c: Creature, time: number): void {
 export const worldAsleep = (g: Pick<Game, "partyOver" | "party" | "map">): boolean => !!g.partyOver || (g.party.spellAt === null && !g.map.zoo);
 /** The world asleep before the party (not after a loss): the night not started yet. */
 export const beforeParty = (g: Pick<Game, "partyOver" | "party" | "map">): boolean => !g.partyOver && worldAsleep(g);
+/** How far the afterparty's night sounds are in (0 to 1: platform/audio/sfxCues.ts ambience and night): the party's over's
+ *  ease (`over`), or all the way before the party (Ed, 2026-10-26, Q-c: "the world sounds as after a loss"), fading out over
+ *  `fade` seconds once the spell's cast (a night that never waited, spellAt undefined, has none of it). */
+export function nightEase(g: Pick<Game, "partyOver" | "party" | "map" | "clock">, over: number, fade = 4): number {
+  if (beforeParty(g)) return 1;
+  const at = g.party.spellAt;
+  return typeof at === "number" ? Math.max(over, Math.min(1, Math.max(0, 1 - (g.clock.time - at) / fade))) : over;
+}
 const NO_RELICS: Relic[] = [];
 /** The relics out in the world: none before the party (Ed, 2026-10-26: "Relics, like finds, only appear once the party starts":
  *  not lying, glinting, lit, dowsed or drunk till the spell's cast), else the map's. */
