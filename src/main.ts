@@ -56,7 +56,8 @@ import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
-import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
+import { loadSave, nightOver, sailNight, storeSave, worldSeed } from "./app/chartSave";
+import { readZooCoasts } from "./app/zooCoasts";
 import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
@@ -115,6 +116,8 @@ if (bootSeed === null) {
 
 // The boot's own map, made in a worker from here on (app/mapPrep.ts; Ed, 2026-10-20): the page's thread free while it's made (the
 // opening's chart, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
+// (the zoo: its islands' real coasts read back from the chart's cache first, a moment at most, for its map: app/zooCoasts.ts)
+if (params.has("zoo")) { const w = params.get("world"), t0 = performance.now(), r = await readZooCoasts(w ? worldSeed(w) : loadSave().world); console.info(`zoo: ${Object.keys(r.coasts).length} islands in their real shapes (${Math.round(performance.now() - t0)} ms)${r.missing.length ? `, ${r.missing.length} round till the chart makes them` : ""}`); }
 const bootMap = params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
 
 declare const __BUILD__: string;
