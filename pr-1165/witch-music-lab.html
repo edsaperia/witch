@@ -12455,6 +12455,272 @@ label.check input { accent-color: var(--accent); }
   var fireCol = { [M.ACCENT]: [150, 145, 140], [M.BODY2]: [95, 92, 100], [M.TRUNK]: [110, 70, 40], [M.BARKD]: [60, 38, 24], [M.MAGIC]: [255, 130, 40], [M.MAGIC2]: [255, 228, 120], [M.NOSE]: [30, 24, 26] };
   var FACE = M.GLINT;
 
+  // config/legend-footprints.json
+  var legend_footprints_default = {
+    _: "Each species' legend as drawn, in metres: asleep (its nap, both breaths) and awake (standing, both frames, facing us and away), each [width, height]. Written by node tools/legends/footprint.mjs from the art in the game's style (config/style.json at the tuning's pixelSize); rules/legendFit.ts sizes each legend's circle from it. Run it again after a change to a creature's art (--check says whether it's stale).",
+    species: {
+      arcticfox: {
+        asleep: [22.9, 11.5],
+        awake: [28, 17.6]
+      },
+      armadillo: {
+        asleep: [13.4, 13.2],
+        awake: [14.3, 17.8]
+      },
+      badger: {
+        asleep: [14.4, 8.7],
+        awake: [14.8, 11.4]
+      },
+      bat: {
+        asleep: [7.2, 8.1],
+        awake: [13.8, 17.1]
+      },
+      bear: {
+        asleep: [34.5, 23.6],
+        awake: [37.4, 28.4]
+      },
+      beaver: {
+        asleep: [17.9, 11.9],
+        awake: [27.1, 15.4]
+      },
+      beetle: {
+        asleep: [17.8, 14.8],
+        awake: [21, 23]
+      },
+      boar: {
+        asleep: [37.2, 31.7],
+        awake: [40, 36.8]
+      },
+      cat: {
+        asleep: [18.4, 12.8],
+        awake: [23.3, 21.8]
+      },
+      cheetah: {
+        asleep: [38.4, 31.2],
+        awake: [64.9, 47.8]
+      },
+      crab: {
+        asleep: [12.8, 10.4],
+        awake: [25.8, 12.3]
+      },
+      crocodile: {
+        asleep: [41.3, 13.8],
+        awake: [41.3, 17]
+      },
+      dormouse: {
+        asleep: [7.6, 8.5],
+        awake: [12.6, 11.5]
+      },
+      dragonfly: {
+        asleep: [16.4, 6.6],
+        awake: [19.9, 18.4]
+      },
+      elephant: {
+        asleep: [83, 38.5],
+        awake: [94.7, 50.7]
+      },
+      elk: {
+        asleep: [46.4, 36.4],
+        awake: [53.2, 57.8]
+      },
+      featheredserpent: {
+        asleep: [24.3, 14.8],
+        awake: [29.8, 21.1]
+      },
+      fennec: {
+        asleep: [17.2, 11.9],
+        awake: [21, 14.8]
+      },
+      flyingsquirrel: {
+        asleep: [12.9, 8.8],
+        awake: [17.7, 12.5]
+      },
+      fox: {
+        asleep: [23.7, 14.5],
+        awake: [39.8, 34.6]
+      },
+      frosttroll: {
+        asleep: [16.4, 20.9],
+        awake: [21.2, 26.9]
+      },
+      frostwyrm: {
+        asleep: [61.1, 38.1],
+        awake: [77.5, 41]
+      },
+      griffin: {
+        asleep: [54, 67.3],
+        awake: [66.3, 76.3]
+      },
+      hare: {
+        asleep: [17.9, 30.5],
+        awake: [24, 37]
+      },
+      hedgehog: {
+        asleep: [23.5, 20],
+        awake: [24.9, 21.8]
+      },
+      heron: {
+        asleep: [18.2, 12],
+        awake: [20, 31.9]
+      },
+      hydra: {
+        asleep: [15.8, 13.8],
+        awake: [16.8, 11.9]
+      },
+      ibex: {
+        asleep: [23.2, 26.9],
+        awake: [26, 33]
+      },
+      jaguar: {
+        asleep: [41.3, 20.6],
+        awake: [50.2, 25.1]
+      },
+      komodo: {
+        asleep: [27.7, 14.3],
+        awake: [40.8, 15.3]
+      },
+      lion: {
+        asleep: [47.3, 30.8],
+        awake: [54.2, 38.7]
+      },
+      lynx: {
+        asleep: [19.9, 30.9],
+        awake: [27.5, 37]
+      },
+      marten: {
+        asleep: [17.3, 10.7],
+        awake: [32.2, 16.2]
+      },
+      meerkat: {
+        asleep: [16.6, 14],
+        awake: [24.9, 21.3]
+      },
+      mole: {
+        asleep: [15.5, 13.2],
+        awake: [19.4, 14.7]
+      },
+      moth: {
+        asleep: [6.8, 4],
+        awake: [12.9, 12.6]
+      },
+      newt: {
+        asleep: [18.1, 10.9],
+        awake: [18.8, 16.9]
+      },
+      otter: {
+        asleep: [18.2, 9.8],
+        awake: [21.3, 11.9]
+      },
+      owl: {
+        asleep: [12.7, 20],
+        awake: [27, 32.1]
+      },
+      penguin: {
+        asleep: [7.5, 11.3],
+        awake: [10.7, 13.4]
+      },
+      polarbear: {
+        asleep: [36.8, 20.9],
+        awake: [37.5, 31.6]
+      },
+      raccoon: {
+        asleep: [15.4, 11.6],
+        awake: [24.4, 17.3]
+      },
+      ram: {
+        asleep: [23.9, 20.1],
+        awake: [26.6, 29.3]
+      },
+      rattlesnake: {
+        asleep: [7.8, 7.5],
+        awake: [12.1, 11.9]
+      },
+      raven: {
+        asleep: [20.5, 13.4],
+        awake: [22.6, 17.8]
+      },
+      redpanda: {
+        asleep: [21.7, 15.1],
+        awake: [29.9, 18.3]
+      },
+      rhino: {
+        asleep: [33.5, 17.6],
+        awake: [35.7, 29.6]
+      },
+      roe: {
+        asleep: [26.7, 28.4],
+        awake: [29.9, 43.6]
+      },
+      salamander: {
+        asleep: [15.4, 10.5],
+        awake: [16.6, 12.5]
+      },
+      scorpion: {
+        asleep: [10.1, 9.9],
+        awake: [11.3, 11.4]
+      },
+      snail: {
+        asleep: [10.5, 12.2],
+        awake: [12.4, 10.9]
+      },
+      snake: {
+        asleep: [14.3, 10.1],
+        awake: [39.6, 13.7]
+      },
+      snowleopard: {
+        asleep: [22.7, 15],
+        awake: [29.1, 24.6]
+      },
+      sphinx: {
+        asleep: [44.2, 53],
+        awake: [59.3, 63.9]
+      },
+      spider: {
+        asleep: [13.6, 19.1],
+        awake: [21.7, 25]
+      },
+      squirrel: {
+        asleep: [12.7, 11.4],
+        awake: [17.4, 25.8]
+      },
+      stag: {
+        asleep: [35.8, 31.6],
+        awake: [40.5, 48.8]
+      },
+      stegosaurus: {
+        asleep: [61.6, 32.8],
+        awake: [68.9, 44.1]
+      },
+      stoat: {
+        asleep: [15, 10.5],
+        awake: [23, 14.7]
+      },
+      tiger: {
+        asleep: [47.3, 22.6],
+        awake: [54.5, 32.9]
+      },
+      toad: {
+        asleep: [14.8, 10.1],
+        awake: [15.8, 14.8]
+      },
+      unicorn: {
+        asleep: [43.4, 20.1],
+        awake: [48.7, 39.8]
+      },
+      wolf: {
+        asleep: [33.9, 21.8],
+        awake: [48.1, 33.7]
+      },
+      woodlouse: {
+        asleep: [10.2, 6.9],
+        awake: [16.2, 12.5]
+      }
+    }
+  };
+
+  // src/rules/legendFit.ts
+  var LEGEND_SIZES = legend_footprints_default.species;
+
   // config/area-types.json
   var area_types_default = {
     _readme: `Game settings per area type. The area types themselves (Ed's 30, in his columns: floor, wall, small, big, set piece, creature) are defined with their art in art/areas.js; this file adds what the game needs. treeDensity scales how many of the area's big objects (its trees, mounds, boulders, logs) stand in it: even the open types are woodland with clearings (Ed, 2026-10-03: "a forest with clearings, not a meadow with trees"), just thinner. groundCover: the tufts on its ground (Ed, v171: so the ground doesn't look flat): density 0 (bare) to 1 (thick), and which kinds (blades, fern, heather, reeds, moss, clover).`,
@@ -16791,8 +17057,8 @@ label.check input { accent-color: var(--accent); }
     clearingFalloff: 0.18,
     gladeAmount: 0.25,
     gladeScale: 38,
-    _areaEdgeBlend: "Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. Only the look: creatures, partifying and the party border keep the exact borders.",
-    areaEdgeBlend: { width: 40, scale: 40, stray: 0.85 },
+    _areaEdgeBlend: `Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.`,
+    areaEdgeBlend: { width: 80, scale: 40, stray: 0.85, warp: 30, warpScale: 120, tufts: 0 },
     _groundBlend: "How neighbouring areas' floor textures meet (Ed, v160): the border is warped by noise in two octaves (up to warp metres over about 40 m, and fine metres over about 6 m), so it meanders rather than following the texture's grid; across a band metres wide the two floors mix pixel by pixel, by noise and (dither) an ordered dither, like grass creeping into dirt. Visual only. ?blend=off turns it off.",
     groundBlend: { on: true, warp: 8, fine: 1.5, band: 5, dither: true },
     _ground: "The ground's fake relief (Ed, v171: so the ground doesn't look flat): low rises and hollows from noise about relief.scale metres across, tilting the ground's lighting by relief.strength (0 flat) so the witch's light and the campfires pick out the bumps, and hollows shaded darker by relief.shade. ?relief=0 turns it off. layout (rules/terrain.ts; Ed's idea, relayed by the coordinator 2026-10-07: runestones on high ground, legends in low, trees thicker low down): every area's runestone stands on a rise and every legend clearing lies in a hollow, rise and dip times the hills' amplitude high and deep (0.15 of 40 m: 6 m), each easing out over reach metres (kept short and low: the stones are about 110 m apart, a clearing about 65 m from its stone, and the slopes must stay under the camera's sightline) (the plateaus then level each one, so a stone tops a knoll and a clearing sits in a dell); trees grow up to trees (a share) thicker in the lowest ground and thinner on the highest, by the land's height over half the hills' amplitude (most of it lies within that). Drawing and tree placement only: the rules still move on flat ground.",
@@ -16806,11 +17072,11 @@ label.check input { accent-color: var(--accent); }
     _home: `Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"): the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle.`,
     home: { margin: 10, gap: 0.3 },
     _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows. Kinds (Ed, 2026-10-11, the small islands): only the playground; the sports grounds are left out of kinds.",
-    _legendClearing: `Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it. minFromStone (Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"): its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged). minFromOtherStones (Ed, v1628: "Legend and runestone in the same place"): its edge at least this many metres from every neighbouring area's runestone too, always (not relaxed for a small area). floor (Ed, 2026-10-06: "The floor of the legend circle can be weathered and mossy stone with the legend's sigil carved into it. It's covered by moss etc and so you can't see it clearly"): on, old flagstones about slab metres across, the legend's sigil carved into them as dark grooves, overgrowth (0.5 as drawn, up to 1 for more) moss, grass and litter over them so the carving shows only in pieces; glint: how much the grooves catch the light while its legend sleeps (0, off: Ed's call later). rim: art builder 3's rim kit (#262) round its edge, a piece every spacing metres of it at chance, out metres past its radius and up to spread more (on its ring, never its floor), none on a path nor within gap degrees of due south (the way in). grove (Ed, 2026-10-06: "an area of the tallest trees around each legend circle"; "It should blend back smoothly into the rest of the forest around this area, so it doesn't stand out too much"): round the circle's ragged edge the forest swells, strongest at the edge and easing out (smoothstep) over reach metres to the area's own: there trees stand at up to density (a chance a tree spot), up to tallest of them the area's two tallest kinds, drawn up to scale times bigger, each tree's strength jittered by jitter either way so no ring or step shows; open in front, gap degrees either side of due south (toward the camera), easing in over soft degrees more, for the way in and the view of the legend.`,
+    _legendClearing: `Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06), where no tree or decor stands: radius metres across from its middle (species: a radius for that legend, sized to fit it: half its sleeping width plus 4 m), a soft ring edge metres wide marking it on the ground, and the legend lying top x radius north of the middle (the circle's far side from the camera), the open floor in front. Quest sigils and relics take effect inside it. minFromStone (Ed, 2026-10-06: "The legend circle shouldn't spawn near its runestone"): its edge at least this many metres from its area's runestone (where the soundsystem comes), clear of the stone's clearing and the party's dance space; a small area with no such spot takes the farthest that fits (logged). minFromOtherStones (Ed, v1628: "Legend and runestone in the same place"): its edge at least this many metres from every neighbouring area's runestone too, always (not relaxed for a small area). floor (Ed, 2026-10-06: "The floor of the legend circle can be weathered and mossy stone with the legend's sigil carved into it. It's covered by moss etc and so you can't see it clearly"): on, old flagstones about slab metres across, the legend's sigil carved into them as dark grooves, overgrowth (0.5 as drawn, up to 1 for more) moss, grass and litter over them so the carving shows only in pieces; glint: how much the grooves catch the light while its legend sleeps (0, off: Ed's call later). rim: art builder 3's rim kit (#262) round its edge, a piece every spacing metres of it at chance, out metres past its radius and up to spread more (on its ring, never its floor), none on a path nor within gap degrees of due south (0 since Ed, 2026-10-26: "legend circles should always be hidden by scenery around them": the stones go all the way round). grove (Ed, 2026-10-06: "an area of the tallest trees around each legend circle"; "It should blend back smoothly into the rest of the forest around this area, so it doesn't stand out too much"): round the circle's ragged edge the forest swells, strongest at the edge and easing out (smoothstep) over reach metres to the area's own: there trees stand at up to density (a chance a tree spot), up to tallest of them the area's two tallest kinds, drawn up to scale times bigger, each tree's strength jittered by jitter either way so no ring or step shows; open in front gap degrees either side of due south (toward the camera), easing in over soft degrees more (both 0 since Ed, 2026-10-26: "legend circles should always be hidden by scenery around them": the ring of trees goes all the way round, the circle hidden until she walks in, her see-through hole showing it then). fit (Ed, 2026-10-26: "Legend circles need to be larger. Often legends don't fit in them"; rules/legendFit.ts): each circle sized to its legend as drawn asleep (config/legend-footprints.json, measured by node tools/legends/footprint.mjs), its sleeping body fitting where it lies with margin metres to spare, never smaller than species (or radius) gives it, never more than max metres (past about 25 a circle can't be placed in its area clear of the runestones).`,
     _scenes: `Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bus stop, a picnic gone wild...) and large landmarks (a cemetery, a car park, ruined churches and temples, castle ruins...), each a few pieces counting as one, each at most once per map. An area gets one with chance, if a scene that suits it (its suits) is still unused; it stands off to the side of the area's centre, its footprint clear of the paths, gameplay and other features, trees kept off it, mirrored at random. footprint: the farthest piece's authored offset times scale, plus pad metres (a test checks it covers the art's own). featured: one of ids (seeded) placed on a map at its chance, in an area it suits if there is room, else in any (Ed, 2026-10-11: the temple ruins on most islands, "both": the Greek temple or the classical ruins, and "more variations": temple-* is every seeded classical ruin scene, art/landmarks.js CLASSICAL_PLANS; an id ending in * takes every scene it starts).`,
     scenes: { chance: 0.12, scale: 2.2, pad: 4, featured: { ids: ["greek-temple", "classical-ruins", "temple-*"], chance: 0.8 } },
     grounds: { chance: 0.035, kinds: ["playground"], radius: { playground: 12, tennis: 14, baseball: 14, football: 21, basketball: 5 } },
-    legendClearing: { radius: 9, edge: 2.5, top: 0.45, minFromStone: 45, minFromOtherStones: 15, floor: { on: true, overgrowth: 0.5, slab: 1.3, glint: 0 }, rim: { spacing: 1.3, chance: 0.85, out: 0.5, spread: 1.4, gap: 22 }, grove: { reach: 30, density: 0.65, tallest: 0.9, scale: 1.12, gap: 45, soft: 30, jitter: 0.3 }, species: { elk: 22, stag: 18, fox: 17, bear: 17, boar: 16, wolf: 16, ram: 14, snake: 13, raven: 13, lynx: 12, otter: 12, beetle: 12, marten: 11, beaver: 11, hare: 11, badger: 11, stoat: 11, newt: 10, flyingsquirrel: 10, stegosaurus: 24, cat: 12, salamander: 10 } },
+    legendClearing: { radius: 9, edge: 2.5, top: 0.45, minFromStone: 45, minFromOtherStones: 15, floor: { on: true, overgrowth: 0.5, slab: 1.3, glint: 0 }, rim: { spacing: 1.3, chance: 0.85, out: 0.5, spread: 1.4, gap: 0 }, grove: { reach: 30, density: 0.65, tallest: 0.9, scale: 1.12, gap: 0, soft: 0, jitter: 0.3 }, fit: { margin: 3, max: 25 }, species: { elk: 22, stag: 18, fox: 17, bear: 17, boar: 16, wolf: 16, ram: 14, snake: 13, raven: 13, lynx: 12, otter: 12, beetle: 12, marten: 11, beaver: 11, hare: 11, badger: 11, stoat: 11, newt: 10, flyingsquirrel: 10, stegosaurus: 24, cat: 12, salamander: 10 } },
     _relics: "Modern relics (cars, trolleys, cones, highway slabs, a phone box, a sofa...): one chance per spacing-metre cell (chance, steered by the area's decor share of modern), nearRoad times as likely within 20 m of a road or railway; never on a path, in a central clearing or a ground; at least minGap metres from the next relic (Ed, v147: too numerous).",
     relics: { spacing: 34, chance: 67e-4, nearRoad: 4, minGap: 80 },
     _walls: "Wall objects as features (Ed, v147), per area: man-made and linear ones (garden walls, hedges, brambles, rock walls) as runs [min,max] of runLength [min,max] pieces joined end to end, along a path where one passes (with a gateway gap gateChance of the time; a garden's flower beds in a row along them); henge stones as rings [min,max] of ringStones [min,max] (the first round the shrine, others ringRadius [min,max] metres across in a glade), an avenue leading in avenueChance of the time, and a lone stone loneChance; water, reeds and boulders as clumps [min,max] of clumpSize [min,max] within clumpRadius metres. Open ground between.",
