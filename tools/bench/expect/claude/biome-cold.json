@@ -1,0 +1,5 @@
+{
+  "reason": "the roster's cold re-themes (Ed, 2026-10-25/26; Delta's b1 list): the garden becomes the snowy taiga (the wolf: firs, pines and larches among rowans and aspens, a needle floor, its stone walls left as old field walls, no flower beds) and the bog the tundra bog (the elk: dwarf birches and larches, sedge and cotton grass on pale moss), new ids; each keeps its place among the area types, so every map's layout is as it was; the garden's flower beds go, so the wall features' rules state (no beds) changes where a garden stood",
+  "frames": { "*": "a scene showing the snowy taiga or the tundra bog (once the garden and the bog; on the default map too): their new trees, ground, small props and tint" },
+  "rules": { "*": "where a garden stood, its walls stand on but its flower beds are gone" }
+}

@@ -2255,11 +2255,11 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `light.spooky.berryHalo` | number | 0 to … |
 | `light.spooky.berryGlow` | number | 0 to … |
 | `light.spooky.areaEase` | number | 0 to … |
-| `light.spooky.areas.bog.hazeHue` | number | 0 to … |
-| `light.spooky.areas.bog.hazeSat` | number | 0 to … |
-| `light.spooky.areas.bog.haze` | number | 0 to … |
-| `light.spooky.areas.bog.mist` | number | 0 to … |
-| `light.spooky.areas.bog.gradeHue` | number | 0 to … |
+| `light.spooky.areas.tundra-bog.hazeHue` | number | 0 to … |
+| `light.spooky.areas.tundra-bog.hazeSat` | number | 0 to … |
+| `light.spooky.areas.tundra-bog.haze` | number | 0 to … |
+| `light.spooky.areas.tundra-bog.mist` | number | 0 to … |
+| `light.spooky.areas.tundra-bog.gradeHue` | number | 0 to … |
 | `light.spooky.areas.wetland.hazeHue` | number | 0 to … |
 | `light.spooky.areas.wetland.hazeSat` | number | 0 to … |
 | `light.spooky.areas.wetland.haze` | number | 0 to … |
@@ -2327,8 +2327,8 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `light.spooky.areas.jungle-understory.gradeHue` | number | 0 to … |
 | `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
 | `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
-| `light.spooky.areas.garden.hazeHue` | number | 0 to … |
-| `light.spooky.areas.garden.hazeSat` | number | 0 to … |
+| `light.spooky.areas.snowy-taiga.hazeHue` | number | 0 to … |
+| `light.spooky.areas.snowy-taiga.hazeSat` | number | 0 to … |
 | `light.spooky.areas.berry-thicket.hazeHue` | number | 0 to … |
 | `light.spooky.areas.berry-thicket.hazeSat` | number | 0 to … |
 | `light.spooky.areas.home.gradeHue` | number | 0 to … |
