@@ -61,7 +61,7 @@ for (const k of ["home", ...kinds]) {
     svg += `<text x="${mx}" y="${my + pr + 18}" text-anchor="middle" font-family="monospace" font-size="13" fill="#eee" stroke="#000" stroke-width="2.5" paint-order="stroke">home: the Ent's plaza</text>`;
     rows.push({ id: k, state: "home" });
   } else if (found.has(k)) {
-    svg += `<path d="${d}" fill="${hex(floorOf(k))}" stroke="#2a2a22" stroke-width="2"/>`;
+    svg += `<path d="${d}" fill="${hex(floorOf(k))}" stroke="#2a1a08" stroke-width="4"/><path d="${d}" fill="none" stroke="#e0aa35" stroke-width="2" stroke-dasharray="3 2"/>`; // (its little gold fence, Ed 2026-10-26)
     // its legend's circle at the island's middle (Ed: "Each zoo area has the corresponding legend circle at the centre of it"), its sigil carved in
     const lr = 22 * sc, col = hex(S.sigilColour(k));
     svg += `<circle cx="${mx}" cy="${my}" r="${lr}" fill="url(#plaza)" stroke="#d8d0bc" stroke-width="1.5"/>`;
@@ -79,7 +79,7 @@ for (const k of ["home", ...kinds]) {
   }
 }
 svg += `<text x="20" y="34" font-family="monospace" font-size="22" fill="#eee">The zoo laid out like the sea chart (world ${world}; ${found.size} of ${kinds.length} islands found, ${found.size >= kinds.length ? "?all: the map's see-all switch" : "sample save"})</text>`;
-svg += `<text x="20" y="62" font-family="monospace" font-size="15" fill="#aaa">streets: the dancefloor's flagstones · rim: water pouring off into space · coloured: found · lake colours: undiscovered · every island ${AREA} m across, disc ${2 * DISC} m across</text>`;
+svg += `<text x="20" y="62" font-family="monospace" font-size="15" fill="#aaa">streets: the dancefloor's flagstones · rim: water pouring off into space · coloured, gold-fenced: found · lake colours: undiscovered · every island ${AREA} m across, disc ${2 * DISC} m across</text>`;
 const bar = 500 * sc; svg += `<rect x="20" y="${PX - 40}" width="${bar}" height="6" fill="#eee"/><text x="${20 + bar + 8}" y="${PX - 32}" font-family="monospace" font-size="14" fill="#eee">500 m (every island ${AREA} m across, one area; the nearest two ${GAP}+ m apart)</text>`;
 svg += `</svg>`;
 fs.writeFileSync("previews/ed/zoo-map/map.svg", svg);

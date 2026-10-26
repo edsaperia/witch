@@ -17,6 +17,7 @@ This is a mock. Nothing here is merged.
 - `chart-edge.png`: the sea chart's own rim, the look the zoo's edge would copy. The sea darkens to the lip, pours off the disc (`seaChart.ts`'s `fall` skirt) and fades into the starfield.
 - `frame-street.png`, `frame-above.png`: in play on a street, on foot and from the treetops. The streets are painted by the ground shader in the dancefloor plaza's flagstones (the same courses, joints, moss and grain as `uPave`), laid in straight courses along the street. This is the mock's hack in `src/render/ground.ts`. It paints today's zoo grid's streets, so it shows **the stone's look only**. The layout is the maps': as built, the flagstones fill the whole sea between the islands (Ed's answer below). `v1/` has the first try, the `flagstones` path strip, for comparison.
 - `frame-island.png`: inside an island's area on foot, today's zoo block (its own floor, flora, runestone and nameplate).
+- `frame-fence.png`, `fence-close.png`: the little gold fence (Ed's), a concept painted in the bold pixel style over the island frame, and a close-up of a section.
 - `lakes/lava-ground.png`, `lakes/ice-*.png`: two biome lakes as the game draws them today. An undiscovered island would be one of these in its outline.
 
 ## How it would read the chart
@@ -81,6 +82,16 @@ Ed: "I think the streets should be the shape of the sea, and the areas should be
 ## Undiscovered islands (Ed answered)
 
 An undiscovered island is its biome's lake in the island's outline, with the animal's sigil drawn faintly on the water: like the legend floor's carving, but faint and watery. To build it, the lake shader takes the sigil's mask (`legendSigilMask`, as the carving does) at low strength, rippled by the water's own wobble.
+
+## The gold fence (Ed)
+
+Ed: "Zoo areas, apart from home, should have a little gold fence around them, that stop creatures passing."
+
+- **Where.** Along every found island's outline (gold in `map.png`). There is none round the home plaza.
+  - **Undiscovered lakes: no fence (proposal).** Nothing lives on them to keep in, and the shore already reads as the edge. When the island is found, its lake becomes the area and the fence appears with it.
+- **Look.** Bold pixel style: three hue-shifted gold tones (a cream highlight, a mid gold, a warm brown shade) and a near-black outline. Posts 2 m apart with ball finials and two rails, 0.9 m tall, about half the witch's height. It is a prop in the art (a `zooFence` piece in art/country.js beside `fence`: posts and rails in a new gold material, or `M.ACCENT` with a gold palette), laid along the outline the way paths lay their edge props. It doesn't glow.
+- **Creatures.** They can't cross it. Each island's creatures keep to its outline, the way a legend's baby keeps to its clearing today (`keepsToCircle`): the rules clamp a creature that would step outside back to the inside. A 💌 still flies over.
+- **The witch.** She steps over it on foot. It is too low to block her, so the rules don't collide her with it, and she walks straight across; the drawing gives her a small step-up as she crosses. In the treetops she simply flies over. Her leashed creatures follow her across: a leashed creature isn't held by its island.
 
 ## Questions for Ed
 
