@@ -100,10 +100,12 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     w = { ...w, stargazing: false, beachPush: 0 };
   }
   // The fall (the house, rules/treehouse.ts): off the balcony's open rim with no broom, she drops out of sight (drawing only: her
-  // height stays the floor's, so the camera stays up) and, after house.fall.time, is back at the magic circle. No steering meanwhile.
+  // height stays the floor's, so the camera stays up), hits the ground below after house.fall.time (a thud: rules/game.ts) and, a
+  // beat (house.fall.beat) later, is back at the magic circle. No steering meanwhile.
   if (w.falling !== undefined && deck?.house) {
-    const f = w.falling + dt;
-    if (f >= deck.house.fall.time) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    const f = w.falling + dt, F = deck.house.fall;
+    if (f >= F.time + (F.beat ?? 0)) return { ...w, x: deck.house.circle.x, z: deck.house.circle.z, vx: 0, vz: 0, lift: 0, mode: "ground", falling: undefined, perch: true, lean: false, boost: 0, braking: false, away: false, heading: "side" };
+    if (f >= F.time) return { ...w, vx: 0, vz: 0, falling: f, lean: false, boost: 0, braking: false }; // (down there, unseen, a moment)
     const k = Math.exp(-3 * dt);
     return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
   }
@@ -168,6 +170,11 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
   if (mode === "ground" && bounds.lakes) {
     const q = stopAtShore(bounds, w.x, w.z, x, z, lakeKnobs(t).pad, 0);
     if (q) { const into = -(vx * q.nx + vz * q.nz); if (into < 0) { vx += q.nx * into; vz += q.nz * into; } x = q.x; z = q.z; }
+  }
+  // On foot, the zoo's gold fences stop her too (Ed, 2026-10-26: "the witch can fly over the fence, not walk"): sliding along.
+  if (mode === "ground" && bounds.fence) {
+    const q = bounds.fence.stop(w.x, w.z, x, z);
+    if (q) { const into = vx * q.nx + vz * q.nz; if (into > 0) { vx -= q.nx * into; vz -= q.nz * into; } x = q.x; z = q.z; }
   }
   if (deck?.house && !perch && mode === "treetop" && lift > 0.9 && !wasOver && flyOnto(deck, x, z)) { perch = true; mode = "descending"; }
   // On the deck (or coming down onto it): kept on it, inside its rail, round the map table and behind the decks. In the house

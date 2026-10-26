@@ -11,6 +11,7 @@ import { beatAt, beatTime } from "../../rules/beat";
 import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
 import { deckOf, type Deck } from "../../rules/treehouse";
+import { atDecks } from "../../rules/wakeUp";
 import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -44,7 +45,7 @@ function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: num
  *  motes; returns the lights of the nearest. */
 export function drawMarkers(v: View, time: number): ForestLight[] {
   const g = v.game, t = g.tuning, R = t.runeMarkers, w = g.witch, range = t.haze.far + 20, mc = v.markerCache;
-  if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
+  if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = g.map.zoo?.layout ? [] : spawnMarkers(g.party, g.map); } // (the zoo's islands: only their animals, no runestones; the coordinator on Ed's spec, 2026-10-26)
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes = MOTES, lasers: Laser[] = [];
@@ -198,7 +199,7 @@ const STAND = { x: 0, z: 0 };
 const SPEAKER_LIST: SpriteInstance[] = [];
 export function drawSpeakers(v: View, time: number, angle: number): ForestLight[] {
   const A = v.assets.speakerArt(), g = v.game, lights: ForestLight[] = [];
-  if (!A) return lights;
+  if (!A || g.map.zoo?.layout) { v.leashView.ringGlows.length = 0; return lights; } // (the zoo has no speakers: Ed, 2026-10-26)
   // The boot-up (Ed, 2026-10-06): each starts as a runestone (as tall as an area's, half as wide: Ed, 2026-10-08), and when the boot pulse reaches it (g.speakerBoot,
   // rules/game.ts) it turns into its speaker: the stone glows white and stretches up, then the speaker springs up out of
   // the ground with a flare, overshooting a little and settling, its glow fading.
@@ -365,7 +366,9 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
     const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
     const p0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
-    items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true });
+    // (lit while E there starts the party, as the house's objects she can use are: Ed's playtest, 2026-10-26; render/useGlow.ts's breath)
+    const g = v.game, lit = !!g.wake?.open && g.party.spellAt === null && atDecks(g) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * performance.now()) / 1400) : 0;
+    items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true, glow: lit }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true, glow: lit });
   }
   // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she

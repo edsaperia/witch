@@ -38,7 +38,7 @@ export const HOUSE = { balcony: { out: 6.3, r: 5 }, wallH: 3.4, domeH: 3.2, pool
 /** The oak's Terrace (organic: config/house/base.json terrace, which the game passes in; the same here for the lab and the checks,
  *  rules/houseConfig.test.ts keeping them one): her seat behind the decks, the decks' desk on its open south-east rim (its middle, w
  *  along x, d along z), the magic circle, metres east and south of its middle; r, the round of wood drawn for the outside view. */
-export const OAK_TERRACE = { seat: { x: 6, z: 6.4 }, decks: { x: 6, z: 8, w: 5, d: 1.6 }, circle: { x: 2, z: 2, r: 2 }, r: 10 };
+export const OAK_TERRACE = { seat: { x: 6, z: 6.4 }, decks: { x: 6, z: 8, w: 5, d: 1.6 }, circle: { x: 2, z: 2, r: 3.2 }, r: 10 };
 /** Its colours: the treehouse's (the giant's bark and leaves, wood, iron, warm light, the party's neons). */
 export const entColours = st => ({ ...treehouseColours(st), [M.WATER]: [38, 92, 128], [M.STONED]: [52, 50, 56] }); // (the map's sea and the pool; the flagstones' seams)
 

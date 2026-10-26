@@ -67,22 +67,24 @@ describe("the Studio's instruments by nearness", () => {
     expect(shelf.room).toBe("terrace");
     expect(Math.hypot(shelf.x, shelf.z - 9.77)).toBeLessThan(6); // (by her seat at the decks, on the balcony south of the hub)
   });
-  it("finds the instrument she walks up to, holds it a little past reach, and not again after Esc till she's walked off", () => {
+  it("lights the instrument she walks up to, is at it only on E there, holds it a little past reach, and lets go on Esc (Ed's playtest, 2026-10-26)", () => {
     const front = { x: kit.x, z: kit.z + kit.d / 2 + 0.5 };
     expect(fromObject(kit, at, front.x, front.z)).toBeLessThan(HOUSE_ROOMS.reach);
-    expect(instrumentAt(at, front.x, front.z, null, null).object?.id).toBe("drumKit");
+    const by = instrumentAt(at, front.x, front.z, null);
+    expect(by.near?.id).toBe("drumKit"); expect(by.object).toBeNull(); // (in range: lit, E over it, nothing open)
+    expect(instrumentAt(at, front.x, front.z, null, "drumKit").object?.id).toBe("drumKit"); // (E there)
+    expect(instrumentAt(at, front.x, front.z, null, "microphone").object).toBeNull(); // (E meant for another: not this)
     const edge = { x: kit.x, z: kit.z + kit.d / 2 + HOUSE_ROOMS.reach + 0.4 };
-    expect(instrumentAt(at, edge.x, edge.z, null, null).object).toBeNull();
-    expect(instrumentAt(at, edge.x, edge.z, "drumKit", null).object?.id).toBe("drumKit");
-    // Esc: she's let go, and it doesn't open again while she's still by it
+    expect(instrumentAt(at, edge.x, edge.z, null, "drumKit").object).toBeNull();
+    expect(instrumentAt(at, edge.x, edge.z, "drumKit").object?.id).toBe("drumKit");
+    // Esc: she's let go, and it stays shut by it till E
     const st = newStudio(); st.players[0].object = "drumKit"; st.players[0].at = "drums";
-    leaveInstrument(st); expect(st.players[0].at).toBeNull(); expect(st.players[0].left).toBe("drumKit");
-    const again = instrumentAt(at, front.x, front.z, null, "drumKit");
-    expect(again.object).toBeNull(); expect(again.stillLeft).toBe("drumKit");
-    // (nothing else opens while she's still by it: not the synth beside the kit)
+    leaveInstrument(st); expect(st.players[0].at).toBeNull(); expect(st.players[0].object).toBeNull();
+    expect(instrumentAt(at, front.x, front.z, null).object).toBeNull();
+    // (only the nearest lights: between the kit and the synth beside it, one)
     const synth = HOUSE_ROOMS.objects.find(o => o.id === "synthRack")!, between = { x: (kit.x + kit.w / 2 + synth.x - synth.w / 2) / 2, z: kit.z - kit.d / 2 + 0.3 };
-    if (fromObject(synth, at, between.x, between.z) <= HOUSE_ROOMS.reach) expect(instrumentAt(at, between.x, between.z, null, "drumKit").object).toBeNull();
-    const far = instrumentAt(at, mic.x, mic.z + mic.d / 2 + 0.6, null, "drumKit");
-    expect(far.stillLeft).toBeNull(); expect(far.object?.id).toBe("microphone");
+    const lit = instrumentAt(at, between.x, between.z, null).near;
+    if (lit) expect(fromObject(lit, at, between.x, between.z)).toBeLessThanOrEqual(Math.min(fromObject(kit, at, between.x, between.z), fromObject(synth, at, between.x, between.z)) + 1e-9);
+    expect(instrumentAt(at, mic.x, mic.z + mic.d / 2 + 0.6, null).near?.id).toBe("microphone");
   });
 });

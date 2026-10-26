@@ -119,3 +119,7 @@ export function lakesOf(L: LandMap, seed: number, b: IslandBiome): { lake: Int32
 export function mapBiome(island: { kind: string; phase: number } | null, tuning: { map?: { world?: number }; lakes?: Partial<LakeKnobs> }): IslandBiome {
   return island ? islandBiome(island.kind, tuning.map?.world ?? 0, island.phase, lakeKnobs(tuning)) : { blend: TEMPERATE, lakeBlend: null, lakeShare: 0 };
 }
+
+/** An undiscovered island's lake in the zoo (Ed, 2026-10-26: "Islands that are not discovered yet appear as that biome's lake"):
+ *  its biome's lake look, by its bearing on the chart (the first of the two biomes it lies between), water where the biome has none. */
+export const zooLakeLook = (kind: string, world: number): LakeLook => LAKE_LOOKS[blendAt(islandBearing(kind, world)).a] ?? "water";

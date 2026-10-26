@@ -74,6 +74,9 @@ export interface GladeTuning {
   motes: { per: number; rise: number; height: number; size: number; hue: number; sat: number; bright: number };
 }
 
+/** A kind of place kept clear (Tuning.reveal). */
+export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number; /** metres round the thing itself never faded */ keep?: number; /** only the scenery within radius metres of it fades (the runestone's: Ed, 2026-10-26) */ bounded?: boolean }
+
 export interface Tuning {
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
   wisps?: WispTuning;
@@ -231,6 +234,8 @@ export interface Tuning {
     land: { volume: number; gap: number };
     /** A sigil refused (put down too near another): a soft two-note "nope" (chimes.ts nope). */
     nope: { volume: number; gap: number };
+    /** Her fall off the Terrace with no broom hitting the ground, unseen below (rules/kit.ts): a soft, comic thud (chimes.ts thud). */
+    thud?: { volume: number; gap: number };
     /** Her phone's alarm in the new opening's wake-up (chimes.ts alarm): a ring at most every gap seconds. */
     alarm?: { volume: number; gap: number };
     /** A 💌 refused by an enraged animal (Ed, 2026-10-12): its angry whine (chimes.ts refused). */
@@ -409,7 +414,7 @@ export interface Tuning {
     /** The deck on the Ent (rules/treehouse.ts): its radius and floor height (m), the landing grace, the rail's keep-in, the map table's radius and reach, the decks' arc (inner, outer m; from, to degrees, 90 south) and her seat behind them (m south). */
     deck?: { on: boolean; radius: number; height: number; grace: number; rail: number; table: number; tableUse: number; decks: { inner: number; outer: number; from: number; to: number }; seat: number };
     /** The house on the Ent (rules/treehouse.ts, docs/backlog/treehouse.md step 1; on: in place of the deck; the oak since 2026-10-24, its floor and the Terrace's layout config/house/'s): its floor height (m), the landing grace, the edge's keep-in; landTime: seconds to come down onto the Terrace flying onto it; fall: with no broom she falls off the Terrace's open rim (on: for now a switch, the brooms as objects to come; time: seconds till she's back at the circle). */
-    house?: { on: boolean; height: number; grace: number; rail: number; landTime: number; /** on foot in the house: her walking speed (m/s; Ed, 2026-10-25: half again as fast, 5 to 7.5, her broom's ground speed apart) */ walk: number; /** the walking speed (m/s) her walk cycle is drawn for (render/view/witch.ts): faster than this, her steps quicken with her pace, so her feet don't slide */ stride?: number; fall: { on: boolean; time: number }; /** the forest behind the enclosed rooms black (render/view.ts behindHouse), back over `fade` seconds */ dark?: { on: boolean; fade: number }; /** the great oak's crown over the house (rules/crown.ts, render/crown.ts), grown from `seed`; indoors a room's cut, and the hole round her, open and close over `cutFade` seconds (0 at once) */ crown?: { on: boolean; seed: number; cutFade?: number } };
+    house?: { on: boolean; height: number; grace: number; rail: number; landTime: number; /** on foot in the house: her walking speed (m/s; Ed, 2026-10-25: half again as fast, 5 to 7.5, her broom's ground speed apart) */ walk: number; /** the walking speed (m/s) her walk cycle is drawn for (render/view/witch.ts): faster than this, her steps quicken with her pace, so her feet don't slide */ stride?: number; fall: { on: boolean; time: number; /** seconds after the thud before she is back at the circle */ beat?: number }; /** the forest behind the enclosed rooms black (render/view.ts behindHouse), back over `fade` seconds */ dark?: { on: boolean; fade: number }; /** the great oak's crown over the house (rules/crown.ts, render/crown.ts), grown from `seed`; indoors a room's cut, and the hole round her, open and close over `cutFade` seconds (0 at once) */ crown?: { on: boolean; seed: number; cutFade?: number } };
     /** Who carries the Ent (drawing only; art/carrier.js): "island" the island's own kind's legend (none at home), a kind's id that kind's, "none" no one. */
     carrier?: string };
   decor: { spacing: number; ruins: number; rocks: number; freak: number; /** each family's share times this (1 as authored; 0 none) */ mix?: { ruins?: number; rocks?: number; freak?: number }; minGap: number; clearing: number; pathGap: number; /** A decoration's footprint radius (metres): kept clear of the gameplay (map.reserved). */ footprint: number };
@@ -429,6 +434,11 @@ export interface Tuning {
   /** The circle-bug suspects (Ed, 2026-10-14): each effect centred on her with a round edge, on as ever or off (the pause page's toggles). */
   suspects: { seeThrough: boolean; holeCut: boolean; trunkFade: boolean; groundCover: boolean; glow: boolean; effectsLayer: boolean; haze: boolean; areaAverage: boolean; seeDepth: boolean; cutWhole: boolean; seeSplit: boolean; seeMark: boolean; mist: boolean; lightRings: boolean; seeWrite: boolean; seeCull: boolean; seeKeep: boolean; seeStencil: boolean; seeEarly: boolean; seeSolid: "off" | "all" | "circle" | "rest"; seeNoBlend: boolean; seeShowAlpha: boolean; showBroken: boolean; seeDither: boolean; seeTwo: boolean };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
+  /** The places she stands in kept clear of the scenery in front of them (Ed, 2026-10-26; render/view/reveal.ts): the seconds each fades over in
+   *  and out, the soft edge (a share of the screen's width) and the depth (m) the fade eases over; and each kind on or off, the radius
+   *  (m) she stands within, the ring (m) boxed with it, and the width and height (m) of what stands at its centre (a legend's circle:
+   *  its own radius and legend, its ring pad m wider). */
+  reveal?: { seconds: number; edge: number; depth: number; legend: { on: boolean; pad?: number }; runestone: RevealKind; find: RevealKind; flask: RevealKind };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number; /** Its sigils more visible (Ed, 2026-10-15): each drawn at bright times leash.sigilGlyph, over a near-black disc at backing (0 none) backSize times its width, and with over drawn over the scenery (no depth test), so no crown hides the stack. */ bright?: number; backing?: number; backSize?: number; over?: boolean };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };

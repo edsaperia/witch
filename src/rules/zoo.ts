@@ -9,6 +9,7 @@
 import ZOO from "../../config/zoo.json";
 import { AREAS } from "../../art/areas.js";
 import { KINDS } from "./rosters";
+import type { ZooLayout } from "./zooMap";
 
 export interface ZooBlock {
   /** Its grid cell (column, row). */
@@ -19,6 +20,10 @@ export interface ZooBlock {
   kind: string;
   /** Its row's name (the biome's). */
   row: string;
+  /** Laid out like the chart (rules/zooMap.ts): its island's middle (m), and whether it's found (its area) or not yet (a lake). */
+  x?: number;
+  z?: number;
+  found?: boolean;
 }
 
 export interface ZooPlan {
@@ -36,10 +41,14 @@ export interface ZooPlan {
   group: { babies: number; young: number; adults: number };
   /** Half a path's width (m). */
   pathHalf: number;
+  /** Laid out like the chart (rules/zooMap.ts): the islands, home's middle and its cell. */
+  layout?: ZooLayout;
 }
 
 interface ZooRow { name: string; biomes: string[]; areas: string[] }
-interface ZooConfig { group: ZooPlan["group"]; pathHalf: number; rows: ZooRow[] }
+interface ZooConfig { group: ZooPlan["group"]; pathHalf: number; gap?: number; margin?: number; legendCap?: number; plaza?: number; lip?: number; rows: ZooRow[] }
+/** The zoo's config (config/zoo.json). */
+export const ZOO_CONFIG = ZOO as ZooConfig;
 
 /** The zoo's plan: every row's areas from column 1 (home's column 0 left free but for home), then any area type its list doesn't
  *  name yet whose creature's biome is the row's (the first such row: a new kind is in the zoo the day it lands, at its row's end,
@@ -79,4 +88,17 @@ export function zooPathLines(plan: Pick<ZooPlan, "cols" | "rows">, A: number, st
   for (let r = 0; r <= plan.rows; r++) for (let c = 0; c < plan.cols; c++) out.push(line(c * A, r * A, (c + 1) * A, r * A));
   for (let c = 0; c <= plan.cols; c++) for (let r = 0; r < plan.rows; r++) out.push(line(c * A, r * A, c * A, (r + 1) * A));
   return out;
+}
+
+/** The plan laid out like the sea chart (rules/zooMap.ts): every block at its island, home's cell the layout's, the grid the
+ *  layout's; its rows (the jump list's, by biome) as zooPlan's. A block with no island (a kind not on the chart) is left out. */
+export function zooChartPlan(L: ZooLayout, cfg: ZooConfig = ZOO as ZooConfig): ZooPlan {
+  const base = zooPlan(cfg), byKind = new Map(L.islands.map(I => [I.kind, I]));
+  const creature = new Map((AREAS as unknown as { id: string; creature: string }[]).map(a => [a.id, a.creature]));
+  const blocks: ZooBlock[] = [];
+  for (const b of base.blocks) {
+    const I = byKind.get(b.area ? creature.get(b.area) ?? b.kind : b.kind);
+    if (I) blocks.push({ ...b, cell: [I.cell[0], I.cell[1]], x: I.x, z: I.z, found: I.found });
+  }
+  return { ...base, n: L.n, cols: L.n, rows: base.rows, home: [L.homeCell[0], L.homeCell[1]], blocks, layout: L };
 }

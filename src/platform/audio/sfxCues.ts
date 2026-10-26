@@ -157,6 +157,8 @@ export class SfxCues {
     for (const e of g.leashEvents) if (e.kind === "invited") this.flourish(g, e.id, time, Math.max(0.6, near(e.x, e.z)), pan(e.x));
       else if (e.kind === "fizzled") S.nope(pan(e.x)); // (a sigil refused, too near one already down: Ed, 2026-10-07)
       else if (e.kind === "lakeHold") S.nope(pan(e.x)); // (a coming-down refused over a lake: the same soft "nope"; Ed, 2026-10-23)
+      else if (e.kind === "thud") S.thud(pan(e.x)); // (her fall off the Terrace with no broom hitting the ground: rules/kit.ts)
+      else if (e.kind === "kit") { if (e.obj === "invites") S.invited(0, pan(e.x)); else S.hit(pan(e.x)); } // (her invitations or a broom taken)
       else if (e.kind === "grounded") this.yank = { at: time + 0.38, pan: pan(e.x) }; // (a take-off her leashes won't allow: the thud as they pull her back down, render/view/witch.ts groundedHop; Ed, 2026-10-18)
       else if (e.kind === "outsideCircle") S.land(pan(e.x), 0.5); // (put down outside a legend's circle: it does nothing; a soft thud, and the circle flashes)
   }

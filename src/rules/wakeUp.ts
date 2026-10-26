@@ -1,7 +1,7 @@
 // The new opening's wake-up (Ed, 2026-10-20; previews/ed/opening-mock/ on claude/ed-shots, beats 3a–5a): the chart's dive lands
 // in her bedroom (rules/opening.ts) with her in bed, her phone's alarm ringing in the dark. E snoozes it, five seconds a time,
 // as often as she likes; moving (WASD, a rise) gets her up: she stretches, then stands beside the bed and walks (WASD, taught in
-// a safe room). The first time she comes to the dressing table its mirror opens by itself (her skin, hair and earrings). Up, the
+// a safe room). The first time she comes to the dressing table it's marked ("mirror"; E there opens it, her skin, hair and earrings, as every station since Ed's playtest of 2026-10-26). Up, the
 // wake-up's over (`open`; the oak, Ed 2026-10-24: no curtains, and nothing waits on the island's build, which carries on behind
 // her): the bedroom's door opens as soon as she's up (Ed, 2026-10-25: "I should be able to leave regardless" of dressing; last
 // night's clothes wait in their pile by the bed, rules/clothesPile.ts, for whenever she wants them), everything but her hat, bag and broom being in the bedroom (config/house/; Ed: "all of the customisation options (except for
@@ -18,7 +18,7 @@ import { castPartySpell } from "./party";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, keepInRoom, objectAt, objectWorld } from "./houseRooms";
 import { bedside } from "./opening";
-import { dressed, PILE_SLOTS, type PileSlot } from "./clothesPile";
+import { pileOut, PILE_SLOTS, type PileSlot } from "./clothesPile";
 
 export type WakeBeat = /** asleep, dreaming (finds on loan) */ "dream" | "alarm" | "snooze" | "stretch" | "up";
 /** Something that happened this step, for the page (its sound and cards). */
@@ -32,7 +32,7 @@ export interface WakeState {
   snoozes: number;
   /** She's up: the wake-up's over (the door's open). */
   open: boolean;
-  /** The dressing table's mirror opened by itself already (or, short, never by itself). */
+  /** She's come to the dressing table already (or, short, never marked). */
   mirror: boolean;
   /** The shorter wake-up: any key or move gets her up at once (later loads, after the bed). */
   short?: boolean;
@@ -88,7 +88,7 @@ export function stepWake(g: Game, c: Controls, ht: number, K: WakeTuning): Contr
     // Up: E at last night's clothes puts on all that's still in the pile (rules/clothesPile.ts); the dressing table's mirror the
     // first time she's at it; then out to her decks
     const d = deckOf(g.map, g.tuning), W = g.witches[0], here = d ? objectAt(d, W.body.x, W.body.z) : null;
-    if (press && !dressed(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
+    if (press && pileOut(w) && here?.use.kind === "pile") { w.pile = []; w.events.push("dressed"); return used; }
     if (!w.mirror && here?.id === "dressingTable") { w.mirror = true; w.events.push("mirror"); }
     if (g.party.spellAt !== null) return c;
     // (her bed before the party: held, she sleeps and the night counts as lost, as the bed after a loss does; main.ts "slept": Ed,

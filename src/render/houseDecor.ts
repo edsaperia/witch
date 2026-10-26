@@ -1,15 +1,13 @@
 // The treehouse's rooms dressed (Ed, 2026-10-23; art/houseDecor.js): each room's rug and four to six pieces (Ed's pick: a middle
-// density) placed by `decorPlan` and drawn as one picture a room (`bakeRoomDecor`: each piece baked and lit as the furniture is,
+// density) placed by `decorPlan` and drawn as one picture a room (render/housePieces.ts `roomDecorPiece`, by the art workers: each piece baked and lit as the furniture is,
 // render/houseFurniture.ts, then laid on one canvas, the far ones first), so a room's dressing is one draw and one bake, kept light on
 // Ed's laptop's graphics. Only looked at: nothing in the rules knows of it. The pieces stand by the walls, clear of the doorways where
 // the branches come in, of the way in from each door to the room's middle, and of every object's reach (the stations stay as easy to
 // use as before); the rug lies a little south of the middle, under whatever stands there. `?decor=0` leaves the rooms bare.
-import { decorSprite } from "../../art/houseDecor.js";
-import { messSprite, MESS } from "../../art/houseMess.js";
-import { SIZE } from "../../art/furniture.js";
 import { HOUSE_ROOMS, type HouseConfig, type Rect } from "../rules/houseRooms";
-import type { Style } from "./style";
-import { litCanvas, pixelTexture, standing, FURNITURE, type Drawn, type FurnitureArt } from "./houseFurniture";
+import { MESS } from "../../art/houseMess.js";
+import { FURNITURE_IDS } from "../../art/furniture.js";
+import { standing } from "./housePieces";
 
 /** Whether the rooms are dressed (`?decor=0`: bare, as before). */
 export const decorOn = typeof location === "undefined" || new URLSearchParams(location.search).get("decor") !== "0";
@@ -28,6 +26,7 @@ export const ROOM_DECOR: Record<string, string[]> = {
   cloakroom: ["rug", "plant", "candles", "lantern"],
   bestiary: ["rug", "mushrooms", "candles", "lantern", "books", "plant"],
   turret: ["lantern", "crates", "plant"],
+  terrace: ["plant", "lantern", "candles"], // (no rug: the magic circle is burnt into its boards, render/houseArt.ts)
 };
 const DEFAULT = ["rug", "plant", "lantern", "candles"];
 
@@ -37,9 +36,9 @@ const DEFAULT = ["rug", "plant", "lantern", "candles"];
 export interface DecorItem { kind: string; x: number; z: number; yaw: number; k: number; r?: number; of?: string; foot?: { w: number; d: number; h: number } }
 
 /** A rug's colours, times this: it lies flat to the light, and a pale one blooms into a glare (the solarium's cream). */
-const RUG_DIM = 0.6;
-/** The things spilled on the floor, times this: flat to the lamps as a rug is, a pale sheet of paper glared white. */
-const MESS_DIM = 0.7;
+export const RUG_DIM = 0.6;
+/** The things spilled on the floor (art/houseMess.js), times this: flat to the lamps as a rug is, a pale sheet of paper glared white. */
+export const MESS_DIM = 0.7;
 /** Clear of these (m): a doorway, the way in from it, an object's reach past its edge (on top of the house's own reach). */
 const DOOR_CLEAR = 2.8, WAY_CLEAR = 1.8, REACH_CLEAR = 0.4, GAP = 2;
 
@@ -67,31 +66,12 @@ export function decorPlan(room: Rect & { id: string; r?: number; locked?: boolea
   for (const d of [R - 1.05, R - 1.5]) for (let b = -125; b <= 125; b += 6) { const a = (b * Math.PI) / 180; places.push([d * Math.sin(a), -d * Math.cos(a)]); }
   const order = places.map((p, i) => ({ p, s: hash(seed, i) })).sort((a, b) => a.s - b.s).map(q => q.p);
   // what's spilled off each of the room's pieces round its foot (Ed, 2026-10-26: "she's a messy witch"), as it stands
-  for (const o of objects) if (o.room === room.id && MESS[o.id] && FURNITURE.has(o.id)) { const s = standing(o); out.push({ kind: "mess", of: o.id, x: +(o.x - cx).toFixed(2), z: +(o.z - cz).toFixed(2), yaw: s.yaw, k: 0, foot: s.foot }); }
+  for (const o of objects) if (o.room === room.id && MESS[o.id] && FURNITURE_IDS.includes(o.id)) { const s = standing(o); out.push({ kind: "mess", of: o.id, x: +(o.x - cx).toFixed(2), z: +(o.z - cz).toFixed(2), yaw: s.yaw, k: 0, foot: s.foot }); }
   kinds.filter(k => k !== "rug").forEach((kind, i) => {
     const at = order.find(([x, z]) => clear(x, z) && out.every(q => q.kind === "rug" || q.kind === "mess" || Math.hypot(q.x - x, q.z - z) > GAP));
     if (at) out.push({ kind, x: +at[0].toFixed(2), z: +at[1].toFixed(2), yaw: face(at[0], at[1]), k: seed + i * 101 });
   });
   return out;
-}
-
-/** A room's dressing as one picture: each piece drawn (art/houseDecor.js, at the house's pixel and view), baked in the room's
- *  colours and lit by its own lights, then laid on one canvas at its place (the rug first, then far to near); its origin the room's
- *  middle on the floor. Null for a room with none. */
-export function bakeRoomDecor(room: Rect & { id: string; r?: number; locked?: boolean }, st: Style, ppm: number, pitch: number): FurnitureArt | null {
-  const items = decorPlan(room);
-  if (!items.length) return null;
-  const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
-    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
-    return { it, c, left: it.x * ppm - d.origin.x, top: it.z * ky - d.origin.y };
-  });
-  const x0 = Math.floor(Math.min(...drawn.map(q => q.left))), y0 = Math.floor(Math.min(...drawn.map(q => q.top)));
-  const w = Math.ceil(Math.max(...drawn.map(q => q.left + q.c.width))) - x0, h = Math.ceil(Math.max(...drawn.map(q => q.top + q.c.height))) - y0;
-  const out = document.createElement("canvas"); out.width = w; out.height = h;
-  const g = out.getContext("2d")!;
-  g.imageSmoothingEnabled = false;
-  for (const q of [...drawn].sort((a, b) => (a.it.kind === "rug" ? -1 : b.it.kind === "rug" ? 1 : (a.it.kind === "mess") !== (b.it.kind === "mess") ? (a.it.kind === "mess" ? -1 : 1) : a.it.z - b.it.z))) g.drawImage(q.c, Math.round(q.left - x0), Math.round(q.top - y0));
-  return { tex: pixelTexture(out), w, h, ox: -x0, oy: -y0, marks: {} };
 }
 
 /** The rooms dressed (those with any), for render/houseRooms.ts. */

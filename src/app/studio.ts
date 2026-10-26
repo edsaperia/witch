@@ -43,11 +43,13 @@ export class StudioPlayer {
   /** The instrument she's at now (null: none). */
   get at(): Instrument | null { return this.state.players[0].at; }
 
-  /** A frame: where she is (the menu in or out), the loop scheduled ahead, the gamepad, the synth's live controls. */
-  update(g: Game | null, active: boolean, dt: number): void {
+  /** A frame: where she is (the menu in or out; `use`, the house object E was pressed at, rules/studio.ts stepStudio), the loop
+   *  scheduled ahead, the gamepad, the synth's live controls. */
+  update(g: Game | null, active: boolean, dt: number, use: string | null = null): void {
     const P = this.state.players[0], was = P.at;
-    if (g && active) stepStudio(this.state, g); else { P.at = null; P.object = null; }
+    if (g && active) stepStudio(this.state, g, g.tuning, 0, use); else { P.at = null; P.object = null; }
     if (P.at !== was) { this.releaseAll(); P.latch = false; this.panel.show(this.state); }
+    if (P.at && !was && typeof navigator !== "undefined") this.pad = (navigator.getGamepads?.().find(p => p?.connected)?.buttons ?? []).map(b => b.pressed); // (the pad's use button that opened it is held, not a note)
     if (P.at && !this.main) this.make(); // (at the first walk-up; or once the context's made, at the first press)
     const ctx = this.ctx;
     if (!ctx || !this.main) return;
@@ -92,7 +94,8 @@ export class StudioPlayer {
   private key(e: KeyboardEvent, down: boolean): void {
     const P = this.state.players[0];
     if (!P.at || PASS.has(e.code) || e.metaKey || e.ctrlKey) return;
-    if (down && e.code === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); this.leave(); return; }
+    if (down && (e.code === "Escape" || e.code === "KeyE")) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) this.leave(); return; } // (E leaves, as it closes everything: Ed, 2026-10-26)
+    if (e.code === "KeyE") { e.preventDefault(); e.stopImmediatePropagation(); return; } // (its key-up: not a note)
     e.preventDefault(); e.stopImmediatePropagation(); // (every other key is the instrument's, not the game's)
     if (down && e.repeat) return;
     const c = down ? controlFor(e.code) : null;
@@ -182,7 +185,7 @@ export class StudioPlayer {
       const on = b.pressed, was = this.pad[i] ?? false;
       this.pad[i] = on;
       if (on === was) return;
-      if (i === PAD_LEAVE) { if (on) this.leave(); return; }
+      if (PAD_LEAVE.includes(i)) { if (on) this.leave(); return; }
       if (i === 9) return; // (Start: the pause)
       this.press(`pad:${i}`, on);
     });

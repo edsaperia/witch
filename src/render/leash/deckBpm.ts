@@ -13,7 +13,7 @@ const LIFT = 2.5;
 export function drawDeckBpm(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game, seat = lv.seatAt;
   let el = lv.deckBpmEl;
-  if (!host || !seat || g.partyOver) { if (el) el.style.display = "none"; return; }
+  if (!host || !seat || g.partyOver || g.map.zoo?.layout) { if (el) el.style.display = "none"; return; } // (the zoo has no decks: Ed, 2026-10-26)
   if (!el) {
     el = document.createElement("div"); el.className = "deck-bpm";
     el.innerHTML = `<span class="n"></span><span class="u">BPM</span>`;

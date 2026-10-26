@@ -64,6 +64,7 @@ import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "
 import { deckOf, onTreehouse } from "./treehouse";
 import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
+import { hasBroom, hasInvites, type Kit } from "./kit";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
  *  body (where she is and how she flies), her leash, her spell. */
@@ -97,6 +98,9 @@ export interface Witch {
   landedAt?: number;
   /** Her business in the treehouse's rooms (rules/houseRooms.ts): the bed's hold, the hats on the hats' floor. */
   house?: HouseState;
+  /** Her night's kit (rules/kit.ts): her invitations and a broom, taken in the house; none on a night that never waits for her
+   *  spell (she has both). */
+  kit?: Kit;
 }
 
 /** The simulation's fixed step (seconds): the rules advance only in these, driven only by the
@@ -260,16 +264,16 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
   dash?: boolean;
 }
 
-export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  // (at her decks, on the treehouse deck: rules/treehouse.ts)
-  return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
+export function newWitchPlayer(id: number, x: number, z: number, t: Tuning, seated = true): Witch {
+  // (at her decks, on the treehouse deck: rules/treehouse.ts; in the zoo, standing on its plaza)
+  return { id, body: { ...newWitch(x, z), seated, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPrep | ForestMap): Game {
   resetFight(); useData(COMBAT); // (the last night's fight settings out: a night starts as a fresh page's)
   // (ready: the map made already for this seed and tuning (app/mapPrep.ts readyMap), or its heavy parts, made in a worker while the chart flew)
   const map = !ready ? generateMap(seed, tuning) : Array.isArray((ready as MapPrep).neighbours) ? hydrateMap(seed, tuning, ready as MapPrep) : (ready as ForestMap);
-  const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
+  const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning, !map.zoo?.layout));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
   // gameplay's: Ed, "tempo is set by the gameplay")
@@ -404,8 +408,10 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
   for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
+  if (g.map.zoo?.layout) return !(g.witch.mode === "ground" && (onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad) || g.map.bounds.fence?.stop(g.witch.x, g.witch.z, x, z))); // (the zoo: no speakers or treehouse, Ed 2026-10-26)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
   if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
+  if (g.witch.mode === "ground" && g.map.bounds.fence?.stop(g.witch.x, g.witch.z, x, z)) return false; // (on foot, never over the zoo's fence)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -530,7 +536,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
   // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
   // in the treetops, or coming down, she flies on as before.
-  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && groundedBy(W.leash.stack, g.creatures, t).grounded) {
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
     c = { ...c, toggleMode: false };
     g.leashEvents.push({ kind: "grounded", id: 0, x: W.body.x, z: W.body.z, at: ht });
   }
@@ -557,7 +563,8 @@ function fixedStep(g: Game, controls: Controls): void {
     if (W.spells.broom === "battering") batter(g, W.dash.fromX, W.dash.fromZ, W.dash.toX, W.dash.toZ, t); // (Battering: what's in her path is stunned)
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
-  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
+  const deck = deckOf(g.map, t), fallsOff = deck?.house && !hasBroom(W) ? { ...deck, house: { ...deck.house, fall: { ...deck.house.fall, on: true } } } : deck; // (no broom: off the Terrace she falls, rules/kit.ts)
+  W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), fallsOff)); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
   if (g.wake) keepInBedroom(g); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
@@ -616,6 +623,8 @@ function fixedStep(g: Game, controls: Controls): void {
   stepTravel(LV.stack, LV.placed, g.creatures, g.witch, g.map, dt, t, id => busy(id) || heldByCombat(g.creatures[id]), t.leash.pace ?? 1);
   stepSigilButton(g, c, W, t, ht, hdt, legends, busy, STEP, LV.guards);
   if (perchTurn) W.leash.events.push({ kind: "perch", id: W.id, x: W.body.x, z: W.body.z, at: ht, on: perchTurn > 0 });
+  const ground = deck?.house?.fall.time ?? Infinity; // (her fall hits the ground then, unseen below: a thud; Ed, 2026-10-26)
+  if (was.falling !== undefined && was.falling < ground && (W.body.falling === undefined || W.body.falling >= ground)) W.leash.events.push({ kind: "thud", id: W.id, x: was.x, z: was.z, at: ht });
   if (was.falling !== undefined && W.body.falling === undefined) W.leash.events.push({ kind: "fell", id: W.id, x: W.body.x, z: W.body.z, at: ht }); // (off the balcony with no broom: back at the circle)
   // Her hat's spell on putting it down or picking it up (rules/hatSpells.ts: Harvest, Dowsing, Gathering).
   // Stealth (rules/brooms.ts): throwing 💌s, or putting down or picking up anything, gives her away for a moment.
@@ -625,7 +634,7 @@ function fixedStep(g: Game, controls: Controls): void {
     else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); if (g.wake && W === g.witches[0]) wearPiece(g.wake, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
-  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
+  stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && hasInvites(W) && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hasInvites(W) ? hatLetters(hatsDown(W), t) : undefined, g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
   if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
@@ -650,6 +659,13 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
   // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
   if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
+  // And in the zoo every creature stays inside its island's fence, whatever moved it (rules/zooMap.ts); hers go where she goes.
+  const F = g.map.bounds.fence;
+  if (F) for (const c of g.creatures) {
+    if (c.gone || c.leashed) continue;
+    const I = F.ofCell(c.cell[0], c.cell[1]);
+    if (I) { const p = F.keepIn(I, c.x, c.z); c.x = p.x; c.z = p.z; }
+  }
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -956,7 +972,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver || !!g.map.zoo, // (nor in the zoo: its legends sleep for show, Ed 2026-10-26)
     areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,

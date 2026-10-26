@@ -98,8 +98,8 @@ export const BIOMES = ["#2f6b5e", "#9fc4d8", "#7f93a3", "#2e8b3e", "#7aa04a", "#
 const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.NIGHT2, M.MOUTH];
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
-/** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-/** (Ed, 2026-10-26: "the items were designed for being against walls, but her house doesn't really have walls, so we should design
+/** The pieces that follow a round room's wall (bent round it): long, flat-backed things.
+ *  (Ed, 2026-10-26: "the items were designed for being against walls, but her house doesn't really have walls, so we should design
  *  things to look nice freestanding": they stand off the walls now, straight; the bend kept for a piece that's wanted against one.) */
 export const BEND = new Set(["curtains"]);
 
@@ -400,28 +400,51 @@ const PIECES = {
     m.chain([[W / 2 - .2, .23, .05, .01], [W / 2 - .15, .3, .05, .01], [W / 2 - .1, .23, .05, .01]], M.SHADES, { group: 20 });
   },
 
-  // The invitations desk: a writing desk with a slanted top, stacks of pink envelopes sealed with hearts, a quill in its ink, a candle,
-  // and her laptop open and glowing; a fern in a teacup.
-  invitations(m, { W, D, H }) {
-    const top = H * .82;
-    m.box([0, top, 0], [W / 2, .035, D / 2], M.WOOD, { round: .015, group: 1 });
-    m.box([-W / 2 + .2, top / 2, 0], [.17, top / 2 - .02, D / 2 - .05], M.WOOD, { group: 2, paint: p => (Math.abs(((p[1] / .22) % 1 + 1) % 1 - .5) > .45 ? M.BARKD : undefined) });
-    for (const x of [-W / 2 + .2, W / 2 - .05]) for (const z of [-D / 2 + .05, D / 2 - .05]) m.seg([x, 0, z], [x, top, z], .03, .03, M.WOOD, { group: 3 });
-    for (let y = .15; y < top - .2; y += .22) m.ell([-W / 2 + .2, y + .1, D / 2 - .02], [.025, .025, .015], M.FLOWER, { group: 4 });
-    const sit = top + .035;
-    // stacks of envelopes, pink, each a heart's seal; one leaning
-    [[-W * .25, 5], [-W * .1, 3]].forEach(([x, n], k) => { for (let i = 0; i < n; i++) m.box([x + (i % 2) * .01, sit + .015 + i * .028, -.05 + k * .05], [.11, .012, .075], M.POM, { group: 10 + k, dir: rotY(X, (i % 3 - 1) * .12), paint: p => (Math.hypot(p[0] - x, p[2] - (-.05 + k * .05)) < .02 && p[1] > sit + i * .028 + .02 ? M.ACCENT : undefined) }); });
-    // the quill and its ink; a candle
-    can(m, W * .02, -.15, sit, sit + .07, .045, M.SHADES, { group: 14 });
-    m.flat([W * .02 + .05, sit + .2, -.15], [.3, 1, 0], Z, .04, .14, (s, t) => (Math.abs(s) < (1 - t * t) * .9 ? M.BELLY : undefined), { group: 15, bend: .3 });
-    candle(m, [-W * .4, sit, -.2], 16, .15);
-    // her laptop, open: its keyboard flat and its screen up, lit
-    m.box([W * .25, sit + .012, .05], [.2, .012, .14], M.FRAME, { round: .01, group: 18 });
-    m.box([W * .25, sit + .14, -.1], [.2, .13, .012], M.FRAME, { group: 19, dir: [1, 0, 0], up: [0, 1, -.2] });
-    m.flat([W * .25, sit + .14, -.085], X, [0, 1, -.2], .17, .11, () => M.GLINT, { group: 20, bend: 0 });
-    light(m, [W * .25, sit + .15, .05], SCREEN, 12, .35);
-    can(m, W / 2 - .1, .1, sit, sit + .07, .05, M.BELLY, { group: 21 });
-    sprig(m, [W / 2 - .1, sit + .1, .1], 5, .08, 22, .7);
+  // The invitations desk (Ed, 2026-10-26: bigger, freestanding, and messy; rules/kit.ts): a writing table standing free in the Parlour,
+  // turned legs and a drawer each side, good from any side; on it three piles of the 💌 she throws (white, a blue edge and flap,
+  // a red heart: render/invites.ts's emoji), one a witch, each on her own tray (pink, teal, gold); its state how many are left in
+  // each ("8,4,0"); envelopes sliding off its edges, and a spill of them on the floor all round, which stays as her pile empties.
+  invitations(m, { W, D, H }, state) {
+    const top = H * .78, sit = top + .03, X = [1, 0, 0], Z = [0, 0, 1], E = Math.min(W * .13, D * .3); // E: an envelope's half-width
+    // the table: a thick top with a lip, four turned legs, a drawer on the front and the back
+    m.box([0, top, 0], [W / 2, .035, D / 2], M.WOOD, { round: .02, group: 1 });
+    m.box([0, top - .07, 0], [W / 2 - .06, .04, D / 2 - .06], M.HAIR, { group: 2 });
+    for (const x of [-W / 2 + .08, W / 2 - .08]) for (const z of [-D / 2 + .08, D / 2 - .08]) {
+      m.seg([x, 0, z], [x, top - .1, z], .035, .028, M.WOOD, { group: 3 });
+      m.ell([x, top * .55, z], [.05, .05, .05], M.HAIR, { group: 3 });
+    }
+    for (const z of [-D / 2 + .05, D / 2 - .05]) { m.box([0, top - .07, z], [W * .18, .035, .01], M.BARKD, { group: 4 }); m.ell([0, top - .07, z + Math.sign(z) * .015], [.02, .02, .015], M.FLOWER, { group: 4 }); }
+    // the 💌: white, a blue edge and its flap's V, and a big red heart over the flap's point, most of its face (Ed: "envelopes on the
+    // desk should clearly read as hearts", at the house's camera)
+    const heart = (x, y) => (x * x + y * y - 1) ** 3 - x * x * y * y * y <= 0;
+    // (t runs up the face, as the camera sees it lying flat: the flap's V down from the top corners, the heart's lobes up)
+    const face = (s, t) => (heart(s / .56, (t + .1) / .62) ? M.ACCENT : Math.abs(s) > .88 || Math.abs(t) > .84 || Math.abs(t - Math.abs(s) * .84) < .08 ? M.IRIS : M.BELLY);
+    const env = (c, yaw, g, tilt = 0) => {
+      // (tilted about its own width: its face's up, v, and its normal, up, turned together; tilt < 0 leans its face to the camera)
+      const u = rotY(X, yaw), v0 = rotY([0, 0, -1], yaw), ct = Math.cos(tilt), sn = Math.sin(tilt), v = [v0[0] * ct, -sn, v0[2] * ct], up = [v0[0] * sn, ct, v0[2] * sn];
+      m.box([c[0] - up[0] * .008, c[1] - up[1] * .008, c[2] - up[2] * .008], [E * .97, .004, E * .65], M.BELLY, { group: g, dir: u, up, round: .003 });
+      m.flat([c[0] + up[0] * .006, c[1] + up[1] * .006, c[2] + up[2] * .006], u, v, E, E * .68, face, { group: g + 1, bend: 0 });
+    };
+    // three piles, one a witch, on her tray
+    const left = (state ?? "8,8,8").split(",").map(Number), trays = [M.POM, M.HAT1, M.FLOWER];
+    [-W * .3, 0, W * .3].forEach((x, k) => {
+      const z = 0, n = Math.min(10, left[k] ?? 0);
+      m.box([x, sit + .01, z], [E * 1.25, .012, E * .95], trays[k], { round: .012, group: 10 + k * 4 });
+      // (fanned, so each letter's heart shows: a stack of love letters, not a white block)
+      for (let i = 0; i < n; i++) env([x + (i - (n - 1) / 2) * E * .09 + (hash2(k, i, 3) - .5) * E * .2, sit + .02 + i * .014, z + (hash2(k, i, 4) - .5) * E * .3], (hash2(k, i, 5) - .5) * .9, 11 + k * 4);
+      if (n > 4) env([x + E * .9, sit + .03, z + E * .6], .9 + k, 12 + k * 4); // (one slid off the top of a tall pile)
+      if (n > 0) env([x, sit + .02 + n * .014 + E * .3, z + E * .25], (hash2(k, 9, 1) - .5) * .3, 13 + k * 4, -1.05); // (and one propped up on it, its heart to the room)
+    });
+    // sliding off the edges, and a spill on the floor all round (it stays: she's a messy witch)
+    env([-W / 2 + .02, top - .02, D * .3], .3, 30, .7); env([W / 2 - .02, top - .03, -D * .25], -.4, 32, -.6); env([W * .1, top - .02, D / 2 - .01], 1.2, 34, .8);
+    for (let i = 0; i < 16; i++) {
+      const a = hash2(i, 7, 1) * Math.PI * 2, r = .55 + hash2(i, 7, 2) * .45, x = Math.cos(a) * (W / 2 + .1) * r * 1.15, z = Math.sin(a) * (D / 2 + .1) * r * 1.3;
+      env([x, .03 + (i % 3) * .004, z], (hash2(i, 7, 3) - .5) * 2.4, 40 + (i % 6) * 2, -.3); // (fallen face up, near enough the camera's way, a little tipped up on each other)
+    }
+    // a quill in its ink among the piles
+    can(m, W * .15, -D * .3, sit, sit + .07, .045, M.SHADES, { group: 70 });
+    m.flat([W * .15 + .05, sit + .2, -D * .3], [.3, 1, 0], Z, .04, .14, (s, t) => (Math.abs(s) < (1 - t * t) * .9 ? M.BELLY : undefined), { group: 71, bend: .3 });
+    // (no candle: its light washed the letters out at the house's camera)
   },
 
   // The pegboard (Hotel's Workshop, Ed's OK, 2026-10-23): the 3 × 3 biome board her broom's parts hang on, laid out as the islands'
@@ -483,7 +506,7 @@ const PIECES = {
 
   // The lathe (Hotel's Workshop): a sturdy bench, the lathe on it (a headstock, its bed, a tailstock: her broom lies between them,
   // the mark `rest`), a row of paint tins with drips down their sides, brushes in a jar, a rag; shavings curling on the floor.
-  lathe(m, { W, D, H }) {
+  lathe(m, { W, D, H }, state) {
     const top = H * .45;
     m.box([0, top, 0], [W / 2, .04, D / 2], M.WOOD, { round: .015, group: 1, paint: planks(.3) });
     for (const x of [-W / 2 + .08, W / 2 - .08]) for (const z of [-D / 2 + .06, D / 2 - .06]) m.seg([x, 0, z], [x, top, z], .04, .04, M.WOOD, { group: 2 });
@@ -502,6 +525,17 @@ const PIECES = {
     for (let i = 0; i < 3; i++) m.seg([W * .42 + (i - 1) * .02, sit + .08, D * .2], [W * .42 + (i - 1) * .05, sit + .3, D * .2], .01, .016, i ? M.WOOD : M.STRAW, { group: 31 + i });
     m.ell([W * .1, sit + .02, D * .25], [.12, .025, .08], M.BELLY, { group: 35, rough: .01, paint: p => (hash2(Math.round(p[0] * 40), Math.round(p[2] * 40), 4) > .7 ? M.ACCENT : undefined) });
     for (let i = 0; i < 6; i++) { const a = i * 1.1; m.ell([lx + Math.cos(a) * .3, .015, D * .35 + Math.sin(a) * .15], [.05, .012, .03], M.STRAW, { group: 40, dir: [Math.cos(a), 0, Math.sin(a)] }); }
+    // Her night's brooms (Ed, 2026-10-26: "three basic brooms, one on the lathe, two resting nearby, they disappear as each witch takes one"): the
+    // state the brooms left ("3", "2", "1", "0"); the first on the lathe, the others leaning on the table's ends
+    const left = Number(state ?? 3), broom = (a, b, g) => { // a plain broom, its handle from a to its bristles' end b
+      const t = [a[0] + (b[0] - a[0]) * .72, a[1] + (b[1] - a[1]) * .72, a[2] + (b[2] - a[2]) * .72];
+      m.seg(a, t, .06, .065, M.BARKD, { group: g }); // (a dark handle, thick enough to read at the house's camera, against the lit tabletop)
+      m.seg(t, [t[0] + (b[0] - a[0]) * .03, t[1] + (b[1] - a[1]) * .03, t[2] + (b[2] - a[2]) * .03], .08, .08, M.FRAME, { group: g + 1 });
+      m.seg(t, b, .09, .17, M.STRAW, { group: g + 2, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 7) > .8 ? M.BROOM : undefined) });
+    };
+    if (left >= 1) broom([lx - len * .55, sit + .42, .12], [lx + len * .6, sit + .36, .12], 50); // (up on its centres, clear of the rails)
+    if (left >= 2) broom([-W / 2 - .02, top + .55, D / 2 - .1], [-W / 2 - .28, .02, D / 2 + .25], 54);
+    if (left >= 3) broom([W / 2 + .02, top + .55, D / 2 - .1], [W / 2 + .3, .02, D / 2 + .2], 58);
   },
 
   // The record shelf: a tall shelf of records, their spines every colour, a turntable on top with a record on it, a crate of vinyl at its
@@ -789,7 +823,7 @@ export const PARTS = { light, bulb, candle, sprig, ivy, can, disc, planks, WARM,
 /** The ids drawn as art (every interactive object of the house; the hats on the hats' floor are its own, render/houseRooms.ts). */
 export const FURNITURE_IDS = Object.keys(PIECES).filter(id => id !== "door");
 /** Each piece's states, drawn once each (the first the default). */
-export const FURNITURE_STATES = { curtains: ["open", "shut"] };
+export const FURNITURE_STATES = { curtains: ["open", "shut"], invitations: ["8,8,8", "4,8,8", "0,8,8", "8,3,0", "0,0,0"], lathe: ["3", "2", "1", "0"] };
 
 // ---------- colours, a palette a room ----------
 // Each room its own (Ed: "per room"); materials: BARKD dark carved wood, WOOD warm wood, HAIR its carving's light, CLOTH the room's main
@@ -827,8 +861,15 @@ const ROOM_COLOURS = {
 /** A piece's own colours over its room's (the biome board's frames). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
-const PIECE_COLOURS = { pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
-export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
+// (the letters' paper slightly off-white; the whole desk dimmed, PIECE_DIM)
+const PIECE_COLOURS = { invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+/** Pieces mostly flat to the light, their colours times this (as render/houseDecor.ts RUG_DIM a rug's): the invitations desk, its top
+ *  and its letters lying face up, lit to a glare that bloomed at the house's camera (2026-10-26). */
+const PIECE_DIM = { invitations: .62 };
+export function furnitureColours(st = {}, room = "bedroom", id = "") {
+  const c = { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }, k = PIECE_DIM[id];
+  return k ? Object.fromEntries(Object.entries(c).map(([m, rgb]) => [m, rgb.map(v => Math.round(v * k))])) : c;
+}
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
  *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives

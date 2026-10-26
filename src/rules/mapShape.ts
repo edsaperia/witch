@@ -33,6 +33,8 @@ export interface Bounds {
   land?: LandMap;
   /** The lakes' water (rules/lakes.ts): a land map whose "land" is the lakes' water (+ on a lake); absent with no lakes. */
   lakes?: LandMap;
+  /** The zoo's fences (rules/zooMap.ts): round every island, crossed only in the air. */
+  fence?: import("./zooMap").ZooFence;
   /** The map's seed (the beach's width varies by it). */
   seed?: number;
 }

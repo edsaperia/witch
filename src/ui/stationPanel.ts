@@ -1,5 +1,6 @@
 // A dressing station's panel (Ed, 2026-10-21, the station menus; the mock, previews/ed/station-menus-mock on claude/ed-shots): it
-// slides in from the left as she comes near a station and away as she walks off (main.ts, rules/stations.ts), over the live game.
+// slides in from the left on E at a station and away on E again (the pad's □), she standing still at it (main.ts, rules/stations.ts;
+// Ed, 2026-10-26), over the live game.
 // Its shelves (rules/wardrobe.ts) hold the things she owns, silhouettes for those still to find (no hint: Ed), each shelf's
 // colour grid (5 rows: every colour hers), its fit sliders; and the Workshop's (Ed, 2026-10-22/23; docs/backlog/workshop.md): the bay's
 // part cards (a slot's parts, the empty slot first, the unfound greyed), the sets' chips, the focused part's stats and "Her broom",
@@ -17,6 +18,7 @@ import { broomColours, partCanvas } from "../render/workshopArt";
 import { broomSummary, canChoose, cardAt, choose, panelPad, partStats, partsFound, setChips, setsOf, spellLine, stationLines, type Line } from "./stationLines";
 import { classicPalette, cpuCanvas, slot, swatchAt } from "./creator";
 import { SlideIn } from "./slideIn";
+import { keycapHtml } from "./keyHint";
 
 type Genome = Record<string, unknown> & { palette: Record<string, number[]> | null; accessories: Record<string, unknown> };
 type Sprite = { A: HTMLCanvasElement; w: number; h: number };
@@ -95,7 +97,7 @@ export class StationPanel {
     });
     // The arrow keys move through the panel while it's open (Ed, 2026-10-21: "the arrow keys move through the panel at a station;
     // WASD still walks her"): taken before the game's input sees them.
-    // Enter, Space or E chooses what's in focus (Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
+    // Space or Enter chooses what's in focus (E did, till Ed's 2026-10-26: "E should also close, and we can have spacebar to select"; Ed's playtest, 2026-10-23: "I can't select them, I can only move the selector
     // around"): landing on an owned item already wears it; choosing does too, and says when it's still to be found.
     window.addEventListener("keydown", e => {
       if (!this.id) return;
@@ -106,6 +108,9 @@ export class StationPanel {
     }, true);
   }
 
+  /** What she plays with (platform/input.ts device): its keys in the hint line, repainted as it changes. */
+  private device: "keys" | "pad" | "touch" = "keys";
+  setDevice(d: "keys" | "pad" | "touch"): void { if (d !== this.device) { this.device = d; if (this.id) this.paint(); } }
   /** The station whose panel is open, or null. */
   get station(): string | null { return this.id; }
   /** She's choosing: the pointer's over the panel, or she moved through it since she last walked (main.ts: the camera eases in). */
@@ -121,6 +126,7 @@ export class StationPanel {
   open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null): void {
     this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.banner = banner; this.ws = ws;
     this.navAt = -1e9; this.hover = null;
+    this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
     const s0 = first >= 0 ? this.shelves[L[first].shelf] : null;
     const worn = !s0 ? 0 : s0.slot ? Math.max(0, Array.from({ length: L[first].n }, (_, c) => cardAt(s0, L[first], c)).indexOf(this.ws?.fitted[s0.slot] ?? null)) : shownItems(s0).findIndex(i => wears(this.g, i));
@@ -143,7 +149,7 @@ export class StationPanel {
   /** Tonight's loan (its id, or null): its card sparkles, the panel repainted if it's open and that changed. */
   setLoaned(id: string | null): void { if (id !== this.loaned) { this.loaned = id; if (this.id) this.paint(); } }
   setLook(g: Genome): void { if (this.id && JSON.stringify(g) !== JSON.stringify(this.g)) { this.g = clone(g); this.paint(); } }
-  /** Each frame while open: the pad's d-pad or right stick moves, its bottom or left face button chooses (the left stick walks her:
+  /** Each frame while open: the pad's d-pad or right stick moves, its bottom face button chooses (the left stick walks her, square closes it:
    *  platform/input.ts padControls leaves the rest of the pad to the panel). */
   update(time: number): void {
     if (!this.id) return;
@@ -274,7 +280,7 @@ export class StationPanel {
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot"><span class="k">🖱</span> click or <span class="k">← ↑ → ↓</span> <span class="k">✥</span> to wear · <span class="k">E</span> <span class="k">Enter</span> <span class="k">Ⓐ</span> choose · walk away to close</div>`;
+    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot">${footHtml(this.device)}</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
@@ -359,9 +365,18 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
   return out;
 }
 
-const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+// (WASD too: she stands still while it's open, the movement keys its buttons; Ed, 2026-10-26: "walking away shouldn't work - then
+// we can use the movement keys as buttons in the menus")
+const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
 /** The keys and pad buttons (A, X) that choose what's in focus. */
-const CHOOSE = new Set(["Enter", "NumpadEnter", "Space", "KeyE"]);
+/** The panel's hint line, keycaps and no words, three groups on the device she plays with (Ed, 2026-10-26: "hint line: trim it"):
+ *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; □). Enter and the arrows still work, unshown; on touch she taps
+ *  what she wants, and the corner's keycap closes it (main.ts). */
+export const footHtml = (device: "keys" | "pad" | "touch"): string =>
+  device === "pad" ? `${keycapHtml("STICK")} · ${keycapHtml("X")} · ${keycapHtml("SQ")}`
+  : device === "touch" ? keycapHtml("TAP")
+  : `${(["W", "A", "S", "D"] as const).map(g => keycapHtml(g)).join("")} · <span class="k">Space</span> · ${keycapHtml("E")}`;
+const CHOOSE = new Set(["Enter", "NumpadEnter", "Space"]); // (Space chooses, E closes it: Ed, 2026-10-26, "E should also close, and we can have spacebar to select")
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
 const ART_M = Art.M as Record<string, number>;
