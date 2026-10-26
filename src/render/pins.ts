@@ -18,7 +18,7 @@ import type { Tuning } from "../rules/tuning";
  *  object by its id (config/house: its own height unless `top`). */
 export type PinTarget = { x: number; z: number; top?: number; house?: boolean } | { object: string; top?: number };
 /** How a pin looks: its ring's colour (rgb 0-1), the glyph in its middle (rows of `#` and `+`, render/indicator.ts HAT and the
- *  rest) or a creature's sigil (`species`), the glyph's own colour, and a label beside it (else its distance, past 20 m). */
+ *  rest) or a creature's sigil (`species`), the glyph's own colour, and a label beside it: none by default (Ed, 2026-10-26: guidance pins are "icons only, no words"; not even its distance). */
 export interface PinLook { colour: THREE.Vector3; glyph?: readonly string[]; glyphColour?: THREE.Vector3; species?: string; label?: string }
 
 /** Where a target is to be drawn: x, z and its top over the ground there (as render/height.ts placed takes it), or null (an object
@@ -50,7 +50,7 @@ export class Pin {
     if (Math.abs(this.shown - this.want) < 0.01) this.shown = this.want;
     this.ind.fade(this.shown * calm);
     const L = this.look;
-    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour } : null, wx, wz, beat, bpm, 1, L.label);
+    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour } : null, wx, wz, beat, bpm, 1, L.label ?? "");
   }
   /** Gone for good (its canvas and label off the page). */
   dispose(): void { this.ind.dispose(); }

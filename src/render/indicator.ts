@@ -305,7 +305,7 @@ export class StoneIndicator {
     drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);
     c.flush();
     // The distance on the far side of the ring from the arrow (or beside it, as a pin).
-    const showLabel = !!label || dist > 20;
+    const showLabel = label !== "" && (!!label || dist > 20); // ("": no words at all, render/pins.ts)
     if (!showLabel) { c.label.style.display = "none"; return; }
     // (opposite the arrow on the edge; beside the ring as a pin, clear of its arrow below and the clock above at the screen's top)
     const ax = -Math.cos(arrow) * (1 - ease) + ease, ay = -Math.sin(arrow) * (1 - ease), al = Math.hypot(ax, ay) || 1;
