@@ -1,0 +1,6 @@
+{
+  "reason": "Take off anywhere on the treehouse (Ed, 2026-10-26): with her broom she rises from any room or branch, not only the Terrace. The rules bench's fixed path has her walk east off her seat into the branch room off the Terrace, where its rise at step 300 used to do nothing: now she takes off, and the run goes on from the treetops.",
+  "rules": {
+    "*": "the bench's path rises from a branch room at step 300 (rules/treehouse.ts noRiseAt, only with no broom now), so everything after it differs"
+  }
+}
