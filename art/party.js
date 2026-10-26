@@ -5,7 +5,7 @@
 // Small, cheap sprites, reused heavily (many per area, unlike the once-per-map scenes). Each piece has a size class:
 //   litter     cups, cans, bottles, party hats, streamers, balloons, confetti and glitter decals, crushed glowsticks;
 //   small      the light sources: glowsticks, tea lights, candles, jam-jar lanterns, paper lanterns, a tiki torch, a fire
-//              pit, lanterns, a jar and a mirror ball hanging from the trees;
+//              pit, jack-o'-lanterns, lanterns, a jar and a mirror ball hanging from the trees;
 //   furniture  folding tables, chairs, deck chairs, a picnic blanket, a cool box, hay-bale seating, a hammock, a gazebo;
 // (Ed's scenery review, 2026-10-19, cut ten: the fairy bush and branch, the LED cube, the standing mirror ball, the UV rock and
 // stump, the hanging fairy lights, the party tent, the inflatable ring and the speaker stack.)
@@ -14,7 +14,7 @@
 // piece is drawn once and baked in any neon (partyColours(style, neon)): the game picks the colour per placement.
 // Built in 3D (model3d.js) at the witch's scale, like the country pieces.
 import { M, hsv2rgb } from "./core.js";
-import { Model, v3, masks } from "./model3d.js";
+import { Model, v3, masks, YAW, PITCH } from "./model3d.js";
 import { NEON } from "./sigils.js";
 import { ctHash, ctCell, ctWorn, ctPlank, ctBar, ctGlow, ctCyl, ctTufts, mark, place, pieceSprite } from "./country.js";
 import { propVariant } from "./props/generator.js";
@@ -36,6 +36,30 @@ const pString = (m, pts, n, g, mat = M.GLOW) => { const seg = []; for (let i = 0
 const pSag = (a, b, sag, n = 10) => Array.from({ length: n + 1 }, (_, i) => { const t = i / n; return v3.add(v3.lerp(a, b, t), [0, -Math.sin(t * Math.PI) * sag, 0]); });
 const pChair = (m, c, g, { yaw = 0, mat = M.BELLY } = {}) => { const n = mark(m); m.box([0, .4, 0], [.2, .025, .2], mat, { round: .02, group: g }); m.box([-.19, .63, 0], [.025, .22, .2], mat, { round: .02, group: g }); for (const x of [-.17, .17]) for (const z of [-.17, .17]) m.seg([x, 0, z], [x * .95, .4, z * .95], .02, .02, mat, { group: g }); place(m, n, { yaw, at: c }); };
 const pNeon = shape => (s, t) => { const d = shape(s, t); return d < .06 ? M.MAGIC2 : d < .14 ? M.MAGIC : null; }; // a neon tube along an outline, as a distance
+// A jack-o'-lantern (Ed, 2026-10-26: "a few kinds of jack-o-lanterns that cast a bit of warm light"): a pumpkin of ribs round its
+// middle, its stalk on top and a face carved on the side towards us, the candle's light (GLOW, its hot core RUNE) showing through the
+// cuts. `face(u, v)` is the face's carving over the front, u across and v up (-1 to 1 of its radius): 0 uncut, 1 cut, 2 its core.
+const pTri = (u, v, ax, ay, bx, by, cx, cy) => { const s = (px, py, qx, qy, rx, ry) => (px - rx) * (qy - ry) - (qx - rx) * (py - ry), d1 = s(u, v, ax, ay, bx, by), d2 = s(u, v, bx, by, cx, cy), d3 = s(u, v, cx, cy, ax, ay); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
+const JACK_FACES = {
+  // triangle eyes and nose, a wide grin with two teeth left in
+  grin: (u, v) => { const eye = pTri(Math.abs(u), v, .2, .08, .56, .08, .38, .42), nose = pTri(u, v, -.1, -.1, .1, -.1, 0, .08), r = Math.hypot(u, v + .05), mouth = v < -.18 && r > .42 && r < .68 && Math.abs(u) < .66 && !(Math.abs(Math.abs(u) - .22) < .07 && v > -.62); return eye || nose || mouth ? (Math.abs(u) < .5 && v > .1 && v < .3 && eye ? 2 : 1) : 0; },
+  // slanted angry eyes and a jagged mouth
+  grim: (u, v) => { const a = Math.abs(u), eye = pTri(a, v, .14, .3, .6, .44, .5, .12), tooth = Math.abs(((u + 1) * 5) % 1 - .5) * .36, mouth = Math.abs(u) < .6 && v < -.12 + tooth - .12 * (1 - u * u) && v > -.55 + tooth * .7; return eye ? (a > .32 && a < .44 && v < .32 ? 2 : 1) : mouth ? 1 : 0; },
+  // round eyes and an O of a mouth, surprised
+  oh: (u, v) => { const e = Math.hypot(Math.abs(u) - .32, v - .22), m = Math.hypot(u / .8, v + .35); return e < .16 || m < .2 ? (e < .07 || m < .1 ? 2 : 1) : 0; },
+  // a lopsided wink: one round eye, one slit, a crooked smile
+  wink: (u, v) => { const w = 1 - ((u - .08) / .55) ** 2, eye = u < 0 ? Math.hypot(u + .32, v - .2) < .15 : Math.abs(v - .2 - (u - .32) * .2) < .05 && Math.abs(u - .32) < .18, mouth = w > 0 && v < -.2 - .12 * w && v > -.2 - .32 * w; return eye || mouth ? 1 : 0; },
+};
+// One at c: radius r, height (squash) h × r, its face, its stalk's lean; g its first group (it takes two).
+function pJack(m, c, r, face, g, { h = .82, lean = .2 } = {}) {
+  const [x, y, z] = c, cy = y + r * h, F = JACK_FACES[face], sy = Math.sin(YAW.towards), cyw = Math.cos(YAW.towards), sp = Math.sin(PITCH), cp = Math.cos(PITCH);
+  // (carved on the side the sprites are drawn from, model3d.js YAW and PITCH, so it looks out at us)
+  const paint = p => { const qx = p[0] - x, qy = p[1] - cy, qz = p[2] - z; if (qx * sy * cp + qy * sp + qz * cyw * cp < r * .3) return undefined;
+    const k = F((qx * cyw - qz * sy) / r, (-qx * sy * sp + qy * cp - qz * cyw * sp) / (r * h)); return k === 2 ? M.RUNE : k === 1 ? M.GLOW : undefined; };
+  m.ell([x, cy, z], [r * .78, r * h, r * .78], M.BODY2, { group: g, paint });
+  for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + .26; m.ell([x + Math.cos(a) * r * .3, cy, z + Math.sin(a) * r * .3], [r * .62, r * h * .96, r * .62], M.BODY2, { group: g, paint }); } // its ribs
+  m.seg([x, cy + r * h * .88, z], [x + lean * r * .3, cy + r * h * 1.28, z - r * .05], r * .1, r * .07, M.MOSS, { group: g + 1 }); // the stalk
+}
 
 const PARTY = {
   // ---- litter: small and many ----
@@ -63,6 +87,10 @@ const PARTY = {
   "lantern-pole": { cls: "small", desc: "a paper lantern hanging from a shepherd's-crook pole, glowing warm amber", glow: true, light: "warm", bob: [.04, 2.8], pointLight: { rgb: [255, 186, 96], radius: 3.5, height: 1.3 }, build(m) { m.chain([[0, 0, 0, .018], [0, 1.4, 0, .015], [.1, 1.55, 0, .012], [.25, 1.5, 0, .012]], M.FRAME, { group: 1 }); m.seg([.25, 1.5, 0], [.25, 1.38, 0], .004, .004, M.NOSE, { group: 2 }); m.ell([.25, 1.24, 0], [.14, .15, .14], M.GLOW, { group: 3, paint: p => Math.abs(Math.sin(p[1] * 60)) > .85 ? M.RUNE : undefined }); } },
   "lantern-string": { cls: "small", desc: "a string of round paper lanterns sagging between two poles", glow: true, light: "warm", bob: [.05, 3.2], pointLight: { rgb: [255, 186, 96], radius: 4.5, height: 1.2 }, build(m) { for (const x of [-.9, .9]) ctBar(m, [x, 0, 0], [x, 1.45, 0], 1, .02, M.WOOD, undefined); const pts = pSag([-.9, 1.42, 0], [.9, 1.42, 0], .25); m.chain(pts.map(p => [...p, .005]), M.NOSE, { group: 2 }); [2, 4, 6, 8].forEach((i, k) => m.ell(v3.add(pts[i], [0, -.12, 0]), [.09, .1, .09], k % 2 ? M.RUNE : M.GLOW, { group: 3 + k })); } },
   "tiki-torch": { cls: "small", desc: "a bamboo tiki torch, its flame burning", glow: true, light: "warm", build(m) { m.seg([0, 0, 0], [0, 1.25, 0], .025, .03, M.STRAW, { group: 1, paint: p => (p[1] * 6) % 1 < .08 ? M.WOOD : undefined }); m.seg([0, 1.2, 0], [0, 1.38, 0], .06, .05, M.STRAW, { group: 2, paint: p => ctCell(p, 30) < .3 ? M.WOOD : undefined }); m.flat([0, 1.52, .01], [1, 0, .3], [0, 1, 0], .1, .17, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 3, bend: .2 }); } },
+  "jack-o-lantern": { cls: "small", desc: "a jack-o'-lantern grinning, triangle eyes, its candle glowing through the cuts", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3, height: .4 }, build(m) { pJack(m, [0, 0, 0], .42, "grin", 1); } },
+  "jack-o-lantern-grim": { cls: "small", desc: "a tall jack-o'-lantern with slanted eyes and a jagged mouth, glowing", glow: true, light: "warm", pointLight: { rgb: [255, 140, 50], radius: 3, height: .5 }, build(m) { pJack(m, [0, 0, 0], .38, "grim", 1, { h: 1.15, lean: -.4 }); } },
+  "jack-o-lanterns": { cls: "small", desc: "a big jack-o'-lantern and a smaller surprised one beside it, both lit", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3.5, height: .4 }, build(m) { pJack(m, [-.2, 0, 0], .42, "grin", 1, { h: .78 }); pJack(m, [.5, 0, .2], .26, "oh", 5, { h: .9, lean: .5 }); } },
+  "jack-o-lantern-stack": { cls: "small", desc: "three jack-o'-lanterns stacked into a wobbly tower, each a different face, glowing", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3.5, height: 1 }, build(m) { pJack(m, [0, 0, 0], .42, "grim", 1, { h: .72 }); pJack(m, [.03, .54, 0], .33, "wink", 5, { h: .78 }); pJack(m, [-.02, .98, 0], .25, "oh", 9, { h: .86, lean: .6 }); } },
   "fire-pit-lit": { cls: "small", desc: "a little fire pit in a ring of stones, its fire lit", glow: true, light: "warm", build(m) { for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283; m.ell([Math.cos(a) * .32, .06, Math.sin(a) * .26], [.08, .065, .07], M.STONE, { group: 1 + (i % 2), rough: .01 }); } for (const [a, b] of [[[-.18, .04, -.05], [.15, .1, .06]], [[-.06, .04, .14], [.12, .08, -.12]]]) m.seg(a, b, .035, .03, M.BARKD, { group: 3, paint: p => ctCell(p, 25) < .4 ? M.GLOW : undefined }); [[0, 0], [.05, .05], [-.05, .03]].forEach(([x, z], i) => m.flat([x, .2 + i * .02, z], [1, 0, .4], [0, 1, 0], .08 - i * .015, .16 - i * .03, (s, t) => { const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4; return Math.abs(s) > half ? null : Math.abs(s) < half * .45 && u < .6 ? M.RUNE : M.GLOW; }, { group: 4 + i, bend: .2 })); } },
 
   // ---- hanging from real branches (Ed: hang them from real branch points; the pole versions stay for open ground). Each hangs from its
