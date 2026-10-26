@@ -27,7 +27,7 @@ import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
-import { AREA_TYPES, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
+import { AREA_TYPES, areaCellAt, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
@@ -605,7 +605,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // Noticing her (before they step, so a curious baby sets off this step).
   {
     const near: Creature[] = [], byArea = (g.byArea ??= indexByArea(g.creatures)), seen = new Set<string>();
-    for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
+    for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
     const T = COMBAT.temperament;
     stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
   }
@@ -672,7 +672,7 @@ function napRules(g: Game): NapRules | undefined {
   const N = g.tuning.naps;
   if (!N?.on) return undefined;
   const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko).map(w => w.body);
-  for (const b of down) roused.add(cellKey(g.map.cellSafe(b.x, b.z).cell));
+  for (const b of down) roused.add(cellKey(areaCellAt(g.map, b.x, b.z)));
   // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
   const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
@@ -717,6 +717,14 @@ function confusedAim(W: Witch, c: Controls, ht: number): Controls {
 /** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
  *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
  *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
+/** Whether (x, z) is in a creature's area, for its fights (combat's world.inArea: its edge, chases past it, defending): a legend
+ *  area and its pair as one (Ed, 2026-10-26: "for legends getting enraged, and also for animals attacking and defending, the
+ *  adjacent areas should count as one"; map.sameArea). */
+export const creatureInArea = (map: ForestMap) => (c: { cell: readonly [number, number] }, x: number, z: number): boolean => {
+  const k = map.cellSafe(x, z).cell;
+  return (k[0] === c.cell[0] && k[1] === c.cell[1]) || (!!map.sameArea && map.sameArea(k, c.cell as [number, number]));
+};
+
 function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolean): void {
   const S = g.combat, time = g.clock.time;
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
@@ -735,7 +743,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // mid-fight. (Not every wild one round a standing soundsystem: with the areas growing, Ed
   // 2026-10-04, that was thousands of idle creatures stepped for nothing.)
   const byArea = (g.byArea ??= indexByArea(g.creatures)), hot = new Set<string>(), active: Creature[] = [];
-  const near = (x: number, z: number) => { const k = cellKey(g.map.cellSafe(x, z).cell); if (hot.has(k)) return; hot.add(k); for (const n of g.map.neighbours.get(k) ?? []) hot.add(n); };
+  const near = (x: number, z: number) => { const k = cellKey(areaCellAt(g.map, x, z)); if (hot.has(k)) return; hot.add(k); for (const n of g.map.neighbours.get(k) ?? []) hot.add(n); };
   for (const w of g.witches) near(w.body.x, w.body.z);
   for (const w of g.witches) for (const id of [...w.leash.stack, ...w.leash.placed.map(p => p.id)]) { const c = g.creatures[id]; if (!c.gone) { near(c.x, c.z); active.push(c); } }
   const seen = new Set<number>(active.map(c => c.id));
@@ -764,7 +772,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     home: homeArea(g.map),
     areaAt: (x, z) => areaOf(g.map, g.map.cellSafe(x, z).cell), // (a parked animal guards its sigil's whole area: Ed, 2026-10-15)
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
-    inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
+    inArea: creatureInArea(g.map),
     packWorld: {
       dash: id => { const W = g.witches[id]; return W && W.dash.at > -Infinity ? { at: W.dash.at, x: W.dash.toX, z: W.dash.toZ } : null; },
       lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
@@ -949,7 +957,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
     creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
-    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
+    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
   // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning

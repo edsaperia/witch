@@ -23,10 +23,10 @@ export function radiusToFit(species: string, LC: Clearing): number {
   return half / Math.sqrt(Math.max(0.05, 1 - LC.top * LC.top));
 }
 
-/** A species' legend circle's radius (m): what fits its legend, never less than it had before, never more than the cap. */
-export function legendRadius(species: string, LC: Clearing): number {
+/** A species' legend circle's radius (m): what fits its legend, never less than it had before, never more than the cap: `max`
+ *  if given (a legend area's, legendClearing.fit.areaMax; the zoo's), else the tuning's fit.max (in an area with a runestone). */
+export function legendRadius(species: string, LC: Clearing, max = LC.fit?.max ?? Infinity): number {
   const before = LC.species[species] ?? LC.radius;
-  const max = LC.fit?.max ?? Infinity;
   return Math.max(before, Math.min(max, radiusToFit(species, LC)));
 }
 
