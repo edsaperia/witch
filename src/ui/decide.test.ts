@@ -2,7 +2,8 @@
 // a confirmed choice makes the issue link and line the coordinator reads.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, valuesText } from "./decide";
+import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, swatchCss, valuesText } from "./decide";
+import { hsv2rgb } from "../../art/core.js";
 
 /** The URL switches the game reads (src/main.ts, app/linkParams.ts), and their values (a slider's: any number). */
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"], fightScale: [], fightSpeed: [], fightMomentum: [], treetopSpeed: [], areaSize: [] };
@@ -94,5 +95,10 @@ describe("the decisions panel", () => {
     expect(changedIn([a, b], values)).toBe(0);
     values.set(b.id, b.control.type === "toggle" ? !b.default : "changed");
     expect(changedIn([a, b], values)).toBe(1);
+  });
+  it("draws a colour's swatch as the light takes it (the Hidden witch group's glow; Ed, 2026-10-26)", () => {
+    for (const [h, sv] of [[0.08, 0.55], [0.6, 1], [0.33, 0], [0.95, 0.3]]) expect(swatchCss(h, sv)).toBe(`rgb(${hsv2rgb(h, sv, 1).join(", ")})`);
+    const glow = DECISION_LIST.filter(d => d.control.type === "slider" && d.control.swatch);
+    expect(glow.map(d => d.apply.knob).sort()).toEqual(["light.spooky.glowHue", "light.spooky.glowSat"]);
   });
 });

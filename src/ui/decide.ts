@@ -7,7 +7,7 @@
 // panel; Ed submits it and the coordinator acts on it. The page holds no secret: the issue is Ed's to send. Copy puts the
 // same line on the clipboard instead.
 import { button, h } from "./dom";
-import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
+import { byPr, changedIn, DECISION_LIST, decisionLine, groupOf, issueUrl, knobAt, knobParam, openGroups, saveOpenGroups, setKnob, currentValue, valuesText, type Decision } from "./decisions";
 import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
@@ -168,6 +168,8 @@ const PAUSE_CSS = `
 #pause-sliders .ctl { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; margin-top: 2px; }
 #pause-sliders input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent, #e8b46a); filter: drop-shadow(0 0 1px #000); }
 #pause-sliders .val { width: 38px; text-align: right; }
+#pause-sliders .swatch { width: 14px; height: 14px; flex: none; border: 1px solid rgba(242,236,251,.75); border-radius: 3px; }
+#pause-sliders input.hues { appearance: none; height: 8px; border-radius: 4px; background: linear-gradient(to right, hsl(0,90%,55%), hsl(60,90%,55%), hsl(120,90%,55%), hsl(180,90%,55%), hsl(240,90%,55%), hsl(300,90%,55%), hsl(360,90%,55%)); }
 #pause-sliders .opt { font: inherit; text-shadow: inherit; color: inherit; background: rgba(14,11,28,.25); border: 1px solid rgba(242,236,251,.55); border-radius: 4px; padding: 1px 6px; cursor: pointer; }
 #pause-sliders .opt.on { background: var(--accent, #e8b46a); color: #1d1408; border-color: var(--accent, #e8b46a); text-shadow: none; }
 #pause-sliders .key { color: #d6cfe6; font-size: 11px; }
@@ -255,14 +257,18 @@ export class PauseSliders {
       const r = ctl.querySelector<HTMLInputElement>("input"), out = ctl.querySelector(".val");
       if (r && document.activeElement !== r) r.value = String(v);
       if (out) out.textContent = String(v);
+      const sw = ctl.querySelector<HTMLElement>(".swatch"), S = d.control.type === "slider" ? d.control.swatch : undefined;
+      if (sw && S) sw.style.background = swatchCss(Number(knobAt(this.host.tuning, S.hue)), Number(knobAt(this.host.tuning, S.sat)));
     };
-    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); paint(); this.paintHeads(); this.status.textContent = ""; }; // (a persisted one, the volumes, remembered: app/settings.ts)
+    const set = (v: string | number | boolean) => { this.values.set(d.id, v); applyDecision(this.host, d, v); saveSetting(d, v); if (d.control.type === "slider" && d.control.swatch) for (const p of this.paints) p(); else paint(); this.paintHeads(); this.status.textContent = ""; }; // (a colour's swatch shows on its hue's and saturation's rows both) // (a persisted one, the volumes, remembered: app/settings.ts)
     if (d.control.type === "slider") {
       const c = d.control, r = h("input", { type: "range" }), out = h("span");
       r.min = String(c.min); r.max = String(c.max); r.step = String(c.step); out.className = "val";
       r.addEventListener("input", () => set(+r.value));
       r.addEventListener("dblclick", () => set(d.default as number));
+      if (c.swatch?.hue === d.apply.knob) r.classList.add("hues");
       ctl.append(r, out);
+      if (c.swatch) ctl.append(h("span", { class: "swatch" }));
     } else {
       const opts = d.control.type === "toggle" ? [{ value: "true", label: "On" }, { value: "false", label: "Off" }] : d.control.options;
       for (const o of opts) ctl.append(button(o.label, () => set(d.control.type === "toggle" ? o.value === "true" : o.value), { class: "opt", data: { v: o.value } }));
@@ -271,4 +277,10 @@ export class PauseSliders {
     paint(); this.paints.push(paint);
     return box;
   }
+}
+
+/** A hue and saturation (0 to 1) at full brightness, as CSS: the colour the light takes. */
+export function swatchCss(hue: number, sat: number): string {
+  const f = (n: number) => { const k = (n + hue * 6) % 6; return Math.round(255 * (1 - sat * Math.max(0, Math.min(1, k, 4 - k)))); };
+  return `rgb(${f(5)}, ${f(3)}, ${f(1)})`;
 }

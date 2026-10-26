@@ -92,11 +92,10 @@ export class Glades {
   private near: Glade[] = [];
   /** Each clearing's eased edge, by gladeKey (so a clearing keeps its own as the nearest change). */
   private edges = new Map<number, number>();
-  /** How far she's into a clearing (0 out, 1 in), eased over fade seconds; her glow's own power, to fade it from. */
+  /** How far she's into a clearing (0 out, 1 in), eased over fade seconds. */
   private inside = 0;
   /** How much of the clearings' twilight shows: 1 on the ground, 0 over the treetops (easeTwilight). */
   private twilight = 1;
-  private glowBase: number;
 
   constructor(private T: GladeTuning) {
     const n = MAX_GLADES * T.motes.per, seeds = new Float32Array(n), which = new Float32Array(n);
@@ -115,7 +114,6 @@ export class Glades {
     this.points.frustumCulled = false; this.points.renderOrder = 12;
     hsvInto(LIGHT_UNIFORMS.uGladeRgb.value, T.hue, T.sat, 1);
     LIGHT_UNIFORMS.uGladeLight.value.set(T.on ? T.light : 0, T.on ? T.edge : 0);
-    this.glowBase = LIGHT_UNIFORMS.uGlowPower.value;
   }
 
   /** Another night (View.setGame): its clearings found afresh, their edges and her inside one eased from the start again. */
@@ -157,6 +155,6 @@ export class Glades {
     this.twilight = easeTwilight(this.twilight, ground, dt, T.fade);
     U.uGladeLight.value.set(T.light * this.twilight, T.edge * this.twilight);
     U.uDim.value = clearingDim(T, this.inside);
-    U.uGlowPower.value = this.glowBase * clearingGlow(T, this.inside);
+    U.uGlowPower.value *= clearingGlow(T, this.inside); // (this frame's: render/view/frameUniforms.ts sets it from glowPower first, so the pause page's Glow strength and Glow switch show live)
   }
 }
