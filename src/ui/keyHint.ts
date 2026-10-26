@@ -13,9 +13,7 @@ const GLYPH: Record<string, string[]> = {
   E: ["111", "100", "110", "100", "111"],
   /** The pad's square (its use button) and cross (choose), drawn on a round face button (`ROUND`), and on touch a fingertip: the
    *  key itself is tapped. */
-  SQ: ["111", "101", "111"], X: ["101", "010", "101"],
-  /** The pad's left stick (the wake-up's "get up" on a pad, render/houseRooms.ts): its cap, a ring on a round button. */
-  LS: ["01110", "10001", "10001", "10001", "01110"], TAP: ["01110", "11111", "11111", "11111", "01110"],
+  SQ: ["111", "101", "111"], X: ["101", "010", "101"], STICK: ["010", "111", "010"], TAP: ["01110", "11111", "11111", "11111", "01110"],
 };
 const KEY = 9, FACE = 7, GAP = 1;
 /** Seconds of walking before it fades, how long it takes, and how long standing still brings it back. */
@@ -83,8 +81,8 @@ function drawRound(c: CanvasRenderingContext2D, kx: number, ky: number, glyph: s
 }
 
 /** The keycaps a prompt shows: E, a movement key's letter, the pad's square and cross (round), a tap. */
-export type KeycapGlyph = "E" | "SQ" | "X" | "LS" | "TAP" | "W" | "A" | "S" | "D" | "U" | "N" | "L" | "R";
-const ROUND = new Set(["SQ", "X", "LS"]);
+export type KeycapGlyph = "E" | "SQ" | "X" | "STICK" | "TAP" | "W" | "A" | "S" | "D" | "U" | "N" | "L" | "R";
+const ROUND = new Set(["SQ", "X", "STICK"]);
 /** A lone keycap (KEY art pixels square) as a canvas, `scale` page pixels an art pixel, drawn sharp: the use prompt's. */
 export function keycapCanvas(glyph: KeycapGlyph, scale = 3, down = false): HTMLCanvasElement {
   const cv = document.createElement("canvas");

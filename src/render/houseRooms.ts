@@ -447,7 +447,7 @@ export class HouseRoomsView {
     const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm" && !wk!.short, wkey = `${pad}|${px}`;
     if (bedObj && wkey !== this.wakeKey) {
       this.wakeKey = wkey;
-      this.wakeL.replaceChildren(pad ? keycapCanvas("LS", px) : wasdCanvas(px));
+      this.wakeL.replaceChildren(pad ? keycapCanvas("STICK", px) : wasdCanvas(px));
       const word = document.createElement("span"); word.textContent = "snooooze";
       this.wakeR.replaceChildren(keycapCanvas(pad ? "SQ" : "E", px), word);
     }
