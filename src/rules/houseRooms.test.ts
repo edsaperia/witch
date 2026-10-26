@@ -132,16 +132,23 @@ describe("the oak's rooms", () => {
     }
   });
 
-  it("she can't rise in the rooms or along the limbs, only on the Terrace (Ed, 2026-10-23: \"She shouldn't be able to rise while in the treehouse, except on the terrace\")", () => {
+  it("with a broom she takes off from any room or limb (Ed, 2026-10-26: \"maybe you can take off from anywhere on the treehouse\"); with none, only rising on the Terrace, as before", () => {
     const g = inHouse(0, 0), W = g.witches[0], d = deck(g);
+    for (let i = 0; i < 3 / STEP; i++) stepGame(g, idle, STEP); // (the night's first dodge's worth of cooldown over)
+    const cool = structuredClone(W.cool);
     const rise = (x: number, z: number) => {
       W.body = { ...W.body, x: d.x + x, z: d.z + z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
+      W.cool = structuredClone(cool); W.landedAt = undefined; // (no rise cooldown between tries)
       stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.2 / STEP; i++) stepGame(g, idle, STEP);
       return W.body.mode;
     };
-    for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) expect(rise(r.x, r.z), r.id).toBe("ground");
-    for (const c of HOUSE_ROOMS.corridors) { const [x, z] = c.pts![4]; if (!onTerrace(d, d.x + x, d.z + z)) expect(rise(x, z), c.id).toBe("ground"); }
-    expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle)
+    const spots = [...HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace").map(r => [r.id, r.x, r.z] as const),
+      ...HOUSE_ROOMS.corridors.map(c => [c.id, c.pts![4][0], c.pts![4][1]] as const).filter(([, x, z]) => !onTerrace(d, d.x + x, d.z + z))];
+    W.kit = { invites: true, broom: true }; // (her broom taken: rules/kit.ts)
+    for (const [id, x, z] of spots) expect(["rising", "treetop"], id).toContain(rise(x, z));
+    W.kit = { invites: true, broom: false };
+    for (const [id, x, z] of spots) expect(rise(x, z), `${id}, no broom`).toBe("ground");
+    expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle, as before)
   });
 
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {

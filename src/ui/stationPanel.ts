@@ -29,7 +29,7 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
 /** How long after the last change her look goes to the game (ms: a run of d-pad steps over the colours is one bake, not one a
  *  swatch). */
-const LOOK_AFTER = 160;
+const LOOK_AFTER = 60;
 /** The d-pad held: its first repeat after this many seconds, then one every REPEAT. */
 const HOLD = .35, REPEAT = .11;
 /** The fit sliders that only mean anything while what they shape is on (none at 0: the fit never puts it on). */
@@ -51,6 +51,8 @@ export class StationPanel {
   onLook: (g: Genome) => void = () => {};
   /** Something changed on her (she turns to show it). */
   onChange: () => void = () => {};
+  /** A step changed her look (not her broom's parts): she twirls while it draws (render/spin.ts). */
+  onDress: () => void = () => {};
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
   private id: string | null = null;
@@ -240,6 +242,7 @@ export class StationPanel {
     this.change(g); this.paint();
   }
   private change(g: Genome): void {
+    if (JSON.stringify(g) !== JSON.stringify(this.g)) this.onDress();
     this.g = g;
     clearTimeout(this.lookTimer); this.lookTimer = window.setTimeout(() => this.lookNow(), LOOK_AFTER);
     this.onChange();

@@ -6,7 +6,7 @@ import { clamp, lerp, smoothstep } from "./random";
 import type { Tuning } from "./tuning";
 import { beachOf, keepIn, softEdge, type Bounds } from "./mapShape";
 import { NO_LOAD, type LeashLoad } from "./leashWeight";
-import { flyOnto, keepInHouse, keepOnDeck, landsOn, noRiseAt, overDeck, type Deck } from "./treehouse";
+import { flyOnto, keepInHouse, keepOnDeck, landingSpot, landsOn, noRiseAt, overDeck, type Deck } from "./treehouse";
 
 export type Mode = "ground" | "rising" | "treetop" | "descending";
 
@@ -110,7 +110,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     return { ...w, x: w.x + w.vx * dt, z: w.z + w.vz * dt, vx: w.vx * k, vz: w.vz * k, falling: f, lean: false, boost: 0, braking: false };
   }
   let { mode, lift } = w, perch = !!w.perch && !!deck && overDeck(deck, w.x, w.z); // (put somewhere else, she's off it)
-  // (in the house's rooms and on its branches she can't rise, only on the Terrace: rules/treehouse.ts noRiseAt)
+  // (in the house's rooms and on its branches she rises only with a broom: rules/treehouse.ts noRiseAt)
   if (intent.toggleMode && !(perch && mode === "ground" && deck && noRiseAt(deck, w.x, w.z))) mode = mode === "ground" || mode === "descending" ? "rising" : "descending";
   // The treehouse deck (rules/treehouse.ts): coming down from the treetops over it, she lands on it; rising takes her off it.
   if (deck && intent.toggleMode && mode === "descending" && landsOn(deck, w.x, w.z)) perch = true;
@@ -185,6 +185,12 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
     const p = deck.house ? keepInHouse(deck, x, z) : { ...keepOnDeck(deck, x, z), off: false };
     if (p.off && mode === "ground") { if (deck.house!.fall.on) falling = 0; else mode = "rising"; }
     else if (p.x !== x || p.z !== z) { if (mode === "ground") { vx = (p.x - w.x) / Math.max(dt, 1e-6); vz = (p.z - w.z) / Math.max(dt, 1e-6); } x = p.x; z = p.z; }
+    // Coming down onto the house: eased over what's left of the landing onto clear floor, never into furniture or a station (Ed,
+    // 2026-10-26; rules/treehouse.ts landingSpot), there as she touches down.
+    if (deck.house?.rooms && (mode === "descending" || (mode === "ground" && w.mode === "descending"))) {
+      const q = landingSpot(deck, x, z), f = Math.min(1, dt / Math.max(dt, lift * deck.house!.landTime));
+      x += (q.x - x) * f; z += (q.z - z) * f;
+    }
   }
   const facing: 1 | -1 = vx > 0.3 ? 1 : vx < -0.3 ? -1 : w.facing;
   const speed = Math.hypot(vx, vz), away = facingAway(vx, vz, w.away, Math.max(1, max * 0.15), t), heading = headingOf(vx, vz, w.heading, Math.max(1, max * 0.15), t);

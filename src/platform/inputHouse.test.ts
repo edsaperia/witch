@@ -1,8 +1,9 @@
-// No input lifts her off in the treehouse but on the Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the
-// treehouse, except on the terrace"), through the page's own controls (platform/input.ts): the gamepad's X (its rise, the bottom
-// face button) with the stick held toward a station against the wall, as Ed's playtest on v4273 found it taking her off in the
-// bedroom, and Space with the keys held the same way. Pushed at a round room's wall she stands on its very edge, where a floor
-// test reads her as just outside the room.
+// Rising in the treehouse through the page's own controls (platform/input.ts): with no broom, no input lifts her off but on the
+// Terrace (Ed, 2026-10-23: "She shouldn't be able to rise while in the treehouse, except on the terrace"): the gamepad's X (its
+// rise, the bottom face button) with the stick held toward a station against the wall, as Ed's playtest on v4273 found it taking
+// her off in the bedroom, and Space with the keys held the same way (pushed at a round room's wall she stands on its very edge,
+// where a floor test reads her as just outside the room); with her broom, both take her up from any room (Ed, 2026-10-26: "maybe
+// you can take off from anywhere on the treehouse").
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { Input, KEYS, PAD } from "./input";
 import { TUNING } from "../rules/tuning";
@@ -25,9 +26,10 @@ function fakePad() {
 }
 afterEach(() => vi.unstubAllGlobals());
 
-/** In the house mid-night, landed, off her decks. */
-function inHouse(): Game {
+/** In the house mid-night, landed, off her decks, with her broom or not (rules/kit.ts). */
+function inHouse(broom = false): Game {
   const g = newGame(123, TUNING);
+  g.witches[0].kit = { invites: true, broom };
   g.clock.paused = false; g.party.paused = true;
   for (let i = 0; i < 0.3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP); // (the controls' first frame)
   return g;
@@ -56,7 +58,7 @@ function pushAndRise(g: Game, x: number, z: number, ux: number, uz: number, how:
 
 describe("rising in the treehouse, through the page's controls", () => {
   for (const how of ["pad", "keys"] as const) {
-    it(`${how}: pushed against every room's walls, she stays on the ground`, () => {
+    it(`${how}: with no broom, pushed against every room's walls, she stays on the ground`, () => {
       const g = inHouse(), d = deckOf(g.map, g.tuning)!, rose: string[] = [];
       for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) { // (the Terrace: rising, and its open rim, are hers)
         const c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
@@ -70,7 +72,7 @@ describe("rising in the treehouse, through the page's controls", () => {
     });
   }
 
-  it("pad: at each bedroom station, the stick held toward it, X doesn't take her off", () => {
+  it("pad: with no broom, at each bedroom station, the stick held toward it, X doesn't take her off", () => {
     const g = inHouse(), rose: string[] = [];
     for (const o of HOUSE_ROOMS.objects.filter(q => q.room === "bedroom")) {
       const at = objectFront(o, g.map.treehouse, 0.6), to = objectFront(o, g.map.treehouse, -0.5), l = Math.hypot(to.x - at.x, to.z - at.z) || 1;
@@ -84,4 +86,19 @@ describe("rising in the treehouse, through the page's controls", () => {
     const g = inHouse(), d = deckOf(g.map, g.tuning)!;
     expect(["rising", "treetop"]).toContain(pushAndRise(g, d.x, d.z, 0, 0, "pad", false));
   });
+
+  for (const how of ["pad", "keys"] as const) {
+    it(`${how}: with her broom, rise takes her up from every room, pushed against its wall or not`, () => {
+      const stayed: string[] = [];
+      for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) {
+        for (const a of [null, 0, 180]) {
+          const g = inHouse(true), d = deckOf(g.map, g.tuning)!, c = fromPlan(d, (r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2);
+          for (let i = 0; i < 3 / STEP; i++) stepGame(g, { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, STEP); // (the night's first dodge's worth of cooldown over)
+          const m = a === null ? pushAndRise(g, c.x, c.z, 0, 0, how, false) : pushAndRise(g, c.x, c.z, Math.cos((a * Math.PI) / 180), Math.sin((a * Math.PI) / 180), how);
+          if (m !== "rising" && m !== "treetop" && m !== "terrace") stayed.push(`${r.id} ${a ?? "still"}: ${m}`);
+        }
+      }
+      expect(stayed).toEqual([]);
+    });
+  }
 });

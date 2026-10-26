@@ -89,3 +89,38 @@ describe("the great oak's crown", () => {
   });
 });
 
+
+describe("the crown whole over the Terrace (Ed, 2026-10-26: \"I'd like to try the treehouse canopy not being cut-through\")", () => {
+  const T = O.rooms.find(r => r.id === "terrace")!;
+  const gapped = makeCrown(input()), whole = makeCrown({ ...input(), gap: false });
+  /** The share of the Terrace's floor (a 1 m grid inside its outline) under some lobe's disc, on the plan. */
+  const covered = (c: typeof whole) => { let n = 0, k = 0;
+    for (let x = -20; x <= 20; x++) for (let z = -20; z <= 20; z++) if (polySigned(T.outline, x, z) < 0) { n++; if (c.lobes.some(l => Math.hypot(l.x - x, l.z - z) < l.r * 0.8)) k++; }
+    return k / n; };
+  /** Lobes along the notch's line out from the take-off rim. */
+  const overNotch = (c: typeof whole) => c.lobes.filter(l => { const [ox, oz] = c.notchFrom, along = (l.x - ox) * c.takeoff[0] + (l.z - oz) * c.takeoff[1]; return along > 0 && Math.abs((l.x - ox) * c.takeoff[1] - (l.z - oz) * c.takeoff[0]) < 4; });
+
+  it("has leaves over the Terrace and along its notch, where the gap had none", () => {
+    expect(whole.gap).toBe(false); expect(gapped.gap).toBe(true);
+    expect(covered(gapped)).toBe(0);
+    expect(covered(whole)).toBeGreaterThan(0.6); // (78% at seed 1: the gaps between the clumps, as over every room)
+    expect(overNotch(whole).length).toBeGreaterThan(overNotch(gapped).length);
+    expect(whole.lobes.length).toBeGreaterThan(gapped.lobes.length);
+  });
+
+  it("has no ring of lights round a gap, its other strings as ever, its limbs all kept", () => {
+    expect(whole.strings.filter(s => s.kind === "ring").length).toBe(0);
+    for (const k of ["swag", "drape", "garland"] as const) expect(whole.strings.some(s => s.kind === k), k).toBe(true);
+    expect(whole.limbs.filter(l => l.kind === "branch").length).toBe(O.stubs.length);
+  });
+
+  it("still keeps open ground it's given open to the sky (the dancefloor)", () => {
+    const open = [{ x: 70, z: 70, r: 15 }], c = makeCrown({ ...input(), open, gap: false });
+    for (const l of c.lobes) expect(sightClearance(c, l.x, l.y, l.z), `${l.x}, ${l.z}`).toBeGreaterThan(l.r);
+  });
+
+  it("is the same crown for the same house and seed, and the gap's crown is the one it always was", () => {
+    expect(JSON.stringify(makeCrown({ ...input(), gap: false }))).toBe(JSON.stringify(whole));
+    expect(JSON.stringify(makeCrown({ ...input(), gap: true }))).toBe(JSON.stringify(gapped));
+  });
+});
