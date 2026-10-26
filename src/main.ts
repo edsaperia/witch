@@ -1,4 +1,5 @@
 // Starts the prototype: the seed from the URL, the game rules, the view, input, and the loop.
+import { spinStep } from "./render/spin";
 import { keycapCanvas } from "./ui/keyHint";
 import { wavesOver } from "./rules/win";
 import { chartOpen, closeChart, openChart, prepareChart, type Sailed } from "./ui/chartOverlay";
@@ -390,6 +391,7 @@ stations.onLook = g => {
   showLook();
 };
 stations.onChange = () => { const { game } = N(); view.turnUntil = game.herTime + 0.8; };
+stations.onDress = () => { view.spin = spinStep(view.spin, N().game.herTime); }; // (Ed, 2026-10-26: she twirls while her new look draws)
 // The Workshop's bay (Ed, 2026-10-23; docs/backlog/workshop.md): a part chosen goes on her broom at once, mid-night too (its stats
 // and its set's spell with it: rules/spells.ts setParts), and is kept on this browser for the nights after (app/broomSave.ts).
 stations.onFit = f => { const { game } = N(); setParts(game.witches[0].spells, f); fitBroom(partsWithoutLoan(f, loan)); }; // (kept without a part on loan: app/loan.ts)

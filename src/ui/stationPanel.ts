@@ -51,6 +51,8 @@ export class StationPanel {
   onLook: (g: Genome) => void = () => {};
   /** Something changed on her (she turns to show it). */
   onChange: () => void = () => {};
+  /** A step changed her look (not her broom's parts): she twirls while it draws (render/spin.ts). */
+  onDress: () => void = () => {};
   /** Her broom's parts changed at the bay (a card chosen: fitted at once). */
   onFit: (f: Fitted) => void = () => {};
   private id: string | null = null;
@@ -240,6 +242,7 @@ export class StationPanel {
     this.change(g); this.paint();
   }
   private change(g: Genome): void {
+    if (JSON.stringify(g) !== JSON.stringify(this.g)) this.onDress();
     this.g = g;
     clearTimeout(this.lookTimer); this.lookTimer = window.setTimeout(() => this.lookNow(), LOOK_AFTER);
     this.onChange();
