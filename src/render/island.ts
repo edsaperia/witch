@@ -9,6 +9,7 @@
 import * as THREE from "three";
 import type { Game } from "../rules/game";
 import { ZooFall, ZooFences } from "./zooFences";
+import { ZooInscriptions } from "./zooInscriptions";
 import { ZOO_CONFIG } from "../rules/zoo";
 import type { Deck } from "../rules/treehouse";
 import type { AssetLibrary } from "./assets";
@@ -52,6 +53,8 @@ export class IslandLayers {
   zooFences?: ZooFences;
   /** The zoo's edge pouring off into space (render/zooFences.ts). */
   zooFall?: ZooFall;
+  /** The zoo's inscriptions in the street south of each island. */
+  zooWords?: ZooInscriptions;
   treehouseBatch!: SpriteBatch;
   mapTable: MapTable | null = null;
   minimap!: Minimap;
@@ -117,7 +120,11 @@ export class IslandLayers {
     this.paths = new PathView(game.map, style, mpp, game.tuning.pathFade.metres, made);
     this.root.add(this.paths.group);
     // (the zoo's gold fences round its islands: render/zooFences.ts)
-    if (game.map.zoo?.layout) { this.zooFences = new ZooFences(game.map); this.zooFall = new ZooFall(game.map, ZOO_CONFIG.lip ?? 110); this.root.add(this.zooFences.mesh, this.zooFall.mesh); }
+    if (game.map.zoo?.layout) {
+      this.zooFences = new ZooFences(game.map); this.zooFall = new ZooFall(game.map, ZOO_CONFIG.lip ?? 110);
+      this.zooWords = new ZooInscriptions(game.map.zoo.layout, game.map.zoo.blocks); // (each island's words in the street: render/zooInscriptions.ts)
+      this.root.add(this.zooFences.mesh, this.zooFall.mesh, this.zooWords.group);
+    }
   }
 
   /** The treehouse's batch (placed each frame by placeTreehouse) and the deck's map table, with the deck on. */
@@ -171,6 +178,7 @@ export class IslandLayers {
     this.heights?.dispose();
     this.zooFences?.dispose();
     this.zooFall?.dispose();
+    this.zooWords?.dispose();
     this.ground?.dispose();
     this.paths?.dispose();
     this.treehouseBatch?.release();
