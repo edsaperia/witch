@@ -1,0 +1,26 @@
+{
+  "pr": 1127,
+  "group": "Tree height cap",
+  "decisions": [
+    {
+      "id": "treeCapKeep",
+      "pr": 1127,
+      "group": "Tree height cap",
+      "label": "Tree cap: keep above it",
+      "note": "How much of each tree's height over the cap it keeps (Ed, 2026-10-26: \"Can we have the tree height cap as a menu slider?\"): 0.35 as built (a 45 m tree shows 29 m), 1 no cap at all (the art's own heights: home's trees average 23.7 m, not 19.3). The oak's crown tops out at 32.3 m: with the cap from 20 m, anything over 0.35 has home trees taller than it (0.4: 675 of its 17,069; 0.6: 2,108; 1: 4,107). The jungle's tallest grow most (49 m to about 67 m at 0.6). Live: no rebake, drawn again at once.",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.35,
+      "apply": { "knob": "treeCap.keep" }
+    },
+    {
+      "id": "treeCapFrom",
+      "pr": 1127,
+      "group": "Tree height cap",
+      "label": "Tree cap: from (m)",
+      "note": "The height (metres) over which a tree is squeezed: 20 as built, so her 24 m treetop flight stays mostly over the canopy. Raising it lets more trees stand at their full height, and they top the oak's 32.3 m crown sooner (25 m at keep 0.35: 986 of home's trees). Live: no rebake, drawn again at once.",
+      "control": { "type": "slider", "min": 10, "max": 40, "step": 1 },
+      "default": 20,
+      "apply": { "knob": "treeCap.from" }
+    }
+  ]
+}
