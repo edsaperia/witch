@@ -32,7 +32,7 @@ const H = require("../../config/house/load.mjs").loadHouse();
       const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false };
     }, o);
     // (stood by it: nothing yet; then E, pressed till the rules' step has seen her there)
-    const use = async want => { await page.waitForTimeout(1500); ok(await page.evaluate(() => window.witch.studio.at === null), "stood by it, nothing opens till E"); for (let i = 0; i < 20 && !(await page.evaluate(w => window.witch.studio.at === w, want)); i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); } };
+    const use = async want => { await page.waitForTimeout(1500); ok(await page.evaluate(() => window.witch.studio.at === null), "stood by it, nothing opens till E"); for (let i = 0; i < 5 && !(await page.evaluate(w => window.witch.studio.at === w, want)); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await page.evaluate(w => window.witch.studio.at === w, want)); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ };
     const atIs = (want, ms = 120000) => page.waitForFunction(w => window.witch.studio.at === w, want, { timeout: ms, polling: 200 }).then(() => true, () => false);
     const listen = ms => page.evaluate(ms => new Promise(res => {
       const a = window.witch.studio.meter; if (!a) return res({ rms: 0, bad: false });

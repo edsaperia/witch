@@ -87,7 +87,7 @@ function front(id, by) {
     // 2026-10-26: nothing opens by nearness)
     const goTo = (id, by) => page.evaluate(([x, z]) => { const g = window.witch.game, th = g.map.treehouse, W = g.witches[0]; W.body = { ...W.body, x: th.x + x, z: th.z + z, vx: 0, vz: 0 }; }, front(id, by));
     const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel.in"));
-    const useIt = async () => { await page.waitForTimeout(1500); if (await panelIn()) fail("a station's panel opened by her being near it, before E"); for (let i = 0; i < 30 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); } };
+    const useIt = async () => { await page.waitForTimeout(1500); if (await panelIn()) fail("a station's panel opened by her being near it, before E"); for (let i = 0; i < 5 && !(await panelIn()); i++) { await page.keyboard.press("KeyE"); for (let j = 0; j < 40 && !(await panelIn()); j++) await page.waitForTimeout(500); } /* (one E, then up to 20 s for a slow frame to see it: E closes it too) */ };
     await goTo("dressingTable", 0.5);
     await shot("09b-mirror-lit.png"); // (lit, its prompt over it)
     await useIt();
