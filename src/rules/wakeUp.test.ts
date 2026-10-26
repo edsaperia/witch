@@ -5,7 +5,7 @@
 import { describe, expect, it } from "vitest";
 import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
-import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectFront, toPlan } from "./houseRooms";
+import { HOUSE_ROOMS, floorHats, fromObject, fromPlan, hatSlots, objectFront, toPlan } from "./houseRooms";
 import { inRoom as inBlob } from "../../config/house/shape.js";
 import { wakeInBedroom } from "./opening";
 import { atDecks, bedRoom, doorShut, endDream, startWake, WAKE_DEFAULT, type WakeEvent } from "./wakeUp";
@@ -29,7 +29,7 @@ function woken(ready = false, later = false): Game {
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { const seen: WakeEvent[] = []; for (let i = 0; i < Math.round(s / STEP); i++) { stepGame(g, { ...idle, ...c }, STEP); seen.push(...(g.wake?.events ?? [])); } return seen; };
 const press = (g: Game) => run(g, STEP, { place: true, sigil: true });
 const rel = (g: Game) => toPlan(g.map.treehouse, g.witch.x, g.witch.z); // (where she is on the house's plan)
-const inRoom = (g: Game) => { const p = rel(g); return inBlob(HOUSE_ROOMS.shape, bedRoom(), p.x, p.z) <= 0.05; }; // (on her bed's room's own floor: its blob; the Turret since Ed, 2026-10-26)
+const inRoom = (g: Game) => fromObject(obj("bed"), { x: 0, z: 0 }, rel(g).x, rel(g).z) < 3; // (in her bed or by it: Ed, 2026-10-26, it stands in the corridor up to the Turret)
 /** Up and walking: snoozed out of bed by a step of WASD, the stretch over. */
 function up(ready = false, later = false): Game { const g = woken(ready, later); run(g, 0.1, { moveX: 1 }); run(g, K.stretch + 0.1); return g; }
 const standAt = (g: Game, id: string, by = 0.6) => { const p = objectFront(obj(id), g.map.treehouse, by); g.witches[0].body = { ...g.witches[0].body, x: p.x, z: p.z, vx: 0, vz: 0 }; };

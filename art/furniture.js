@@ -744,57 +744,55 @@ const PIECES = {
   },
 
   // The synth (Ed, 2026-10-26, his photo: previews/ed/refs/studio-synth-modular.jpg on claude/ed-shots: "The keyboard looks like this,
-  // with a keyboard in front of it"): a big modular on a dark desk, three tiers of silver cases full of knobs and little modules, the
-  // top tier set back and the wings angled in towards her, a messy web of bright patch cables draped over it all (the messy witch),
-  // small LEDs glowing every colour; a keyboard on the desk in front, lit blue from under its edge.
+  // with a keyboard in front of it"; then, at the house's size: brighter, clearer, "fewer but bolder"): a big modular on a desk, three
+  // tiers of bright silver cases stepping back and up, each a row of modules with dark seams between, a grid of knobs (dots that read)
+  // and a row of big glowing LEDs (red, green, blue, white); a dozen thick patch cables in red, orange, yellow and blue looping down
+  // between them in wide arcs, two trailing off the desk to the floor (the messy witch); a keyboard on the desk in front, lit blue.
   synthRack(m, { W, D, H }) {
     const desk = .6, zf = D / 2 - .03, back = -D / 2 + .12, X = [1, 0, 0];
-    // the desk: a dark top on two panel legs, a shelf under it, a blue glow strip along its front edge
     m.box([0, desk, 0], [W / 2, .03, D / 2], M.WOOD, { round: .01, group: 1 });
     for (const x of [-W / 2 + .05, W / 2 - .05]) for (const z of [-D / 2 + .05, D / 2 - .05]) m.seg([x, 0, z], [x, desk, z], .025, .025, M.FRAME, { group: 1 });
-    m.box([0, desk - .035, zf], [W / 2 - .03, .008, .008], M.GLINT, { group: 2 });
-    light(m, [0, desk - .05, zf + .05], SCREEN, 14, .3);
-    // the cases: three tiers stepping back and up, each a row of panels (the middle one face on, the two wings turned in), their faces
-    // silver with dark seams between modules; knobs in rows, a few big ones; LEDs every colour
-    const LEDS = [M.COLLAR, M.RUNE, M.GLINT, M.GLOW, M.WOKEN, M.MAGIC];
-    const tiers = [[desk + .27, .24, back + .2, .25], [desk + .76, .24, back + .1, .12], [desk + 1.25, .24, back, 0]]; // [middle y, half height, z, tilt back]
-    const faces = []; // (each panel's face: its middle, its across and up directions, its half sizes: where cables plug in)
-    tiers.forEach(([y, hh, z, tilt], t) => {
-      for (const [side, x0, x1, turn] of [[-1, -W / 2 + .03, -W * .17, .45], [0, -W * .17, W * .17, 0], [1, W * .17, W / 2 - .03, -.45]]) {
-        const hw = (x1 - x0) / 2, cx = (x0 + x1) / 2 + side * .02, cz = z + Math.abs(side) * .1, across = rotY(X, side ? turn : 0), up = [0, Math.cos(tilt), Math.sin(tilt)];
+    // the cases: three tiers, each a middle panel facing her and two wings turned in; silver faces, dark seams a module apart
+    const LEDS = [M.COLLAR, M.RUNE, M.GLINT, M.WOKEN], hh = .23, tiers = [[desk + .27, back + .22, .22], [desk + .78, back + .11, .1], [desk + 1.29, back, 0]];
+    const faces = [];
+    tiers.forEach(([y, z, tilt], t) => {
+      for (const [side, x0, x1, turn] of [[-1, -W / 2 + .03, -W * .18, .5], [0, -W * .17, W * .17, 0], [1, W * .18, W / 2 - .03, -.5]]) {
+        const hw = (x1 - x0) / 2, cx = (x0 + x1) / 2, cz = z + Math.abs(side) * .12, across = rotY(X, side ? turn : 0), up = [0, Math.cos(tilt), Math.sin(tilt)];
         const out = [across[1] * up[2] - across[2] * up[1], across[2] * up[0] - across[0] * up[2], across[0] * up[1] - across[1] * up[0]];
-        m.box([cx, y, cz], [hw, hh, .05], M.FRAME, { round: .006, group: 10 + t * 3 + side + 1, dir: across, up, paint: p => { const u = (p[0] - cx) * across[0] + (p[2] - cz) * across[2]; return Math.abs(((u / .075) % 1 + 1) % 1 - .5) > .44 || Math.abs(p[1] - y) > hh - .012 ? M.SHADES : undefined; } });
-        const at = (u, v, o = .055) => [cx + across[0] * u + out[0] * o, y + up[1] * v + out[1] * o, cz + across[2] * u + up[2] * v + out[2] * o];
-        faces.push({ at, hw, hh });
-        // knobs: little dark ones in rows, a big one now and then; LEDs between
-        for (let r = 0; r < 5; r++) for (let k = 0; k < Math.round(hw * 15); k++) {
-          const u = -hw + .03 + (k + .5) * (2 * hw - .06) / Math.round(hw * 15), v = hh - .04 - r * (2 * hh - .06) / 5, hk = hash2(t * 31 + side, r * 17 + k, 9);
-          if (hk > .8) bulb(m, at(u, v, .06), .014, LEDS[Math.floor(hash2(k, r + t * 4, 3) * LEDS.length)], 40 + t, hk > .97 ? [[FAIRY, GREEN, SCREEN, WARM][Math.floor(hk * 97) % 4], 7, .18] : null);
-          else if (hk > .3) m.ell(at(u, v, .065), [hk > .74 ? .024 : .014, hk > .74 ? .024 : .014, .014], hk > .74 ? M.BELLY : M.SHADES, { group: 30 + t, dir: out });
+        const g = 10 + t * 3 + side + 1, uOf = p => (p[0] - cx) * across[0] + (p[2] - cz) * across[2];
+        m.box([cx, y, cz], [hw, hh, .05], M.FRAME, { round: .006, group: g, dir: across, up, paint: p => (Math.abs(((uOf(p) / .12) % 1 + 1) % 1 - .5) > .45 || Math.abs(p[1] - y) > hh - .02 ? M.SHADES : undefined) });
+        const at = (u, v, o = .06) => [cx + across[0] * u + out[0] * o, y + up[1] * v + out[1] * o, cz + across[2] * u + up[2] * v + out[2] * o];
+        faces.push({ at, hw });
+        // a module every 12 cm: two knobs over each other, the top row big; a row of LEDs along the top of each tier
+        const n = Math.max(1, Math.round(hw * 2 / .12));
+        for (let k = 0; k < n; k++) {
+          const u = -hw + (k + .5) * (2 * hw) / n;
+          m.ell(at(u, .06, .065), [.026, .026, .016], M.SHADES, { group: 30 + t, dir: out });
+          m.ell(at(u, -.08, .065), [.018, .018, .014], hash2(k, t, 5) > .6 ? M.ACCENT : M.SHADES, { group: 30 + t, dir: out });
+          bulb(m, at(u, .17, .06), .02, LEDS[(k + t + side + 4) % LEDS.length], 40 + t, k % 3 === 1 ? [[FAIRY, GREEN, SCREEN, WARM][(k + t + side + 4) % 4], 9, .3] : null);
         }
       }
     });
-    // the patch cables: dozens, plugged into one panel and another, sagging forward and down between, red, orange, yellow, blue, pink
-    const CAB = [M.ACCENT, M.JACKET, M.FLOWER, M.IRIS, M.POM, M.HAT1, M.BODY2];
-    for (let i = 0; i < 30; i++) {
-      const a = faces[Math.floor(hash2(i, 1, 21) * faces.length)], b = faces[Math.floor(hash2(i, 2, 21) * faces.length)];
-      const p0 = a.at((hash2(i, 3, 21) * 2 - 1) * a.hw * .9, (hash2(i, 4, 21) * 2 - 1) * a.hh * .8, .075), p1 = b.at((hash2(i, 5, 21) * 2 - 1) * b.hw * .9, (hash2(i, 6, 21) * 2 - 1) * b.hh * .8, .075);
-      const sag = .08 + hash2(i, 7, 21) * .3, mid = [(p0[0] + p1[0]) / 2, Math.min(p0[1], p1[1]) - sag, Math.max(p0[2], p1[2]) + .06 + sag * .4];
-      const q = t => { const s = 1 - t; return [s * s * p0[0] + 2 * s * t * mid[0] + t * t * p1[0], s * s * p0[1] + 2 * s * t * mid[1] + t * t * p1[1], s * s * p0[2] + 2 * s * t * mid[2] + t * t * p1[2], .008]; };
-      m.chain([0, .25, .5, .75, 1].map(t => [...q(t).slice(0, 3), .012]), CAB[i % CAB.length], { group: 60 + (i % 8) });
+    // the patch cables: a dozen, thick, from one module to another, sagging in wide arcs in front of the wall
+    const CAB = [M.ACCENT, M.JACKET, M.FLOWER, M.IRIS], plugs = [];
+    faces.forEach((f, i) => { for (const u of [-.6, .6]) plugs.push(f.at(u * f.hw, -.15, .08)); });
+    for (let i = 0; i < 12; i++) {
+      const p0 = plugs[Math.floor(hash2(i, 1, 31) * plugs.length)], p1 = plugs[Math.floor(hash2(i, 2, 31) * plugs.length)];
+      if (Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) < .3) continue;
+      const sag = .18 + hash2(i, 3, 31) * .25, mid = [(p0[0] + p1[0]) / 2, Math.min(p0[1], p1[1]) - sag, Math.max(p0[2], p1[2]) + .1];
+      const q = t => { const s = 1 - t; return [s * s * p0[0] + 2 * s * t * mid[0] + t * t * p1[0], s * s * p0[1] + 2 * s * t * mid[1] + t * t * p1[1], s * s * p0[2] + 2 * s * t * mid[2] + t * t * p1[2], .02]; };
+      m.chain([0, .2, .4, .6, .8, 1].map(q), CAB[i % CAB.length], { group: 60 + (i % 8) });
     }
-    // a few cables falling off the desk's front to the floor in loops (her mess)
-    for (let i = 0; i < 4; i++) { const x = -W * .3 + i * W * .2; m.chain([[x, desk + .25, back + .3, .009], [x + .05, desk + .02, zf + .03, .009], [x + .02, desk * .5, zf + .1, .009], [x + .1, .01, zf + .2, .009]], CAB[(i * 3) % CAB.length], { group: 70 + i }); }
-    // the keyboard on the desk in front: its case, white keys, the black keys over them, a strip of LEDs over the keys
-    const kz = zf - .17, kw = W * .42;
+    for (let i = 0; i < 2; i++) { const x = -W * .25 + i * W * .45; m.chain([[x, desk + .2, back + .3, .02], [x + .05, desk + .03, zf + .03, .02], [x + .02, desk * .5, zf + .12, .02], [x + .14, .02, zf + .25, .02]], CAB[i * 3], { group: 70 + i }); }
+    // the keyboard on the desk in front, lit blue from a strip along the desk's front edge
+    const kz = zf - .16, kw = W * .42;
     m.box([0, desk + .05, kz], [kw, .03, .13], M.SHADES, { round: .01, group: 80 });
-    m.box([0, desk + .075, kz + .04], [kw - .03, .012, .08], M.BELLY, { group: 81, paint: p => (Math.abs(((p[0] / .045) % 1 + 1) % 1 - .5) > .42 ? M.SHADES : undefined) });
-    for (let k = 0; k < Math.floor(kw * 2 / .045); k++) if ([1, 2, 4, 5, 6].includes(k % 7)) m.box([-kw + .03 + k * .045, desk + .09, kz + .015], [.012, .008, .045], M.SHADES, { group: 82 });
-    for (let k = 0; k < 9; k++) bulb(m, [-kw + .08 + k * (kw * 2 - .16) / 8, desk + .085, kz - .09], .008, LEDS[k % LEDS.length], 83, null);
-    // (the wall lit by its own LEDs, so its silver reads in the Studio's dark: Ed's photo's glow)
-    light(m, [0, desk + .9, back + .45], FAIRY, 22, .45);
-    light(m, [-W * .3, desk + .6, back + .4], GREEN, 14, .35);
-    light(m, [W * .3, desk + 1.1, back + .4], SCREEN, 14, .35);
+    m.box([0, desk + .075, kz + .04], [kw - .03, .012, .08], M.BELLY, { group: 81, paint: p => (Math.abs(((p[0] / .05) % 1 + 1) % 1 - .5) > .42 ? M.SHADES : undefined) });
+    for (let k = 0; k < Math.floor(kw * 2 / .05); k++) if ([1, 2, 4, 5, 6].includes(k % 7)) m.box([-kw + .03 + k * .05, desk + .09, kz + .015], [.013, .009, .045], M.SHADES, { group: 82 });
+    m.box([0, desk - .02, zf + .01], [W / 2 - .03, .015, .012], M.GLINT, { group: 2 });
+    m.box([0, desk + .06, kz - .135], [kw, .012, .008], M.GLINT, { group: 2 });
+    light(m, [0, desk + .1, zf + .1], SCREEN, 18, .5);
+    light(m, [0, desk + 1.1, back + .5], WARM, 22, .45);
   },
 
   // The microphone, spotlit: a chrome stand on a round base, a big vintage capsule mic, its cable coiling away; a spot lamp hanging over
@@ -870,7 +868,7 @@ const ROOM_COLOURS = {
   parlour: { [M.CLOTH]: [40, 104, 70], [M.ACCENT]: [178, 120, 48], [M.BODY]: [26, 70, 48] }, // emerald and old gold
   study: { [M.CLOTH]: [40, 56, 104], [M.ACCENT]: [170, 110, 46] }, // navy and ochre
   workshop: { [M.CLOTH]: [74, 92, 64], [M.ACCENT]: [184, 74, 44] }, // oily green and rust
-  studio: { [M.CLOTH]: [52, 30, 80], [M.ACCENT]: [226, 60, 140] }, // midnight purple and neon pink
+  studio: { [M.CLOTH]: [52, 30, 80], [M.ACCENT]: [226, 60, 140], [M.FRAME]: [226, 230, 240] }, // midnight purple and neon pink; bright silver (the synth's cases)
   kitchen: { [M.CLOTH]: [110, 138, 104], [M.ACCENT]: [196, 104, 60] }, // sage and copper
   solarium: { [M.CLOTH]: [224, 206, 150], [M.ACCENT]: [226, 120, 120], [M.WOOD]: [176, 132, 86] }, // cream and sunny rose, pale wood
   drawingRoom: { [M.CLOTH]: [34, 98, 62], [M.ACCENT]: [150, 30, 44] }, // baize green and crimson
