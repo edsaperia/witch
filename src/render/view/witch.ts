@@ -204,6 +204,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
+  // (where she's drawn less the rules' place, in the house: her 💌s leave her hand as drawn, render/invites.ts letterAt)
+  { const O = v.herOffset; O.on = !!(T.ent && deck && w.perch); O.x = wx - w.x; O.z = wz - w.z; O.y = wyy + groundHeight(wx, wz); }
   v.inviteView.update(ht, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.leashView.tops, v.leashView.heads);
   // Idling into the party, she's drawn in her party pose there instead.
   // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;

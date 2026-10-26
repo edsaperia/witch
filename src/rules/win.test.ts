@@ -13,7 +13,7 @@ import { barAt, musicCue, planBlock } from "./musicPlan";
 import type { MusicStyle } from "./musicScore";
 import { composeFloor, newFloor } from "./dancefloor";
 import { floorInputs } from "./game";
-import { congaPlace, congaRadius, finalStone, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
+import { congaFollows, congaPlace, congaRadius, finalStone, trailPlaces, islandCleared, legendPlaces, winFlare, nearestStraggler, routeDone, straggler, WIN_DEFAULT, winLit, winPulse, winPulseOut, winTarget } from "./win";
 import { cellKey, clearArea, wavePlan } from "./party";
 import { leyChain } from "./leylines";
 import { fillTrunk } from "./finds";
@@ -204,6 +204,60 @@ describe("the end of the route (rules/win.ts)", () => {
     const play = () => { const { g } = toTheEnd(11); run(g, 0.2); calmAll(g); run(g, 30); return JSON.stringify({ w: g.win, xs: g.creatures.map(c => [Math.round(c.x * 100), Math.round(c.z * 100), c.finale ?? null]) }); };
     expect(play()).toBe(play());
   }, 120000);
+});
+
+describe("the conga follows her (Ed's playtest, 2026-10-26: on the ground in the home area, the line follows you)", () => {
+  /** The night won, the line formed round the dancefloor, her on the ground by the dancefloor. */
+  function wonNight(): Game {
+    const { g } = toTheEnd();
+    run(g, 0.2); calmAll(g);
+    for (let i = 0; i < 120 / STEP && g.win?.phase !== "won"; i++) stepGame(g, idle, STEP);
+    expect(g.win?.phase).toBe("won");
+    run(g, 30); // (everyone in place round the floor; she's still up in the treetops)
+    const d0 = g.map.dancefloor;
+    g.witch = { ...g.witch, x: d0.x, z: d0.z + 20, mode: "ground", lift: 0, vx: 0, vz: 0, perch: undefined, seated: false };
+    return g;
+  }
+  const line = (g: Game) => g.creatures.filter(c => !c.gone && c.finale !== undefined && c.finale >= 0).sort((a, b) => a.finale! - b.finale!);
+
+  it("on the ground in the home area the line files after her along where she's walked, its leader followLead behind her", () => {
+    const g = wonNight(), d0 = g.map.dancefloor, n = g.win!.congaSize;
+    expect(n).toBeGreaterThan(10);
+    // she walks round a wide circle by the dancefloor for half a minute, staying in the home area
+    for (let i = 0; i < 30 / STEP; i++) {
+      const t = i * STEP, a = t * 1.0; // (a 19 m circle: the home area reaches only about 60 m from the floor some ways)
+      stepGame(g, { ...idle, moveX: -Math.sin(a), moveZ: Math.cos(a) }, STEP);
+      expect(congaFollows(g)).toBe(true);
+    }
+    const L = line(g), P = trailPlaces(g.win!.trail!, g.witch.x, g.witch.z, W.followLead, W.congaGap, n, []);
+    expect(Math.hypot(L[0].x - g.witch.x, L[0].z - g.witch.z)).toBeLessThan(W.followLead + 1.5);
+    let near = 0;
+    for (const c of L) if (Math.hypot(P[c.finale! * 2] - c.x, P[c.finale! * 2 + 1] - c.z) < 1) near++;
+    expect(near / L.length).toBeGreaterThan(0.95); // (each on its place along her trail)
+    for (let i = 1; i < Math.min(L.length, 40); i++) expect(Math.hypot(L[i].x - L[i - 1].x, L[i].z - L[i - 1].z)).toBeLessThan(W.congaGap + 0.3);
+    void d0;
+  });
+
+  it("she stops: they stop behind her; up in the treetops or out of the home area they go back round the dancefloor", () => {
+    const g = wonNight(), n = g.win!.congaSize;
+    for (let i = 0; i < 2 / STEP; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
+    expect(congaFollows(g)).toBe(true);
+    run(g, 3);
+    const still = line(g).slice(0, 5).map(c => [c.x, c.z]);
+    run(g, 2);
+    line(g).slice(0, 5).forEach((c, k) => expect(Math.hypot(c.x - still[k][0], c.z - still[k][1])).toBeLessThan(0.05));
+    // up into the treetops: back to the ring
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 30);
+    expect(congaFollows(g)).toBe(false);
+    expect(g.win!.trail).toBeUndefined();
+    for (const c of line(g)) { const p = congaPlace(g, c.finale!, n, g.clock.time); expect(Math.hypot(p.x - c.x, p.z - c.z)).toBeLessThan(0.6); }
+    // on the ground but out of the home area: not following
+    const out = g.map.cells.map(([cx, cy]) => g.map.siteOf(cx, cy)).find(s => !(g.map.cellSafe(s.x, s.z).cell[0] === g.map.centreCell[0] && g.map.cellSafe(s.x, s.z).cell[1] === g.map.centreCell[1]))!;
+    g.witch = { ...g.witch, x: out.x, z: out.z, mode: "ground", lift: 0 };
+    stepGame(g, idle, STEP);
+    expect(congaFollows(g)).toBe(false);
+  });
 });
 
 describe("the woken legends' places (Ed, 2026-10-11: north of the dancefloor, beyond the conga)", () => {

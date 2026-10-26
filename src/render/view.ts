@@ -47,7 +47,7 @@ import { lakeKnobs } from "../rules/lakes";
 import type { ForestMap } from "../rules/map";
 import { OcclusionProbes } from "./occlusion";
 import { Ride } from "./ride";
-import { groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, type HeightField } from "./height";
+import { bendPoint, groundHeight, HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL, type HeightField } from "./height";
 import { applyStyleLight, LIGHT_UNIFORMS } from "./lighting";
 import { AreaMoods, hsvInto, moodOf } from "./mood";
 import { hsv2rgb } from "../../art/generator.js";
@@ -58,7 +58,7 @@ import { TRAIL_DEFAULT, WitchTrail } from "./trail";
 import { newPartyOverLook, partyOff, partyOverEase, updatePartyOver } from "./partyOver";
 import { SWOOP_TRAIL_DEFAULT, SwoopTrails } from "./swoopTrails";
 import { LOAD_DEFAULT, loadView } from "./load";
-import { InviteView } from "./invites";
+import { HAND, InviteView, letterAt, type HerOffset } from "./invites";
 import { StateMarks } from "./looks";
 import { BuffHud } from "./buffhud";
 import type { Dancefloor } from "./dancefloor";
@@ -214,7 +214,7 @@ function nightState(t: Tuning) {
     trailAt: -1,
     /** The crowns' reach now (metres; 0 on the ground): eased toward the tuning's scenery.canopyReach in the air (render/view/scenery.ts). */
     canopyNow: 0,
-    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number },
+    lastBuild: { x: Infinity, y: Infinity, z: Infinity, version: -1, radius: -1, relics: -1 } as { x: number; y: number; z: number; version: number; radius: number; canopy?: number; relics: number; cap?: number },
     /** The scenery budget: how far round the witch scenery is drawn (rules/budget.ts). */
     budget: newBudget(t) as SceneryBudget,
     /** The last drawn frame's real time (ms), for the budget. */
@@ -547,6 +547,14 @@ export class View {
   readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */
   readonly houseCam = { x: 0, y: 0, z: 0 };
+  /** Where she's drawn less where the rules have her, in the treehouse (render/view/witch.ts), her feet's world height as drawn: her
+   *  letters drawn by it (render/invites.ts letterAt), so they leave her hand as drawn. */
+  readonly herOffset: HerOffset = { on: false, x: 0, y: 0, z: 0 };
+  /** Where a 💌 thrown now starts as drawn (the world's height), for the tools (tools/house/positions.cjs). */
+  inviteStart(g: Game): { x: number; y: number; z: number; world: boolean } {
+    const [x, y, z] = letterAt(this.herOffset, g.witch.x, HAND, g.witch.z);
+    return { x, y: y + groundHeight(x, z), z, world: true };
+  }
   /** How far up the Ent's plane (its art's pixels, negative up) the oak's rooms are drawn this frame, so the room she's in sits at the
    *  Terrace's height (render/view/witch.ts sets it, render/houseRooms.ts draws by it). */
   houseShift = 0;
@@ -725,6 +733,7 @@ export class View {
     this.strings = new StringLightsView(this.scene, game);
     this.strings.setCrown(this.crown); // (the crown's lights, made before the strings were)
     this.leashView = new LeashView(this.scene, game);
+    this.leashView.herOffset = this.herOffset;
     this.rig = rigOn() ? new RigView(this.scene, this.assets, this.mpp) : null; // the live rig (#79): on unless ?rig=0
     this.lasers = new Lasers(this.scene, game);
     yield "holograms";
@@ -751,6 +760,7 @@ export class View {
     this.swoopTrails = new SwoopTrails(game.tuning.swoopTrail ?? SWOOP_TRAIL_DEFAULT);
     this.scene.add(this.swoopTrails.mesh);
     this.inviteView = new InviteView(game);
+    this.inviteView.herOffset = this.herOffset;
     // The 💌s and the invite rings hidden as the animals are, by what stands in front of them and the smoke (render/occlusion.ts;
     // Ed, 2026-10-19). ?occlusion=off: drawn over everything, as before, to compare.
     yield "occlusion";
@@ -1150,6 +1160,13 @@ export class View {
   box = new THREE.Box3();
   m4 = new THREE.Matrix4();
   v3 = new THREE.Vector3();
+  /** A world point on screen (normalised device coordinates: x right, y up, -1 to 1), as the sprites are placed (the bend): `y`
+   *  over the ground there, or the world's own height with `world`. For the tools (tools/house/positions.cjs). */
+  screenOf(x: number, y: number, z: number, world = false): [number, number] {
+    const p = this.v3.set(x, world ? y : y + groundHeight(x, z), z);
+    bendPoint(p).project(this.camera);
+    return [p.x, p.y];
+  }
   v3b = new THREE.Vector3();
   v3c = new THREE.Vector3();
   /** Keep track of what appears and vanishes (into pops): the smoke check turns it on (and
@@ -1490,7 +1507,11 @@ export class View {
       W.o.set(deck.x, groundHeight(deck.x, deck.z) + deck.h, deck.z); W.ex.set(c, 0, -s); W.ez.set(s, 0, c);
       const plan = this.houseRooms?.plan ?? null, here = plan ? toPlan({ x: deck.x, z: deck.z }, w.x, w.z) : null;
       const dt = Number.isFinite(this.crownAt) ? Math.min(0.1, Math.max(0, ht - this.crownAt)) : 0; this.crownAt = ht;
-      this.crown.update(this.camera, W, plan, here, dt);
+      // (indoors, the forest's hole round her as it would be outdoors, its middle where she's drawn: render/view/witch.ts set uWitch
+      // this frame, her house's slide in it; Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse")
+      const cut = t.canopyCutout, hw = SPRITE_UNIFORMS.uWitch.value, CR = t.treehouse.house?.crown;
+      const hole = { x: hw.x, y: hw.y, r: 0.5 * cut.screenFraction * (t.suspects.holeCut ? 1 : 0) * this.width, edge: cut.edge * this.width };
+      this.crown.update(this.camera, W, plan, here, dt, hole, CR?.cutFade ?? 0);
       if (this.crownFar) { // (and over the horizon from far off: its picture baked the first frame there is one)
         this.crownFar.bake(this.renderer);
         const at = g.party.spellAt;

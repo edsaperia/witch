@@ -26,7 +26,7 @@ import { hasRune, runeNear } from "../rules/creatureStates";
 import { newLoadView, type LoadView } from "./load";
 import { relicGlints } from "../rules/legends";
 import { SPRITE_UNIFORMS, metresPerArtPixel } from "./sprites";
-import { lobHeight } from "./invites";
+import { letterAt, lobHeight, type HerOffset } from "./invites";
 
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
@@ -143,6 +143,8 @@ export class LeashView {
   /** When she last hit a party legend's edge (its boing played). */
   boingAt = -Infinity;
 
+  /** Where she's drawn less the rules' place, in the house (the view's: render/view/witch.ts): her letters' trails drawn by it. */
+  herOffset?: HerOffset;
   constructor(scene: THREE.Scene, public game: Game) {
     this.canvas.width = this.canvas.height = SLOT * SLOTS;
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!;
@@ -420,7 +422,8 @@ export class LeashView {
           const back = j * 0.4, f = L.flown - back;
           if (f < 0) break;
           const c = j % 2 ? AMBER : ROSE, y = L.kind === "orbit" ? 1.3 : lobHeight(f, L.range, arc);
-          this.standing.add(L.x - ux * back, y, L.z - uz * back, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
+          const [tx, ty, tz] = letterAt(this.herOffset, L.x - ux * back, y, L.z - uz * back); // (in the house, behind it as drawn: render/invites.ts)
+          this.standing.add(tx, ty, tz, (L.small ? 0.5 : 0.8) * (1 - j * 0.07), dot, c[0], c[1], c[2], 0.9 * (1 - j / 10));
         }
       }
       for (const e of W.invites.events) {
