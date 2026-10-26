@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { HOUSE_CONFIG } from "./houseConfig";
 import { houseFiles, loadHouse } from "../../config/house/load.mjs";
 import { roomPlaces } from "../../config/house/assemble.js";
-import { inRoom } from "../../config/house/shape.js";
+import { field, inRoom } from "../../config/house/shape.js";
 import { houseOutline, houseWalk } from "../../config/house/outline.js";
 import { OAK_TERRACE } from "../../art/ent.js";
 
@@ -36,6 +36,7 @@ describe("the house, a file a room (config/house/)", () => {
     for (const o of H2.objects) {
       const door = o.id.endsWith("Door") ? o.id.slice(0, -4) : null, d = inRoom(H2.shape, door ?? o.room, o.x, o.z);
       if (door) expect(Math.abs(d), `${o.id}: at ${door}'s rim`).toBeLessThan(0.6);
+      else if (o.id === "bed") expect(field(H2.shape, o.x, o.z, true), `${o.id}: on the trunk's floor (in the corridor up to the Turret: Ed, 2026-10-26)`).toBeLessThan(0);
       else expect(d, `${o.id}: in ${o.room}`).toBeLessThan(0);
     }
     // the limbs: the trunk's between its rooms in order, each branch from its trunk room into its room (or to its door)
@@ -51,7 +52,9 @@ describe("the house, a file a room (config/house/)", () => {
       const a = L[i], b = L[j];
       expect(Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r, `${a.id} and ${b.id} crowd`).toBeGreaterThanOrEqual(3);
     }
-    expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m; the mock's 93)").toBe(93);
+    // (the mock's 93 from her bed in the Bedroom; 99 since it's in the corridor up to the Turret, Ed 2026-10-26: "bring the bed closer
+    // to the bedroom (it can go in the corridor)")
+    expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m)").toBe(99);
   });
   it("its Terrace's layout is the Ent's art's own (art/ent.js OAK_TERRACE: the lab draws it as the game does)", () => {
     const T = (H as unknown as { terrace: Record<string, unknown> }).terrace;

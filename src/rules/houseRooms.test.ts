@@ -5,7 +5,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
-import { inRoom } from "../../config/house/shape.js";
+import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
 
@@ -267,13 +267,14 @@ describe("the oak's rooms", () => {
     const d = deck(newGame(7, TUNING));
     for (const o of HOUSE_ROOMS.objects) {
       if (o.id.endsWith("Door")) continue; // (a locked room's door: at its rim, above)
-      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
+      // (her bed in the corridor up to the Turret, Ed 2026-10-26: "it can go in the corridor": on the house's floor, not a room's)
+      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.use.kind === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
       if (room(o.room).locked) continue;
       const f = before(o), k = keepInHouse(d, d.x + f.x, d.z + f.z);
       expect(Math.hypot(k.x - d.x - f.x, k.z - d.z - f.z), `${o.id}: in front of it is floor`).toBeLessThan(0.05);
       expect(objectAt(d, d.x + f.x, d.z + f.z)?.id, `${o.id}: in reach from in front`).toBe(o.id);
     }
     const w = objectWorld(obj("bed"), { x: 0, z: 0 });
-    expect(inRoom(S, "bedroom", w.x, w.z)).toBeLessThan(0);
+    expect(field(S, w.x, w.z, true)).toBeLessThan(0); // (her bed, in the corridor up to the Turret: Ed, 2026-10-26)
   });
 });

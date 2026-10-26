@@ -166,7 +166,7 @@ describe("where her broom is on foot in the house (Ed, 2026-10-23: \"only while 
     expect(where(g)).toBe("held");
   });
   it("nowhere drawn elsewhere in the rooms: the Workshop away from the bay and the lathe, the pegboard, another room", () => {
-    const ws = HOUSE_ROOMS.rooms.find(r => r.id === "workshop")!, mid = inHouse(ws.x, ws.z - 2);
+    const ws = HOUSE_ROOMS.rooms.find(r => r.id === "workshop")!, mid = inHouse(ws.x - 3, ws.z); // (west of its middle: clear of the bay, the lathe and the pegboard)
     expect(where(mid)).toBe("none");
     const pb = before("pegboard", 0.5); expect(where(inHouse(pb.x, pb.z))).toBe("none");
     const at = HOUSE_ROOMS.rooms.find(r => r.id === "dining")!; expect(where(inHouse(at.x, at.z + 1))).toBe("none");

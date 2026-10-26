@@ -5,6 +5,9 @@
 // the branches come in, of the way in from each door to the room's middle, and of every object's reach (the stations stay as easy to
 // use as before); the rug lies a little south of the middle, under whatever stands there. `?decor=0` leaves the rooms bare.
 import { HOUSE_ROOMS, type HouseConfig, type Rect } from "../rules/houseRooms";
+import { MESS } from "../../art/houseMess.js";
+import { FURNITURE_IDS } from "../../art/furniture.js";
+import { standing } from "./housePieces";
 
 /** Whether the rooms are dressed (`?decor=0`: bare, as before). */
 export const decorOn = typeof location === "undefined" || new URLSearchParams(location.search).get("decor") !== "0";
@@ -28,11 +31,17 @@ export const ROOM_DECOR: Record<string, string[]> = {
 const DEFAULT = ["rug", "plant", "lantern", "candles"];
 
 /** One piece of a room's dressing: its kind, its place (metres on the plan from the room's middle), which way it faces (the art's
- *  yaw: 0 the camera), its seed, and a rug's radius (metres, house.json's). */
-export interface DecorItem { kind: string; x: number; z: number; yaw: number; k: number; r?: number }
+ *  yaw: 0 the camera), its seed, and a rug's radius (metres, house.json's); a piece's spill (kind "mess", art/houseMess.js) the object
+ *  it's spilled off and that object's footprint as its art takes it. */
+export interface DecorItem { kind: string; x: number; z: number; yaw: number; k: number; r?: number; of?: string; foot?: { w: number; d: number; h: number } }
 
 /** A rug's colours, times this: it lies flat to the light, and a pale one blooms into a glare (the solarium's cream). */
 export const RUG_DIM = 0.6;
+/** The things spilled on the floor (art/houseMess.js), times this: flat to the lamps as a rug is, a pale sheet of paper glared white. */
+export const MESS_DIM = 0.6;
+/** No piece with a spill stands nearer her clothes pile than this (m, box to box): so nothing on the floor near it could be taken for
+ *  it (Ed, 2026-10-26: the floor's mess never "last night's clothes"); the layout keeps to it (config/house), a test checks. */
+export const PILE_CLEAR = 3;
 /** Clear of these (m): a doorway, the way in from it, an object's reach past its edge (on top of the house's own reach). */
 const DOOR_CLEAR = 2.8, WAY_CLEAR = 1.8, REACH_CLEAR = 0.4, GAP = 2;
 
@@ -59,8 +68,10 @@ export function decorPlan(room: Rect & { id: string; r?: number; locked?: boolea
   const places: [number, number][] = [];
   for (const d of [R - 1.05, R - 1.5]) for (let b = -125; b <= 125; b += 6) { const a = (b * Math.PI) / 180; places.push([d * Math.sin(a), -d * Math.cos(a)]); }
   const order = places.map((p, i) => ({ p, s: hash(seed, i) })).sort((a, b) => a.s - b.s).map(q => q.p);
+  // what's spilled off each of the room's pieces round its foot (Ed, 2026-10-26: "she's a messy witch"), as it stands
+  for (const o of objects) if (o.room === room.id && MESS[o.id] && FURNITURE_IDS.includes(o.id)) { const s = standing(o); out.push({ kind: "mess", of: o.id, x: +(o.x - cx).toFixed(2), z: +(o.z - cz).toFixed(2), yaw: s.yaw, k: 0, foot: s.foot }); }
   kinds.filter(k => k !== "rug").forEach((kind, i) => {
-    const at = order.find(([x, z]) => clear(x, z) && out.every(q => q.kind === "rug" || Math.hypot(q.x - x, q.z - z) > GAP));
+    const at = order.find(([x, z]) => clear(x, z) && out.every(q => q.kind === "rug" || q.kind === "mess" || Math.hypot(q.x - x, q.z - z) > GAP));
     if (at) out.push({ kind, x: +at[0].toFixed(2), z: +at[1].toFixed(2), yaw: face(at[0], at[1]), k: seed + i * 101 });
   });
   return out;
