@@ -7409,6 +7409,19 @@
           ],
           "additionalProperties": false
         },
+        "house": {
+          "type": "object",
+          "properties": {
+            "muffle": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "muffle"
+          ],
+          "additionalProperties": false
+        },
         "clear": {
           "type": "number",
           "minimum": 0
@@ -7470,6 +7483,7 @@
         "audible",
         "circle",
         "slow",
+        "house",
         "clear",
         "distort",
         "src",
