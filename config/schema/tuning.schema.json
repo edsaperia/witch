@@ -1366,11 +1366,16 @@
                 "seed": {
                   "type": "number",
                   "minimum": 0
+                },
+                "cutFade": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
-                "seed"
+                "seed",
+                "cutFade"
               ],
               "additionalProperties": false
             }
