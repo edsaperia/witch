@@ -20,7 +20,8 @@
     1026,
     1043,
     1063,
-    1110
+    1110,
+    1149
   ],
   "built": [
     "`docs/art-review/menagerie-review.md`: the creature pipeline end to end and its weaknesses measured (knee angles, level-to-level silhouette distances)",
@@ -45,7 +46,8 @@
     "The ground's cost measured part by part (tools/bench/ground.cjs) and its unused lake and beach code compiled out: a fifth off the forest floor's draw, the picture the same to the pixel",
     "The sail's transition: the next night made under the sea chart's flight, the flight easing into a hover until the night's ground, house and shaders are ready, the dive's own areas drawn first and the dive coming in from far out to sea (`tools/view/sail-timing.cjs` times it)",
     "Biome looks by ring: each island's forests take its biome at its ring's strength (55% at ring 3, 80% at ring 4, full at ring 5), mixed toward temperate, its art cached apart by ring",
-    "Ed's tuned leaf jitter and spooky grade as the built defaults (his pause-page sliders, v4522)"
+    "Ed's tuned leaf jitter and spooky grade as the built defaults (his pause-page sliders, v4522)",
+    "Softer area borders: neighbouring areas' trees mix over an 80 m band (it was 40) that itself wanders, with a pause-page slider for its width"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",
@@ -58,7 +60,8 @@
     "Measure a voice before judging it: a pitch tracker over the sung line said in numbers what Ed heard (out of tune), and found the cause in a sample's first quarter second singing 20 cents flat.",
     "A physical-model voice drifts on purpose: Pink Trombone's glottis wanders a few cents by design, which reads as a singer solo and as out of tune in a chord; one knob scaling the wander turned 46 cents off into 13.",
     "Tinting a tree by hue does nothing: the night palette squeezes every green into a narrow band, so a biome's colour has to go in after it, in RGB. And the per-tree autumn jitter that makes a temperate wood lively turns a snowy fir pink, so each biome keeps only its share of it",
-    "On the cloud's software renderer, shader code behind a uniform that's switched off still costs: measure by switching parts off in the page, and prove a saving by drawing old and new back to back in one call, since a live frame never quite stands still"
+    "On the cloud's software renderer, shader code behind a uniform that's switched off still costs: measure by switching parts off in the page, and prove a saving by drawing old and new back to back in one call, since a live frame never quite stands still",
+    "A blend has a price in identity: areas are about 168 m across, so most ground is within 80 m of a border, and doubling the band took an area's own trees from about 77% to 59%. Measure that share with the test's own map before setting a threshold; a quick script on another seed told a different story"
   ],
   "previews": [
     {
