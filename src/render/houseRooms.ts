@@ -432,7 +432,7 @@ export class HouseRoomsView {
       const word = document.createElement("span"); word.textContent = "snooooze";
       this.wakeR.replaceChildren(keycapCanvas(pad ? "SQ" : "E", px), word);
     }
-    const gap = 0.8; // (metres out from the bed's sides)
+    const gap = 1.5; // (metres out from the bed's sides)
     place(this.wakeL, bedObj && { ...bedObj, x: bedObj.x - bedObj.w / 2 - gap }, 0.2);
     place(this.wakeR, snooze && bedObj ? { ...bedObj, x: bedObj.x + bedObj.w / 2 + gap } : null, 0.2);
     if (snooze && bedObj) this.wakeR.style.display = "flex";

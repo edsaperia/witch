@@ -22,7 +22,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     await page.goto(`http://127.0.0.1:${server.address().port}/?opening=bedroom&quick=1`);
     await page.waitForFunction(() => window.witch?.game?.wake?.beat === "alarm", null, { timeout: 1200000, polling: 1000 });
     log("in bed, her alarm ringing");
-    await page.waitForTimeout(4000);
+    await page.waitForTimeout(12000); // (the house camera settled on her bed)
     const look = () => page.evaluate(() => {
       const card = document.getElementById("wake-card"), shown = el => !!el && getComputedStyle(el).display !== "none" && el.getBoundingClientRect().width > 0;
       const box = document.getElementById("house-tags"), kids = box ? [...box.children].filter(shown).map(el => { const r = el.getBoundingClientRect(); return { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), text: el.textContent }; }) : [];
