@@ -7,9 +7,9 @@ import { AREA_FLORA } from "../art/flora/areas.js";
 import { KINDS_TABLE } from "./rules/kinds";
 
 const BIOME_TREES: Record<string, string[]> = {
-  hot: ["acacia", "baobab", "datePalm"],
-  badlands: ["juniper", "paloVerde", "saguaro", "joshua", "pricklyPear", "ocotillo", "pine"], // the pine a pinyon
-  "mangrove swamp": ["mangrove", "strangler", "palm"], // palm: the tree fern
+  hot: ["acacia", "baobab", "datePalm", "marula", "mopane"],
+  badlands: ["juniper", "mesquite", "desertIronwood", "paloVerde", "saguaro", "joshua", "pricklyPear", "ocotillo", "pine"], // the pine a pinyon
+  "mangrove swamp": ["mangrove", "baldCypress", "coconut", "nipa", "strangler", "palm"], // palm: the tree fern
   jungle: ["kapok", "strangler", "bamboo", "vinewood", "palm", "ironwood"], // ironwood: the rainforest one
   "mountains and glaciers": ["fir", "juniper", "larch", "cherry", "crystal"], // cherry: the Himalayan terraces'
   cold: ["fir", "larch", "birch", "juniper", "pine"], // boreal birch and pine

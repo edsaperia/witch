@@ -186,6 +186,7 @@ At ground level a young creature is about 45 px tall and the witch about 50 px. 
 
   Per-level `form` values did this for the bat, toad, spider and glow-worm (#97).
 - **The legend's feature must read at a glance and look grown, not glued on.** Lollipop trees on a back, flat-card wings and crystal fins all read as toys (#97, #112). Until features can be grown by the plant generator or come from a part pool, use fewer and bigger features that match the area.
+- **Species may look alike** (Ed, 2026-10-26, approving the flora check's seven new trees: "I think maybe we have been too strict on trees and animals looking different"). Real species often do: a mesquite and a palo verde, a bald cypress and a larch, two palms. Draw each as it really looks; don't push a tree or an animal away from its true shape just to clear a similarity check. The checks' look-alike lines are warnings to look at, not orders to change the art (the silhouette check's hard 0.15 floor stays).
 - **Trees: each species owns a crown shape.** Examples: slanting and broad (ancient oak), a cone (holly), a column (aspen, alder carr), weeping (willow), umbrella (Scots pine), bare and twisted (snags). Don't build a cone from separate blobs: the blob generator turned a holly into topiary (#97).
 
 ## 5. Clumps and density
