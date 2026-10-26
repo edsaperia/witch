@@ -4,6 +4,7 @@
     "*": "a partified area or home: its loose party pieces dealt again (some now jack-o'-lanterns, glowing, with their warm pools of light), and the party animals standing by its lit pieces"
   },
   "rules": {
-    "creatures": "the party animals' spots: they gather by an area's lit pieces (rules/partyGuests.ts), and the dressing they're dealt from has the jack-o'-lanterns among it"
+    "creatures": "the party animals' spots: they gather by an area's lit pieces (rules/partyGuests.ts), and the dressing they're dealt from has the jack-o'-lanterns among it",
+    "*": "what follows from the party animals standing elsewhere: who fights whom and when, the party, the clock, the witches, the camera and the floor"
   }
 }
