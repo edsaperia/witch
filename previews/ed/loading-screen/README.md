@@ -19,7 +19,10 @@ script; OFL licence).
 
 **Files:**
 - `desktop-*.png` (1440×900) and `phone-*.png` (390×844 at 3×): the load at 0, 25, 50, 75 and 100%.
-- `*-handover-35/70/100.png`: the hand-over. The seal flares, fades to dark, then the asleep card ("💤 … zzz …") comes up.
+- `*-supernova-15/30/42/60/100.png`: the hand-over (Ed: "the final star is in the centre - it should supernova, transitioning straight to the dark bedroom and the alarm going off").
+  - The last star, in the middle, swells to a white core with four spikes across the screen, and a shockwave ring races out across the seal's plane.
+  - The screen goes white, then the white falls straight away onto her dark bedroom with the alarm ringing. There's no asleep card.
+  - `bedroom-alarm*.png` is the game's own frame there: a cold load at seed 123 at its alarm beat.
 - `mock.html`: the live page; open it from this folder, next to `greatvibes.woff2`.
 
 The mock's settings, all in its query string:
@@ -28,7 +31,7 @@ The mock's settings, all in its query string:
 |---|---|
 | `?p=0..1` | the load's progress |
 | `?t=` | a moment of the camera's sway |
-| `?hand=0..1` | how far through the hand-over |
+| `?hand=0..1` | how far through the hand-over: white by 0.45 (`?nova=`), the white clearing over 0.35 (`?clear=`) |
 | `?edge=` | how strongly the edge lights first |
 | `?ghost=` | how bright an unlit star is |
 | `?sp=` | the tree's stars apart |
