@@ -113,7 +113,7 @@ export function wearHat(game: Game, look: unknown): void { const H = game.witche
 const freshFlags = (): NightFlags => ({ ready: false, landed: false, inBed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
 
 /** The playtest log's hooks main.ts sets (they read the holder, so they carry to the next night's log as they are). */
-const LOG_HOOKS = ["audioState", "frameState", "viewState", "debugInfo", "debugText", "stalls"] as const;
+const LOG_HOOKS = ["audioState", "frameState", "viewState", "keyState", "sceneState", "debugInfo", "debugText", "stalls"] as const;
 
 /** A night, made as the boot makes it, in the same order: the tuning from its link and this browser's settings, the game (from the
  *  chart's map prep if it's this night's), the link's switches for the game, her hat, a new playtest run, the knobs' start, the HUD

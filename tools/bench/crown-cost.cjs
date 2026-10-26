@@ -7,6 +7,8 @@
 // software renderer, shares, not milliseconds).
 //   npm run build && node tools/bench/crown-cost.cjs [out.json]   (DIST=, SEED=123, SCENES=a|b|c, FRAMES=60, SIZE=1280x720)
 const http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));
 const SEED = process.env.SEED || "123", FRAMES = Number(process.env.FRAMES || 60), [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number);
@@ -25,6 +27,7 @@ const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[M
       const errors = []; page.on("pageerror", e => errors.push(e.message));
       await page.goto(`http://127.0.0.1:${server.address().port}/?shot=${encodeURIComponent(scene)}&seed=${SEED}`);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
+      KEY ??= await pageKey(page, { spot: `crown-cost.cjs scenes ${SCENES.join(" | ")}` });
       await page.evaluate(() => { window.witch.manual = true; });
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
       const said = await page.evaluate(s => window.witch.lastShot ?? window.witch.shot(s), scene);
@@ -93,5 +96,5 @@ const med = a => { const s = [...a].sort((x, y) => x - y); return s.length ? s[M
       await page.close();
     }
   } finally { await browser.close(); server.close(); }
-  if (process.argv[2]) fs.writeFileSync(process.argv[2], JSON.stringify(out, null, 1));
+  if (process.argv[2]) fs.writeFileSync(process.argv[2], JSON.stringify({ key: KEY, ...out }, null, 1));
 })().catch(e => { console.error(e); process.exit(1); });

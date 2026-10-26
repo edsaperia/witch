@@ -20,6 +20,8 @@
 // 5 s: what's live, under the garbage) reported first to last.
 //   node tools/bench/stalls.cjs [out dir]   DIST=dist-prof SEED=2267 X=2673 Z=2484 ZOOM=3 SECONDS=60 SIZE=640x360 WARM=8 RUN_MS=50 NODRAW=1 HEAP=0 HEAP_EVERY=4096
 const http = require("http");
+const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+let KEY = null;
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -86,6 +88,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
   const t0 = Date.now(), lap = what => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)} s] ${what}`);
   await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&spell=auto`);
   await page.waitForFunction(() => window.witch?.ready, null, { timeout: 180000 });
+  KEY ??= await pageKey(page, { spot: `stalls.cjs at ${X},${Z} zoom ${ZOOM}` });
   lap("ready");
   // (NODRAW: the draw a no-op, but any texture not yet on the GPU is still uploaded, as the first draw that used it would: the
   // atlases let their pixels go once uploaded (render/atlas.ts), and the upload is the page's own work too)
@@ -216,7 +219,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
       selfTop: [...bySelf].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, kbf(v), Math.round((1000 * v) / bytes) / 10]),
       chainsTop: [...byChain].sort((a, b) => b[1] - a[1]).slice(0, 40).map(([k, v]) => [k, kbf(v), Math.round((1000 * v) / bytes) / 10]) };
   }
-  fs.writeFileSync(path.join(out, "stalls.json"), JSON.stringify(report, null, 1));
+  fs.writeFileSync(path.join(out, "stalls.json"), JSON.stringify({ key: KEY, ...report }, null, 1));
   console.log(`profile ${report.totalMs} ms: idle ${report.idleMs}, program ${report.programMs}, gc ${report.gcMs}; heap ${report.heapMb.join(" -> ")} MB`);
   console.log(`heap floors (MB, the least seen each 5 s): ${heapFloors.join(" ")}`);
   if (counts0 && counts1) { console.log(`live objects after a full collection, start -> end (heap ${counts0.heapMb} -> ${counts1.heapMb} MB):`); for (const k of Object.keys(counts1)) if (k !== "heapMb") console.log(`  ${k.padEnd(18)} ${String(counts0[k]).padStart(9)} -> ${String(counts1[k]).padStart(9)}  (${counts1[k] - counts0[k] >= 0 ? "+" : ""}${counts1[k] - counts0[k]})`); }

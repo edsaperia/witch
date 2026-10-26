@@ -10,6 +10,8 @@
 // Run `npm run build` first. Playwright comes from the machine's global install.
 //   node tools/bench/hitch.cjs [out dir] (default bench-out/)   SEED=871136 WAVE=28 FRAMES=600 HITCH=3 FLOOR=33 FINISH=0 HUNT=1
 const http = require("http");
+const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+let KEY = null;
 const fs = require("fs");
 const path = require("path");
 let playwright;
@@ -62,6 +64,7 @@ async function main() {
   const t0 = Date.now(), lap = what => console.log(`  ${what} ${Math.round((Date.now() - t0) / 1000)} s`);
   await page.goto(`http://127.0.0.1:${port}/?opening=old&seed=${seed}`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000 });
+  KEY ??= await pageKey(page, { spot: "hitch.cjs: the ground and treetop paths, a wave called in, the hunt" });
   await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 2400000, polling: 1000 });
   // FINISH=1: the GPU drained inside each draw (gl.finish), so in the cloud's software renderer its backlog isn't waited on
   // in whichever part makes the next GL call (texture uploads, uniforms), and every part but draw reads as CPU alone.
@@ -134,7 +137,7 @@ async function main() {
     heapMB: heap.length ? { start: r1(heap[0] / 2 ** 20), end: r1(heap[heap.length - 1] / 2 ** 20), max: r1(Math.max(...heap) / 2 ** 20) } : null,
     parts: Object.fromEntries([...new Set(rows.flatMap(r => Object.keys(r.ms)))].sort().map(k => [k, { p50: r1(pct(rows.map(r => r.ms[k] ?? 0), 0.5)), p99: r1(pct(rows.map(r => r.ms[k] ?? 0), 0.99)) }])),
   };
-  fs.writeFileSync(path.join(out, "hitch.json"), JSON.stringify({ summary, hitches, rows, errors }, null, 1));
+  fs.writeFileSync(path.join(out, "hitch.json"), JSON.stringify({ key: KEY, summary, hitches, rows, errors }, null, 1));
   console.log(JSON.stringify(summary, null, 1));
   for (const h of hitches.slice(0, 40)) console.log(`${h.at}: ${h.ms} ms (rules ${h.step}) ${h.parts.join(", ")} · ${h.calls} calls, ${h.creatures} creatures, wave ${h.wave}`);
   await browser.close(); server.close();

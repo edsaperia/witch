@@ -8,6 +8,8 @@
 //   npm run build && node tools/bench/ground.cjs [out dir]   DIST=dist SEED=569166 SPOTS=decks,ground:60,-170,treetop:60,-170,coast:90
 //   SIZE=1280x720 FRAMES=24 ONLY=base,lights QUERY=island=fox GROUND_ONLY=1 (the ground alone in the measured frames)
 const http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);
 const root = path.resolve(__dirname, "../..", env("DIST", "dist")), out = path.resolve(process.argv[2] || path.join(__dirname, "../../previews/ground-cost"));
@@ -66,6 +68,7 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
     page.on("console", m => { if (m.type() === "error") errors.push(m.text()); });
     await page.goto(`http://127.0.0.1:${port}/?seed=${SEED}&creator=0&quick=1&spell=auto&pulse=off${process.env.QUERY ? "&" + process.env.QUERY : ""}`);
     await page.waitForFunction(() => window.witch?.ready, null, { timeout: 900000, polling: 500 });
+    KEY ??= await pageKey(page, { spot: "ground.cjs spots" });
     await page.evaluate(() => { window.witch.manual = true; });
     if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForTimeout(500); }
     if (spot.startsWith("coast:")) {
@@ -174,6 +177,6 @@ const med = a => { if (!a.length) return NaN; const s = [...a].sort((x, y) => x 
   for (const r of results) { const bs = results.filter(q => q.spot === r.spot && q.id.startsWith("base")), b = { ms: bs.reduce((a, q) => a + q.ms, 0) / bs.length }; lines.push(`| ${r.spot} | ${r.id}: ${r.what} | ${r.ms.toFixed(1)} | ${r.id === "base" ? "" : `${(b.ms - r.ms).toFixed(1)} (${((1 - r.ms / b.ms) * 100).toFixed(0)}%)`} | ${r.id === "base" ? "" : `${r.diffPx} (max ${r.maxDiff})`}${r.same ? ` / ${r.same.diff} (max ${r.same.maxd})` : ""} |`); }
   console.log("\n" + lines.join("\n"));
   fs.writeFileSync(path.join(out, "ground.md"), lines.join("\n") + "\n");
-  fs.writeFileSync(path.join(out, "ground.json"), JSON.stringify(results, null, 1));
+  fs.writeFileSync(path.join(out, "ground.json"), JSON.stringify({ key: KEY, results }, null, 1));
   await browser.close(); server.close();
 })().catch(e => { console.error(e); process.exit(1); });

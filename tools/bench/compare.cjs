@@ -3,17 +3,21 @@
 // scene shots (frames.json and <scene>.png, from tools/bench/frames.cjs) pixel by pixel, and puts
 // the timings side by side. Writes <after>/diff-<scene>.png for any shot that differs (the
 // differing pixels in red over the shot, dimmed). Exits 1 on any mismatch the PR hasn't declared (tools/bench/expect.cjs:
-// --expect tools/bench/expect/<branch>.json, what it means to change and why; the Bench workflow passes the PR's own).
-//   node tools/bench/compare.cjs <before out> <after out> [--expect <file>]
+// --expect tools/bench/expect/<branch>.json, what it means to change and why; the Bench workflow passes the PR's own). Refuses
+// (exit 2) two runs whose comparability keys differ in more than the build (tools/lib/comparable.cjs): --testing <fields> to say
+// what else is being tested, --override to compare them anyway.
+//   node tools/bench/compare.cjs <before out> <after out> [--expect <file>] [--testing build,...] [--override]
 const fs = require("fs");
 const path = require("path");
 let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
 const { readExpect, judge } = require("./expect.cjs");
+const { checkComparable, compareFlags } = require("../lib/comparable.cjs");
 const args = process.argv.slice(2), ei = args.indexOf("--expect"), expectFile = ei >= 0 ? args.splice(ei, 2)[1] : null;
+const flags = compareFlags(args); // (--testing <fields>, build by default; --override: compare runs whose keys differ anyway)
 const [A, B] = args.map(p => path.resolve(p));
-if (!A || !B) { console.error("usage: node tools/bench/compare.cjs <before> <after> [--expect <file>]"); process.exit(2); }
+if (!A || !B) { console.error("usage: node tools/bench/compare.cjs <before> <after> [--expect <file>] [--testing build,...] [--override]"); process.exit(2); }
 const expect = readExpect(fs, expectFile);
 const read = (dir, f) => (fs.existsSync(path.join(dir, f)) ? JSON.parse(fs.readFileSync(path.join(dir, f), "utf8")) : null);
 // (each mismatch keyed, so a PR can declare it: rules:<state part>, frames:<scene>; none for what can't be declared)
@@ -21,6 +25,14 @@ const lines = [], bad = [], miss = (key, text) => bad.push({ key, text });
 const row = (...cells) => lines.push(`| ${cells.join(" | ")} |`);
 
 async function main() {
+  // Like with like first (tools/lib/comparable.cjs): each part's comparability keys may differ only in what's being tested.
+  for (const [f, what] of [["rules.json", "the rules runs"], ["frames.json", "the frames runs"]]) {
+    const a = read(A, f), b = read(B, f);
+    if (!a || !b) continue;
+    const c = checkComparable(a.key, b.key, { ...flags, what });
+    console.log(c.text);
+    if (!c.ok) process.exit(2);
+  }
   // The rules: same fingerprints at every checkpoint, every seed.
   const ra = read(A, "rules.json"), rb = read(B, "rules.json");
   if (ra && rb) {

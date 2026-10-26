@@ -5,6 +5,7 @@
 //   --quick (npm run bench:quick, about 5 minutes): the rules to wave 10 for 900 steps, and frames.cjs's three quick scenes.
 import { build } from "esbuild";
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -18,6 +19,8 @@ await build({ entryPoints: [path.join(here, "rules.ts")], bundle: true, platform
 const quick = flags.includes("--quick"), given = k => flags.some(f => f.startsWith(`--${k}=`));
 const ruleFlags = [...flags.filter(f => f !== "--rules-only" && f !== "--quick"), ...(quick && !given("wave") ? ["--wave=10"] : []), ...(quick && !given("steps") ? ["--steps=900"] : [])];
 const rules = execFileSync(process.execPath, [bundle, ...ruleFlags], { encoding: "utf8", maxBuffer: 1 << 26 });
-fs.writeFileSync(path.join(out, "rules.json"), rules);
+// (the run's comparability key: tools/lib/comparable.cjs; compare.cjs refuses two runs whose keys differ in more than the build)
+const { nodeKey } = createRequire(import.meta.url)("../lib/comparable.cjs"), R = JSON.parse(rules);
+fs.writeFileSync(path.join(out, "rules.json"), JSON.stringify({ key: nodeKey({ seed: R.seeds.map(s => s.seed).join(","), scene: `wave ${R.wave}, ${R.steps} steps`, spot: "the bench's fixed path" }), ...R }, null, 1));
 for (const s of JSON.parse(rules).seeds) console.log(`rules seed ${s.seed}: wave ${s.wave}, ${s.creatures} creatures, step median ${s.step.median} ms, p99 ${s.step.p99} ms, worst ${s.step.worst} ms`);
 if (!flags.includes("--rules-only")) execFileSync(process.execPath, [path.join(here, "frames.cjs"), out], { stdio: "inherit", env: { ...process.env, ...(quick ? { QUICK: "1" } : {}) } });

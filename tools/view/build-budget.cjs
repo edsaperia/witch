@@ -10,6 +10,7 @@
 //   node tools/view/build-budget.cjs [dist] [query] [throttle]   (THROTTLE=, LIMIT=, FIRST=, SWAP=, PREP=1, OUT=<json>)
 // The default query is Ed's case: world 1268398697, home, seed 821186, straight to the decks.
 const http = require("http"), fs = require("fs"), path = require("path");
+const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [dir = "dist", query = "world=1268398697&island=home&seed=821186&creator=0", thr = process.env.THROTTLE ?? "1"] = process.argv.slice(2);
 const LIMIT = Number(process.env.LIMIT ?? 100) * Number(thr), FIRST = Number(process.env.FIRST ?? 1000) * Number(thr), root = path.resolve(dir);
@@ -54,6 +55,7 @@ srv.listen(0, "127.0.0.1", async () => {
       return { first, setGame: Math.round(built - t0), total: Math.round(t1 - t0), setTasks: set, prepTasks: prep, slices: (window.witch.slices ?? []).filter(x => x.what === "setGame").at(-1) ?? null };
     }, [seed, island ?? ""]);
   }
+  const KEY = await pageKey(p, { spot: "build-budget.cjs: the island's build" });
   await b.close(); srv.close();
   const own = (r.slices ?? []).find(x => x.what === "view"), longest = own ? Math.round(own.longest) : Math.max(0, ...r.viewTasks); // (the build's own longest step: the page's other tasks meanwhile, a worker's reply and the like, are reported, not the build's)
   console.log(`throttle ${thr}x: the View built in ${r.view} ms; its longest step ${longest} ms (limit ${LIMIT}); the page's long tasks meanwhile (${r.viewTasks.length}): ${r.viewTasks.join(" ")}; the one it ends in (ms before witch:view, after): ${JSON.stringify(r.straddle)}`);
@@ -72,7 +74,7 @@ srv.listen(0, "127.0.0.1", async () => {
     if (sw.first && Math.max(0, ...sw.first.tasks) > FIRST) { console.log(`FAIL: its first frame had a ${Math.max(...sw.first.tasks)} ms task (over ${FIRST})`); process.exitCode = 1; }
     if (own > LIMIT) { console.log(`FAIL: a step of setGame's build took ${own} ms (over ${LIMIT})`); process.exitCode = 1; }
   }
-  if (process.env.OUT) fs.writeFileSync(process.env.OUT, JSON.stringify({ throttle: Number(thr), query, ...r, longest }, null, 1));
+  if (process.env.OUT) fs.writeFileSync(process.env.OUT, JSON.stringify({ key: KEY, throttle: Number(thr), query, ...r, longest }, null, 1));
   if (errors.length) { console.log("page errors:", errors.slice(0, 3)); process.exit(1); }
   if (longest > LIMIT) { console.log(`FAIL: a step of the View's build took ${longest} ms (over ${LIMIT})`); process.exit(1); }
   // (the start's own frames, its renders, are frames: a GPU's in milliseconds, the cloud's software renderer's in hundreds; PREP=1 to fail on them too)
