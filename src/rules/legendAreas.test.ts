@@ -9,7 +9,8 @@ import { isInside } from "./mapShape";
 import { pastEdge } from "./combat/targeting";
 import type { CombatWorld } from "./combat/data";
 import { stepLegendStates } from "./legends";
-import { cellKey } from "./party";
+import { cellKey, partifiedKey, partyZones, type PartyState } from "./party";
+import { borderOf } from "./borders";
 
 // The legend areas (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are";
 // "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively becomes
@@ -19,6 +20,7 @@ const islandOf = (kind: string): Tuning => ({ ...TUNING, map: { ...TUNING.map!, 
 const MAPS: [string, number][] = [["home", 1], ["home", 2], ["tiger", 1], ["lion", 2], ["elephant", 1]];
 const cellOf = (k: string): [number, number] => { const [x, y] = k.split(",").map(Number); return [x, y]; };
 const kindAt = (map: ForestMap, k: string) => AREA_TYPES[map.typeOf(...cellOf(k))].creature;
+const withLegend = (map: ForestMap) => [...map.legendAreas].find(([, p]) => map.hasLegend(...cellOf(p)))!; // (a legend area with tonight's legend)
 
 describe("legend areas", () => {
   for (const [kind, seed] of MAPS) {
@@ -38,8 +40,9 @@ describe("legend areas", () => {
         // never beside home, nor another legend area
         expect(map.neighbours.get(la)?.has(home)).toBe(false);
         for (const o of map.legendAreas.keys()) if (o !== la) expect(map.neighbours.get(la)?.has(o)).toBe(false);
-        // its legend's circle inside it; the legend's own area its pair
-        expect(map.hasLegend(px, py)).toBe(true);
+        // tonight's legend of its kind: its circle inside it, the legend's own area its pair; one of a kind not dealt tonight stands
+        // empty (one for every kind a night could deal, so the island's shape is the same every night)
+        if (!map.hasLegend(px, py)) { expect(map.legendClearing(px, py)).toBeNull(); continue; }
         const c = map.legendClearing(px, py)!;
         expect(c).not.toBeNull();
         expect(c.cell).toEqual([lx, ly]);
@@ -85,7 +88,9 @@ describe("legend areas", () => {
   it("counts a legend area and its pair as one area: a point in either is in the pair's area, and the legend's cell is its pair's", () => {
     const map = generateMap(1, islandOf("tiger")), creatures = spawnCreatures(map);
     for (const [la, pair] of map.legendAreas) {
-      const c = map.legendClearing(...cellOf(pair))!;
+      expect(map.sameArea(cellOf(la), cellOf(pair))).toBe(true);
+      const c = map.legendClearing(...cellOf(pair));
+      if (!c) continue; // (no legend of its kind tonight)
       expect(areaCellAt(map, c.x, c.z)).toEqual(cellOf(pair));
       expect(map.sameArea(cellOf(la), cellOf(pair))).toBe(true);
       expect(map.areaOf(cellOf(la))).toEqual(cellOf(pair));
@@ -94,12 +99,12 @@ describe("legend areas", () => {
       expect(Math.hypot(L!.x - c.legend.x, L!.z - c.legend.z)).toBeLessThan(c.r); // (lying in its circle, in the legend area)
     }
     // (an area and a neighbour that isn't its legend area stay two)
-    const [la, pair] = [...map.legendAreas][0], other = [...map.neighbours.get(pair)!].find(k => k !== la && map.playable(...cellOf(k)))!;
+    const [la, pair] = withLegend(map), other = [...map.neighbours.get(pair)!].find(k => k !== la && map.playable(...cellOf(k)))!;
     expect(map.sameArea(cellOf(pair), cellOf(other))).toBe(false);
   });
 
   it("wild creatures defend the pair as one: one of the pair's chases her on into its legend area, and gives up only past its far edge", () => {
-    const map = generateMap(1, islandOf("tiger")), [la, pair] = [...map.legendAreas][0], c = map.legendClearing(...cellOf(pair))!;
+    const map = generateMap(1, islandOf("tiger")), [la, pair] = withLegend(map), c = map.legendClearing(...cellOf(pair))!;
     const w = { inArea: creatureInArea(map), t: map.tuning } as unknown as CombatWorld, site = map.siteOf(...cellOf(pair));
     const foe = { cell: cellOf(pair), anchorX: site.x, anchorZ: site.z } as unknown as Creature;
     // (her in the legend area, at its circle: in the pair's area, not past its edge)
@@ -112,7 +117,7 @@ describe("legend areas", () => {
   });
 
   it("a legend's rage counts the pair as one: its kin parked by sigil in its legend area keep it calm", () => {
-    const map = generateMap(1, islandOf("tiger")), creatures = spawnCreatures(map), [la, pair] = [...map.legendAreas][0], c = map.legendClearing(...cellOf(pair))!;
+    const map = generateMap(1, islandOf("tiger")), creatures = spawnCreatures(map), [la, pair] = withLegend(map), c = map.legendClearing(...cellOf(pair))!;
     const L = creatures.find(q => q.boss && q.cell.join(",") === pair)!;
     // (every creature of its kind gone, but one, leashed and parked at a sigil in the legend area)
     const kin = creatures.filter(q => q !== L && q.species === L.species && !q.boss);
@@ -128,5 +133,22 @@ describe("legend areas", () => {
     parked.gone = true;
     step(40);
     expect(L.legendState).not.toBe("asleep");
+  });
+  it("partifies a pair together: its legend area is partified with it, drawn as a zone of its own, and the party border runs round the outside of the pair", () => {
+    const map = generateMap(1, islandOf("tiger")), [la, pair] = withLegend(map);
+    const p = { areas: new Map([[pair, { cell: cellOf(pair), wave: 3, at: 10, from: null, soundsystem: null }]]) } as unknown as PartyState;
+    expect(partifiedKey(p, map, pair)).toBe(true);
+    expect(partifiedKey(p, map, la)).toBe(true);
+    const other = [...map.legendAreas.keys()].find(k => k !== la)!;
+    expect(partifiedKey(p, map, other)).toBe(false);
+    const zones = partyZones(p, map), mine = zones.find(([k]) => k === la);
+    expect(mine?.[1].cell).toEqual(cellOf(la));
+    expect(mine?.[1].soundsystem).toBeNull();
+    expect(partyZones(p, map)).toBe(zones); // (the same list while the party's areas don't change)
+    // (the pair's border with its legend area is inside the zone: no line there; its border with the rest stays)
+    const edge = borderOf(map, cellOf(pair), 8), inner = edge.filter(q => q.other === la), outer = edge.filter(q => q.other !== la && !partifiedKey(p, map, q.other));
+    expect(inner.length).toBeGreaterThan(0);
+    expect(inner.every(q => partifiedKey(p, map, q.other))).toBe(true);
+    expect(outer.length).toBeGreaterThan(0);
   });
 });

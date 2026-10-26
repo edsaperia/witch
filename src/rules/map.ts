@@ -26,7 +26,7 @@ import { knownRoute, rememberRoute, type LeyRoute } from "./leyroute";
 import { lakeDepth, lakeKnobs } from "./lakes";
 import { growIsland, lakePlan, placeLakes, reachOf, shapeOf, type Candidate, type PatchGrowth } from "./islandGrowth";
 import { patchAt, STRAIT } from "./archipelago";
-import { dealLegends, homeIsland, homeKinds, islandOf, knownKinds, playableIsland, type Island } from "./rosters";
+import { dealLegends, homeIsland, homeKinds, islandOf, isPlaceholder, knownKinds, playableIsland, type Island } from "./rosters";
 import { CLASSIC_SLOTS, KIND_SLOTS } from "./kinds";
 import { zooJunctions, zooPlan, type ZooPlan } from "./zoo";
 
@@ -536,7 +536,12 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
       return best;
     };
     const taken = new Set<string>(), near = (k: string) => [...(neighbours.get(k) ?? [])];
-    dealtKinds.forEach((kind, ki) => {
+    // (one for every kind a night could deal here, not just tonight's: the island's shape, and so its land, coast and chart
+    // outline, is its world's every night; tonight's legends take theirs, the rest stand empty. The early quest's kinds choose
+    // first, then the rest in an order seeded by the island's own seed.)
+    const pool = [...new Set(rosterIsland.roster.map(r => r.kind))].filter(k => k !== rosterIsland.kind && !isPlaceholder(k)).sort();
+    const order = [...pool.filter(k => early.includes(k)), ...pool.filter(k => !early.includes(k)).sort((a, b) => hash2(pool.indexOf(a), 3, shapeSeed + 6153) - hash2(pool.indexOf(b), 3, shapeSeed + 6153))];
+    order.forEach((kind, ki) => {
       const want = Math.min(areaMax, Math.max(LC0.species[kind] ?? LC0.radius, radiusToFit(kind, LC0)));
       let best: { k: string; pair: string; room: number; h: number } | null = null;
       for (const [x, y] of others) {
@@ -544,7 +549,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
         if (kindOf(pair) !== kind) continue;
         for (const k of near(pair)) {
           if (grownSet!.has(k) || lakeCells.has(k) || nearHome.has(k) || taken.has(k) || !growable(k) || near(k).some(o => taken.has(o) || lakeCells.has(o))) continue;
-          const r = room(k, want), h = early.includes(kind) ? Math.hypot(x - centreCell[0], y - centreCell[1]) : hash2(x * 31 + y, ki, seed + 6151);
+          const r = room(k, want), h = early.includes(kind) ? Math.hypot(x - centreCell[0], y - centreCell[1]) : hash2(x * 31 + y, ki, shapeSeed + 6151);
           // (the roomiest up to its legend's need; among those that hold it, an early kind's nearest home, else seeded)
           if (!best || Math.min(r, want) > Math.min(best.room, want) || (Math.min(r, want) === Math.min(best.room, want) && h < best.h)) best = { k, pair, room: r, h };
         }
