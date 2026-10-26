@@ -1,0 +1,9 @@
+{
+  "reason": "Jack-o'-lanterns at the party (Ed, 2026-10-26: \"a few kinds of jack-o-lanterns that cast a bit of warm light\"): four new small party pieces with warm point lights, dealt among every party area's loose pieces and home's, so each partified area's dressing is dealt afresh.",
+  "frames": {
+    "*": "a partified area or home: its loose party pieces dealt again (some now jack-o'-lanterns, glowing, with their warm pools of light), and the party animals standing by its lit pieces"
+  },
+  "rules": {
+    "creatures": "the party animals' spots: they gather by an area's lit pieces (rules/partyGuests.ts), and the dressing they're dealt from has the jack-o'-lanterns among it"
+  }
+}
