@@ -22,6 +22,8 @@ describe("renamed areas", () => {
     expect(creatureOf("holly-thicket")).toBe("spider");
     expect(creatureOf("norway")).toBe("snake");
     expect(creatureOf("cave-mouth")).toBe("bat");
+    expect(creatureOf("stream")).toBe("otter");
+    expect(creatureOf("heronry")).toBe("heron");
     for (const old of Object.keys(AREA_RENAMES)) expect(KIND_SLOTS[creatureOf(old)], old).toBeGreaterThanOrEqual(0);
   });
 

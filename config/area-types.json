@@ -17,7 +17,7 @@
     "old-oaks": {"treeDensity": 0.9, "groundCover": {"density": 0.6, "kinds": ["blades", "fern"]}},
     "berry-thicket": {"treeDensity": 1, "groundCover": {"density": 0.5, "kinds": ["blades", "clover"]}},
     "wetland": {"treeDensity": 0.75, "groundCover": {"density": 0.8, "kinds": ["reeds", "moss"]}},
-    "stream": {"treeDensity": 0.8, "groundCover": {"density": 0.7, "kinds": ["reeds", "blades"]}},
+    "mangrove-channel": {"treeDensity": 0.8, "groundCover": {"density": 0.7, "kinds": ["reeds", "moss"]}},
     "rocky-slope": {"treeDensity": 0.75, "groundCover": {"density": 0.25, "kinds": ["moss", "blades"]}},
     "bog": {"treeDensity": 0.7, "groundCover": {"density": 0.7, "kinds": ["reeds", "moss"]}},
     "deadwood": {"treeDensity": 0.8, "groundCover": {"density": 0.25, "kinds": ["moss"]}},

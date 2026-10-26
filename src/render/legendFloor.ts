@@ -50,7 +50,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "old-oaks": look("buffSandstone", "leaves", "moss", 0.6, false, 0.6),
   "berry-thicket": look("redSandstone", "needles", "lichen", 0.5),
   "wetland": look("granite", "reeds", "moss", 0.66, true),
-  "stream": look("limestone", "pebbles", "moss", 0.5, true),
+  "mangrove-channel": look("granite", "reeds", "moss", 0.6, true), // grey mud and reed litter by the channel (the stream's pebbles till the roster)
   "rocky-slope": look("slate", "pebbles", "lichen", 0.4),
   "trollwood": look("granite", "needles", "moss", 0.45),
   "icefall": look("granite", "pebbles", "lichen", 0.35),
@@ -75,7 +75,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "bamboo-jungle": look("limestone", "leaves", "moss", 0.6), // old shrine stone, bamboo litter over it
   "river-jungle": look("granite", "darkLeaves", "moss", 0.75, true), // dark wet stone by the river, moss over it
   "temple-jungle": look("redSandstone", "darkLeaves", "moss", 0.7), // temple flagstones, red earth and roots over them
-  "heronry": look("granite", "reeds", "lichen", 0.55, true),
+  "mangrove-heronry": look("granite", "darkLeaves", "moss", 0.6, true), // the mere's wet stone under mangrove litter (the heronry's reeds till the roster)
   "cactus-flats": look("buffSandstone", "pebbles", "lichen", 0.25), // pale sandstone, drifted over
   "red-canyon": look("buffSandstone", "pebbles", "lichen", 0.35), // red rock, scree over it
   "mangrove-pools": look("granite", "reeds", "moss", 0.6, true), // dark wet stone among the roots,

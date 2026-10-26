@@ -83,8 +83,6 @@
    "areas": [
     "fen",
     "wetland",
-    "stream",
-    "heronry",
     "beaver-pond",
     "bog"
    ]
@@ -153,6 +151,8 @@
    "areas": [
     "mudflat",
     "mangrove-pools",
+    "mangrove-channel",
+    "mangrove-heronry",
     "mangrove"
    ]
   }

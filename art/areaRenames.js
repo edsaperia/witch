@@ -24,6 +24,8 @@ export const AREA_RENAMES = {
   "holly-thicket": "thorn-scrub",
   norway: "jungle-understory",
   "cave-mouth": "jungle-cave",
+  stream: "mangrove-channel",
+  heronry: "mangrove-heronry",
 };
 
 /** Today's id for an area id, old or new (a rename of a rename followed to its end). */
