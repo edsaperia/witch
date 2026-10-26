@@ -81,11 +81,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
     else if (acting && v.footAct) wf = pick(v.footAct.pose, Math.floor((ht - v.footAct.at) * F[v.footAct.pose].fps));
     else if (L.talk && still) wf = pick("talk", Math.floor(ht * F.talk.fps) % F.talk[side].length);
     else if (indoors && F.walk && F.idle) {
-      // walking: her six frames at a pace by her speed (F.walk.fps at the house's walk), side-on or, going straight up or down the
+      // walking: her six frames at a pace by her speed (F.walk.fps at the walk they're drawn for, house.stride, so her steps keep up
+      // with her pace and her feet don't slide), side-on or, going straight up or down the
       // screen, in that heading; standing, her idle
       // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
       const sp = Math.hypot(w.vx, w.vz), heading = still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
-      v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.walk);
+      v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.stride ?? deckNow!.house!.walk);
       // (on the Terrace she carries her broom: Ed, 2026-10-23, "she holds it when she's on the terrace"; rules/stations.ts broomWhere)
       const held = broomWhere(g, stationOf(g, null, t)?.id ?? null, t) === "held" && !!F.idleBroom && !!F.walkBroom;
       const I = held ? "idleBroom" : "idle", Wk = held ? "walkBroom" : "walk";

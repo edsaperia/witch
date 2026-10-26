@@ -1402,7 +1402,8 @@ describe("the dancefloor's tile lights (Ed, v160)", () => {
     g.clock.paused = false;
     const colours = () => { const o = composeFloor(g.floor, floorInputs(g), T).rgbi, seen = new Set<string>(); let max = 0; for (let i = 0; i < o.length; i += 4) if (o[i + 3]) { seen.add(`${o[i]},${o[i + 1]},${o[i + 2]}`); max = Math.max(max, o[i + 3]); } return { seen, max }; };
     for (let i = 0; i < 30; i++) stepGame(g, { ...NO_INTENT, zoom: 0 }, 1 / 60);
-    for (let i = 0; i < 60; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
+    const east = Math.round(60 * 5 / T.treehouse.house!.walk); // (5 m east, off her seat along behind the decks, at her walk)
+    for (let i = 0; i < east; i++) stepGame(g, { ...NO_INTENT, moveX: 1, toggleMode: i === 5, zoom: 0 }, 1 / 60);
     for (let i = 0; i < 90 && g.witch.mode === "ground"; i++) stepGame(g, { ...NO_INTENT, moveX: 0.6, moveZ: 0.8, zoom: 0 }, 1 / 60); // (out off the Terrace's open rim, south-east past the decks: flying, the world's time her own again)
     expect(g.witch.mode).not.toBe("ground");
     expect(g.party.wave).toBe(0);

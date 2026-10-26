@@ -105,6 +105,17 @@ describe("the oak's rooms", () => {
     expect(g.tuning.treehouse.house!.walk).toBeLessThan(g.tuning.groundSpeed / 2);
   });
 
+  it("walks half again as fast as she did (Ed, 2026-10-25: 5 to 7.5 m/s), her broom's ground speed apart and unchanged, her walk cycle drawn for 5 m/s so her steps quicken with her", () => {
+    const H = TUNING.treehouse.house!;
+    expect(H.walk).toBe(7.5);
+    expect(H.stride).toBe(5);
+    expect(H.walk / H.stride!).toBeCloseTo(1.5, 6);
+    expect(TUNING.groundSpeed).toBe(19.25);
+    const g = inHouse(0, -3), W = g.witches[0];
+    for (let i = 0; i < 0.5 / STEP; i++) stepGame(g, { ...idle, moveX: 1 }, STEP);
+    expect(Math.hypot(W.body.vx, W.body.vz)).toBeCloseTo(7.5, 1);
+  });
+
   it("leave her room to move: limbs 3 m wide or more, rooms 12 m across or more, her bedroom 16 m", () => {
     for (const c of HOUSE_ROOMS.corridors) expect(c.w, c.id).toBeGreaterThanOrEqual(3);
     for (const r of HOUSE_ROOMS.rooms) expect(2 * r.r, r.id).toBeGreaterThanOrEqual(r.id === "bedroom" ? 16 : 12);

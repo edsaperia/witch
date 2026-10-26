@@ -196,13 +196,14 @@ describe("the treehouse's house", () => {
   it("takes her flying again when she walks off the Terrace's open rim; with no broom she falls and comes back at the circle", () => {
     const out = { moveX: Math.cos(40 * DEG), moveZ: Math.sin(40 * DEG) }; // (south-east, past the desk's east end)
     const g = game(JETS);
-    run(g, 0.2, { moveZ: -1 }); run(g, 0.7, { moveX: 1 }); // (off her seat, along behind the desk to its end)
+    const along = 0.7 * 5 / HS.walk; // (along behind the desk to its end: 3.5 m, at her walk)
+    run(g, 0.2, { moveZ: -1 }); run(g, along, { moveX: 1 }); // (off her seat, along behind the desk to its end)
     let off = false;
     for (let i = 0; i < 600 && !off; i++) { press(g, out); off = g.witch.mode === "rising" || g.witch.mode === "treetop"; }
     expect(off).toBe(true);
     run(g, 2); expect(g.witch.mode).toBe("treetop"); expect(g.witch.perch).toBeFalsy();
     const T = withTuning({ treehouse: { ...TUNING.treehouse, house: { ...HS, fall: { on: true, time: 0.9 } } } }), g2 = game(T), d2 = deckOf(g2.map, T)!;
-    run(g2, 0.2, { moveZ: -1 }); run(g2, 0.7, { moveX: 1 });
+    run(g2, 0.2, { moveZ: -1 }); run(g2, along, { moveX: 1 });
     let falling = false;
     for (let i = 0; i < 600 && !falling; i++) { press(g2, out); falling = g2.witch.falling !== undefined; }
     expect(falling).toBe(true);
