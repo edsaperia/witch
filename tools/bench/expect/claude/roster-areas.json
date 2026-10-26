@@ -1,0 +1,4 @@
+{
+  "reason": "the roster's first re-theme (Ed, 2026-10-25): the holly thicket becomes the thorn scrub, at the badlands' edge (new trees, ground, small props and its id); it keeps its place among the area types, so every map's layout and the rules' state are as they were, and only a scene that shows it looks different",
+  "frames": { "*": "a scene showing the thorn scrub (once the holly thicket; on the default map too): its new trees, ground and props" }
+}

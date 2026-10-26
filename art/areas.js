@@ -86,8 +86,11 @@ export const AREAS = [
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { variant: "windbent", scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
   { id: "bluebell-glade", name: "Bluebell glade", creature: "hare", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
-  { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
-    wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("holly", { scale: .9 }), tree("yew", { minor: true, scale: .7 })], set: tree("broad", { bare: true, webs: true }) },
+  // (the holly thicket till the roster moved the spider to the badlands, Ed 2026-10-23/25; ring 3, so semi-temperate: dry brown
+  // earth, the scrub wash's thorny scrub, wind-bent thorn trees (the savanna's acacia and the plains' stunted one are theirs) and junipers from the badlands' list with hawthorn among them; the cobwebs and
+  // the web-hung dead tree kept, the spider's own)
+  { id: "thorn-scrub", name: "Thorn scrub", creature: "spider", by: "draft", leaf: .22, floor: ["mud", .07, .3, .45], text: { floor: "dry brown earth", wall: "the scrub's rocky banks", small: "thorny scrub and cobwebs", big: "thorn trees, hawthorns and junipers", set: "a web-hung dead tree" },
+    wall: [P("rockwall", {})], small: [P("shrub", { spiky: true, flower: [214, 190, 120] }), P("web")], big: [tree("acacia", { variant: "windbent", scale: .8 }), tree("hawthorn", { scale: .85, gnarl: .6 }), tree("juniper", { minor: true, scale: .7, lean: .2 }), P("snag", { sparse: .15, bleached: true })], set: tree("broad", { bare: true, webs: true }) },
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { variant: "coppiced", trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
@@ -212,8 +215,8 @@ export const AREA_LAYOUTS = {
     "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle.", { treeShare: 0.3 }),
   "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
     "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
-  "holly-thicket": LAY("thicket", .9, .3, [1, [6, 9]], [.3, .6, .1, 0], .7, NO_LEAN, ["hollows"], [.25, [.3, 0, .5, 0, .2]],
-    "Dark hollies packed close, cobwebs strung between, one clearing round the web-hung tree."),
+  "thorn-scrub": LAY("thicket", .55, .5, [1, [8, 12]], [.35, .55, .1, 0], .75, NO_LEAN, ["rocky", "hollows"], [.3, [.25, .55, .1, 0, .1]],
+    "Low thorn trees and junipers packed in tangles on dry red earth, cobwebs strung between them, one clearing round the web-hung tree."),
   "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
