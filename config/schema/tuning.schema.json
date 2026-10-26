@@ -10847,7 +10847,7 @@
                   ],
                   "additionalProperties": false
                 },
-                "cave-mouth": {
+                "jungle-cave": {
                   "type": "object",
                   "properties": {
                     "haze": {
@@ -10944,7 +10944,7 @@
                   ],
                   "additionalProperties": false
                 },
-                "norway": {
+                "jungle-understory": {
                   "type": "object",
                   "properties": {
                     "hazeHue": {
@@ -11063,11 +11063,11 @@
                 "moor",
                 "heath",
                 "grassland",
-                "cave-mouth",
+                "jungle-cave",
                 "ravine",
                 "rocky-slope",
                 "old-pinewood",
-                "norway",
+                "jungle-understory",
                 "honeysuckle-tangle",
                 "garden",
                 "berry-thicket",

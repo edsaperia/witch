@@ -829,7 +829,7 @@ async function main() {
       const g = window.witch.game, m = g.map, d = m.dancefloor;
       let best = null;
       for (const [x, y] of m.cells) {
-        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "cave-mouth") continue;
+        if (window.witch.areaTypeId(m.typeOf(x, y)) !== "jungle-cave") continue;
         const s = m.siteOf(x, y), k = Math.hypot(s.x - d.x, s.z - d.z);
         if (!best || k < best.k) best = { x, y, k, s };
       }

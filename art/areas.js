@@ -50,8 +50,11 @@ export const AREAS = [
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
     small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { variant: "ancient", scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
-  { id: "norway", name: "Norway", creature: "snake", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
-    small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })] },
+  // (Norway till the roster moved the snake, now a jungle python, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate: a warm
+  // temperate-tropical mix, mossy ironwoods, liana-hung vinewoods and clumps of bamboo from the jungle's list among limes and hazels, a
+  // soft leaf litter, ferns and flowering shrubs under them)
+  { id: "jungle-understory", name: "Jungle understory", creature: "snake", by: "Ed", leaf: .3, floor: ["leaves", .2, .45, .3], text: { floor: "leaf litter and moss", small: "ferns and flowering shrubs", big: "mossy ironwoods, liana-hung vinewoods, limes and hazels, bamboo in clumps" },
+    small: [P("fern"), P("shrub", { flower: [236, 84, 150] })], big: [tree("ironwood", { variant: "mossy", scale: 1.1 }), tree("lime", { minor: true, scale: .9 })] },
   { id: "alder-forest", name: "Alder forest", creature: "stoat", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
     small: [P("stump", { grass: true })], big: [tree("alder", { lean: .3, scale: 1.2, dark: true })] },
   { id: "meadow", name: "Meadow", creature: "cat", by: "draft", leaf: .25, floor: ["flowers", .25, .5, .5], text: { floor: "grass and wildflowers", small: "scattered hawthorn", big: "lone oaks" },
@@ -70,8 +73,11 @@ export const AREAS = [
     wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("birch", { variant: "stunted", scale: .8, dark: true }), tree("pine", { minor: true, scale: .7 })] },
   { id: "deadwood", name: "Deadwood", creature: "raven", by: "draft", leaf: .15, floor: ["earth", .07, .35, .3], text: { floor: "bare earth", small: "broken branches", big: "blasted dead trees" },
     small: [P("log", { branch: true })], big: [tree("broad", { bare: true, gnarl: 1 })] },
-  { id: "cave-mouth", name: "Cave mouth", creature: "bat", by: "draft", leaf: .2, floor: ["stone", .08, .15, .35], text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
-    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { variant: "mossy", bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
+  // (the cave mouth till the roster moved the bat, now a fruit bat, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate and
+  // still tree-led (Ed, 2026-10-26): an old strangler fig, the fruit bats' tree, over the rock walls and the cave, kapoks from the
+  // jungle's list among yews; a mossier stone floor, ferns between the stalagmite stubs)
+  { id: "jungle-cave", name: "Jungle cave", creature: "bat", by: "draft", leaf: .26, floor: ["stone", .16, .3, .32], text: { floor: "mossy stone and fig roots", wall: "rock walls", small: "stalagmite stubs and ferns", big: "old strangler figs, kapoks and yews", set: "a cave mouth" },
+    wall: [P("rockwall", { moss: true })], small: [P("stalagmite"), P("fern")], big: [tree("strangler", { variant: "ancient", scale: 1.15 }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
   { id: "grassland", name: "Grassland", creature: "boar", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "rooted-up turf", big: "lone birches" },
     small: [P("mound", { brown: true, small: true })], big: [tree("flat", { scale: 1.1 }), tree("weepingBirch", { minor: true })] },
   { id: "beaver-pond", name: "Beaver pond", creature: "beaver", by: "draft", leaf: .17, floor: ["leaves", .13, .6, .5], text: { floor: "birch leaves", wall: "a pond", small: "stumps", big: "birch and aspen", set: "a beaver dam" },
@@ -97,7 +103,7 @@ export const AREAS = [
 // Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
 // and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
 const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
-  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
+  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "jungle-cave": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
 for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
 // The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
 for (const R of AREA_RECIPES) {
@@ -179,8 +185,8 @@ export const AREA_LAYOUTS = {
     "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
   "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .35, .4, .2], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
     "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."),
-  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .45, .35, .05], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
-    "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."),
+  "jungle-understory": LAY("stands", .75, .6, [2, [6, 10]], [.3, .45, .2, .05], .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, .2, .2, .2, .1]],
+    "Mossy ironwoods and liana-hung vinewoods in close stands among limes and hazels, bamboo in clumps, ferns and flowering shrubs filling the gaps; warm, green and close."),
   "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .4, .35, .05], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
     "Tall slanted alders at every height over long grass and stumps, a little stream wandering through."),
   "meadow": LAY("lone", .2, .15, [0], [.15, .45, .25, .15], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
@@ -199,8 +205,8 @@ export const AREA_LAYOUTS = {
     "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."),
   "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .3, .45, .2], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
     "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."),
-  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .5, .3, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
-    "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
+  "jungle-cave": LAY("edgeOnly", .45, .5, [1, [10, 14]], [.15, .45, .3, .1], .45, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
+    "Rock walls and old strangler figs ring an open mossy stone floor that leads to the cave's dark mouth, fruit bats streaming out at dusk."),
   "grassland": LAY("lone", .16, .8, [0], [.3, .5, .2, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
     "Short turf to the horizon, rooted up in mounds, birches alone or in twos and threes."),
   "beaver-pond": LAY("edgeOnly", .65, .4, [1, [14, 20]], [.4, .45, .15, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],

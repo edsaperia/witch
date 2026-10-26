@@ -1285,7 +1285,7 @@ describe("finds, each at most once per map (Ed, v160)", () => {
   }, 60000);
   it("stairs stand only by ravines, rocky slopes, cave mouths and stone shrines", () => {
     for (const m of maps) for (const p of m.paths.pieces.filter(p => p.id.startsWith("stairs")))
-      expect(["ravine", "rocky-slope", "cave-mouth", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
+      expect(["ravine", "rocky-slope", "jungle-cave", "stone-shrine"]).toContain(AREA_TYPES[m.areaAt(p.x, p.z).type].id);
   });
   it("give each set piece to one area only, which has room for it", () => {
     for (const m of maps) {
@@ -1517,9 +1517,9 @@ describe("ground cover (Ed, v171)", () => {
       expect(LOOKS[f.type].groundCover.kinds).toContain(TUFT_KINDS[f.kind]); // (its look: home's meadow has its own)
     }
   });
-  it("is thick where the area says (grassland) and thin where it doesn't (cave mouth), and none at density 0", () => {
+  it("is thick where the area says (grassland) and thin where it doesn't (the jungle cave), and none at density 0", () => {
     const per = (id: string) => { let n = 0, area = 0; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y); const l = around(s.x + 30, s.z + 30, 8).filter(f => map.areaAt(f.x, f.z).type === map.typeOf(x, y)); n += l.length; area++; if (area >= 3) break; } return n / Math.max(1, area); };
-    expect(per("grassland")).toBeGreaterThan(per("cave-mouth") * 2);
+    expect(per("grassland")).toBeGreaterThan(per("jungle-cave") * 2);
     expect(tuftsInCell(map, 140, 150, G.cell, G.spacing, 0)).toEqual([]);
   });
 });

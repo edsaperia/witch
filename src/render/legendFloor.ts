@@ -44,7 +44,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "garden": look("limestone", "flowers", "lichen", 0.4, false, 0.35),
   "twiggy-forest": look("granite", "leaves", "moss", 0.5),
   "ancient": look("granite", "darkLeaves", "moss", 0.72),
-  "norway": look("slate", "needles", "moss", 0.55, false, 0.6),
+  "jungle-understory": look("limestone", "leaves", "moss", 0.65), // leaf litter and moss over pale stone (Norway's slate and needles till the roster)
   "alder-forest": look("granite", "grass", "moss", 0.6, true),
   "meadow": look("limestone", "flowers", "lichen", 0.45, false, 0.45),
   "old-oaks": look("buffSandstone", "leaves", "moss", 0.6, false, 0.6),
@@ -57,7 +57,7 @@ export const FLOOR_LOOKS: Record<string, FloorLook> = {
   "crags": look("slate", "pebbles", "lichen", 0.4),
   "bog": look("granite", "reeds", "moss", 0.75, true, 0.35),
   "deadwood": look("buffSandstone", "darkLeaves", "lichen", 0.45, false, 0.6),
-  "cave-mouth": look("slate", "pebbles", "moss", 0.55),
+  "jungle-cave": look("limestone", "pebbles", "moss", 0.65), // the cave's mossy limestone (the cave mouth's slate till the roster)
   "grassland": look("limestone", "grass", "lichen", 0.5),
   "beaver-pond": look("limestone", "birch", "moss", 0.55, true, 0.6),
   "log-pile": look("buffSandstone", "leaves", "moss", 0.6, false, 0.65),

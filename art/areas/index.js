@@ -41,7 +41,6 @@ import { AREA_FLORA_BEAVER_POND } from "./beaver-pond/flora.js";
 import { AREA_FLORA_BERRY_THICKET } from "./berry-thicket/flora.js";
 import { AREA_FLORA_BLUEBELL_GLADE } from "./bluebell-glade/flora.js";
 import { AREA_FLORA_BOG } from "./bog/flora.js";
-import { AREA_FLORA_CAVE_MOUTH } from "./cave-mouth/flora.js";
 import { AREA_FLORA_DEADWOOD } from "./deadwood/flora.js";
 import { AREA_FLORA_FERN_FOREST } from "./fern-forest/flora.js";
 import { AREA_FLORA_GARDEN } from "./garden/flora.js";
@@ -49,11 +48,12 @@ import { AREA_FLORA_GRASSLAND } from "./grassland/flora.js";
 import { AREA_FLORA_HAZEL_FOREST } from "./hazel-forest/flora.js";
 import { AREA_FLORA_HEATH } from "./heath/flora.js";
 import { AREA_FLORA_HONEYSUCKLE_TANGLE } from "./honeysuckle-tangle/flora.js";
+import { AREA_FLORA_JUNGLE_CAVE } from "./jungle-cave/flora.js";
+import { AREA_FLORA_JUNGLE_UNDERSTORY } from "./jungle-understory/flora.js";
 import { AREA_FLORA_LOG_PILE } from "./log-pile/flora.js";
 import { AREA_FLORA_MEADOW } from "./meadow/flora.js";
 import { AREA_FLORA_MOOR } from "./moor/flora.js";
 import { AREA_FLORA_MUDDY_FOREST } from "./muddy-forest/flora.js";
-import { AREA_FLORA_NORWAY } from "./norway/flora.js";
 import { AREA_FLORA_OLD_OAKS } from "./old-oaks/flora.js";
 import { AREA_FLORA_OLD_PINEWOOD } from "./old-pinewood/flora.js";
 import { AREA_FLORA_RAVINE } from "./ravine/flora.js";
@@ -66,7 +66,7 @@ import { AREA_FLORA_TWIGGY_FOREST } from "./twiggy-forest/flora.js";
 import { AREA_FLORA_WETLAND } from "./wetland/flora.js";
 import { AREA_FLORA_WISPY_FOREST } from "./wispy-forest/flora.js";
 export const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-export const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+export const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 export const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
   {"kind":"squirrel","slot":1,"phase":0,"bearing":285,"dir":"WNW","biome":"temperate"},

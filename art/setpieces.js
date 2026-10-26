@@ -262,7 +262,7 @@ export const NEW_SET_PIECES = {
   "hazel-forest": ["fairy-ring", "a ring of fairy stones and toadstools", 1.1],
   "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
   "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
-  "norway": ["turf-hut", "a log cabin with a turf roof", 1.15],
+  "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
   "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
   "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
   "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
