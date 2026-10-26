@@ -10,7 +10,7 @@ export const TEMPLE_JUNGLE = {
   setPiece: ["heap", "a tumbled heap of temple stones under the figs", 1.2, { of: "rubble", top: "post", moss: .4, rock: "sandstone" }],
   layout: {
     pattern: "lone", density: .45, clump: .6, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .175, giant: .1 }, undergrowth: .6, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .35, ruins: .55, rocks: .15, freak: .1, lake: .2, modern: 0 },
     feel: "Huge strangler figs and kapoks standing apart over red earth, their roots swallowing tumbled temple stones; mud wallows in the open, wide and slow.",
   },

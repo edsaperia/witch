@@ -10,7 +10,7 @@ export const MOSSY_CREEK = {
   setPiece: ["heap", "a mossy logjam where the creek pools", 1, { of: "logs", moss: .5 }],
   layout: {
     pattern: "rows", along: "stream", density: .7, clump: .6, glades: { count: 1, size: [12, 18] },
-    heightMix: { sapling: .1, mature: .35, tall: .4, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .2, giant: .075 }, undergrowth: .9, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "pools", "hollows"], decor: { rate: .2, ruins: .2, rocks: .4, freak: .1, lake: .3, modern: 0 },
     feel: "A cold green gloom under towering mossy spruces and cedars, a creek chattering over stones, ferns waist-deep; dripping, soft and old.",
   },

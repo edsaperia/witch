@@ -10,7 +10,7 @@ export const PACKICE = {
   setPiece: ["heap", "a pressure ridge of broken ice", 1, { seed: 7, of: "stones", moss: 0, top: "slab", stone: [.55, .18, .9] }],
   layout: {
     pattern: "edgeOnly", density: .2, clump: .7, glades: { count: 2, size: [24, 32] },
-    heightMix: { sapling: .45, mature: .5, tall: .05, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
+    heightMix: { sapling: .45, mature: .525, tall: .025, giant: 0 }, undergrowth: .2, lean: { dir: 0, amount: .35 },
     terrain: ["pools"], decor: { rate: .15, ruins: .05, rocks: .3, freak: .1, lake: .5, modern: .05 },
     feel: "White floes and slabs of sea ice split by black leads of open water, a pressure ridge heaved up in the middle, a few wind-bent larches, firs and birch crouched along the shore; bitter, bright and silent.",
   },

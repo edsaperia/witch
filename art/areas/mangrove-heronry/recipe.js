@@ -11,7 +11,7 @@ export const MANGROVE_HERONRY = {
   setPiece: ["jetty", "an old jetty out over the mere", 1],
   layout: {
     pattern: "stands", density: .45, clump: .75, glades: { count: 1, size: [18, 26] },
-    heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .1, mature: .625, tall: .175, giant: .1 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
     feel: "A wide still mere ringed with reeds, tall mangroves and old elms standing round it in stands, their crowns heaped with herons' nests; open, grey-green and watchful.",
   },

@@ -10,7 +10,7 @@ export const RED_CANYON = {
   setPiece: ["heap", "a heap of red stones", 1, { of: "stones", moss: 0 }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "groves", density: .3, clump: .7, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .25, mature: .55, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: 0, amount: .15 },
+    heightMix: { sapling: .25, mature: .65, tall: .1, giant: 0 }, undergrowth: .45, lean: { dir: 0, amount: .15 },
     terrain: ["rocky", "ridges"], decor: { rate: .35, ruins: .2, rocks: .7, freak: .05, lake: 0, modern: .05 },
     feel: "Red rock ledges and scree, palo verde and desert ironwood in the clefts, ocotillo flaring red; hot stone giving back the day's heat, things clicking in the dark.",
   },

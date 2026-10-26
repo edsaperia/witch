@@ -9,7 +9,7 @@ export const MANGROVE = {
   setPiece: ["punt", "a dugout sunk among the mangrove roots", 1, { seed: 3 }],
   layout: {
     pattern: "stands", density: .5, clump: .7, glades: { count: 2, size: [14, 20] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .15, rocks: .05, freak: .15, lake: .6, modern: .05 },
     feel: "Brown tidal channels threading between mangroves on their stilt roots, mud banks and still pools; warm, close and watchful, something long lying at the water's edge.",
   },

@@ -11,7 +11,7 @@ export const TROLLWOOD = {
   setPiece: ["heap", "a troll bridge over an iced stream", 1, { of: "stones", moss: .3, top: "slab" }],
   layout: {
     pattern: "stands", density: .55, clump: .7, glades: { count: 1, size: [16, 24] },
-    heightMix: { sapling: .2, mature: .5, tall: .25, giant: .05 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .2, mature: .65, tall: .125, giant: .025 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["stream", "mounds"], decor: { rate: .25, ruins: .15, rocks: .7, freak: .1, lake: 0, modern: .05 },
     feel: "A frozen forest, hushed: old spruces hung with frost and larches in stands, an iced stream winding through, snow-capped boulders among the trees that might be sleeping trolls.",
   },
