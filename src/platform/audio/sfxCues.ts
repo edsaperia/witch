@@ -18,6 +18,7 @@
 //    (#108), a legend's long charge (#114), a relic bottle found (#99).
 //  - Home's meadow; each other area's own ambience (night.ts, quiet near the party).
 import { affectionOf, type Game } from "../../rules/game";
+import { relicsOut } from "../../rules/partyOver";
 import type { Creature } from "../../rules/creatures";
 import { restlessness } from "../../rules/dream";
 import { bossBreath } from "../../render/leash";
@@ -315,7 +316,7 @@ export class SfxCues {
    *  reaches it; read loosely until the relics land (g.relics: id, x, z, state). */
   private relics({ g, pan }: Here): void {
     const w = g.witch, R = g.tuning.sfx.relic, treetop = w.mode !== "ground" || w.lift > 0.5;
-    for (const r of (g as unknown as { relics?: { id: number; x: number; z: number; state: string }[] }).relics ?? []) {
+    for (const r of relicsOut(g)) { // (none before the party: rules/partyOver.ts)
       if (r.state !== "lying" || this.relicsFound.has(r.id)) continue;
       const d = Math.hypot(r.x - w.x, r.z - w.z);
       if (d <= R.reach || d <= (treetop ? R.spotTreetop : R.spot)) { this.relicsFound.add(r.id); if (this.primed) this.sfx.relic(pan(r.x)); }

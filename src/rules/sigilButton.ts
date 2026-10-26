@@ -7,7 +7,7 @@ import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
-import { worldAsleep } from "./partyOver";
+import { relicsOut, worldAsleep } from "./partyOver";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
@@ -98,7 +98,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
     // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
     // becomes one at once; with none to grow, nothing happens but the refusal's sound, and the flask stays where it lies.
-    const f = flaskUnder(g.relics, g.witch.x, g.witch.z, t.leash.runeRadius);
+    const f = flaskUnder(relicsOut(g), g.witch.x, g.witch.z, t.leash.runeRadius);
     if (f) {
       sigil = false; place = false;
       const grown = growthSpurt(g.berries, g.creatures, W.leash.stack, g.clock.time);

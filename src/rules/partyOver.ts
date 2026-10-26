@@ -24,6 +24,7 @@ import { isHomeKey } from "./speakers";
 import { heal, type Creature } from "./creatures";
 import { pointInArea } from "./creatures";
 import { letPartyLegendGo } from "./leash";
+import type { Relic } from "./legends";
 
 /** Whether the party's over by the fight: every one of the home ring's speakers down (Ed, 2026-10-10), whatever else stands. */
 export function homeDown(S: Pick<CombatState, "sounds">): boolean {
@@ -73,6 +74,12 @@ function calm(c: Creature, time: number): void {
 /** The world asleep: the afterparty, or a night still waiting for her party spell (the zoo, a review tool, never). Nothing fights
  *  or attacks her, the legends lie still, no 💌 takes, tonight's find isn't there (rules/finds.ts trunkAt's callers). */
 export const worldAsleep = (g: Pick<Game, "partyOver" | "party" | "map">): boolean => !!g.partyOver || (g.party.spellAt === null && !g.map.zoo);
+/** The world asleep before the party (not after a loss): the night not started yet. */
+export const beforeParty = (g: Pick<Game, "partyOver" | "party" | "map">): boolean => !g.partyOver && worldAsleep(g);
+const NO_RELICS: Relic[] = [];
+/** The relics out in the world: none before the party (Ed, 2026-10-26: "Relics, like finds, only appear once the party starts":
+ *  not lying, glinting, lit, dowsed or drunk till the spell's cast), else the map's. */
+export const relicsOut = (g: Pick<Game, "partyOver" | "party" | "map" | "relics">): Relic[] => (beforeParty(g) ? NO_RELICS : g.relics);
 
 /** Where it lies down: a legend where it lay (its lair), anything else a spot in its own area (a circle's baby in its circle). */
 function bedOf(g: Game, c: Creature): { x: number; z: number } {

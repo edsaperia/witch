@@ -8,7 +8,7 @@ import { TUNING } from "./tuning";
 import { cellKey } from "./party";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";
-import { endParty, worldAsleep } from "./partyOver";
+import { endParty, relicsOut, worldAsleep } from "./partyOver";
 import type { Creature } from "./creatures";
 import { circleLines } from "./legendCircle";
 
@@ -123,6 +123,22 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
     stepGame(g, { ...C, castParty: true }, STEP);
     run(g, 0.5);
     for (const c of dreamers) expect(c.questOpen, `${c.species} ${c.id}`).toBe(true);
+  });
+
+  it("no relics before the party (Ed, 2026-10-26: \"Relics, like finds, only appear once the party starts\"); out once it's cast", () => {
+    const g = beforeParty();
+    expect(g.relics.length).toBeGreaterThan(0);
+    expect(relicsOut(g)).toEqual([]);
+    // (standing on a flask's sigil with a baby following, E drinks nothing: no growth spurt, no fizzle)
+    const r = g.relics.find(k => k.state === "lying")!;
+    out(g, r.sx, r.sz);
+    run(g, 0.2, { place: true, sigil: true });
+    expect(r.state).toBe("lying");
+    expect(g.leashEvents.some(e => e.kind === "flaskDrunk" || e.kind === "fizzled")).toBe(false);
+    stepGame(g, { ...C, castParty: true }, STEP);
+    expect(relicsOut(g)).toBe(g.relics);
+    const L = lost();
+    expect(relicsOut(L)).toBe(L.relics); // (a lost night's are as today's: its relics still lie where they lay)
   });
 
   it("a night that never waits for the spell (the tools, the bots) is as before: awake from the start", () => {

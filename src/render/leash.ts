@@ -39,6 +39,7 @@ import { drawDeckBpm } from "./leash/deckBpm";
 import { drawBond, drawStack, drawStrain, stackKey } from "./leash/stack";
 import { drawProjection } from "./leash/projection";
 import { RUNE_SCALE, runeOffset, sigilSize } from "../rules/runeOffset";
+import { relicsOut } from "../rules/partyOver";
 export { BUBBLE_PX, bubblePx } from "./leash/bubbles";
 export { legendarySigil } from "./leash/glyphs";
 
@@ -574,10 +575,10 @@ export class LeashView {
     // The ghost: where the bottom sigil would land; none where it can't (a relic's at the bottom: its own) (Ed, 2026-10-07: "no visual feedback when you can't put
     // down a sigil, just a refusal sound": the "fizzled" leash event, platform/audio).
     const bottomRelic = stackBottom(s)?.kind === "relic";
-    if (w.mode === "ground" && bottomRelic && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !g.relics.some(r => (r.state === "lying" || r.state === "dropped") && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) {
+    if (w.mode === "ground" && bottomRelic && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !relicsOut(g).some(r => (r.state === "lying" || r.state === "dropped") && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) {
       const col = (this.slotOf("relic", 0), this.colours.get("relic")!); // (a flask's at the bottom: its ghost, Ed 2026-10-08: "it's what you put down when you press e")
       this.groundSigil(w.x, 0, w.z, 3.4, this.uv(this.slotOf("relic", 0)), col.r, col.g, col.b, 0.22);
-    } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !g.relics.some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
+    } else if (w.mode === "ground" && stackBottom(s)?.kind === "creature" && !blocked(s, w.x, w.z, t) && !s.placed.some(p => Math.hypot(p.x - w.x, p.z - w.z) <= L.pickRadius) && !runeNear(g.creatures, w.x, w.z, L.runeRadius, time, undefined, k => runeOffset(k, t)) && !relicsOut(g).some(r => r.state === "lying" && Math.hypot(r.sx - w.x, r.sz - w.z) <= L.runeRadius)) { // (on a relic's sigil the button picks the relic up)
       const c = g.creatures[s.stack[s.stack.length - 1]], col = this.colours.get(c.species)!;
       const sg = this.sigilOf(c);
       this.groundSigil(w.x, 0, w.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r, col.g, col.b, 0.22);
@@ -588,7 +589,7 @@ export class LeashView {
     // gold rune (the pickup marker) and its glint, which shows from the treetops only through a gap in the canopy (Ed,
     // 2026-10-05: "a rare find"), never over the canopy; no markers.
     const aloft = w.lift > 0.5;
-    for (const r of g.relics) {
+    for (const r of relicsOut(g)) { // (none before the party: rules/partyOver.ts)
       const dropped = r.state === "dropped"; // (put down by her off any legend's clearing: its sigil alone, where she left it)
       if ((r.state !== "lying" && !dropped) || Math.abs(r.sx - w.x) > 400 || Math.abs(r.sz - w.z) > 400) continue;
       // Its relic sigil on the ground south of it, written like any placed sigil (Ed, 2026-10-06:
