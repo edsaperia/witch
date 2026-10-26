@@ -67,6 +67,21 @@ describe("legend areas", () => {
     expect(over.every(s => s.startsWith("elephant"))).toBe(true);
   });
 
+  it("shows no border inside a pair: the legend area wears its pair's look everywhere, so the area blend has nothing to blend there", () => {
+    const map = generateMap(2, islandOf("tiger"));
+    for (const [la, pair] of map.legendAreas) {
+      const [lx, ly] = cellOf(la), want = map.typeOf(...cellOf(pair)), s = map.siteOf(lx, ly); // (an area's look is its type, but home's)
+      let n = 0;
+      for (let i = -20; i <= 20; i++) for (let j = -20; j <= 20; j++) {
+        const x = s.x + i * 6, z = s.z + j * 6, a = map.areaAt(x, z);
+        if (a.cell[0] !== lx || a.cell[1] !== ly) continue;
+        expect(a.look).toBe(want);
+        n++;
+      }
+      expect(n).toBeGreaterThan(50);
+    }
+  });
+
   it("counts a legend area and its pair as one area: a point in either is in the pair's area, and the legend's cell is its pair's", () => {
     const map = generateMap(1, islandOf("tiger")), creatures = spawnCreatures(map);
     for (const [la, pair] of map.legendAreas) {
