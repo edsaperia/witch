@@ -21,9 +21,13 @@ export const CIRCLE = { line: [190, 40, 52] as RGB, glow: [226, 70, 74] as RGB, 
 export const circleMark = (u: number, v: number): "line" | "glow" | "floor" | null => {
   const r = Math.hypot(u, v);
   if (r > 1) return null;
-  if (r > 0.9 || (r > 0.8 && r < 0.85)) return r > 0.95 || r < 0.82 ? "line" : "glow";
-  if (r > 0.74) return "floor";
-  return sigilHit("worldTree", 0.5 + u / 1.45, 0.5 + v / 1.45, 0.03) ? "line" : "floor"; // (the tree filling the inner ring)
+  if (r > 0.965 || (r > 0.855 && r < 0.88)) return "line"; // (the two rings, thin)
+  if (r > 0.88) { // (between them, a band of runes: a glyph of ticks and bars every few degrees)
+    const a = (Math.atan2(v, u) / (2 * Math.PI) + 1) * 56, k = Math.floor(a), f = a - k, t = (r - 0.88) / 0.085, h = Math.sin(k * 91.7) * 4375.85 - Math.floor(Math.sin(k * 91.7) * 4375.85);
+    const stem = Math.abs(f - 0.5) < 0.09 && t > 0.15 && t < 0.85, bar = f > 0.25 && f < 0.75 && Math.abs(t - (h < 0.5 ? 0.3 : 0.7)) < 0.1, hook = h > 0.7 && Math.abs(f - 0.3) < 0.07 && t > 0.5 && t < 0.85;
+    return stem || bar || hook ? "glow" : "floor";
+  }
+  return sigilHit("worldTree", 0.5 + u / 1.62, 0.5 + v / 1.62, 0.014) ? "glow" : "floor"; // (the tree filling the inner ring)
 };
 /** The Terrace's magic circle on the house's plan: its middle and radius, metres (null: none). */
 export const terraceCircle = (H: HouseConfig): { x: number; z: number; r: number } | null => {

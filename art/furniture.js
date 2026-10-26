@@ -397,12 +397,15 @@ const PIECES = {
       m.ell([x, top * .55, z], [.05, .05, .05], M.HAIR, { group: 3 });
     }
     for (const z of [-D / 2 + .05, D / 2 - .05]) { m.box([0, top - .07, z], [W * .18, .035, .01], M.BARKD, { group: 4 }); m.ell([0, top - .07, z + Math.sign(z) * .015], [.02, .02, .015], M.FLOWER, { group: 4 }); }
-    // the 💌: white, a blue edge and its flap's V, a red heart over the flap's point
+    // the 💌: white, a blue edge and its flap's V, and a big red heart over the flap's point, most of its face (Ed: "envelopes on the
+    // desk should clearly read as hearts", at the house's camera)
     const heart = (x, y) => (x * x + y * y - 1) ** 3 - x * x * y * y * y <= 0;
-    const face = (s, t) => (heart(s / .42, -(t + .05) / .52 + .25) ? M.ACCENT : Math.abs(s) > .86 || Math.abs(t) > .8 || Math.abs(t - (-.8 + Math.abs(s) * .95)) < .1 ? M.IRIS : M.BELLY);
+    // (t runs up the face, as the camera sees it lying flat: the flap's V down from the top corners, the heart's lobes up)
+    const face = (s, t) => (heart(s / .56, (t + .1) / .62) ? M.ACCENT : Math.abs(s) > .88 || Math.abs(t) > .84 || Math.abs(t - Math.abs(s) * .84) < .08 ? M.IRIS : M.BELLY);
     const env = (c, yaw, g, tilt = 0) => {
-      const u = rotY(X, yaw), v0 = rotY([0, 0, -1], yaw), v = [v0[0], Math.sin(tilt), v0[2] * Math.cos(tilt)], up = [-v0[0] * Math.sin(tilt) * 0, Math.cos(tilt), -Math.sin(tilt)];
-      m.box([c[0] - up[0] * .012, c[1] - up[1] * .012, c[2] - up[2] * .012], [E * .97, .008, E * .65], M.BELLY, { group: g, dir: u, up, round: .004 });
+      // (tilted about its own width: its face's up, v, and its normal, up, turned together; tilt < 0 leans its face to the camera)
+      const u = rotY(X, yaw), v0 = rotY([0, 0, -1], yaw), ct = Math.cos(tilt), sn = Math.sin(tilt), v = [v0[0] * ct, -sn, v0[2] * ct], up = [v0[0] * sn, ct, v0[2] * sn];
+      m.box([c[0] - up[0] * .008, c[1] - up[1] * .008, c[2] - up[2] * .008], [E * .97, .004, E * .65], M.BELLY, { group: g, dir: u, up, round: .003 });
       m.flat([c[0] + up[0] * .006, c[1] + up[1] * .006, c[2] + up[2] * .006], u, v, E, E * .68, face, { group: g + 1, bend: 0 });
     };
     // three piles, one a witch, on her tray
@@ -410,14 +413,16 @@ const PIECES = {
     [-W * .3, 0, W * .3].forEach((x, k) => {
       const z = 0, n = Math.min(10, left[k] ?? 0);
       m.box([x, sit + .01, z], [E * 1.25, .012, E * .95], trays[k], { round: .012, group: 10 + k * 4 });
-      for (let i = 0; i < n; i++) env([x + (hash2(k, i, 3) - .5) * .03, sit + .03 + i * .025, z + (hash2(k, i, 4) - .5) * .03], (hash2(k, i, 5) - .5) * .5, 11 + k * 4);
+      // (fanned, so each letter's heart shows: a stack of love letters, not a white block)
+      for (let i = 0; i < n; i++) env([x + (i - (n - 1) / 2) * E * .09 + (hash2(k, i, 3) - .5) * E * .2, sit + .02 + i * .014, z + (hash2(k, i, 4) - .5) * E * .3], (hash2(k, i, 5) - .5) * .9, 11 + k * 4);
       if (n > 4) env([x + E * .9, sit + .03, z + E * .6], .9 + k, 12 + k * 4); // (one slid off the top of a tall pile)
+      if (n > 0) env([x, sit + .02 + n * .014 + E * .3, z + E * .25], (hash2(k, 9, 1) - .5) * .3, 13 + k * 4, -1.05); // (and one propped up on it, its heart to the room)
     });
     // sliding off the edges, and a spill on the floor all round (it stays: she's a messy witch)
     env([-W / 2 + .02, top - .02, D * .3], .3, 30, .7); env([W / 2 - .02, top - .03, -D * .25], -.4, 32, -.6); env([W * .1, top - .02, D / 2 - .01], 1.2, 34, .8);
     for (let i = 0; i < 16; i++) {
       const a = hash2(i, 7, 1) * Math.PI * 2, r = .55 + hash2(i, 7, 2) * .45, x = Math.cos(a) * (W / 2 + .1) * r * 1.15, z = Math.sin(a) * (D / 2 + .1) * r * 1.3;
-      env([x, .012 + (i % 3) * .004, z], hash2(i, 7, 3) * 6.3, 40 + (i % 6) * 2);
+      env([x, .03 + (i % 3) * .004, z], (hash2(i, 7, 3) - .5) * 2.4, 40 + (i % 6) * 2, -.3); // (fallen face up, near enough the camera's way, a little tipped up on each other)
     }
     // a quill in its ink and a candle among the piles
     can(m, W * .15, -D * .3, sit, sit + .07, .045, M.SHADES, { group: 70 });
@@ -832,7 +837,7 @@ const ROOM_COLOURS = {
 /** A piece's own colours over its room's (the biome board's frames). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
-const PIECE_COLOURS = { invitations: { [M.BELLY]: [232, 228, 220], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [212, 46, 58] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+const PIECE_COLOURS = { invitations: { [M.BELLY]: [232, 228, 220], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
