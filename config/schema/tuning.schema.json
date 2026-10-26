@@ -866,12 +866,27 @@
         "stray": {
           "type": "number",
           "minimum": 0
+        },
+        "warp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warpScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "width",
         "scale",
-        "stray"
+        "stray",
+        "warp",
+        "warpScale",
+        "tufts"
       ],
       "additionalProperties": false
     },
