@@ -112,9 +112,16 @@ function front(id, by) {
       await shot(name);
     }
     // up, the wake-up's over (the oak, Ed 2026-10-24: no curtains, nothing waiting on the island's build): only her dressing keeps the door
+    // (she stands still at it, the movement keys its buttons: E again slides it out; Ed, 2026-10-26)
+    const at0 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    await page.keyboard.down("KeyD"); await page.waitForTimeout(800); await page.keyboard.up("KeyD");
+    const at1 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    if (Math.hypot(at1[0] - at0[0], at1[1] - at0[1]) > 0.05) fail(`she walked while the shoe rack's panel was open (${at0} to ${at1})`);
+    if (!(await page.evaluate(() => !!document.querySelector("#station-panel.in")))) fail("a movement key closed the shoe rack's panel");
+    await page.keyboard.press("KeyE");
+    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250);
+    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("E didn't slide the shoe rack's panel out");
     await goTo("clothesPile", 1.5);
-    for (let i = 0; i < 40 && (await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) await page.waitForTimeout(250); // (walking away slides it out)
-    if (await page.evaluate(() => !!document.querySelector("#station-panel.in"))) fail("the shoe rack's panel didn't slide out as she walked away");
     const before = await wake();
     log("up:", JSON.stringify(before));
     if (!before.open) fail("up, but the wake-up isn't over");

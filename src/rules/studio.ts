@@ -3,7 +3,7 @@
 // previews/ed/studio-instruments on claude/ed-shots). Walking up to one lights it with E over it (Ed's playtest, 2026-10-26: "Menus
 // should open when she presses E near an interactive object ... instead of them opening automatically just through proximity");
 // E there and she's at it: its menu slides in (ui/studioPanel.ts) and every key plays it, the movement keys too (Ed: "it's a shame
-// to lose all the movement keys for the instruments"), till Esc (a gamepad's B) steps her away or she walks off; E plays it again. The Studio has its own loop at its own tempo, never the
+// to lose all the movement keys for the instruments"), till E (the pad's □), or Esc (B), steps her away (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"), she standing still at it meanwhile. The Studio has its own loop at its own tempo, never the
 // night's music, shared by every player there, while each player's instrument is their own (Ed: three players jamming, one on
 // each, when multiplayer comes). Her notes always sound exactly when pressed, never snapped to the loop (Ed, 2026-10-23). Numbers
 // and names only: app/studio.ts plays them.
@@ -79,7 +79,7 @@ export type Pad = "kick" | "kick808" | "kickSoft" | "kickHard" | "snare" | "rim"
 export const DRUM_KEYS: Record<string, Pad> = {
   Space: "kick",
   KeyA: "clap", KeyS: "openHat", KeyD: "hat", KeyF: "snare", KeyG: "tomLow", KeyH: "tomHigh", KeyJ: "snare", KeyK: "hat", KeyL: "openHat", Semicolon: "clap", Quote: "crash",
-  KeyQ: "hat", KeyW: "openHat", KeyE: "rim", KeyR: "tomHigh", KeyT: "tomMid", KeyY: "shaker", KeyU: "cowbell", KeyI: "snap", KeyO: "rim", KeyP: "crash", BracketLeft: "crash", BracketRight: "crash",
+  KeyQ: "hat", KeyW: "openHat", KeyR: "tomHigh", KeyT: "tomMid", KeyY: "shaker", KeyU: "cowbell", KeyI: "snap", KeyO: "rim", KeyP: "crash", BracketLeft: "crash", BracketRight: "crash",
   KeyZ: "kick808", KeyX: "kickSoft", KeyC: "kickHard", KeyV: "clap", KeyB: "snap", KeyN: "clap", KeyM: "snap", Comma: "shaker", Period: "cowbell", Slash: "crash",
   ArrowUp: "tomHigh", ArrowLeft: "tomMid", ArrowRight: "tomLow", ArrowDown: "tomFloor",
 };
@@ -87,7 +87,7 @@ export const DRUM_KEYS: Record<string, Pad> = {
 export const NOTE_ROWS: string[][] = [
   ["KeyZ", "KeyX", "KeyC", "KeyV", "KeyB", "KeyN", "KeyM", "Comma", "Period", "Slash"],
   ["KeyA", "KeyS", "KeyD", "KeyF", "KeyG", "KeyH", "KeyJ", "KeyK", "KeyL", "Semicolon", "Quote"],
-  ["KeyQ", "KeyW", "KeyE", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight"],
+  ["KeyQ", "KeyW", "KeyR", "KeyT", "KeyY", "KeyU", "KeyI", "KeyO", "KeyP", "BracketLeft", "BracketRight", "Backslash"], // (no E: it leaves)
 ];
 const SCALES: Record<string, number[]> = { dorian: [0, 2, 3, 5, 7, 9, 10], aeolian: [0, 2, 3, 5, 7, 8, 10], phrygian: [0, 1, 3, 5, 7, 8, 10], ionian: [0, 2, 4, 5, 7, 9, 11], mixolydian: [0, 2, 4, 5, 7, 9, 10] };
 /** A scale step's MIDI note: the root, `deg` steps up the scale (any number, octaves and all). */
@@ -124,11 +124,13 @@ export const soundsOf = (inst: Instrument, S = STUDIO_CONFIG): { id: string; nam
 /** A drum pad's patch in a kit (the house kit's where the kit leaves it out). */
 export const padPatch = (pad: Pad, kit: number, S = STUDIO_CONFIG): string => S.drums.kits[kit]?.pads[pad] ?? S.drums.kits[0].pads[pad] ?? "kick";
 
-/** The gamepad (the standard mapping's button numbers): B (1) steps away; the drum kit's pads; the synth's and the mic's eight
- *  notes (the d-pad and the face buttons, a scale's steps from the middle row's root), the bumper and trigger an octave down and up. */
-export const PAD_LEAVE = 1;
-export const PAD_DRUMS: Record<number, Pad> = { 0: "kick", 2: "snare", 3: "hat", 5: "openHat", 6: "clap", 7: "crash", 12: "tomHigh", 14: "tomMid", 15: "tomLow", 13: "tomFloor" };
-export const PAD_NOTES: Record<number, number> = { 13: 0, 14: 1, 12: 2, 15: 3, 0: 4, 2: 5, 3: 6, 5: 7 };
+/** The gamepad (the standard mapping's button numbers): square (2), the use button, steps away as E does, and circle (1) as Esc
+ *  (Ed, 2026-10-26: "instruments: leave with E; if not consistent it will be confusing"); the drum kit's pads; the synth's and the
+ *  mic's eight notes (the d-pad and the face buttons, a scale's steps from the middle row's root), the bumpers and the left trigger
+ *  an octave down and up. */
+export const PAD_LEAVE: readonly number[] = [2, 1];
+export const PAD_DRUMS: Record<number, Pad> = { 0: "kick", 4: "snare", 3: "hat", 5: "openHat", 6: "clap", 7: "crash", 12: "tomHigh", 14: "tomMid", 15: "tomLow", 13: "tomFloor" };
+export const PAD_NOTES: Record<number, number> = { 13: 0, 14: 1, 12: 2, 15: 3, 0: 4, 7: 5, 3: 6, 5: 7 };
 export const PAD_OCTAVE: Record<number, number> = { 4: -1, 6: 1 };
 
 // ---- the loop: a bar of sixteenths in a style, four bars round (i, IV, VII, i in the scale) ----

@@ -95,7 +95,7 @@ const CASES = [
     check(await isOpen(), `${C.id}: back to the overlay on resume`);
     // close it for the next one
     if (C.id === "sea-chart") await page.evaluate(() => document.querySelector("#chart-overlay button[title*='lose'], #chart-overlay .close")?.click());
-    if (C.id === "map-table") { await page.keyboard.down("KeyS"); await page.waitForTimeout(600); await page.keyboard.up("KeyS"); } // (she walks: it's put away)
+    if (C.id === "map-table") { await page.keyboard.press("KeyE"); await page.waitForTimeout(600); } // (E again: it's put away; walking doesn't, Ed 2026-10-26)
     if (C.on) await page.evaluate(() => window.witch.telescope.close());
     if (C.id === "finds-dev") await page.evaluate(() => document.getElementById("finds-dev-btn")?.click());
     await away(); await page.waitForTimeout(1500);

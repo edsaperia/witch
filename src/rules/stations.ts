@@ -6,7 +6,8 @@
 // and whether there are rooms are houseRooms.ts's (fromObject, hasRooms), never worked out here, so a new plan for the rooms
 // moves the stations' reach with them. Stations are known by their `use` alone. Since Ed's playtest of 2026-10-26 ("Menus should
 // open when she presses E near an interactive object") the one she's at is lit with E over it (render/houseRooms.ts), and E there
-// slides its panel in (main.ts, the rules' "house" event); walking off it slides it out. The rules don't change for it.
+// slides its panel in (main.ts, the rules' "house" event), and E again slides it out, she standing still at it meanwhile (Ed:
+// "walking away shouldn't work - then we can use the movement keys as buttons in the menus"). The rules don't change for it.
 import type { Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, fromObject, hasRooms, onRoomFloor, type HouseObject } from "./houseRooms";
@@ -15,7 +16,7 @@ import type { Tuning } from "./tuning";
 /** How much further than the house's reach she can step before an open station's panel goes (m). */
 export const STATION_SLACK = 0.8;
 
-/** The uses whose panels come on E at them and go as she walks off: the dressing stations' (the creator: their panels slide in from the left, ui/stationPanel.ts)
+/** The uses whose panels come and go on E at them: the dressing stations' (the creator: their panels slide in from the left, ui/stationPanel.ts)
  *  and the tables' (Ed, 2026-10-23: "'Tables' slide in from the bottom and have a soft edge (they're more diegetic)": the Atrium's
  *  map table's sea chart, ui/chartOverlay.ts; the card table's to come, docs/backlog/treehouse.md). */
 export const STATION_USES: readonly HouseObject["use"]["kind"][] = ["creator"];

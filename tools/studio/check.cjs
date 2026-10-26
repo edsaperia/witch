@@ -83,10 +83,18 @@ const H = require("../../config/house/load.mjs").loadHouse();
     await page.keyboard.down("a"); await page.waitForTimeout(900); await page.keyboard.up("a");
     await page.keyboard.down("Space"); await page.keyboard.down("g"); await page.waitForTimeout(900); await page.keyboard.up("g"); await page.keyboard.up("Space");
     heard(await mic, "her singing voice, and its harmony");
+    // (the movement keys are notes: she stands still at it)
+    const m0 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    await page.keyboard.down("KeyD"); await page.waitForTimeout(600); await page.keyboard.up("KeyD");
+    const m1 = await page.evaluate(() => { const b = window.witch.game.witches[0].body; return [b.x, b.z]; });
+    ok(Math.hypot(m1[0] - m0[0], m1[1] - m0[1]) < 0.05 && await page.evaluate(() => window.witch.studio.at === "mic"), "the movement keys play it, she doesn't walk off");
     await page.keyboard.press("ArrowDown");
     ok(await page.evaluate(() => window.witch.studio.state.players[0].vowel === "ooh"), "the arrows choose the vowel");
     await page.screenshot({ path: path.join(outDir, "microphone.png") });
-    await page.keyboard.press("Escape"); await atIs(null, 20000);
+    // E leaves, as it closes everything (Ed, 2026-10-26: "instruments: leave with E")
+    await page.keyboard.press("KeyE"); ok(await atIs(null, 20000), "E steps her away from the mic");
+    await page.waitForTimeout(1500);
+    ok(await page.evaluate(() => window.witch.studio.at === null), "and the E that left it doesn't open it again");
     // the mic and its spotlight (render/spotlight.ts) with her stood aside, for a before and after
     const m = obj("microphone"); await page.evaluate(m => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + m.x + 2.5, z: T.z + m.z + 3.5, vx: 0, vz: 0 }; }, m);
     await page.waitForTimeout(4000);

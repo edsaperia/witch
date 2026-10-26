@@ -23,10 +23,6 @@ export class TelescopeView {
   /** The arrow keys held, and the mouse's movement since the last step (CSS pixels). */
   private readonly held = new Set<string>();
   private mouse = { x: 0, y: 0, at: null as { x: number; y: number } | null };
-  /** The movement keys let go since it opened: from then, moving walks her off (not a key still held from walking up to it). */
-  private walkFree = false;
-  /** She walked off (main.ts: it stays shut till she's left the telescope). */
-  onWalk: () => void = () => {};
   /** The night it was opened on: another night closes it (main.ts). */
   night: unknown = null;
   /** Called as she starts and stops looking. */
@@ -53,7 +49,7 @@ export class TelescopeView {
     Object.assign(this.strip.style, { position: "absolute", top: "36px", left: "50%", width: `${STRIP.w * STRIP.px}px`, maxWidth: "80vw", height: `${STRIP.h * STRIP.px}px`, transform: "translateX(-50%)", imageRendering: "pixelated" });
     this.el.append(this.strip, this.readout);
     host.append(this.el);
-    // The arrows look round while she looks (WASD walks her off); the mouse looks round as it moves.
+    // The arrows look round while she looks (WASD too, through her controls: she stands still at it); the mouse as it moves.
     addEventListener("keydown", e => { if (!this.aim || !ARROWS[e.code]) return; e.preventDefault(); e.stopImmediatePropagation(); this.held.add(e.code); }, { capture: true });
     addEventListener("keyup", e => { if (ARROWS[e.code]) this.held.delete(e.code); }, { capture: true });
     addEventListener("blur", () => this.held.clear());
@@ -68,7 +64,7 @@ export class TelescopeView {
     if (this.aim) return;
     this.aim = newTelescope(T);
     this.night = night;
-    this.walkFree = false; this.mouse.x = 0; this.mouse.y = 0; this.held.clear();
+    this.mouse.x = 0; this.mouse.y = 0; this.held.clear();
     this.el.style.display = "";
     this.onChange(true);
   }
@@ -89,14 +85,12 @@ export class TelescopeView {
 
   /** A frame (real seconds), with her controls as read (WASD and the left stick in moveX/moveZ: the arrows are the telescope's):
    *  the aiming keys look round (the arrows, the right stick, the d-pad: main.ts gives it the d-pad), and the mouse as it moves;
-   *  the wheel, Z and X and the shoulder buttons zoom; walking (WASD, the left stick) leaves it, as does E. */
+   *  the wheel, Z and X and the shoulder buttons zoom; WASD and the left stick look round too (she stands still at it: Ed, 2026-10-26,
+   *  "walking away shouldn't work - then we can use the movement keys as buttons"); E (the pad's □) or Esc leaves it. */
   step(c: { moveX: number; moveZ: number; zoom?: number; sigil?: boolean }, dt: number, T: TelescopeTuning): void {
     if (!this.aim) return;
     if (c.sigil) { this.close(); return; }
-    const walk = Math.hypot(c.moveX, c.moveZ);
-    if (walk < 0.15) this.walkFree = true;
-    else if (this.walkFree) { this.close(); this.onWalk(); return; }
-    let lx = 0, ly = 0;
+    let lx = Math.abs(c.moveX) > 0.15 ? c.moveX : 0, ly = Math.abs(c.moveZ) > 0.15 ? c.moveZ : 0;
     for (const k of this.held) { lx += ARROWS[k][0]; ly += ARROWS[k][1]; }
     const pad = [...(navigator.getGamepads?.() ?? [])].find(g => g?.connected);
     if (pad) {
@@ -118,7 +112,7 @@ export class TelescopeView {
     if (T.vignette !== this.vignette) { this.vignette = T.vignette; this.el.style.background = vignetteCss(T.vignette); } // (live: the pause page's slider)
     const up = Math.round(this.aim.elevation);
     this.drawStrip(this.aim.heading);
-    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   walk away to leave`;
+    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   E □ Esc ⏏`;
   }
 
   /** The compass strip (Ed, 2026-10-23: "Telescope view has a compass at the top"): STRIP.span degrees across, ticks every 15°, the

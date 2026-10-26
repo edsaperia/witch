@@ -94,7 +94,8 @@ export class StudioPlayer {
   private key(e: KeyboardEvent, down: boolean): void {
     const P = this.state.players[0];
     if (!P.at || PASS.has(e.code) || e.metaKey || e.ctrlKey) return;
-    if (down && e.code === "Escape") { e.preventDefault(); e.stopImmediatePropagation(); this.leave(); return; }
+    if (down && (e.code === "Escape" || e.code === "KeyE")) { e.preventDefault(); e.stopImmediatePropagation(); if (!e.repeat) this.leave(); return; } // (E leaves, as it closes everything: Ed, 2026-10-26)
+    if (e.code === "KeyE") { e.preventDefault(); e.stopImmediatePropagation(); return; } // (its key-up: not a note)
     e.preventDefault(); e.stopImmediatePropagation(); // (every other key is the instrument's, not the game's)
     if (down && e.repeat) return;
     const c = down ? controlFor(e.code) : null;
@@ -184,7 +185,7 @@ export class StudioPlayer {
       const on = b.pressed, was = this.pad[i] ?? false;
       this.pad[i] = on;
       if (on === was) return;
-      if (i === PAD_LEAVE) { if (on) this.leave(); return; }
+      if (PAD_LEAVE.includes(i)) { if (on) this.leave(); return; }
       if (i === 9) return; // (Start: the pause)
       this.press(`pad:${i}`, on);
     });
