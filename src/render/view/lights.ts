@@ -1,6 +1,7 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
 import { writeOn } from "../leash/glyphs";
+import { areaCellAt } from "../../rules/map";
 import * as THREE from "three";
 import { partyOff } from "../partyOver";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
@@ -29,7 +30,7 @@ export function updateSources(v: View, time: number): void {
       // Campfires are party objects (Ed, 2026-10-04): none in the dormant forest; in a partified
       // area they light up with a whoosh of sparks as the party arrives (late in its transition).
       let key = v.sourceCell.get(src);
-      if (key === undefined) v.sourceCell.set(src, (key = cellKey(g.map.cellSafe(src.x, src.z).cell))); // it never moves: ask once
+      if (key === undefined) v.sourceCell.set(src, (key = cellKey(areaCellAt(g.map, src.x, src.z)))); // it never moves: ask once (a legend area's as its pair's: they partify together)
       const a = g.party.areas.get(key);
       if (!a) continue;
       const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);

@@ -5,7 +5,7 @@
 // a uniform list of anchors refreshed a few times a second, so nothing is allocated per frame.
 import * as THREE from "three";
 import type { Game } from "../rules/game";
-import { cellKey } from "../rules/party";
+import { cellKey, partifiedKey } from "../rules/party";
 import type { WispTuning } from "../rules/tuning";
 import { hash2 } from "../rules/random";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -112,7 +112,7 @@ export class Wisps {
       let d = Infinity;
       for (const s of this.partySites) d = Math.min(d, Math.hypot(s.x - x, s.z - z));
       if (hash2(i, j, 813) >= wispChance(T, d)) continue;
-      if (g.party.areas.has(cellKey(g.map.areaAt(x, z).cell))) continue; // (never in the party's own ground)
+      if (partifiedKey(g.party, g.map, cellKey(g.map.areaAt(x, z).cell))) continue; // (never in the party's own ground, a legend area with its pair)
       this.anchors[n++].set(x, z, hash2(i, j, 814), 0.55 + 0.45 * hash2(i, j, 815));
     }
     this.u.uWispCount.value = n;
