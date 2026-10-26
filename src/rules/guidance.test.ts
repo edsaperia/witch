@@ -42,7 +42,7 @@ describe("guidance pins", () => {
     expect(of(g)?.target).toEqual({ object: "hats" });
     g.wake!.pile = [];
     const d = deckOf(g.map, g.tuning)!;
-    expect(of(g)).toEqual({ kind: "decks", target: { x: d.seat.x, z: d.seat.z } });
+    expect(of(g)).toEqual({ kind: "decks", target: { x: d.house!.desk.x, z: d.house!.desk.z } });
   });
 
   it("no dressing pin on the nights after: straight to the decks, last night's clothes or not", () => {
@@ -102,7 +102,7 @@ describe("guidance pins", () => {
     expect(atGuide(g, 0, G)).toBe(false);
     standAt(g, "wardrobe");
     expect(atGuide(g, 0, G)).toBe(true);
-    const d = deckOf(g.map, g.tuning)!, D = { kind: "decks" as const, target: { x: d.seat.x, z: d.seat.z } };
+    const d = deckOf(g.map, g.tuning)!, D = { kind: "decks" as const, target: { x: d.house!.desk.x, z: d.house!.desk.z } }; // (over the desk; at it, at her seat)
     expect(atGuide(g, 0, D)).toBe(false);
     g.witches[0].body = { ...g.witches[0].body, x: d.seat.x + 1, z: d.seat.z };
     expect(atGuide(g, 0, D)).toBe(true);

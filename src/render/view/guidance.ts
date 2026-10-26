@@ -114,7 +114,7 @@ export class GuidePin {
    *  shown, or hidden, eased (render/pins.ts). */
   update(guide: Guide | null, shows: boolean): void {
     if (guide) {
-      const T = guide.target, target: PinTarget = "object" in T ? { object: T.object, top: TOPS[T.object] } : { x: T.x, z: T.z, top: 1.5, house: true };
+      const T = guide.target, target: PinTarget = "object" in T ? { object: T.object, top: TOPS[T.object] } : { x: T.x, z: T.z, top: 1.2, house: true };
       const key = `${guide.kind}:${JSON.stringify(target)}`;
       if (key !== this.key) {
         // (a new guide: the old pin gone, the new eased in from nothing)

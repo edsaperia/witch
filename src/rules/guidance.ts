@@ -64,7 +64,8 @@ export function guidanceOf(g: Game, w: number, save: GuideSave, found: readonly 
   if (n) return { kind: n.kind, target: { object: n.at } };
   if (found.some(i => !save.chartSeen.includes(i))) return { kind: "chart", target: { object: "mapTable" } };
   const d = deckOf(g.map, g.tuning);
-  return d ? { kind: "decks", target: { x: d.seat.x, z: d.seat.z } } : null;
+  const at = d?.house?.desk ?? d?.seat; // (over the decks' desk in the house; her seat behind it is where she's at them)
+  return at ? { kind: "decks", target: { x: at.x, z: at.z } } : null;
 }
 
 /** Whether `w` is at a guide's target now (its pin hidden: its own tag says what to do there). */
@@ -72,7 +73,7 @@ export function atGuide(g: Game, w: number, guide: Guide): boolean {
   const b = g.witches[w]?.body, d = deckOf(g.map, g.tuning);
   if (!b || !d) return false;
   const T = guide.target;
-  if (!("object" in T)) return Math.hypot(b.x - T.x, b.z - T.z) <= AT_DECKS;
+  if (!("object" in T)) return Math.hypot(b.x - d.seat.x, b.z - d.seat.z) <= AT_DECKS; // (the decks: at her seat)
   return !!b.perch && hasRooms(d) && objectAt(d, b.x, b.z)?.id === T.object;
 }
 
