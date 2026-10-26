@@ -1,0 +1,6 @@
+{
+  "reason": "The old oaks' streaky trunks (Ed, v4821: \"trunks read as flat vertical stripes\"): art/trees.js underTrunk carried a row of wood down to the ground under every limb crossing it, flat barkless pillars; now it carries only the trunk over its foot, up from that row, and below it the bottom half takes the tree's own wood with its bark.",
+  "frames": {
+    "*": "trees with a low or spreading crown, seen from the ground: their trunks keep their bark and forked limbs, no flat pillars under the limbs"
+  }
+}
