@@ -1,0 +1,65 @@
+{
+  "pr": 1176,
+  "group": "Places kept clear",
+  "decisions": [
+    {
+      "id": "revealRunestone",
+      "pr": 1176,
+      "group": "Places kept clear",
+      "label": "Clear in front of runestones",
+      "note": "Ed, 2026-10-26: \"we might want this for other important points of interest, such as runestone areas, finds, flasks\". On: within reveal.runestone.radius metres of an area's runestone, on the ground, the trees and scenery in front of the stone and its fight's open middle fade away (render/view/reveal.ts), as they do in a legend's circle. On since Ed, 2026-10-26 (\"All four on\"); off to compare.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "reveal.runestone.on"
+      }
+    },
+    {
+      "id": "revealRunestoneRadius",
+      "pr": 1176,
+      "group": "Places kept clear",
+      "label": "Runestone clear area (m)",
+      "note": "How far round a runestone the scenery in front of it fades (Ed, 2026-10-26: \"the fading area around a runestone is relatively small (say a 30m radius)\"): only while she's within this many metres of the stone, and only what stands within it, so the woods round a fight don't thin out beyond. Live.",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 60,
+        "step": 5
+      },
+      "default": 30,
+      "apply": {
+        "knob": "reveal.runestone.radius"
+      }
+    },
+    {
+      "id": "revealFind",
+      "pr": 1176,
+      "group": "Places kept clear",
+      "label": "Clear in front of the find",
+      "note": "On: near tonight's trunk or wreck (within reveal.find.radius metres, until it's taken), the scenery in front of it fades away. On since Ed, 2026-10-26 (\"All four on\"); off to compare.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "reveal.find.on"
+      }
+    },
+    {
+      "id": "revealFlask",
+      "pr": 1176,
+      "group": "Places kept clear",
+      "label": "Clear in front of flasks",
+      "note": "On: near a relic flask lying in the woods (within reveal.flask.radius metres), the scenery in front of it fades away. On since Ed, 2026-10-26 (\"All four on\"); off to compare.",
+      "control": {
+        "type": "toggle"
+      },
+      "default": true,
+      "apply": {
+        "knob": "reveal.flask.on"
+      }
+    }
+  ]
+}
