@@ -1,9 +1,10 @@
 // The witch's health and knockout (Ed, 2026-10-04). She takes knockout hits (one point each,
 // whatever hits her); one comes back every repairTime seconds, the timer starting over at every
 // hit. At none she's knocked out: she collapses where she is (no more hits, no input), her sigil
-// stack comes down from the bottom up, one every releaseEach seconds, each sigil put down where
-// its animal stands (#87, Ed 2026-10-05: leashed is for good, so they stay hers as a parked
-// group). One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
+// stack comes down from the bottom up, one every releaseEach seconds, each animal turning happy
+// where it stands (Ed's playtest of v4821, 2026-10-26: "they should become happy instead of leashed to a point by a floor
+// sigil"; before, #87, each sigil was put down where its animal stood and they stayed hers, parked): its rune at its feet
+// to pick up again, it goes home to its own area and defends it as any happy one does. One timeline (Ed, 2026-10-07), the whole wait counted from her going down (knockout.respawn: short, longer for
 // knockdowns close together, back to base after a cooldown): her hat floats to the ground (knockout.hatFloat, the screen
 // dimmed, a sad trumpet; if she had one to drop), she sparkles out and back in behind her decks, and scratches there for the
 // rest of the wait ("Every time she respawns she could do a bit of scratching to increase the respawn time"), her army
@@ -90,7 +91,7 @@ export function respawnWait(streak: number, t: Tuning): number {
   return Math.min(Math.max(R.base, R.max), R.base + R.step * streak);
 }
 
-/** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go, bottom first (legends kept if
+/** She goes down: her hat floats down if it dropped (hatFloats), then her stack is let go happy, bottom first (legends kept if
  *  they're loyal), then the teleport home and her scratching behind her decks for the rest of the wait. */
 export function knockOut(leash: LeashState, creatures: Creature[], time: number, t: Tuning, o: { hatFloats?: boolean; streak?: number; /** the house: seconds rising out of the circle's floor, and the walk to her decks */ house?: { rise: number; walk: number } } = {}): Knockout {
   const K = t.knockout, R = K.respawn ?? RESPAWN_NONE, streak = o.streak ?? 0, order = [...leash.stack].reverse().filter(id => !(K.legendsLoyal && creatures[id].level === LEGEND && !creatures[id].partyLegend)); // (a party legend is always let go: it doesn't move)
@@ -103,21 +104,23 @@ export function knockOut(leash: LeashState, creatures: Creature[], time: number,
   return { at: time, order, times, released: 0, floatUntil, teleportAt, inAt, ...(riseUntil !== undefined ? { riseUntil } : {}), seatAt, backAt, streak, wait: respawnWait(streak, t), out: false, moved: false };
 }
 
-/** Put a carried sigil down where its animal stands (a little aside if another sigil is there): it stays hers, parked. */
-export function parkWhere(c: Creature, leash: LeashState, time: number, spacing = 4): void {
+/** Let a carried one go happy where it stands (Ed, 2026-10-26): off her stack, no sigil made; happy now, so its rune is at its
+ *  feet once states' pickupDelay has passed (she leashes it again by picking that up), it fights only the enraged (never the
+ *  wild), and it goes home to its own area (its cell: the anchor it had on her leash may be anywhere, so it's set to its
+ *  area's again). Its hurt stays: an invite heals, a knockout doesn't. */
+export function letGoHappy(c: Creature, leash: LeashState, map: ForestMap, time: number): void {
   leash.stack = leash.stack.filter(id => id !== c.id);
-  let x = c.x, z = c.z;
-  for (let k = 0; k < 24 && leash.placed.some(p => Math.hypot(p.x - x, p.z - z) < spacing); k++) { const a = k * 2.4, r = spacing * (1 + k / 8); x = c.x + Math.cos(a) * r; z = c.z + Math.sin(a) * r; }
-  leash.placed.push({ id: c.id, x, z, at: time });
+  const [ax, az] = anchorOf(map, c.cell, c.homeX, c.homeZ, c.range);
+  Object.assign(c, { leashed: false, state: "happy", happyAt: time, enraged: false, siege: undefined, fight: undefined, taunt: undefined, wanderTo: undefined, affection: undefined, dancing: false, anchorX: ax, anchorZ: az, tx: c.x, tz: c.z, rest: 0 });
 }
 
-/** One step of a knockout: sigils put down on time, then the teleport. Returns true once she's back. */
+/** One step of a knockout: her carried ones let go happy on time, then the teleport. Returns true once she's back. */
 export function stepKnockout(k: Knockout, body: WitchState, leash: LeashState, creatures: Creature[], map: ForestMap, time: number, _partified: (key: string) => boolean, events: KnockoutEvent[]): { body: WitchState; done: boolean } {
   while (k.released < k.order.length && time >= k.times[k.released]) {
     const c = creatures[k.order[k.released++]];
-    // (#87: leashed is for good; each carried sigil is put down where its animal stands, so they stay a parked group)
+    // (each carried one happy where it stands, Ed 2026-10-26: no sigil put down; a party legend dancing there as ever)
     if (c?.partyLegend && leash.stack.includes(c.id)) { leash.stack = leash.stack.filter(id => id !== c.id); letPartyLegendGo(c); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
-    else if (c && c.leashed && leash.stack.includes(c.id)) { parkWhere(c, leash, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
+    else if (c && c.leashed && leash.stack.includes(c.id)) { letGoHappy(c, leash, map, time); events.push({ kind: "released", at: time, x: c.x, z: c.z, id: c.id }); }
   }
   if (time >= k.teleportAt && !k.out) { k.out = true; events.push({ kind: "sparkleOut", at: time, x: body.x, z: body.z }); }
   const mid = (k.teleportAt + k.inAt) / 2;

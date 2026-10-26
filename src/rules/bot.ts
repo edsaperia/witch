@@ -20,7 +20,7 @@ import { runeOffset } from "./runeOffset";
 import { AREA_TYPES } from "./map";
 import { cellKey } from "./party";
 import { hexSpot, stackBottom, toBottom } from "./leash";
-import { runeNear, stateOf } from "./creatureStates";
+import { hasRune, runeNear, stateOf } from "./creatureStates";
 import { creatureValue, sideValue } from "./power";
 import type { Controls, Game } from "./game";
 import type { Creature } from "./creatures";
@@ -193,6 +193,8 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   let feeding: { x: number; z: number; until: number; phase?: "drop" | "wait" | "collect"; ids?: number[] } | null = null, feedAgain = 0, healing = false;
   let target: Target | null = null, pickAt = -1, landWave = -1, lastWave = 0, seenWave = 0, lastWoken: Cell | null = null, steps = 0;
   const parkedAt = new Set<string>();
+  // (her stack as it was before a knockout, and so the ones it let go happy: Ed, 2026-10-26; she gathers their runes again)
+  let carried: number[] = [], letGo = new Set<number>();
   let holding = null as string | null; // (the soundsystem the champion's holding)
   const seen = new Map<number, { x: number; z: number; at: number }>(); // (where she last saw each target: the champion leads moving ones)
   const bot: Bot = { kind, doing: "", done: { quests: [], relics: [] }, decide };
@@ -201,6 +203,7 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
   function decide(g: Game): Controls {
     const map = g.map, w = g.witches[0], b = w.body, time = g.clock.time, t = g.tuning, R = t.invites.range, H = t.witchHealth.hits;
     const homeKey = cellKey(map.centreCell);
+    if (w.ko) { if (carried.length) { for (const id of carried) letGo.add(id); carried = []; } } else carried = [...w.leash.stack];
     legendOf ??= new Map(g.creatures.filter(c => c.boss).map(c => [cellKey(c.cell), c.id]));
     const LO = legendOf;
     // The waves she's seen come: when the last came, and the area it woke (the last she'd defend after it).
@@ -378,12 +381,22 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       // The win's stragglers (rules/win.ts, #675): nothing moves on while an enraged animal lives, and only her posse can
       // knock one down; she takes them to the one the pointer shows, landing by it and keeping out of its reach.
       const S = straggler, d = Math.hypot(S.x - b.x, S.z - b.z);
-      // (her parked ones first, if she's carrying few: a knockout puts her whole stack down where it stood)
-      let pk = null as { x: number; z: number } | null, pd = Infinity;
+      // (her parked ones first, if she's carrying few, and the ones a knockout let go happy, by their runes)
+      let pk = null as { x: number; z: number } | null, pd = Infinity, rn = null as Creature | null;
       if (w.leash.stack.length < 4) for (const p of w.leash.placed) { const e = Math.hypot(p.x - b.x, p.z - b.z); if (e < pd) { pd = e; pk = p; } }
-      if (pk) { bot.doing = "gathering her posse for the last ones"; pickUp(pk); }
+      if (w.leash.stack.length < 4) for (const id of letGo) {
+        const c = g.creatures[id];
+        if (!c || c.leashed || c.gone) { letGo.delete(id); continue; }
+        if (!hasRune(c, time)) continue;
+        const e = Math.hypot(c.x - b.x, c.z + runeOffset(c, t) - b.z); if (e < pd) { pd = e; pk = null; rn = c; }
+      }
+      if (rn) {
+        bot.doing = "gathering her posse for the last ones";
+        const rx = rn.x, rz = rn.z + runeOffset(rn, t), rd = Math.hypot(rx - b.x, rz - b.z); // (its rune lies south of it)
+        if (goTo(rx, rz, true, t.leash.pickRadius)) { if (rd > t.leash.pickRadius * 0.6) { mx = (rx - b.x) / rd; mz = (rz - b.z) / rd; } else if (step % 10 === 0) place = true; }
+      } else if (pk) { bot.doing = "gathering her posse for the last ones"; pickUp(pk); }
       else bot.doing = there(S.x, S.z) ? `seeing off ${article(S.species)}` : `flying to the last ${plural(S.species)}`;
-      if (!pk && goTo(S.x, S.z, true, 12)) {
+      if (!pk && !rn && goTo(S.x, S.z, true, 12)) {
         if (d < K.kite) { mx = (b.x - S.x) / (d || 1); mz = (b.z - S.z) / (d || 1); dash = careful && d < K.dashAt; }
         else if (d > 12) { mx = (S.x - b.x) / d; mz = (S.z - b.z) / d; }
       }
