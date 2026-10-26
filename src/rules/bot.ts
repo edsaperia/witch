@@ -354,12 +354,12 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (nd > 0.01) { mx = (b.x - near.x) / nd; mz = (b.z - near.z) / nd; } else { mx = 1; mz = 0; }
     };
     /** Toward (x, z): over the treetops when far, landing there if `land`; true once on the ground within `within` m. */
-    const NEAR = 45, FAR = 60;
+    const NEAR = 45, FAR = 60, deckHere = deckOf(g.map, t);
     const goTo = (x: number, z: number, land: boolean, within = 45) => {
       const dx = x - b.x, dz = z - b.z, d = Math.hypot(dx, dz) || 1;
       // (Rising only past FAR on foot, landing within NEAR: between the two she walks, so she never hops up and down at the line.)
       if (d > (b.mode === "ground" ? FAR : NEAR)) { if (b.mode === "ground") toggle = true; mx = dx / d; mz = dz / d; return false; }
-      if (land && b.mode === "treetop") { toggle = true; return false; }
+      if (land && b.mode === "treetop") { if (deckHere && landsOn(deckHere, b.x, b.z)) { mx = dx / d; mz = dz / d; } else toggle = true; return false; } // (over the treehouse deck she'd land on it, which the bots don't: on toward it till she's past the deck)
       if (b.mode === "ground" && d > Math.min(6, within * 0.6)) { mx = dx / d; mz = dz / d; }
       return b.mode === "ground" && d <= within; // (within: how near counts as there; a clearing's sigil, a few metres)
     };
