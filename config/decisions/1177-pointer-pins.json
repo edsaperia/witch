@@ -7,9 +7,9 @@
       "pr": 1177,
       "group": "Pointer pins",
       "label": "Pins: float above (px)",
-      "note": "How far the pointers' arrow tips float over what they point at, in screen pixels (Ed, 2026-10-26: \"pins should be a bit higher\"): 12 as built, twice the first build's 6. Every pin: her hats, the stones, the Dowsing hat's flask, the wave pointer over the pulse and the house's pins. Live.",
+      "note": "How far the pointers' arrow tips float over what they point at, in screen pixels (Ed, 2026-10-26: \"pins should be a bit higher\"): 20 as built (the first build had 6; 12 still nearly touched a hat). Every pin: her hats, the stones, the Dowsing hat's flask, the wave pointer over the pulse and the house's pins. Live.",
       "control": { "type": "slider", "min": 0, "max": 40, "step": 1 },
-      "default": 12,
+      "default": 20,
       "apply": { "knob": "pins.gap" }
     }
   ]

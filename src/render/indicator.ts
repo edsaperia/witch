@@ -230,7 +230,7 @@ export const FLASK = [
 ];
 
 /** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
-const PIN_GAP = 12, PIN_BOB = 3;
+const PIN_GAP = 20, PIN_BOB = 3;
 /** Angle `a` turned toward `b` by share `k`, the short way round. */
 const turnToward = (a: number, b: number, k: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
 
