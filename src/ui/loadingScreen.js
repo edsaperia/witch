@@ -14,8 +14,9 @@ import treeStrokes from "./loadingTree.json";
 const rand = seed => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 /** How the stars light: the edge first by EDGE (0 plain random), RATE stars a second at most (a jump in the load fills over a
- *  moment), each flashing for FLASH s; the supernova to white over NOVA s, the white clearing over CLEAR s. */
-const EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, CLEAR = 1.2, STAR = [255, 214, 140], GHOST = 0.34;
+ *  moment), each flashing for FLASH s, the unlit ones at GHOST (0: an empty sky, Ed's call, the seal showing only as it lights); the supernova to white over NOVA s, the white clearing over CLEAR s. The tuning's loading block sets them (startLoadingScreen's knobs). */
+let EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, CLEAR = 1.2, GHOST = 0;
+const STAR = [255, 214, 140];
 
 /** The seal's stars, in seal units (its middle at 0, 0): the tree's strokes resampled every SP, each a little off its line, then the
  *  two words, then their order. */
@@ -149,7 +150,9 @@ function remnantPicture() {
 }
 
 /** Start the loading screen over the page; `font` the CSS font family for the words (loaded by the caller). */
-export function startLoadingScreen(font) {
+/** `knobs` the tuning's loading block (edge, rate, flash, ghost, nova, clear), any left out as built. */
+export function startLoadingScreen(font, knobs = {}) {
+  ({ edge: EDGE = EDGE, rate: RATE = RATE, flash: FLASH = FLASH, ghost: GHOST = GHOST, nova: NOVA = NOVA, clear: CLEAR = CLEAR } = knobs);
   const root = document.createElement("div");
   root.id = "loading-screen";
   root.style.cssText = "position:fixed;inset:0;z-index:1000;background:#05060e;pointer-events:none";
@@ -231,7 +234,7 @@ export function startLoadingScreen(font) {
     for (const s of stars) {
       const q = project(s.x, s.y, 0); if (!q) continue;
       const [X, Y] = q;
-      if (s.at >= n) { add(X, Y, 150, 160, 210, GHOST); continue; }
+      if (s.at >= n) { if (GHOST > 0) add(X, Y, 150, 160, 210, GHOST); continue; }
       const fresh = Math.max(0, 1 - (t - (litAt[s.at] ?? -99)) / FLASH), f = Math.max(fresh, flare), tw = 0.85 + 0.15 * Math.sin(t * 2.3 + s.x * 40);
       add(X, Y, 255, 248, 226, Math.min(1, tw + flare + f * 0.5));
       cross(X, Y, STAR[0], STAR[1], STAR[2], (0.45 + 0.55 * f) * 0.55, 1);

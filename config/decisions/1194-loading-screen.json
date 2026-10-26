@@ -1,0 +1,114 @@
+{
+  "pr": 1194,
+  "group": "Loading screen",
+  "decisions": [
+    {
+      "id": "loadingEdge",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Edge first",
+      "note": "How strongly the stars light from the edge in (loading.edge; 1 as built, 0 plain random). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 3,
+        "step": 0.1
+      },
+      "default": 1,
+      "persist": true,
+      "apply": {
+        "knob": "loading.edge"
+      }
+    },
+    {
+      "id": "loadingRate",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Stars a second",
+      "note": "At most this many stars light a second, so a jump in the load fills over a moment (loading.rate; 90 as built). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 10,
+        "max": 300,
+        "step": 10
+      },
+      "default": 90,
+      "persist": true,
+      "apply": {
+        "knob": "loading.rate"
+      }
+    },
+    {
+      "id": "loadingFlash",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Flash",
+      "note": "How long each star flashes as it lights, seconds (loading.flash; 0.6 as built). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.6,
+      "persist": true,
+      "apply": {
+        "knob": "loading.flash"
+      }
+    },
+    {
+      "id": "loadingGhost",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Unlit stars",
+      "note": "How bright the stars not yet lit show (loading.ghost; 0 as built: an empty sky, Ed's call, 2026-10-26). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.02
+      },
+      "default": 0,
+      "persist": true,
+      "apply": {
+        "knob": "loading.ghost"
+      }
+    },
+    {
+      "id": "loadingNova",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Supernova",
+      "note": "The heart's star going supernova to white, seconds (loading.nova; 2.6 as built). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0.5,
+        "max": 6,
+        "step": 0.1
+      },
+      "default": 2.6,
+      "persist": true,
+      "apply": {
+        "knob": "loading.nova"
+      }
+    },
+    {
+      "id": "loadingClear",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "White clearing",
+      "note": "The white clearing into the bedroom, seconds (loading.clear; 1.2 as built). Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 0.2,
+        "max": 4,
+        "step": 0.1
+      },
+      "default": 1.2,
+      "persist": true,
+      "apply": {
+        "knob": "loading.clear"
+      }
+    }
+  ]
+}

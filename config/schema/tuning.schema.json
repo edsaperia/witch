@@ -8172,6 +8172,44 @@
       ],
       "additionalProperties": false
     },
+    "loading": {
+      "type": "object",
+      "properties": {
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rate": {
+          "type": "number",
+          "minimum": 0
+        },
+        "flash": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ghost": {
+          "type": "number",
+          "minimum": 0
+        },
+        "nova": {
+          "type": "number",
+          "minimum": 0
+        },
+        "clear": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "edge",
+        "rate",
+        "flash",
+        "ghost",
+        "nova",
+        "clear"
+      ],
+      "additionalProperties": false
+    },
     "opening": {
       "type": "object",
       "properties": {
@@ -9054,6 +9092,38 @@
       ],
       "additionalProperties": false
     },
+    "occlusion": {
+      "type": "object",
+      "properties": {
+        "on": {
+          "type": "boolean"
+        },
+        "fadeOpacity": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "minHeight": {
+          "type": "number",
+          "minimum": 0
+        },
+        "silhouette": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "on",
+        "fadeOpacity",
+        "edge",
+        "minHeight",
+        "silhouette"
+      ],
+      "additionalProperties": false
+    },
     "reveal": {
       "type": "object",
       "properties": {
@@ -9081,7 +9151,8 @@
             }
           },
           "required": [
-            "on"
+            "on",
+            "pad"
           ],
           "additionalProperties": false
         },
@@ -9117,7 +9188,12 @@
           },
           "required": [
             "on",
-            "radius"
+            "radius",
+            "ring",
+            "width",
+            "height",
+            "keep",
+            "bounded"
           ],
           "additionalProperties": false
         },
@@ -9131,10 +9207,6 @@
               "type": "number",
               "minimum": 0
             },
-            "ring": {
-              "type": "number",
-              "minimum": 0
-            },
             "width": {
               "type": "number",
               "minimum": 0
@@ -9146,14 +9218,14 @@
             "keep": {
               "type": "number",
               "minimum": 0
-            },
-            "bounded": {
-              "type": "boolean"
             }
           },
           "required": [
             "on",
-            "radius"
+            "radius",
+            "width",
+            "height",
+            "keep"
           ],
           "additionalProperties": false
         },
@@ -9167,10 +9239,6 @@
               "type": "number",
               "minimum": 0
             },
-            "ring": {
-              "type": "number",
-              "minimum": 0
-            },
             "width": {
               "type": "number",
               "minimum": 0
@@ -9182,14 +9250,14 @@
             "keep": {
               "type": "number",
               "minimum": 0
-            },
-            "bounded": {
-              "type": "boolean"
             }
           },
           "required": [
             "on",
-            "radius"
+            "radius",
+            "width",
+            "height",
+            "keep"
           ],
           "additionalProperties": false
         }
@@ -9202,38 +9270,6 @@
         "runestone",
         "find",
         "flask"
-      ],
-      "additionalProperties": false
-    },
-    "occlusion": {
-      "type": "object",
-      "properties": {
-        "on": {
-          "type": "boolean"
-        },
-        "fadeOpacity": {
-          "type": "number",
-          "minimum": 0
-        },
-        "edge": {
-          "type": "number",
-          "minimum": 0
-        },
-        "minHeight": {
-          "type": "number",
-          "minimum": 0
-        },
-        "silhouette": {
-          "type": "number",
-          "minimum": 0
-        }
-      },
-      "required": [
-        "on",
-        "fadeOpacity",
-        "edge",
-        "minHeight",
-        "silhouette"
       ],
       "additionalProperties": false
     },
@@ -11795,6 +11831,7 @@
     "dancefloor",
     "partyOver",
     "sail",
+    "loading",
     "opening",
     "arrive",
     "camera",
@@ -11805,6 +11842,7 @@
     "sigilProjection",
     "suspects",
     "occlusion",
+    "reveal",
     "canopyShadow",
     "rig",
     "pathFade",
