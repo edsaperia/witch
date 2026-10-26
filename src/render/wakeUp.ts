@@ -1,13 +1,11 @@
 // The wake-up on the page (the new opening, rules/wakeUp.ts; Ed, 2026-10-20, previews/ed/opening-mock/ beats 3a–5a): the bedroom
-// dark while she's in bed, lit as she gets up; a card at the foot of the screen saying what each beat takes (her phone's alarm and
-// E to snooze it, the snoozes counted and the next ring, WASD to get up), and her phone ringing (platform/audio/chimes.ts alarm).
+// dark while she's in bed, lit as she gets up; a card at the foot of the screen while she dreams and stretches (in bed with her
+// alarm ringing, its keys stand beside the bed instead: render/houseRooms.ts), and her phone ringing (platform/audio/chimes.ts alarm).
 // Her own poses in bed are render/view/witch.ts's. Once she's up, no card (Ed, 2026-10-26, of the line sending her to her decks and
 // to last night's clothes: "Please remove this tip").
 import type { Game } from "../rules/game";
 import type { WakeState } from "../rules/wakeUp";
 
-const KEY = "display:inline-block;min-width:1.4em;padding:0 5px;margin:0 2px;border:1px solid rgba(255,214,140,.7);border-radius:4px;background:rgba(255,214,140,.14);font-weight:700;text-align:center";
-const k = (s: string) => `<span style="${KEY}">${s}</span>`;
 
 export class WakeCard {
   private veil: HTMLDivElement;
@@ -43,16 +41,17 @@ export class WakeCard {
     this.veil.style.display = "block";
     this.veil.style.opacity = this.dark.toFixed(3);
     if (w.beat === "alarm") ring();
-    const html = w.open ? "" : this.text(w, ht, g.tuning.opening?.wake?.snooze ?? 5);
+    const html = w.open ? "" : this.text(w);
     if (html !== this.html) { this.html = html; this.card.innerHTML = html; }
     this.card.style.display = html ? "block" : "none";
   }
 
-  private text(w: WakeState, ht: number, snooze: number): string {
+  private text(w: WakeState): string {
     switch (w.beat) {
       case "dream": return "💤 … zzz …"; // (still asleep, dreaming: render/dream.ts; the alarm when it ends)
-      case "alarm": return w.short ? `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>any key: up` : `📱 ♪ ♫ ♪ your phone's alarm ♪ ♫ ♪<br>${k("E")} snooze · ${k("W")}${k("A")}${k("S")}${k("D")} get up`;
-      case "snooze": return `💤 five more minutes…${w.snoozes > 1 ? ` (snoozed ×${w.snoozes})` : ""} · rings again in ${Math.max(1, Math.ceil(snooze - (ht - w.at)))} s<br>${k("W")}${k("A")}${k("S")}${k("D")} get up`;
+      // (in bed with her alarm ringing, or snoozed: no card; its keys stand beside the bed, render/houseRooms.ts. Ed, 2026-10-26:
+      // "This should just be WASD in keycaps to the left of the bed and 'E snooooze' to the right")
+      case "alarm": case "snooze": return "";
       case "stretch": return "*yaaawn* … *stretch*";
       case "up": return ""; // (up is open: no card)
     }
