@@ -791,8 +791,10 @@ const PIECES = {
     m.box([0, desk + .075, kz + .04], [kw - .03, .012, .08], M.BELLY, { group: 81, paint: p => (Math.abs(((p[0] / .045) % 1 + 1) % 1 - .5) > .42 ? M.SHADES : undefined) });
     for (let k = 0; k < Math.floor(kw * 2 / .045); k++) if ([1, 2, 4, 5, 6].includes(k % 7)) m.box([-kw + .03 + k * .045, desk + .09, kz + .015], [.012, .008, .045], M.SHADES, { group: 82 });
     for (let k = 0; k < 9; k++) bulb(m, [-kw + .08 + k * (kw * 2 - .16) / 8, desk + .085, kz - .09], .008, LEDS[k % LEDS.length], 83, null);
-    light(m, [0, desk + .9, back + .4], FAIRY, 16, .25);
-    light(m, [-W * .3, desk + .5, back + .4], GREEN, 10, .2);
+    // (the wall lit by its own LEDs, so its silver reads in the Studio's dark: Ed's photo's glow)
+    light(m, [0, desk + .9, back + .45], FAIRY, 22, .45);
+    light(m, [-W * .3, desk + .6, back + .4], GREEN, 14, .35);
+    light(m, [W * .3, desk + 1.1, back + .4], SCREEN, 14, .35);
   },
 
   // The microphone, spotlit: a chrome stand on a round base, a big vintage capsule mic, its cable coiling away; a spot lamp hanging over
