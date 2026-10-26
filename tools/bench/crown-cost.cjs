@@ -7,7 +7,7 @@
 // software renderer, shares, not milliseconds).
 //   npm run build && node tools/bench/crown-cost.cjs [out.json]   (DIST=, SEED=123, SCENES=a|b|c, FRAMES=60, SIZE=1280x720)
 const http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const root = path.resolve(process.env.DIST || path.join(__dirname, "../../dist"));

@@ -9,7 +9,7 @@
 //   npm run build && node tools/view/sail-timing.cjs [out] [dist]
 // ISLAND (fox), THEN (islands to sail on to after it, on the same page: a warm sail, "fox,owl"), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1), AFTER (ms after landing whose frames are counted as `settle`: the island's art coming in, 15000).
 const http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);

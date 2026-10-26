@@ -4,7 +4,7 @@
 // the timings side by side. Writes <after>/diff-<scene>.png for any shot that differs (the
 // differing pixels in red over the shot, dimmed). Exits 1 on any mismatch the PR hasn't declared (tools/bench/expect.cjs:
 // --expect tools/bench/expect/<branch>.json, what it means to change and why; the Bench workflow passes the PR's own). Refuses
-// (exit 2) two runs whose comparability keys differ in more than the build (tools/lib/comparable.cjs): --testing <fields> to say
+// (exit 2) two runs whose comparability keys differ in more than the build (tools/bench/comparable.cjs): --testing <fields> to say
 // what else is being tested, --override to compare them anyway.
 //   node tools/bench/compare.cjs <before out> <after out> [--expect <file>] [--testing build,...] [--override]
 const fs = require("fs");
@@ -13,7 +13,7 @@ let playwright;
 try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 
 const { readExpect, judge } = require("./expect.cjs");
-const { checkComparable, compareFlags } = require("../lib/comparable.cjs");
+const { checkComparable, compareFlags } = require("./comparable.cjs");
 const args = process.argv.slice(2), ei = args.indexOf("--expect"), expectFile = ei >= 0 ? args.splice(ei, 2)[1] : null;
 const flags = compareFlags(args); // (--testing <fields>, build by default; --override: compare runs whose keys differ anyway)
 const [A, B] = args.map(p => path.resolve(p));
@@ -25,7 +25,7 @@ const lines = [], bad = [], miss = (key, text) => bad.push({ key, text });
 const row = (...cells) => lines.push(`| ${cells.join(" | ")} |`);
 
 async function main() {
-  // Like with like first (tools/lib/comparable.cjs): each part's comparability keys may differ only in what's being tested.
+  // Like with like first (tools/bench/comparable.cjs): each part's comparability keys may differ only in what's being tested.
   for (const [f, what] of [["rules.json", "the rules runs"], ["frames.json", "the frames runs"]]) {
     const a = read(A, f), b = read(B, f);
     if (!a || !b) continue;

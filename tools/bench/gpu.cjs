@@ -8,7 +8,7 @@
 // triangles. The knobs are the tuning's, set live (the view reads them each frame), so the game's build is what's measured.
 //   node tools/bench/gpu.cjs [out dir]   DIST=dist QUERY=island=fox SEED=569166 X=2204 Z=2253 ZOOM=3 WAVES=9 SIZE=2000x1326 FRAMES=90 WARM=10 ONLY=base,cast
 const http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);

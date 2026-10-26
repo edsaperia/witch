@@ -10,7 +10,7 @@
 // Run `npm run build` first. Playwright comes from the machine's global install.
 //   node tools/bench/hitch.cjs [out dir] (default bench-out/)   SEED=871136 WAVE=28 FRAMES=600 HITCH=3 FLOOR=33 FINISH=0 HUNT=1
 const http = require("http");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 const fs = require("fs");
 const path = require("path");

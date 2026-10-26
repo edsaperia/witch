@@ -1,4 +1,4 @@
-// Compare like with like (tools/lib/comparable.cjs; Ed, 2026-10-26): two runs' comparability keys may differ only in what's
+// Compare like with like (tools/bench/comparable.cjs; Ed, 2026-10-26): two runs' comparability keys may differ only in what's
 // tested, a playtest log's medians go by scene, and the playtest compare refuses this morning's pair.
 import { describe, expect, it } from "vitest";
 import fs from "node:fs";

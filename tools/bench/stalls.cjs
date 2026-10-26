@@ -20,7 +20,7 @@
 // 5 s: what's live, under the garbage) reported first to last.
 //   node tools/bench/stalls.cjs [out dir]   DIST=dist-prof SEED=2267 X=2673 Z=2484 ZOOM=3 SECONDS=60 SIZE=640x360 WARM=8 RUN_MS=50 NODRAW=1 HEAP=0 HEAP_EVERY=4096
 const http = require("http");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 const fs = require("fs");
 const path = require("path");

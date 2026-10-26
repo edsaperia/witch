@@ -15,7 +15,7 @@
 //   PROFILE=1: the CPU profiler over the timed frames; <out>/late-profile.json gives the page's own JS by self time, the
 //   functions and the files (three.js's walk, sort and uniform set-up, the view's own parts), GL calls apart.
 const http = require("http");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 const fs = require("fs");
 const path = require("path");

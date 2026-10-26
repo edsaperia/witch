@@ -9,7 +9,7 @@ import os from "node:os";
 const here = path.dirname(fileURLToPath(import.meta.url)), [name, ...rest] = process.argv.slice(2);
 const bundle = path.join(os.tmpdir(), `witch-${name}-${process.pid}.mjs`);
 await build({ entryPoints: [path.join(here, `${name}.ts`)], bundle: true, platform: "node", format: "esm", outfile: bundle, logLevel: "warning", sourcemap: "inline" });
-// (the result's comparability key first, on stderr so its JSON on stdout stays whole: tools/lib/comparable.cjs)
-const { nodeKey } = createRequire(import.meta.url)("../lib/comparable.cjs");
+// (the result's comparability key first, on stderr so its JSON on stdout stays whole: tools/bench/comparable.cjs)
+const { nodeKey } = createRequire(import.meta.url)("./comparable.cjs");
 console.error(`comparability key: ${JSON.stringify(nodeKey({ spot: `${name} ${rest.join(" ")}`.trim() }))}`);
 execFileSync(process.execPath, ["--expose-gc", "--enable-source-maps", bundle, ...rest], { stdio: "inherit" });

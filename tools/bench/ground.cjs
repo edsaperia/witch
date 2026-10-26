@@ -8,7 +8,7 @@
 //   npm run build && node tools/bench/ground.cjs [out dir]   DIST=dist SEED=569166 SPOTS=decks,ground:60,-170,treetop:60,-170,coast:90
 //   SIZE=1280x720 FRAMES=24 ONLY=base,lights QUERY=island=fox GROUND_ONLY=1 (the ground alone in the measured frames)
 const http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("./comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
 const env = (k, d) => (process.env[k] === undefined ? d : process.env[k]);

@@ -10,7 +10,7 @@
 //   node tools/view/build-budget.cjs [dist] [query] [throttle]   (THROTTLE=, LIMIT=, FIRST=, SWAP=, PREP=1, OUT=<json>)
 // The default query is Ed's case: world 1268398697, home, seed 821186, straight to the decks.
 const http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [dir = "dist", query = "world=1268398697&island=home&seed=821186&creator=0", thr = process.env.THROTTLE ?? "1"] = process.argv.slice(2);
 const LIMIT = Number(process.env.LIMIT ?? 100) * Number(thr), FIRST = Number(process.env.FIRST ?? 1000) * Number(thr), root = path.resolve(dir);

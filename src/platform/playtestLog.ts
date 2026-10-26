@@ -43,7 +43,7 @@ export interface PlaytestSample {
   /** The repro link at this sample (app/repro.ts): the world as it was and her place, for a builder to open. */
   link?: string;
   /** Her mode as a scene (ground, treetops, house, zoo: app/compareKey.ts sceneMode), so the log's medians go by scene
-   *  (tools/lib/comparable.cjs segments: island, wave and mode). */
+   *  (tools/bench/comparable.cjs segments: island, wave and mode). */
   scene?: string;
   audio?: { state: string; volume: number; distort: number; distance: number; mends: number; /** The safety valve's step (platform/audio/shed.ts: 0 all the sound, up to 3). */ shed?: number; /** The music's continuity so far (musicEngine.stats; Ed, round 16: "Music is still starting and stopping"): seconds left unscheduled, re-anchorings, sixteenths held for a stall, and how far ahead it schedules now. */ gap?: number; resyncs?: number; late?: number; ahead?: number; /** The audio clock against the page's (outputMeter.ts ClockWatch; Ed, 2026-10-07: "the music is still cutting out"): one-second windows slow and fast, the drift (ms, negative: audio behind) by the context's clock and by what the device played, under-runs the browser counted, and the verdict in words. */ clock?: { slow: number; fast: number; drift: number; played: number | null; underruns: number | null; underrunMs: number | null; verdict: string } };
 }

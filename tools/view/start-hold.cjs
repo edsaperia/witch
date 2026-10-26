@@ -6,7 +6,7 @@
 //   PROF=1: a CPU profile of any start whose first frame passes 5 s)
 // A frame here (the cloud's software renderer) is 2.3 to 3 s on its own; a held start's first one was 8 to 9.3 s.
 const { chromium } = require("playwright"), http = require("http"), fs = require("fs"), path = require("path");
-const { pageKey } = require("../lib/comparable.cjs"); // (the result's comparability key: tools/lib/comparable.cjs)
+const { pageKey } = require("../bench/comparable.cjs"); // (the result's comparability key: tools/bench/comparable.cjs)
 let KEY = null;
 const [dist = path.join(__dirname, "../../dist"), runs = "8", out] = process.argv.slice(2);
 const types = { ".js": "text/javascript", ".html": "text/html", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".ogg": "audio/ogg", ".woff2": "font/woff2" };

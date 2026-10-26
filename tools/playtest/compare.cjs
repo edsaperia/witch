@@ -2,13 +2,13 @@
 // "v4821 slower than v4522" set a wave-0 run on one island against waves 0 to 4 after a sail on another). Each run's
 // comparability key (app/compareKey.ts) must differ from the other's in nothing but what's being tested (the build by default),
 // or it's refused with the fields that differ (exit 2; --testing <fields> to say what's being tested, --override to compare
-// anyway). Each run's samples are split by scene (island, wave, mode: tools/lib/comparable.cjs segments), and only a scene both
+// anyway). Each run's samples are split by scene (island, wave, mode: tools/bench/comparable.cjs segments), and only a scene both
 // runs have is set side by side: the frames' medians by scene, never the session's.
 //   node tools/playtest/compare.cjs <log a> [<log b>] [--a <run>] [--b <run>] [--testing build,...] [--override]
 // A log holds the last few runs; --a and --b pick one by index (0 the oldest, -1 the newest: the default). With one log, its
 // run's segments alone.
 const fs = require("fs");
-const { checkComparable, compareFlags, segments, byScene } = require("../lib/comparable.cjs");
+const { checkComparable, compareFlags, segments, byScene } = require("../bench/comparable.cjs");
 
 const args = process.argv.slice(2), flags = compareFlags(args);
 const pick = name => { const i = args.indexOf(name); return i >= 0 ? Number(args.splice(i, 2)[1]) : -1; };
