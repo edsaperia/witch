@@ -9,3 +9,4 @@ Ed's playtest, 2026-10-26: menus open on E near an object, which lights up with 
 - `6-telescope-lit.png`: the telescope, "Telescope · E look".
 - `7-map-table-lit.png`, `8-map-table-E.png`: the map table, "Map table · E the sea chart", then the chart rising after E.
 - `9-shoe-rack-pad.png`: on a pad, the shoe rack with "□". Only the nearest object lights; the wardrobe behind her doesn't.
+- `10-clothes-pile.png`, `11-decks.png`: from the opening's shots (`tools/opening/shots.cjs`, 1280×720). Last night's clothes, "· E put them on", lit. Her decks before the party, "Decks · E start the party".
