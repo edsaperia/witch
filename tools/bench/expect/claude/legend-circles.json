@@ -1,0 +1,5 @@
+{
+  "reason": "each legend's circle is sized to fit its sleeping legend (Ed, 2026-10-26: \"Legend circles need to be larger. Often legends don't fit in them\"; rules/legendFit.ts from config/legend-footprints.json), so the bigger legends' circles are larger and placed elsewhere in their areas: the clearings, where each legend lies, the trees and finds cut back round them and the creatures and witches that meet them all move",
+  "frames": { "*": "a larger circle moves its legend and clears more of the forest round it, wherever a legend's area is in view" },
+  "rules": { "*": "the legends lie elsewhere and their circles cover more ground, so what meets them, and everything after, differs" }
+}

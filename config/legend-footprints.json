@@ -1,0 +1,261 @@
+{
+ "_": "Each species' legend as drawn, in metres: asleep (its nap, both breaths) and awake (standing, both frames, facing us and away), each [width, height]. Written by node tools/legends/footprint.mjs from the art in the game's style (config/style.json at the tuning's pixelSize); rules/legendFit.ts sizes each legend's circle from it. Run it again after a change to a creature's art (--check says whether it's stale).",
+ "species": {
+  "arcticfox": {
+   "asleep": [22.9, 11.5],
+   "awake": [28, 17.6]
+  },
+  "armadillo": {
+   "asleep": [13.4, 13.2],
+   "awake": [14.3, 17.8]
+  },
+  "badger": {
+   "asleep": [14.4, 8.7],
+   "awake": [14.8, 11.4]
+  },
+  "bat": {
+   "asleep": [7.2, 8.1],
+   "awake": [13.8, 17.1]
+  },
+  "bear": {
+   "asleep": [34.5, 23.6],
+   "awake": [37.4, 28.4]
+  },
+  "beaver": {
+   "asleep": [17.9, 11.9],
+   "awake": [27.1, 15.4]
+  },
+  "beetle": {
+   "asleep": [17.8, 14.8],
+   "awake": [21, 23]
+  },
+  "boar": {
+   "asleep": [37.2, 31.7],
+   "awake": [40, 36.8]
+  },
+  "cat": {
+   "asleep": [18.4, 12.8],
+   "awake": [23.3, 21.8]
+  },
+  "cheetah": {
+   "asleep": [38.4, 31.2],
+   "awake": [64.9, 47.8]
+  },
+  "crab": {
+   "asleep": [12.8, 10.4],
+   "awake": [25.8, 12.3]
+  },
+  "crocodile": {
+   "asleep": [41.3, 13.8],
+   "awake": [41.3, 17]
+  },
+  "dormouse": {
+   "asleep": [7.6, 8.5],
+   "awake": [12.6, 11.5]
+  },
+  "dragonfly": {
+   "asleep": [16.4, 6.6],
+   "awake": [19.9, 18.4]
+  },
+  "elephant": {
+   "asleep": [83, 38.5],
+   "awake": [94.7, 50.7]
+  },
+  "elk": {
+   "asleep": [46.4, 36.4],
+   "awake": [53.2, 57.8]
+  },
+  "featheredserpent": {
+   "asleep": [24.3, 14.8],
+   "awake": [29.8, 21.1]
+  },
+  "fennec": {
+   "asleep": [17.2, 11.9],
+   "awake": [21, 14.8]
+  },
+  "flyingsquirrel": {
+   "asleep": [12.9, 8.8],
+   "awake": [17.7, 12.5]
+  },
+  "fox": {
+   "asleep": [23.7, 14.5],
+   "awake": [39.8, 34.6]
+  },
+  "frosttroll": {
+   "asleep": [16.4, 20.9],
+   "awake": [21.2, 26.9]
+  },
+  "frostwyrm": {
+   "asleep": [61.1, 38.1],
+   "awake": [77.5, 41]
+  },
+  "griffin": {
+   "asleep": [54, 67.3],
+   "awake": [66.3, 76.3]
+  },
+  "hare": {
+   "asleep": [17.9, 30.5],
+   "awake": [24, 37]
+  },
+  "hedgehog": {
+   "asleep": [23.5, 20],
+   "awake": [24.9, 21.8]
+  },
+  "heron": {
+   "asleep": [18.2, 12],
+   "awake": [20, 31.9]
+  },
+  "hydra": {
+   "asleep": [15.8, 13.8],
+   "awake": [16.8, 11.9]
+  },
+  "ibex": {
+   "asleep": [23.2, 26.9],
+   "awake": [26, 33]
+  },
+  "jaguar": {
+   "asleep": [41.3, 20.6],
+   "awake": [50.2, 25.1]
+  },
+  "komodo": {
+   "asleep": [27.7, 14.3],
+   "awake": [40.8, 15.3]
+  },
+  "lion": {
+   "asleep": [47.3, 30.8],
+   "awake": [54.2, 38.7]
+  },
+  "lynx": {
+   "asleep": [19.9, 30.9],
+   "awake": [27.5, 37]
+  },
+  "marten": {
+   "asleep": [17.3, 10.7],
+   "awake": [32.2, 16.2]
+  },
+  "meerkat": {
+   "asleep": [16.6, 14],
+   "awake": [24.9, 21.3]
+  },
+  "mole": {
+   "asleep": [15.5, 13.2],
+   "awake": [19.4, 14.7]
+  },
+  "moth": {
+   "asleep": [6.8, 4],
+   "awake": [12.9, 12.6]
+  },
+  "newt": {
+   "asleep": [18.1, 10.9],
+   "awake": [18.8, 16.9]
+  },
+  "otter": {
+   "asleep": [18.2, 9.8],
+   "awake": [21.3, 11.9]
+  },
+  "owl": {
+   "asleep": [12.7, 20],
+   "awake": [27, 32.1]
+  },
+  "penguin": {
+   "asleep": [7.5, 11.3],
+   "awake": [10.7, 13.4]
+  },
+  "polarbear": {
+   "asleep": [36.8, 20.9],
+   "awake": [37.5, 31.6]
+  },
+  "raccoon": {
+   "asleep": [15.4, 11.6],
+   "awake": [24.4, 17.3]
+  },
+  "ram": {
+   "asleep": [23.9, 20.1],
+   "awake": [26.6, 29.3]
+  },
+  "rattlesnake": {
+   "asleep": [7.8, 7.5],
+   "awake": [12.1, 11.9]
+  },
+  "raven": {
+   "asleep": [20.5, 13.4],
+   "awake": [22.6, 17.8]
+  },
+  "redpanda": {
+   "asleep": [21.7, 15.1],
+   "awake": [29.9, 18.3]
+  },
+  "rhino": {
+   "asleep": [33.5, 17.6],
+   "awake": [35.7, 29.6]
+  },
+  "roe": {
+   "asleep": [26.7, 28.4],
+   "awake": [29.9, 43.6]
+  },
+  "salamander": {
+   "asleep": [15.4, 10.5],
+   "awake": [16.6, 12.5]
+  },
+  "scorpion": {
+   "asleep": [10.1, 9.9],
+   "awake": [11.3, 11.4]
+  },
+  "snail": {
+   "asleep": [10.5, 12.2],
+   "awake": [12.4, 10.9]
+  },
+  "snake": {
+   "asleep": [14.3, 10.1],
+   "awake": [39.6, 13.7]
+  },
+  "snowleopard": {
+   "asleep": [22.7, 15],
+   "awake": [29.1, 24.6]
+  },
+  "sphinx": {
+   "asleep": [44.2, 53],
+   "awake": [59.3, 63.9]
+  },
+  "spider": {
+   "asleep": [13.6, 19.1],
+   "awake": [21.7, 25]
+  },
+  "squirrel": {
+   "asleep": [12.7, 11.4],
+   "awake": [17.4, 25.8]
+  },
+  "stag": {
+   "asleep": [35.8, 31.6],
+   "awake": [40.5, 48.8]
+  },
+  "stegosaurus": {
+   "asleep": [61.6, 32.8],
+   "awake": [68.9, 44.1]
+  },
+  "stoat": {
+   "asleep": [15, 10.5],
+   "awake": [23, 14.7]
+  },
+  "tiger": {
+   "asleep": [47.3, 22.6],
+   "awake": [54.5, 32.9]
+  },
+  "toad": {
+   "asleep": [14.8, 10.1],
+   "awake": [15.8, 14.8]
+  },
+  "unicorn": {
+   "asleep": [43.4, 20.1],
+   "awake": [48.7, 39.8]
+  },
+  "wolf": {
+   "asleep": [33.9, 21.8],
+   "awake": [48.1, 33.7]
+  },
+  "woodlouse": {
+   "asleep": [10.2, 6.9],
+   "awake": [16.2, 12.5]
+  }
+ }
+}
