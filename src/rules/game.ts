@@ -41,6 +41,7 @@ import { coarseTurn, fullRadius, inFull, newLodCounts, type LodCounts } from "./
 import { dropHat, newHat, type HatState } from "./hat";
 import { questsFromPlaced, stepSigilButton } from "./sigilButton";
 import { keepInBedroom, stepWake, WAKE_DEFAULT, type WakeState } from "./wakeUp";
+import { wearPiece } from "./clothesPile";
 import { hatLetters, hatsDown, onHatPicked, onHatPut, stepHatSpells } from "./hatSpells";
 import { loadOf, type LeashLoad, groundedBy } from "./leashWeight";
 import { pinWitch, type Pinned } from "./partyLegend";
@@ -555,7 +556,7 @@ function fixedStep(g: Game, controls: Controls): void {
     if (M.decoy > 0) dropCache(W.invites, was.x, was.z, ht, t, M);
   }
   W.body = applyDash(W.dash, stepWitch(was, c, hdt, boost === 1 ? tw : { ...tw, groundSpeed: tw.groundSpeed * boost, treetopSpeed: tw.treetopSpeed * boost }, g.map.bounds, loadOf(W.leash.stack, g.creatures, was, t, pullOf(W.spells)), deckOf(g.map, t))); // (her sigils' pull: rules/leashWeight.ts; the treehouse deck: rules/treehouse.ts)
-  if (g.wake) keepInBedroom(g); // (the bedroom's door shut till she's dressed: rules/wakeUp.ts)
+  if (g.wake) keepInBedroom(g); // (the bedroom's door shut till she's up: rules/wakeUp.ts)
   if (W.knock) W.body = stepWitchKnock(W.knock, W.body, hdt, t, g.map.bounds, (x, z) => blinkClear(g, x, z));
   if (was.mode !== "ground" && W.body.mode === "ground") { W.landedAt = ht; if (shared) coolSpend(W.cool, tw.riseCooldown ?? 0, room); } // (landed: the rise cooldown starts; shared, the landing's share of the one cooldown)
   if (shared && was.mode === "ground" && !was.seated && W.body.mode === "rising") coolSpend(W.cool, tw.cooldown?.rise ?? 0, room); // (taken off: its share; not her first step off the decks)
@@ -616,7 +617,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (firing || W.leash.events.some(e => e.at === ht && (e.kind === "placed" || e.kind === "picked" || e.kind === "hatPut" || e.kind === "hatPicked" || e.kind === "relicPicked" || e.kind === "flaskDrunk" || e.kind === "relicPlaced" || e.kind === "relicDropped"))) revealed(W.spells, ht, t);
   for (const e of W.leash.events.slice()) if (e.at === ht && e.id === W.id) {
     if (e.kind === "hatPut" && W.hat.down) onHatPut(g, W, W.hat.down.x, W.hat.down.z, ht, t);
-    else if (e.kind === "hatPicked") onHatPicked(g, W, e.x, e.z, ht, t);
+    else if (e.kind === "hatPicked") { onHatPicked(g, W, e.x, e.z, ht, t); if (g.wake && W === g.witches[0]) wearPiece(g.wake, "hat"); } // (a hat on her head: out of last night's pile, so she's drawn in it; rules/clothesPile.ts)
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
