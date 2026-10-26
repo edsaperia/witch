@@ -102,6 +102,28 @@ describe("guidance pins", () => {
     expect(guideShows(g, 0, G!)).toBe(true);
   });
 
+  it("after a won night, once its finale's over: the map table for an island found tonight not yet seen on the chart, then the bed; shown from anywhere, leading her home (Ed, 2026-10-26)", () => {
+    const g = up(true), W = g.witches[0];
+    g.party.spellAt = 1;
+    const win = (found: string[], card: boolean) => { g.win = { phase: "won", card, found, lost: [] } as unknown as Game["win"]; };
+    win(["lion"], false);
+    expect(of(g)).toBeNull(); // (the finale still on: nothing yet)
+    win(["lion"], true);
+    const s: GuideSave = { unseen: [{ kind: "hat", id: "h", at: "hats" }], chartSeen: ["tiger"] };
+    expect(of(g, s)).toEqual({ kind: "chart", target: { object: "mapTable" } }); // (over anything new in the house)
+    s.chartSeen = ["tiger", "lion"];
+    expect(of(g, s)).toEqual({ kind: "bed", target: { object: "bed" } });
+    win([], true);
+    expect(of(g)).toEqual({ kind: "bed", target: { object: "bed" } }); // (no island found tonight: to bed)
+    // (out in the world, off the treehouse: still shown, pointing her home)
+    W.body = { ...W.body, perch: null as never };
+    win(["lion"], true);
+    expect(guideShows(g, 0, of(g)!)).toBe(true);
+    // (a new night: none of it)
+    g.win = null;
+    expect(of(g)).toBeNull();
+  });
+
   it("shows only in the treehouse, and hides at its target", () => {
     const g = up();
     const G = of(g)!;
