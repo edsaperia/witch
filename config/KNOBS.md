@@ -497,7 +497,7 @@ Tree density is a field, not two states (Ed, 2026-10-03): each area's own densit
 | `bushClump` | number | 0 to … |
 | `treeHeight` | number | 0 to … |
 
-### `treeCap`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+### `treeCap`
 
 The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).
 
@@ -505,6 +505,14 @@ The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight
 |---|---|---|
 | `treeCap.from` | number | 0 to … |
 | `treeCap.keep` | number | 0 to … |
+
+### `pins`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+
+The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top (Ed, 2026-10-26: "pins should be a bit higher").
+
+| knob | type | range |
+|---|---|---|
+| `pins.gap` | number | 0 to … |
 | `crownWidth` | number | 0 to … |
 | `treeSpacingX` | number | 0 to … |
 | `treeSpacingZ` | number | 0 to … |
