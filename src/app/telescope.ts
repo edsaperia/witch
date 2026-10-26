@@ -86,7 +86,8 @@ export class TelescopeView {
   /** A frame (real seconds), with her controls as read (WASD and the left stick in moveX/moveZ: the arrows are the telescope's):
    *  the aiming keys look round (the arrows, the right stick, the d-pad: main.ts gives it the d-pad), and the mouse as it moves;
    *  the wheel, Z and X and the shoulder buttons zoom; WASD and the left stick look round too (she stands still at it: Ed, 2026-10-26,
-   *  "walking away shouldn't work - then we can use the movement keys as buttons"); E (the pad's □) or Esc leaves it. */
+   *  "walking away shouldn't work - then we can use the movement keys as buttons"); E (the pad's □) leaves it (Esc pauses over it:
+   *  platform/freeze.ts takes it first). */
   step(c: { moveX: number; moveZ: number; zoom?: number; sigil?: boolean }, dt: number, T: TelescopeTuning): void {
     if (!this.aim) return;
     if (c.sigil) { this.close(); return; }
@@ -112,7 +113,7 @@ export class TelescopeView {
     if (T.vignette !== this.vignette) { this.vignette = T.vignette; this.el.style.background = vignetteCss(T.vignette); } // (live: the pause page's slider)
     const up = Math.round(this.aim.elevation);
     this.drawStrip(this.aim.heading);
-    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   E □ Esc ⏏`;
+    this.readout.textContent = `${up >= 0 ? "up" : "down"} ${Math.abs(up)}°  ·  ×${telescopeMagnification(T, this.aim.zoom).toFixed(1)}\nthe mouse, ◀ ▶ ▲ ▼ or the right stick look round   wheel / Z X zoom   E □ ⏏`;
   }
 
   /** The compass strip (Ed, 2026-10-23: "Telescope view has a compass at the top"): STRIP.span degrees across, ticks every 15°, the

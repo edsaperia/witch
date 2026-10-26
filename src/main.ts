@@ -357,7 +357,6 @@ creator.onLoadout = l => { const { game } = N(); changeLoadout(game.witches[0], 
 // still to find as silhouettes; each change goes on her a beat later and she turns to show it; choosing, the camera eases in on her
 // (camera.station), and out as she moves.
 const stations = new StationPanel(style, bootTuning.pixelSize);
-stations.onClose = () => stations.close(); // (Esc at it)
 /** Something of the house's open at the end of the last frame (a station, the chart, the telescope, an instrument): a use press now
  *  closes it, nothing else (the frame below). */
 let openPrev = false;
@@ -430,7 +429,7 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
 // playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
 // the night running on at the house's tenth while she stands still, WASD and the left stick looking round too (Ed, 2026-10-26:
-// "walking away shouldn't work"); E (the pad's □) or Esc leaves, and E there looks again. Its picture is drawn at telescope.resolution, on an integrated GPU
+// "walking away shouldn't work"); E (the pad's □) leaves, and E there looks again; Esc pauses over it. Its picture is drawn at telescope.resolution, on an integrated GPU
 // (Ed's Intel UHD) telescope.lowGpuResolution (?telescopeRes= sets it: 0.25 to 3, 1 the game's pixels, 2 twice as fine).
 // The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
@@ -1004,14 +1003,14 @@ function frame(now: number): void {
   }
   // The station she's at (lit, E over it: render/houseRooms.ts); E there slides its panel in (Ed's playtest, 2026-10-26: "Menus should
   // open when she presses E near an interactive object ... instead of them opening automatically just through proximity"); walking
-  // off it, out (not over her room open full screen, the chart, or a bot's game). E again, the pad's □ or Esc slides it out (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
+  // off it, out (not over her room open full screen, the chart, or a bot's game). E again or the pad's □ slides it out (Esc pauses over it, platform/freeze.ts) (Ed: "I think E should also close, and we can have spacebar to select"; the frame's start), she standing still at it; Space chooses in it (ui/stationPanel.ts).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
   if (stations.station && station?.id !== stations.station) stations.close(); // (she's somehow off it: a knockout, a new night; E closes it above)
   if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
-  // The telescope: E at it looks (useHouse); E, □ or Esc shuts it (its own step); and should she somehow be off it, it shuts.
+  // The telescope: E at it looks (useHouse); E or □ shuts it (its own step; Esc pauses over it); and should she somehow be off it, it shuts.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
   if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
   input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)

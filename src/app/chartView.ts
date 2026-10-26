@@ -74,7 +74,7 @@ export interface ChartViewOptions {
   /** Sail mode at a table (Ed, 2026-10-23: the Atrium's map table, its chart sliding up by nearness, ui/chartOverlay.ts): the
    *  movement keys choose too (she stands still at it: Ed, 2026-10-26, "walking away shouldn't work - then we can use the movement
    *  keys as buttons in the menus"), as the aiming keys (the arrows, WASD, the d-pad, either stick, the mouse); Space or Enter (the
-   *  pad's cross) held sails; the use button (E, the pad's square) or Esc (the pad's circle) puts it away (`onLeave`), as E brought
+   *  pad's cross) held sails; the use button (E, the pad's square) or the pad's circle puts it away (`onLeave`; Esc pauses over it, platform/freeze.ts taking it first), as E brought
    *  it up (Ed, 2026-10-26: "E should also close, and we can have spacebar to select"). No
    *  title, Sail home or zoom buttons (the wheel and the shoulders zoom); the testing toggle in the top right; the island she's on
    *  says so, with no button (going to bed starts the next night there). */
@@ -178,7 +178,7 @@ export function mountChart(host: HTMLElement, opts: ChartViewOptions): ChartView
   ($("home") as HTMLElement).hidden = !sailing || !!table; $("sail-any").hidden = !sailing; $("close").hidden = !opts.onClose || !!table;
   if (table) { root.classList.add("table"); $("top").hidden = true; $("world").hidden = true; $("zoom-in").hidden = true; $("zoom-out").hidden = true; $("corner").append($("sail-any")); }
   $("hint").textContent = table
-    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, Space or Enter (✕ on a pad) on an island to sail · E (□) or Esc to put it down · sigils: islands you can sail to · gold rings: won"
+    ? "point, or the arrows / d-pad / right stick, to choose · hold the mouse, Space or Enter (✕ on a pad) on an island to sail · E (□) to put it down · sigils: islands you can sail to · gold rings: won"
     : sailing
     ? "Tap an island to look at it, again to sail · arrows / stick to choose, Enter / A to sail · sigils: islands you can sail to · gold rings: won"
     : "Tap an island to look at it · arrows / stick to choose · sigils: islands you can sail to · gold rings: won";
