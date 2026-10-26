@@ -88,6 +88,15 @@ export class OcclusionProbes {
   private veilRt = new THREE.WebGLRenderTarget(VEIL_PROBES, 1, { depthBuffer: false, stencilBuffer: false, generateMipmaps: false });
   private veilBuf = new Uint8Array(VEIL_PROBES * 4);
   private veilBusy = false;
+  /** How the veil's texels come back (?veilread=: Ed's machine, 2026-10-26, "jerky" on foot at waves 1 on, every long frame holding
+   *  a 70 to 150 ms timer in three's readRenderTargetPixelsAsync, which polls the GPU's fence with a flush every 4 ms and then copies
+   *  the pixels out): "fence" (as given) our own, one read buffer kept, its fence looked at once a frame in `update` (no flush, no
+   *  timer) and its pixels copied only once the GPU has signalled it; "three" as before, to compare; "off" no veil (smoke hides
+   *  nothing). */
+  veilRead: "fence" | "three" | "off" = "fence";
+  private veilPbo: WebGLBuffer | null = null;
+  private veilFence: WebGLSync | null = null;
+  private veilKeys: string[] = [];
   private veilScene = new THREE.Scene();
   private veilCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   private veilMat: THREE.ShaderMaterial | null = null;
@@ -143,15 +152,32 @@ export class OcclusionProbes {
       if (p.used < this.frame - 1) p.mesh.visible = false; // (not asked about last frame: not drawn)
       if (this.frame - p.used > FORGET * 60 && !p.pending.length) { this.byKey.delete(p.key); p.key = ""; }
     }
+    // the veil read last frame, once the GPU has signalled it's there (looked at, never waited on)
+    if (this.veilFence && gl.getSyncParameter(this.veilFence, gl.SYNC_STATUS) === gl.SIGNALED) {
+      gl.deleteSync(this.veilFence); this.veilFence = null;
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.veilPbo);
+      gl.getBufferSubData(gl.PIXEL_PACK_BUFFER, 0, this.veilBuf);
+      gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+      this.heardVeil(this.veilKeys);
+    }
+  }
+
+  /** The veil's texels come back: each probe still asking about the same thing eased toward its own. */
+  private heardVeil(keys: string[]): void {
+    this.veilBusy = false;
+    keys.forEach((k, i) => { const p = this.pool[i]; if (k && p.key === k) p.veil += (this.veilBuf[i * 4] / 255 - p.veil) * 0.4; }); // (a readback a frame or two: eased over a few)
   }
 
   /** Once a frame, after the scene is drawn: the smoke's veil over every probe in use (one draw, a texel each), read back when the
    *  last one's in (never waiting on it), eased in as the queries' answers are. */
   veil(): void {
     const S = this.smoke;
-    if (!this.gl || !this.on || !S || !S.mesh.visible || this.veilBusy) return;
+    if (!this.gl || !this.on || this.veilRead === "off" || !S || !S.mesh.visible || this.veilBusy) return;
     const fires = S.drawnFires();
     if (!fires.n) return;
+    let asked = false;
+    for (let i = 0; i < VEIL_PROBES && !asked; i++) { const p = this.pool[i]; asked = !!p?.key && p.used === this.frame; }
+    if (!asked) return; // (no probe in use: nothing for it to veil)
     if (!this.veilMat) {
       const U = S.uniforms;
       this.veilMat = new THREE.ShaderMaterial({ vertexShader: VEIL_VERT, fragmentShader: VEIL_FRAG, depthTest: false, depthWrite: false,
@@ -166,16 +192,25 @@ export class OcclusionProbes {
     for (let i = 0; i < n; i++) { const o = i * fires.stride; F[i].set(fires.a[o], fires.a[o + 1], fires.a[o + 2], fires.a[o + 3]); }
     u.uFireCount.value = n;
     (u.uViewProj.value as THREE.Matrix4).multiplyMatrices(this.camera.projectionMatrix, this.camera.matrixWorldInverse);
-    const r = this.renderer, prev = r.getRenderTarget();
+    const r = this.renderer, prev = r.getRenderTarget(), gl = this.gl;
     r.setRenderTarget(this.veilRt);
     r.render(this.veilScene, this.veilCam);
-    r.setRenderTarget(prev);
     this.veilBusy = true;
     const keys = this.pool.slice(0, VEIL_PROBES).map(p => p.key);
-    r.readRenderTargetPixelsAsync(this.veilRt, 0, 0, VEIL_PROBES, 1, this.veilBuf).then(() => {
-      this.veilBusy = false;
-      keys.forEach((k, i) => { const p = this.pool[i]; if (k && p.key === k) p.veil += (this.veilBuf[i * 4] / 255 - p.veil) * 0.4; }); // (a readback a frame or two: eased over a few)
-    }, () => { this.veilBusy = false; });
+    if (this.veilRead === "three") {
+      r.setRenderTarget(prev);
+      r.readRenderTargetPixelsAsync(this.veilRt, 0, 0, VEIL_PROBES, 1, this.veilBuf).then(() => this.heardVeil(keys), () => { this.veilBusy = false; });
+      return;
+    }
+    // (into a read buffer of its own while its target is still bound, and a fence after it: `update` takes the pixels once it's passed)
+    if (!this.veilPbo) { this.veilPbo = gl.createBuffer(); gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.veilPbo); gl.bufferData(gl.PIXEL_PACK_BUFFER, this.veilBuf.byteLength, gl.STREAM_READ); }
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, this.veilPbo);
+    gl.readPixels(0, 0, VEIL_PROBES, 1, gl.RGBA, gl.UNSIGNED_BYTE, 0);
+    gl.bindBuffer(gl.PIXEL_PACK_BUFFER, null);
+    r.setRenderTarget(prev);
+    this.veilFence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    this.veilKeys = keys;
+    if (!this.veilFence) this.veilBusy = false;
   }
 
   private make(): Probe {

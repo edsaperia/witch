@@ -811,6 +811,7 @@ export class View {
     yield "occlusion";
     this.occlusion = new OcclusionProbes(this.scene, this.renderer, this.camera, this.smoke);
     this.occlusion.on = typeof location === "undefined" || new URLSearchParams(location.search).get("occlusion") !== "off";
+    { const r = typeof location === "undefined" ? null : new URLSearchParams(location.search).get("veilread"); if (r === "three" || r === "off") this.occlusion.veilRead = r; } // (?veilread=three|off: render/occlusion.ts)
     this.inviteView.probes = this.occlusion;
     this.inviteView.onVanished = (x, z) => this.edgeSparkle(x, z);
     yield "stateMarks";
@@ -1666,8 +1667,9 @@ export class View {
     if (this.post.behind > 0) this.castMap.render(this.renderer, this.scene, this.game.witch.x, this.game.witch.z, this.castOn);
     this.occluders();
     this.post.render(this.scene, this.camera);
-    this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
     this.time("draw");
+    this.occlusion.veil(); // (the smoke over the 💌s, once the frame's smoke is drawn)
+    this.time("veil");
     this.drawEst += (Math.min(8, this.ms.draw) - this.drawEst) * 0.1; // (eased; a stalled frame counts for at most 8 ms)
     // Anything set but not drawn (three.js capping a batch's instances) is a bug: count and log it.
     DROPPED = this.propBatch.dropped + this.soundBatch.dropped + (this.speakerBatch?.dropped ?? 0);
