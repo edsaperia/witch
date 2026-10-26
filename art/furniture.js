@@ -424,10 +424,10 @@ const PIECES = {
       const a = hash2(i, 7, 1) * Math.PI * 2, r = .55 + hash2(i, 7, 2) * .45, x = Math.cos(a) * (W / 2 + .1) * r * 1.15, z = Math.sin(a) * (D / 2 + .1) * r * 1.3;
       env([x, .03 + (i % 3) * .004, z], (hash2(i, 7, 3) - .5) * 2.4, 40 + (i % 6) * 2, -.3); // (fallen face up, near enough the camera's way, a little tipped up on each other)
     }
-    // a quill in its ink and a candle among the piles
+    // a quill in its ink among the piles
     can(m, W * .15, -D * .3, sit, sit + .07, .045, M.SHADES, { group: 70 });
     m.flat([W * .15 + .05, sit + .2, -D * .3], [.3, 1, 0], Z, .04, .14, (s, t) => (Math.abs(s) < (1 - t * t) * .9 ? M.BELLY : undefined), { group: 71, bend: .3 });
-    candle(m, [-W * .15, sit, -D * .3], 72, .15);
+    // (no candle: its light washed the letters out at the house's camera)
   },
 
   // The pegboard (Hotel's Workshop, Ed's OK, 2026-10-23): the 3 × 3 biome board her broom's parts hang on, laid out as the islands'
@@ -509,11 +509,11 @@ const PIECES = {
     // state the brooms left ("3", "2", "1", "0"); the first on the lathe, the others leaning on the table's ends
     const left = Number(state ?? 3), broom = (a, b, g) => { // a plain broom, its handle from a to its bristles' end b
       const t = [a[0] + (b[0] - a[0]) * .72, a[1] + (b[1] - a[1]) * .72, a[2] + (b[2] - a[2]) * .72];
-      m.seg(a, t, .035, .038, M.BARKD, { group: g }); // (a dark handle, to read against the lit tabletop)
-      m.seg(t, [t[0] + (b[0] - a[0]) * .03, t[1] + (b[1] - a[1]) * .03, t[2] + (b[2] - a[2]) * .03], .045, .045, M.FRAME, { group: g + 1 });
-      m.seg(t, b, .07, .15, M.STRAW, { group: g + 2, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 7) > .8 ? M.BROOM : undefined) });
+      m.seg(a, t, .06, .065, M.BARKD, { group: g }); // (a dark handle, thick enough to read at the house's camera, against the lit tabletop)
+      m.seg(t, [t[0] + (b[0] - a[0]) * .03, t[1] + (b[1] - a[1]) * .03, t[2] + (b[2] - a[2]) * .03], .08, .08, M.FRAME, { group: g + 1 });
+      m.seg(t, b, .09, .17, M.STRAW, { group: g + 2, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 7) > .8 ? M.BROOM : undefined) });
     };
-    if (left >= 1) broom([lx - len * .55, sit + .3, .02], [lx + len * .6, sit + .28, .02], 50);
+    if (left >= 1) broom([lx - len * .55, sit + .42, .12], [lx + len * .6, sit + .36, .12], 50); // (up on its centres, clear of the rails)
     if (left >= 2) broom([-W / 2 - .02, top + .55, D / 2 - .1], [-W / 2 - .28, .02, D / 2 + .25], 54);
     if (left >= 3) broom([W / 2 + .02, top + .55, D / 2 - .1], [W / 2 + .3, .02, D / 2 + .2], 58);
   },
@@ -837,7 +837,8 @@ const ROOM_COLOURS = {
 /** A piece's own colours over its room's (the biome board's frames). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
-const PIECE_COLOURS = { invitations: { [M.BELLY]: [232, 228, 220], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+// (the letters' paper off-white and a little dim: flat to the light, a paler one blooms into a glare, as a rug does: render/houseDecor.ts RUG_DIM)
+const PIECE_COLOURS = { invitations: { [M.BELLY]: [188, 180, 166], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
 export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
