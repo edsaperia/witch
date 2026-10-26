@@ -1,12 +1,42 @@
 # Loading screen mock (Ed, 2026-10-26)
 
-The starscape; the Ent's sigil (the World Tree) as a constellation in the middle; COVEN in star-letters round its top, RUSH round
-its bottom. No bar: every star (165: 101 the sigil's, 64 the letters') is the progress. They light in a random order weighted toward
-the seal's edge (knob `edgeFirst`, here 1.0; 0 is plain random), and the star nearest the middle is always last, lit as the game
-is truly ready. The faint dotted lines (as the telescope's constellations) show only between two lit stars. Unlit stars are a
-faint ghost (knob `ghost`, 0.34), so the seal's shape is hinted from the start.
+`loading-desktop.mp4` and `loading-phone.mp4` show it moving, a 20 s loop: the stars light, then the hand-over.
 
-- `desktop-*.png` 1440×900, `phone-*.png` 390×844 at 3×: 0, 25, 50, 75 and 100%.
-- `*-handover-35/70/100.png`: the seal flaring as it completes, faded to dark, then the asleep card ("💤 … zzz …").
-- `mock.html`: the live mock. With no query it loops; `?p=0..1`, `?edge=`, `?ghost=`, `?hand=0..1`, `?extra=0` (no extra stars along the letters' long strokes).
-- `cloud-load-timeline.json`: a cold first load in the cloud (seed 123): every timing mark, the art's done and pending, the long tasks.
+**The seal.** The Ent's sigil (the World Tree) is drawn in stars, "Coven" over it and "Rush" under it, in Great Vibes (a brush
+script; OFL licence).
+- There are 593 stars, every one part of the progress.
+- They light in a random order weighted toward the edge, and the star nearest the middle is always last, as the game is truly ready.
+- Each new star flashes, then settles. There are no connecting lines (`?lines=1` brings them back).
+
+**Laid back like the sea chart.** The tree lies tipped away from the camera, while the words stand upright on its rim.
+- The camera is far off, so the view is nearly isometric and "Coven" and "Rush" come out the same size.
+- It sways slowly and comes a little closer as the seal completes.
+
+**The galaxy.** Under the seal, in its plane, lies an irregular star-forming cloud after Ed's NGC 346 reference, kept dim:
+- blue-violet gas with a dark dust lane through it;
+- clumps of young blue-white stars, and an old orange cluster off to the right;
+- around it, a dense sky of warm orange and blue-white stars, the brightest with four-point spikes, and a Milky Way band.
+
+**Files:**
+- `desktop-*.png` (1440×900) and `phone-*.png` (390×844 at 3×): the load at 0, 25, 50, 75 and 100%.
+- `*-handover-35/70/100.png`: the hand-over. The seal flares, fades to dark, then the asleep card ("💤 … zzz …") comes up.
+- `mock.html`: the live page; open it from this folder, next to `greatvibes.woff2`.
+
+The mock's settings, all in its query string:
+
+| Setting | What it does |
+|---|---|
+| `?p=0..1` | the load's progress |
+| `?t=` | a moment of the camera's sway |
+| `?hand=0..1` | how far through the hand-over |
+| `?edge=` | how strongly the edge lights first |
+| `?ghost=` | how bright an unlit star is |
+| `?sp=` | the tree's stars apart |
+| `?spacing=`, `?wordh=` | the words' stars apart, and their size |
+| `?galaxy=` | the galaxy's brightness |
+| `?tilt=` | how far the tree lies back |
+| `?far=` | the camera's distance |
+| `?orbit=`, `?dolly=` | the camera's sway, and how much nearer it comes |
+| `?lines=1` | bring back the connecting lines |
+
+`cloud-load-timeline.json`: a cold first load in the cloud, its timing marks, for the progress plan.
