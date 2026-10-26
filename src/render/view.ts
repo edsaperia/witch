@@ -26,6 +26,7 @@ const HIZ_NEAR = 120;
 import { carvingMask, warmCarvings } from "./legendCarving";
 import { sigilColour } from "../../art/generator.js";
 import type { Game } from "../rules/game";
+import { stepTiltShare, tiltShareShown } from "./overlayTilt";
 import { blinkCharges, poseOf, witchTuning } from "../rules/game";
 import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
@@ -336,6 +337,9 @@ const islandTypes = (map: ForestMap): Set<number> => { const s = new Set<number>
  *  from the sea (where the island first comes into view). */
 const TRACK_REACH = 140, TRACK_AHEAD = 320;
 
+/** Seconds the tilt-shift takes to ease out as she comes onto the house, and back in as she leaves (View.houseTilt). */
+const HOUSE_TILT_EASE = 0.6;
+
 export class View {
   readonly renderer: THREE.WebGLRenderer;
   scene = new THREE.Scene();
@@ -366,6 +370,18 @@ export class View {
    *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
    *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
    *  speed in the house's slowed time, and the same on any machine). */
+  /** No tilt-shift in the treehouse (Ed, 2026-10-26: "No tilt shift while you're in the treehouse"): on the house (its rooms,
+   *  branches and Terrace, the stations' close-ups; her perch) the blur eases out over HOUSE_TILT_EASE seconds of her clock, and back
+   *  in as she leaves; through the telescope it stays as it was (its own view of the island). Once a frame (render/view/witch.ts), its
+   *  share for the post pass (Post.tilt) and the overlays (render/overlayTilt.ts). */
+  tiltK = 1;
+  private tiltAt = NaN;
+  houseTilt(g: Game): number {
+    const want = g.witch.perch && !this.telescope ? 0 : 1, dt = Number.isFinite(this.tiltAt) ? Math.max(0, Math.min(0.1, g.herTime - this.tiltAt)) : 1e9;
+    this.tiltAt = g.herTime;
+    this.tiltK = stepTiltShare(this.tiltK, want, dt, HOUSE_TILT_EASE);
+    return tiltShareShown(this.tiltK);
+  }
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
@@ -1541,6 +1557,7 @@ export class View {
     if (!draw) return;
     this.renderer.info.reset();
     this.post.lift = this.game.witch.lift;
+    this.post.tilt = tiltShareShown(this.tiltK); // (as houseTilt gives the overlays)
     if (t.bare) this.hideForBare();
     this.behindHouse(this.game);
     // (the cast-shadow map is the forest's: none while only the house is drawn)

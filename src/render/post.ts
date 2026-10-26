@@ -175,6 +175,8 @@ export class Post {
 
   /** How far the witch is risen (0 ground, 1 treetops): the tilt-shift blends from the ground's to the treetops'. */
   lift = 0;
+  /** How much of the tilt-shift's blur is on (0 none, 1 all): none in the treehouse (render/view.ts houseTilt). */
+  tilt = 1;
   /** Her light's pool on screen (0 to 1, y up): its centre and half-widths, spared from the grade (z 0: none). */
   get pool(): THREE.Vector4 { return this.mats.composite.uniforms.uPool.value; }
   /** The knockout's iris (render/koIris.ts): centre x, y (0-1 on screen), radius (a share of its height), dark outside; and the record's turn, how far it shows, the smear, its label's radius. */
@@ -298,7 +300,7 @@ export class Post {
       this.pass("blur", this.fx, u => { u.uSrc.value = this.fxB.texture; u.uStep.value.set(0, 0.6 / lh); });
       yield;
     }
-    const tilt = t.tiltShift.on && t.tiltShift.strength > 0;
+    const tilt = t.tiltShift.on && t.tiltShift.strength > 0 && this.tilt > 0;
     this.pass("composite", tilt ? this.a : out, u => {
       u.uScene.value = this.scene.texture; u.uBloom.value = this.bright.texture; u.uLow.value.copy(this.low); u.uBloomStrength.value = bloomOn ? t.bloom.strength : 0;
       u.uBlack.value = t.tone.black; u.uGamma.value = t.tone.gamma;
@@ -311,7 +313,7 @@ export class Post {
     const w = this.a.width, h = this.a.height;
     const common = (u: Record<string, THREE.IUniform>) => {
       const T = t.tiltShift, k = Math.max(0, Math.min(1, this.lift)), k2 = k * k * (3 - 2 * k);
-      u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = T.strength + (T.treetop.strength - T.strength) * k2; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
+      u.uDepth.value = this.scene.depthTexture; u.uTexel.value.set(1 / w, 1 / h); u.uStrength.value = (T.strength + (T.treetop.strength - T.strength) * k2) * this.tilt; u.uBand.value = T.band + (T.treetop.band - T.band) * k2; u.uCentre.value = 1 - T.centre;
       u.uSkyBlur.value = T.skyBlur ?? 1;
     };
     this.pass("tilt", this.b, u => { common(u); u.uSrc.value = this.a.texture; u.uDir.value.set(1, 0); });
