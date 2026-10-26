@@ -1,7 +1,7 @@
 // The ley line through the first wave and the wave's pulse (render/leylines.ts; Ed, 2026-10-06).
 import { describe, expect, it } from "vitest";
 import type { PartyState } from "../rules/party";
-import { leyReveal, shaderPulse } from "./leylines";
+import { leyDrawnTo, leyReveal, shaderPulse } from "./leylines";
 import { newGame } from "../rules/game";
 import { TUNING } from "../rules/tuning";
 import { castPartySpell } from "../rules/party";
@@ -160,5 +160,18 @@ describe("the first line branching off the boot ring (Ed, v2001 and 2026-10-07)"
       // (and the boot path's own measure of it is where the pulse passes it)
       expect(P.stoneAt[i]).toBeGreaterThan(P.ringFrom);
     }
+  });
+});
+
+describe("the ley line before the party (Ed, 2026-10-26: \"Before the party, the ley line is not visible\")", () => {
+  it("isn't drawn at all till the spell's cast, not even the Route-seer hat's whole route; then as before", () => {
+    const before = { ...party(), spellAt: null } as PartyState;
+    for (const t of [0, 5, 30, 600]) {
+      expect(leyDrawnTo(before, map, t, 3, null, false)).toBe(0);
+      expect(leyDrawnTo(before, map, t, 3, null, true)).toBe(0);
+    }
+    const on = party();
+    expect(leyDrawnTo(on, map, first, 3, null, true)).toBeNull(); // (the hat's whole route, once the party's on)
+    expect(leyDrawnTo(on, map, first, 3, null, false)).toBe(leyReveal(on, map, first, 3, null));
   });
 });

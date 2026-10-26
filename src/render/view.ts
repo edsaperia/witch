@@ -93,7 +93,7 @@ import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
 import { packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
-import { leyReveal, shaderPulse, type LeyLines } from "./leylines";
+import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
 import { bootLineAt, bootPath, bootPulseAt } from "../rules/bootRing";
 import { Glades } from "./glades";
@@ -124,6 +124,7 @@ import { drawWitch, houseShiftOf } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
+import { relicsOut } from "../rules/partyOver";
 
 /** Her shadow, lying on the rolling ground corner by corner. */
 const SHADOW_VERT = `varying vec2 vUv;
@@ -1394,7 +1395,7 @@ export class View {
       // (leyReveal, by the boot pulse's own progress), then on along the route.
       this.ley.near(w.x, w.z);
       // (the Route-seer hat worn, rules/hatSpells.ts: the whole route, however far the reveal has grown)
-      this.ley.grow(routeSeen(g) ? null : leyReveal(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch()));
+      this.ley.grow(leyDrawnTo(g.party, g.map, time, t.leyLines.reveal ?? 3, this.ley.branch(), routeSeen(g))); // (none before the party, the hat's too)
       { // The boot's ring (rules/bootRing.ts): the line round the home ring at reveal x the pulse, the pulse turning the stones; faint after.
         // (Its sparkler runs the whole lap, past the last stone to where it came on to the ring, at the pulse's speed, the boot
         // ending as it gets there, and hands over to the wave's: Ed, 2026-10-07, "The two pulses or tips don't join correctly at
@@ -1476,7 +1477,7 @@ export class View {
     const clear = g.leash.placed.map(p => ({ x: p.x, z: p.z, r: Math.max(t.groundCover.sigilClear, (3 + g.creatures[p.id].level * 0.8) * 0.45) }));
     { const W0 = g.witches[0].hat, H = W0.down; if (H && W0.has) clear.push({ x: H.x + HAT_BESIDE, z: H.z, r: t.groundCover.sigilClear }); for (const q of W0.left) clear.push({ x: q.x + HAT_BESIDE, z: q.z, r: t.groundCover.sigilClear }); } // (her hats where they lie)
     for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (Math.abs(c.x - w.x) < GR && Math.abs(c.z - w.z) < GR && hasRune(c)) clear.push({ x: c.x, z: c.z, r: t.groundCover.sigilClear }); } // (a happy one's rune at its feet)
-    for (const r of g.relics) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
+    for (const r of relicsOut(g)) if ((r.state === "lying" || r.state === "dropped") && Math.abs(r.sx - w.x) < GR && Math.abs(r.sz - w.z) < GR) clear.push({ x: r.sx, z: r.sz, r: Math.max(t.groundCover.sigilClear, 3.4 * 0.45) }); // (and a relic's sigil, south of it)
     { const F = findClear(this); if (F) clear.unshift(F); } // (tonight's find's patch, first: render/view/finds.ts)
     this.time("markers");
     this.grass.update(w.x, w.z, 1 - canopyShown(w), parts, t.suspects.groundCover ? LIGHT_UNIFORMS.uGlowR.value * 1.05 : t.groundCover.radius, clear); // out to the canopy hole's edge

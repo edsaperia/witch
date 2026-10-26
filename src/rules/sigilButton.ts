@@ -7,6 +7,7 @@ import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
+import { relicsOut, worldAsleep } from "./partyOver";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
@@ -83,7 +84,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
   // takes what's in it, hers for the night (on loan till she sleeps: app/loan.ts; the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
-  const trunk = (sigil || place) && onFoot && !g.partyOver ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null;
+  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);
@@ -97,7 +98,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
     // A flask's sigil under her (Ed, 2026-10-18: "All flasks give growth spurt (all creatures following you become adults)"):
     // drunk on the spot, not carried. Every animal following her (on her stack, not parked at a sigil) younger than an adult
     // becomes one at once; with none to grow, nothing happens but the refusal's sound, and the flask stays where it lies.
-    const f = flaskUnder(g.relics, g.witch.x, g.witch.z, t.leash.runeRadius);
+    const f = flaskUnder(relicsOut(g), g.witch.x, g.witch.z, t.leash.runeRadius);
     if (f) {
       sigil = false; place = false;
       const grown = growthSpurt(g.berries, g.creatures, W.leash.stack, g.clock.time);
@@ -120,7 +121,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
  *  be given when the sigil is placed, not when the animal enters the circle"; her animal of its kind walking in does nothing). */
 export function questsFromPlaced(g: Game, ht: number): void {
-  if (g.partyOver) return; // (no quests once the party's over: Ed, 2026-10-18)
+  if (worldAsleep(g)) return; // (no quests once the party's over, Ed 2026-10-18, nor before it: Ed, 2026-10-26)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
   for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === ht) {
     const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);
