@@ -1,0 +1,1 @@
+{ "version": 4842, "items": ["Landing on a new island no longer stutters while its trees arrive: the forest is redrawn a little each frame instead of all at once"] }

@@ -47,8 +47,12 @@ export interface ZooLayout {
 export interface ZooLayoutKnobs {
   /** An island's width (m: about an area). */
   across: number;
-  /** The street between the nearest two islands at least (m). */
+  /** The street between the nearest two islands at least (m), coast to coast. */
   gap: number;
+  /** The street an island's nearest neighbour typically lies across (m, coast to coast; the median): the chart is spread to it. */
+  street?: number;
+  /** Clear of the Ent's plaza by at least (m from home's middle). */
+  plaza?: number;
   /** The streets' margin past the furthest coast to the edge water (m). */
   margin: number;
   /** An area's size (m: the grid's cell). */
@@ -73,29 +77,60 @@ export function insideIsland(I: Pick<ZooIsland, "x" | "z" | "reach" | "most">, x
  *  lakes. `coast`: the islands' coast knobs (the tuning's islands.coast), as the chart draws them. */
 export function zooLayout(world: number, found: ReadonlySet<string> | "all", k: ZooLayoutKnobs, coast?: CoastKnobs, kinds: readonly string[] = KIND_NAMES): ZooLayout {
   const placed = worldOf(world).islands;
-  const mids = kinds.map(kind => placed.get(kind)).filter((p): p is NonNullable<typeof p> => !!p);
-  let near = Infinity;
-  const all = [{ x: 0, y: 0 }, ...mids];
-  for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) near = Math.min(near, Math.hypot(all[i].x - all[j].x, all[i].y - all[j].y));
-  const scale = (k.across + k.gap) / Math.max(1e-6, near);
-  let far = 0;
-  for (const p of mids) far = Math.max(far, Math.hypot(p.x, p.y));
-  const reach = far * scale + k.across / 2, half = reach + k.margin + k.areaSize * 2, A = k.areaSize;
-  const n = Math.ceil((half * 2) / A) + 2, mid = (n * A) / 2, home = { x: mid, z: mid };
-  const homeCell: Cell = [Math.floor(home.x / A), Math.floor(home.z / A)];
-  const taken = new Set([`${homeCell[0]},${homeCell[1]}`]);
-  const islands: ZooIsland[] = [];
+  // Each island's outline, scaled so it's `across` wide whatever its real size (Ed, "about the same size as the ones found on islands")
+  const shapes: { kind: string; p: { x: number; y: number }; reach: Float32Array; most: number }[] = [];
   for (const kind of kinds) {
     const p = placed.get(kind), isle = islandOf(kind, world);
     if (!p || !isle) continue;
     const radii = islandCoast(coastSpec(isle) as IslandSpec, coast).radii, N = radii.length;
-    // (its outline scaled so it's `across` wide, whatever its real size: Ed, "about the same size as the ones found on islands")
     let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
     for (let i = 0; i < N; i++) { const a = -Math.PI + (i / N) * Math.PI * 2, r = radii[i]; x0 = Math.min(x0, Math.cos(a) * r); x1 = Math.max(x1, Math.cos(a) * r); z0 = Math.min(z0, Math.sin(a) * r); z1 = Math.max(z1, Math.sin(a) * r); }
     const s = k.across / Math.max(1e-6, x1 - x0, z1 - z0), reachM = new Float32Array(N);
     let most = 0;
     for (let i = 0; i < N; i++) { reachM[i] = radii[i] * s; most = Math.max(most, reachM[i]); }
-    const x = home.x + p.x * scale, z = home.z + p.y * scale;
+    shapes.push({ kind, p, reach: reachM, most });
+  }
+  // The chart spread so an island's nearest neighbour typically lies a street of `street` metres away (Ed, 2026-10-26: "Zoo areas
+  // are too small and too far apart"; before, the chart's closest two islands set the spread, leaving most streets far wider), then
+  // eased apart wherever two come closer than `gap` coast to coast, or one onto the plaza: the chart's layout kept, its gaps closed.
+  const nn = shapes.map(a => Math.min(...shapes.filter(b => b !== a).map(b => Math.hypot(a.p.x - b.p.x, a.p.y - b.p.y))));
+  const sorted = [...nn].sort((a, b) => a - b), mid = sorted[Math.floor(sorted.length / 2)] ?? 1;
+  const scale = (k.across + (k.street ?? k.gap)) / Math.max(1e-6, mid);
+  const at = shapes.map(sh => ({ x: sh.p.x * scale, z: sh.p.y * scale }));
+  const clear = (k.plaza ?? 0) + k.gap;
+  const ease = () => { // (apart wherever two come closer than gap coast to coast, or one onto the plaza)
+    for (let pass = 0; pass < 80; pass++) {
+      let moved = false;
+      for (let i = 0; i < shapes.length; i++) {
+        const A = at[i];
+        if (k.plaza !== undefined) { const d = Math.hypot(A.x, A.z) || 1e-6, need = clear + reachAt(shapes[i].reach, Math.atan2(-A.z, -A.x)); if (d < need) { A.x *= need / d; A.z *= need / d; moved = true; } }
+        for (let j = i + 1; j < shapes.length; j++) {
+          const B = at[j], dx = B.x - A.x, dz = B.z - A.z, d = Math.hypot(dx, dz) || 1e-6;
+          if (d > shapes[i].most + shapes[j].most + k.gap) continue;
+          const a = Math.atan2(dz, dx), need = reachAt(shapes[i].reach, a) + reachAt(shapes[j].reach, a + Math.PI) + k.gap;
+          if (d >= need) continue;
+          const push = (need - d) / 2 + 0.01, ux = dx / d, uz = dz / d;
+          A.x -= ux * push; A.z -= uz * push; B.x += ux * push; B.z += uz * push; moved = true;
+        }
+      }
+      if (!moved) return;
+    }
+  };
+  // (each island's street to its nearest neighbour, coast to coast; the median)
+  const streets = () => { const g = at.map((A, i) => Math.min(...at.map((B, j) => { if (i === j) return Infinity; const a = Math.atan2(B.z - A.z, B.x - A.x); return Math.hypot(B.x - A.x, B.z - A.z) - reachAt(shapes[i].reach, a) - reachAt(shapes[j].reach, a + Math.PI); }))).sort((a, b) => a - b); return g[Math.floor(g.length / 2)] ?? 0; };
+  ease();
+  // (the chart's sparse stretches leave wide streets still: drawn in toward the plaza a little at a time, eased apart again each
+  // time, till the typical street is `street`)
+  for (let step = 0; step < 120 && streets() > (k.street ?? k.gap); step++) { for (const A of at) { A.x *= 0.99; A.z *= 0.99; } ease(); }
+  let far = 0;
+  shapes.forEach((sh, i) => { far = Math.max(far, Math.hypot(at[i].x, at[i].z) + sh.most); });
+  const reach = far, half = reach + k.margin + k.areaSize * 2, A = k.areaSize;
+  const n = Math.ceil((half * 2) / A) + 2, gridMid = (n * A) / 2, home = { x: gridMid, z: gridMid };
+  const homeCell: Cell = [Math.floor(home.x / A), Math.floor(home.z / A)];
+  const taken = new Set([`${homeCell[0]},${homeCell[1]}`]);
+  const islands: ZooIsland[] = [];
+  shapes.forEach((sh, i) => {
+    const x = home.x + at[i].x, z = home.z + at[i].z;
     // (its cell: the grid's cell at its middle, or the nearest free one round it: a key, never shared)
     let cell: Cell = [Math.floor(x / A), Math.floor(z / A)];
     search: for (let d = 0; d < 6; d++) for (let dy = -d; dy <= d; dy++) for (let dx = -d; dx <= d; dx++) {
@@ -104,8 +139,8 @@ export function zooLayout(world: number, found: ReadonlySet<string> | "all", k: 
       if (!taken.has(`${c[0]},${c[1]}`)) { cell = c; break search; }
     }
     taken.add(`${cell[0]},${cell[1]}`);
-    islands.push({ kind, x, z, reach: reachM, most, found: found === "all" || found.has(kind), cell });
-  }
+    islands.push({ kind: sh.kind, x, z, reach: sh.reach, most: sh.most, found: found === "all" || found.has(sh.kind), cell });
+  });
   return { islands, home, homeCell, reach, scale, n };
 }
 
