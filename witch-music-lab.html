@@ -14928,6 +14928,47 @@ label.check input { accent-color: var(--accent); }
     const d = shape(s, t);
     return d < 0.06 ? M.MAGIC2 : d < 0.14 ? M.MAGIC : null;
   };
+  var pTri = (u, v, ax, ay, bx, by, cx, cy) => {
+    const s = (px, py, qx, qy, rx, ry) => (px - rx) * (qy - ry) - (qx - rx) * (py - ry), d1 = s(u, v, ax, ay, bx, by), d2 = s(u, v, bx, by, cx, cy), d3 = s(u, v, cx, cy, ax, ay);
+    return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0));
+  };
+  var JACK_FACES = {
+    // triangle eyes and nose, a wide grin with two teeth left in
+    grin: (u, v) => {
+      const eye = pTri(Math.abs(u), v, 0.2, 0.08, 0.56, 0.08, 0.38, 0.42), nose = pTri(u, v, -0.1, -0.1, 0.1, -0.1, 0, 0.08), r = Math.hypot(u, v + 0.05), mouth = v < -0.18 && r > 0.42 && r < 0.68 && Math.abs(u) < 0.66 && !(Math.abs(Math.abs(u) - 0.22) < 0.07 && v > -0.62);
+      return eye || nose || mouth ? Math.abs(u) < 0.5 && v > 0.1 && v < 0.3 && eye ? 2 : 1 : 0;
+    },
+    // slanted angry eyes and a jagged mouth
+    grim: (u, v) => {
+      const a = Math.abs(u), eye = pTri(a, v, 0.14, 0.3, 0.6, 0.44, 0.5, 0.12), tooth = Math.abs((u + 1) * 5 % 1 - 0.5) * 0.36, mouth = Math.abs(u) < 0.6 && v < -0.12 + tooth - 0.12 * (1 - u * u) && v > -0.55 + tooth * 0.7;
+      return eye ? a > 0.32 && a < 0.44 && v < 0.32 ? 2 : 1 : mouth ? 1 : 0;
+    },
+    // round eyes and an O of a mouth, surprised
+    oh: (u, v) => {
+      const e = Math.hypot(Math.abs(u) - 0.32, v - 0.22), m = Math.hypot(u / 0.8, v + 0.35);
+      return e < 0.16 || m < 0.2 ? e < 0.07 || m < 0.1 ? 2 : 1 : 0;
+    },
+    // a lopsided wink: one round eye, one slit, a crooked smile
+    wink: (u, v) => {
+      const w = 1 - ((u - 0.08) / 0.55) ** 2, eye = u < 0 ? Math.hypot(u + 0.32, v - 0.2) < 0.15 : Math.abs(v - 0.2 - (u - 0.32) * 0.2) < 0.05 && Math.abs(u - 0.32) < 0.18, mouth = w > 0 && v < -0.2 - 0.12 * w && v > -0.2 - 0.32 * w;
+      return eye || mouth ? 1 : 0;
+    }
+  };
+  function pJack(m, c, r, face, g, { h = 0.82, lean = 0.2 } = {}) {
+    const [x, y, z] = c, cy = y + r * h, F = JACK_FACES[face], sy = Math.sin(YAW.towards), cyw = Math.cos(YAW.towards), sp = Math.sin(PITCH), cp = Math.cos(PITCH);
+    const paint = (p) => {
+      const qx = p[0] - x, qy = p[1] - cy, qz = p[2] - z;
+      if (qx * sy * cp + qy * sp + qz * cyw * cp < r * 0.3) return void 0;
+      const k = F((qx * cyw - qz * sy) / r, (-qx * sy * sp + qy * cp - qz * cyw * sp) / (r * h));
+      return k === 2 ? M.RUNE : k === 1 ? M.GLOW : void 0;
+    };
+    m.ell([x, cy, z], [r * 0.78, r * h, r * 0.78], M.BODY2, { group: g, paint });
+    for (let i = 0; i < 6; i++) {
+      const a = i / 6 * Math.PI * 2 + 0.26;
+      m.ell([x + Math.cos(a) * r * 0.3, cy, z + Math.sin(a) * r * 0.3], [r * 0.62, r * h * 0.96, r * 0.62], M.BODY2, { group: g, paint });
+    }
+    m.seg([x, cy + r * h * 0.88, z], [x + lean * r * 0.3, cy + r * h * 1.28, z - r * 0.05], r * 0.1, r * 0.07, M.MOSS, { group: g + 1 });
+  }
   var PARTY = {
     // ---- litter: small and many ----
     "cup-red": { cls: "litter", desc: "a red party cup on its side", build(m) {
@@ -15042,6 +15083,21 @@ label.check input { accent-color: var(--accent); }
         const u = (t + 1) / 2, half = Math.sin(Math.PI * Math.min(1, u * 1.1)) * (1 - u) * 1.4;
         return Math.abs(s) > half ? null : Math.abs(s) < half * 0.45 && u < 0.6 ? M.RUNE : M.GLOW;
       }, { group: 3, bend: 0.2 });
+    } },
+    "jack-o-lantern": { cls: "small", desc: "a jack-o'-lantern grinning, triangle eyes, its candle glowing through the cuts", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3, height: 0.4 }, build(m) {
+      pJack(m, [0, 0, 0], 0.42, "grin", 1);
+    } },
+    "jack-o-lantern-grim": { cls: "small", desc: "a tall jack-o'-lantern with slanted eyes and a jagged mouth, glowing", glow: true, light: "warm", pointLight: { rgb: [255, 140, 50], radius: 3, height: 0.5 }, build(m) {
+      pJack(m, [0, 0, 0], 0.38, "grim", 1, { h: 1.15, lean: -0.4 });
+    } },
+    "jack-o-lanterns": { cls: "small", desc: "a big jack-o'-lantern and a smaller surprised one beside it, both lit", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3.5, height: 0.4 }, build(m) {
+      pJack(m, [-0.2, 0, 0], 0.42, "grin", 1, { h: 0.78 });
+      pJack(m, [0.5, 0, 0.2], 0.26, "oh", 5, { h: 0.9, lean: 0.5 });
+    } },
+    "jack-o-lantern-stack": { cls: "small", desc: "three jack-o'-lanterns stacked into a wobbly tower, each a different face, glowing", glow: true, light: "warm", pointLight: { rgb: [255, 150, 60], radius: 3.5, height: 1 }, build(m) {
+      pJack(m, [0, 0, 0], 0.42, "grim", 1, { h: 0.72 });
+      pJack(m, [0.03, 0.54, 0], 0.33, "wink", 5, { h: 0.78 });
+      pJack(m, [-0.02, 0.98, 0], 0.25, "oh", 9, { h: 0.86, lean: 0.6 });
     } },
     "fire-pit-lit": { cls: "small", desc: "a little fire pit in a ring of stones, its fire lit", glow: true, light: "warm", build(m) {
       for (let i = 0; i < 8; i++) {
