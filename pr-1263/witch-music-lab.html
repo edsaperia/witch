@@ -7666,6 +7666,7 @@ label.check input { accent-color: var(--accent); }
     "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
     "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
     "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
+    "snowy-taiga": ["turf-hut", "a trapper's log cabin with a turf roof", 1.15],
     "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
     "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
     "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
@@ -12578,8 +12579,8 @@ label.check input { accent-color: var(--accent); }
       big: [tree("hazel", { gnarl: 1, scale: 0.95 }), tree("oak", { minor: true, scale: 0.9 })]
     },
     // (the garden till the roster moved the wolf to the cold, Ed 2026-10-23/25; ring 3, so semi-temperate: a boreal edge with light
-    // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub, the garden's stone
-    // walls left standing as old field walls)
+    // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub; the formal garden's
+    // walls, flower beds and pavilion gone with it, Ed 2026-10-26)
     {
       id: "snowy-taiga",
       name: "Snowy taiga",
@@ -12587,11 +12588,9 @@ label.check input { accent-color: var(--accent); }
       by: "Ed",
       leaf: 0.32,
       floor: ["needles", 0.2, 0.3, 0.45],
-      text: { floor: "pine needles under light snow", wall: "old drystone field walls", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens", set: "a stone pavilion" },
-      wall: [P("wall")],
+      text: { floor: "pine needles under light snow", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens" },
       small: [tree("juniper", { scale: 0.45 })],
-      big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: 0.85 })],
-      set: P("pavilion")
+      big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: 0.85 })]
     },
     {
       id: "twiggy-forest",
@@ -13033,7 +13032,7 @@ label.check input { accent-color: var(--accent); }
       NO_LEAN,
       ["mounds", "hollows"],
       [0.35, [0.3, 0.3, 0.2, 0.1, 0.1]],
-      "Firs and pines in close stands under light snow, larches and rowans and aspens at their edges, old field walls running between; cold, quiet and watched."
+      "Firs and pines in close stands under light snow, larches, rowans and aspens at their edges, juniper scrub between; cold, quiet and watched."
     ),
     "twiggy-forest": LAY(
       "scatter",

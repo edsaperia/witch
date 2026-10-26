@@ -1881,19 +1881,30 @@ function underTrunk(sp, crownY, bot) {
   let kept = 0;
   for (let i = y1 * W; i < H * W; i++) if (bot.m[i]) kept++;
   if (H - crownY >= H * LOW_CROWN && kept >= (H - y1) * 2) return;
-  // (the highest row of it showing, from the carried trunk's top down: the trunk itself, not its foot flaring into roots)
+  // (the highest row of it showing, from the carried trunk's top down: the trunk itself, not its foot flaring into roots; only the run
+  // of wood over its foot, the middle of its lowest wood, not a limb crossing that row off to one side)
+  let foot = -1;
+  for (let y = H - 1; y >= y1 && foot < 0; y--) { let s = 0, k = 0; for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) { s += x; k++; } if (k) foot = s / k; }
   let row = -1, xs = [];
   for (let y = y1; y < H && xs.length < 2; y++) {
-    const here = [];
-    for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) here.push(x);
+    const runs = [];
+    for (let x = 0; x < W; x++) if (WOOD.has(sp.m[y * W + x])) { const last = runs[runs.length - 1]; if (last && last[last.length - 1] === x - 1) last.push(x); else runs.push([x]); }
+    if (!runs.length) continue;
+    const off = run => (run[0] <= foot && run[run.length - 1] >= foot ? 0 : Math.min(Math.abs(run[0] - foot), Math.abs(run[run.length - 1] - foot)));
+    const here = foot < 0 ? runs.flat() : runs.reduce((a, b) => (off(b) < off(a) ? b : a));
     if (here.length > xs.length) { xs = here; row = y; }
   }
   const col = x => row >= 0 ? { m: sp.m[row * W + x], n: [sp.n[(row * W + x) * 3], sp.n[(row * W + x) * 3 + 1], sp.n[(row * W + x) * 3 + 2]] } : null;
   if (!xs.length) { const c = Math.floor(W / 2); xs = [c - 1, c]; } // (none showing at all: a plain trunk up its middle)
+  // Carried up from that row only; below it the wood that shows is the tree's own, bark and all, moved into the bottom half (it was
+  // the top half's, above the crown line). Ed, v4821, the old oaks' "trunks read as flat vertical stripes": that row's colours had been
+  // carried down to the ground too, wherever the bottom half was empty, a flat pillar under every limb crossing that row.
+  const to = row >= 0 ? row : H;
   for (const x of xs) {
     const c = col(x) ?? { m: M.TRUNK, n: x < W / 2 ? [-.6, 0, .8] : [.6, 0, .8] };
-    for (let y = y1; y < H; y++) if (!bot.m[y * W + x]) bot.px(x, y, c.m, c.n[0], c.n[1], c.n[2]);
+    for (let y = y1; y < to; y++) if (!bot.m[y * W + x]) bot.px(x, y, c.m, c.n[0], c.n[1], c.n[2]);
   }
+  for (let y = to; y < H; y++) for (let x = 0; x < W; x++) { const i = y * W + x, m = sp.m[i]; if (WOOD.has(m) && !bot.m[i]) bot.put(x, y, m, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
 }
 
 // ================= undergrowth =================
@@ -13966,6 +13977,7 @@ const NEW_SET_PIECES = {
   "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
   "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
   "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
+  "snowy-taiga": ["turf-hut", "a trapper's log cabin with a turf roof", 1.15],
   "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
   "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
   "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
@@ -15183,10 +15195,10 @@ const AREAS = [
   { id: "hazel-forest", name: "Hazel forest", creature: "hedgehog", by: "Ed", leaf: .26, floor: ["grass", .24, .45, .45], text: { floor: "short grass", small: "brown lumps", big: "crooked trees with many branches" },
     small: [P("mound", { brown: true })], big: [tree("hazel", { gnarl: 1, scale: .95 }), tree("oak", { minor: true, scale: .9 })] },
   // (the garden till the roster moved the wolf to the cold, Ed 2026-10-23/25; ring 3, so semi-temperate: a boreal edge with light
-  // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub, the garden's stone
-  // walls left standing as old field walls)
-  { id: "snowy-taiga", name: "Snowy taiga", creature: "wolf", by: "Ed", leaf: .32, floor: ["needles", .2, .3, .45], text: { floor: "pine needles under light snow", wall: "old drystone field walls", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens", set: "a stone pavilion" },
-    wall: [P("wall")], small: [tree("juniper", { scale: .45 })], big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: .85 })], set: P("pavilion") },
+  // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub; the formal garden's
+  // walls, flower beds and pavilion gone with it, Ed 2026-10-26)
+  { id: "snowy-taiga", name: "Snowy taiga", creature: "wolf", by: "Ed", leaf: .32, floor: ["needles", .2, .3, .45], text: { floor: "pine needles under light snow", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens" },
+    small: [tree("juniper", { scale: .45 })], big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: .85 })] },
   { id: "twiggy-forest", name: "Twiggy forest", creature: "squirrel", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
@@ -15326,7 +15338,7 @@ const AREA_LAYOUTS = {
   "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .625, .06, .015], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
     "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."),
   "snowy-taiga": LAY("stands", .7, .55, [2, [8, 12]], [.15, .65, .175, .025], .4, NO_LEAN, ["mounds", "hollows"], [.35, [.3, .3, .2, .1, .1]],
-    "Firs and pines in close stands under light snow, larches and rowans and aspens at their edges, old field walls running between; cold, quiet and watched."),
+    "Firs and pines in close stands under light snow, larches, rowans and aspens at their edges, juniper scrub between; cold, quiet and watched."),
   "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .625, .1, .025], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
     "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
   "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .65, .2, .1], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
