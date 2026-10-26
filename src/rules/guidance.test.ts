@@ -104,6 +104,9 @@ describe("guidance pins", () => {
   it("after a lost night, the bed, wherever she is, over everything else", () => {
     const g = up();
     g.party.spellAt = 1;
+    g.partyOver = { at: 100, ease: 0 } as Game["partyOver"];
+    // (from the moment it's over, no card since Ed's "Remove the end cards", 2026-10-26: the pin alone leads her home)
+    expect(of(g)).toEqual({ kind: "bed", target: { object: "bed" } });
     g.partyOver = { at: 100, ease: 1 } as Game["partyOver"];
     const G = of(g, { unseen: [{ kind: "hat", id: "h", at: "hats" }], chartSeen: [] }, ["lion"]);
     expect(G).toEqual({ kind: "bed", target: { object: "bed" } });
@@ -114,7 +117,7 @@ describe("guidance pins", () => {
   it("after a won night, once its finale's over: the map table for an island found tonight not yet seen on the chart, then the bed; shown from anywhere, leading her home (Ed, 2026-10-26)", () => {
     const g = up(true), W = g.witches[0];
     g.party.spellAt = 1;
-    const win = (found: string[], card: boolean) => { g.win = { phase: "won", card, found, lost: [] } as unknown as Game["win"]; };
+    const win = (found: string[], settled: boolean) => { g.win = { phase: "won", settled, found, lost: [] } as unknown as Game["win"]; };
     win(["lion"], false);
     expect(of(g)).toBeNull(); // (the finale still on: nothing yet)
     win(["lion"], true);

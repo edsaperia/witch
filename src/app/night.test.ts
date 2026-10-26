@@ -33,20 +33,20 @@ describe("startNight (docs/plans/sail-without-reload.md B)", () => {
     expect(n.game.seed).toBe(4321);
     expect(n.game.tuning).toBe(n.tuning);
     expect(n.tuning.map?.island).toBe("home");
-    expect(n.flags).toEqual({ ready: false, landed: false, inBed: false, wonShown: false, overShown: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
+    expect(n.flags).toEqual({ ready: false, landed: false, inBed: false, overRecorded: false, chartRecorded: false, castWanted: false, artRevealed: false, frame1: false, last: 0, attackTick: -1 });
     expect(n.arrival).toBeNull();
   });
 
   it("a second night gets fresh flags, its own game, tuning and playtest run, the log's hooks and the overlay carried", async () => {
     const page: Page = { night: null, build: "test", look: () => null };
     const a = await startNight(page, spec(11));
-    a.flags.ready = a.flags.chartRecorded = a.flags.overShown = true;
+    a.flags.ready = a.flags.chartRecorded = a.flags.overRecorded = true;
     a.hud.debugOn = true;
     const hook = () => [];
     a.playtest.stalls = hook;
     const b = await startNight(page, { ...spec(22), how: "sail" });
     expect(page.night).toBe(b);
-    expect(b.flags.ready || b.flags.chartRecorded || b.flags.overShown).toBe(false);
+    expect(b.flags.ready || b.flags.chartRecorded || b.flags.overRecorded).toBe(false);
     expect(b.game).not.toBe(a.game);
     expect(b.tuning).not.toBe(a.tuning);
     expect(b.playtest).not.toBe(a.playtest);

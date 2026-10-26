@@ -117,12 +117,6 @@ export function stayLabel(state: NightState): string {
   return state === "over" ? "Back to the afterparty" : "Back to the party";
 }
 
-/** The party's-over card's way on (Ed, 2026-10-21: its Play again and A new forest "replace with the bed"): the treehouse's bed starts
- *  the next night on this island; a bot game's way out is its tag's Esc (ui/botGame.ts), the bot never sleeping. */
-export function overBedLine(bot: boolean): string {
-  return bot ? "Esc goes back to the start." : "Go to bed in the treehouse to start a new night.";
-}
-
 /** Choosing an island on a chart over a night: the island she's on (in the same world) never starts a new night, from any chart: it
  *  closes and she's back where she was ("stay"; only the treehouse's bed starts the same island again). Any other island sails. */
 export function chartChoice(here: { island: string; world: number } | null | undefined, chosen: string, world: number): "stay" | "sail" {
