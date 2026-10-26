@@ -124,6 +124,25 @@ class Part {
   }
 }
 
+/** The house's programs to come held by twins that are never shown, so the view compiles and links them with the rest before play
+ *  (View.compileAll), as the beach's (render/ground.ts): the floors and the furniture take their textured materials only as their
+ *  pictures come back from the art workers, often after the start, and a program's first draw waits for its link there (the
+ *  coordinator, 2026-10-26: 2 to 10 s held at the start in some cold starts). Each the same material as its own, with a texel for a map:
+ *  the floor's, the Terrace's and the furniture's (the Workshop's pictures and last night's clothes share the furniture's). */
+function programTwins(): THREE.Mesh[] {
+  const tex = new THREE.DataTexture(new Uint8Array(4), 1, 1, THREE.RGBAFormat);
+  tex.colorSpace = THREE.NoColorSpace; tex.needsUpdate = true;
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(new Float32Array(12), 3));
+  geo.setAttribute("uv", new THREE.BufferAttribute(new Float32Array([0, 0, 1, 0, 1, 1, 0, 1]), 2));
+  geo.setIndex([0, 1, 2, 0, 2, 3]);
+  return [
+    { map: tex, transparent: true, depthWrite: false, depthTest: false, side: THREE.DoubleSide }, // (the floor's)
+    { map: tex, alphaTest: 0.5, side: THREE.DoubleSide }, // (the Terrace's)
+    { map: tex, transparent: true, alphaTest: 0.5, side: THREE.DoubleSide, depthWrite: false, depthTest: false }, // (a piece of furniture's)
+  ].map(o => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial(o)); m.visible = false; m.frustumCulled = false; return m; });
+}
+
 export class HouseRoomsView {
   /** Its meshes, for the scene: behind the hub, and in front. */
   readonly meshes: THREE.Object3D[];
@@ -187,7 +206,7 @@ export class HouseRoomsView {
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
     this.furniture.add(this.spot.mesh, this.glow.mesh);
-    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group];
+    this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group, ...programTwins()];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";

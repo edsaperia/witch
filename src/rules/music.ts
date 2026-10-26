@@ -84,10 +84,11 @@ export const nearness = (M: Tuning["music"], distance: number) => 1 - Math.min(1
 
 /** The mix muffled in a sleeping legend's clearing (Ed, 2026-10-06: "the current music becomes
  *  very muffled"), by `amount` (0 none to 1 fully in, eased by the platform): its low-pass closed
- *  down to `circle.muffle` Hz and its volume down to `circle.quiet` of itself. */
-export function muffled(M: Tuning["music"], mix: MusicMix, amount: number): MusicMix {
+ *  down to `circle.muffle` Hz and its volume down to `circle.quiet` of itself. In the treehouse (Ed, 2026-10-26: "When in the
+ *  treehouse, the house music slows and muffles. Other sounds stay the same"): `muffle` the house's (`house.muffle`), `quiet` 1. */
+export function muffled(M: Tuning["music"], mix: MusicMix, amount: number, muffle = M.circle.muffle, quiet = M.circle.quiet): MusicMix {
   const k = Math.max(0, Math.min(1, amount));
   if (k <= 0) return mix;
-  const to = Math.min(mix.cutoff, M.circle.muffle);
-  return { ...mix, cutoff: mix.cutoff * Math.pow(to / mix.cutoff, k), volume: mix.volume * (1 - (1 - M.circle.quiet) * k) };
+  const to = Math.min(mix.cutoff, muffle);
+  return { ...mix, cutoff: mix.cutoff * Math.pow(to / mix.cutoff, k), volume: mix.volume * (1 - (1 - quiet) * k) };
 }

@@ -601,6 +601,8 @@ const SPRITE_CHECKS = async ({ names, only }) => {
     const vec = x => [x.fill / .1, x.dark / .1, x.light / .1, x.grain, Math.log(x.shape) / .25, x.hue / .03, x.value / .06]; // in steps one can just tell apart
     const apart = (a, b) => Math.hypot(...vec(stats2[a]).map((v, k) => v - vec(stats2[b])[k]));
     let closest = [9, "", ""]; for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) { const d = apart(ids[i], ids[j]); if (d < closest[0]) closest = [d, ids[i], ids[j]]; }
+    // (Ed, 2026-10-26: "I think maybe we have been too strict on trees and animals looking different": species may look alike, as
+    // real ones do; these lines are for a look, never a reason to push a tree from its true shape: docs/ART-GUIDE.md section 4.)
     // Two species are only ever seen side by side where one area grows them both (art/flora/areas.js AREA_FLORA, its species
     // list), so only such a pair looking alike from above (under 1.5 apart) matters, and only as a warning (the coordinator for
     // Ed, 2026-10-14: loosened from every pair across all the trees failing, the rule of 2026-10-03); the closest pair of all is
