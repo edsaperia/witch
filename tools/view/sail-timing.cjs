@@ -7,13 +7,13 @@
 // every mark to the dive in order (steps, in the .json). STRIP=<ms>: a picture
 // every that many ms from the press to the alarm too (slows the run: time it without). Writes <out>.json (and <out>-NNN.png).
 //   npm run build && node tools/view/sail-timing.cjs [out] [dist]
-// ISLAND (fox), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1).
+// ISLAND (fox), THEN (islands to sail on to after it, on the same page: a warm sail, "fox,owl"), THROTTLE (CPU slow-down, 1), SIZE (960x540), GAP (ms, 100), EXTRA (more of the link), RUNS (1), AFTER (ms after landing whose frames are counted as `settle`: the island's art coming in, 15000).
 const http = require("http"), fs = require("fs"), path = require("path");
 let pw; try { pw = require("playwright"); } catch { pw = require("/opt/node22/lib/node_modules/playwright"); }
 const [outArg = "previews/sail/timing", distArg] = process.argv.slice(2);
 const out = path.resolve(outArg), root = path.resolve(distArg || path.join(__dirname, "../../dist"));
 const [W, H] = (process.env.SIZE || "960x540").split("x").map(Number), THR = Number(process.env.THROTTLE || 1), GAP = Number(process.env.GAP || 100);
-const ISLAND = process.env.ISLAND || "fox", STRIP = Number(process.env.STRIP || 0), RUNS = Number(process.env.RUNS || 1);
+const AFTER = Number(process.env.AFTER || 15000), ISLAND0 = process.env.ISLAND || "fox", THEN = process.env.THEN ? process.env.THEN.split(",") : [], STRIP = Number(process.env.STRIP || 0), RUNS = Number(process.env.RUNS || 1);
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
 const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
 const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:prep", "witch:game", "witch:prep-start", "witch:prep-warm", "witch:prep-ground", "witch:prep-home", "witch:prep-idle", "witch:prep-compile0", "witch:prep-compiled", "witch:prep-programs", "witch:prep-textures", "witch:prep-draws", "witch:prep-track", "witch:prep-house", "sail:ready", "witch:landed", "dive:eased", "dive:house-ready", "dive:house-due", "dive:on", "game:arrived", "opening:alarm"];
@@ -32,7 +32,7 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       page.on("console", m => { const t = m.text(); if (t.startsWith("sail-timing:") || t.startsWith("arrival:")) log(t); });
       await page.addInitScript(() => {
         try { localStorage.setItem("witch.chart.sailAnywhere", "1"); } catch { /* */ }
-        window.__f = []; const f = t => { window.__f.push(t); requestAnimationFrame(f); }; requestAnimationFrame(f);
+        window.__f = []; window.__parts = []; const f = t => { window.__f.push(t); const ms = window.witch?.view?.ms; if (ms) { const e = Object.entries(ms).filter(([, v]) => v > 2); if (e.reduce((p, [, v]) => p + v, 0) > 20) window.__parts.push({ t, parts: e }); } requestAnimationFrame(f); }; requestAnimationFrame(f); // (the view's own work by part, on frames it passed 20 ms)
         window.__lt = []; try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([e.startTime, e.duration]); }).observe({ type: "longtask", buffered: true }); } catch { /* */ }
       });
       if (THR > 1) { const cdp = await page.context().newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: THR }); }
@@ -41,6 +41,8 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       await page.goto(link);
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
       await page.waitForTimeout(3000);
+      for (const [leg, ISLAND] of [ISLAND0, ...THEN].entries()) { // (THEN: on the same page after, warm: its art, programs and workers the last island's)
+      if (leg) await page.waitForTimeout(5000);
       log("ready; opening the chart");
       await page.evaluate(() => window.witch.chart());
       await page.waitForFunction(i => { const c = window.chart; return c && c.islands && c.islands().find(x => x.id === i && x.outline); }, ISLAND, { timeout: 600000, polling: 250 });
@@ -48,12 +50,14 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
       await page.evaluate(i => window.chart.choose(i), ISLAND);
       await page.waitForTimeout(1500);
       log("sailing to", ISLAND);
+      const progs = () => page.evaluate(() => (window.witch.view.renderer.info.programs ?? []).map(p => `${p.name}|${p.cacheKey.length}|${p.cacheKey.slice(-40)}`)).catch(() => []);
+      const before = await progs();
       const sail = await page.evaluate(() => performance.now());
       await page.keyboard.press("Enter");
       const shots = [];
       const until = Date.now() + 1800000;
       for (let i = 0; Date.now() < until; i++) {
-        const done = await page.evaluate(() => performance.getEntriesByName("opening:alarm").length > 0 || performance.getEntriesByName("game:arrived").length > 0).catch(() => false);
+        const done = await page.evaluate(s0 => ["opening:alarm", "game:arrived"].some(n => performance.getEntriesByName(n).some(e => e.startTime >= s0)), sail).catch(() => false);
         if (STRIP > 0) {
           const at = await page.evaluate(() => performance.now()).catch(() => 0), file = `${path.basename(out)}-${String(i).padStart(3, "0")}.png`;
           await page.screenshot({ path: path.join(path.dirname(out), file) }).catch(() => {});
@@ -62,8 +66,8 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
           await page.waitForTimeout(STRIP);
         } else { if (done) break; await page.waitForTimeout(500); }
       }
-      await page.waitForTimeout(2000);
-      const r = await page.evaluate(([names, gap, s0]) => {
+      await page.waitForTimeout(AFTER);
+      const r = await page.evaluate(([names, gap, s0, after]) => {
         const at = n => { const e = performance.getEntriesByName(n).filter(x => x.startTime >= s0); return e.length ? Math.round(e[0].startTime - s0) : null; };
         const m = Object.fromEntries(names.map(n => [n, at(n)]));
         const sailAt = performance.getEntriesByName("chart:sail").filter(x => x.startTime >= s0)[0]?.startTime ?? s0;
@@ -74,14 +78,18 @@ const MARKS = ["chart:depart", "chart:ready", "chart:flown", "chart:go", "witch:
         const all = performance.getEntriesByType("mark").filter(e => e.startTime >= s0).sort((a, b) => a.startTime - b.startTime);
         const tasks = window.__lt.filter(([t]) => t >= s0 && t < dive).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([t, d]) => ({ at: Math.round(t - s0), ms: Math.round(d), after: all.filter(e => e.startTime <= t).at(-1)?.name ?? "" }));
         const steps = all.filter(e => e.startTime < dive).map(e => [e.name, Math.round(e.startTime - s0)]); // (every mark to the dive, in order)
-        return { sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), tasks, steps };
-      }, [MARKS, GAP * THR, sail]);
-      r.shots = shots;
+        const slices = (window.witch.slices ?? []).map(x => ({ what: x.what, ms: Math.round(x.ms), slices: x.slices, longest: Math.round(x.longest), at: x.longestAt })); // (the sliced builds' own time: render/slices.ts)
+        const parts = {}; for (const f of window.__parts ?? []) if (f.t >= end && f.t < end + after) for (const [k, ms] of f.parts) parts[k] = Math.round((parts[k] ?? 0) + ms);
+        return { slices, settleParts: parts, sailMark: Math.round(sailAt - s0), marks: m, toDive: sum(s0, dive), diveToEnd: sum(dive, end), settle: sum(end, end + after), tasks, steps };
+      }, [MARKS, GAP * THR, sail, AFTER]);
+      const after = await progs(); r.programs = { before: before.length, after: after.length, made: after.filter(x => !before.includes(x)) }; // (the shader programs this sail made anew)
+      r.shots = shots; r.island = ISLAND; r.leg = leg ? "warm" : "cold";
       runs.push(r);
-      log(JSON.stringify({ marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd, tasks: r.tasks }));
+      log(JSON.stringify({ island: ISLAND, leg: r.leg, marks: r.marks, toDive: r.toDive, diveToEnd: r.diveToEnd, settle: r.settle, settleParts: r.settleParts, programs: { ...r.programs, made: r.programs.made.length }, slices: r.slices, tasks: r.tasks }));
+      }
       await page.close();
     }
-    fs.writeFileSync(out + ".json", JSON.stringify({ island: ISLAND, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
+    fs.writeFileSync(out + ".json", JSON.stringify({ island: ISLAND0, then: THEN, throttle: THR, size: `${W}x${H}`, gap: GAP, runs }, null, 1));
     log("written", out + ".json");
   } catch (e) { console.error(e); code = 1; } finally { await browser.close(); server.close(); }
   if (errors.length) { console.error("page errors:\n" + errors.join("\n")); code = 1; }
