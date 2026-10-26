@@ -9,7 +9,7 @@ export const BAMBOO_JUNGLE = {
   setPiece: ["heap", "a heap of mossed temple rubble", 1, { of: "rubble", top: "slab", moss: .5 }],
   layout: {
     pattern: "thicket", density: .65, clump: .85, glades: { count: 2, size: [10, 16] },
-    heightMix: { sapling: .15, mature: .5, tall: .25, giant: .1 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .15, mature: .675, tall: .125, giant: .05 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["paths", "hollows"], decor: { rate: .2, ruins: .5, rocks: .25, freak: .15, lake: 0, modern: .1 },
     feel: "Tall bamboo in dense groves, its stems knocking in the wind, a few kapoks standing far above it; striped light and shadow, close and watchful.",
   },

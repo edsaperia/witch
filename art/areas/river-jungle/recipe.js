@@ -10,7 +10,7 @@ export const RIVER_JUNGLE = {
   setPiece: ["heap", "a heap of fallen giants by the river, mossed over", 1.1, { of: "logs", top: "none", moss: .5 }],
   layout: {
     pattern: "thicket", density: .8, clump: .5, glades: { count: 1, size: [14, 20] },
-    heightMix: { sapling: .15, mature: .35, tall: .35, giant: .15 }, undergrowth: .9, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .15, mature: .6, tall: .175, giant: .075 }, undergrowth: .9, lean: { dir: 0, amount: .05 },
     terrain: ["stream", "pools"], decor: { rate: .15, ruins: .2, rocks: .3, freak: .2, lake: .3, modern: 0 },
     feel: "A dark river under a closed canopy of rainforest giants hung with lianas, vinewood glowing in the gloom; still, deep and watched from above.",
   },

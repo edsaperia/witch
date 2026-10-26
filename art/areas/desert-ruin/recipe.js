@@ -10,7 +10,7 @@ export const DESERT_RUIN = {
   setPiece: ["heap", "a heap of fallen sandstone blocks", 1.2, { of: "rubble", top: "post", moss: 0, rock: "sandstone" }], // (a generated stand-in: set pieces are switched off for now, Ed 2026-10-13)
   layout: {
     pattern: "grid", along: .4, density: .22, clump: .5, glades: { count: 3, size: [16, 26] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .25, lean: { dir: .4, amount: .1 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .25, lean: { dir: .4, amount: .1 },
     terrain: ["mounds", "ridges"], decor: { rate: .45, ruins: .75, rocks: .2, freak: 0, lake: .05, modern: 0 },
     feel: "A buried city's streets running straight under drifted sand, columns standing and fallen along them, palms in its old squares; still, golden and watched.",
   },

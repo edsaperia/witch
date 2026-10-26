@@ -8,7 +8,7 @@ export const ERG = {
   setPiece: ["ring", "a ring of wind-worn stones round an old hearth", 1, { centre: "fire", member: "stone", embers: 1, rock: "sandstone" }],
   layout: {
     pattern: "rings", density: .25, clump: .85, glades: { count: 3, size: [18, 30] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .3, lean: { dir: .3, amount: .2 },
     terrain: ["ridges", "mounds"], decor: { rate: .2, ruins: .3, rocks: .4, freak: 0, lake: .3, modern: 0 },
     feel: "Long gold dunes rippled by the wind, date palms and wild olives clumped round a still oasis, wide open sand between; hot, bright and quiet, small ears listening.",
   },
