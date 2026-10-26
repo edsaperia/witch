@@ -11,7 +11,7 @@ import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, 
 import { runeOffset } from "./runeOffset";
 import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
-import { befriend, invitableNow, stateOf } from "./creatureStates";
+import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
@@ -189,6 +189,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
 export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
+  if (inConga(c)) return; // (the won night's line follows her, never on her leash: rules/creatureStates.ts inConga)
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
