@@ -2,6 +2,7 @@
 // dist/) at 1600×900: she's put in each room of the house (config/house/) a little south of its middle and the camera zoomed
 // out ZOOM steps (default 1), a shot each (`<room>.png`).
 // BROOM: her broom's save (localStorage witch.broom, as app/broomSave.ts keeps it: {"v":1,"found":[...],"fitted":{...}}).
+// KIT: what her night's kit holds (rules/kit.ts): KIT=none, KIT=invites, KIT=invites,broom (the desk's pile and the lathe's brooms as taken).
 // QUERY adds to the link (QUERY=furniture=0: the plain boxes, to compare). ONLY=bedroom,boudoir shoots only those. Fails on a page
 // error.
 //   npm run build && node tools/house/furniture-shots.cjs <out dir> [seed]
@@ -28,6 +29,7 @@ const A = ((H.turn || 0) * Math.PI) / 180, plan = (x, z) => [x * Math.cos(A) + z
     await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
     await page.keyboard.press("Enter");
     await page.waitForFunction(() => window.witch.game.clock.time > 3, null, { timeout: 600000, polling: 500 });
+    if (process.env.KIT) await page.evaluate(k => { const W = window.witch.game.witches[0]; W.kit = { invites: k.includes("invites"), broom: k.includes("broom") }; }, process.env.KIT.split(","));
     const put = (x, z) => page.evaluate(([x, z]) => { const g = window.witch.game, Th = g.map.treehouse; g.witch = { ...g.witch, x: Th.x + x, z: Th.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
     const step = (o, n) => page.evaluate(([o, n]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, ...o }, 1 / 60); }, [o, n]);
     const shot = async name => { await page.screenshot({ path: path.join(outDir, `${name}.png`), timeout: 300000 }); console.log("shot", name); };

@@ -6,6 +6,7 @@
 // quads (`standing`), traced from the same shape's outline.
 import type { HouseConfig } from "../rules/houseRooms";
 import { fbm, field, outline } from "../../config/house/shape.js";
+import { sigilHit } from "../../art/sigils.js";
 
 type RGB = [number, number, number];
 
@@ -13,6 +14,26 @@ type RGB = [number, number, number];
  *  on the plan by its inverse, read round on screen (the mock's FORE). */
 const FORE = Math.sin((24 * Math.PI) / 180);
 /** The tree's wood (the mock's WOOD): four floor tones darkest first, a growth line, bark, moss, a locked room's dim boards. */
+/** The Terrace's magic circle (Ed, 2026-10-26: "The magic circle should be larger and have the ent sigil on it"; config/house/base.json
+ *  terrace.circle, where she comes back after a fall or a knockout): burnt into the boards, a double ring round the Ent's sigil, the
+ *  World Tree (art/sigils.js), its lines the circle's red, the boards inside scorched. `mark(u, v)`: u, v -1 to 1 across it. */
+export const CIRCLE = { line: [190, 40, 52] as RGB, glow: [226, 70, 74] as RGB, floor: [58, 30, 24] as RGB };
+export const circleMark = (u: number, v: number): "line" | "glow" | "floor" | null => {
+  const r = Math.hypot(u, v);
+  if (r > 1) return null;
+  if (r > 0.965 || (r > 0.855 && r < 0.88)) return "line"; // (the two rings, thin)
+  if (r > 0.88) { // (between them, a band of runes: a glyph of ticks and bars every few degrees)
+    const a = (Math.atan2(v, u) / (2 * Math.PI) + 1) * 56, k = Math.floor(a), f = a - k, t = (r - 0.88) / 0.085, h = Math.sin(k * 91.7) * 4375.85 - Math.floor(Math.sin(k * 91.7) * 4375.85);
+    const stem = Math.abs(f - 0.5) < 0.09 && t > 0.15 && t < 0.85, bar = f > 0.25 && f < 0.75 && Math.abs(t - (h < 0.5 ? 0.3 : 0.7)) < 0.1, hook = h > 0.7 && Math.abs(f - 0.3) < 0.07 && t > 0.5 && t < 0.85;
+    return stem || bar || hook ? "glow" : "floor";
+  }
+  return sigilHit("worldTree", 0.5 + u / 1.62, 0.5 + v / 1.62, 0.014) ? "glow" : "floor"; // (the tree filling the inner ring)
+};
+/** The Terrace's magic circle on the house's plan: its middle and radius, metres (null: none). */
+export const terraceCircle = (H: HouseConfig): { x: number; z: number; r: number } | null => {
+  const tr = H.rooms.find(r => r.id === "terrace");
+  return tr && H.terrace?.circle ? { x: (tr.x0 + tr.x1) / 2 + H.terrace.circle.x, z: (tr.z0 + tr.z1) / 2 + H.terrace.circle.z, r: H.terrace.circle.r } : null;
+};
 const WOOD = { floor: [[78, 46, 28], [104, 64, 38], [132, 84, 48], [158, 106, 62]] as RGB[], ring: [62, 36, 22] as RGB, bark: [[38, 28, 22], [56, 40, 28], [78, 58, 40]] as RGB[], moss: [[46, 66, 38], [70, 96, 50]] as RGB[], locked: [[52, 40, 34], [64, 50, 40]] as RGB[] };
 const DEG = Math.PI / 180;
 
@@ -62,6 +83,7 @@ export function paintFloorRows(H: HouseConfig, mpp: number, j0: number, j1: numb
   j1 = Math.min(j1, Hh);
   const rest = new Uint8ClampedArray(W * Math.max(0, j1 - j0) * 4), terrace = new Uint8ClampedArray(rest.length);
   const locked = new Set(H.rooms.filter(r => r.locked).map(r => r.id));
+  const circ = terraceCircle(H);
   const set = (px: Uint8ClampedArray, o: number, c: RGB) => { px[o] = c[0]; px[o + 1] = c[1]; px[o + 2] = c[2]; px[o + 3] = 255; };
   // (blocks about 2 m across; the field falls at most about 1.3 m a metre (a room's wobble), so 2 a metre and half a metre to spare)
   const reach = 2 * Math.SQRT1_2 * B * mpp + 0.5;
@@ -81,6 +103,7 @@ export function paintFloorRows(H: HouseConfig, mpp: number, j0: number, j1: numb
       if (d > -0.45 && onTakeoff(H, x, z)) { set(px, o, WOOD.floor[3]); continue; } // (the open rim where she steps off: worn pale, no lip)
       if (d > -0.45) { const n = hash(i * 3 + 1, j * 7); set(px, o, fbm(mx * 0.8, mz * 0.8) > 0.6 ? WOOD.moss[n > 0.5 ? 1 : 0] : WOOD.bark[n > 0.66 ? 2 : n > 0.33 ? 1 : 0]); continue; }
       if (room && locked.has(room)) { set(px, o, WOOD.locked[hash(i, j) < 0.5 ? 0 : 1]); continue; }
+      if (onTerrace && circ) { const m = circleMark((x - circ.x) / circ.r, (z - circ.z) / circ.r); if (m) { set(px, o, CIRCLE[m]); continue; } } // (the magic circle)
       const gr = grain(mx, mz, parts) + (fbm(mx * 0.9, (mz / FORE) * 0.9) - 0.5) * 1.1, f = gr - Math.floor(gr);
       if (f < 0.09) { set(px, o, WOOD.ring); continue; } // (a growth line)
       const lit = fbm(mx * 0.12 + 7, (mz / FORE) * 0.12) * 0.9 + (1 - f) * 0.25;

@@ -157,6 +157,19 @@ export function nope(K: SfxKit, pan = 0): void {
   }
 }
 
+/** Her fall off the Terrace with no broom hitting the ground, unseen below (Ed, 2026-10-26: "a 'thud' sound"; soft and comic, not
+ *  painful; rules/kit.ts): a soft body thump, then a small springy boing a little after it, wobbling up. The tuning's sfx.thud. */
+export function thud(K: SfxKit, pan = 0): void {
+  const T = K.T.thud;
+  if (!T || !K.ready("thud", T.gap)) return;
+  const c = K.ctx, at = c.currentTime + 0.005;
+  K.thump(at, T.volume, pan);
+  const g = c.createGain(), out = K.voice(pan, 0.5); g.connect(out); K.env(g, at + 0.07, T.volume * 0.22, 0.006, 0.28);
+  const f = mtof(K.root + 3), o = K.osc("sine", f, at + 0.07, 0.34, g), depth = c.createGain();
+  o.frequency.exponentialRampToValueAtTime(f * 1.5, at + 0.36);
+  depth.gain.value = f * 0.06; depth.connect(o.frequency); K.osc("sine", 16, at + 0.07, 0.34, depth); // (the boing's wobble)
+}
+
 /** Her phone's alarm (the new opening's wake-up, Ed 2026-10-20: "a plain modern phone alarm, for the joke"; rules/wakeUp.ts): one
  *  ring, a bright marimba-ish run of six plucks up and down the key's triad and back (sine and a quiet octave, fast decay, a soft
  *  click on each), about a second; the page rings it again every gap seconds while the alarm's ringing. The tuning's sfx.alarm. */

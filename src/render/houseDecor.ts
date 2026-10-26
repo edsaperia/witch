@@ -23,6 +23,7 @@ export const ROOM_DECOR: Record<string, string[]> = {
   cloakroom: ["rug", "plant", "candles", "lantern"],
   bestiary: ["rug", "mushrooms", "candles", "lantern", "books", "plant"],
   turret: ["lantern", "crates", "plant"],
+  terrace: ["plant", "lantern", "candles"], // (no rug: the magic circle is burnt into its boards, render/houseArt.ts)
 };
 const DEFAULT = ["rug", "plant", "lantern", "candles"];
 
