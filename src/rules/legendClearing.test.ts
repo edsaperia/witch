@@ -152,7 +152,7 @@ describe("legend clearings", () => {
 
   // Ed (2026-10-06): "I think there should be an area of the tallest trees around each legend circle"; "It should blend back
   // smoothly into the rest of the forest around this area, so it doesn't stand out too much".
-  it("each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, open toward the camera", () => {
+  it("each swells the forest round it, strongest at its edge and easing smoothly out into the area's own, all the way round", () => {
     // (half the areas with legends, as when this was written: enough clearings to average the grove's shape over, whatever legends.share)
     const map = generateMap(123, withTuning({ legends: { ...TUNING.legends, share: 0.5 } })), forest = new Forest(map), G = TUNING.legendClearing.grove, bins = 6, w = G.reach / bins;
     const sum = new Array(bins + 1).fill(0), n = new Array(bins + 1).fill(0);
@@ -178,10 +178,11 @@ describe("legend clearings", () => {
     expect(perArea(0)).toBeGreaterThan(perArea(bins) * 0.9);
   });
 
-  // Art builder 3's rim kit (#262) round each: on its ring, never its floor, leaving the way in and paths clear.
-  it("each is edged by the rim kit: small pieces just past its floor, the way in (south) left open", () => {
+  // Art builder 3's rim kit (#262) round each: on its ring, never its floor, paths clear; all the way round, no way in left open to
+  // the south (Ed, 2026-10-26: "legend circles should always be hidden by scenery around them").
+  it("each is edged by the rim kit: small pieces just past its floor, all the way round", () => {
     const map = generateMap(123, TUNING), forest = new Forest(map), R = TUNING.legendClearing.rim;
-    let edged = 0;
+    let edged = 0, south = 0;
     for (const lc of map.legendClearings) {
       const mine = forest.rimNear(lc.x, lc.z, lc.r + R.out + R.spread + 1).filter(p => Math.abs(Math.hypot(p.x - lc.x, p.z - lc.z) - lc.r - R.out - R.spread / 2) <= R.spread / 2 + 1e-6);
       for (const p of mine) {
@@ -192,8 +193,10 @@ describe("legend clearings", () => {
         expect(p.type).toBe(map.typeOf(lc.cell[0], lc.cell[1]));
       }
       if (mine.length >= Math.round((2 * Math.PI * lc.r) / R.spacing) * R.chance * 0.5) edged++;
+      if (mine.some(p => (p.z - lc.z) / Math.hypot(p.x - lc.x, p.z - lc.z) > Math.cos(Math.PI / 12))) south++; // (within 15 degrees of due south)
     }
     expect(edged).toBeGreaterThan(map.legendClearings.length * 0.8);
+    expect(south).toBeGreaterThan(map.legendClearings.length * 0.8);
   });
 
   // Ed (2026-10-06): "The legend circle shouldn't spawn near its runestone."

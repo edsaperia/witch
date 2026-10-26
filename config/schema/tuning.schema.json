@@ -866,12 +866,27 @@
         "stray": {
           "type": "number",
           "minimum": 0
+        },
+        "warp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warpScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "width",
         "scale",
-        "stray"
+        "stray",
+        "warp",
+        "warpScale",
+        "tufts"
       ],
       "additionalProperties": false
     },
@@ -1366,11 +1381,16 @@
                 "seed": {
                   "type": "number",
                   "minimum": 0
+                },
+                "cutFade": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
-                "seed"
+                "seed",
+                "cutFade"
               ],
               "additionalProperties": false
             }
@@ -1621,6 +1641,24 @@
           ],
           "additionalProperties": false
         },
+        "fit": {
+          "type": "object",
+          "properties": {
+            "margin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "margin",
+            "max"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -1638,6 +1676,7 @@
         "floor",
         "rim",
         "grove",
+        "fit",
         "species"
       ],
       "additionalProperties": false
@@ -3549,6 +3588,17 @@
           "type": "number",
           "minimum": 0
         },
+        "follow": {
+          "type": "boolean"
+        },
+        "followLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "followSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
         "legendGap": {
           "type": "number",
           "minimum": 0
@@ -3589,6 +3639,9 @@
         "congaRadius",
         "joinSpeed",
         "seen",
+        "follow",
+        "followLead",
+        "followSpeed",
         "legendGap",
         "legendRow",
         "legendSpace",

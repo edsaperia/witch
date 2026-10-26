@@ -6,7 +6,7 @@
 // the rooms' leaf roofs were: after the house, no depth, far to near), eased between the two as she lands or takes off.
 //
 // Indoors (Ed: "indoors, whole room opens up; these holes should match the irregular shape of the room") it clears over the room
-// she's in, its floor's outline and its far wall, with a ragged dithered edge 1 to 3.5 m out, or over her stretch of branch: a small
+// she's in, its floor's outline and its far wall, with a ragged soft edge 1 to 3.5 m out (faded as the forest's hole is, not dithered), or over her stretch of branch: a small
 // distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
 // circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
 import * as THREE from "three";
@@ -45,9 +45,9 @@ function polyDist(p: [number, number][], x: number, z: number, closed = false): 
   return d;
 }
 
-/** How fast the oak dithers away as she goes behind it and back as she comes out (1/s). */
+const smooth01 = (t: number) => t * t * (3 - 2 * t);
+/** How fast the oak fades away as she goes behind it and back as she comes out (1/s). */
 const BEHIND_EASE = 4;
-
 /** The mask's side (texels) over the crown's dome: about a metre a texel. */
 const MASK = 128;
 
@@ -59,39 +59,59 @@ vec3 mapPlan(vec3 p) { return uMapO + p.x * uMapX + p.y * uMapY + p.z * uMapZ; }
 export const CLEAR_GLSL = /* glsl */ `
 uniform float uIndoor; // laid over the floors: no haze nor slowed time's grey (the floors' own colours aren't graded)
 vec3 crownHaze(vec3 c, vec3 P) { return uIndoor > 0.5 ? c : haze(c, P); }
-uniform sampler2D uClear;
+uniform sampler2D uClear, uClearB; // her room's (or branch's) floor, and the one she left (fading back in)
 uniform vec4 uClearBox; // the mask's plan box: x0, z0, 1/width, 1/depth
 uniform float uClearOn; // 1 indoors with a room (or branch) to clear
+uniform vec2 uClearW; // how far each is cleared: the room she's in fading in, the one she left fading out (treehouse.house.crown.cutFade)
+uniform vec4 uHerHole; // indoors, the hole round her (canopyCutout's, as outdoors): its middle where she's drawn, radius, edge (pixels)
+uniform vec4 uCutShape; // the hole's edge, shared with the forest's: wobble, how far out the fade reaches, ragged, (spread)
 uniform vec4 uWitch, uOcc;
 uniform float uWitchDepth;
-uniform float uBehind; // she's behind the oak, north of it (0 to 1, eased): what of it stands nearer than her dithers away
+uniform float uBehind; // she's behind the oak, north of it (0 to 1, eased): what of it stands nearer than her fades away
 uniform sampler2D uNoise; // a tiling value noise, 64 cells across (one lookup in place of four hashes: the crown is a lot of pixels)
 float vnoise2(vec2 p) { return texture2D(uNoise, (p + 0.5) / 64.0).r; }
 float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
   return (i == 0.0 ? 0.0 : i == 1.0 ? 8.0 : i == 2.0 ? 2.0 : i == 3.0 ? 10.0 : i == 4.0 ? 12.0 : i == 5.0 ? 4.0 : i == 6.0 ? 14.0 : i == 7.0 ? 6.0 : i == 8.0 ? 3.0 : i == 9.0 ? 11.0 : i == 10.0 ? 1.0 : i == 11.0 ? 9.0 : i == 12.0 ? 15.0 : i == 13.0 ? 7.0 : i == 14.0 ? 13.0 : 5.0) / 16.0 + 1.0 / 32.0; }
 float screenDistC(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
-// Cleared away here? Her room's (or branch's) floor and its far wall, a ragged dithered edge 1 to 3.5 m out (vFloor: the floor's plan
-// point under this pixel); and the forest's hole round her, where this stands in front of her (depth: its distance from the camera).
-bool cleared(vec2 floorP, float depth) {
+// How far a floor's mask clears this pixel (1 cleared, 0 not): its floor and its far wall, a ragged soft edge 1 to 3.5 m out, faded
+// smoothly as the forest's hole is (Ed, 2026-10-26: "Room cutouts seem to be more dithered (pixellated) than in the forest": it
+// was a 4 x 4 ordered dither across the band).
+float inClear(sampler2D mask, vec2 floorP) {
+  vec2 uv = (floorP - uClearBox.xy) * uClearBox.zw, uv2 = (floorP + vec2(0.0, 5.0) - uClearBox.xy) * uClearBox.zw;
+  float d = 1e3;
+  if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) d = texture2D(mask, uv).r * 16.0;
+  if (all(greaterThan(uv2, vec2(0.0))) && all(lessThan(uv2, vec2(1.0)))) d = min(d, texture2D(mask, uv2).r * 16.0);
+  float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
+  return 1.0 - smoothstep(0.0, 2.5, o);
+}
+// How much of the crown stays here (0 cleared away, 1 whole): her room's (or branch's) floor as it fades in, the one she left as it
+// fades back (vFloor: the floor's plan point under this pixel); indoors, the forest's hole round her where she's drawn, its soft
+// edge as outdoors (render/sprites.ts); and the fade round her, where this stands in front of her (depth: its distance from the camera).
+float clearKeep(vec2 floorP, float depth) {
+  float keep = 1.0;
   if (uClearOn > 0.5) {
-    vec2 uv = (floorP - uClearBox.xy) * uClearBox.zw, uv2 = (floorP + vec2(0.0, 5.0) - uClearBox.xy) * uClearBox.zw;
-    float d = 1e3;
-    if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) d = texture2D(uClear, uv).r * 16.0;
-    if (all(greaterThan(uv2, vec2(0.0))) && all(lessThan(uv2, vec2(1.0)))) d = min(d, texture2D(uClear, uv2).r * 16.0);
-    float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
-    if (o < 0.0 || (o < 2.5 && bayer4(gl_FragCoord.xy) > o / 2.5)) return true;
+    if (uClearW.x > 0.0) keep *= 1.0 - uClearW.x * inClear(uClear, floorP);
+    if (uClearW.y > 0.0) keep *= 1.0 - uClearW.y * inClear(uClearB, floorP);
+  }
+  if (uHerHole.z > 0.0) {
+    vec2 off = gl_FragCoord.xy - uHerHole.xy;
+    float ang = atan(off.y, off.x), rag = 0.5 * sin(ang * 3.0 + 1.3) + 0.3 * sin(ang * 5.0 + 4.1) + 0.2 * sin(ang * 7.0 + 2.2);
+    float wob = (vnoise2(floorP * 0.4) - 0.5) * uHerHole.w * uCutShape.x, r = uHerHole.z * (1.0 + uCutShape.z * rag);
+    keep *= smoothstep(r - uHerHole.w, r + uHerHole.w * uCutShape.y, screenDistC(gl_FragCoord.xy, uHerHole.xy) + wob);
   }
   // (Ed, 2026-10-26: "from the north of the oak, hide the crown and trunk of the treehouse as well, when you're behind them": the
   // camera looks north, so north of the oak it stands between the camera and her, its lobes filling the screen; everything of it
-  // nearer than her goes, dithered in and out as she comes and goes)
-  if (uBehind > 0.0 && uIndoor < 0.5 && depth < uWitchDepth - 1.0 && bayer4(gl_FragCoord.xy) < uBehind) return true;
+  // nearer than her goes, faded in and out as she comes and goes)
+  if (uBehind > 0.0 && uIndoor < 0.5 && depth < uWitchDepth - 1.0) keep *= 1.0 - uBehind;
   if (uOcc.w > 0.0 && depth < uWitchDepth - 0.5) {
     float e = screenDistC(gl_FragCoord.xy, uWitch.xy) / max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
     float occl = 1.0 - smoothstep(0.3, 1.0 + uOcc.y, e);
-    if (bayer4(gl_FragCoord.xy) < occl) return true;
+    if (bayer4(gl_FragCoord.xy) < occl) keep = 0.0;
   }
-  return false;
+  return keep;
 }
+// Cleared away here? (the string lights: a bulb is there or not, dithered through a fade)
+bool cleared(vec2 floorP, float depth) { return clearKeep(floorP, depth) <= bayer4(gl_FragCoord.xy + vec2(2.0, 1.0)); }
 `;
 
 const LOBE_VERT = /* glsl */ `
@@ -143,7 +163,8 @@ void main() {
   float rag = vnoise2(vUv * 3.2 + s) * 0.28 + vnoise2(vUv * 7.0 + s * 1.7) * 0.12;
   if (rr > 1.0 - rag) discard;
   if (vData.x > 0.0 && vnoise2(vUv * 6.5 + s * 3.1) + vnoise2(vUv * 13.0 - s) * 0.4 < vData.x * 1.5) discard;
-  if (cleared(vFloor, vDepth)) discard;
+  float keep = clearKeep(vFloor, vDepth);
+  if (keep < 0.004) discard;
   // a billowing clump: a sphere's normal, lumped by its leaves, shaded by the moon on the light the vertices found
   vec2 u = vUv + (vec2(vnoise2(vUv * 5.0 + s * 0.3), vnoise2(vUv * 5.0 + s * 0.3 + 19.0)) - 0.5) * 0.45;
   vec3 N = normalize(u.x * uRight + u.y * uUp + uBack * sqrt(max(0.05, 1.0 - dot(u, u))));
@@ -152,7 +173,7 @@ void main() {
   float t = clamp(floor(y * 7.0 + (speck - 0.5) * 1.6), 0.0, 4.0);
   vec3 tint = L / max(y, 1e-3);
   vec3 c = leafTone(t) * mix(vec3(1.0), clamp(tint, 0.0, 2.0), 0.12) * (0.85 + 0.4 * min(1.0, y * 2.0));
-  gl_FragColor = vec4(crownHaze(c, vWorld), 1.0);
+  gl_FragColor = vec4(crownHaze(c, vWorld), keep);
 }`;
 
 const BARK_VERT = /* glsl */ `
@@ -188,7 +209,8 @@ varying vec3 vLight;
 ${LIGHT_GLSL}
 ${CLEAR_GLSL}
 void main() {
-  if (cleared(vFloor, vDepth)) discard;
+  float keep = clearKeep(vFloor, vDepth);
+  if (keep < 0.004) discard;
   vec3 N = normalize(vN);
   vec3 L = vLight;
   float y = dot(L, vec3(0.3, 0.55, 0.15));
@@ -198,7 +220,7 @@ void main() {
   vec3 c = t < 0.5 ? vec3(0.094, 0.078, 0.078) : t < 1.5 ? vec3(0.157, 0.129, 0.118) : t < 2.5 ? vec3(0.227, 0.188, 0.165) : vec3(0.314, 0.267, 0.220);
   if (fur < 0.3) c = vec3(0.094, 0.078, 0.078);
   if (N.y > 0.35 && vnoise2(vBark * vec2(0.35, 4.0)) > 0.55) c = vnoise2(gl_FragCoord.xy * 0.7) < 0.5 ? vec3(0.133, 0.196, 0.118) : vec3(0.204, 0.282, 0.157); // moss on its top
-  gl_FragColor = vec4(crownHaze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), 1.0);
+  gl_FragColor = vec4(crownHaze(c * (0.85 + 0.3 * min(1.0, y * 2.0)), vWorld), keep);
 }`;
 
 /** The bark's tubes: a Catmull-Rom through each limb's knots, rings of `sides` round it about a third of its radius apart. */
@@ -269,23 +291,25 @@ export class CrownView {
   get indoors(): boolean { return this.k > 0.5; }
   /** Its uniforms (the map, the clearing): shared with its string lights (render/strings.ts). */
   readonly uniforms: Record<string, THREE.IUniform>;
-  private readonly mask = new Uint8Array(MASK * MASK);
-  private readonly maskTex = new THREE.DataTexture(this.mask, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType);
-  private maskFor = "";
+  /** Two floors' masks: the room (or branch) she's in, clearing as it fades in, and the one she left, filling back in as it fades
+   *  out (Ed, 2026-10-26: "Room canopy cuts should fade in rather than be instant"); each its key and how far it's cleared. */
+  private readonly masks = [0, 1].map(() => { const data = new Uint8Array(MASK * MASK), tex = new THREE.DataTexture(data, MASK, MASK, THREE.RedFormat, THREE.UnsignedByteType); tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter; tex.needsUpdate = true; return { data, tex, key: "", w: 0 }; });
+  /** How far the hole round her is open indoors (0 to 1, by the same fade). */
+  private herW = 0;
   private readonly back = new THREE.Vector3();
   /** The bulbs of its lights (rules/crown.ts crownBulbs), for render/strings.ts and the far landmark. */
   readonly bulbs: Bulb[];
 
   constructor(readonly crown: Crown, spacing: number, private readonly outline: HouseOutline) {
-    this.maskTex.magFilter = THREE.LinearFilter; this.maskTex.minFilter = THREE.LinearFilter; this.maskTex.needsUpdate = true;
     const { cx, cz, rx, rz } = crown.dome;
     this.uniforms = {
       ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS,
-      uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc,
+      uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uWitch: SPRITE_UNIFORMS.uWitch, uWitchDepth: SPRITE_UNIFORMS.uWitchDepth, uOcc: SPRITE_UNIFORMS.uOcc, uCutShape: SPRITE_UNIFORMS.uCutShape,
       uMapO: { value: new THREE.Vector3() }, uMapX: { value: new THREE.Vector3(1, 0, 0) }, uMapY: { value: new THREE.Vector3(0, 1, 0) }, uMapZ: { value: new THREE.Vector3(0, 0, 1) },
       uBendOn: { value: 1 }, uIndoor: { value: 0 }, uLobeK: { value: 1 }, uBack: { value: this.back },
       uNoise: { value: noiseTexture() },
-      uBehind: { value: 0 }, uClear: { value: this.maskTex }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
+      uBehind: { value: 0 }, uClear: { value: this.masks[0].tex }, uClearB: { value: this.masks[1].tex }, uClearW: { value: new THREE.Vector2() }, uClearBox: { value: new THREE.Vector4(cx - rx, cz - rz, 1 / (2 * rx), 1 / (2 * rz)) }, uClearOn: { value: 0 },
+      uHerHole: { value: new THREE.Vector4() },
     };
     const lobeMat = new THREE.ShaderMaterial({ vertexShader: LOBE_VERT, fragmentShader: LOBE_FRAG, uniforms: this.uniforms });
     const barkMat = new THREE.ShaderMaterial({ vertexShader: BARK_VERT, fragmentShader: BARK_FRAG, uniforms: this.uniforms });
@@ -300,9 +324,11 @@ export class CrownView {
   get stats() { return { lobes: (this.lobes.geometry as THREE.InstancedBufferGeometry).instanceCount, barkTris: (this.bark.geometry.index?.count ?? 0) / 3 }; }
 
   /** A frame: `world` the true map (the hub on the ground, the floor's height), `house` the floors' own (null when she isn't
-   *  indoors), `here` her place on the plan indoors, `dt` her clock's step, `her` where she is in the world (for hiding the oak when
-   *  she's behind it). */
-  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number, her: { x: number; y: number; z: number } | null = null): void {
+   *  indoors), `here` her place on the plan indoors, `dt` her clock's step; `hole` the forest's hole round her as it would be
+   *  outdoors, its middle where she's drawn (screen pixels: x, y, radius, edge), cut in the crown indoors; `fade` the seconds a
+   *  room's cut (and that hole) takes to open or close (treehouse.house.crown.cutFade; 0 at once); `her` where she is in the world
+   *  (for hiding the oak when she's behind it). */
+  update(camera: THREE.Camera, world: PlanMap, house: PlanMap | null, here: { x: number; z: number } | null, dt: number, hole: { x: number; y: number; r: number; edge: number } | null = null, fade = 0, her: { x: number; y: number; z: number } | null = null): void {
     const want = house ? 1 : 0;
     this.k += (want - this.k) * (1 - Math.exp(-8 * Math.max(0, dt)));
     if (Math.abs(this.k - want) < 0.01 || dt <= 0) this.k = want;
@@ -329,9 +355,24 @@ export class CrownView {
     let branch = null as HouseOutline["branches"][number] | null;
     if (indoors && here && !room) { let bd = Infinity; for (const b of O.branches) { const d = polyDist(b.pts, here.x, here.z) - b.w / 2; if (d < bd) { bd = d; branch = b; } } if (bd > 2) branch = null; }
     const key = room ? `room:${room.id}` : branch ? `branch:${branch.id}` : "";
-    U.uClearOn.value = key ? 1 : 0;
-    if (key && key !== this.maskFor) { this.maskFor = key; this.fill(room ? (x, z) => (inPoly(room.outline, x, z) ? 0 : polyDist(room.outline, x, z, true)) : (x, z) => Math.max(0, polyDist(branch!.pts, x, z) - branch!.w / 2)); }
+    // (a floor she moves into takes the mask that's least cleared, unless it's one of the two already: back into the room she
+    // just left, its cut opens again from where its fade had got to)
+    const M = this.masks, step = fade > 0 ? Math.max(0, dt) / fade : 1;
+    if (key && !M.some(m => m.key === key)) { const m = M[0].w <= M[1].w ? M[0] : M[1]; m.key = key; m.w = 0; this.fill(m, room ? (x, z) => (inPoly(room.outline, x, z) ? 0 : polyDist(room.outline, x, z, true)) : (x, z) => Math.max(0, polyDist(branch!.pts, x, z) - branch!.w / 2)); }
+    for (const m of M) { m.w = m.key && m.key === key ? Math.min(1, m.w + step) : Math.max(0, m.w - step); if (!m.w && m.key !== key) m.key = ""; }
+    // (the room she's in is the shader's first mask, the other the second)
+    const [a, b] = M[1].key === key && key ? [M[1], M[0]] : [M[0], M[1]];
+    U.uClear.value = a.tex; U.uClearB.value = b.tex; (U.uClearW.value as THREE.Vector2).set(a.key ? a.w : 0, b.key ? b.w : 0);
+    U.uClearOn.value = (a.key && a.w > 0) || (b.key && b.w > 0) ? 1 : 0;
+    // the hole round her, as outdoors, where she's drawn: opening as she comes in, closing as she goes out
+    this.herW = indoors && hole ? Math.min(1, this.herW + step) : Math.max(0, this.herW - step);
+    const H = U.uHerHole.value as THREE.Vector4;
+    if (hole && this.herW > 0) H.set(hole.x, hole.y, hole.r * smooth01(this.herW), Math.max(1, hole.edge)); else H.set(0, 0, 0, 1);
   }
+
+  /** How far a floor's cut has opened (0 to 1), by its key (`room:<id>`, `branch:<id>`), and the hole round her: for the tests. */
+  cutOf(key: string): number { return this.masks.find(m => m.key === key)?.w ?? 0; }
+  get herHole(): number { return this.herW; }
 
   /** How much she's behind the oak (0 or 1): north of the crown's middle on its plan, and the line from the camera to her passing
    *  through the crown (its dome on the plan, from its lowest sagging lobes to its top). */
@@ -351,18 +392,18 @@ export class CrownView {
   /** Eased 0 to 1 as she goes behind the oak (uBehind). */
   private behind = 0;
 
-  /** The distance field of one floor shape (its plan's metres, 0 to 16 m in 0 to 1). */
-  private fill(dist: (x: number, z: number) => number): void {
+  /** The distance field of one floor shape into a mask (its plan's metres, 0 to 16 m in 0 to 1). */
+  private fill(m: { data: Uint8Array; tex: THREE.DataTexture }, dist: (x: number, z: number) => number): void {
     const B = this.uniforms.uClearBox.value as THREE.Vector4, w = 1 / B.z, d = 1 / B.w;
     for (let j = 0; j < MASK; j++) for (let i = 0; i < MASK; i++) {
       const x = B.x + ((i + 0.5) / MASK) * w, z = B.y + ((j + 0.5) / MASK) * d;
-      this.mask[j * MASK + i] = Math.min(255, Math.round((dist(x, z) / 16) * 255));
+      m.data[j * MASK + i] = Math.min(255, Math.round((dist(x, z) / 16) * 255));
     }
-    this.maskTex.needsUpdate = true;
+    m.tex.needsUpdate = true;
   }
 
   dispose(): void {
     for (const m of this.meshes) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); }
-    this.maskTex.dispose(); (this.uniforms.uNoise.value as THREE.Texture).dispose();
+    for (const m of this.masks) m.tex.dispose(); (this.uniforms.uNoise.value as THREE.Texture).dispose();
   }
 }

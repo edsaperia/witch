@@ -109,15 +109,10 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // by how far toward it she stands (so she's between the Ent's halves, render/view/home.ts ENT_DEPTH) and scaled to land on those
   // pixels; eased off as she rises (her lift) into the world's own place.
   const inRoom = !!(T.ent && deck?.house?.rooms && w.perch && !onTerrace(deck, w.x, w.z) && onRoomFloor(deck.house.rooms, w.x, w.z)); // (in a room off the Terrace, rules/houseRooms.ts)
-  v.houseCam.x = v.houseCam.y = v.houseCam.z = 0; v.houseShift = 0;
+  v.houseCam.x = v.houseCam.y = v.houseCam.z = 0;
   if (T.ent && deck && w.perch) {
     const m = 1 - w.lift, ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
-    // (off the Terrace, the house's drawing slid up the Ent's plane by her own place on it, so the room she's in is drawn at the
-    // Terrace's height: the oak's rooms run 75 m north and 50 south of it, and down the plane the south ones were drawn under the
-    // ground, the camera climbing away; eased in over the first metres past the Terrace, as the camera's following; render/houseRooms.ts
-    // draws the rooms by it too)
-    const off = deck.house?.rooms ? Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3)) : 0;
-    v.houseShift = -dz * ky * off;
+    // (the house's drawing slid up the Ent's plane by her own place on it: v.houseShift, houseShiftOf, set before the Ent is placed)
     const p = onTreehouse(T.ent.deck.x + (w.x - deck.x) / v.mpp, T.ent.deck.y + dz * ky + v.houseShift), g0 = groundHeight(deck.x, deck.z);
     // (in a room off the hub, rules/houseRooms.ts: in the plane through the hub's middle, the same pixels, never out over the forest
     // behind it, where the bend and the fade round her lose her; drawn over everything there, below)
@@ -205,10 +200,12 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
   v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
-  setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
+  setOverlayTilt(t.tiltShift, w.lift, v.canvas.clientHeight || window.innerHeight, v.height, v.houseTilt(g)); // (the DOM overlays blurred as the world: render/overlayTilt.ts)
   v.partyWitchView.bubbles(g, time, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight);
   const onBeach = v.beachView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4), v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.fly ? { x: v.fly.tx, z: v.fly.tz, reach: g.tuning.haze.far } : undefined); // (a sail's dive in over the sea: the sea drawn)
   v.stateMarks.update(g, time, v.leashView.tops, 70, v.camera.position);
+  // (where she's drawn less the rules' place, in the house: her 💌s leave her hand as drawn, render/invites.ts letterAt)
+  { const O = v.herOffset; O.on = !!(T.ent && deck && w.perch); O.x = wx - w.x; O.z = wz - w.z; O.y = wyy + groundHeight(wx, wz); }
   v.inviteView.update(ht, v.camera, v.canvas.clientWidth || window.innerWidth, v.canvas.clientHeight || window.innerHeight, v.leashView.tops, v.leashView.heads);
   // Idling into the party, she's drawn in her party pose there instead.
   // Behind the decks her frame stands with its ground anchor on the seat (not its box's middle), so her hands land on the decks;
@@ -337,4 +334,19 @@ export function groundedHop(s: number): number {
   if (s < 0.3) return GROUNDED_HOP * Math.sin((s / 0.3) * Math.PI / 2);
   if (s < 0.42) { const k = (s - 0.3) / 0.12; return GROUNDED_HOP * (1 - k * k); }
   return 0.18 * Math.sin(((s - 0.42) / 0.18) * Math.PI);
+}
+
+/** How far (the Ent's art pixels, up its plane) the house's drawing is slid this frame (View sets v.houseShift by it before the Ent and
+ *  the house are placed): off the Terrace, by her own place on the plane, so the room she's in is drawn at the Terrace's height (the
+ *  oak's rooms run 75 m north and 50 south of it, and down the plane the south ones were drawn under the ground, the camera climbing
+ *  away); eased in over the first metres past the Terrace, as the camera's following. The house's floors and furniture
+ *  (render/houseRooms.ts), its crown (render/crown.ts) and the Ent's own sprites, the Terrace's art and her decks
+ *  (render/view/home.ts placeTreehouse), all slide by it together, so they stay one floor (Ed, 2026-10-26: the Terrace slid against the
+ *  rooms as she walked them). */
+export function houseShiftOf(v: View): number {
+  const g = v.game, w = g.witch, T = v.assets.treehouse, deck = deckOf(g.map, g.tuning);
+  if (!T?.ent || !deck?.house?.rooms || !w.perch) return 0;
+  const ky = (T.seat.y - T.ent.deck.y) / Math.max(0.1, deck.seat.z - deck.z), dz = w.z - deck.z;
+  const off = Math.min(1, Math.max(0, (Math.hypot(w.x - deck.x, dz) - deck.r) / 3));
+  return -dz * ky * off;
 }

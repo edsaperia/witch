@@ -6,7 +6,8 @@ import { poseOf } from "../../rules/game";
 import { coastView, gazeAt } from "../../rules/camera";
 import { witchHeight } from "../../rules/witch";
 import { deckOf } from "../../rules/treehouse";
-import { moonInView } from "../../rules/telescope";
+import { moonInSky, skyDirection, skyOnScreen } from "../../rules/telescope";
+import { moonKnobs, type ChartKnobs } from "../chart/moon";
 import { constellationFor } from "../../rules/constellations";
 import { loanFind, nightFind } from "../../rules/finds";
 import { groundHeight, HEIGHT_UNIFORMS } from "../height";
@@ -35,7 +36,12 @@ export function placeCamera(v: View, time: number, pose: ReturnType<typeof poseO
     const W = g.witch, rdt = Number.isNaN(v.rideTime) ? 0 : time - v.rideTime, full = W.mode === "ground" ? t.groundSpeed : t.treetopSpeed;
     v.rideTime = time;
     v.ride.update(rdt, W.x, W.z, W.vx, W.vz, full, groundHeight, t.witch, witchHeight(W, t));
-    v.camRide.update(rdt, pose.tx, pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity); // (no floor: just the smoothed ground)
+    // (no floor: just the smoothed ground. In the treehouse, the ground at its middle: the oak's rooms are drawn over that, on the Ent's
+    // plane, wherever they lie (render/view/witch.ts, render/houseRooms.ts); under the rules' place a room far from the Terrace had the
+    // ground of 60 m away, the camera metres above or below her: Ed's playtest, 2026-10-25, "it doesn't seem to accurately know where
+    // the witch is")
+    const D = v.herOffset.on ? deckOf(g.map, t) : null;
+    v.camRide.update(rdt, D ? D.x : pose.tx, D ? D.z : pose.tz, W.vx, W.vz, full, groundHeight, t.witch, Infinity);
     v.rideOff = W.seated || W.perch ? 0 : v.ride.h - groundHeight(W.x, W.z); // (on the treehouse deck: its floor is flat)
   }
   const target = new THREE.Vector3(pose.tx, F ? F.ty : pose.ty + v.camRide.h, pose.tz); // (the flight's aim is in the world's heights)
@@ -125,9 +131,12 @@ function placeTelescope(v: View, look: { heading: number; fov: number; pitch: nu
   HEIGHT_UNIFORMS.uBend.value.set(T.bend, ex, ez, t.ground.hills.on ? t.ground.hills.amplitude : 0);
   HEIGHT_UNIFORMS.uBendFwd.value.set(s, -c);
   v.bendTo = T.bend;
-  // The moon by its bearing, and the stars a screen's width along for each field of view turned (sky.ts drifts them by uCam.x / 50).
+  // The moon at its bearing and elevation in the sky the stars are in (rules/telescope.ts moonInSky), projected through the same view
+  // (sky.look), so it keeps its place in the sky as the view pans, tilts and zooms (Ed's playtest, v4522: it rose and fell with the tilt).
   const fovX = (2 * Math.atan(Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height)) * 180) / Math.PI;
-  const mx = moonInView(moon.x, look.heading, fovX, T.moonSpread), shown = { ...moon, x: mx > -0.2 && mx < 1.2 ? mx : -2 };
+  const M = t.moon, sky = moonInSky(moon, T.moonSpread, M.low, M.high, moonKnobs(t as { chart?: ChartKnobs }).height);
+  const at = skyOnScreen(skyDirection(sky.bearing, sky.elevation), look.heading, look.pitch, look.fov, v.width / v.height);
+  const shown = at && at.x > -0.2 && at.x < 1.2 && at.y > -0.2 && at.y < 1.2 ? { ...moon, x: at.x, y: at.y } : { ...moon, x: -2 };
   v.sky.look(look.heading, look.pitch, look.fov, v.width, v.height);
   lookAtConstellation(v, look, fovX);
   v.sky.update(T.bend, ex + (look.heading / fovX) * v.width * 50, ez, T.hazeFar, 2 * T.hazeFar * Math.tan((look.fov * Math.PI) / 360) * (v.width / v.height), shown);

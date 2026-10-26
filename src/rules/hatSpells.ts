@@ -13,6 +13,7 @@ import { setLoadout, type SpellState } from "./spells";
 import { leaveHat, wearing } from "./hat";
 import { LEGEND, healBy, type Creature } from "./creatures";
 import { creatureMaxHp } from "./combat";
+import { relicsOut } from "./partyOver";
 
 /** Whom a hat's spell may stun, slow or move: a wild or enraged creature, not hers, not happy, not a legend, not one running
  *  off or gone; `enraged` false leaves the enraged out too (the Lullaby: Ed's "wild creatures nearby nap"). */
@@ -32,7 +33,7 @@ export function onHatPut(g: Game, W: Witch, x: number, z: number, time: number, 
   } else if (S.hat === "dowsing") {
     const D = t.spells.dowsing;
     let best = -1, bd = Infinity;
-    for (const r of g.relics) {
+    for (const r of relicsOut(g)) {
       if (r.state !== "lying" && r.state !== "dropped") continue;
       const d = Math.hypot(r.sx - x, r.sz - z);
       if (d < bd) { bd = d; best = r.id; }
@@ -108,7 +109,7 @@ export function hatLetters(down: { x: number; z: number; spell: string }[], t: T
 export function dowseMarker(g: Game, s: SpellState, time: number): { x: number; z: number } | null {
   const D = s.dowse;
   if (!D || time >= D.until) return null;
-  const r = g.relics[D.relic];
+  const r = relicsOut(g)[D.relic];
   return r && (r.state === "lying" || r.state === "dropped") ? { x: r.sx, z: r.sz } : null;
 }
 
