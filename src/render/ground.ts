@@ -168,6 +168,7 @@ void main() {
     // (the zoo's edge, Ed 2026-10-26: "all around the flagstones give way to water, which falls off the disc as a waterfall, and
     // behind that is space": past its lip, space, its stars fixed to the sky, not the ground; the fall is render/zooFences.ts)
     if (uZooStreet.x > 0.5 && bd > uZooStreet.z) {
+      if (bd < uZooStreet.z + 55.0) discard; // (the water pouring over the lip shows here, curving down below: render/zooFences.ts ZooFall)
       vec3 V = normalize(vec3(p.x, vWorld.y, p.y) - cameraPosition);
       vec2 sc = floor(V.xz / max(0.05, -V.y + 0.3) * 90.0);
       float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
@@ -201,7 +202,10 @@ void main() {
         float up = clamp(R.y, 0.0, 1.0);
         col = mix(uHazeColour * 0.9 + vec3(0.1, 0.17, 0.22), vec3(0.09, 0.18, 0.26), smoothstep(0.0, 0.3, up)); // (the sky's glow low down, the deep blue-teal over most of it)
         col *= 0.9 + 0.25 * (rip.x + 0.5); // (its ripples, lighter and darker)
-        if (uZooStreet.x > 0.5) { float lip = smoothstep(uZooStreet.z - 14.0, uZooStreet.z, bd); col = mix(col, vec3(0.36, 0.5, 0.6) * (0.85 + 0.3 * vnoise(p / vec2(1.5, 0.6) + vec2(0.0, uTime * 1.5))), lip * 0.7); } // (the zoo's lip: lighter where the water gathers to pour off)
+        if (uZooStreet.x > 0.5) { float lip = smoothstep(uZooStreet.z - 14.0, uZooStreet.z, bd); col = mix(col, vec3(0.36, 0.5, 0.6) * (0.85 + 0.3 * vnoise(p / vec2(1.5, 0.6) + vec2(0.0, uTime * 1.5))), lip * 0.7);
+          // (its foam the last few metres, streaming out over the edge)
+          float foam = step(0.52, vnoise(vec2(p.x + p.y, bd * 1.6 - uTime * 2.2) / 1.1)) * smoothstep(uZooStreet.z - 4.0, uZooStreet.z - 0.5, bd);
+          col = mix(col, vec3(0.78, 0.87, 0.93), foam * 0.85); } // (the zoo's lip: lighter where the water gathers to pour off)
         vec2 sc = floor(R.xz / max(0.08, R.y) * 26.0);
         float hs = fract(sin(dot(sc, vec2(12.9898, 78.233))) * 43758.5453);
         if (hs > 0.9965) col += vec3(0.42, 0.46, 0.56) * (0.55 + 0.45 * sin(uTime * 2.3 + hs * 90.0)); // a star

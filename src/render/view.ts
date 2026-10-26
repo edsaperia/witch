@@ -135,6 +135,8 @@ ${HEIGHT_VERT_GLSL}
 void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(position, 1.0)).xyz)); }`;
 
 /** A point light: where, how far it reaches, its colour and strength. */
+/** The zoo's plaza's own soft light over the World Tree (the legend circles' moonlit cyan). */
+const PLAZA_RGB = new THREE.Vector3(0.55, 0.85, 0.9);
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
   /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
    *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
@@ -1382,7 +1384,7 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
-    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0 }); this.ringCount++; }
+    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0.7 }); this.ringCount++; } // (lit always: the coordinator, 2026-10-26, "as clear as a legend circle's floor")
     // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
     const glint = g.tuning.legendClearing.floor?.glint ?? 0;
     for (let i = 0; i < near.length; i++) {
@@ -1394,7 +1396,7 @@ export class View {
       const L = id >= 0 ? g.creatures[id] : undefined;
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
-    if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 0; }
+    if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 1; } // (its grooves glinting, so the World Tree reads)
     return out;
   }
   private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
@@ -1571,7 +1573,9 @@ export class View {
     // (the zoo: no treehouse, dancefloor or speakers, only the Ent's circle on its plaza; Ed, 2026-10-26)
     const noHome = !!g.map.zoo?.layout, discoLight = this.dancefloor.update(time, this.ground, g, floorOff);
     if (noHome) { for (const m of [...this.treehouseBatch.meshes, ...(this.speakerBatch?.meshes ?? []), this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes]) m.visible = false; thLights.length = 0; speakerLights.length = 0; }
-    if (t.bare) setLights(this, [], w.x, w.z); else setLights(this, [...(noHome ? [] : [discoLight]), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    const zooF = this.island.zooFences; // (the zoo's railings: clear round her line of sight; the nearest lamps light the street, render/zooFences.ts)
+    zooF?.update(w.x, witchHeight(w, t) + this.rideOff + 1, w.z);
+    if (t.bare) setLights(this, [], w.x, w.z); else setLights(this, [...(noHome ? [] : [discoLight]), ...(zooF ? zooF.lights(w.x, w.z, time) : []), ...(zooF && g.map.zoo?.layout && Math.hypot(w.x - g.map.zoo.layout.home.x, w.z - g.map.zoo.layout.home.z) < 160 ? [{ x: g.map.zoo.layout.home.x, y: 7, z: g.map.zoo.layout.home.z, reach: 52, rgb: PLAZA_RGB, strength: 0.75 }] : []), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     SHADOW_TINT.value = t.shadows.tint ?? 0; // (every shadow's colour: render/shadows.ts, trunkShadows.ts)
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;

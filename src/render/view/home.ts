@@ -45,7 +45,7 @@ function mote(x: number, y: number, z: number, colour: THREE.Vector3, alpha: num
  *  motes; returns the lights of the nearest. */
 export function drawMarkers(v: View, time: number): ForestLight[] {
   const g = v.game, t = g.tuning, R = t.runeMarkers, w = g.witch, range = t.haze.far + 20, mc = v.markerCache;
-  if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = spawnMarkers(g.party, g.map); }
+  if (mc.wave !== g.party.wave || mc.n !== g.party.areas.size) { mc.wave = g.party.wave; mc.n = g.party.areas.size; mc.list = g.map.zoo?.layout ? [] : spawnMarkers(g.party, g.map); } // (the zoo's islands: only their animals, no runestones; the coordinator on Ed's spec, 2026-10-26)
   const cd = waveCountdown(g.party, g.map, time), build = g.party.paused ? 0 : cd.gone;
   const phase = (beatTime(g.beat, time) * t.beat.bpm) / 60, beat = Math.pow(0.5 + 0.5 * Math.cos(phase * Math.PI * 2), 2); // 1 on the beat
   const inst: SpriteInstance[] = [], lights: ForestLight[] = [], beacons: Beacon[] = [], motes = MOTES, lasers: Laser[] = [];

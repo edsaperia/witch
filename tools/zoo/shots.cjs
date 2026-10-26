@@ -42,6 +42,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     const L = await p.evaluate(() => { const Z = window.witch.game.map.zoo.layout, I = Z.islands.find(J => J.kind === "wolf") ?? Z.islands[0], at = a => { const n = I.reach.length, t = ((a + Math.PI) / (Math.PI * 2)) * n, i = Math.floor(t), f = t - i; return I.reach[((i % n) + n) % n] * (1 - f) + I.reach[(((i + 1) % n) + n) % n] * f; }; return { I: { x: I.x, z: I.z, south: at(Math.PI / 2), kind: I.kind }, home: Z.home, reach: Z.reach }; });
     log("island", JSON.stringify(L.I));
     await shoot(p, "fence", [L.I.x + 10, L.I.z + L.I.south + 7, "ground"]); // (on the street by its south shore, the fence before her)
+    await shoot(p, "fly-over", [L.I.x + 10, L.I.z + L.I.south, "treetop"]); // (in the treetops right over its fence)
     await shoot(p, "legend", [L.I.x, L.I.z + 34, "ground"]); // (south of its circle at the middle, its legend asleep in it)
     await shoot(p, "plaza", [L.home.x, L.home.z + 18, "ground"]); // (in the Ent's circle at the middle, its World Tree carving)
     await shoot(p, "plaza-above", [L.home.x, L.home.z + 40, "treetop"]);
