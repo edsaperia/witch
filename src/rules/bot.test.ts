@@ -42,11 +42,14 @@ describe("the bot", () => {
     expect(g.leash.stack.length + g.leash.placed.length).toBeGreaterThan(0); // (leashed: their runes picked up)
   });
 
-  it("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night", () => {
+  // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards
+  // turned the stack over every step and never went down, a fighter of the same level already at the bottom; on 33 it kept the
+  // last hare of an area with no legend, so the area could never be cleared, and had no one else to invite)
+  it.each([11, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night (seed %i)", seed => {
     // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
     // (seed 11: 8919, which this run was tuned on, lost once the bare broom lost the plain broom's quick take-off, Ed 2026-10-23, a
-    // chaotic run; on the bare broom seeds 11, 22 and 33 win, inviting 22, 20 and 21)
-    const g = newGame(11, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
+    // chaotic run; on the bare broom seeds 11, 22 and 33 win, inviting 22, 24 and 23)
+    const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
     const bot = newBot("skilled");
     let invited = 0;
@@ -56,7 +59,7 @@ describe("the bot", () => {
     }
     expect(g.partyOver).toBeFalsy();
     expect(g.win?.phase).toBe("won");
-    expect(invited).toBeGreaterThanOrEqual(15); // (15 here since home's forest mammals, 2026-10-12; seeds 11, 22 and 33 invite 17, 16 and 22, all won)
+    expect(invited).toBeGreaterThanOrEqual(15); // (15 here since home's forest mammals, 2026-10-12; seeds 11, 22 and 33 invite 22, 24 and 23, all won)
   }, 240000);
 
   it("is deterministic: the same game and steps give the same run", () => {
