@@ -9018,6 +9018,136 @@
       ],
       "additionalProperties": false
     },
+    "reveal": {
+      "type": "object",
+      "properties": {
+        "seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "edge": {
+          "type": "number",
+          "minimum": 0
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0
+        },
+        "legend": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "pad": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on"
+          ],
+          "additionalProperties": false
+        },
+        "runestone": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "find": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        },
+        "flask": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "radius": {
+              "type": "number",
+              "minimum": 0
+            },
+            "ring": {
+              "type": "number",
+              "minimum": 0
+            },
+            "width": {
+              "type": "number",
+              "minimum": 0
+            },
+            "height": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "radius"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "seconds",
+        "edge",
+        "depth",
+        "legend",
+        "runestone",
+        "find",
+        "flask"
+      ],
+      "additionalProperties": false
+    },
     "occlusion": {
       "type": "object",
       "properties": {

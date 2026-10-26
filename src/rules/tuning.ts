@@ -74,6 +74,9 @@ export interface GladeTuning {
   motes: { per: number; rise: number; height: number; size: number; hue: number; sat: number; bright: number };
 }
 
+/** A kind of place kept clear (Tuning.reveal). */
+export interface RevealKind { on: boolean; radius: number; ring?: number; width?: number; height?: number }
+
 export interface Tuning {
   /** Will-o'-the-wisps in the wild areas (render/wisps.ts, Ed 2026-10-07); off (or absent) for none. */
   wisps?: WispTuning;
@@ -427,6 +430,11 @@ export interface Tuning {
   /** The circle-bug suspects (Ed, 2026-10-14): each effect centred on her with a round edge, on as ever or off (the pause page's toggles). */
   suspects: { seeThrough: boolean; holeCut: boolean; trunkFade: boolean; groundCover: boolean; glow: boolean; effectsLayer: boolean; haze: boolean; areaAverage: boolean; seeDepth: boolean; cutWhole: boolean; seeSplit: boolean; seeMark: boolean; mist: boolean; lightRings: boolean; seeWrite: boolean; seeCull: boolean; seeKeep: boolean; seeStencil: boolean; seeEarly: boolean; seeSolid: "off" | "all" | "circle" | "rest"; seeNoBlend: boolean; seeShowAlpha: boolean; showBroken: boolean; seeDither: boolean; seeTwo: boolean };
   occlusion: { on: boolean; fadeOpacity: number; edge: number; minHeight: number; silhouette: number };
+  /** The places she stands in kept clear of the scenery in front of them (Ed, 2026-10-26; render/view/reveal.ts): the seconds each fades over in
+   *  and out, the soft edge (a share of the screen's width) and the depth (m) the fade eases over; and each kind on or off, the radius
+   *  (m) she stands within, the ring (m) boxed with it, and the width and height (m) of what stands at its centre (a legend's circle:
+   *  its own radius and legend, its ring pad m wider). */
+  reveal?: { seconds: number; edge: number; depth: number; legend: { on: boolean; pad?: number }; runestone: RevealKind; find: RevealKind; flask: RevealKind };
   stack: { offset: number; scale: number; gap: number; stiffness: number; damping: number; trail: number; idleSway: number; /** Its sigils more visible (Ed, 2026-10-15): each drawn at bright times leash.sigilGlyph, over a near-black disc at backing (0 none) backSize times its width, and with over drawn over the scenery (no depth test), so no crown hides the stack. */ bright?: number; backing?: number; backSize?: number; over?: boolean };
   lasers: { on: boolean; maxCount: number; length: number; spread: number; maxTilt: number; sweep: number; sweepBeats: number; openBars: number; opacity: number; duty: number; blockBars: number; fadeIn: number; fadeOut: number; fadeNear: number; fadeFar: number };
   borders: { on: boolean; width: number; brightness: number; sparkle: number; step: number; /** 0 a gentle breathing, 1 star-like flashes and dropouts */ twinkle: number; /** colour swaps a second */ swapRate: number; /** the share of sparks that swap on the beat */ swapBeat: number };

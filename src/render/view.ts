@@ -120,6 +120,7 @@ import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn 
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
+import { newReveal, setReveal } from "./view/reveal";
 import { drawWitch, houseShiftOf } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
@@ -169,6 +170,8 @@ function nightState(t: Tuning) {
     /** The canopy hole's lead ahead of her on screen (pixels, eased) and when it was last moved. */
     holeLead: { x: 0, y: 0 },
     holeAt: 0,
+    /** The place of interest she stands in, kept clear of the scenery in front of it (render/view/reveal.ts), eased. */
+    reveal: newReveal(),
     /** The bend the view is easing to (the treetops' when she's rising or up there), for culling. */
     bendTo: 0,
     /** How much each wave number shows over the bent horizon (eased), by its area, and when it was last eased. */
@@ -1360,6 +1363,7 @@ export class View {
 
     this.swapHomeArt();
     setFrameUniforms(this, time, up);
+    setReveal(this, time);
     const w = g.witch;
     this.time("uniforms");
     updateSources(this, time);

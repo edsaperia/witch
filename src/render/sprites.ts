@@ -51,6 +51,12 @@ export const SPRITE_UNIFORMS = {
   // Lying on the beach to stargaze the camera sits low behind her (rules/camera.ts beach.camera): anything nearer it than this
   // (metres, by its base's depth) dithers away, so trees behind her don't fill the picture (0: off).
   uNearCut: { value: 0 },
+  /** The place she stands in kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should
+   *  fade away"; render/view/reveal.ts): its box on screen (pixels: x0, y0, x1, y1; a legend's circle and its legend, a runestone,
+   *  the find, a flask), and its centre's depth from the camera (m), how far it's faded in (0 to 1), the soft edge (pixels) and the
+   *  depth (m) it eases over. */
+  uCircleBox: { value: new THREE.Vector4(0, 0, 0, 0) },
+  uCircleFade: { value: new THREE.Vector4(0, 0, 1, 1) },
   // The party's canopy uplight: the nearest partified areas (centre x, z, reach, fade-in) and their
   // colours; uUplight: strength, pulse, edge (m), the beat's phase (radians).
   uParty: { value: Array.from({ length: 16 }, () => new THREE.Vector4()) },
@@ -98,6 +104,9 @@ uniform float uWitchDepth;
 uniform vec4 uOcc;
 uniform float uNearCut;
 varying float vNear;
+uniform vec4 uCircleBox, uCircleFade;
+uniform float uHasFade;
+varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
 uniform vec4 uLean; // the witch under a load (render/load.ts): sheared forward (m per m up), tilted nose-up (m per m across), her broom bowed (art pixels)
 uniform vec4 uCutout, uWitch;
@@ -195,6 +204,16 @@ void main() {
   float hh = abs(s1.y - s0.y) * 0.5 + 1.0, hw = hh * iSize.x / max(iSize.y, 0.01);
   vec2 cc = (s0 + s1) * 0.5;
   float wob = 0.5 * uCutout.w * uCutShape.x; // (the hole's edge wobbles this far either way)
+  // The place she stands in (uCircleFade.y, eased in and out: a legend's circle, a runestone, the find, a flask): anything standing
+  // nearer the camera than its centre whose rectangle covers its box on screen (the grove's south trees, the rim's stones, crowns) fades out
+  // whole, easing over a few pixels of the boxes' gap and a few metres of depth, so nothing snaps at the line.
+  vCircle = 1.0;
+  if (uCircleFade.y > 0.0 && uHasFade > 0.5 && uFlat < 0.5) {
+    vec2 bc = (uCircleBox.xy + uCircleBox.zw) * 0.5, bh = (uCircleBox.zw - uCircleBox.xy) * 0.5;
+    float gap = length(max(abs(cc - bc) - bh - vec2(hw, hh), 0.0));
+    vCircle = 1.0 - uCircleFade.y * (1.0 - smoothstep(0.0, uCircleFade.z, gap)) * smoothstep(0.0, uCircleFade.w, uCircleFade.x + (viewMatrix * vec4(base, 1.0)).z);
+    if (vCircle < 0.004) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; } // (wholly gone: in no pass)
+  }
   if (abs(iFlags.y) > 0.001) {
     // Its own radius for the hole (vHole here: in pixels): each tree's own, spread round the hole's (uCutShape.w), and the
     // outline ragged round her, its bays and points drifting slowly round (uCutShape.z: Ed, 2026-10-06, "circle": no round line).
@@ -228,7 +247,7 @@ void main() {
   if (uFadePass > 0.5 && uSilhouette.a <= 0.0 && uSeeDbg.z > 0.5) { // (uSeeDbg.z: the circle hunt's switch for this cull)
     // Two kinds of see-through pixel (the fragment shader's \`passOf\`): \`occl\`, over her circle in front of her, and \`seePart\`,
     // anything half faded (a crown in the hole's band, a cut trunk's top, scenery at its budget's edge or appearing).
-    bool occ = false, part = uIsScenery > 0.5 && uAppear < 0.996;
+    bool occ = false, part = (uIsScenery > 0.5 && uAppear < 0.996) || vCircle < 0.996;
     float dbg = uCullDbg;
     if (uFlat < 0.5 && uOcc.w > 0.0 && vFront > 0.0) {
       float R = (1.0 + uOcc.y) * max(max(uWitch.z, uWitch.w) * 1.2, 1.0);
@@ -264,6 +283,7 @@ uniform vec4 uLean;
 uniform vec4 uWitch, uOcc, uSilhouette;
 varying float vNear;
 uniform float uFadePass, uHasFade;
+varying float vCircle;
 uniform float uLies; // lies flat on the ground (no cast shadow taken: it's drawn over it already)
 uniform float uFlat; // lies flat on the ground (a court's decal), or gameplay that stays solid: never cut away round her
 uniform vec4 uParty[16];
@@ -395,7 +415,7 @@ bool passOf() {
   // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
   // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
   // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
-  float edgeK = uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0; // (a crown: out to the canopy's reach)
+  float edgeK = (uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0) * vCircle; // (a crown: out to the canopy's reach; and the place she stands in kept clear)
   bool part = shown * trunkA * edgeK < 0.996;
   bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
   if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) return false; } // (the circle hunt)
@@ -602,6 +622,7 @@ void main() {
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
+  gl_FragColor.a *= vCircle; // (the place she stands in kept clear)
   if (uSeeShowA > 0.5 && uFadePass > 0.5 && (uFadePass < 1.5 || uFadePass > 2.5)) gl_FragColor = vec4(vec3(gl_FragColor.a), 1.0); // (the circle hunt: its opacity, white solid)
 }
 `;
