@@ -79,6 +79,31 @@ export interface PartyState {
 
 export const cellKey = (c: Cell) => `${c[0]},${c[1]}`;
 
+/** Whether area `key` is partified: a legend area with its pair (Ed, 2026-10-26: "The pair partifies together"; rules/map.ts
+ *  legend areas), any other by its own runestone. */
+export function partifiedKey(p: PartyState, map: Pick<ForestMap, "legendAreas"> | Partial<Pick<ForestMap, "legendAreas">>, key: string): boolean {
+  if (p.areas.has(key)) return true;
+  const pair = map.legendAreas?.size ? map.legendAreas.get(key) : undefined;
+  return pair !== undefined && p.areas.has(pair);
+}
+
+/** The partified areas as the view draws them (the string lights, the party border, the canopy's uplight, the wisps): each, and
+ *  each one's legend area as an entry of its own (its pair's record at the legend area's cell, no soundsystem: Ed, 2026-10-26,
+ *  "The pair partifies together", the border running round the outside of the pair). The same list while the party's areas
+ *  don't change (no allocation a frame). */
+const zoneCache = new WeakMap<PartyState, { n: number; map: unknown; zones: [string, Partified][] }>();
+export function partyZones(p: PartyState, map: Pick<ForestMap, "legendAreas"> | Partial<Pick<ForestMap, "legendAreas">>): readonly [string, Partified][] {
+  const had = zoneCache.get(p);
+  if (had && had.n === p.areas.size && had.map === map) return had.zones;
+  const zones: [string, Partified][] = [...p.areas];
+  if (map.legendAreas?.size) for (const [la, pair] of map.legendAreas) {
+    const a = p.areas.get(pair);
+    if (a) { const [x, y] = la.split(",").map(Number); zones.push([la, { ...a, cell: [x, y], soundsystem: null }]); }
+  }
+  zoneCache.set(p, { n: p.areas.size, map, zones });
+  return zones;
+}
+
 /** Whether a wave has passed an area already (or it's home): partified or ruined, and not one reached early whose wave is
  *  still to come (`ahead`). The picker steps over these. */
 const passed = (p: PartyState, key: string) => (p.areas.has(key) || !!p.ruined?.has(key)) && !p.ahead?.has(key);

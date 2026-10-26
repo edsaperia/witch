@@ -19,7 +19,8 @@ describe("islands by area count (map.islandAreas)", () => {
       const map = generateMap(seed, island(n)), home = map.siteOf(map.centreCell[0], map.centreCell[1]);
       expect(map.cells.length, `${n} areas, seed ${seed}`).toBe(n + 1);
       expect(map.cells.some(([x, y]) => x === map.centreCell[0] && y === map.centreCell[1])).toBe(true);
-      const far = Math.max(...map.cells.map(([x, y]) => { const s = map.siteOf(x, y); return Math.hypot(s.x - home.x, s.z - home.z); }));
+      // (its furthest ground: its areas', and its legend areas' grown beside them: Ed, 2026-10-26, the islands grow by them)
+      const far = Math.max(...[...map.cells, ...[...(map.legendAreas?.keys() ?? [])].map(k => k.split(",").map(Number))].map(([x, y]) => { const s = map.siteOf(x, y); return Math.hypot(s.x - home.x, s.z - home.z); }));
       for (const [x, y] of map.cells) { const s = map.siteOf(x, y); expect(isInside(map.bounds, s.x, s.z, 0), `seed ${seed}: area ${x},${y} inside`).toBe(true); }
       // (its coast round them, not the old map's: no further out than the buffer's depth and an area past it)
       const coast = map.bounds.land!.loops.find(l => l.sea)!.pts;

@@ -8,6 +8,7 @@
 // from. Glow only (bloom): no light, nothing from the light budget. Where the borders run comes
 // from rules/borders.ts, worked out a few milliseconds a frame as areas partify.
 import { beatTime } from "../rules/beat";
+import { partifiedKey, partyZones } from "../rules/party";
 import * as THREE from "three";
 import { sigilColour } from "../../art/generator.js";
 import { borderSteps, type BorderPoint } from "../rules/borders";
@@ -89,7 +90,7 @@ export class BorderView {
     this.mesh.visible = true; // (on again after the pause page's "Area edges" switched it off: Ed, 2026-10-13)
     (this.mesh.material as THREE.ShaderMaterial).uniforms.uBeat.value = (beatTime(g.beat, g.clock.time) * g.tuning.beat.bpm) / 60;
     // New areas: start working out their borders.
-    for (const [k, a] of g.party.areas) {
+    for (const [k, a] of partyZones(g.party, g.map)) { // (a legend area with its pair: they partify together)
       if (this.areas.has(k)) continue;
       const site = g.map.siteOf(a.cell[0], a.cell[1]), from = a.from ? g.map.siteOf(a.from[0], a.from[1]) : null;
       const ox = from ? (from.x + site.x) / 2 : site.x, oz = from ? (from.z + site.z) / 2 : site.z, reach = g.map.areaSize * 1.6, T = g.tuning.party.transition;
@@ -105,7 +106,7 @@ export class BorderView {
       if (j.gen.next().done) { this.areas.get(j.key)!.done = true; this.jobs.shift(); }
     }
     // Rebuild the line when an area's border is finished or the zone has grown.
-    const stamp = `${g.party.areas.size}|${[...this.areas.values()].filter(a => a.done).length}`;
+    const stamp = `${partyZones(g.party, g.map).length}|${[...this.areas.values()].filter(a => a.done).length}`;
     if (stamp === this.stamp) return;
     this.stamp = stamp;
     const pos: number[] = [], col: number[] = [], col2: number[] = [], spark: number[] = [];
@@ -117,7 +118,7 @@ export class BorderView {
     for (const [, a] of this.areas) {
       if (!a.done) continue;
       for (const p of a.points) {
-        if (p.other !== "edge" && g.party.areas.has(p.other)) continue; // inside the zone: no line
+        if (p.other !== "edge" && partifiedKey(g.party, g.map, p.other)) continue; // inside the zone: no line (round the outside of a pair)
         pos.push(p.x, 0.15, p.z);
         col.push(a.colour.r, a.colour.g, a.colour.b);
         col2.push(...(p.other === "edge" ? [a.colour.r, a.colour.g, a.colour.b] : colourOf(p.other)));
