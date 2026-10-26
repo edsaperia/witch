@@ -9,6 +9,7 @@
 // only celebrates (rules/party.ts spreadWave). No drawing here.
 import type { Creature } from "./creatures";
 import type { ForestMap } from "./map";
+import { areaCellAt } from "./map";
 import type { PartyState } from "./party";
 
 /** Whether a creature keeps its home area from being cleared: one of its own young or adults, not leashed, not happy (wild
@@ -65,7 +66,7 @@ export function wildLeft(creatures: readonly Creature[], cell: readonly [number,
 /** The wild area a witch at (x, z) is in, if clearing it would transform its runestone (not home, not partified or
  *  ruined): its cell, else null. */
 export function clearableAt(p: PartyState, map: ForestMap, x: number, z: number): [number, number] | null {
-  const cell = map.cellSafe(x, z).cell, key = `${cell[0]},${cell[1]}`, [hx, hy] = map.centreCell;
+  const cell = areaCellAt(map, x, z), key = `${cell[0]},${cell[1]}`, [hx, hy] = map.centreCell; // (a legend area as its pair)
   if ((cell[0] === hx && cell[1] === hy) || p.areas.has(key) || p.ruined?.has(key)) return null;
   return [cell[0], cell[1]];
 }

@@ -4,6 +4,7 @@ import { beatAt, timeAt } from "../rules/beat";
 import { PARTY_CAST } from "../rules/party";
 import { djIntroEnd } from "../rules/djSet";
 import { Music } from "../platform/audio/music";
+import { slowAmount, slowest } from "../render/slowtime";
 import { Sfx } from "../platform/audio/sfx";
 import { OVER_DEBUG, SfxCues } from "../platform/audio/sfxCues";
 import { AudioWatchdog } from "../platform/audio/watchdog";
@@ -197,7 +198,7 @@ export class Sound {
     // (the Music Lab's jump on the cue; its bedroom preview on its own clock, the mix whole, with no night playing)
     const labCue = this.lab ? this.lab.cued(cue) : cue, pv = this.lab?.previewTime(performance.now() / 1000) ?? null;
     const mix = pv ? { ...this.lastMix, volume: 1, cutoff: 16000, distort: 0 } : this.lastMix;
-    this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG)); // (the world slowed in a legend's circle: the music with it)
+    this.music?.update(mix, labCue, pv ? pv.time : game.clock.time, pv ? pv.clock : game.beat, pv ? true : !game.clock.paused, this.tuning.music, pv ? 1 : game.timeScale ?? 1, pv ? 0 : partyOverEase(game, OVER_DEBUG), pv || !game.witch.perch ? 0 : slowAmount(game.timeScale ?? 1, slowest(this.tuning))); // (the world slowed in a legend's circle or the treehouse: the music with it, and muffled there)
     if (this.lab && this.music?.engine && this.audio) this.lab.frame(this.music.engine, this.audio);
     const t2 = performance.now();
     if (this.sfxCues) this.sfxCues.leyLink = this.leyLink;

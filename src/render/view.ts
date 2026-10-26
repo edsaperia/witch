@@ -65,7 +65,7 @@ import { BuffHud } from "./buffhud";
 import type { Dancefloor } from "./dancefloor";
 import { PartyView } from "./party";
 import { MarkerArt, MarkerFx, type Mote } from "./markers";
-import type { SpawnMarker } from "../rules/party";
+import { partyZones, type SpawnMarker } from "../rules/party";
 import { WaveNumbers } from "./waveNumbers";
 import { StringLightsView } from "./strings";
 import { LeashView } from "./leash";
@@ -78,6 +78,7 @@ import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { StoneIndicator } from "./indicator";
+import { Pin, type PinLook, type PinTarget } from "./pins";
 import type { AlarmIndicators } from "./alarm";
 import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
@@ -540,6 +541,16 @@ export class View {
   dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
   winPointer: StoneIndicator | null = null;
+  /** Pins anyone has put up (render/pins.ts: view.pin(target, look)), drawn with the pointers. */
+  readonly pins = new Set<Pin>();
+  pinsAt = Number.NaN;
+  /** A map pin toward `target` (a world point with a height, or a house object), looking `look`; shown at once, `hide()` and
+   *  `show()` to fade it, `remove()` for good. */
+  pin(target: PinTarget, look: PinLook): Pin & { remove(): void } {
+    const p = Object.assign(new Pin(target, look), { remove: () => { this.pins.delete(p); p.dispose(); } });
+    this.pins.add(p);
+    return p;
+  }
   alarmCues: AlarmIndicators | null = null;
   get minimap(): Minimap { return this.island.minimap; }
   /** Metre rulers and a ground grid (G). */
@@ -1415,7 +1426,7 @@ export class View {
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
     {
-      const U = SPRITE_UNIFORMS, P = t.party, list = [...g.party.areas.values()].map(a => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) }))
+      const U = SPRITE_UNIFORMS, P = t.party, list = partyZones(g.party, g.map).map(([, a]) => ({ a, s: g.map.siteOf(a.cell[0], a.cell[1]) })) // (a legend area lit with its pair)
         .sort((p, q) => Math.hypot(p.s.x - w.x, p.s.z - w.z) - Math.hypot(q.s.x - w.x, q.s.z - w.z)).slice(0, 16);
       list.forEach(({ a, s }, i) => {
         const fade = (a.wave === 0 ? 1 : Math.min(1, Math.max(0, (time - a.at) / Math.max(0.01, P.transition)))) * (1 - offAt(s.x, s.z));
