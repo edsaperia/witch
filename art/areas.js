@@ -45,10 +45,10 @@ export const AREAS = [
   { id: "hazel-forest", name: "Hazel forest", creature: "hedgehog", by: "Ed", leaf: .26, floor: ["grass", .24, .45, .45], text: { floor: "short grass", small: "brown lumps", big: "crooked trees with many branches" },
     small: [P("mound", { brown: true })], big: [tree("hazel", { gnarl: 1, scale: .95 }), tree("oak", { minor: true, scale: .9 })] },
   // (the garden till the roster moved the wolf to the cold, Ed 2026-10-23/25; ring 3, so semi-temperate: a boreal edge with light
-  // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub, the garden's stone
-  // walls left standing as old field walls)
-  { id: "snowy-taiga", name: "Snowy taiga", creature: "wolf", by: "Ed", leaf: .32, floor: ["needles", .2, .3, .45], text: { floor: "pine needles under light snow", wall: "old drystone field walls", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens", set: "a stone pavilion" },
-    wall: [P("wall")], small: [tree("juniper", { scale: .45 })], big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: .85 })], set: P("pavilion") },
+  // snow, firs, pines and larches from the cold's list among rowans and aspens, a needle floor and juniper scrub; the formal garden's
+  // walls, flower beds and pavilion gone with it, Ed 2026-10-26)
+  { id: "snowy-taiga", name: "Snowy taiga", creature: "wolf", by: "Ed", leaf: .32, floor: ["needles", .2, .3, .45], text: { floor: "pine needles under light snow", small: "juniper scrub", big: "firs and pines, larches, rowans and aspens" },
+    small: [tree("juniper", { scale: .45 })], big: [tree("fir", { scale: 1.1 }), tree("rowan", { minor: true, scale: .85 })] },
   { id: "twiggy-forest", name: "Twiggy forest", creature: "squirrel", by: "Ed", leaf: .29, floor: ["plants", .3, .5, .38], text: { floor: "small leafy plants", small: "small trees with many thin trunks", big: "straight but slanted trees with many trunks" },
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
@@ -188,7 +188,7 @@ export const AREA_LAYOUTS = {
   "hazel-forest": LAY("rings", .6, .6, [2, [6, 9]], [.3, .625, .06, .015], .5, NO_LEAN, ["mounds", "paths"], [.3, [.4, .3, .3, 0, 0]],
     "Crooked hazels grown in loose fairy rings on short grass, lumpy little mounds in the middle of each."),
   "snowy-taiga": LAY("stands", .7, .55, [2, [8, 12]], [.15, .65, .175, .025], .4, NO_LEAN, ["mounds", "hollows"], [.35, [.3, .3, .2, .1, .1]],
-    "Firs and pines in close stands under light snow, larches and rowans and aspens at their edges, old field walls running between; cold, quiet and watched."),
+    "Firs and pines in close stands under light snow, larches, rowans and aspens at their edges, juniper scrub between; cold, quiet and watched."),
   "twiggy-forest": LAY("scatter", .75, .3, [1, [6, 10]], [.25, .625, .1, .025], .6, [60, .5], ["paths"], [.25, [.3, .2, .3, 0, .2]],
     "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
   "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .65, .2, .1], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],

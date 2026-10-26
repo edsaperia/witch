@@ -1612,21 +1612,6 @@ describe("wall objects as features", () => {
   const W = TUNING.walls;
   // Areas of a type that own ground (a cell whose site lies in another area has none).
   const cellsOf = (id: string) => { const out: [number, number][] = []; for (let y = 0; y < map.n; y++) for (let x = 0; x < map.n; x++) { if (AREA_TYPES[map.typeOf(x, y)].id !== id) continue; const s = map.siteOf(x, y), c = map.areaAt(s.x, s.z).cell; if (c[0] === x && c[1] === y && isInside(map.bounds, s.x, s.z, (TUNING.beach?.on ? TUNING.beach.width : 0) + map.areaSize * 0.6)) out.push([x, y]); } return out; }; // (not the areas the beach cuts into)
-  // (the garden's walls stand on in the snowy taiga as old field walls, the roster's re-theme, 2026-10-26; its flower beds went with
-  // the garden: whether a temperate area takes them up is Ed's call)
-  it("lay the taiga's old field walls as joined runs (no isolated stubs), a few runs an area, with no flower beds", () => {
-    const cells = cellsOf("snowy-taiga");
-    expect(cells.length).toBeGreaterThan(0);
-    let pieces = 0, joined = 0, beds = 0;
-    for (const [cx, cy] of cells) {
-      const f = wallFeatures(map, cx, cy);
-      expect(f.walls.length).toBeLessThanOrEqual(W.runs[1] * W.runLength[1]);
-      for (const p of f.walls) { pieces++; if (f.walls.some(q => q !== p && Math.hypot(q.x - p.x, q.z - p.z) < 3.2)) joined++; }
-      beds += f.beds.length;
-    }
-    expect(joined / pieces).toBeGreaterThan(0.85);
-    expect(beds).toBe(0);
-  });
   it("set the shrine's henge stones in circles, not an even field", () => {
     let stones = 0, inRing = 0;
     for (const [cx, cy] of cellsOf("stone-shrine")) {
@@ -1639,7 +1624,7 @@ describe("wall objects as features", () => {
     expect(inRing / stones).toBeGreaterThan(0.8);
   });
   it("are the same every time and keep off paths and the reserved spots", () => {
-    for (const [cx, cy] of [...cellsOf("snowy-taiga"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
+    for (const [cx, cy] of [...cellsOf("thorn-scrub"), ...cellsOf("stone-shrine"), ...cellsOf("wetland")].slice(0, 8)) {
       const f = wallFeatures(map, cx, cy);
       expect(wallFeatures(map, cx, cy)).toEqual(f);
       for (const p of f.walls) { expect(map.paths.at(p.x, p.z)).toBeNull(); expect(map.reserved(p.x, p.z, 1.5)).toBe(false); }
