@@ -103,7 +103,7 @@ export interface Tuning {
   /** The density field: a patch noise patchScale metres across ranging patchMin to patchMax times an area's density, and a floor of lone trees. */
   density: { patchScale: number; patchMin: number; patchMax: number; lone: number };
   /** Ragged area edges: plants take their look from up to width metres away (noise scale metres, plus a per-plant stray share). */
-  areaEdgeBlend: { width: number; scale: number; stray: number };
+  areaEdgeBlend: { width: number; scale: number; stray: number; /** the band's own wander (m) and its noise's size (m) */ warp?: number; warpScale?: number; /** the share of the band the tufts blend over */ tufts?: number };
   /** How neighbouring areas' floor textures meet: a two-octave warp of warp and fine metres, and a dithered band metres wide. */
   groundBlend: { on: boolean; warp: number; fine: number; band: number; dither: boolean };
   /** The ground's fake relief: rises and hollows from noise (scale metres across) tilting the ground's normal by strength, so lights pick out the bumps, and shading hollows darker by shade. */

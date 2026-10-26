@@ -1,0 +1,24 @@
+{
+  "pr": 1149,
+  "group": "Area blend",
+  "decisions": [
+    {
+      "id": "areaBlend",
+      "pr": 1149,
+      "group": "Area blend",
+      "label": "Area blend (m)",
+      "note": "How far each area's trees, bushes and ground cover reach into its neighbours (Ed, 2026-10-26: \"The effect that makes tree placement from neighbouring areas blend should be increased\"): the neighbour's share ramps from about half at the border to none this many metres in, the band wandering by the tuning's areaEdgeBlend.warp. 40 was the old blend, 0 a hard edge. A new map: it reloads.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 160,
+        "step": 10
+      },
+      "default": 80,
+      "apply": {
+        "knob": "areaEdgeBlend.width",
+        "reload": true
+      }
+    }
+  ]
+}

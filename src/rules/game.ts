@@ -62,7 +62,7 @@ import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { deckOf, onTreehouse } from "./treehouse";
-import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
+import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -176,6 +176,8 @@ export interface Game {
   /** The party's over (Ed, 2026-10-06: every soundsystem and the home ring's speakers destroyed): the afterparty, when it
    *  began and how far it has eased in (rules/partyOver.ts). Null while the party's on. */
   partyOver: PartyOver | null;
+  /** The world put to bed while the night waits for her party spell (rules/partyOver.ts stepWorldAsleep): woken as it's cast. */
+  asleepBeforeParty?: boolean;
   /** The end of the route (rules/win.ts): the stragglers, the victory lap, the night won. Null till the last wave lands. */
   win: WinState | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */
@@ -363,7 +365,7 @@ export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
   const w = g.witches[id], at = g.herTime + (worldAt - g.clock.time);
-  if (!w || w.ko || dashing(w.dash, at) || g.partyOver || won(g)) return; // (the afterparty, or the night won: nothing hurts her)
+  if (!w || w.ko || dashing(w.dash, at) || worldAsleep(g) || won(g)) return; // (the afterparty, the world before the party, or the night won: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
   // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
@@ -567,7 +569,10 @@ function fixedStep(g: Game, controls: Controls): void {
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
+  // The world before the party is the afterparty's (Ed, 2026-10-26): asleep in bed, or got up as the spell's cast.
+  stepWorldAsleep(g, g.clock.time);
   const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
+  const still = calm || worldAsleep(g); // (and the world before the party: no fights, the legends still, nothing grows; its waves wait as ever, stepParty)
   const lapping = g.win?.phase === "lap"; // (the victory lap: its pulses race along the line, the waves done with: rules/win.ts)
   if (c.pauseWaves && !calm) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
@@ -575,7 +580,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (!calm && !lapping) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
-  if (!calm) stepLegends(g, legends, !!c.happyNearest);
+  if (!still) stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -588,14 +593,14 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepHealingRing(W.spells, W.health, W.body.mode === "ground" ? hatsDown(W) : [], W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
-  if (!calm) stepClear(g);
+  if (!still) stepClear(g);
   // (in the treehouse her followers guard home as if their sigils were placed there, her stack unchanged: rules/houseGuard.ts)
   const LV = leashView(W, g.creatures, g.map, t);
   updateModes(LV.stack, LV.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
-  if (!calm) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
-  if (!calm) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
-  if (!calm) stepFights(g, t, dt, busy);
+  if (!still) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
+  if (!still) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
+  if (!still) stepFights(g, t, dt, busy);
   else if (over) stepPartyOver(g, dt); // (nothing fights: everyone walks home to bed, rules/partyOver.ts)
   // Noticing her (before they step, so a curious baby sets off this step).
   {
@@ -621,7 +626,7 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
-  if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
+  if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
   questsFromPlaced(g, ht);

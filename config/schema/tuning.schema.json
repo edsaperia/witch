@@ -866,12 +866,27 @@
         "stray": {
           "type": "number",
           "minimum": 0
+        },
+        "warp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warpScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "width",
         "scale",
-        "stray"
+        "stray",
+        "warp",
+        "warpScale",
+        "tufts"
       ],
       "additionalProperties": false
     },
@@ -3578,6 +3593,17 @@
           "type": "number",
           "minimum": 0
         },
+        "follow": {
+          "type": "boolean"
+        },
+        "followLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "followSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
         "legendGap": {
           "type": "number",
           "minimum": 0
@@ -3618,6 +3644,9 @@
         "congaRadius",
         "joinSpeed",
         "seen",
+        "follow",
+        "followLead",
+        "followSpeed",
         "legendGap",
         "legendRow",
         "legendSpace",

@@ -167,13 +167,16 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 
 ### `areaEdgeBlend`
 
-Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. Only the look: creatures, partifying and the party border keep the exact borders.
+Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
 
 | knob | type | range |
 |---|---|---|
 | `areaEdgeBlend.width` | number | 0 to … |
 | `areaEdgeBlend.scale` | number | 0 to … |
 | `areaEdgeBlend.stray` | number | 0 to … |
+| `areaEdgeBlend.warp` | number | 0 to … |
+| `areaEdgeBlend.warpScale` | number | 0 to … |
+| `areaEdgeBlend.tufts` | number | 0 to … |
 
 ### `groundBlend`
 
@@ -824,7 +827,7 @@ The 💌 invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when o
 
 ### `win`
 
-The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after.
+The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after. The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"): with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.
 
 | knob | type | range |
 |---|---|---|
@@ -834,6 +837,9 @@ The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/jou
 | `win.congaRadius` | number | 0 to … |
 | `win.joinSpeed` | number | 0 to … |
 | `win.seen` | number | 0 to … |
+| `win.follow` | boolean |  |
+| `win.followLead` | number | 0 to … |
+| `win.followSpeed` | number | 0 to … |
 | `win.legendGap` | number | 0 to … |
 | `win.legendRow` | number | 0 to … |
 | `win.legendSpace` | number | 0 to … |
