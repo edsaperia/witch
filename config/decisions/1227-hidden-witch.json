@@ -1,0 +1,133 @@
+{
+  "pr": 1227,
+  "group": "Hidden witch",
+  "decisions": [
+    {
+      "id": "occSilhouette",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Silhouette",
+      "note": "Where scenery still hides her, her shape drawn flat in her glow colour through it, at this strength: 0.55 as built, 0 none (she's simply hidden), 1 a solid glow-coloured cut-out. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0.55,
+      "apply": {
+        "knob": "occlusion.silhouette"
+      }
+    },
+    {
+      "id": "occSeeThrough",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "See-through",
+      "note": "How clear the soft circle round her is at its middle, where tall things in front of her fade: 0 as built (fully see-through there), 1 not at all (solid: no circle, the silhouette alone shows her). Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05
+      },
+      "default": 0,
+      "apply": {
+        "knob": "occlusion.fadeOpacity"
+      }
+    },
+    {
+      "id": "occEdge",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Soft edge",
+      "note": "Where the circle eases back to solid, as a share of its radius past her body: 3 as built; lower, a smaller, harder-edged hole; higher, a wider, softer one. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 8,
+        "step": 0.25
+      },
+      "default": 3,
+      "apply": {
+        "knob": "occlusion.edge"
+      }
+    },
+    {
+      "id": "occMinHeight",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Fade things taller than (m)",
+      "note": "Only things taller than this (metres) standing in front of her fade round her: 2.5 as built, so bushes and props stay solid and trees, rocks and ruins fade; 0, everything in front of her fades. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 10,
+        "step": 0.5
+      },
+      "default": 2.5,
+      "apply": {
+        "knob": "occlusion.minHeight"
+      }
+    },
+    {
+      "id": "glowHue",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow colour (hue)",
+      "note": "Her own glow's colour round the colour wheel (light.spooky.glowHue, the spooky mood's; render/lighting.ts uGlowRgb): 0.08 as built, a warm amber-orange; 0 red, 0.17 yellow, 0.33 green, 0.5 cyan, 0.67 blue, 0.83 magenta. Her pool on the ground, its light on what's near her and her silhouette all take it; the swatch is the colour. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.01,
+        "swatch": {
+          "hue": "light.spooky.glowHue",
+          "sat": "light.spooky.glowSat"
+        }
+      },
+      "default": 0.08,
+      "apply": {
+        "knob": "light.spooky.glowHue"
+      }
+    },
+    {
+      "id": "glowSat",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow colour (saturation)",
+      "note": "How coloured her glow is (light.spooky.glowSat): 0.55 as built; 0 white light, 1 the hue at its deepest. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 1,
+        "step": 0.05,
+        "swatch": {
+          "hue": "light.spooky.glowHue",
+          "sat": "light.spooky.glowSat"
+        }
+      },
+      "default": 0.55,
+      "apply": {
+        "knob": "light.spooky.glowSat"
+      }
+    },
+    {
+      "id": "glowPower",
+      "pr": 1227,
+      "group": "Hidden witch",
+      "label": "Glow strength",
+      "note": "Her own glow at its brightest (glowPower): 0.95 as built; 0 no glow (her silhouette keeps its colour); over 1 the bright middle of her pool spreads wider, as the light is capped at full. Live.",
+      "control": {
+        "type": "slider",
+        "min": 0,
+        "max": 2,
+        "step": 0.05
+      },
+      "default": 0.95,
+      "apply": {
+        "knob": "glowPower"
+      }
+    }
+  ]
+}

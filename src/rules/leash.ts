@@ -11,7 +11,7 @@ import { attackerNear, BABIES_DEFAULT, babiesOf, isBaby, scatterSpot, stepBaby, 
 import { runeOffset } from "./runeOffset";
 import { heal, speedFactor, type Creature } from "./creatures";
 import type { Tuning } from "./tuning";
-import { befriend, invitableNow, stateOf } from "./creatureStates";
+import { befriend, inConga, invitableNow, stateOf } from "./creatureStates";
 import { facingAway } from "./witch";
 
 export interface PlacedSigil { id: number; x: number; z: number; /** game time it was put down */ at: number }
@@ -142,6 +142,8 @@ export interface LeashControls {
   inviteNearest?: boolean;
   /** Whether a hex cell centred at (x, z) is barred to sigils (under a runestone, a soundsystem or a home speaker: rules/sigilButton.ts). */
   barred?: (x: number, z: number) => boolean;
+  /** Whether (x, z) is on the island's land, where a scattering baby may run to (rules/sigilButton.ts; none: anywhere). */
+  land?: (x: number, z: number) => boolean;
   /** Put a relic's sigil down on the ground at (x, z) (the game's relics: rules/sigilButton.ts), when it's at the bottom of
    *  her stack and the button isn't giving it to a legend (Ed, 2026-10-08: "if the flask is in the bottom slot, it's what you
    *  put down when you press e"). */
@@ -189,6 +191,7 @@ function nearest(creatures: Creature[], x: number, z: number, within: number, le
 
 /** Invite it: leashed to her, for good (#87), its sigil on the bottom of the stack (the 💌's second step: rules/invites.ts). */
 export function inviteCreature(s: LeashState, c: Creature, x: number, z: number, time: number, kind: "invited" | "picked" = "invited"): void {
+  if (inConga(c)) return; // (the won night's line follows her, never on her leash: rules/creatureStates.ts inConga)
   c.leashed = true; c.state = "leashed"; c.affection = undefined; c.dazed = false; c.dazedUntil = undefined;
   c.rest = 0;
   c.wanderTo = undefined; c.siege = undefined; c.fight = undefined;
@@ -305,12 +308,15 @@ export function stepLeash(s: LeashState, creatures: Creature[], c: LeashControls
     if (!s.scatter) { const dx = witch.x - foe.x, dz = witch.z - foe.z, d = Math.hypot(dx, dz) || 1; s.scatter = { x: dx / d, z: dz / d, until: 0 }; }
     s.scatter.until = time + (BB.calm ?? BABIES_DEFAULT.calm);
   } else if (s.scatter && (!babies.length || time >= s.scatter.until)) s.scatter = undefined;
+  const land = c.land;
   for (let i = s.stack.length - 1, k = 0; i >= 0; i--) {
     const id = s.stack[i], c = byId(id);
     if (!babies.length || !isBaby(c)) continue;
     const slot = k++;
     if (busy(id)) continue;
-    const to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
+    let to = s.scatter ? scatterSpot(c, witch.x, witch.z, s.scatter, BB.scatter) : trailPoint(s.trail, witch.x, witch.z, (slot + 1) * BB.gap);
+    // (scattered off the screen, but never off the island: pulled back toward her till it's on land)
+    for (let n = 0; s.scatter && land && n < 8 && !land(to.x, to.z); n++) to = { x: witch.x + (to.x - witch.x) * 0.75, z: witch.z + (to.z - witch.z) * 0.75 };
     stepBaby(c, to.x, to.z, witch.x, witch.z, leashSpeed(c, t) * (t.leash.pace ?? 1), herSpeed, dt, t);
   }
   const guarding = new Set(guards.map(p => p.id));
