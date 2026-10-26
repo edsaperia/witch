@@ -11,6 +11,7 @@ import { beatAt, beatTime } from "../../rules/beat";
 import { candleCount, candleMelt, candleRed } from "../../rules/knockout";
 import { canopyShown } from "../../rules/witch";
 import { deckOf, type Deck } from "../../rules/treehouse";
+import { atDecks } from "../../rules/wakeUp";
 import { groundHeight } from "../height";
 import { cellKey, spawnMarkers, waveCountdown, wavePlan } from "../../rules/party";
 import { leyKey } from "../../rules/leylines";
@@ -365,7 +366,9 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const k = Math.floor(beatAt(v.game.beat, time) * 2) % T.foreFrames, ff = f[2 + Math.max(0, k)], R = SPRITE_UNIFORMS.uRight.value;
     const dx = (T.foreBox.x + ff.w / 2 - f[0].w / 2) * mpp, dy = (f[0].h - T.foreBox.y - ff.h) * mpp;
     const p0 = { x: at.x + R.x * dx + U.x * dy, y: at.y + R.y * dx + U.y * dy, z: at.z + R.z * dx + U.z * dy };
-    items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true });
+    // (lit while E there starts the party, as the house's objects she can use are: Ed's playtest, 2026-10-26; render/useGlow.ts's breath)
+    const g = v.game, lit = !!g.wake?.open && g.party.spellAt === null && atDecks(g) ? 0.18 + 0.12 * Math.cos((2 * Math.PI * performance.now()) / 1400) : 0;
+    items.push(deckAt ? ent(p0, ED.near + DJ_DEPTH.fore - DJ_DEPTH.her, ff, { overlay: true, glow: lit }) : { ...nearerCamera(v, p0, DJ_DEPTH.fore), frame: ff, flip: false, overlay: true, glow: lit });
   }
   // The knockdown candles along the front edge of the studio's terrace (Ed, 2026-10-07), a loading bar (rules/knockout.ts: candleCount, one for every knockout.candleStep
   // seconds of her wait; candleRed of them red, the wait past the base; candleMelt, burning down one after another as she
