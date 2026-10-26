@@ -1407,7 +1407,10 @@ export class View {
     }
     // The sleeping legends' clearings: their twilight and motes, the nearest few (render/glades.ts).
     { const gdt = Math.min(0.1, Math.max(0, ht - this.gladeTime)); this.gladeTime = ht; // (eased on her clock, so the slowing doesn't slow its own look)
-      this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, slowAmount(g.timeScale, slowest(t))); }
+      // (none on the house, its rooms, Terrace and telescope: its own slowing greyed all the view there as outside a circle it isn't
+      // in, washing the island out through the telescope; Ed, 2026-10-26: "I think it should not be grey": indoors the slowed time
+      // shows only in how things move. A sleeping legend's circle outdoors keeps its grey.)
+      this.glades.update(g, w.x, w.z, gdt, w.mode === "ground", undefined, w.perch || this.telescope ? 0 : slowAmount(g.timeScale, slowest(t))); }
     this.wisps?.update(g, w.x, w.z, ht); // (the wild areas' wisps round her, render/wisps.ts)
     this.time("party");
     // The canopy uplight over the nearest partified areas, fading in with each one's transition.
