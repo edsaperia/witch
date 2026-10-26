@@ -996,8 +996,20 @@ export class View {
     return true;
   }
 
+  /** How far the shaders' readiness has got (compileAll), for a loading screen's bar (the coordinator, 2026-10-26: Foxtrot's
+   *  loading screen fills from real progress): its stage, and that stage's steps done out of its total (the programs linked, the
+   *  textures uploaded, the warm draws; the GPU's catching up has no count, 0 of 1 till it has). "ready" once all are done. Read it
+   *  as `window.witch.view.readiness`; `share` is the whole of it, 0 to 1. */
+  readonly readiness: { stage: "compile" | "programs" | "textures" | "draws" | "gpu" | "ready"; done: number; total: number; share: number } = { stage: "compile", done: 0, total: 1, share: 0 };
+  private setReadiness(stage: View["readiness"]["stage"], done: number, total: number): void {
+    const order = ["compile", "programs", "textures", "draws", "gpu", "ready"], i = order.indexOf(stage), r = this.readiness;
+    r.stage = stage; r.done = done; r.total = Math.max(1, total);
+    r.share = stage === "ready" ? 1 : Math.min(0.999, (i + Math.min(1, done / r.total)) / (order.length - 1));
+  }
+
   /** Every shader the scene holds compiled, and their programs' logs read, ahead of their first draw (prepare). */
   private async compileAll(): Promise<void> {
+    this.setReadiness("compile", 0, 1);
     // Every shader the scene holds compiled now, in the Bedroom, not on the first frame each is drawn (overnight phase 2: ten
     // programs compiled mid-run before, a hitch each: on the first steps, the first rise and the first waves; after, one).
     // In the background where the browser can (KHR_parallel_shader_compile); nothing it draws changes.
@@ -1017,14 +1029,19 @@ export class View {
     // Waited for till every program is ready (three asks the driver without waiting, KHR_parallel_shader_compile, every 10 ms):
     // a cap of 4 s (Ed's laptop, 2026-10-21: reached every time) left the rest compiling, and the program logs read next waited on
     // them, one task, 5 s with the chart frozen. A program the driver never finishes mustn't hold the start for good: 60 s.
+    // (the programs linked so far out of all of them, a loading screen's count: three's isReady, KHR_parallel_shader_compile's status)
+    const linked = () => { const all = (this.renderer.info.programs ?? []) as unknown as { isReady(): boolean }[]; this.setReadiness("compile", all.filter(p => p.isReady()).length, all.length); };
+    linked();
+    const counting = setInterval(linked, 50);
     const t0 = performance.now(), capped = await Promise.race([compiled.then(() => false), new Promise<boolean>(r => setTimeout(() => r(true), 60000))]);
+    clearInterval(counting);
     if (capped) console.warn(`view: the shaders weren't ready in ${Math.round(performance.now() - t0)} ms; play starts anyway`);
     performance.mark("witch:prep-compiled");
     releaseDisposals(); // (the last night's materials, kept till now: render/retire.ts)
     // three reads a program's link and compile logs on its first draw (onFirstUse), a call that waits on the GPU: 0.1 to 2 s
     // in play the first time she rises, lands or comes near something new. Read them now, at load, for every program.
-    const programs = [...(this.renderer.info.programs ?? [])]; // (a program's log read a step at a time: render/slices.ts)
-    await runSliced((function* () { for (const p of programs) { p.getUniforms(); yield; } })(), "programs");
+    const programs = [...(this.renderer.info.programs ?? [])], v = this; // (a program's log read a step at a time: render/slices.ts)
+    await runSliced((function* () { let i = 0; for (const p of programs) { v.setReadiness("programs", i++, programs.length); p.getUniforms(); yield; } })(), "programs");
     performance.mark("witch:prep-programs");
     // And every texture the scene's materials hold uploaded now, a texture a step (three uploads each on its first draw: on Ed's
     // laptop, 2026-10-21, most of the 2 s first frame after a sail; the cloud's first frame's 5 to 7 s), so the first frame
@@ -1032,10 +1049,31 @@ export class View {
     const textures = new Set<THREE.Texture>();
     this.scene.traverse(o => { for (const m of ([] as THREE.Material[]).concat((o as THREE.Mesh).material ?? [])) for (const u of Object.values((m as THREE.ShaderMaterial).uniforms ?? {})) for (const t of ([] as unknown[]).concat(u?.value)) if ((t as THREE.Texture)?.isTexture && !(t as THREE.Texture).isRenderTargetTexture) textures.add(t as THREE.Texture); });
     const R = this.renderer;
-    await runSliced((function* () { for (const t of textures) { if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
+    await runSliced((function* () { let i = 0; for (const t of textures) { v.setReadiness("textures", i++, textures.size); if ((t as THREE.Texture & { image?: unknown }).image) R.initTexture(t); yield; } })(), "textures");
     performance.mark("witch:prep-textures");
+    this.setReadiness("draws", 0, 1);
     await this.warmDraws();
     performance.mark("witch:prep-draws");
+    this.setReadiness("gpu", 0, 1);
+    await this.gpuCaughtUp();
+    performance.mark("witch:prep-gpu");
+    this.setReadiness("ready", 1, 1);
+  }
+
+  /** Waited for, without blocking the page, till the GPU has done everything asked of it so far (a fence, polled): the links, the
+   *  uploads and the warm draws above are only queued, and the first frame after them waited on the lot, a frozen frame just as play
+   *  began (the coordinator, 2026-10-26, Hotel's profile: 2 to 7 s held in some cold starts, at the first draw after the start key;
+   *  here the fence took 2.5 to 11 s after ready). So the loading screen (or the chart) stays up for it instead. A GL without fences
+   *  (WebGL 1) goes on as before; one that never signals mustn't hold the start for good: 30 s. */
+  private async gpuCaughtUp(): Promise<void> {
+    const gl = this.renderer.getContext();
+    if (!(typeof WebGL2RenderingContext !== "undefined" && gl instanceof WebGL2RenderingContext)) return;
+    const fence = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
+    if (!fence) return;
+    gl.flush();
+    const t0 = performance.now();
+    while (gl.clientWaitSync(fence, 0, 0) === gl.TIMEOUT_EXPIRED && performance.now() - t0 < 30000) await new Promise(r => setTimeout(r, 25));
+    gl.deleteSync(fence);
   }
 
   /** The first frame drawn ahead, a pass a step, its targets a few pixels across (render/post.ts renderSteps): a GL's first draw
@@ -1061,7 +1099,7 @@ export class View {
         }
       });
       const show = (on: THREE.Object3D | null) => { for (const o of was.keys()) o.visible = !(o as THREE.Mesh).isMesh && !(o as THREE.Points).isPoints && !(o as THREE.Line).isLine && !(o as THREE.Sprite).isSprite; if (on) on.visible = true; };
-      for (const o of one) { show(o); R.setRenderTarget(v.post.sceneTarget); R.render(v.scene, v.camera); yield; }
+      for (const [i, o] of one.entries()) { v.setReadiness("draws", i, one.length); show(o); R.setRenderTarget(v.post.sceneTarget); R.render(v.scene, v.camera); yield; }
       for (const [o, vis] of was) o.visible = vis;
       yield* v.post.renderSteps(v.scene, v.camera, false);
     })(), "draws");
