@@ -121,7 +121,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
 /** A sigil put down this step in a sleeping legend's clearing finishes its quest: only the drop does (Ed, 2026-10-19: "The reward should
  *  be given when the sigil is placed, not when the animal enters the circle"; her animal of its kind walking in does nothing). */
 export function questsFromPlaced(g: Game, ht: number): void {
-  if (g.partyOver) return; // (no quests once the party's over: Ed, 2026-10-18)
+  if (worldAsleep(g)) return; // (no quests once the party's over, Ed 2026-10-18, nor before it: Ed, 2026-10-26)
   // A sigil put down in a wild area whose legend dreams of that creature: the quest is done.
   for (const e of g.leash.events.slice()) if (e.kind === "placed" && e.at === ht) {
     const ids = (g.legendIds ??= g.creatures.filter(k => k.boss).map(k => k.id)), L = questPlaced(g.map, g.creatures, ids, g.friendly, k => g.party.areas.has(k), e.id, e.x, e.z, g.clock.time);

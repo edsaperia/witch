@@ -10,6 +10,7 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { fillTrunk } from "./finds";
 import { endParty, worldAsleep } from "./partyOver";
 import type { Creature } from "./creatures";
+import { circleLines } from "./legendCircle";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
@@ -107,6 +108,21 @@ describe("the world before the party is the afterparty's (Ed, 2026-10-26)", () =
     out(g, T.x, T.z);
     run(g, 0.2, { place: true, sigil: true });
     expect(T.found).toBe(true);
+  });
+
+  it("a legend only snores before the party, no dream (Ed, 2026-10-26): its quest closed, as after a loss, open again once it's cast", () => {
+    const g = beforeParty(), dreamers = g.creatures.filter(c => c.boss && c.quest && c.quest.done === undefined);
+    expect(dreamers.length).toBeGreaterThan(3);
+    for (const c of dreamers) {
+      // (asleep, so render/leash/bubbles.ts gives it a snore; questOpen false, so render/leash.ts gives it no dream)
+      expect(deepAsleep(c), `${c.species} ${c.id}`).toBe(true);
+      expect(c.questOpen, `${c.species} ${c.id}`).toBe(false);
+      expect(circleLines(c, true).map(l => l.text)).toContain("It sleeps till the party starts.");
+    }
+    for (const c of them(lost())) if (c.boss && c.quest && c.quest.done === undefined) expect(c.questOpen).toBe(false);
+    stepGame(g, { ...C, castParty: true }, STEP);
+    run(g, 0.5);
+    for (const c of dreamers) expect(c.questOpen, `${c.species} ${c.id}`).toBe(true);
   });
 
   it("a night that never waits for the spell (the tools, the bots) is as before: awake from the start", () => {

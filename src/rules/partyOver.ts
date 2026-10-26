@@ -98,6 +98,9 @@ export function stepWorldAsleep(g: Game, time: number): void {
     const arena = new Set(g.arena?.ids ?? []);
     let put = false;
     for (const c of g.creatures) {
+      // (a legend only snores, no dream: Ed, 2026-10-26, "In the world before the party, legends should just show a snore bubble,
+      // not a dream"; rules/legends.ts opens its quest again once the spell's cast)
+      if (c.boss) c.questOpen = false;
       if (c.asleep && c.napUntil === undefined) continue;
       if (c.gone || c.leashed || c.partyLegend || arena.has(c.id)) continue;
       putToBed(g, c, time); put = true;
