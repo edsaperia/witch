@@ -45,10 +45,13 @@ describe("the bot", () => {
   // (seeds 11 and 33: the two ways it stood idle with a full leash and never finished the night, 2026-10-26: on 11 its home guards
   // turned the stack over every step and never went down, a fighter of the same level already at the bottom; on 33 it kept the
   // last hare of an area with no legend, so the area could never be cleared, and had no one else to invite)
-  it.each([11, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night (seed %i)", seed => {
+  it.each([11, 22, 33])("plays the islands' pace (bots-again, 2026-10-11): on a 10-area home it invites through the run and wins the night (seed %i)", seed => {
     // (before: it stood at each next soundsystem before its wave, invited 3 to 5 all run and lost every night)
     // (seed 11: 8919, which this run was tuned on, lost once the bare broom lost the plain broom's quick take-off, Ed 2026-10-23, a
-    // chaotic run; on the bare broom seeds 11, 22 and 33 win, inviting 22, 24 and 23)
+    // chaotic run; on the bare broom seeds 11, 22 and 33 win)
+    // (seed 22 since the legend circles were sized to their legends, 2026-10-26: their maps moved, and on seed 11 the bot then
+    // stood idle with a full leash from 6 minutes on, never finishing the night, as seed 33 already did before; both fixed in the
+    // bot since, above: all three run)
     const g = newGame(seed, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } }));
     g.clock.paused = false; g.witch = { ...g.witch, seated: false, perch: false }; // (on the ground by the treehouse, as this run was tuned from; the deck's start shifts this chaotic run: 8 seeds from one spot invite about as many with it on as off)
     const bot = newBot("skilled");

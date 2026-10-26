@@ -866,12 +866,27 @@
         "stray": {
           "type": "number",
           "minimum": 0
+        },
+        "warp": {
+          "type": "number",
+          "minimum": 0
+        },
+        "warpScale": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tufts": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
         "width",
         "scale",
-        "stray"
+        "stray",
+        "warp",
+        "warpScale",
+        "tufts"
       ],
       "additionalProperties": false
     },
@@ -1626,6 +1641,24 @@
           ],
           "additionalProperties": false
         },
+        "fit": {
+          "type": "object",
+          "properties": {
+            "margin": {
+              "type": "number",
+              "minimum": 0
+            },
+            "max": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "margin",
+            "max"
+          ],
+          "additionalProperties": false
+        },
         "species": {
           "type": "object",
           "additionalProperties": {
@@ -1643,6 +1676,7 @@
         "floor",
         "rim",
         "grove",
+        "fit",
         "species"
       ],
       "additionalProperties": false

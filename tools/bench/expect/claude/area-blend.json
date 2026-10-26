@@ -1,0 +1,9 @@
+{
+  "reason": "Stronger area blending (Ed, 2026-10-26): areaEdgeBlend.width 40 to 80 m, plus a warp of 30 m on a 120 m noise so the band wanders; the tufts take the blended look too. Only the look: which area you're in, creatures and partifying keep the exact borders.",
+  "frames": {
+    "*": "near an area border: some trees, bushes and tufts there take the neighbouring area's type (its species, layout and ground cover), further in than before"
+  },
+  "rules": {
+    "forest": "the plants' types (look only) within about 80 m of a border, if the bench reads the forest"
+  }
+}
