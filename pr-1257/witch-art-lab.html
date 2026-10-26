@@ -13976,7 +13976,7 @@ const NEW_SET_PIECES = {
   "hazel-forest": ["fairy-ring", "a ring of fairy stones and toadstools", 1.1],
   "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
   "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
-  "norway": ["turf-hut", "a log cabin with a turf roof", 1.15],
+  "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
   "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
   "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
   "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
@@ -14802,10 +14802,6 @@ const AREA_FLORA_BLUEBELL_GLADE = { species: [["beech", .5], ["holly", .2], ["ch
 const AREA_FLORA_BOG = { species: [["birch", .5, { dark: true }], ["pine", .3], ["aspen", .2]], palette: { sat: .75, val: .85 } };
 
 
-// ---- inlined from art/areas/cave-mouth/flora.js ----
-const AREA_FLORA_CAVE_MOUTH = { species: [["broad", .45, { bare: true }], ["yew", .3], ["crystal", .25]], palette: { sat: .8, val: .85 } };
-
-
 // ---- inlined from art/areas/deadwood/flora.js ----
 const AREA_FLORA_DEADWOOD = { species: [["broad", .5, { bare: true }], ["elm", .25, { bare: true }], ["aspen", .25, { bare: true }]], palette: { sat: .7, val: .8 } };
 
@@ -14834,6 +14830,21 @@ const AREA_FLORA_HEATH = { species: [["birch", .4], ["pine", .25], ["hawthorn", 
 const AREA_FLORA_HONEYSUCKLE_TANGLE = { species: [["hazel", .4], ["rowan", .25], ["elder", .2], ["crabApple", .15]], palette: { sat: 1.05, val: 1.02 } };
 
 
+// ---- inlined from art/areas/jungle-cave/flora.js ----
+// The jungle cave (the cave mouth till the roster moved the bat, now a fruit bat, to the jungle: Ed, 2026-10-23/25). A ring 3 area, so
+// semi-temperate, and still tree-led (Ed, 2026-10-26): old strangler figs, the fruit bats' tree, and kapoks from the jungle's list
+// (art/flora/biomes.js) among yews, a third; no bare broadleaf or crystal trees.
+const AREA_FLORA_JUNGLE_CAVE = { species: [["strangler", .45, { variant: "ancient" }], ["kapok", .2], ["yew", .35]], palette: { sat: .85, val: .85 } };
+
+
+// ---- inlined from art/areas/jungle-understory/flora.js ----
+// The jungle understory (Norway till the roster moved the snake, now a jungle python, to the jungle: Ed, 2026-10-23/25). A ring 3 area,
+// so semi-temperate (Ed, 2026-10-25: "lower phase non-home biome areas can be semi-temperate looking"): mossy ironwoods, vinewood and
+// bamboo from the jungle's list (art/flora/biomes.js), limes and hazels, a third, the temperate wood they grow up through; no fir, birch,
+// cedar or larch.
+const AREA_FLORA_JUNGLE_UNDERSTORY = { species: [["ironwood", .35, { variant: "mossy" }], ["vinewood", .2], ["bamboo", .15], ["lime", .2], ["hazel", .1]], palette: { sat: .95, val: .85 } };
+
+
 // ---- inlined from art/areas/log-pile/flora.js ----
 const AREA_FLORA_LOG_PILE = { species: [["elder", .4], ["aspen", .35], ["birch", .25]], palette: { sat: .9, val: .95 } };
 
@@ -14855,10 +14866,6 @@ const AREA_FLORA_MOOR = { species: [["hawthorn", .5], ["rowan", .35], ["birch", 
 
 // ---- inlined from art/areas/muddy-forest/flora.js ----
 const AREA_FLORA_MUDDY_FOREST = { species: [["sycamore", .4], ["alder", .25], ["elm", .2], ["crabApple", .15]], palette: { sat: .85, val: .85 } };
-
-
-// ---- inlined from art/areas/norway/flora.js ----
-const AREA_FLORA_NORWAY = { species: [["fir", .5], ["birch", .2], ["cedar", .15], ["larch", .15]], palette: { sat: .85, val: .8 } };
 
 
 // ---- inlined from art/areas/old-oaks/flora.js ----
@@ -14905,7 +14912,7 @@ const AREA_FLORA_WISPY_FOREST = { species: [["lime", .4], ["birch", .25], ["aspe
 
 
 const AREA_FOLDER_RECIPES = [FEN, MANGROVE_HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
   {"kind":"squirrel","slot":1,"phase":0,"bearing":285,"dir":"WNW","biome":"temperate"},
@@ -15187,8 +15194,11 @@ const AREAS = [
     small: [tree("broad", { trunks: 4, scale: .5, thin: true })], big: [tree("ash", { trunks: 3, lean: .3, gnarl: .1 })] },
   { id: "ancient", name: "Ancient", creature: "stag", by: "Ed", leaf: .31, floor: ["roots", .1, .25, .35], text: { floor: "mossy roots over rocks", small: "sorrel", big: "giant gnarly slanted trees" },
     small: [P("flowers", { hue: .98, leafy: true })], big: [tree("yew", { variant: "ancient", scale: 1.4, gnarl: 1, lean: .35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })] },
-  { id: "norway", name: "Norway", creature: "snake", by: "Ed", leaf: .36, floor: ["slate", .6, .15, .35], text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
-    small: [P("stones", { big: true })], big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })] },
+  // (Norway till the roster moved the snake, now a jungle python, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate: a warm
+  // temperate-tropical mix, mossy ironwoods, liana-hung vinewoods and clumps of bamboo from the jungle's list among limes and hazels, a
+  // soft leaf litter, ferns and flowering shrubs under them)
+  { id: "jungle-understory", name: "Jungle understory", creature: "snake", by: "Ed", leaf: .3, floor: ["leaves", .2, .45, .3], text: { floor: "leaf litter and moss", small: "ferns and flowering shrubs", big: "mossy ironwoods, liana-hung vinewoods, limes and hazels, bamboo in clumps" },
+    small: [P("fern"), P("shrub", { flower: [236, 84, 150] })], big: [tree("ironwood", { variant: "mossy", scale: 1.1 }), tree("lime", { minor: true, scale: .9 })] },
   { id: "alder-forest", name: "Alder forest", creature: "stoat", by: "Ed", leaf: .23, floor: ["tallgrass", .22, .45, .42], text: { floor: "tall and short grass", small: "tree stumps with tall grass around", big: "tall slanted trees with thin leaves at different heights" },
     small: [P("stump", { grass: true })], big: [tree("alder", { lean: .3, scale: 1.2, dark: true })] },
   { id: "meadow", name: "Meadow", creature: "cat", by: "draft", leaf: .25, floor: ["flowers", .25, .5, .5], text: { floor: "grass and wildflowers", small: "scattered hawthorn", big: "lone oaks" },
@@ -15210,8 +15220,11 @@ const AREAS = [
     wall: [P("water", { bog: true })], small: [P("reeds", { cotton: true })], big: [tree("birch", { variant: "stunted", scale: .8, dark: true }), tree("pine", { minor: true, scale: .7 })] },
   { id: "deadwood", name: "Deadwood", creature: "raven", by: "draft", leaf: .15, floor: ["earth", .07, .35, .3], text: { floor: "bare earth", small: "broken branches", big: "blasted dead trees" },
     small: [P("log", { branch: true })], big: [tree("broad", { bare: true, gnarl: 1 })] },
-  { id: "cave-mouth", name: "Cave mouth", creature: "bat", by: "draft", leaf: .2, floor: ["stone", .08, .15, .35], text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
-    wall: [P("rockwall")], small: [P("stalagmite")], big: [tree("broad", { variant: "mossy", bare: true }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
+  // (the cave mouth till the roster moved the bat, now a fruit bat, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate and
+  // still tree-led (Ed, 2026-10-26): an old strangler fig, the fruit bats' tree, over the rock walls and the cave, kapoks from the
+  // jungle's list among yews; a mossier stone floor, ferns between the stalagmite stubs)
+  { id: "jungle-cave", name: "Jungle cave", creature: "bat", by: "draft", leaf: .26, floor: ["stone", .16, .3, .32], text: { floor: "mossy stone and fig roots", wall: "rock walls", small: "stalagmite stubs and ferns", big: "old strangler figs, kapoks and yews", set: "a cave mouth" },
+    wall: [P("rockwall", { moss: true })], small: [P("stalagmite"), P("fern")], big: [tree("strangler", { variant: "ancient", scale: 1.15 }), tree("yew", { minor: true, scale: .8 })], set: P("cave") },
   { id: "grassland", name: "Grassland", creature: "boar", by: "draft", leaf: .25, floor: ["grass", .26, .5, .48], text: { floor: "short turf", small: "rooted-up turf", big: "lone birches" },
     small: [P("mound", { brown: true, small: true })], big: [tree("flat", { scale: 1.1 }), tree("weepingBirch", { minor: true })] },
   { id: "beaver-pond", name: "Beaver pond", creature: "beaver", by: "draft", leaf: .17, floor: ["leaves", .13, .6, .5], text: { floor: "birch leaves", wall: "a pond", small: "stumps", big: "birch and aspen", set: "a beaver dam" },
@@ -15237,7 +15250,7 @@ const AREAS = [
 // Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
 // and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
 const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, "mangrove-channel": { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
-  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "cave-mouth": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
+  ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "jungle-cave": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
 for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
 // The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
 for (const R of AREA_RECIPES) {
@@ -15319,8 +15332,8 @@ const AREA_LAYOUTS = {
     "Straight many-trunked trees all slanting the same way, like a wood frozen in a gale."),
   "ancient": LAY("lone", .4, .2, [1, [12, 18]], [.05, .65, .2, .1], .4, [150, .25], ["rocky", "mounds", "hollows"], [.45, [.5, .2, .3, 0, 0]],
     "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."),
-  "norway": LAY("stands", .8, .5, [1, [8, 12]], [.15, .65, .175, .025], .2, NO_LEAN, ["rocky", "ridges"], [.3, [.2, .6, 0, .2, 0]],
-    "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."),
+  "jungle-understory": LAY("stands", .75, .6, [2, [6, 10]], [.3, .575, .1, .025], .7, NO_LEAN, ["hollows", "mounds"], [.3, [.3, .2, .2, .2, .1]],
+    "Mossy ironwoods and liana-hung vinewoods in close stands among limes and hazels, bamboo in clumps, ferns and flowering shrubs filling the gaps; warm, green and close."),
   "alder-forest": LAY("scatter", .55, .4, [2, [6, 10]], [.2, .6, .175, .025], .6, [120, .35], ["stream", "hollows"], [.3, [.3, .1, .2, .3, .1]],
     "Tall slanted alders at every height over long grass and stumps, a little stream wandering through."),
   "meadow": LAY("lone", .2, .15, [0], [.15, .65, .125, .075], .3, NO_LEAN, ["mounds", "paths"], [.35, [.3, .3, 0, .2, .2]],
@@ -15339,8 +15352,8 @@ const AREA_LAYOUTS = {
     "Sphagnum and bog pools, stunted spruce in tight dark stands, cotton grass pale between them."),
   "deadwood": LAY("scatter", .25, .2, [2, [8, 14]], [.05, .625, .225, .1], .15, NO_LEAN, ["ridges", "hollows"], [.45, [.3, .1, .3, 0, .3]],
     "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."),
-  "cave-mouth": LAY("edgeOnly", .4, .5, [1, [10, 14]], [.2, .65, .15, 0], .2, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
-    "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."),
+  "jungle-cave": LAY("edgeOnly", .45, .5, [1, [10, 14]], [.15, .65, .15, .05], .45, NO_LEAN, ["rocky", "ridges"], [.4, [.3, .6, 0, 0, .1]],
+    "Rock walls and old strangler figs ring an open mossy stone floor that leads to the cave's dark mouth, fruit bats streaming out at dusk."),
   "grassland": LAY("lone", .16, .8, [0], [.3, .6, .1, 0], .2, NO_LEAN, ["mounds"], [.35, [.3, .2, 0, .1, .4]],
     "Short turf to the horizon, rooted up in mounds, birches alone or in twos and threes."),
   "beaver-pond": LAY("edgeOnly", .65, .4, [1, [14, 20]], [.4, .525, .075, 0], .4, NO_LEAN, ["pools", "stream"], [.4, [.1, 0, 0, .7, .2]],
@@ -19085,11 +19098,11 @@ const SMALL = {
     ["picnic-table", 0, -.7], ["picnic-blanket", .5, .9], ["hamper", -1.2, .8], ["fungi-glow", 1.5, .2], ["camp-chair", -1.5, -.4, "left"]] },
   "allotment-feral": { desc: "an allotment gone feral: a shed with its door hanging, beds bolted to seed, a bean wigwam, a compost bay, a scarecrow", suits: ["garden", "honeysuckle-tangle", "meadow"], pieces: [
     ["garden-shed", -1.7, -1.7], ["raised-bed", .6, -.9], ["raised-bed", .8, .6, "left"], ["bean-wigwam", 2.5, -.6], ["compost-heap", -1.9, 1.0], ["watering-can", -.4, 1.9], ["scarecrow", 2.7, 1.5]] },
-  "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+  "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
     ["car-parked", 0, 0], ["snack-van", -3.3, -1.4], ["litter-bin", 2.2, -.9], ["picnic-table", 2.7, 1.0], ["relic:cones", -1.3, 1.7], ["sign-round", -3.0, 1.4]] },
   "festival-remnants": { desc: "festival remnants: tent frames with rags of fabric, faded bunting, a cold fire pit, crates, a camp chair, glow sticks still glowing", suits: ["meadow", "heath", "grassland", "bluebell-glade"], pieces: [
     ["bunting", 0, -2.3], ["tent-frame", -1.6, -.7], ["tent-frame", .9, -1.3, "left"], ["fire-pit", .4, .6], ["crates", -1.9, 1.2], ["camp-chair", 1.7, .1, "left"], ["glow-sticks", 1.2, 1.5]] },
-  "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "norway", "old-pinewood"], pieces: [
+  "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "old-pinewood"], pieces: [
     ["log-pile", -1.4, -1.1], ["chopping-block", .4, .2], ["sawhorse", 1.9, -.9], ["stumps", -.9, 1.4], ["stumps", 2.1, 1.2, "left"], ["wheelbarrow", -2.5, .5]] },
   "fly-tip": { desc: "a fly-tip in the bracken: a sofa, a washing machine, a mattress, bin bags, a pile of tyres", suits: ["fern-forest", "muddy-forest", "tangly-forest", "berry-thicket"], pieces: [
     ["relic:sofa", 0, -.6], ["relic:washing-machine", 1.7, -.7], ["mattress", -1.5, .6], ["bin-bags", .6, .9], ["tyre-pile", 2.3, .7]] },
@@ -19114,19 +19127,19 @@ const LARGE = {
     ["lychgate", 0, 4.4], ["mausoleum", -3.4, -3.4], ["yew", 3.6, -3.2], ["stone-angel", .2, -.7], ["obelisk", 2.6, 1.0],
     ...rows("headstone", -3.6, 3.6, .9, [-1.9, .5, 2.4], (x, z) => (Math.abs(x - .2) < .9 && Math.abs(z + .7) < 1.5) || (Math.abs(x - 2.6) < .6 && Math.abs(z - 1.0) < .8) || (x < -2.3 && z > 1.5), GRAVES),
     ["iron-railing", -3.4, 1.4], ["iron-railing", -3.4, 3.3], ["grave-lantern", -1.7, .7], ["grave-lantern", 1.0, 2.6]] },
-  "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+  "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
     ["carpark-tarmac", 0, 0], ["car-parked", -2.7, -1.8], ["car-parked", 1.7, 1.9, "left"], ["car-bonnet-up", 3.6, -1.8], ["relic:van-tree", -1.0, 2.0],
     ["ticket-machine", 5.0, .3], ["barrier", -6.2, .4], ["lamppost", -4.8, -3.1], ["lamppost", 4.6, -3.2, "left"], ["relic:trolley-tipped", .6, -1.3], ["relic:trolley-nest", 4.4, 2.5]] },
   "scrap-yard": { desc: "a scrap yard: stacks of crushed cars, tyre piles, a grab crane with its arm still up, oil drums, a chain-link fence torn open, a corrugated shack", suits: ["muddy-forest", "deadwood", "rocky-slope", "tangly-forest"], pieces: [
     ["crushed-cars", -2.8, -2.1], ["crushed-cars", -1.0, -2.8, "left"], ["grab-crane", 1.4, -1.6], ["shack", 3.8, -.4], ["tyre-pile", -3.2, .8], ["tyre-pile", 2.2, 1.8, "left"],
     ["oil-drums", .2, .9], ["relic:car-on-side", -1.0, 2.1], ["relic:court-fence", -3.0, 3.6], ["relic:court-fence", .2, 3.7, "left"]] },
-  "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["norway", "old-pinewood", "fern-forest", "rocky-slope"], pieces: [
+  "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["old-pinewood", "fern-forest", "rocky-slope"], pieces: [
     ["@stave-church", 0, 0], ["headstone-sunk", -2.8, 1.8], ["grave-cross", -2.0, 2.6, "left"], ["headstone-lean", 2.9, 2.0], ["yew", 3.8, -2.6]] },
   "parish-church": { desc: "a roofless stone parish church with its square tower, a churchyard of leaning stones, a yew by the gate", suits: ["old-oaks", "bluebell-glade", "meadow", "ancient"], pieces: [
     ["@parish-church", 0, 0], ["yew", 3.6, 2.4], ...rows("headstone", -2.6, 1.6, 1.05, [2.6], () => false, GRAVES), ["grave-cross", 2.6, -2.2], ["headstone-sunk", -.8, -2.4]] },
   "baroque-church": { desc: "a baroque church with its dome cracked open, its fallen lantern in the grass, a stone angel and rubble before its facade", suits: ["garden", "old-oaks", "ancient"], pieces: [
     ["@baroque-church", 0, 0], ["stone-angel", -2.6, 2.6, "left"], ["rubble", 2.4, 2.8], ["column-broken", 3.3, .6]] },
-  "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland", "cave-mouth"], pieces: [
+  "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland"], pieces: [
     ["@coptic-basilica", 0, 0], ["rubble", -1.0, 2.4], ["rubble", 3.4, 1.6, "left"], ["decor:split", -3.4, 1.8]] },
   "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "mangrove-channel"], pieces: [
     ["pagoda-temple", 0, 0], ["decor:pair", -2.8, 1.6], ["decor:rock", 2.9, -1.4], ["rubble", -2.4, -1.8, "left"]] },
@@ -19136,7 +19149,7 @@ const LARGE = {
     ["stupa", 0, 0], ["decor:standing-rock", -3.2, -1.0], ["decor:pair", 3.0, 1.8, "left"]] },
   "greek-temple": { desc: "a Greek temple on its stepped base, a peristyle of columns half fallen, drums in the grass, a headless statue", suits: ["meadow", "grassland", "garden", "heath"], pieces: [
     ["@greek-temple", 0, 0], ["column-drums", 1.6, 2.9], ["statue-headless", -3.4, 2.3], ["pediment-fragment", 3.8, -1.6, "left"]] },
-  "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "norway", "deadwood", "cave-mouth"], pieces: [
+  "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "deadwood"], pieces: [
     ["curtain-wall", -4.2, -1.2], ["round-tower", -1.7, -2.6], ["gatehouse", 1.6, -2.3], ["curtain-wall-breach", 4.7, -1.4, "left"], ["steps-to-nowhere", -3.4, 2.0], ["rubble", 2.6, 1.7], ["rubble", -.4, 1.2, "left"]] },
   "classical-ruins": { desc: "classical ruins: a row of columns, some fallen in drums, a pediment fragment, a cracked mosaic floor, a headless statue, a broken arch and fallen drums", suits: ["meadow", "garden", "grassland", "ancient"], pieces: [
     ["mosaic-floor", 0, 0], ["column", -2.2, -2.3], ["column", -.8, -2.4], ["column-broken", .6, -2.3], ["column", 2.0, -2.4], ["column-drums", 1.8, 2.4], ["pediment-fragment", -2.8, 2.1],
@@ -19145,7 +19158,7 @@ const LARGE = {
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "cave-mouth", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;
@@ -19234,7 +19247,7 @@ const rag = (u, v, P, amt = .14) => Math.abs(u) > 1 - amt * pkNoise(u > 0 ? 3 : 
 const PATH_KINDS = {
   dirt: { width: 3, period: 4, desc: "a dirt track: worn earth, grass at its edges, puddles in its ruts", moods: ["muddy-forest", "hazel-forest", "twiggy-forest", "alder-forest", "meadow", "grassland", "beaver-pond", "wispy-forest"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .3)) return 0; const n = pkNoise(u * 3, v, 2.2, P); if (Math.abs(u) > .8 - n * .15) return [n > .5 ? M.LEAF2 : M.LEAF, .1]; const rut = Math.abs(Math.abs(u) - .45) < .1 + n * .05; if (rut && pkNoise(u * 2, v, .9, P) > .68) return [M.WATER, 0]; return [rut ? (n < .5 ? M.BARK2 : M.BARKD) : n < .3 ? M.BARK2 : n > .8 ? M.LEAF3 : M.BODY2, .15]; } },
-  animal: { width: 1.2, period: 4, desc: "an animal track: a faint, narrow trail through the undergrowth", moods: ["berry-thicket", "tangly-forest", "thorn-scrub", "fern-forest", "honeysuckle-tangle", "ancient", "bog"],
+  animal: { width: 1.2, period: 4, desc: "an animal track: a faint, narrow trail through the undergrowth", moods: ["berry-thicket", "tangly-forest", "thorn-scrub", "jungle-understory", "fern-forest", "honeysuckle-tangle", "ancient", "bog"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .5)) return 0; const n = pkNoise(u * 2, v, 3, P); if (n < .35) return 0; return [n > .75 ? M.BARK2 : M.LEAF3, .1]; } },
   flagstones: { width: 2.5, period: 4, desc: "mossy flagstones: an old stone path, gaps between the slabs", moods: ["garden", "stone-shrine", "ancient", "bluebell-glade", "old-oaks"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .1)) return 0; const c = pkCells(u * 1.25, v, 1.3, P); if (c.edge < .12) return c.edge < .05 ? 0 : [M.MOSS, .1]; if (c.id < .08) return 0; return [c.id < .25 ? M.STONED : pkNoise(u, v, 4, P) < .2 ? M.MOSS : M.STONE, .25]; } },
@@ -19246,7 +19259,7 @@ const PATH_KINDS = {
     surface(u, v) { const P = 4, k = Math.floor(v / .5), f = v / .5 - k; if (Math.abs(u) > .97) return [M.BARKD, .1]; if (sinHash(k % 8, 3) < .1) return 0; if (f < .1) return 0; const grain = Math.abs(Math.sin(u * 40 + (k % 8) * 3)) < .12; return [pkNoise(u, v, 3, P) < .15 ? M.MOSS : grain ? M.BARKD : sinHash(k % 8, 5) < .4 ? M.BARK2 : M.WOOD, .1]; } },
   tarmac: { width: 10, period: 8, desc: "an overgrown tarmac road: cracked, faded centre lines, verge posts and a cat's-eye or two (3D props)", moods: ["grassland", "deadwood", "heath", "muddy-forest", "moor"],
     surface(u, v, core) { const P = 8; if (rag(u, v, P, .06)) return 0; const n = pkNoise(u * 4, v, 1.1, P), crack = Math.abs(pkNoise(u * 6, v, .7, P) - .5) < .02 || Math.abs(pkNoise(u * 3 + 9, v, 1.6, P) - .5) < .012; if (crack) return [pkNoise(u, v, 6, P) < .5 ? M.LEAF2 : M.STONED, 0]; if (Math.abs(u) > .9) return [n < .5 ? M.LEAF2 : M.LEAF, .1]; if (!core && Math.abs(u) < .025 && (v % 4) < 2.2 && n > .3) return [M.CLOTH, .05]; if (!core && Math.abs(Math.abs(u) - .84) < .015 && n > .35) return [M.BELLY, .05]; return [n < .2 ? M.MOSS : n > .85 ? M.STONED : M.STONE, .05]; } },
-  railway: { width: 4, period: 4, desc: "an old railway line: rusty rails, sleepers half-buried in grass", moods: ["grassland", "heath", "deadwood", "moor", "norway", "rocky-slope"], variants: ["plain", "half-buried", "overgrown"],
+  railway: { width: 4, period: 4, desc: "an old railway line: rusty rails, sleepers half-buried in grass", moods: ["grassland", "heath", "deadwood", "moor", "rocky-slope"], variants: ["plain", "half-buried", "overgrown"],
     surface(u, v, core, variant = 0) { const P = 4, n = pkNoise(u * 3, v, 2.5, P), grass = [0, .35, .6][variant]; if (rag(u, v, P, .2)) return 0; const ru = Math.abs(Math.abs(u) - .3); if (ru < .05) return [pkNoise(u, v, 8, P) < grass * .5 ? M.LEAF2 : ru < .018 ? M.FRAME : M.SHADES, .3]; /* the rails: dark, a rusty shine along their tops */ const k = Math.floor(v * 6 / P), f = v * 6 / P - k; if (Math.abs(u) < .55 && f < .38 && pkNoise(u, v, 6, P) > grass * .8) return [sinHash(k % 6, 2) < .25 ? M.BARKD : f < .06 || f > .32 ? M.BARKD : M.BARK2, .2]; if (n < grass) return [n < grass * .5 ? M.LEAF : M.LEAF2, .1]; return [n > .7 ? M.STONED : M.STONE, .3]; } },
   roots: { width: 2.5, period: 4, desc: "a root path: gnarled roots across it, worn into steps", moods: ["ancient", "old-oaks", "old-pinewood", "log-pile", "fern-forest"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .25)) return 0; const k = Math.floor(v / .8), wob = Math.sin(u * 3 + (k % 5) * 2) * .12, f = v / .8 - k + wob; if (Math.abs(f - .5) < .14 + pkNoise(u, v, 3, P) * .06) return [Math.abs(f - .5) < .05 ? M.BARKL : M.TRUNK, .6]; return [pkNoise(u, v, 2, P) < .4 ? M.BARKD : M.BARK2, .1]; } },
@@ -20810,7 +20823,7 @@ function renderTall() {
     const c = document.getElementById("tallSheet"); if (!c) return;
     const st = current, studio = { ...st, ambient: .55, ambientHue: .15, moon: .9, moonHue: .15, shafts: 0 }, gap = 8, wit = bake(witchSprite(st), witchColours(st), st, st.cOutline);
     const rows = ["moor", "stone-shrine", "log-pile", "ravine"].map(id => [...areaAssets(id, st).big.map(b => b.sp), wit]);
-    rows.push([areaAssets("norway", st).setPiece.sp, wit]);
+    rows.push([areaAssets("jungle-understory", st).setPiece.sp, wit]);
     const w = Math.max(...rows.map(r => r.reduce((a, x) => a + x.w + gap, gap))), rh = rows.map(r => Math.max(...r.map(x => x.h)) + gap), h = rh.reduce((a, v) => a + v, gap), tgt = makeTarget(w, h);
     tgt.a.fillStyle = `rgb(${hsv2rgb(st.groundHue, .4, st.groundVal)})`; tgt.a.fillRect(0, 0, w, h); tgt.n.fillStyle = "rgb(128,75,240)"; tgt.n.fillRect(0, 0, w, h);
     let y = gap;
