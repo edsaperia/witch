@@ -46,6 +46,9 @@ export class Input {
   private pointer: { x: number; y: number } | null = null;
   /** At a dressing station: the d-pad moves through its panel (ui/stationPanel.ts), not her; the left stick still walks her. */
   dpadMenu = false;
+  /** What she last played with: the keyboard (or mouse), a gamepad or a touch screen; the use prompts show its button (E, □ or a
+   *  tap: render/houseRooms.ts). A coarse-pointer-only screen starts on touch. */
+  device: "keys" | "pad" | "touch" = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches && !matchMedia("(any-pointer: fine)").matches ? "touch" : "keys";
   /** Where the mouse is (client pixels), or null before it has moved: for the aim reticle. */
   get cursor(): { x: number; y: number } | null { return this.pointer; }
   /** The ground under the cursor from her at the last read (metres), or null. */
@@ -59,6 +62,7 @@ export class Input {
   constructor(target: Window = window) {
     target.addEventListener("keydown", e => {
       if (e.repeat) { if (this.isGameKey(e.code)) e.preventDefault(); return; }
+      this.device = "keys";
       this.keys.add(e.code);
       if (this.isGameKey(e.code)) e.preventDefault();
       if (!this.onAny?.()) this.pressed.add(e.code);
@@ -72,6 +76,7 @@ export class Input {
     // The mouse: where the cursor is, and the left button over the game (not its panels and buttons).
     target.addEventListener("pointermove", e => { if (e.pointerType === "mouse") this.pointer = { x: e.clientX, y: e.clientY }; });
     target.addEventListener("pointerdown", e => {
+      this.device = e.pointerType === "touch" ? "touch" : "keys";
       if (e.pointerType !== "mouse" || e.button !== 0 || (e.target as HTMLElement | null)?.tagName !== "CANVAS") return;
       this.pointer = { x: e.clientX, y: e.clientY };
       if (this.onAny?.()) return;
@@ -146,6 +151,7 @@ export class Input {
       if (!pad) continue;
       const buttons = pad.buttons.map(b => b.pressed);
       const fresh = buttons.some((b, i) => b && !this.padPrev[i]);
+      if (fresh || pad.axes.some(a => Math.abs(a) > 0.5)) this.device = "pad";
       const consumed = fresh && !!this.onAny?.();
       const P = padControls(buttons, pad.axes, this.padPrev, consumed, this.dpadMenu);
       moveX += P.moveX; moveZ += P.moveZ; zoom += P.zoom;

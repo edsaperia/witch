@@ -560,6 +560,13 @@ export class View {
   readonly witchBase = { x: 0, y: 0, z: 0 };
   /** Her hat's top on screen as last drawn (shares of the view, y up; on: drawn), for her dream's cloud (render/dream.ts). */
   readonly herHead = { x: 0.5, y: 0.5, on: false };
+  /** The house object whose panel or close-up is open now (main.ts: a station, an instrument), or null: its use prompt is down and
+   *  its light out while it's open (render/houseRooms.ts). */
+  houseOpen: string | null = null;
+  /** What she plays with, for the use prompts' button (platform/input.ts device): E, the pad's □ or a tap on the prompt itself. */
+  useDevice: "keys" | "pad" | "touch" = "keys";
+  /** A tap on a use prompt (touch): down and up, as the touch sigil button's (main.ts sets it). */
+  onUse: ((down: boolean) => void) | null = null;
   /** In the house's rooms, her head on the page (CSS px) as the house places it (render/houseRooms.ts) and when (ms). */
   readonly herHouseHead = { x: 0, y: 0, at: -Infinity };
   /** Off the treehouse's hub, how far the camera's aim moves to follow where she's drawn (render/view/witch.ts). */

@@ -45,6 +45,7 @@ const front = (id, gap = 0.7) => {
     const shot = async name => { await page.screenshot({ path: path.join(outDir, `${name}.png`), timeout: 300000 }); console.log("shot", name); };
     const at = async id => {
       await put(front(id)); await settle();
+      for (let i = 0; i < 60 && !(await page.evaluate(() => !!document.querySelector("#station-panel.in"))); i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); } // (E at it: Ed's playtest, 2026-10-26)
       await page.waitForFunction(id => document.querySelector("#station-panel.in") && document.querySelector("#station-panel .sp-head b")?.textContent, id, { timeout: 300000, polling: 500 });
       await page.waitForTimeout(12000); // (its pictures baked a few a frame; the camera easing in)
       out[id] = await page.evaluate(() => document.querySelector("#station-panel .sp-head")?.textContent);

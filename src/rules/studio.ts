@@ -1,8 +1,9 @@
 // The treehouse Studio's instruments (Ed, 2026-10-23: "The studio has a drumkit (top left), modular synth setup (top right),
 // microphone (middle, spotlit). They open menus when you go near that let you 'play them'"; config/studio.json, the mock in
-// previews/ed/studio-instruments on claude/ed-shots). Walking up to one, she's at it: its menu slides in (ui/studioPanel.ts) and
-// every key plays it, the movement keys too (Ed: "it's a shame to lose all the movement keys for the instruments"), till Esc (a
-// gamepad's B) steps her away; to play it again she walks off and back. The Studio has its own loop at its own tempo, never the
+// previews/ed/studio-instruments on claude/ed-shots). Walking up to one lights it with E over it (Ed's playtest, 2026-10-26: "Menus
+// should open when she presses E near an interactive object ... instead of them opening automatically just through proximity");
+// E there and she's at it: its menu slides in (ui/studioPanel.ts) and every key plays it, the movement keys too (Ed: "it's a shame
+// to lose all the movement keys for the instruments"), till Esc (a gamepad's B) steps her away or she walks off; E plays it again. The Studio has its own loop at its own tempo, never the
 // night's music, shared by every player there, while each player's instrument is their own (Ed: three players jamming, one on
 // each, when multiplayer comes). Her notes always sound exactly when pressed, never snapped to the loop (Ed, 2026-10-23). Numbers
 // and names only: app/studio.ts plays them.
@@ -26,14 +27,13 @@ export type Vowel = "laa" | "ooh" | "loo" | "mm";
 
 /** The Studio as the players share it: the loop (on, its tempo and style), and each player's own instrument. */
 export interface StudioState { loop: { on: boolean; bpm: number; style: LoopStyle }; players: StudioPlayer[] }
-/** A player at the Studio: the instrument she's at (null: none), the one she stepped away from with Esc (not reopened till she's
- *  walked off it), each instrument's sound (an index into its list), the synth's octave, its latch, and the mic's vowel. */
-export interface StudioPlayer { at: Instrument | null; object: string | null; left: string | null; sound: Record<Instrument, number>; octave: number; latch: boolean; vowel: Vowel }
+/** A player at the Studio: the instrument she's at (null: none) and its object, each instrument's sound (an index into its list), the synth's octave, its latch, and the mic's vowel. */
+export interface StudioPlayer { at: Instrument | null; object: string | null; sound: Record<Instrument, number>; octave: number; latch: boolean; vowel: Vowel }
 
 export function newStudio(players = 1, S = STUDIO_CONFIG): StudioState {
   return { loop: { on: false, bpm: S.loop.bpm, style: S.loop.styles[0] }, players: Array.from({ length: players }, newPlayer) };
 }
-export const newPlayer = (): StudioPlayer => ({ at: null, object: null, left: null, sound: { drums: 0, synth: 0, mic: 0 }, octave: 0, latch: false, vowel: "laa" });
+export const newPlayer = (): StudioPlayer => ({ at: null, object: null, sound: { drums: 0, synth: 0, mic: 0 }, octave: 0, latch: false, vowel: "laa" });
 
 // ---- the house's instruments, by nearness (as rules/stations.ts finds the dressing stations) ----
 
@@ -41,38 +41,33 @@ export const newPlayer = (): StudioPlayer => ({ at: null, object: null, left: nu
 export const STUDIO_SLACK = 0.8;
 export const instrumentOfObject = (o: HouseObject): Instrument | null => (o.use.kind === "instrument" ? o.use.instrument : null);
 
-/** The instrument object she's at, standing at (x, z), `open` the one she's at now and `left` the one she stepped away from:
- *  `open` while she's within reach + slack of it; else, once she's walked off `left`, the nearest within reach (none while she's
- *  still by it: Esc at the drum kit never opens the synth beside it). `stillLeft`: `left` while she's still within reach + slack
- *  of it, null once she's walked off it. */
-export function instrumentAt(at: { x: number; z: number }, x: number, z: number, open: string | null, left: string | null, H = HOUSE_ROOMS, slack = STUDIO_SLACK): { object: HouseObject | null; stillLeft: string | null } {
-  const near = (o: HouseObject, pad: number) => fromObject(o, at, x, z) <= H.reach + pad;
-  const L = left ? H.objects.find(o => o.id === left) : undefined, stillLeft = L && near(L, slack) ? left : null;
+/** The instrument object she's at, standing at (x, z), `open` the one she's at now and `use` the one E was pressed at this step:
+ *  `open` while she's within reach + slack of it; else `use` if it's the nearest within reach (`near`, lit with E over it). */
+export function instrumentAt(at: { x: number; z: number }, x: number, z: number, open: string | null, use: string | null = null, H = HOUSE_ROOMS, slack = STUDIO_SLACK): { object: HouseObject | null; near: HouseObject | null } {
+  let near: HouseObject | null = null, bd = H.reach;
+  for (const o of H.objects) if (instrumentOfObject(o)) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; near = o; } }
   const cur = open ? H.objects.find(o => o.id === open && instrumentOfObject(o)) : undefined;
-  if (cur && near(cur, slack)) return { object: cur, stillLeft };
-  if (stillLeft) return { object: null, stillLeft };
-  let best: HouseObject | null = null, bd = H.reach;
-  for (const o of H.objects) if (instrumentOfObject(o)) { const d = fromObject(o, at, x, z); if (d <= bd) { bd = d; best = o; } }
-  return { object: best, stillLeft };
+  if (cur && fromObject(cur, at, x, z) <= H.reach + slack) return { object: cur, near };
+  return { object: use && near?.id === use ? near : null, near };
 }
 
 /** Step the first player's place at the Studio from where she is in the game: only on foot in the house (landed, off her decks,
- *  not knocked out). Returns whether she's at an instrument now. */
-export function stepStudio(S: StudioState, g: Game, tuning: Tuning = g.tuning, i = 0): boolean {
+ *  not knocked out); `use`, the object E was pressed at this step (the rules' "house" event), if any. Returns whether she's at an
+ *  instrument now. */
+export function stepStudio(S: StudioState, g: Game, tuning: Tuning = g.tuning, i = 0, use: string | null = null): boolean {
   const P = S.players[i] ?? (S.players[i] = newPlayer()), w = g.witches[i] ?? g.witches[0], b = w.body;
   const d = deckOf(g.map, tuning);
-  if (!b.perch || b.mode !== "ground" || b.seated || w.ko || !d || !hasRooms(d)) { P.at = null; P.object = null; P.left = null; return false; }
-  const r = instrumentAt(d, b.x, b.z, P.object, P.left);
-  P.left = r.stillLeft;
+  if (!b.perch || b.mode !== "ground" || b.seated || w.ko || !d || !hasRooms(d)) { P.at = null; P.object = null; return false; }
+  const r = instrumentAt(d, b.x, b.z, P.object, use);
   P.object = r.object?.id ?? null;
   P.at = r.object ? instrumentOfObject(r.object) : null;
   return !!P.at;
 }
 
-/** Esc at an instrument (a gamepad's B): she steps away; it won't open again till she's walked off it. */
+/** Esc at an instrument (a gamepad's B): she steps away; E there plays it again. */
 export function leaveInstrument(S: StudioState, i = 0): void {
   const P = S.players[i]; if (!P?.object) return;
-  P.left = P.object; P.object = null; P.at = null; P.latch = false;
+  P.object = null; P.at = null; P.latch = false;
 }
 
 // ---- the keys (by position, KeyboardEvent.code: any layout plays the same places) ----

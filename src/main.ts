@@ -11,7 +11,7 @@ import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongT
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
-import { areaUnderWitch, interpolated, STEP, stepGame } from "./rules/game";
+import { areaUnderWitch, interpolated, STEP, stepGame, type Game } from "./rules/game";
 import { TUNING, type Tuning } from "./rules/tuning";
 import { diveReach, diveTrack, handoffShot, newFlightClock, stepFlightClock, type Shot } from "./rules/arrive";
 import { nextFrame } from "./render/slices";
@@ -416,10 +416,10 @@ function herHead(): { x: number; y: number } | null {
 const loanIcon = new LoanIcon();
 let zooPaused = false;
 const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on) { zooPaused = clock.paused; clock.paused = true; } else clock.paused = zooPaused; input.clearPresses(); }), zooUrl(location.href));
-// The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): walking up to it looks through it (Ed,
-// 2026-10-23: "opens when you walk up to it, look around with aiming keys"; by nearness, as the map table's chart), full screen,
-// the night running on at the house's tenth while she stands still; walking off (WASD, the left stick), E or Esc leaves, and it
-// stays shut till she's left it (E there opens it again). Its picture is drawn at telescope.resolution, on an integrated GPU
+// The telescope in the crow's nest (Ed, 2026-10-21; app/telescope.ts, rules/telescope.ts): E at it looks through it (Ed's
+// playtest, 2026-10-26, in place of 2026-10-23's "opens when you walk up to it"; look around with the aiming keys), full screen,
+// the night running on at the house's tenth while she stands still; walking off (WASD, the left stick), E or Esc leaves, and E
+// there looks again. Its picture is drawn at telescope.resolution, on an integrated GPU
 // (Ed's Intel UHD) telescope.lowGpuResolution (?telescopeRes= sets it: 0.25 to 3, 1 the game's pixels, 2 twice as fine).
 // The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
@@ -428,11 +428,9 @@ const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tun
 /** What takes the keys now (the frame loop: input.release() as it changes). */
 let keysTaken = "";
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
-let scopeAt: string | null = null, scopeShut: string | null = null; // (the telescope it's open at, and the one she left it at)
-telescope.onWalk = () => { scopeShut = scopeAt; }; // (and any closing while she's there: below, onChange)
+let scopeAt: string | null = null; // (the telescope it's open at)
 telescope.onChange = on => {
   const T = N().tuning.telescope, res = Number(new URLSearchParams(location.search).get("telescopeRes")) || (T && integratedGpu(view.renderer.getContext()) ? T.lowGpuResolution : T?.resolution ?? 1);
-  if (!on) scopeShut = scopeAt; // (closed at it, by walking, E or Esc: not opened again till she's left it)
   view.pixelScale = on ? 1 / Math.max(0.25, Math.min(3, res)) : 1; // (finer than the game's pixels too: Ed, 2026-10-23, "too pixellated")
   fit();
   input.clearPresses();
@@ -442,8 +440,8 @@ const useHouse = (obj: string): void => {
   if (obj === "slept") { if (!chartRecorded && !overShown) nightOver(tuning.map?.island ?? "", { won: false }, undefined, tuning.map?.world ?? 0); setTimeout(() => newNight("bed"), 0); return; } // (the sea chart: played, as the afterparty records it; then a new seed: app/newForest.ts; after this frame, in place)
   const o = HOUSE_ROOMS.objects.find(q => q.id === obj);
   if (!o || creator.open || game.witches[0].ko) return;
-  if (o.use.kind === "zoo") zoo.open(); // (a station's E does nothing more: its panel is in by her being there, rules/stations.ts)
-  else if (o.use.kind === "telescope" && tuning.telescope) { scopeShut = null; scopeAt = o.id; telescope.open(game, tuning.telescope); }
+  if (o.use.kind === "zoo") zoo.open(); // (a station's E and an instrument's: their panels, below in the frame and app/studio.ts)
+  else if (o.use.kind === "telescope" && tuning.telescope && !telescope.on) { scopeAt = o.id; telescope.open(game, tuning.telescope); }
 };
 creator.progress = () => { const a = view.assets; return { done: a.done, total: a.done + a.pending, ready: !sailing && N().flags.ready }; }; // (a new night in place: not till it's made)
 // (its room's ambience plays while it's open: overnight, 2026-10-06)
@@ -733,13 +731,12 @@ function chartOverNight(table?: string): void {
   const here = island ? { island, world: n.tuning.map?.world ?? 0, label: stayLabel(n.game.partyOver ? "over" : n.game.win?.phase === "won" ? "won" : "on") } : undefined;
   if (table) chartAt = table;
   openChart((href, to) => { chartAt = null; void sailFromChart(href, to); }, chartWorldArg(), { here, onDepart: departFromChart, onStay: () => console.info(`sea chart: ${island} chosen, she's there: back to the night (seed ${N().seed}, game time ${N().game.clock.time.toFixed(1)} s)`),
-    ...(table ? { table: { onLeave: () => { tableShut = chartAt; chartAt = null; closeChart(); } } } : {}) });
+    ...(table ? { table: { onLeave: () => { chartAt = null; closeChart(); } } } : {}) });
 }
-/** The map table's chart by nearness (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes
- *  stations"; rules/stations.ts tableOf, ui/chartOverlay.ts `table`): up as she comes to the table, the night held behind it;
- *  she moves and it slides away, and stays away till she's left the table (or E there brings it back). The table it's up at, and
- *  the one she put it away at. */
-let chartAt: string | null = null, tableShut: string | null = null;
+/** The map table's chart (Ed, 2026-10-23: "Map menu slides in from the bottom when you go near it, like the clothes stations"; since
+ *  his playtest of 2026-10-26, E at it: rules/stations.ts tableOf, ui/chartOverlay.ts `table`): up from the bottom, the night held
+ *  behind it; she moves and it slides away. The table it's up at. */
+let chartAt: string | null = null;
 document.getElementById("won-sail")?.addEventListener("click", chartFromCard);
 document.getElementById("chart-open")?.addEventListener("click", chartFromCard);
 document.getElementById("over-close")?.addEventListener("click", () => document.getElementById("over")!.classList.remove("on"));
@@ -920,6 +917,9 @@ function leaveBot(): void {
 /** ?debug=sail's test of the fallback: window.witch.sail(island, seed, { fail: true }). */
 let sailFail = false;
 /** Controls with nothing pressed or held (the aim left where it is). */
+/** The house object E was pressed at in the last step (the rules' "house" event: rules/sigilButton.ts), or null; never in a bot's game. */
+view.onUse = down => { if (down) input.touch.sigil = true; input.touch.sigilHeld = down; }; // (a tap on a use prompt: the touch sigil button's press)
+const usedAt = (g: Game): string | null => (bot ? null : g.leashEvents.find(e => e.kind === "house" && e.obj && e.obj !== "slept")?.obj ?? null);
 const stillControls = <T extends object>(c: T): T => Object.fromEntries(Object.entries(c).map(([k, v]) => [k, typeof v === "boolean" ? false : typeof v === "number" ? 0 : v])) as T;
 function frame(now: number): void {
   requestAnimationFrame(frame);
@@ -935,7 +935,7 @@ function frame(now: number): void {
   freeze.pollPad();
   // (the sea chart open over the game, ui/chartOverlay.ts: its keys and clicks are the chart's, hers held still)
   // (her room open mid-night, or the telescope: she stands still; the telescope takes her stick, keys and wheel, E leaving it)
-  studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt);
+  studio.update(bot ? null : game, !creator.open && !chartOpen() && !freeze.frozen && !telescope.on, dt, usedAt(game)); // (E at an instrument: she's at it)
   // (a menu or overlay that takes the keys opening or closing, the Studio's, the chart, the telescope, the creator or the zoo:
   // everything held let go, so a key-up it took doesn't leave her walking after; Ed's playtest of v4515, the Studio's mic)
   const takes = `${studio.at}|${chartOpen()}|${telescope.on}|${creator.open}|${zoo.isOpen}`;
@@ -985,19 +985,23 @@ function frame(now: number): void {
     const said = spawnHere(k as FindKindId | null, i);
     if (!said.startsWith("no clear ground")) { console.log(`spawnfind: ${said}`); spawnWanted = null; }
   }
-  // The station she's at, its panel slid in; none, out (not over her room open full screen, the chart, or a bot's game).
+  // The station she's at (lit, E over it: render/houseRooms.ts); E there slides its panel in (Ed's playtest, 2026-10-26: "Menus should
+  // open when she presses E near an interactive object ... instead of them opening automatically just through proximity"); walking
+  // off it, out (not over her room open full screen, the chart, or a bot's game). While it's open E chooses in it (ui/stationPanel.ts).
   const station = bot || creator.open || charting ? null : stationOf(game, stations.station), shelves = station ? shelvesAt(station.id) : null;
   stations.setLoaned(loan?.id ?? null); // (its card sparkles: ui/stationPanel.ts)
-  if (station && shelves && station.id !== stations.station) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
+  if (stations.station && station?.id !== stations.station) stations.close(); // (walked off it, or on to another: that one waits for E)
+  if (station && shelves && station.id !== stations.station && usedAt(game) === station.id) { const g = (page.look() ?? creator.genome()) as Record<string, unknown>; stations.open(station.id, shelves, g as never, owned ??= loadOwned(g), game.wake && !game.wake.short && station.id === "dressingTable" ? "First night · pick your look here, and at the wardrobe, cloak pegs and shoe rack" : "", shelves.some(q => q.slot || q.board) ? workshopNow() : null); }
   else if (!shelves && stations.station) stations.close();
   stations.update(performance.now() / 1000);
-  // The telescope by nearness (as the tables): up as she comes to it, shut once she walks off, till she's left it.
+  // The telescope: E at it looks (useHouse), and it shuts once she walks off.
   const scope = bot || creator.open || sailing || charting ? null : stationOf(game, telescope.on ? scopeAt : null, tuning, ["telescope"]);
-  if (!scope) { scopeShut = null; if (telescope.on && scopeAt) { telescope.close(); scopeAt = null; } }
-  else if (!telescope.on && scopeShut !== scope.id && tuning.telescope) { scopeAt = scope.id; telescope.open(game, tuning.telescope); }
+  if (!scope && telescope.on && scopeAt) { telescope.close(); scopeAt = null; }
   input.dpadMenu = !!stations.station || telescope.on; // (the d-pad: a station's panel's, or the telescope's look)
+  // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
+  view.useDevice = input.device; view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
-  // and the dressing table's mirror opened by itself the first time; the island's art latched drawn (marked, nothing waits on it).
+  // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
   if (!game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; mark("island:ready"); } // (latched: the island's own art drawn, render/view.ts islandDrawn; its time marked for ?timing=1)
   showLook(); // (what she has on: last night's pile as it stands, rules/clothesPile.ts)
   // Her dream of tonight's loan (render/dream.ts): a key the rules took (the pad's too) ends it; ended, the alarm rings (endDream).
@@ -1009,15 +1013,13 @@ function frame(now: number): void {
   // The on-loan icon, top left (render/loanIcon.ts): tonight's find once she's taken it, till she sleeps.
   { const lf = loanFind(game, game.map.treehouse.x, game.map.treehouse.z); loanIcon.set(bot ? null : lf?.item ?? null, () => (lf ? findCanvas(findKind(lf.kind).piece(lf.item), view.assets.style) : null)); loanIcon.draw(now / 1000); }
   if (game.wake) {
-    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel by nearness, as every station's)
+    for (const e of game.wake.events) { mark(`opening:${e}`); if (e === "up") woke(); if (e === "dressed") sound.sfx?.spell("rustle", 0.6); } // (dressed: a rustle of clothes) // (the dressing table's mirror: its panel on E, as every station's)
     if (creator.open || stations.station) wakeCard?.hide(); // (at the mirror: its panel over it)
     else (wakeCard ??= new WakeCard()).update(game, game.herTime, dt, () => sound.sfx?.alarm());
   } else if (!sailing && !bootAsleep) wakeCard?.hide(); // (asleep while the next night's made: kept up)
-  // The tables (the map table's sea chart) by nearness, as the stations; E at one brings it back after she's put it away there.
+  // The tables (the map table's sea chart): E at one brings its chart up, as the stations' panels (Ed's playtest, 2026-10-26).
   const table = bot || creator.open || sailing || F.ready === false ? null : tableOf(game, chartAt);
-  if (!table) tableShut = null;
-  if (!bot && game.leashEvents.some(e => e.kind === "chart")) tableShut = null;
-  if (table && table.use.kind === "chart" && !chartOpen() && tableShut !== table.id) chartOverNight(table.id);
+  if (table && table.use.kind === "chart" && !chartOpen() && game.leashEvents.some(e => e.kind === "chart")) chartOverNight(table.id);
   // The party's over (rules/partyOver.ts; Ed, 2026-10-06): no end screen and no pause, the afterparty. Once it has eased
   // in, a small card under the clock says so, with the time she lasted, and a way to play again.
   // The night won (rules/win.ts): its card, the islands its woken legends showed, and those found recorded on the sea chart

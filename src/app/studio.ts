@@ -43,11 +43,13 @@ export class StudioPlayer {
   /** The instrument she's at now (null: none). */
   get at(): Instrument | null { return this.state.players[0].at; }
 
-  /** A frame: where she is (the menu in or out), the loop scheduled ahead, the gamepad, the synth's live controls. */
-  update(g: Game | null, active: boolean, dt: number): void {
+  /** A frame: where she is (the menu in or out; `use`, the house object E was pressed at, rules/studio.ts stepStudio), the loop
+   *  scheduled ahead, the gamepad, the synth's live controls. */
+  update(g: Game | null, active: boolean, dt: number, use: string | null = null): void {
     const P = this.state.players[0], was = P.at;
-    if (g && active) stepStudio(this.state, g); else { P.at = null; P.object = null; }
+    if (g && active) stepStudio(this.state, g, g.tuning, 0, use); else { P.at = null; P.object = null; }
     if (P.at !== was) { this.releaseAll(); P.latch = false; this.panel.show(this.state); }
+    if (P.at && !was && typeof navigator !== "undefined") this.pad = (navigator.getGamepads?.().find(p => p?.connected)?.buttons ?? []).map(b => b.pressed); // (the pad's use button that opened it is held, not a note)
     if (P.at && !this.main) this.make(); // (at the first walk-up; or once the context's made, at the first press)
     const ctx = this.ctx;
     if (!ctx || !this.main) return;

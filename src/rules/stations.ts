@@ -4,8 +4,9 @@
 // the cloak pegs, the shoe rack, the bags; the Workshop's bay, lathe and pegboard); she's at one within the house's reach of its edge, and stays at it
 // till she's `slack` metres further off, so its panel doesn't flicker at the edge; one at a time, the nearest. Where an object is
 // and whether there are rooms are houseRooms.ts's (fromObject, hasRooms), never worked out here, so a new plan for the rooms
-// moves the stations' reach with them. Stations are known by their `use` alone. No E: the page
-// (main.ts, ui/creator.ts dock) slides its panel in and out as this changes. The rules don't change for it.
+// moves the stations' reach with them. Stations are known by their `use` alone. Since Ed's playtest of 2026-10-26 ("Menus should
+// open when she presses E near an interactive object") the one she's at is lit with E over it (render/houseRooms.ts), and E there
+// slides its panel in (main.ts, the rules' "house" event); walking off it slides it out. The rules don't change for it.
 import type { Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, fromObject, hasRooms, onRoomFloor, type HouseObject } from "./houseRooms";
@@ -14,7 +15,7 @@ import type { Tuning } from "./tuning";
 /** How much further than the house's reach she can step before an open station's panel goes (m). */
 export const STATION_SLACK = 0.8;
 
-/** The uses that come to her by nearness: the dressing stations' (the creator: their panels slide in from the left, ui/stationPanel.ts)
+/** The uses whose panels come on E at them and go as she walks off: the dressing stations' (the creator: their panels slide in from the left, ui/stationPanel.ts)
  *  and the tables' (Ed, 2026-10-23: "'Tables' slide in from the bottom and have a soft edge (they're more diegetic)": the Atrium's
  *  map table's sea chart, ui/chartOverlay.ts; the card table's to come, docs/backlog/treehouse.md). */
 export const STATION_USES: readonly HouseObject["use"]["kind"][] = ["creator"];

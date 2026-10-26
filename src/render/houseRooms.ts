@@ -28,6 +28,8 @@ import { dressed } from "../rules/clothesPile";
 import { bakeRoomDecor, DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
+import { UseGlow } from "./useGlow";
+import { atDecks } from "../rules/wakeUp";
 import { loanFind } from "../rules/finds";
 
 type V3 = { x: number; y: number; z: number };
@@ -141,6 +143,9 @@ export class HouseRoomsView {
   private sparkle: LoanSparkle | null = null;
   private readonly box: HTMLDivElement;
   private readonly tag: HTMLDivElement;
+  private tagHtml = "";
+  /** While the prompt is a tap target (touch): the view's onUse. */
+  private tapUse: ((down: boolean) => void) | null = null;
   private readonly bubble: HTMLDivElement;
   private readonly ring: HTMLDivElement;
   private said: { obj: HouseObject; at: number } | null = null;
@@ -154,6 +159,8 @@ export class HouseRoomsView {
   private readonly workshop = new WorkshopArt();
   /** Pieces baked to nothing (a room with no dressing), not tried again. */
   private readonly empty = new Set<string>();
+  /** The light round the piece she can use (render/useGlow.ts), drawn just after it. */
+  private readonly glow = new UseGlow();
   /** The Studio mic's cone of light from its spot lamp (render/spotlight.ts), drawn just after the mic. */
   private readonly spot = new Spotlight();
   // (the Ent's own floors, painted: render/houseArt.ts; a grid laid on the house's plane, an art pixel a texel)
@@ -180,13 +187,16 @@ export class HouseRoomsView {
     this.parts = [new Part(this.mat, R.back), new Part(this.mat, R.backNear), new Part(this.mat, R.front), new Part(this.mat, R.frontNear), new Part(this.mat, R.frontNear - 1e-4)];
     this.floor.frustumCulled = false; this.floor.visible = false; this.floor.renderOrder = 19.925;
     this.terraceFloor.frustumCulled = false; this.terraceFloor.visible = false;
-    this.furniture.add(this.spot.mesh);
+    this.furniture.add(this.spot.mesh, this.glow.mesh);
     this.meshes = [this.floor, this.terraceFloor, ...this.parts.map(p => p.mesh), this.furniture, this.workshop.group];
     this.box = document.createElement("div");
     this.box.id = "house-tags"; // (hidden under a table's chart: ui/chartOverlay.ts)
     this.box.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:11;display:none";
     const pill = "position:absolute;transform:translate(-50%,-100%);white-space:nowrap;font:600 14px/1.2 inherit;padding:3px 8px;border-radius:8px;";
     this.tag = document.createElement("div"); this.tag.style.cssText = pill + "background:rgba(20,14,32,.82);color:#f3e8ff;border:1px solid rgba(255,214,140,.55)";
+    // (on a touch screen the prompt is itself the button: a tap uses the object, as the touch sigil button does; ui/touch.ts)
+    this.tag.addEventListener("pointerdown", e => { if (this.tapUse) { e.preventDefault(); this.tapUse(true); } });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) this.tag.addEventListener(ev, () => this.tapUse?.(false));
     this.bubble = document.createElement("div"); this.bubble.style.cssText = pill + "background:rgba(250,244,255,.94);color:#2a1d38;border-radius:12px;padding:6px 12px;max-width:320px;white-space:normal;text-align:center";
     this.ring = document.createElement("div"); this.ring.style.cssText = "position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border-radius:50%";
     this.box.append(this.tag, this.bubble, this.ring);
@@ -269,7 +279,7 @@ export class HouseRoomsView {
     // plane, the crown, is drawn after them with no depth)
     { const flat = (px: number, pz: number, h: number) => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp, T.ent!.deck.y + z * ky + v.houseShift - h / v.mpp); return new THREE.Vector3(p.x, p.y + g0, p.z); }; // (slid with the rooms: houseShift)
       const o = flat(0, 0, 0); this.plan = { o, ex: flat(1, 0, 0).sub(o), ey: flat(0, 0, 1).sub(o), ez: flat(0, 1, 0).sub(o) }; }
-    const at = objectAt(D, w.x, w.z), lit = at?.id;
+    const at = objectAt(D, w.x, w.z), lit = at && at.id !== v.houseOpen ? at.id : undefined; // (lit, the one she can use; out while it's open)
     for (const P of this.parts) {
       let k = 0;
       for (const q of P.quads) {
@@ -306,6 +316,8 @@ export class HouseRoomsView {
       }
     }
     const pxWorld = (px: number, pz: number, dx: number, dy: number): V3 => { const { x, z } = fromPlan({ x: 0, z: 0 }, px, pz), p = onTreehouse(T.ent!.deck.x + x / v.mpp + dx, T.ent!.deck.y + z * ky + v.houseShift + dy); return alongRay(v, { x: p.x, y: p.y + g0, z: p.z }, z); };
+    let glowed = false;
+    const now = performance.now() / 1000;
     for (const [k, { art, mesh, pos, id, x, z }] of this.pieces) {
       const o = HOUSE_ROOMS.objects.find(q => q.id === id);
       mesh.visible = !o || k === pieceKey(o); // (a piece in another state than now's, hidden; a room's dressing always)
@@ -315,6 +327,7 @@ export class HouseRoomsView {
       for (const [name, q] of Object.entries(art.marks)) this.marks.set(`${id}.${name}`, pxWorld(x, z, q.x - art.ox, q.y - art.oy));
       (mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
       (mesh.material as THREE.MeshBasicMaterial).color.setScalar(id === lit ? 1.15 : 1);
+      if (id === lit) { this.glow.set(art.tex, art.w, art.h, -art.ox, -art.oy, (dx, dy) => pxWorld(x, z, dx, dy), mesh.renderOrder, now); glowed = true; }
     }
     // the Workshop's (render/workshopArt.ts): her broom resting on the bay while she's at it, on the lathe while she's at that (Ed,
     // 2026-10-23: "only while she's at the bay"; rules/stations.ts broomWhere), her parts on the pegboard;
@@ -356,8 +369,10 @@ export class HouseRoomsView {
         [[-P.w / 2, -P.h], [P.w / 2, -P.h], [P.w / 2, 0], [-P.w / 2, 0]].forEach(([dx, dy], i) => { const p = pxWorld(po.x, po.z, dx, dy); P.pos[i * 3] = p.x; P.pos[i * 3 + 1] = p.y; P.pos[i * 3 + 2] = p.z; });
         (P.mesh.geometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
         (P.mesh.material as THREE.MeshBasicMaterial).color.setScalar(po.id === lit ? 1.15 : 1);
+        if (po.id === lit && !glowed) { this.glow.set((P.mesh.material as THREE.MeshBasicMaterial).map, P.w, P.h, -P.w / 2, -P.h, (dx, dy) => pxWorld(po.x, po.z, dx, dy), P.mesh.renderOrder, now); glowed = true; }
       }
     } else if (this.pile) this.pile.mesh.visible = false;
+    if (!glowed) this.glow.set(null);
     // on the page: the object she's at, a placeholder's line, the bed's ring
     for (const e of g.leashEvents) if (e.kind === "house" && e.obj) { const o = HOUSE_ROOMS.objects.find(q => q.id === e.obj); if (o?.use.kind === "say") this.said = { obj: o, at: ht }; }
     if (this.said && (ht - this.said.at > SAY_FOR || this.said.at > ht)) this.said = null;
@@ -380,7 +395,17 @@ export class HouseRoomsView {
     }
     if (glints.length || this.sparkle) (this.sparkle ??= new LoanSparkle()).draw(glints, performance.now() / 1000, Math.max(2, Math.round(cv.width / v.width * 3)));
     const waking = !!g.wake && (!g.wake.open || (at?.use.kind === "bed" && g.party.spellAt === null)); // (the new opening's wake-up, rules/wakeUp.ts: no tag while she's in bed; the bed's not for sleeping yet)
-    place(this.tag, at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null, tagHeight(at?.use.kind), at ? tagOf(at, W, D, w) : "");
+    // the tag over it: its name and the button that uses it (Ed's playtest, 2026-10-26: "there's a prompt showing the button to press
+    // to open it"): E, the pad's □, or on a touch screen the tag itself to tap; just its name while it's open. Up at her decks before
+    // the party, E there starts it (rules/wakeUp.ts atDecks).
+    const decks = !at && g.wake?.open && g.party.spellAt === null && atDecks(g) ? decksSpot(D) : null;
+    const tagged = decks ?? (at && !this.said && !waking && !(at.use.kind === "pile" && dressed(g.wake)) ? at : null);
+    const say = decks ? { label: "Decks", act: "start the party" } : tagged ? tagOf(tagged, W, D, w) : null, open = !!tagged && tagged.id === v.houseOpen;
+    const html = say ? promptHtml(say, open ? null : v.useDevice) : "";
+    if (html !== this.tagHtml) { this.tagHtml = html; this.tag.innerHTML = html; }
+    this.tapUse = say && !open && v.useDevice === "touch" ? v.onUse : null;
+    this.tag.style.pointerEvents = this.tapUse ? "auto" : "none";
+    place(this.tag, tagged, decks ? 1.9 : tagHeight(tagged?.use.kind));
     place(this.bubble, this.said?.obj ?? null, 0.6, this.said?.obj.use.kind === "say" ? this.said.obj.use.line : "");
     const from = W.house?.bedFrom, bed = at?.use.kind === "bed" ? at : null;
     if (bed && from !== undefined) {
@@ -392,19 +417,39 @@ export class HouseRoomsView {
   }
 }
 
-/** What the tag over an object says: its name and what E does there (the hats' floor: the hat nearest her; a dressing station, its name only). */
-function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): string {
-  if (o.use.kind === "bed") return "Bed · hold E to sleep (ends the night)";
-  if (o.use.kind === "zoo") return "Bestiary book · E: the zoo";
-  if (o.use.kind === "telescope") return "Telescope · E: look";
-  if (o.use.kind === "say") return `${o.label} · E`;
+/** The tag's words: the object's name, and what its button does (`act`; "" its button alone; undefined, no button), held (`hold`). */
+export interface TagSay { label: string; act?: string; hold?: boolean }
+
+/** What the tag over an object says (the hats' floor: the hat nearest her). */
+export function tagOf(o: HouseObject, W: Witch, D: Deck, w: { x: number; z: number }): TagSay {
+  if (o.use.kind === "bed") return { label: "Bed", act: "to sleep (ends the night)", hold: true };
+  if (o.use.kind === "zoo") return { label: "Bestiary book", act: "the zoo" };
+  if (o.use.kind === "telescope") return { label: "Telescope", act: "look" };
+  if (o.use.kind === "chart") return { label: o.label, act: "the sea chart" };
+  if (o.use.kind === "pile") return { label: o.label, act: "put them on" };
+  if (o.use.kind === "instrument") return { label: o.label, act: "play" };
   if (o.use.kind === "hats") {
     const hats = hatsOnFloor(W), slots = hatSlots(D);
     let best = -1, bd = 0.9;
     hats.forEach((s, i) => { const dd = Math.hypot(slots[i].x - w.x, slots[i].z - w.z); if (s && dd <= bd) { bd = dd; best = i; } });
-    return best >= 0 ? `${hatSpell(hats[best])?.name ?? hats[best]} hat · E: wear it` : "Hats · E: put yours down";
+    return best >= 0 ? { label: `${hatSpell(hats[best])?.name ?? hats[best]} hat`, act: "wear it" } : { label: "Hats", act: "put yours down" };
   }
-  if (o.use.kind === "creator") return o.label; // (its choices are in by her being here: rules/stations.ts, no E)
-  if (o.use.kind === "instrument") return o.label; // (she's at it by being here: rules/studio.ts, no E; Esc steps away)
-  return `${o.label} · E`;
+  return { label: o.label, act: "" };
+}
+
+/** The use button's face on each device: the key, the pad's left face button (the sigil's, platform/input.ts PAD), a tap. */
+export const USE_BUTTON = { keys: "E", pad: "□", touch: "tap" } as const;
+
+/** The tag's HTML: its name, then (on `device`, null while it's open: its name alone) the button in a key cap and what it does. */
+export function promptHtml(say: TagSay, device: keyof typeof USE_BUTTON | null): string {
+  const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  if (!device || say.act === undefined) return esc(say.label);
+  const cap = `<b style="display:inline-block;min-width:1.1em;padding:0 4px;margin:0 2px;border-radius:4px;background:#f3e8ff;color:#2a1d3a;box-shadow:0 2px 0 #8a6fb0;text-align:center;font-weight:700">${USE_BUTTON[device]}</b>`;
+  return `${esc(say.label)} · ${say.hold ? "hold " : ""}${cap}${say.act ? ` ${esc(say.act)}` : ""}`;
+}
+
+/** Her decks' spot for a tag, as a house object's (on the plan: rules/houseRooms.ts), just behind her seat. */
+function decksSpot(D: Deck): HouseObject {
+  const p = toPlanAt0(D.seat.x - D.x, D.seat.z - D.z);
+  return { id: "decks", label: "Decks", room: "terrace", x: p.x, z: p.z, w: 1, d: 1, h: 0, use: { kind: "say", line: "" } } as unknown as HouseObject;
 }

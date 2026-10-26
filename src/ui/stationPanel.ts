@@ -121,6 +121,7 @@ export class StationPanel {
   open(station: string, shelves: Shelf[], g: Genome, owned: Set<string>, banner = "", ws: WorkshopCtx | null = null): void {
     this.id = station; this.shelves = shelves; this.g = clone(g); this.owned = owned; this.banner = banner; this.ws = ws;
     this.navAt = -1e9; this.hover = null;
+    this.padChoose = true; // (the pad's use button that opened it is held: let go first, then a press chooses)
     const L = this.lines(), first = L.findIndex(l => l.kind === "items" || (l.kind === "cards" && !l.readOnly));
     const s0 = first >= 0 ? this.shelves[L[first].shelf] : null;
     const worn = !s0 ? 0 : s0.slot ? Math.max(0, Array.from({ length: L[first].n }, (_, c) => cardAt(s0, L[first], c)).indexOf(this.ws?.fitted[s0.slot] ?? null)) : shownItems(s0).findIndex(i => wears(this.g, i));

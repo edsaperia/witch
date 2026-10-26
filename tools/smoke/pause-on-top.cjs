@@ -51,8 +51,9 @@ const CASES = [
   const paused = () => page.evaluate(() => !!document.querySelector("#pause-sliders.open"));
   for (const C of CASES) {
     // open it
-    if (C.at) await put(front(C.at)); else await C.open(page);
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
+    // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
+    if (C.at) { await put(front(C.at)); for (let i = 0; i < 30 && !(await isOpen()); i++) { await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); } } else await C.open(page);
     try { await page.waitForFunction(C.on ? C.on : ([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, C.on ? null : [C.sel, !!C.shown], { timeout: 120000, polling: 250 }); }
     catch { check(false, `${C.id}: opens`); continue; }
     await page.waitForTimeout(1500); // (slid in)

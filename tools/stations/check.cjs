@@ -32,7 +32,10 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 500 });
       // (the start card's any key: Q, which the station's panel leaves alone, as it takes Enter, E and Space)
       await page.keyboard.press("KeyQ");
-      await page.waitForFunction(() => document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused, null, { timeout: 300000, polling: 500 });
+      // (then E at it: nothing opens by nearness, Ed's playtest of 2026-10-26; pressed till the rules' step has seen her there)
+      const panelIn = () => page.evaluate(() => !!document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused);
+      for (let i = 0; i < 300 && !(await panelIn()); i++) { if (await page.evaluate(() => !window.witch.game.clock.paused)) await page.keyboard.press("KeyE"); await page.waitForTimeout(1000); }
+      await page.waitForFunction(() => document.querySelector("#station-panel")?.classList.contains("in") && !window.witch.game.clock.paused, null, { timeout: 30000, polling: 500 });
       const settle = async () => { await page.waitForTimeout(1500); await page.waitForFunction(() => window.witch.view.assets.pending === 0, null, { timeout: 900000, polling: 500 }); await page.waitForTimeout(3000); };
       // Where she's drawn on screen: her feet (the view's witchBase) and her top (up her sprite by her drawn height).
       const her = () => page.evaluate(([W, H]) => {
