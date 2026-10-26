@@ -1,6 +1,6 @@
 // ?timing=1 (app/timing.ts): the chart page's steps carried across the sail's reload and merged with the new page's.
 import { afterEach, describe, expect, it } from "vitest";
-import { carryTiming, clearCarried, mark, timingOn, transitionTiming } from "./timing";
+import { carryTiming, clearCarried, mark, sinceSail, timingOn, transitionTiming } from "./timing";
 
 const memory = () => { const m = new Map<string, string>(); return { getItem: (k: string) => m.get(k) ?? null, setItem: (k: string, v: string) => void m.set(k, v), removeItem: (k: string) => void m.delete(k) }; };
 const G = globalThis as unknown as { sessionStorage?: unknown };
@@ -36,5 +36,13 @@ describe("?timing=1, the transition's steps in the L log", () => {
     expect(transitionTiming().steps).toEqual([]);
     delete G.sessionStorage;
     expect(timingOn(new URLSearchParams("timing=1"))).toBe(false);
+  });
+  it("keeps the last sail's steps alone, timed from it (every log: Ed's v4821 sail)", () => {
+    const t = { steps: [{ name: "game:arrived", at: 0, page: 1, ms: 0 }, { name: "chart:sail", at: 100, page: 1, ms: 100 }, { name: "witch:prep", at: 150, page: 1, ms: 50 }, { name: "chart:sail", at: 1000, page: 1, ms: 850 }, { name: "game:arrived", at: 1400, page: 1, ms: 400 }], longTasks: [{ at: 120, ms: 60 }, { at: 1100, ms: 80 }] };
+    const s = sinceSail(t);
+    expect(s.steps.map(x => [x.name, x.at, x.ms])).toEqual([["chart:sail", 0, 0], ["game:arrived", 400, 400]]);
+    expect(s.longTasks).toEqual([{ at: 100, ms: 80 }]);
+    const none = { steps: [{ name: "witch:main", at: 0, page: 1, ms: 0 }], longTasks: [] };
+    expect(sinceSail(none)).toBe(none);
   });
 });
