@@ -38,7 +38,10 @@ export interface DecorItem { kind: string; x: number; z: number; yaw: number; k:
 /** A rug's colours, times this: it lies flat to the light, and a pale one blooms into a glare (the solarium's cream). */
 export const RUG_DIM = 0.6;
 /** The things spilled on the floor (art/houseMess.js), times this: flat to the lamps as a rug is, a pale sheet of paper glared white. */
-export const MESS_DIM = 0.7;
+export const MESS_DIM = 0.6;
+/** No piece with a spill stands nearer her clothes pile than this (m, box to box): so nothing on the floor near it could be taken for
+ *  it (Ed, 2026-10-26: the floor's mess never "last night's clothes"); the layout keeps to it (config/house), a test checks. */
+export const PILE_CLEAR = 3;
 /** Clear of these (m): a doorway, the way in from it, an object's reach past its edge (on top of the house's own reach). */
 const DOOR_CLEAR = 2.8, WAY_CLEAR = 1.8, REACH_CLEAR = 0.4, GAP = 2;
 

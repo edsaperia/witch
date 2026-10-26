@@ -8,8 +8,8 @@
   "z": 12,
   "r": 8,
   "objects": [
-    {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[0,-6.29],"box":{"w":5,"d":0.5,"h":4.4}},
-    {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2.29,3.43],"box":{"w":6,"d":2.4,"h":2.2}},
-    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[3.4,-4.4],"box":{"w":4.8,"d":1.8,"h":2.2}}
+    {"id":"pegboard","label":"Pegboard","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-3.76,-5.18],"box":{"w":6.2,"d":1.8,"h":6.2}},
+    {"id":"broomBay","label":"Broom bay","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[-2.29,3.43],"box":{"w":6.4,"d":3.2,"h":3}},
+    {"id":"lathe","label":"Lathe","use":{"kind":"creator","axes":[],"wear":[],"parts":[]},"offset":[3.02,-3.73],"box":{"w":5.76,"d":2.16,"h":2.64}}
   ]
 }

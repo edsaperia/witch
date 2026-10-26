@@ -21,7 +21,7 @@ export const SIZE = 2;
 /** Each piece drawn this much bigger again (Ed, 2026-10-26: "I think they're too small, which makes it hard to see what they are"):
  *  house.json's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
  *  The bed's already big; the small ones grow most. */
-export const GROW = { bed: 1.15, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.2, synthRack: 1.05, broomBay: 1.35, lathe: 1.4, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
+export const GROW = { bed: 1, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.1, synthRack: 1.4, broomBay: 1.35, lathe: 1.2, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
 export const GROW_ALL = 1.5;
 /** A piece's own scale: its footprint's metres over the real piece's. */
 export const sizeOf = id => SIZE * (GROW[id] ?? (id.startsWith("bedroom") ? 1 : GROW_ALL));

@@ -7,6 +7,6 @@
   "z": -44,
   "r": 9.5,
   "objects": [
-    {"id":"telephone","label":"Telephone","use":{"kind":"say","line":"The line's quiet. Friends can call later."},"offset":[-3.8,-3.8],"box":{"w":1.8,"d":1.8,"h":3.96}}
+    {"id":"telephone","label":"Telephone","use":{"kind":"say","line":"The line's quiet. Friends can call later."},"offset":[-1.81,-6.76],"box":{"w":1.8,"d":1.8,"h":3.96}}
   ]
 }

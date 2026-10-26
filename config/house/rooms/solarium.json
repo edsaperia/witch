@@ -8,6 +8,6 @@
   "z": -38,
   "r": 7,
   "objects": [
-    {"id":"mapTable","label":"Map table","use":{"kind":"chart"},"offset":[0,0],"box":{"w":3.9,"d":3.9,"h":1.35}}
+    {"id":"mapTable","label":"Map table","use":{"kind":"chart"},"offset":[-1.8,0],"box":{"w":3.9,"d":3.9,"h":1.35}}
   ]
 }

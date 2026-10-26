@@ -274,6 +274,6 @@ describe("the oak's rooms", () => {
       expect(objectAt(d, d.x + f.x, d.z + f.z)?.id, `${o.id}: in reach from in front`).toBe(o.id);
     }
     const w = objectWorld(obj("bed"), { x: 0, z: 0 });
-    expect(inRoom(S, "bedroom", w.x, w.z)).toBeLessThan(0);
+    expect(inRoom(S, "turret", w.x, w.z)).toBeLessThan(0); // (her bed, up in the Turret by the telescope: Ed, 2026-10-26)
   });
 });

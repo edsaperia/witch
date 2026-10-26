@@ -51,7 +51,8 @@ describe("the house, a file a room (config/house/)", () => {
       const a = L[i], b = L[j];
       expect(Math.hypot(a.x - b.x, a.z - b.z) - a.r - b.r, `${a.id} and ${b.id} crowd`).toBeGreaterThanOrEqual(3);
     }
-    expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m; the mock's 93)").toBe(93);
+    // (the mock's 93 from her bed in the Bedroom; 106 since the bed went up to the Turret, Ed 2026-10-26: "Move the bed to the turret")
+    expect(Math.round(houseWalk(H as never).toTakeoff), "bed to take-off along the trunk (m)").toBe(106);
   });
   it("its Terrace's layout is the Ent's art's own (art/ent.js OAK_TERRACE: the lab draws it as the game does)", () => {
     const T = (H as unknown as { terrace: Record<string, unknown> }).terrace;

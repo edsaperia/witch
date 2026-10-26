@@ -11,10 +11,10 @@ import { inRoom } from "../../config/house/shape.js";
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
 describe("waking in her bedroom", () => {
-  it("is beside her bed, in the bedroom, on the house's floor", () => {
+  it("is beside her bed, in its room (the Turret: Ed, 2026-10-26, \"Move the bed to the turret\"), on the house's floor", () => {
     const g = newGame(123, TUNING), at = bedside(g)!, p = toPlan(g.map.treehouse, at.x, at.z); // (on the house's turned plan)
     expect(at).not.toBeNull();
-    expect(inRoom(HOUSE_ROOMS.shape, "bedroom", p.x, p.z)).toBeLessThan(0); // (on the bedroom's own floor)
+    expect(inRoom(HOUSE_ROOMS.shape, HOUSE_ROOMS.objects.find(o => o.use.kind === "bed")!.room, p.x, p.z)).toBeLessThan(0); // (on its room's own floor)
     expect(onFloor(deckOf(g.map, g.tuning)!, at.x, at.z)).toBe(true);
   });
 

@@ -84,10 +84,12 @@ const THINGS = {
  *  invitations desk is Lima's (her redo of it). */
 /** @type {Record<string, [string, number][]>} */
 export const MESS = {
-  bed: [["clothes", 2], ["sock", 2], ["book", 1], ["cup", 1]],
-  wardrobe: [["clothes", 4], ["hanger", 2], ["shoe", 1], ["sock", 1]],
-  dressingTable: [["makeup", 2], ["ribbon", 2], ["clothes", 1], ["bottle", 1]],
-  shoeRack: [["shoe", 8], ["sock", 2]],
+  // (her Bedroom's kept sparse, low and with no clothes on the floor, Ed 2026-10-26: so nothing on its floor looks like last night's
+  // clothes, the pile she picks up by the wardrobe: rules/clothesPile.ts; and the rest lies away from it, render/houseDecor.ts PILE_CLEAR)
+  // (nothing round the bed, up in the Turret: Ed, 2026-10-26, "Move the bed to the turret")
+  wardrobe: [["hanger", 2]], // (her clothes pile lies by it: only hangers, never clothes or shoes)
+  dressingTable: [["makeup", 1], ["ribbon", 1]],
+  shoeRack: [["shoe", 5], ["sock", 1]],
   cloakPegs: [["hat", 1], ["ribbon", 1], ["clothes", 1], ["sock", 1]],
   mirror: [["ribbon", 2], ["makeup", 1], ["hat", 1]],
   telephone: [["paper", 3], ["crumple", 3], ["pencil", 1]],
