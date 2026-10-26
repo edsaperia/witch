@@ -837,9 +837,15 @@ const ROOM_COLOURS = {
 /** A piece's own colours over its room's (the biome board's frames). */
 /** (the biome frames dimmed, so the board's bright ones don't bloom over the parts hung in them) */
 const FRAME_DIM = .6;
-// (the letters' paper off-white and a little dim: flat to the light, a paler one blooms into a glare, as a rug does: render/houseDecor.ts RUG_DIM)
-const PIECE_COLOURS = { invitations: { [M.BELLY]: [188, 180, 166], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
-export function furnitureColours(st = {}, room = "bedroom", id = "") { return { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }; }
+// (the letters' paper slightly off-white; the whole desk dimmed, PIECE_DIM)
+const PIECE_COLOURS = { invitations: { [M.BELLY]: [228, 222, 208], [M.IRIS]: [110, 162, 218], [M.ACCENT]: [238, 44, 70] }, pegboard: Object.fromEntries(BIOME_MATS.map((mm, i) => [mm, hexRgb(BIOMES[i]).map(v => Math.round(v * FRAME_DIM))])) };
+/** Pieces mostly flat to the light, their colours times this (as render/houseDecor.ts RUG_DIM a rug's): the invitations desk, its top
+ *  and its letters lying face up, lit to a glare that bloomed at the house's camera (2026-10-26). */
+const PIECE_DIM = { invitations: .62 };
+export function furnitureColours(st = {}, room = "bedroom", id = "") {
+  const c = { ...BASE, ...(ROOM_COLOURS[room] ?? {}), ...(PIECE_COLOURS[id] ?? {}) }, k = PIECE_DIM[id];
+  return k ? Object.fromEntries(Object.entries(c).map(([m, rgb]) => [m, rgb.map(v => Math.round(v * k))])) : c;
+}
 
 /** A piece, drawn: its sprite (cropped), where its footprint's middle on the floor lands (`origin`, pixels from its top-left) and its
  *  lights in pixels ({ x, y, z, R, rgb, power }, as art/lighting.js shade takes them). foot: { w, d, h } in metres as house.json gives
