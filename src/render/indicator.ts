@@ -19,10 +19,13 @@
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
 import { groundHeight, HEIGHT_UNIFORMS, placed, seenOverBend } from "./height";
+import { pixelEmojiData } from "./bubbles";
 
 export const N = 40; // art pixels across
 const SCALE = 4; // screen pixels per art pixel
 const RING_R = 13; // the ring's radius (art pixels)
+/** An emoji's size in the ring (art pixels across). */
+const EMOJI_PX = 17;
 
 let RING: number[] | null = null;
 /** The ring's pixels (x, y, turn: 0 at 12 o'clock, clockwise), in row order, worked out once (a hypot and an atan2 a pixel a frame
@@ -257,7 +260,7 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** an emoji in its middle, drawn in pixels in its own colours (render/bubbles.ts, as the thrown 💌; the guidance pins: render/view/guidance.ts), else the glyph */ emoji?: string; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number; /** screen pixels from the arrow's tip up to that top (tuning pins.gap) */ gap?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
@@ -291,7 +294,11 @@ export class StoneIndicator {
       else c.dot(ring[k], ring[k + 1], dim, 0.9);
     }
     // In the middle: 🎶 (the wave pointer), or the rune: the area's creature's sigil, in its neon.
-    if (at.notes || at.glyph) {
+    const E = at.emoji ? pixelEmojiData(at.emoji, EMOJI_PX) : null;
+    if (E && E.data.some((v, i) => i % 4 === 3 && v > 0)) {
+      const o = Math.floor((N - EMOJI_PX) / 2), d = E.data;
+      for (let y = 0; y < EMOJI_PX; y++) for (let x = 0; x < EMOJI_PX; x++) { const i = (y * EMOJI_PX + x) * 4; if (d[i + 3]) c.dot(o + x, o + y, [d[i], d[i + 1], d[i + 2]], 1); }
+    } else if (at.notes || at.glyph) {
       const ink = at.glyphColour ? calm([at.glyphColour.x * 255, at.glyphColour.y * 255, at.glyphColour.z * 255]).map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)) : bright;
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
       for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }

@@ -68,11 +68,21 @@ export function pixelTexture(c: HTMLCanvasElement): THREE.CanvasTexture {
 
 /** One object's picture, baked and lit: its texture, its size in art pixels, where its floor's middle is on it; marks: named points
  *  of the piece in its picture's pixels (art/furniture.js: the mic's spot lamp). */
-export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }> }
+export interface FurnitureArt { tex: THREE.CanvasTexture; w: number; h: number; ox: number; oy: number; marks: Record<string, { x: number; y: number }>;
+  /** Its top as drawn: the highest row of its pixels, at the middle of its pixels' width (a pin over it clears it: render/pins.ts). */
+  top: { x: number; y: number } }
 export function bakeFurniture(o: HouseObject, st: Style, ppm: number, pitch: number, state?: string): FurnitureArt {
   const { yaw, foot, curve } = standing(o);
   const d = furnitureSprite(o.id, foot, st, { ppm, pitch, yaw, state, curve }) as Drawn, lit = litCanvas(d, o.room, st, 1, o.id);
-  return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {} };
+  return { tex: pixelTexture(lit), w: lit.width, h: lit.height, ox: d.origin.x, oy: d.origin.y, marks: d.marks ?? {}, top: drawnTop(lit) };
+}
+
+/** A picture's top as drawn: its highest row with a pixel in it, at the middle of its pixels' width (its whole top, empty). */
+function drawnTop(c: HTMLCanvasElement): { x: number; y: number } {
+  const A = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+  let y0 = -1, x0 = c.width, x1 = -1;
+  for (let y = 0; y < c.height; y++) for (let x = 0; x < c.width; x++) if (A[(y * c.width + x) * 4 + 3]) { if (y0 < 0) y0 = y; x0 = Math.min(x0, x); x1 = Math.max(x1, x); }
+  return y0 < 0 ? { x: c.width / 2, y: 0 } : { x: (x0 + x1 + 1) / 2, y: y0 };
 }
 
 /** The state an object is drawn in now (art/furniture.js FURNITURE_STATES): none in the oak's house (its bedroom's curtains, shut

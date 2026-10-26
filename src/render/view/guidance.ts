@@ -3,7 +3,6 @@
 import * as THREE from "three";
 import type { View } from "../view";
 import { HAT_INK } from "../view";
-import { HAT } from "../indicator";
 import type { Pin, PinTarget } from "../pins";
 import type { Guide, GuideKind } from "../../rules/guidance";
 
@@ -100,7 +99,28 @@ export const MAP = [
   "...............",
 ];
 
-export const GUIDE_GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: BROOM, hat: HAT, part: BROOM, wearable: SHIRT, chart: MAP, decks: DECKS };
+/** A wrapped present: something new (a find). */
+export const GIFT = [
+  "....##...##....",
+  ".....##.##.....",
+  "......###......",
+  "###############",
+  "#++++++#++++++#",
+  "###############",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#.....#.....#.",
+  ".#############.",
+];
+
+/** Each pin's icon (Ed, 2026-10-26: "bed emoji is 💤, desk emoji is 💌, map table emoji is 🧭, decks emoji is 🎶"; "Broom should be
+ *  'wings'"; "new find will be 🎁"), drawn in pixels as the thrown 💌 is (render/indicator.ts emoji); the dressing stations' a
+ *  shirt of our own. */
+export const GUIDE_EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", decks: "🎶", lathe: "🪽", hat: "🎁", part: "🎁", wearable: "🎁" };
+/** Each pin's glyph: the shirt, and where the browser has no such emoji, what's drawn in its place. */
+export const GUIDE_GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: BROOM, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: DECKS };
 
 /** Over the floor-level hats' floor (its height 0), the pin hovers as over a hat lying there. */
 const TOPS: Record<string, number> = { hats: 1 };
@@ -121,7 +141,7 @@ export class GuidePin {
       if (key !== this.key) {
         // (a new guide: the old pin gone, the new eased in from nothing)
         this.pin?.remove();
-        this.pin = this.view.pin(target, { colour: HAT_INK, glyph: GUIDE_GLYPH[guide.kind], glyphColour: INK });
+        this.pin = this.view.pin(target, { colour: HAT_INK, glyph: GUIDE_GLYPH[guide.kind], glyphColour: INK, emoji: GUIDE_EMOJI[guide.kind] });
         this.pin.hide();
         this.key = key;
       }

@@ -21,5 +21,11 @@ describe("a pin's target as drawn", () => {
     const s = pinSpot({ object: "wardrobe" }, map, TUNING, her, flat)!;
     expect(s.x).toBeCloseTo(at.x + 3, 9); expect(s.z).toBeCloseTo(at.z - 40, 9); expect(s.top).toBeCloseTo(30 + o.h, 9);
   });
+  it("a house object's top as drawn once its art's made (render/houseRooms.ts marks \"<id>.top\"), so the pin clears it (Ed, 2026-10-26: \"the pointer should be not overlapping with the item\"); its config height till then, or when the target sets its own", () => {
+    const tops = (id: string) => (id === "wardrobe" ? { x: 5, y: 9, z: 7 } : null), hilly = () => 2;
+    expect(pinSpot({ object: "wardrobe" }, map, TUNING, off, hilly, tops)).toEqual({ x: 5, z: 7, top: 7 }); // (over the ground there)
+    expect(pinSpot({ object: "bed" }, map, TUNING, off, flat, tops)?.top).toBe(HOUSE_ROOMS.objects.find(q => q.id === "bed")!.h + deck.h);
+    expect(pinSpot({ object: "wardrobe", top: 1 }, map, TUNING, off, flat, tops)).toEqual({ x: at.x, z: at.z, top: 1 + deck.h });
+  });
   it("nothing for an object the house hasn't", () => expect(pinSpot({ object: "no-such-thing" }, map, TUNING, off, flat)).toBeNull());
 });

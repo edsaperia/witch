@@ -87,7 +87,8 @@ export function drawPointers(v: View, time: number): void {
     const ht = g.herTime, dt = Number.isFinite(v.pinsAt) ? Math.min(0.1, Math.max(0, ht - v.pinsAt)) : 0; v.pinsAt = ht; // (on her clock: the house's time runs at a tenth)
     // (in the house, where time runs slow too, they stay: they're there to guide her round it; the telescope's view still has none)
     const pinCalm = v.herOffset.on ? (v.telescope ? 0 : 1) : calm;
-    for (const P of v.pins) P.draw(v.camera, cw, ch, pinSpot(P.target, g.map, t, v.herOffset, groundHeight), w.x, w.z, beatTime(g.beat, time), t.beat.bpm, dt, pinCalm, t.pins?.gap);
+    const drawnTop = (id: string) => v.houseRooms?.marks.get(`${id}.top`); // (each object's top as drawn: pins clear it)
+    for (const P of v.pins) P.draw(v.camera, cw, ch, pinSpot(P.target, g.map, t, v.herOffset, groundHeight, drawnTop), w.x, w.z, beatTime(g.beat, time), t.beat.bpm, dt, pinCalm, t.pins?.gap);
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
     const AT = t.alarms ?? ALARM_DEFAULTS;
     stepAlarms(v.alarms, g.combat.sounds, g.combat.events, time, AT);

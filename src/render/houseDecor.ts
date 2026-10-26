@@ -85,7 +85,7 @@ export function bakeRoomDecor(room: Rect & { id: string; r?: number; locked?: bo
   const g = out.getContext("2d")!;
   g.imageSmoothingEnabled = false;
   for (const q of [...drawn].sort((a, b) => (a.it.kind === "rug" ? -1 : b.it.kind === "rug" ? 1 : a.it.z - b.it.z))) g.drawImage(q.c, Math.round(q.left - x0), Math.round(q.top - y0));
-  return { tex: pixelTexture(out), w, h, ox: -x0, oy: -y0, marks: {} };
+  return { tex: pixelTexture(out), w, h, ox: -x0, oy: -y0, marks: {}, top: { x: w / 2, y: 0 } }; // (a room's dressing: no pin points at it)
 }
 
 /** The rooms dressed (those with any), for render/houseRooms.ts. */
