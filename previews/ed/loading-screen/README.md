@@ -43,3 +43,18 @@ The mock's settings, all in its query string:
 | `?lines=1` | bring back the connecting lines |
 
 `cloud-load-timeline.json`: a cold first load in the cloud, its timing marks, for the progress plan.
+
+## v4 (Ed's notes, 2026-10-26, after v3)
+
+- **Flat again**: the seal faces the camera squarely, with no tilt and no dome. The slow sway and the sky's depth stay.
+- **Font**: "Calligraphy" (Ed's upload; `?font=Adelia` and `?font=Great Vibes` for the others).
+  - Neither uploaded font is committed here: Adelia's file says "All rights reserved" (Carroline, 2022), and Calligraphy's carries no licence.
+  - Put `calligraphy.otf`, `adelia.ttf` and `adelia-alt.otf` beside `mock.html` to see them. Without them it falls back to Great Vibes.
+  - Shipping either in the game needs its maker's licence.
+- **Text star density low**, as Ed asked (`?spacing=20`). With these scripts the small lowercase gets hard to read at that density.
+  - Compare `*-compare-calligraphy-denser.png` (`?spacing=10`), `*-compare-adelia.png` and `*-compare-greatvibes.png`.
+- **One colour**: every star of the design lights the same warm gold (`?star=r,g,b`).
+- **The supernova**, after Ed's Cassiopeia A reference, in `*-supernova-10…100.png`:
+  - a brief white flash from the centre star;
+  - a ragged remnant shell opening out from it: a red haze outside, blue wisps inside, orange-gold filaments along it, green patches;
+  - then the white, and the cut to the bedroom with its alarm (`bedroom-alarm*.png`).

@@ -14,13 +14,16 @@
        ?hand=0..1   the hand-over: the last star's supernova to white by .45 (?nova), the white clearing over .35 (?clear) onto her bedroom, its alarm ringing
        ?extra=1     extra stars along the letters' long strokes (on by default; 0: their corners and ends only)
        ?t=          the clock (seconds): where the camera's orbit is, for a still
-       ?font=Great Vibes  the script for the words; ?spacing=6.5 its stars apart (px at 190 px); ?wordh=0.0019 the words' size
+       ?font=Adelia  the script for the words (or "Adelia Alt", "Great Vibes"); ?w1=Coven ?w2=Rush the words; ?bandw= ?bandh= the space each fits in; ?spacing=6.5 its stars apart (px at 190 px); ?wordh=0.0019 the words' size
        ?galaxy=1    the galaxy under the seal (0 none)
-       ?tilt=0.68   how far the seal lies back (radians; 0 upright, as before)
+       ?tilt=0   how far the seal lies back (radians; 0 upright, as before)
        ?orbit=0.1 ?dolly=0.12 ?dome=0.18 ?jitter=0.025   the 3D: the camera's sway (radians), how much nearer it comes as the
                     seal completes, the seal's dome (its middle toward us) and each star's own depth off it (0 for all: flat as before) -->
 <style>
 @font-face { font-family: "Great Vibes"; src: url(greatvibes.woff2) format("woff2"); font-display: block; }
+@font-face { font-family: "Adelia"; src: url(adelia.ttf) format("truetype"); font-display: block; }
+@font-face { font-family: "Calligraphy"; src: url(calligraphy.otf) format("opentype"); font-display: block; }
+@font-face { font-family: "Adelia Alt"; src: url(adelia-alt.otf) format("opentype"); font-display: block; }
 html, body { margin: 0; height: 100%; overflow: hidden; background: #05060e; }
 canvas { position: fixed; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
 #bed { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; }
@@ -101,10 +104,10 @@ function band(text, top) {
 // The words in a flowing script (Ed, 2026-10-26: "Make the font more like this", a brush script with swashes): each drawn in the
 // script, thinned to its strokes' centre lines (Zhang-Suen), and a star put every SPACING pixels along them; each word stands
 // upright along its band of the seal, its foot on the rim (SCRIPT the font: Great Vibes, OFL).
-const SCRIPT = P.get("font") || "Great Vibes", SPACING = num("spacing", 6.5);
+let SCRIPT = P.get("font") || "Calligraphy"; const SPACING = num("spacing", 20); // (Ed, 2026-10-26: "Try this font: Adelia"; Great Vibes till its file is here; fewer stars on the words: "star density on the text should be lower")
 function scriptWord(text, top) {
-  const c = document.createElement("canvas"), w = 900, h = 300; c.width = w; c.height = h;
-  const g = c.getContext("2d", { willReadFrequently: true }); g.font = `190px "${SCRIPT}"`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = "#fff"; g.fillText(text, w / 2, h / 2);
+  const c = document.createElement("canvas"), w = 1300, h = 700; c.width = w; c.height = h; // (room for the script's tall capitals and long tails)
+  const g = c.getContext("2d", { willReadFrequently: true }); g.font = `190px "${SCRIPT}"`; g.textAlign = "center"; g.textBaseline = "middle"; g.fillStyle = g.strokeStyle = "#fff"; g.lineWidth = num("thick", SCRIPT === "Adelia" ? 5 : 0); g.lineJoin = "round"; g.strokeText(text, w / 2, h / 2); g.fillText(text, w / 2, h / 2); // (thickened first, so the script's hairlines survive the thinning)
   const d = g.getImageData(0, 0, w, h).data, img = new Uint8Array(w * h);
   for (let i = 0; i < w * h; i++) img[i] = d[i * 4 + 3] > 110 ? 1 : 0;
   // Zhang-Suen thinning
@@ -125,10 +128,16 @@ function scriptWord(text, top) {
     for (let i = -1; i <= 1 && !near; i++) for (let j = -1; j <= 1 && !near; j++) for (const q of cell.get(`${cx + i},${cy + j}`) ?? []) if (Math.hypot(q[0] - x, q[1] - y) < SPACING) { near = true; break; }
     if (near) continue; const q = [x, y]; pts.push(q); const k = key(x, y); cell.set(k, [...(cell.get(k) ?? []), q]); }
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity; for (const [x, y] of pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
-  const R = 0.66, sc = num("wordh", 0.0019); // (seal units a pixel of the 190 px script: both words at one letter height)
-  for (const [x, y] of pts) {
-    const sArc = (x - (x0 + x1) / 2) * sc, am = top ? -Math.PI / 2 + sArc / R : Math.PI / 2 - sArc / R, ax = R * Math.cos(am), ay = R * Math.sin(am);
-    stars.push({ kind: "letter", top, ax, ay, x: ax, y: ay + (y - h / 2) * sc });
+  return { pts, x0, x1, y0, y1, top };
+}
+/** Both words laid on the seal at one scale, the largest that fits each inside its band (BAND_W wide, BAND_H tall, in seal units). */
+function layWords(words) {
+  const R = 0.66, BW = num("bandw", 1.2), BH = num("bandh", 0.62), sc = Math.min(...words.map(w => Math.min(BW / (w.x1 - w.x0), BH / (w.y1 - w.y0))));
+  for (const w of words) for (const [x, y] of w.pts) {
+    const sArc = (x - (w.x0 + w.x1) / 2) * sc, am = w.top ? -Math.PI / 2 + sArc / R : Math.PI / 2 - sArc / R, ax = R * Math.cos(am), ay = R * Math.sin(am);
+    // (its foot on the rim: the top word's bottom just above it, the bottom word's top just below it)
+    const dy = w.top ? (y - w.y1) * sc - 0.02 : (y - w.y0) * sc + 0.02;
+    stars.push({ kind: "letter", top: w.top, ax, ay, x: ax, y: ay + dy });
   }
 }
 
@@ -152,7 +161,7 @@ let W = 0, H = 0, u = 3, bg = [], neb = [];
 // Laid back like the sea chart's disc (Ed, 2026-10-26: "a bit foreshortened/isometric, like the map is"): the seal lies tipped away
 // from us by TILT radians (its top far, its bottom near), so its circle reads as an ellipse, COVEN the far side, RUSH the near; the
 // dome stands up out of it like an island's hills. The camera sways as the chart's glides, never turning it round.
-const TILT = num("tilt", 0.68), LIFT = num("lift", 0.13), ORBIT = num("orbit", 0.1), DOLLY = num("dolly", 0.12), DOME = num("dome", 0.18), JITTER = num("jitter", 0.025), D = num("far", 8); // (the camera this far off, in seal units: far, so nearly isometric, the far rim hardly smaller than the near, as the chart is)
+const TILT = num("tilt", 0), LIFT = num("lift", 0.13), ORBIT = num("orbit", 0.1), DOLLY = num("dolly", 0.12), DOME = num("dome", 0), JITTER = num("jitter", 0), D = num("far", 8); // (the camera this far off, in seal units: far, so nearly isometric, the far rim hardly smaller than the near, as the chart is)
 { let s = 11; const r = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   for (const st of stars) { const rr = st.x * st.x + st.y * st.y; st.z = -DOME * (1 - Math.min(1, rr / 0.5)) + (r() - 0.5) * 2 * JITTER + (st.kind === "letter" ? -0.04 : 0); } }
 function fit() {
@@ -205,7 +214,33 @@ const gasPic = document.createElement("canvas");
   cluster(0.78, -0.2, 0.06, 60, ["#ffffff", "#e8ddff"], 0.8);
   for (let i = 0; i < 900; i++) { const X = (r() - 0.5) * 3.2, Y = (r() - 0.5) * 3.2; gal.push({ x: X, y: Y, c: r() < 0.5 ? "#ffd0a0" : "#d8e2ff", a: 0.25 + 0.5 * r(), big: r() < 0.01 }); } // (the field in the plane)
 }
-const seal = () => Math.min(W, H) * (W < H ? 0.6 : 0.5);
+// The supernova's remnant (Ed, 2026-10-26, his reference Cassiopeia A): a ragged shell of fibrous gas, a red haze round it, blue
+// wisps inside, orange and gold filaments along it, green patches; drawn once, opened out from the last star.
+const remnant = document.createElement("canvas");
+{ const T = 300; remnant.width = remnant.height = T; const rx = remnant.getContext("2d"), img = rx.createImageData(T, T), d = img.data;
+  const h = (i, j) => { const v = Math.sin(i * 157.1 + j * 271.7) * 43758.5453; return v - Math.floor(v); };
+  const vn = (x, y) => { const i = Math.floor(x), j = Math.floor(y), fx = x - i, fy = y - j, u = fx * fx * (3 - 2 * fx), v = fy * fy * (3 - 2 * fy);
+    return (h(i, j) * (1 - u) + h(i + 1, j) * u) * (1 - v) + (h(i, j + 1) * (1 - u) + h(i + 1, j + 1) * u) * v; };
+  const fbm = (x, y) => { let a = 0, f = 1, w = 0.5; for (let o = 0; o < 5; o++) { a += w * vn(x * f + o * 31.7, y * f - o * 17.9); f *= 2.07; w *= 0.5; } return a; };
+  const ridge = (x, y, p) => Math.pow(1 - Math.abs(2 * fbm(x, y) - 1), p);
+  for (let j = 0; j < T; j++) for (let i = 0; i < T; i++) {
+    const u = i / T * 2 - 1, v = j / T * 2 - 1, r = Math.hypot(u, v), ang = Math.atan2(v, u);
+    const rr = 0.66 + 0.12 * (fbm(Math.cos(ang) * 2 + 5, Math.sin(ang) * 2 + 5) - 0.5) * 2;   // (the shell's radius, wobbling round)
+    const shell = Math.exp(-(((r - rr) / (0.16 + 0.06 * fbm(u * 3, v * 3))) ** 2));
+    const inner = Math.max(0, 1 - r / rr) * 0.55, halo = Math.exp(-(((r - rr - 0.12) / 0.2) ** 2));
+    const fil = ridge(u * 4.2 + 1, v * 4.2, 6), fil2 = ridge(u * 8 + 7, v * 8 + 2, 10), wisp = ridge(u * 3 + 11, v * 3 - 4, 4);
+    const green = Math.max(0, Math.min(1, (fbm(u * 1.6 + 20, v * 1.6 - 3) - 0.56) / 0.12)) * shell * (u < 0.1 ? 1 : 0.35);
+    let R = 190 * halo * 0.6 + 200 * shell * 0.35 + 255 * fil * shell * 0.75 + 255 * fil2 * shell * 0.55 + 20 * green;
+    let G = 25 * halo * 0.3 + 40 * shell * 0.25 + 120 * fil * shell * 0.75 + 190 * fil2 * shell * 0.55 + 120 * green;
+    let B = 140 * halo * 0.5 + 255 * (inner * 1.1 + shell * 0.6) * (0.25 + 0.75 * wisp * wisp) + 20 * fil2 * shell + 40 * green;
+    R *= 1 - 0.6 * green; // (its green patches green, not white)
+    const fade = Math.max(0, Math.min(1, (1.0 - r) / 0.12));
+    R *= fade; G *= fade; B *= fade;
+    const o = (j * T + i) * 4, mx = Math.max(R, G, B);
+    d[o] = Math.min(255, R); d[o + 1] = Math.min(255, G); d[o + 2] = Math.min(255, B); d[o + 3] = Math.min(255, mx);
+  }
+  rx.putImageData(img, 0, 0); }
+const seal = () => Math.min(W, H) * (W < H ? 0.5 : 0.36);
 // the camera this frame: its sway round the seal's middle and how near it is
 let cam = { cy: 1, sy: 0, cp: 1, sp: 0, d: D };
 function camera(t, p) { const yaw = ORBIT * Math.sin(t * 0.21), pitch = ORBIT * 0.55 * Math.sin(t * 0.17 + 1.3); cam = { cy: Math.cos(yaw), sy: Math.sin(yaw), cp: Math.cos(pitch), sp: Math.sin(pitch), d: D * (1 - DOLLY * p) }; }
@@ -220,7 +255,7 @@ function dotted(ax, ay, bx, by, a) { // a faint dotted line, every other pixel (
   const n = Math.ceil(Math.max(Math.abs(bx - ax), Math.abs(by - ay)));
   for (let i = 2; i < n - 1; i += 2) px(ax + (bx - ax) * i / n, ay + (by - ay) * i / n, `rgba(190,204,255,${a.toFixed(2)})`);
 }
-const NOVA = num("nova", 0.45), CLEAR = num("clear", 0.35), LINES = P.get("lines") === "1", FLASH = num("flash", 0.6), GROW = num("grow", 0.45), STEP = num("step", 0.12); // (the flash, a line's growing, a still's pretended gap between stars: seconds)
+const STAR = P.get("star") || "255,214,140", NOVA = num("nova", 0.66), CLEAR = num("clear", 0.3), LINES = P.get("lines") === "1", FLASH = num("flash", 0.6), GROW = num("grow", 0.45), STEP = num("step", 0.12); // (the flash, a line's growing, a still's pretended gap between stars: seconds)
 let live = true; const litAt = [];
 function draw(t, p, hand) {
   // the sky: deep night, faint stars drifting slowly (the world turning), twinkling
@@ -247,7 +282,7 @@ function draw(t, p, hand) {
   const pos = s => {
     if (s.kind !== "letter") return flat(s.x, s.y, s.z);
     const q = flat(s.ax, s.ay, 0); if (!q) return null; // (its letter's foot on the rim, the letter itself upright on it: a sign, not a decal)
-    return [q[0] + (s.x - s.ax) * seal() * q[2], q[1] + (s.y - s.ay) * seal() * q[2] - (s.top ? LIFT : 0) * seal() * q[2], q[2]];
+    return [q[0] + (s.x - s.ax) * seal() * q[2], q[1] + (s.y - s.ay) * seal() * q[2] - (s.top ? LIFT * 0 : 0) * seal() * q[2], q[2]];
   };
   if (GALAXY > 0) {
     const spin = t * 0.012, cs = Math.cos(spin), sn = Math.sin(spin), Z = 0.06;
@@ -276,7 +311,7 @@ function draw(t, p, hand) {
     if (s.at >= lit) { if (GHOST > 0) px(X, Y, `rgba(150,160,210,${(GHOST * fade).toFixed(2)})`); continue; }
     const fresh = Math.max(0, 1 - age(s) / FLASH); // (just lit: a flash, brighter and bigger, then it settles)
     const tw = 0.85 + 0.15 * Math.sin(t * 2.3 + s.x * 40), core = `rgba(255,248,226,${(Math.min(1, (tw + flare) * depth) * fade).toFixed(2)})`;
-    const halo = s.kind === "sigil" ? "125,255,206" : "255,214,140"; // (the sigil's mint, its island's neon; the letters' gold)
+    const halo = STAR; // (every star of the design lit alike: Ed, 2026-10-26, "the stars on the design should all light up the same colours")
     px(X, Y, core);
     const arm = (0.45 + 0.55 * Math.max(fresh, flare)) * fade;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) px(X + dx, Y + dy, `rgba(${halo},${(arm * 0.55).toFixed(2)})`);
@@ -291,28 +326,29 @@ function draw(t, p, hand) {
   // screen's white (NOVA of the hand-over); then the white falls away straight onto her dark bedroom, her phone's alarm ringing
   // (the game's own first frame of the wake-up: no asleep card between).
   if (hand > 0) {
-    const last = stars.find(s => s.at === N - 1), c = last && pos(last), k = Math.min(1, hand / NOVA);
+    const last = stars.find(s => s.at === N - 1), c = last && pos(last);
     if (c) {
-      const m = Math.min(W, H), r = 2 + k * k * m * 0.22, gr = x.createRadialGradient(c[0], c[1], 0, c[0], c[1], r);
-      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(0.25, "rgba(255,250,235,0.95)"); gr.addColorStop(0.6, `rgba(150,255,220,${(0.5 * k).toFixed(2)})`); gr.addColorStop(1, "rgba(150,120,255,0)");
-      x.fillStyle = gr; x.fillRect(c[0] - r, c[1] - r, 2 * r, 2 * r);
-      const L = 4 + k * k * Math.max(W, H) * 0.7; // (the spikes)
-      for (let i = 1; i < L; i++) { const a = (1 - i / L) * Math.min(1, 0.4 + k); for (const [dx, dy] of [[i, 0], [-i, 0], [0, i], [0, -i]]) px(c[0] + dx, c[1] + dy, `rgba(255,252,240,${a.toFixed(2)})`); }
-      for (const [R0, col] of [[k * 2.2, "160,255,220"], [k * 1.6, "200,170,255"]]) { // (the shockwave: two rings, in the plane)
-        const n = 360; for (let i = 0; i < n; i++) { const th = i / n * 6.283, q = flat(Math.cos(th) * R0, Math.sin(th) * R0, 0); if (q) px(q[0], q[1], `rgba(${col},${(0.9 * (1 - k * 0.6)).toFixed(2)})`); }
-      }
+      const m = Math.max(W, H), k = Math.max(0, Math.min(1, (hand - 0.03) / (NOVA - 0.03))), ease = 1 - Math.pow(1 - k, 2.2);
+      // the flash: the star's core, white, a moment (its spikes reaching out), then the shell takes over
+      const f = Math.max(0, 1 - hand / 0.18), r0 = 3 + (1 - f) * m * 0.05;
+      if (f > 0) { const gr = x.createRadialGradient(c[0], c[1], 0, c[0], c[1], r0 * 3); gr.addColorStop(0, `rgba(255,255,255,${f})`); gr.addColorStop(1, "rgba(255,240,200,0)"); x.fillStyle = gr; x.fillRect(c[0] - r0 * 3, c[1] - r0 * 3, r0 * 6, r0 * 6);
+        const L = m * 0.35 * (1 - f * 0.5); for (let i = 1; i < L; i++) { const a = (1 - i / L) * f; for (const [dx, dy] of [[i, 0], [-i, 0], [0, i], [0, -i]]) px(c[0] + dx, c[1] + dy, `rgba(255,248,220,${a.toFixed(2)})`); } }
+      // the remnant (after Cassiopeia A, Ed's reference): its shell opening out from the star, brightest as it grows
+      const R = (0.04 + 0.9 * ease) * m * 0.62;
+      x.save(); x.globalCompositeOperation = "lighter"; x.globalAlpha = Math.min(0.85, k * 2.2); x.imageSmoothingEnabled = true;
+      x.translate(c[0], c[1]); x.rotate(k * 0.25); x.drawImage(remnant, -R, -R, 2 * R, 2 * R); x.restore();
     }
   }
-  const white = hand <= 0 ? 0 : hand < NOVA ? Math.pow(Math.max(0, (hand - NOVA * 0.45) / (NOVA * 0.55)), 1.5) : Math.max(0, 1 - (hand - NOVA) / CLEAR);
+  const white = hand <= 0 ? 0 : hand < NOVA ? Math.pow(Math.max(0, (hand - NOVA * 0.72) / (NOVA * 0.28)), 1.6) : Math.max(0, 1 - (hand - NOVA) / CLEAR);
   document.getElementById("white").style.opacity = white.toFixed(3);
   const bed = document.getElementById("bed"); if (innerWidth < 700 && !bed.src.includes("phone")) bed.src = "bedroom-alarm-phone.png";
   bed.style.opacity = hand >= NOVA ? "1" : "0";
 }
-const ready = document.fonts.load(`190px "${SCRIPT}"`).catch(() => {}).then(() => { scriptWord("Coven", true); scriptWord("Rush", false); orderStars(); fit(); window.seal = { stars: N, letters: stars.filter(s => s.kind === "letter").length }; document.body.dataset.ready = "1"; });
+const ready = document.fonts.load(`190px "${SCRIPT}"`).catch(() => []).then(f => { if (!f || !f.length) { SCRIPT = "Great Vibes"; return document.fonts.load(`190px "${SCRIPT}"`); } }).then(() => { layWords([scriptWord(P.get("w1") || "Coven", true), scriptWord(P.get("w2") || "Rush", false)]); orderStars(); fit(); window.seal = { stars: N, letters: stars.filter(s => s.kind === "letter").length }; document.body.dataset.ready = "1"; });
 addEventListener("resize", fit);
 const fixedP = P.has("p") ? num("p", 0) : null, fixedH = num("hand", 0), t0 = performance.now() - num("t", 0) * 1000;
 ready.then(() => requestAnimationFrame(function loop(now) {
-  const t = (now - t0) / 1000, cyc = t % 20, p = fixedP ?? Math.min(1, cyc / 15), hand = fixedP === null && !P.has("hand") ? Math.max(0, Math.min(1, (cyc - 15.5) / 3)) : fixedH;
+  const t = (now - t0) / 1000, cyc = t % 21, p = fixedP ?? Math.min(1, cyc / 15), hand = fixedP === null && !P.has("hand") ? Math.max(0, Math.min(1, (cyc - 15.5) / 4)) : fixedH;
   live = fixedP === null; const lit = Math.floor(p * N + 1e-9);
   if (live) { if (cyc < 0.05) litAt.length = 0; for (let i = litAt.length; i < lit; i++) litAt[i] = t; }
   draw(t, p, hand); requestAnimationFrame(loop);
