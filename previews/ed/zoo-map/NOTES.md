@@ -121,3 +121,24 @@ The brief: gilded railings about 1–1.2 m, close-set bars with spearhead finial
 - `above.png`: an island from the treetops, its fence and the streets round it.
 - `lake.png`, `lake-above.png`: an undiscovered island's lake inside its fence (shot on the build before the islands were brought closer).
 - The zoo is flat; islands are 12 m of street apart at the nearest (was 30).
+
+## The fence, round 2: five times taller (concept, before the final art)
+
+Ed: "Make it more Versailles. Add fleur-de-lis tips, a curly scroll band and proper urns on the posts. Make it five times taller." (The 1.1 m round is in `short/`.)
+
+- `fence-close.png`: a 10 m run at 5 screen pixels an art pixel, her height beside it.
+  - 5.5 m of railing (42 art pixels).
+  - Bars every 4 pixels: a lit pixel and a dark one, two clear between, so half of it is see-through.
+  - Fleur-de-lis on every other bar, spear points on the rest.
+  - Two bands of C-scrolls meeting at rosettes, near the foot and near the top.
+  - A pilaster every 4 m with a capital, a footed urn and a flame finial (about 8 m to the flame).
+  - A gilt lamp every 30 m, its lantern about 8.5 m up, over the urns, lighting a warm pool on the street.
+  - Three gold tones and a highlight, with a near-black edge on the ornament (gold, not brass).
+- `frame-fence.png`: painted along the wolf island's fence line in a game frame. She stands on the street before it; the wolves' garden shows through the bars.
+- `fly-over.png`: her in the treetops (24 m) over the same island's front, with the railing along it and its lamps' pools. She clears it by about 18 m.
+
+Knock-ons:
+- **Flying over:** her flight height is 24 m (`treetopHeight`), so she clears 5.5 m by far. The fence only stops anything on foot. Her leashed followers cross with her (tested); every other creature is held in.
+- **The camera:** from the street, she stands in front of it. Inside an island, with the fence between her and the camera, 5.5 m of gold would cover her. The final art fades the fence round her line of sight, as the scenery fade does trees.
+- **The lights:** the same budget as before. About 1,100 lamps over the whole zoo; every lantern glows (emissive); the pools are painted in the ground shader; only the nearest ~8 cast real point lights.
+- **Cost:** one mesh for all the railings (a textured ribbon), and the lamps one sprite batch, so no more draw calls than the 1.1 m fence.
