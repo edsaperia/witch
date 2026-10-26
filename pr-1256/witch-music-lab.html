@@ -5553,7 +5553,7 @@ label.check input { accent-color: var(--accent); }
       garden: { treeDensity: 0.75, groundCover: { density: 0.6, kinds: ["clover", "blades"] } },
       "twiggy-forest": { treeDensity: 1, groundCover: { density: 0.4, kinds: ["moss", "blades"] } },
       ancient: { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["moss", "fern"] } },
-      norway: { treeDensity: 1, groundCover: { density: 0.5, kinds: ["moss", "blades"] } },
+      "jungle-understory": { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["moss", "fern"] } },
       "alder-forest": { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["reeds", "moss"] } },
       meadow: { treeDensity: 0.55, groundCover: { density: 1, kinds: ["blades", "clover"] } },
       "old-oaks": { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["blades", "fern"] } },
@@ -5563,7 +5563,7 @@ label.check input { accent-color: var(--accent); }
       "rocky-slope": { treeDensity: 0.75, groundCover: { density: 0.25, kinds: ["moss", "blades"] } },
       bog: { treeDensity: 0.7, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
       deadwood: { treeDensity: 0.8, groundCover: { density: 0.25, kinds: ["moss"] } },
-      "cave-mouth": { treeDensity: 0.75, groundCover: { density: 0.2, kinds: ["moss"] } },
+      "jungle-cave": { treeDensity: 0.75, groundCover: { density: 0.2, kinds: ["moss", "fern"] } },
       grassland: { treeDensity: 0.55, groundCover: { density: 1, kinds: ["blades", "clover"] } },
       "beaver-pond": { treeDensity: 0.8, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } },
       "log-pile": { treeDensity: 0.7, groundCover: { density: 0.2, kinds: ["moss", "blades"] } },
@@ -7665,7 +7665,7 @@ label.check input { accent-color: var(--accent); }
     "hazel-forest": ["fairy-ring", "a ring of fairy stones and toadstools", 1.1],
     "twiggy-forest": ["charcoal-hut", "a charcoal burner's hut of sticks, its mound smouldering", 1],
     "ancient": ["root-arch", "a great arch of roots over mossy stones", 1.1],
-    "norway": ["turf-hut", "a log cabin with a turf roof", 1.15],
+    "jungle-understory": ["turf-hut", "a log cabin with a turf roof", 1.15],
     "alder-forest": ["heron-rookery", "an alder holding herons' stick nests", 1],
     "meadow": ["sundial", "a moonlit sundial on a stone dais in a ring of flowers", 1.2],
     "berry-thicket": ["bear-den", "a bear's den in a bramble mound", 1.1],
@@ -11984,9 +11984,6 @@ label.check input { accent-color: var(--accent); }
   // art/areas/bog/flora.js
   var AREA_FLORA_BOG = { species: [["birch", 0.5, { dark: true }], ["pine", 0.3], ["aspen", 0.2]], palette: { sat: 0.75, val: 0.85 } };
 
-  // art/areas/cave-mouth/flora.js
-  var AREA_FLORA_CAVE_MOUTH = { species: [["broad", 0.45, { bare: true }], ["yew", 0.3], ["crystal", 0.25]], palette: { sat: 0.8, val: 0.85 } };
-
   // art/areas/deadwood/flora.js
   var AREA_FLORA_DEADWOOD = { species: [["broad", 0.5, { bare: true }], ["elm", 0.25, { bare: true }], ["aspen", 0.25, { bare: true }]], palette: { sat: 0.7, val: 0.8 } };
 
@@ -12008,6 +12005,12 @@ label.check input { accent-color: var(--accent); }
   // art/areas/honeysuckle-tangle/flora.js
   var AREA_FLORA_HONEYSUCKLE_TANGLE = { species: [["hazel", 0.4], ["rowan", 0.25], ["elder", 0.2], ["crabApple", 0.15]], palette: { sat: 1.05, val: 1.02 } };
 
+  // art/areas/jungle-cave/flora.js
+  var AREA_FLORA_JUNGLE_CAVE = { species: [["strangler", 0.45, { variant: "ancient" }], ["kapok", 0.2], ["yew", 0.35]], palette: { sat: 0.85, val: 0.85 } };
+
+  // art/areas/jungle-understory/flora.js
+  var AREA_FLORA_JUNGLE_UNDERSTORY = { species: [["ironwood", 0.35, { variant: "mossy" }], ["vinewood", 0.2], ["bamboo", 0.15], ["lime", 0.2], ["hazel", 0.1]], palette: { sat: 0.95, val: 0.85 } };
+
   // art/areas/log-pile/flora.js
   var AREA_FLORA_LOG_PILE = { species: [["elder", 0.4], ["aspen", 0.35], ["birch", 0.25]], palette: { sat: 0.9, val: 0.95 } };
 
@@ -12022,9 +12025,6 @@ label.check input { accent-color: var(--accent); }
 
   // art/areas/muddy-forest/flora.js
   var AREA_FLORA_MUDDY_FOREST = { species: [["sycamore", 0.4], ["alder", 0.25], ["elm", 0.2], ["crabApple", 0.15]], palette: { sat: 0.85, val: 0.85 } };
-
-  // art/areas/norway/flora.js
-  var AREA_FLORA_NORWAY = { species: [["fir", 0.5], ["birch", 0.2], ["cedar", 0.15], ["larch", 0.15]], palette: { sat: 0.85, val: 0.8 } };
 
   // art/areas/old-oaks/flora.js
   var AREA_FLORA_OLD_OAKS = { species: [["oak", 0.5], ["holly", 0.2], ["elm", 0.15], ["whitebeam", 0.15]], palette: { sat: 1, val: 0.95 } };
@@ -12058,7 +12058,7 @@ label.check input { accent-color: var(--accent); }
 
   // art/areas/index.js
   var AREA_FOLDER_RECIPES = [FEN, MANGROVE_HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
     { "kind": "squirrel", "slot": 1, "phase": 0, "bearing": 285, "dir": "WNW", "biome": "temperate" },
@@ -12612,16 +12612,19 @@ label.check input { accent-color: var(--accent); }
       small: [P("flowers", { hue: 0.98, leafy: true })],
       big: [tree("yew", { variant: "ancient", scale: 1.4, gnarl: 1, lean: 0.35 }), tree("oak", { minor: true, scale: 1.3, gnarl: 1 })]
     },
+    // (Norway till the roster moved the snake, now a jungle python, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate: a warm
+    // temperate-tropical mix, mossy ironwoods, liana-hung vinewoods and clumps of bamboo from the jungle's list among limes and hazels, a
+    // soft leaf litter, ferns and flowering shrubs under them)
     {
-      id: "norway",
-      name: "Norway",
+      id: "jungle-understory",
+      name: "Jungle understory",
       creature: "snake",
       by: "Ed",
-      leaf: 0.36,
-      floor: ["slate", 0.6, 0.15, 0.35],
-      text: { floor: "pine needles and slate", small: "rocks", big: "straight pines" },
-      small: [P("stones", { big: true })],
-      big: [tree("fir", { scale: 1.2 }), tree("birch", { minor: true })]
+      leaf: 0.3,
+      floor: ["leaves", 0.2, 0.45, 0.3],
+      text: { floor: "leaf litter and moss", small: "ferns and flowering shrubs", big: "mossy ironwoods, liana-hung vinewoods, limes and hazels, bamboo in clumps" },
+      small: [P("fern"), P("shrub", { flower: [236, 84, 150] })],
+      big: [tree("ironwood", { variant: "mossy", scale: 1.1 }), tree("lime", { minor: true, scale: 0.9 })]
     },
     {
       id: "alder-forest",
@@ -12734,17 +12737,20 @@ label.check input { accent-color: var(--accent); }
       small: [P("log", { branch: true })],
       big: [tree("broad", { bare: true, gnarl: 1 })]
     },
+    // (the cave mouth till the roster moved the bat, now a fruit bat, to the jungle, Ed 2026-10-23/25; ring 3, so semi-temperate and
+    // still tree-led (Ed, 2026-10-26): an old strangler fig, the fruit bats' tree, over the rock walls and the cave, kapoks from the
+    // jungle's list among yews; a mossier stone floor, ferns between the stalagmite stubs)
     {
-      id: "cave-mouth",
-      name: "Cave mouth",
+      id: "jungle-cave",
+      name: "Jungle cave",
       creature: "bat",
       by: "draft",
-      leaf: 0.2,
-      floor: ["stone", 0.08, 0.15, 0.35],
-      text: { floor: "stone and roots", wall: "rock walls", small: "stalagmite stubs", big: "dead trees", set: "a cave mouth" },
-      wall: [P("rockwall")],
-      small: [P("stalagmite")],
-      big: [tree("broad", { variant: "mossy", bare: true }), tree("yew", { minor: true, scale: 0.8 })],
+      leaf: 0.26,
+      floor: ["stone", 0.16, 0.3, 0.32],
+      text: { floor: "mossy stone and fig roots", wall: "rock walls", small: "stalagmite stubs and ferns", big: "old strangler figs, kapoks and yews", set: "a cave mouth" },
+      wall: [P("rockwall", { moss: true })],
+      small: [P("stalagmite"), P("fern")],
+      big: [tree("strangler", { variant: "ancient", scale: 1.15 }), tree("yew", { minor: true, scale: 0.8 })],
       set: P("cave")
     },
     {
@@ -12870,7 +12876,7 @@ label.check input { accent-color: var(--accent); }
     "beaver-pond": { ponds: true, wet: true },
     ravine: { steep: true, pathKinds: ["stairs"] },
     "rocky-slope": { steep: true, pathKinds: ["stairs"] },
-    "cave-mouth": { steep: true, pathKinds: ["stairs"] },
+    "jungle-cave": { steep: true, pathKinds: ["stairs"] },
     "stone-shrine": { steep: true }
   };
   for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find((a) => a.id === id), f);
@@ -13049,17 +13055,17 @@ label.check input { accent-color: var(--accent); }
       [0.45, [0.5, 0.2, 0.3, 0, 0]],
       "Giant gnarled trees far apart, roots heaving over mossy rocks; every tree is a landmark."
     ),
-    "norway": LAY(
+    "jungle-understory": LAY(
       "stands",
-      0.8,
-      0.5,
-      [1, [8, 12]],
-      [0.15, 0.65, 0.175, 0.025],
-      0.2,
+      0.75,
+      0.6,
+      [2, [6, 10]],
+      [0.3, 0.575, 0.1, 0.025],
+      0.7,
       NO_LEAN,
-      ["rocky", "ridges"],
-      [0.3, [0.2, 0.6, 0, 0.2, 0]],
-      "Dense stands of straight pines on slate ridges, bare rock between; dark, vertical and cold."
+      ["hollows", "mounds"],
+      [0.3, [0.3, 0.2, 0.2, 0.2, 0.1]],
+      "Mossy ironwoods and liana-hung vinewoods in close stands among limes and hazels, bamboo in clumps, ferns and flowering shrubs filling the gaps; warm, green and close."
     ),
     "alder-forest": LAY(
       "scatter",
@@ -13170,17 +13176,17 @@ label.check input { accent-color: var(--accent); }
       [0.45, [0.3, 0.1, 0.3, 0, 0.3]],
       "Sparse tall blasted snags on bare ridges; bleak, quiet, with long sightlines."
     ),
-    "cave-mouth": LAY(
+    "jungle-cave": LAY(
       "edgeOnly",
-      0.4,
+      0.45,
       0.5,
       [1, [10, 14]],
-      [0.2, 0.65, 0.15, 0],
-      0.2,
+      [0.15, 0.65, 0.15, 0.05],
+      0.45,
       NO_LEAN,
       ["rocky", "ridges"],
       [0.4, [0.3, 0.6, 0, 0, 0.1]],
-      "Rock walls and dead trees ring an open stone floor that leads to the cave's dark mouth."
+      "Rock walls and old strangler figs ring an open mossy stone floor that leads to the cave's dark mouth, fruit bats streaming out at dusk."
     ),
     "grassland": LAY(
       "lone",
@@ -16548,7 +16554,7 @@ label.check input { accent-color: var(--accent); }
       ["watering-can", -0.4, 1.9],
       ["scarecrow", 2.7, 1.5]
     ] },
-    "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+    "lay-by": { desc: "a lay-by: a car still parked, a snack trailer shuttered, a litter bin, a picnic table, cones and a sign", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
       ["car-parked", 0, 0],
       ["snack-van", -3.3, -1.4],
       ["litter-bin", 2.2, -0.9],
@@ -16565,7 +16571,7 @@ label.check input { accent-color: var(--accent); }
       ["camp-chair", 1.7, 0.1, "left"],
       ["glow-sticks", 1.2, 1.5]
     ] },
-    "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "norway", "old-pinewood"], pieces: [
+    "woodcutters-clearing": { desc: "a woodcutter's clearing: a woodpile, a chopping block with the axe left in it, a sawhorse, sawn stumps, a barrow", suits: ["log-pile", "old-oaks", "alder-forest", "old-pinewood"], pieces: [
       ["log-pile", -1.4, -1.1],
       ["chopping-block", 0.4, 0.2],
       ["sawhorse", 1.9, -0.9],
@@ -16636,7 +16642,7 @@ label.check input { accent-color: var(--accent); }
       ["grave-lantern", -1.7, 0.7],
       ["grave-lantern", 1, 2.6]
     ] },
-    "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "norway", "wispy-forest"], pieces: [
+    "car-park": { desc: "a car park lost in the trees: cracked tarmac and faded bays, cars where they were left (one with a tree through it), a ticket machine, a snapped barrier, lampposts, trolleys", suits: ["grassland", "twiggy-forest", "wispy-forest"], pieces: [
       ["carpark-tarmac", 0, 0],
       ["car-parked", -2.7, -1.8],
       ["car-parked", 1.7, 1.9, "left"],
@@ -16661,7 +16667,7 @@ label.check input { accent-color: var(--accent); }
       ["relic:court-fence", -3, 3.6],
       ["relic:court-fence", 0.2, 3.7, "left"]
     ] },
-    "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["norway", "old-pinewood", "fern-forest", "rocky-slope"], pieces: [
+    "stave-church": { desc: "a ruined wooden stave church in a clearing, its nave open to the sky and its spire still up, a few sunken graves round it", suits: ["old-pinewood", "fern-forest", "rocky-slope"], pieces: [
       ["@stave-church", 0, 0],
       ["headstone-sunk", -2.8, 1.8],
       ["grave-cross", -2, 2.6, "left"],
@@ -16681,7 +16687,7 @@ label.check input { accent-color: var(--accent); }
       ["rubble", 2.4, 2.8],
       ["column-broken", 3.3, 0.6]
     ] },
-    "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland", "cave-mouth"], pieces: [
+    "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland"], pieces: [
       ["@coptic-basilica", 0, 0],
       ["rubble", -1, 2.4],
       ["rubble", 3.4, 1.6, "left"],
@@ -16709,7 +16715,7 @@ label.check input { accent-color: var(--accent); }
       ["statue-headless", -3.4, 2.3],
       ["pediment-fragment", 3.8, -1.6, "left"]
     ] },
-    "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "norway", "deadwood", "cave-mouth"], pieces: [
+    "castle-ruins": { desc: "castle ruins: curtain walls (one breached), a round tower open to the sky, a gatehouse with its portcullis fallen, steps to nowhere, rubble", suits: ["rocky-slope", "moor", "deadwood"], pieces: [
       ["curtain-wall", -4.2, -1.2],
       ["round-tower", -1.7, -2.6],
       ["gatehouse", 1.6, -2.3],
@@ -16733,7 +16739,7 @@ label.check input { accent-color: var(--accent); }
     // (the toppled statue head gone: Ed, 2026-10-11)
   };
   var TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"];
-  var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "cave-mouth", "wispy-forest"];
+  var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
   var TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
   for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
     const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => (Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453 % 1 + 1) % 1;
@@ -17333,8 +17339,8 @@ label.check input { accent-color: var(--accent); }
     _invites: `The \u{1F48C} invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning \u{1F48C}s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last (Ed, 2026-10-06: "the invitation dropoff rate (the speed at which animals become less invited) is too fast": 0.03 after 4 s, a full meter in about 33 s; it was states.json's 0.08 after 1.5 s, this knob unread). Every letter that lands on an invitable creature counts (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a \u{1F48C} that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a \u{1F48C} in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one \u{1F48C} a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then (balance, 2026-10-07, the overnight pass, with the wider level gap) [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat). orbit (Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"): the \u{1F48C} ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.`,
     invites: { on: true, burst: 1, burstGap: 0.12, cooldown: 0.55, range: 33, speed: 31.2, arc: 1.2, homing: 120, homingCone: 30, homingRange: 10, multiShot: 1, spread: 14, radius: 0.5, amount: 1, hits: [4, 7, 14, 36], drain: 0.03, fireSlow: 0.8, linger: 2.5, lingerFade: 0.6, lingerMax: 30, spin: 2.5, orbit: { scale: 2, gap: 1, min: 2 } },
     invite: { talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
-    _win: `The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); the Night won card cardAfter seconds after. The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"): with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.`,
-    win: { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 },
+    _win: `The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home (rules/guidance.ts; no card since Ed's 2026-10-26 "Remove the end cards"). The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"): with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.`,
+    win: { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, settleAfter: 20, retarget: 0.25 },
     _leash: `grounded (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative: "if creatures are light or heavy you can extrapolate"): weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off. runs (Ed, 2026-10-15: "Pick up and place in runs"): with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell. sigilBacking (Ed, 2026-10-12, Bravo's o3: "a dark patch directly underneath a sigil is quite helpful for making it more readable", "the same width as the sigil, darker, edges not too smooth", "sigils less transparent"): under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph). sigilGlyph and sigilHalo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation"): every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none). placedThrough (Ed, 2026-10-11): how bright a placed sigil shows where grass, bushes, trees or other scenery hide it (0 hidden, 1 as bright as in the open); never through the witch. runeGap (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil", so it's easier to see and pick up; 2026-10-13: "the top of the sigil's background should be just below the animal's feet"): a happy creature's rune lies south of it (down the screen), and a parked animal roams round a point the same way north of its sigil, by its size: its body radius, half the sigil with its backing, and runeGap metres between (rules/runeOffset.ts; it was a fixed restAbove, 5 m). hex (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (4: leash.spacing's density; 0: put down freely where she stands, as before). The cell nearest her decides: a sigil of hers in it, the press picks it up; free, a sigil goes down in its middle (never fizzling). Cells under a runestone or soundsystem (within stone metres of it, plus half a cell) or a home speaker (speaker metres) are skipped: the sigil goes down on the nearest free cell that isn't, within two cells, or not at all. Relic sigils and her hat go down where she stands, off the grid. hatHold (Ed, 2026-10-09: "If you are in ground mode and hold down the drop / pick up sigil button and there are no sigils to pick up, you put down your hat"): seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down at her feet (just a marker; a press over it puts it back on; rules/hat.ts putHat). length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up one of her own placed sigils; runeRadius: how near (m) she picks up a happy creature's rune, a relic's sigil or her hat (both 25% further on Ed's word, 2026-10-13: 3.5 to 4.375, 4.5 to 5.625; Ed's playtest, 2026-10-06: "Floor sigils of happy creatures and relics are difficult to pick up": bigger than pickRadius, which stays under spacing, and less than a relic's sigilOffset, so standing on the relic itself doesn't); runePull: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Ed, 2026-10-10: free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1). Less free (the first few sigils' worth, so early play feels the same; on the ground, plus one adult's weight, levels' adult: Ed, 2026-10-09, "extra free allowance on the ground should be the equivalent of one adult"), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it. babies (Ed, 2026-10-11, docs/backlog/gameplay.md): her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": 55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered), for the whole fight (Ed, 2026-10-11): from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds. weight.babyGround: a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line.`,
     leash: { length: 8, runSpeed: 4, pickRadius: 4.375, spacing: 4, runeRadius: 5.625, hatHold: 0.5, placedThrough: 0.45, sigilGlyph: 0.5, sigilHalo: 0, sigilBacking: { dark: 0.85, size: 1.1, ink: 1.5 }, runeGap: 0.5, hex: { size: 4, stone: 3, speaker: 1.5 }, runs: true, runePull: { radius: 8, speed: 1.5, stop: 1.5 }, grounded: { weight: 2 }, weight: { free: 2.5, levels: [0.3, 0.8, 2, 3], drag: 0.35, drift: 0.12, rise: 0.3, sink: 0.05, sinkMax: 0.12, floor: 0.75, extreme: 8, maxTension: 1, babyGround: 0.56 }, babies: { gap: 5, scatter: 55, calm: 3, farAt: 35, farSpeed: 40 } },
     _bond: `The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.`,
@@ -17536,7 +17542,7 @@ label.check input { accent-color: var(--accent); }
     },
     glowPower: 0.95,
     _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off: Ed's tuned value from the pause page, 2026-10-26, v4522, and so the areas' grade tints with it), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
-    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "cave-mouth": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, norway: { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
+    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
     lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 5e-3, wetPond: 0.03 },
     haze: { near: 150, far: 360 },
     _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.`,
