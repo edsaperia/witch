@@ -304,7 +304,8 @@ export class AssetLibrary {
       // from them, would put the old look back on her, the new one never showing: Ed's playtest, 2026-10-23, "I can't select them")
       const hers = JSON.stringify(r.job.genome ?? null) === JSON.stringify(this.witchGenome ?? null);
       if (r.job.bare) {
-        if (hers && (!r.job.quick || !this.bare)) { // (a preview never over the whole set)
+        if (hers && (!r.job.quick || !this.bare || this.bareStale)) { // (a preview never over the whole set)
+          this.bareStale = false;
           if (r.job.quick) this.ask(this.witchJob(r.job.genome, true), true);
           this.bare = { ...atlas, grounds: r.result.ours!.grounds };
           this.witchHatFrame = r.job.quick ? -1 : r.result.ours!.hat; // (the preview has no hat on the ground)
@@ -559,7 +560,7 @@ export class AssetLibrary {
   djFrame(beat: number, cast = false, scratch = false): number { return (Art.djFrame as (b: number, o: object) => number)(beat, { cast, scratch }); } // (scratch: her respawn wait after a knockout; art/witch.js's frames for it, else she DJs as ever)
   /** The character creator changed her look: her frames again, from an art worker (her old ones until they arrive; then onWitch). */
   rebakeWitch(genome: unknown): void {
-    this.witchGenome = genome; this.bare = null; this.bareAsked = false; this.lookOn = false;
+    this.witchGenome = genome; this.bareStale = true; this.bareAsked = false; this.lookOn = false; // (her old hat-off frames till the new ones are in: the same places)
     // (a look she's since moved past, still waiting in the queue, is dropped: stepping through a station's choices queued one a
     // step, each ahead of the next, and the one she'd landed on came last; Ed's playtest of v4821, "I don't see changes on the
     // witch immediately")
@@ -580,20 +581,34 @@ export class AssetLibrary {
   private wearLook(look: { atlas: Atlas; art: WitchArt }): void { this.dropPreview(); this.witch = look.atlas; this.applyWitchTables(look.art); this.home.witch = true; }
   /** Her preview's frames, worn till her whole set lands (rebakeWitch). */
   private preview: Atlas | null = null;
-  private dropPreview(): void { if (this.preview) { this.preview.albedo.dispose(); this.preview.normal.dispose(); this.preview = null; } } // (her batch takes the next set before the frame draws: view.ts swapHomeArt)
+  /** Previews she's had since, freed once nothing draws from them (letGo): her batch keeps the clothes she had through a twirl
+   *  (render/spin.ts). */
+  private spent: Atlas[] = [];
+  private dropPreview(): void { if (this.preview) { this.spent.push(this.preview); this.preview = null; } }
+  /** The view's batches draw from `inUse` now: the previews spent and not among them freed. */
+  letGo(inUse: Atlas[]): void {
+    if (!this.spent.length) return;
+    this.spent = this.spent.filter(a => { if (inUse.includes(a)) return true; a.albedo.dispose(); a.normal.dispose(); return false; });
+  }
+  /** Her look now (the panel's latest) has its frames on her, a preview or her whole set: a twirl can end (render/spin.ts). */
+  get lookReady(): boolean { return this.lookOn; }
   /** Her frames with her hat knocked off (rules/hat.ts), at the same places as `witch`'s, and her hat lying on the
    *  ground (`witchHatFrame`): asked for the first time they're wanted (the view asks once the game is up); a stand-in
    *  till they arrive (then onWitch). */
   witchBare(): Atlas {
-    if (!this.bare && !this.bareAsked && this.lookOn) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true, true), true); } // (urgent, and after her look: this one's preview, then its whole set, receive; her own frames, one job, needed at her first knockdown; behind the art drawn ahead they came minutes late on a slow machine, and she was drawn from the stand-in: invisible)
+    if ((!this.bare || this.bareStale) && !this.bareAsked && this.lookOn) { this.bareAsked = true; this.ask(this.witchJob(this.witchGenome, true, true), true); } // (urgent, and after her look: this one's preview, then its whole set, receive; her own frames, one job, needed at her first knockdown; behind the art drawn ahead they came minutes late on a slow machine, and she was drawn from the stand-in: invisible)
     return this.bare ?? this.bareStandIn;
   }
   private bare: Atlas | null = null;
+  /** `bare` is a look she's changed from (rebakeWitch), kept till hers is in. */
+  private bareStale = false;
   private bareAsked = false;
   /** Her look (its preview or whole set) is on her: her hat-off frames are asked after it (witchBare). */
   private lookOn = true;
   /** Her frames without her hat are in (not the stand-in): always her look now (onResult drops one for a look she's left). */
   get bareReady(): boolean { return !!this.bare; }
+  /** Her hat-off frames are her look now's (not the look she's changed from). */
+  get bareFresh(): boolean { return !!this.bare && !this.bareStale; }
   private bareStandIn = placeholderAtlas(256);
   /** The hat on the ground in witchBare()'s atlas (-1: she has none). */
   witchHatFrame = -1;
