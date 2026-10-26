@@ -5,12 +5,13 @@ import { describe, expect, it } from "vitest";
 import { generateMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
 
-const CASES = [[123, "home"], [7, "home"], [42, "fox"], [9, "ibex"]] as const;
+// (the radius map as the tests start from it, and the game's own 10-area islands)
+const CASES = [[123, "home", 0], [7, "home", 0], [42, "fox", 0], [9, "ibex", 0], [123, "home", 10], [7, "home", 10], [42, "fox", 10]] as const;
 
 describe("no reserved clearing with nothing in it", () => {
-  for (const [seed, island] of CASES) {
-    it(`only playable areas clear an arena or a soundsystem's room (seed ${seed}, ${island})`, () => {
-      const map = generateMap(seed, withTuning({ map: { ...TUNING.map, island } } as never)), L = map.bounds.land!;
+  for (const [seed, island, islandAreas] of CASES) {
+    it(`only playable areas clear an arena or a soundsystem's room (seed ${seed}, ${island}${islandAreas ? `, ${islandAreas} areas` : ""})`, () => {
+      const map = generateMap(seed, withTuning({ map: { ...TUNING.map, island, islandAreas } } as never)), L = map.bounds.land!;
       let buffer = 0, spotsClear = 0, inland = 0;
       for (const key of map.neighbours.keys()) {
         const [cx, cy] = key.split(",").map(Number), s = map.siteOf(cx, cy), q = map.soundsystemSpot(cx, cy);
