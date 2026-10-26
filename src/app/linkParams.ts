@@ -202,6 +202,10 @@ export function tuningFromLink(params: URLSearchParams) {
   if (params.has("zoo") && tuning.map) tuning.map = { ...tuning.map, shape: "zoo", island: "", islandAreas: 0 };
   // (its edge, rules/zooMap.ts: the flagstones straight into the water, no sand to speak of, nothing on it, no one about)
   if (params.has("zoo") && tuning.beach) { const B = tuning.beach; tuning.beach = { ...B, width: 2, vary: B.vary && { ...B.vary, amp: 0, min: 2 }, decor: B.decor && { ...B.decor, on: false }, witchChance: 0 }; }
+  // (flat: no hills, no rises under its runestones or dells under its legends; Ed, 2026-10-26: "The zoo is flat, no hills")
+  // (no treehouse: Ed, 2026-10-26, "The zoo doesn't have a treehouse or a dancefloor; just an ent sigil legend circle at the centre")
+  if (params.has("zoo")) tuning.treehouse = { ...tuning.treehouse, deck: tuning.treehouse.deck && { ...tuning.treehouse.deck, on: false }, house: tuning.treehouse.house && { ...tuning.treehouse.house, on: false } };
+  if (params.has("zoo")) tuning.ground = { ...tuning.ground, hills: { ...tuning.ground.hills, on: false }, layout: tuning.ground.layout && { ...tuning.ground.layout, on: false } };
   // The prop generator's props (Ed's props decision; the hand-made ones retired with their ?props=hand, 2026-10-07): fingerposts
   // where footpaths come into a clearing (placed with the map, so set before it is made).
   tuning.paths = { ...tuning.paths, fingerposts: true };

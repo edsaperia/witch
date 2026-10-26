@@ -42,7 +42,7 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("island", JSON.stringify(L.I));
     await shoot(p, "fence", [L.I.x + 10, L.I.z + L.I.south + 7, "ground"]); // (on the street by its south shore, the fence before her)
     await shoot(p, "legend", [L.I.x, L.I.z + 6, "ground"]); // (in its circle at the middle, its legend asleep just north)
-    await shoot(p, "plaza", [L.home.x + 12, L.home.z + 34, "ground"]); // (on the plaza south of the dancefloor, the World Tree's carving round it)
+    await shoot(p, "plaza", [L.home.x, L.home.z + 18, "ground"]); // (in the Ent's circle at the middle, its World Tree carving)
     await shoot(p, "plaza-above", [L.home.x, L.home.z + 40, "treetop"]);
     await shoot(p, "above", [L.I.x, L.I.z + L.I.south + 40, "treetop"]);
     await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 + 15), "ground"]); // (on the water's band by the north edge, the lip and the fall ahead)

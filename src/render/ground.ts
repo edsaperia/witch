@@ -640,7 +640,7 @@ export class Ground {
         uTile: { value: new THREE.Vector2(64, 48) },
         uFloorsSize: { value: new THREE.Vector2(64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS) },
         uSat: { value: st.sat },
-        uFloor: { value: new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) },
+        uFloor: { value: map.zoo?.layout ? new THREE.Vector3(1e7, 1e7, 0) : new THREE.Vector3(map.dancefloor.x, map.dancefloor.z, map.dancefloor.radius) }, // (the zoo has no dancefloor, nor its paving: Ed 2026-10-26)
         uCanopy: { value: new THREE.Vector4() },
         uCircle: { value: new THREE.Vector4() },
         uBeach: { value: new THREE.Vector4() },

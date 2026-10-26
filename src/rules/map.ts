@@ -833,7 +833,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     seed, tuning, n, first, margin, shape, cells, playable, inBuffer, isLake, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
     treehouse, treehouseFront: frontOf(treehouse, centre, tuning.treehouse.clear), grounds, scenes,
-    start: { x: treehouse.x + seatOffset(tuning).x, z: treehouse.z + seatOffset(tuning).z }, // (her decks: on the Terrace's open rim, or the deck: rules/treehouse.ts)
+    start: zooAt ? { x: zooAt.home.x, z: zooAt.home.z + (ZOO_CONFIG.plaza ?? 60) * 0.3 } : { x: treehouse.x + seatOffset(tuning).x, z: treehouse.z + seatOffset(tuning).z }, // (the zoo: on the Ent's plaza, no treehouse) // (her decks: on the Terrace's open rim, or the deck: rules/treehouse.ts)
     bounds,
     extent: ext ? (land ? { minX: Math.min(ext.minX, land.box.minX - edgeK * A), maxX: Math.max(ext.maxX, land.box.maxX + edgeK * A), minZ: Math.min(ext.minZ, land.box.minZ - edgeK * A), maxZ: Math.max(ext.maxZ, land.box.maxZ + edgeK * A) } : ext) : { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A }, // (the forest past the coast all round)
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,

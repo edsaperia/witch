@@ -7,6 +7,8 @@ import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { TUNING } from "./tuning";
 import { insideIsland, reachAt, type ZooIsland } from "./zooMap";
 import { knockOut } from "./knockout";
+import { deckOf } from "./treehouse";
+import { ZOO_CONFIG } from "./zoo";
 
 const C: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...C, ...c }, STEP); };
@@ -76,5 +78,14 @@ describe("the zoo's gold fences (Ed, 2026-10-26)", () => {
     expect(W.ko).toBeNull();
     expect(g.map.areaAt(g.witch.x, g.witch.z).cell).toEqual(g.map.centreCell); // (home's ground: the plaza)
     expect(islands(g).some(J => insideIsland(J, g.witch.x, g.witch.z))).toBe(false);
+    const H = g.map.zoo!.layout!.home;
+    expect(Math.hypot(g.witch.x - H.x, g.witch.z - H.z)).toBeLessThan(ZOO_CONFIG.plaza ?? 60); // (in the Ent's circle)
+    expect(g.witch.seated).toBeFalsy(); // (no decks to sit behind)
+  });
+  it("has no treehouse: she starts standing in the Ent's circle at the middle, no deck (Ed, 2026-10-26)", () => {
+    const g = zoo(["*"]), H = g.map.zoo!.layout!.home;
+    expect(deckOf(g.map, g.tuning)).toBeNull();
+    expect(g.witch.seated).toBeFalsy();
+    expect(Math.hypot(g.witch.x - H.x, g.witch.z - H.z)).toBeLessThan(ZOO_CONFIG.plaza ?? 60);
   });
 });
