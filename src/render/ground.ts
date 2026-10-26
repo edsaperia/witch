@@ -351,8 +351,8 @@ void main() {
     }
   }
   // The zoo's plaza (Ed, 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it"; the coordinator, "clean, continuous
-  // lines ... so the glow follows the strokes"): inside its ring the flagstones cleaner and paler (no moss), the World Tree's sigil
-  // laid in whole art pixels of pale mint light with a soft glow round its lines, and a glowing ring at its edge.
+  // lines ... so the glow follows the strokes"; then Ed, "less strong and bright and thick, and be more weathered"): inside its ring
+  // the flagstones paler, the World Tree's sigil carved in thin grooves of whole art pixels with a faint mint light in them, worn.
   float plazaLine = 0.0, plazaHalo = 0.0;
   if (uZooPlaza.w > 0.5) {
     vec2 q = p - uZooPlaza.xy;
@@ -366,10 +366,17 @@ void main() {
         for (int k = 0; k < 8; k++) { float a = float(k) * 0.7854; plazaHalo += texture2D(uPlazaSigil, uv + vec2(cos(a), sin(a)) * o).r; }
         plazaHalo /= 8.0;
       }
-      float ring = 1.0 - step(uPixel * 2.0, abs(d - R));
+      float ring = 1.0 - step(uPixel * 1.0, abs(d - R));
       plazaLine = max(plazaLine, ring);
-      plazaHalo = max(plazaHalo, (1.0 - smoothstep(0.0, 1.6, abs(d - R))) * 0.6);
-      if (d < R) c *= 1.0 - 0.25 * plazaHalo * (1.0 - plazaLine); // (the stone darker round the lines, so they stand out)
+      plazaHalo = max(plazaHalo, (1.0 - smoothstep(0.0, 1.0, abs(d - R))) * 0.4);
+      // Weathered (Ed, 2026-10-26: "less strong and bright and thick, and be more weathered"): an old carving, faint light in its
+      // grooves, broken in places (worn gaps, chips), moss and dirt over stretches of it, its light uneven along a line.
+      float wear = vnoise(cell / 2.6 + 17.0), chip = hash(floor(p / uPixel) + 3.0), moss = vnoise(cell / 4.5 + 41.0);
+      float keep = step(0.3, wear) * step(0.12, chip) * (1.0 - step(0.68, moss) * step(0.35, hash(floor(p / uPixel) + 9.0)));
+      if (plazaLine > 0.0 && keep < 0.5) { c = moss > 0.62 ? mix(c, uPaveMoss, 0.7) : c * 0.78; } // (a groove filled with moss or dirt, dark)
+      plazaLine *= keep * (0.45 + 0.55 * vnoise(cell / 7.0 + 5.0));
+      plazaHalo *= 0.35 + 0.65 * smoothstep(0.25, 0.6, wear);
+      if (d < R) c *= 1.0 - 0.18 * plazaHalo * (1.0 - step(0.01, plazaLine)); // (the stone darker round the grooves)
     }
   }
   // A sleeping legend's clearing: a soft ring of trodden earth set with pale stones marks its edge, the
@@ -624,7 +631,7 @@ void main() {
   if (shoreNear > 0.0) { moonK = mix(moonK, 1.0, shoreNear * 0.7); c = mix(c, c * vec3(0.95, 1.18, 1.0) * 1.2, shoreNear * 0.6); } // (by the sand, the woods' floor in more moonlight, greener)
   vec3 light = nightLightShaded(N, vWorld, moonK);
   vec3 lit = glowPool(min(vec3(1.0), c * light * 1.25), vWorld);
-  if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.5, 0.9, 0.72), plazaLine * 0.9) + vec3(0.08, 0.4, 0.26) * plazaHalo * (1.0 - plazaLine) * 0.5; // (the plaza's sigil, its own light)
+  if (plazaLine + plazaHalo > 0.0) lit = mix(lit, vec3(0.36, 0.62, 0.52), plazaLine * 0.55) + vec3(0.04, 0.16, 0.11) * plazaHalo * (1.0 - plazaLine) * 0.4; // (the plaza's sigil, its own light)
   gl_FragColor = vec4(haze(lit, vWorld), 1.0); // (her pool in her light's colour)
 }
 `;
@@ -985,7 +992,7 @@ function plazaSigil(zoo: boolean): THREE.DataTexture {
   const n = zoo ? PLAZA_SIGIL : 1, px = new Uint8Array(n * n * 4);
   if (zoo) {
     const S = legendSigilStrokes as (id: string, o: { tier: number }) => Stroke[];
-    const strokes = [...S("worldTree", { tier: 2 }).filter(s => s.kind !== "animal"), ...S("worldTree", { tier: 0 }).filter(s => s.kind === "animal").map(s => ({ ...s, w: s.w * 0.5, r: s.r * 0.6 }))];
+    const strokes = [...S("worldTree", { tier: 2 }).filter(s => s.kind !== "animal").map(s => ({ ...s, w: s.w * 0.5, r: s.r * 0.7 })), ...S("worldTree", { tier: 0 }).filter(s => s.kind === "animal").map(s => ({ ...s, w: s.w * 0.25, r: s.r * 0.45 }))]; // (half as thick: Ed, 2026-10-26)
     const m = new Float32Array(n * n);
     for (const st of strokes) {
       const half = st.dot ? st.r * n : Math.max(1, (st.w * n) / 2), P = st.pts.map(([x, y]) => [x * n, y * n]);
