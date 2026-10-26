@@ -116,6 +116,7 @@ export class PixelCue {
     this.img = this.g.createImageData(N, N);
   }
   hide(): void { this.canvas.style.display = "none"; this.label.style.display = "none"; }
+  dispose(): void { this.canvas.remove(); this.label.remove(); }
   private text = ""; private textW = 0;
   /** Its label, `text` in `colour`, centred out from (cx, cy) along (ux, uy) (a unit vector), its near edge `clear` pixels
    *  out, so it never lies over the cue's own ring or arrow. */
@@ -242,6 +243,8 @@ export class StoneIndicator {
   /** `scale`, `opacity`: its size and strength (only the next stone has one: Ed, 2026-10-05). */
   constructor(parent: HTMLElement, scale = SCALE, private opacity = 1) { this.cue = new PixelCue(parent, scale, opacity); }
   private shown = -1;
+  /** Off the page for good (render/pins.ts Pin.dispose). */
+  dispose(): void { this.cue.dispose(); }
   /** Its label pulses up (the wave pointer's tempo rising on a knockdown: index.html's bpm-up). */
   pop(): void { const L = this.cue.label; L.style.animation = "none"; void L.offsetWidth; L.style.animation = "bpm-up 1.4s ease-out"; }
   /** How much it shows, 0 to 1, times its own strength (the wave pointer fading in as the boot ends). */
@@ -292,7 +295,7 @@ export class StoneIndicator {
       const ink = at.glyphColour ? calm([at.glyphColour.x * 255, at.glyphColour.y * 255, at.glyphColour.z * 255]).map(v => Math.min(255, v * (0.9 + 0.15 * pulse) + 255 * flash * 0.4)) : bright;
       const G = at.glyph ?? NOTES, ox = Math.floor((N - G[0].length) / 2), oy = Math.floor((N - G.length) / 2), band = ink.map(v => Math.min(255, v * 0.6 + 255 * 0.4));
       for (let y = 0; y < G.length; y++) { const row = G[y]; for (let x = 0; x < row.length; x++) { const on = row[x]; if (on === "#") c.dot(ox + x, oy + y, ink, 1); else if (on === "+") c.dot(ox + x, oy + y, band, 1); } }
-    } else {
+    } else if (at.species) {
       let g = this.glyphs.get(at.species);
       if (!g) { g = sigilGlyph(at.species, 17) as { w: number; m: Uint8Array }; this.glyphs.set(at.species, g); }
       const o = Math.floor((N - g.w) / 2);

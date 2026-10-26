@@ -11,6 +11,8 @@ import { edgeLayout, FLASK, HAT, PARTY, StoneIndicator } from "../indicator";
 import { dowseMarker } from "../../rules/hatSpells";
 import { finalStone, winPulse, winTarget } from "../../rules/win";
 import { AlarmIndicators } from "../alarm";
+import { pinSpot } from "../pins";
+import { groundHeight } from "../height";
 import { ALARM_DEFAULTS, shownAlarms, stepAlarms } from "../../rules/alarms";
 import { HAT_BESIDE, HAT_INK } from "../view";
 import { slowAmount, slowest } from "../slowtime";
@@ -81,6 +83,11 @@ export function drawPointers(v: View, time: number): void {
       const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species, top: PIN_TOP.creature } : L ? { x: v.ley.pulseTip?.x ?? L.x, z: v.ley.pulseTip?.z ?? L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY, top: PIN_TOP.pulse } : null;
       P.update(v.camera, cw, ch, at, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
+    // Anyone's pins (render/pins.ts: view.pin), toward their targets as the pointers are, a house object's as the house is drawn.
+    const ht = g.herTime, dt = Number.isFinite(v.pinsAt) ? Math.min(0.1, Math.max(0, ht - v.pinsAt)) : 0; v.pinsAt = ht; // (on her clock: the house's time runs at a tenth)
+    // (in the house, where time runs slow too, they stay: they're there to guide her round it; the telescope's view still has none)
+    const pinCalm = v.herOffset.on ? (v.telescope ? 0 : 1) : calm;
+    for (const P of v.pins) P.draw(v.camera, cw, ch, pinSpot(P.target, g.map, t, v.herOffset, groundHeight), w.x, w.z, beatTime(g.beat, time), t.beat.bpm, dt, pinCalm);
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
     const AT = t.alarms ?? ALARM_DEFAULTS;
     stepAlarms(v.alarms, g.combat.sounds, g.combat.events, time, AT);

@@ -78,6 +78,7 @@ import { BeachView } from "./beach";
 import { PartyObjectsView } from "./partyObjects";
 import { BorderView } from "./borders";
 import { StoneIndicator } from "./indicator";
+import { Pin, type PinLook, type PinTarget } from "./pins";
 import type { AlarmIndicators } from "./alarm";
 import { newAlarms } from "../rules/alarms";
 import { hasRune } from "../rules/creatureStates";
@@ -540,6 +541,16 @@ export class View {
   dowsePointer: StoneIndicator | null = null;
   /** The end of the route's pointer (rules/win.ts): toward the straggler nearest the centre, then the victory lap's pulse. */
   winPointer: StoneIndicator | null = null;
+  /** Pins anyone has put up (render/pins.ts: view.pin(target, look)), drawn with the pointers. */
+  readonly pins = new Set<Pin>();
+  pinsAt = Number.NaN;
+  /** A map pin toward `target` (a world point with a height, or a house object), looking `look`; shown at once, `hide()` and
+   *  `show()` to fade it, `remove()` for good. */
+  pin(target: PinTarget, look: PinLook): Pin & { remove(): void } {
+    const p = Object.assign(new Pin(target, look), { remove: () => { this.pins.delete(p); p.dispose(); } });
+    this.pins.add(p);
+    return p;
+  }
   alarmCues: AlarmIndicators | null = null;
   get minimap(): Minimap { return this.island.minimap; }
   /** Metre rulers and a ground grid (G). */
