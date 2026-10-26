@@ -8,7 +8,7 @@
 // sail.inPlace; window.witch.sail, as the map table's chart sails: docs/plans/sail-without-reload.md), skips the flight in and
 // checks the night is the island's, its link pushed and play running; the chart over it, its own island chosen, closes back to
 // the same night (no sail); Back opens the pause menu on the same night; and, the party over, the treehouse's bed (E held at it,
-// as the over card tells her: Ed, 2026-10-21) starts the next night in place (the same island, a new seed, a new game). QUICK_SAIL=0 skips those
+// where the afterparty's 💤 pin leads her: Ed, 2026-10-21) starts the next night in place (the same island, a new seed, a new game). QUICK_SAIL=0 skips those
 // (a few minutes in the cloud). tools/sail/leak.cjs and swap.cjs (SAIL=1) test the sail fully.
 // Run `npm run build` first, then `npm run smoke:quick`.
 const http = require("http");
@@ -181,7 +181,7 @@ async function main() {
       check(b.menu && b.url === n.url && b.seed === 4242, `Back opens the pause menu on the same night (${b.url})`);
       await page.keyboard.press("Escape");
       await page.waitForFunction(() => !document.getElementById("pause-sliders")?.classList.contains("open"), null, { timeout: 60000 }).catch(() => {});
-      // The bed (main.ts useHouse "slept", newNight "bed"; the party's-over card points her there: Ed, 2026-10-21): the party
+      // The bed (main.ts useHouse "slept", newNight "bed"; the afterparty's 💤 pin leads her there: Ed, 2026-10-21): the party
       // over, she's put by the treehouse's bed and holds E; the next night on this island starts in place, a new seed, as a fresh load.
       const ta = Date.now();
       const over = await page.evaluate(() => { window.witch.lose("home"); return true; });
@@ -201,8 +201,8 @@ async function main() {
       await page.waitForFunction(() => window.witch.game !== window.__lastGame && window.witch.ready, null, { timeout: 600000, polling: 500 });
       await page.keyboard.press("Enter"); // (?creator=0: the start card's any key, as a fresh page's)
       await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 120000, polling: 100 }).catch(() => {});
-      const a2 = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused, over: !!window.witch.game.partyOver, card: !!document.getElementById("over")?.classList.contains("on") }));
-      check(over && po && a2.island === "fox" && a2.seed !== 4242 && new RegExp(`[?&]island=fox(&|$)`).test(a2.url) && new RegExp(`[?&]seed=${a2.seed}(&|$)`).test(a2.url) && !a2.paused && !a2.over && !a2.card && a2.t < 30,
+      const a2 = await page.evaluate(() => ({ island: window.witch.game.tuning.map?.island, seed: window.witch.game.seed, url: location.search, t: window.witch.game.clock.time, paused: window.witch.game.clock.paused, over: !!window.witch.game.partyOver }));
+      check(over && po && a2.island === "fox" && a2.seed !== 4242 && new RegExp(`[?&]island=fox(&|$)`).test(a2.url) && new RegExp(`[?&]seed=${a2.seed}(&|$)`).test(a2.url) && !a2.paused && !a2.over && a2.t < 30,
         `the party over, the bed starts the next night in place (${a2.island}, seed ${a2.seed}, ${a2.url}, game time ${a2.t.toFixed(1)} s, the party on again ${!a2.over}, in ${((Date.now() - ta) / 1000).toFixed(0)} s)`);
     }
   } catch (e) {

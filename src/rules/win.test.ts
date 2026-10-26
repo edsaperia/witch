@@ -184,7 +184,7 @@ describe("the end of the route (rules/win.ts)", () => {
     for (const c of dancers) { expect(c.z).toBeLessThan(d0.z - R); expect(Math.hypot(c.x - d0.x, c.z - d0.z)).toBeGreaterThan(R + W.legendGap - 0.6); expect(c.away).toBe(false); }
     for (const a of dancers) for (const b of dancers) if (a !== b) expect(Math.hypot(a.x - b.x, a.z - b.z)).toBeGreaterThan(W.legendSpace - 0.6);
     expect(g.creatures.some(c => c.fight?.target)).toBe(false);
-    expect(w.card).toBe(true);
+    expect(w.settled).toBe(true);
     expect(winFlare(g)).toBeNull(); // (held win.flare seconds, then gone)
     expect(g.partyOver).toBeNull();
   }, 120000);
@@ -280,7 +280,7 @@ describe("the woken legends' places (Ed, 2026-10-11: north of the dancefloor, be
   it("puts any number of them on arcs north of the floor, beyond the conga's ring, apart, clear of the treehouse, the same every time", () => {
     const g = newGame(7, withTuning({ map: { ...TUNING.map!, islandAreas: 10 } })), d0 = g.map.dancefloor, th = g.map.treehouse;
     expect(th.z).toBeLessThan(d0.z); // (north is -z: the treehouse stands north of the floor)
-    g.win = { phase: "won", lastWaveAt: 0, target: null, pickedAt: 0, lap: [], fired: 0, sigil: "worldTree", found: [], lost: [], card: false, lead: 0, congaSize: 60 };
+    g.win = { phase: "won", lastWaveAt: 0, target: null, pickedAt: 0, lap: [], fired: 0, sigil: "worldTree", found: [], lost: [], settled: false, lead: 0, congaSize: 60 };
     const R = congaRadius(60, W);
     for (const n of [1, 2, 3, 5, 13]) {
       const ps = legendPlaces(g, n);

@@ -3654,7 +3654,7 @@
           "type": "number",
           "minimum": 0
         },
-        "cardAfter": {
+        "settleAfter": {
           "type": "number",
           "minimum": 0
         },
@@ -3679,7 +3679,7 @@
         "legendArc",
         "flareDraw",
         "flare",
-        "cardAfter",
+        "settleAfter",
         "retarget"
       ],
       "additionalProperties": false

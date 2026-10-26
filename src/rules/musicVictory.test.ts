@@ -1,5 +1,5 @@
 // The victory music (wave 2's finale, Ed approved, 2026-10-11): when an island is won, its lap, its party (a conga line
-// round the dancefloor) and the "Night won" card play the style's victory section: the drop a whole step up, choir,
+// round the dancefloor) play the style's victory section: the drop a whole step up, choir,
 // strings and arp over it, the claps in a conga line, looping clean.
 import { describe, expect, it } from "vitest";
 import styleJson from "../../config/music-style.json";
