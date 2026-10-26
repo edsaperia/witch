@@ -18,6 +18,13 @@ import { SHEETED_PIECES, SHEETED_COLOURS } from "./sheeted.js";
 /** House.json's footprints over a real piece's: the pieces drawn twice their real size (Ed, 2026-10-23: "about 2x, as big as in her
  *  old creator bedroom"), so a piece is built at its footprint over this and drawn this many times over. */
 export const SIZE = 2;
+/** Each piece drawn this much bigger again (Ed, 2026-10-26: "I think they're too small, which makes it hard to see what they are"):
+ *  house.json's footprint is the real piece's times SIZE times this, so the piece is the same, drawn bigger, its details chunkier.
+ *  The bed's already big; the small ones grow most. */
+export const GROW = { bed: 1, telephone: 1.8, microphone: 1.6, book: 1.7, telescope: 1.6, hats: 1, drumKit: 1.1, synthRack: 1.4, broomBay: 1.35, lathe: 1.2, pegboard: 1.4, cauldron: 1.4, teaTable: 1.4, cardTable: 1.4, invitations: 1 };
+export const GROW_ALL = 1.5;
+/** A piece's own scale: its footprint's metres over the real piece's. */
+export const sizeOf = id => SIZE * (GROW[id] ?? (id.startsWith("bedroom") ? 1 : GROW_ALL));
 
 const X = [1, 0, 0], Y = [0, 1, 0], Z = [0, 0, 1];
 const rotY = (v, a) => [v[0] * Math.cos(a) + v[2] * Math.sin(a), v[1], -v[0] * Math.sin(a) + v[2] * Math.cos(a)];
@@ -91,8 +98,10 @@ export const BIOMES = ["#2f6b5e", "#9fc4d8", "#7f93a3", "#2e8b3e", "#7aa04a", "#
 const BIOME_MATS = [M.SKIN, M.EAR, M.EYE, M.PUPIL, M.BROW, M.BODYL, M.NIGHT, M.NIGHT2, M.MOUTH];
 const hexRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
 
-/** The pieces that follow a round room's wall (bent round it): long, flat-backed things. */
-export const BEND = new Set(["broomBay", "synthRack", "wardrobe", "dressingTable", "curtains", "cloakPegs", "shoeRack", "bags", "pegboard", "recordShelf", "specimens"]);
+/** The pieces that follow a round room's wall (bent round it): long, flat-backed things.
+ *  (Ed, 2026-10-26: "the items were designed for being against walls, but her house doesn't really have walls, so we should design
+ *  things to look nice freestanding": they stand off the walls now, straight; the bend kept for a piece that's wanted against one.) */
+export const BEND = new Set(["curtains"]);
 
 // ---------- the pieces ----------
 // Each builds model m from its real footprint (W along the wall, D out from it, H its height) and its state.
@@ -193,6 +202,7 @@ const PIECES = {
     for (const [x, z] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) m.chain([[x * (W / 2 - .06), top - .2, z * (D / 2 - .06), .035], [x * (W / 2 - .02), .35, z * (D / 2 - .04), .026], [x * (W / 2 - .07), .02, z * (D / 2 - .07), .03]], M.WOOD, { group: 4 });
     const mx = W * .4, my0 = top + .05, my1 = H, mz = -D / 2 + .06, mc = (my0 + my1) / 2, mh = (my1 - my0) / 2;
     m.box([0, mc, mz], [mx, mh, .035], M.BARKD, { round: .025, group: 5 });
+    for (const sx of [-1, 1]) { m.seg([sx * (mx + .04), top, mz], [sx * (mx + .04), my1 + .08, mz], .025, .022, M.WOOD, { group: 5 }); m.ell([sx * (mx + .04), my1 + .11, mz], [.04, .05, .04], M.FLOWER, { group: 5 }); } // (its own posts: it stands free)
     m.flat([0, mc + .02, mz + .06], X, Y, mx - .1, mh - .1, (s, tt) => (s + tt * .6 > .45 && s + tt * .6 < .7 ? M.BELLY : M.WEB), { group: 6, bend: 0 });
     const ring = [];
     for (let i = 0; i < 4; i++) ring.push([-mx + .05 + i * (2 * mx - .1) / 3, my1 - .03]);
@@ -281,23 +291,23 @@ const PIECES = {
     m.chain([[r * .5 + .04, sit + .08, -r * .4, .012], [r * .5 + .08, sit + .05, -r * .4, .012], [r * .5 + .04, sit + .02, -r * .4, .012]], M.HAT1, { group: 10 });
   },
 
-  // Cloak pegs: a mossy board of carved pegs on the wall, two cloaks and a scarf hanging, a witch's hat on the end peg, a sprig of leaves.
+  // A coat tree, freestanding (Ed, 2026-10-26: her house hasn't walls): a carved stem on three clawed feet, pegs branching all round
+  // its top, cloaks hanging off it front and back, a striped scarf, her witch's hat crowning it, ivy up the stem, a sprig at its top.
   cloakPegs(m, { W, D, H }) {
-    const zb = -D / 2 + .03, y = H * .85;
-    m.box([0, y, zb], [W / 2, .07, .025], M.BARKD, { round: .01, group: 1, paint: p => (p[1] > y + .04 ? M.MOSS : undefined) });
-    const pegs = 4;
-    for (let i = 0; i < pegs; i++) { const x = -W / 2 + .15 + i * (W - .3) / (pegs - 1); m.seg([x, y, zb], [x, y + .03, zb + .14], .025, .03, M.WOOD, { group: 2 }); m.ell([x, y + .04, zb + .15], [.04, .04, .04], M.WOOD, { group: 2 }); }
-    // two cloaks, long and short, hanging off their pegs; a scarf; her hat on the last peg
-    const px = i => -W / 2 + .15 + i * (W - .3) / (pegs - 1);
-    m.box([px(0), y - .5, zb + .12], [.2, .48, .05], M.HAT, { round: .06, group: 10, paint: p => (p[1] < y - .92 ? M.HAT2 : undefined) });
-    m.ell([px(0), y - .05, zb + .17], [.12, .07, .08], M.HAT, { group: 10 });
-    m.box([px(1), y - .32, zb + .12], [.19, .3, .05], M.CLOTH, { round: .06, group: 11, paint: p => (Math.abs(p[0] - px(1)) < .02 ? M.FLOWER : undefined) });
-    m.ell([px(1), y - .04, zb + .17], [.11, .06, .08], M.CLOTH, { group: 11 });
-    m.chain([[px(2) - .05, y + .02, zb + .17, .045], [px(2) - .08, y - .35, zb + .14, .04], [px(2) + .02, y - .65, zb + .12, .035]], M.ACCENT, { group: 12, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
-    m.chain([[px(2) + .05, y + .02, zb + .17, .045], [px(2) + .08, y - .25, zb + .14, .04]], M.ACCENT, { group: 12, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
-    m.ell([px(3), y + .02, zb + .18], [.18, .02, .16], M.HAT, { group: 13 });
-    m.seg([px(3), y + .02, zb + .18], [px(3) + .06, y + .42, zb + .14], .11, .01, M.HAT, { group: 13, paint: p => (p[1] < y + .09 ? M.FLOWER : undefined) });
-    sprig(m, [W / 2 - .05, y + .1, zb + .05], 5, .1, 14);
+    const top = H * .86, r = Math.min(W, D) / 2;
+    for (let i = 0; i < 3; i++) { const a = i * 2.1 + .3; m.chain([[0, .28, 0, .05], [Math.cos(a) * r * .55, .09, Math.sin(a) * r * .55, .04], [Math.cos(a) * r * .9, .02, Math.sin(a) * r * .9, .035]], M.BARKD, { group: 1 }); }
+    m.chain([[0, .22, 0, .075], [0, top * .5, 0, .045], [0, top + .05, 0, .055]], M.BARKD, { group: 2, paint: p => (Math.sin(p[1] * 40) > .75 ? M.HAIR : undefined) });
+    const pegs = 6, peg = i => { const a = (i / pegs) * Math.PI * 2 + .35; return { c: Math.cos(a), s: Math.sin(a), y: top - .08 - (i % 2) * .14 }; };
+    for (let i = 0; i < pegs; i++) { const { c, s: sn, y } = peg(i); m.seg([0, y, 0], [c * .22, y + .1, sn * .22], .026, .02, M.WOOD, { group: 3 }); m.ell([c * .24, y + .12, sn * .24], [.035, .035, .035], M.FLOWER, { group: 3 }); }
+    // a cloak off peg i: its hood over the peg, falling to len, its hem trimmed
+    const cloak = (i, mat, len, half, g, trim) => { const { c, s: sn, y } = peg(i), x = c * .26, z = sn * .26 + Math.sign(sn) * .05, y0 = y + .1; m.box([x, y0 - len / 2 - .04, z], [half, len / 2, .06], mat, { round: .07, group: g, paint: p => (p[1] < y0 - len + .04 ? trim : Math.abs(p[0] - x) < .02 ? M.FLOWER : undefined) }); m.ell([x, y0 - .03, z], [half * .7, .08, .09], mat, { group: g }); };
+    cloak(0, M.HAT, .95, .2, 10, M.HAT2); cloak(2, M.CLOTH, .7, .19, 11, M.ACCENT); cloak(4, M.IRIS, .8, .18, 12, M.BELLY);
+    const sc = peg(1);
+    m.chain([[sc.c * .26 - .05, sc.y + .12, sc.s * .26 + .04, .045], [sc.c * .3 - .08, sc.y - .3, sc.s * .3 + .06, .04], [sc.c * .3 + .02, sc.y - .62, sc.s * .3 + .08, .035]], M.ACCENT, { group: 13, paint: p => (Math.floor(p[1] * 12) % 2 ? M.BELLY : undefined) });
+    m.ell([0, top + .1, 0], [.22, .02, .2], M.HAT, { group: 14 });
+    m.seg([0, top + .1, 0], [.07, top + .55, -.03], .13, .01, M.HAT, { group: 14, paint: p => (p[1] < top + .17 ? M.FLOWER : undefined) });
+    ivy(m, 0, 0, .3, top * .7, 15, .055);
+    sprig(m, [.05, top + .1, .12], 4, .09, 16, .6);
   },
 
   // A shoe rack: two chunky shelves of rough wood, her shoes on them (big trainers, boots, glitter platforms, light-up trainers with a
@@ -305,7 +315,9 @@ const PIECES = {
   shoeRack(m, { W, D, H }) {
     const sh = [.08, H * .55], top = H * .95;
     for (const y of [...sh, top]) m.box([0, y, 0], [W / 2, .03, D / 2 - .02], M.WOOD, { round: .01, group: 1, paint: planks(.25) });
-    for (const x of [-W / 2 + .03, W / 2 - .03]) m.box([x, top / 2, 0], [.03, top / 2, D / 2 - .02], M.BARKD, { group: 2 });
+    for (const x of [-W / 2 + .03, W / 2 - .03]) { m.box([x, top / 2 + .03, 0], [.03, top / 2, D / 2 - .02], M.BARKD, { group: 2 }); for (const z of [-D / 2 + .04, D / 2 - .04]) m.ell([x, .02, z], [.05, .03, .05], M.BARKD, { group: 2 }); }
+    m.seg([-W / 2 + .03, top + .18, -D / 2 + .05], [W / 2 - .03, top + .18, -D / 2 + .05], .02, .02, M.WOOD, { group: 3 });
+    for (const x of [-W / 2 + .03, W / 2 - .03]) m.seg([x, top, -D / 2 + .05], [x, top + .2, -D / 2 + .05], .02, .02, M.WOOD, { group: 3 });
     const shoe = (x, y, mat, sole, g, boot = false) => {
       m.ell([x, y + .07, .02], [.08, boot ? .14 : .06, .14], mat, { group: g, dir: [0, 0, 1] });
       if (boot) m.seg([x, y + .1, -.04], [x, y + .3, -.04], .07, .065, mat, { group: g });
@@ -365,8 +377,13 @@ const PIECES = {
 
   // The bags: a row of iron hooks on a plank, her satchel, a backpack, a bum bag and a tote of records hanging; a little lantern.
   bags(m, { W, D, H }) {
-    const zb = -D / 2 + .03, y = H * .8;
-    m.box([0, y, zb], [W / 2, .06, .025], M.WOOD, { round: .01, group: 1, paint: planks(.4) });
+    // (a hall stand, freestanding: two posts on sledge feet and a rail between them, its hooks forward; the bags hang off its front)
+    const zb = -.02, y = H * .8;
+    for (const x of [-W / 2 + .06, W / 2 - .06]) { m.seg([x, .03, 0], [x, y + .14, 0], .035, .03, M.WOOD, { group: 1 }); m.seg([x, .03, -.3], [x, .03, .3], .04, .04, M.WOOD, { group: 1 }); m.ell([x, y + .18, 0], [.05, .05, .05], M.FLOWER, { group: 1 }); }
+    m.box([0, y, zb], [W / 2 - .06, .05, .03], M.WOOD, { round: .01, group: 1, paint: planks(.4) });
+    // (its back: an umbrella and a long scarf off the rail's far side)
+    m.seg([-W * .2, y, -.08], [-W * .22, .05, -.12], .02, .02, M.SHADES, { group: 14 }); m.seg([-W * .2, y + .03, -.08], [-W * .2 + .06, y + .12, -.08], .012, .012, M.SHADES, { group: 14 });
+    m.chain([[W * .25, y, -.07, .04], [W * .27, y * .6, -.1, .035], [W * .24, y * .3, -.1, .03]], M.ACCENT, { group: 15, paint: p => (Math.floor(p[1] * 10) % 2 ? M.FLOWER : undefined) });
     const xs = [-W * .36, -W * .12, W * .12, W * .36];
     for (const x of xs) m.chain([[x, y, zb + .02, .018], [x, y - .02, zb + .12, .016], [x, y + .04, zb + .16, .014]], M.SHADES, { group: 2 });
     // the satchel (a flap, a buckle, its strap), the backpack (pockets), the bum bag, the tote
@@ -435,7 +452,10 @@ const PIECES = {
   // compass rose over it; a sprig sprouting from a corner. Each cell's middle is a mark (`cell0` to `cell8`, row by row from the top
   // left) for the parts Hotel hangs on it, which glow on tonight's cell.
   pegboard(m, { W, D, H }) {
-    const zb = -D / 2 + .02, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
+    // (freestanding: the board on two posts with sledge feet, braced at its back)
+    const zb = 0, y0 = .55, y1 = H - .35, cy = (y0 + y1) / 2, hh = (y1 - y0) / 2, zf = zb + .035;
+    for (const s of [-1, 1]) { const x = s * (W / 2 + .06); m.seg([x, 0, zb - .02], [x, y1 + .1, zb - .02], .04, .035, M.WOOD, { group: 3 }); m.seg([x, .03, -.32], [x, .03, .32], .045, .045, M.WOOD, { group: 3 }); m.seg([x, .05, -.28], [x, cy, zb - .04], .02, .02, M.WOOD, { group: 3 }); m.ell([x, y1 + .14, zb - .02], [.05, .05, .05], M.FLOWER, { group: 3 }); }
+    for (const s of [-1, 1]) m.seg([s * W * .45, y0, zb - .035], [-s * W * .45, y1, zb - .035], .02, .02, M.BARKD, { group: 3 });
     // (a dark board, oily green, so the parts hung on it stand out against it: art/workshop.js)
     m.box([0, cy, zb], [W / 2, hh, .02], M.CLOTH, { group: 1, paint: p => (Math.abs(((p[0] * 9) % 1 + 1) % 1 - .5) < .1 && Math.abs(((p[1] * 9) % 1 + 1) % 1 - .5) < .1 ? M.BARKD : undefined) });
     m.box([0, cy, zb - .012], [W / 2 + .05, hh + .05, .015], M.WOOD, { round: .01, group: 2 });
@@ -454,7 +474,7 @@ const PIECES = {
     m.ell(rc, [.16, .16, .02], M.FLOWER, { group: 30 });
     for (const [dx, dy, mat] of [[0, 1, M.ACCENT], [0, -1, M.BARKD], [1, 0, M.BARKD], [-1, 0, M.BARKD]]) m.seg([rc[0], rc[1], rc[2] + .02], [rc[0] + dx * .2, rc[1] + dy * .2, rc[2] + .02], .035, .005, mat, { group: 31 });
     sprig(m, [-W / 2, y1 + .05, zb + .05], 5, .12, 32);
-    sprig(m, [W / 2 - .05, y0, zb + .05], 4, .1, 33, .2);
+    sprig(m, [W / 2 + .06, y0 * .5, zb + .05], 4, .1, 33, .2);
   },
 
   // The broom bay (Hotel's Workshop): two trestles that hold her broom across them at waist height (the mark `rest`: Hotel draws her
@@ -524,7 +544,7 @@ const PIECES = {
     const zb = -D / 2 + .02, n = 4;
     for (let i = 0; i <= n; i++) m.box([0, .05 + i * (H - .1) / n, 0], [W / 2, .025, D / 2 - .02], M.WOOD, { round: .008, group: 1 });
     for (const s of [-1, 1]) m.box([s * (W / 2 - .02), H / 2, 0], [.025, H / 2, D / 2 - .02], M.BARKD, { group: 2 });
-    m.box([0, H / 2, zb], [W / 2, H / 2, .01], M.BARKD, { group: 2 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.ell([sx * (W / 2 - .02), .02, sz * (D / 2 - .04)], [.04, .03, .04], M.BARKD, { group: 2 }); // (open at the back, on feet: freestanding)
     const spines = [M.ACCENT, M.FLOWER, M.HAT1, M.BELLY, M.POM, M.IRIS, M.CLOTH, M.SHADES];
     for (let i = 0; i < n; i++) {
       const y0 = .075 + i * (H - .1) / n, ht = (H - .1) / n - .06;
@@ -626,7 +646,10 @@ const PIECES = {
     const zb = -D / 2 + .02, shelves = [.05, H * .4, H * .72];
     for (const y of shelves) m.box([0, y, 0], [W / 2, .03, D / 2 - .02], M.BARKD, { round: .01, group: 1 });
     for (const x of [-W / 2 + .03, -W / 6, W / 6, W / 2 - .03]) m.box([x, H * .37, 0], [.025, H * .37, D / 2 - .02], M.BARKD, { group: 2 });
-    m.box([0, H * .37, zb], [W / 2, H * .37, .01], M.BODY3, { group: 2 });
+    m.box([0, H * .37, zb], [W / 2, H * .37, .012], M.BODY3, { group: 2 });
+    m.box([0, H * .37, zb - .02], [W / 2 + .01, H * .37 + .01, .012], M.BARKD, { group: 2, paint: p => (Math.abs(((p[0] / .18) % 1 + 1) % 1 - .5) > .46 ? M.HAIR : undefined) }); // (its back, panelled: it stands free)
+    m.box([0, H * .755, 0], [W / 2 + .03, .025, D / 2 + .01], M.BARKD, { round: .01, group: 2 });
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) m.ell([sx * (W / 2 - .03), .02, sz * (D / 2 - .05)], [.045, .035, .045], M.BARKD, { group: 2 });
     const skull = (x, y, s, g, fern = false) => {
       m.ell([x, y + s * .9, 0], [s * .8, s * .75, s * .9], M.BELLY, { group: g });
       m.ell([x, y + s * .4, s * .35], [s * .5, s * .35, s * .45], M.BELLY, { group: g });
@@ -644,6 +667,7 @@ const PIECES = {
     can(m, -W * .05, 0, shelves[2] + .03, shelves[2] + .25, .07, M.CRYSTAL, { group: 32 });
     // the deer skull over it, antlers spread
     const dy = H * .95;
+    m.box([-W * .2, H * .79, 0], [.1, .04, .08], M.WOOD, { round: .01, group: 39 }); m.seg([-W * .2, H * .8, 0], [-W * .2, dy - .08, zb + .1], .02, .02, M.BARKD, { group: 39 }); // (on a plinth on the cabinet's top)
     m.ell([-W * .2, dy, zb + .1], [.1, .14, .1], M.BELLY, { group: 40 });
     for (const s of [-1, 1]) { const b = [-W * .2 + s * .06, dy + .12, zb + .1]; m.chain([[...b, .025], [b[0] + s * .18, b[1] + .2, b[2], .02], [b[0] + s * .25, b[1] + .45, b[2], .012]], M.BELLY, { group: 41 }); m.seg([b[0] + s * .18, b[1] + .2, b[2]], [b[0] + s * .35, b[1] + .3, b[2]], .015, .008, M.BELLY, { group: 41 }); }
   },
@@ -719,37 +743,56 @@ const PIECES = {
     can(m, -W * .44, -D * .4, 0, .2, .1, M.BODY2, { group: 42 }); sprig(m, [-W * .44, .26, -D * .4], 6, .12, 43, .7);
   },
 
-  // The synth rack (Ed's pick, 2026-10-23: a retro tech wall): metal shelving stacked with vintage synths, two keyboards, a modular
-  // case of blinking lights and patch cables, a reel-to-reel and a little glowing screen; cables tangling down the front; a fern on top.
+  // The synth (Ed, 2026-10-26, his photo: previews/ed/refs/studio-synth-modular.jpg on claude/ed-shots: "The keyboard looks like this,
+  // with a keyboard in front of it"; then, at the house's size: brighter, clearer, "fewer but bolder"): a big modular on a desk, three
+  // tiers of bright silver cases stepping back and up, each a row of modules with dark seams between, a grid of knobs (dots that read)
+  // and a row of big glowing LEDs (red, green, blue, white); a dozen thick patch cables in red, orange, yellow and blue looping down
+  // between them in wide arcs, two trailing off the desk to the floor (the messy witch); a keyboard on the desk in front, lit blue.
   synthRack(m, { W, D, H }) {
-    const sh = [.08, H * .32, H * .62, H * .93], zf = D / 2 - .04;
-    for (const y of sh) m.box([0, y, 0], [W / 2, .02, D / 2 - .02], M.FRAME, { group: 1 });
-    for (const x of [-W / 2 + .02, W / 2 - .02]) for (const z of [-D / 2 + .04, D / 2 - .04]) m.seg([x, 0, z], [x, H, z], .02, .02, M.FRAME, { group: 2 });
-    // the bottom: the reel-to-reel (two reels, a deck) and a speaker cab
-    m.box([-W * .22, sh[0] + .2, 0], [.28, .2, D / 2 - .08], M.SHADES, { round: .02, group: 10 });
-    for (const s of [-1, 1]) { m.ell([-W * .22 + s * .13, sh[0] + .26, zf - .02], [.1, .1, .015], M.FRAME, { group: 11, paint: p => (Math.hypot(p[0] - (-W * .22 + s * .13), p[1] - (sh[0] + .26)) < .03 ? M.SHADES : Math.sin(Math.atan2(p[1] - (sh[0] + .26), p[0] - (-W * .22 + s * .13)) * 3) > .7 ? M.SHADES : undefined) }); }
-    m.box([W * .25, sh[0] + .22, 0], [.24, .22, D / 2 - .08], M.WOOD, { round: .02, group: 12 });
-    m.ell([W * .25, sh[0] + .22, zf - .03], [.15, .15, .02], M.SHADES, { group: 13, paint: p => (Math.hypot(p[0] - W * .25, p[1] - (sh[0] + .22)) < .05 ? M.FRAME : undefined) });
-    // the middle: two keyboards stacked, their keys facing out, knobs over them
-    const keys = (y, g, body) => {
-      m.box([0, y + .07, .02], [W / 2 - .12, .06, D / 2 - .1], body, { round: .02, group: g });
-      m.box([0, y + .1, zf - .08], [W / 2 - .2, .02, .08], M.BELLY, { group: g + 1, paint: p => (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .1 ? M.SHADES : (Math.abs(((p[0] / .055) % 1 + 1) % 1 - .5) < .3 && p[2] < zf - .1 ? M.SHADES : undefined)) });
-      for (let i = 0; i < 9; i++) bulb(m, [-W / 2 + .25 + i * (W - .5) / 8, y + .14, -.02], .018, [M.GLINT, M.WOKEN, M.COLLAR][i % 3], g + 2, i === 4 ? [SCREEN, 8, .2] : null);
-    };
-    keys(sh[1], 20, M.ACCENT); keys(sh[1] + .17, 24, M.BELLY);
-    // the top shelf: the modular case, rows of blinking lights and patch cables looping down; the little screen glowing
-    m.box([-W * .1, sh[2] + .26, -.02], [W * .34, .25, D / 2 - .08], M.SHADES, { round: .02, group: 30, paint: p => (Math.abs(((p[1] - sh[2]) / .1) % 1 - .5) < .06 ? M.FRAME : undefined) });
-    for (let r = 0; r < 4; r++) for (let i = 0; i < 9; i++) if (hash2(r, i, 3) > .35) bulb(m, [-W * .1 - W * .3 + i * W * .075, sh[2] + .1 + r * .11, zf - .06], .017, [M.COLLAR, M.GLINT, M.WOKEN, M.MAGIC][(r + i) % 4], 31, r === 2 && i === 3 ? [FAIRY, 10, .3] : null);
-    const cols = [M.COLLAR, M.HAT1, M.FLOWER, M.IRIS, M.ACCENT];
-    for (let i = 0; i < 6; i++) { const x0 = -W * .38 + i * W * .12, x1 = x0 + (hash2(i, 1, 5) - .5) * .4; m.chain([[x0, sh[2] + .3, zf - .02, .012], [(x0 + x1) / 2, sh[2] + .02 - hash2(i, 2, 5) * .25, zf + .03, .012], [x1, sh[2] + .15, zf - .02, .012]], cols[i % cols.length], { group: 35 + i }); }
-    m.box([W * .36, sh[2] + .2, 0], [.13, .19, .14], M.FRAME, { round: .03, group: 42 });
-    m.flat([W * .36, sh[2] + .21, .145], X, Y, .09, .12, (s, t) => (Math.abs(t - Math.sin(s * 6) * .4) < .18 ? M.MAGIC2 : M.GLINT), { group: 43, bend: 0 });
-    light(m, [W * .36, sh[2] + .2, .3], SCREEN, 10, .3);
-    // cables tangling down to the floor, a fern on top, a disco ball hanging off the top shelf's corner
-    for (let i = 0; i < 3; i++) m.chain([[-W * .3 + i * .3, sh[1], zf, .014], [-W * .25 + i * .32, sh[1] * .5, zf + .06, .014], [-W * .2 + i * .25, .01, zf + .2, .014]], [M.SHADES, M.ACCENT, M.HAT1][i], { group: 50 + i });
-    can(m, W * .3, 0, sh[3] + .02, sh[3] + .18, .09, M.BODY2, { group: 60 }); sprig(m, [W * .3, sh[3] + .25, 0], 7, .13, 61, .6);
-    m.seg([-W / 2 + .08, sh[3], zf], [-W / 2 + .08, sh[3] - .2, zf + .02], .006, .006, M.FRAME, { group: 62 });
-    m.ell([-W / 2 + .08, sh[3] - .28, zf + .02], [.08, .08, .08], M.FRAME, { group: 63, paint: p => (hash2(Math.round(p[0] * 60), Math.round(p[1] * 60), 8) > .6 ? M.BELLY : undefined) });
+    const desk = .6, zf = D / 2 - .03, back = -D / 2 + .12, X = [1, 0, 0];
+    m.box([0, desk, 0], [W / 2, .03, D / 2], M.WOOD, { round: .01, group: 1 });
+    for (const x of [-W / 2 + .05, W / 2 - .05]) for (const z of [-D / 2 + .05, D / 2 - .05]) m.seg([x, 0, z], [x, desk, z], .025, .025, M.FRAME, { group: 1 });
+    // the cases: three tiers, each a middle panel facing her and two wings turned in; silver faces, dark seams a module apart
+    const LEDS = [M.COLLAR, M.RUNE, M.GLINT, M.WOKEN], hh = .23, tiers = [[desk + .27, back + .22, .22], [desk + .78, back + .11, .1], [desk + 1.29, back, 0]];
+    const faces = [];
+    tiers.forEach(([y, z, tilt], t) => {
+      for (const [side, x0, x1, turn] of [[-1, -W / 2 + .03, -W * .18, .5], [0, -W * .17, W * .17, 0], [1, W * .18, W / 2 - .03, -.5]]) {
+        const hw = (x1 - x0) / 2, cx = (x0 + x1) / 2, cz = z + Math.abs(side) * .12, across = rotY(X, side ? turn : 0), up = [0, Math.cos(tilt), Math.sin(tilt)];
+        const out = [across[1] * up[2] - across[2] * up[1], across[2] * up[0] - across[0] * up[2], across[0] * up[1] - across[1] * up[0]];
+        const g = 10 + t * 3 + side + 1, uOf = p => (p[0] - cx) * across[0] + (p[2] - cz) * across[2];
+        m.box([cx, y, cz], [hw, hh, .05], M.FRAME, { round: .006, group: g, dir: across, up, paint: p => (Math.abs(((uOf(p) / .12) % 1 + 1) % 1 - .5) > .45 || Math.abs(p[1] - y) > hh - .02 ? M.SHADES : undefined) });
+        const at = (u, v, o = .06) => [cx + across[0] * u + out[0] * o, y + up[1] * v + out[1] * o, cz + across[2] * u + up[2] * v + out[2] * o];
+        faces.push({ at, hw });
+        // a module every 12 cm: two knobs over each other, the top row big; a row of LEDs along the top of each tier
+        const n = Math.max(1, Math.round(hw * 2 / .12));
+        for (let k = 0; k < n; k++) {
+          const u = -hw + (k + .5) * (2 * hw) / n;
+          m.ell(at(u, .06, .065), [.026, .026, .016], M.SHADES, { group: 30 + t, dir: out });
+          m.ell(at(u, -.08, .065), [.018, .018, .014], hash2(k, t, 5) > .6 ? M.ACCENT : M.SHADES, { group: 30 + t, dir: out });
+          bulb(m, at(u, .17, .06), .02, LEDS[(k + t + side + 4) % LEDS.length], 40 + t, k % 3 === 1 ? [[FAIRY, GREEN, SCREEN, WARM][(k + t + side + 4) % 4], 9, .3] : null);
+        }
+      }
+    });
+    // the patch cables: a dozen, thick, from one module to another, sagging in wide arcs in front of the wall
+    const CAB = [M.ACCENT, M.JACKET, M.FLOWER, M.IRIS], plugs = [];
+    faces.forEach((f, i) => { for (const u of [-.6, .6]) plugs.push(f.at(u * f.hw, -.15, .08)); });
+    for (let i = 0; i < 12; i++) {
+      const p0 = plugs[Math.floor(hash2(i, 1, 31) * plugs.length)], p1 = plugs[Math.floor(hash2(i, 2, 31) * plugs.length)];
+      if (Math.hypot(p0[0] - p1[0], p0[1] - p1[1]) < .3) continue;
+      const sag = .18 + hash2(i, 3, 31) * .25, mid = [(p0[0] + p1[0]) / 2, Math.min(p0[1], p1[1]) - sag, Math.max(p0[2], p1[2]) + .1];
+      const q = t => { const s = 1 - t; return [s * s * p0[0] + 2 * s * t * mid[0] + t * t * p1[0], s * s * p0[1] + 2 * s * t * mid[1] + t * t * p1[1], s * s * p0[2] + 2 * s * t * mid[2] + t * t * p1[2], .02]; };
+      m.chain([0, .2, .4, .6, .8, 1].map(q), CAB[i % CAB.length], { group: 60 + (i % 8) });
+    }
+    for (let i = 0; i < 2; i++) { const x = -W * .25 + i * W * .45; m.chain([[x, desk + .2, back + .3, .02], [x + .05, desk + .03, zf + .03, .02], [x + .02, desk * .5, zf + .12, .02], [x + .14, .02, zf + .25, .02]], CAB[i * 3], { group: 70 + i }); }
+    // the keyboard on the desk in front, lit blue from a strip along the desk's front edge
+    const kz = zf - .16, kw = W * .42;
+    m.box([0, desk + .05, kz], [kw, .03, .13], M.SHADES, { round: .01, group: 80 });
+    m.box([0, desk + .075, kz + .04], [kw - .03, .012, .08], M.BELLY, { group: 81, paint: p => (Math.abs(((p[0] / .05) % 1 + 1) % 1 - .5) > .42 ? M.SHADES : undefined) });
+    for (let k = 0; k < Math.floor(kw * 2 / .05); k++) if ([1, 2, 4, 5, 6].includes(k % 7)) m.box([-kw + .03 + k * .05, desk + .09, kz + .015], [.013, .009, .045], M.SHADES, { group: 82 });
+    m.box([0, desk - .02, zf + .01], [W / 2 - .03, .015, .012], M.GLINT, { group: 2 });
+    m.box([0, desk + .06, kz - .135], [kw, .012, .008], M.GLINT, { group: 2 });
+    light(m, [0, desk + .1, zf + .1], SCREEN, 18, .5);
+    light(m, [0, desk + 1.1, back + .5], WARM, 22, .45);
   },
 
   // The microphone, spotlit: a chrome stand on a round base, a big vintage capsule mic, its cable coiling away; a spot lamp hanging over
@@ -825,7 +868,7 @@ const ROOM_COLOURS = {
   parlour: { [M.CLOTH]: [40, 104, 70], [M.ACCENT]: [178, 120, 48], [M.BODY]: [26, 70, 48] }, // emerald and old gold
   study: { [M.CLOTH]: [40, 56, 104], [M.ACCENT]: [170, 110, 46] }, // navy and ochre
   workshop: { [M.CLOTH]: [74, 92, 64], [M.ACCENT]: [184, 74, 44] }, // oily green and rust
-  studio: { [M.CLOTH]: [52, 30, 80], [M.ACCENT]: [226, 60, 140] }, // midnight purple and neon pink
+  studio: { [M.CLOTH]: [52, 30, 80], [M.ACCENT]: [226, 60, 140], [M.FRAME]: [226, 230, 240] }, // midnight purple and neon pink; bright silver (the synth's cases)
   kitchen: { [M.CLOTH]: [110, 138, 104], [M.ACCENT]: [196, 104, 60] }, // sage and copper
   solarium: { [M.CLOTH]: [224, 206, 150], [M.ACCENT]: [226, 120, 120], [M.WOOD]: [176, 132, 86] }, // cream and sunny rose, pale wood
   drawingRoom: { [M.CLOTH]: [34, 98, 62], [M.ACCENT]: [150, 30, 44] }, // baize green and crimson
@@ -857,22 +900,23 @@ export function furnitureSprite(id, foot, st = {}, { ppm = 32 / 3, pitch = .6, y
   const build = PIECES[id];
   if (!build || id === "door") throw new Error(`no furniture "${id}"`);
   const m = new Model({ blend: .025 });
-  build(m, { W: foot.w / SIZE, D: foot.d / SIZE, H: foot.h / SIZE }, state ?? FURNITURE_STATES[id]?.[0]);
-  if (curve > 0 && BEND.has(id)) bendModel(m, curve / SIZE, foot.d / SIZE);
-  return modelSprite(m, { ppm, pitch, yaw });
+  const k = sizeOf(id);
+  build(m, { W: foot.w / k, D: foot.d / k, H: foot.h / k }, state ?? FURNITURE_STATES[id]?.[0]);
+  if (curve > 0 && BEND.has(id)) bendModel(m, curve / k, foot.d / k);
+  return modelSprite(m, { ppm, pitch, yaw, size: k });
 }
 
 /** A model of the house's (metres of the real piece) drawn at the house's pixel, SIZE times over, turned by yaw: its sprite, cropped,
  *  where its middle on the floor lands (`origin`), its lights and its marks in pixels (furnitureSprite's; art/houseDecor.js's too). */
-export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0 } = {}) {
+export function modelSprite(m, { ppm = 32 / 3, pitch = .6, yaw = 0, size = SIZE } = {}) {
   m.ell([0, .004, 0], [.01, .004, .01], M.NOSE, { group: 0 }); // (a common ground line)
-  const { sp, project } = render(m, { scale: ppm * SIZE, yaw, pitch, lineGap: .1 });
+  const { sp, project } = render(m, { scale: ppm * size, yaw, pitch, lineGap: .1 });
   let x0 = sp.w, x1 = -1, y0 = sp.h, y1 = -1;
   for (let y = 0; y < sp.h; y++) for (let x = 0; x < sp.w; x++) if (sp.m[y * sp.w + x]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
   const W = x1 - x0 + 1, Hh = y1 - y0 + 1, crop = new Sprite(W, Hh);
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) { const i = (y + y0) * sp.w + x + x0, mm = sp.m[i]; if (mm) crop.put(x, y, mm, sp.n[i * 3], sp.n[i * 3 + 1], sp.n[i * 3 + 2]); }
   const [ox, oy] = project([0, 0, 0]);
-  const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * SIZE, R: L.R * SIZE, rgb: L.rgb, power: L.power }; });
+  const lights = (m.lights ?? []).map(L => { const [lx, ly] = project(L.c); return { x: +(lx - x0).toFixed(1), y: +(ly - y0).toFixed(1), z: 8 * size, R: L.R * size, rgb: L.rgb, power: L.power }; });
   // (its marks: named points of it in pixels, for the view: the mic's spot lamp, where the music builder's cone of light hangs from)
   const marks = Object.fromEntries(Object.entries(m.marks ?? {}).map(([k, c]) => { const [mx, my] = project(c); return [k, { x: +(mx - x0).toFixed(1), y: +(my - y0).toFixed(1) }]; }));
   return { sp: crop, origin: { x: +(ox - x0).toFixed(1), y: +(oy - y0).toFixed(1) }, lights, marks };

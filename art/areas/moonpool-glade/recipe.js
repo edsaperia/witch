@@ -10,7 +10,7 @@ export const MOONPOOL = {
   setPiece: ["ring", "a ring of white stones by the pool", 1, { seed: 3 }],
   layout: {
     pattern: "stands", density: .45, clump: .7, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .15, mature: .45, tall: .3, giant: .1 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .15, mature: .65, tall: .15, giant: .05 }, undergrowth: .45, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .15, rocks: .15, freak: .1, lake: .6, modern: 0 },
     feel: "Old mossy cedars, spruces and alders round a still pool that holds the moon; a ring of white stones in the glade, hushed and bright.",
   },

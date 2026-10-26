@@ -9,7 +9,7 @@ describe("the treehouse's rooms dressed", () => {
   const rooms = HOUSE_ROOMS.rooms.filter(r => r.r && !r.locked);
   it("gives each room a middle density (Ed's pick): a rug and up to six pieces, two or more in the bigger rooms (the small hubs crowded with branches, and the busy Workshop, take what fits)", () => {
     for (const r of rooms) {
-      const items = decorPlan(r), pieces = items.filter(i => i.kind !== "rug");
+      const items = decorPlan(r), pieces = items.filter(i => i.kind !== "rug" && i.kind !== "mess");
       if (r.r! >= 6) expect(pieces.length, r.id).toBeGreaterThanOrEqual(Math.min(2, (ROOM_DECOR[r.id] ?? []).filter(k => k !== "rug").length));
       expect(pieces.length, r.id).toBeLessThanOrEqual(6);
     }
@@ -20,6 +20,7 @@ describe("the treehouse's rooms dressed", () => {
       const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2;
       for (const it of decorPlan(r)) {
         if (it.kind === "rug") { expect(Math.hypot(it.x, it.z) + it.r!, `${r.id} rug`).toBeLessThan(r.r!); continue; }
+        if (it.kind === "mess") continue; // (a piece's spill, round its foot: below)
         expect(Math.hypot(it.x, it.z), `${r.id} ${it.kind}: by the wall`).toBeGreaterThan(r.r! - 1.6);
         expect(Math.hypot(it.x, it.z), `${r.id} ${it.kind}: on the floor`).toBeLessThan(r.r! - 0.5);
         for (const o of HOUSE_ROOMS.objects) expect(fromObject(o, { x: 0, z: 0 }, cx + it.x, cz + it.z), `${r.id} ${it.kind} by ${o.id}`).toBeGreaterThan(HOUSE_ROOMS.reach);

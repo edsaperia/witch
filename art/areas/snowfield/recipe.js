@@ -10,7 +10,7 @@ export const SNOWFIELD = {
   setPiece: ["ring", "a ring of old stones half buried in a drift", 1, { member: "stone", centre: "stone", fallen: 2 }],
   layout: {
     pattern: "lone", density: .3, clump: .6, glades: { count: 2, size: [20, 30] },
-    heightMix: { sapling: .25, mature: .5, tall: .25, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .25, mature: .625, tall: .125, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .1, rocks: .55, freak: .05, lake: .25, modern: .05 },
     feel: "A wide white quiet: deep snow and lone snow-laden firs standing out of it, dwarf birch bent low, old stones showing through the drifts.",
   },

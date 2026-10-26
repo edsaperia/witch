@@ -23,7 +23,9 @@ import { djRoutineAt } from "../../rules/djSet";
 import { respawnLeft } from "../../rules/knockout";
 import { HAT_BESIDE } from "../view";
 import { hatFlight } from "../hatFlight";
+import { letterAt } from "../invites";
 import { atDecksFrom, koIris } from "../koIris";
+import { spinAt, spinFacing, spinLift } from "../spin";
 
 /** The player asked for less motion (the knockout's iris then a plain cut: render/koIris.ts). */
 const REDUCED = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -75,6 +77,8 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   v.footTime = ht;
   v.foot += (wantFoot - v.foot) * Math.min(1, fdt * 8);
   if (Math.abs(wantFoot - v.foot) < 0.01) v.foot = wantFoot;
+  let spinFlip: boolean | null = null, spinUp = 0;
+  if (v.spin && !(indoors && still && v.foot > 0.6)) { v.spin = null; v.turnUntil = 0; } // (walked off, or off her feet: no twirl)
   const pick = (pose: string, k: number) => { const fr = F[pose][side]; return fr[Math.max(0, Math.min(fr.length - 1, k))]; };
   if (v.foot > 0.6) {
     if (bedPose && wk) wf = bedPose === "sit" ? pick("sit", Math.floor(ht * F.sit.fps) % F.sit[side].length) : pick("liftSigil", Math.floor((ht - wk.at) * F.liftSigil.fps));
@@ -85,19 +89,23 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
       // with her pace and her feet don't slide), side-on or, going straight up or down the
       // screen, in that heading; standing, her idle
       // (a change shown off at a dressing station, standing: she turns to face us for a beat, View.turnUntil)
-      const sp = Math.hypot(w.vx, w.vz), heading = still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
+      // (a change at a dressing station: she twirls in what she has on till the new look's frames are in, render/spin.ts)
+      if (v.spin) { const was = v.spin; v.spin = still ? spinAt(was, ht, v.assets.lookReady && (!v.hatOff || v.assets.bareFresh)) : null; if (!v.spin) v.turnUntil = ht + 0.8; }
+      const S = v.spin && spinFacing(ht - v.spin.from);
+      if (S) { spinFlip = S.flip; spinUp = spinLift(ht - v.spin!.from); }
+      const sp = Math.hypot(w.vx, w.vz), heading = S ? S.heading : still && ht < v.turnUntil ? "down" : w.heading, Hd = heading && heading !== "side" ? v.assets.witchHeading[heading] : null;
       v.walkPhase = still ? 0 : v.walkPhase + fdt * F.walk.fps * sp / Math.max(0.5, deckNow!.house!.stride ?? deckNow!.house!.walk);
       // (on the Terrace she carries her broom: Ed, 2026-10-23, "she holds it when she's on the terrace"; rules/stations.ts broomWhere)
       const held = broomWhere(g, stationOf(g, null, t)?.id ?? null, t) === "held" && !!F.idleBroom && !!F.walkBroom;
       const I = held ? "idleBroom" : "idle", Wk = held ? "walkBroom" : "walk";
-      const list = still ? (Hd?.[I]?.length ? Hd[I] : F[I][side]) : (Hd?.[Wk]?.length ? Hd[Wk] : F[Wk][side]);
+      const list = still ? (Hd?.[I]?.length ? Hd[I] : F[I][S ? S.side : side]) : (Hd?.[Wk]?.length ? Hd[Wk] : F[Wk][side]);
       wf = list[(still ? Math.floor(ht * F.idle.fps) : Math.floor(v.walkPhase)) % list.length];
     }
     else wf = pick("stand", Math.floor(ht * F.stand.fps) % F.stand[side].length);
   } else if (v.foot > 0.02) wf = v.foot >= prevFoot ? pick("land", Math.floor(v.foot * 3)) : pick("takeoff", Math.floor((1 - v.foot) * 3));
   // On the treehouse deck (rules/treehouse.ts) its floor is her ground.
   const deck = deckOf(g.map, t), floor = w.perch && deck ? deck.h : 0;
-  const footEase = v.foot * v.foot * (3 - 2 * v.foot), wy = floor + (h - floor + bob - 0.4) * (1 - footEase);
+  const footEase = v.foot * v.foot * (3 - 2 * v.foot), wy = floor + (h - floor + bob - 0.4) * (1 - footEase) + spinUp;
   // At the start she sits on the treehouse terrace (the sit pose, swinging her legs), and eases
   // off it into the air when she first moves.
   const sdt = Math.min(0.1, Math.max(0, ht - v.seatTime));
@@ -186,17 +194,19 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // Her hat knocked off (rules/hat.ts): her frames without it, and the hat where it lies. Baked a moment after the game is up
   // (not at a knockout, mid-fight), if she has a hat to lose.
   const Hat = g.witches[0].hat;
-  if (!v.bareAsked && Hat.has && !g.clock.paused && ht > 1) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
+  // (asked at once when her hat's already off: a game's first morning starts with it on the hats' floor, rules/wakeUp.ts)
+  if (!v.bareAsked && Hat.has && (!!Hat.down || (!g.clock.paused && ht > 1))) { v.bareAsked = true; setTimeout(() => { v.bareBatch ??= v.makeWitchBatch(true); }, 0); }
   // At a station for her head and face (ui/stationPanel.ts bareHead; Ed, 2026-10-23), drawn without it too, once those frames are in.
-  const bare = Hat.has && (!!Hat.down || (v.hatOff && !!v.assets.witchBare() && v.assets.bareReady)) ? // (her hat off at a station: witchBare asks for the bare frames, hat on till they're in)
+  const bare = Hat.has && (!!Hat.down || v.hatOff) && !!v.assets.witchBare() && v.assets.bareReady ? // (her hat off, down or at a station: witchBare asks for the bare frames, hat on till they're in, never her drawn with none)
     (v.bareBatch ??= v.makeWitchBatch(true)) : null;
 
-  const watlas = bare ? v.assets.witchBare() : v.assets.witch, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
+  // (her frames from the atlas her batch draws: through a twirl that is still the clothes she had, render/spin.ts)
+  const watlas = (bare ?? v.witchBatch).atlas, wframe = watlas.frames[wf], hatTop = wyy + wframe.h * v.mpp;
   v.witchTall = wframe.h * v.mpp * herScale; // (a station's aim is a share of it: render/view/camera.ts)
   // Stood by her frame's ground (art/witch.js liftShadow): the point under her on the model's ground lands on wyy, so on
   // foot her feet are on the ground, not on the bottom of a box that held a shadow drawn into her (Ed, 2026-10-06); and
   // her shadow lies at that point, under her feet whatever the pose.
-  const wg = watlas.grounds?.[wf], wflip = w.seated ? false : w.facing < 0, U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
+  const wg = watlas.grounds?.[wf], wflip = spinFlip ?? (w.seated ? false : w.facing < 0), U = SPRITE_UNIFORMS.uUp.value, R = SPRITE_UNIFORMS.uRight.value;
   const wsink = wg ? (wframe.h - wg.y) * v.mpp : 0, wside = wg ? (wg.x - wframe.w / 2) * v.mpp * (wflip ? -1 : 1) : 0;
   v.partyWitchView.update(g, time, (x, z, ww, hh) => inView(v, x, z, ww, hh, 4));
   v.swoopTrails.update(g.partyWitches.list, time);
@@ -240,12 +250,16 @@ export function drawWitch(v: View, time: number, ht: number, onTreehouse: (px: n
   // to where it lies over the knockout's float (ko.at to ko.floatUntil, knockout.hatFloat: rules/knockout.ts), drifting over as it goes, swaying side to
   // side less as it settles and rocking with each swing (the sprite turned as it swings back), its shadow gathering under it.
   const fk = bare && hatFrame && KO && KO.floatUntil > KO.at ? Math.max(0, Math.min(1, (ht - KO.at) / (KO.floatUntil - KO.at))) : 1;
-  const hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  let hat = bare && hatFrame ? hatFlight(Hat.down!.x, Hat.down!.z, fk, Math.max(0, hatTop - hatFrame.h * v.mpp * 0.6), HAT_BESIDE) : null;
+  // (lying on the house's floor, the hats' floor on a first morning: drawn where the house is, slid with her in it, on its floor
+  // outside it, as the house's pins are: render/pins.ts pinSpot)
+  const inHouse = !!(hat && deck?.house?.rooms && onRoomFloor(deck.house.rooms, Hat.down!.x, Hat.down!.z));
+  if (hat && inHouse) { const [X, Y, Z] = v.herOffset.on ? letterAt(v.herOffset, hat.x, hat.y, hat.z, groundHeight) : [hat.x, hat.y + deck!.h, hat.z]; hat = { ...hat, x: X, y: Y, z: Z }; }
   v.bareBatch?.set(bare ? (hat ? [...her, { x: hat.x, y: hat.y + groundHeight(hat.x, hat.z), z: hat.z, frame: hatFrame!, flip: hat.flip }] : her) : []);
   const lying = drawLeftHats(v);
   // The party's and the beach's witches' shadows, and a small one under her hat (gathering as it comes down).
   v.witchShadows = [...v.partyWitchView.shadows, ...v.beachView.shadows];
-  if (hat) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
+  if (hat && !inHouse) { const s = 0.35 + 0.65 * fk * fk; v.witchShadows.push({ x: hat.x, z: hat.z, w: hatFrame!.w * v.mpp * 0.9 * s, d: hatFrame!.w * v.mpp * 0.35 * s }); }
   for (const q of lying) v.witchShadows.push({ x: q.x, z: q.z, w: q.w * 0.9, d: q.w * 0.35 });
   // The rest of the screen dims while she's down with her hat floating off (render/post.ts uKoDim): in over half a second from
   // the knockdown, held till she sparkles away, out as she goes. No hat to lose, no dim.

@@ -16,7 +16,7 @@ import { TUNING } from "../rules/tuning";
 import { lakeKnobs } from "../rules/lakes";
 import { islandBiome, lookOfLoop, loopMiddles, nearestLoop, LOOK_IDS, type Blend, type LakeLook } from "../rules/lakeLooks";
 import type { LandMap } from "../rules/land";
-import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
+import { CACHE_PREFIX, cacheGet, cacheKey, cachePrune, cachePut, keepCoast, OUTLINE_ACROSS, OUTLINE_DETAIL } from "./chartCache";
 import { buildIslandMesh, meshBuffers, type IslandMesh } from "../render/chart/islandMesh";
 import { K, SIGIL_TIERS } from "../render/chart/chartScale";
 import { islandSigil } from "../../art/sigils.js";
@@ -238,7 +238,7 @@ async function serveKept(): Promise<void> {
   for (const id of ids) {
     if (job !== j) return; // (a new ask: it serves its own)
     const o = await cacheGet<OutlineDone>(cacheKey(id, j.world, j.found, j.step, ACROSS));
-    if (o && o.mesh && o.sigils) send(o); else left.push(id);
+    if (o && o.mesh && o.sigils) { void keepCoast(id, j.world, o.loops); send(o); } else left.push(id); // (its coast kept for the zoo too, app/chartCache.ts keepCoast)
   }
   queue = queue.filter(id => left.includes(id)); // (a `first` meanwhile keeps its place)
   if (j.cacheOnly) queue = [];
@@ -257,6 +257,7 @@ async function next(): Promise<void> {
     let o = await cacheGet<OutlineDone>(key), made = false;
     if (o && !(o.mesh && o.sigils)) o = null; // (kept before the meshes and the sigil's ink came with the ground: made again)
     if (!o && !j.cacheOnly) { o = make(id, j.world, j.found, j.step, across); made = !!o; if (o) await cachePut(key, o); } // (copied as it's put, before its buffers are sent on)
+    if (o && !close) await keepCoast(id, j.world, o.loops); // (its coast kept for the zoo: app/chartCache.ts)
     if (j.warm && !close) { if (made) warmMade++; else warmKept++; note({ warmed: id, made }); }
     else if (o) send(o);
   } catch (e) { console.warn(`sea chart: ${id}'s island`, e); }

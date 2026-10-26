@@ -5,7 +5,7 @@ import { TUNING } from "./tuning";
 import { newGame, stepGame, STEP, type Controls, type Game } from "./game";
 import { deckOf, keepInHouse, onFloor, onTerrace } from "./treehouse";
 import { HOUSE_ROOMS, floorHats, fromPlan, hatSlots, objectAt, objectFront, objectWorld, toPlan } from "./houseRooms";
-import { inRoom } from "../../config/house/shape.js";
+import { field, inRoom } from "../../config/house/shape.js";
 import { wearing } from "./hat";
 import { endParty } from "./partyOver";
 
@@ -132,16 +132,23 @@ describe("the oak's rooms", () => {
     }
   });
 
-  it("she can't rise in the rooms or along the limbs, only on the Terrace (Ed, 2026-10-23: \"She shouldn't be able to rise while in the treehouse, except on the terrace\")", () => {
+  it("with a broom she takes off from any room or limb (Ed, 2026-10-26: \"maybe you can take off from anywhere on the treehouse\"); with none, only rising on the Terrace, as before", () => {
     const g = inHouse(0, 0), W = g.witches[0], d = deck(g);
+    for (let i = 0; i < 3 / STEP; i++) stepGame(g, idle, STEP); // (the night's first dodge's worth of cooldown over)
+    const cool = structuredClone(W.cool);
     const rise = (x: number, z: number) => {
       W.body = { ...W.body, x: d.x + x, z: d.z + z, vx: 0, vz: 0, perch: true, mode: "ground", lift: 0 };
+      W.cool = structuredClone(cool); W.landedAt = undefined; // (no rise cooldown between tries)
       stepGame(g, { ...idle, toggleMode: true }, STEP); for (let i = 0; i < 0.2 / STEP; i++) stepGame(g, idle, STEP);
       return W.body.mode;
     };
-    for (const r of HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace")) expect(rise(r.x, r.z), r.id).toBe("ground");
-    for (const c of HOUSE_ROOMS.corridors) { const [x, z] = c.pts![4]; if (!onTerrace(d, d.x + x, d.z + z)) expect(rise(x, z), c.id).toBe("ground"); }
-    expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle)
+    const spots = [...HOUSE_ROOMS.rooms.filter(q => !q.locked && q.id !== "terrace").map(r => [r.id, r.x, r.z] as const),
+      ...HOUSE_ROOMS.corridors.map(c => [c.id, c.pts![4][0], c.pts![4][1]] as const).filter(([, x, z]) => !onTerrace(d, d.x + x, d.z + z))];
+    W.kit = { invites: true, broom: true }; // (her broom taken: rules/kit.ts)
+    for (const [id, x, z] of spots) expect(["rising", "treetop"], id).toContain(rise(x, z));
+    W.kit = { invites: true, broom: false };
+    for (const [id, x, z] of spots) expect(rise(x, z), `${id}, no broom`).toBe("ground");
+    expect(["rising", "treetop"]).toContain(rise(0, 0)); // (the Terrace's middle, as before)
   });
 
   it("E at each working object says which (main.ts opens its station, the creator at its choices, or the zoo)", () => {
@@ -267,13 +274,14 @@ describe("the oak's rooms", () => {
     const d = deck(newGame(7, TUNING));
     for (const o of HOUSE_ROOMS.objects) {
       if (o.id.endsWith("Door")) continue; // (a locked room's door: at its rim, above)
-      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
+      // (her bed in the corridor up to the Turret, Ed 2026-10-26: "it can go in the corridor": on the house's floor, not a room's)
+      for (const [dx, dz] of [[0, 0], [-1, -1], [1, -1], [1, 1], [-1, 1]]) expect(o.use.kind === "bed" ? field(S, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2, true) : inRoom(S, o.room, o.x + (dx * o.w) / 2, o.z + (dz * o.d) / 2), `${o.id}: on ${o.room}'s floor`).toBeLessThan(0.6);
       if (room(o.room).locked) continue;
       const f = before(o), k = keepInHouse(d, d.x + f.x, d.z + f.z);
       expect(Math.hypot(k.x - d.x - f.x, k.z - d.z - f.z), `${o.id}: in front of it is floor`).toBeLessThan(0.05);
       expect(objectAt(d, d.x + f.x, d.z + f.z)?.id, `${o.id}: in reach from in front`).toBe(o.id);
     }
     const w = objectWorld(obj("bed"), { x: 0, z: 0 });
-    expect(inRoom(S, "bedroom", w.x, w.z)).toBeLessThan(0);
+    expect(field(S, w.x, w.z, true)).toBeLessThan(0); // (her bed, in the corridor up to the Turret: Ed, 2026-10-26)
   });
 });

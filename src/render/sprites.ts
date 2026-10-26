@@ -730,6 +730,10 @@ export class SpriteBatch {
   private sil: THREE.Mesh | null = null;
   /** Her silhouette through what hides her shown or not (off behind the DJ table, which hides her legs on purpose). */
   set silhouette(on: boolean) { if (this.sil) this.sil.visible = on; }
+  /** Her silhouette's strength (0 to 1; tuning occlusion.silhouette), set every frame so the pause page's slider shows at once. */
+  /** Her silhouette's colour (her glow's, LIGHT_UNIFORMS.uGlowRgb), set every frame too, so it follows the pause page's glow colour. */
+  set silhouetteColour(c: THREE.Vector3) { const u = this.sil && ((this.sil.material as THREE.ShaderMaterial).uniforms.uSilhouette.value as THREE.Vector4); if (u) u.set(c.x, c.y, c.z, u.w); }
+  set silhouetteOpacity(o: number) { const u = this.sil && ((this.sil.material as THREE.ShaderMaterial).uniforms.uSilhouette.value as THREE.Vector4); if (u) u.w = o; }
 
   private grow(n: number): void {
     const cap = Math.max(n, this.capacity * 2);

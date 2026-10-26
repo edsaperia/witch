@@ -9,7 +9,7 @@ export const PLAINS = {
   setPiece: ["heap", "a cluster of tall termite mounds", 1, { of: "termite", height: 5, width: 8, rock: "laterite" }],
   layout: {
     pattern: "lone", density: .14, clump: .25, glades: { count: 1, size: [40, 60] },
-    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .65, tall: .05, giant: 0 }, undergrowth: .4, lean: { dir: 0, amount: 0 },
     terrain: ["mounds"], decor: { rate: .1, ruins: 0, rocks: .6, freak: .15, lake: .25, modern: 0 },
     feel: "Open grass to the horizon with hardly a tree, room to run; termite mounds standing like lookouts, a lone thorn here and there; bright, wide and fast.",
   },

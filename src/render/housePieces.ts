@@ -6,10 +6,11 @@
 import * as Art from "../../art/generator.js";
 import { furnitureSprite, furnitureColours } from "../../art/furniture.js";
 import { decorSprite } from "../../art/houseDecor.js";
+import { messSprite } from "../../art/houseMess.js";
 import { SIZE } from "../../art/furniture.js";
 import { shade } from "../../art/lighting.js";
 import { HOUSE_ROOMS, fromPlan, type HouseObject } from "../rules/houseRooms";
-import { decorPlan, RUG_DIM } from "./houseDecor";
+import { decorPlan, RUG_DIM, MESS_DIM } from "./houseDecor";
 import type { Style } from "./style";
 
 type AnyCanvas = HTMLCanvasElement | OffscreenCanvas;
@@ -75,14 +76,14 @@ export function roomDecorPiece(roomId: string, st: Style, ppm: number, pitch: nu
   const items = room ? decorPlan(room) : [];
   if (!room || !items.length) return null;
   const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
-    const d = decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) }) as Drawn, c = litCanvas(d, room.id, st, mk, it.kind === "rug" ? RUG_DIM : 1);
+    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, mk, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
     return { it, c, left: it.x * ppm - d.origin.x, top: it.z * ky - d.origin.y };
   });
   const x0 = Math.floor(Math.min(...drawn.map(q => q.left))), y0 = Math.floor(Math.min(...drawn.map(q => q.top)));
   const w = Math.ceil(Math.max(...drawn.map(q => q.left + q.c.width))) - x0, h = Math.ceil(Math.max(...drawn.map(q => q.top + q.c.height))) - y0;
   const out = mk(w, h), g = ctx2d(out);
   g.imageSmoothingEnabled = false;
-  for (const q of [...drawn].sort((a, b) => (a.it.kind === "rug" ? -1 : b.it.kind === "rug" ? 1 : a.it.z - b.it.z))) g.drawImage(q.c as CanvasImageSource, Math.round(q.left - x0), Math.round(q.top - y0));
+  for (const q of [...drawn].sort((a, b) => (a.it.kind === "rug" ? -1 : b.it.kind === "rug" ? 1 : (a.it.kind === "mess") !== (b.it.kind === "mess") ? (a.it.kind === "mess" ? -1 : 1) : a.it.z - b.it.z))) g.drawImage(q.c as CanvasImageSource, Math.round(q.left - x0), Math.round(q.top - y0));
   return { px: pixelsOf(out), w, h, ox: -x0, oy: -y0, marks: {} };
 }
 

@@ -10,7 +10,7 @@ export const MANGROVE_POOLS = {
   setPiece: ["jetty", "a sagging boardwalk out over the pools", 1, { end: "lantern", rail: "one", missing: 2 }],
   layout: {
     pattern: "edgeOnly", density: .5, clump: .7, glades: { count: 2, size: [14, 22] },
-    heightMix: { sapling: .2, mature: .55, tall: .25, giant: 0 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
+    heightMix: { sapling: .2, mature: .675, tall: .125, giant: 0 }, undergrowth: .6, lean: { dir: 0, amount: .1 },
     terrain: ["pools", "hollows"], decor: { rate: .2, ruins: .1, rocks: .1, freak: .1, lake: .65, modern: .05 },
     feel: "Still dark pools between mangroves on their stilts of roots, reeds at the edges, dragonflies hawking low over the water; warm, close and humming.",
   },

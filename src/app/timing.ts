@@ -60,3 +60,13 @@ export function transitionTiming(): Timing {
 
 /** Done with what's carried (written into the log). */
 export function clearCarried(): void { store()?.removeItem(KEY); }
+
+/** The transition from the last sail on this page on (chart:sail), its times from there: on a page that's sailed many times, the
+ *  last voyage's steps alone (every playtest log keeps the sail's, ?timing=1 or not: Ed's playtest of v4821, "sailing transition
+ *  loading was slow", and his log couldn't say where it went). None sailed: as it is. */
+export function sinceSail(t: Timing): Timing {
+  const i = t.steps.map(s => s.name).lastIndexOf("chart:sail");
+  if (i <= 0) return t;
+  const t0 = t.steps[i].at;
+  return { ...t, steps: t.steps.slice(i).map((s, j) => ({ ...s, at: s.at - t0, ms: j ? s.ms : 0 })), longTasks: t.longTasks.filter(l => l.at >= t0).map(l => ({ ...l, at: l.at - t0 })) };
+}

@@ -220,9 +220,12 @@ export const packPixels = (sprites: Baked[], width = 2048): AtlasPixels => runSy
 
 /** packPixels as steps (render/slices.ts): a step every few sprites. */
 export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
-  const pad = 1, place: { x: number; y: number }[] = [];
+  const pad = 1, place: { x: number; y: number }[] = [], first = new Map<Baked, number>(); // (a sprite given twice is packed once: her preview's frames, render/homeArt.ts)
   let x = 0, y = 0, rowH = 0, W = 1;
-  for (const s of sprites) {
+  for (const [i, s] of sprites.entries()) {
+    const was = first.get(s);
+    if (was !== undefined) { place.push(place[was]); continue; }
+    first.set(s, i);
     if (x + s.w + pad > width) { x = 0; y += rowH + pad; rowH = 0; }
     place.push({ x, y });
     x += s.w + pad; rowH = Math.max(rowH, s.h); W = Math.max(W, x);
@@ -232,7 +235,8 @@ export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
   const frames: Frame[] = [];
   for (let i = 0; i < sprites.length; i++) {
     if (i && i % 4 === 0) yield;
-    const s = sprites[i];
+    const s = sprites[i], was = first.get(s)!;
+    if (was !== i) { frames.push(frames[was]); continue; }
     const p = place[i], pa = pixels(s.A, s.w, s.h), pn = pixels(s.N, s.w, s.h);
     const sd = s.S ? pixels(s.S, s.w, s.h) : null, sway = sd ? Array.from({ length: s.h }, (_, row) => Array.from({ length: s.w }, (_, x) => sd[(row * s.w + x) * 4 + 1])) : null; // G: the pixel-wind code (art/sway.js swayCode)
     for (let row = 0; row < s.h; row++) {
@@ -268,7 +272,7 @@ export type ArtJob = { kind: "type"; id: number; style: Style; seed: number; K: 
   | { kind: "lakeShore"; id: string; style: Style; K: number; /** the island's biome key (its look over the leafy pieces); id is the same, or "all" */ biome?: string }
   /** The start's own art (render/homeArt.ts, fast start (b)): our witch's frames from her genome (id: its hash, and bare), the
    *  light props, the soundsystems and the treehouse. */
-  | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean }
+  | { kind: "witch"; id: string; style: Style; genome: unknown; bare: boolean; /** her preview: a frame a facing (render/homeArt.ts witchSprites) */ quick?: boolean }
   /** Her hat alone, as it lies on the ground, in the look of a genome (id: its hash): a hat she left lying keeps the look it had
    *  (render/view/witch.ts), whatever she's wearing since. */
   | { kind: "hat"; id: string; style: Style; genome: unknown }
@@ -612,7 +616,7 @@ export function runJob(job: ArtJob, mk: MakeCanvas): ArtResult {
   if (job.kind === "disco") { const d = discoDrawn(job.style, mk); return { px: packPixels([], 16), disco: { ...d, base: canvasPixels(d.base), lit: canvasPixels(d.lit) } }; }
   if (job.kind === "sea") { const { sprites, origins } = seaSprites(job.id, job.style, mk); return { px: packPixels(sprites, job.id === "kraken" ? 1024 : 512), sea: origins }; }
   if (job.kind === "stones") { const { sprites, heights } = stoneSprites(job.style, job.stones, job.levels, job.scale, mk); return { px: packPixels(sprites, 2048), stones: heights }; }
-  if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk); return { px: packPixels(sprites, 2048), ours: witch }; }
+  if (job.kind === "witch") { const { sprites, witch } = witchSprites(job.style, job.genome, job.bare, mk, false, !!job.quick); return { px: packPixels(sprites, 2048), ours: witch }; }
   if (job.kind === "hat") {
     const mine = witchLookOf(job.style, job.genome), hat = (Art.witchHatSprite as (st: Style, o: object) => unknown)(job.style, { look: mine.look });
     return { px: packPixels(hat ? [Art.bake(hat, mine.colours, job.style, job.style.cOutline, mk) as Baked] : [], 256) };

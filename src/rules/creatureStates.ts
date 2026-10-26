@@ -13,6 +13,11 @@ export interface StatesData { affection: { hits: number[]; drain: number; drainD
 export const STATES = raw as unknown as StatesData;
 
 /** A creature's state now. */
+/** A dancer in the won night's conga (rules/win.ts: its place in the line, c.finale, 0 on; the woken legends' are negative). It
+ *  follows her round home but is never on her leash again (Ed's playtest, 2026-10-26: "When conga animals are following me, they
+ *  shouldn't be leashed to me - they just follow me"): no rune to pick up, no 💌 or chat takes it. */
+export const inConga = (c: Creature): boolean => c.finale !== undefined && c.finale >= 0;
+
 export function stateOf(c: Creature): State {
   if (c.leashed) return "leashed";
   if (c.state === "happy" || c.legendState === "happy") return "happy";
@@ -53,6 +58,7 @@ export function enrage(c: Creature): boolean {
  *  second step (states.leash). Enraged ones, legends and leashed ones can't. */
 export function invitableNow(c: Creature, data: StatesData = STATES): boolean {
   if (c.asleep || c.bed) return false; // (asleep, or walking home to bed: rules/partyOver.ts)
+  if (inConga(c)) return false; // (the won night's line: never hers again)
   if (c.swoop?.up) return false; // (a wild flyer up in the air, out of reach: 💌s pass under it; rules/movement.ts stepSwoop)
   if (data.partyEgg && partyEggOpen(c)) return true; // (the Easter egg: a happy legend takes 💌s, 100 of them)
   if (c.gone || c.leashed || (c.fleeUntil && !c.dazedUntil) || c.level === LEGEND || c.boss) return false;
@@ -79,7 +85,7 @@ export function makePartyLegend(c: Creature, time: number): void {
  *  legend circle's baby, once happy, carries one like any other). `time` given: whether it's ready yet
  *  (pickupDelay after the hearts); without, whether it has one at all (the view draws it popping out). */
 export function hasRune(c: Creature, time?: number, data: StatesData = STATES): boolean {
-  if (c.asleep || c.bed) return false;
+  if (c.asleep || c.bed || inConga(c)) return false;
   if (c.partyLegend) { if (data.leash !== "pickup" || c.gone || c.leashed) return false; } // (a party legend's: the egg)
   else if (data.leash !== "pickup" || c.gone || c.leashed || c.boss || c.level === LEGEND || c.legendState === "happy" || stateOf(c) !== "happy") return false;
   return time === undefined || time >= (c.happyAt ?? -Infinity) + (data.pickupDelay ?? 0);

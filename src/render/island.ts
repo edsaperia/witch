@@ -122,7 +122,7 @@ export class IslandLayers {
     // (the zoo's gold fences round its islands: render/zooFences.ts)
     if (game.map.zoo?.layout) {
       this.zooFences = new ZooFences(game.map); this.zooFall = new ZooFall(game.map, ZOO_CONFIG.lip ?? 110);
-      this.zooWords = new ZooInscriptions(game.map.zoo.layout, game.map.zoo.blocks); // (each island's words in the street: render/zooInscriptions.ts)
+      this.zooWords = new ZooInscriptions(game.map.zoo.layout, game.map.zoo.blocks, game.map.zoo.layout.reach + (ZOO_CONFIG.margin ?? 120) - 8); // (each island's words in the street: render/zooInscriptions.ts)
       this.root.add(this.zooFences.mesh, this.zooFall.mesh, this.zooWords.group);
     }
   }

@@ -9,7 +9,7 @@ export const FEN = {
   setPiece: ["punt", "a punt sunk among the sedge", 1],
   layout: {
     pattern: "edgeOnly", density: .6, clump: .85, glades: { count: 2, size: [12, 18] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .85, lean: { dir: 0, amount: 0 },
     terrain: ["pools", "hollows"], decor: { rate: .25, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
     feel: "Black peaty pools between tussocks of sedge, alder and willow carr round the rim; still, low and full of small lives.",
   },

@@ -10,7 +10,7 @@ export const BUSHVELD = {
   setPiece: ["ring", "a ring of old boma posts round a cold hearth", 1, { seed: 5, member: "post", centre: "fire", embers: 0 }],
   layout: {
     pattern: "rings", density: .55, clump: .75, glades: { count: 3, size: [14, 22] },
-    heightMix: { sapling: .3, mature: .55, tall: .15, giant: 0 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .3, mature: .625, tall: .075, giant: 0 }, undergrowth: .75, lean: { dir: 0, amount: .05 },
     terrain: ["mounds", "hollows"], decor: { rate: .2, ruins: .15, rocks: .45, freak: .1, lake: .2, modern: .1 },
     feel: "Close, thorny bush on red earth, clumps of thorn trees round small open patches and a churned mud wallow; hot, dusty, and something heavy breathing just out of sight.",
   },
