@@ -1636,11 +1636,16 @@
             "max": {
               "type": "number",
               "minimum": 0
+            },
+            "areaMax": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [
             "margin",
-            "max"
+            "max",
+            "areaMax"
           ],
           "additionalProperties": false
         },
@@ -4954,6 +4959,9 @@
         "earlyQuest": {
           "type": "boolean"
         },
+        "areas": {
+          "type": "boolean"
+        },
         "buffPower": {
           "type": "number",
           "minimum": 0
@@ -5031,6 +5039,7 @@
       "required": [
         "share",
         "earlyQuest",
+        "areas",
         "buffPower",
         "happyRange",
         "questCap",

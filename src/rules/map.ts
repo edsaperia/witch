@@ -2,7 +2,7 @@
 // shares; the playable ones a circle of them round home (Ed, 2026-10-06; or, ?shape=square, the
 // old mapAreas x mapAreas square), then a buffer ring of forest she can fly over but where nothing
 // happens, then a margin of areas past it so the forest never visibly ends. World units are metres: x runs east, z runs south, one area cell is areaSize.
-import { legendRadius } from "./legendFit";
+import { legendRadius, radiusToFit } from "./legendFit";
 import rawTypes from "../../config/area-types.json";
 import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
@@ -198,6 +198,16 @@ export interface ForestMap {
   legendClearing(cx: number, cy: number): LegendClearing | null;
   /** Every legend's clearing (for the drawing: its ground ring, and the rendering's twilight and motes). */
   readonly legendClearings: readonly LegendClearing[];
+  /** The legend areas (Ed, 2026-10-26): each "cx,cy" key to its pair's, the area of its kind it was grown beside. In the buffer
+   *  (inBuffer: no runestone, soundsystem, arena or creatures of its own), its legend's circle at its heart; the legend's own cell
+   *  is its pair's, and its pair's legendClearing is the circle there. */
+  readonly legendAreas: ReadonlyMap<string, string>;
+  isLegendArea(cx: number, cy: number): boolean;
+  /** The area a cell counts as (Ed, 2026-10-26: "for legends getting enraged, and also for animals attacking and defending, the
+   *  adjacent areas should count as one"): a legend area's pair, else the cell itself (the same array: no allocation). */
+  areaOf(cell: Cell): Cell;
+  /** Whether two cells count as one area (the same cell, or a legend area and its pair). */
+  sameArea(a: Cell, b: Cell): boolean;
   /** Pairs of areas that touch, as "cx,cy|cx,cy" keys, for tests and the debug view. */
   readonly neighbours: ReadonlyMap<string, ReadonlySet<string>>;
   /** Paths, roads and railways, with the corridors they keep clear. */
@@ -436,6 +446,8 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // Its lakes (Ed, 2026-10-11: from phase 1, never home): areas of water among its own, grown with it (so it keeps its size
   // in land) and kept off home and its neighbours (rules/islandGrowth.ts placeLakes).
   let grownSet: Set<string> | null = null, growOrder: string[] = [], lakeCells = new Set<string>();
+  // (an area of the grid the island could have grown into, inside its patch: where a legend area may grow, below)
+  let growable: (k: string) => boolean = () => false;
   if (island) {
     const cand = new Map<string, Candidate>(), plan = lakePlan(shapeK, shapeSeed), extra = plan.reduce((t, k) => t + k, 0);
     for (let cy = first; cy < first + n; cy++) for (let cx = first; cx < first + n; cx++) if (hasGround(cx, cy)) { const s = siteOf(cx, cy), k = cellKey(cx, cy); cand.set(k, { key: k, dx: (s.x - centre.x) / A, dz: (s.z - centre.z) / A }); }
@@ -451,6 +463,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     growOrder = growIsland(cellKey(centreCell[0], centreCell[1]), island + extra, cand, neighbours, shapeK, shapeSeed, grow, rosterIsland?.turn ?? 0);
     if (extra) { const L = placeLakes(growOrder, island, plan, neighbours, shapeSeed); growOrder = L.playable; lakeCells = L.lakes; }
     grownSet = new Set(growOrder);
+    growable = k => { const c = cand.get(k); return !!c && (!grow || grow.outside(c) <= 0); };
     R = 1;
     for (const k of grownSet) { const [cx, cy] = k.split(",").map(Number); R = Math.max(R, Math.hypot(cx - centreCell[0], cy - centreCell[1])); }
   }
@@ -487,6 +500,64 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     }
   }
 
+  // The legend areas (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually
+  // are"; "extra areas are added to each island, and the legend areas can be adjacent to the same type of area, so it effectively
+  // becomes an area twice the size"; all legends in them; "The route only cares about runestones"; islands grow by them): on an
+  // island by roster, each of the night's legends is given an area of its own, grown out of the island's frontier beside one of its
+  // kind's areas (its pair), taking the pair's kind and look: the roomiest such (the biggest circle it holds, up to what its
+  // legend needs), never beside home or another legend area, nor a lake. No runestone, soundsystem, arena or route stop: its
+  // legend's circle at its heart. Here, before the land, so the island's land and coast grow round them; the night's legends dealt
+  // here too (the route isn't made yet: the early quest's areas taken as the three nearest home). The pair counts as one area
+  // (map.areaOf, map.sameArea): a legend's kin and rage, wild creatures chasing and defending. A kind with no room beside any of
+  // its areas keeps its legend in one of its own areas, as before (below, once the route's known).
+  const legendAreas = new Map<string, string>(), pairCells = new Map<string, Cell>(); // (a legend area's key -> its pair's key, and its pair's cell)
+  let dealtKinds: string[] | null = null;
+  const LC0 = tuning.legendClearing, areaMax = LC0.fit?.areaMax ?? LC0.fit?.max ?? 25;
+  if (rosterIsland && grownSet && !zoo && tuning.legends?.areas !== false && others.length) {
+    const homeKey = cellKey(centreCell[0], centreCell[1]), nearHome = new Set([homeKey, ...(neighbours.get(homeKey) ?? [])]);
+    const kindOf = (k: string) => AREA_TYPES[types.get(k) ?? 0]?.creature;
+    const byHome = [...others].sort((a, b) => Math.hypot(a[0] - centreCell[0], a[1] - centreCell[1]) - Math.hypot(b[0] - centreCell[0], b[1] - centreCell[1]));
+    const first = byHome.slice(0, 3).map(([x, y]) => cellKey(x, y));
+    const early = tuning.legends?.earlyQuest !== false ? first.filter(k => first.some(o => o !== k && kindOf(o) !== kindOf(k))).map(kindOf) : [];
+    dealtKinds = dealLegends(rosterIsland, runSeed, new Set(MS.found ?? []), early);
+    // The biggest circle (m, up to `want`) wholly in area k round a spot near its middle (16 points on its rim in it).
+    const cellAt = (x: number, z: number) => { const [u, v] = toPart(x, z); return partition.partition(u, v); };
+    const room = (k: string, want: number) => {
+      const [cx, cy] = k.split(",").map(Number), s = siteOf(cx, cy), inside = (x: number, z: number) => { const c = cellAt(x, z); return c[0] === cx && c[1] === cy; };
+      const holds = (x: number, z: number, r: number) => { for (let i = 0; i < 16; i++) { const b = (i / 16) * Math.PI * 2; if (!inside(x + Math.cos(b) * r, z + Math.sin(b) * r)) return false; } return true; };
+      let best = 0;
+      for (let i = -5; i <= 5 && best < want; i++) for (let j = -5; j <= 5 && best < want; j++) {
+        const x = s.x + i * A * 0.07, z = s.z + j * A * 0.07;
+        if (!inside(x, z) || !holds(x, z, best + 2)) continue;
+        let r = best + 2;
+        while (r + 2 <= want && holds(x, z, r + 2)) r += 2;
+        best = r;
+      }
+      return best;
+    };
+    const taken = new Set<string>(), near = (k: string) => [...(neighbours.get(k) ?? [])];
+    dealtKinds.forEach((kind, ki) => {
+      const want = Math.min(areaMax, Math.max(LC0.species[kind] ?? LC0.radius, radiusToFit(kind, LC0)));
+      let best: { k: string; pair: string; room: number; h: number } | null = null;
+      for (const [x, y] of others) {
+        const pair = cellKey(x, y);
+        if (kindOf(pair) !== kind) continue;
+        for (const k of near(pair)) {
+          if (grownSet!.has(k) || lakeCells.has(k) || nearHome.has(k) || taken.has(k) || !growable(k) || near(k).some(o => taken.has(o) || lakeCells.has(o))) continue;
+          const r = room(k, want), h = early.includes(kind) ? Math.hypot(x - centreCell[0], y - centreCell[1]) : hash2(x * 31 + y, ki, seed + 6151);
+          // (the roomiest up to its legend's need; among those that hold it, an early kind's nearest home, else seeded)
+          if (!best || Math.min(r, want) > Math.min(best.room, want) || (Math.min(r, want) === Math.min(best.room, want) && h < best.h)) best = { k, pair, room: r, h };
+        }
+      }
+      if (!best) return;
+      taken.add(best.k);
+      legendAreas.set(best.k, best.pair);
+      types.set(best.k, types.get(best.pair)!);
+    });
+    for (const [k, p] of legendAreas) { const [x, y] = p.split(",").map(Number); pairCells.set(k, [x, y]); }
+  }
+  const isLegendArea = (cx: number, cy: number) => legendAreas.has(cellKey(cx, cy));
+
   // The warp's steepest slope (vnoise's gradient is at most 1.5 a component), so a step of d metres
   // moves a point at most d * stretch / A in partition units.
   const stretch = 1 + (2 * V / L) * 1.5 * 2;
@@ -502,14 +573,15 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // the playable ground)
     const want = new Set<string>(), deep = MS.buffer * A * 0.85, G = 20;
     for (const [cx, cy] of cells) want.add(cellKey(cx, cy));
+    for (const k of legendAreas.keys()) want.add(k); // (its legend areas its ground too: the buffer and the coast round them)
     let px0 = Infinity, px1 = -Infinity, pz0 = Infinity, pz1 = -Infinity;
-    for (const [cx, cy] of cells) { const s = siteOf(cx, cy); px0 = Math.min(px0, s.x); px1 = Math.max(px1, s.x); pz0 = Math.min(pz0, s.z); pz1 = Math.max(pz1, s.z); }
+    for (const [cx, cy] of [...cells, ...[...legendAreas.keys()].map((k): Cell => { const [x, y] = k.split(",").map(Number); return [x, y]; })]) { const s = siteOf(cx, cy); px0 = Math.min(px0, s.x); px1 = Math.max(px1, s.x); pz0 = Math.min(pz0, s.z); pz1 = Math.max(pz1, s.z); }
     px0 -= deep + A; px1 += deep + A; pz0 -= deep + A; pz1 += deep + A;
     const gc = Math.ceil((px1 - px0) / G) + 1, gr = Math.ceil((pz1 - pz0) / G) + 1, dd = new Float32Array(gc * gr).fill(Infinity), at: string[] = new Array(gc * gr);
     for (let j = 0; j < gr; j++) for (let i = 0; i < gc; i++) {
       const [u, v] = toPart(px0 + i * G, pz0 + j * G), c = partition.partition(u, v), k = j * gc + i;
       at[k] = cellKey(c[0], c[1]);
-      if (playable(c[0], c[1]) || lakeCells.has(at[k])) dd[k] = 0; // (a lake is ringed by land as deep: never a lake on the coast)
+      if (playable(c[0], c[1]) || lakeCells.has(at[k]) || legendAreas.has(at[k])) dd[k] = 0; // (a lake is ringed by land as deep: never a lake on the coast)
     }
     const D2 = G * Math.SQRT2, relax = (k: number, q: number, w: number) => { if (dd[q] + w < dd[k]) dd[k] = dd[q] + w; };
     for (let j = 0; j < gr; j++) for (let i = 0; i < gc; i++) { const k = j * gc + i; if (i) relax(k, k - 1, G); if (j) { relax(k, k - gc, G); if (i) relax(k, k - gc - 1, D2); if (i < gc - 1) relax(k, k - gc + 1, D2); } }
@@ -718,6 +790,9 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   };
 
   const remoteness = (cx: number, cy: number) => Math.min(1, Math.hypot(cx - centreCell[0], cy - centreCell[1]) / (round ? R : n / 2));
+  // (a legend area counts as its pair: the cell itself otherwise, unallocated; on a map without legend areas, no lookup at all)
+  const areaOf = (cell: Cell): Cell => (legendAreas.size ? pairCells.get(cellKey(cell[0], cell[1])) ?? cell : cell);
+  const sameArea = (a: Cell, b: Cell) => (a[0] === b[0] && a[1] === b[1]) || (legendAreas.size > 0 && (() => { const p = areaOf(a), q = areaOf(b); return p[0] === q[0] && p[1] === q[1]; })());
   const map = {
     seed, tuning, n, first, margin, shape, cells, playable, inBuffer, isLake, coast, areaSize: A, partition, centreCell, homeRadius,
     dancefloor: { x: centre.x, z: centre.z, radius: floorR, speakers: speakerRing(centre, tuning) },
@@ -726,9 +801,10 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     bounds,
     extent: ext ? (land ? { minX: Math.min(ext.minX, land.box.minX - edgeK * A), maxX: Math.max(ext.maxX, land.box.maxX + edgeK * A), minZ: Math.min(ext.minZ, land.box.minZ - edgeK * A), maxZ: Math.max(ext.maxZ, land.box.maxZ + edgeK * A) } : ext) : { minX: lo * A, maxX: hi * A, minZ: lo * A, maxZ: hi * A }, // (the forest past the coast all round)
     typeOf, areaAt, cellSafe, siteOf, treeWeight, arenaOpen, hardClear, neighbours, setPieceOf, soundsystemSpot, setPieceSpot, reserved, remoteness,
+    legendAreas, isLegendArea, areaOf, sameArea,
     hasLegend: (cx: number, cy: number) => legendCells.has(cellKey(cx, cy)), legendCells,
     island: rosterIsland, legendKinds, zoo: zoo ? { ...zoo, junctions: zooJunctions(zoo, A) } : undefined,
-    legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? null, legendClearings: [] as LegendClearing[],
+    legendClearing: (cx: number, cy: number) => clearings.get(cellKey(cx, cy)) ?? (legendAreas.size ? clearings.get(legendAreas.get(cellKey(cx, cy)) ?? "") ?? null : null), legendClearings: [] as LegendClearing[], // (by its legend's area: a legend area's by its pair)
     paths: null as unknown as PathNetwork,
   };
   if (prep?.route) rememberRoute(map as unknown as ForestMap, prep.route); // (its route, already worked out: rules/leyroute.ts)
@@ -793,9 +869,11 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     // (with another kind beside it there, so its dream has a creature to want) dealt where it can be, in its earliest area.
     const order = routeOf(map as unknown as ForestMap).order, kindAt = (k: string) => { const [x, y] = k.split(",").map(Number); return AREA_TYPES[typeOf(x, y)].creature; };
     const first = order.slice(0, 3), early = tuning.legends?.earlyQuest !== false ? first.filter(k => first.some(o => o !== k && kindAt(o) !== kindAt(k))).map(kindAt) : [];
-    legendKinds = dealLegends(rosterIsland, runSeed, new Set(MS.found ?? []), early);
+    legendKinds = dealtKinds ?? dealLegends(rosterIsland, runSeed, new Set(MS.found ?? []), early); // (dealt with the legend areas, above)
     map.legendKinds = legendKinds;
     for (const kind of legendKinds) {
+      const pair = [...legendAreas.values()].find(p => kindAt(p) === kind); // (its legend area's pair: the legend's own area)
+      if (pair) { legendCells.add(pair); continue; }
       const mine = order.filter(k => kindAt(k) === kind);
       const at = mine.find(k => first.includes(k)) ?? mine[Math.floor(hash2(runSeed, mine.length, 7357 + legendKinds.indexOf(kind)) * mine.length)];
       if (at) legendCells.add(at);
@@ -817,8 +895,27 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
     }
   }
   const LC = tuning.legendClearing, nearStone: string[] = [], SHRINK = [1, 0.92, 0.85, 0.78, 0.72, 0.65];
+  const legendAreaOfPair = new Map([...legendAreas].map(([k, p]) => [p, k]));
   for (const [cx, cy] of cells) {
     if (!legendCells.has(cellKey(cx, cy))) continue; // (no legend, no clearing: home, and the areas legends.share leaves out)
+    // In its legend area (above): at its heart, where a runestone would stand, sized to fit its legend up to fit.areaMax; clear of
+    // the runestones round it (its pair's among them) by minFromOtherStones; failing a full-size spot, smaller in fine steps.
+    const la = legendAreaOfPair.get(cellKey(cx, cy));
+    if (la) {
+      const [lx, ly] = la.split(",").map(Number), species = AREA_TYPES[typeOf(cx, cy)].creature, site = siteOf(lx, ly), a0 = hash2(lx, ly, seed + 893) * Math.PI * 2;
+      const r0 = Math.max(LC.species[species] ?? LC.radius, Math.min(areaMax, radiusToFit(species, LC)));
+      const stones = [...(neighbours.get(la) ?? [])].map(k => k.split(",").map(Number)).filter(([x, y]) => playable(x, y) && !(x === centreCell[0] && y === centreCell[1])).map(([x, y]) => soundsystemSpot(x, y));
+      const B = map.bounds, fits = (x: number, z: number, r: number) => {
+        if (!isInside(B, x, z, 15) || !inCell(x, z, lx, ly)) return false;
+        if (!stones.every(q => Math.hypot(x - q.x, z - q.z) - r >= (LC.minFromOtherStones ?? 0))) return false;
+        for (let k = 0; k < 16; k++) { const b = (k / 16) * Math.PI * 2; if (!inCell(x + Math.cos(b) * r, z + Math.sin(b) * r, lx, ly)) return false; }
+        return !reserved(x, z, r) && !map.paths.at(x, z, r * 0.6);
+      };
+      const spots: [number, number][] = [[site.x, site.z]];
+      for (const f of [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5]) for (let k = 0; k < 16; k++) { const b = a0 + (k / 16) * Math.PI * 2; spots.push([site.x + Math.cos(b) * A * f, site.z + Math.sin(b) * A * f]); }
+      placed: for (const k of [1, 0.92, 0.85, 0.78, 0.72, 0.65, 0.55, 0.45]) { const r = Math.max(LC.radius, r0 * k); for (const [x, z] of spots) if (fits(x, z, r)) { clearings.set(cellKey(cx, cy), { cell: [lx, ly], x, z, r, edge: LC.edge, legend: { x, z: z - r * LC.top } }); break placed; } }
+      if (clearings.has(cellKey(cx, cy))) continue;
+    }
     const species = AREA_TYPES[typeOf(cx, cy)].creature, r0 = legendRadius(species, LC); // (sized to fit its legend: rules/legendFit.ts)
     let r = r0;
     const site = siteOf(cx, cy), a0 = hash2(cx, cy, seed + 891) * Math.PI * 2;
@@ -904,6 +1001,13 @@ export function sceneFootprint(id: string, tuning: Tuning): number {
  *  neighbouring legend areas to two at most; then (an area has about six neighbours, so half can't
  *  all be kept that apart) ones that leave no legend area bordering more than two others; then
  *  any left over, those with the fewest legend neighbours first. */
+/** The area a point counts as in (map.areaOf: a legend area as its pair; Ed, 2026-10-26: "the adjacent areas should count as
+ *  one"), its cell; a map without legend areas (or a test's stand-in) its own cell. */
+export function areaCellAt(map: Pick<ForestMap, "cellSafe"> & Partial<Pick<ForestMap, "areaOf">>, x: number, z: number): Cell {
+  const c = map.cellSafe(x, z).cell;
+  return map.areaOf ? map.areaOf(c) : c;
+}
+
 export function chooseLegendCells(cells: readonly Cell[], home: Cell, neighbours: ReadonlyMap<string, ReadonlySet<string>>, share: number, seed: number): Set<string> {
   const all: { key: string; h: number }[] = [];
   for (const [cx, cy] of cells) if (cx !== home[0] || cy !== home[1]) all.push({ key: cellKey(cx, cy), h: hash2(cx, cy, seed + 901) });

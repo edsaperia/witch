@@ -375,7 +375,7 @@ export interface Tuning {
   grounds: { chance: number; kinds: string[]; radius: Record<string, number> };
   /** Each area's sleeping legend lies in a small circular clearing of its own (Ed, 2026-10-06): radius metres (or its species' own,
    *  sized to the legend), a soft edge ring edge metres wide, the legend lying top of the radius toward its far (north) side. */
-  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; minFromOtherStones?: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number>; /** Sized to fit its legend (rules/legendFit.ts): metres to spare round its sleeping body, and the most a radius may be. */ fit?: { margin: number; max: number } };
+  legendClearing: { radius: number; edge: number; top: number; minFromStone: number; minFromOtherStones?: number; floor: { on: boolean; overgrowth: number; slab: number; glint: number }; rim: { spacing: number; chance: number; out: number; spread: number; gap: number }; grove: { reach: number; density: number; tallest: number; scale: number; gap: number; soft: number; jitter: number }; species: Record<string, number>; /** Sized to fit its legend (rules/legendFit.ts): metres to spare round its sleeping body, and the most a radius may be. */ fit?: { margin: number; max: number; /** the most in a legend area of its own (Ed, 2026-10-26; rules/map.ts) */ areaMax?: number } };
   /** Scenes (art/scenes.js): the share of areas that get one (if an unused scene suits them); footprint = farthest piece's authored offset times scale, plus pad metres. */
   scenes: { chance: number; scale: number; pad: number; /** one scene placed on most maps (Ed, 2026-10-11: the temple ruins), at this chance a map, suited areas first, then any */ featured?: { ids: string[]; chance: number } };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
@@ -467,6 +467,10 @@ export interface Tuning {
     questLater?: boolean;
     /** The early easy quest (Ed, 2026-10-07; rules/quest.ts earlyQuest): one of the first three areas the waves wake, with a legend, dreams of the baby of another of those three's kind. */
     earlyQuest: boolean;
+    /** Legend areas (Ed, 2026-10-26: all legends in "additional areas that have legend circles where runestones usually are", each
+     *  grown beside an area of its kind, counting as one area with it; rules/map.ts): on (the default), or false for legends in their
+     *  own kind's areas as before. */
+    areas?: boolean;
     /** An angry legend bombarding soundsystems (Ed, 2026-10-06: "Legend bombards, but prioritises you"): with no witch in its reach, the first lob or beam of its volley goes at the nearest standing soundsystem within range metres, doing damage to it (of combat.soundsystemHealth). */
     bombard: { on: boolean; range: number; damage: number };
     /** The stomp (Ed, 2026-10-06, a "perhaps"): a legend turning angry with its own area's soundsystem standing destroys it at once; with it on, legends stay restless angryAfter seconds (not legends.json's) before they anger. */
