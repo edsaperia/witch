@@ -41,10 +41,12 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     const L = await p.evaluate(() => { const Z = window.witch.game.map.zoo.layout, I = Z.islands.find(J => J.kind === "wolf") ?? Z.islands[0], at = a => { const n = I.reach.length, t = ((a + Math.PI) / (Math.PI * 2)) * n, i = Math.floor(t), f = t - i; return I.reach[((i % n) + n) % n] * (1 - f) + I.reach[(((i + 1) % n) + n) % n] * f; }; return { I: { x: I.x, z: I.z, south: at(Math.PI / 2), kind: I.kind }, home: Z.home, reach: Z.reach }; });
     log("island", JSON.stringify(L.I));
     await shoot(p, "fence", [L.I.x + 10, L.I.z + L.I.south + 7, "ground"]); // (on the street by its south shore, the fence before her)
-    await shoot(p, "legend", [L.I.x, L.I.z + 22, "ground"]); // (south of its circle at the middle)
-    await shoot(p, "plaza", [L.home.x + 30, L.home.z + 40, "ground"]);
+    await shoot(p, "legend", [L.I.x, L.I.z + 6, "ground"]); // (in its circle at the middle, its legend asleep just north)
+    await shoot(p, "plaza", [L.home.x + 12, L.home.z + 34, "ground"]); // (on the plaza south of the dancefloor, the World Tree's carving round it)
+    await shoot(p, "plaza-above", [L.home.x, L.home.z + 40, "treetop"]);
     await shoot(p, "above", [L.I.x, L.I.z + L.I.south + 40, "treetop"]);
-    await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 - 25), "ground"]); // (on the flagstones by the north edge: the water and the fall ahead)
+    await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 + 15), "ground"]); // (on the water's band by the north edge, the lip and the fall ahead)
+    await shoot(p, "edge-above", [L.home.x, L.home.z - (L.reach + 120 + 50), "treetop"]);
     await p.close();
     // (a fresh save: the islands she hasn't found, lakes)
     const q = await load("zoo&found=");

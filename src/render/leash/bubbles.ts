@@ -268,7 +268,7 @@ export function drawCirclePanel(lv: LeashView, camera: THREE.Camera, width: numb
   let el = lv.circlePanel;
   if (!lv.circleFade || !lv.circleLast) { if (el) el.style.display = "none"; return; }
   if (!el) { el = document.createElement("div"); el.className = "legend-panel"; host.append(el); lv.circlePanel = el; }
-  const { legend: c, x, z, r } = lv.circleLast, brought = broughtLine(g, lv.circleLast), before = !g.partyOver && worldAsleep(g), lines = brought ? [...circleLines(c, before), brought] : circleLines(c, before);
+  const { legend: c, x, z, r } = lv.circleLast, brought = broughtLine(g, lv.circleLast), before = g.map.zoo ? "zoo" as const : !g.partyOver && worldAsleep(g), lines = brought ? [...circleLines(c, before), brought] : circleLines(c, before);
   const key = `${c.id}:${c.legendState}:${c.quest?.done !== undefined}:${c.quest?.species}:${c.questOpen}:${before}:${brought?.text ?? ""}`; // (its dream closing as the party ends changes its lines too)
   if (el.dataset.k !== key) {
     el.dataset.k = key;
