@@ -1319,6 +1319,10 @@
               "type": "number",
               "minimum": 0
             },
+            "stride": {
+              "type": "number",
+              "minimum": 0
+            },
             "fall": {
               "type": "object",
               "properties": {
@@ -1378,6 +1382,7 @@
             "rail",
             "landTime",
             "walk",
+            "stride",
             "fall",
             "dark",
             "crown"

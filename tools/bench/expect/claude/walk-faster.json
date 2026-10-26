@@ -1,0 +1,5 @@
+{
+  "reason": "on foot in the treehouse she walks half again as fast (Ed, 2026-10-25: treehouse.house.walk 5 to 7.5 m/s; her broom's ground speed and every flight speed unchanged), so wherever she walks the house (the boot's walk from her decks, the bots' first steps before they rise) she is further along at each step",
+  "frames": { "boot": "she walks from her decks half again as fast, so she ends 2.5 m further along and the picture follows her" },
+  "rules": { "witches": "her walk off her decks is faster, so she reaches each place sooner", "creatures": "they react to where she is, which is sooner along", "camera": "it follows her", "floor": "the dancefloor's lights follow her steps off the decks and the waves that come after" }
+}
