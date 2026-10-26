@@ -33,9 +33,10 @@ describe("the great oak's crown", () => {
 
   it("leaves the Terrace and its notch out to the crown's edge open: no lobe, limb or string above the floor on any line of sight to them", () => {
     for (const l of c.lobes) expect(sightClearance(c, l.x, l.y, l.z)).toBeGreaterThan(l.r); // (its whole disc)
-    // every limb's tube, all along it, not only its knots (Ed, 2026-10-26: "there are branches in front of the balcony")
+    // every limb's tube, all along it, not only its knots, over the floor or under it (the floors are drawn in a plane of their own, so
+    // bark under the Terrace showed over it; Ed, 2026-10-26: "there are branches in front of the balcony")
     for (const limb of c.limbs) if (limb.kind !== "root" && limb.kind !== "trunk") for (const { p: [x, y, z, r] } of limbSamples(limb, 0.5))
-      if (y + r > 0) expect(Math.min(sightClearance(c, x, y + r, z), sightClearance(c, x, Math.max(0, y), z)), `${limb.kind} at ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`).toBeGreaterThan(r);
+      expect(Math.min(sightClearance(c, x, y + r, z), sightClearance(c, x, y - r, z)), `${limb.kind} at ${x.toFixed(1)}, ${y.toFixed(1)}, ${z.toFixed(1)}`).toBeGreaterThan(r);
     for (const s of c.strings) if (s.kind !== "garland") for (const p of s.spans) for (let i = 0; i <= 10; i++) { const u = i / 10, y = p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u);
       if (y > 0) expect(sightClearance(c, p.a[0] + (p.b[0] - p.a[0]) * u, y, p.a[2] + (p.b[2] - p.a[2]) * u)).toBeGreaterThan(0); }
     // the notch reaches the crown's edge: along the take-off way, past the dome's edge, it's still open

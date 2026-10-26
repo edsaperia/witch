@@ -91,11 +91,13 @@ export function polySigned(p: [number, number][], x: number, z: number): number 
 export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.terrace.map(t => t.r)) * 0.6 + 2;
 
 /** How clear a point over the plan (y over the floor) keeps the Terrace: the least, over the camera's lines of sight, of how far the
- *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). */
+ *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). Under the floor (y negative), the floor
+ *  point in front of it on the line of sight: the house's floors are drawn in a plane of their own, not in front of the bark by
+ *  depth, so bark under the Terrace showed over it (Ed, 2026-10-26: "there are branches in front of the balcony"). */
 export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"] }, x: number, y: number, z: number): number {
   const w = notchWidth(c);
   let m = notchDistance(c, x, z, w);
-  for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - Math.max(0, y) / Math.tan(p * DEG), w)); // (slid back down the line of sight to the floor: further north)
+  for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - y / Math.tan(p * DEG), w)); // (slid along the line of sight to the floor: back, north, from over it; forward, south, from under it)
   return m;
 }
 
@@ -113,10 +115,10 @@ export function limbSamples(l: Limb, step = 1): { p: Knot; knot: number }[] {
   }
   return out;
 }
-/** The knots of a limb whose tube stands on a line of sight to the Terrace's gap (above the floor, within its radius and a metre). */
+/** The knots of a limb whose tube stands on a line of sight to the Terrace's gap, over the floor or under it (within its radius and a metre). */
 export function limbOverGap(shape: Shape, l: Limb): number[] {
   const bad = new Set<number>();
-  for (const { p: [x, y, z, r], knot } of limbSamples(l)) if (y + r > 0 && Math.min(sightClearance(shape, x, y + r, z), sightClearance(shape, x, Math.max(0, y), z)) < r + 1) bad.add(knot);
+  for (const { p: [x, y, z, r], knot } of limbSamples(l)) if (Math.min(sightClearance(shape, x, y + r, z), sightClearance(shape, x, y - r, z)) < r + 1) bad.add(knot);
   return [...bad];
 }
 /** Whether a string's span (its wire, sagging) keeps off every line of sight to the gap. */
