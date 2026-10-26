@@ -1,0 +1,5 @@
+{
+  "reason": "the b1 temperate pass (Ed, 2026-10-26; Delta's list): the flora check's fixes (the fern forest's mossy birch main with oak and rowan for its larch and fir, the old pinewood's juniper for its larch, the ancient wood's holly for its cedar) and the re-themes' freed assets rehomed (the berried holly hedge as the bluebell glade's wall, the red-berry shrub in the hazel forest, the weeping birch among the alders, the stream's saplings in the twiggy forest, the bare mossy broadleaf in the ancient wood); no ids change, every map's layout is as it was",
+  "frames": { "*": "a scene showing one of those temperate areas: their new trees, walls and small props" },
+  "rules": { "*": "the bluebell glade's new hedge walls and the areas' new plants change where things stand in them" }
+}
