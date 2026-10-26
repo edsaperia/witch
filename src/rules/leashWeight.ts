@@ -42,14 +42,16 @@ export const leashStrain = (d: number, t: Tuning) => Math.max(0, Math.min(t.leas
 export const freeOf = (t: Tuning, ground: boolean) => t.leash.weight.free + (ground ? t.leash.weight.levels[2] ?? 0 : 0);
 
 /** Her load from the sigils in her stack (`stack`: creature ids), at (x, z); `at.mode` "ground" gives the ground's allowance. */
-/** `pull`: how hard they pull on her (the Haul broom's half: rules/spells.ts pullOf). */
-export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number; mode?: string }, t: Tuning, pull = 1): LeashLoad {
+/** `pull`: how hard they pull on her (the Haul broom's half: rules/spells.ts pullOf); `scattering`: her babies scattered in a fight
+ *  (rules/babies.ts), where they're meant to be however far, so pulling on nothing. */
+export function loadOf(stack: readonly number[], creatures: readonly Creature[], at: { x: number; z: number; mode?: string }, t: Tuning, pull = 1, scattering = false): LeashLoad {
   if (!stack.length) return NO_LOAD;
   let px = 0, pz = 0, babies = 0;
   const ground = at.mode === "ground", gap = babiesOf(t).gap;
   for (let i = stack.length - 1; i >= 0; i--) { // (from the bottom: babies in their line's order)
     const c = creatures[stack[i]];
     if (!c || c.gone || c.partyLegend) continue; // (a party legend doesn't drag: it pins her, rules/partyLegend.ts)
+    if (scattering && ground && isBaby(c)) continue; // (scattered off the screen in a fight: where it's meant to be)
     // (a baby in single file on the ground: its leash's slack measured from its place in the line, so a tidy line costs nothing)
     const slack = ground && isBaby(c) ? ++babies * gap : 0;
     const dx = c.x - at.x, dz = c.z - at.z, d = Math.hypot(dx, dz), s = leashStrain(d - slack, t);

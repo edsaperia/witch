@@ -11,7 +11,6 @@
 // railing dithers away round her line of sight (uHer) so it never hides her. One mesh for the whole zoo, made once.
 import * as THREE from "three";
 import type { ForestMap } from "../rules/map";
-import { reachAt } from "../rules/zooMap";
 import { ZOO_CONFIG } from "../rules/zoo";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -130,13 +129,21 @@ export class ZooFences {
     const L = map.zoo?.layout;
     const pos: number[] = [], base: number[] = [], st: number[] = [], idx: number[] = [];
     for (const I of L?.islands ?? []) {
-      // (round its outline in sections of about SECTION metres, a lamp in every LAMP_EVERY metres' worth, spread evenly)
-      let per = 0;
-      for (let k = 0; k < 96; k++) { const a0 = -Math.PI + (k / 96) * Math.PI * 2, a1 = -Math.PI + ((k + 1) / 96) * Math.PI * 2, r0 = reachAt(I.reach, a0), r1 = reachAt(I.reach, a1); per += Math.hypot(Math.cos(a1) * r1 - Math.cos(a0) * r0, Math.sin(a1) * r1 - Math.sin(a0) * r0); }
-      const n = Math.max(12, Math.round(per / SECTION)), nl = Math.max(3, Math.round(per / LAMP_EVERY)), lampAt = new Set(Array.from({ length: nl }, (_, j) => Math.floor(((j + 0.5) * n) / nl)));
+      // (along its coast in sections of about SECTION metres, a lamp in every LAMP_EVERY metres' worth, spread evenly: its points
+      // spaced evenly along the coast's length, so bays and points keep their railings' rhythm)
+      const C = I.coast, m = C.length >> 1, cum = [0];
+      for (let i = 0; i < m; i++) { const j = (i + 1) % m; cum.push(cum[i] + Math.hypot(C[j * 2] - C[i * 2], C[j * 2 + 1] - C[i * 2 + 1])); }
+      const per = cum[m], n = Math.max(12, Math.round(per / SECTION)), nl = Math.max(3, Math.round(per / LAMP_EVERY)), lampAt = new Set(Array.from({ length: nl }, (_, j) => Math.floor(((j + 0.5) * n) / nl)));
+      let seg = 0;
+      const along = (d: number): [number, number] => { // (the coast's point `d` metres round it)
+        d = ((d % per) + per) % per;
+        if (d < cum[seg]) seg = 0;
+        while (seg < m - 1 && cum[seg + 1] < d) seg++;
+        const j = (seg + 1) % m, t = (d - cum[seg]) / Math.max(1e-6, cum[seg + 1] - cum[seg]);
+        return [I.x + C[seg * 2] + (C[j * 2] - C[seg * 2]) * t, I.z + C[seg * 2 + 1] + (C[j * 2 + 1] - C[seg * 2 + 1]) * t];
+      };
       for (let k = 0; k < n; k++) {
-        const a0 = -Math.PI + (k / n) * Math.PI * 2, a1 = -Math.PI + ((k + 1) / n) * Math.PI * 2, r0 = reachAt(I.reach, a0), r1 = reachAt(I.reach, a1);
-        const x0 = I.x + Math.cos(a0) * r0, z0 = I.z + Math.sin(a0) * r0, x1 = I.x + Math.cos(a1) * r1, z1 = I.z + Math.sin(a1) * r1, v = pos.length / 3, tile = lampAt.has(k) ? 1 : 0;
+        const [x0, z0] = along((k / n) * per), [x1, z1] = along(((k + 1) / n) * per - 1e-6), v = pos.length / 3, tile = lampAt.has(k) ? 1 : 0;
         for (const [x, z, s, y] of [[x0, z0, 0, 0], [x1, z1, 1, 0], [x1, z1, 1, 1], [x0, z0, 0, 1]]) { pos.push(0, y * HEIGHT, 0); base.push(x, z); st.push(s, y, tile); }
         idx.push(v, v + 1, v + 2, v, v + 2, v + 3);
         if (tile) this.lamps.push({ x: (x0 + x1) / 2, z: (z0 + z1) / 2 });

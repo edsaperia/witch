@@ -1,6 +1,8 @@
 // Babies behave differently (Ed, 2026-10-11; docs/backlog/gameplay.md "Babies"): leashed and following her on the ground they
 // walk in single file along where she's been, in stack order (the stack's bottom baby first, leash.babies.gap metres apart);
-// while she's in a fight they scatter, leash.babies.scatter metres off to the side away from the first attacker, from the moment
+// while she's in a fight they scatter, leash.babies.scatter metres or a quarter more off to the side away from the first attacker
+// (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": past the view's edge; on the island's land,
+// rules/leash.ts; pulling on her not at all meanwhile, rules/leashWeight.ts), from the moment
 // something goes for her or hers (closing in or winding up, not on the hit) until nothing has for leash.babies.calm seconds; and one
 // more than leash.babies.farAt metres from her (about off the screen) moves at leash.babies.farSpeed, so it's always with
 // her in seconds. Berries, evolving and weight: rules/berries.ts and rules/leashWeight.ts. No drawing here.
@@ -8,7 +10,7 @@ import type { Creature } from "./creatures";
 import { hash2 } from "./random";
 import type { Tuning } from "./tuning";
 
-export const BABIES_DEFAULT = { gap: 1.6, scatter: 8, calm: 3, farAt: 35, farSpeed: 40 };
+export const BABIES_DEFAULT = { gap: 1.6, scatter: 55, calm: 3, farAt: 35, farSpeed: 40 };
 export const babiesOf = (t: Tuning) => t.leash.babies ?? BABIES_DEFAULT;
 
 /** A baby on her leash: level 0, and not a party legend. */
@@ -54,12 +56,13 @@ export function attackerNear(creatures: readonly Creature[], wx: number, wz: num
   return best;
 }
 
-/** Where a baby scatters to in a fight: `scatter` metres from her, along `away` (the way from the attacker to her when the fight
- *  began, kept so a charge through her doesn't send them back across her) and off to one side (its own, seeded). */
+/** Where a baby scatters to in a fight: `scatter` metres from her or up to a quarter more (its own, seeded: never nearer, so off
+ *  the screen whichever way it runs), along `away` (the way from the attacker to her when the fight began, kept so a charge
+ *  through her doesn't send them back across her) and off to one side (its own, seeded). */
 export function scatterSpot(c: Creature, wx: number, wz: number, away: { x: number; z: number }, scatter: number): { x: number; z: number } {
   const a = Math.atan2(away.z, away.x);
   const side = hash2(c.id, 0, 7717) < 0.5 ? -1 : 1, turn = side * (0.6 + 0.9 * hash2(c.id, 1, 7717)); // (35° to 85° off the line away from it)
-  const r = scatter * (0.75 + 0.5 * hash2(c.id, 2, 7717));
+  const r = scatter * (1 + 0.25 * hash2(c.id, 2, 7717));
   return { x: wx + Math.cos(a + turn) * r, z: wz + Math.sin(a + turn) * r };
 }
 

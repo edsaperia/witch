@@ -8,7 +8,7 @@ import { endDream, startWake } from "./rules/wakeUp";
 import { wearFromStation, wornGenome } from "./rules/clothesPile";
 import { WakeCard } from "./render/wakeUp";
 import { toggleCornerPanel, closeCornerPanel } from "./ui/cornerPanel";
-import { carryTiming, clearCarried, mark, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
+import { carryTiming, clearCarried, mark, sinceSail, timingOn, transitionTiming, watchLongTasks } from "./app/timing";
 import "./platform/tuningPreset"; // (first: ?tuning=pre-overnight writes the old balance over the config before anything reads it)
 import { FrameStats } from "./platform/frameStats";
 import { musicCue } from "./rules/musicPlan";
@@ -56,7 +56,8 @@ import { StationPanel, type WorkshopCtx } from "./ui/stationPanel";
 import { ZooOverlay, domZooHost, zooUrl } from "./app/zooOverlay";
 import { leaveZoo } from "./app/zooExit";
 import { TelescopeView, integratedGpu } from "./app/telescope";
-import { loadSave, nightOver, sailNight, storeSave } from "./app/chartSave";
+import { loadSave, nightOver, sailNight, storeSave, worldSeed } from "./app/chartSave";
+import { readZooCoasts } from "./app/zooCoasts";
 import { atGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS } from "./rules/guidance";
 import { addNew, dropNew, loadGuide, storeGuide } from "./app/guideSave";
 import { GuidePin } from "./render/view/guidance";
@@ -98,7 +99,7 @@ const bootLink = new URLSearchParams(location.search);
 const TIMING = timingOn(params);
 if (TIMING) watchLongTasks();
 /** The transition so far into the L log (?timing=1). */
-const logTiming = (): void => { if (TIMING) N().playtest.timing(transitionTiming()); };
+const logTiming = (): void => { N().playtest.timing(sinceSail(transitionTiming())); }; // (always: the long tasks only with ?timing=1)
 // The zoo (?zoo; rules/zoo.ts): straight in, as ?creator=0 (no bedroom, no party spell), unless the link says otherwise.
 if (params.has("zoo") && !params.has("creator")) params.set("creator", "0");
 // A builder's quick shot (?shot=<scene>, app/shot.ts): only the art the view needs, no start card or bedroom, the waves held.
@@ -115,6 +116,8 @@ if (bootSeed === null) {
 
 // The boot's own map, made in a worker from here on (app/mapPrep.ts; Ed, 2026-10-20): the page's thread free while it's made (the
 // opening's chart, the bedroom); a sail's arrival (&arrive=1) takes the chart's instead.
+// (the zoo: its islands' real coasts read back from the chart's cache first, a moment at most, for its map: app/zooCoasts.ts)
+if (params.has("zoo")) { const w = params.get("world"), t0 = performance.now(), r = await readZooCoasts(w ? worldSeed(w) : loadSave().world); console.info(`zoo: ${Object.keys(r.coasts).length} islands in their real shapes (${Math.round(performance.now() - t0)} ms)${r.missing.length ? `, ${r.missing.length} round till the chart makes them` : ""}`); }
 const bootMap = params.get("arrive") ? null : startBootMapPrep(bootSeed, params);
 
 declare const __BUILD__: string;
@@ -338,7 +341,7 @@ function arrived(): void {
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd) && dd) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd, true) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -582,6 +585,7 @@ function pauseControls(on: boolean): void {
   pauseBtns.style.display = "";
 }
 freeze.onToggle = on => {
+  input.clearPresses(); // (a press not yet read as she pauses or resumes is dropped: an E pending under the pause closed a station's panel there, the pause check's broom bay on a slow runner)
   sound.freeze(on);
   pauseControls(on);
   musicLabPanel?.frozen(on);
@@ -940,7 +944,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over)) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over, true)) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
@@ -980,7 +984,7 @@ function frame(now: number): void {
   // buttons (Ed, 2026-10-26: "walking away shouldn't work - then we can use the movement keys as buttons in the menus"), and the use
   // button (E, the pad's □, a tap on touch) closes it, as it opened it: that press is the close and nothing else, even when the thing
   // open closed itself on it a moment before (the chart and the instruments take E themselves), so it never opens it again.
-  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's □ and a tap `sigil`)
+  const raw = input.read(), openNow = chartOpen() || telescope.on || !!studio.at || !!stations.station, shutTap = !freeze.frozen && !!(raw.sigil || raw.place) && (openNow || openPrev); // (E is `place`; the pad's □ and a tap `sigil`; never under the pause)
   if (shutTap) { if (stations.station) stations.close(); if (studio.at) studio.leave(); if (chartAt && chartOpen()) { chartAt = null; closeChart(); } } // (the telescope: its own step, below)
   const human = openNow || shutTap ? stillControls(raw) : raw;
   if (telescope.on) { if (telescope.night !== game || game.witches[0].ko || chartOpen() || !tuning.telescope) telescope.close(); else telescope.step({ ...raw, sigil: !!(raw.sigil || raw.place) }, dt, tuning.telescope); } // (E or □ leaves it)
@@ -1174,6 +1178,9 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
 // window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
+// window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
+// played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
+(window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = N(); return wakeInBedroom(game) && startWake(game, game.herTime, true, false, yesterday); };
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;

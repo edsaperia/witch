@@ -16,20 +16,25 @@ const games = new Map<string, Game>();
 const game = (found: string[]) => { const k = found.join(","); if (!games.has(k)) games.set(k, newGame(7, zoo(found))); return games.get(k)!; };
 
 describe("the zoo laid out like the sea chart (Ed, 2026-10-26)", () => {
-  it("puts every kind's island at its chart place, one area across, the nearest two an area and the gap apart", () => {
-    const L = zooLayout(0, "all", { across: A, gap: ZOO_CONFIG.gap!, margin: ZOO_CONFIG.margin!, areaSize: A });
+  it("puts every kind's island at its chart place, size areas across, no two closer than the gap, the typical street about street (Ed: \"too small and too far apart\")", () => {
+    const S = ZOO_CONFIG.size ?? 1, across = A * S;
+    const L = zooLayout(0, "all", { across, gap: ZOO_CONFIG.gap!, street: ZOO_CONFIG.street, plaza: ZOO_CONFIG.plaza, margin: ZOO_CONFIG.margin!, areaSize: A });
     expect(L.islands.length).toBe(KIND_NAMES.length);
     const cells = new Set([`${L.homeCell[0]},${L.homeCell[1]}`]);
     for (const I of L.islands) {
       let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
       for (let k = 0; k < 360; k++) { const a = -Math.PI + (k / 360) * Math.PI * 2, r = reachAt(I.reach, a); x0 = Math.min(x0, Math.cos(a) * r); x1 = Math.max(x1, Math.cos(a) * r); z0 = Math.min(z0, Math.sin(a) * r); z1 = Math.max(z1, Math.sin(a) * r); }
-      expect(Math.max(x1 - x0, z1 - z0), I.kind).toBeCloseTo(A, -1); // (one area across, whatever its real size)
+      expect(Math.max(x1 - x0, z1 - z0) / across, I.kind).toBeCloseTo(1, 1); // (size areas across, whatever its real size)
       expect(cells.has(`${I.cell[0]},${I.cell[1]}`), I.kind).toBe(false); cells.add(`${I.cell[0]},${I.cell[1]}`);
+      // (off the plaza)
+      expect(Math.hypot(I.x - L.home.x, I.z - L.home.z) - reachAt(I.reach, Math.atan2(L.home.z - I.z, L.home.x - I.x))).toBeGreaterThanOrEqual((ZOO_CONFIG.plaza ?? 0) + ZOO_CONFIG.gap! - 0.5);
     }
-    const mids = [L.home, ...L.islands];
-    let near = Infinity;
-    for (let i = 0; i < mids.length; i++) for (let j = i + 1; j < mids.length; j++) near = Math.min(near, Math.hypot(mids[i].x - mids[j].x, mids[i].z - mids[j].z));
-    expect(near).toBeCloseTo(A + ZOO_CONFIG.gap!, 0);
+    // (coast to coast along the line between their middles: never under the gap; the median nearest about the street)
+    const street = L.islands.map(I => Math.min(...L.islands.filter(J => J !== I).map(J => { const a = Math.atan2(J.z - I.z, J.x - I.x); return Math.hypot(J.x - I.x, J.z - I.z) - reachAt(I.reach, a) - reachAt(J.reach, a + Math.PI); })));
+    expect(Math.min(...street)).toBeGreaterThanOrEqual(ZOO_CONFIG.gap! - 0.5);
+    const sorted = [...street].sort((a, b) => a - b), med = sorted[Math.floor(sorted.length / 2)];
+    expect(med).toBeGreaterThan(ZOO_CONFIG.gap!);
+    expect(med).toBeLessThanOrEqual((ZOO_CONFIG.street ?? 0) + 1);
   });
 
   it("?all (found \"*\", the map's see-all): every island its kind's area; the rest of the ground home's (the plaza and the streets)", () => {

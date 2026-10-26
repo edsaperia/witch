@@ -5,7 +5,7 @@ import DECISIONS from "../../config/decisions.json";
 // them: Ed, 2026-10-13, so builders adding sliders don't collide; node tools/data.mjs decisions adopt moves a pasted entry out)
 const FRAGMENTS = import.meta.glob<{ pr?: number; group?: string; pinned?: boolean; decisions: Decision[] }>("../../config/decisions/*.json", { eager: true, import: "default" });
 
-export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number };
+export type Control = { type: "toggle" } | { type: "choice"; options: { value: string; label: string }[] } | { type: "slider"; min: number; max: number; step: number; /** a colour swatch beside it, from these two knobs (hue and saturation, 0 to 1); the hue slider's own track drawn as the hues */ swatch?: { hue: string; sat: string } };
 export interface Decision { id: string; /** the pull request that added it */ pr?: number; /** that PR's short name (the pause page's heading: "#pr group") */ group?: string; label: string; note: string; control: Control; default: string | number | boolean; /** kept on this browser (localStorage witch.settings) and taken again as the game loads: app/settings.ts (Ed, 2026-10-14: the volumes) */ persist?: boolean; /** its group pinned at the top of the pause page (the fragment's flag), headed by its name alone */ pinned?: boolean; apply: { knob?: string; param?: string; reload?: boolean } }
 /** Every decision: the fragments' (newest pull request first, each in its file's order) and then the file's own. */
 export const DECISION_LIST: Decision[] = [
