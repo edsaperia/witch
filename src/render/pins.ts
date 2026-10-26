@@ -44,13 +44,13 @@ export class Pin {
   constructor(public target: PinTarget, public look: PinLook, parent: HTMLElement = document.body) { this.ind = new StoneIndicator(parent, 3); }
   show(): void { this.want = 1; }
   hide(): void { this.want = 0; }
-  /** A frame (render/view/hud.ts): eased toward shown or hidden over about a fifth of a second, times `calm` (the HUD's own fade). */
-  draw(camera: THREE.Camera, width: number, height: number, spot: { x: number; z: number; top: number } | null, wx: number, wz: number, beat: number, bpm: number, dt: number, calm: number): void {
+  /** A frame (render/view/hud.ts): eased toward shown or hidden over about a fifth of a second, times `calm` (the HUD's own fade); `gap` the tip's pixels over its top (tuning pins.gap). */
+  draw(camera: THREE.Camera, width: number, height: number, spot: { x: number; z: number; top: number } | null, wx: number, wz: number, beat: number, bpm: number, dt: number, calm: number, gap?: number): void {
     this.shown += (this.want - this.shown) * Math.min(1, Math.max(0, dt) * 10);
     if (Math.abs(this.shown - this.want) < 0.01) this.shown = this.want;
     this.ind.fade(this.shown * calm);
     const L = this.look;
-    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour } : null, wx, wz, beat, bpm, 1, L.label ?? "");
+    this.ind.update(camera, width, height, spot && this.shown > 0 ? { x: spot.x, z: spot.z, top: spot.top, gap, colour: L.colour, species: L.species ?? "", glyph: L.glyph, glyphColour: L.glyphColour } : null, wx, wz, beat, bpm, 1, L.label ?? "");
   }
   /** Gone for good (its canvas and label off the page). */
   dispose(): void { this.ind.dispose(); }

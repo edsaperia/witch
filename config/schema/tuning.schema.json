@@ -2179,6 +2179,19 @@
       ],
       "additionalProperties": false
     },
+    "pins": {
+      "type": "object",
+      "properties": {
+        "gap": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "gap"
+      ],
+      "additionalProperties": false
+    },
     "crownWidth": {
       "type": "number",
       "minimum": 0
@@ -11532,6 +11545,7 @@
     "bushClump",
     "treeHeight",
     "treeCap",
+    "pins",
     "crownWidth",
     "treeSpacingX",
     "treeSpacingZ",

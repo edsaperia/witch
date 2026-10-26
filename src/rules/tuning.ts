@@ -380,6 +380,8 @@ export interface Tuning {
   scenes: { chance: number; scale: number; pad: number; /** one scene placed on most maps (Ed, 2026-10-11: the temple ruins), at this chance a map, suited areas first, then any */ featured?: { ids: string[]; chance: number } };
   relics: { spacing: number; chance: number; nearRoad: number; minGap: number };
   treeCap: { from: number; keep: number };
+  /** The HUD's pointers as map pins (render/indicator.ts): gap screen pixels between the arrow's tip and its subject's drawn top. */
+  pins?: { gap: number };
   treetop: { boost: number; boostTime: number; boostAngle: number; turnRate: number; turnRateSlow: number; sharpTurnSpeed: number; brakeAt: number; glideTime: number; sharpTurnBleed: number; cameraPull: number };
   /** The creature states' looks (render/looks.ts): enraged ones tinted toward colour by amount (0 none, 1 all). */
   /** The live rig (#79, render/rig/): on by default (?rig=0 off); creatures in the treetops, or drawn smaller than minPx art pixels, keep their baked frames, except the levels in alwaysLevels ("baby", "young", "adult", "legend"), rigged at any size (Ed, 2026-10-05: legends always). */
