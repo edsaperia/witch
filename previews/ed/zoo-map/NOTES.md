@@ -97,3 +97,17 @@ Ed: "Zoo areas, apart from home, should have a little gold fence around them, th
 
 1. **Q1 (streets)**: plain flagstone streets everywhere, or the sea's shape kept by darker, wetter stone near the coasts?
 1. **Q1 (animals)**: only the island's own animal at every age, plus its sleeping legend? Its legend sleeps at the centre. Should its quest work in the zoo (bring it the sigil it dreams of and it wakes happy), or should it only sleep, for show?
+
+## The fence: Versailles railings (concept, before the final art)
+
+The brief: gilded railings about 1–1.2 m, close-set bars with spearhead finials, a lower band with rosettes, taller posts with urns, and gilt streetlamps with lantern heads every ~30 m that really light the ground.
+
+- `fence-close.png`: one run close up, in the bold pixel style (three gold tones, near-black outline). Bars every 2 art px with spearheads, a rail band with rosettes low down, a post with an urn every 4 m, and a lamp (about 4 m, a lantern head) casting a warm pool.
+- `frame-fence.png`: the same overlaid in play at the game's scale (an art pixel is about 0.13 m, so the railing is 1.1 m, a little under her shoulder).
+- `lamps-above.png`: zoomed out over world 0. A lamp about every 30 m, spread evenly round each island (17–18 an island), each with its warm pool.
+
+**The light budget.** That is about 1,100 lamps over the whole zoo (about 170 in a treetop view). The plan: every lamp's head glows (emissive, free), its pool is drawn in the ground shader from the nearest lamps' places, and only the nearest ~8 to her also feed the game's point lights (the house/party light system), so the cost is the same as a party area's.
+
+**Flying over.** The fence stops walking only (her on foot, every creature). Rising and flying cross it, and her leashed followers follow her over, as they would anywhere (tested: `src/rules/zooFence.test.ts`).
+
+**Knocked out in the zoo** she comes back on home's plaza (tested).
