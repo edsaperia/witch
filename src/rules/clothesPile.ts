@@ -20,6 +20,11 @@ export const STATION_SLOT: Readonly<Record<string, PileSlot>> = { wardrobe: "top
 
 /** She's dressed: nothing of last night's left in the pile (an old wake-up, with no pile, counts as dressed). */
 export const dressed = (w: { pile?: PileSlot[] } | null | undefined): boolean => !w?.pile?.length;
+/** Last night's clothes lie by her bed, to put on with E: on every wake-up but her first (Ed, 2026-10-26: "if it's the first night,
+ *  there won't be any last night's clothes"; the coordinator: no pile on the first wake-up, `short` false). On the first she's in
+ *  her nightie all the same, `pile` the pieces still to put on, each at its station (her first night's guidance pins lead her round
+ *  them: rules/guidance.ts). */
+export const pileOut = (w: { pile?: PileSlot[]; short?: boolean } | null | undefined): boolean => !!w?.short && !dressed(w);
 
 /** A station's choice before she's dressed: its piece goes on her, out of the pile. True when the pile changed. */
 export function wearFromStation(w: { pile?: PileSlot[] }, station: string): boolean {
