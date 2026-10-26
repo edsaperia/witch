@@ -68,6 +68,7 @@ const CASES = [
     try { await page.waitForFunction(() => (document.getElementById("pause-sliders")?.getBoundingClientRect().left ?? -1) >= 0, null, { timeout: 30000, polling: 200 }); } catch { /* checked below */ }
     check(await paused(), `${C.id}: Esc pauses`);
     check(await isOpen(), `${C.id}: the overlay is still there under the pause`);
+    if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`);
     const top = await page.evaluate(() => {
       const s = document.getElementById("pause-sliders")?.getBoundingClientRect(), mid = (x, y) => document.elementFromPoint(x, y);
       const atSliders = s ? mid(s.left + s.width / 2, s.top + Math.min(200, s.height / 2)) : null;
@@ -96,6 +97,7 @@ const CASES = [
     await page.evaluate(() => { window.__pad = null; }); await page.waitForTimeout(300);
     check(await paused(), `${C.id}: the pad didn't unpause it`);
     check(await isOpen(), `${C.id}: the pad's B didn't shut the overlay under the pause`);
+    if (!(await isOpen())) console.log(`  ${C.id}: closed by ${JSON.stringify(await page.evaluate(() => (window.witch.stationShuts ?? []).slice(-3)))}`); // (main.ts: why it shut, and whether paused)
     if (C.state) { const after = await focus(); check(after === before, `${C.id}: the d-pad and keys didn't move its focus (${before} → ${after})`); }
     // resume: back to it as it was
     await page.keyboard.press("Escape");
