@@ -91,6 +91,16 @@ export function keycapCanvas(glyph: KeycapGlyph, scale = 3, down = false): HTMLC
   if (ROUND.has(glyph)) drawRound(cv.getContext("2d")!, 0, 0, glyph); else drawKey(cv.getContext("2d")!, 0, 0, glyph, down);
   return cv;
 }
+/** The walking keys, W A S D in their inverted T (KeyHint.W × KeyHint.H art pixels), as a canvas: the wake-up's "get up" beside
+ *  the bed (render/houseRooms.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed"). */
+export function wasdCanvas(scale = 3): HTMLCanvasElement {
+  const cv = document.createElement("canvas");
+  cv.width = KeyHint.W; cv.height = KeyHint.H;
+  cv.style.cssText = `width:${KeyHint.W * scale}px;height:${KeyHint.H * scale}px;image-rendering:pixelated;display:block`;
+  const c = cv.getContext("2d")!;
+  for (const k of KEYS) drawKey(c, k.at[0] * (KEY + GAP), k.at[1] * (KEY + GAP), k.g[0], false);
+  return cv;
+}
 /** The same keycap as an inline image for a panel's hint line (its HTML), `scale` page pixels an art pixel. */
 const capHtml = new Map<string, string>();
 export function keycapHtml(glyph: KeycapGlyph, scale = 2): string {

@@ -27,7 +27,7 @@ import { DECOR_ROOMS } from "./houseDecor";
 import { Spotlight } from "./spotlight";
 import { LoanSparkle } from "./loanSparkle";
 import { UseGlow } from "./useGlow";
-import { keycapCanvas, type KeycapGlyph } from "../ui/keyHint";
+import { keycapCanvas, wasdCanvas, type KeycapGlyph } from "../ui/keyHint";
 import { atDecks } from "../rules/wakeUp";
 import { loanFind } from "../rules/finds";
 
@@ -164,6 +164,10 @@ export class HouseRoomsView {
   private tapUse: ((down: boolean) => void) | null = null;
   private readonly bubble: HTMLDivElement;
   private readonly ring: HTMLDivElement;
+  /** The wake-up's keys beside the bed, in bed with her alarm ringing: getting up on its left, snoozing on its right. */
+  private readonly wakeL: HTMLDivElement;
+  private readonly wakeR: HTMLDivElement;
+  private wakeKey = "";
   private said: { obj: HouseObject; at: number } | null = null;
   private readonly labels: { el: HTMLDivElement; x: number; z: number }[] = [];
   /** The furniture drawn as art (render/houseFurniture.ts): each piece's picture and its quad, baked a piece a frame as she first comes in. */
@@ -220,7 +224,10 @@ export class HouseRoomsView {
     for (const ev of ["pointerup", "pointerleave", "pointercancel"]) this.tag.addEventListener(ev, () => this.tapUse?.(false));
     this.bubble = document.createElement("div"); this.bubble.style.cssText = pill + "background:rgba(250,244,255,.94);color:#2a1d38;border-radius:12px;padding:6px 12px;max-width:320px;white-space:normal;text-align:center";
     this.ring = document.createElement("div"); this.ring.style.cssText = "position:absolute;width:38px;height:38px;transform:translate(-50%,-50%);border-radius:50%";
-    this.box.append(this.tag, this.bubble, this.ring);
+    const side = "position:absolute;display:none;filter:drop-shadow(0 0 3px rgba(255,214,140,.55))";
+    this.wakeL = document.createElement("div"); this.wakeL.style.cssText = side + ";transform:translate(-100%,-50%)";
+    this.wakeR = document.createElement("div"); this.wakeR.style.cssText = side + ";transform:translate(0,-50%);display:none;align-items:center;gap:8px;font:700 15px/1 ui-monospace,monospace;color:#f3e8ff;text-shadow:0 1px 0 #1a1022,0 0 4px #1a1022";
+    this.box.append(this.tag, this.bubble, this.ring, this.wakeL, this.wakeR);
     // (?rooms=labels: each room's name on its floor, for the plan's shots)
     if (typeof location !== "undefined" && /[?&]rooms=labels/.test(location.search)) for (const r of HOUSE_ROOMS.rooms) {
       const el = document.createElement("div"); el.textContent = r.label;
@@ -446,6 +453,22 @@ export class HouseRoomsView {
       this.ring.style.background = `conic-gradient(rgba(255,214,140,.95) ${f * 360}deg, rgba(20,14,32,.6) 0deg)`;
       this.ring.style.boxShadow = "0 0 0 3px rgba(20,14,32,.7) inset";
     } else this.ring.style.display = "none";
+    // the wake-up in bed (rules/wakeUp.ts; Ed, 2026-10-26: "This should just be WASD in keycaps to the left of the bed and 'E
+    // snooooze' to the right", "or the equivalent for controller"), in place of the card at the foot of the screen: the walking keys
+    // (a pad's left stick) beside the bed's left, its snooze key (a pad's □) and "snooooze" beside its right while it rings (not
+    // snoozing, nor the shorter wake-up, where any key gets her up); the keys follow the device she last played with
+    const wk = g.wake, inBed = !!wk && !wk.open && (wk.beat === "alarm" || wk.beat === "snooze"), bedObj = inBed ? HOUSE_ROOMS.objects.find(o => o.use.kind === "bed") ?? null : null;
+    const pad = v.useDevice === "pad", snooze = inBed && wk!.beat === "alarm" && !wk!.short, wkey = `${pad}|${px}`;
+    if (bedObj && wkey !== this.wakeKey) {
+      this.wakeKey = wkey;
+      this.wakeL.replaceChildren(pad ? keycapCanvas("STICK", px) : wasdCanvas(px));
+      const word = document.createElement("span"); word.textContent = "snooooze";
+      this.wakeR.replaceChildren(keycapCanvas(pad ? "SQ" : "E", px), word);
+    }
+    const gap = 1.5; // (metres out from the bed's sides)
+    place(this.wakeL, bedObj && { ...bedObj, x: bedObj.x - bedObj.w / 2 - gap }, 0.2);
+    place(this.wakeR, snooze && bedObj ? { ...bedObj, x: bedObj.x + bedObj.w / 2 + gap } : null, 0.2);
+    if (snooze && bedObj) this.wakeR.style.display = "flex";
   }
 }
 
