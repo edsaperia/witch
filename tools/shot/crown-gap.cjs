@@ -31,7 +31,7 @@ const OUTLINE = JSON.parse(fs.readFileSync(path.join(__dirname, "../../config/ho
       if (await page.evaluate(() => window.witch.game.clock.paused)) { await page.keyboard.press("Enter"); await page.waitForFunction(() => !window.witch.game.clock.paused, null, { timeout: 60000 }).catch(() => {}); }
       const said = await page.evaluate(s => window.witch.lastShot ?? window.witch.shot(s), scene);
       if (!said.ok) throw new Error(said.say);
-      const step = n => page.evaluate(n => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, true); }, n);
+      const step = n => page.evaluate(n => { const w = window.witch; for (let i = 0; i < n; i++) w.frame({ moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 }, 1 / 60, i === n - 1); }, n); // (drawn only the last: as tools/shot/shot.cjs)
       for (let round = 0, calm = 0; calm < 2 && round < 60; round++) { await step(10); if ((await page.evaluate(() => window.witch.view.assets.pending)) === 0) calm++; else { calm = 0; await page.waitForTimeout(1500); } }
       await step(30);
       // the Terrace's outline on the screen: the crown's own map (render/view.ts crownWorld), bent as the crown is (render/height.ts bendW)
