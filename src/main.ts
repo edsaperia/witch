@@ -434,7 +434,8 @@ const zoo = new ZooOverlay(domZooHost(on => { const { clock } = N().game; if (on
 // The treehouse Studio's instruments (Ed, 2026-10-23; app/studio.ts, rules/studio.ts, ui/studioPanel.ts): walking up to the drum
 // kit, the modular synth or the microphone she's at it, its menu in and every key playing it (she stands still: her keys are its),
 // till Esc (the pad's B) steps her away; the first Esc is the instrument's, the next the pause's. The Studio's loop is its own.
-const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tuning.music.volume * sound.level, new StudioPanel());
+const studioPanel = new StudioPanel();
+const studio = new StudioPlayer(N().musicStyle, () => sound.audio, () => N().tuning.music.volume * sound.level, studioPanel);
 /** What takes the keys now (the frame loop: input.release() as it changes). */
 let keysTaken = "";
 const telescope = new TelescopeView(document.body, bootTuning.telescope?.vignette ?? 0.6);
@@ -1017,7 +1018,7 @@ function frame(now: number): void {
   openPrev = chartOpen() || telescope.on || !!studio.at || !!stations.station;
   shutButton.style.display = openPrev && input.device === "touch" ? "block" : "none"; // (on touch, a way to close it: the tap keycap)
   // (the use prompts, render/houseRooms.ts: the button on what she plays with, and none over what's open)
-  view.useDevice = input.device; view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
+  view.useDevice = input.device; stations.setDevice(input.device); studioPanel.setDevice(input.device); view.houseOpen = stations.station ?? studio.state.players[0].object ?? (telescope.on ? scopeAt : null) ?? chartAt;
   // The new opening's wake-up (rules/wakeUp.ts, render/wakeUp.ts): its card, the dark and her phone; its beats marked for ?timing=1,
   // and the first time she comes to the dressing table; the island's art latched drawn (marked, nothing waits on it).
   if (!game.islandReady && F.ready && F.artRevealed && (mistGateOff || view.islandDrawn())) { game.islandReady = true; mark("island:ready"); } // (latched: the island's own art drawn, render/view.ts islandDrawn; its time marked for ?timing=1)

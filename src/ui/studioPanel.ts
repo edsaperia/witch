@@ -2,7 +2,7 @@
 // it): it slides in from the left as she walks up to an instrument, in the station menus' look (ui/stationPanel.ts), and out as
 // she steps away (Esc). Its keys as she'd press them (the drum kit's pads, the synth's and the mic's three rows of notes), each
 // lit as it sounds and playable with the pointer or a touch; the sounds (5 to 9), the loop's switch, tempo and style (1 to 4), the
-// synth's live controls (the arrows) and the mic's vowel; at its foot the keys that leave (E, the pad's □, Esc), keycaps.
+// synth's live controls (the arrows) and the mic's vowel; at its foot the key that leaves (E, the pad's □), a keycap.
 import { keycapHtml } from "./keyHint";
 import { DRUM_KEYS, NOTE_ROWS, soundsOf, STUDIO_CONFIG as S, type Control, type Instrument, type Pad, type StudioState } from "../rules/studio";
 
@@ -43,8 +43,14 @@ export class StudioPanel {
     for (const ev of ["pointerdown", "pointerup", "wheel", "contextmenu"]) this.root.addEventListener(ev, e => e.stopPropagation()); // (its presses don't fly her)
   }
 
+  /** What she plays with (platform/input.ts device), for the key that leaves: repainted as it changes. */
+  private device: "keys" | "pad" | "touch" = "keys";
+  private last: StudioState | null = null;
+  setDevice(d: "keys" | "pad" | "touch"): void { if (d !== this.device) { this.device = d; if (this.at && this.last) this.show(this.last); } }
+
   /** In with the instrument she's at, out with none; drawn afresh. */
   show(S0: StudioState): void {
+    this.last = S0;
     const P = S0.players[0], at = P.at;
     clearTimeout(this.timer);
     if (!at) {
@@ -67,7 +73,7 @@ export class StudioPanel {
       else html += `<div class="sp-shelf on"><div class="sp-lab">Sings <em>the arrows</em></div><div class="chips">${(["up", "left", "down", "right"] as const).map(d => `<span class="chip${S.mic.vowels[d] === P.vowel ? " on" : ""}" data-key="${d === "up" ? "ArrowUp" : d === "down" ? "ArrowDown" : d === "left" ? "ArrowLeft" : "ArrowRight"}">${S.mic.vowels[d]} <span class="k">${keyName(d === "up" ? "ArrowUp" : d === "down" ? "ArrowDown" : d === "left" ? "ArrowLeft" : "ArrowRight")}</span></span>`).join("")}<span class="chip" data-key="Space">Harmony <span class="k">Space</span></span></div></div>`;
     }
     html += `<div class="sp-shelf on"><div class="sp-lab">The Studio's loop <em>${L.on ? `${L.bpm} bpm` : "off"}</em></div><div class="beat">${Array.from({ length: 16 }, () => "<i></i>").join("")}</div><div class="chips"><span class="chip${L.on ? " on" : ""}" data-ctl="loop">${L.on ? "Stop" : "Start"} <span class="k">1</span></span><span class="chip" data-ctl="slower">Slower <span class="k">2</span></span><span class="chip" data-ctl="faster">Faster <span class="k">3</span></span><span class="chip" data-ctl="style">${L.style} <span class="k">4</span></span></div></div>`;
-    html += `</div><div class="sp-foot">${keycapHtml("E")} ${keycapHtml("SQ")} <span class="k">Esc</span> ⏏</div>`; // (keycaps, no words: Ed, 2026-10-26)
+    html += `</div><div class="sp-foot">${keycapHtml(this.device === "pad" ? "SQ" : this.device === "touch" ? "TAP" : "E")}</div>`; // (the key that leaves, alone: Ed, 2026-10-26, "hint line: trim it"; Esc still does) // (keycaps, no words: Ed, 2026-10-26)
     this.root.innerHTML = html;
     this.lights = [...this.root.querySelectorAll<HTMLElement>(".beat i")];
     this.root.style.display = "flex";

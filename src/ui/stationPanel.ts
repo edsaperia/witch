@@ -108,6 +108,9 @@ export class StationPanel {
     }, true);
   }
 
+  /** What she plays with (platform/input.ts device): its keys in the hint line, repainted as it changes. */
+  private device: "keys" | "pad" | "touch" = "keys";
+  setDevice(d: "keys" | "pad" | "touch"): void { if (d !== this.device) { this.device = d; if (this.id) this.paint(); } }
   /** The station whose panel is open, or null. */
   get station(): string | null { return this.id; }
   /** She's choosing: the pointer's over the panel, or she moved through it since she last walked (main.ts: the camera eases in). */
@@ -277,7 +280,7 @@ export class StationPanel {
       else if (l.kind === "fit") { const [lo, hi] = this.fitRange(l.axis!), on = !FIT_NEEDS[l.axis!] || FIT_NEEDS[l.axis!](this.g), v = Math.max(0, Math.min(1, (this.fitValue(l.axis!) - lo) / (hi - lo))); html += `<div class="sp-fit${on ? "" : " off"}${f(0)}" data-line="${i}" data-col="0"><span>${esc(FIT_NAMES[l.axis!] ?? l.axis!)}</span><div class="bar"><i style="left:${(v * 100).toFixed(1)}%"></i></div></div>`; }
     });
     if (shelf >= 0) html += `</div>`;
-    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot">${foot()}</div>`;
+    html += `</div><div class="sp-detail"></div>${this.shelves.some(q => q.slot) && this.ws ? this.summary(this.ws) : ""}<div class="sp-foot">${footHtml(this.device)}</div>`;
     this.root.innerHTML = html;
     for (const el of this.root.querySelectorAll<HTMLElement>("[data-thumb]")) this.thumbInto(el);
     this.paintDetail();
@@ -366,9 +369,13 @@ export function wearPicture(st: Style, g: Record<string, unknown>, it: WardrobeI
 // we can use the movement keys as buttons in the menus")
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1], KeyA: [-1, 0], KeyD: [1, 0], KeyW: [0, -1], KeyS: [0, 1] };
 /** The keys and pad buttons (A, X) that choose what's in focus. */
-/** The panel's hint line, keycaps and no words (Ed, 2026-10-26, "Please remove words"): the movement keys and the arrows move; Space,
- *  Enter or the pad's ✕ choose (✓); E or the pad's □ close it (⏏; Esc is the pause's, over it: platform/freeze.ts). */
-const foot = (): string => `${(["W", "A", "S", "D"] as const).map(g => keycapHtml(g)).join("")} ${(["L", "U", "N", "R"] as const).map(g => keycapHtml(g)).join("")} <span class="k">✥</span> · <span class="k">Space</span> <span class="k">Enter</span> ${keycapHtml("X")} ✓ · ${keycapHtml("E")} ${keycapHtml("SQ")} ⏏`;
+/** The panel's hint line, keycaps and no words, three groups on the device she plays with (Ed, 2026-10-26: "hint line: trim it"):
+ *  move (WASD; a pad's stick), choose (Space; ✕) and close (E; □). Enter and the arrows still work, unshown; on touch she taps
+ *  what she wants, and the corner's keycap closes it (main.ts). */
+export const footHtml = (device: "keys" | "pad" | "touch"): string =>
+  device === "pad" ? `${keycapHtml("STICK")} · ${keycapHtml("X")} · ${keycapHtml("SQ")}`
+  : device === "touch" ? keycapHtml("TAP")
+  : `${(["W", "A", "S", "D"] as const).map(g => keycapHtml(g)).join("")} · <span class="k">Space</span> · ${keycapHtml("E")}`;
 const CHOOSE = new Set(["Enter", "NumpadEnter", "Space"]); // (Space chooses, E closes it: Ed, 2026-10-26, "E should also close, and we can have spacebar to select")
 const PAD_DIRS: Record<string, [number, number]> = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] };
 const STATION_NAMES: Record<string, string> = { mirror: "Mirror", dressingTable: "Dressing table", wardrobe: "Wardrobe", cloakPegs: "Cloak pegs", shoeRack: "Shoe rack", bags: "Bags", broomBay: "The bay", lathe: "Lathe", pegboard: "Pegboard" };
