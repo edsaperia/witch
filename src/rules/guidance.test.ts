@@ -14,12 +14,12 @@ import { atGuide, emptyGuide, guidanceOf, guideShows, seeGuide, GUIDANCE_HOOKS, 
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 const run = (g: Game, s: number, c: Partial<Controls> = {}) => { for (let i = 0; i < Math.round(s / STEP); i++) stepGame(g, { ...idle, ...c }, STEP); };
-/** Up in her bedroom: the first night's whole wake-up, or (`later`) the shorter one of the nights after. */
+/** Up in her bedroom: a game's first morning, or (`later`) after a night played (one wake-up for every morning: Ed, 2026-10-26). */
 function up(later = false): Game {
   const g = newGame(123, TUNING);
   g.party.spellAt = null; g.clock.paused = false;
   wakeInBedroom(g);
-  startWake(g, g.herTime, later, false, later); // (later: after a night played, last night's clothes in their pile)
+  startWake(g, g.herTime, { yesterday: later }); // (later: after a night played, last night's clothes in their pile)
   run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
   return g;
 }
@@ -52,9 +52,9 @@ describe("guidance pins", () => {
     expect(of(g)?.kind).toBe("decks");
   });
 
-  it("a game's first morning on a later load (the shorter wake-up, no night played yet): no pile, so the dressing pins, her hat last on the hats' floor", () => {
+  it("a game's first morning on a later load (no night played yet): no pile, so the dressing pins, her hat last on the hats' floor", () => {
     const g = newGame(123, TUNING);
-    g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, true);
+    g.party.spellAt = null; g.clock.paused = false; wakeInBedroom(g); startWake(g, g.herTime, { mirrored: true });
     run(g, 0.1, { moveX: 1 }); run(g, WAKE_DEFAULT.stretch + 0.1);
     expect(of(g)).toEqual({ kind: "dress", target: { object: "wardrobe" } });
     for (const st of ["wardrobe", "shoeRack", "cloakPegs", "bags"]) wearFromStation(g.wake!, st);

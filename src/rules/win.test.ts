@@ -258,6 +258,22 @@ describe("the conga follows her (Ed's playtest, 2026-10-26: on the ground in the
     stepGame(g, idle, STEP);
     expect(congaFollows(g)).toBe(false);
   });
+  it("never on her leash (Ed's playtest, 2026-10-26: \"when I land in the home area, they start following me, and they are all added to my sigil stack\"): landing at home, walking with the line and pressing the sigil button among it, her stack stays empty and none of them is leashed", () => {
+    const g = wonNight();
+    expect(g.leash.stack).toEqual([]);
+    // up in the treetops over home, then down again: landing, as Ed did
+    g.witch = { ...g.witch, mode: "treetop", lift: 1 };
+    run(g, 2);
+    stepGame(g, { ...idle, toggleMode: true }, STEP);
+    for (let i = 0; i < 20 / STEP; i++) {
+      const t = i * STEP, a = t * 0.8, press = i % Math.round(0.5 / STEP) === 0;
+      stepGame(g, { ...idle, moveX: -Math.sin(a) * 0.6, moveZ: Math.cos(a) * 0.6, sigil: press }, STEP);
+      if (i > 2 / STEP) expect(congaFollows(g)).toBe(true);
+      expect(g.leash.stack).toEqual([]);
+    }
+    expect(line(g).filter(c => c.leashed)).toEqual([]);
+    expect(g.leash.placed).toEqual([]);
+  });
 });
 
 describe("the woken legends' places (Ed, 2026-10-11: north of the dancefloor, beyond the conga)", () => {
