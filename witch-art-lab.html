@@ -14817,10 +14817,6 @@ const AREA_FLORA_HAZEL_FOREST = { species: [["hazel", .45], ["oak", .2], ["elder
 const AREA_FLORA_HEATH = { species: [["birch", .4], ["pine", .25], ["hawthorn", .2], ["rowan", .15]], palette: { sat: .9, val: .95 } };
 
 
-// ---- inlined from art/areas/holly-thicket/flora.js ----
-const AREA_FLORA_HOLLY_THICKET = { species: [["holly", .45], ["yew", .3], ["vinewood", .25]], palette: { sat: .9, val: .8 } };
-
-
 // ---- inlined from art/areas/honeysuckle-tangle/flora.js ----
 const AREA_FLORA_HONEYSUCKLE_TANGLE = { species: [["hazel", .4], ["rowan", .25], ["elder", .2], ["crabApple", .15]], palette: { sat: 1.05, val: 1.02 } };
 
@@ -14873,6 +14869,13 @@ const AREA_FLORA_STREAM = { species: [["alder", .45], ["willow", .3], ["weepingB
 const AREA_FLORA_TANGLY_FOREST = { species: [["hawthorn", .45], ["elder", .25], ["crabApple", .2], ["hazel", .1]], palette: { sat: 1.05, val: .9 } };
 
 
+// ---- inlined from art/areas/thorn-scrub/flora.js ----
+// The thorn scrub (the holly thicket till the roster moved the spider to the badlands: Ed, 2026-10-23/25). A ring 3 area, so
+// semi-temperate (Ed, 2026-10-25: "lower phase non-home biome areas can be semi-temperate looking"): thorn trees and junipers from
+// the badlands' list (art/flora/biomes.js) with hawthorn, the temperate thorn, among them; no holly, yew or vinewood.
+const AREA_FLORA_THORN_SCRUB = { species: [["acacia", .35], ["hawthorn", .35], ["juniper", .3]], palette: { sat: .7, val: .8 } };
+
+
 // ---- inlined from art/areas/twiggy-forest/flora.js ----
 const AREA_FLORA_TWIGGY_FOREST = { species: [["ash", .5], ["elm", .25], ["aspen", .25]], palette: { sat: .9, val: 1.05 } };
 
@@ -14886,7 +14889,7 @@ const AREA_FLORA_WISPY_FOREST = { species: [["lime", .4], ["birch", .25], ["aspe
 
 
 const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "holly-thicket": AREA_FLORA_HOLLY_THICKET, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, "cave-mouth": AREA_FLORA_CAVE_MOUTH, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, norway: AREA_FLORA_NORWAY, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
   {"kind":"squirrel","slot":1,"phase":0,"bearing":285,"dir":"WNW","biome":"temperate"},
@@ -15204,8 +15207,11 @@ const AREAS = [
     wall: [P("rockwall", { moss: true })], small: [P("fern")], big: [P("boulder", { moss: true, big: true }), P("spire", { sparse: .1 }), P("spire", { sparse: .06, twin: true }), P("stalagmite", { sparse: .1 }), tree("rowan", { variant: "windbent", scale: .9, lean: .4 }), tree("pine", { minor: true, lean: .35 })], set: P("waterfall") }, // (and trees clinging to its rims, leaning out: Ed, 2026-10-13)
   { id: "bluebell-glade", name: "Bluebell glade", creature: "hare", by: "draft", leaf: .26, floor: ["bluebells", .27, .45, .4], text: { floor: "bluebells", small: "ferns", big: "beeches" },
     small: [P("fern")], big: [tree("beech", { gnarl: .2, scale: 1.1 }), tree("holly", { minor: true, scale: .7 })] },
-  { id: "holly-thicket", name: "Holly thicket", creature: "spider", by: "draft", leaf: .36, floor: ["leaves", .08, .35, .28], text: { floor: "dead leaves", wall: "holly hedges", small: "cobwebs", big: "hollies", set: "a web-hung dead tree" },
-    wall: [P("hedge", { berries: true })], small: [P("web")], big: [tree("holly", { scale: .9 }), tree("yew", { minor: true, scale: .7 })], set: tree("broad", { bare: true, webs: true }) },
+  // (the holly thicket till the roster moved the spider to the badlands, Ed 2026-10-23/25; ring 3, so semi-temperate: dry brown
+  // earth, the scrub wash's thorny scrub, wind-bent thorn trees (the savanna's acacia and the plains' stunted one are theirs) and junipers from the badlands' list with hawthorn among them; the cobwebs and
+  // the web-hung dead tree kept, the spider's own)
+  { id: "thorn-scrub", name: "Thorn scrub", creature: "spider", by: "draft", leaf: .22, floor: ["mud", .07, .3, .45], text: { floor: "dry brown earth", wall: "the scrub's rocky banks", small: "thorny scrub and cobwebs", big: "thorn trees, hawthorns and junipers", set: "a web-hung dead tree" },
+    wall: [P("rockwall", {})], small: [P("shrub", { spiky: true, flower: [214, 190, 120] }), P("web")], big: [tree("acacia", { variant: "windbent", scale: .8 }), tree("hawthorn", { scale: .85, gnarl: .6 }), tree("juniper", { minor: true, scale: .7, lean: .2 }), P("snag", { sparse: .15, bleached: true })], set: tree("broad", { bare: true, webs: true }) },
   { id: "honeysuckle-tangle", name: "Honeysuckle tangle", creature: "dormouse", by: "draft", leaf: .25, floor: ["clover", .27, .45, .45], text: { floor: "grass and clover", wall: "bramble", small: "honeysuckle", big: "hazel coppice" },
     wall: [P("bramble")], small: [P("shrub", { flower: [250, 230, 170] })], big: [tree("hazel", { variant: "coppiced", trunks: 5, scale: .9, thin: true }), tree("rowan", { minor: true, scale: .8 })] }, // a taller coppice, so the area has something tall
 ];
@@ -15330,8 +15336,8 @@ const AREA_LAYOUTS = {
     "A deep wet cleft: rock walls and mossy boulders either side, ferns, a stream down the middle.", { treeShare: 0.3 }),
   "bluebell-glade": LAY("groves", .45, .5, [3, [8, 14]], [.1, .5, .35, .05], .3, NO_LEAN, ["hollows"], [.35, [.4, 0, .3, .3, 0]],
     "Beech groves round open glades carpeted in bluebells; soft, bright and airy."),
-  "holly-thicket": LAY("thicket", .9, .3, [1, [6, 9]], [.3, .6, .1, 0], .7, NO_LEAN, ["hollows"], [.25, [.3, 0, .5, 0, .2]],
-    "Dark hollies packed close, cobwebs strung between, one clearing round the web-hung tree."),
+  "thorn-scrub": LAY("thicket", .55, .5, [1, [8, 12]], [.35, .55, .1, 0], .75, NO_LEAN, ["rocky", "hollows"], [.3, [.25, .55, .1, 0, .1]],
+    "Low thorn trees and junipers packed in tangles on dry red earth, cobwebs strung between them, one clearing round the web-hung tree."),
   "honeysuckle-tangle": LAY("stands", .6, .7, [2, [5, 8]], [.45, .5, .05, 0], .8, NO_LEAN, ["paths", "mounds"], [.3, [.3, 0, .3, 0, .4]],
     "Hazel coppice stools in clumps, honeysuckle and bramble between, clover paths winding through."),
 };
@@ -19057,7 +19063,7 @@ const SMALL = {
 const rows = (piece, x0, x1, dx, zs, skip = () => false, kinds = [piece]) => zs.flatMap((z, j) => { const out = []; for (let x = x0, i = 0; x <= x1 + 1e-6; x += dx, i++) if (!skip(x, z)) out.push([kinds[(i * 7 + j * 3) % kinds.length], +(x + ((i * 37 + j * 11) % 5 - 2) * .04).toFixed(2), +(z + ((i * 13 + j * 7) % 5 - 2) * .05).toFixed(2), (i + j) % 3 ? undefined : "left"]); return out; });
 const GRAVES = ["headstone", "headstone", "headstone-lean", "grave-cross", "headstone-sunk", "headstone"];
 const LARGE = {
-  "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "holly-thicket", "ancient", "deadwood", "wispy-forest"], pieces: [
+  "cemetery": { desc: "a cemetery gone back to the wood: rows of leaning headstones and crosses, a stone angel, a mausoleum, iron railings round an old plot, a lychgate, a yew, a lantern or two still flickering", suits: ["old-oaks", "ancient", "deadwood", "wispy-forest"], pieces: [
     ["lychgate", 0, 4.4], ["mausoleum", -3.4, -3.4], ["yew", 3.6, -3.2], ["stone-angel", .2, -.7], ["obelisk", 2.6, 1.0],
     ...rows("headstone", -3.6, 3.6, .9, [-1.9, .5, 2.4], (x, z) => (Math.abs(x - .2) < .9 && Math.abs(z + .7) < 1.5) || (Math.abs(x - 2.6) < .6 && Math.abs(z - 1.0) < .8) || (x < -2.3 && z > 1.5), GRAVES),
     ["iron-railing", -3.4, 1.4], ["iron-railing", -3.4, 3.3], ["grave-lantern", -1.7, .7], ["grave-lantern", 1.0, 2.6]] },
@@ -19181,7 +19187,7 @@ const rag = (u, v, P, amt = .14) => Math.abs(u) > 1 - amt * pkNoise(u > 0 ? 3 : 
 const PATH_KINDS = {
   dirt: { width: 3, period: 4, desc: "a dirt track: worn earth, grass at its edges, puddles in its ruts", moods: ["muddy-forest", "hazel-forest", "twiggy-forest", "alder-forest", "meadow", "grassland", "beaver-pond", "wispy-forest"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .3)) return 0; const n = pkNoise(u * 3, v, 2.2, P); if (Math.abs(u) > .8 - n * .15) return [n > .5 ? M.LEAF2 : M.LEAF, .1]; const rut = Math.abs(Math.abs(u) - .45) < .1 + n * .05; if (rut && pkNoise(u * 2, v, .9, P) > .68) return [M.WATER, 0]; return [rut ? (n < .5 ? M.BARK2 : M.BARKD) : n < .3 ? M.BARK2 : n > .8 ? M.LEAF3 : M.BODY2, .15]; } },
-  animal: { width: 1.2, period: 4, desc: "an animal track: a faint, narrow trail through the undergrowth", moods: ["berry-thicket", "tangly-forest", "holly-thicket", "fern-forest", "honeysuckle-tangle", "ancient", "bog"],
+  animal: { width: 1.2, period: 4, desc: "an animal track: a faint, narrow trail through the undergrowth", moods: ["berry-thicket", "tangly-forest", "thorn-scrub", "fern-forest", "honeysuckle-tangle", "ancient", "bog"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .5)) return 0; const n = pkNoise(u * 2, v, 3, P); if (n < .35) return 0; return [n > .75 ? M.BARK2 : M.LEAF3, .1]; } },
   flagstones: { width: 2.5, period: 4, desc: "mossy flagstones: an old stone path, gaps between the slabs", moods: ["garden", "stone-shrine", "ancient", "bluebell-glade", "old-oaks"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .1)) return 0; const c = pkCells(u * 1.25, v, 1.3, P); if (c.edge < .12) return c.edge < .05 ? 0 : [M.MOSS, .1]; if (c.id < .08) return 0; return [c.id < .25 ? M.STONED : pkNoise(u, v, 4, P) < .2 ? M.MOSS : M.STONE, .25]; } },
