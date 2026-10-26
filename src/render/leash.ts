@@ -56,6 +56,8 @@ export class LeashView {
   /** How far her decks are slid this frame with the house's drawing, off the Terrace (render/view/home.ts placeTreehouse): the tempo
    *  over them goes with them. */
   seatSlide = { x: 0, y: 0, z: 0 };
+  /** Her decks not drawn this frame (the Terrace one of the house's rooms, seen from outside: render/view/home.ts placeTreehouse): their tempo hidden with them. */
+  decksHidden = false;
   canvas = document.createElement("canvas");
   tex: THREE.CanvasTexture;
   slots = new Map<string, number>();

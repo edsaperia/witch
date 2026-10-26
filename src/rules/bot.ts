@@ -575,8 +575,9 @@ export function newBot(kind: BotKind, o: BotOptions = {}): Bot {
       if (dd) { dash = true; mx = dd.x; mz = dd.z; aimX = dd.x * 10; aimZ = dd.z * 10; fire = false; }
       else if (dash) { const l = Math.hypot(mx, mz) || 1; aimX = (mx / l) * 10; aimZ = (mz / l) * 10; fire = false; } // (a kiting blink: away, the way she's going)
     }
-    // The treehouse deck (rules/treehouse.ts): the bots don't use it. Stepped off her decks onto it, she rises straight off; in the
-    // treetops she doesn't come down over it.
+    // The treehouse deck (rules/treehouse.ts): the bots don't use it. Stepped off her decks onto it, or flown onto the house's landing
+    // trunk on her way somewhere (Dining Room to Boudoir: it lands her by herself), she rises straight off (from any room, with her
+    // broom: Ed, 2026-10-26); in the treetops she doesn't come down over it (landsOn).
     const deck = deckOf(g.map, t);
     if (deck && !b.seated && b.perch && b.mode === "ground") toggle = true;
     else if (deck && toggle && b.mode === "treetop" && landsOn(deck, b.x, b.z)) toggle = false;

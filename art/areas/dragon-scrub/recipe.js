@@ -10,7 +10,7 @@ export const DRAGON_SCRUB = {
   setPiece: ["heap", "a great sun-warmed basking rock", 1.2, { of: "stones", moss: .02, top: "slab", height: 2.6 }],
   layout: {
     pattern: "lone", density: .22, clump: .3, glades: { count: 3, size: [16, 24] },
-    heightMix: { sapling: .2, mature: .6, tall: .2, giant: 0 }, undergrowth: .45, lean: { dir: .3, amount: .15 },
+    heightMix: { sapling: .2, mature: .7, tall: .1, giant: 0 }, undergrowth: .45, lean: { dir: .3, amount: .15 },
     terrain: ["rocky", "hollows"], decor: { rate: .3, ruins: .15, rocks: .7, freak: .05, lake: 0, modern: .1 },
     feel: "Hot dry savannah grass between rocky outcrops, flat-topped acacias and fan palms standing well apart, thorn scrub at their feet; open, bright and baking, a big lizard asleep on every warm rock.",
   },

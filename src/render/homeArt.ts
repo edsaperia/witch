@@ -29,14 +29,24 @@ export interface WitchArt {
 
 /** Her frames from her genome (null: the classic witch): flight, on foot, headings. Bare (her hat knocked off: rules/hat.ts):
  *  the same frames, at the same places, with no hat; then the hat on the ground. Dry: nothing drawn, only where each pose's
- *  frames will be (the page's stand-in until the worker's frames arrive; the same order, so the same places). */
-export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: MakeCanvas, dry = false): { sprites: Baked[]; witch: WitchArt } {
+ *  frames will be (the page's stand-in until the worker's frames arrive; the same order, so the same places). Quick: her preview
+ *  (Ed's playtest of v4821, 2026-10-26: "When selecting clothes etc I don't see changes on the witch immediately when I select
+ *  them"): one frame a facing (towards, away, up and down the screen: standing, as she stands at a station) drawn, and every pose's
+ *  frames that frame, so a look shows on her in a tenth of the time; the whole set follows (render/assets.ts rebakeWitch). */
+export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: MakeCanvas, dry = false, quick = false): { sprites: Baked[]; witch: WitchArt } {
   // The witch: hover frames 0-2 towards, 3-5 away, then leaning towards (6) and away (7); then
   // rising (8-9 towards, 10-11 away) and descending (12-13 towards, 14-15 away), two frames each.
   const mine = witchLookOf(style, genome), wc = mine.colours, look = bare ? { ...(mine.look ?? {}), hat: "none" } : mine.look;
   const W: WitchArt = { foot: {}, fly: {}, heading: {} as WitchArt["heading"], lean: { towards: [], away: [] }, dj: { full: [], upper: [] }, hat: -1, grounds: [] };
+  const drawn = new Map<string, { b: Baked; ground: FrameGround | null }>();
   const wb = (o: object) => {
     if (dry) { W.grounds.push(null); return DRY; }
+    if (quick) { // (the preview: her standing frame for this facing, drawn once)
+      const q = o as { facing?: string; heading?: string }, k = q.heading ? `h${q.heading}` : q.facing ?? "towards";
+      let d = drawn.get(k);
+      if (!d) { const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { pose: "idle", frame: 0, ...(q.heading ? { heading: q.heading } : { facing: k }), look }) as { anchors?: Record<string, number[]> }; drawn.set(k, (d = { b: Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked, ground: groundOf(sp.anchors) })); }
+      W.grounds.push(d.ground); return d.b;
+    }
     const sp = (Art.witchSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite>)(style, { ...o, look }) as { anchors?: Record<string, number[]> };
     W.grounds.push(groundOf(sp.anchors));
     return Art.bake(sp as ReturnType<typeof Art.witchSprite>, wc, style, style.cOutline, mk) as Baked;
@@ -60,6 +70,7 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
   for (const facing of ["towards", "away"] as const) for (let frame = 0; frame < 4; frame++) { W.lean[facing].push(sprites.length); sprites.push(wb({ pose: "lean", frame, facing })); }
   // Behind the decks: each DJ frame, then its upper layer (the same sprite, only what's above the decks' top: art/witch.js aboveDecks).
   for (let frame = 0; frame < (FOOT.dj?.frames ?? 0); frame++) {
+    if (quick) { W.dj.full.push(sprites.length); sprites.push(wb({ facing: "towards" })); W.dj.upper.push(sprites.length); sprites.push(wb({ facing: "towards" })); continue; }
     if (dry) { W.grounds.push(null, null); W.dj.full.push(sprites.length); sprites.push(DRY); W.dj.upper.push(sprites.length); sprites.push(DRY); continue; }
     const sp = (Art.witchSprite as (st: Style, o: object) => { anchors?: Record<string, number[]>; upper?: Uint8Array; m: Uint8Array; w: number; h: number })(style, { pose: "dj", frame, look });
     W.grounds.push(groundOf(sp.anchors), groundOf(sp.anchors));
@@ -72,7 +83,7 @@ export function witchSprites(style: Style, genome: unknown, bare: boolean, mk: M
       idle: [...Array(FOOT.idle.frames).keys()].map(frame => at({ pose: "idle", frame })), walk: [...Array(FOOT.walk.frames).keys()].map(frame => at({ pose: "walk", frame })),
       idleBroom: [...Array(FOOT.idleBroom.frames).keys()].map(frame => at({ pose: "idleBroom", frame })), walkBroom: [...Array(FOOT.walkBroom.frames).keys()].map(frame => at({ pose: "walkBroom", frame })) };
   }
-  if (bare && !dry) {
+  if (bare && !dry && !quick) {
     const hat = (Art.witchHatSprite as (st: Style, o: object) => ReturnType<typeof Art.witchSprite> | null)(style, { look: mine.look });
     if (hat) { W.hat = sprites.push(Art.bake(hat, wc, style, style.cOutline, mk) as Baked) - 1; W.grounds.push(null); }
   }

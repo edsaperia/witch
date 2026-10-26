@@ -10,7 +10,7 @@ export const CINDER_SLOPES = {
   setPiece: ["cinder-cone", "a cinder cone, its crater glowing, lava trickling down its side", 1.0],
   layout: {
     pattern: "stands", density: .3, clump: .8, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .3, mature: .5, tall: .2, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
+    heightMix: { sapling: .3, mature: .6, tall: .1, giant: 0 }, undergrowth: .35, lean: { dir: 0, amount: 0 },
     terrain: ["hollows"], decor: { rate: .3, ruins: .1, rocks: .6, freak: .2, lake: 0, modern: .1 },
     feel: "Black ash slopes cracked with glowing lava, tree ferns and cycad palms gathered in the sheltered hollows, a few palms on the ridges, a little cinder cone smoking in the clearing.",
   },

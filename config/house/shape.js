@@ -91,6 +91,20 @@ export function field(S0, x0, z0, walk = false, parts = null) {
   return walk && lockedIn < 1e8 ? Math.max(d, -lockedIn) : d;
 }
 
+/** The trunk's floor from room `from` to room `to` along it (rules/treehouse.ts: where she lands by herself, Ed 2026-10-26): their
+ *  blobs and the trunk's limbs between them, smoothed as the floor's (negative inside), metres on the plan; 1e9 for rooms not on it.
+ *  @param {any} S0 @param {number} x0 @param {number} z0 @param {string} from @param {string} to */
+export function trunkField(S0, x0, z0, from, to) {
+  const S = inMock(S0), x = x0 + S.ox, z = z0 + S.oz, i0 = S.trunk.findIndex(r => r.id === from), i1 = S.trunk.findIndex(r => r.id === to);
+  if (i0 < 0 || i1 < i0) return 1e9;
+  const far = outside(S.box, x, z);
+  if (far > 0) return far;
+  let d = 1e9;
+  for (let i = i0; i <= i1; i++) d = smin(d, blob(S.trunk[i], x, z), 6);
+  for (let i = i0 + 1; i <= i1; i++) { const l = spineLimb(S.trunk[i - 1], S.trunk[i], i), [s] = limb(l.a, l.b, l.bend, l.w0, l.w1, x, z); d = smin(d, s, 6); }
+  return d;
+}
+
 /** The room whose floor (x, z) is on: the nearest blob that holds it, else null (on a branch between rooms). */
 export function roomAt(S0, x0, z0) {
   const S = inMock(S0), x = x0 + S.ox, z = z0 + S.oz;

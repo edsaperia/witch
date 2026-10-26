@@ -11,7 +11,7 @@ export const DROWNED_WOOD = {
   setPiece: ["heap", "the drowned stones of an old wall", 1, { seed: 11, of: "rubble", moss: .5, top: "none" }],
   layout: {
     pattern: "stands", density: .55, clump: .6, glades: { count: 2, size: [16, 24] },
-    heightMix: { sapling: .05, mature: .35, tall: .45, giant: .15 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
+    heightMix: { sapling: .05, mature: .65, tall: .225, giant: .075 }, undergrowth: .4, lean: { dir: 0, amount: .05 },
     terrain: ["pools", "hollows"], decor: { rate: .3, ruins: .6, rocks: .1, freak: .1, lake: .2, modern: 0 },
     feel: "Tall drowned bald cypresses standing in still black water, roots knuckled up out of it, strangler figs among them, the broken tops of old walls and pillars breaking the surface; silent, cold and deep, and the water moving where nothing should be.",
   },

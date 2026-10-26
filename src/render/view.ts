@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf, noRiseAt } from "../rules/treehouse";
+import { carrierOf, deckOf, indoorsAt } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
@@ -102,6 +102,7 @@ import { Glades } from "./glades";
 import { Wisps } from "./wisps";
 import { leyChain, leyKey } from "../rules/leylines";
 import { SPRITE_UNIFORMS, SpriteBatch, metresPerArtPixel } from "./sprites";
+import type { Spin } from "./spin";
 import { nextFrame, runSliced, runSync, type Steps } from "./slices";
 import { holdDisposals, releaseDisposals } from "./retire";
 import { Fireworks } from "./fireworks";
@@ -314,6 +315,9 @@ function nightState(t: Tuning) {
     /** Showing a change off at a dressing station (main.ts, ui/stationPanel.ts; Ed, 2026-10-21: "a beat on each change"): till this
      *  time of hers, standing still, she turns to face us. */
     turnUntil: 0,
+    /** Her twirl at a dressing station while her new look draws (render/spin.ts; main.ts starts it): her frames kept on the look she
+     *  had till it's over (swapHomeArt). */
+    spin: null as Spin | null,
     /** On foot in the house, her walk's phase (frames: render/view/witch.ts). */
     walkPhase: 0,
     /** Each ring speaker's top, state and power, for its laser (Ed: one each, none from the disco ball). */
@@ -374,7 +378,7 @@ export class View {
   private smoke!: Smoke;
   /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
    *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
-   *  room or on a branch off the Terrace (rules/treehouse.ts noRiseAt), only the house's own meshes are drawn (its rooms, the Ent's
+   *  room or on a branch off the Terrace (rules/treehouse.ts indoorsAt), on foot, only the house's own meshes are drawn (its rooms, the Ent's
    *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
    *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
    *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
@@ -394,7 +398,7 @@ export class View {
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
+    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && indoorsAt(deck, w.x, w.z) && !this.telescope; // (on foot: rising out of a room, the forest comes back as she lifts off)
     // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
     if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
     const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
@@ -460,12 +464,15 @@ export class View {
   /** The crown for a house with rooms (made once: the same oak over any island's treehouse), or none. */
   private ensureCrown(game: Game): void {
     const t = game.tuning, H = t.treehouse.house, want = !!(H?.on && H.crown?.on && deckOf(game.map, t)?.house?.rooms);
+    // (the crown whole over the Terrace or with its gap, the pause page's switch: Ed, 2026-10-26, grown again when it's flipped)
+    const gap = H?.crown?.whole !== true;
+    if (this.crown && want && this.crown.crown.gap !== gap) { this.scene.remove(...this.crown.meshes); this.strings?.setCrown(null); this.crown.dispose(); this.crown = null; if (this.crownFar) { this.scene.remove(...this.crownFar.meshes); this.crownFar.dispose(); this.crownFar = null; } }
     if (want && !this.crown && H) {
       const outline = { rooms: OUTLINE_ROOMS, branches: OUTLINE_BRANCHES, stubs: OUTLINE_STUBS, takeoff: OUTLINE_TAKEOFF } as unknown as HouseOutline;
       // (the dancefloor and its speakers stay open to the sky as the Terrace does: it stands south-east of the house, under the crown's edge)
       const deck = deckOf(game.map, t)!, df = game.map.dancefloor, dp = toPlan({ x: deck.x, z: deck.z }, df.x, df.z);
       const open = [{ x: dp.x, z: dp.z, r: speakerRadius(t) + t.dancefloor.speakers.footprint + 4 }];
-      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open }), t.stringLights.bulbSpacing, outline);
+      this.crown = new CrownView(makeCrown({ outline, floor: H.height, seed: H.crown!.seed, open, gap }), t.stringLights.bulbSpacing, outline);
       this.crown.drawMask = (key, box) => { const p = this.assets.oneOff({ kind: "crownMask", id: `${key}@${box.map(v => v.toFixed(4)).join(",")}`, style: this.assets.style, box: [...box] }).then(r => r.mask ?? Promise.reject(new Error("no mask"))); this.assets.track(`crownMask:${key}`, p); return p; };
       this.scene.add(...this.crown.meshes);
       this.strings?.setCrown(this.crown); // (its string lights: render/strings.ts)
@@ -1367,8 +1374,11 @@ export class View {
   /** The start's own art, drawn by the art workers (fast start (b)): each batch built on a stand-in takes its set once it arrives. */
   private swapHomeArt(): void {
     const A = this.assets;
-    if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
-    if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
+    if (!this.spin) { // (a twirl's in the clothes she had: render/spin.ts)
+      if (this.witchBatch.atlas !== A.witch) this.witchBatch.setAtlas(A.witch);
+      if (this.bareBatch && this.bareBatch.atlas !== A.witchBare()) this.bareBatch.setAtlas(A.witchBare());
+      A.letGo([this.witchBatch.atlas, ...(this.bareBatch ? [this.bareBatch.atlas] : [])]);
+    }
     if (this.treehouseBatch.atlas !== A.treehouse.atlas) this.treehouseBatch.setAtlas(A.treehouse.atlas);
     if (this.propBatch.atlas !== A.props) this.propBatch.setAtlas(A.props);
     if (this.soundBatch.atlas !== A.soundsystems) { this.soundBatch.setAtlas(A.soundsystems); this.partyView.atlas = A.soundsystems; }
