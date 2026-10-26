@@ -188,15 +188,22 @@ varying vec3 vWorld;
 varying vec2 vSt;
 float h(float x) { return fract(sin(x * 91.7) * 4375.85); }
 void main() {
-  float col = floor(vSt.x * uCols), streak = h(col), y = floor(vSt.y * 60.0) / 60.0; // (whole pixels down it)
-  float run = fract(y * 3.0 - uTime * (0.4 + streak * 0.5) + streak);
-  float lit = smoothstep(0.55, 1.0, run) * (0.4 + 0.6 * streak);
-  float fade = 1.0 - smoothstep(0.1, 1.0, y);
-  vec3 c = mix(vec3(0.07, 0.12, 0.2), vec3(0.42, 0.56, 0.72), lit) * (0.5 + 0.5 * fade);
-  // (white water and spray where it goes over the lip, thinning as it falls)
-  float spray = (1.0 - smoothstep(0.0, 0.22, y)) * step(0.35, h(col * 1.7 + floor(vSt.y * 60.0 - uTime * 6.0) * 0.13));
-  c = mix(c, vec3(0.8, 0.88, 0.95), spray * 0.85);
-  gl_FragColor = vec4(c, max(spray * 0.9, fade * (0.6 + 0.4 * lit)));
+  // (in whole pixels: a column a metre and a bit round the rim, 90 rows down the fall)
+  float col = floor(vSt.x * uCols), y = floor(vSt.y * 90.0) / 90.0, r = h(col), r2 = h(col + 17.3);
+  // the crest: white water rolling over the lip, a lit band and its curl
+  float crest = 1.0 - smoothstep(0.0, 0.07, y);
+  // the sheet: streaks of white water racing down it, each column its own speed and spacing, over deep blue water
+  float speed = 0.9 + r * 0.8, run = fract(y * (2.0 + r2 * 3.0) - uTime * speed + r);
+  float streak = step(0.62 - 0.25 * r2, run) * (0.55 + 0.45 * r);
+  float band = step(0.5, fract(col * 0.5)) * 0.15; // (alternate columns a shade apart: the water in ropes)
+  vec3 deep = vec3(0.1, 0.2, 0.32), white = vec3(0.78, 0.88, 0.96);
+  vec3 c = mix(deep * (1.0 + band), white, streak * (1.0 - smoothstep(0.55, 0.95, y)));
+  c = mix(c, vec3(0.92, 0.97, 1.0), crest);
+  // falling away into the dark: thinning to mist past the middle, gone by the bottom
+  float body = 1.0 - smoothstep(0.45, 1.0, y), mist = 0.35 * smoothstep(0.35, 0.7, y) * (1.0 - smoothstep(0.7, 1.0, y)) * (0.6 + 0.4 * h(col * 3.1 + floor(y * 30.0 - uTime * 2.0)));
+  float a = max(crest, max(body * (0.85 + 0.15 * streak), mist));
+  if (a < 0.02) discard;
+  gl_FragColor = vec4(c * (0.55 + 0.45 * body) + vec3(mist * 0.3), a);
 }
 `;
 
@@ -206,7 +213,7 @@ export class ZooFall {
     const L = map.zoo?.layout, R = (L?.reach ?? 0) + (ZOO_CONFIG.margin ?? 120) + lip; // (the disc's coast, rules/map.ts, and the lip past it)
     // (the water pouring over the lip, a sheet curving out and down: out metres beyond it as it falls drop metres, so it shows
     // from above past the edge, where a sheer fall would hide behind the lip; the ground cut away over it, render/ground.ts)
-    const pos: number[] = [], base: number[] = [], st: number[] = [], idx: number[] = [], n = Math.max(64, Math.round((Math.PI * 2 * R) / 3)), rows = 10;
+    const pos: number[] = [], base: number[] = [], st: number[] = [], idx: number[] = [], n = Math.max(64, Math.round((Math.PI * 2 * R) / 3)), rows = 16;
     const cx = L?.home.x ?? 0, cz = L?.home.z ?? 0;
     for (let k = 0; k <= n; k++) {
       const a = (k / n) * Math.PI * 2;
@@ -247,7 +254,7 @@ export class ZooFall {
 }
 
 /** The spray's height over the lip (m). */
-const SPRAY_H = 7;
+const SPRAY_H = 4;
 const SPRAY_FRAG = /* glsl */ `
 uniform float uTime;
 uniform float uCols;

@@ -205,7 +205,7 @@ export function stepWitch(w: WitchState, intent: Intent, dt: number, t: Tuning, 
 }
 
 /** Is she being steered on out to sea (within 60 degrees of straight out to the water)? undefined: not steered at all. */
-function seaward(w: { x: number; z: number }, intent: Intent, bounds: Bounds): boolean | undefined {
+export function seaward(w: { x: number; z: number }, intent: Intent, bounds: Bounds): boolean | undefined {
   const L = bounds.land, m = Math.hypot(intent.moveX, intent.moveZ);
   if (!L || m < 0.1) return undefined;
   const n = L.inward(w.x, w.z);
