@@ -19,7 +19,7 @@ describe("the Spooky colour grade slider", () => {
     expect(d.apply.knob).toBe("light.spooky.grade");
     expect(d.control).toMatchObject({ type: "slider", min: 0, max: 1 });
     expect(d.default).toBe(TUNING.light?.spooky?.grade);
-    expect(d.default).toBe(0.9);
+    expect(d.default).toBe(0); // (Ed's tuned value, 2026-10-26: the grade off)
     const leaf = DECISION_LIST.filter(e => e.id.startsWith("leafJitter"));
     expect(leaf.length).toBe(3);
     for (const e of leaf) expect(groupOf(e)).toBe(groupOf(d));
@@ -27,6 +27,7 @@ describe("the Spooky colour grade slider", () => {
 
   it("drives uGrade.x live: the slider sets the knob in place and the next frame's grade reads it", () => {
     const t = copy(), M = moodOf(t)!, u = vec();
+    setKnob(t, d.apply.knob!, 0.9);
     gradeInto(u, M);
     expect(u.x).toBe(0.9); expect(u.y).toBe(M.gradeDesat); expect(u.z).toBe(M.gradePivot);
     setKnob(t, d.apply.knob!, 0.35); // (as the pause page does: applyDecision)
