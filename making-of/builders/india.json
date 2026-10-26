@@ -44,7 +44,8 @@
     "A fresh game's first screen: asleep in the dark while home's night is made, then the wake-up in her bedroom; What's new and Options on the pause page (#1063)",
     "The ground's cost measured part by part (tools/bench/ground.cjs) and its unused lake and beach code compiled out: a fifth off the forest floor's draw, the picture the same to the pixel",
     "The sail's transition: the next night made under the sea chart's flight, the flight easing into a hover until the night's ground, house and shaders are ready, the dive's own areas drawn first and the dive coming in from far out to sea (`tools/view/sail-timing.cjs` times it)",
-    "Biome looks by ring: each island's forests take its biome at its ring's strength (55% at ring 3, 80% at ring 4, full at ring 5), mixed toward temperate, its art cached apart by ring"
+    "Biome looks by ring: each island's forests take its biome at its ring's strength (55% at ring 3, 80% at ring 4, full at ring 5), mixed toward temperate, its art cached apart by ring",
+    "Ed's tuned leaf jitter and spooky grade as the built defaults (his pause-page sliders, v4522)"
   ],
   "learned": [
     "Measure before you draw: one script through `rigParts` showed nineteen species standing on four vertical columns, which no amount of shading could fix.",

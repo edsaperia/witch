@@ -14,7 +14,7 @@
         "max": 1,
         "step": 0.01
       },
-      "default": 0.25,
+      "default": 0.2,
       "apply": {
         "knob": "leafJitter.autumn"
       }
@@ -31,7 +31,7 @@
         "max": 180,
         "step": 1
       },
-      "default": 8,
+      "default": 0,
       "apply": {
         "knob": "leafJitter.hue"
       }
@@ -48,7 +48,7 @@
         "max": 0.6,
         "step": 0.01
       },
-      "default": 0.12,
+      "default": 0.15,
       "apply": {
         "knob": "leafJitter.value"
       }
@@ -65,7 +65,7 @@
         "max": 1,
         "step": 0.01
       },
-      "default": 0.9,
+      "default": 0,
       "apply": {
         "knob": "light.spooky.grade"
       }

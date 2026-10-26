@@ -11,7 +11,7 @@ import type { Game } from "../rules/game";
 import { affectionOf, meterHits } from "../rules/game";
 import { witchHeight } from "../rules/witch";
 import { hash2 } from "../rules/random";
-import { placed, shownOverBend } from "./height";
+import { groundHeight, placed, shownOverBend } from "./height";
 import { pixelEmoji, pixelEmojiData, pixelSprite, sizeBubble, speechBubble } from "./bubbles";
 
 import { bodyRadius } from "../rules/spacing";
@@ -97,6 +97,8 @@ function showTurned(im: HTMLImageElement, e: string, n: number, sx: number, sy: 
 interface Bubble { el: HTMLElement; img: HTMLImageElement; until: number; x: number; y: number; z: number; id: number }
 
 export class InviteView {
+  /** Where she's drawn less the rules' place, in the house (the view's: render/view/witch.ts); its letters drawn by it. */
+  herOffset?: HerOffset;
   private root = document.createElement("div");
   private letters: HTMLImageElement[] = [];
   private lanterns: HTMLElement[] = [];
@@ -343,14 +345,15 @@ export class InviteView {
       im.style.display = "block";
       // A cache waits on the ground, bobbing; an orbiting one circles at her hand; the rest fly.
       const y = L.kind === "cache" ? 0.35 + 0.12 * Math.sin((time - L.at) * 4 + L.n) : L.kind === "orbit" || L.kind === "sling" ? 1.3 : lobHeight(L.flown, L.range ?? this.game.tuning.invites.range, this.game.tuning.invites.arc ?? 0);
-      place(im, L.x, y, L.z);
+      const [lx, ly, lz] = letterAt(this.herOffset, L.x, y, L.z); // (in the house, from her hand as drawn)
+      place(im, lx, ly, lz);
       // Like a frisbee (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): lying flat, turning
       // about the upright at invites.spin turns a second (snapped to sixteenths, pixel-like), laid flat
       // for the camera; a small one (Spawn) smaller; a cache still.
       const turns = L.kind === "cache" ? 0 : Math.round(((time - L.at) * t.invites.spin + L.n * 0.37) * 16) / 16, deg = (turns % 1) * 360, sz = L.small ? 0.6 : 1;
       if (!L.kind) this.spins.set(L.n, deg);
       showTurned(im, "💌", n, sz, sz * flat, deg, k); // (in art pixels, on the grid: Ed, round 14)
-      hide(im, `l${L.n}`, L.x, y, L.z);
+      hide(im, `l${L.n}`, lx, ly, lz);
     });
     if (this.spins.size > 64) { const live = new Set(I.letters.map(L => L.n)); for (const n of this.spins.keys()) if (!live.has(n)) this.spins.delete(n); }
     // Paw prints (Wildcat): little glowing hearts where the letters flew, fading out.
@@ -453,8 +456,22 @@ export class InviteView {
   }
 }
 
+/** Where she's drawn less where the rules have her, while she's in the treehouse (render/view/witch.ts: the oak's rooms are drawn
+ *  on the Ent's plane, slid up it with her, render/houseRooms.ts houseShift), and `y` her feet's height in the world as drawn
+ *  (the house's floor, some 22 m up). Off anywhere else. */
+export interface HerOffset { on: boolean; x: number; y: number; z: number }
+/** Where to draw a letter the rules have at (x, z), `y` metres up from where she stands: as it is, or in the house moved with her,
+ *  so a 💌 leaves her hand as drawn and flies on over the house's floor (Ed's playtest, 2026-10-25: "When you invite while you're
+ *  in the treehouse, the invites come from a place where the witch isn't": from the ground 22 m below her rules' place). The height
+ *  returned is over the ground there, as `placed` takes it. */
+export function letterAt(O: HerOffset | undefined, x: number, y: number, z: number, ground: (x: number, z: number) => number = groundHeight): [number, number, number] {
+  if (!O?.on) return [x, y, z];
+  const X = x + O.x, Z = z + O.z;
+  return [X, O.y + y - ground(X, Z), Z];
+}
+
 /** Her hand's height (m), where a 💌 leaves from. */
-const HAND = 1.3;
+export const HAND = 1.3;
 /** A letter's height (m) `flown` metres out (Ed, round 11: "they should arc a little and disappear when
  *  they hit the ground"): a gentle lob from her hand, rising `arc` over the straight line down to the
  *  ground at `range`, where the rules end it (fizzled) and it lands with a puff. */

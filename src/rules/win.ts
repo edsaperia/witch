@@ -12,6 +12,10 @@
 //     conga, but they come home and dance there as party legends) save any still enraged, which calm and go back to sleep in
 //     their clearing; every other animal on the island a party animal in one giant conga line round
 //     the dancefloor; fireworks from every standing soundsystem. Nothing fights after; the waves are over.
+//   The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow
+//     you"): while she's on the ground in the home area (not up at the treehouse, nor in the treetops), the line's leader
+//     trails followLead m behind her along where she's walked and the rest follow single file, congaGap apart (its trail starts
+//     through the line as it stands, so they file after her from where they are); anywhere else, back round the dancefloor.
 //   Then the "Night won" card (card), listing the islands found tonight by quests (found: g.islandsTonight; Ed, 2026-10-18: the
 //     win itself finds none, and only a won night keeps them).
 // The losing still comes first: home's speakers down before the win, the party's over as ever (rules/partyOver.ts). No drawing.
@@ -25,6 +29,8 @@ import { allReached, cellKey } from "./party";
 import { leyChain } from "./leylines";
 import { pulseProgress } from "./leypulse";
 import { goneAtWin } from "./finds";
+import { homeArea } from "./homeArea";
+import { updateTrail } from "./babies";
 
 /** A point on one of the lap's pulses' runs: a stone (its key; "" for where it set off), where it stands, when the pulse passes
  *  it, and its place along the ley route as drawn (links: home's stone 0, the route's j-th stone j). */
@@ -61,6 +67,9 @@ export interface WinState {
   /** The conga: the leader's starting angle round the dancefloor (towards her, as the night's won), and how many dance in it. */
   lead: number;
   congaSize: number;
+  /** Following her (WinTuning follow): where she's walked, newest first, flat [x0, z0, x1, z1, ...], begun through the line as it
+   *  stood; none while the line goes round the dancefloor. */
+  trail?: number[];
 }
 
 export interface WinTuning {
@@ -73,6 +82,11 @@ export interface WinTuning {
   /** Joining: how fast a dancer walks to its place (m/s); out of her sight (this far from her, m) it's simply there. */
   joinSpeed: number;
   seen: number;
+  /** Following her on the ground in the home area: on; the leader's distance behind her (m); and the dancers' pace to their places
+   *  while following, at least joinSpeed and this many times her own speed (so the line keeps up with her broom). */
+  follow: boolean;
+  followLead: number;
+  followSpeed: number;
   /** The woken legends' places (Ed, 2026-10-11, from art1's #691: a ring inside the conga's hid it from the ground): on the
    *  dancefloor's far (north) side, beyond the conga's ring and behind everything from the north-facing camera: arcs legendGap m
    *  outside the conga's circle, legendRow m apart, places legendSpace m apart along them from due north out to legendArc
@@ -89,7 +103,7 @@ export interface WinTuning {
   retarget: number;
 }
 
-export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
+export const WIN_DEFAULT: WinTuning = { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, cardAfter: 20, retarget: 0.25 };
 const tuningOf = (g: Game): WinTuning => ({ ...WIN_DEFAULT, ...(g.tuning.win ?? {}) });
 
 /** A legend (an area's, or any at the legend level). */
@@ -248,14 +262,35 @@ function win(g: Game, time: number): void {
   g.byArea = null;
 }
 
-/** Moves a finale dancer toward `to`: at win.joinSpeed in her sight, at once out of it; there, it keeps its place. */
-function toward(g: Game, c: Creature, to: { x: number; z: number }, dt: number, T: WinTuning): void {
+/** Moves a finale dancer toward `to`: at `speed` (win.joinSpeed) in her sight, at once out of it; there, it keeps its place. */
+function toward(g: Game, c: Creature, to: { x: number; z: number }, dt: number, T: WinTuning, speed = T.joinSpeed): void {
   const dx = to.x - c.x, dz = to.z - c.z, d = Math.hypot(dx, dz), wx = g.witch.x, wz = g.witch.z;
   const unseen = Math.hypot(c.x - wx, c.z - wz) > T.seen && Math.hypot(to.x - wx, to.z - wz) > T.seen;
-  const step = T.joinSpeed * dt;
+  const step = speed * dt;
   if (unseen || d <= step) { c.x = to.x; c.z = to.z; } else { c.x += (dx / d) * step; c.z += (dz / d) * step; if (Math.abs(dx) > 1e-6) c.facing = dx < 0 ? -1 : 1; c.away = dz < 0; }
   c.tx = c.x; c.tz = c.z; c.moving = d > 0.05;
 }
+
+/** Whether the line follows her now: the night won, and she's on the ground in the home area, off the treehouse. */
+export function congaFollows(g: Game): boolean {
+  const W = g.witch;
+  return tuningOf(g).follow && won(g) && W.mode === "ground" && !W.perch && !W.seated && !W.falling && homeArea(g.map).inside(W.x, W.z);
+}
+
+/** The places `first`, `first + gap`, ... metres back along her trail from her at (x, z), `n` of them, into `out` (flat x, z),
+ *  in one walk along it; past its far end, its far end. */
+export function trailPlaces(trail: readonly number[], x: number, z: number, first: number, gap: number, n: number, out: number[]): number[] {
+  out.length = n * 2;
+  let px = x, pz = z, done = 0, at = 0; // (at: how far back (px, pz) is)
+  for (let i = 0; i < trail.length && done < n; i += 2) {
+    const qx = trail[i], qz = trail[i + 1], seg = Math.hypot(qx - px, qz - pz);
+    while (done < n && first + done * gap <= at + seg && seg > 1e-9) { const k = (first + done * gap - at) / seg; out[done * 2] = px + (qx - px) * k; out[done * 2 + 1] = pz + (qz - pz) * k; done++; }
+    at += seg; px = qx; pz = qz;
+  }
+  for (; done < n; done++) { out[done * 2] = px; out[done * 2 + 1] = pz; }
+  return out;
+}
+const PLACES: number[] = [];
 
 /** The end of the route, a step (after everything else has moved: the finale's dancers keep their places). */
 export function stepWin(g: Game, dt: number): void {
@@ -285,11 +320,27 @@ export function stepWin(g: Game, dt: number): void {
     // fireworks from every standing soundsystem, home's ring among them
     for (const [key, h] of g.combat.sounds) if (h.hp > 0) g.waveEvents.push({ kind: "waveCelebrate", key, x: h.x, z: h.z, at: time, wave: g.party.wave });
   }
-  // Won: the line goes round, the legends dance at home; the card comes up.
-  const n = w.congaSize;
+  // Won: the line goes round (or follows her), the legends dance at home; the card comes up.
+  const n = w.congaSize, W = g.witch, follow = congaFollows(g);
+  if (!follow) w.trail = undefined;
+  else {
+    if (!w.trail) { // (begun through the line as it stands, leader first, so they file after her from where they are)
+      const at: Creature[] = [];
+      for (const c of g.creatures) if (c.finale !== undefined && c.finale >= 0 && !c.gone) at[c.finale] = c;
+      w.trail = []; for (const c of at) if (c) w.trail.push(c.x, c.z);
+    }
+    w.trail = updateTrail(w.trail, W.x, W.z, T.followLead + n * T.congaGap + 10);
+    trailPlaces(w.trail, W.x, W.z, T.followLead, T.congaGap, n, PLACES);
+  }
+  const pace = follow ? Math.max(T.joinSpeed, T.followSpeed * Math.hypot(W.vx, W.vz)) : T.joinSpeed;
   for (const c of g.creatures) {
     if (c.finale === undefined || c.gone) continue;
-    if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
+    if (c.finale >= 0 && follow) {
+      const p = { x: PLACES[c.finale * 2], z: PLACES[c.finale * 2 + 1] };
+      toward(g, c, p, dt, T, pace);
+      if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5 && c.finale > 0) { const a = c.finale - 1, ax = PLACES[a * 2] - c.x, az = PLACES[a * 2 + 1] - c.z; if (Math.abs(ax) > 0.05) c.facing = ax < 0 ? -1 : 1; c.away = az < 0; }
+      else if (c.finale === 0 && Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { const ax = W.x - c.x; if (Math.abs(ax) > 0.05) c.facing = ax < 0 ? -1 : 1; c.away = W.z - c.z < 0; }
+    } else if (c.finale >= 0) { const p = congaPlace(g, c.finale, n, time); toward(g, c, p, dt, T); if (Math.hypot(p.x - c.x, p.z - c.z) < 0.5) { c.facing = p.facing; c.away = p.away; c.moving = true; } }
     else { toward(g, c, { x: c.anchorX, z: c.anchorZ }, dt, T); if (!c.moving) c.away = false; } // (there: facing us, dancing in place)
   }
   if (!w.card && time >= (w.wonAt ?? Infinity) + T.cardAfter) w.card = true;

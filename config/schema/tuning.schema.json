@@ -1366,11 +1366,16 @@
                 "seed": {
                   "type": "number",
                   "minimum": 0
+                },
+                "cutFade": {
+                  "type": "number",
+                  "minimum": 0
                 }
               },
               "required": [
                 "on",
-                "seed"
+                "seed",
+                "cutFade"
               ],
               "additionalProperties": false
             }
@@ -3549,6 +3554,17 @@
           "type": "number",
           "minimum": 0
         },
+        "follow": {
+          "type": "boolean"
+        },
+        "followLead": {
+          "type": "number",
+          "minimum": 0
+        },
+        "followSpeed": {
+          "type": "number",
+          "minimum": 0
+        },
         "legendGap": {
           "type": "number",
           "minimum": 0
@@ -3589,6 +3605,9 @@
         "congaRadius",
         "joinSpeed",
         "seen",
+        "follow",
+        "followLead",
+        "followSpeed",
         "legendGap",
         "legendRow",
         "legendSpace",
