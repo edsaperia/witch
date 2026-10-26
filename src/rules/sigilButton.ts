@@ -7,6 +7,7 @@ import { atMapTable, deckOf } from "./treehouse";
 import { addFloorHat, objectAt, stepBed, useHats } from "./houseRooms";
 import { runeOffset } from "./runeOffset";
 import type { Controls, Game, Witch } from "./game";
+import { worldAsleep } from "./partyOver";
 import type { Tuning } from "./tuning";
 import type { Creature } from "./creatures";
 import { heldByCombat } from "./creatures";
@@ -83,7 +84,7 @@ export function stepSigilButton(g: Game, c: Controls, W: Witch, t: Tuning, ht: n
   }
   // Tonight's find (rules/finds.ts; Ed, 2026-10-21): the travel trunk, or a wreck (Ed, 2026-10-23); E at it while the party's on
   // takes what's in it, hers for the night (on loan till she sleeps: app/loan.ts; the kind's claim, if it has one: a broom part waits at the Workshop, not fitted).
-  const trunk = (sigil || place) && onFoot && !g.partyOver ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null;
+  const trunk = (sigil || place) && onFoot && !worldAsleep(g) ? trunkAt(g.trunk, g.witch.x, g.witch.z) : null; // (not there in the world asleep: the afterparty, or before the party, Ed 2026-10-26)
   if (trunk) {
     trunk.found = true; sigil = false; place = false;
     findKind(trunk.kind).claim?.(W.spells, trunk.item!);

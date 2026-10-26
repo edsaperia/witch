@@ -13,6 +13,11 @@
 // (and those that ran off the map earlier: their records are kept, `gone`) are simply there, already asleep, out of her
 // sight. Her leashed ones are let go and sleep where they stand. Asleep is the one shared state (Creature.asleep, with the
 // naps and the sleeping art): still, out of every fight, no rune, no 💌s. No drawing here.
+//
+// The world before the party is the same (Ed, 2026-10-26: "If you leave the treehouse before starting the party, it should be the
+// same as after a party is lost; creatures are asleep in their areas and you can't invite them, the night's permanent upgrade find
+// is not placed yet"): a night waiting for her party spell (party.spellAt null) lies asleep, every creature in bed in its own
+// area, the same sleep (worldAsleep, putToBed), till the spell's cast and it all gets up (stepWorldAsleep).
 import type { Game } from "./game";
 import type { CombatState } from "./combat/data";
 import { isHomeKey } from "./speakers";
@@ -65,11 +70,45 @@ function calm(c: Creature, time: number): void {
   if (c.boss && c.legendState !== "asleep") { c.legendState = "asleep"; c.restlessness = 0; }
 }
 
+/** The world asleep: the afterparty, or a night still waiting for her party spell (the zoo, a review tool, never). Nothing fights
+ *  or attacks her, the legends lie still, no 💌 takes, tonight's find isn't there (rules/finds.ts trunkAt's callers). */
+export const worldAsleep = (g: Pick<Game, "partyOver" | "party" | "map">): boolean => !!g.partyOver || (g.party.spellAt === null && !g.map.zoo);
+
 /** Where it lies down: a legend where it lay (its lair), anything else a spot in its own area (a circle's baby in its circle). */
 function bedOf(g: Game, c: Creature): { x: number; z: number } {
   if (c.boss && c.lairX !== undefined && c.lairZ !== undefined) return { x: c.lairX, z: c.lairZ };
   const [x, z] = pointInArea(g.map, { ...c, dancing: false, leashed: false, state: undefined, enraged: false, anywhere: true }, c.rand);
   return { x, z };
+}
+
+/** In bed at once, asleep for good, in its own area (a legend in its lair): out of whatever it was doing. */
+export function putToBed(g: Game, c: Creature, time: number): void {
+  calm(c, time);
+  const b = bedOf(g, c);
+  c.x = c.tx = b.x; c.z = c.tz = b.z;
+  sleep(c, time);
+}
+
+/** A step of the world before the party (worldAsleep, the party not over): every creature up is put to bed at once (she's in her
+ *  bedroom as a night starts, out of their sight; the debug arena's left be), and once the spell's cast, everyone the night put to
+ *  bed gets up where they lie, as the night would have had them: wild, in their areas (a legend asleep as ever, its quest its own). */
+export function stepWorldAsleep(g: Game, time: number): void {
+  if (g.partyOver) return;
+  if (worldAsleep(g)) {
+    const arena = new Set(g.arena?.ids ?? []);
+    let put = false;
+    for (const c of g.creatures) {
+      if (c.asleep && c.napUntil === undefined) continue;
+      if (c.gone || c.leashed || c.partyLegend || arena.has(c.id)) continue;
+      putToBed(g, c, time); put = true;
+    }
+    if (put) g.byArea = null;
+    g.asleepBeforeParty = true;
+    return;
+  }
+  if (!g.asleepBeforeParty) return;
+  for (const c of g.creatures) if (c.asleep && c.napUntil === undefined) { c.asleep = false; c.asleepAt = undefined; c.rest = 0; c.seen = time; }
+  g.asleepBeforeParty = false; g.byArea = null;
 }
 
 /** The party's over: when it starts. Everyone stops what they're doing; each creature in her sight sets off home to bed,

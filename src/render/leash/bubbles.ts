@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { drawSigil, sigilColour } from "../../../art/generator.js";
 import { talkTurn } from "../../rules/leash";
 import { hash2 } from "../../rules/random";
+import { worldAsleep } from "../../rules/partyOver";
 import { emojiOr, sleepyFace } from "../sleepyFace";
 import { broughtLine, circleLines, circleShown, legendCircleNear } from "../../rules/legendCircle";
 import { witchHeight } from "../../rules/witch";
@@ -52,14 +53,16 @@ const MOODS = [["😴", "🫩", "🥱", "💼"], ["😐", "😐", "🥱"], ["�
  *  party's-over rules, legends too), or, before those rules, any creature not hers once the party's well over. */
 export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, height: number): void {
   const host = lv.bubbleWitch?.parentElement, g = lv.game, w = g.witch, near = lv.snoreNear;
+  // (how far the sleep's in: the party's over's ease, or all the way in the world before the party: rules/partyOver.ts worldAsleep)
+  const K = !g.partyOver && worldAsleep(g) ? 1 : lv.partyOverEase;
   let used = 0;
   near.length = 0;
-  if (host && lv.partyOverEase > 0.3 && w.mode === "ground" && w.lift < 0.5) {
+  if (host && K > 0.3 && w.mode === "ground" && w.lift < 0.5) {
     for (const c of g.creatures) {
       if (c.gone || c.leashed) continue;
       // (asleep: the rules' c.asleep, legends too; before builder hotel's party's-over rules, any creature not hers once it's well over)
       const asleep = (c as { asleep?: boolean }).asleep, rules = "partyOver" in g, dx = c.x - w.x, dz = c.z - w.z;
-      if (!(asleep || (!rules && asleep === undefined && lv.partyOverEase >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
+      if (!(asleep || (!rules && asleep === undefined && K >= 0.6 && c.level !== 3 && !c.boss)) || Math.abs(dx) > SNORE_RANGE || Math.abs(dz) > SNORE_RANGE) continue;
       const d = Math.hypot(dx, dz);
       if (d > SNORE_RANGE) continue;
       if (near.length < SNORES) near.push({ c, d });
@@ -79,7 +82,7 @@ export function drawSnores(lv: LeashView, camera: THREE.Camera, width: number, h
       thoughtEmoji(el, S, face, SNORE_INNER, 1, P);
       const at = thoughtAt(S, ((lv.v.x + 1) / 2) * width, ((1 - lv.v.y) / 2) * height, P);
       el.style.left = `${at.left}px`; el.style.top = `${at.top}px`;
-      el.style.opacity = `${Math.min(1, (lv.partyOverEase - 0.3) * 4).toFixed(2)}`;
+      el.style.opacity = `${Math.min(1, (K - 0.3) * 4).toFixed(2)}`;
       used++;
     }
   }
