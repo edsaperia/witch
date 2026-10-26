@@ -394,8 +394,7 @@ export class View {
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    // (the Terrace too, as one of the rooms, with treehouse.house.terraceRoom: Ed, 2026-10-26, "not having the terrace drawn separately")
-    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && (!!g.tuning.treehouse.house?.terraceRoom || noRiseAt(deck, w.x, w.z)) && !this.telescope;
+    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
     // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
     if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
     const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
