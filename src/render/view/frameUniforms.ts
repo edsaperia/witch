@@ -53,6 +53,7 @@ export function setFrameUniforms(v: View, time: number, up: THREE.Vector3): void
   SPRITE_UNIFORMS.uTopFade.value = lifted;
   SPRITE_UNIFORMS.uTrunkFade.value.set(S.trunkFade ? t.trunkFade.metres : 0, v.mpp, t.trunkFade.share);
   SPRITE_UNIFORMS.uOcc.value.set(t.occlusion.fadeOpacity, t.occlusion.edge, t.occlusion.minHeight, t.occlusion.on && S.seeThrough ? 1 : 0); // (every frame: the pause page's sliders)
+  v.witchBatch.silhouetteOpacity = t.occlusion.silhouette; if (v.bareBatch) v.bareBatch.silhouetteOpacity = t.occlusion.silhouette; // (her silhouette's strength, live too)
   for (const m of FADE_MATERIALS) { m.depthWrite = S.seeWrite; if (m.stencilRef === 1) m.stencilWrite = S.seeStencil; m.blending = S.seeNoBlend ? THREE.NoBlending : THREE.NormalBlending; }
   for (const o of FADE_MESHES) o.renderOrder = S.seeEarly ? 0.6 : 11;
   SPRITE_UNIFORMS.uSeeSolid.value = ({ off: 0, all: 1, circle: 2, rest: 3 } as Record<string, number>)[S.seeSolid] ?? 0;
