@@ -334,7 +334,8 @@ export class HouseRoomsView {
     // (the hats on top of the hats' floor's own piece, wherever the house puts it)
     const floorOf = HOUSE_ROOMS.objects.find(o => o.use.kind === "hats");
     if (floorOf) this.parts[4].mesh.renderOrder = hatsOrder(south(floorOf.x, floorOf.z), piece(floorOf.id)?.mesh.renderOrder ?? null);
-    if (piece("broomBay") || piece("pegboard") || piece("lathe")) {
+    // (every frame the house shows, its pieces there or not: its pictures asked of the workers at once, laid once their pieces are in)
+    {
       const tr = g.trunk, tonight = tr && tr.kind === "part" && !tr.found ? tr.item : null, where = broomWhere(g, stationOf(g, null, t)?.id ?? null, t);
       this.workshop.update({ fitted: W.spells.parts, found: v.partsFound, tonight, at: where === "bay" || where === "lathe" ? where : null, genome: v.assets.witchGenome }, v.assets.style, 1 / v.mpp, pitch,
         id => { const o = HOUSE_ROOMS.objects.find(q => q.id === id); return o ? facing(o).yaw : 0; },

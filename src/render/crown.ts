@@ -333,11 +333,11 @@ export class CrownView {
     // (a floor she moves into takes the mask that's least cleared, unless it's one of the two already: back into the room she
     // just left, its cut opens again from where its fade had got to)
     const M = this.masks, step = fade > 0 ? Math.max(0, dt) / fade : 1;
-    // (each floor's field asked of the art workers the first time she's indoors, kept as it comes: drawn here as she stepped into a
+    // (each floor's field asked of the art workers from the crown's first frame, kept as it comes: drawn here as she stepped into a
     // room, it held the frame 190 to 360 ms under the cloud's software renderer, Ed's playtest of v4515; one not in yet waits a frame
     // or two, its fade starting as it comes; with no workers, drawn here)
     const B = this.uniforms.uClearBox.value as THREE.Vector4, box = [B.x, B.y, B.z, B.w];
-    if (indoors && this.drawMask) for (const k of maskKeys(O)) if (!this.fields.has(k) && !this.fieldsAsked.has(k)) {
+    if (this.drawMask) for (const k of maskKeys(O)) if (!this.fields.has(k) && !this.fieldsAsked.has(k)) {
       this.fieldsAsked.add(k);
       this.drawMask(k, box).then(f => { this.fields.set(k, f); }, () => { this.fieldsAsked.delete(k); this.drawMask = null; });
     }
