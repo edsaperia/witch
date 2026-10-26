@@ -14039,23 +14039,25 @@ const FEN = {
 };
 
 
-// ---- inlined from art/areas/heronry/recipe.js ----
-// The heronry (#119): the second area type written as a recipe (art/recipes.js says what each field is). Ed's columns as for the
-// 30: a still mere under tall elms where the herons nest, the heron its creature (art builder 2's heron builder, #181).
-const HERONRY = {
-  slot: 1, id: "heronry", name: "Heronry", creature: "heron", by: "recipe", leaf: .27, floor: ["tallgrass", .3, .35, .34],
-  text: { floor: "rough grass and reed litter", wall: "the mere's edge", small: "reeds and rushes", big: "tall elms with herons' nests", set: "an old jetty out over the mere" },
+// ---- inlined from art/areas/mangrove-heronry/recipe.js ----
+// The mangrove heronry (the heronry, #119, the second area type written as a recipe, art/recipes.js, till the roster moved the heron to
+// the mangrove swamp: Ed, 2026-10-23/25). A ring 3 area, so semi-temperate: the herons' still mere, its nests now in tall mangroves
+// from the swamp's list (art/flora/biomes.js) and drowned larches (the bald cypress's stand-in), with the old elms and ashes, a third;
+// a softer, muddier ground; the heron its creature (art builder 2's heron builder, #181).
+const MANGROVE_HERONRY = {
+  slot: 1, id: "mangrove-heronry", name: "Mangrove heronry", creature: "heron", by: "recipe", leaf: .28, floor: ["mud", .2, .35, .32],
+  text: { floor: "mud and reed litter", wall: "the mere's edge", small: "reeds and rushes", big: "tall mangroves and elms with herons' nests", set: "an old jetty out over the mere" },
   wall: [["water", { w: 1.8 }], ["reeds", { tall: true }]], small: [["reeds", {}], ["grass", { h: 1.5 }]],
-  big: [["tree", { type: "elm", scale: 1.35 }], ["tree", { type: "ash", minor: true, scale: 1.05 }]],
+  big: [["tree", { type: "mangrove", variant: "tall", scale: 1.3 }], ["tree", { type: "elm", minor: true, scale: 1.2 }]],
   ponds: true, wet: true, pathKinds: ["boardwalk"],
   setPiece: ["jetty", "an old jetty out over the mere", 1],
   layout: {
     pattern: "stands", density: .45, clump: .75, glades: { count: 1, size: [18, 26] },
     heightMix: { sapling: .1, mature: .35, tall: .35, giant: .2 }, undergrowth: .5, lean: { dir: 0, amount: 0 },
     terrain: ["pools"], decor: { rate: .2, ruins: .2, rocks: .1, freak: .1, lake: .5, modern: .1 },
-    feel: "A wide still mere ringed with reeds, tall elms standing round it in stands, their crowns heaped with herons' nests; open, grey and watchful.",
+    feel: "A wide still mere ringed with reeds, tall mangroves and old elms standing round it in stands, their crowns heaped with herons' nests; open, grey-green and watchful.",
   },
-  flora: { species: [["elm", .55], ["ash", .3], ["willow", .15]], palette: { sat: .8, val: .9 } },
+  flora: { species: [["mangrove", .45, { variant: "tall" }], ["larch", .2, { variant: "drowned" }], ["elm", .2], ["ash", .15]], palette: { sat: .85, val: .9 } },
   settings: { treeDensity: .5, groundCover: { density: .7, kinds: ["reeds", "blades"] } },
 };
 
@@ -14836,6 +14838,13 @@ const AREA_FLORA_JUNGLE_UNDERSTORY = { species: [["ironwood", .35, { variant: "m
 const AREA_FLORA_LOG_PILE = { species: [["elder", .4], ["aspen", .35], ["birch", .25]], palette: { sat: .9, val: .95 } };
 
 
+// ---- inlined from art/areas/mangrove-channel/flora.js ----
+// The mangrove channel (the stream till the roster moved the otter, a smooth-coated otter now, to the mangrove swamp: Ed, 2026-10-23/25).
+// A ring 3 area, so semi-temperate (Ed, 2026-10-25: "lower phase non-home biome areas can be semi-temperate looking"): drowned willows
+// and young mangroves from the swamp's list (art/flora/biomes.js) with alders, a third; no weeping birch.
+const AREA_FLORA_MANGROVE_CHANNEL = { species: [["willow", .4, { variant: "drowned" }], ["mangrove", .3, { variant: "stunted" }], ["alder", .3]], palette: { sat: .95, val: .9 } };
+
+
 // ---- inlined from art/areas/meadow/flora.js ----
 const AREA_FLORA_MEADOW = { species: [["chestnut", .3], ["oak", .2], ["hawthorn", .25], ["cherry", .15], ["crabApple", .1]], palette: { sat: 1.1, val: 1.12 } };
 
@@ -14868,10 +14877,6 @@ const AREA_FLORA_ROCKY_SLOPE = { species: [["rowan", .4], ["pine", .3], ["whiteb
 const AREA_FLORA_STONE_SHRINE = { species: [["yew", .6], ["holly", .25], ["hawthorn", .15]], palette: { sat: .9, val: .9 } };
 
 
-// ---- inlined from art/areas/stream/flora.js ----
-const AREA_FLORA_STREAM = { species: [["alder", .45], ["willow", .3], ["weepingBirch", .25]], palette: { sat: 1, val: 1 } };
-
-
 // ---- inlined from art/areas/tangly-forest/flora.js ----
 const AREA_FLORA_TANGLY_FOREST = { species: [["hawthorn", .45], ["elder", .25], ["crabApple", .2], ["hazel", .1]], palette: { sat: 1.05, val: .9 } };
 
@@ -14895,8 +14900,8 @@ const AREA_FLORA_WETLAND = { species: [["willow", .45], ["alder", .3], ["aspen",
 const AREA_FLORA_WISPY_FOREST = { species: [["lime", .4], ["birch", .25], ["aspen", .2], ["whitebeam", .15]], palette: { sat: .85, val: 1.12 } };
 
 
-const AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+const AREA_FOLDER_RECIPES = [FEN, MANGROVE_HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
+const AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
 const AREA_FOLDER_KINDS = [
   {"kind":"hedgehog","slot":0,"phase":0,"bearing":170,"dir":"S","biome":"temperate"},
   {"kind":"squirrel","slot":1,"phase":0,"bearing":285,"dir":"WNW","biome":"temperate"},
@@ -15193,8 +15198,11 @@ const AREAS = [
     wall: [P("bramble")], small: [P("shrub", { flower: [200, 30, 60] })], big: [tree("pine", { variant: "stunted", scale: 1.2 }), tree("rowan", { minor: true })] },
   { id: "wetland", name: "Wetland", creature: "toad", by: "draft", leaf: .2, floor: ["mud", .15, .45, .3], text: { floor: "wet mud", wall: "puddles, reeds", small: "reeds and rushes", big: "willows" },
     wall: [P("water"), P("reeds", { tall: true })], small: [P("reeds")], big: [tree("willow", { variant: "pollard" }), tree("alder", { minor: true, scale: .9 })] },
-  { id: "stream", name: "Stream", creature: "otter", by: "draft", leaf: .27, floor: ["pebbles", .25, .3, .45], text: { floor: "pebbles and grass", wall: "a stream or pond", small: "alder saplings", big: "alders", set: "a fallen-log bridge" },
-    wall: [P("water", { w: 2 })], small: [tree("broad", { scale: .45 })], big: [tree("alder", { variant: "windbent", scale: .95, gnarl: .3 }), tree("willow", { minor: true, scale: .8 })], set: P("bridge") },
+  // (the stream till the roster moved the otter, a smooth-coated otter now, to the mangrove swamp, Ed 2026-10-23/25; ring 3, so
+  // semi-temperate: a brackish channel, drowned willows and young mangroves from the swamp's list along it with alders, a third, soft
+  // grey mud for its pebbles, reeds and mangrove seedlings at the water)
+  { id: "mangrove-channel", name: "Mangrove channel", creature: "otter", by: "draft", leaf: .28, floor: ["mud", .18, .3, .4], text: { floor: "soft grey mud", wall: "a brackish channel", small: "reeds and mangrove seedlings", big: "drowned willows, young mangroves and alders", set: "a fallen-log bridge" },
+    wall: [P("water", { w: 2 }), P("reeds", { tall: true })], small: [P("reeds"), tree("mangrove", { scale: .4 })], big: [tree("willow", { variant: "drowned", scale: 1 }), tree("mangrove", { minor: true, scale: .8 })], set: P("bridge") },
   { id: "rocky-slope", name: "Rocky slope", creature: "lynx", by: "draft", leaf: .34, floor: ["scree", .2, .2, .42], text: { floor: "scree and moss", wall: "boulders", small: "rocks", big: "pines", set: "a rocky outcrop" },
     wall: [P("boulder", { big: true })], small: [P("stones", { big: true })], big: [tree("rowan", { scale: 1.1 }), tree("pine", { minor: true })], set: P("outcrop") },
   { id: "bog", name: "Bog", creature: "elk", by: "draft", leaf: .38, floor: ["moss", .18, .55, .4], text: { floor: "sphagnum moss", wall: "bog pools", small: "cotton grass", big: "spruce" },
@@ -15230,7 +15238,7 @@ const AREAS = [
 ];
 // Each area's flags, as data the rules read (src/rules/map.ts AreaType): ponds (more moonlit ponds), wet (its paths run as streams
 // and boardwalks), steep (a flight of stairs may stand at its clearing's edge), pathKinds (path kinds besides those whose moods name it).
-const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, stream: { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
+const AREA_FLAGS = { moor: { ponds: true }, wetland: { ponds: true, wet: true }, "mangrove-channel": { ponds: true, wet: true, pathKinds: ["bridges"] }, bog: { ponds: true, wet: true }, "beaver-pond": { ponds: true, wet: true },
   ravine: { steep: true, pathKinds: ["stairs"] }, "rocky-slope": { steep: true, pathKinds: ["stairs"] }, "jungle-cave": { steep: true, pathKinds: ["stairs"] }, "stone-shrine": { steep: true } };
 for (const [id, f] of Object.entries(AREA_FLAGS)) Object.assign(AREAS.find(a => a.id === id), f);
 // The area recipes (art/recipes.js): area types written as data alone, folded in here as if written above.
@@ -15325,8 +15333,8 @@ const AREA_LAYOUTS = {
     "Tall pines over solid berry bushes and brambles, only narrow animal paths and a couple of pockets of space."),
   "wetland": LAY("stands", .5, .7, [1, [16, 24]], [.25, .55, .15, .05], .8, NO_LEAN, ["pools", "stream"], [.35, [.2, 0, 0, .6, .2]],
     "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."),
-  "stream": LAY("rows", .68, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
-    "Alders lining both banks of a pebbly stream, saplings at the water's edge, open grass away from it.", { along: "stream" }),
+  "mangrove-channel": LAY("rows", .68, .2, [1, [6, 10]], [.3, .45, .2, .05], .5, NO_LEAN, ["stream", "pools"], [.3, [.3, .3, 0, .3, .1]],
+    "Drowned willows and young mangroves lining both banks of a brackish channel, alders among them, seedlings and reeds at the water's edge, soft mud away from it.", { along: "stream" }),
   "rocky-slope": LAY("scatter", .35, .6, [1, [8, 12]], [.3, .5, .18, .02], .2, [90, .15], ["rocky", "ridges"], [.5, [.3, .7, 0, 0, 0]],
     "Scree and boulders with pines clinging in clumps, everything leaning slightly uphill."),
   "bog": LAY("stands", .25, .85, [3, [10, 20]], [.4, .5, .1, 0], .6, NO_LEAN, ["pools", "mounds"], [.35, [.2, 0, 0, .5, .3]],
@@ -15357,7 +15365,7 @@ const AREA_LAYOUTS = {
 Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS); // the recipes' own
 // Hanging moss and vines in the eerie woods (Ed, 2026-10-07: "moss and vines only"): how much hangs from their trees'
 // crowns and low boughs, 0 to 1 (art/trees.js lowLife, st.treeHang): the wet, old and tangled woods.
-const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "stream": .4 };
+const HANG = { "wispy-forest": .9, "tangly-forest": .7, "muddy-forest": .55, "ancient": .7, "old-oaks": .5, "alder-forest": .6, "wetland": .7, "bog": .8, "deadwood": .45, "honeysuckle-tangle": .6, "beaver-pond": .5, "mangrove-channel": .4 };
 for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
 for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
 // Checks a layout's shape; returns a list of problems (empty when it's sound).
@@ -19094,7 +19102,7 @@ const LARGE = {
     ["@baroque-church", 0, 0], ["stone-angel", -2.6, 2.6, "left"], ["rubble", 2.4, 2.8], ["column-broken", 3.3, .6]] },
   "coptic-basilica": { desc: "a domed Coptic basilica, one dome fallen in, its bell tower standing, rubble round it", suits: ["rocky-slope", "heath", "grassland"], pieces: [
     ["@coptic-basilica", 0, 0], ["rubble", -1.0, 2.4], ["rubble", 3.4, 1.6, "left"], ["decor:split", -3.4, 1.8]] },
-  "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "stream"], pieces: [
+  "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "mangrove-channel"], pieces: [
     ["pagoda-temple", 0, 0], ["decor:pair", -2.8, 1.6], ["decor:rock", 2.9, -1.4], ["rubble", -2.4, -1.8, "left"]] },
   "step-pyramid": { desc: "a stepped pyramid in its clearing, its stair between serpent balustrades, fallen blocks at its foot", suits: ["step-pyramid"], pieces: [
     ["step-pyramid", 0, 0], ["rubble", 3.6, 2.0], ["decor:standing-rock", -3.8, 1.4, "left"]] },
@@ -19111,7 +19119,7 @@ const LARGE = {
 // The classical ruins from a seed (art/landmarks.js CLASSICAL_PLANS; Ed, 2026-10-11: more variations, some smaller): each plan's
 // seeded variants as scenes, a few fallen pieces round the large ones (picked by the seed), the small ones alone; the large ones ("temple-<plan>~<k>") join
 // the featured pool (tuning scenes.featured, "temple-*"), the small ones ("ruin-<plan>~<k>") scatter as scenes in many more area types.
-const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "jungle-cave", "wispy-forest"];
+const TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"], RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
 const TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
 for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
   const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => ((Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453) % 1 + 1) % 1;
@@ -19206,7 +19214,7 @@ const PATH_KINDS = {
     surface(u, v) { const P = 4; if (rag(u, v, P, .1)) return 0; const c = pkCells(u * 1.25, v, 1.3, P); if (c.edge < .12) return c.edge < .05 ? 0 : [M.MOSS, .1]; if (c.id < .08) return 0; return [c.id < .25 ? M.STONED : pkNoise(u, v, 4, P) < .2 ? M.MOSS : M.STONE, .25]; } },
   cobbles: { width: 4, period: 4, desc: "cobbles: a stretch of old village lane", moods: ["garden", "old-oaks", "meadow", "stone-shrine"],
     surface(u, v) { const P = 4; if (rag(u, v, P, .08)) return 0; const c = pkCells(u * 2, v, 2.2, P); if (c.edge < .16) return [pkNoise(u, v, 3, P) < .3 ? M.MOSS : M.STONED, .05]; return [c.id < .2 ? M.STONED : c.id > .85 ? M.BELLY : M.STONE, .35]; } },
-  stepping: { width: 2, period: 4, desc: "stepping stones across water or bog (each also a 3D prop)", moods: ["stream", "wetland", "bog", "ravine", "beaver-pond"],
+  stepping: { width: 2, period: 4, desc: "stepping stones across water or bog (each also a 3D prop)", moods: ["mangrove-channel", "wetland", "bog", "ravine", "beaver-pond"],
     surface(u, v) { const P = 4, sp = P / 3, k = Math.floor(v / sp), t = v - k * sp - sp / 2, du = u * 1 - (sinHash(k % 3, 9) - .5) * .5, d = Math.hypot(du * .9, t / .55); if (d > .55 + pkNoise(u, v, 4, P) * .1) return 0; return [d > .45 ? M.MOSS : M.STONE, .4]; } },
   boardwalk: { width: 2.5, period: 4, desc: "a boardwalk: planks on posts over bog or pools, a few boards missing (posts are 3D props)", moods: ["bog", "wetland", "moor", "beaver-pond"],
     surface(u, v) { const P = 4, k = Math.floor(v / .5), f = v / .5 - k; if (Math.abs(u) > .97) return [M.BARKD, .1]; if (sinHash(k % 8, 3) < .1) return 0; if (f < .1) return 0; const grain = Math.abs(Math.sin(u * 40 + (k % 8) * 3)) < .12; return [pkNoise(u, v, 3, P) < .15 ? M.MOSS : grain ? M.BARKD : sinHash(k % 8, 5) < .4 ? M.BARK2 : M.WOOD, .1]; } },

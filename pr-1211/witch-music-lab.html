@@ -5559,7 +5559,7 @@ label.check input { accent-color: var(--accent); }
       "old-oaks": { treeDensity: 0.9, groundCover: { density: 0.6, kinds: ["blades", "fern"] } },
       "berry-thicket": { treeDensity: 1, groundCover: { density: 0.5, kinds: ["blades", "clover"] } },
       wetland: { treeDensity: 0.75, groundCover: { density: 0.8, kinds: ["reeds", "moss"] } },
-      stream: { treeDensity: 0.8, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } },
+      "mangrove-channel": { treeDensity: 0.8, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
       "rocky-slope": { treeDensity: 0.75, groundCover: { density: 0.25, kinds: ["moss", "blades"] } },
       bog: { treeDensity: 0.7, groundCover: { density: 0.7, kinds: ["reeds", "moss"] } },
       deadwood: { treeDensity: 0.8, groundCover: { density: 0.25, kinds: ["moss"] } },
@@ -5706,11 +5706,10 @@ label.check input { accent-color: var(--accent); }
     z: -61,
     r: 8.5,
     objects: [
-      { id: "wardrobe", label: "Wardrobe", use: { kind: "creator", axes: ["top"], wear: [], parts: ["jacket", "top", "jeans"] }, offset: [-6.68, -2.43], box: { w: 1.2, d: 4, h: 4.4 } },
-      { id: "dressingTable", label: "Dressing table", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-2.43, -6.68], box: { w: 2.8, d: 1.2, h: 3.4 } },
-      { id: "bed", label: "Bed", use: { kind: "bed" }, offset: [3.64, -3.64], box: { w: 4, d: 5.2, h: 1.6 } },
-      { id: "shoeRack", label: "Shoe rack", use: { kind: "creator", axes: [], wear: ["chunky"], parts: ["sneakers"] }, offset: [-5.46, 4.25], box: { w: 3, d: 1.1, h: 1.6 } },
-      { id: "clothesPile", label: "Last night's clothes", use: { kind: "pile" }, offset: [3.04, 2.43], box: { w: 1.6, d: 2, h: 0.6 } }
+      { id: "wardrobe", label: "Wardrobe", use: { kind: "creator", axes: ["top"], wear: [], parts: ["jacket", "top", "jeans"] }, offset: [-4.31, -3.88], box: { w: 2.2, d: 4.8, h: 6.2 } },
+      { id: "dressingTable", label: "Dressing table", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-0.71, -6.76], box: { w: 3.2, d: 1.6, h: 4.6 } },
+      { id: "shoeRack", label: "Shoe rack", use: { kind: "creator", axes: [], wear: ["chunky"], parts: ["sneakers"] }, offset: [-4.81, 4.81], box: { w: 4.5, d: 1.65, h: 2.4 } },
+      { id: "clothesPile", label: "Last night's clothes", use: { kind: "pile" }, offset: [-4.18, 0.44], box: { w: 1.6, d: 2, h: 0.6 } }
     ]
   };
 
@@ -5765,8 +5764,8 @@ label.check input { accent-color: var(--accent); }
     z: -10,
     r: 7.5,
     objects: [
-      { id: "book", label: "Bestiary book", use: { kind: "zoo" }, offset: [-1.25, -3.13], box: { w: 1.6, d: 1.2, h: 2.2 } },
-      { id: "specimens", label: "Skeletons and skulls", use: { kind: "say", line: "The skeletons and skulls come later." }, offset: [5, 1.25], box: { w: 0.8, d: 5, h: 4 } }
+      { id: "book", label: "Bestiary book", use: { kind: "zoo" }, offset: [-1.11, -3.42], box: { w: 2.72, d: 2.04, h: 3.74 } },
+      { id: "specimens", label: "Skeletons and skulls", use: { kind: "say", line: "The skeletons and skulls come later." }, offset: [3.42, 3.08], box: { w: 2, d: 3.2, h: 5.4 } }
     ]
   };
 
@@ -5780,7 +5779,7 @@ label.check input { accent-color: var(--accent); }
     z: -44,
     r: 9.5,
     objects: [
-      { id: "telephone", label: "Telephone", use: { kind: "say", line: "The line's quiet. Friends can call later." }, offset: [-3.8, -3.8], box: { w: 1, d: 1, h: 2.2 } }
+      { id: "telephone", label: "Telephone", use: { kind: "say", line: "The line's quiet. Friends can call later." }, offset: [-1.81, -6.76], box: { w: 1.8, d: 1.8, h: 3.96 } }
     ]
   };
 
@@ -5795,9 +5794,9 @@ label.check input { accent-color: var(--accent); }
     z: -12,
     r: 7,
     objects: [
-      { id: "mirror", label: "Mirror", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-3.18, -4.45], box: { w: 2.2, d: 0.6, h: 4.2 } },
+      { id: "mirror", label: "Mirror", use: { kind: "creator", axes: ["hair"], wear: ["earrings"], parts: ["hair", "skin"] }, offset: [-3.18, -4.45], box: { w: 3.3, d: 0.9, h: 6.3 } },
       { id: "hats", label: "Hats", use: { kind: "hats" }, offset: [1.27, 1.27], box: { w: 3.6, d: 1.8, h: 0 } },
-      { id: "cloakPegs", label: "Cloak pegs", use: { kind: "creator", axes: ["cloak", "cloakLength", "scarfLength"], wear: ["patches", "scarf"], parts: ["cloak", "scarf"] }, offset: [-5.73, 2.55], box: { w: 0.6, d: 2.6, h: 4 } }
+      { id: "cloakPegs", label: "Cloak pegs", use: { kind: "creator", axes: ["cloak", "cloakLength", "scarfLength"], wear: ["patches", "scarf"], parts: ["cloak", "scarf"] }, offset: [-2.72, 5.35], box: { w: 1.9, d: 1.9, h: 5.6 } }
     ]
   };
 
@@ -5811,8 +5810,8 @@ label.check input { accent-color: var(--accent); }
     z: 26,
     r: 14,
     objects: [
-      { id: "teaTable", label: "Tea table", use: { kind: "say", line: "The tea's not brewed yet." }, offset: [-7, -2.33], box: { w: 2.8, d: 2.8, h: 1.4 } },
-      { id: "cardTable", label: "Card table", use: { kind: "say", line: "The cards come later." }, offset: [7, 4.67], box: { w: 3.4, d: 3.4, h: 1.5 } }
+      { id: "teaTable", label: "Tea table", use: { kind: "say", line: "The tea's not brewed yet." }, offset: [-4.99, 2.54], box: { w: 3.92, d: 3.92, h: 1.96 } },
+      { id: "cardTable", label: "Card table", use: { kind: "say", line: "The cards come later." }, offset: [7, 4.67], box: { w: 4.76, d: 4.76, h: 2.1 } }
     ]
   };
 
@@ -5827,7 +5826,7 @@ label.check input { accent-color: var(--accent); }
     z: 44,
     r: 7.5,
     objects: [
-      { id: "cauldron", label: "Cauldron", use: { kind: "say", line: "The cauldron is cold. Brewing comes later." }, offset: [-1.25, 0], box: { w: 2.8, d: 2.8, h: 1.8 } }
+      { id: "cauldron", label: "Cauldron", use: { kind: "say", line: "The cauldron is cold. Brewing comes later." }, offset: [-1.25, 0], box: { w: 3.92, d: 3.92, h: 2.52 } }
     ]
   };
 
@@ -5841,7 +5840,7 @@ label.check input { accent-color: var(--accent); }
     z: -24,
     r: 11,
     objects: [
-      { id: "bags", label: "Bags", use: { kind: "creator", axes: ["bagSize", "backpackSize"], wear: ["satchel", "bumbag"], parts: ["satchel", "backpack"] }, offset: [-4.89, -6.11], box: { w: 3.6, d: 0.8, h: 3.2 } },
+      { id: "bags", label: "Bags", use: { kind: "creator", axes: ["bagSize", "backpackSize"], wear: ["satchel", "bumbag"], parts: ["satchel", "backpack"] }, offset: [-3.66, -9.52], box: { w: 5.4, d: 1.8, h: 4.8 } },
       { id: "invitations", label: "Invitations desk", use: { kind: "invites" }, offset: [0, -4.4], box: { w: 5, d: 2.8, h: 2 } }
     ]
   };
@@ -5857,7 +5856,7 @@ label.check input { accent-color: var(--accent); }
     z: -38,
     r: 7,
     objects: [
-      { id: "mapTable", label: "Map table", use: { kind: "chart" }, offset: [0, 0], box: { w: 2.6, d: 2.6, h: 0.9 } }
+      { id: "mapTable", label: "Map table", use: { kind: "chart" }, offset: [-1.8, 0], box: { w: 3.9, d: 3.9, h: 1.35 } }
     ]
   };
 
@@ -5872,9 +5871,9 @@ label.check input { accent-color: var(--accent); }
     z: 20,
     r: 7.5,
     objects: [
-      { id: "drumKit", label: "Drum kit", use: { kind: "instrument", instrument: "drums" }, offset: [-2.31, -3.46], box: { w: 4.4, d: 4, h: 2.6 } },
-      { id: "synthRack", label: "Modular synth", use: { kind: "instrument", instrument: "synth" }, offset: [3.4, -3.6], box: { w: 4.8, d: 1.4, h: 3.8 } },
-      { id: "microphone", label: "Microphone", use: { kind: "instrument", instrument: "mic" }, offset: [0.58, 2.88], box: { w: 1, d: 1, h: 3.4 } }
+      { id: "drumKit", label: "Drum kit", use: { kind: "instrument", instrument: "drums" }, offset: [3.5, -3.1], box: { w: 4.6, d: 4.4, h: 2.86 } },
+      { id: "synthRack", label: "Modular synth", use: { kind: "instrument", instrument: "synth" }, offset: [-1.4, -4.8], box: { w: 4.4, d: 2.4, h: 5.32 } },
+      { id: "microphone", label: "Microphone", use: { kind: "instrument", instrument: "mic" }, offset: [0.58, 2.88], box: { w: 1.6, d: 1.6, h: 5.44 } }
     ]
   };
 
@@ -5888,7 +5887,7 @@ label.check input { accent-color: var(--accent); }
     z: 0,
     r: 12.5,
     objects: [
-      { id: "recordShelf", label: "Record shelf", use: { kind: "say", line: "The shelf waits for records." }, offset: [0, 9.5], box: { w: 1.2, d: 3.2, h: 3.2 } }
+      { id: "recordShelf", label: "Record shelf", use: { kind: "say", line: "The shelf waits for records." }, offset: [0, 10.6], box: { w: 4.8, d: 1.8, h: 4.8 } }
     ]
   };
 
@@ -5902,7 +5901,8 @@ label.check input { accent-color: var(--accent); }
     z: -75,
     r: 6.5,
     objects: [
-      { id: "telescope", label: "Telescope", use: { kind: "telescope" }, offset: [0.72, -1.44], box: { w: 1.6, d: 1.6, h: 3.2 } }
+      { id: "telescope", label: "Telescope", use: { kind: "telescope" }, offset: [0.4, -3.78], box: { w: 2.56, d: 2.56, h: 5.12 } },
+      { id: "bed", label: "Bed", use: { kind: "bed" }, offset: [-2.33, 8.82], box: { w: 4, d: 5.2, h: 1.6 } }
     ]
   };
 
@@ -5917,9 +5917,9 @@ label.check input { accent-color: var(--accent); }
     z: 12,
     r: 8,
     objects: [
-      { id: "pegboard", label: "Pegboard", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [0, -6.29], box: { w: 5, d: 0.5, h: 4.4 } },
-      { id: "broomBay", label: "Broom bay", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [-2.29, 3.43], box: { w: 6, d: 2.4, h: 2.2 } },
-      { id: "lathe", label: "Lathe", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [3.4, -4.4], box: { w: 4.8, d: 1.8, h: 2.2 } }
+      { id: "pegboard", label: "Pegboard", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [-3.76, -5.18], box: { w: 6.2, d: 1.8, h: 6.2 } },
+      { id: "broomBay", label: "Broom bay", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [-2.29, 3.43], box: { w: 6.4, d: 3.2, h: 3 } },
+      { id: "lathe", label: "Lathe", use: { kind: "creator", axes: [], wear: [], parts: [] }, offset: [3.02, -3.73], box: { w: 5.76, d: 2.16, h: 2.64 } }
     ]
   };
 
@@ -10903,19 +10903,19 @@ label.check input { accent-color: var(--accent); }
     settings: { treeDensity: 0.55, groundCover: { density: 0.8, kinds: ["moss", "blades"] } }
   };
 
-  // art/areas/heronry/recipe.js
-  var HERONRY = {
+  // art/areas/mangrove-heronry/recipe.js
+  var MANGROVE_HERONRY = {
     slot: 1,
-    id: "heronry",
-    name: "Heronry",
+    id: "mangrove-heronry",
+    name: "Mangrove heronry",
     creature: "heron",
     by: "recipe",
-    leaf: 0.27,
-    floor: ["tallgrass", 0.3, 0.35, 0.34],
-    text: { floor: "rough grass and reed litter", wall: "the mere's edge", small: "reeds and rushes", big: "tall elms with herons' nests", set: "an old jetty out over the mere" },
+    leaf: 0.28,
+    floor: ["mud", 0.2, 0.35, 0.32],
+    text: { floor: "mud and reed litter", wall: "the mere's edge", small: "reeds and rushes", big: "tall mangroves and elms with herons' nests", set: "an old jetty out over the mere" },
     wall: [["water", { w: 1.8 }], ["reeds", { tall: true }]],
     small: [["reeds", {}], ["grass", { h: 1.5 }]],
-    big: [["tree", { type: "elm", scale: 1.35 }], ["tree", { type: "ash", minor: true, scale: 1.05 }]],
+    big: [["tree", { type: "mangrove", variant: "tall", scale: 1.3 }], ["tree", { type: "elm", minor: true, scale: 1.2 }]],
     ponds: true,
     wet: true,
     pathKinds: ["boardwalk"],
@@ -10930,9 +10930,9 @@ label.check input { accent-color: var(--accent); }
       lean: { dir: 0, amount: 0 },
       terrain: ["pools"],
       decor: { rate: 0.2, ruins: 0.2, rocks: 0.1, freak: 0.1, lake: 0.5, modern: 0.1 },
-      feel: "A wide still mere ringed with reeds, tall elms standing round it in stands, their crowns heaped with herons' nests; open, grey and watchful."
+      feel: "A wide still mere ringed with reeds, tall mangroves and old elms standing round it in stands, their crowns heaped with herons' nests; open, grey-green and watchful."
     },
-    flora: { species: [["elm", 0.55], ["ash", 0.3], ["willow", 0.15]], palette: { sat: 0.8, val: 0.9 } },
+    flora: { species: [["mangrove", 0.45, { variant: "tall" }], ["larch", 0.2, { variant: "drowned" }], ["elm", 0.2], ["ash", 0.15]], palette: { sat: 0.85, val: 0.9 } },
     settings: { treeDensity: 0.5, groundCover: { density: 0.7, kinds: ["reeds", "blades"] } }
   };
 
@@ -12014,6 +12014,9 @@ label.check input { accent-color: var(--accent); }
   // art/areas/log-pile/flora.js
   var AREA_FLORA_LOG_PILE = { species: [["elder", 0.4], ["aspen", 0.35], ["birch", 0.25]], palette: { sat: 0.9, val: 0.95 } };
 
+  // art/areas/mangrove-channel/flora.js
+  var AREA_FLORA_MANGROVE_CHANNEL = { species: [["willow", 0.4, { variant: "drowned" }], ["mangrove", 0.3, { variant: "stunted" }], ["alder", 0.3]], palette: { sat: 0.95, val: 0.9 } };
+
   // art/areas/meadow/flora.js
   var AREA_FLORA_MEADOW = { species: [["chestnut", 0.3], ["oak", 0.2], ["hawthorn", 0.25], ["cherry", 0.15], ["crabApple", 0.1]], palette: { sat: 1.1, val: 1.12 } };
 
@@ -12038,9 +12041,6 @@ label.check input { accent-color: var(--accent); }
   // art/areas/stone-shrine/flora.js
   var AREA_FLORA_STONE_SHRINE = { species: [["yew", 0.6], ["holly", 0.25], ["hawthorn", 0.15]], palette: { sat: 0.9, val: 0.9 } };
 
-  // art/areas/stream/flora.js
-  var AREA_FLORA_STREAM = { species: [["alder", 0.45], ["willow", 0.3], ["weepingBirch", 0.25]], palette: { sat: 1, val: 1 } };
-
   // art/areas/tangly-forest/flora.js
   var AREA_FLORA_TANGLY_FOREST = { species: [["hawthorn", 0.45], ["elder", 0.25], ["crabApple", 0.2], ["hazel", 0.1]], palette: { sat: 1.05, val: 0.9 } };
 
@@ -12057,8 +12057,8 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLORA_WISPY_FOREST = { species: [["lime", 0.4], ["birch", 0.25], ["aspen", 0.2], ["whitebeam", 0.15]], palette: { sat: 0.85, val: 1.12 } };
 
   // art/areas/index.js
-  var AREA_FOLDER_RECIPES = [FEN, HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
-  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, stream: AREA_FLORA_STREAM, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
+  var AREA_FOLDER_RECIPES = [FEN, MANGROVE_HERONRY, ERG, WARREN, SAVANNA, PLAINS, SCRUB_WASH, MOSSY_CREEK, FROSTCAVE, EYRIE, DELL, MANGROVE_POOLS, MUDFLAT, TERRACES, MANGROVE, BUSHVELD, PACKICE, CACTUS_FLATS, RED_CANYON, BAMBOO_JUNGLE, TEMPLE_JUNGLE, RIVER_JUNGLE, ROOKERY, MOONPOOL, DRAGON_SCRUB, SNOWFIELD, CRAGS, ICEFALL, MISTWOOD, TROLLWOOD, CINDER_SLOPES, DROWNED_WOOD, DESERT_RUIN, STEP_PYRAMID];
+  var AREA_FOLDER_FLORA = { "alder-forest": AREA_FLORA_ALDER_FOREST, ancient: AREA_FLORA_ANCIENT, "beaver-pond": AREA_FLORA_BEAVER_POND, "berry-thicket": AREA_FLORA_BERRY_THICKET, "bluebell-glade": AREA_FLORA_BLUEBELL_GLADE, bog: AREA_FLORA_BOG, deadwood: AREA_FLORA_DEADWOOD, "fern-forest": AREA_FLORA_FERN_FOREST, garden: AREA_FLORA_GARDEN, grassland: AREA_FLORA_GRASSLAND, "hazel-forest": AREA_FLORA_HAZEL_FOREST, heath: AREA_FLORA_HEATH, "honeysuckle-tangle": AREA_FLORA_HONEYSUCKLE_TANGLE, "jungle-cave": AREA_FLORA_JUNGLE_CAVE, "jungle-understory": AREA_FLORA_JUNGLE_UNDERSTORY, "log-pile": AREA_FLORA_LOG_PILE, "mangrove-channel": AREA_FLORA_MANGROVE_CHANNEL, meadow: AREA_FLORA_MEADOW, moor: AREA_FLORA_MOOR, "muddy-forest": AREA_FLORA_MUDDY_FOREST, "old-oaks": AREA_FLORA_OLD_OAKS, "old-pinewood": AREA_FLORA_OLD_PINEWOOD, ravine: AREA_FLORA_RAVINE, "rocky-slope": AREA_FLORA_ROCKY_SLOPE, "stone-shrine": AREA_FLORA_STONE_SHRINE, "tangly-forest": AREA_FLORA_TANGLY_FOREST, "thorn-scrub": AREA_FLORA_THORN_SCRUB, "twiggy-forest": AREA_FLORA_TWIGGY_FOREST, wetland: AREA_FLORA_WETLAND, "wispy-forest": AREA_FLORA_WISPY_FOREST };
   var AREA_FOLDER_KINDS = [
     { "kind": "hedgehog", "slot": 0, "phase": 0, "bearing": 170, "dir": "S", "biome": "temperate" },
     { "kind": "squirrel", "slot": 1, "phase": 0, "bearing": 285, "dir": "WNW", "biome": "temperate" },
@@ -12685,17 +12685,20 @@ label.check input { accent-color: var(--accent); }
       small: [P("reeds")],
       big: [tree("willow", { variant: "pollard" }), tree("alder", { minor: true, scale: 0.9 })]
     },
+    // (the stream till the roster moved the otter, a smooth-coated otter now, to the mangrove swamp, Ed 2026-10-23/25; ring 3, so
+    // semi-temperate: a brackish channel, drowned willows and young mangroves from the swamp's list along it with alders, a third, soft
+    // grey mud for its pebbles, reeds and mangrove seedlings at the water)
     {
-      id: "stream",
-      name: "Stream",
+      id: "mangrove-channel",
+      name: "Mangrove channel",
       creature: "otter",
       by: "draft",
-      leaf: 0.27,
-      floor: ["pebbles", 0.25, 0.3, 0.45],
-      text: { floor: "pebbles and grass", wall: "a stream or pond", small: "alder saplings", big: "alders", set: "a fallen-log bridge" },
-      wall: [P("water", { w: 2 })],
-      small: [tree("broad", { scale: 0.45 })],
-      big: [tree("alder", { variant: "windbent", scale: 0.95, gnarl: 0.3 }), tree("willow", { minor: true, scale: 0.8 })],
+      leaf: 0.28,
+      floor: ["mud", 0.18, 0.3, 0.4],
+      text: { floor: "soft grey mud", wall: "a brackish channel", small: "reeds and mangrove seedlings", big: "drowned willows, young mangroves and alders", set: "a fallen-log bridge" },
+      wall: [P("water", { w: 2 }), P("reeds", { tall: true })],
+      small: [P("reeds"), tree("mangrove", { scale: 0.4 })],
+      big: [tree("willow", { variant: "drowned", scale: 1 }), tree("mangrove", { minor: true, scale: 0.8 })],
       set: P("bridge")
     },
     {
@@ -12868,7 +12871,7 @@ label.check input { accent-color: var(--accent); }
   var AREA_FLAGS = {
     moor: { ponds: true },
     wetland: { ponds: true, wet: true },
-    stream: { ponds: true, wet: true, pathKinds: ["bridges"] },
+    "mangrove-channel": { ponds: true, wet: true, pathKinds: ["bridges"] },
     bog: { ponds: true, wet: true },
     "beaver-pond": { ponds: true, wet: true },
     ravine: { steep: true, pathKinds: ["stairs"] },
@@ -13124,7 +13127,7 @@ label.check input { accent-color: var(--accent); }
       [0.35, [0.2, 0, 0, 0.6, 0.2]],
       "Open reedy water and mud in the middle, willows crowding the rim; wet and echoing."
     ),
-    "stream": LAY(
+    "mangrove-channel": LAY(
       "rows",
       0.68,
       0.2,
@@ -13134,7 +13137,7 @@ label.check input { accent-color: var(--accent); }
       NO_LEAN,
       ["stream", "pools"],
       [0.3, [0.3, 0.3, 0, 0.3, 0.1]],
-      "Alders lining both banks of a pebbly stream, saplings at the water's edge, open grass away from it.",
+      "Drowned willows and young mangroves lining both banks of a brackish channel, alders among them, seedlings and reeds at the water's edge, soft mud away from it.",
       { along: "stream" }
     ),
     "rocky-slope": LAY(
@@ -13297,7 +13300,7 @@ label.check input { accent-color: var(--accent); }
     )
   };
   Object.assign(AREA_LAYOUTS, RECIPE_LAYOUTS);
-  var HANG = { "wispy-forest": 0.9, "tangly-forest": 0.7, "muddy-forest": 0.55, "ancient": 0.7, "old-oaks": 0.5, "alder-forest": 0.6, "wetland": 0.7, "bog": 0.8, "deadwood": 0.45, "honeysuckle-tangle": 0.6, "beaver-pond": 0.5, "stream": 0.4 };
+  var HANG = { "wispy-forest": 0.9, "tangly-forest": 0.7, "muddy-forest": 0.55, "ancient": 0.7, "old-oaks": 0.5, "alder-forest": 0.6, "wetland": 0.7, "bog": 0.8, "deadwood": 0.45, "honeysuckle-tangle": 0.6, "beaver-pond": 0.5, "mangrove-channel": 0.4 };
   for (const [id, h] of Object.entries(HANG)) if (AREA_LAYOUTS[id]) AREA_LAYOUTS[id].hang = h;
   for (const a of AREAS) a.layout = AREA_LAYOUTS[a.id];
   var fireCol = { [M.ACCENT]: [150, 145, 140], [M.BODY2]: [95, 92, 100], [M.TRUNK]: [110, 70, 40], [M.BARKD]: [60, 38, 24], [M.MAGIC]: [255, 130, 40], [M.MAGIC2]: [255, 228, 120], [M.NOSE]: [30, 24, 26] };
@@ -16634,7 +16637,7 @@ label.check input { accent-color: var(--accent); }
       ["rubble", 3.4, 1.6, "left"],
       ["decor:split", -3.4, 1.8]
     ] },
-    "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "stream"], pieces: [
+    "pagoda-temple": { desc: "a tiered wooden temple on its plinth, its top tier leaning and its spire fallen, mossed rocks round it", suits: ["bluebell-glade", "fern-forest", "ravine", "mangrove-channel"], pieces: [
       ["pagoda-temple", 0, 0],
       ["decor:pair", -2.8, 1.6],
       ["decor:rock", 2.9, -1.4],
@@ -16680,7 +16683,7 @@ label.check input { accent-color: var(--accent); }
     // (the toppled statue head gone: Ed, 2026-10-11)
   };
   var TEMPLE_SUITS = ["meadow", "garden", "grassland", "ancient", "heath", "desert-ruin"];
-  var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "stream", "jungle-cave", "wispy-forest"];
+  var RUIN_SUITS = [...TEMPLE_SUITS, "moor", "rocky-slope", "stone-shrine", "bluebell-glade", "hazel-forest", "old-oaks", "fern-forest", "deadwood", "ravine", "mangrove-channel", "jungle-cave", "wispy-forest"];
   var TEMPLE_EXTRAS = ["column-drums", "pediment-fragment", "statue-headless", "column-broken", "column"];
   for (const id of CLASSICAL_PLAN_IDS) for (let k = 0; k < CLASSICAL_VARIANTS; k++) {
     const d = LANDMARK_BY_ID[`${id}~${k}`], big = d.planSize === "large", h = (i, j = 0) => (Math.sin((i + 1) * 127.1 + (j + 1) * 311.7 + k * 74.7 + id.length * 19.3) * 43758.5453 % 1 + 1) % 1;
@@ -17483,7 +17486,7 @@ label.check input { accent-color: var(--accent); }
     },
     glowPower: 0.95,
     _light: `The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party in it"; render/mood.ts): mood spooky lays this grade over the Art Lab's night light, plain is the light as it was (?light=plain or ?light=spooky to compare). spooky: ambientHue and ambient (times the tuning's ambient): the shadows' colour and brightness, a deep blue-green; moonHue, moonSat and moon (times tone.moon): a colder moon, a little stronger, so it rims what it lights; hazeHue, hazeSat and haze (its brightness, 0 to 1): the fog the forest fades into, violet; hazeNear and hazeFar: where the fog starts and is whole (metres from the witch; nearer than haze.near and haze.far, which still set how far scenery is drawn); mist: the low ground mist's strength (instead of mist.strength); glowHue and glowSat: the witch's glow, warmer, so the party's lights are the warm ones in the wood; grade, gradeDesat, gradePivot, gradeHue and gradeSat: a grade over the finished picture, draining the dark and middle tones' colour (gradeDesat of it) toward a cold tint (hue and saturation), by grade (0 off: Ed's tuned value from the pause page, 2026-10-26, v4522, and so the areas' grade tints with it), fading out up to gradePivot brightness, so the bright warm lights keep their colour; partyWarm, partyReach and partyStrength: the soundsystems' light, warm amber, pink and gold (one per variant, instead of their crystal cyan, violet and amber), wider and stronger; decorLights, decorReach and decorStrength: the party decor's lights (lanterns, campfires), how many an area lights (instead of partyObjects.lightsPerArea) and how far and strong, so each party is pools of warm light with dark between; areas: each area type's own fog (hazeHue, hazeSat, haze), grade tint (gradeHue, gradeSat) and mist over the above, by area id ("home" for home): misty teal over the bogs and water, violet-grey in the dead and ancient woods, blue-violet in the bluebells, pale mist on the open moor, darker in the rocky places, near-black green under the pines, rosy in the honeysuckle and gardens, home a little less cold; areaEase: how fast the mood eases from one area's to the next (a second); rimHue, rimSat and rim: a moonlight rim on the characters (the witch and every creature, baked or rigged), a light edge one art pixel wide on the side away from the moon in the night sky's blue-violet, at rim strength (0 off), so they read against the dark (the art director, round 1), only where the sprite is three pixels thick or more and never on the live rig's leg discs (Ed, 2026-10-06: "Animal legs have outlines on them; they'd look better without"); witchGlow: how much of her own glow lights the witch herself (0: none, as before), so she stands in her pool of light. Round 2 (the art director): moonUp, the moon's fill on whatever faces up (canopy tops, open ground) as a share of the moon, so the dark middle distance still reads (0 none); leyRgb and leyBright, the ley line in the HUD's amber at half its brightness, a guide rather than a light (leave leyRgb out for each area's own colour); berryHalo and berryGlow, a berry's halo's size and strength as shares of the old 2.8 m soft disc, so a berry reads as a crisp dot with a small glow. Round 3: moonUpHue and moonUpSat, the moon fill's own hue and saturation (green-cyan and pale, so the woods are blue-green with violet only in the shadows; left out, the moon's); styledRim and styledGlow: with ?style=bold or ref, the rim's strength and her own glow on her, in place of rim and witchGlow (the styles bake dark tones with flat normals, so she needs more to stand out in her own pool). witchLift and styledLift: her pool's light thrown back up onto her, added rather than multiplied, so even dark tones lift (0 in the default style; styledLift with bold or ref, where she otherwise vanishes in her own pool). moonUpWrap: the share of that fill every face gets whatever its normal (0: by its normal alone), so a crown's regular bumps don't light up as a lattice of dots. Round 4: decorWarm, how far the party decor's point lights go from their neon to the party's amber (an area's neon pieces lit its ground lime; the neon stays on the bulbs, the pool stays warm).`,
-    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, stream: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
+    light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { bog: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, garden: { hazeHue: 0.88, hazeSat: 0.4 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
     lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 5e-3, wetPond: 0.03 },
     haze: { near: 150, far: 360 },
     _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.`,
