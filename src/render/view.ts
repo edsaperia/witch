@@ -1055,6 +1055,9 @@ export class View {
     // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
     warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
+    // (the zoo, every island its own type and kind, dozens of them: each island's creatures and sleeping legend with its trees,
+    // nearest first, not every type's trees ahead of any creature, or the island she's on waits behind the whole zoo's)
+    if (this.game.map.zoo?.layout) { for (const [t] of [...near].sort((a, b) => a[1] - b[1])) { this.assets.prefetchType(t); const sp = AREA_TYPES[t]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.sleepArt(sp); } } return; }
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     // The island's own creatures' art ahead (the map's area types' and the night's legends'), not every species' (Ed's log,
     // 2026-10-14: the audio under-ran in bursts through the first ten minutes of every night; the workers were baking all sixty
