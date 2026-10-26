@@ -13,6 +13,8 @@
 //  - Her hat (Ed, 2026-10-06: "when you are killed, you drop your hat, and there's a direction marker for it, so you can
 //    go back and find it"): the same ring, whole, a 🎩 in the middle (HAT), pointing at it while it lies on the ground
 //    (rules/hat.ts), hovering over it once it's on screen.
+//  - On screen, every one of them is a map pin over its subject (Ed, 2026-10-26): its arrow turned straight down at it, its
+//    tip just over the subject's top, bobbing gently, kept on the screen, side by side with another over the same spot.
 // Directions are in screen space, y down: an angle a points along (cos a, sin a) on the canvas.
 import * as THREE from "three";
 import { sigilGlyph } from "../../art/generator.js";
@@ -226,6 +228,11 @@ export const FLASK = [
   "...#########...",
 ];
 
+/** A pin's arrow tip over its subject's top (CSS pixels), and how far it bobs either way. */
+const PIN_GAP = 6, PIN_BOB = 3;
+/** Angle `a` turned toward `b` by share `k`, the short way round. */
+const turnToward = (a: number, b: number, k: number) => a + Math.atan2(Math.sin(b - a), Math.cos(b - a)) * k;
+
 export class StoneIndicator {
   private cue: PixelCue;
   private v = new THREE.Vector3();
@@ -247,21 +254,27 @@ export class StoneIndicator {
 
   /** Point at the next waking stone at (x, z), its area's creature `species` and neon (rgb 0-1);
    *  `fill`: how far the countdown to the next wave has run (0 just after one, 1 as it comes). null hides it. */
-  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3 } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
+  update(camera: THREE.Camera, width: number, height: number, at: { x: number; z: number; colour: THREE.Vector3; species: string; notes?: boolean; glyph?: readonly string[]; /** the glyph in its own colour (her hats' pointers), the ring in `colour` */ glyphColour?: THREE.Vector3; /** how tall the subject stands (m): the pin hovers over its top (a stone's 3.2 m by default) */ top?: number } | null, wx: number, wz: number, time: number, bpm: number, fill: number, label?: string): void {
     const c = this.cue;
     // The party spread (the countdown went back to the start): a flash.
     if (fill < this.lastFill - 0.5) this.flashAt = time;
     this.lastFill = fill;
     if (!at) { c.hide(); return; }
     // Off screen: on the edge, pointing the way; on screen (Ed, v256: "runestone UI markers
-    // shouldn't disappear"): gliding from the edge to hover over the stone, without the arrow,
-    // smaller when she's close so it doesn't cover her, the distance gone within 20 m.
-    const e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, 3.2);
+    // shouldn't disappear"): gliding from the edge to hover over its subject as a map pin (Ed, 2026-10-26: "When you get close to
+    // the subject of a pointer, instead of disappearing it should float above that thing and point downwards, like a map pin"):
+    // its arrow turning from the way to straight down, its tip just over the subject's top (`top` metres up), bobbing gently,
+    // kept on the screen (it slid off the top as a subject came in there), smaller when she's close so it doesn't cover her, the
+    // distance gone within 20 m.
+    const top = at.top ?? 3.2, e = edgeSpot(this.v, camera, width, height, at.x, at.z, wx, wz, top);
     const dist = Math.hypot(at.x - wx, at.z - wz), over = 1 - e.show, ease = over * over * (3 - 2 * over);
     const size = 1 - 0.3 * ease * (1 - Math.min(1, Math.max(0, (dist - 12) / 28)));
-    const lift = (N * c.scale * size) / 2 + 6; // above the stone's top, clear of it
-    let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (e.sy - lift - e.ey) * ease;
-    ({ x: cx, y: cy } = edgeLayout.claim(cx, cy, e.angle, (N * c.scale * size) * 0.42, e.show > 0.5));
+    const px = c.scale * size, half = (N * px) / 2, bob = ease * PIN_BOB * Math.sin(time * Math.PI); // (a bob every two beats)
+    const pinY = Math.max(half + 4, e.sy - PIN_GAP - (RING_R + 7) * px) + bob; // (the arrow's tip PIN_GAP over its top)
+    let cx = e.ex + (e.sx - e.ex) * ease, cy = e.ey + (pinY - e.ey) * ease;
+    // (pins side by side where they'd overlap, as the edge's cues are along the edge)
+    const arrow = turnToward(e.angle, Math.PI / 2, ease);
+    ({ x: cx, y: cy } = edgeLayout.claim(cx, cy, arrow, (N * c.scale * size) * 0.42));
     c.place(cx, cy, size);
     c.clear();
     const beat = (time * bpm) / 60, pulse = Math.pow(0.5 + 0.5 * Math.cos((beat % 1) * Math.PI * 2), 2);
@@ -285,13 +298,14 @@ export class StoneIndicator {
       const o = Math.floor((N - g.w) / 2);
       for (let y = 0; y < g.w; y++) for (let x = 0; x < g.w; x++) if (g.m[y * g.w + x]) c.dot(o + x, o + y, bright, 1);
     }
-    // The arrowhead outside the ring, toward the stone (fading as it comes over the stone).
-    drawArrow(c, e.angle, N, R + 2, R + 7, 3.5, bright, e.show);
+    // The arrowhead outside the ring: toward the subject at the edge, straight down at it as a pin.
+    drawArrow(c, arrow, N, R + 2, R + 7, 3.5, bright, 1);
     c.flush();
-    // The distance on the far side of the ring from the arrow (or under the ring, over the stone).
+    // The distance on the far side of the ring from the arrow (or beside it, as a pin).
     const showLabel = !!label || dist > 20;
     if (!showLabel) { c.label.style.display = "none"; return; }
-    const ax = -Math.cos(e.angle) * e.show, ay = -Math.sin(e.angle) * e.show + (1 - e.show), al = Math.hypot(ax, ay) || 1;
+    // (opposite the arrow on the edge; beside the ring as a pin, clear of its arrow below and the clock above at the screen's top)
+    const ax = -Math.cos(arrow) * (1 - ease) + ease, ay = -Math.sin(arrow) * (1 - ease), al = Math.hypot(ax, ay) || 1;
     c.say(label ?? `${Math.round(dist)} m`, `rgb(${neon.map(Math.round).join(",")})`, cx, cy, ax / al, ay / al, (R + 1.5) * c.scale * size);
   }
 }

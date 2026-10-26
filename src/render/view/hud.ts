@@ -18,6 +18,10 @@ import { slowAmount, slowest } from "../slowtime";
 /** At most this many left before each gets a pointer (more would clutter the edge: the HUD's count says how many). */
 
 /** Updates the pointers for this frame. */
+/** How tall each pointer's subject stands (m): its pin hovers over that (render/indicator.ts). A runestone; the ley line's pulse
+ *  (its sparkler, over the line); a hat or a relic's sigil on the ground; an enraged animal. */
+const PIN_TOP = { stone: 3.2, pulse: 1.5, ground: 0.6, creature: 2.5 };
+
 export function drawPointers(v: View, time: number): void {
   const g = v.game, t = g.tuning, w = g.witch;
   // The wave pointer (Ed, 2026-10-06): toward the ley line's pulse on its way to the next wave's stone (rules/leypulse.ts,
@@ -41,7 +45,7 @@ export function drawPointers(v: View, time: number): void {
         if (!c || shown <= 0) { ind.update(v.camera, cw, ch, null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 0); return; }
         const s = g.map.soundsystemSpot(c[0], c[1]), species = AREA_TYPES[g.map.typeOf(c[0], c[1])].creature;
         const pulse = i === 0 ? v.ley.pulseTip ?? leyPulse(g.party, g.map, time, v.ley.currentLink()) : null, at = pulse ?? s; // (the sparkler's own point, drawn this frame)
-        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0, glyph: i === 0 && finalStone(g) ? PARTY : undefined }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
+        ind.update(v.camera, cw, ch, { x: at.x, z: at.z, colour: v.markerArt.colour.get(species)!, species, notes: i === 0, glyph: i === 0 && finalStone(g) ? PARTY : undefined, top: pulse ? PIN_TOP.pulse : PIN_TOP.stone }, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, fill, label);
       });
     };
     // Pausing holds the countdown. Its label is the party's tempo (Ed, 2026-10-07: "The BPM is shown on the sparkler
@@ -59,14 +63,14 @@ export function drawPointers(v: View, time: number): void {
     v.hatPointers.forEach((P, i) => {
       const H = hats[i];
       P.fade(H ? calm : 0);
-      P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT, glyphColour: hatInk(v.hatLooks.get(hatKey(H))) } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      P.update(v.camera, cw, ch, H ? { x: H.x + HAT_BESIDE, z: H.z, colour: HAT_INK, species: "", glyph: HAT, glyphColour: hatInk(v.hatLooks.get(hatKey(H))), top: PIN_TOP.ground } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     });
     // The Dowsing hat (rules/hatSpells.ts): toward the nearest relic still to find, for a while after she puts it down.
     const D = dowseMarker(g, g.witches[0].spells, g.herTime);
     if (D || v.dowsePointer) {
       const P = (v.dowsePointer ??= new StoneIndicator(document.body, 3));
       P.fade(D ? calm : 0);
-      P.update(v.camera, cw, ch, D ? { x: D.x, z: D.z, colour: HAT_INK, species: "", glyph: FLASK } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
+      P.update(v.camera, cw, ch, D ? { x: D.x, z: D.z, colour: HAT_INK, species: "", glyph: FLASK, top: PIN_TOP.ground } : null, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // The end of the route (rules/win.ts): toward the enraged animal nearest the centre while any lives (its sigil, in its
     // neon), then toward the victory lap's pulse racing home (🎉).
@@ -74,7 +78,7 @@ export function drawPointers(v: View, time: number): void {
     if (S || L || v.winPointer) {
       const P = (v.winPointer ??= new StoneIndicator(document.body, 3));
       P.fade(S || L ? calm : 0);
-      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species } : L ? { x: v.ley.pulseTip?.x ?? L.x, z: v.ley.pulseTip?.z ?? L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY } : null;
+      const at = S ? { x: S.x, z: S.z, colour: v.markerArt.colour.get(S.species)!, species: S.species, top: PIN_TOP.creature } : L ? { x: v.ley.pulseTip?.x ?? L.x, z: v.ley.pulseTip?.z ?? L.z, colour: v.markerArt.colour.get(AREA_TYPES[g.map.typeOf(g.map.centreCell[0], g.map.centreCell[1])].creature) ?? HAT_INK, species: "", glyph: PARTY, top: PIN_TOP.pulse } : null;
       P.update(v.camera, cw, ch, at, w.x, w.z, beatTime(g.beat, time), t.beat.bpm, 1);
     }
     // A soundsystem (or the home ring's speakers) under attack off screen (Ed, 2026-10-06): 🔇 at the edge toward it.
