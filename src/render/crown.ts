@@ -6,7 +6,7 @@
 // the rooms' leaf roofs were: after the house, no depth, far to near), eased between the two as she lands or takes off.
 //
 // Indoors (Ed: "indoors, whole room opens up; these holes should match the irregular shape of the room") it clears over the room
-// she's in, its floor's outline and its far wall, with a ragged dithered edge 1 to 3.5 m out, or over her stretch of branch: a small
+// she's in, its floor's outline and its far wall, with a ragged soft edge 1 to 3.5 m out (faded as the forest's hole is, not dithered), or over her stretch of branch: a small
 // distance field of that floor, made when she changes room. Everywhere, the forest's own hole round her (render/sprites.ts: her
 // circle on the screen, uWitch and uOcc, its dithered way, uSeeDither) cuts it where it stands in front of her.
 import * as THREE from "three";
@@ -70,14 +70,16 @@ float vnoise2(vec2 p) { return texture2D(uNoise, (p + 0.5) / 64.0).r; }
 float bayer4(vec2 p) { vec2 q = mod(floor(p), 4.0); float i = q.x + q.y * 4.0;
   return (i == 0.0 ? 0.0 : i == 1.0 ? 8.0 : i == 2.0 ? 2.0 : i == 3.0 ? 10.0 : i == 4.0 ? 12.0 : i == 5.0 ? 4.0 : i == 6.0 ? 14.0 : i == 7.0 ? 6.0 : i == 8.0 ? 3.0 : i == 9.0 ? 11.0 : i == 10.0 ? 1.0 : i == 11.0 ? 9.0 : i == 12.0 ? 15.0 : i == 13.0 ? 7.0 : i == 14.0 ? 13.0 : 5.0) / 16.0 + 1.0 / 32.0; }
 float screenDistC(vec2 a, vec2 b) { return length(clamp((a - b) / 256.0, -100.0, 100.0)) * 256.0; }
-// Whether a floor's mask clears this pixel: its floor and its far wall, a ragged dithered edge 1 to 3.5 m out.
-bool inClear(sampler2D mask, vec2 floorP) {
+// How far a floor's mask clears this pixel (1 cleared, 0 not): its floor and its far wall, a ragged soft edge 1 to 3.5 m out, faded
+// smoothly as the forest's hole is (Ed, 2026-10-26: "Room cutouts seem to be more dithered (pixellated) than in the forest": it
+// was a 4 x 4 ordered dither across the band).
+float inClear(sampler2D mask, vec2 floorP) {
   vec2 uv = (floorP - uClearBox.xy) * uClearBox.zw, uv2 = (floorP + vec2(0.0, 5.0) - uClearBox.xy) * uClearBox.zw;
   float d = 1e3;
   if (all(greaterThan(uv, vec2(0.0))) && all(lessThan(uv, vec2(1.0)))) d = texture2D(mask, uv).r * 16.0;
   if (all(greaterThan(uv2, vec2(0.0))) && all(lessThan(uv2, vec2(1.0)))) d = min(d, texture2D(mask, uv2).r * 16.0);
   float o = d - (1.0 + 1.6 * vnoise2(floorP * 0.5));
-  return o < 0.0 || (o < 2.5 && bayer4(gl_FragCoord.xy) > o / 2.5);
+  return 1.0 - smoothstep(0.0, 2.5, o);
 }
 // How much of the crown stays here (0 cleared away, 1 whole): her room's (or branch's) floor as it fades in, the one she left as it
 // fades back (vFloor: the floor's plan point under this pixel); indoors, the forest's hole round her where she's drawn, its soft
@@ -85,8 +87,8 @@ bool inClear(sampler2D mask, vec2 floorP) {
 float clearKeep(vec2 floorP, float depth) {
   float keep = 1.0;
   if (uClearOn > 0.5) {
-    if (uClearW.x > 0.0 && inClear(uClear, floorP)) keep *= 1.0 - uClearW.x;
-    if (uClearW.y > 0.0 && inClear(uClearB, floorP)) keep *= 1.0 - uClearW.y;
+    if (uClearW.x > 0.0) keep *= 1.0 - uClearW.x * inClear(uClear, floorP);
+    if (uClearW.y > 0.0) keep *= 1.0 - uClearW.y * inClear(uClearB, floorP);
   }
   if (uHerHole.z > 0.0) {
     vec2 off = gl_FragCoord.xy - uHerHole.xy;
