@@ -30,8 +30,8 @@ import { AREA_GLSL, AREA_TILE, AreaWindow, areaTexel } from "./areaWindow";
 /** How much smaller her warm pool is on the open sand than on the forest floor (the beach's: render/ground.ts). */
 const BEACH_POOL = 2.2;
 
-/** The area texture's windows (render/areaWindow.ts): the near one at 2 texels a metre (as the whole map's was), NEAR_TILES of its
- *  32-texel tiles a side (1 km), moved NEAR_STEP tiles at a time, so it always holds 448 m round her, past the haze's far edge (the
+/** The area texture's windows (render/areaWindow.ts): the near one at 2 texels a metre (as the whole map's was: a little under on the
+ *  biggest maps), NEAR_TILES of its 32-texel tiles a side (1 km), moved NEAR_STEP tiles at a time, so it always holds 448 m round her, past the haze's far edge (the
  *  ground beyond it is all haze: lighting.ts haze; tuning haze.far 360 m, the spooky mood's 200); and the far one, for the
  *  telescope's view across the island (its haze at 1000 m), at 4 m a texel, FAR_TILES a side (2.6 km): 8 MB and 0.8 MB. */
 const NEAR_TPM = 2, NEAR_TILES = 64, NEAR_STEP = 4, FAR_TPM = 0.25, FAR_TILES = 20, FAR_STEP = 2;
@@ -656,7 +656,9 @@ export class Ground {
     this.plazaSigil = plazaSigil(!!map.zoo?.layout);
     const e = map.extent, w = e.maxX - e.minX, d = e.maxZ - e.minZ, cap = Math.floor(maxTexture / AREA_TILE);
     const window = (tpm: number, tiles: number, step: number) => new AreaWindow(Math.min(tiles, cap), tpm, step, { minX: e.minX, minZ: e.minZ, tilesX: Math.ceil((w * tpm) / AREA_TILE), tilesZ: Math.ceil((d * tpm) / AREA_TILE) }, (out, i, j, tpm) => this.areaTile(out, i, j, tpm));
-    this.near = window(NEAR_TPM, NEAR_TILES, NEAR_STEP);
+    // (the near window's texels where the whole map's were: 2 a metre, or a little under on a map over 4080 m across, its texture held
+    // to 8160 texels then; the same grid, so the area borders' blend reads the same texels: the bench's frames unchanged)
+    this.near = window(Math.min(NEAR_TPM, ((Math.floor(8192 / AREA_TILE) - 1) * AREA_TILE) / Math.max(1, w, d)), NEAR_TILES, NEAR_STEP);
     this.far = window(FAR_TPM, FAR_TILES, FAR_STEP);
     const nearest = (t: THREE.DataTexture) => { t.magFilter = t.minFilter = THREE.NearestFilter; t.generateMipmaps = false; t.colorSpace = THREE.NoColorSpace; t.needsUpdate = true; return t; };
     this.floors = nearest(new THREE.DataTexture(new Uint8Array(64 * FLOOR_VARIANTS * FLOOR_COLS * 48 * FLOOR_ROWS * 4), 64 * FLOOR_VARIANTS * FLOOR_COLS, 48 * FLOOR_ROWS));
@@ -843,13 +845,15 @@ export class Ground {
     for (const [t, c] of [[u.uDiscoBase.value, base], [u.uDiscoLit.value, lit]] as [THREE.CanvasTexture, HTMLCanvasElement][]) { t.image = c; t.needsUpdate = true; }
   }
 
-  /** The area texture's tiles in `rect` round (x, z) (render/areaWindow.ts: the near window, then the far one), nearest first,
-   *  for about `budgetMs`: how many are left. */
+  /** The area texture's tiles in `rect` round (x, z) (render/areaWindow.ts: the near window), nearest first, for about `budgetMs`:
+   *  how many are left. The far window (the telescope's) only with the time left once the near one's done, and not counted: the
+   *  start and the tools wait for what's drawn round her, as before. */
   fill(renderer: THREE.WebGLRenderer, rect: { minX: number; maxX: number; minZ: number; maxZ: number }, x: number, z: number, budgetMs: number): number {
     if (!this.initialised) { renderer.initTexture(this.floors); this.initialised = true; }
     if (this.pendingFloors.length) this.placeFloors(renderer);
-    const t0 = performance.now(), left = this.near.fill(renderer, rect, x, z, budgetMs);
-    return left + this.far.fill(renderer, rect, x, z, left ? 0 : Math.max(0, budgetMs - (performance.now() - t0)));
+    const t0 = performance.now(), left = this.near.fill(renderer, rect, x, z, budgetMs), spare = budgetMs - (performance.now() - t0);
+    if (!left && spare > 0) this.far.fill(renderer, rect, x, z, spare);
+    return left;
   }
 
   /** Map tile (i, j)'s texels at `tpm` (render/areaWindow.ts areaTexel): each one's area look, openness and pond. */

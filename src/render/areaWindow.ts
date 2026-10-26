@@ -4,8 +4,9 @@
 // at 2 texels a metre: up to 8192 a side, 256 MB of GPU memory (the zoo's 254 MB, tools/zoo/perf.cjs), of which only the tiles near
 // the cameras were ever filled. Now S tiles a side of the map's 32-texel tiles, each of the map's tiles held in the one its index
 // wraps to (the texture repeats, so the shader's lookup needs no wrapping of its own), the window kept round her a step at a time:
-// the tiles it leaves cleared as it goes, so nothing stale is ever read. Two bytes a texel (RG8): the area's look + 1 (0, not filled
-// yet: the shader's old "a < 0.5"), and its openness in seven bits with the pond's in the eighth. The shader reads it through
+// the tiles it leaves cleared as it goes, so nothing stale is ever read. Two bytes a texel (RG8): the area's look + 1 in seven bits
+// (0, not filled yet: the shader's old "a < 0.5") with the pond's in the eighth, and its openness, all eight bits as before (seven
+// changed the clearings' shade: the bench's wave-fight, 10% of its pixels by a level or two). The shader reads it through
 // AREA_GLSL's areaAt, which hands back the old four channels. No three.js scene here, only the texture: tested without a GPU.
 import * as THREE from "three";
 
@@ -18,8 +19,8 @@ uniform sampler2D uAreas, uAreasFar;
 uniform vec4 uExtent, uExtentFar;   // each texture's corner (x, z) and span (metres): it repeats
 uniform vec4 uAreaWin, uAreaWinFar; // each window's held box: min x, min z, max x, max z (metres)
 vec4 areaDecode(vec4 a) {
-  float t = floor(a.r * 255.0 + 0.5), g = floor(a.g * 255.0 + 0.5);
-  return t < 0.5 ? vec4(0.0) : vec4((t - 1.0) / 255.0, mod(g, 128.0) / 127.0, g >= 128.0 ? 1.0 : 0.0, 1.0);
+  float r = floor(a.r * 255.0 + 0.5), t = mod(r, 128.0);
+  return t < 0.5 ? vec4(0.0) : vec4((t - 1.0) / 255.0, a.g, r >= 128.0 ? 1.0 : 0.0, 1.0);
 }
 vec4 areaAt(vec2 p) {
   if (p.x >= uAreaWin.x && p.y >= uAreaWin.y && p.x < uAreaWin.z && p.y < uAreaWin.w) return areaDecode(texture2D(uAreas, (p - uExtent.xy) / uExtent.zw));
@@ -28,9 +29,12 @@ vec4 areaAt(vec2 p) {
 }
 `;
 
-/** One texel's two bytes: the area's look + 1 and its openness (0 to 1) in seven bits, the pond's flag the eighth. */
-export const areaTexel = (look: number, openness: number, pond: boolean): [number, number] =>
-  [look + 1, (pond ? 128 : 0) + Math.max(0, Math.min(127, Math.round(openness * 127)))];
+/** One texel's two bytes: the area's look + 1 (under 128: the looks are about 65) with the pond's flag in the top bit, and its
+ *  openness (0 to 1) as the old texture's green byte. */
+export function areaTexel(look: number, openness: number, pond: boolean): [number, number] {
+  if (look + 1 >= 128) throw new Error(`area look ${look}: the area texture holds looks under 127`);
+  return [(look + 1) + (pond ? 128 : 0), Math.round(Math.max(0, Math.min(1, openness)) * 255)];
+}
 
 /** Where the map's tile (i, j) lives in a window `s` tiles a side: its slot (column, row). */
 export const slotOf = (i: number, j: number, s: number): [number, number] => [((i % s) + s) % s, ((j % s) + s) % s];
