@@ -40,6 +40,7 @@ export class ZooPlates {
   draw(g: Game, camera: THREE.Camera, width: number, height: number): void {
     const Z = g.map.zoo;
     if (!Z) return;
+    if (Z.layout) { for (const el of this.plates.values()) el.style.display = "none"; return; } // (laid out like the chart, its words are in the street: render/zooInscriptions.ts)
     const A = g.map.areaSize, w = g.witch, reach = w.lift > 0.5 ? NEAR.treetop : NEAR.ground;
     const near = Z.blocks.filter(b => b.found !== false).map(b => ({ b, ...(Z.layout ? blockFront(g.map, b) : { x: (b.cell[0] + 0.5) * A, z: (b.cell[1] + 1) * A - 6 }) })).map(p => ({ ...p, d: Math.hypot(p.x - w.x, p.z - w.z) }))
       .filter(p => p.d < reach).sort((p, q) => p.d - q.d).slice(0, MAX);
