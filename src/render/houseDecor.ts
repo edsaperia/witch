@@ -38,6 +38,8 @@ export interface DecorItem { kind: string; x: number; z: number; yaw: number; k:
 
 /** A rug's colours, times this: it lies flat to the light, and a pale one blooms into a glare (the solarium's cream). */
 const RUG_DIM = 0.6;
+/** The things spilled on the floor, times this: flat to the lamps as a rug is, a pale sheet of paper glared white. */
+const MESS_DIM = 0.7;
 /** Clear of these (m): a doorway, the way in from it, an object's reach past its edge (on top of the house's own reach). */
 const DOOR_CLEAR = 2.8, WAY_CLEAR = 1.8, REACH_CLEAR = 0.4, GAP = 2;
 
@@ -80,7 +82,7 @@ export function bakeRoomDecor(room: Rect & { id: string; r?: number; locked?: bo
   const items = decorPlan(room);
   if (!items.length) return null;
   const ky = Math.sin(pitch) * ppm, drawn = items.map(it => {
-    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, it.kind === "rug" ? RUG_DIM : 1);
+    const d = (it.kind === "mess" ? messSprite(it.of!, it.foot!, st, { ppm, pitch, yaw: it.yaw }) : decorSprite(it.kind, it.k, st, { ppm, pitch, yaw: it.yaw, ...(it.r ? { r: it.r / SIZE } : {}) })) as Drawn, c = litCanvas(d, room.id, st, it.kind === "rug" ? RUG_DIM : it.kind === "mess" ? MESS_DIM : 1);
     return { it, c, left: it.x * ppm - d.origin.x, top: it.z * ky - d.origin.y };
   });
   const x0 = Math.floor(Math.min(...drawn.map(q => q.left))), y0 = Math.floor(Math.min(...drawn.map(q => q.top)));
