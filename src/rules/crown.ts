@@ -47,6 +47,8 @@ export interface Crown {
   /** The Terrace on the plan (its disc), where its open rim is (the take-off's point) and the way she takes off from it (a unit
    *  vector on the plan). */
   terrace: { x: number; z: number; r: number }[]; notchFrom: [number, number]; takeoff: [number, number];
+  /** The Terrace's own floor outline on the plan (config/house/outline.json): the gap frames all of it, its DJ desk on the rim too. */
+  terraceOutline: [number, number][];
   /** Ground kept open as the Terrace is (CrownInput.open). */
   open: { x: number; z: number; r: number }[];
   /** The floor's height over the ground (m). */
@@ -55,31 +57,73 @@ export interface Crown {
 
 /** How the north-facing camera looks down at the Terrace from outside (degrees: the treetops' angleIn to angleOut and the landing): a
  *  clump on any of these lines of sight down to it would hide it (Ed, 2026-10-24: "the terrace should be very visible all the time"). */
-export const SIGHT_PITCHES = [30, 40, 50];
+export const SIGHT_PITCHES = [26, 34, 42, 50]; // (26: the ground camera's angleIn, low on the broom near the oak; 2026-10-26)
+/** How far past the Terrace's outline the gap opens (m): its rim and her DJ desk on it framed, not cut. */
+export const GAP_MARGIN = 3;
 
 const DEG = Math.PI / 180;
 
 /** The Terrace's notch (Ed, 2026-10-24: "perhaps terrace crown gap should be a cutout extending from the terrace to the edge of the
  *  crown, not just a hole"): how far (x, z) on the plan is from the open ground over the Terrace and the channel running from it out
  *  to the crown's edge the way she takes off (negative inside). `width` the channel's half-width. */
-export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"] }, x: number, z: number, width: number): number {
+export function notchDistance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"] }, x: number, z: number, width: number): number {
   let d = Infinity;
   for (const t of c.terrace) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
+  // (the Terrace's own outline, GAP_MARGIN past it: Ed, 2026-10-26, the gap "doesn't seem to surround the balcony": its disc, r 12.5,
+  // left its floor's bulges, out to 15 m, and the desk on its rim under the leaves)
+  if (c.terraceOutline?.length) d = Math.min(d, polySigned(c.terraceOutline, x, z) - GAP_MARGIN);
   for (const t of c.open ?? []) d = Math.min(d, Math.hypot(x - t.x, z - t.z) - t.r);
   const [ox, oz] = c.notchFrom, [tx, tz] = c.takeoff, along = (x - ox) * tx + (z - oz) * tz;
   if (along > -width) d = Math.min(d, Math.abs((x - ox) * tz - (z - oz) * tx) - width);
   return d;
+}
+/** How far (x, z) is from a closed outline: negative inside it. */
+export function polySigned(p: [number, number][], x: number, z: number): number {
+  let d = Infinity, inside = false;
+  for (let i = 0, j = p.length - 1; i < p.length; j = i++) {
+    const [ax, az] = p[j], [bx, bz] = p[i], dx = bx - ax, dz = bz - az, t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / Math.max(1e-9, dx * dx + dz * dz)));
+    d = Math.min(d, Math.hypot(x - ax - dx * t, z - az - dz * t));
+    if ((az > z) !== (bz > z) && x < (dx * (z - az)) / dz + ax) inside = !inside;
+  }
+  return inside ? -d : d;
 }
 /** The channel's half-width: as wide as the Terrace's widest disc, so the clearing reads as one open way out to the crown's edge. */
 export const notchWidth = (c: Pick<Crown, "terrace">): number => Math.max(...c.terrace.map(t => t.r)) * 0.6 + 2;
 
 /** How clear a point over the plan (y over the floor) keeps the Terrace: the least, over the camera's lines of sight, of how far the
  *  floor it hides is from the notch (negative: it would hide the Terrace or its way out). */
-export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"] }, x: number, y: number, z: number): number {
+export function sightClearance(c: Pick<Crown, "terrace" | "takeoff" | "notchFrom"> & { open?: Crown["open"]; terraceOutline?: Crown["terraceOutline"] }, x: number, y: number, z: number): number {
   const w = notchWidth(c);
   let m = notchDistance(c, x, z, w);
   for (const p of SIGHT_PITCHES) m = Math.min(m, notchDistance(c, x, z - Math.max(0, y) / Math.tan(p * DEG), w)); // (slid back down the line of sight to the floor: further north)
   return m;
+}
+
+type Shape = Parameters<typeof sightClearance>[0];
+/** A limb's tube as the bark draws it (render/crown.ts barkGeometry: a Catmull-Rom through its knots), sampled about every metre:
+ *  each point (x, y, z, its radius) and the knot it's nearest. */
+export function limbSamples(l: Limb, step = 1): { p: Knot; knot: number }[] {
+  const k: Knot[] = [l.knots[0], ...l.knots, l.knots[l.knots.length - 1]], out: { p: Knot; knot: number }[] = [];
+  for (let i = 1; i < k.length - 2; i++) {
+    const [p0, p1, p2, p3] = [k[i - 1], k[i], k[i + 1], k[i + 2]], L = Math.hypot(p2[0] - p1[0], p2[1] - p1[1], p2[2] - p1[2]), n = Math.max(2, Math.ceil(L / step));
+    for (let s = 0; s <= n; s++) {
+      const t = s / n, t2 = t * t, t3 = t2 * t, q = [0, 1, 2, 3].map(j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3)) as Knot;
+      out.push({ p: q, knot: i - 1 + (t < 0.5 ? 0 : 1) });
+    }
+  }
+  return out;
+}
+/** The knots of a limb whose tube stands on a line of sight to the Terrace's gap (above the floor, within its radius and a metre). */
+export function limbOverGap(shape: Shape, l: Limb): number[] {
+  const bad = new Set<number>();
+  for (const { p: [x, y, z, r], knot } of limbSamples(l)) if (y + r > 0 && Math.min(sightClearance(shape, x, y + r, z), sightClearance(shape, x, Math.max(0, y), z)) < r + 1) bad.add(knot);
+  return [...bad];
+}
+/** Whether a string's span (its wire, sagging) keeps off every line of sight to the gap. */
+function spanClear(shape: Shape, p: { a: V3; b: V3; sag: number }): boolean {
+  for (let i = 0; i <= 10; i++) { const u = i / 10, y = p.a[1] + (p.b[1] - p.a[1]) * u - p.sag * 4 * u * (1 - u);
+    if (y > 0 && sightClearance(shape, p.a[0] + (p.b[0] - p.a[0]) * u, y, p.a[2] + (p.b[2] - p.a[2]) * u) < 1) return false; }
+  return true;
 }
 
 /** The house's bounds on the plan: its rooms and branches. */
@@ -93,15 +137,15 @@ function bounds(O: HouseOutline) {
 /** The great oak's crown for a house. The same house and seed always grow the same crown. */
 export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): Crown {
   const R = rng(seed * 7919 + 4111), U = (a: number, b: number) => a + (b - a) * R();
-  const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10 }, terrace = [{ x: T.x, z: T.z, r: T.r }];
+  const T = O.rooms.find(r => r.id === "terrace") ?? { x: 0, z: 0, r: 10, outline: [] as [number, number][] }, terrace = [{ x: T.x, z: T.z, r: T.r }], terraceOutline = T.outline;
   const ta = ((O.takeoff.from + O.takeoff.to) / 2) * DEG, takeoff: [number, number] = [Math.cos(ta), Math.sin(ta)], notchFrom: [number, number] = [O.takeoff.x, O.takeoff.z];
-  const shape = { terrace, takeoff, notchFrom, open };
+  const shape = { terrace, takeoff, notchFrom, open, terraceOutline };
   const B = bounds(O), margin = 26;
   const dome = { cx: (B.x0 + B.x1) / 2, cz: (B.z0 + B.z1) / 2, rx: (B.x1 - B.x0) / 2 + margin, rz: (B.z1 - B.z0) / 2 + margin, base: 14, top: 0 };
   const size = Math.max(dome.rx, dome.rz), RY = size * 0.45, K = size / 92; // (K: the mock's lobes, for its 185 m crown, scaled to this one)
   dome.top = dome.base + RY;
   const lobes: Lobe[] = [], limbs: Limb[] = [], strings: CrownString[] = [];
-  const clear = (x: number, y: number, z: number, r: number) => sightClearance(shape, x, y, z) > r * 0.8;
+  const clear = (x: number, y: number, z: number, r: number) => sightClearance(shape, x, y, z) > r + 1; // (its whole disc: the octagon's edge reaches r)
   const trunkRooms = O.rooms.filter(r => r.trunk).sort((a, b) => b.z - a.z), base = trunkRooms[0] ?? T; // (the trunk's foot: under its lowest room, the furthest south)
 
   // ---- the bark: the trunk under its lowest room, its roots on the ground, its great limbs up into the crown ----
@@ -157,8 +201,17 @@ export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): C
       limbs.push({ kind: "fork", knots: [[e[0], e[1], e[2], 0.9], [f[0], f[1], f[2], 0.3]] }); ends.push(f);
     }
   }
-  // (none across the Terrace's notch: a limb whose knot would stand on its line of sight ducks under the floor there)
-  for (const l of limbs) if (l.kind !== "root" && l.kind !== "trunk") for (const k of l.knots) if (k[1] > -k[3] && sightClearance(shape, k[0], k[1], k[2]) < k[3] * 1.25 + 1) k[1] = -k[3] - 1;
+  // (none across the Terrace's notch: a limb whose tube, anywhere along it, would stand on a line of sight to it ducks under the floor
+  // there, knot by knot; one that still would after that is left out. Ed, 2026-10-26: "there are branches in front of the balcony":
+  // only the knots were tested, and the tube bowed up between them over the Terrace)
+  for (let i = limbs.length - 1; i >= 0; i--) {
+    const l = limbs[i]; if (l.kind === "root" || l.kind === "trunk") continue;
+    for (let round = 0; round < 8; round++) {
+      const bad = limbOverGap(shape, l); if (!bad.length) break;
+      for (const j of bad) { const k = l.knots[j]; k[1] = Math.min(k[1], -k[3] - 1.5 - round * 2); }
+    }
+    if (limbOverGap(shape, l).length) limbs.splice(i, 1);
+  }
 
   // ---- the leaves: billowing lobes on a broad low dome (2:1), its outer ends sagging, its inner, lower crown left open ----
   for (let n = 0; n < 380; n++) {
@@ -199,10 +252,15 @@ export function makeCrown({ outline: O, floor, seed, open = [] }: CrownInput): C
   }
   for (const a of tops) if (hash2(a.seed, 3, seed) < 0.45) strings.push({ kind: "garland", x: a.x, y: a.y, z: a.z, r: a.r * 1.02, el: 0.25 + 0.45 * hash2(a.seed, 5, seed), o: hash2(a.seed, 7, seed) * Math.PI * 2 });
   { const o = terrace[0], rr = o.r + 9, pts: V3[] = [];
-    for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2; pts.push([o.x + Math.cos(a) * rr, 14 + 3 * Math.sin(a * 3), o.z + Math.sin(a) * rr]); }
+    for (let i = 0; i <= 12; i++) { const a = (i / 12) * Math.PI * 2, y = 14 + 3 * Math.sin(a * 3); let d = rr; // (out past every line of sight down to the gap)
+      while (d < rr + 80 && sightClearance(shape, o.x + Math.cos(a) * d, y, o.z + Math.sin(a) * d) < 1.5) d += 1;
+      pts.push([o.x + Math.cos(a) * d, y, o.z + Math.sin(a) * d]); }
     strings.push({ kind: "ring", spans: pts.slice(1).map((b, i) => ({ a: pts[i], b, sag: 2.2 })) }); }
 
-  return { lobes, limbs, strings, dome, terrace, notchFrom, takeoff, open, floor };
+  // (no string across the gap either: a span whose wire would hang on a line of sight to the Terrace is left out)
+  for (const s of strings) if (s.kind !== "garland") s.spans = s.spans.filter(p => spanClear(shape, p));
+  const kept = strings.filter(s => s.kind === "garland" || s.spans.length);
+  return { lobes, limbs, strings: kept, dome, terrace, terraceOutline, notchFrom, takeoff, open, floor };
 }
 
 /** A bulb of the crown's lights: where (on the plan, y over the floor), its colour's place in the palette, how far along its string
