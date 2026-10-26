@@ -14,7 +14,7 @@ import type { Forest } from "../rules/forest";
 import type { Tuning } from "../rules/tuning";
 import { tuftSpan, tuftsInCell, TUFT_KINDS, type Tuft } from "../rules/groundcover";
 import { hash2 } from "../rules/random";
-import { atlasFromPixels, type Atlas, type Baked } from "./atlas";
+import { atlasFromPixels, atlasGlsl, atlasUniforms, setAtlasUniforms, type Atlas, type Baked } from "./atlas";
 import { packSteps, type AtlasPixels } from "./artBuild";
 import { runSync, type Steps } from "./slices";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
@@ -84,7 +84,7 @@ ${VALUE_NOISE_GLSL}${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uTufts, uTuftN;
+${atlasGlsl("uTufts", "uTuftN")}
 uniform vec2 uTuftSize; // the atlas, in pixels
 uniform vec3 uRight, uUp, uFacing;
 uniform vec4 uFade; // centre x, z, radius, how much shows (0 in the treetops)
@@ -97,12 +97,12 @@ ${BAYER_GLSL}void main() {
   // Its texel picked in its own pixels and sampled at that texel's centre (the bench, 2026-10-13: as fractions of the atlas, which texel
   // a fragment landed on shifted with the atlas's height, so a new area's tufts moved every tuft's pixels everywhere)
   vec2 vUv = (vRect.xy + clamp(floor(vLocal), vec2(0.0), vRect.zw - 1.0) + 0.5) / uTuftSize;
-  vec4 m = texture2D(uTufts, vUv);
+  vec4 m = albedoAt(vUv);
   if (m.a < 0.5) discard;
   // Fading out towards the edge of the cover, and as she rises, in an ordered dither.
   float k = (1.0 - smoothstep(uFade.z * 0.7, uFade.z, length(vWorld.xz - uFade.xy))) * uFade.w;
   if (k < 0.999 && bayer4(gl_FragCoord.xy) > k) discard;
-  vec4 n = texture2D(uTuftN, vUv);
+  vec4 n = normalAt(vUv);
   vec3 N = normalize(uRight * ((n.r * 255.0 - 128.0) / 127.0) - uUp * ((n.g * 255.0 - 128.0) / 127.0) + uFacing * n.b);
   gl_FragColor = vec4(haze(glowPool(min(vec3(1.0), m.rgb * nightLightShaded(N, vWorld, vMoonK) * 1.25), vWorld), vWorld), 1.0);
 }`;
@@ -162,7 +162,7 @@ export class GrassView {
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uRight: SPRITE_UNIFORMS.uRight, uUp: SPRITE_UNIFORMS.uUp, uFacing: SPRITE_UNIFORMS.uFacing, uRes: SPRITE_UNIFORMS.uRes, uWind: SPRITE_UNIFORMS.uWind,
-        uTufts: { value: this.atlas.albedo }, uTuftN: { value: this.atlas.normal }, uTuftSize: { value: new THREE.Vector2(this.atlasW, this.atlasH) }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
+        ...atlasUniforms(this.atlas, "uTufts", "uTuftN"), uTuftSize: { value: new THREE.Vector2(this.atlasW, this.atlasH) }, uPart: { value: Array.from({ length: 4 }, () => new THREE.Vector4()) }, uClear: { value: Array.from({ length: 8 }, () => new THREE.Vector4()) },
         uGrass: { value: new THREE.Vector4(metresPerPixel, t.groundCover.sway, t.groundCover.part, 0) }, uFade: { value: new THREE.Vector4() },
         uCanopy: ground?.uCanopy ?? { value: new THREE.Vector4() }, uClearing: ground?.uClearing ?? { value: new THREE.Vector2(1, 1) } },
       // its pixels marked in the stencil's second bit (scenery's is the first, sprites.ts), so the placed sigils show through it (render/leash.ts)
@@ -218,7 +218,7 @@ export class GrassView {
     this.atlas = atlasFromPixels(made.pixels);
     const img = this.atlas.albedo.image as { width: number; height: number }; this.atlasW = img.width; this.atlasH = img.height;
     const u = this.mat.uniforms;
-    u.uTufts.value = this.atlas.albedo; u.uTuftN.value = this.atlas.normal; (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);
+    setAtlasUniforms(u, this.atlas, "uTufts", "uTuftN"); (u.uTuftSize.value as THREE.Vector2).set(this.atlasW, this.atlasH);
     old.albedo.dispose(); old.normal.dispose();
   }
 

@@ -5,7 +5,7 @@
 import { HIZ_GLSL, HIZ_UNIFORMS } from "./hiz";
 import * as THREE from "three";
 import { PIXEL_SNAP_GLSL, WIND_GUST_GLSL } from "./shaders";
-import type { Atlas, Frame } from "./atlas";
+import { atlasGlsl, atlasUniforms, setAtlasUniforms, type Atlas, type Frame } from "./atlas";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { WITCH_LIGHT_GLSL, witchLightUniform } from "./witchLight";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -281,7 +281,7 @@ void main() {
 `;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uAlbedo, uNormal;
+${atlasGlsl()}
 uniform vec3 uRight, uUp, uFacing;
 uniform float uTopFade, uUnlit;
 uniform vec4 uCutout;
@@ -318,7 +318,7 @@ uniform float uFind; // this batch: 1 for wild creatures (eyeshine, light floor,
 uniform float uRimOn; // this batch: 1 for characters (the witch, creatures): the mood's moonlight rim
 uniform vec4 uMoodRim; // the rim's colour and strength (0: none; render/mood.ts)
 uniform float uRimInset; // 1: stylised sprites, the rim one pixel in from the edge (inside the style's outline)
-float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : texture2D(uAlbedo, q).a; }
+float rimAlpha(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : albedoAt(q).a; }
 uniform vec4 uTint; // this batch's tint: colour and how much (enraged creatures' red, Ed 2026-10-05)
 uniform float uSteps; // a legend's batch: its light in this many steps of brightness (0: smooth; Ed's round 14 playtest: "same pixel density and palette discipline")
 uniform vec4 uLegend; // a sleeping legend's batch: its sigil's neon and the rim's strength (0: none; Ed's round 14 playtest)
@@ -363,12 +363,12 @@ vec3 autumnTone(float t) {
   vec3 g = vec3(0.95, 0.74, 0.18), o = vec3(0.96, 0.44, 0.1), r = vec3(0.86, 0.16, 0.1), c = vec3(0.7, 0.1, 0.32), p = vec3(0.52, 0.2, 0.68);
   return t < 1.0 ? mix(g, o, t) : t < 2.0 ? mix(o, r, t - 1.0) : t < 3.0 ? mix(r, c, t - 2.0) : mix(c, p, t - 3.0);
 }
-vec4 areaAvg(sampler2D t, vec2 uv, vec4 c) {
+vec4 areaAvg(bool normal, vec2 uv, vec4 c) {
   vec3 sum = c.rgb; float w = 1.0;
   for (int i = 0; i < 4; i++) {
     vec2 o = vec2(i == 0 || i == 2 ? -areaH.x : areaH.x, i < 2 ? -areaH.y : areaH.y);
     vec2 q = clamp(uv + o, vFrame.xy, vFrame.zw);
-    if (texture2D(uAlbedo, q).a > 0.5) { sum += texture2D(t, q).rgb; w += 1.0; }
+    if (albedoAt(q).a > 0.5) { sum += (normal ? normalAt(q) : albedoAt(q)).rgb; w += 1.0; }
   }
   return vec4(sum / w, c.a);
 }
@@ -457,22 +457,22 @@ void shade() {
       float d = i == 5 ? 0.0 : (i == 1 ? 1.0 : i == 2 ? -1.0 : i == 3 ? 2.0 : -2.0);
       vec2 q = vUv - vec2(d * dir / tw, 0.0);
       if (q.x < vFrame.x || q.x > vFrame.z) continue;
-      float c = floor(texture2D(uNormal, q).a * 255.0 + 0.5);
+      float c = floor(normalAt(q).a * 255.0 + 0.5);
       float off = c < 0.5 ? 0.0 : clamp(floor((mod(c, 32.0) / 31.0) * px * (0.8 + 0.35 * sin(uWind.w * 2.3 + floor(c / 32.0) * 0.785)) + 0.5), -2.0, 2.0);
       if (off == d) { uvS = q; hit = true; break; }
     }
     if (!hit) discard;
   }
-  vec4 a = texture2D(uAlbedo, uvS);
+  vec4 a = albedoAt(uvS);
   if (a.a < 0.5) discard;
   if (vNear < 1.0 && bayer(gl_FragCoord.xy) >= vNear) discard; // (near the low stargazing camera: dithered away)
   if (uIsScenery > 0.5) {
     vec2 ts = vec2(textureSize(uAlbedo, 0)), fp = vec2(length(vec2(uvDx.x, uvDy.x)), length(vec2(uvDx.y, uvDy.y))) * ts;
-    if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(uAlbedo, uvS, a); }
+    if (uAreaAvg > 0.5 && max(fp.x, fp.y) > 1.25) { areaOn = true; areaH = min(fp, vec2(3.0)) * 0.25 / ts; a = areaAvg(false, uvS, a); }
     // Each tree's own leaf colour (Ed, 2026-10-16: "a small amount of per-tree colour jitter", docs/ART-GUIDE.md section 3): its
     // leaves' value scaled by its seed times the tuning's leafJitter here, and once lit (below) drifted toward its own autumn colour; its
     // wood (sway code 0) untouched.
-    if ((vJitter.x != 0.0 || vJitter.y != 0.0) && (uLeafJitter.x != 0.0 || uLeafJitter.y != 0.0 || uLeafJitter.z != 0.0) && texture2D(uNormal, uvS).a * 255.0 >= 0.5) {
+    if ((vJitter.x != 0.0 || vJitter.y != 0.0) && (uLeafJitter.x != 0.0 || uLeafJitter.y != 0.0 || uLeafJitter.z != 0.0) && normalAt(uvS).a * 255.0 >= 0.5) {
       a.rgb = clamp(a.rgb * (1.0 + vJitter.y * uLeafJitter.y), 0.0, 1.0);
       // (its colour by its hue seed; how far it goes, its own share of the knob, a second number from the same seeds: some trees barely turn)
       leafTone = autumnTone(0.5 + 0.5 * vJitter.x);
@@ -510,8 +510,8 @@ void shade() {
   }
   // (glow -0.5: switched off, a soundsystem standing when the party's over (render/party.ts): its glowing pixels lit as paint)
   if (a.a < 0.999 && !eyePx && abs(vGlow + 0.5) > 0.25) { gl_FragColor = vec4(haze(a.rgb, vWorld), alpha); return; }
-  vec4 n = texture2D(uNormal, uvS);
-  if (areaOn) n = areaAvg(uNormal, uvS, n);
+  vec4 n = normalAt(uvS);
+  if (areaOn) n = areaAvg(true, uvS, n);
   float nx = (n.r * 255.0 - 128.0) / 127.0, ny = (n.g * 255.0 - 128.0) / 127.0, nz = n.b;
   if (vFlags.x > 0.5) nx = -nx;
   vec3 N = normalize(uRight * nx - uUp * ny + uFacing * nz);
@@ -591,7 +591,7 @@ void main() {
     // the dark below a share of its own mossed look, and its outline glows in its sigil's neon, breathing slowly (only while she's
     // in its circle: ring, Ed 2026-10-07; outside it, a mossy boulder).
     if (uLegend.w > 0.0 && gl_FragColor.a > 0.5) {
-      vec3 own = texture2D(uAlbedo, vUv).rgb, mossed = mix(own, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * dot(own, vec3(0.3, 0.55, 0.15))), m);
+      vec3 own = albedoAt(vUv).rgb, mossed = mix(own, vec3(0.2, 0.26, 0.14) * (0.45 + 1.1 * dot(own, vec3(0.3, 0.55, 0.15))), m);
       gl_FragColor.rgb = max(gl_FragColor.rgb, mossed * uLegendFloor);
       float e = min(min(rimAlpha(vUv + rdx), rimAlpha(vUv - rdx)), min(rimAlpha(vUv + rdy), rimAlpha(vUv - rdy)));
       float e2 = min(min(rimAlpha(vUv + rdx * 2.0), rimAlpha(vUv - rdx * 2.0)), min(rimAlpha(vUv + rdy * 2.0), rimAlpha(vUv - rdy * 2.0)));
@@ -604,7 +604,7 @@ void main() {
     }
   }
   // A dark-coated legend awake (Ed, 2026-10-07: lifted only for those dark enough to vanish at night): never below a share of its own colour.
-  if (uLegendAwake > 0.0 && vGlow > -1.5 && gl_FragColor.a > 0.5) gl_FragColor.rgb = max(gl_FragColor.rgb, texture2D(uAlbedo, vUv).rgb * uLegendAwake);
+  if (uLegendAwake > 0.0 && vGlow > -1.5 && gl_FragColor.a > 0.5) gl_FragColor.rgb = max(gl_FragColor.rgb, albedoAt(vUv).rgb * uLegendAwake);
   // The moonlight rim (render/mood.ts; the art director's round 1: "characters must read against the
   // night"): a character's pixels whose neighbour on the side away from the moon is empty catch a light
   // edge in the night sky's colour, one art pixel wide, so the witch and the creatures stand out of the dark.
@@ -679,7 +679,7 @@ export class SpriteBatch {
     this.geo.setAttribute("uv", quad.getAttribute("uv"));
     this.pos = this.size = this.uvs = this.flags = this.glow = undefined as never;
     this.grow(64);
-    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, uAlbedo: { value: atlas.albedo }, uNormal: { value: atlas.normal }, uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
+    const uniforms = (extra: Record<string, THREE.IUniform>) => ({ ...LIGHT_UNIFORMS, ...SPRITE_UNIFORMS, ...HEIGHT_UNIFORMS, ...HIZ_UNIFORMS, ...atlasUniforms(atlas), uUnlit: { value: opts.unlit ? 1 : 0 }, uIsScenery: { value: opts.scenery ? 1 : 0 }, uAppear: this.appearU, uFadePass: { value: 0 }, uHasFade: { value: opts.fade ? 1 : 0 }, uFlat: { value: opts.flat || opts.solid ? 1 : 0 }, uLies: { value: opts.flat ? 1 : 0 }, ...CAST_SHADOW_UNIFORMS, uSilhouette: { value: new THREE.Vector4(0, 0, 0, 0) }, uWitchLight: witchLightUniform(opts.witchLight), uFind: { value: opts.find ? 1 : 0 }, uRimOn: { value: opts.rim ? 1 : 0 }, uTint: opts.tint ?? { value: new THREE.Vector4(0, 0, 0, 0) }, uLegend: { value: opts.legend ?? new THREE.Vector4(0, 0, 0, 0) }, uSteps: { value: opts.steps ?? 0 }, uLegendFloor: { value: opts.legendFloor ?? 0 }, uLegendAwake: { value: opts.legendAwake ?? 0 }, uAbsolute: { value: opts.absolute ? 1 : 0 }, uLean: this.leanU, ...extra });
     // Scenery blends where it fades out at the budget's edge. Custom blending, as three.js turns
     // normal blending off for opaque materials; it stays in the opaque pass, in its old order.
     const blend = opts.scenery ? { blending: THREE.CustomBlending, blendSrc: THREE.SrcAlphaFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {};
@@ -724,7 +724,7 @@ export class SpriteBatch {
   /** Its art swapped for another set's (the same frames: a stand-in replaced by the art workers' set when it arrives). */
   setAtlas(atlas: Atlas): void {
     this.atlas = atlas;
-    for (const m of this.meshes) { const u = (m.material as THREE.ShaderMaterial).uniforms; u.uAlbedo.value = atlas.albedo; u.uNormal.value = atlas.normal; }
+    for (const m of this.meshes) { setAtlasUniforms((m.material as THREE.ShaderMaterial).uniforms, atlas); }
   }
 
   private sil: THREE.Mesh | null = null;

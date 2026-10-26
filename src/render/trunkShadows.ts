@@ -14,7 +14,7 @@ import * as THREE from "three";
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { CAST_LAYER } from "./castShadows";
-import type { Atlas } from "./atlas";
+import { atlasGlsl, atlasUniforms, type Atlas } from "./atlas";
 import type { Frame } from "./artBuild";
 
 /** The fires that throw them (up to MAX_FIRES nearest her, set each frame: xyz, reach; how far each has flared up; and its colour:
@@ -102,13 +102,13 @@ void main() {
 }`;
 
 const FRAG = /* glsl */ `
-uniform sampler2D uAlbedo;
+${atlasGlsl()}
 uniform float uTrunkStrength, uTrunkHard, uTrunkCore, uTrunkCover, uCover;
 varying vec2 vTex, vUx;
 varying float vFade, vAlong, vLen, vU, vTaper, vFoot;
 varying vec4 vFrame;
 varying vec3 vShade;
-float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, texture2D(uAlbedo, q).a); }
+float solid(vec2 q) { return q.x < vFrame.x || q.x > vFrame.z || q.y < vFrame.y || q.y > vFrame.w ? 0.0 : step(0.5, albedoAt(q).a); }
 void main() {
   float a;
   // Tapered at its foot (Ed, 2026-10-12: roots and decorations "get wide at the base, that look strange when they're rotated"): its
@@ -156,7 +156,7 @@ export class TrunkShadowBatch {
       // goes over it; in the opaque pass so it keeps that place, multiplying all the same, with no depth test: the tufts stand
       // above the shadow, which lies on the ground)
       const mat = new THREE.ShaderMaterial({ vertexShader: VERT, fragmentShader: FRAG,
-        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...TRUNK_SHADOW_UNIFORMS, uAlbedo: { value: atlas.albedo }, uSlot: { value: slot }, uCover: { value: cover ? 1 : 0 } },
+        uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...TRUNK_SHADOW_UNIFORMS, ...atlasUniforms(atlas), uSlot: { value: slot }, uCover: { value: cover ? 1 : 0 } },
         depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
         blending: THREE.CustomBlending, blendSrc: THREE.ZeroFactor, blendDst: THREE.SrcColorFactor,
         ...(cover ? { transparent: false, depthTest: false, stencilWrite: true, stencilRef: 2, stencilFuncMask: 2, stencilWriteMask: 0, stencilFunc: THREE.EqualStencilFunc, stencilFail: THREE.KeepStencilOp, stencilZFail: THREE.KeepStencilOp, stencilZPass: THREE.KeepStencilOp } : { transparent: true }) });

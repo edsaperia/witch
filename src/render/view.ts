@@ -93,7 +93,7 @@ import { SHADOW_DEBUG, SHADOW_TINT, ShadowBatch, type ShadowInstance } from "./s
 import { MAX_FIRES, TRUNK_SHADOW_UNIFORMS, type TrunkShadowBatch } from "./trunkShadows";
 import { CastShadowMap } from "./castShadows";
 import { newBudget, stepBudget, type SceneryBudget } from "../rules/budget";
-import { packAtlas } from "./atlas";
+import { atlasBytes, packAtlas } from "./atlas";
 import { berrySprite } from "./berries";
 import { leyDrawnTo, shaderPulse, type LeyLines } from "./leylines";
 import { routeSeen } from "../rules/hatSpells";
@@ -1222,7 +1222,7 @@ export class View {
    *  for again from the art cache if she comes back, fading in as any set does). Flown over every island they came to 887 MB (tools/zoo/perf.cjs,
    *  2026-10-26); a typical zoo's few stay under it and nothing goes. */
   keepTypesUnder(listed: ReadonlySet<number>, mb: number): void {
-    const now = performance.now(), bytes = (b: SpriteBatch) => { const a = b.atlas.albedo.image as { width?: number; height?: number } | null; return (a?.width ?? 0) * (a?.height ?? 0) * 4 * 2; };
+    const now = performance.now(), bytes = (b: SpriteBatch) => atlasBytes(b.atlas); // (as stored: an indexed plane a byte a pixel, render/atlas.ts)
     for (const t of listed) this.typeUsed.set(t, now);
     let total = 0;
     for (const b of this.typeBatches.values()) total += bytes(b);
