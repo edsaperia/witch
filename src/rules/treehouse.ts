@@ -22,7 +22,7 @@ import type { Game } from "./game";
 import type { Tuning } from "./tuning";
 import type { WitchState } from "./witch";
 import { floorDistance, floorRects, fromPlan, HOUSE_ROOMS, nearestRoomFloor, objectAt, onRoomFloor, toPlan, type RoomFloor } from "./houseRooms";
-import { inRoom } from "../../config/house/shape.js";
+import { inRoom, trunkField } from "../../config/house/shape.js";
 
 /** The deck in the world: its middle (x, z), radius, floor height (m over the ground there), the rail's keep-in, the map table, the decks' arc and her seat. */
 export interface Deck {
@@ -79,15 +79,29 @@ export function atTakeoff(d: Deck, x: number, z: number): boolean {
   const dx = x - d.x, dz = z - d.z, a = Math.atan2(dz, dx), da = Math.abs(((a - k.angle + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
   return Math.hypot(dx, dz) < d.r + 3 && da < k.half;
 }
-/** In the house's rooms or on its branches, off the Terrace: she can't rise there (Ed, 2026-10-23: "She shouldn't be able to rise
- *  while in the treehouse, except on the terrace"; rules/witch.ts). The rooms' floor give or take the rail (as onFloor's):
- *  the walls keep her on a round room's very edge, which a floor test with none reads as just outside it (Ed's playtest, v4273: the
- *  pad's X at a bedroom station, the stick held toward it, took her off). */
-export const noRiseAt = (d: Deck, x: number, z: number): boolean => !!d.house?.rooms && onRoomFloor(d.house.rooms, x, z, d.rail) && !onTerrace(d, x, z);
+/** In the house's rooms or on its branches, off the Terrace: indoors (render/view.ts draws only the house there). The rooms' floor
+ *  give or take the rail (as onFloor's): the walls keep her on a round room's very edge, which a floor test with none reads as just
+ *  outside it (Ed's playtest, v4273: the pad's X at a bedroom station, the stick held toward it, took her off). */
+export const indoorsAt = (d: Deck, x: number, z: number): boolean => !!d.house?.rooms && onRoomFloor(d.house.rooms, x, z, d.rail) && !onTerrace(d, x, z);
+/** Where she can't rise: indoors with no broom (the house's fall on: rules/game.ts, rules/kit.ts). With one she takes off from any
+ *  room or branch (Ed, 2026-10-26: "maybe you can take off from anywhere on the treehouse"; before, 2026-10-23, only the Terrace). */
+export const noRiseAt = (d: Deck, x: number, z: number): boolean => !!d.house?.fall.on && indoorsAt(d, x, z);
 
-/** Flying at treetop height over the Terrace: she lands on it (Ed, 2026-10-14: "to enter the treehouse you fly directly onto a
- *  balcony"; the oak's Terrace since 2026-10-24, its open rim facing the dancefloor), where she is over its floor. */
-export const flyOnto = (d: Deck, x: number, z: number): boolean => !!d.house && onTerraceFloor(d, x, z, -d.rail) && onFloor(d, x, z, -d.rail);
+/** The trunk she lands on (Ed, 2026-10-26: "land anywhere in the trunk section from the dining room up to the boudoir"; "The whole
+ *  trunk lands her by herself, like the Terrace does now"): its rooms from the Dining Room to the Boudoir and its limbs between them.
+ *  The Bedroom, the Turret and the branch rooms aren't: over those she comes down to the ground beneath. */
+export const LANDING_TRUNK = { from: "dining", to: "boudoir" } as const;
+/** On the landing trunk's floor (its rooms and limbs: LANDING_TRUNK), `pad` metres past it; the Terrace's alone with the house's rooms off. */
+export function onLandingTrunk(d: Deck, x: number, z: number, pad = 0): boolean {
+  if (!d.house?.rooms) return onTerraceFloor(d, x, z, pad);
+  const p = toPlan(d, x, z);
+  return trunkField(HOUSE_ROOMS.shape, p.x, p.z, LANDING_TRUNK.from, LANDING_TRUNK.to) <= pad;
+}
+
+/** Flying at treetop height over the trunk: she lands on it (Ed, 2026-10-14: "to enter the treehouse you fly directly onto a
+ *  balcony"; the oak's Terrace since 2026-10-24; the whole trunk from the Dining Room to the Boudoir since 2026-10-26), where she is
+ *  over its floor. */
+export const flyOnto = (d: Deck, x: number, z: number): boolean => !!d.house && onLandingTrunk(d, x, z, -d.rail) && onFloor(d, x, z, -d.rail);
 
 /** The kind whose legend carries the Ent here (drawing only: art/carrier.js; Ed, 2026-10-10, journey.md "Arriving": on a new
  *  island the Ent stands on the back of a party legend of that island's kind), or null: tuning treehouse.carrier "island" the
@@ -113,9 +127,30 @@ export function onTreehouse(g: Game, i = 0): boolean {
 
 /** Over the deck (or anywhere over the house's floor), near enough to land on it: where she stays perched, walking it. */
 export const overDeck = (d: Deck, x: number, z: number): boolean => onFloor(d, x, z, d.grace);
-/** Where coming down from the treetops with the button lands her on it: over the deck; the house only over its Terrace (the oak's
- *  rooms spread far over the forest round it: coming down over them she lands on the ground beneath, as anywhere). */
-export const landsOn = (d: Deck, x: number, z: number): boolean => (d.house ? onTerraceFloor(d, x, z, d.grace) : overDeck(d, x, z));
+/** Where coming down from the treetops with the button lands her on it: over the deck; the house only over its landing trunk (the
+ *  Dining Room to the Boudoir: LANDING_TRUNK; over the rest of the oak, spread far over the forest round it, she lands on the ground
+ *  beneath, as anywhere). */
+export const landsOn = (d: Deck, x: number, z: number): boolean => (d.house ? onLandingTrunk(d, x, z, d.grace) : overDeck(d, x, z));
+
+/** Clear of furniture (Ed, 2026-10-26: she always lands on clear walkable floor, never inside furniture or on a station): (x, z)
+ *  outside every object's box on the plan, `pad` metres round, and the decks' desk's. */
+export function clearOfFurniture(d: Deck, x: number, z: number, pad = 0.4): boolean {
+  const p = toPlan(d, x, z);
+  if (HOUSE_ROOMS.objects.some(o => Math.abs(p.x - o.x) < o.w / 2 + pad && Math.abs(p.z - o.z) < o.d / 2 + pad)) return false;
+  const b = d.house?.desk;
+  return !b || Math.abs(x - b.x) >= b.w / 2 + pad || Math.abs(z - b.z) >= b.d / 2 + pad;
+}
+/** Where she touches down landing at (x, z): there, or the nearest clear spot (clearOfFurniture, on the floor the rail in) within
+ *  8 m, nudged out in half-metre rings. */
+export function landingSpot(d: Deck, x: number, z: number): { x: number; z: number } {
+  const rooms = d.house?.rooms, ok = (u: number, v: number) => (!rooms || onRoomFloor(rooms, u, v)) && clearOfFurniture(d, u, v);
+  if (ok(x, z)) return { x, z };
+  for (let r = 0.5; r <= 8; r += 0.5) {
+    const n = Math.max(8, Math.round((2 * Math.PI * r) / 0.5));
+    for (let k = 0; k < n; k++) { const a = (k / n) * 2 * Math.PI, u = x + Math.cos(a) * r, v = z + Math.sin(a) * r; if (ok(u, v)) return { x: u, z: v }; }
+  }
+  return { x, z };
+}
 
 /** Out of the decks' desk (round centre (cx, cz)): from where she stands behind it (inner metres out) to its front (outer),
  *  from..to degrees round; she's put back on its nearer side. `out`: the floor's edge there (the desk against it: no way round outside). */

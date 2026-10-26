@@ -7,7 +7,7 @@ import type { Creature } from "../rules/creatures";
 import { partyGearOf } from "./artBuild";
 import { beatTime } from "../rules/beat";
 import * as THREE from "three";
-import { carrierOf, deckOf, noRiseAt } from "../rules/treehouse";
+import { carrierOf, deckOf, indoorsAt } from "../rules/treehouse";
 import { HOUSE_LAYER } from "./post";
 import type { MapTable } from "./mapTable";
 import { islandArtSeed } from "./artCache";
@@ -374,7 +374,7 @@ export class View {
   private smoke!: Smoke;
   /** The dark behind the house's enclosed rooms (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not
    *  the terrace) the forest behind the tree should be black"; the tuning's treehouse.house.dark; render/post.ts Post.behind): in a
-   *  room or on a branch off the Terrace (rules/treehouse.ts noRiseAt), only the house's own meshes are drawn (its rooms, the Ent's
+   *  room or on a branch off the Terrace (rules/treehouse.ts indoorsAt), on foot, only the house's own meshes are drawn (its rooms, the Ent's
    *  art with its crowns, her), over black; the scenery is still listed and its art still asked for, only not drawn. Stepping
    *  onto the Terrace the forest comes back from the doorway she came through over dark.fade seconds, and goes again as she goes
    *  back in; through the telescope it fades in over the same, the whole picture at once. Eased on her clock (g.herTime: full
@@ -394,7 +394,7 @@ export class View {
   private dark = { k: 1, at: NaN, door: null as { x: number; z: number } | null, enclosed: false, uv: new THREE.Vector2() };
   private behindHouse(g: Game): void {
     const D = this.dark, T = g.tuning.treehouse.house?.dark, deck = deckOf(g.map, g.tuning), w = g.witch;
-    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && noRiseAt(deck, w.x, w.z) && !this.telescope;
+    const enclosed = !!T?.on && !!deck?.house?.rooms && !!w.perch && w.mode === "ground" && indoorsAt(deck, w.x, w.z) && !this.telescope; // (on foot: rising out of a room, the forest comes back as she lifts off)
     // (the doorway: where she crossed between a room's branch and the Terrace, either way; none for the telescope's fade)
     if (enclosed !== D.enclosed) { D.door = this.telescope && !enclosed ? null : { x: w.x, z: w.z }; D.enclosed = enclosed; }
     const dt = Number.isFinite(D.at) ? Math.max(0, Math.min(0.1, g.herTime - D.at)) : 1e9;
