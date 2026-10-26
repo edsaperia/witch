@@ -6,6 +6,7 @@ import { legendRadius } from "./legendFit";
 import rawTypes from "../../config/area-types.json";
 import { seatOffset } from "./treehouse";
 import { AREAS, HOME_AREA } from "../../art/areas.js";
+import { areaIdOf } from "../../art/areaRenames.js";
 import { SCENES as SCENES_RAW, SCENE_BY_ID as SCENE_BY_ID_RAW } from "../../art/scenes.js";
 import { makePartition, type Cell, type Partition } from "./partition";
 import { hash2, rng, smoothstep, vnoise } from "./random";
@@ -421,7 +422,7 @@ export function generateMap(runSeed: number, tuning: Tuning, only?: { landStep: 
   // (the zoo's blocks: each its own area's type; an empty "?" block its row's first area's ground, so the row reads as one biome)
   const zooCells = new Set<string>();
   if (zoo) {
-    const byId = (id: string) => AREA_TYPES.findIndex(a => a.id === id), first = new Map<string, number>();
+    const byId = (id: string) => AREA_TYPES.findIndex(a => a.id === areaIdOf(id)), first = new Map<string, number>(); // (an old id, renamed since, still finds its area: art/areaRenames.js)
     for (const b of zoo.blocks) if (b.area && !first.has(b.row)) first.set(b.row, byId(b.area));
     for (const b of zoo.blocks) { const t = b.area ? byId(b.area) : first.get(b.row) ?? -1; if (t >= 0) types.set(cellKey(b.cell[0], b.cell[1]), t); if (b.area && t >= 0 && b.found !== false) zooCells.add(cellKey(b.cell[0], b.cell[1])); }
     zooCells.add(cellKey(centreCell[0], centreCell[1]));

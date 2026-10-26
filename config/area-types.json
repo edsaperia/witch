@@ -29,7 +29,7 @@
     "old-pinewood": {"treeDensity": 1, "groundCover": {"density": 0.5, "kinds": ["moss", "heather"]}},
     "ravine": {"treeDensity": 0.75, "groundCover": {"density": 0.15, "kinds": ["moss", "fern"]}},
     "bluebell-glade": {"treeDensity": 0.8, "groundCover": {"density": 0.7, "kinds": ["blades", "clover"]}},
-    "holly-thicket": {"treeDensity": 1, "groundCover": {"density": 0.4, "kinds": ["moss", "fern"]}},
+    "thorn-scrub": {"treeDensity": 0.55, "groundCover": {"density": 0.45, "kinds": ["pebbles", "blades"]}},
     "honeysuckle-tangle": {"treeDensity": 1, "groundCover": {"density": 0.6, "kinds": ["blades", "fern"]}}
   }
 }
