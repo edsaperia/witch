@@ -980,7 +980,7 @@ export class View {
       const s = m.siteOf(x, y); cells.push({ type: m.typeOf(x, y), x: s.x, z: s.z });
     }
     const A = this.ground.areaUniforms;
-    this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uAreas, A.uExtent, this.post.scene.depthTexture, this.post.fxSize, A.slots);
+    this.loadingMist = new LoadingMist(T, typeReaches(cells, m.treehouse, m.areaSize), m.treehouse, m.extent, A.uniforms, this.post.scene.depthTexture, this.post.fxSize, A.slots);
     (this.post.fxScene ??= new THREE.Scene()).add(this.loadingMist.mesh);
   }
 
