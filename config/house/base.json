@@ -7,5 +7,5 @@
   "bed": {"hold": 1.5},
   "organic": true,
   "noiseAt": [10, 8],
-  "terrace": {"takeoff": {"angle": 60.2, "half": 31.5}, "decks": {"x": 6, "z": 8, "w": 5, "d": 1.6}, "seat": {"x": 6, "z": 6.4}, "circle": {"x": 2, "z": 2, "r": 2}}
+  "terrace": {"takeoff": {"angle": 60.2, "half": 31.5}, "decks": {"x": 6, "z": 8, "w": 5, "d": 1.6}, "seat": {"x": 6, "z": 6.4}, "circle": {"x": 2, "z": 2, "r": 3.2}}
 }

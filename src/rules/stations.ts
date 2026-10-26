@@ -8,6 +8,7 @@
 // open when she presses E near an interactive object") the one she's at is lit with E over it (render/houseRooms.ts), and E there
 // slides its panel in (main.ts, the rules' "house" event), and E again slides it out, she standing still at it meanwhile (Ed:
 // "walking away shouldn't work - then we can use the movement keys as buttons in the menus"). The rules don't change for it.
+import { hasBroom } from "./kit";
 import type { Game } from "./game";
 import { deckOf } from "./treehouse";
 import { HOUSE_ROOMS, fromObject, hasRooms, onRoomFloor, type HouseObject } from "./houseRooms";
@@ -57,6 +58,7 @@ export function broomWhere(g: Game, station: string | null, tuning: Tuning = g.t
   if (!w.perch || w.mode !== "ground" || w.seated) return "none";
   const d = deckOf(g.map, tuning);
   if (!d || !hasRooms(d)) return "none";
+  if (!hasBroom(g.witches[0])) return "none"; // (no broom of hers yet tonight: the lathe's brooms are its own, rules/kit.ts)
   if (station === "broomBay") return "bay";
   if (station === "lathe") return "lathe";
   const inRoom = Math.hypot(w.x - d.x, w.z - d.z) > d.r && onRoomFloor(d.house!.rooms!, w.x, w.z);
