@@ -338,7 +338,7 @@ function arrived(): void {
   // (landed asleep in her bed: with a loan settled, dreaming it, the alarm when it ends; else the alarm at once: rules/wakeUp.ts, render/dream.ts)
   const dd = dreamAfterDive;
   dreamAfterDive = null;
-  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd) && dd) startDream(dd);
+  if (N().flags.inBed && startWake(N().game, N().game.herTime, true, !!dd, true) && dd) startDream(dd); // (a sail: a night played, last night's clothes in their pile)
   if (start()) queueCast(); // (woken in her bedroom, the dive's landing: not yet, rules/wakeUp.ts)
   if (N().game.wake) mark("opening:alarm");
   if (!gestured) soundNote(); else sound.wake();
@@ -940,7 +940,7 @@ async function nightInPlace(spec: NightSpec, href: string): Promise<void> {
   startEl.classList.remove("loading");
   input.clearPresses();
   sailing = false;
-  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over)) { mark("opening:bed"); start(); }
+  if (wakes && wakeInBedroom(n.game) && startWake(n.game, n.game.herTime, true, !!dream && !dream.over, true)) { mark("opening:bed"); start(); } // (after the bed: last night's clothes in their pile)
 }
 /** The bot game left (its exit in place): the bot and its tag gone, her own look back (the creator's, as a fresh page has it). */
 function leaveBot(): void {
