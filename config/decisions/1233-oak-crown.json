@@ -35,14 +35,14 @@
       "pr": 1233,
       "group": "Oak crown",
       "label": "Forest fades in behind the house (s)",
-      "note": "In the house the forest stays dark behind every room, the Terrace too, till the island has loaded (its art drawn); then it fades in behind the whole treehouse over this many seconds of her clock, and stays (Ed, 2026-10-26: \"When the forest has loaded, fade it in gradually behind the whole treehouse\"). It was dark behind the enclosed rooms always. 0.5 nearly at once; 4 a slow reveal.",
+      "note": "In the house the forest stays dark behind every room, the Terrace too, till the island has loaded (its art drawn); then it fades in behind the whole treehouse over this many seconds of her clock, and stays (Ed, 2026-10-26: \"When the forest has loaded, fade it in gradually behind the whole treehouse\"). It was dark behind the enclosed rooms always. 20 (Ed, 2026-10-26: \"Fade in time: 20 seconds\"); 0.5 nearly at once.",
       "control": {
         "type": "slider",
         "min": 0.5,
-        "max": 12,
+        "max": 40,
         "step": 0.5
       },
-      "default": 4,
+      "default": 20,
       "apply": {
         "knob": "treehouse.house.dark.reveal"
       }
