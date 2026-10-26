@@ -73,7 +73,6 @@
    "areas": [
     "muddy-forest",
     "fern-forest",
-    "norway",
     "old-pinewood",
     "deadwood",
     "tangly-forest",
@@ -96,7 +95,6 @@
    "areas": [
     "heath",
     "moor",
-    "cave-mouth",
     "ravine",
     "log-pile",
     "meadow",
@@ -139,6 +137,8 @@
     "jungle"
    ],
    "areas": [
+    "jungle-cave",
+    "jungle-understory",
     "river-jungle",
     "bamboo-jungle",
     "temple-jungle",

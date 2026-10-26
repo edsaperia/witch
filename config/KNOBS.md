@@ -2308,9 +2308,9 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `light.spooky.areas.grassland.hazeSat` | number | 0 to … |
 | `light.spooky.areas.grassland.haze` | number | 0 to … |
 | `light.spooky.areas.grassland.mist` | number | 0 to … |
-| `light.spooky.areas.cave-mouth.haze` | number | 0 to … |
-| `light.spooky.areas.cave-mouth.gradeHue` | number | 0 to … |
-| `light.spooky.areas.cave-mouth.gradeSat` | number | 0 to … |
+| `light.spooky.areas.jungle-cave.haze` | number | 0 to … |
+| `light.spooky.areas.jungle-cave.gradeHue` | number | 0 to … |
+| `light.spooky.areas.jungle-cave.gradeSat` | number | 0 to … |
 | `light.spooky.areas.ravine.haze` | number | 0 to … |
 | `light.spooky.areas.ravine.gradeHue` | number | 0 to … |
 | `light.spooky.areas.ravine.gradeSat` | number | 0 to … |
@@ -2321,10 +2321,10 @@ The lighting's mood (Ed, 2026-10-06: "make it a spooky dark forest with a party 
 | `light.spooky.areas.old-pinewood.hazeSat` | number | 0 to … |
 | `light.spooky.areas.old-pinewood.haze` | number | 0 to … |
 | `light.spooky.areas.old-pinewood.gradeHue` | number | 0 to … |
-| `light.spooky.areas.norway.hazeHue` | number | 0 to … |
-| `light.spooky.areas.norway.hazeSat` | number | 0 to … |
-| `light.spooky.areas.norway.haze` | number | 0 to … |
-| `light.spooky.areas.norway.gradeHue` | number | 0 to … |
+| `light.spooky.areas.jungle-understory.hazeHue` | number | 0 to … |
+| `light.spooky.areas.jungle-understory.hazeSat` | number | 0 to … |
+| `light.spooky.areas.jungle-understory.haze` | number | 0 to … |
+| `light.spooky.areas.jungle-understory.gradeHue` | number | 0 to … |
 | `light.spooky.areas.honeysuckle-tangle.hazeHue` | number | 0 to … |
 | `light.spooky.areas.honeysuckle-tangle.hazeSat` | number | 0 to … |
 | `light.spooky.areas.garden.hazeHue` | number | 0 to … |

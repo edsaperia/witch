@@ -50,7 +50,7 @@ const url = await b.page.evaluate(async ({ scale }) => {
   };
   const rows = [], pick = window.ROWS, mode = window.MODE || "trees";
   if (mode === "areas") { // each biome's look over a real area's own ten trees: what the re-themed areas would bake
-    const AREAS = [["temperate", "old-oaks"], ["cold", "garden"], ["mountains and glaciers", "rocky-slope"], ["volcanic", "log-pile"], ["badlands", "heath"], ["hot", "meadow"], ["mangrove swamp", "wetland"], ["jungle", "cave-mouth"], ["cold rainforest", "ancient"]];
+    const AREAS = [["temperate", "old-oaks"], ["cold", "garden"], ["mountains and glaciers", "rocky-slope"], ["volcanic", "log-pile"], ["badlands", "heath"], ["hot", "meadow"], ["mangrove swamp", "wetland"], ["jungle", "jungle-cave"], ["cold rainforest", "ancient"]];
     for (const [biome, area] of AREAS) {
       if (pick && !pick.includes(biome)) continue;
       const vs = s => G.areaTreeVariants(area, s).filter(v => v.heightClass !== "sapling" && !v.face).slice(-3).map(v => v.whole);
