@@ -1174,6 +1174,9 @@ installHooks({ night: N, view, sound, meter, shake, frameStats, loadTimes, loop 
 // witch.dream("won" | "lost", kind, item): her dream of such a loan over the night, its own dark under it (as ?dream=); under ?shot=
 // drawn only when asked, window.__dream.draw(seconds) (tools/loan/shots.cjs).
 // window.witch.guide: her guidance pin's state, what's kept of it (what's new, the islands seen) the pickups' hooks, and a step of it (window.witch.frame's manual frames don't run the page's loop: shots).
+// window.witch.wakeUp(yesterday): a wake-up in her bed as the game starts one (rules/wakeUp.ts startWake), with or without a night
+// played before it (the shots of the first morning's hat on the hats' floor, and of last night's pile).
+(window as unknown as { witch: Record<string, unknown> }).witch.wakeUp = (yesterday: boolean): boolean => { const { game } = N(); return wakeInBedroom(game) && startWake(game, game.herTime, true, false, yesterday); };
 (window as unknown as { witch: Record<string, unknown> }).witch.guide = { save: guide, pin: () => guidePin.state, hooks: GUIDANCE_HOOKS, step: () => stepGuide(performance.now()) };
 (window as unknown as { witch: Record<string, unknown> }).witch.dream = (v: string, kind: FindKindId, id: string): boolean => {
   if (!FIND_KINDS.some(q => q.id === kind && q.items.includes(id))) return false;
