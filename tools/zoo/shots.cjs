@@ -1,0 +1,58 @@
+// The zoo laid out like the sea chart (rules/zooMap.ts), shot from the built game: on foot by an island's gold fence, at a legend
+// asleep in its circle at an island's middle, by an undiscovered island's lake (its sigil faint on the water), at the edge where the
+// water pours off into space, on the Ent's plaza, and from the treetops over the streets. Each waits for its art (the view's trees,
+// the art queue empty) or WAIT seconds. Fails on a page error.
+//   npm run build && node tools/zoo/shots.cjs [out] [dist]   WAIT (s, 120), SIZE (1280x720)
+const http = require("http"), fs = require("fs"), path = require("path");
+let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
+const [outArg = "previews/zoo/shots", distArg] = process.argv.slice(2);
+const out = path.resolve(outArg), root = path.resolve(distArg || path.join(__dirname, "../../dist"));
+const [W, H] = (process.env.SIZE || "1280x720").split("x").map(Number), WAIT = Number(process.env.WAIT || 120);
+const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".wasm": "application/wasm", ".woff2": "font/woff2", ".ogg": "audio/ogg" };
+const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)} s]`, ...a);
+
+(async () => {
+  fs.mkdirSync(out, { recursive: true });
+  const server = http.createServer((req, res) => { const p = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname)), f = fs.existsSync(p) && fs.statSync(p).isDirectory() ? path.join(p, "index.html") : p; if (!f.startsWith(root) || !fs.existsSync(f)) { res.writeHead(404); res.end(); return; } res.writeHead(200, { "Content-Type": types[path.extname(f)] || "application/octet-stream" }); fs.createReadStream(f).pipe(res); });
+  await new Promise(r => server.listen(0, "127.0.0.1", r));
+  const browser = await playwright.chromium.launch({ args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
+  const errors = [];
+  const load = async query => {
+    const page = await browser.newPage({ viewport: { width: W, height: H } });
+    page.on("pageerror", e => errors.push(`${query}: ${e.message}`));
+    await page.goto(`http://127.0.0.1:${server.address().port}/?${query}&creator=0`);
+    await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 1800000, polling: 500 });
+    await page.keyboard.press("Enter");
+    return page;
+  };
+  const shoot = async (page, name, where) => {
+    await page.evaluate(([x, z, mode]) => { const g = window.witch.game, Wb = g.witches[0]; Wb.body = { ...Wb.body, x, z, vx: 0, vz: 0, seated: false, perch: false, mode, lift: mode === "ground" ? 0 : 1 }; }, where);
+    const tb = Date.now();
+    await page.waitForTimeout(8000);
+    while ((Date.now() - tb) / 1000 < WAIT) { const s = await page.evaluate(() => ({ q: window.witch.view.assets.queue.length, busy: window.witch.view.assets.workers.some(w => w.busy) })); if (!s.q && !s.busy) break; await page.waitForTimeout(4000); }
+    await page.waitForTimeout(2000);
+    await page.evaluate(() => { for (const id of ["start", "zoo-bar"]) { const e = document.getElementById(id); if (e) e.style.display = "none"; } document.querySelectorAll(".zoo-bar,#zoo-jump").forEach(e => e.style.display = "none"); });
+    await page.screenshot({ path: path.join(out, `${name}.png`) });
+    log(name, "done");
+  };
+  try {
+    // (every island found: ?all)
+    const p = await load("zoo&all");
+    const L = await p.evaluate(() => { const Z = window.witch.game.map.zoo.layout, I = Z.islands.find(J => J.kind === "wolf") ?? Z.islands[0], at = a => { const n = I.reach.length, t = ((a + Math.PI) / (Math.PI * 2)) * n, i = Math.floor(t), f = t - i; return I.reach[((i % n) + n) % n] * (1 - f) + I.reach[(((i + 1) % n) + n) % n] * f; }; return { I: { x: I.x, z: I.z, south: at(Math.PI / 2), kind: I.kind }, home: Z.home, reach: Z.reach }; });
+    log("island", JSON.stringify(L.I));
+    await shoot(p, "fence", [L.I.x + 10, L.I.z + L.I.south + 7, "ground"]); // (on the street by its south shore, the fence before her)
+    await shoot(p, "legend", [L.I.x, L.I.z + 22, "ground"]); // (south of its circle at the middle)
+    await shoot(p, "plaza", [L.home.x + 30, L.home.z + 40, "ground"]);
+    await shoot(p, "above", [L.I.x, L.I.z + L.I.south + 40, "treetop"]);
+    await shoot(p, "edge", [L.home.x, L.home.z - (L.reach + 120 - 25), "ground"]); // (on the flagstones by the north edge: the water and the fall ahead)
+    await p.close();
+    // (a fresh save: the islands she hasn't found, lakes)
+    const q = await load("zoo&found=");
+    const K = await q.evaluate(() => { const Z = window.witch.game.map.zoo.layout, w = window.witch.game.witch; const I = Z.islands.filter(J => !J.found).sort((a, b) => Math.hypot(a.x - Z.home.x, a.z - Z.home.z) - Math.hypot(b.x - Z.home.x, b.z - Z.home.z))[0]; return { x: I.x, z: I.z, most: I.most, kind: I.kind }; });
+    log("lake", JSON.stringify(K));
+    await shoot(q, "lake", [K.x, K.z + K.most + 18, "ground"]);
+    await shoot(q, "lake-above", [K.x, K.z + K.most + 30, "treetop"]);
+    await q.close();
+  } finally { await browser.close(); server.close(); }
+  if (errors.length) { console.error("page errors:\n" + errors.join("\n")); process.exit(1); }
+})().catch(e => { console.error(e); process.exit(1); });

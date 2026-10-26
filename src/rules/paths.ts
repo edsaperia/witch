@@ -64,7 +64,7 @@ export class PathNetwork {
     // Railways and roads run off the map's whole extent, so they leave it rather than stop at its edge.
     const t = map.tuning.paths, b = map.extent, r = rng(map.seed * 7 + 4242);
     // The zoo (rules/zoo.ts): a straight path along every border between its blocks, nothing else.
-    if (map.zoo) for (const pts of zooPathLines(map.zoo, map.areaSize)) this.lines.push({ kind: "path", pts, half: map.zoo.pathHalf });
+    if (map.zoo && !map.zoo.layout) for (const pts of zooPathLines(map.zoo, map.areaSize)) this.lines.push({ kind: "path", pts, half: map.zoo.pathHalf });
     else {
       const W = b.maxX - b.minX, H = b.maxZ - b.minZ;
       const edgePoint = (side: number, u: number): [number, number] =>

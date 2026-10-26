@@ -32,6 +32,7 @@ import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
+import { ZOO_CONFIG } from "../rules/zoo";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
@@ -1300,7 +1301,10 @@ export class View {
    *  only in the circle): up while she stands on the ground inside it, and a flash (dying over a second and a half) when a
    *  sigil or a relic meant for its legend was put down outside it. No garbage a frame. */
   private legendRings(g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings);
+    // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
+    // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
+    const Z = g.map.zoo?.layout, plaza = Z && Math.hypot(g.witch.x - Z.home.x, g.witch.z - Z.home.z) < 400 ? Z.home : null;
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -1316,6 +1320,7 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
+    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0 }); this.ringCount++; }
     // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
     const glint = g.tuning.legendClearing.floor?.glint ?? 0;
     for (let i = 0; i < near.length; i++) {
@@ -1327,8 +1332,10 @@ export class View {
       const L = id >= 0 ? g.creatures[id] : undefined;
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
+    if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 0; }
     return out;
   }
+  private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
@@ -1374,6 +1381,14 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
+    // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
+    if (g.map.zoo?.layout) {
+      const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
+      items.length = 0;
+      for (const I of L.islands) if (!I.found && Math.abs(I.x - w.x) < 500 && Math.abs(I.z - w.z) < 500) items.push({ x: I.x, z: I.z, r: I.most * 0.62, species: I.kind, d: Math.hypot(I.x - w.x, I.z - w.z) });
+      items.sort((a, b) => a.d - b.d);
+      this.ground.setLakeSigils(items.slice(0, 4));
+    }
     this.lasers.update(time, w.x, w.z, this.speakerTops, g.map.dancefloor); // (the dancefloor ring's: the soundsystems project their sigils instead)
     this.holograms.update(party.projectors, time, w.x, w.z);
     {

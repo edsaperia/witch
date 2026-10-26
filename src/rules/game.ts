@@ -406,6 +406,7 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
   if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
+  if (g.witch.mode === "ground" && g.map.bounds.fence?.stop(g.witch.x, g.witch.z, x, z)) return false; // (on foot, never over the zoo's fence)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -530,7 +531,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
   // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
   // in the treetops, or coming down, she flies on as before.
-  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && groundedBy(W.leash.stack, g.creatures, t).grounded) {
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
     c = { ...c, toggleMode: false };
     g.leashEvents.push({ kind: "grounded", id: 0, x: W.body.x, z: W.body.z, at: ht });
   }
@@ -650,6 +651,13 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
   // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
   if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
+  // And in the zoo every creature stays inside its island's fence, whatever moved it (rules/zooMap.ts); hers go where she goes.
+  const F = g.map.bounds.fence;
+  if (F) for (const c of g.creatures) {
+    if (c.gone || c.leashed) continue;
+    const I = F.ofCell(c.cell[0], c.cell[1]);
+    if (I) { const p = F.keepIn(I, c.x, c.z); c.x = p.x; c.z = p.z; }
+  }
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -948,7 +956,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver || !!g.map.zoo, // (nor in the zoo: its legends sleep for show, Ed 2026-10-26)
     areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,

@@ -3,6 +3,7 @@
 // creature's name, its area's and its row's and the area's own line (art/areas.js layout.feel); a block of a kind not yet designed,
 // a "?". DOM over the game, as the legend circle's explainer. (No legend's boon line: legends give no boons since Ed's change of
 // 2026-10-18, docs/notes/gameplay.md "Legend buff".)
+import { blockFront } from "../rules/zooControls";
 import * as THREE from "three";
 import { SPECIES_BY_ID } from "../../art/generator.js";
 import { AREA_TYPES } from "../rules/map";
@@ -40,7 +41,7 @@ export class ZooPlates {
     const Z = g.map.zoo;
     if (!Z) return;
     const A = g.map.areaSize, w = g.witch, reach = w.lift > 0.5 ? NEAR.treetop : NEAR.ground;
-    const near = Z.blocks.map(b => ({ b, x: (b.cell[0] + 0.5) * A, z: (b.cell[1] + 1) * A - 6 })).map(p => ({ ...p, d: Math.hypot(p.x - w.x, p.z - w.z) }))
+    const near = Z.blocks.filter(b => b.found !== false).map(b => ({ b, ...(Z.layout ? blockFront(g.map, b) : { x: (b.cell[0] + 0.5) * A, z: (b.cell[1] + 1) * A - 6 }) })).map(p => ({ ...p, d: Math.hypot(p.x - w.x, p.z - w.z) }))
       .filter(p => p.d < reach).sort((p, q) => p.d - q.d).slice(0, MAX);
     const shown = new Set<string>();
     for (const p of near) {
