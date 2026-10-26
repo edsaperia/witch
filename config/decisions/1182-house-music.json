@@ -1,0 +1,16 @@
+{
+  "pr": 1182,
+  "group": "House music",
+  "decisions": [
+    {
+      "id": "houseMusicMuffle",
+      "pr": 1182,
+      "group": "House music",
+      "label": "Muffle (Hz)",
+      "note": "In the treehouse the music slows and muffles: its low-pass closes to this as the house's world slows. Lower is more muffled (a legend's circle is 320). Only the music; other sounds as they are.",
+      "control": { "type": "slider", "min": 150, "max": 4000, "step": 10 },
+      "default": 800,
+      "apply": { "knob": "music.house.muffle" }
+    }
+  ]
+}

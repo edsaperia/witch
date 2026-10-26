@@ -1,0 +1,36 @@
+{
+  "pr": 1162,
+  "group": "Telescope look",
+  "decisions": [
+    {
+      "id": "telescopeHazeNear",
+      "pr": 1162,
+      "group": "Telescope look",
+      "label": "Haze starts (m)",
+      "note": "Through the telescope: where its haze starts to fade the land toward one colour (it looks out from about 260 m).",
+      "control": { "type": "slider", "min": 0, "max": 2000, "step": 10 },
+      "default": 320,
+      "apply": { "knob": "telescope.hazeNear" }
+    },
+    {
+      "id": "telescopeHazeFar",
+      "pr": 1162,
+      "group": "Telescope look",
+      "label": "Haze full (m)",
+      "note": "Through the telescope: where its haze is full, the land all haze colour. Further keeps more colour far off.",
+      "control": { "type": "slider", "min": 200, "max": 4000, "step": 20 },
+      "default": 1000,
+      "apply": { "knob": "telescope.hazeFar" }
+    },
+    {
+      "id": "telescopeVignette",
+      "pr": 1162,
+      "group": "Telescope look",
+      "label": "Vignette",
+      "note": "How dark the telescope view's edges are (0 none).",
+      "control": { "type": "slider", "min": 0, "max": 1, "step": 0.05 },
+      "default": 0.6,
+      "apply": { "knob": "telescope.vignette" }
+    }
+  ]
+}

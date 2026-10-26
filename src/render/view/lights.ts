@@ -1,6 +1,7 @@
 // The lights (from render/view.ts, issue #122): campfires and magic stones lit each frame, and the
 // shader's light budget filled with the nearest.
 import { writeOn } from "../leash/glyphs";
+import { areaCellAt } from "../../rules/map";
 import * as THREE from "three";
 import { partyOff } from "../partyOver";
 import { LIGHT_UNIFORMS, MAX_LIGHTS } from "../lighting";
@@ -15,6 +16,7 @@ import * as Art from "../../../art/generator.js";
 import { LEGENDS } from "../../rules/legends";
 import { beachFires } from "../beach";
 import { findLight } from "./finds";
+import { relicsOut } from "../../rules/partyOver";
 
 const SOURCE_ITEMS: SpriteInstance[] = []; // (the sources' sprites: one list, emptied each frame)
 
@@ -28,7 +30,7 @@ export function updateSources(v: View, time: number): void {
       // Campfires are party objects (Ed, 2026-10-04): none in the dormant forest; in a partified
       // area they light up with a whoosh of sparks as the party arrives (late in its transition).
       let key = v.sourceCell.get(src);
-      if (key === undefined) v.sourceCell.set(src, (key = cellKey(g.map.cellSafe(src.x, src.z).cell))); // it never moves: ask once
+      if (key === undefined) v.sourceCell.set(src, (key = cellKey(areaCellAt(g.map, src.x, src.z)))); // it never moves: ask once (a legend area's as its pair's: they partify together)
       const a = g.party.areas.get(key);
       if (!a) continue;
       const since = time - (a.at + g.tuning.party.transition * 0.7 + k * 1.5);
@@ -148,7 +150,7 @@ export const relicArtId = (kind: string): string => { const g = relicGlass(kind)
  *  reads as magic and not scenery. Only those near her. */
 export function relicLights(v: View, time: number): ForestLight[] {
   const g = v.game, w = g.witch, out: ForestLight[] = [], S = g.tuning.lights.stone;
-  for (const r of g.relics) {
+  for (const r of relicsOut(g)) {
     if (r.state !== "lying" || Math.abs(r.x - w.x) > 160 || Math.abs(r.z - w.z) > 160) continue;
     const id = relicBottle(r.kind), glass = relicGlass(r.kind), L = (Art.partyRelicLight as (id: string, glass?: string) => { rgb: number[]; radius: number; height: number; pulse: number })(id, glass), key = relicArtId(r.kind);
     let rgb = relicRgb.get(key);

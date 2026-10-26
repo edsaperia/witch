@@ -2,6 +2,7 @@
 // empty"): only the playable areas open a fighting arena round their middle and keep room for a
 // soundsystem; the buffer's areas, which never get a runestone, soundsystem or fight, grow as forest.
 import { describe, expect, it } from "vitest";
+import { beachOf } from "./mapShape";
 import { generateMap } from "./map";
 import { TUNING, withTuning } from "./tuning";
 
@@ -11,7 +12,7 @@ const CASES = [[123, "home", 0], [7, "home", 0], [42, "fox", 0], [9, "ibex", 0],
 describe("no reserved clearing with nothing in it", () => {
   for (const [seed, island, islandAreas] of CASES) {
     it(`only playable areas clear an arena or a soundsystem's room (seed ${seed}, ${island}${islandAreas ? `, ${islandAreas} areas` : ""})`, () => {
-      const map = generateMap(seed, withTuning({ map: { ...TUNING.map, island, islandAreas } } as never)), L = map.bounds.land!;
+      const map = generateMap(seed, withTuning({ map: { ...TUNING.map, island, islandAreas } } as never)), L = map.bounds.land!, sand = beachOf(map.bounds, map.tuning);
       let buffer = 0, spotsClear = 0, inland = 0;
       for (const key of map.neighbours.keys()) {
         const [cx, cy] = key.split(",").map(Number), s = map.siteOf(cx, cy), q = map.soundsystemSpot(cx, cy);
@@ -27,7 +28,9 @@ describe("no reserved clearing with nothing in it", () => {
           expect(map.arenaOpen(q.x + Math.cos(t) * r, q.z + Math.sin(t) * r, [cx, cy])).toBe(1);
         }
         // (its soundsystem's spot, well inland, isn't held clear: only a scene, a ground or the like clears it)
-        if (L.distAt(q.x, q.z) > 60 && map.areaAt(q.x, q.z).cell.join() === key) { inland++; if (map.hardClear(q.x, q.z)) spotsClear++; }
+        // (but a legend area's heart, where its legend's circle lies, and the beach's sand, which reaches far inland on some
+        // coasts: neither is a reserved clearing; Ed, 2026-10-26, legend areas, grew the land so more buffer areas lie that far in)
+        if (L.distAt(q.x, q.z) > 60 && map.areaAt(q.x, q.z).cell.join() === key && !map.isLegendArea?.(cx, cy) && !((sand?.intoSand(q.x, q.z) ?? -1) > 0)) { inland++; if (map.hardClear(q.x, q.z)) spotsClear++; }
       }
       expect(buffer).toBeGreaterThan(10);
       expect(spotsClear).toBeLessThanOrEqual(Math.ceil(inland * 0.25));

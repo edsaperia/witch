@@ -167,13 +167,16 @@ The beach (Ed, 2026-10-06: "Outside of the circular map, there is the sea. A bea
 
 ### `areaEdgeBlend`
 
-Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. Only the look: creatures, partifying and the party border keep the exact borders.
+Blended area edges: each tree and bush takes its look (its area type) from a point up to width metres away (40: Ed, #887, 2026-10-13, so the planting blends across the borders; it was 20), the offset mostly the plant's own, drawn independently of its neighbours' (stray of it: 0.85, Ed's #887 feedback, so the kinds interleave tree by tree rather than in clumps; it was 0.5), the rest a smooth noise scale metres across so the band doesn't run dead straight; the neighbour's share ramps from about half at the border to none width metres in. And the band itself wanders (Ed, 2026-10-26: "The effect that makes tree placement from neighbouring areas blend should be increased"): every plant near one spot shifted alike by up to warp metres, a noise warpScale metres across, so a border reads as ragged, gradual mixing rather than a line; width doubled to 80 then (it was 40). warp 0 since (Ed, 2026-10-26, on v4618: "I don't think tree blending borders need to wander, as the area edges themselves are already noisy"; it was 30), kept as a knob. tufts: the share of the band the ground cover blends over (0: the tufts keep the exact border, as before; they lie on the area's own floor, which keeps its edge, and a cave mouth's bare ground taking a grassland's thick grass 40 m in read as wrong; 1 blends them as the trees); their cell (a legend circle's floor, an arena) stays the exact one either way. The pause page's Area blend slider sets width (a new map: it reloads). Only the look: creatures, partifying and the party border keep the exact borders.
 
 | knob | type | range |
 |---|---|---|
 | `areaEdgeBlend.width` | number | 0 to … |
 | `areaEdgeBlend.scale` | number | 0 to … |
 | `areaEdgeBlend.stray` | number | 0 to … |
+| `areaEdgeBlend.warp` | number | 0 to … |
+| `areaEdgeBlend.warpScale` | number | 0 to … |
+| `areaEdgeBlend.tufts` | number | 0 to … |
 
 ### `groundBlend`
 
@@ -330,6 +333,9 @@ Scenes (Ed, 2026-10-04; art/scenes.js): small vignettes (a farmyard corner, a bu
 | `legendClearing.grove.gap` | number | 0 to … |
 | `legendClearing.grove.soft` | number | 0 to … |
 | `legendClearing.grove.jitter` | number | 0 to … |
+| `legendClearing.fit.margin` | number | 0 to … |
+| `legendClearing.fit.max` | number | 0 to … |
+| `legendClearing.fit.areaMax` | number | 0 to … |
 | `legendClearing.species` | record |  |
 
 ### `relics`
@@ -491,7 +497,7 @@ Tree density is a field, not two states (Ed, 2026-10-03): each area's own densit
 | `bushClump` | number | 0 to … |
 | `treeHeight` | number | 0 to … |
 
-### `treeCap`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+### `treeCap`
 
 The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight (treetopHeight) stays above the canopy: any height over from metres keeps only keep of the rest (so a 45 m giant shows about 29 m: still over the canopy, not burying her).
 
@@ -499,6 +505,14 @@ The tallest tree variants (tall, giant) are drawn squeezed so the treetop flight
 |---|---|---|
 | `treeCap.from` | number | 0 to … |
 | `treeCap.keep` | number | 0 to … |
+
+### `pins`, `crownWidth`, `treeSpacingX`, `treeSpacingZ`, `crownHalfWidth`, `crownHeight`, `bushSpacing`
+
+The HUD's pointers as map pins over their subject (render/indicator.ts): gap is how far (screen pixels) the arrow's tip floats over the subject's drawn top (Ed, 2026-10-26: "pins should be a bit higher").
+
+| knob | type | range |
+|---|---|---|
+| `pins.gap` | number | 0 to … |
 | `crownWidth` | number | 0 to … |
 | `treeSpacingX` | number | 0 to … |
 | `treeSpacingZ` | number | 0 to … |
@@ -1146,12 +1160,13 @@ A sleeping legend's dream (or nightmare) bubble, and its pointer to the nearest 
 
 ### `legends`, `wildLegends`, `legendSpeed`
 
-Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08: "it should be more like 1/5"; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map (Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature": the gamble kept); N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it). earlyQuest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"): one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before. questLater (Ed's core design, relayed by the coordinator 2026-10-07: quests point to later areas, deeper in and wilder now the forest is grown before the waves): a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before. questRoll (the same: "the difficulty of the encounter is the slot machine, not the reward size"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written).
+Ed, 2026-10-06: "Legends should only appear in about half of areas (we can test this ratio); every area makes them too common." share: the fraction of the areas (home never) with a sleeping legend (Ed, 2026-10-08: "it should be more like 1/5"; 0.5 before), seeded per map and spread so they don't clump (no more than two neighbouring areas together where the map allows). The rest have no legend: no clearing, quest, restlessness or legend music. Read as the map is made: the decisions panel reloads. Ed's answers on #259 (2026-10-06): buffPower, every legend's buff's strength ("Bigger buffs", for quests worth their cost; 1 as written: a scale of v is 1 + (v - 1) x buffPower, an add v x buffPower, a behaviour's count rounded up by it, its limits still holding); happyRange, a happy legend's reach in metres (relic allies: "They stay home, but if they're not useful enough right now, make their range longer"); bombard ("Legend bombards, but prioritises you"): an angry legend with no witch in its reach throws the first lob or beam of its volley at the nearest standing soundsystem within range metres, damage a hit (of combat.soundsystemHealth); a charging legend lobs at it rather than charge. stomp (Ed, 2026-10-06, a "perhaps": "an angry legend simply stamps on the soundsystem in its area, destroying immediately. The angry legend waking timer may have to be longer"): on, a legend turning angry while its own area's soundsystem stands destroys it at once (ruined, as any fallen one), and legends are restless angryAfter seconds before they anger (legends.json angryAfter otherwise). The party-legend Easter egg (Ed, 2026-10-06: "It would be funny if you could leash an elder, but it's so heavy that it stops you moving at all outside the leash slack distance, and it doesn't move towards you at all. Maybe you should be able to turn a happy legend into a party legend with an absurd number of invites (100?) and then pick up its sigil but it's totally useless"; rules/partyLegend.ts): partyEgg turns it on; a happy legend (by its relic or its quest) then takes 💌s, its meter partyHits long, draining partyDrain of a full meter a second; full, it's a party legend (it keeps its buff, dances in place, fights no one, its rune at its feet); picked up, she can go anywhere within partyReach metres of it (the leash's slack: 0.85 of leash.length) and not a step further, and it never comes to her; put down (E), it's let go where it stands. questNear: 0, a legend dreams of any kind on the map (Ed, 2026-10-06: "They're a high-roll mechanic; you don't know how hard the quest will be before you go off to try and find the creature": the gamble kept); N, one of the N nearest other kinds round it, an area nearer home counting as nearer (a knob for trying it). earlyQuest (Ed, 2026-10-07: "for variety we could fix one of [first, second, third] having a legend that wants one of the first three [not itself] so there's always an easy quest to do in the first third"): one of the first three areas the waves wake (seeded), one with a legend, dreams of the baby of another of those three's kind (rules/quest.ts earlyQuest); if none of them has a legend, one of them (seeded, one whose kind another of the three lacks) is given one as the map is made, moved from the legend area the route reaches last (or, where that would clump legend areas together, from the one beside it), so share holds (rules/map.ts); false: every dream as before. questLater (Ed's core design, relayed by the coordinator 2026-10-07: quests point to later areas, deeper in and wilder now the forest is grown before the waves): a legend dreams only of a kind living in an area later on the route than its own, within questCap areas; failing that, the kind of the nearest later area; with no later area, any kind (the early easy quest keeps its own pick); false: any kind as before. questRoll (the same: "the difficulty of the encounter is the slot machine, not the reward size"): a done quest's buff is this many times as strong as written, whatever its dream's distance (it was 1 to 1.5 by distance, questFar; a relic's stays as written). areas (Ed, 2026-10-26: "legends are spawned in additional areas that have legend circles where runestones usually are"; all legends in them): on, each of the night's legends gets an area of its own grown out of the island beside one of its kind's areas (its pair), taking its kind and look, with no runestone, soundsystem or route stop, its circle at its heart; the island grows by them; the pair counts as one area for a legend's rage and for creatures attacking and defending (rules/map.ts areaOf); false: legends in their own kind's areas as before.
 
 | knob | type | range |
 |---|---|---|
 | `legends.share` | number | 0 to … |
 | `legends.earlyQuest` | boolean |  |
+| `legends.areas` | boolean |  |
 | `legends.buffPower` | number | 0 to … |
 | `legends.happyRange` | number | 0 to … |
 | `legends.questCap` | number | 0 to … |
@@ -1555,6 +1570,7 @@ The sound effects, all synthesised in the music's key (2026-10-05): volume over 
 | `music.slow.on` | boolean |  |
 | `music.slow.pitch` | number | 0 to … |
 | `music.slow.floor` | number | 0 to … |
+| `music.house.muffle` | number | 0 to … |
 | `music.clear` | number | 0 to … |
 | `music.distort` | number | 0 to … |
 | `music.src` | string |  |
@@ -1861,7 +1877,7 @@ From the treetops, each placed sigil shows above the canopy over its spot: heigh
 | `sigilProjection.creatures.happy` | number | 0 to … |
 | `sigilProjection.creatures.fade` | number | 0 to … |
 
-### `suspects`, `occlusion`, `canopyShadow`
+### `suspects`, `occlusion`
 
 The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that draw circles around the witch"): each effect centred on her with a round edge, on (as ever) or off, read every frame so the pause page's toggles show at once. seeThrough: tall things in front of her fading (occlusion); holeCut: the canopy cut away round her (off: crowns everywhere); trunkFade: trunk tops fading where crowns are cut away; groundCover: the tufts kept to the cut-away's reach (off: out to groundCover.radius); glow: her light and its warm pool; effectsLayer: the smooth effects layer (mist, dapple: drawn at the scene's resolution and blurred, laid over the picture); haze: the far haze round her; areaAverage: scenery sprites averaged where they shrink; seeDepth: the see-through pass's depth (#896); cutWhole: the cut-away by each crown whole, as canopyCutout.whole has it (off: pixel by pixel); seeSplit: the see-through's fade itself (off: the soft circle's things stay solid and in the solid pass; the vertex side unchanged); seeMark: the pixels the see-through pass draws tinted magenta; mist: the low mist (in the effects layer); lightRings: the moonlight rings on the crowns (in the effects layer); seeWrite: the see-through pass writes its depth as it draws, so the nearer of two faded things wins where they overlap, as in the solid pass (off as ever: whichever is drawn last); seeCull: the see-through pass skipping, before drawing, every sprite it reckons can't reach her circle or the hole (off: it draws them all and lets each pixel decide); seeKeep: the solid pass keeps what's in front of her as well (the see-through pass drawn over it); seeStencil: the see-through pass marks scenery in the stencil as the solid pass does; seeEarly: the see-through pass drawn straight after the solid scenery (render order 0.6, not 11: she then shows through it whole); seeSolid: the see-through pass's pixels drawn at alpha 1: off, all, only those in her circle (circle) or only the rest (rest); seeNoBlend: the see-through pass drawn with no blending; seeShowAlpha: the see-through pass drawn as its own opacity in grey (white solid, black clear); showBroken: scene pixels that are not a number red, infinite magenta, negative yellow (before the post-process); seeDither: the see-through done in the solid pass as an ordered dither (no second pass for it); seeTwo: the fix (on): what's in front of her drawn in a see-through pass of its own, writing depth, before the half-faded things (off: one see-through pass, as before, the circle bug).
 
@@ -1897,6 +1913,39 @@ The circle-bug suspects (Ed, 2026-10-14: "there are not very many things that dr
 | `occlusion.edge` | number | 0 to … |
 | `occlusion.minHeight` | number | 0 to … |
 | `occlusion.silhouette` | number | 0 to … |
+
+### `reveal`, `canopyShadow`
+
+The places she stands in, kept clear (Ed, 2026-10-26: "When the witch stands in a legend circle, scenery in front of it should fade away"; "we might want this for other important points of interest, such as runestone areas, finds, flasks"; render/view/reveal.ts): while she stands on the ground within a place of interest, everything standing nearer the camera than its centre whose picture covers it (its ring on the ground and what stands at its centre, width by height metres) fades out whole. legend: a legend's circle (its own radius, its ring pad metres wider for the rim's stones, and its legend as drawn, asleep or awake). runestone: an area's runestone and its fight's open middle (within radius metres of the stone; ring metres round it boxed; 30 m since Ed, 2026-10-26: "the fading area around a runestone is relatively small (say a 30m radius)"). bounded (the runestone's): only what stands within radius metres of the thing fades, so the woods round a fight don't thin out past it. For these three, whatever stands within keep metres of the thing is never faded: the thing itself (a relic, the trunk and a runestone are stood toward the camera by part of their height, nearer than the spot they mark). find: tonight's trunk or wreck, until it's taken. flask: a lying relic flask. Each on or off (all four on since Ed, 2026-10-26: "All four on"; the last three the pause page's toggles, and the runestone's radius its slider). A place fades over seconds as she walks in and back over seconds as she leaves; edge (a share of the screen's width) and depth (metres) are how far past its box on screen and nearer than its centre each thing eases from gone to whole, so nothing snaps at a line. ?reveal=legend,runestone,find,flask (or all, or none) sets which are on.
+
+| knob | type | range |
+|---|---|---|
+| `reveal.seconds` | number | 0 to … |
+| `reveal.edge` | number | 0 to … |
+| `reveal.depth` | number | 0 to … |
+| `reveal.legend.on` | boolean |  |
+| `reveal.legend.pad` | number | 0 to … |
+| `reveal.runestone.on` | boolean |  |
+| `reveal.runestone.radius` | number | 0 to … |
+| `reveal.runestone.ring` | number | 0 to … |
+| `reveal.runestone.width` | number | 0 to … |
+| `reveal.runestone.height` | number | 0 to … |
+| `reveal.runestone.keep` | number | 0 to … |
+| `reveal.runestone.bounded` | boolean |  |
+| `reveal.find.on` | boolean |  |
+| `reveal.find.radius` | number | 0 to … |
+| `reveal.find.ring` | number | 0 to … |
+| `reveal.find.width` | number | 0 to … |
+| `reveal.find.height` | number | 0 to … |
+| `reveal.find.keep` | number | 0 to … |
+| `reveal.find.bounded` | boolean |  |
+| `reveal.flask.on` | boolean |  |
+| `reveal.flask.radius` | number | 0 to … |
+| `reveal.flask.ring` | number | 0 to … |
+| `reveal.flask.width` | number | 0 to … |
+| `reveal.flask.height` | number | 0 to … |
+| `reveal.flask.keep` | number | 0 to … |
+| `reveal.flask.bounded` | boolean |  |
 | `canopyShadow.on` | boolean |  |
 | `canopyShadow.strength` | number | 0 to … |
 | `canopyShadow.height` | number | 0 to … |

@@ -1,0 +1,7 @@
+{
+  "reason": "No slowed-time grey on the house (Ed, 2026-10-26: \"I think it should not be grey\"): while she's on it (its rooms, Terrace and telescope) the world keeps its colours, the slowing shown only in how things move; drawing only, no rules state changes",
+  "frames": {
+    "boot": "walking off her decks on the Terrace, the house's slowed time no longer greys the forest round it",
+    "bedroom": "in her bedroom, the house's slowed time no longer greys what's drawn round it"
+  }
+}

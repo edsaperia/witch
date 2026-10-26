@@ -60,6 +60,13 @@ export function applyKnobParams(tuning: object, params: URLSearchParams): void {
 export const groupOf = (d: Decision): string => (d.pinned ? d.group ?? "Settings" : d.pr ? `#${d.pr} ${d.group ?? ""}`.trim() : d.group ?? "Other");
 /** The registry in the pause page's order: by PR, newest first (those without one last), each PR's in the registry's order. */
 export const byPr = (list: readonly Decision[]): Decision[] => list.map((d, i) => ({ d, i })).sort((a, b) => (b.d.pinned ? 1 : 0) - (a.d.pinned ? 1 : 0) || (b.d.pr ?? -1) - (a.d.pr ?? -1) || a.i - b.i).map(x => x.d); // (the pinned groups first: the Volume)
+/** How many of a group's entries differ from built (its header's count on the pause page). */
+export const changedIn = (list: readonly Decision[], values: ReadonlyMap<string, unknown>): number => list.filter(d => values.has(d.id) && values.get(d.id) !== d.default).length;
+/** The pause page's groups the player left open (Ed, 2026-10-26: "grouped by their title with the ability to fold, and start
+ *  folded"): every group starts folded, those opened remembered on this browser (localStorage witch.pauseOpen) so a reload keeps them. */
+const OPEN_KEY = "witch.pauseOpen";
+export const openGroups = (): Set<string> => { try { const t = localStorage.getItem(OPEN_KEY), a = t ? JSON.parse(t) : []; return new Set(Array.isArray(a) ? a.filter(x => typeof x === "string") : []); } catch { return new Set(); } };
+export const saveOpenGroups = (open: ReadonlySet<string>): void => { try { localStorage.setItem(OPEN_KEY, JSON.stringify([...open])); } catch { /* storage blocked: this load only */ } };
 /** What it changes, as Ed would name it to a builder: the tuning key, or the URL switch. */
 export const keyOf = (d: Decision): string => d.apply.knob ?? `?${d.apply.param}`;
 

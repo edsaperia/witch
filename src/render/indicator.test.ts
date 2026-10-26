@@ -29,3 +29,19 @@ describe("the edge cues' layout (Ed, v1628: the 🎶 distance drawn twice, \"201
     expect(edgeLayout.claim(1500, 455, 0, 50, false)).toEqual({ x: 1500, y: 455 }); // (over its target on screen: not nudged)
   });
 });
+
+describe("a pointer near its subject, a map pin (Ed, 2026-10-26: \"it should float above that thing and point downwards\")", () => {
+  it("points straight down at it, its tip under the ring", () => {
+    const N = 40, px = arrowPixels(Math.PI / 2, N, 15, 20, 3.5);
+    const tip = px.reduce((b, p) => (p[1] > b[1] ? p : b));
+    expect(Math.abs(tip[0] + 0.5 - N / 2)).toBeLessThan(1);
+    expect(tip[1] + 0.5 - N / 2).toBeGreaterThan(15);
+  });
+  it("sits beside another pin over the same spot, not on it", async () => {
+    const { edgeLayout } = await import("./indicator");
+    edgeLayout.reset();
+    const a = edgeLayout.claim(600, 300, Math.PI / 2, 40), b = edgeLayout.claim(605, 302, Math.PI / 2, 40);
+    expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThanOrEqual(80 - 1e-9);
+    expect(Math.abs(b.y - 302)).toBeLessThan(1e-9); // (side by side: across, not stacked)
+  });
+});

@@ -2,7 +2,7 @@
 // a confirmed choice makes the issue link and line the coordinator reads.
 import { describe, expect, it } from "vitest";
 import { TUNING } from "../rules/tuning";
-import { applyKnobParams, byPr, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, parseValue, setKnob, valuesText } from "./decide";
+import { applyKnobParams, byPr, changedIn, currentValue, decisionLine, DECISION_LIST, groupOf, issueUrl, keyOf, knobAt, knobParam, openGroups, parseValue, saveOpenGroups, setKnob, valuesText } from "./decide";
 
 /** The URL switches the game reads (src/main.ts, app/linkParams.ts), and their values (a slider's: any number). */
 const PARAMS: Record<string, string[]> = { style: ["bold", "ref"], fightScale: [], fightSpeed: [], fightMomentum: [], treetopSpeed: [], areaSize: [] };
@@ -78,5 +78,21 @@ describe("the decisions panel", () => {
     expect(lines).toContain(`  ${style.label} · ?style = ${style.default} (built ${style.default})`);
     expect(keyOf(style)).toBe("?style");
     expect(lines.filter(l => / = .* \(built /.test(l)).length).toBe(DECISION_LIST.length);
+  });
+  it("folds the pause page's groups (Ed, 2026-10-26): all folded at first, the opened ones remembered, each header counting its changed sliders", () => {
+    const store = new Map<string, string>(), was = (globalThis as { localStorage?: unknown }).localStorage;
+    (globalThis as { localStorage?: unknown }).localStorage = { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => { store.set(k, v); } };
+    try {
+      expect(openGroups().size).toBe(0);
+      saveOpenGroups(new Set([groupOf(DECISION_LIST[0])]));
+      expect([...openGroups()]).toEqual([groupOf(DECISION_LIST[0])]);
+      store.set("witch.pauseOpen", "not json");
+      expect(openGroups().size).toBe(0);
+    } finally { (globalThis as { localStorage?: unknown }).localStorage = was; }
+    expect(openGroups().size).toBe(0); // (no storage at all: folded, no throw)
+    const [a, b] = DECISION_LIST, values = new Map<string, unknown>([[a.id, a.default], [b.id, b.default]]);
+    expect(changedIn([a, b], values)).toBe(0);
+    values.set(b.id, b.control.type === "toggle" ? !b.default : "changed");
+    expect(changedIn([a, b], values)).toBe(1);
   });
 });

@@ -1,0 +1,7 @@
+{
+  "reason": "The pointers as map pins over their subjects when in view (Ed, 2026-10-26): drawing only (the HUD's cues), no rules state changes",
+  "frames": {
+    "boot": "a pointer on screen over its subject drawn as a pin (its arrow down, higher, bobbing) where it was a ring",
+    "wave-fight": "the wave pointer or a hat's over its subject drawn as a pin where it was a ring"
+  }
+}

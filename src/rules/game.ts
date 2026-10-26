@@ -27,7 +27,7 @@ import { heldByRoutine } from "./djSet";
 import { castPartySpell, cellKey, clearArea, heldBySpell, newParty, resetPulse, spreadWave, stepParty, type Partified, type PartyState } from "./party";
 import { clearedAreas } from "./clear";
 import { bootShare, stoneTurned } from "./bootRing";
-import { AREA_TYPES, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
+import { AREA_TYPES, areaCellAt, generateMap, hydrateMap, type ForestMap, type MapPrep } from "./map";
 import { areaOf, homeArea } from "./homeArea";
 import { beachOf, exitPoint } from "./mapShape";
 import { calmRingAt, keepEnragedOut, leavesCalmRing, stepTimeScale } from "./slowTime";
@@ -62,7 +62,7 @@ import { newGrowth, type GrowthState } from "./growth";
 import type { Tuning } from "./tuning";
 import { newWitch, stepWitch, witchHeight, type Intent, type WitchState } from "./witch";
 import { deckOf, onTreehouse } from "./treehouse";
-import { homeDown, startPartyOver, stepPartyOver, type PartyOver } from "./partyOver";
+import { homeDown, startPartyOver, stepPartyOver, stepWorldAsleep, worldAsleep, type PartyOver } from "./partyOver";
 import { stepWin, winFlare, won, type WinState } from "./win";
 
 /** One player's witch (Stage 4: game.witches, one per player, the first this machine's): her
@@ -176,6 +176,8 @@ export interface Game {
   /** The party's over (Ed, 2026-10-06: every soundsystem and the home ring's speakers destroyed): the afterparty, when it
    *  began and how far it has eased in (rules/partyOver.ts). Null while the party's on. */
   partyOver: PartyOver | null;
+  /** The world put to bed while the night waits for her party spell (rules/partyOver.ts stepWorldAsleep): woken as it's cast. */
+  asleepBeforeParty?: boolean;
   /** The end of the route (rules/win.ts): the stragglers, the victory lap, the night won. Null till the last wave lands. */
   win: WinState | null;
   /** One-shot presses (rise, sigil, spell...) waiting for the next step. */
@@ -363,7 +365,7 @@ export const leashLoad = (g: Game, w: Witch = g.witches[0]): LeashLoad => loadOf
 export function hitWitch(g: Game, id: number, worldAt: number, t: Tuning = g.tuning, blow?: Blow): void {
   // (her health, blinks, knocks and hat run on her clock, rules/slowTime.ts: the world's moment `worldAt` on hers, by how far it is from now)
   const w = g.witches[id], at = g.herTime + (worldAt - g.clock.time);
-  if (!w || w.ko || dashing(w.dash, at) || g.partyOver || won(g)) return; // (the afterparty, or the night won: nothing hurts her)
+  if (!w || w.ko || dashing(w.dash, at) || worldAsleep(g) || won(g)) return; // (the afterparty, the world before the party, or the night won: nothing hurts her)
   if (at < w.health.hurtAt + t.witchHealth.grace) return; // (just hit: a moment's grace, so a pack can't take all her hits at once)
   // The Helmet (rules/spells.ts; Ed, 2026-10-11: "The helmet gives you an extra hit and it's knocked off when hit"): worn, it
   // takes the blow, knocked off to lie beside her (her hat down: picked up and put back on as ever, rules/hat.ts).
@@ -567,7 +569,10 @@ function fixedStep(g: Game, controls: Controls): void {
   if (t.legends.partyEgg) { const P = pinWitch(W.body, W.leash.stack, g.creatures, t.legends.partyReach, g.clock.time, W.pinned ?? null); W.body = P.body; W.pinned = P.pinned; }
   g.camera = stepCamera(g.camera, c.zoom, { x: g.witch.x, y: witchHeight(g.witch, g.tuning), z: g.witch.z }, { x: g.witch.vx, z: g.witch.vz }, g.witch.lift, hdt, g.tuning, !!g.witch.seated, g.introFocus, coastOf(g), g.tuning.camera.circle?.on ? legendCircleNear(g, g.witch)?.legend ?? null : null, onTreehouse(g), !!c.framing && onTreehouse(g), c.framePart ?? null); // (in a legend's circle: the lower view, camera.circle; indoors, camera.house; choosing at a station, camera.station)
   // The afterparty (rules/partyOver.ts): the waves have stopped for good.
+  // The world before the party is the afterparty's (Ed, 2026-10-26): asleep in bed, or got up as the spell's cast.
+  stepWorldAsleep(g, g.clock.time);
   const over = !!g.partyOver, calm = over || won(g); // (calm: the afterparty, or the night won (rules/win.ts): no waves, no fights)
+  const still = calm || worldAsleep(g); // (and the world before the party: no fights, the legends still, nothing grows; its waves wait as ever, stepParty)
   const lapping = g.win?.phase === "lap"; // (the victory lap: its pulses race along the line, the waves done with: rules/win.ts)
   if (c.pauseWaves && !calm) g.party.paused = !g.party.paused;
   const celebrate = (a: Partified, wave: number) => { if (a.soundsystem) g.waveEvents.push({ kind: "waveCelebrate", key: cellKey(a.cell), x: a.soundsystem.x, z: a.soundsystem.z, at: g.clock.time, wave }); };
@@ -575,7 +580,7 @@ function fixedStep(g: Game, controls: Controls): void {
   if (!calm && !lapping) stepParty(g.party, g.map, g.clock.time, dt, !!g.witch.seated, celebrate, tempoRate(g.beat, t));
   // Each wave brings its tempo, eased in from the block line its music lands on.
   if (g.party.wave !== g.beat.wave) waveArrived(g.beat, g.tuning, g.party.wave, g.clock.time);
-  if (!calm) stepLegends(g, legends, !!c.happyNearest);
+  if (!still) stepLegends(g, legends, !!c.happyNearest);
   if (W.ko) {
     const wasMoved = W.ko.moved, r = stepKnockout(W.ko, W.body, W.leash, g.creatures, g.map, ht, k => g.party.areas.has(k), g.koEvents);
     W.body = r.body;
@@ -588,19 +593,19 @@ function fixedStep(g: Game, controls: Controls): void {
   if (stepHealingRing(W.spells, W.health, W.body.mode === "ground" ? hatsDown(W) : [], W.body.x, W.body.z, ht, t)) g.koEvents.push({ kind: "healed", at: ht, x: W.body.x, z: W.body.z });
   const B = g.berries, busy = (id: number) => B.feeding.has(id) || B.evolving.has(id);
   // (No growth on a clock: every area is peopled from the start by its place on the route, Ed 2026-10-07; rules/creatures.ts.)
-  if (!calm) stepClear(g);
+  if (!still) stepClear(g);
   // (in the treehouse her followers guard home as if their sigils were placed there, her stack unchanged: rules/houseGuard.ts)
   const LV = leashView(W, g.creatures, g.map, t);
   updateModes(LV.stack, LV.placed, g.creatures, g.witch, g.witch.mode === "ground" && !g.witch.seated && !g.witch.perch && !W.ko, g.map, g.clock.time); // (posse or travelling: rules/travel.ts)
   g.lod = newLodCounts();
-  if (!calm) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
-  if (!calm) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
-  if (!calm) stepFights(g, t, dt, busy);
+  if (!still) stepWildWatch(g, t); // (before the fights: those just watching her hold off this very step)
+  if (!still) stepHunts(g, t); // (then the woken areas' own hunt her: rules/hunt.ts)
+  if (!still) stepFights(g, t, dt, busy);
   else if (over) stepPartyOver(g, dt); // (nothing fights: everyone walks home to bed, rules/partyOver.ts)
   // Noticing her (before they step, so a curious baby sets off this step).
   {
     const near: Creature[] = [], byArea = (g.byArea ??= indexByArea(g.creatures)), seen = new Set<string>();
-    for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(g.map.cellSafe(w.body.x, w.body.z).cell); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
+    for (const w of g.witches) { if (w.body.mode !== "ground") continue; const k = cellKey(areaCellAt(g.map, w.body.x, w.body.z)); for (const a of [k, ...(g.map.neighbours.get(k) ?? [])]) if (!seen.has(a)) { seen.add(a); near.push(...(byArea.get(a) ?? [])); } }
     const T = COMBAT.temperament;
     stepNotice(near, g.witches.map(w => ({ x: w.body.x, z: w.body.z, onGround: w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko })), sp => (T.curious.includes(sp) ? "curious" : T.skittish.includes(sp) ? "skittish" : null), t);
   }
@@ -621,7 +626,7 @@ function fixedStep(g: Game, controls: Controls): void {
   }
   // The 💌s (issue #87): on the ground, off her seat, not knocked out.
   stepInvites(W.invites, W.ko ? {} : confusedAim(W, c, ht), { ...g.witch }, t.invites.on && g.witch.mode === "ground" && !g.witch.seated && !W.ko, g.creatures, affectionOf(g), ht, hdt, t, M, undefined, g.tuning.legendCircle?.slow.on === false ? undefined : leavesCalmRing(g, W.body), hatLetters(hatsDown(W), t), g.combat.mirages?.length || g.combat.decoys?.length ? mirageDecoys(g, g.clock.time) : undefined);
-  if (!over) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
+  if (!worldAsleep(g)) wakeOnInvites(g, W.invites.events, t); // (a 💌 landing on a wild one wakes its area: rules/inviteWakes.ts)
   // Frenzy (Stoat): an animal won over gives back a blink.
   if (M.frenzy > 0) for (const e of W.invites.events) if (e.kind === "happy") { if (shared) coolRefund(W.cool, t.dash.cooldown); else refundDash(W.dash, ht, charges); }
   questsFromPlaced(g, ht);
@@ -667,7 +672,7 @@ function napRules(g: Game): NapRules | undefined {
   const N = g.tuning.naps;
   if (!N?.on) return undefined;
   const roused = new Set<string>(), down = g.witches.filter(w => w.body.mode === "ground" && !w.body.seated && !w.body.perch && !w.ko).map(w => w.body);
-  for (const b of down) roused.add(cellKey(g.map.cellSafe(b.x, b.z).cell));
+  for (const b of down) roused.add(cellKey(areaCellAt(g.map, b.x, b.z)));
   // A legend circle's baby (naps.circle) wakes only for a witch at its circle (so she can still invite it), not anywhere in its area.
   const C = N.circle, atCircle = (c: Creature) => down.some(b => Math.hypot(b.x - c.circle!.x, b.z - c.circle!.z) <= c.circle!.r + C!.reach);
   return { chance: N.chance, length: N.length, wake: N.wake, circle: C, wild: c => !g.party.areas.has(cellKey(c.cell)), roused: c => C && keepsToCircle(c) ? atCircle(c) : roused.size > 0 && roused.has(cellKey(c.cell)) };
@@ -712,6 +717,14 @@ function confusedAim(W: Witch, c: Controls, ht: number): Controls {
 /** Fights and sieges (rules/combat.ts): new soundsystems come under siege, every creature near a
  *  witch or busy with a siege fights, blows land on creatures, witches and soundsystems; a fallen
  *  soundsystem ends its party and its besiegers march on; the run ends when none stands. */
+/** Whether (x, z) is in a creature's area, for its fights (combat's world.inArea: its edge, chases past it, defending): a legend
+ *  area and its pair as one (Ed, 2026-10-26: "for legends getting enraged, and also for animals attacking and defending, the
+ *  adjacent areas should count as one"; map.sameArea). */
+export const creatureInArea = (map: ForestMap) => (c: { cell: readonly [number, number] }, x: number, z: number): boolean => {
+  const k = map.cellSafe(x, z).cell;
+  return (k[0] === c.cell[0] && k[1] === c.cell[1]) || (!!map.sameArea && map.sameArea(k, c.cell as [number, number]));
+};
+
 function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolean): void {
   const S = g.combat, time = g.clock.time;
   // A new soundsystem: its area's wild creatures are enraged and march on it (#87: its quest done or not).
@@ -730,7 +743,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
   // mid-fight. (Not every wild one round a standing soundsystem: with the areas growing, Ed
   // 2026-10-04, that was thousands of idle creatures stepped for nothing.)
   const byArea = (g.byArea ??= indexByArea(g.creatures)), hot = new Set<string>(), active: Creature[] = [];
-  const near = (x: number, z: number) => { const k = cellKey(g.map.cellSafe(x, z).cell); if (hot.has(k)) return; hot.add(k); for (const n of g.map.neighbours.get(k) ?? []) hot.add(n); };
+  const near = (x: number, z: number) => { const k = cellKey(areaCellAt(g.map, x, z)); if (hot.has(k)) return; hot.add(k); for (const n of g.map.neighbours.get(k) ?? []) hot.add(n); };
   for (const w of g.witches) near(w.body.x, w.body.z);
   for (const w of g.witches) for (const id of [...w.leash.stack, ...w.leash.placed.map(p => p.id)]) { const c = g.creatures[id]; if (!c.gone) { near(c.x, c.z); active.push(c); } }
   const seen = new Set<number>(active.map(c => c.id));
@@ -759,7 +772,7 @@ function stepFights(g: Game, t: Tuning, dt: number, busy: (id: number) => boolea
     home: homeArea(g.map),
     areaAt: (x, z) => areaOf(g.map, g.map.cellSafe(x, z).cell), // (a parked animal guards its sigil's whole area: Ed, 2026-10-15)
     unseen: (x, z) => g.witches.every(w => Math.hypot(w.body.x - x, w.body.z - z) > t.haze.far + 60),
-    inArea: (c, x, z) => { const k = g.map.cellSafe(x, z).cell; return k[0] === c.cell[0] && k[1] === c.cell[1]; },
+    inArea: creatureInArea(g.map),
     packWorld: {
       dash: id => { const W = g.witches[id]; return W && W.dash.at > -Infinity ? { at: W.dash.at, x: W.dash.toX, z: W.dash.toZ } : null; },
       lettered: id => g.witches.some(W => W.invites.events.some(e => e.kind === "hit" && e.id === id && time - e.at < 0.25)),
@@ -944,7 +957,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
     creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
-    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(g.map.cellSafe(p.x, p.z).cell) : ""; } return cellKey(c.cell); },
+    areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,
   // destroying immediately. The angry legend waking timer may have to be longer"): a legend turning
