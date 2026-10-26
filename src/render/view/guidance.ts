@@ -5,7 +5,7 @@ import type { View } from "../view";
 import { HAT_INK } from "../view";
 import type { Pin, PinTarget } from "../pins";
 import type { Guide, GuideKind } from "../../rules/guidance";
-import { EMOJI_PX, HAT } from "../indicator";
+import { EMOJI_PX, HAT, NOTES } from "../indicator";
 import { pixelSprite } from "../bubbles";
 
 const INK = new THREE.Vector3(1, 0.94, 0.82);
@@ -39,21 +39,6 @@ export const LETTER = [
   "#.+.......+..##",
   "###############",
   "...............",
-];
-/** Two platters on a desk: her decks. */
-export const DECKS = [
-  "...............",
-  ".#####...#####.",
-  "#.....#.#.....#",
-  "#..+..#.#..+..#",
-  "#.+++.#.#.+++.#",
-  "#..+..#.#..+..#",
-  "#.....#.#.....#",
-  ".#####...#####.",
-  "...............",
-  "###############",
-  "#+++++++++++++#",
-  "###############",
 ];
 /** A bed: after a lost night. */
 export const BED = [
@@ -119,11 +104,11 @@ export const WINGS = [
 ];
 
 /** Each pin's icon (Ed, 2026-10-26): 💤 the bed, 💌 the invitations desk, a pair of 🪽 the lathe ("Broom should be a pair of
- *  wings"), 🎁 anything new ("new find will be 🎁"), 🧭 the map table, 🎶 the decks; on her first night 👗 the wardrobe, 👠 the shoe
+ *  wings"), 🎁 anything new ("new find will be 🎁"), 🧭 the map table, 🎶 the decks (the wave pointer's own 🎶, in cream: the emoji's black notes were lost on the dark floor); on her first night 👗 the wardrobe, 👠 the shoe
  *  rack, 🧥 the cloak pegs, 👜 the bags and the hats' floor the hat pointers' own hat. Emoji drawn in pixels as the thrown 💌 is
  *  (render/indicator.ts emoji), each with a glyph of ours in its place where the browser has no such emoji. */
-const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", decks: "🎶", hat: "🎁", part: "🎁", wearable: "🎁" };
-const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: DECKS };
+const EMOJI: Partial<Record<GuideKind, string>> = { bed: "💤", desk: "💌", chart: "🧭", hat: "🎁", part: "🎁", wearable: "🎁" };
+const GLYPH: Record<GuideKind, readonly string[]> = { bed: BED, dress: SHIRT, desk: LETTER, lathe: WINGS, hat: GIFT, part: GIFT, wearable: GIFT, chart: MAP, decks: NOTES };
 const DRESS: Record<string, { emoji?: string; glyph: readonly string[] }> = { wardrobe: { emoji: "👗", glyph: SHIRT }, shoeRack: { emoji: "👠", glyph: SHIRT }, cloakPegs: { emoji: "🧥", glyph: SHIRT }, bags: { emoji: "👜", glyph: SHIRT }, hats: { glyph: HAT } };
 /** The pair of wings: 🪽 and 🪽 mirrored, spread either side, one pixel sprite (render/bubbles.ts pixelSprite, served as an emoji is). */
 const wings = (): string => pixelSprite("🪽pair", EMOJI_PX, (x, n) => {
