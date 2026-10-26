@@ -291,6 +291,25 @@ const candlesSeen = new WeakMap<View, { n: number; red: number; until: number }>
 /** Another night in the view (View.setGame): no candles burning down. */
 export function forgetCandles(v: View): void { candlesSeen.delete(v); }
 
+/** The ground a sprite `w` metres wide stands on at (x, z), as the sprites' shader finds it (render/sprites.ts: the lowest of five
+ *  points across its foot, up to 5 m either side). */
+export function underFoot(x: number, z: number, w: number): number {
+  const R = SPRITE_UNIFORMS.uRight.value, fw = Math.min(w * 0.45, 5);
+  let m = groundHeight(x, z);
+  for (const f of [-1, -0.5, 0.5, 1]) m = Math.min(m, groundHeight(x + R.x * fw * f, z + R.z * fw * f));
+  return m;
+}
+
+/** Where the Ent's deck middle (its art's anchor, art/ent.js) is drawn this frame, as the sprites' shader stands its far half: for
+ *  tools/house/terrace-lock.cjs, which holds it to the house's floor's own middle of the Terrace (render/houseRooms.ts plan). */
+export function entDeckDrawn(v: View): { x: number; y: number; z: number } | null {
+  const T = v.assets.treehouse, it = v.treehouseBatch.items[0];
+  if (!T.ent || !it) return null;
+  const k = it.scale ?? 1, fr = it.frame, R = SPRITE_UNIFORMS.uRight.value, U = SPRITE_UNIFORMS.uUp.value;
+  const ox = (T.ent.deck.x - fr.w / 2) * v.mpp * k, oy = (fr.h - T.ent.deck.y) * v.mpp * k, g = underFoot(it.x, it.z, fr.w * v.mpp * k);
+  return { x: it.x + R.x * ox + U.x * oy, y: it.y + g + R.y * ox + U.y * oy, z: it.z + R.z * ox + U.z * oy };
+}
+
 /** Stand the treehouse with its trunk's foot (its base anchor) on its spot: like a set piece's
  *  origin, the roots drawn below the foot lie on the ground nearer the camera, its lowest drawn
  *  pixel on the ground. Returns where its sprite stands (the bottom middle of its box). */
@@ -301,11 +320,23 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
   const x = th.x - (T.base.x - f[0].w / 2) * mpp, z = th.z + (below * upOnScreen) / Math.max(0.2, Math.sin(pitch));
   let at = { x: x - U.x * d, y: -U.y * d, z: z - U.z * d };
   const deck = T.ent ? deckOf(v.game.map, v.game.tuning) : null, R0 = SPRITE_UNIFORMS.uRight.value, ED = entDepth(deck);
+  // (in the house off the Terrace, slid up its plane with the house's floors, by v.houseShift (render/view/witch.ts houseShiftOf), so
+  // the Terrace's art and her decks stay on the floor they're drawn on: Ed, 2026-10-26, "the DJ booth and maybe the whole terrace
+  // behaves strangely as you walk around the treehouse"; the anchor returned isn't slid, as what's placed by it slides itself)
+  const sh = deck?.house ? v.houseShift * mpp : 0, D = { x: -U.x * sh, y: -U.y * sh, z: -U.z * sh };
+  const S = v.leashView?.seatSlide; if (S) { S.x = D.x; S.y = D.y; S.z = D.z; } // (the tempo over her decks with them: render/leash/deckBpm.ts)
   // The treehouse Ent: its deck's middle (its anchor) on the rules' deck, its two halves either side of her (ENT_DEPTH)
   const ent = (p: { x: number; y: number; z: number }, dd: number, frame: SpriteInstance["frame"], o: Partial<SpriteInstance> = {}): SpriteInstance => {
-    const P = deckAt!, g0 = groundHeight(P.x, P.z), q = alongRay(v, { ...P, y: P.y + g0 }, dd), k = q.scale; // (the ray in the world's heights; sprites stand on the ground: p's offset from the deck's middle, shrunk or grown with it)
-    q.y -= g0;
-    return { x: q.x + (p.x - P.x) * k, y: q.y + (p.y - P.y) * k, z: q.z + (p.z - P.z) * k, frame, flip: false, scale: k, ...o };
+    const P = deckAt!, g0 = groundHeight(P.x, P.z);
+    const put = (dx: number, dy: number, dz: number) => { // (the ray in the world's heights; sprites stand on the ground: p's offset from the deck's middle, shrunk or grown with it)
+      const q = alongRay(v, { x: P.x + dx, y: P.y + dy + g0, z: P.z + dz }, dd), k = q.scale;
+      return { x: q.x + (p.x - P.x) * k, y: q.y - g0 + (p.y - P.y) * k, z: q.z + (p.z - P.z) * k, k };
+    };
+    const a = put(D.x, D.y, D.z);
+    // (slid, it's stood on the ground under where it's slid to (sprites.ts: the lowest ground under its foot): the ground it stood on
+    // unslid kept, so it moves with the floors, which stand on the deck's ground)
+    if (sh) { const b = put(0, 0, 0); a.y -= underFoot(a.x, a.z, frame.w * mpp * a.k) - underFoot(b.x, b.z, frame.w * mpp * b.k); }
+    return { x: a.x, y: a.y, z: a.z, frame, flip: false, scale: a.k, ...o };
   };
   let deckAt: { x: number; y: number; z: number } | null = null;
   if (deck && T.ent) {
@@ -322,7 +353,7 @@ export function placeTreehouse(v: View, angle: number, time: number): { x: numbe
     const C = T.carrier, fc = f[C.frame];
     const bx = T.base.x - C.back.x + fc.w / 2, by = T.base.y + C.sink + (fc.h - C.back.y); // (its sprite's bottom middle, in the Ent's pixels)
     const dx = (bx - f[0].w / 2) * mpp, dy = (f[0].h - by) * mpp;
-    const p0 = { x: at.x + R0.x * dx + U.x * dy, y: at.y + R0.y * dx + U.y * dy, z: at.z + R0.z * dx + U.z * dy };
+    const p0 = { x: at.x + R0.x * dx + U.x * dy + D.x, y: at.y + R0.y * dx + U.y * dy + D.y, z: at.z + R0.z * dx + U.z * dy + D.z };
     // Stacked down the sprites' up (tilted back from the camera, steeply in the treetops) its feet would land under the ground:
     // slid along the ray from the camera until they stand on it, the same pixels on screen (nearer, so drawn smaller).
     const g0 = groundHeight(deckAt.x, deckAt.z), c = v.camera.position, Wy = p0.y + g0, t = p0.y < 0 && c.y > Wy ? -p0.y / (c.y - Wy) : 0;

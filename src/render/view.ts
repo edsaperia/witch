@@ -116,11 +116,11 @@ import { cancelRefresh, refresh, refreshSteps } from "./view/scenery";
 import { drawBerries, drawCreatures, resetCreatureCaches } from "./view/creatures";
 import { drawHatArt } from "./view/hatArt";
 import { drawFinds, findClear } from "./view/finds";
-import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse } from "./view/home";
+import { drawMarkers, drawSpeakers, forgetCandles, placeTreehouse, entDeckDrawn } from "./view/home";
 import { lanternLights, relicLights, setLights, sigilLights, updateSources } from "./view/lights";
 import { placeCamera } from "./view/camera";
 import { setFrameUniforms } from "./view/frameUniforms";
-import { drawWitch } from "./view/witch";
+import { drawWitch, houseShiftOf } from "./view/witch";
 import { drawPointers } from "./view/hud";
 import { workAhead } from "./view/ahead";
 import { winLit, winPulse, winPulseOut } from "../rules/win";
@@ -435,6 +435,8 @@ export class View {
   /** Drawn without her hat while a station for her head and face is open (main.ts, ui/stationPanel.ts bareHead). */
   hatOff = false;
   get treehouseBatch(): SpriteBatch { return this.island.treehouseBatch; }
+  /** Where the Ent's deck middle is drawn this frame (render/view/home.ts entDeckDrawn; tools/house/terrace-lock.cjs). */
+  entDeckDrawn(): { x: number; y: number; z: number } | null { return entDeckDrawn(this); }
   /** The treehouse's placeholder rooms (render/houseRooms.ts), with the house's rooms on. */
   houseRooms: HouseRoomsView | null = null;
   /** The great oak's crown over the house (render/crown.ts), with the house's rooms and treehouse.house.crown on. */
@@ -1423,6 +1425,7 @@ export class View {
     this.strings.update();
     this.borders.update();
     // A point on the treehouse's sprite (its pixels) in the world, standing on its spot.
+    this.houseShift = houseShiftOf(this); // (before the Ent and the house are placed: render/view/witch.ts)
     const T = this.assets.treehouse, thf = T.atlas.frames[0], at = placeTreehouse(this, pose.angle, time), U2 = SPRITE_UNIFORMS;
     const onTreehouse = (px: number, py: number) => {
       const r = U2.uRight.value, u = U2.uUp.value, dx = (px - thf.w / 2) * this.mpp, dy = (thf.h - py) * this.mpp;
