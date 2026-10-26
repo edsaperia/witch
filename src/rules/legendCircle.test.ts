@@ -62,6 +62,7 @@ describe("the legend circle's explainer", () => {
     expect(words()).toEqual([`A sleeping legend: the ${name}.`, `Put down {sigil} ${sigilWords(L.quest!.species)}, any age, inside this circle.`, "It will wake, fight for you and show you its island.", "Leave none of its kind in its area and it grows restless."]);
     L.questOpen = false; // (the party's over: Ed, 2026-10-18, no quest taken)
     expect(words()).toEqual([`A sleeping legend: the ${name}.`, "The party's over: it sleeps on."]);
+    expect(circleLines(L, "zoo").map(l => l.text)).toEqual([`A sleeping legend: the ${name}.`, "In the zoo it sleeps on, for you to see."]); // (the zoo's legends sleep for show: Ed, 2026-10-26)
     L.questOpen = true;
     L.legendState = "restless";
     expect(legendCircleNear(g, at)?.legend).toBe(L);

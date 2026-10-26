@@ -5,7 +5,8 @@
 // and the hot springs' steam (steamVents, for render/smoke.ts). Looks only: every lake plays as water (rules/lakes.ts).
 // `?lakelook=<look>` draws every lake in one look (the tools' shots: tools/lakes/looks.cjs).
 import * as THREE from "three";
-import { LOOK_IDS, lakesOf, mapBiome, type LakeLook } from "../rules/lakeLooks";
+import { LOOK_IDS, lakesOf, mapBiome, zooLakeLook, type LakeLook } from "../rules/lakeLooks";
+import type { ZooLayout } from "../rules/zooMap";
 import type { LandMap } from "../rules/land";
 import type { ForestMap } from "../rules/map";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
@@ -30,7 +31,10 @@ export function lakeLooksOf(map: ForestMap): LakeLooks | null {
   let out: LakeLooks | null = null;
   if (L) {
     const island = map.island, made = lakesOf(L, island?.seed ?? 0, mapBiome(island, map.tuning)), force = forcedLook();
-    const looks = force ? made.looks.map(() => force) : made.looks;
+    let looks = force ? made.looks.map(() => force) : made.looks;
+    // (the zoo, rules/zooMap.ts: each lake an undiscovered island, in that island's biome's look, Ed 2026-10-26)
+    const Z = map.zoo?.layout;
+    if (Z && !force) looks = zooLakeLooks(L, made.lake, made.looks.length, Z, map.tuning.map?.world ?? 0);
     const n = L.cols * L.rows, near = new Uint8Array(n), steps = new Uint8Array(n).fill(255), queue: number[] = [], reach = Math.ceil(RIM / L.step);
     for (let i = 0; i < n; i++) if (made.lake[i] >= 0) { near[i] = LOOK_IDS.indexOf(looks[made.lake[i]]); steps[i] = 0; queue.push(i); }
     // (ashore: the nearest lake's, by steps across the grid)
@@ -311,4 +315,18 @@ export function glacierMesh(k: LakeLooks, seed: number, mpp: number, cap: number
   mesh.frustumCulled = false;
   mesh.name = "glacier";
   return mesh;
+}
+
+/** The zoo's lakes' looks (rules/zooMap.ts): each lake (by its samples' middle) its nearest island's biome lake. */
+function zooLakeLooks(L: LandMap, lake: Int32Array, count: number, Z: ZooLayout, world: number): LakeLook[] {
+  const sx = new Float64Array(count), sz = new Float64Array(count), sn = new Float64Array(count);
+  for (let i = 0; i < lake.length; i++) { const k = lake[i]; if (k < 0) continue; sx[k] += L.x0 + (i % L.cols) * L.step; sz[k] += L.z0 + Math.floor(i / L.cols) * L.step; sn[k]++; }
+  const out: LakeLook[] = [];
+  for (let k = 0; k < count; k++) {
+    const x = sx[k] / Math.max(1, sn[k]), z = sz[k] / Math.max(1, sn[k]);
+    let best = Z.islands[0], bd = Infinity;
+    for (const I of Z.islands) { const d = (I.x - x) ** 2 + (I.z - z) ** 2; if (d < bd) { bd = d; best = I; } }
+    out.push(best ? zooLakeLook(best.kind, world) : "water");
+  }
+  return out;
 }

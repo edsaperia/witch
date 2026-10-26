@@ -260,16 +260,16 @@ export interface Controls extends Intent, Partial<LeashControls>, InviteControls
   dash?: boolean;
 }
 
-export function newWitchPlayer(id: number, x: number, z: number, t: Tuning): Witch {
-  // (at her decks, on the treehouse deck: rules/treehouse.ts)
-  return { id, body: { ...newWitch(x, z), seated: true, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
+export function newWitchPlayer(id: number, x: number, z: number, t: Tuning, seated = true): Witch {
+  // (at her decks, on the treehouse deck: rules/treehouse.ts; in the zoo, standing on its plaza)
+  return { id, body: { ...newWitch(x, z), seated, ...(t.treehouse.deck?.on ? { perch: true } : {}) }, leash: newLeash(), spells: newSpells(t), dash: newDash(), cool: newCool(t.dash.cooldown), invites: newInvites(), health: newHealth(t), ko: null, hat: newHat() };
 }
 
 export function newGame(seed: number, tuning: Tuning, players = 1, ready?: MapPrep | ForestMap): Game {
   resetFight(); useData(COMBAT); // (the last night's fight settings out: a night starts as a fresh page's)
   // (ready: the map made already for this seed and tuning (app/mapPrep.ts readyMap), or its heavy parts, made in a worker while the chart flew)
   const map = !ready ? generateMap(seed, tuning) : Array.isArray((ready as MapPrep).neighbours) ? hydrateMap(seed, tuning, ready as MapPrep) : (ready as ForestMap);
-  const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning));
+  const witches = Array.from({ length: Math.max(1, players) }, (_, i) => newWitchPlayer(i, map.start.x + i * 2, map.start.z, tuning, !map.zoo?.layout));
   const body = witches[0].body, creatures = spawnCreatures(map), forest = new Forest(map);
   // the night's set (Ed, 2026-10-11: "Each night should be a full set"; rules/musicSet.ts): its arc for the music (the tempo stays the
   // gameplay's: Ed, "tempo is set by the gameplay")
@@ -404,8 +404,10 @@ export function blinkClear(g: Game, x: number, z: number): boolean {
   if (g.forest.treesNear(x, z, C.tree).some(p => near(p.x, p.z, C.tree))) return false;
   if (g.forest.decorNear(x, z, C.decor).some(p => near(p.x, p.z, C.decor))) return false;
   for (const [k, s] of g.combat.sounds) if (!isHomeKey(k) && near(s.x, s.z, C.sound)) return false; // (home's speakers: below)
+  if (g.map.zoo?.layout) return !(g.witch.mode === "ground" && (onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad) || g.map.bounds.fence?.stop(g.witch.x, g.witch.z, x, z))); // (the zoo: no speakers or treehouse, Ed 2026-10-26)
   if (g.map.dancefloor.speakers.some(p => near(p.x, p.z, C.speaker))) return false;
   if (g.witch.mode === "ground" && onLake(g.map.bounds, x, z, lakeKnobs(g.tuning).pad)) return false; // (on foot, never onto a lake: rules/lakes.ts)
+  if (g.witch.mode === "ground" && g.map.bounds.fence?.stop(g.witch.x, g.witch.z, x, z)) return false; // (on foot, never over the zoo's fence)
   return !near(g.map.treehouse.x, g.map.treehouse.z, C.treehouse);
 }
 
@@ -530,7 +532,7 @@ function fixedStep(g: Game, controls: Controls): void {
   // by her taut, blazing leashes (render/view/witch.ts groundedHop, render/leash/stack.ts drawBond) and the landing's thud
   // (platform/audio/sfxCues.ts). Drawn only: she never leaves the ground, so it's no dodge. Only a take-off from the ground: up
   // in the treetops, or coming down, she flies on as before.
-  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && groundedBy(W.leash.stack, g.creatures, t).grounded) {
+  if (c.toggleMode && W.body.mode === "ground" && !W.body.seated && !g.map.bounds.fence && groundedBy(W.leash.stack, g.creatures, t).grounded) { // (never in the zoo: flying is the only way over its fences, Ed 2026-10-26, so nothing holds her down)
     c = { ...c, toggleMode: false };
     g.leashEvents.push({ kind: "grounded", id: 0, x: W.body.x, z: W.body.z, at: ht });
   }
@@ -650,6 +652,13 @@ function fixedStep(g: Game, controls: Controls): void {
   if (g.tuning.legendCircle?.slow.on !== false) keepEnragedOut(g);
   // And everyone on foot stays ashore of the lakes (rules/lakes.ts).
   if (g.map.bounds.lakes) creaturesAshore(g.creatures, g.map.bounds, lakeKnobs(t).pad);
+  // And in the zoo every creature stays inside its island's fence, whatever moved it (rules/zooMap.ts); hers go where she goes.
+  const F = g.map.bounds.fence;
+  if (F) for (const c of g.creatures) {
+    if (c.gone || c.leashed) continue;
+    const I = F.ofCell(c.cell[0], c.cell[1]);
+    if (I) { const p = F.keepIn(I, c.x, c.z); c.x = p.x; c.z = p.z; }
+  }
 }
 
 /** Spacing (rules/spacing.ts) for the creatures within movement.json bodies.range of a witch (about the view on the ground): every kind of movement at
@@ -956,7 +965,7 @@ function stepLegends(g: Game, ids: number[], happyNearest: boolean): void {
   const stomp = g.tuning.legends?.stomp, was = stomp?.on ? ids.map(id => g.creatures[id].legendState) : null;
   const placed = leashView(g.witches[0], g.creatures, g.map, g.tuning).placed; // (in the treehouse, her followers count as home's: rules/houseGuard.ts)
   stepLegendStates({
-    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver,
+    creatures: g.creatures, map: g.map, time, dt: STEP, partified: k => g.party.areas.has(k), angryAfter: stomp?.on ? stomp.angryAfter : undefined, questsClosed: !!g.partyOver || !!g.map.zoo, // (nor in the zoo: its legends sleep for show, Ed 2026-10-26)
     areaOf: c => { if (c.leashed) { const p = placed.find(q => q.id === c.id); return p ? cellKey(areaCellAt(g.map, p.x, p.z)) : ""; } return cellKey(c.cell); },
   }, ids);
   // The stomp (Ed, 2026-10-06: "perhaps an angry legend simply stamps on the soundsystem in its area,

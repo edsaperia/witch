@@ -44,7 +44,8 @@ export interface Deck {
 const DEG = Math.PI / 180;
 
 /** The house (tuning treehouse.house.on) or the deck (treehouse.deck.on) at a map's treehouse, or null with both off (the old treehouse). */
-export function deckOf(map: { treehouse: { x: number; z: number } }, t: Tuning): Deck | null {
+export function deckOf(map: { treehouse: { x: number; z: number }; zoo?: { layout?: unknown } }, t: Tuning): Deck | null {
+  if (map.zoo?.layout) return null; // (the zoo has no treehouse: Ed, 2026-10-26)
   const { x, z } = map.treehouse, H = t.treehouse.house, D = t.treehouse.deck;
   if (H?.on) {
     const T = HOUSE_ROOMS.terrace, at = { x, z }, P = (p: { x: number; z: number }) => fromPlan(at, p.x, p.z), r = HOUSE_ROOMS.rooms.find(q => q.id === "terrace")?.r ?? 12.5;

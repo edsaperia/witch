@@ -32,6 +32,7 @@ import { coolRoom, coolShare } from "../rules/cooldown";
 import { shotCamera, type Shot, type TreeExtent } from "../rules/arrive";
 import { FALLBACK_LOOK, floorLook, type FloorLook } from "./legendFloor";
 import { AREA_TYPES, HOME_LOOK, nearestClearings, type LegendClearing } from "../rules/map";
+import { ZOO_CONFIG } from "../rules/zoo";
 import { canopyShown, witchHeight } from "../rules/witch";
 import { AssetLibrary } from "./assets";
 import type { LightSource } from "../rules/forest";
@@ -134,6 +135,8 @@ ${HEIGHT_VERT_GLSL}
 void main(){ vUv = uv; gl_Position = clipOf(onGround((modelMatrix * vec4(position, 1.0)).xyz)); }`;
 
 /** A point light: where, how far it reaches, its colour and strength. */
+/** The zoo's plaza's own soft light over the World Tree (the legend circles' moonlit cyan). */
+const PLAZA_RGB = new THREE.Vector3(0.55, 0.85, 0.9);
 export interface ForestLight { x: number; y: number; z: number; reach: number; rgb: THREE.Vector3; strength: number;
   /** a light things cast shadows from (render/trunkShadows.ts), as a campfire's: where they're thrown from and how strongly (0 to 1);
    *  the soundsystems' and runestones' (Ed, 2026-10-13: "the light that soundsystems and runestones produce" casting shadows) */
@@ -1114,6 +1117,9 @@ export class View {
     // Each legend's carving (render/legendCarving.ts: 10-80 ms a kind) made in idle time now, not the first time she comes near one.
     warmCarvings(this.game.map.legendClearings.map(c => AREA_TYPES[this.game.map.typeOf(c.cell[0], c.cell[1])].creature));
     if (this.quick) return; // ?quick=1 (the CI smoke test): only what's needed, as it's needed
+    // (the zoo, every island its own type and kind, dozens of them: each island's creatures and sleeping legend with its trees,
+    // nearest first, not every type's trees ahead of any creature, or the island she's on waits behind the whole zoo's)
+    if (this.game.map.zoo?.layout) { for (const [t] of [...near].sort((a, b) => a[1] - b[1])) { this.assets.prefetchType(t); const sp = AREA_TYPES[t]?.creature; if (sp) { this.assets.creatureArt(sp); this.assets.sleepArt(sp); } } return; }
     for (const [t] of [...near].sort((a, b) => a[1] - b[1])) this.assets.prefetchType(t);
     // The island's own creatures' art ahead (the map's area types' and the night's legends'), not every species' (Ed's log,
     // 2026-10-14: the audio under-ran in bursts through the first ten minutes of every night; the workers were baking all sixty
@@ -1360,7 +1366,10 @@ export class View {
    *  only in the circle): up while she stands on the ground inside it, and a flash (dying over a second and a half) when a
    *  sigil or a relic meant for its legend was put down outside it. No garbage a frame. */
   private legendRings(g: Game, time: number): { x: number; z: number; r: number; edge: number; glow: number }[] {
-    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings);
+    // (the zoo's plaza, Ed 2026-10-26: "Home appears as a stone plaza with the ent's sigil on it (drawn like the floor of a legend
+    // circle)": a floor of its own round the dancefloor, the World Tree carved in, drawn after the legends' nearest five)
+    const Z = g.map.zoo?.layout, plaza = Z && Math.hypot(g.witch.x - Z.home.x, g.witch.z - Z.home.z) < 400 ? Z.home : null;
+    const w = g.witch, dt = Math.min(0.1, Math.max(0, time - this.lastRingTime)), near = nearestClearings(g.map.legendClearings, w.x, w.z, this.nearRings, plaza ? 5 : 6);
     this.lastRingTime = time;
     for (const e of g.leashEvents) if (e.kind === "outsideCircle") {
       const L = g.creatures[e.id], c = L && g.map.legendClearing(L.cell[0], L.cell[1]);
@@ -1376,6 +1385,7 @@ export class View {
       Object.assign(out[i], { x: c.x, z: c.z, r: c.r, edge: c.edge, glow: Math.min(1, Math.max(s.k, flash)) });
     }
     this.ringCount = near.length;
+    if (plaza) { Object.assign(out[near.length], { x: plaza.x, z: plaza.z, r: ZOO_CONFIG.plaza ?? 60, edge: g.tuning.legendClearing.edge, glow: 0.7 }); this.ringCount++; } // (lit always: the coordinator, 2026-10-26, "as clear as a legend circle's floor")
     // Their floors (render/ground.ts): each carving its legend's kind; its grooves' glint (the tuning's knob, 0 off) while it sleeps.
     const glint = g.tuning.legendClearing.floor?.glint ?? 0;
     for (let i = 0; i < near.length; i++) {
@@ -1387,8 +1397,10 @@ export class View {
       const L = id >= 0 ? g.creatures[id] : undefined;
       f.glint = glint > 0 && L && !L.gone && (L.legendState === "asleep" || L.legendState === "restless") ? glint : 0;
     }
+    if (plaza) { const f = this.floorItems[near.length]; f.species = "worldTree"; f.look = FALLBACK_LOOK; f.glint = 4; } // (its grooves glinting, so the World Tree reads)
     return out;
   }
+  private lakeSigils: { x: number; z: number; r: number; species: string; d: number }[] = [];
   private floorItems: { species: string; glint: number; look: FloorLook }[] = Array.from({ length: 6 }, () => ({ species: "", glint: 0, look: FALLBACK_LOOK }));
 
   render(time: number, draw = true): void {
@@ -1435,6 +1447,14 @@ export class View {
     this.soundBatch.set(party.items);
     this.ground.setLegendRings(this.legendRings(g, time), this.ringCount);
     this.ground.setLegendFloors(this.floorItems, this.ringCount);
+    // (the zoo's undiscovered islands, rules/zooMap.ts: the nearest four lakes' sigils, faint on the water)
+    if (g.map.zoo?.layout) {
+      const L = g.map.zoo.layout, w = g.witch, items = this.lakeSigils;
+      items.length = 0;
+      for (const I of L.islands) if (!I.found && Math.abs(I.x - w.x) < 500 && Math.abs(I.z - w.z) < 500) items.push({ x: I.x, z: I.z, r: I.most * 0.62, species: I.kind, d: Math.hypot(I.x - w.x, I.z - w.z) });
+      items.sort((a, b) => a.d - b.d);
+      this.ground.setLakeSigils(items.slice(0, 4));
+    }
     this.lasers.update(time, w.x, w.z, this.speakerTops, g.map.dancefloor); // (the dancefloor ring's: the soundsystems project their sigils instead)
     this.holograms.update(party.projectors, time, w.x, w.z);
     {
@@ -1551,7 +1571,12 @@ export class View {
     this.updateSmoke(g, time); // (time is the world's: what moves on its own slows with it, rules/slowTime.ts)
     const floorOff = offAt(g.map.dancefloor.x, g.map.dancefloor.z);
     if (over.front > 0) for (const L of [markerLights, speakerLights, partyObjectLights]) for (const l of L) l.strength *= 1 - offAt(l.x, l.z);
-    if (t.bare) { this.dancefloor.update(time, this.ground, g, floorOff); setLights(this, [], w.x, w.z); } else setLights(this, [this.dancefloor.update(time, this.ground, g, floorOff), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
+    // (the zoo: no treehouse, dancefloor or speakers, only the Ent's circle on its plaza; Ed, 2026-10-26)
+    const noHome = !!g.map.zoo?.layout, discoLight = this.dancefloor.update(time, this.ground, g, floorOff);
+    if (noHome) { for (const m of [...this.treehouseBatch.meshes, ...(this.speakerBatch?.meshes ?? []), this.dancefloor.ball, this.dancefloor.beam, this.dancefloor.motes]) m.visible = false; thLights.length = 0; speakerLights.length = 0; }
+    const zooF = this.island.zooFences; // (the zoo's railings: clear round her line of sight; the nearest lamps light the street, render/zooFences.ts)
+    zooF?.update(w.x, witchHeight(w, t) + this.rideOff + 1, w.z);
+    if (t.bare) setLights(this, [], w.x, w.z); else setLights(this, [...(noHome ? [] : [discoLight]), ...(zooF ? zooF.lights(w.x, w.z, time) : []), ...(zooF && g.map.zoo?.layout && Math.hypot(w.x - g.map.zoo.layout.home.x, w.z - g.map.zoo.layout.home.z) < 160 ? [{ x: g.map.zoo.layout.home.x, y: 7, z: g.map.zoo.layout.home.z, reach: 75, rgb: PLAZA_RGB, strength: 1.8 }] : []), ...party.lights, ...this.fireworks.lights(time), ...thLights, ...markerLights, ...speakerLights, ...partyObjectLights, ...lanternLights(this, time), ...this.lakeShore.lavaLights(g, time, w.x, w.z), ...sigilLights(this, time, witchHeight(w, t) + this.rideOff + t.sigilSpill.stackHeight), ...relicLights(this, time), ...this.forestLights], w.x, w.z);
     SHADOW_TINT.value = t.shadows.tint ?? 0; // (every shadow's colour: render/shadows.ts, trunkShadows.ts)
     { // the trunks' and palms' shadows (render/trunkShadows.ts): on foot (fading out as she rises), from her glow and the nearest lit fires
       const TS = t.shadows.trunks, lift = Math.min(1, Math.max(0, w.lift ?? 0)), on = !!TS && TS.mode !== "off" && lift < 1 && !t.bare, U = TRUNK_SHADOW_UNIFORMS;
