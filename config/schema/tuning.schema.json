@@ -8198,6 +8198,10 @@
         "clear": {
           "type": "number",
           "minimum": 0
+        },
+        "fps": {
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
@@ -8206,7 +8210,8 @@
         "flash",
         "ghost",
         "nova",
-        "clear"
+        "clear",
+        "fps"
       ],
       "additionalProperties": false
     },

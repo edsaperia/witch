@@ -109,6 +109,24 @@
       "apply": {
         "knob": "loading.clear"
       }
+    },
+    {
+      "id": "loadingFps",
+      "pr": 1194,
+      "group": "Loading screen",
+      "label": "Frames a second",
+      "note": "How often the screen draws while the game loads (loading.fps; 10 as built): each frame costs the load a little (at 20 its cold load in the cloud came 5.4 s later). About 20 once it's ready, for the supernova. Remembered on this browser; takes effect on the next load (the screen is over before the game can pause).",
+      "control": {
+        "type": "slider",
+        "min": 2,
+        "max": 30,
+        "step": 1
+      },
+      "default": 10,
+      "persist": true,
+      "apply": {
+        "knob": "loading.fps"
+      }
     }
   ]
 }

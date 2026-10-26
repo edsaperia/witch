@@ -15,7 +15,7 @@ const rand = seed => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
 /** How the stars light: the edge first by EDGE (0 plain random), RATE stars a second at most (a jump in the load fills over a
  *  moment), each flashing for FLASH s, the unlit ones at GHOST (0: an empty sky, Ed's call, the seal showing only as it lights); the supernova to white over NOVA s, the white clearing over CLEAR s. The tuning's loading block sets them (startLoadingScreen's knobs). */
-let EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, CLEAR = 1.2, GHOST = 0;
+let EDGE = 1, RATE = 90, FLASH = 0.6, NOVA = 2.6, CLEAR = 1.2, GHOST = 0, FPS = 10;
 const STAR = [255, 214, 140];
 
 /** The seal's stars, in seal units (its middle at 0, 0): the tree's strokes resampled every SP, each a little off its line, then the
@@ -150,9 +150,9 @@ function remnantPicture() {
 }
 
 /** Start the loading screen over the page; `font` the CSS font family for the words (loaded by the caller). */
-/** `knobs` the tuning's loading block (edge, rate, flash, ghost, nova, clear), any left out as built. */
+/** `knobs` the tuning's loading block (edge, rate, flash, ghost, nova, clear, fps), any left out as built. */
 export function startLoadingScreen(font, knobs = {}) {
-  ({ edge: EDGE = EDGE, rate: RATE = RATE, flash: FLASH = FLASH, ghost: GHOST = GHOST, nova: NOVA = NOVA, clear: CLEAR = CLEAR } = knobs);
+  ({ edge: EDGE = EDGE, rate: RATE = RATE, flash: FLASH = FLASH, ghost: GHOST = GHOST, nova: NOVA = NOVA, clear: CLEAR = CLEAR, fps: FPS = FPS } = knobs);
   const root = document.createElement("div");
   root.id = "loading-screen";
   root.style.cssText = "position:fixed;inset:0;z-index:1000;background:#05060e;pointer-events:none";
@@ -206,8 +206,10 @@ export function startLoadingScreen(font, knobs = {}) {
   const frame = now => {
     if (done) return;
     requestAnimationFrame(frame);
-    if (now - lastFrame < 48 || document.hidden) return; // (about 20 frames a second: the game's load gets the rest of the thread)
-    const dt = Math.min(0.1, (now - (lastFrame || now)) / 1000), t = (now - t0) / 1000;
+    // FPS frames a second while the game loads (each one costs it: at 20 a second its cold load in the cloud came 5.4 s later, 42.5 s
+    // against 37.1 s, 2026-10-26), about 20 once it's ready, for the supernova
+    if (now - lastFrame < (finishAt < 0 ? 1000 / FPS - 4 : 48) || document.hidden) return;
+    const dt = Math.min(0.25, (now - (lastFrame || now)) / 1000), t = (now - t0) / 1000;
     lastFrame = now;
     // the stars lit: toward the load's share (the last star only once it's finished), at most RATE a second
     const want = N ? (finishAt >= 0 ? N : Math.min(N - 1, Math.floor(share * (N - 1)))) : 0;
