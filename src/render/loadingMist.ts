@@ -17,6 +17,7 @@ import * as THREE from "three";
 import { LIGHT_GLSL, LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS, HEIGHT_VERT_GLSL } from "./height";
 import { cleared, fadeAt, frontAt, FRONT_CLEAR, FRONT_FULL, type LoadingMistTuning, type TypeReach } from "./loadingFront";
+import { AREA_GLSL } from "./areaWindow";
 
 const VERT = /* glsl */ `
 attribute float aLayer; // 0 the lowest sheet .. 1 the top
@@ -31,8 +32,8 @@ void main() {
 }`;
 
 const frag = (slots: number) => /* glsl */ `
-uniform sampler2D uAreas, uDepth;
-uniform vec4 uExtent;
+uniform sampler2D uDepth;
+${AREA_GLSL}
 uniform vec2 uLow;
 uniform float uFront[${slots}], uFade[${slots}];
 uniform vec4 uMist; // density, soft edge (m), noise size (m), the treehouse's x
@@ -56,8 +57,7 @@ void main() {
   // so a cleared area costs a texture read (the frames' cost on a slow GPU: tools/mist/frames.cjs). Off the areas, the sea: its own
   // front, thinning out to sea.
   vec2 j = vec2(cellHash(floor(p * 2.0)), cellHash(floor(p * 2.0) + 31.0)) - 0.5;
-  vec2 uv = (p + j * 12.0 - uExtent.xy) / uExtent.zw;
-  vec4 area = uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0 ? vec4(0.0) : texture2D(uAreas, uv);
+  vec4 area = areaAt(p + j * 12.0); // (render/areaWindow.ts: nothing, the sea's, beyond the windows round her)
   float front, fade, thin = 1.0;
   if (area.a < 0.5) { front = uSea.x; fade = uSea.y; thin = 1.0 - smoothstep(uSea.z, uSea.z + uSea.w, home); }
   else { int t = int(area.r * 255.0 + 0.5); front = uFront[t]; fade = uFade[t]; }
@@ -119,7 +119,7 @@ export class LoadingMist {
   done = false;
 
   constructor(private T: LoadingMistTuning, private reaches: Map<number, TypeReach>, house: { x: number; z: number }, extent: { minX: number; minZ: number; maxX: number; maxZ: number },
-    areas: { value: THREE.Texture }, areaExtent: { value: THREE.Vector4 }, depth: THREE.Texture | null, low: THREE.Vector2, slots: number) {
+    areas: Record<string, THREE.IUniform>, depth: THREE.Texture | null, low: THREE.Vector2, slots: number) {
     this.fronts = new Float32Array(slots).fill(FRONT_CLEAR);
     this.fades = new Float32Array(slots).fill(1);
     for (const t of reaches.keys()) if (t < slots) this.fronts[t] = frontAt(reaches.get(t), undefined, T);
@@ -129,7 +129,7 @@ export class LoadingMist {
     this.seaFront = T.sea > 0 ? FRONT_FULL : FRONT_CLEAR;
     this.mat = new THREE.ShaderMaterial({
       vertexShader: VERT, fragmentShader: frag(slots),
-      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, uAreas: areas, uExtent: areaExtent, uDepth: { value: depth }, uLow: { value: low },
+      uniforms: { ...LIGHT_UNIFORMS, ...HEIGHT_UNIFORMS, ...areas, uDepth: { value: depth }, uLow: { value: low },
         uNoise: { value: noiseTexture() }, uFront: { value: this.fronts }, uFade: { value: this.fades }, uSea: { value: new THREE.Vector4(this.seaFront, 1, this.islandR, Math.max(1, T.sea)) }, uMist: { value: new THREE.Vector4(T.density, T.soft, T.size, house.x) }, uHouseZ: { value: house.z }, uTop: { value: T.height }, uGlow: { value: T.glow } },
       depthWrite: false, depthTest: false, transparent: true,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor, blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,

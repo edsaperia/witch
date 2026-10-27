@@ -1,7 +1,7 @@
 // Work done ahead, out of what's left of the frame's budget (moved out of view.ts's render, unchanged): the hills' next strip,
 // the forest ahead, the art, the ground's area tiles.
 import type { View } from "../view";
-import { viewRect } from "./culling";
+import { focusOf, viewRect } from "./culling";
 import { FRAME_MS } from "../view";
 
 /** Does this frame's share of the work ahead. */
@@ -27,7 +27,8 @@ export function workAhead(v: View): void {
   v.assets.work(give(6, 1));
   took(t0); v.time("art");
   // The ground's area tiles: everything the cameras can see, plus a band ahead.
-  v.stats.pendingGround = v.ground.fill(v.renderer, viewRect(v, t.haze.far, 40), w.x, w.z, give(4, 1));
+  // (round the view's focus, where the haze is centred: her, or the arrival's flight's aim; render/areaWindow.ts)
+  { const f = focusOf(v); v.stats.pendingGround = v.ground.fill(v.renderer, viewRect(v, t.haze.far, 40), f.x, f.z, give(4, 1)); }
   v.stats.pendingArt = v.assets.pending;
   v.time("groundTiles");
 }
