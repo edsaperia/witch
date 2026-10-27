@@ -73,6 +73,11 @@ describe("beat clock", () => {
       for (const t of [time, time + 0.3, time + 5, time + 20, time + 80]) { expect(beatAt(c, t)).toBeCloseTo(beatAt(old, t + lost), 6); expect(bpmAt(c, t)).toBeCloseTo(bpmAt(old, t + lost), 6); }
       for (const b of [beatAt(c, time) + 1, 200, 300]) expect(timeAt(c, b)).toBeCloseTo(timeAt(old, b) - lost, 6);
     }
+    // the beats the stall skipped: at the time they were skipped at, so the beat's times never run back
+    const k = newBeatClock(120);
+    shiftBeat(k, 10, 1.5); // (beats 20 to 23 skipped)
+    for (const b of [20.5, 21, 22.9]) expect(timeAt(k, b)).toBeCloseTo(10, 9);
+    for (let b = 0, was = -Infinity; b < 60; b += 0.25) { expect(timeAt(k, b)).toBeGreaterThanOrEqual(was); was = timeAt(k, b); }
     const c = newBeatClock(120), was = structuredClone(c);
     shiftBeat(c, 5, 0); shiftBeat(c, 5, -1);
     expect(c).toEqual(was);

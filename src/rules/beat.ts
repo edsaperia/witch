@@ -56,9 +56,14 @@ export function bpmAt(c: BeatClock, time: number): number {
   return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + ((s.bpmTo - s.bpm) * dt) / s.dur : s.bpmTo;
 }
 
-/** The game time of beat `beat`. */
+/** The game time of beat `beat` (a beat a stall skipped, shiftBeat: the time it was skipped at). */
 export function timeAt(c: BeatClock, beat: number): number {
-  const s = segAtBeat(c, beat), db = beat - s.beat;
+  const s = segAtBeat(c, beat), next = c.segs[c.segs.indexOf(s) + 1];
+  return next ? Math.min(next.time, segTime(s, beat)) : segTime(s, beat);
+}
+
+function segTime(s: TempoSegment, beat: number): number {
+  const db = beat - s.beat;
   if (db <= 0) return s.time + (db * 60) / s.bpm;
   const rb = rampBeats(s);
   if (s.dur > 0 && db < rb) {

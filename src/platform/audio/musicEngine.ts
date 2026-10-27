@@ -649,7 +649,7 @@ export class MusicEngine {
     s.loop = length > 1.5;
     if (this.notePitch !== 1) s.playbackRate.value = this.notePitch; // (the tape slowing: hats and snares drop too)
     const at = t + (this.stems ? this.phaseAt : 0); // (where in the noise: by the music's time, a renderer's the same as live's)
-    s.start(t, ((at * 7.31) % 1) * 0.5);
+    s.start(t, ((((at * 7.31) % 1) + 1) % 1) * 0.5); // (never a negative offset: a renderer's time against the first's can be)
     s.stop(t + length);
     return s;
   }
