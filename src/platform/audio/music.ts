@@ -65,7 +65,7 @@ export class Music {
       void el.play().catch(() => { /* blocked until a press: the start screen is one */ });
     } else {
       this.engine = new MusicEngine(ctx, this.bus, style, seed, this.circleGain);
-      if (drawAhead && ctx instanceof AudioContext && typeof OfflineAudioContext !== "undefined") this.ahead = new MusicAhead(this.engine, ctx);
+      if (drawAhead && typeof AudioContext !== "undefined" && typeof OfflineAudioContext !== "undefined" && ctx instanceof AudioContext) this.ahead = new MusicAhead(this.engine, ctx); // (a page's; offline or a stand-in context, as ever)
     }
   }
 

@@ -151,7 +151,7 @@ export class Sound {
     );
     setInterval(() => { try { watchdog.check(); } catch { /* never let the watchdog itself stop anything */ } }, 1000);
     const r2 = (x: number) => Math.round(x * 100) / 100;
-    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}) });
+    playtest().audioState = () => ({ state: this.audio?.state ?? "none", volume: this.music ? r2((this.music.output as GainNode).gain.value) : 0, distort: r2(this.lastMix?.distort ?? 0), distance: Math.round(Math.min(9999, this.lastMix?.distance ?? 9999)), mends: watchdog.mends.length, shed: this.valve.level, ...(this.music ? { gap: r2(this.music.stats.gap), resyncs: this.music.stats.resyncs, late: this.music.stats.late, ahead: r2(this.music.stats.ahead ?? 0) } : {}), ...(this.music?.ahead ? { drawn: this.music.ahead.drawing, bars: this.music.ahead.stats.rendered, barsLate: this.music.ahead.stats.late, barsDropped: this.music.ahead.stats.dropped } : {}) }); // (drawn ahead: the bars, docs/notes/music.md "Music ahead")
   }
 
   private live: () => boolean = () => false;

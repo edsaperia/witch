@@ -10,7 +10,7 @@
 // What changes the bars to come (a wave, a section, the boot's layers, a knockdown, the style, the shed's level) drops those
 // not yet heard, to be drawn again from the first.
 import { timeAt, type BeatClock } from "../../rules/beat";
-import type { MusicCue } from "../../rules/musicPlan";
+import { bootLayers, Conductor, formClock, type MusicCue } from "../../rules/musicPlan";
 import { MusicEngine, type MusicSink } from "./musicEngine";
 
 /** How far ahead (s) the bars are queued; the first drawn ahead begins at least START in (the live engine's own schedule
@@ -27,6 +27,8 @@ interface Bar {
   bar: number;
   /** Its music time (s: game time as the music has it) and length; its renderer (the next carries on from it). */
   g: number; dur: number; renderer: MusicEngine;
+  /** What its notes hang on (sigOf): drawn again only if that changes. */
+  sig: string;
   events: Ev[];
   state: "rendering" | "queued" | "dropped";
   src?: AudioBufferSourceNode;
@@ -42,6 +44,9 @@ export class MusicAhead {
   /** Bars drawn and how (the stall test and the playtest log read it): rendered, arrived too late to be heard whole, dropped
    *  (the music changed), the time rendering took in all (ms), how far ahead the queue reaches now (s). */
   readonly stats = { rendered: 0, late: 0, dropped: 0, renderMs: 0, queuedAhead: 0 };
+  /** What of the cue changed, the last few times the bars were dropped (the playtest log's). */
+  readonly changed: string[] = [];
+  private lastCue: Record<string, unknown> = {};
   private bars = new Map<number, Bar>();
   private key = "";
   private on = false;
@@ -60,12 +65,21 @@ export class MusicAhead {
     if (!playing || !E.anchored) { this.stopAll(now); return; }
     if (!allowed) { this.handBack(now, clock); return; }
     // the timeline moved (a jump, a pause, a new run): everything queued is wrong; started afresh
-    const anchor = E.audioAt(0);
+    const anchor = E.anchorAt;
     if (this.on && Math.abs(anchor - this.anchor) > 0.002) this.stopAll(now);
     this.anchor = anchor;
     const k = `${cueKey(cue)}|${this.styleId()}|${E.seed}|${E.shed}`;
-    if (this.on && k !== this.key) this.dropFrom(now, clock);
-    this.key = k;
+    if (this.on && k !== this.key) {
+      // (the cue moves often, its boot's bar with the beat before the spell, say: only the bars whose notes it changes are dropped)
+      let first = Infinity;
+      for (const B of this.bars.values()) if (B.state !== "dropped" && E.audioAt(B.g) > now + 0.05 && B.sig !== this.sigOf(cue, B.bar)) first = Math.min(first, B.bar);
+      if (Number.isFinite(first)) {
+        const was = this.lastCue, why = Object.keys({ ...was, ...cue }).filter(f => !["siege", "party", "legend", "circle"].includes(f) && JSON.stringify(was[f]) !== JSON.stringify((cue as unknown as Record<string, unknown>)[f]));
+        this.changed.push(why.join(",") || "style/seed/shed"); if (this.changed.length > 8) this.changed.shift();
+        this.dropFrom(now, clock, first);
+      }
+    }
+    this.key = k; this.lastCue = { ...cue } as unknown as Record<string, unknown>;
     if (!this.on) {
       // the first bar drawn ahead: far enough in for the live engine's schedule and its render; live plays till then
       let b = Math.ceil(this.barAt(E.musicTime(now), clock));
@@ -87,6 +101,13 @@ export class MusicAhead {
     while (timeAt(clock, hi * 4) <= g) hi += 64;
     while (hi - lo > 1) { const m = (lo + hi) >> 1; if (timeAt(clock, m * 4) <= g) lo = m; else hi = m; }
     return lo + (g - timeAt(clock, lo * 4)) / Math.max(1e-6, timeAt(clock, (lo + 1) * 4) - timeAt(clock, lo * 4));
+  }
+
+  /** What bar `b`'s notes hang on in `cue`: its block's plan (and the next's, for a fill), the boot's layers over it, its form,
+   *  a knockdown over it; the style, seed and shed in the key already. */
+  private sigOf(cue: MusicCue, b: number): string {
+    const S = this.engine.style, C = new Conductor(S);
+    return JSON.stringify([C.plan(cue, b), (b + 1) % S.blockBars === 0 ? C.plan(cue, b + 1) : null, bootLayers(cue, b), bootLayers(cue, b + 1), formClock(S, cue, b), (cue.knockdowns ?? []).filter(k => k.at < b + 1 && Math.ceil(k.back - 1e-3) > b), cue.victory !== undefined && b >= cue.victory - (cue.victory % S.blockBars), cue.knockedOut]);
   }
 
   private styleId(): number {
@@ -119,7 +140,7 @@ export class MusicAhead {
     const prev = this.bars.get(b - 1);
     if (prev && prev.state !== "dropped") r.carryFrom(prev.renderer, g - prev.g);
     r.renderAhead({ ...cue, siege: 0, party: 0, legend: 0, circle: undefined }, g, dur, clock);
-    const B: Bar = { bar: b, g, dur, renderer: r, events, state: "rendering", asked: performance.now() };
+    const B: Bar = { bar: b, g, dur, renderer: r, sig: this.sigOf(cue, b), events, state: "rendering", asked: performance.now() };
     this.bars.set(b, B);
     void oc.startRendering().then(buf => this.arrive(B, buf), () => { B.state = "dropped"; });
   }
@@ -152,11 +173,11 @@ export class MusicAhead {
   }
 
   /** The bars not yet heard (from `now`) dropped, to be drawn again from the first of them: the music they hang on changed. */
-  private dropFrom(now: number, clock: BeatClock): void {
+  private dropFrom(now: number, clock: BeatClock, from = -Infinity): void {
     const E = this.engine;
     let first = Infinity;
     for (const B of this.bars.values()) {
-      if (B.state === "dropped" || E.audioAt(B.g) <= now + 0.05) continue;
+      if (B.state === "dropped" || B.bar < from || E.audioAt(B.g) <= now + 0.05) continue;
       first = Math.min(first, B.bar); B.state = "dropped"; this.stats.dropped++;
       try { B.src?.stop(); } catch { /* not started */ }
     }
