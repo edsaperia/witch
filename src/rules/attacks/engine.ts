@@ -71,7 +71,7 @@ export interface Zone {
 /** A warning, as plain geometry and timing (the look layer's danger frame draws it; the audio cues on its events). */
 export interface Telegraph {
   id: number; alive: boolean; kind: TelegraphKind; attack: string; side: string; source: number; cast: number;
-  shape: { type: "point" | "segment" | "path" | "disc" | "ring" | "cone"; x: number; z: number; ax?: number; az?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[] };
+  shape: { type: "point" | "segment" | "path" | "disc" | "ring" | "cone"; x: number; z: number; x2?: number; z2?: number; r?: number; inner?: number; width?: number; angle?: number; heading?: number; points?: number[] };
   start: number; fire: number; until: number;
   /** what it moves with: a body, or a creature */
   follows?: { body?: number; creature?: number };
@@ -207,7 +207,7 @@ function showTelegraphs(S: SpellState, W: SpellWorld, spec: AttackSpec, name: st
       const dirs = patternOf(spec, heading).slice(0, 16), bent = (spec.path ?? []).some(t => "curve" in t || "wave" in t || "spiral" in t || "orbit" in t || "boomerang" in t);
       for (const d of dirs) {
         if (bent) telegraph(S, { ...base, shape: { type: "path", x: x + d.dx, z: z + d.dz, width, points: predictPath(spec, x + d.dx, z + d.dz, d.heading, source, W) }, until: fire + d.delay });
-        else telegraph(S, { ...base, shape: { type: "segment", x: x + d.dx, z: z + d.dz, ax: x + d.dx + Math.cos(d.heading) * range, az: z + d.dz + Math.sin(d.heading) * range, width }, until: fire + d.delay });
+        else telegraph(S, { ...base, shape: { type: "segment", x: x + d.dx, z: z + d.dz, x2: x + d.dx + Math.cos(d.heading) * range, z2: z + d.dz + Math.sin(d.heading) * range, width }, until: fire + d.delay });
       }
     }
   }
