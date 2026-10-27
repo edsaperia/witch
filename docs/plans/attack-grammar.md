@@ -247,6 +247,8 @@ All of it is pure and headless (`src/rules/attacks/`), so Juliet's page and the 
    - the perf measured at the caps.
 6. **Optional:** the 27 on the new engine, if the bench proves it identical.
 
+Step 5 as built (Ed, 2026-10-27: species defaults by biome and island phase, made the default): `docs/plans/attack-species.md` maps every species to its attack.
+
 Each step is its own PR into claude/prototype, with a REPORT, frames from the arena where there's something to see, and a FINAL.
 
 ## Decisions for Ed
