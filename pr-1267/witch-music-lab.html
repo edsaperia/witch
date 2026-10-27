@@ -525,7 +525,11 @@ label.check input { accent-color: var(--accent); }
     return dt <= 0 ? s.bpm : dt < s.dur ? s.bpm + (s.bpmTo - s.bpm) * dt / s.dur : s.bpmTo;
   }
   function timeAt(c, beat) {
-    const s = segAtBeat(c, beat), db2 = beat - s.beat;
+    const s = segAtBeat(c, beat), next = c.segs[c.segs.indexOf(s) + 1];
+    return next ? Math.min(next.time, segTime(s, beat)) : segTime(s, beat);
+  }
+  function segTime(s, beat) {
+    const db2 = beat - s.beat;
     if (db2 <= 0) return s.time + db2 * 60 / s.bpm;
     const rb = rampBeats(s);
     if (s.dur > 0 && db2 < rb) {
@@ -546,6 +550,18 @@ label.check input { accent-color: var(--accent); }
     }
     const dur = beats > 0 && bpm !== from ? beats * 60 / ((from + bpm) / 2) : 0;
     c.segs.push({ time, beat: atBeat, bpm: from, bpmTo: bpm, dur });
+  }
+  function shiftBeat(c, time, lost2) {
+    if (!(lost2 > 0)) return;
+    const at2 = time + lost2, beat = beatAt(c, at2), bpm = bpmAt(c, at2), s = segAtTime(c, at2), left = Math.max(0, s.time + s.dur - at2), to = left > 0 ? s.bpmTo : bpm;
+    const before = c.segs.filter((x) => x.time < time), after = c.segs.filter((x) => x.time > at2).map((x) => ({ ...x, time: x.time - lost2 }));
+    const last = before[before.length - 1];
+    if (last && last.time + last.dur > time) {
+      const k = (time - last.time) / Math.max(1e-9, last.dur);
+      last.bpmTo = last.bpm + (last.bpmTo - last.bpm) * k;
+      last.dur = time - last.time;
+    }
+    c.segs = [...before, { time, beat, bpm, bpmTo: to, dur: left }, ...after];
   }
   function waveTempo(t, wave2) {
     const T = t.beat.tempos;
@@ -2692,6 +2708,7 @@ label.check input { accent-color: var(--accent); }
     movement: {
       speed: 14,
       accel: 25,
+      momentum: { turn: 160 },
       fight: [{ kind: "arrive", w: 1 }, { kind: "separation", w: 0.5, radius: 7 }],
       move: {
         kind: "charge",
@@ -2765,6 +2782,7 @@ label.check input { accent-color: var(--accent); }
     movement: {
       speed: 26,
       accel: 120,
+      momentum: { k: 3.5 },
       fight: [{ kind: "arrive", w: 1 }, { kind: "strafe", w: 0.4, swap: 1 }, { kind: "separation", w: 0.6, radius: 8 }],
       move: { kind: "charge", cooldown: 4, from: 8, to: 40, speed: 42, time: 1.1, windup: 0.4, accel: 120, brake: 80 },
       tactics: [{ kind: "flank", w: 2 }]
@@ -4695,6 +4713,7 @@ label.check input { accent-color: var(--accent); }
     movement: {
       speed: 17,
       accel: 70,
+      momentum: { delay: 0.2, chaseLead: 0.15 },
       fight: [
         { kind: "arrive", w: 1 },
         { kind: "slot", w: 1.2 },
@@ -5018,12 +5037,12 @@ label.check input { accent-color: var(--accent); }
     const onlyCircle = ctx2.only === "circle";
     const parts = onlyCircle ? [] : Object.entries(sec.parts).map(([k, u]) => [k, u, 1]);
     if (onlyCircle) {
-    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege]);
+    } else if (ctx2.siege > 0.01) for (const [k, u] of Object.entries(style2.siege)) parts.push([k, u, ctx2.siege, "siege"]);
     if ((ctx2.party ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party]);
+      for (const [k, u] of Object.entries(style2.party ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.party, "party"]);
     }
     if ((ctx2.legend ?? 0) > 0.01) {
-      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend]);
+      for (const [k, u] of Object.entries(style2.legend ?? {})) if (!sec.parts[k]) parts.push([k, u, ctx2.legend, "legend"]);
     }
     const build = ctx2.build ?? 1, building = ctx2.build !== void 0 && plan.section === style2.intro;
     const circle = ctx2.circle && ctx2.circle.level > 0.01 && ctx2.only !== "main" ? ctx2.circle : null, layer = /* @__PURE__ */ new Set();
@@ -5034,7 +5053,7 @@ label.check input { accent-color: var(--accent); }
       }
     }
     if (fillBar && !onlyCircle) parts.push([style2.fill.part, { p: "__fill" }, 1]);
-    for (const [name, u0, scaleLevel] of parts) {
+    for (const [name, u0, scaleLevel, hook] of parts) {
       const def = style2.parts[name];
       if (!def) continue;
       const u = use(u0);
@@ -5058,7 +5077,7 @@ label.check input { accent-color: var(--accent); }
       if (ch === "?" && r >= a.energy) continue;
       const level = u.level * scaleLevel * (0.94 + 0.06 * r) * (building && !own ? 0.45 + 0.55 * build : 1);
       const patch = a.bass && def.role === "bass" && sec.parts[name] && !own && style2.patches[a.bass] ? a.bass : def.patch;
-      const base = { part: name, patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {} };
+      const base = { part: name, patch, step: own && ctx2.circleStep !== void 0 ? ctx2.circleStep : step2, offset: 0, dur, ...own ? { layer: "circle" } : {}, ...hook ? { hook } : {} };
       if (def.role === "drum") {
         if (ch === "r") {
           out.push({ ...base, dur: 0.5, midi: null, vel: 0.6 * level }, { ...base, offset: 0.5, dur: 0.5, midi: null, vel: 0.75 * level });
@@ -16855,10 +16874,6 @@ label.check input { accent-color: var(--accent); }
     bodies: { radius: {}, level: [0.5, 0.75, 1, 3.2], space: [1.5, 1.5, 1.5, 1], factor: 1.3, margin: 0.5, push: 6, neighbours: 8, cell: 8, range: 150 }
   };
 
-  // src/rules/movement.ts
-  var R2 = movement_default;
-  var MOVEMENT = { ...R2, profiles: { ...R2.profiles, ...sectionOf("movement") }, legends: { ...R2.legends, bySpecies: { ...R2.legends.bySpecies, ...sectionOf("legendMoves") } }, bodies: { ...R2.bodies, radius: { ...R2.bodies.radius, ...sectionOf("radius") } } };
-
   // config/combat.json
   var combat_default = {
     _: "Combat (Stage 4; DESIGN.md 'Combat, pacing and forecasting'). One system for wild and party creatures. levels: by level (baby, young, adult, legend): hp, the health it has; dps, its power budget (damage a second, the same for every attack of that level, so no species is stronger for its level: equal power budget). attacks: each is data. delivery: melee (a hit within range), shot (a projectile flying at speed m/s, dodgeable, hitting the first enemy within its radius), or quake (everything of the other side within radius round the attacker: the legends' slow, heavy signature move). windup: seconds it telegraphs before it lands or flies; cooldown: seconds from one to the next; damage is dps times cooldown; range: metres it attacks from; modifier: none, knockback (pushes the target knockback metres) or slow (the target moves at slowMult for slowTime seconds; slows don't stack: a new one only renews it). Babies don't attack; the young have one attack, adults a stronger one with a modifier, legends the signature. ranged: the species that shoot (the rest fight in melee). Melee attacks wind up and lunge lunge metres at where they aimed (step aside to dodge); shots fly at where they aimed (dodgeable). bySpecies: a species' own attacks by level, overriding byLevel. kite: species that keep their distance as part of their attack (Ed, 2026-10-04), holding between near and far of their attack's range from their target, backing off or closing in (the raven, with long-range shots). Babies are never attacked by anything, on either side (Ed, 2026-10-04). temperament: how a species' babies take to the witch close by (tuning notice): curious ones come up to her, skittish ones keep off; the rest just turn to look. Stage 5 deliveries: lob (an arcing shot at the point it aimed at, landing after flight seconds and hitting everything of the other side within radius there: step out of the ring), beam (a line range metres long and width wide from the attacker toward its aim, burning for duration seconds in ticks every tick seconds, sweeping toward its target at sweep degrees a second: step out of the line). factor: a delivery's damage times this, so its expected damage a second (allowing for misses and area hits) matches the level's budget. traits (Stage 5, readable counters): the species with each trait. counters: what a trait does to a blow, by its delivery: its damage times this (flier: melee 0.5, it flits out of reach; armoured: shots, lobs and beams 0.35; swarm: area hits 2); knockback: its distance times this (heavy 0: it won't budge; armoured 2), stun: seconds a knockback stuns it (armoured: knocked on its back), slow: a slow's time times this (heavy 0.5). Nimble creatures sidestep telegraphs (their movement profile's dodge); burrowers can't be hit while burrowed. The raw numbers stay on the level's budget: counters are the difference between kinds. pulse (Stage 5): everything of the other side within radius round the attacker, at once (a bat's screech, a mole's upheaval as it surfaces, a toad's slam as it lands): a small quake that any level may have; factor below 1 as it can hit several. Wild legends' moves (Stage 5; their patterns in movement.json legends): legendSlam (a quake round it), legendNova (shots shots in a ring outward, each factor of the move's damage), legendSpin (a beam spinning all the way round at spin degrees a second for duration seconds: each pass hits once, for factor of the damage), legendCharge (a straight run at speed m/s for up to duration seconds, trampling everything of the other side it meets, once each, with knockback). Damage is the legend budget times the move's cooldown, as for any attack. Motion scale (Ed, 2026-10-04): lengths here are at the fight's scale (tuning fight.scale) and shot speeds at its speed (fight.speed): melee strikes lunge 12 to 16 m (a dash-strike, the windup showing its line), shots fly at 22 to 32 m/s over 20 to 40 m, area attacks reach 4 to 12 m, knockback throws 7 to 12 m. Ed\u2019s species pass (2026-10-05): the bear swipes (swipe, bigswipe: a wide, heavy blow with a short lunge); otters, squirrels and dormice are nimble too.",
@@ -17250,8 +17265,8 @@ label.check input { accent-color: var(--accent); }
     _glades: `The sleeping legends' clearings (Ed, 2026-10-06: "Sleeping legends should be in a small circular clearing, where they sit near the top of the circle. This magical clearing should be lit with an eerie twilight with glowing motes rising in it."; render/glades.ts): art builder 1 places them (the map's glades); until then one round each sleeping legend, radius metres across with the legend top of the way toward its top. Only those within reach metres of the witch, the nearest 4, are lit. hue, sat: the twilight's colour (a cool violet dusk, against the party's amber); light: its pool, filling the circle and soft at its edge; edge: the ring at its edge at full (a quarter of it always marks the circle), which brightens with the witch inside it or a quest sigil or relic put down in it, easing at edgeEase a second. Inside one (Ed, 2026-10-06: "When you go into the legend clearing, the rest of the forest should get darker. Maybe switch off the witch's glow when she's in there."): the forest's light and haze outside the clearing's own twilight dim by dark (0 none, 1 black), her own glow goes by glowOff (1: off; her moonlit rim stays), both eased in and out over fade seconds. motes: per to a clearing, rising rise metres a second to height metres, size art pixels, in hue and sat at bright.`,
     wisps: { _: "Will-o'-the-wisps in the wild areas (Ed, 2026-10-07): a seeded chance per square of ground (cell m) within reach of her; none within partyNear of a partified area, the full chance from partyFar; height [low, high] m, drift m, a cycle of period s (fade in, linger, fade out, gone); core and halo size in art pixels; colour.", on: true, cell: 26, reach: 75, chance: 0.4, partyNear: 40, partyFar: 140, height: [1.2, 3], drift: 3, period: 22, size: 3, halo: 9, hue: 0.47, sat: 0.4, bright: 1.6 },
     glades: { on: true, radius: 14, top: 0.55, reach: 160, hue: 0.76, sat: 0.5, light: 0.9, edge: 0.5, edgeEase: 2, dark: 0.6, glowOff: 1, fade: 1, motes: { per: 40, rise: 0.55, height: 8, size: 1, hue: 0.55, sat: 0.3, bright: 1.3 } },
-    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"; the oak since 2026-10-24, Ed: "put the treehouse north-west of the dancefloor", its Terrace's open south-east rim towards it): its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts; the oak since 2026-10-24, config/house/): its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed (Ed, 2026-10-25: half again as fast, 5 to 7.5: "walking without sitting on a broom ... is too slow"); her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"; since 2026-10-26, Ed: "When the forest has loaded, fade it in gradually behind the whole treehouse"): with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown (Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/; rules/crown.ts, render/crown.ts): with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors (Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse", "Room canopy cuts should fade in rather than be instant"): the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever.`,
-    treehouse: { gap: 22, angle: -135, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, height: 22, grace: 2, rail: 0.45, landTime: 0.35, walk: 7.5, stride: 5, fall: { on: false, time: 0.9, beat: 0.6 }, dark: { on: true, fade: 0.6, reveal: 20 }, crown: { on: true, seed: 1, cutFade: 0.4, whole: true }, terraceRoom: true }, carrier: "island" },
+    _treehouse: `The witch's treehouse, home (Ed, 2026-10-05: "The treehouse should be 5m due north of the dance floor, outside the speaker ring"; the oak since 2026-10-24, Ed: "put the treehouse north-west of the dancefloor", its Terrace's open south-east rim towards it): its foot (the Terrace's middle; clear metres round it) stands gap metres beyond the dancefloor's ring of speakers (so however many speakers or how far out, it stays outside them; 22 keeps the oak's rooms, up in its crown, clear of the dancefloor's clearing), at angle degrees (-135: north-west; -90 due north, straight up the screen), always facing south, to the floor and the camera; and keeps a clearing of clear metres round its foot (at least the art's footprint: 8.2 m for the v2 tower); its lantern and fairy lights light lightReach metres round at lightStrength. The game starts with her sitting on its terrace; the first move or rise takes her off. The deck (Ed, 2026-10-11: "a circle with a wooden floor and a balustrade sitting on the ent. You land on it by being at treetop height, and during the night time slower 10x"; rules/treehouse.ts): on (false: the old treehouse), a round deck radius metres across its middle at the Ent (the treehouse's spot), its floor height metres up (Ed: "The deck sits at 22 m"); in the treetops, landing within radius + grace metres of its middle lands her on it; she walks it, kept rail metres inside its edge, round the map table in its middle (table metres round; Ed: "The world map is in the centre"; E within tableUse metres of its edge opens the sea chart) and behind the decks along its south edge (Ed: "The table holding the decks is along the curved bottom edge of the platform": decks, from where she stands behind them, inner metres out, to their front, outer, from to to degrees round, 90 due south; the Ent's art, art/ent.js, draws them there), where she starts and comes back, seat metres south of the middle. On it, landed, time runs as in a calm legend circle (legendCircle.slow). carrier (Ed, 2026-10-10, journey.md "Arriving": on a new island the Ent stands on the back of a party legend of that island's kind; drawing only, art/carrier.js): "island" that island's kind's legend, braced under the Ent, its back about 13 m up and the Ent's trunk that much shorter, so the deck stays where it is (home, the Ent's own island, has none, nor has a map that isn't an island); a kind's id (e.g. "bear", or ?carrier=bear) that kind's everywhere; "none" no one. The house (Ed, 2026-10-14, docs/backlog/treehouse.md step 1; treehouse.house, on in place of the deck; rules/treehouse.ts; the oak since 2026-10-24, config/house/): its floor the oak's one shape (config/house/shape.js) at height metres, rail its edge's keep-in, the Terrace one of its trunk rooms at the treehouse's spot, its layout config/house/base.json's (terrace: the open rim, the decks, her seat, the magic circle): at treetop height she flies straight onto the Terrace and lands over landTime seconds, walks off its rim to fly again, or, with no broom (fall.on, a switch till the brooms are objects), falls for fall.time seconds and comes back at the magic circle (circle.out south of the hub's centre, circle.r), where a knockout brings her back too. The house's walk (Ed, 2026-10-21: "she shouldn't use her broom until she steps off the balcony"): on foot in the house (the hub, the balcony, the rooms) she walks, walk metres a second, not at her broom's groundSpeed (Ed, 2026-10-25: half again as fast, 5 to 7.5: "walking without sitting on a broom ... is too slow"); her walk cycle is drawn for stride metres a second, its steps quickening above it so her feet don't slide. The dark behind the house (Ed, 2026-10-23: "when you're inside the treehouse in an enclosed room (i.e. not the terrace) the forest behind the tree should be black"; since 2026-10-26, Ed: "When the forest has loaded, fade it in gradually behind the whole treehouse"): with dark.on, on foot in the house, any room or the Terrace, only the house, the Ent's crowns and her are drawn, over black, till the island's ready (its art drawn: g.islandReady); then the forest fades in behind the whole house over dark.reveal seconds and stays behind every room after; leaving the house before then, it comes back from where she stands over dark.fade seconds, and through the telescope it fades in over the same. The great oak's crown (Ed, 2026-10-24, the mock previews/ed/treehouse-layout-v4/crown/; rules/crown.ts, render/crown.ts): with crown.on, one crown over the whole house in place of the rooms' leaf roofs, grown from the house's outline (config/house/outline.json) and crown.seed: its lobes, the oak's limbs through its gaps, the Terrace's notch open to the sky out to its edge, its string lights and its far landmark. Indoors (Ed, 2026-10-26: "The witch should have a canopy circle cut around her in the treehouse", "Room canopy cuts should fade in rather than be instant"): the crown cleared over her room (or branch) opens over crown.cutFade seconds as she comes in and fills back in over the same as she leaves, and the forest's hole round her (canopyCutout: its size, its soft edge) is cut in it too, round where she's drawn, opening and closing with it; the Terrace's notch stays open as ever. Its lights (Ed, 2026-10-27, on the mock previews/ed/crown-look/: "lights at half"): lights of its strings hung, whole strings by a hash (0.5; 1 every one), each string hung its own way (rules/crown.ts: swags with their own sag and steps, some part way, tails hanging off them, spirals round the big limbs, drapes near or long across a gap, garlands part way or all round, tilted and wavering, the bulbs the same spacing on every one, Ed: "The same bulb spacing"). Its wrap (Ed, 2026-10-27, on the mock previews/ed/crown-spiral/: "The spiral with 2 strands, smoothed so it sags across the gaps"): wrap long strands spiralling out over its top from its middle as seen from above, in place of its drapes and garlands, each resting on the lobes, its height smoothed along it and sagging across the gaps between them (rules/crown.ts makeCrown); 2, as Ed chose; 0 its drapes and garlands instead. Its warm light (Ed: "warm light only"): warm times the house's light spilling up onto the lobes' and limbs' undersides over its open rooms (render/crown.ts warmAt: a glow round each room's middle 1.5 m over its floor, its size and 3 m more across, worked out once as the crown's made), in flat quarter steps; 0 none, 1 as Ed chose it from the mock; both live on the pause page's Oak crown group.`,
+    treehouse: { gap: 22, angle: -135, clear: 9, lightReach: 16, lightStrength: 0.6, deck: { on: true, radius: 7, height: 22, grace: 2, rail: 0.6, table: 1.25, tableUse: 1.6, decks: { inner: 5.47, outer: 6.33, from: 54.5, to: 125.5 }, seat: 5.47 }, house: { on: true, height: 22, grace: 2, rail: 0.45, landTime: 0.35, walk: 7.5, stride: 5, fall: { on: false, time: 0.9, beat: 0.6 }, dark: { on: true, fade: 0.6, reveal: 20 }, crown: { on: true, seed: 1, cutFade: 0.4, whole: true, lights: 0.5, warm: 1, wrap: 2 }, terraceRoom: true }, carrier: "island" },
     _home: `Home's area (Ed, 2026-10-05: "Home area should be big enough that the whole circle, centre the dancefloor, edge the treehouse, is within it"): the map is cut with home first, a circle round the dancefloor out past the treehouse's footprint (its distance and clear) and margin metres more all home's; the areas round it are cut round it, their centres kept at least gap of an area beyond the circle.`,
     home: { margin: 10, gap: 0.3 },
     _grounds: "Old playgrounds and sports grounds (the relics art's arrangements): an area has one with chance (not home), off to the side of its centre, keeping a clearing of radius metres (per kind) where nothing grows. Kinds (Ed, 2026-10-11, the small islands): only the playground; the sports grounds are left out of kinds.",
@@ -17338,22 +17353,24 @@ label.check input { accent-color: var(--accent); }
     _swoopTrail: `The party witches' swoop trails (Ed, 2026-10-06: "Party-witch swoops should get the same following glow that you have, but it should be bright and multicoloured."): while one swoops she leaves a ribbon in her trail's look, bright and in rainbow colours, each witch starting at her own hue, the colours running along it (hueSpread turns of the wheel a metre) and shifting over time (hueSpeed turns a second), so a crowd of swoops reads as fireworks over the canopy. width metres across (turned to face the camera, so a climb straight up shows), wider in step with its distance from the camera past near metres (so from the treetops it reads as a streak, not a thread), bright its brightness; it fades in as she lifts off over her first liftFade metres, and each stretch of it fades out life seconds after she passed, so it trails out as she lands. At most slots at once (only while the party is stepped: partyWitches.simRange).`,
     swoopTrail: { on: true, life: 1.4, width: 1.8, near: 50, bright: 2.2, hueSpeed: 0.3, hueSpread: 0.015, liftFade: 3, slots: 96 },
     __army: "Inviting and the army: the \u{1F48C}s, the leash and sigil weight, the bond, berries.",
-    _berries: `Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs (Ed, 2026-10-05: "tie the cost to strength"): the fighting value it gains (cost.by "value": \u221A(hp \xD7 dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 (Ed, 2026-10-06: "Double the amount of berries animals need to evolve": cost.per halved from 7.25) ("power" would count hp \xD7 dps instead). Bigger patches since (Ed, 2026-10-05: "we can make the berry clusters bigger"): perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult (Ed, 2026-10-04: legends are the areas' own, never grown). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies (Ed, 2026-10-11): a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.`,
-    berries: { perArea: [10, 15], bushesPerArea: 20, patch: { bushes: [4, 7], radius: 3.5 }, detour: 4.5, eatTime: 0.25, cost: { by: "value", per: 3.625 }, colour: "#9e1024", glow: 0.8, babyReach: 10, babyCost: 1 },
+    _berries: `Berries and evolving (Ed): every area has bushesPerArea berry bushes (normal bushes of that area) and perArea [min, max] berries on distinct ones at the start. Bushes grow in patches of patch.bushes [min, max] within patch.radius metres. Party animals (invited, not legends), following her or held at a sigil, take a berry on their way (Ed, v233): within detour metres of the line to where they're heading or of their sigil, never beyond their leash; they nip over, eat it (eatTime seconds) and carry on. The berry grows again at once on a free berry bush somewhere else on the map. A party animal evolves on the next bar line once it has eaten the berries its next level costs (Ed, 2026-10-05: "tie the cost to strength"): the fighting value it gains (cost.by "value": \u221A(hp \xD7 dps), its species' strength included) at cost.per a berry, rounded, at least 1: so a berry buys the same fighting value for every species; one of normal strength costs 4 and 4 (Ed, 2026-10-06: "Double the amount of berries animals need to evolve": cost.per halved from 7.25; the level gap of 2026-10-07 made the youth's 6, 8 and 16 for light, normal and strong species; Ed, 2026-10-27, a youth showing a dot per berry eaten, two rows of 4 at most: "We can change 6/8/16=>3/4/8, and reduce berry spawns (keep the current cluster size but reduce frequency of clusters.)": cost.per back to 7.25, so 3, 4 and 8, and bushesPerArea and perArea halved, half as many patches of the same size, the same share of their bushes in berry) ("power" would count hp \xD7 dps instead). Bigger patches since (Ed, 2026-10-05: "we can make the berry clusters bigger"): perArea and patch.bushes up a quarter to a half, so the first evolve's extra berry (2, was 1) and weaker species' one-berry minimum come out a little faster to feed than before. Evolving stops at adult (Ed, 2026-10-04: legends are the areas' own, never grown). colour: the berry's (shiny dark cherry red); glow: its soft halo's strength. B (debug) feeds the nearest party animal one berry. Babies (Ed, 2026-10-11): a baby eats only when its sigil is put down with a berry within babyReach metres of it (following her, it never stops for one; when a baby's sigil is next to go down, the berries within babyReach of her glow brightly), and babyCost berries evolve it into a youth.`,
+    berries: { perArea: [5, 8], bushesPerArea: 10, patch: { bushes: [4, 7], radius: 3.5 }, detour: 4.5, eatTime: 0.25, cost: { by: "value", per: 7.25 }, colour: "#9e1024", glow: 0.8, babyReach: 10, babyCost: 1 },
     _invite: "The old proximity chat (DESIGN.md, the leash; superseded 2026-10-05 by the \u{1F48C}s, invites, and used only with invites.on false): on the ground, she talks by herself (no button: Ed, v244) to the nearest invitable creature within talkRange metres, and sticks with it; you chat in emoji for talkTime seconds (babies, young, adults), taking turns every turn seconds (babies, young, adults), then it is invited and leashed to you. Rising or moving further than cancelDistance stops it, and the chat's progress drains at decayRate of the rate it filled (0.5: half), so coming back soon picks up where it left off. Legends can't be invited: they give one unimpressed look. leash.length: how far a leashed creature roams from its leash point (you, or its sigil on the ground); runSpeed: how fast it hurries back when out of range (m/s); pickRadius: how near a placed sigil you must be to pick it up; spacing: how close two sigils may be put down (keep it above pickRadius, or a blocked spot picks up instead of fizzling). bond: how a creature shows its tie to its sigil (rim: a glow at its feet in the sigil's colour; sparks: one spark every sparkEvery seconds from sigil to creature, staggered; thread: a dotted line only under strain). A legend gives her one unimpressed look for snubTime seconds per approach (not again till she's been beyond cancelDistance). Being hit doesn't set a chat back (Ed, 2026-10-04: losing a hit point is the cost). talkTime's fourth value is for legends let go on a knockout (wild legends still can't be invited).",
     _invites: `The \u{1F48C} invite (Ed, issue #87, 2026-10-05), replacing the proximity chat when on: on the ground she shoots spinning \u{1F48C}s, aimed with the cursor (click fires) or the right stick (a trigger fires), or 1 toward the cursor. A burst is burst volleys burstGap seconds apart, each multiShot letters fanned over spread degrees, then cooldown seconds before the next; letters fly at speed m/s for range metres, turning toward the nearest invitable creature within homingRange metres and homingCone degrees of straight ahead at up to homing degrees a second, and land on one whose body comes within radius metres. Each hit adds amount to its affection; hits: letters to fill it, by level (baby, young, adult); it drains drain of a full meter a second when not being hit, from config/states.json's affection.drainDelay seconds after the last (Ed, 2026-10-06: "the invitation dropoff rate (the speed at which animals become less invited) is too fast": 0.03 after 4 s, a full meter in about 33 s; it was states.json's 0.08 after 1.5 s, this knob unread). Every letter that lands on an invitable creature counts (Ed, 2026-10-06: "I think we should remove the 0.5s cooldown between counted hits per creature - better to control this through the witch firing speed instead of having hits not register"): how fast she invites is her firing rate (burst, burstGap, cooldown), nothing adaptive. Enraged creatures and legends block letters; scenery never stops them (Ed). fireSlow: her ground speed while firing, times this (Ram's Steady buff takes it away). linger (Ed's playtest, 2026-10-06: "invitations should sit on the ground for a little while before they fade away"): a \u{1F48C} that met no one rests where it came down this many seconds, fading over the last lingerFade, at most lingerMax at once (drawn only: it's no hit). spin (Ed, 2026-10-06: "the envelopes should spin like a frisbee"): a \u{1F48C} in flight lies flat and turns about the upright this many times a second (drawn only); when it lands it stops and lies flat. Data, so legend buffs can change any of it (config/legend-buffs.json). Round 11 (Ed: "base invite should be one envelope at a time (rebalance hits accordingly), they should arc a little and disappear when they hit the ground, go 50% further, 20% faster, and they should rotate by pitching instead of yawing"): one \u{1F48C} a shot (burst 1, multiShot 1), cooldown 0.55 (just over the old 0.5 s per-creature gap), hits [4, 9, 18, 36] so a meter fills in about the time it did with bursts of three (they gave one hit each 0.84 s); then (balance, 2026-10-07, the overnight pass, with the wider level gap) [4, 7, 14, 36]: the young and adults quicker to win over, so good play counts for more (a skilled player lasts about 2.5 minutes longer, a crude one no longer), range 33 (was 22) and speed 31.2 (was 26); arc: the height (m) its lob rises over the straight line from her hand to the ground at its range, where it lands, with a puff (drawn only: the rules fly it flat). orbit (Ed's playtest, 2026-10-06: "Invitation orbits are too tight around the creature"): the \u{1F48C} ring circles a creature at scale times its body radius (movement.json bodies) plus gap metres, at least min, and wider still when it holds many.`,
     invites: { on: true, burst: 1, burstGap: 0.12, cooldown: 0.55, range: 33, speed: 31.2, arc: 1.2, homing: 120, homingCone: 30, homingRange: 10, multiShot: 1, spread: 14, radius: 0.5, amount: 1, hits: [4, 7, 14, 36], drain: 0.03, fireSlow: 0.8, linger: 2.5, lingerFade: 0.6, lingerMax: 30, spin: 2.5, orbit: { scale: 2, gap: 1, min: 2 } },
     invite: { talkRange: 12, cancelDistance: 18, snubTime: 2, talkTime: [3, 6, 12, 24], turn: [0.7, 0.9, 1.3], decayRate: 0.5 },
     _win: `The end of the route (Ed, 2026-10-10, 2026-10-11; rules/win.ts, docs/backlog/journey.md "The end of the route"): the last wave landed, a pointer to the enraged animal nearest the centre while any lives (enraged legends don't count; retarget: seconds between re-picks); none left, the victory lap: the pulse races back along the route to home at lapSpeed m/s, every stone it passes firing its fireworks; home reached, the night won: the dealt legends wake (bar any still enraged, which go back to sleep, their islands not found) and dance in place on its far side (Ed, 2026-10-11: a ring inside the conga's hid it from the ground), north of the dancefloor beyond the conga, behind everything from the north-facing camera: on arcs legendGap m outside the conga's circle, legendRow m apart, legendSpace m between them, from due north out to legendArc degrees across, clear of the treehouse, the island's sigil flares on the dancefloor (drawn on over flareDraw s, held flare s), every other animal joins one conga line round it (congaSpeed m/s, congaGap m apart, a circle of at least congaRadius m, as big as the line needs), walking to its place at joinSpeed m/s (out of her sight, seen m off, simply there); settleAfter seconds after, it settles: the guidance pins lead her home (rules/guidance.ts; no card since Ed's 2026-10-26 "Remove the end cards"). The conga follows her (Ed's playtest, 2026-10-26: "when you're on the ground in the home area, the line should follow you"): with follow on, while she's on the ground in the home area (not at the treehouse or in the treetops) the leader trails followLead m behind her along where she's walked and the rest follow single file congaGap apart, walking to their places at joinSpeed or followSpeed times her own speed, whichever is faster; anywhere else the line goes back round the dancefloor.`,
     win: { lapSpeed: 120, congaSpeed: 2.5, congaGap: 2.4, congaRadius: 34, joinSpeed: 14, seen: 120, follow: true, followLead: 5, followSpeed: 1.25, legendGap: 12, legendRow: 14, legendSpace: 14, legendArc: 150, flareDraw: 3, flare: 16, settleAfter: 20, retarget: 0.25 },
-    _leash: `grounded (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative: "if creatures are light or heavy you can extrapolate"): weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off. runs (Ed, 2026-10-15: "Pick up and place in runs"): with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell. sigilBacking (Ed, 2026-10-12, Bravo's o3: "a dark patch directly underneath a sigil is quite helpful for making it more readable", "the same width as the sigil, darker, edges not too smooth", "sigils less transparent"): under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph). sigilGlyph and sigilHalo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation"): every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none). placedThrough (Ed, 2026-10-11): how bright a placed sigil shows where grass, bushes, trees or other scenery hide it (0 hidden, 1 as bright as in the open); never through the witch. runeGap (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil", so it's easier to see and pick up; 2026-10-13: "the top of the sigil's background should be just below the animal's feet"): a happy creature's rune lies south of it (down the screen), and a parked animal roams round a point the same way north of its sigil, by its size: its body radius, half the sigil with its backing, and runeGap metres between (rules/runeOffset.ts; it was a fixed restAbove, 5 m). hex (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (4: leash.spacing's density; 0: put down freely where she stands, as before). The cell nearest her decides: a sigil of hers in it, the press picks it up; free, a sigil goes down in its middle (never fizzling). Cells under a runestone or soundsystem (within stone metres of it, plus half a cell) or a home speaker (speaker metres) are skipped: the sigil goes down on the nearest free cell that isn't, within two cells, or not at all. Relic sigils and her hat go down where she stands, off the grid. hatHold (Ed, 2026-10-09: "If you are in ground mode and hold down the drop / pick up sigil button and there are no sigils to pick up, you put down your hat"): seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down at her feet (just a marker; a press over it puts it back on; rules/hat.ts putHat). length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up one of her own placed sigils; runeRadius: how near (m) she picks up a happy creature's rune, a relic's sigil or her hat (both 25% further on Ed's word, 2026-10-13: 3.5 to 4.375, 4.5 to 5.625; Ed's playtest, 2026-10-06: "Floor sigils of happy creatures and relics are difficult to pick up": bigger than pickRadius, which stays under spacing, and less than a relic's sigilOffset, so standing on the relic itself doesn't); runePull: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Ed, 2026-10-10: free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1). Less free (the first few sigils' worth, so early play feels the same; on the ground, plus one adult's weight, levels' adult: Ed, 2026-10-09, "extra free allowance on the ground should be the equivalent of one adult"), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it. babies (Ed, 2026-10-11, docs/backlog/gameplay.md): her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": 55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered), for the whole fight (Ed, 2026-10-11): from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds. weight.babyGround: a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line.`,
-    leash: { length: 8, runSpeed: 4, pickRadius: 4.375, spacing: 4, runeRadius: 5.625, hatHold: 0.5, placedThrough: 0.45, sigilGlyph: 0.5, sigilHalo: 0, sigilBacking: { dark: 0.85, size: 1.1, ink: 1.5 }, runeGap: 0.5, hex: { size: 4, stone: 3, speaker: 1.5 }, runs: true, runePull: { radius: 8, speed: 1.5, stop: 1.5 }, grounded: { weight: 2 }, weight: { free: 2.5, levels: [0.3, 0.8, 2, 3], drag: 0.35, drift: 0.12, rise: 0.3, sink: 0.05, sinkMax: 0.12, floor: 0.75, extreme: 8, maxTension: 1, babyGround: 0.56 }, babies: { gap: 5, scatter: 55, calm: 3, farAt: 35, farSpeed: 40 } },
+    _leash: `grounded (Ed, 2026-10-18: "One adult stops you taking off. Three young do.", the numbers indicative: "if creatures are light or heavy you can extrapolate"): weight is the most the creatures following her may weigh, together, before she can't take off (their sigils in her stack, each at its leash.weight.levels weight times its species' strength, however near; parked ones at a sigil on the ground don't count, nor babies; 2 is one adult of normal strength, three young 2.4, two 1.6; 0 turns it off). Pressing rise she tries: she lifts a little and the leashes, taut and bright, pull her straight back down (drawn only: she never leaves the ground, so it's no dodge and spends no cooldown). Apart from the pull (weight below); once up she stays up, it only stops the next take-off. runs (Ed, 2026-10-15: "Pick up and place in runs"): with the sigil button held on since a press that picked a sigil up, she keeps picking up any sigil she runs over (her placed ones, happy creatures' runes, a relic's); held since a press that put one down, moving into each empty hex puts down the next (a press that did nothing starts no run, so holding E with nothing to do still puts her hat down). On the pad her hat is triangle's (placed or picked up), circle cycles the stack, L3 casts the broom's spell. sigilBacking (Ed, 2026-10-12, Bravo's o3: "a dark patch directly underneath a sigil is quite helpful for making it more readable", "the same width as the sigil, darker, edges not too smooth", "sigils less transparent"): under every sigil lying on the ground (placed, a happy creature's rune, the ghost, a relic's) a near-black disc in chunky 2-px cells with a lighter outer step, as wide as the glyph's own pixels times size, at dark (0: none), then the glyph painted opaque in its full neon at ink times how much it shows, under the dim added glyph (sigilGlyph). sigilGlyph and sigilHalo (Ed's pick B, 2026-10-12: "it's their glow that makes them hard to see, not the pixellation"): every sigil glyph from the leash atlas (placed, happy runes, the ghost, a relic's, her stack, the treetop projection, one walking home after a knockout) is drawn at sigilGlyph times its colour (0.5: under the bloom's threshold, so it doesn't bloom into a disc on lit ground; 1 as bright as before), and the soft halos under placed sigils, ready runes and relic sigils and round a relic in her stack at sigilHalo times their old strength (0: none). placedThrough (Ed, 2026-10-11): how bright a placed sigil shows where grass, bushes, trees or other scenery hide it (0 hidden, 1 as bright as in the open); never through the witch. runeGap (Ed, 2026-10-10: "Leashed animals should come to rest 10m above their placed sigil", so it's easier to see and pick up; 2026-10-13: "the top of the sigil's background should be just below the animal's feet"): a happy creature's rune lies south of it (down the screen), and a parked animal roams round a point the same way north of its sigil, by its size: its body radius, half the sigil with its backing, and runeGap metres between (rules/runeOffset.ts; it was a fixed restAbove, 5 m). hex (Ed, 2026-10-11: "a cluster of placed sigils reads cleanly"): on the ground the sigil button works on a world-fixed hex grid, size metres between neighbouring cells (6 with the rank sigils, their ranks.hex; 4 before them, leash.spacing's density, as ?sigils=old still has it; 0: put down freely where she stands, as before). The cell nearest her decides: a sigil of hers in it, the press picks it up; free, a sigil goes down in its middle (never fizzling). Cells under a runestone or soundsystem (within stone metres of it, plus half a cell) or a home speaker (speaker metres) are skipped: the sigil goes down on the nearest free cell that isn't, within two cells, or not at all. Relic sigils and her hat go down where she stands, off the grid. hatHold (Ed, 2026-10-09: "If you are in ground mode and hold down the drop / pick up sigil button and there are no sigils to pick up, you put down your hat"): seconds she holds the sigil button on the ground, with nothing it picks up or puts down, to put her hat down at her feet (just a marker; a press over it puts it back on; rules/hat.ts putHat). length: metres her creatures follow within; runSpeed: how fast one out of range hurries back (m/s); pickRadius: how near (m) she picks up one of her own placed sigils; runeRadius: how near (m) she picks up a happy creature's rune, a relic's sigil or her hat (both 25% further on Ed's word, 2026-10-13: 3.5 to 4.375, 4.5 to 5.625; Ed's playtest, 2026-10-06: "Floor sigils of happy creatures and relics are difficult to pick up": bigger than pickRadius, which stays under spacing, and less than a relic's sigilOffset, so standing on the relic itself doesn't); runePull: on the ground, the nearest happy creature with its rune within radius (m) trots toward her at speed (m/s), stopping stop (m) from her, so its rune comes to her; spacing: how far apart (m) sigils can be put down. weight, sigil weight (Ed, 2026-10-06: "every sigil above your head pulls on you as well as attracting the animal; you find it slower to move in the opposite direction to where the leashes are, you are pulled off course, and rising to treetop is slower. And you're gradually pulled back down"; rules/leashWeight.ts): each sigil in her stack (placed ones weigh nothing) pulls her toward its creature by how taut its leash is (0 within 0.85 of length, up to maxTension a leash length further, however far: a far traveller can't pin her) times its weight (levels: baby, young, adult, legend; times its species' combat.json strength). Ed, 2026-10-10: free in the treetops for 8 babies, 3 youths or 1 adult, and on the ground 5 youths or 2 adults (baby 0.3, youth 0.8, from 0.5 and 1). Less free (the first few sigils' worth, so early play feels the same; on the ground, plus one adult's weight, levels' adult: Ed, 2026-10-09, "extra free allowance on the ground should be the equivalent of one adult"), that's her load (weight units, a young on a taut leash being 1). drag: moving away from the pull, that part of her speed is divided by 1 + drag x load (her input still steers); drift: she drifts toward the pull at up to that share of her top speed, reached at an extreme load; rise: rising takes 1 + rise x load times as long; sink: over the treetops, loaded, she sinks by sink x load of the climb a second (at most sinkMax), to floor (of the climb, just over the crowns) while she flies on, and all the way down to land if she stops or her load reaches extreme; unloaded, she floats back up. The view reads leashLoad (rules/game.ts); the debug overlay shows it. babies (Ed, 2026-10-11, docs/backlog/gameplay.md): her leashed babies following her on the ground walk in single file along where she's been, in stack order (the stack's bottom one first), gap metres apart; while she's in a fight they scatter, scatter metres or a quarter more off to the side away from the first attacker (Ed, 2026-10-26: "they should scatter further, e.g. outside of my camera view": 55, past the view's farthest edge at the usual ground zoom, its top 50 m from her; kept on the island's land, and pulling on her not at all while scattered), for the whole fight (Ed, 2026-10-11): from the moment something goes for her or one of hers (closing in or winding up, not on the hit), the same way throughout, back into line once nothing has for calm seconds; one more than farAt metres from her (about off the screen) moves at farSpeed m/s, so it's with her in seconds. weight.babyGround: a baby's weight on the ground (the treetops' is weight.levels[0]), so 8 fill either allowance; a baby's species strength doesn't count, and in the line its leash's tension is measured from its place in the line. ranks (Ed, 2026-10-27, after mocks 3 to 9: "larger sigils is good ... embers are good ... colours-for-rank is good; it's more important in rapid gameplay to be able to tell ranks apart than creatures"; render/leash/ranks.ts): on (the default since Ed, 2026-10-27: "go ahead and push all the new sigil work"; ?sigils=old turns them off and the hex grid back to 4 m), every leash sigil (her stack, placed sigils, happy runes, the ghost, the treetop projection, the bond) is its bare glyph, no ring or disc, glyph metres across on the ground, in its rank's colour (colours: baby, youth, adult, legend; the species' neon stays the world's: borders, stones, fireworks, dancefloor, holograms, chart), with embers rising off its strokes (embers.count at once, each size metres, rising rise metres, by rank; in her stack stack of that), under a dark shade in the glyph's own shape (not a disc); a youth in her stack shows two rows of round dots off to its right, one a berry it eats on the move (toEvolve less the last, eaten at a placed sigil), at most dotsPerRow a row, bright eaten and dim not, pulsing when ready; and the hex grid is hex metres (leash.hex.size).`,
+    leash: { length: 8, runSpeed: 4, pickRadius: 4.375, spacing: 4, runeRadius: 5.625, hatHold: 0.5, placedThrough: 0.45, sigilGlyph: 0.5, sigilHalo: 0, sigilBacking: { dark: 0.85, size: 1.1, ink: 1.5 }, runeGap: 0.5, hex: { size: 6, stone: 3, speaker: 1.5 }, runs: true, runePull: { radius: 8, speed: 1.5, stop: 1.5 }, grounded: { weight: 2 }, weight: { free: 2.5, levels: [0.3, 0.8, 2, 3], drag: 0.35, drift: 0.12, rise: 0.3, sink: 0.05, sinkMax: 0.12, floor: 0.75, extreme: 8, maxTension: 1, babyGround: 0.56 }, babies: { gap: 5, scatter: 55, calm: 3, farAt: 35, farSpeed: 40 }, ranks: { on: true, hex: 6, glyph: 5, colours: [[40, 225, 215], [150, 90, 255], [255, 70, 70], [255, 226, 60]], embers: { count: [3, 5, 8, 12], size: [0.22, 0.26, 0.3, 0.36], rise: [1.6, 2.1, 2.8, 3.6], stack: 0.4 }, dotsPerRow: 4, stoneGlow: 2.4 } },
     _bond: `The bond between her and her leashed creatures: rim, a glow at a creature's feet in its sigil's colour; sparks, one now and then from sigil to creature (every sparkEvery seconds, staggered); thread, a dotted line while a leash is under strain (past 0.85 of its length), bowing upward by threadArcSlack metres per metre of its length while slack, flattening to threadArcTaut as it goes taut (Ed, 2026-10-06: "The curve on slack leashes should be higher than it is now"; doubled, 0.4 to 0.8 and the cap 4 to 8, Ed 2026-10-15: "The arc of leashes should be higher"), never more than threadArcMax metres.`,
     bond: { rim: true, sparks: true, thread: true, sparkEvery: 4, threadArcSlack: 0.8, threadArcTaut: 0.02, threadArcMax: 8 },
     __creatures: "Creatures: how many and how they grow, move, notice, nap, guard and fight.",
     _spells: "Spells (Ed, 2026-10-11; rules/spells.ts, docs/backlog/unlocks.md): two slots, a hat and a broom, each with a spell or none (the plain ones), the hat's chosen in the creator (or ?hat=), the broom's the set its parts complete (the Workshop, Ed 2026-10-23). hat: the default; hats: the spell hats she owns, a comma list or * for every one (Ed, 2026-10-23: only the plain hat is hers at first, every spell hat found one a night, rules/finds.ts; the page sets it from her save, app/hatSave.ts, and ?hats= for one load). parts: her broom's parts, a comma list of ids from config/broom-parts.json (the page sets it from her save, localStorage witch.broom, fitted at the Workshop's bay; ?parts= for one load); the bare broom, none, has no spell and no quick take-off (Ed, 2026-10-23), and a complete set gives its spell. Hats are put down with the sigil button held (rules/hat.ts) and work there (some once when placed, some while they lie there); the Helmet is worn. Broom parts change how she moves or pulls (config/broom-parts.json: the Long, Double blink and Haul brooms are the Curled tip, the Twig bristles and the Canoe hull now); an active set spell is cast with the spell button (R; gamepad circle; touch spell), then recharges. speed: the Speed broom, her speed times mult for duration seconds, then cooldown seconds to recharge. healing: the Healing ring, within radius m of it she heals a hit every `every` seconds while hurt. The Helmet: the first blow knocks it off beside her instead of costing a hit; she picks it up (E) to wear it again. harvest: the Harvest hat, put down, grows berries berries in a ring radius m round it (Ed, 2026-10-11: six), at most once every every s (the same ring, moved: uneaten ones move with it). dowsing: the Dowsing hat, put down, points to the nearest relic for time s. sentry: the Sentry hat, lying there, throws a \u{1F48C} at the nearest invitable creature within range m every every s (Ed: larger ranges). slingshot: the Slingshot hat catches her \u{1F48C}s flying within catch m, circling it radius m out, holds them hold s and flings each at the nearest invitable creature within fire m, at most max at once. gathering: the Gathering hat, picked up again, brings every sigil of hers within range m back to her stack (Ed: all sigils in range). bramble: the Bramble hat slows wild and enraged creatures within range m of it (Ed: 30 m). mine: the Mine hat, put down, stuns wild and enraged creatures within range m for stun s, at most once every every s. lullaby: the Lullaby hat, put down, sends wild creatures (not enraged) within range m to sleep for time s, at most once every every s; one wakes when a \u{1F48C} lands on it (Ed, 2026-10-12). cyclone: the Cyclone hat (Ed, 2026-10-12, instead of the Decoy), on putting it down and every every s while it lies there, catches wild and enraged creatures within radius m, sweeps them round it at spin turns a second for time s, lifting them up to lift m, then flings them fling m outward over flingTime s, stunned stun s after they land; never hers, happy ones or legends, and never hurt. nursing: the Nursing hat heals her own creatures within range m of it, rate of their health a second (0.1: whole again in ten seconds). battering: the Battering broom's blink stuns every wild and enraged creature within width m of its line for stun s (Ed, 2026-10-12). leyjump: the Ley jump broom, cast, puts her at the ley line's pulse; cooldown s. pound: the Ground pound broom (Ed, 2026-10-12, the Updraft renamed), cast, rises or lands at once, knocking wild and enraged creatures within radius m back push m, and landing stuns them stun s; cooldown s. stealth: the Stealth broom (Ed, 2026-10-12): creatures don't see her unless she threw a \u{1F48C} or put down or picked up something in the last reveal s; ones that went for her keep on while she's within range m, then lose her.",
     _fight: `The fight's scale and speed (Ed's motion scale pass, 2026-10-04: "the animals don't move around enough when attacking and defending"): fights are drawn and played at the ground camera's scale, creatures running at about the witch's speed and their patterns about 50 m across. scale: every length in a fight times this (attack ranges, lunges, area radii, beam widths, knockback, the packs' patterns and spacing, pursuit and guard reach, aggro); speed: every fight speed times this (running, charging, lunging, shots). momentum (Ed, 2026-10-05: "they should have more momentum"): how heavily creatures in a fight change speed and turn: their accelerations, braking and turn rates divided by it (2: twice as heavy). Try ?fightScale= and ?fightSpeed=, or change them live on the pause page (Esc): its Debug knobs sliders, or [ and ] for scale, ; and ' for speed, , and . for momentum. charge and leap (Ed, round 13, 2026-10-06: 'charging and jumping creatures should charge or jump much further ... damaging whenever they're touched while in attack mode ... much more momentum, travelling in wide arcs'): every species' charge (movement.json) scaled: reach its run's time and overshoot past its target, turn its turn rate (lower: wider arcs), brake how hard it slows (lower: more momentum); contact: it hurts every foe it touches on the way, once each (her grace making one charge one hit). Every leap: reach times how far off it leaps from, a pounce (the lynx's) landing through metres past its target (a slam, the toad's, still onto it); contact: a pounce hurts whoever it touches in the air. Walking away is no escape (Ed, 2026-10-06: "Charging creatures can easily be evaded by just walking away from them. They should jump far enough or charge far enough that this doesn't work"): charge.chase, a charge runs at least that many times her ground speed and on until it has caught up with her walking straight down its lane (its own time if longer), so stepping out of the lane at its tell, a blink sideways or the treetops get her clear, walking doesn't (0: off); leap.lead, a leap comes down where she'll be when it lands, as she's going at take-off (that share of it; 0: where she was). miss: a charge that struck nothing stands winded that many seconds after (stars round its head), an opening for her \u{1F48C}s (Ed, 2026-10-06: "We want to reward skilful use of blink and accurate invitation aiming").`,
     fight: { scale: 1, speed: 1, momentum: 1, charge: { reach: 2, turn: 0.4, brake: 0.5, contact: true, chase: 1.6, miss: 1.2 }, leap: { reach: 1.5, through: 5, contact: true, lead: 1 } },
+    _creatureMomentum: `Creature momentum (Ed, 2026-10-27: "most animals don't have enough momentum and can turn too sharply, or alternatively track the witch too quickly and accurately ... less worth dodging"; "all these as options, which we can tweak later", "prediction is ok, but it should mostly be for telegraphed attacks", "each creature can have different amounts of each"; rules/momentum.ts), chasing the witch only (fights between creatures, legends and marchers as before): on its run-in and its wind-up (a pack's tell and combo too), never its committed lunge, which goes where the wind-up aimed, reaching up to a quarter again its usual length if the run-in left it short (Ed, 2026-10-27), so a strike that starts stays reliable. turn: its heading swings at most turn / (1 + its speed / k) degrees a second (also divided by fight.momentum), slowing to turn tighter when she's far off its heading, so a fast one sidestepped overshoots in an arc; delay: it steers for where she was that many seconds ago (a short trail of her places), so a sidestep or blink fools it a moment; chaseLead: seconds of her velocity it leads her by when just chasing (0: none); strikeLead: times the lead its telegraphed attacks take (a melee wind-up's tracking, dodge.a.lead; a charge's lane, dodge.b.chargeLead; a leap, fight.leap.lead; a swoop's dive; shots and lobs, dodge.b.lead). classes: each class's values (heavy: dodge.a.heavy's species; light: those with the nimble or swarm trait; normal: everyone else), and a species may set its own in its folder (art/creatures/<id>/creature.js movement.momentum). The pause page's sliders (Creature momentum) are global: turn, delay and strikeLead multiply every species' values, chaseLead adds seconds to every species' own; on false: as before.`,
+    creatureMomentum: { on: true, turn: 1, delay: 1, chaseLead: 0, strikeLead: 1, classes: { heavy: { turn: 220, k: 6, delay: 0.4 }, normal: { turn: 420, k: 6, delay: 0.25 }, light: { turn: 650, k: 8, delay: 0.15 } } },
     _combat: `packs: pack combat (docs/backlog/combat.md, build step 1; Ed, 2026-10-19), on by default (Ed, 2026-10-20: "Turn pack combat on by default") and on the pause page to turn off for testing: on, packs of config/packs.json's kinds (home's ten and Phase 1's eleven) fight in combos (the nearest lunges, the ones at range fire where a dodge would go, the one behind her throws the special), fall back by their kind's retreat between combos, and her own pack combos without retreating. Combat (Stage 4; the attacks themselves are data in config/combat.json; lengths and speeds at the fight's scale: see fight). fightRun: how fast a creature runs in a fight (m/s), when its movement profile doesn't say (movement.json speed); legendRun: a legend's; reaction: seconds before a creature that has just noticed something goes for it; pursuitRun: how fast it closes in while over 30 m off (so an area's creatures are onto her in a few seconds when she lands in it); pursuit: how far from her (or its sigil, guarding) a party animal chases a foe before giving up; aggro: wild creatures go for party animals within this, and for the witch anywhere in their area. leaveArea (Ed, 2026-10-05): a wild one chasing the witch gives up once she's this far past its area's edge, and turns back home (besiegers keep witchLose: they give up once she's out of their area, out of range and this far off). Wild creatures attack party animals of other kinds within aggro metres. They go for the witch on the ground as soon as she's in their area or within their attack's range (Ed's playtest, 2026-10-04), and let her go when she rises to the treetops, or once she's out of their area, out of their range and at least witchLose metres away; then they walk back to their spot. The one she's inviting holds its fire on her (its friends don't). Party animals following her take on what attacks her or her party; parked ones (at a sigil) guard within guard.radius of it. Babies are never attacked, by either side. Marching on a soundsystem, its own area's or marching on after a fall, a creature moves at marchShare of its top (fight) speed: its movement profile's, else fightRun, a legend legendRun (Ed's playtest, 2026-10-11: "Animals seem to walk very slowly when they're going towards soundsystems they plan to attack"; it was its walk times marchMult, under 1 m/s, and marchOnRun 5 m/s marching on). Against a soundsystem or speaker, charging kinds don't charge and swoopers don't swoop: they land and use their ordinary attack (Ed, 2026-10-11: some "seem to struggle to damage soundsystems"; a charge struck once a run, a swoop once a dive). A beaten creature, wild or party, runs off the map at fleeMult times its speed and is gone for good (Ed, 2026-10-04); a party animal is lost for the run. A soundsystem has soundsystemHealth, passive, and is hit within soundsystemRadius metres: sieges should outlast the wave gap. A soundsystem has 500 (Ed, 2026-10-08, from 4000: shorter games, falls that cascade, and you must stop a swarm before it arrives). Home is its ring of speakers (Ed, 2026-10-08: "home as 12 speakers at 500 hp each"; rules/speakers.ts), each a soundsystem of speakerHealth, hit within speakerRadius metres, the besiegers going for the nearest standing one; home falls when every one has (its old homeHealth 8000 and homeRadius 9 gone). shake: how hard a legend's quake shakes the screen (0 none). daze: seconds a wild creature knocked down in a fight lies stunned (nothing attacks it, it attacks nothing, she can still invite it; it counts as present for its legend, and no siege takes it) before it runs off home (Ed, round 13, 2026-10-06: 'the length of the stun of wild creatures that are downed in combat, before they run away, should be 20 seconds'; it was 8, states.json's daze). leaveArea: a wild creature chases her (or her party) up to this many metres past its area's edge (Ed, round 13, 2026-10-06: 30; it was 10); beyond it, or once she rises, it gives up and retreats into its area at its own pace, roaming again once it's in and within retreatHome metres of home, taking up a fight on the way only with someone back in its area (no flip-flopping at the edge). Besiegers march as before; happy and leashed ones aren't affected. defendRadius (Ed, 2026-10-09: her posse defends her, "just ones that are in the same combat as you"): her animals following her within this many metres of her go first for anything attacking her, spread over her attackers; farther off, following her, one fights back only at what's on it itself (and parked, guarding or travelling ones carry on as they were): never pulled across to her fight. taunt (Ed, 2026-10-09, on #592: "Taunt seems good"): a creature after her that one of her animals in her fight hits turns on that animal instead, with chance chance, for time seconds (a lunge at her already under way lands first; then it may come back to her).`,
     _attackFx: "How attacks feel on screen (Ed, 2026-10-06: 'make creature attack visuals better'; render/attackFeel.ts), a party not a fight: windupSquash, how low and wide an attacker crouches as its wind-up nears the blow (at most windupMax seconds of it shown); lungeStretch, how far it stretches out in its lunge; squash, how flat a hit squashes the one it hits, springing back past its shape over squashSecs seconds; a knock-back thrown faster than tumbleKnock m/s tumbles: up tumbleHeight metres (at most 1.5 times that for the hardest) for tumbleSecs, over on its back from turnFrom to turnTo of the way (one slow beat, never a strobe), landing with a squash. Squash and stretch go in whole art pixels. legendFlash: how much bigger and longer a legend's blow flashes than anyone's (its flash 1 + 2 \xD7 legendFlash times; 0.5, twice: Ed's decisions panel, config/decisions.json).",
     attackFx: { windupSquash: 0.12, windupMax: 0.6, lungeStretch: 0.14, squash: 0.24, squashSecs: 0.34, tumbleKnock: 20, tumbleHeight: 0.9, tumbleSecs: 0.5, turnFrom: 0.3, turnTo: 0.7, legendFlash: 0.5 },
@@ -17426,8 +17443,8 @@ label.check input { accent-color: var(--accent); }
     blood: { on: true, style: "prints+drops", colour: "red", fade: 8, rate: 3, cap: 600, range: 60 },
     _soundsystemGen: `The generated soundsystems (Ed, 2026-10-08: "a variety, for them all to point towards the dancefloor (like the central speaker ones do; back facing ones face outwards), and broadly for the ones further away to be larger ... we don't see any exactly identical ones on the map"; art/soundsystemGen.js, render/soundsystemGen.ts): each area's its own genome, dealt as one set a map (none alike). Sized from near times the old stacks' height (three times the witch) by the dancefloor to far times at to metres out and beyond (from metres and nearer all near), more tiers and wider the further out. Turned along the line to the dancefloor, facing it from the far side and away from it on the near side so every one shows its front, as the ring's speakers (toward: always facing it, the near ones showing their carved backs), never more than maxYaw degrees off facing us (a wide stack side-on is a sliver). Baked in the background ahead waves ahead of the party. on false: the old three stacks.`,
     soundsystemGen: { on: true, near: 0.8, far: 1.6, from: 120, to: 1e3, maxYaw: 60, toward: false, ahead: 2 },
-    _stringLights: "Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours (Ed, 2026-10-08: 'I liked the six bright colour string lights, please bring them back'); areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light.",
-    stringLights: { on: true, runsPerArea: [3, 6], spansPerRun: [4, 10], coneAngle: 35, junctionChance: 0.15, spanMin: 6, spanMax: 20, spread: 24, height: 6.5, sag: 0.9, bulbSpacing: 0.8, palette: ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"], mode: "palette", twinkle: 0.35, chaseSpeed: 8 },
+    _stringLights: `Colourful string lights in every partified area, as long garlands: runsPerArea runs (a range), each spansPerRun spans (a range) from tree to tree, every next tree inside a forward cone of coneAngle degrees either side, so a run sweeps across rather than zig-zagging; runs start at least spread metres apart. Each span is spanMin to spanMax metres. No span crosses another and each tree holds at most two ends, except junction trees (junctionChance per tree on a run) where a branch leaves, so three meet. At height metres, sagging sag metres per 8 m of span, a bulb every bulbSpacing metres, coloured by mode: palette cycles through all of palette's colours (Ed, 2026-10-08: 'I liked the six bright colour string lights, please bring them back'); areaNeon is warm white, the palette's first, two bulbs in three and the area's own neon the third (the art director, round 2: one neon an area plus the warm light). The light's grade leaves them their colour (light.spooky only drains what's darker than its gradePivot; measured from the treetops, the same with and without it), twinkling (twinkle 0-1), a chase running along now and then at chaseSpeed bulbs per second. The bulbs only glow (bloom); they cast no light. Each line hung its own way (Ed, 2026-10-27, of the crown's: "String lights on the treehouse seem to all have the same shape"): its two ends up to 1.2 m above or below height, its sag 0.5 to 1.7 times sag, and one in five with a strand of 1.5 to 4 m let hang off its far end (render/strings.ts, from its seed). more (Ed, 2026-10-27: "the party-area slider"; the pause page's Oak crown group): times as many runs an area, their spread apart shrunk by its square root to fit (1 as tuned).`,
+    stringLights: { on: true, runsPerArea: [3, 6], spansPerRun: [4, 10], coneAngle: 35, junctionChance: 0.15, spanMin: 6, spanMax: 20, spread: 24, height: 6.5, sag: 0.9, bulbSpacing: 0.8, palette: ["#fff1d6", "#ff6fcf", "#5fe8ff", "#ffe25c", "#b48cff", "#7dff8a"], mode: "palette", twinkle: 0.35, chaseSpeed: 8, more: 1 },
     _dancefloor: "The dancefloor: motes: magic particles drifting up off the circle (count, how high they rise in metres, speed in m/s, column: the share of the circle they rise from); its radius in metres; a ring of speakers.count stone speakers (Ed, v160), the first at speakers.start degrees round from the camera side and the rest evenly spaced, speakers.radiusFactor times the radius out, each speakers.footprint metres round; a clear space of clearing metres beyond the speakers' feet (the treehouse stands outside that); the floor's glass tiles light up (Ed, v160): levels: how many areas must have the party for each level of intensity above 1 (up to 4, a full rave); tiles: the witch lights the tiles under her (in witchColour, from the neon) when below witchLift, with a ripple each beat lasting rippleTime seconds (a landing's twice as long), footsteps fading over trailTime, events (a wave arriving, a sigil placed) over eventTime, and at level 1 only lowLevelShare of the lit tiles show; through the boot the floor shows the island's sigil (island; Ed, 2026-10-11: home's the World Tree), written on stroke by stroke as the boot's pulse goes round the ring, in place of the moon, the sap rising up it every sapBars bars once written, until the first wave switches the floor on (on: false, the moon as before); a glowing magic circle (two hues 0-1, pulse per second, runeSpeed in turns per minute) lighting the ground round it (lightReach metres, lightStrength), a plaza of flagstones round the floor (paving: in rings from the rim out to beyond metres past the speakers' feet, course metres deep, stones about stone metres long, the outer edge breaking up over ragged metres with missing of its stones gone to grass, moss the share of mossy stones; the speakers stand on a course of darker stone); and a magic disco ball floating discoHeight metres up (discoSize metres across, spin turns per minute) throwing specks of light: specks is the share of the sphere that throws one, speckBrightness how bright, speckReach how far.",
     _waveNumbers: `Off (Ed, 2026-10-06: "Remove the floating numbers above the runestones."); set on to true to bring them back. Wave numbers over the rune stones (Ed, 2026-10-04: "for design purposes, let's just put a big glowing number above the stones"): each stone shows the wave that will wake it, in its area's neon, over the canopy and clouds from the treetops and above the stone on the ground; on turns them off; size: a digit's height as a share of the screen's; lift: metres above the stone (or the treetops); spent: how bright the number stays once the party has reached the area (0 hides it). On the ground, a number whose stone is within pinRange metres is held inside the top of the screen when it would be above it.`,
     waveNumbers: { on: false, size: 0.05, lift: 1.5, spent: 0.3, pinRange: 60 },
@@ -17550,9 +17567,11 @@ label.check input { accent-color: var(--accent); }
     light: { mood: "spooky", spooky: { ambientHue: 0.52, ambient: 0.8, moonHue: 0.6, moonSat: 0.4, moon: 1.1, hazeHue: 0.74, hazeSat: 0.55, haze: 0.12, hazeNear: 60, hazeFar: 200, mist: 0.22, glowHue: 0.08, glowSat: 0.55, grade: 0, gradeDesat: 0.5, gradePivot: 0.6, gradeHue: 0.62, gradeSat: 0.55, partyWarm: [[1, 0.62, 0.28], [1, 0.42, 0.62], [1, 0.82, 0.4]], partyReach: 1.35, partyStrength: 1.3, decorLights: 6, decorReach: 1.8, decorStrength: 1.3, decorWarm: 0.8, rimHue: 0.66, rimSat: 0.4, rim: 0.32, witchGlow: 0.35, moonUp: 1.3, moonUpHue: 0.5, moonUpSat: 0.12, moonUpWrap: 0.5, styledRim: 0.55, styledGlow: 0.6, styledLift: 0.55, leyRgb: "#e8b46a", leyBright: 0.5, berryHalo: 0.4, berryGlow: 0.6, areaEase: 0.5, areas: { "tundra-bog": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, wetland: { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "beaver-pond": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, "mangrove-channel": { hazeHue: 0.47, hazeSat: 0.45, haze: 0.14, mist: 0.34, gradeHue: 0.5 }, deadwood: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, ancient: { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "log-pile": { hazeHue: 0.78, hazeSat: 0.35, haze: 0.1, gradeHue: 0.72, gradeSat: 0.45 }, "bluebell-glade": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, "wispy-forest": { hazeHue: 0.68, gradeHue: 0.68, mist: 0.26 }, moor: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, heath: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, grassland: { hazeHue: 0.62, hazeSat: 0.3, haze: 0.14, mist: 0.3 }, "jungle-cave": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, ravine: { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "rocky-slope": { haze: 0.07, gradeHue: 0.6, gradeSat: 0.35 }, "old-pinewood": { hazeHue: 0.5, hazeSat: 0.5, haze: 0.08, gradeHue: 0.52 }, "jungle-understory": { hazeHue: 0.36, hazeSat: 0.5, haze: 0.08, gradeHue: 0.38 }, "honeysuckle-tangle": { hazeHue: 0.88, hazeSat: 0.4 }, "snowy-taiga": { hazeHue: 0.58, hazeSat: 0.3 }, "berry-thicket": { hazeHue: 0.88, hazeSat: 0.4 }, home: { gradeHue: 0.66, gradeSat: 0.35, mist: 0.15 } } } },
     lightSources: { spacing: 10, campfire: 0.03, magicStone: 0, pond: 5e-3, wetPond: 0.03 },
     haze: { near: 150, far: 360 },
-    _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength.`,
+    _post: `bloom: a gentle glow round bright things (strength 0 or on false turns it off; threshold: how bright a pixel must be to glow). tiltShift: blurs the top and bottom of the screen so the forest looks like a miniature. strength: the blur at the screen's edges, in pixels; band: the height of the sharp band (0-1 of the screen); centre: where it sits (0 top, 0.5 middle, 1 bottom); treetop: the strength and band over the treetops (Ed, v160: a stronger miniature look there), blended in as she rises (both halved and their sharp bands widened, Ed 2026-10-06: "reduce the intensity of the tilt-shift effect"); ?tilt=<strength>,<band> tries treetop values live; It blurs at the low resolution, before the pixels are scaled up; ?tilt=off turns it off. The night sky over the bend is blurred with the rest, the tilt-shift the last thing done to the finished, bent picture (Ed, round 12: "the tilt shift isn't blurring the sky - the tilt shift effect has to be applied after the bend shader rather than before"). tiltShift.skyBlur: the share of the blur the night sky takes (Ed, 2026-10-06: "lessen the tilt-shift effect until you can see the stars", then "the stars don't have to be crisp, just perceptible"): 1 blurs it as the ground, 0 leaves its stars sharp; a slider in the decisions panel, with the treetops' strength. tiltShift.stackSharp: her sigil stack over her hat kept out of the blur, sharp at any height, however tall (Ed, 2026-10-27: "stacks should not be affected by the tilt shift"; render/post.ts Post.sharp); false blurs it with the rest.`,
     _shadows: `trunks.lightReach (Ed, 2026-10-13: "the light that soundsystems and runestones produce" should make the trees cast shadows): how far a soundsystem's or a runestone's light throws the trees', props' and scenery's shadows, in metres (0: none), past its own glow's reach so the trees round its clearing catch it (its clearing: arena.radius 5, noise 0.05 and band 50 (Ed: "Try band at 50"), Ed 2026-10-13: "reduce the clearing size to 15m": the nearest trees about 15 m from it). trunks.foot, trunks.near, trunks.cover (Ed, 2026-10-12: "they should fade out at the bottom of the tree", "when you're close to the tree", for her glow's and the campfires' alike; and "The shadows should darken other foliage that they cast upon"): a trunk's shadow fades in from nothing over foot metres from its foot (0: none) and opens out from a third of its width over taper metres (0: none; Ed: roots and decorations "get wide at the base, that look strange when they're rotated"), fades to nothing as she comes within near metres of its trunk (0: never), and darkens the ground cover it falls on (grass, flowers, tufts) at cover times its strength (0: not at all). Ed's tuned values (2026-10-12): strength 0.75, long 2.5, glowReach 50, glowHeight 1.25, soft, core 0.8, across 1, and lights.campfire.reach 40. shadows: a small contact shadow under the witch, each bush, creature and prop; trees: a crown-sized shadow under every tree too, cast away from the moon (off: Ed, 2026-10-03). canopyShadow: a dappled shadow from the canopy overhead (height in metres), thinner in clearings, drifting with the wind. mist: a low drifting mist (height in metres above the ground). Each has on and strength. trunks.scenery, trunks.sceneryMin (Ed, 2026-10-12: "Scenery (temples etc) should also cast them", "Runestones and soundsystems should also cast shadows"): scenery casts the same shadows from her glow and the fires, untapered (its foot is its own width): set pieces, ruins, rocks and freak trees, modern and quest relics, the scenes' pieces (temples, castles, cemeteries...), the runestones and the soundsystems; pieces under sceneryMin metres tall cast none. tint (Ed, 2026-10-12: "Runestones and especially soundsystems are bright with coloured light; they should have shadows but they shouldn't be black. Can we have complementary colours in shadows cheaply?"; 2026-10-13: "colour all the shadows"): every shadow (scenery's, the trees' and palms', and the blobs under creatures, the witch, bushes and small things) at its darkest goes from black toward the complement of the light it lies in by tint (0: black): a campfire's orange throws blue-violet, plain moonlight a warm shade. cast (Ed, 2026-10-13: "shadows should darken the things that they land on ... it should be everything"): what stands in the trunks', palms' and scenery's shadows (creatures, the witch, bushes, props, scenery) is darkened and tinted by them where they fall on it, from a map of them drawn from above round her (render/castShadows.ts); off, only the ground and grass; castRes is that map's texels across (1024: 6.4 a metre over 160 m; 512 is a quarter of the texels to clear and draw each frame, for a weaker GPU). trunks.glowLight: a glowing caster's (a runestone, a soundsystem) toward a soft shade of its own colour by glowLight (0: as dark as any). trunks.sceneryFoot (Ed, 2026-10-12: "Runestones shadow should fade at the base"): scenery's shadow, cast from its middle, fades in from nothing over its own half-width and sceneryFoot metres past it (0: none). trunks.sceneryTaper (Ed, 2026-10-12: "What about tapering?"): scenery's shadow is pinched to a third at its foot and opens to full over its half-width and sceneryTaper times its width past it (a wide ruin over more ground than a narrow runestone; at most 0.6 of its shadow's length; 0: none).`,
     shadows: { on: true, strength: 0.7, trees: false, tint: 1, cast: true, castRes: 1024, trunks: { mode: "soft", strength: 0.75, long: 2.5, glowReach: 50, glowHeight: 1.25, across: 1, core: 0.8, foot: 1.5, taper: 2, near: 6, cover: 1, scenery: true, sceneryMin: 1.2, glowLight: 0.7, sceneryFoot: 2, sceneryTaper: 0.5, lightReach: 60 } },
+    _attacks: `The composable attacks (docs/plans/attack-grammar.md, src/rules/attacks/): reactionFloor, the least warning (s) any attack and each child it makes gives from its first telegraph to its first harm (Ed, 2026-10-27: 0.45 s, "we can tune in balancing"); one under it is lengthened to it, silently in the game, said so in the Fight Arena. species (Ed, 2026-10-27: "go ahead and merge them"): every species fights with its own attack in the grammar (config/species-attacks.json, by biome and island phase), its kind's own moves and its pack's turns as before; false (?attacks=old) the old ones.`,
+    attacks: { reactionFloor: 0.45, species: true },
     _gpu: "The game-wide GPU memory budget (the coordinator's ask, Ed-approved 2026-10-26; render/gpuLedger.ts counts every texture and render buffer at the GL calls, render/view/gpuBudget.ts keeps it): mb MB for a window of refWidth x refHeight physical pixels, scaled by this window's (Google Maps' rule), never under floor nor over ceil. Every every seconds, over it, the art used longest ago (an area type's trees, a creature set, a rig page) is let go till it's under headroom of the budget, nothing used in the last keep seconds (what's on screen is used every frame); it comes back from the art cache when wanted. GL's out-of-memory error, read every errorEvery seconds (each read waits on the GPU), lowers the budget to headroom of what was held then.",
     gpu: { mb: 1024, refWidth: 1920, refHeight: 1080, floor: 512, ceil: 2048, headroom: 0.85, keep: 3, every: 1, errorEvery: 5 },
     mist: { on: true, strength: 0.12, height: 3, wind: 0.8, gain: 1 },
@@ -17569,7 +17588,7 @@ label.check input { accent-color: var(--accent); }
     looks: { enragedTint: { colour: "#ff2a2a", amount: 0.38 }, anger: { on: true, size: 1 }, partyGlow: { on: true, sparkles: 4, rate: 0.9, size: 1.4, strength: 1 } },
     tone: { black: 0.03, gamma: 1.35, ambient: 0.22, moon: 0.7 },
     bloom: { on: true, strength: 0.7, threshold: 0.55 },
-    tiltShift: { on: true, skyBlur: 0.3, strength: 1.5, band: 0.5, centre: 0.55, treetop: { strength: 3, band: 0.38 } }
+    tiltShift: { on: true, skyBlur: 0.3, stackSharp: true, strength: 1.5, band: 0.5, centre: 0.55, treetop: { strength: 3, band: 0.38 } }
   };
 
   // src/rules/combat/data.ts
@@ -17578,17 +17597,21 @@ label.check input { accent-color: var(--accent); }
     for (const c of Object.values(swarm.classes)) for (const sp of c.species) out[sp] = ref / Math.max(1, c.cap);
     return out;
   }
-  var R3 = combat_default;
+  var R2 = combat_default;
   var COMBAT = {
-    ...R3,
-    bySpecies: { ...R3.bySpecies, ...sectionOf("attacks") },
-    strength: { species: { ...R3.strength?.species ?? {}, ...sectionOf("strength") } },
-    ranged: [...R3.ranged, ...speciesWith("ranged")],
-    kite: { ...R3.kite, species: [...R3.kite.species, ...speciesWith("kite")] },
-    temperament: Object.fromEntries(Object.entries(R3.temperament).map(([k, v]) => [k, [...v, ...speciesWith("temperament", k)]])),
-    traits: Object.fromEntries(Object.entries(R3.traits).map(([k, v]) => [k, [...v, ...speciesWith("traits", k)]]))
+    ...R2,
+    bySpecies: { ...R2.bySpecies, ...sectionOf("attacks") },
+    strength: { species: { ...R2.strength?.species ?? {}, ...sectionOf("strength") } },
+    ranged: [...R2.ranged, ...speciesWith("ranged")],
+    kite: { ...R2.kite, species: [...R2.kite.species, ...speciesWith("kite")] },
+    temperament: Object.fromEntries(Object.entries(R2.temperament).map(([k, v]) => [k, [...v, ...speciesWith("temperament", k)]])),
+    traits: Object.fromEntries(Object.entries(R2.traits).map(([k, v]) => [k, [...v, ...speciesWith("traits", k)]]))
   };
   COMBAT.strength = { species: { ...classStrengths(tuning_default.population.swarm), ...COMBAT.strength?.species ?? {} } };
+
+  // src/rules/movement.ts
+  var R3 = movement_default;
+  var MOVEMENT = { ...R3, profiles: { ...R3.profiles, ...sectionOf("movement") }, legends: { ...R3.legends, bySpecies: { ...R3.legends.bySpecies, ...sectionOf("legendMoves") } }, bodies: { ...R3.bodies, radius: { ...R3.bodies.radius, ...sectionOf("radius") } } };
 
   // src/rules/spacing.ts
   var radius = new Float64Array(0);
@@ -17668,6 +17691,608 @@ label.check input { accent-color: var(--accent); }
 
   // src/rules/combat/packs.ts
   var PACKS = { ...packs_default, kinds: { ...packs_default.kinds, ...sectionOf("pack") } };
+
+  // config/attacks.json
+  var attacks_default = {
+    _: "The attacks, in the composable grammar (docs/plans/attack-grammar.md; src/rules/attacks/). Run node tools/attacks/compile.mjs after editing: it writes the ones today's runtime runs into config/combat.json's attacks.",
+    nip: {
+      cast: {
+        range: 2,
+        windup: 0.45,
+        cooldown: 1.5
+      },
+      body: {
+        kind: "melee",
+        lunge: 12
+      }
+    },
+    maul: {
+      cast: {
+        range: 2.5,
+        windup: 0.55,
+        cooldown: 2
+      },
+      body: {
+        kind: "melee",
+        lunge: 16
+      },
+      hit: {
+        effect: {
+          knockback: 12
+        }
+      }
+    },
+    spit: {
+      cast: {
+        range: 24,
+        windup: 0.7,
+        cooldown: 2.2
+      },
+      body: {
+        kind: "bolt",
+        radius: 0.7
+      },
+      speed: {
+        v: 28
+      }
+    },
+    barb: {
+      cast: {
+        range: 28,
+        windup: 0.8,
+        cooldown: 2.6
+      },
+      body: {
+        kind: "bolt",
+        radius: 0.8
+      },
+      speed: {
+        v: 32
+      },
+      hit: {
+        effect: {
+          slow: {
+            mult: 0.5,
+            time: 2.5
+          }
+        }
+      }
+    },
+    quake: {
+      cast: {
+        range: 8,
+        windup: 1.6,
+        cooldown: 6
+      },
+      body: {
+        kind: "area"
+      },
+      area: {
+        shape: "disc",
+        r: 11,
+        quake: true
+      },
+      hit: {
+        effect: {
+          knockback: 18
+        }
+      }
+    },
+    longspit: {
+      base: "spit",
+      cast: {
+        range: 36,
+        windup: 0.9,
+        cooldown: 2.4
+      }
+    },
+    longbarb: {
+      base: "barb",
+      cast: {
+        range: 40,
+        windup: 1,
+        cooldown: 2.8
+      }
+    },
+    lob: {
+      cast: {
+        range: 30,
+        windup: 0.8,
+        cooldown: 2.6
+      },
+      body: {
+        kind: "lob",
+        radius: 4,
+        flight: 1.2
+      },
+      hit: {
+        damage: 1.2
+      }
+    },
+    biglob: {
+      base: "lob",
+      cast: {
+        range: 34,
+        windup: 0.9,
+        cooldown: 3
+      },
+      body: {
+        radius: 5,
+        flight: 1.3
+      },
+      hit: {
+        effect: {
+          slow: {
+            mult: 0.5,
+            time: 2
+          }
+        }
+      }
+    },
+    beam: {
+      cast: {
+        range: 20,
+        windup: 1,
+        cooldown: 3
+      },
+      body: {
+        kind: "beam"
+      },
+      beam: {
+        width: 2,
+        duration: 0.8,
+        tick: 0.2,
+        track: 25
+      },
+      hit: {
+        damage: 1
+      }
+    },
+    widebeam: {
+      base: "beam",
+      cast: {
+        range: 24,
+        windup: 1.1,
+        cooldown: 3.4
+      },
+      beam: {
+        width: 2.8,
+        duration: 1,
+        track: 30
+      },
+      hit: {
+        effect: {
+          slow: {
+            mult: 0.6,
+            time: 1.5
+          }
+        }
+      }
+    },
+    screech: {
+      cast: {
+        range: 4,
+        windup: 0.5,
+        cooldown: 1.8
+      },
+      body: {
+        kind: "area"
+      },
+      area: {
+        shape: "disc",
+        r: 6
+      },
+      hit: {
+        damage: 0.8
+      }
+    },
+    bigscreech: {
+      base: "screech",
+      cast: {
+        range: 5,
+        windup: 0.55,
+        cooldown: 2.2
+      },
+      area: {
+        r: 7
+      },
+      hit: {
+        effect: {
+          slow: {
+            mult: 0.6,
+            time: 1.5
+          }
+        }
+      }
+    },
+    upheaval: {
+      cast: {
+        range: 4,
+        windup: 0.6,
+        cooldown: 3
+      },
+      body: {
+        kind: "area"
+      },
+      area: {
+        shape: "disc",
+        r: 6
+      },
+      hit: {
+        damage: 0.9
+      }
+    },
+    bigupheaval: {
+      base: "upheaval",
+      cast: {
+        range: 5,
+        cooldown: 3.4
+      },
+      area: {
+        r: 7
+      },
+      hit: {
+        effect: {
+          knockback: 12
+        }
+      }
+    },
+    slam: {
+      cast: {
+        range: 4,
+        windup: 0.5,
+        cooldown: 2.6
+      },
+      body: {
+        kind: "area"
+      },
+      area: {
+        shape: "disc",
+        r: 5
+      },
+      hit: {
+        damage: 0.9
+      }
+    },
+    bigslam: {
+      base: "slam",
+      cast: {
+        range: 5,
+        cooldown: 3
+      },
+      area: {
+        r: 6.5
+      },
+      hit: {
+        effect: {
+          knockback: 12
+        }
+      }
+    },
+    web: {
+      cast: {
+        range: 22,
+        windup: 0.6,
+        cooldown: 2.2
+      },
+      body: {
+        kind: "bolt",
+        radius: 0.7
+      },
+      speed: {
+        v: 28
+      }
+    },
+    bigweb: {
+      base: "web",
+      cast: {
+        range: 24,
+        windup: 0.7,
+        cooldown: 2.6
+      },
+      body: {
+        radius: 0.9
+      },
+      speed: {
+        v: 30
+      },
+      hit: {
+        effect: {
+          slow: {
+            mult: 0.4,
+            time: 3
+          }
+        }
+      }
+    },
+    legendSlam: {
+      cast: {
+        range: 8,
+        windup: 1.6,
+        cooldown: 4
+      },
+      body: {
+        kind: "area"
+      },
+      area: {
+        shape: "disc",
+        r: 12,
+        quake: true
+      },
+      hit: {
+        effect: {
+          knockback: 18
+        }
+      }
+    },
+    legendNova: {
+      cast: {
+        range: 36,
+        windup: 1.2,
+        cooldown: 4
+      },
+      body: {
+        kind: "bolt",
+        radius: 1.4
+      },
+      speed: {
+        v: 22
+      },
+      emit: {
+        pattern: "ring",
+        n: 10
+      },
+      hit: {
+        damage: 0.35
+      }
+    },
+    legendSpin: {
+      cast: {
+        range: 20,
+        windup: 1.4,
+        cooldown: 5
+      },
+      body: {
+        kind: "beam"
+      },
+      beam: {
+        width: 2.5,
+        duration: 2.4,
+        tick: 0.2,
+        spin: 150
+      },
+      hit: {
+        damage: 0.7
+      }
+    },
+    legendCharge: {
+      cast: {
+        range: 4,
+        windup: 1,
+        cooldown: 4
+      },
+      body: {
+        kind: "melee",
+        charge: {
+          speed: 26,
+          time: 2
+        }
+      },
+      hit: {
+        effect: {
+          knockback: 20
+        }
+      }
+    },
+    swipe: {
+      cast: {
+        range: 3.2,
+        windup: 0.6,
+        cooldown: 1.8
+      },
+      body: {
+        kind: "melee",
+        lunge: 5
+      },
+      hit: {
+        effect: {
+          knockback: 8
+        }
+      }
+    },
+    bigswipe: {
+      base: "swipe",
+      cast: {
+        range: 3.6,
+        windup: 0.7,
+        cooldown: 2.2
+      },
+      body: {
+        lunge: 6
+      },
+      hit: {
+        effect: {
+          knockback: 16
+        }
+      }
+    },
+    legendLob: {
+      cast: {
+        range: 420,
+        windup: 2.2,
+        cooldown: 7
+      },
+      body: {
+        kind: "lob",
+        radius: 8,
+        flight: 3
+      }
+    },
+    legendBeam: {
+      cast: {
+        range: 420,
+        windup: 2.2,
+        cooldown: 7
+      },
+      body: {
+        kind: "beam"
+      },
+      beam: {
+        width: 3,
+        duration: 1.6,
+        tick: 0.25,
+        track: 8
+      }
+    }
+  };
+
+  // src/rules/attacks/schema.ts
+  var BODY_KINDS = ["melee", "bolt", "lob", "runner", "beam", "area", "zone", "mine", "seed", "lure"];
+  var PATTERNS = ["single", "burst", "fan", "ring", "spray", "wall", "volley"];
+  var AIMS = ["target", "lead", "dodge", "ahead", "caster", "random", "spot"];
+  var SPEED_PROFILES = ["constant", "slow", "accel", "decel", "stopGo"];
+  var AREA_SHAPES = ["disc", "ring", "donut", "cone", "safeCircle", "cross", "line", "grid"];
+  var TELEGRAPH_KINDS = ["flash", "lane", "landing", "ring", "cone", "beamLine", "countdown", "arming", "chainNext", "tetherLine", "lockOn", "none"];
+  var EFFECT_NAMES = ["slow", "stun", "knockback", "pull", "root", "burn"];
+  var TELL_POSES = ["none", "rear", "crouch", "coil", "spread", "glow", "stamp"];
+  var num = (minimum = 0, unit, maximum) => ({ type: "number", minimum, ...maximum !== void 0 ? { maximum } : {}, ...unit ? { unit } : {} });
+  var int = (minimum = 0, maximum) => num(minimum, void 0, maximum);
+  var obj = (properties, required = []) => ({ type: "object", properties, required, additionalProperties: false });
+  var oneOf = (list) => ({ type: "string", enum: list });
+  var angle = () => ({ type: "number", minimum: -3600, maximum: 3600, unit: "\xB0" });
+  var PATH_TERM = {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      arc: obj({ height: num(0, "m") }, ["height"]),
+      curve: angle(),
+      wave: obj({ amp: num(0, "m"), freq: num(0, "Hz"), phase: num(0) }, ["amp", "freq"]),
+      spiral: obj({ rate: angle(), grow: num(-50, "m/s") }, ["rate", "grow"]),
+      home: obj({ turn: num(0, "\xB0/s"), after: num(0, "s"), giveUp: num(0, "m") }, ["turn"]),
+      boomerang: obj({ out: num(0, "m") }, ["out"]),
+      orbit: obj({ r: num(0, "m"), time: num(0, "s") }, ["r", "time"]),
+      runner: { type: "boolean" }
+    }
+  };
+  var EFFECT = obj({
+    slow: obj({ mult: num(0, void 0, 1), time: num(0, "s") }, ["mult", "time"]),
+    stun: num(0, "s"),
+    knockback: num(0, "m"),
+    pull: num(0, "m/s"),
+    root: num(0, "s"),
+    burn: obj({ dps: num(0), time: num(0, "s") }, ["dps", "time"])
+  });
+  function attackSchema() {
+    const child = obj({ attack: {}, from: oneOf(["self", "hit", "caster"]), aim: oneOf(AIMS), damage: num(0), at: num(0, "s") }, ["attack"]);
+    const children = { type: "array", items: child, maxItems: 64 };
+    return obj({
+      base: { type: "string" },
+      note: { type: "string" },
+      cast: obj({ range: num(0, "m"), windup: num(0, "s"), cooldown: num(0, "s"), casts: int(1, 99), rest: num(0, "s"), tell: obj({ pose: oneOf(TELL_POSES), glow: num(0, "s") }) }),
+      telegraph: obj({ kind: oneOf(TELEGRAPH_KINDS), lead: num(0, "s"), size: num(0, "m") }),
+      emit: obj({ pattern: oneOf(PATTERNS), n: int(1, 64), gap: num(0, "s"), angle: angle(), rate: angle(), spacing: num(0, "m"), holes: { type: "array", items: int(0, 63), maxItems: 64 }, time: num(0, "s"), offset: angle(), aim: oneOf(AIMS) }),
+      body: obj({ kind: oneOf(BODY_KINDS), radius: num(0, "m"), element: { type: "string" }, look: { type: "string" }, lunge: num(0, "m"), charge: obj({ speed: num(0, "m/s"), time: num(0, "s") }, ["speed", "time"]), flight: num(0, "s"), arm: num(0, "s"), trigger: num(0, "m"), pull: num(0, "m/s"), reach: num(0, "m") }),
+      path: { type: "array", items: PATH_TERM, maxItems: 8 },
+      speed: obj({ profile: oneOf(SPEED_PROFILES), v: num(0, "m/s"), to: num(0, "m/s"), time: num(0, "s"), go: num(0, "s"), pause: num(0, "s"), n: int(1, 16) }),
+      life: obj({ range: num(0, "m"), time: num(0, "s"), pierce: int(0, 8), bounce: { ...obj({ n: int(0, 8), keep: num(0, void 0, 1) }, ["n"]), nullable: true }, stick: { type: "boolean" } }),
+      beam: obj({ length: num(0, "m"), width: num(0, "m"), duration: num(0, "s"), tick: num(0.01, "s"), sweep: num(0, "\xB0/s"), track: num(0, "\xB0/s"), spin: angle(), charge: num(0, "s"), pulse: { type: "array", items: num(0, "s"), minItems: 2, maxItems: 2 }, strike: { type: "boolean" } }),
+      area: obj({ quake: { type: "boolean" }, shape: oneOf(AREA_SHAPES), r: num(0, "m"), inner: num(0, "m"), width: num(0, "m"), angle: num(0, "\xB0", 360), to: num(0, "m"), time: num(0, "s"), grow: num(0, "m/s"), waves: int(1, 16), gap: num(0, "s"), n: int(1, 64), spacing: num(0, "m"), delay: num(0, "s"), rain: obj({ n: int(1, 64), r: num(0, "m"), time: num(0, "s") }, ["n", "r", "time"]), at: oneOf(["caster", "target", "spot"]) }),
+      zone: obj({ r: num(0, "m"), time: num(0, "s"), tick: num(0.01, "s") }),
+      hit: obj({ damage: num(0), effect: EFFECT, allies: obj({ damage: num(0, void 0, 1), effects: { type: "array", items: oneOf(EFFECT_NAMES), maxItems: 6 } }), blink: { type: "boolean" } }),
+      force: obj({ r: num(0, "m"), push: { type: "number", minimum: -100, maximum: 100, unit: "m/s" }, who: oneOf(["all", "others", "foes"]) }, ["push"]),
+      on: obj({ hit: children, expire: children, bounce: children, land: children, timer: children }),
+      pack: obj({
+        chain: obj({ n: int(1, 16), range: num(0, "m"), hop: num(0, "s") }, ["n", "range"]),
+        relay: obj({ n: int(1, 16), hop: num(0, "s") }, ["n"]),
+        amplify: obj({ r: num(0, "m"), per: num(0), max: num(1) }, ["r", "per", "max"]),
+        tether: obj({ time: num(0, "s"), width: num(0, "m") }, ["time", "width"]),
+        triangulate: obj({ delay: num(0, "s"), r: num(0, "m") }, ["delay", "r"])
+      })
+    });
+  }
+  var ATTACK_FILE_SCHEMA = { type: "object", additionalProperties: attackSchema() };
+
+  // src/rules/attacks/parse.ts
+  var ORDER = Object.keys(attackSchema().properties);
+
+  // src/rules/attacks/engine.ts
+  var RAD = Math.PI / 180;
+
+  // src/rules/attacks/index.ts
+  var ATTACK_LIB = Object.fromEntries(Object.entries(attacks_default).filter(([k]) => !k.startsWith("_")));
+
+  // config/species-attacks.json
+  var species_attacks_default = {
+    _: "Each species' own attack in the composable grammar (rules/attacks/, docs/plans/attack-grammar.md step 5; Ed, 2026-10-27: within each biome every species a distinct style, the attacks growing more complex with its island's phase, the default from then on: ?attacks=old for the old ones). Its young's attack as written; its adult's the same grown (rules/attacks/species.ts adultOf: one more in its pattern, bigger, further). Damage: hit.damage is each thing's share of a cast's budget (the level's dps times its strength times its cooldown), so the many-shot ones carry less each. Every one at least the reaction floor from its first warning to its first harm (src/rules/attacks/species.test.ts). Its kind's own moves (a charge, a leap, a swoop, a burrow) and its pack's turns stay as they were: this is the attack those use when they strike.",
+    badger: { note: "a shoulder-barge lunge that knocks her back", cast: { range: 2.5, windup: 0.6, cooldown: 1.8, tell: { pose: "crouch" } }, body: { kind: "melee", lunge: 10 }, hit: { effect: { knockback: 7 } } },
+    dormouse: { note: "a quick seed flicked straight at her", cast: { range: 20, windup: 0.6, cooldown: 1.8 }, body: { kind: "bolt", radius: 0.5, element: "seed" }, speed: { v: 26 } },
+    fox: { note: "a foxfire wisp curving in", cast: { range: 18, windup: 0.6, cooldown: 1.8, tell: { pose: "glow", glow: 0.5 } }, body: { kind: "bolt", radius: 0.6, element: "foxfire" }, path: [{ curve: 30 }], speed: { v: 20 } },
+    hare: { note: "a stamp: the ground jolts round it", cast: { range: 3, windup: 0.6, cooldown: 1.8, tell: { pose: "stamp" } }, body: { kind: "area", element: "earth" }, area: { r: 4 }, hit: { damage: 0.8 } },
+    hedgehog: { note: "a ring of quills, short reach", cast: { range: 6, windup: 0.7, cooldown: 2.2, tell: { pose: "spread" } }, emit: { pattern: "ring", n: 6 }, body: { kind: "bolt", radius: 0.5, element: "thorn" }, speed: { v: 22 }, life: { range: 9 }, hit: { damage: 0.5 } },
+    marten: { note: "two pinecones thrown in quick succession", cast: { range: 18, windup: 0.6, cooldown: 2 }, emit: { pattern: "burst", n: 2, gap: 0.25 }, body: { kind: "bolt", radius: 0.5, element: "wood", look: "pinecone" }, speed: { v: 24 }, hit: { damage: 0.6 } },
+    mole: { note: "the ground heaves up where she stood", cast: { range: 20, windup: 0.9, cooldown: 2.4, tell: { pose: "stamp" } }, body: { kind: "area", element: "earth" }, area: { r: 3, at: "target" } },
+    snail: { note: "a slime patch round it that slows", cast: { range: 4, windup: 0.8, cooldown: 3 }, body: { kind: "zone", element: "slime" }, zone: { r: 3, time: 3, tick: 0.5 }, hit: { effect: { slow: { mult: 0.6, time: 1 } } } },
+    squirrel: { note: "an acorn lobbed onto where she stands", cast: { range: 22, windup: 0.6, cooldown: 2 }, body: { kind: "lob", radius: 2.5, flight: 1, element: "wood", look: "acorn" } },
+    stoat: { note: "the fastest, longest lunge at home", cast: { range: 2, windup: 0.5, cooldown: 1.4, tell: { pose: "coil" } }, body: { kind: "melee", lunge: 16 } },
+    beaver: { note: "three logs rolled at her side by side", cast: { range: 16, windup: 0.8, cooldown: 2.6, tell: { pose: "rear" } }, emit: { pattern: "wall", n: 3, spacing: 2.5 }, body: { kind: "runner", radius: 0.8, element: "wood", look: "log" }, speed: { v: 12 }, life: { range: 18 }, hit: { damage: 0.6, effect: { knockback: 5 } } },
+    boar: { note: "a goring sweep in an arc in front", cast: { range: 3, windup: 0.7, cooldown: 2, tell: { pose: "crouch" } }, body: { kind: "area", element: "earth" }, area: { shape: "cone", r: 4.5, angle: 70 }, hit: { effect: { knockback: 9 } } },
+    moth: { note: "a fluttering puff of dust that slows", cast: { range: 24, windup: 0.7, cooldown: 2.2, tell: { pose: "spread", glow: 0.5 } }, body: { kind: "bolt", radius: 0.8, element: "dust" }, path: [{ wave: { amp: 1.5, freq: 1.5 } }], speed: { v: 14 }, hit: { effect: { slow: { mult: 0.6, time: 1.5 } } } },
+    newt: { note: "a slime streak that passes through and slows", cast: { range: 18, windup: 0.7, cooldown: 2.2 }, body: { kind: "bolt", radius: 0.6, element: "slime" }, speed: { v: 20 }, life: { pierce: 1 }, hit: { effect: { slow: { mult: 0.7, time: 1.5 } } } },
+    stag: { note: "stamps marching out in a line toward her", cast: { range: 10, windup: 0.8, cooldown: 2.4, tell: { pose: "rear" } }, body: { kind: "area", element: "earth" }, area: { shape: "line", n: 4, r: 1.8, spacing: 2.5, delay: 0.15 }, hit: { damage: 0.5, effect: { knockback: 6 } } },
+    toad: { note: "a hop-splash lob that bounces once", cast: { range: 20, windup: 0.7, cooldown: 2.2, tell: { pose: "crouch" } }, body: { kind: "lob", radius: 2, flight: 0.8, element: "water" }, life: { bounce: { n: 1, keep: 0.5 } }, hit: { damage: 0.6 } },
+    elk: { note: "a frost stamp: a ring spreading out that knocks back", cast: { range: 6, windup: 0.8, cooldown: 2.6, tell: { pose: "stamp" } }, body: { kind: "area", element: "frost" }, area: { shape: "ring", r: 9, width: 1.5, grow: 12 }, hit: { effect: { knockback: 6 } } },
+    wolf: { note: "a frost bite lunge that slows and knocks back", cast: { range: 2, windup: 0.55, cooldown: 1.6, tell: { pose: "crouch" } }, body: { kind: "melee", lunge: 12, element: "frost" }, hit: { effect: { slow: { mult: 0.6, time: 1.5 }, knockback: 5 } } },
+    owl: { note: "a silent feather homing in, speeding up", cast: { range: 26, windup: 0.8, cooldown: 2.6, tell: { pose: "spread", glow: 0.6 } }, body: { kind: "bolt", radius: 0.7, element: "night", look: "feather" }, path: [{ home: { turn: 60, after: 0.3, giveUp: 4 } }], speed: { profile: "accel", v: 12, to: 26, time: 1 }, life: { range: 36 } },
+    raccoon: { note: "a junk can thrown out and coming back", cast: { range: 18, windup: 0.7, cooldown: 2.4 }, body: { kind: "bolt", radius: 0.7, element: "junk", look: "can" }, path: [{ boomerang: { out: 14 } }], speed: { v: 20 }, life: { range: 30, pierce: 1 }, hit: { damage: 0.6 } },
+    cat: { note: "three short claw slashes in a fan", cast: { range: 6, windup: 0.6, cooldown: 1.8, tell: { pose: "crouch" } }, emit: { pattern: "fan", n: 3, angle: 50 }, body: { kind: "bolt", radius: 0.6, element: "claw" }, speed: { v: 30 }, life: { range: 8, pierce: 1 }, hit: { damage: 0.5 } },
+    fennec: { note: "a sweeping spray of sand, slowing as it goes", cast: { range: 10, windup: 0.6, cooldown: 2, tell: { pose: "stamp" } }, emit: { pattern: "spray", n: 5, rate: 70, time: 0.6 }, body: { kind: "bolt", radius: 0.6, element: "sand" }, speed: { profile: "decel", v: 26, to: 12, time: 0.5 }, life: { range: 12 }, hit: { damage: 0.35 } },
+    bat: { note: "a screech: a ring spreading out that slows", cast: { range: 4, windup: 0.6, cooldown: 1.8, tell: { pose: "spread" } }, body: { kind: "area", element: "sound" }, area: { shape: "ring", r: 7, width: 1.5, grow: 14 }, hit: { damage: 0.8, effect: { slow: { mult: 0.7, time: 1 } } } },
+    snake: { note: "a curving, weaving venom spit that slows", cast: { range: 18, windup: 0.7, cooldown: 2.2, tell: { pose: "coil" } }, body: { kind: "bolt", radius: 0.6, element: "venom" }, path: [{ curve: 35 }, { wave: { amp: 0.8, freq: 2 } }], speed: { v: 22 }, hit: { effect: { slow: { mult: 0.6, time: 2 } } } },
+    heron: { note: "a beak-spear that speeds up and pierces", cast: { range: 26, windup: 0.8, cooldown: 2.4, tell: { pose: "rear" } }, body: { kind: "bolt", radius: 0.5, element: "water", look: "beak" }, speed: { profile: "accel", v: 18, to: 40, time: 0.4 }, life: { range: 32, pierce: 1 } },
+    otter: { note: "a skimming pebble, bouncing twice", cast: { range: 20, windup: 0.6, cooldown: 2 }, body: { kind: "lob", radius: 1.5, flight: 0.6, element: "water", look: "pebble" }, life: { bounce: { n: 2, keep: 0.7 } }, hit: { damage: 0.5 } },
+    lynx: { note: "a pouncing lunge that stuns", cast: { range: 2.5, windup: 0.6, cooldown: 2, tell: { pose: "coil" } }, body: { kind: "melee", lunge: 16 }, hit: { effect: { stun: 0.3, knockback: 4 } } },
+    raven: { note: "two curving feathers relayed through its packmate", cast: { range: 28, windup: 0.8, cooldown: 2.6, tell: { pose: "spread" } }, emit: { pattern: "fan", n: 2, angle: 30 }, body: { kind: "bolt", radius: 0.6, element: "night", look: "feather" }, path: [{ curve: -25 }], speed: { v: 26 }, life: { range: 34 }, hit: { damage: 0.6 }, pack: { relay: { n: 1 } } },
+    ram: { note: "a headbutt lunge that throws and stuns", cast: { range: 2.5, windup: 0.7, cooldown: 2, tell: { pose: "crouch" } }, body: { kind: "melee", lunge: 14 }, hit: { effect: { knockback: 12, stun: 0.25 } } },
+    salamander: { note: "a short fire breath sweeping across, burning creatures", cast: { range: 14, windup: 0.8, cooldown: 3, tell: { pose: "glow", glow: 0.8 } }, body: { kind: "beam", element: "fire" }, beam: { length: 14, width: 1.5, duration: 0.8, tick: 0.2, sweep: 30 }, hit: { effect: { burn: { dps: 1, time: 2 } } } },
+    meerkat: { note: "three pebbles arcing in quick succession", cast: { range: 20, windup: 0.6, cooldown: 2.2, tell: { pose: "rear" } }, emit: { pattern: "burst", n: 3, gap: 0.2 }, body: { kind: "bolt", radius: 0.5, element: "sand", look: "pebble" }, speed: { v: 26 }, hit: { damage: 0.4 }, path: [{ arc: { height: 2 } }] },
+    spider: { note: "a web shot that roots, leaving a web patch", cast: { range: 20, windup: 0.7, cooldown: 2.6, tell: { pose: "rear" } }, body: { kind: "bolt", radius: 0.8, element: "web" }, speed: { v: 22 }, life: { range: 20 }, hit: { damage: 0.7, effect: { root: 0.5 } }, on: { expire: [{ attack: { cast: { windup: 0.45 }, body: { kind: "zone", element: "web" }, zone: { r: 2.5, time: 3 }, hit: { damage: 0.15, effect: { slow: { mult: 0.5, time: 1 } } } } }] } },
+    arcticfox: { note: "a frost shard that bursts into three where it ends", cast: { range: 18, windup: 0.7, cooldown: 2.4, tell: { pose: "crouch" } }, body: { kind: "bolt", radius: 0.6, element: "frost" }, speed: { v: 24 }, life: { range: 12 }, hit: { damage: 0.6 }, on: { expire: [{ attack: { cast: { windup: 0.45 }, emit: { pattern: "fan", n: 3, angle: 60 }, body: { kind: "bolt", radius: 0.5, element: "frost" }, speed: { v: 20 }, life: { range: 8 }, hit: { damage: 0.4, effect: { slow: { mult: 0.6, time: 1 } } } } }] } },
+    penguin: { note: "a belly-slide that slows to a stop on an ice patch", cast: { range: 14, windup: 0.7, cooldown: 2.6, tell: { pose: "crouch" } }, body: { kind: "runner", radius: 0.9, element: "frost" }, speed: { profile: "decel", v: 18, to: 6, time: 1 }, life: { range: 16 }, hit: { damage: 0.7 }, on: { expire: [{ attack: { cast: { windup: 0.45 }, body: { kind: "zone", element: "ice" }, zone: { r: 3, time: 3 }, hit: { damage: 0.2, effect: { slow: { mult: 0.5, time: 1 } } } } }] } },
+    flyingsquirrel: { note: "an acorn that scatters four splinters where it lands", cast: { range: 22, windup: 0.7, cooldown: 2.6 }, body: { kind: "lob", radius: 1.5, flight: 1, element: "wood", look: "acorn" }, hit: { damage: 0.6 }, on: { land: [{ attack: { cast: { windup: 0.45 }, emit: { pattern: "ring", n: 4, offset: 45 }, body: { kind: "bolt", radius: 0.5, element: "wood" }, speed: { v: 16 }, life: { range: 6 }, hit: { damage: 0.3 } } }] } },
+    roe: { note: "kicks in a cross round where she stood", cast: { range: 12, windup: 0.8, cooldown: 2.6, tell: { pose: "stamp" } }, body: { kind: "area", element: "earth" }, area: { shape: "cross", n: 2, r: 1.6, spacing: 2.5, delay: 0.2, at: "target" }, hit: { damage: 0.4, effect: { knockback: 5 } } },
+    cheetah: { note: "a dust devil accelerating at her, leaving dust", cast: { range: 18, windup: 0.6, cooldown: 2.2, tell: { pose: "crouch" } }, body: { kind: "runner", radius: 1, element: "sand", look: "dust" }, speed: { profile: "accel", v: 10, to: 34, time: 0.6 }, life: { range: 22 }, hit: { damage: 0.7 }, on: { expire: [{ attack: { cast: { windup: 0.45 }, body: { kind: "zone", element: "sand" }, zone: { r: 2.5, time: 2 }, hit: { damage: 0.2, effect: { slow: { mult: 0.7, time: 1 } } } } }] } },
+    lion: { note: "a roar: a wide cone that throws and stuns", cast: { range: 6, windup: 0.9, cooldown: 3, tell: { pose: "rear" } }, body: { kind: "area", element: "sound" }, area: { shape: "cone", r: 9, angle: 60 }, hit: { effect: { knockback: 8, stun: 0.3 } } },
+    jaguar: { note: "a long-telegraphed pounce onto where she stood", cast: { range: 14, windup: 0.9, cooldown: 2.4, tell: { pose: "coil" } }, body: { kind: "area", element: "claw" }, area: { r: 2.5, at: "target" }, hit: { effect: { knockback: 6 } } },
+    tiger: { note: "three raking slashes in a wide fan that pierce", cast: { range: 7, windup: 0.75, cooldown: 2.2, tell: { pose: "rear" } }, emit: { pattern: "fan", n: 3, angle: 70 }, body: { kind: "bolt", radius: 0.8, element: "claw" }, speed: { v: 32 }, life: { range: 8, pierce: 1 }, hit: { damage: 0.5, effect: { knockback: 4 } } },
+    crocodile: { note: "a whirlpool that drags her in while it bites", cast: { range: 8, windup: 0.9, cooldown: 3, tell: { pose: "crouch" } }, body: { kind: "zone", element: "water" }, zone: { r: 6, time: 2, tick: 0.5 }, force: { r: 6, push: -4, who: "foes" }, hit: { damage: 0.8 } },
+    dragonfly: { note: "a weaving spark that chains from foe to foe", cast: { range: 22, windup: 0.7, cooldown: 2.4, tell: { pose: "glow", glow: 0.6 } }, body: { kind: "bolt", radius: 0.5, element: "spark" }, speed: { v: 30 }, hit: { damage: 0.6 }, pack: { chain: { n: 2, range: 9 } }, path: [{ wave: { amp: 1, freq: 2.5 } }] },
+    ibex: { note: "a rockfall marching out in a line", cast: { range: 16, windup: 0.9, cooldown: 2.8, tell: { pose: "stamp" } }, body: { kind: "area", element: "rock" }, area: { shape: "line", n: 5, r: 1.8, spacing: 3, delay: 0.18 }, hit: { damage: 0.4, effect: { knockback: 6 } } },
+    redpanda: { note: "a leaf thrown out swaying and coming back", cast: { range: 18, windup: 0.7, cooldown: 2.4 }, body: { kind: "bolt", radius: 0.6, element: "wood", look: "leaf" }, path: [{ boomerang: { out: 12 } }, { wave: { amp: 1.2, freq: 1.2 } }], speed: { v: 18 }, life: { range: 26, pierce: 1 }, hit: { damage: 0.5 } },
+    beetle: { note: "a dung bomb laid at her feet: a blast and a ring of embers", cast: { range: 16, windup: 0.7, cooldown: 3, tell: { pose: "rear" } }, body: { kind: "mine", arm: 0.8, trigger: 2, element: "fire", look: "dung" }, area: { r: 3 }, life: { time: 8 }, hit: { damage: 0.7 }, on: { hit: [{ attack: { cast: { windup: 0.45 }, emit: { pattern: "ring", n: 4 }, body: { kind: "bolt", radius: 0.5, element: "fire" }, speed: { v: 14 }, life: { range: 7 }, hit: { damage: 0.3 } } }] } },
+    woodlouse: { note: "a stop-and-go roll, re-aiming at each stop", cast: { range: 16, windup: 0.8, cooldown: 2.6, tell: { pose: "coil" } }, body: { kind: "runner", radius: 1, element: "stone", look: "roll" }, speed: { profile: "stopGo", v: 16, go: 0.5, pause: 0.45, n: 3 }, life: { range: 22 }, hit: { effect: { knockback: 7 } } },
+    armadillo: { note: "a roll that bursts into pebbles at its end", cast: { range: 18, windup: 0.8, cooldown: 2.6, tell: { pose: "coil" } }, body: { kind: "runner", radius: 1, element: "stone", look: "roll" }, speed: { v: 16 }, life: { range: 18 }, hit: { damage: 0.7, effect: { knockback: 5 } }, on: { expire: [{ attack: { cast: { windup: 0.45 }, emit: { pattern: "ring", n: 5 }, body: { kind: "bolt", radius: 0.5, element: "sand", look: "pebble" }, speed: { v: 14 }, life: { range: 6 }, hit: { damage: 0.3 } } }] } },
+    rattlesnake: { note: "two venom traps laid round her", cast: { range: 16, windup: 0.7, cooldown: 3, tell: { pose: "coil" } }, emit: { pattern: "fan", n: 2, angle: 40 }, body: { kind: "mine", arm: 0.7, trigger: 1.8, element: "venom" }, area: { r: 2.5 }, life: { time: 7 }, hit: { damage: 0.6, effect: { slow: { mult: 0.5, time: 2 } } } },
+    griffin: { note: "a dive that lands as a gust: a ring of curving feathers", cast: { range: 26, windup: 0.9, cooldown: 3.2, tell: { pose: "spread", glow: 0.6 } }, body: { kind: "lob", radius: 3, flight: 1.2, element: "wind" }, hit: { damage: 0.6, effect: { knockback: 6 } }, on: { land: [{ attack: { cast: { windup: 0.45 }, emit: { pattern: "ring", n: 6 }, body: { kind: "bolt", radius: 0.6, element: "wind", look: "feather" }, path: [{ curve: 40 }], speed: { v: 16 }, life: { range: 10 }, hit: { damage: 0.25 } } }] } },
+    scorpion: { note: "a sting that sticks, then bursts a venom cloud", cast: { range: 18, windup: 0.8, cooldown: 3, tell: { pose: "rear" } }, body: { kind: "bolt", radius: 0.6, element: "venom", look: "sting" }, speed: { v: 26 }, life: { stick: true }, hit: { damage: 0.3, effect: { slow: { mult: 0.7, time: 1.5 } } }, on: { timer: [{ at: 1.4, attack: { body: { kind: "area", element: "venom" }, area: { r: 3 }, hit: { damage: 0.8, allies: { effects: ["slow"] }, effect: { slow: { mult: 0.5, time: 2 } } } } }] } },
+    frosttroll: { note: "three frost rings spreading out one after another", cast: { range: 6, windup: 1, cooldown: 3.4, tell: { pose: "stamp" } }, body: { kind: "area", element: "ice" }, area: { shape: "ring", r: 10, width: 1.5, grow: 10, waves: 3, gap: 0.6 }, hit: { damage: 0.4, allies: { effects: ["slow"] }, effect: { slow: { mult: 0.5, time: 1.5 } } } },
+    polarbear: { note: "icicles raining round where she stood", cast: { range: 22, windup: 1, cooldown: 3.6, tell: { pose: "rear" } }, body: { kind: "area", element: "ice", look: "icicle" }, area: { r: 1.8, rain: { n: 7, r: 6, time: 1.2 }, at: "target" }, telegraph: { lead: 0.8 }, hit: { damage: 0.3 } },
+    bear: { note: "a huge swat in a wide arc", cast: { range: 4, windup: 0.9, cooldown: 3, tell: { pose: "rear" } }, body: { kind: "area", element: "earth" }, area: { shape: "cone", r: 6, angle: 100 }, hit: { damage: 0.8, allies: { effects: ["knockback"] }, effect: { knockback: 10 } } },
+    unicorn: { note: "a rainbow strung between two unicorns", cast: { range: 22, windup: 0.8, cooldown: 3.4, tell: { pose: "glow", glow: 1 } }, body: { kind: "beam", element: "rainbow" }, beam: { tick: 0.25 }, pack: { tether: { time: 2.5, width: 1.5 } }, hit: { effect: { slow: { mult: 0.6, time: 1 } } } },
+    rhino: { note: "a stampede: two charging runners with a gap to slip through", cast: { range: 18, windup: 0.9, cooldown: 3.2, tell: { pose: "crouch" } }, emit: { pattern: "wall", n: 3, spacing: 3, holes: [1] }, body: { kind: "runner", radius: 1.2, element: "earth", look: "dust" }, speed: { profile: "accel", v: 8, to: 24, time: 0.8 }, life: { range: 24 }, hit: { damage: 0.6, allies: { effects: ["knockback"] }, effect: { knockback: 9 } } },
+    sphinx: { note: "a golden gaze beam that charges, then tracks her", cast: { range: 22, windup: 0.8, cooldown: 3.6, tell: { pose: "glow", glow: 1 } }, body: { kind: "beam", element: "gold" }, beam: { length: 22, width: 1.5, duration: 1.6, tick: 0.2, track: 25, charge: 0.6 }, hit: { effect: { stun: 0.2 } } },
+    elephant: { note: "two great stomp rings that throw", cast: { range: 6, windup: 1, cooldown: 3.4, tell: { pose: "stamp" } }, body: { kind: "area", element: "earth" }, area: { shape: "ring", r: 11, width: 2, grow: 9, waves: 2, gap: 0.8 }, hit: { damage: 0.6, allies: { effects: ["knockback"] }, effect: { knockback: 8 } } },
+    featheredserpent: { note: "six feathers spiralling out", cast: { range: 18, windup: 0.9, cooldown: 3.2, tell: { pose: "spread", glow: 0.8 } }, emit: { pattern: "ring", n: 6 }, body: { kind: "bolt", radius: 0.6, element: "wind", look: "feather" }, path: [{ spiral: { rate: 90, grow: 6 } }], speed: { v: 14 }, life: { time: 3 }, hit: { damage: 0.3 } },
+    crab: { note: "three crabs mark a triangle and the water inside erupts", cast: { range: 16, windup: 0.7, cooldown: 3.4, tell: { pose: "spread" } }, body: { kind: "area", element: "water" }, pack: { triangulate: { delay: 0.8, r: 18 } }, hit: { effect: { knockback: 6 } } },
+    hydra: { note: "three heads spit homing venom that leaves pools", cast: { range: 20, windup: 0.9, cooldown: 3.2, tell: { pose: "rear", glow: 0.6 } }, emit: { pattern: "fan", n: 3, angle: 50 }, body: { kind: "bolt", radius: 0.6, element: "venom" }, path: [{ home: { turn: 40, after: 0.4, giveUp: 4 } }], speed: { v: 16 }, life: { range: 24 }, hit: { damage: 0.35 }, on: { expire: [{ attack: { cast: { windup: 0.45 }, body: { kind: "zone", element: "venom" }, zone: { r: 2, time: 2.5 }, hit: { damage: 0.15, effect: { slow: { mult: 0.6, time: 1 } } } } }] } },
+    frostwyrm: { note: "a frost breath sweeping wide after a charge", cast: { range: 20, windup: 0.9, cooldown: 3.6, tell: { pose: "rear", glow: 1 } }, body: { kind: "beam", element: "frost" }, beam: { length: 20, width: 2, duration: 1.4, tick: 0.2, sweep: 45, charge: 0.4 }, hit: { effect: { slow: { mult: 0.5, time: 1.5 } } } },
+    snowleopard: { note: "frost bursts in a cross round where she stood", cast: { range: 18, windup: 0.8, cooldown: 3, tell: { pose: "coil" } }, body: { kind: "area", element: "frost" }, area: { shape: "cross", n: 3, r: 1.6, spacing: 3, delay: 0.15, at: "target" }, hit: { damage: 0.35, effect: { slow: { mult: 0.6, time: 1 } } } },
+    komodo: { note: "a weaving venom bolt that burns and leaves a pool", cast: { range: 16, windup: 0.8, cooldown: 3, tell: { pose: "coil" } }, body: { kind: "bolt", radius: 0.7, element: "venom" }, path: [{ wave: { amp: 1, freq: 2 } }], speed: { v: 20 }, hit: { damage: 0.6, effect: { burn: { dps: 0.8, time: 3 }, slow: { mult: 0.6, time: 2 } } }, on: { hit: [{ from: "hit", attack: { cast: { windup: 0.45 }, body: { kind: "zone", element: "venom" }, zone: { r: 2.5, time: 3 }, hit: { damage: 0.2, effect: { slow: { mult: 0.6, time: 1 } } } } }] } },
+    stegosaurus: { note: "a spray of tail spikes swept round", cast: { range: 10, windup: 0.9, cooldown: 3.4, tell: { pose: "spread" } }, emit: { pattern: "spray", n: 8, rate: 200, time: 1 }, body: { kind: "bolt", radius: 0.7, element: "bone", look: "spike" }, speed: { v: 20 }, life: { range: 12 }, hit: { damage: 0.25, effect: { knockback: 4 } } }
+  };
+
+  // src/rules/attacks/species.ts
+  var FILE = species_attacks_default;
+  var SPECIES_ATTACKS = Object.fromEntries(Object.entries(FILE).filter(([k, v]) => !k.startsWith("_") && typeof v === "object"));
 
   // src/rules/buffs.ts
   var R4 = legend_buffs_default;
@@ -18198,16 +18823,16 @@ registerProcessor("witch-fof", WitchFof);
       const c = this.ctx, send = c.createGain(), l = c.createDelay(3), r = c.createDelay(3), fb = c.createGain();
       send.gain.value = 0;
       fb.gain.value = 0.42;
-      const merge = c.createChannelMerger(2), tone = c.createBiquadFilter();
+      const merge2 = c.createChannelMerger(2), tone = c.createBiquadFilter();
       tone.type = "lowpass";
       tone.frequency.value = 4500;
       this.air.connect(send).connect(l);
       l.connect(r);
       r.connect(fb).connect(tone).connect(l);
-      l.connect(merge, 0, 0);
-      r.connect(merge, 0, 1);
-      merge.connect(this.wet);
-      return { send, l, r, nodes: [send, l, r, fb, merge, tone] };
+      l.connect(merge2, 0, 0);
+      r.connect(merge2, 0, 1);
+      merge2.connect(this.wet);
+      return { send, l, r, nodes: [send, l, r, fb, merge2, tone] };
     }
     /** A dark hall (the swells go into it too). */
     buildHall() {
@@ -18550,6 +19175,32 @@ registerProcessor("witch-fof", WitchFof);
     g0 = NaN;
     a0 = 0;
     rate = 1;
+    /** Drawn ahead (platform/audio/musicAhead.ts; docs/notes/music.md "Music ahead"): from `from` to `to` (audio time) the main
+     *  notes and their bus automation are the bars drawn ahead, this engine playing the hooks' parts alone (and a legend's
+     *  clearing layer, as ever); and while it's set, the timeline never eased or re-anchored to the game (the bars are fixed on
+     *  the audio clock: the audio clock is the music's), but after a pause, a new run or a jump in time. */
+    handoff = { from: Infinity, to: Infinity };
+    /** The music's own time now (game time as the music has it), and the audio time a music time is heard at (early by the lead). */
+    musicTime(now = this.ctx.currentTime) {
+      return this.g0 + (now - this.a0) * this.rate;
+    }
+    audioAt(g) {
+      return this.a0 + (g - this.g0) / this.rate - this.leadNow;
+    }
+    /** Its timeline's anchor: the audio time music time 0 is at (the lead left out: that eases on its own). */
+    get anchorAt() {
+      return this.a0 - this.g0 / this.rate;
+    }
+    /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat): its timeline the same on the
+     *  audio clock, in the game's new reckoning. */
+    shiftTime(lost2) {
+      if (Number.isFinite(this.g0)) this.g0 -= lost2;
+    }
+    /** Whether its timeline is anchored (it's been played since its last jump). */
+    get anchored() {
+      return Number.isFinite(this.g0);
+    }
+    wasPlaying = false;
     /** Continuity, for the checks (tools/music-lab/flight.cjs) and the playtest log: times the timeline was re-anchored,
      *  sixteenths a stall made late (held and played, not dropped), audio seconds left with nothing scheduled between one
      *  sixteenth and the next, and how far ahead it schedules now (s). */
@@ -18659,6 +19310,10 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** The recorded voices the sample patches sing (samples/voices: platform/audio/voiceSamples.ts loads them). */
     recordings = /* @__PURE__ */ new Map();
+    /** The recordings it sings from (a renderer drawing ahead sings from the same). */
+    get recorded() {
+      return Object.fromEntries(this.recordings);
+    }
     setRecordings(recs) {
       for (const [k, b] of Object.entries(recs)) this.recordings.set(k, b);
     }
@@ -18744,8 +19399,11 @@ registerProcessor("witch-fof", WitchFof);
         this.cNext = -1;
         this.heardTo = -1;
         this.lastNow = -1;
+        this.wasPlaying = false;
         return;
       }
+      const drawn = Number.isFinite(this.handoff.from), resumed = !this.wasPlaying;
+      this.wasPlaying = true;
       const knocks = cue2.knockdowns?.length ?? 0;
       if (knocks < this.knocksHeard) this.knocksHeard = knocks;
       if (knocks > this.knocksHeard) {
@@ -18772,8 +19430,9 @@ registerProcessor("witch-fof", WitchFof);
       ahead = Math.max(ahead, this.lagAhead);
       this.stats.ahead = ahead;
       const err = gameTime - (this.g0 + (now - this.a0) * rate), slew = _MusicEngine.slew * Math.min(dtA, 0.05) * rate;
-      if (!Number.isFinite(err) || err > 0.25 * rate) {
-        if (Number.isFinite(this.g0)) this.stats.resyncs++;
+      if (drawn && Number.isFinite(err) && !resumed && err > -30 && err < 2) {
+      } else if (!Number.isFinite(err) || err > 0.25 * rate || drawn && resumed) {
+        if (Number.isFinite(this.g0) && !(drawn && resumed)) this.stats.resyncs++;
         this.g0 = gameTime;
         this.a0 = now;
         this.nextStep = -1;
@@ -18782,17 +19441,18 @@ registerProcessor("witch-fof", WitchFof);
         this.stats.resyncs++;
       } else this.g0 += Math.max(-slew, Math.min(slew, err * 0.05));
       const audioAt = (g) => this.a0 + (g - this.g0) / rate - L2;
-      if (this.nextStep < 0 || this.nextStep < stepNow - 1 || this.nextStep > stepNow + 64) {
-        this.nextStep = Math.ceil(stepNow);
-        if (this.lastStep < stepNow + 64 && this.lastStep >= stepNow - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
+      const stepMusic = drawn ? beatAt(clock2, this.musicTime(now)) * 4 : stepNow;
+      if (this.nextStep < 0 || this.nextStep < stepMusic - 1 || this.nextStep > stepMusic + 64) {
+        this.nextStep = Math.ceil(stepMusic);
+        if (this.lastStep < stepMusic + 64 && this.lastStep >= stepMusic - 64) this.nextStep = Math.max(this.nextStep, this.lastStep + 1);
       }
       this.bpmNow = bpmAt(clock2, gameTime) * rate;
       this.delay.delayTime.setTargetAtTime(Math.min(4, this.style.mix.delayBeats * 60 / bpmAt(clock2, gameTime) / rate), now, 0.05);
       if (this.heardTo >= 0 && this.nextStep >= 0) {
         const t = audioAt(timeAt(clock2, this.nextStep / 4));
         if (t < now) {
-          this.a0 += now + 5e-3 - t;
           this.stats.late++;
+          if (!drawn) this.a0 += now + 5e-3 - t;
         }
       }
       for (; ; ) {
@@ -18838,8 +19498,13 @@ registerProcessor("witch-fof", WitchFof);
       for (let s = first; ; s++) {
         const g = timeAt(clock2, s / 4);
         if (g >= from + seconds) break;
+        if (this.stems) this.bpmNow = bpmAt(clock2, g);
         this.step(cue2, s, at2 + (g - from), 60 / bpmAt(clock2, g) / 4);
       }
+    }
+    /** The bus's automation from `t` on let go (the bars drawn ahead from there dropped, to be drawn again). */
+    cancelBusFrom(t) {
+      for (const p of [this.tone.frequency, this.duckBus.gain, this.gate.gain]) p.cancelScheduledValues(t);
     }
     /** Stop scheduling and forget the plans (a jump in the timeline). */
     reset() {
@@ -18869,28 +19534,30 @@ registerProcessor("witch-fof", WitchFof);
     /** One sixteenth: `t` its audio time, `sps` seconds a sixteenth lasts now. */
     step(cue2, step2, t, sps) {
       const S = this.style, B = S.blockBars, bar2 = Math.floor(step2 / 16), s = step2 - bar2 * 16;
+      const drawn = t >= this.handoff.from && t < this.handoff.to;
       if (silentAt(cue2, step2 / 16)) {
         if (!this.gated) {
-          this.sink.gate(false, t);
+          if (!drawn) this.sink.gate(false, t);
           this.gated = true;
         }
         return;
       }
       if (this.gated) {
-        this.sink.gate(true, t);
+        if (!drawn) this.sink.gate(true, t);
         this.gated = false;
       }
       const plan = this.conductor.plan(cue2, bar2);
       const next = bar2 % B === B - 1 ? this.conductor.plan(cue2, bar2 + 1) : null;
       this.current = { plan, bar: bar2, step: step2 };
-      if (s === 0) {
+      if (s === 0 && !drawn) {
         const sec = resolveSection(S, plan.section), barIn = bar2 - plan.start;
         const b0 = bootLayers(cue2, bar2), b1 = bootLayers(cue2, bar2 + 1);
         const boot = cue2.speakerBars !== void 0 && plan.section === S.intro;
         const f0 = sectionCutoff(sec, boot ? b0 : barIn / plan.bars), f1 = sectionCutoff(sec, boot ? b1 : (barIn + 1) / plan.bars);
         this.sink.tone(f0, f1, t, 16 * sps);
       }
-      const events = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
+      const all = notesAt(S, plan, next, step2, { ...this.formAt(cue2, bar2), siege: cue2.siege, party: cue2.party, legend: cue2.legend, only: "main", build: cue2.speakerBars !== void 0 ? bootLayers(cue2, bar2) : void 0 });
+      const events = drawn ? all.filter((e) => e.hook) : all;
       const swing = step2 % 2 === 1 ? S.swing * sps : 0;
       this.playAll(events, (e) => t + (e.straight ? 0 : swing) + e.offset * sps, sps);
     }
@@ -19138,7 +19805,7 @@ registerProcessor("witch-fof", WitchFof);
       s.loop = length > 1.5;
       if (this.notePitch !== 1) s.playbackRate.value = this.notePitch;
       const at2 = t + (this.stems ? this.phaseAt : 0);
-      s.start(t, at2 * 7.31 % 1 * 0.5);
+      s.start(t, (at2 * 7.31 % 1 + 1) % 1 * 0.5);
       s.stop(t + length);
       return s;
     }
@@ -19718,7 +20385,265 @@ registerProcessor("witch-fof", WitchFof);
     }
   }
 
+  // src/platform/audio/musicAhead.ts
+  var AHEAD = 6;
+  var START = 2.5;
+  var TAIL = 2.5;
+  var RENDERING = 2;
+  var cueKey = (c) => JSON.stringify({ ...c, siege: 0, party: 0, legend: 0, circle: void 0 });
+  var styleIds = /* @__PURE__ */ new WeakMap();
+  var styleNext = 0;
+  var MusicAhead = class {
+    constructor(engine, ctx2) {
+      this.engine = engine;
+      this.ctx = ctx2;
+    }
+    engine;
+    ctx;
+    /** Bars drawn and how (the stall test and the playtest log read it): rendered, arrived too late to be heard whole, dropped
+     *  (the music changed), the time rendering took in all (ms), how far ahead the queue reaches now (s). */
+    stats = { rendered: 0, late: 0, dropped: 0, renderMs: 0, queuedAhead: 0 };
+    /** What of the cue changed, the last few times the bars were dropped (the playtest log's). */
+    changed = [];
+    lastCue = {};
+    bars = /* @__PURE__ */ new Map();
+    key = "";
+    on = false;
+    next = 0;
+    anchor = NaN;
+    /** Whether it's drawing ahead now. */
+    get drawing() {
+      return this.on;
+    }
+    /** Each frame, before the engine's: `allowed`, whether it may draw ahead now (the world at full speed, the voice a recording,
+     *  no lab), the queue filled to AHEAD seconds. */
+    update(cue2, clock2, playing2, allowed) {
+      const E2 = this.engine, now = this.ctx.currentTime;
+      if (!playing2 || !E2.anchored) {
+        this.stopAll(now);
+        return;
+      }
+      if (!allowed) {
+        this.handBack(now, clock2);
+        return;
+      }
+      const anchor = E2.anchorAt;
+      if (this.on && Math.abs(anchor - this.anchor) > 2e-3) this.stopAll(now);
+      this.anchor = anchor;
+      const k = `${cueKey(cue2)}|${this.styleId()}|${E2.seed}|${E2.shed}`;
+      if (this.on && k !== this.key) {
+        let first = Infinity;
+        for (const B of this.bars.values()) if (B.state !== "dropped" && E2.audioAt(B.g) > now + 0.05 && B.sig !== this.sigOf(cue2, B.bar)) first = Math.min(first, B.bar);
+        if (Number.isFinite(first)) {
+          const was = this.lastCue, why = Object.keys({ ...was, ...cue2 }).filter((f) => !["siege", "party", "legend", "circle"].includes(f) && JSON.stringify(was[f]) !== JSON.stringify(cue2[f]));
+          this.changed.push(why.join(",") || "style/seed/shed");
+          if (this.changed.length > 8) this.changed.shift();
+          this.dropFrom(now, clock2, first);
+        }
+      }
+      this.key = k;
+      this.lastCue = { ...cue2 };
+      if (!this.on) {
+        let b = Math.ceil(this.barAt(E2.musicTime(now), clock2));
+        while (E2.audioAt(timeAt(clock2, b * 4)) < now + START) b++;
+        E2.handoff = { from: Math.max(E2.audioAt(timeAt(clock2, b * 4)), Number.isFinite(E2.handoff.to) ? E2.handoff.to : -Infinity), to: Infinity };
+        this.next = b;
+        this.on = true;
+        this.bars.clear();
+      }
+      let rendering = 0;
+      for (const B of this.bars.values()) if (B.state === "rendering") rendering++;
+      while (rendering < RENDERING && E2.audioAt(timeAt(clock2, this.next * 4)) < now + AHEAD) {
+        this.render(this.next, cue2, clock2);
+        this.next++;
+        rendering++;
+      }
+      this.stats.queuedAhead = Math.max(0, E2.audioAt(timeAt(clock2, this.next * 4)) - now);
+      for (const [b, B] of this.bars) if (B.state !== "rendering" && E2.audioAt(B.g + B.dur) + TAIL < now) this.bars.delete(b);
+    }
+    /** The game's beat moved on by `lost` seconds to where the music is (rules/beat.ts shiftBeat; the engine's shifted with it):
+     *  the bars queued the same on the audio clock, their music times in the game's new reckoning. */
+    shiftTime(lost2) {
+      for (const B of this.bars.values()) B.g -= lost2;
+      if (this.on) this.anchor = this.engine.anchorAt;
+    }
+    /** The bar holding music time `g` (fractional). */
+    barAt(g, clock2) {
+      let lo = Math.floor(g / 4) - 64, hi = lo + 256;
+      while (timeAt(clock2, lo * 4) > g) lo -= 64;
+      while (timeAt(clock2, hi * 4) <= g) hi += 64;
+      while (hi - lo > 1) {
+        const m = lo + hi >> 1;
+        if (timeAt(clock2, m * 4) <= g) lo = m;
+        else hi = m;
+      }
+      return lo + (g - timeAt(clock2, lo * 4)) / Math.max(1e-6, timeAt(clock2, (lo + 1) * 4) - timeAt(clock2, lo * 4));
+    }
+    /** What bar `b`'s notes hang on in `cue`: its block's plan (and the next's, for a fill), the boot's layers over it, its form,
+     *  a knockdown over it; the style, seed and shed in the key already. */
+    sigOf(cue2, b) {
+      const S = this.engine.style, C2 = new Conductor(S);
+      return JSON.stringify([C2.plan(cue2, b), (b + 1) % S.blockBars === 0 ? C2.plan(cue2, b + 1) : null, bootLayers(cue2, b), bootLayers(cue2, b + 1), formClock(S, cue2, b), (cue2.knockdowns ?? []).filter((k) => k.at < b + 1 && Math.ceil(k.back - 1e-3) > b), cue2.victory !== void 0 && b >= cue2.victory - cue2.victory % S.blockBars, cue2.knockedOut]);
+    }
+    styleId() {
+      const s = this.engine.style;
+      let id = styleIds.get(s);
+      if (id === void 0) styleIds.set(s, id = ++styleNext);
+      return id;
+    }
+    /** Bar `b` drawn: its notes queued on a renderer (carrying on from the bar before's), rendered off the page's thread. */
+    render(b, cue2, clock2) {
+      const E2 = this.engine, sr = this.ctx.sampleRate, g = timeAt(clock2, b * 4), dur = timeAt(clock2, (b + 1) * 4) - g;
+      const oc = new OfflineAudioContext(9, Math.ceil(sr * (dur + TAIL)), sr), merge2 = oc.createChannelMerger(9);
+      merge2.connect(oc.destination);
+      const pair2 = (i) => {
+        const n = oc.createGain(), sp = oc.createChannelSplitter(2);
+        n.channelCount = 2;
+        n.channelCountMode = "explicit";
+        n.connect(sp);
+        sp.connect(merge2, 0, 2 * i);
+        sp.connect(merge2, 1, 2 * i + 1);
+        return n;
+      };
+      const voice = oc.createGain();
+      voice.channelCount = 1;
+      voice.channelCountMode = "explicit";
+      voice.connect(merge2, 0, 8);
+      const events = [];
+      const sink = {
+        duck: pair2(0),
+        dry: pair2(1),
+        reverb: pair2(2),
+        delay: pair2(3),
+        voice: () => voice,
+        tone: (f0, f1, t, d) => events.push({ kind: "tone", f0, f1, t, dur: d }),
+        duckAt: (t, depth, sps) => events.push({ kind: "duck", t, depth, sps }),
+        gate: (open, t) => events.push({ kind: "gate", open, t }),
+        fxChain: (part, fx, t) => events.push({ kind: "fx", part, fx, t }),
+        fxRelease: (part, t) => events.push({ kind: "release", part, t }),
+        fxSwell: (part, rec, rate, t, swell, peak) => events.push({ kind: "swell", part, rec, rate, t, swell, peak })
+      };
+      const r = new MusicEngine(oc, oc.destination, E2.style, E2.seed, oc.destination, sink);
+      r.setRecordings(E2.recorded);
+      r.shed = E2.shed;
+      const prev = this.bars.get(b - 1);
+      if (prev && prev.state !== "dropped") r.carryFrom(prev.renderer, g - prev.g);
+      r.renderAhead({ ...cue2, siege: 0, party: 0, legend: 0, circle: void 0 }, g, dur, clock2);
+      const B = { bar: b, g, dur, renderer: r, sig: this.sigOf(cue2, b), events, state: "rendering", asked: performance.now() };
+      this.bars.set(b, B);
+      void oc.startRendering().then((buf) => this.arrive(B, buf), () => {
+        B.state = "dropped";
+      });
+    }
+    /** A bar rendered: queued on the audio clock through the live buses (if it's still wanted), its automation played on them. */
+    arrive(B, buf) {
+      this.stats.renderMs += performance.now() - B.asked;
+      if (B.state === "dropped" || this.bars.get(B.bar) !== B) return;
+      const E2 = this.engine, c = this.ctx, now = c.currentTime, at2 = E2.audioAt(B.g);
+      this.stats.rendered++;
+      if (!Number.isFinite(at2)) {
+        B.state = "dropped";
+        return;
+      }
+      if (at2 < now) this.stats.late++;
+      if (at2 + B.dur < now) {
+        B.state = "dropped";
+        return;
+      }
+      const bus = E2.bus, sung = E2.style.form?.sung.part, voiceIn = sung ? E2.voiceIn(sung) : null;
+      const src = c.createBufferSource(), sp = c.createChannelSplitter(9), nodes = [sp];
+      src.buffer = buf;
+      src.connect(sp);
+      [bus.duck, bus.dry, bus.reverb, bus.delay].forEach((d, i) => {
+        const m = c.createChannelMerger(2);
+        sp.connect(m, 2 * i, 0);
+        sp.connect(m, 2 * i + 1, 1);
+        m.connect(d);
+        nodes.push(m);
+      });
+      if (voiceIn) sp.connect(voiceIn, 8);
+      src.onended = () => {
+        for (const n of nodes) try {
+          n.disconnect();
+        } catch {
+        }
+      };
+      if (at2 >= now) src.start(at2);
+      else src.start(now, now - at2);
+      for (const e of B.events) {
+        const t = at2 + e.t;
+        if (e.kind === "tone") bus.tone(e.f0, e.f1, t, e.dur);
+        else if (e.kind === "duck") {
+          if (t >= now) bus.duckAt(t, e.depth, e.sps);
+        } else if (e.kind === "gate") bus.gate(e.open, Math.max(now, t));
+        else if (e.kind === "fx") bus.fxChain?.(e.part, e.fx, t);
+        else if (e.kind === "release") bus.fxRelease?.(e.part, Math.max(now, t));
+        else bus.fxSwell?.(e.part, e.rec, e.rate, t, e.swell, e.peak);
+      }
+      B.src = src;
+      B.state = "queued";
+    }
+    /** The bars not yet heard (from `now`) dropped, to be drawn again from the first of them: the music they hang on changed. */
+    dropFrom(now, clock2, from = -Infinity) {
+      const E2 = this.engine;
+      let first = Infinity;
+      for (const B of this.bars.values()) {
+        if (B.state === "dropped" || B.bar < from || E2.audioAt(B.g) <= now + 0.05) continue;
+        first = Math.min(first, B.bar);
+        B.state = "dropped";
+        this.stats.dropped++;
+        try {
+          B.src?.stop();
+        } catch {
+        }
+      }
+      if (!Number.isFinite(first)) return;
+      for (const [b, B] of this.bars) if (B.state === "dropped") this.bars.delete(b);
+      E2.cancelBusFrom(E2.audioAt(timeAt(clock2, first * 4)) + 1e-4);
+      this.next = first;
+    }
+    /** Back to live from a bar line far enough in for the live engine's schedule (the world slowing, a lab opened): the bars
+     *  from there dropped, the engine playing everything from it. */
+    handBack(now, clock2) {
+      if (!this.on) return;
+      const E2 = this.engine;
+      let b = Math.ceil(this.barAt(E2.musicTime(now), clock2));
+      while (E2.audioAt(timeAt(clock2, b * 4)) < now + E2.stats.ahead + 0.05) b++;
+      const to = E2.audioAt(timeAt(clock2, b * 4));
+      for (const B of this.bars.values()) if (B.bar >= b && B.state !== "dropped") {
+        B.state = "dropped";
+        try {
+          B.src?.stop();
+        } catch {
+        }
+      }
+      for (const [k, B] of this.bars) if (B.state === "dropped") this.bars.delete(k);
+      E2.cancelBusFrom(to + 1e-4);
+      E2.handoff = { from: E2.handoff.from, to };
+      this.on = false;
+    }
+    /** Everything queued stopped (a pause, a jump in time, a new run): the engine plays everything as ever. */
+    stopAll(now = this.ctx.currentTime) {
+      if (!this.on && !this.bars.size) {
+        this.engine.handoff = { from: Infinity, to: Infinity };
+        return;
+      }
+      for (const B of this.bars.values()) {
+        B.state = "dropped";
+        try {
+          B.src?.stop(now + 0.3);
+        } catch {
+        }
+      }
+      this.bars.clear();
+      this.engine.cancelBusFrom(now);
+      this.engine.handoff = { from: Infinity, to: Infinity };
+      this.on = false;
+    }
+  };
+
   // src/platform/audio/music.ts
+  var SHIFT_MIN = 0.04;
   var smooth01 = (x) => {
     const t = Math.max(0, Math.min(1, x));
     return t * t * (3 - 2 * t);
@@ -19727,7 +20652,7 @@ registerProcessor("witch-fof", WitchFof);
     return !S?.on || rate >= 1 ? 1 : Math.max(S.floor, Math.pow(Math.max(1e-3, rate), S.pitch));
   }
   var Music = class {
-    constructor(ctx2, volume, style2, seed2, src = "") {
+    constructor(ctx2, volume, style2, seed2, src = "", drawAhead = false) {
       this.ctx = ctx2;
       this.volume = volume;
       this.master = ctx2.createGain();
@@ -19764,7 +20689,10 @@ registerProcessor("witch-fof", WitchFof);
         ctx2.createMediaElementSource(el).connect(this.bus);
         void el.play().catch(() => {
         });
-      } else this.engine = new MusicEngine(ctx2, this.bus, style2, seed2, this.circleGain);
+      } else {
+        this.engine = new MusicEngine(ctx2, this.bus, style2, seed2, this.circleGain);
+        if (drawAhead && typeof AudioContext !== "undefined" && typeof OfflineAudioContext !== "undefined" && ctx2 instanceof AudioContext) this.ahead = new MusicAhead(this.engine, ctx2);
+      }
     }
     ctx;
     volume;
@@ -19789,6 +20717,10 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** The generative track (none with a recorded one). */
     engine = null;
+    /** Its main notes drawn ahead (musicAhead.ts; docs/notes/music.md "Music ahead"): none live (`?music=live`), offline or recorded. */
+    ahead = null;
+    /** Whether it may draw ahead now (the pause page's Music Lab sets its levels on the live engine's parts: live while it's open). */
+    aheadAllowed = true;
     /** Each frame: the mix to hear, the music's cue (waves, boot), the game's time and beat. `rate`: the game's time scale
      *  (game seconds a second: about a tenth in a legend's circle, Ed 2026-10-06), which the music follows, slowing like a tape;
      *  `over`: the party's-over ease (0 to 1), winding it down. */
@@ -19818,7 +20750,23 @@ registerProcessor("witch-fof", WitchFof);
       this.dry.gain.setTargetAtTime(1 - mix.distort * 0.6, now, k);
       this.wobble.gain.setTargetAtTime(1 - mix.distort * 0.45 * (0.5 + 0.5 * Math.sin(now * 7.3 + Math.sin(now * 2.1) * 2)), now, 0.02);
       if (on && mix.distort > 0.05 && Math.random() < mix.distort * 0.15) this.crackle(now + Math.random() * 0.05, mix.distort);
+      if (this.ahead && this.engine) {
+        const S = this.engine.style, kind = S.form ? S.patches[S.form.sung.patch]?.kind : void 0;
+        this.ahead.update(cue2, clock2, on, this.aheadAllowed && rate >= 0.999 && stop === 0 && kind !== "fof" && kind !== "tract");
+      }
       this.engine?.update(cue2, gameTime, clock2, on, 0.6, rate, stop > 0 ? Math.max(M2?.over?.floor ?? 0.15, rate) : tapePitch(rate, M2?.slow));
+    }
+    /** The audio clock the master (docs/notes/music.md "Music ahead"): while the music's drawn ahead, a stall the game's clock cut
+     *  short (MAX_STEP) while the music played on moves the game's beat on to the music's (rules/beat.ts shiftBeat) and the
+     *  music's timeline with it, nothing heard moved, so what's on the beat stays on what's heard. Each frame before update();
+     *  returns the seconds moved on (0 under SHIFT_MIN, a frame's jitter). */
+    keepBeat(gameTime, clock2) {
+      const E2 = this.engine, lost2 = this.ahead?.drawing && E2?.anchored ? E2.musicTime() - gameTime : 0;
+      if (!(lost2 > SHIFT_MIN && lost2 < 30)) return 0;
+      shiftBeat(clock2, gameTime, lost2);
+      E2.shiftTime(lost2);
+      this.ahead.shiftTime(lost2);
+      return lost2;
     }
     /** Sound shed to spare the audio thread (shed.ts): the engine's own (unison, tails, reverb, delay). */
     set shed(level) {
@@ -19855,6 +20803,7 @@ registerProcessor("witch-fof", WitchFof);
     }
     /** Silenced for good and let go (the watchdog building afresh). */
     dispose() {
+      this.ahead?.stopAll();
       try {
         this.master.disconnect();
         this.circleGain.disconnect();
@@ -21303,14 +22252,14 @@ registerProcessor("witch-fof", WitchFof);
   function crackleBuffer(ctx2, secs, rate, fork, seed2) {
     const sr = ctx2.sampleRate, n = Math.max(1, Math.round(secs * sr)), buf = ctx2.createBuffer(1, n, sr), d = buf.getChannelData(0);
     let s = seed2 >>> 0 || 1;
-    const rnd = () => {
+    const rnd2 = () => {
       s ^= s << 13;
       s ^= s >>> 17;
       s ^= s << 5;
       return (s >>> 0) / 4294967296;
     };
     const pop = (at2, amp) => {
-      const f = 2500 + rnd() * 5500, decay = 8e-4 + rnd() * 25e-4, len = Math.min(n, Math.ceil(decay * 6 * sr)), ph = rnd() * 6.283;
+      const f = 2500 + rnd2() * 5500, decay = 8e-4 + rnd2() * 25e-4, len = Math.min(n, Math.ceil(decay * 6 * sr)), ph = rnd2() * 6.283;
       for (let i = 0; i < len; i++) {
         const j = (at2 + i) % n, t = i / sr;
         d[j] += amp * Math.exp(-t / decay) * Math.sin(ph + 6.283 * f * t) * (i < 3 ? i / 3 : 1);
@@ -21318,9 +22267,9 @@ registerProcessor("witch-fof", WitchFof);
     };
     const count2 = Math.round(secs * rate);
     for (let k = 0; k < count2; k++) {
-      const at2 = Math.floor(rnd() * n), amp = 0.25 + 0.75 * rnd() ** 2;
+      const at2 = Math.floor(rnd2() * n), amp = 0.25 + 0.75 * rnd2() ** 2;
       pop(at2, amp);
-      if (rnd() < fork) pop(at2 + Math.floor((4e-3 + rnd() * 0.02) * sr), amp * (0.4 + 0.4 * rnd()));
+      if (rnd2() < fork) pop(at2 + Math.floor((4e-3 + rnd2() * 0.02) * sr), amp * (0.4 + 0.4 * rnd2()));
     }
     let peak = 0;
     for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(d[i]));
@@ -23452,10 +24401,10 @@ registerProcessor("witch-fof", WitchFof);
     const rate = 22050, fps = 30, total = aSec + gapSec + bSec, M2 = TUNING.music;
     const oc = new OfflineAudioContext(4, Math.ceil(rate * total), rate);
     const m = new Music(oc, 1, style, 7), e = m.engine, mix = mixAt(M2, 1, 0, 0);
-    const split = oc.createChannelSplitter(2), merge = oc.createChannelMerger(4);
-    split.connect(merge, 0, 2);
-    split.connect(merge, 1, 3);
-    merge.connect(oc.destination);
+    const split = oc.createChannelSplitter(2), merge2 = oc.createChannelMerger(4);
+    split.connect(merge2, 0, 2);
+    split.connect(merge2, 1, 3);
+    merge2.connect(oc.destination);
     const sfx = new Sfx(oc, 0.5, TUNING.sfx, style.root + 24, split);
     const clockA = newBeatClock(style.bpm, waveTempo(beatTuning(), 2)), barA = (t) => barAt(clockA, t);
     const cueA = { waves: [barA(100), barA(200)], nextAt: barA(400), bootUntil: barA(30), knockedOut: false, siege: 0 };
