@@ -3,7 +3,7 @@
 // room (ROOM, default parlour) with the island not yet counted ready (g.islandReady false, its art held undrawn: the dark behind the whole house), shot;
 // then it's ready (main.ts latches it as ever) and the fade's shot at its middle and after its end (dark.reveal, read from the tuning); then the Terrace with the
 // island not ready, as a night starts. Frames <out>/room-before.png, room-mid.png, room-after.png, terrace-start.png.
-//   npm run build && node tools/house/forest-fade.cjs <out dir> [seed]     (ROOM=parlour, SIZE=1600x900, SETTLE=frames)
+//   npm run build && node tools/house/forest-fade.cjs <out dir> [seed]     (ROOM=parlour, SIZE=1600x900, SETTLE=frames, REVEAL=s the fade for the shots, 0 the tuning's)
 // (the cloud's software renderer takes seconds a frame here: a run is some minutes)
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
@@ -30,13 +30,14 @@ const mid = id => { const r = H.rooms.find(q => q.id === id); return plan(r.x ??
     await page.waitForFunction(() => window.witch.game.clock.time > 1, null, { timeout: 600000, polling: 500 });
     const NONE = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0 };
     const stand = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; Object.assign(g.witch, { x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }); }, [x, z]);
-    const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, i === n - 1); }, [n, NONE]); // (drawn only the last: the fade's 20 s are 1200 frames)
+    const step = n => page.evaluate(([n, NONE]) => { const w = window.witch; w.manual = true; for (let i = 0; i < n; i++) w.frame(NONE, 1 / 60, i === n - 1 || i % 6 === 5); }, [n, NONE]); // (drawn every 6th: the fade steps on drawn frames, each counting at most 0.1 s of her clock, render/view.ts behindHouse)
     // (not ready: the island's art held undrawn, so main.ts doesn't latch it again; ready: the real check back, and latched as main.ts
     // would: window.witch.frame steps the view, not main.ts's frame, where it latches)
     const ready = on => page.evaluate(on => { const w = window.witch; if (on) { delete w.view.islandDrawn; w.game.islandReady = true; } else { w.view.islandDrawn = () => false; w.game.islandReady = false; } }, on);
     const behind = () => page.evaluate(() => window.witch.view.post.behind);
     const shot = name => page.screenshot({ path: path.join(outDir, name + ".png"), timeout: 300000 });
-    const reveal = await page.evaluate(() => window.witch.tuning.treehouse.house.dark.reveal ?? 4);
+    // (the fade shortened to REVEAL seconds for the shots, 2 by default: its middle and end look the same at any length)
+    const reveal = await page.evaluate(r => { const d = window.witch.tuning.treehouse.house.dark; if (r) d.reveal = r; return d.reveal ?? 20; }, Number(process.env.REVEAL ?? 2));
     // (her clock steps a 60th of a second a frame: the fade's middle and end in frames)
     await stand(mid(ROOM)); await ready(false); await step(SETTLE * 2);
     let b = await behind(); if (b > 0.01) problems.push(`room before: the forest not dark (behind ${b})`);
