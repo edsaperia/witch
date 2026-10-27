@@ -631,7 +631,10 @@ async function main() {
       const tick = now => { const L = window.speedLog; if (L.stop) return; L.forest.push(window.witch.view.stats.forestMs); if (L.last) L.frame.push(now - L.last); L.last = now; requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     });
-    const [s0, s1] = await hold(page, "ArrowUp", 12, 900000);
+    // South, away from the house: north from her decks she flies in over it and lands on it (rules/witch.ts flyOnto, 2026-10-14),
+    // 59 m on, and held there the 12 s took past the 900 s wait in the slowed house (2026-10-27). South she covers 882 m of fresh
+    // forest in the treetops (seeds 123 and 7).
+    const [s0, s1] = await hold(page, "ArrowDown", 12, 900000);
     const r = await page.evaluate(() => { const L = window.speedLog; L.stop = true; const q = (a, k) => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.min(b.length - 1, Math.floor(k * (b.length - 1)))] : 0; }; return { n: L.forest.length, worst: q(L.forest, 1), p99: q(L.forest, 0.99), median: q(L.forest, 0.5), frameMedian: q(L.frame, 0.5), frameWorst: q(L.frame, 1), missing: window.witch.view.stats.forestMissing }; });
     const dist = Math.hypot(s1.x - s0.x, s1.z - s0.z), speed = dist / (s1.t - s0.t);
     results.push(`info speed: ${dist.toFixed(0)} m of fresh forest at ${speed.toFixed(1)} m/s; forest building per frame: median ${r.median.toFixed(1)} ms, p99 ${r.p99.toFixed(1)} ms, worst ${r.worst.toFixed(1)} ms over ${r.n} frames; frames here (software renderer): median ${r.frameMedian.toFixed(0)} ms, worst ${r.frameWorst.toFixed(0)} ms`);
