@@ -1,10 +1,10 @@
 // The audio capacity test (tools/audio-test) in headless Chromium, for a builder: serves the built game's dist/, opens
 // audio-test/, presses Start, waits for the results (a few minutes) and prints the summary, writing the JSON to [out].
 // Headless audio is software and has no real device: its numbers say the page works, not what a laptop can do.
-//   node tools/audio-test/run.cjs [dist] [out.json]
+//   node tools/audio-test/run.cjs [dist] [out.json] [page: "" the capacity test, stall.html the music stall test]
 const http = require("http"), fs = require("fs"), path = require("path");
 let playwright; try { playwright = require("playwright"); } catch { playwright = require("/opt/node22/lib/node_modules/playwright"); }
-const root = path.resolve(process.argv[2] || "dist"), outFile = process.argv[3] || null;
+const root = path.resolve(process.argv[2] || "dist"), outFile = process.argv[3] || null, pageName = process.argv[4] || "";
 const types = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json", ".ogg": "audio/ogg", ".css": "text/css", ".wasm": "application/wasm" };
 (async () => {
   const server = http.createServer((req, res) => {
@@ -19,7 +19,7 @@ const types = { ".html": "text/html", ".js": "text/javascript", ".json": "applic
     const page = await browser.newPage({ viewport: { width: 1100, height: 900 } });
     page.on("pageerror", e => { failed = true; console.log("pageerror:", e.message); });
     page.on("console", m => { if (m.type() === "error") console.log("console:", m.text()); });
-    await page.goto(`http://127.0.0.1:${server.address().port}/audio-test/`);
+    await page.goto(`http://127.0.0.1:${server.address().port}/audio-test/${pageName}`);
     const t0 = Date.now();
     await page.click("#go");
     let last = "";
