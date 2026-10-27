@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { FIGHTERS, nextSeed, packSpec, rollPack, TellWatch } from "./fightArena";
-import { parseArena, setupArena } from "./arena";
+import { arenaAttack, parseArena, setupArena } from "./arena";
 import { LEGEND } from "./creatures";
 import { attackOf } from "./combat/data";
 import { newGame, stepGame, STEP, type Controls } from "./game";
-import { TUNING } from "./tuning";
+import { TUNING, withTuning } from "./tuning";
 
 const idle: Controls = { moveX: 0, moveZ: 0, toggleMode: false, zoom: 0, autoTalk: false };
 
@@ -53,12 +53,17 @@ describe("the arena wild only (the Fight Arena): her alone against the pack", ()
       for (const e of g.combat.events) if (e.at === g.clock.time && (e.kind === "windup" || e.kind === "charged" || e.kind === "shot")) struck++;
     }
     expect(struck).toBeGreaterThan(0);
+    // knocked out, the fight again: her back, whole
+    g.witches[0].health.hp = 0; g.witches[0].ko = { inAt: g.clock.time } as never;
+    setupArena(g, "wolf*3@2,raven*2@1", { wildOnly: true });
+    expect(g.witches[0].ko).toBeNull();
+    expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
   }, 60000);
 });
 
 describe("the Fight Arena's telegraph timings", () => {
-  it("sees each windup once, from when it began to when it lands, its lead the attack's windup", () => {
-    const g = newGame(5, TUNING);
+  it("sees each windup once, from when it began to when it lands, its lead the attack's windup (the old flat attacks, ?attacks=old)", () => {
+    const g = newGame(5, withTuning({ attacks: { reactionFloor: TUNING.attacks?.reactionFloor ?? 0.45, species: false } }));
     g.clock.paused = false; g.party.paused = true;
     setupArena(g, "wolf*3@2", { wildOnly: true });
     const w = new TellWatch(), windup = attackOf("wolf", 2)!.attack.windup;
@@ -77,11 +82,47 @@ describe("the Fight Arena's telegraph timings", () => {
     expect([w.count, w.shortest]).toEqual([0, Infinity]);
   }, 60000);
 
-  it("takes the composable attacks' telegraphs too, with their own start", () => {
+  it("sees the species' own attacks' telegraphs (the grammar's, the default), not their windups as well", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2", { wildOnly: true });
     const w = new TellWatch();
-    const g = { clock: { time: 10 }, creatures: [], arena: { spec: "", ids: [] }, combat: { telegraphs: [{ id: 3, start: 9.6, fire: 10.5, shape: { a: { x: 1, z: 2 }, b: { x: 5, z: 2 } } }, { id: 4, start: 9, fire: 9.5, shape: { x: 0, z: 0 } }] } };
-    expect(w.update(g as never)).toEqual([{ key: "t3", species: "telegraph", x: 1, z: 2, start: 9.6, fire: 10.5 }]);
+    let species = 0, windups = 0;
+    for (let i = 0; i < 20 / STEP; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP);
+      for (const t of w.update(g)) { if (t.key.startsWith("t") && t.species.startsWith("species:wolf")) species++; if (t.key.startsWith("w")) windups++; }
+    }
+    expect(species).toBeGreaterThan(0);
+    expect(windups).toBe(0);
+    expect(w.shortest).toBeGreaterThanOrEqual((TUNING.attacks?.reactionFloor ?? 0.45) - 1e-6); // (held to the floor)
+  }, 60000);
+
+    it("takes the grammar's telegraphs too (alive ones, with their own start), and not a grammar caster's windup twice", () => {
+    const w = new TellWatch();
+    const g = { clock: { time: 10 }, creatures: [{ id: 0, species: "wolf", x: 0, z: 0, spell: "arena", fight: { windupUntil: 10.5 } }], arena: { spec: "", ids: [0] }, combat: { events: [], spells: { telegraphs: [
+      { id: 3, alive: true, kind: "lane", attack: "arena", source: 0, start: 9.6, fire: 10.5, shape: { type: "segment", x: 1, z: 2, x2: 5, z2: 2 } },
+      { id: 4, alive: false, kind: "ring", attack: "arena", start: 9, fire: 10.6, shape: { type: "disc", x: 0, z: 0 } },
+      { id: 5, alive: true, kind: "landing", attack: "arena", start: 9, fire: 9.5, shape: { type: "disc", x: 0, z: 0 } },
+    ] } } };
+    expect(w.update(g as never)).toEqual([{ key: "t3", species: "arena lane", x: 1, z: 2, start: 9.6, fire: 10.5 }]);
     expect(w.shortest).toBeCloseTo(0.9);
   });
 });
 
+describe("the Fight Arena's pack with an attack in the grammar (rules/attacks, the arena's hook)", () => {
+  it("arms every wild one with it, and the timings see the engine's telegraphs, each with its lead", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2", { wildOnly: true });
+    expect(arenaAttack(g, '{ "cast": { "windup": 0.7, "range": 18 }, "emit": { "pattern": "fan", "n": 3, "angle": 40 }, "body": { "kind": "bolt" }, "speed": { "v": 18 } }')).toEqual([]);
+    for (const id of g.arena!.ids) expect(g.creatures[id].spell).toBe("arena");
+    const w = new TellWatch();
+    let grammar = 0;
+    for (let i = 0; i < 20 / STEP && !grammar; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP);
+      for (const t of w.update(g)) if (t.key.startsWith("t")) { grammar++; expect(t.species).toMatch(/^arena /); expect(t.fire - t.start).toBeGreaterThan(0); }
+    }
+    expect(grammar).toBeGreaterThan(0);
+    expect(arenaAttack(g, '{ "body": { "kind": "dragon" } }')[0]).toMatch(/body\.kind/); // (refused, said why)
+  }, 60000);
+});

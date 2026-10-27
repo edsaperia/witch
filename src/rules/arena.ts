@@ -96,6 +96,8 @@ export function setupArena(g: Game, spec: string, opts: { wildOnly?: boolean } =
   g.byArea = null;
   // She stands just south of the middle, in view of both sides (the wild go for the nearest, so hers first), the camera on her.
   g.witch = { ...g.witch, x: cx, z: cz + Math.min(17 * S, Math.max(6, room - 3)), mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
+  // (the Fight Arena's fight again: her back on her feet and whole, a knockout let go, so a lost fight starts over)
+  if (opts.wildOnly) { const W = g.witches[0]; W.ko = null; W.health.hp = t.witchHealth.hits; W.health.repairAt = Infinity; }
   g.camera = newCamera(t, g.witch.x, witchHeight(g.witch, t), g.witch.z);
   g.introFocus = undefined;
 }

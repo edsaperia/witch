@@ -90,7 +90,7 @@ describe("a form made from a JSON schema (the Fight Arena's attack editor)", () 
 
   it("stops at its depth, the rest raw JSON (children of children of ... are attacks)", () => {
     let v: Record<string, unknown> = {};
-    for (let i = 0; i < 6; i++) v = { on: { hit: [{ attack: v }] } };
+    for (let i = 0; i < 8; i++) v = { on: { hit: [{ attack: v }] } };
     const f = fieldOf(ATTACK, v, ATTACK);
     let deepest = 0;
     const walk = (x: Field, d: number) => { deepest = Math.max(deepest, d); for (const c of x.children ?? []) walk(c, d + 1); };

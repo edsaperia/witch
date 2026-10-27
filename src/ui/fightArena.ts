@@ -66,7 +66,13 @@ export interface FightHost {
   attackSchema(): Schema | null;
   /** The attack being edited (null: the pack's own), and it set: what's wrong with it and what the composer changed. */
   attack: unknown;
-  setAttack(a: unknown): { errors: string[]; warnings: string[] };
+  setAttack(a: unknown): { errors: string[]; warnings: string[]; notes?: string[] };
+  /** The attack as JSON to copy (canonical: short, in the grammar's order). */
+  attackJson(): string;
+  /** Kind `i` of the pack's attack today taken into the editor. */
+  editOwn?(i: number): void;
+  /** What to know about the attack set now (the pack fighting with it or not), under the box. */
+  attackNote?: string;
   /** A random fair attack, when the composable attacks are in. */
   randomAttack?(): unknown;
   /** The library. */
@@ -126,8 +132,9 @@ export class FightPanel {
 
   private setAttack(v: unknown): void {
     const r = this.host.setAttack(v);
-    this.text = v == null ? "" : JSON.stringify(v, null, 1);
-    this.say([...r.errors.map(e => `✗ ${e}`), ...r.warnings.map(w => `⚠ ${w}`)].join("\n") || (v == null ? "the pack's own attacks" : "attack set: the fight again with it"));
+    if (!r.errors.length) this.text = v == null ? "" : this.host.attackJson();
+    this.bad = r.errors.length > 0;
+    this.say([...r.errors.map(e => `✗ ${e}`), ...r.warnings.map(w => `⚠ ${w}`), ...(r.notes ?? []).map(n => `· ${n}`)].join("\n") || (v == null ? "the pack's own attacks" : "attack set"));
   }
 
   private saveAs(name: string): void {
@@ -158,7 +165,8 @@ export class FightPanel {
     else if (what === "apply") this.apply();
     else if (what === "own") this.setAttack(null);
     else if (what === "random" && H.randomAttack) this.setAttack(H.randomAttack());
-    else if (what === "copy") this.copy(this.text.trim() || "null", "attack JSON");
+    else if (what === "copy") this.copy(H.attack == null ? "null" : H.attackJson(), "attack JSON");
+    else if (what === "edit" && H.editOwn) { H.editOwn(Number(b.dataset.i)); this.bad = false; this.text = H.attack == null ? "" : H.attackJson(); this.say("today's attack in the editor: change it, then Set"); }
     else if (what === "paste") {
       const take = (t: string) => {
         try { const v = JSON.parse(t); if (Array.isArray(v) || (v && typeof v === "object" && "name" in v && "attack" in v)) { this.say(`taken into the library: ${H.importJson(t).join(", ")}`); } else this.setAttack(v); }
@@ -168,7 +176,7 @@ export class FightPanel {
       else this.say("paste into the JSON box and press Set");
     }
     else if (what === "save") this.saveAs(this.el.querySelector<HTMLInputElement>("input.save-name")!.value);
-    else if (what === "load") { H.load(name); this.text = H.attack == null ? "" : JSON.stringify(H.attack, null, 1); this.say(`"${name}": seed ${H.seed()}, ${H.spec()}`); }
+    else if (what === "load") { H.load(name); this.bad = false; this.text = H.attack == null ? "" : JSON.stringify(H.attack, null, 1); this.say(`"${name}": seed ${H.seed()}, ${H.spec()}`); }
     else if (what === "fav") { H.toggleFav(name); this.draw(); }
     else if (what === "del") { H.remove(name); this.say(`"${name}" removed`); }
     else if (what === "copyone") this.copy(H.exportJson(name), `"${name}"`);
@@ -179,13 +187,14 @@ export class FightPanel {
   tick(): void {
     const s = this.host.shortest(), line = this.el.querySelector<HTMLElement>(".tim");
     if (!line) return;
-    line.innerHTML = s.count ? `${s.count} telegraph${s.count === 1 ? "" : "s"}; shortest <span class="${s.lead < s.floor ? "short" : ""}">${s.lead.toFixed(2)} s</span> (${s.of})${s.lead < s.floor ? ` under the ${s.floor} s floor` : ""}` : "no telegraphs yet";
+    const under = s.lead < s.floor - 1e-6; // (a warning lifted to the floor lands on it, give or take the arithmetic)
+    line.innerHTML = s.count ? `${s.count} telegraph${s.count === 1 ? "" : "s"}; shortest <span class="${under ? "short" : ""}">${s.lead.toFixed(2)} s</span> (${s.of})${under ? ` under the ${s.floor} s floor` : ""}` : "no telegraphs yet";
   }
 
   /** Drawn again (a roll, a new pack, a change). */
   draw(): void {
     const H = this.host, esc = (s: string) => s.replace(/[&<>"]/g, c => `&#${c.charCodeAt(0)};`), schema = H.attackSchema();
-    const own = H.attacks().map(a => `<h3>${esc(a.species)} @${a.level}: ${esc(a.name)}</h3><pre>${esc(JSON.stringify(a.attack, null, 1))}</pre>`).join("");
+    const own = H.attacks().map((a, i) => `<h3>${esc(a.species)} @${a.level}: ${esc(a.name)}${H.editOwn ? ` <button data-do="edit" data-i="${i}" title="Into the editor, to change">✎</button>` : ""}</h3><pre>${esc(JSON.stringify(a.attack, null, 1))}</pre>`).join("");
     const lib = H.library().map(s => `<li data-name="${esc(s.name)}"><button data-do="fav" class="star" aria-pressed="${!!s.fav}" title="Favourite">★</button><button data-do="load" class="name" title="Load it: its attack, its pack and seed${s.pack ? ` (${esc(s.pack)})` : ""}">${esc(s.name)}</button><button data-do="copyone" title="Copy it as JSON">⧉</button><button data-do="del" title="Remove it">✕</button></li>`).join("");
     this.el.innerHTML = `<h2>⚔ Fight Arena <span class="seed">seed ${H.seed()}</span></h2>
       <div class="row"><button data-do="roll" title="The next seed's pack: a kind or two, 2 to 6 each, young or adult; now and then a lone legend">🎲 Random pack</button>
@@ -201,10 +210,11 @@ export class FightPanel {
       <div class="form"></div>
       <textarea class="json ${this.bad ? "bad" : ""}" rows="5" spellcheck="false" placeholder="the attack's JSON (empty: the pack's own attacks)">${esc(this.text)}</textarea>
       <div class="row"><button data-do="apply" title="Fight with this attack">Set</button>
-        <button data-do="random" ${H.randomAttack ? "" : "disabled"} title="A random fair attack from the composable modules">🎲 Randomise attack</button>
+        <button data-do="random" ${H.randomAttack ? "" : "disabled"} title="${H.randomAttack ? "A random fair attack from the composable modules" : "Comes with the grammar's composer (its library, step 5)"}">🎲 Randomise attack</button>
         <button data-do="own" title="Back to the pack's own attacks">Own</button>
         <button data-do="copy">Copy JSON</button><button data-do="paste" title="An attack, a saved one or a whole library from the clipboard">Paste JSON</button></div>
       ${schema ? "" : `<p class="note">The form comes with the composable attacks (their schema): till then the JSON box is kept as it is, for the library.</p>`}
+      ${H.attackNote ? `<p class="note">${esc(H.attackNote)}</p>` : ""}
       <h3>Library <button data-do="copylib" title="Copy the whole library as JSON">⧉ all</button></h3>
       <div class="row"><input class="save-name" placeholder="name it" value="${esc(this.name)}"><button data-do="save" title="Save this attack with this fight's pack and seed">💾 Save</button></div>
       <ul class="lib">${lib || `<li class="note">Nothing saved yet.</li>`}</ul>
