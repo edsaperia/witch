@@ -4,7 +4,7 @@
 //   lights-<1|0.5|0.25>-<view>.png   the crown's strings of lights at today's density, half and a quarter (the Terrace, on approach)
 //   look-<before|after>-<view>.png   the house's warm light up into the crown and the moon on the great limbs' edges, off and on
 //                                    (a room, the Terrace, on approach in flight)
-//   party-<1|2>-dancefloor.png       the party areas' runs of lights as tuned and twice as many (from the treetops over the dancefloor)
+//   party-<1|2>-dancefloor.png       the party areas' runs of lights as tuned and twice as many (on foot under the home area's first run)
 // then times drawn frames before and after the look at each view (cost.json: relative only, the cloud's software renderer).
 //   npm run build && node tools/shot/crown-look.cjs [out dir]   (SEED=160271, SIZE=1900x1240, ROOM=parlour, WARM=1, RIM=1,
 //   FRAMES=4 timed a variant, ONLY=lights,look,party,cost, DIST=dist)
@@ -44,8 +44,11 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
       room: () => page.evaluate(id => window.witch.shot(`room:${id}`), ROOM),
       terrace: () => page.evaluate(() => window.witch.shot("room:terrace")),
       approach: () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse, b = g.witches[0].body; g.witches[0].body = { ...b, x: T.x + 6, z: T.z + 46, vx: 0, vz: 0, mode: "treetop", lift: 1, perch: false, seated: false }; }),
-      // (the party area's runs of lights hang in its trees: seen from the treetops over the dancefloor's clearing)
-      dancefloor: () => page.evaluate(({ df }) => { const g = window.witch.game, b = g.witches[0].body; g.witches[0].body = { ...b, x: df.x, z: df.z + 10, vx: 0, vz: 0, mode: "treetop", lift: 1, perch: false, seated: false }; }, map),
+      // (the party area's runs of lights hang under its trees' crowns, only specks from the treetops: on foot a little south of the
+      // middle of its first run's lines, as the game hung them)
+      dancefloor: () => page.evaluate(({ df }) => { const g = window.witch.game, b = g.witches[0].body, S = window.witch.view.strings;
+        const lines = [...(S.built?.values() ?? [])].flatMap(v => v.lines ?? []), mid = lines.length ? lines.slice(0, 6).reduce((m, l, _, A) => ({ x: m.x + (l.ax + l.bx) / (2 * A.length), z: m.z + (l.az + l.bz) / (2 * A.length) }), { x: 0, z: 0 }) : { x: df.x, z: df.z };
+        g.witches[0].body = { ...b, x: mid.x, z: mid.z + 6, vx: 0, vz: 0, mode: "ground", lift: 0, perch: false, seated: false }; return lines.length; }, map),
     };
     const shot = async name => { await settle(); await page.screenshot({ path: path.join(out, name + ".png"), timeout: 300000 }); log(name); };
     log("map", JSON.stringify(map), ROOM);
