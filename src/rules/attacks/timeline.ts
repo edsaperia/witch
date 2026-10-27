@@ -16,7 +16,7 @@ export const WINDUP = 0.6;
 export const TELEGRAPH_OF: Record<BodyKind, TelegraphKind> = {
   melee: "flash", bolt: "lane", lob: "landing", runner: "lane", beam: "beamLine", area: "ring", zone: "ring", mine: "arming", seed: "arming", lure: "lane",
 };
-export const telegraphKind = (a: AttackSpec): TelegraphKind => a.telegraph?.kind ?? TELEGRAPH_OF[a.body?.kind ?? "bolt"];
+export const telegraphKind = (a: AttackSpec): TelegraphKind => a.telegraph?.kind ?? (a.pack?.tether ? "tetherLine" : TELEGRAPH_OF[a.body?.kind ?? "bolt"]);
 
 /** Does it harm (any damage, or an effect)? */
 const harms = (a: AttackSpec) => (a.hit?.damage ?? 1) > 0 || !!(a.hit?.effect && Object.keys(a.hit.effect).length);
@@ -28,7 +28,7 @@ export function ownWarning(a: AttackSpec, child: boolean): number {
   const windup = a.cast?.windup ?? (child ? 0 : WINDUP), lead = Math.min(windup, a.telegraph?.lead ?? windup);
   const kind = a.body?.kind ?? "bolt";
   if (kind === "area" && a.area?.rain) return a.telegraph?.lead ?? 0.9; // (each raindrop shows its own landing, that long before it falls)
-  const more = kind === "lob" ? (a.body?.flight ?? 1.2) : kind === "beam" ? (a.beam?.charge ?? 0) : kind === "mine" || kind === "seed" ? (a.body?.arm ?? 0) : 0;
+  const more = kind === "lob" ? (a.body?.flight ?? 1.2) : kind === "beam" ? (a.beam?.charge ?? (a.pack?.tether ? REACTION_FLOOR : 0)) : a.pack?.triangulate ? a.pack.triangulate.delay : kind === "mine" || kind === "seed" ? (a.body?.arm ?? 0) : 0;
   return telegraphKind(a) === "none" ? more : lead + more;
 }
 

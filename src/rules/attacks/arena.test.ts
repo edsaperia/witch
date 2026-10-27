@@ -50,6 +50,14 @@ describe("attacks in the grammar in the real fight", () => {
     expect(named.combat.spells!.stats.bodies[0]).toBeGreaterThan(0);
   });
 
+  it("finds a caster's packmates in the real fight: a tether strung between two of its own kind", () => {
+    const tether: AttackSpec = { cast: { range: 30, windup: 0.6, cooldown: 3 }, body: { kind: "beam" }, beam: { tick: 0.25 }, pack: { tether: { time: 2, width: 1.5 } } };
+    const { g } = arena("wolf*3@2,raven*3@2", serialiseAttack(tether), 12);
+    const S = g.combat.spells!, ravens = g.creatures.filter(c => g.arena!.ids.includes(c.id) && c.species === "raven").map(c => c.id);
+    expect(S.stats.beams[0]).toBeGreaterThan(0);
+    for (const b of S.beams) { expect(ravens).toContain(b.source); expect(ravens).toContain(b.to); expect(b.to).not.toBe(b.source); }
+  });
+
   it("leaves a fight with no attack in the grammar as it was", () => {
     const { g } = arena("wolf*3@2,raven*3@2", null, 8);
     expect(g.combat.spells).toBeUndefined();
