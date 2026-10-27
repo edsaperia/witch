@@ -17,20 +17,6 @@
       }
     },
     {
-      "id": "momentumStrikes",
-      "pr": 1303,
-      "group": "Creature momentum",
-      "label": "Momentum in strikes",
-      "note": "Off as built: momentum shapes the chase, a pack's approach and its lull; telegraphed run-ins (a wind-up's surge in, a pack's tell and combo) track her as before, so a lunge that starts still reaches her (Ed's v3893). On: those have momentum too (creatureMomentum.strikes), the stronger answer to \"they turn towards her instantly\", most of their run-in being their wind-up; lunges then fall short more often.",
-      "control": {
-        "type": "toggle"
-      },
-      "default": false,
-      "apply": {
-        "knob": "creatureMomentum.strikes"
-      }
-    },
-    {
       "id": "momentumTurn",
       "pr": 1303,
       "group": "Creature momentum",

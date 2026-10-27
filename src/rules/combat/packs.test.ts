@@ -90,8 +90,10 @@ describe("pack combat in play (the switch on)", () => {
     });
     console.log("ORDERS", JSON.stringify(order));
     expect(order.length).toBeGreaterThanOrEqual(3);
+    // (the lunger first; with creature momentum, 2026-10-27, a lunger coming round from afar may not get in within two gaps, and then
+    // its shots go first, the combo's own fallback: so most combos, not every one)
+    expect(order.slice(0, 4).filter(o => o[0] === "melee").length).toBeGreaterThanOrEqual(3);
     for (const o of order.slice(0, 3)) {
-      expect(o[0]).toBe("melee"); // (the lunger first)
       const sp = o.indexOf("special"); // (when its special's ready: it has a cooldown)
       if (sp >= 0) expect(o.indexOf("ranged")).toBeLessThan(sp); // (the shots before the special)
     }
@@ -283,7 +285,7 @@ describe("pack combat, mind control (the owl, the unicorn; 2026-10-23)", () => {
   }, 120000);
   it("with none of hers near, its glow turns her aim instead", () => {
     let riddled = false;
-    arena("pack-unicorn", 60, g => { const v = g.witches[0]; if (v.confused && g.clock.time < v.confused.until) riddled = true; });
+    arena("pack-unicorn", 90, g => { const v = g.witches[0]; if (v.confused && g.clock.time < v.confused.until) riddled = true; }); // (90 s: with creature momentum, 2026-10-27, the first glow at her comes at about 63 s)
     expect(riddled).toBe(true);
   }, 120000);
 });
@@ -538,6 +540,6 @@ describe("kinds keep their own moves in a pack (Ed, 2026-10-20)", () => {
       }
     });
     expect(t).toBeGreaterThan(5);
-    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(30); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came)
+    expect((turn / t) * (180 / Math.PI)).toBeGreaterThan(25); // (degrees a second round her: about 45 to 55, 12 to 22 before, straight in from where they came; about 30 with creature momentum, 2026-10-27: they can't whip round her at a run)
   }, 60000);
 });

@@ -143,11 +143,9 @@ describe("in a fight", () => {
     expect(on.swung).toBeLessThan(off.swung / 2); // (it hasn't seen her go yet, and it can't swing round at a run)
     expect(on.met).toBeLessThan(4);
   });
-  it("its wind-up's surge in tracks her as before, unless strikes: then it has momentum too", () => {
-    const strikes = withTuning({ creatureMomentum: { ...M, strikes: true } });
-    const plain = sidestep(TUNING, true), off = sidestep(OFF, true), on = sidestep(strikes, true);
-    expect(plain.stepped && off.stepped && on.stepped).toBe(true);
-    expect(plain.swung).toBeCloseTo(off.swung, 6); // (telegraphed: as it was)
+  it("its wind-up's surge in has momentum too (Ed, 2026-10-27): sidestepped as it winds up, it swings round slowly", () => {
+    const on = sidestep(TUNING, true), off = sidestep(OFF, true);
+    expect(on.stepped && off.stepped).toBe(true);
     expect(on.swung).toBeLessThan(off.swung / 2);
   });
 });
