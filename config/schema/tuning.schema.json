@@ -3924,6 +3924,82 @@
             "farSpeed"
           ],
           "additionalProperties": false
+        },
+        "ranks": {
+          "type": "object",
+          "properties": {
+            "on": {
+              "type": "boolean"
+            },
+            "hex": {
+              "type": "number",
+              "minimum": 0
+            },
+            "glyph": {
+              "type": "number",
+              "minimum": 0
+            },
+            "colours": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              }
+            },
+            "embers": {
+              "type": "object",
+              "properties": {
+                "count": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "size": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "rise": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "stack": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "count",
+                "size",
+                "rise",
+                "stack"
+              ],
+              "additionalProperties": false
+            },
+            "dotsPerRow": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "on",
+            "hex",
+            "glyph",
+            "colours",
+            "embers",
+            "dotsPerRow"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -3943,7 +4019,8 @@
         "runePull",
         "grounded",
         "weight",
-        "babies"
+        "babies",
+        "ranks"
       ],
       "additionalProperties": false
     },

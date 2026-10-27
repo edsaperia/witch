@@ -7,6 +7,7 @@ import { LOAD_DEFAULT } from "../load";
 import type { LeashView } from "../leash";
 import { easeRoute } from "../routeEase";
 import { DISC } from "./glyphs";
+import { dotAt, drawEmbers, rankKnobs, rankOf, ranksOn, shownDots, youthDots } from "./ranks";
 
 /** Seconds a travelling animal's drawn route takes to settle onto a re-plan (render/routeEase.ts). */
 const ROUTE_EASE = 0.3;
@@ -28,6 +29,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
   // Its sigils more visible (Ed, 2026-10-15: "more opacity, and never obscured by scenery"): drawn over the scenery (stack.over: no
   // depth test, after the see-through pass), brighter (stack.bright, in the batch's gain), each over a near-black disc (stack.backing).
   const batch = S.over ?? true ? lv.stackGlyphs : lv.standing, back = S.backing ?? 0, backUv = back > 0 ? lv.uv(DISC) : null;
+  const ranks = ranksOn(t), RK = rankKnobs(t);
   while (lv.chain.length < order.length) lv.chain.push({ x: 0, z: 0, vx: 0, vz: 0 });
   let below = { x: 0, z: 0 }, y = hatTop;
   for (const id of [...lv.stackY.keys()]) if (!keys.has(id)) lv.stackY.delete(id);
@@ -50,13 +52,30 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
     const pos = new THREE.Vector3(w.x + link.x, hatTop + sy, w.z + link.z);
     y += size / 2;
     let col: { r: number; g: number; b: number };
-    if (backUv) lv.stackBack.add(pos.x, pos.y, pos.z, size * (S.backSize ?? 1.3), backUv, 0.02, 0.02, 0.035, back); // (the dark disc behind it)
+    const shade = ranks && c ? lv.shadeOf(sg!.uv) : null;
+    if (shade) lv.stackBack.add(pos.x, pos.y, pos.z, size, shade, 0.02, 0.02, 0.035, back); // (a rank sigil's: the dark in its own shape, no disc)
+    else if (backUv) lv.stackBack.add(pos.x, pos.y, pos.z, size * (S.backSize ?? 1.3), backUv, 0.02, 0.02, 0.035, back); // (the dark disc behind it)
     if (c) {
       slotPos.set(it.id, pos);
-      col = (lv.slotOf(c.species, c.level), lv.colours.get(c.species)!);
+      col = lv.colOf(c);
       // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
       // claw slashes say how hurt she is.)
       batch.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
+      if (ranks) {
+        // Rank sigils (render/leash/ranks.ts): embers off its glyph, fewer and lower than on the ground; and a youth's dots off to
+        // the right of it, two rows, one a berry it eats on the move: bright eaten, dim not, all of them pulsing when it's ready.
+        drawEmbers(batch, dot, lv.glyphPts.get(`${sg!.uv[0]},${sg!.uv[1]}`) ?? [], pos.x, pos.y, pos.z, size, false, rankOf(c), [col.r, col.g, col.b], time, it.id * 3 + 1, RK.embers, RK.embers.stack);
+        const D = shownDots(youthDots(c, g.berries.fed.get(c.id) ?? 0, t), RK.dotsPerRow);
+        if (D.n > 0) {
+          const ready = D.lit >= D.n, beat = ready ? 0.65 + 0.35 * Math.sin(time * 6) : 1, ds = size * 0.24;
+          for (let i = 0; i < D.n; i++) {
+            const q = dotAt(i, D.n, RK.dotsPerRow), on = i < D.lit, k = on ? (ready ? 1.25 * beat : 1) : 0.42;
+            if (back > 0) lv.stackBack.add(pos.x + q.x * size, pos.y + q.y * size, pos.z, ds * 1.5, dot, 0.02, 0.02, 0.035, back);
+            const lit = on ? 0.3 : 0; // (lit ones toward white a little, so they read over the dim)
+            batch.add(pos.x + q.x * size, pos.y + q.y * size, pos.z + 0.02, ds, dot, (col.r + (1 - col.r) * lit) * k, (col.g + (1 - col.g) * lit) * k, (col.b + (1 - col.b) * lit) * k, on ? 1 : 0.85);
+          }
+        }
+      }
     } else {
       const slot = lv.slotOf("relic", 0), tw = 0.88 + 0.12 * Math.sin(time * 3 + it.id);
       col = lv.colours.get("relic")!;
@@ -93,7 +112,7 @@ export function drawBond(lv: LeashView, time: number, slotPos: Map<number, THREE
   const solid = groundedSolid(time - lv.tugAt);
   for (const id of leashed) {
 
-    const c = g.creatures[id], col = lv.colours.get(c.species);
+    const c = g.creatures[id], col = ranksOn(t) ? lv.colOf(c) : lv.colours.get(c.species); // (rank sigils: the rank's colour, ranks.ts)
     if (!col || c.level === 0) continue; // (no leash drawn for a baby: Ed, 2026-10-11)
     const lp = leashPoint(s, id, w.x, w.z)!;
     if (B.rim) lv.flat.add(c.x, 0, c.z, 1.8, dot, col.r, col.g, col.b, 0.35);
