@@ -12,6 +12,8 @@ import type { Game } from "./game";
 import { witchHeight } from "./witch";
 import { PACKS } from "./combat/packs";
 import { profileOf } from "./movement";
+import { ATTACK_LIB, parseAttack } from "./attacks/index";
+import { newSpells } from "./attacks/engine";
 
 export interface ArenaGroup { species: string; count: number; level: Level; /** (wild) besieging home's soundsystem */ siege?: boolean }
 
@@ -47,8 +49,9 @@ export const ARENA_PRESETS: Record<string, string> = {
 // combo-ing on three young wolves. One of each for every pack kind (PACKS.kinds: each creature.js's `pack`).
 for (const k of Object.keys(PACKS.kinds)) { ARENA_PRESETS[`pack-${k}`] = `${k}*1@0,${k}*3@1,${k}*2@2`; ARENA_PRESETS[`hers-${k}`] = `${k}*4@2,${k === "wolf" ? "fox" : "wolf"}*3@1`; } // (her wolves on wild foxes: a kind never fights its own)
 
-export function setupArena(g: Game, spec: string): void {
-  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec), pack = spec.trim().toLowerCase().startsWith("pack-");
+/** `wildOnly` (the Fight Arena, rules/fightArena.ts): every group wild, side by side, coming for her alone; none of hers. */
+export function setupArena(g: Game, spec: string, opts: { wildOnly?: boolean } = {}): void {
+  const groups = parseArena(ARENA_PRESETS[spec.trim().toLowerCase()] ?? spec), pack = opts.wildOnly || spec.trim().toLowerCase().startsWith("pack-");
   if (!groups.length) return;
   const L = g.witches[0].leash;
   if (g.arena) {
@@ -70,7 +73,7 @@ export function setupArena(g: Game, spec: string): void {
   // Borrow creatures from far off (the map's edge holds plenty).
   const spare = g.creatures.filter(c => !c.gone && !c.leashed && !c.boss && Math.hypot(c.x - cx, c.z - cz) > 200).sort((a, b) => Math.hypot(b.x - cx, b.z - cz) - Math.hypot(a.x - cx, a.z - cz));
   groups.forEach((gr, side) => {
-    const party = side === 0, sx = (party ? -14 : 14) * S; // (within the wild's aggro of hers, at the fight's scale)
+    const party = side === 0 && !opts.wildOnly, sx = (party ? -14 : 14 + (opts.wildOnly ? side * 11 : 0)) * S; // (within the wild's aggro of hers, at the fight's scale; a wild-only pack's groups one behind another)
     for (let i = 0; i < gr.count; i++) {
       // A creature borrowed from far off.
       const c = spare.shift();
@@ -95,4 +98,25 @@ export function setupArena(g: Game, spec: string): void {
   g.witch = { ...g.witch, x: cx, z: cz + Math.min(17 * S, Math.max(6, room - 3)), mode: "ground", lift: 0, seated: false, vx: 0, vz: 0 };
   g.camera = newCamera(t, g.witch.x, witchHeight(g.witch, t), g.witch.z);
   g.introFocus = undefined;
+}
+
+/** The Fight Arena's attack (?attack=<name|JSON>; the composable grammar, rules/attacks/): every wild creature the arena put down uses
+ *  it in place of its own, a name from config/attacks.json or an attack given as JSON (its base and children from the library; held
+ *  to the reaction floor). What was wrong or changed comes back as lines; [] when it's set as given. Nothing set if it can't be read. */
+export function arenaAttack(g: Game, input: string): string[] {
+  const lib = { ...ATTACK_LIB, ...(g.combat.attackLib ?? {}) }, named = input.trim();
+  let name = named;
+  const notes: string[] = [];
+  if (!lib[named]) {
+    const p = parseAttack(named, lib, { floor: g.tuning.attacks?.reactionFloor });
+    if (!p.attack) return p.errors;
+    notes.push(...p.warnings);
+    name = "arena";
+    lib.arena = p.attack;
+  }
+  g.combat.attackLib = lib;
+  g.combat.spells ??= newSpells(g.seed);
+  const wild = new Set((g.arena?.ids ?? []).filter(id => !g.creatures[id].leashed && g.creatures[id].state !== "happy"));
+  for (const id of wild) g.creatures[id].spell = name;
+  return notes;
 }

@@ -68,6 +68,7 @@ void main() {
 export const FRAG = /* glsl */ `
 uniform sampler2D uGlyphs;
 uniform float uSolid;
+uniform float uRgb; // the texture's own colours, times the instance's (the attack look's atlas: render/leash/attackLook.ts); else its colour alone
 varying vec2 vUv, vP;
 varying vec4 vCol;
 varying float vDraw;
@@ -75,7 +76,9 @@ varying vec3 vWorld;
 varying float vPix, vN;
 ${LIGHT_GLSL}
 void main() {
-  float a = texture2D(uGlyphs, vUv).a * vCol.a;
+  vec4 tx = texture2D(uGlyphs, vUv);
+  float a = tx.a * vCol.a;
+  vec3 rgb = uRgb > 0.5 ? tx.rgb * vCol.rgb : vCol.rgb;
   if (vPix > 0.5) {
     // A disc of art pixels: each fragment takes its art pixel's middle; a full core, a half rim, nothing past it (one or two
     // pixels across: solid).
@@ -89,7 +92,7 @@ void main() {
 #ifdef MASK
   gl_FragColor = vec4(a); return; // (its coverage alone, for the tilt-shift's sharp mask: maskOf)
 #endif
-  gl_FragColor = uSolid > 0.5 ? vec4(haze(vCol.rgb, vWorld), a) : vec4(haze(vCol.rgb * a, vWorld), 1.0); // (solid: dust and bits, blended, not glowing)
+  gl_FragColor = uSolid > 0.5 ? vec4(haze(rgb, vWorld), a) : vec4(haze(rgb * a, vWorld), 1.0); // (solid: dust and bits, blended, not glowing)
 }`;
 
 /** The same quads' coverage (0 to 1, in every channel; the most of what's drawn there kept), for render/post.ts's sharp mask:

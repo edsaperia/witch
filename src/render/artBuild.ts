@@ -20,7 +20,7 @@ export interface Baked { A: AnyCanvas; N: AnyCanvas; w: number; h: number; /** A
 /** Where a sprite sits in its atlas: u0, vTop, u1, vBottom, and its size in art pixels. */
 /** pad: empty rows (nothing drawn) at the bottom of the sprite, so it can stand on its lowest
  *  drawn pixel rather than on its box. */
-export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
+export interface Frame { uv: [number, number, number, number]; w: number; h: number; pad?: number; /** How far its lowest drawn row reaches either side of its middle, in art pixels (the farther side): the sprite shader stands it on the lowest ground across that much (a kapok's buttresses, a strangler fig's roots). */ foot?: number; /** Its sway mask is in its normal map's alpha (#34): it sways per pixel, leaves only. */ masked?: boolean; /** A creature's head, art pixels from its top left (Baked.head). */ head?: [number, number] }
 export interface AtlasPixels { albedo: Uint8Array; normal: Uint8Array; width: number; height: number; frames: Frame[] }
 
 export type MakeCanvas = (w: number, h: number) => AnyCanvas;
@@ -249,7 +249,10 @@ export function* packSteps(sprites: Baked[], width = 2048): Steps<AtlasPixels> {
     // Its lowest drawn row (the sprite shader drops alpha under a half).
     let pad = 0;
     bottom: for (let row = s.h - 1; row >= 0; row--, pad++) for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) break bottom;
-    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
+    // And how far that row reaches from the middle, either way.
+    let foot = 0;
+    if (pad < s.h) { const row = s.h - 1 - pad; for (let x = 0; x < s.w; x++) if (pa[(row * s.w + x) * 4 + 3] >= 128) foot = Math.max(foot, Math.abs(x + 0.5 - s.w / 2) + 0.5); }
+    frames.push({ uv: [p.x / W, p.y / H, (p.x + s.w) / W, (p.y + s.h) / H], w: s.w, h: s.h, pad: Math.min(pad, s.h), ...(foot ? { foot } : {}), ...(s.S ? { masked: true } : {}), ...(s.head ? { head: s.head } : {}) });
   }
   return { albedo, normal, width: W, height: H, frames };
 }

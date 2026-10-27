@@ -60,6 +60,12 @@ export const SPRITE_UNIFORMS = {
   /** And what stands at its centre, never faded: anything standing within z metres of (x, y) on the ground (a relic, the trunk and a
    *  runestone are stood toward the camera by part of their height, nearer than the centre they mark); and nothing standing more than
    *  w metres from it fades (0: no limit), easing back over the last uCircleFade.w metres. */
+  /** The forest's far edge dithered in the solid pass, not faded in the see-through passes (1: the quality ladder's rung,
+   *  app/ladder.ts; scenery.edgeDither). Its pixels drawn or not by a 4×4 ordered dither on the art's own pixels. */
+  uEdgeDither: { value: 0 },
+  /** The cut-away round her with a hard edge: each crown in the hole's band cut or drawn whole, never half see-through (the
+   *  quality ladder's rung, app/ladder.ts; canopyCutout.hard): where on the soft fade it cuts (0 < it ≤ 1; 0 off, the fade as ever). */
+  uHoleHard: { value: 0 },
   uCircleKeep: { value: new THREE.Vector4(0, 0, 0, 0) },
   /** Quads faded whole left out of the solid and front passes (1; 0 draws them there too, as before, to compare: ?wholecull=0). */
   uWholeCull: { value: typeof location !== "undefined" && new URLSearchParams(location.search).get("wholecull") === "0" ? 0 : 1 },
@@ -112,7 +118,7 @@ uniform float uNearCut;
 varying float vNear;
 uniform vec4 uCircleBox, uCircleFade;
 uniform vec4 uCircleKeep;
-uniform float uHasFade;
+uniform float uHasFade, uEdgeDither, uHoleHard;
 uniform float uWholeCull;
 varying float vCircle; // how much of it shows, the place she stands in kept clear (1 all of it)
 uniform float uAbsolute; // its y is a world height, not a height over the ground
@@ -128,7 +134,7 @@ uniform vec2 uScenery, uHazeCentre;
 uniform float uCullDbg, uCullByPass, uSeeTwo, uSeeDither;
 uniform float uCanopyReach;
 attribute vec3 iPos;
-attribute vec2 iSize;
+attribute vec3 iSize; // its width and height (metres), and how far its foot reaches either side of its base
 attribute vec4 iUv;
 attribute vec4 iFlags; // flip, top (or a trunk's cut, negative), fresh, sway
 attribute float iGlow; // glowing white, 0 to 1 (a party animal evolving); -1: a wild creature blinking (no eyeshine); -0.5: switched off (its glowing pixels unlit)
@@ -151,9 +157,10 @@ ${WIND_GUST_GLSL}${PIXEL_SNAP_GLSL}${HIZ_GLSL}
 void main() {
   // Every sprite stands upright on the rolling ground (height.ts), at the lowest ground under its
   // foot (most of its width, up to 5 m either side of its base, at five points): on a slope its uphill side is planted in the
-  // hillside and nothing floats (Ed, v276: 50 m hills, too steep to skew sprites to).
+  // hillside and nothing floats (Ed, v276: 50 m hills, too steep to skew sprites to). A foot drawn wider than that (a kapok's
+  // buttresses, a strangler fig's roots, 30 m across) reaches as far as it's drawn, so its tips don't hang over the downhill side.
   // (Or, for her, at the height given: she rides a smoothed height over the hills, ride.ts.)
-  float fw = min(iSize.x * 0.45, 5.0);
+  float fw = max(min(iSize.x * 0.45, 5.0), iSize.z);
   float gl = min(min(groundH(iPos.xz), min(groundH((iPos - uRight * fw).xz), groundH((iPos + uRight * fw).xz))), min(groundH((iPos - uRight * fw * 0.5).xz), groundH((iPos + uRight * fw * 0.5).xz)));
   vec3 base = iPos + vec3(0.0, uAbsolute > 0.5 ? 0.0 : gl, 0.0);
   // Tall and nearer the camera than the witch: it may stand in front of her.
@@ -243,7 +250,7 @@ void main() {
   // it all away; 12 to 19% of the frame's GPU time on foot in a thick wood, the picture the same to the pixel). uWholeCull 0: as before.
   if (uWholeCull > 0.5 && uHasFade > 0.5 && uSilhouette.a <= 0.0 && (uFadePass < 0.5 || uFadePass > 2.5)) {
     bool whole = vCircle < 0.996 || (uIsScenery > 0.5 && uAppear < 0.996);
-    if (!whole && iFlags.y > 0.5 && uCutWhole >= 0.999) whole = max(smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, vCrownD), uTopFade) < 0.996;
+    if (!whole && iFlags.y > 0.5 && uCutWhole >= 0.999) whole = max(smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, vCrownD), uTopFade) < (uHoleHard > 0.0 ? uHoleHard : 0.996); // (the hard cut-away: drawn whole from its threshold, so only those under it are gone)
     if (whole) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }
   }
   // What the pixels could never show, left undrawn whole (the ground-mode GPU cost, the coordinator's ask from Ed's overlay,
@@ -273,11 +280,11 @@ void main() {
       vec2 d = max(abs(uWitch.xy - cc) - halfPx, 0.0);
       if (dot(d, d) < R * R && mod(floor(dbg), 2.0) > 0.5) occ = true;
     }
-    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996) {
+    if (abs(iFlags.y) > 0.001 && uTopFade < 0.996 && (uHoleHard <= 0.0 || uTopFade > 0.004)) { // (hard: no crown half see-through in the band, but while the crowns fade in or out as she rises or comes down)
       vec2 d = max(abs(uCutout.xy - cc) - halfPx, 0.0);
       if (mix(length(d) - wob, vCrownD, uCutWhole) < vHole + uCutout.w * uCutShape.y + 1.0 && mod(floor(dbg / 2.0), 2.0) > 0.5) part = true;
     }
-    if (uIsScenery > 0.5) {
+    if (uIsScenery > 0.5 && uEdgeDither < 0.5) { // (dithered in the solid pass instead: not kept for these passes)
       float r = max(uScenery.x, iFlags.y > 0.5 ? uCanopyReach : 0.0);
       if (length(iPos.xz - uHazeCentre) + iSize.x * 0.5 + 2.0 > r - uScenery.y && mod(floor(dbg / 4.0), 2.0) > 0.5) part = true;
     }
@@ -338,6 +345,7 @@ uniform float uLegendFloor; // and the share of its own (mossed) look it never d
 uniform float uLegendAwake; // a dark-coated legend awake: the share of its own colour it never drops below at night (0 none; render/legendLight.ts)
 uniform vec4 uFindLook;
 uniform float uAreaAvg, uSeeDepth, uSeeSolid, uSeeShowA, uSeeDither, uSeeTwo;
+uniform float uEdgeDither, uHoleHard;
 uniform vec4 uSeeDbg;
 uniform float uSeeEarly;
 uniform vec2 uTrunkLook;   // trunks: light floor, rim
@@ -410,6 +418,7 @@ bool passOf() {
   float wob = (cutNoise(vWorld.xz * 0.11 + vWorld.y * 0.07) - 0.5) * uCutout.w * uCutShape.x;
   float cutD = uCutWhole >= 0.999 ? vCrownD : mix(screenDist(gl_FragCoord.xy, uCutout.xy) + wob, vCrownD, uCutWhole); // (by the crown whole: its middle alone, never 0 × an overflow)
   float hole = smoothstep(vHole - uCutout.w, vHole + uCutout.w * uCutShape.y, cutD);
+  if (uHoleHard > 0.0) hole = step(uHoleHard, hole); // (the quality ladder's hard cut-away: cut or whole)
   shown = 1.0;
   if (vFlags.y > 0.5) {
     shown = max(hole, uTopFade);
@@ -427,14 +436,14 @@ bool passOf() {
     float t = clamp((topY - vLocal.y) / band, 0.0, 1.0);
     float keep = max(t, crown);
     if (keep < 0.004) return false;
-    trunkA = keep * keep * (3.0 - 2.0 * keep);
+    trunkA = uHoleHard > 0.0 ? step(uHoleHard, keep) : keep * keep * (3.0 - 2.0 * keep); // (hard: the cut trunk's top there or not)
   }
   // Which pass draws it. Anything partly see-through (a crown fading in the hole, a trunk's top fading, scenery fading at the
   // budget's edge) goes in the see-through pass, after everything solid and writing no depth (Ed, 2026-10-06: "no tree
   // trunks", "trees cut off at the top"): drawn in the opaque pass, nearest first for the early depth test, a half-faded
   // crown near the camera wrote its depth and hid every trunk and crown behind it, a teal carpet where the forest should be.
   // A batch with no see-through pass (uHasFade 0) keeps them in its one pass, as before.
-  float edgeK = (uIsScenery > 0.5 ? (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0) * vCircle; // (a crown: out to the canopy's reach; and the place she stands in kept clear)
+  float edgeK = (uIsScenery > 0.5 ? (uEdgeDither > 0.5 ? 1.0 : vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear : 1.0) * vCircle; // (dithered at the edge: not half faded there) // (a crown: out to the canopy's reach; and the place she stands in kept clear)
   bool part = shown * trunkA * edgeK < 0.996;
   bool seePart = part && (uHasFade > 0.5 || vOverHer > 0.5), see = occl > 0.001 || seePart;
   if (uSeeDither > 0.5) { see = seePart; if (uFadePass < 0.5 && occl > 0.001 && bayer(gl_FragCoord.xy) < occl * (1.0 - uOcc.x)) return false; } // (the circle hunt)
@@ -637,7 +646,8 @@ void main() {
   }
   // Scenery past the budget's radius fades out smoothly (alpha), from the far edge inward.
   if (uIsScenery > 0.5) {
-    float k = (vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld)) * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
+    float edge = vFlags.y > 0.5 ? canopyFade(vWorld) : sceneryFade(vWorld), k = edge * uAppear; // and a set just drawn fades in (a crown: out to the canopy's reach)
+    if (uEdgeDither > 0.5) { if (bayer(gl_FragCoord.xy) >= edge) discard; k = uAppear; } // (the quality ladder's dithered edge: each art pixel there or not)
     if (k < 0.004) discard;
     gl_FragColor.a *= k;
   }
@@ -646,7 +656,7 @@ void main() {
 }
 `;
 
-export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -0.5, switched off (its glowing pixels lit as paint: a soundsystem standing when the party's over); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean; /** A tree's own leaf-colour jitter seeds, -1 to 1 (hue, value), times the tuning's leafJitter in the shader; left out, none (Ed, 2026-10-16). */ jitter?: [number, number] }
+export interface SpriteInstance { x: number; y: number; z: number; frame: Frame; flip: boolean; top?: boolean; fresh?: boolean; /** A trunk cut from its crown this share of the frame's height from its top: its top fades out where crowns are hidden. */ cut?: number; /** Drawn this much bigger (1 if left out). */ scale?: number; /** Squashed or stretched: its width and height times these, about its feet, rounded to whole art pixels (an attack's feel: render/attackFeel.ts). */ sx?: number; sy?: number; /** How much it sways in the wind (0 still, 1 a crown): leafy things only. */ sway?: number; /** Glowing white, 0 to 1 (an evolving party animal); -1, a wild creature blinking (its eyeshine off); -0.5, switched off (its glowing pixels lit as paint: a soundsystem standing when the party's over); -2 - m, a sleeping legend gone m of the way to moss. */ glow?: number; /** Part of another sprite drawn over it (the treehouse's DJ table), not standing on the ground itself (the smoke's floating checks skip it). */ overlay?: boolean; /** A tree's own leaf-colour jitter seeds, -1 to 1 (hue, value), times the tuning's leafJitter in the shader; left out, none (Ed, 2026-10-16). */ jitter?: [number, number]; /** How far its foot reaches either side, in art pixels, over its frame's own (Frame.foot): a crown takes its trunk's, so the two stand on one height (a crown's own lowest row is its underside, not a foot; left out, a top half has none). */ foot?: number }
 
 /** Where a floor draws: right after the ground (-1) and before anything standing (creatures 0, scenery 0.5, shadows 1), and
  *  writing no depth, so it can never hide an actor, a prop or a shadow on it or at its edge (Ed's playtest, 2026-10-06: "the sports
@@ -759,7 +769,7 @@ export class SpriteBatch {
       if (old) (a.array as Float32Array).set(old.array as Float32Array);
       return a;
     };
-    this.pos = make(3, this.pos); this.size = make(2, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow); this.jitter = make(2, this.jitter);
+    this.pos = make(3, this.pos); this.size = make(3, this.size); this.uvs = make(4, this.uvs); this.flags = make(4, this.flags); this.glow = make(1, this.glow); this.jitter = make(2, this.jitter);
     this.geo.setAttribute("iPos", this.pos); this.geo.setAttribute("iSize", this.size);
     this.geo.setAttribute("iUv", this.uvs); this.geo.setAttribute("iFlags", this.flags); this.geo.setAttribute("iGlow", this.glow); this.geo.setAttribute("iJitter", this.jitter);
     this.capacity = cap;
@@ -787,8 +797,9 @@ export class SpriteBatch {
       let j = i * 3;
       if (P[j] !== it.x || P[j + 1] !== it.y || P[j + 2] !== it.z) { P[j] = it.x; P[j + 1] = it.y; P[j + 2] = it.z; dP.touch(i); }
       const w = (it.sx === undefined ? fr.w : Math.max(1, Math.round(fr.w * it.sx))) * mpp * k, h = (it.sy === undefined ? fr.h : Math.max(1, Math.round(fr.h * it.sy))) * mpp * k; // (a squash in whole art pixels: one pixel scale on screen)
-      j = i * 2;
-      if (S[j] !== w || S[j + 1] !== h) { S[j] = w; S[j + 1] = h; dS.touch(i); }
+      const ft = (it.foot ?? (it.top ? 0 : fr.foot ?? 0)) * mpp * k * (it.sx ?? 1);
+      j = i * 3;
+      if (S[j] !== w || S[j + 1] !== h || S[j + 2] !== ft) { S[j] = w; S[j + 1] = h; S[j + 2] = ft; dS.touch(i); }
       j = i * 4;
       if (U[j] !== uv[0] || U[j + 1] !== uv[1] || U[j + 2] !== uv[2] || U[j + 3] !== uv[3]) { U[j] = uv[0]; U[j + 1] = uv[1]; U[j + 2] = uv[2]; U[j + 3] = uv[3]; dU.touch(i); }
       const f0 = it.flip ? 1 : 0, f1 = it.top ? 1 : it.cut ? -it.cut : 0, f2 = it.fresh ? 1 : 0, f3 = (fr.masked ? -1 : 1) * (it.sway ?? 0);
