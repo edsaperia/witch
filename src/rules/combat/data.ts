@@ -123,6 +123,8 @@ export interface Fight {
   lunge?: { dx: number; dz: number; left: number; /** its speed now */ v?: number };
   /** In a pack (rules/combat/packs.ts): the move its wind-up or lunge uses. */
   packMove?: "melee" | "ranged";
+  /** An attack in the grammar being wound up (rules/attacks/combatWorld.ts): the engine's cast, released at the windup's end. */
+  spellCast?: number;
 }
 
 /** A projectile in flight: dodgeable (it flies at a point, not after its target). */
@@ -185,6 +187,10 @@ export interface CombatState {
   decoys?: { id: number; until: number; r: number; side: string }[];
   /** Each witch's places over the last moment (rules/momentum.ts: creatures chasing her steer for where she was). */
   herTrail?: Map<number, { t: number; x: number; z: number }[]>;
+  /** The composable attacks in flight (rules/attacks/engine.ts), made at the first cast of one; and the library they're named from
+   *  (config/attacks.json, with the Fight Arena's own: ?attack=). */
+  spells?: import("../attacks/engine").SpellState;
+  attackLib?: import("../attacks/parse").Library;
 }
 export interface Trail { x: number; z: number; r: number; until: number; side: State; slow: number; from: number }
 
@@ -276,4 +282,9 @@ export interface CombatWorld {
   packWorld?: import("./packs").PackWorld;
   /** A witch is slowed (a snail's slime, a flash): her speed times mult until then. */
   slowWitch?: (id: number, until: number, mult: number) => void;
+  /** An attack in the grammar's effects on her without a hit (rules/attacks/combatWorld.ts): thrown this far from (x, z), staggered
+   *  till then, moved by a force field this step. */
+  throwWitch?: (id: number, x: number, z: number, metres: number) => void;
+  stunWitch?: (id: number, until: number) => void;
+  nudgeWitch?: (id: number, dx: number, dz: number) => void;
 }

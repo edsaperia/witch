@@ -11444,6 +11444,19 @@
       ],
       "additionalProperties": false
     },
+    "attacks": {
+      "type": "object",
+      "properties": {
+        "reactionFloor": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "reactionFloor"
+      ],
+      "additionalProperties": false
+    },
     "gpu": {
       "type": "object",
       "properties": {
@@ -12088,6 +12101,7 @@
     "lightSources",
     "haze",
     "shadows",
+    "attacks",
     "gpu",
     "mist",
     "loadingMist",
