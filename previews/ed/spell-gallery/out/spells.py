@@ -341,3 +341,146 @@ if __name__ == "__main__":
     if which in ("all", "night"): gallery(True, 1.0, "gallery-night")
     if which in ("all", "sides"): sides("side-effects")
     if which in ("all", "power"): power("adult-vs-legend")
+
+# ---- TELEGRAPHS: one family for every warning (Ed, 2026-10-27: "composability and telegraphing") ----
+# The grammar, whatever the element: WHITE is the warning, a DARK EDGE keeps it readable on any ground, MARCHING dashes mean it's
+# live, a FILL creeping in shows the time left, a FLASH says now; only then does the element show (its impact).
+TEL_N = 18                                     # frames of warning before the hit, in a 28-frame loop
+def witch(L, x, y):                            # the stand-in target: a pale figure
+    L.disc(x, y, 1.6, (236, 220, 240), solid=True); L.px(x, y - 2, (180, 120, 200), solid=True)
+def fill_ring(L, cx, cy, r, u):                # time left, as a fill creeping in from the ring
+    if u <= 0: return
+    L.ring(cx, cy, r * (1 - .5 * u), WHITE, 1, int(60 + 100 * u), flat=.55)
+def fill_line(L, x0, y0, x1, y1, u, w=1):
+    xe, ye = x0 + (x1 - x0) * u, y0 + (y1 - y0) * u
+    for k in range(-w + 1, w): L.line(x0, y0 + k, xe, ye + k, WHITE, 150)
+def flash(L, x, y, r=4):
+    L.disc(x, y, r, WHITE); L.ring(x, y, r + 1.5, INK, 1, 200, solid=True, flat=1)
+def dashed_line(L, x0, y0, x1, y1, f, edge=True):
+    n = int(math.hypot(x1 - x0, y1 - y0))
+    nx, ny = -(y1 - y0) / max(1, n), (x1 - x0) / max(1, n)
+    for i in range(n):
+        x, y = x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n
+        if edge: L.px(x + nx, y + ny, INK, 200, True); L.px(x - nx, y - ny, INK, 200, True)
+        if (i + f) % 4 < 2: L.px(x, y, WHITE, 255, True)
+def brackets(L, x, y, r, a=255):                # a lock-on / next-target mark: four corner ticks
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            X, Y = x + sx * r, y + sy * r * .8
+            for k in range(3): L.px(X - sx * k, Y, WHITE, a, True); L.px(X, Y - sy * k, WHITE, a, True)
+            L.px(X + sx, Y, INK, 200, True); L.px(X, Y + sy, INK, 200, True)
+
+def telegraph_frame(kind, e, f):
+    L = Layer(); rnd = random.Random(f * 7 + len(kind)); u = min(1, f / TEL_N); hit = f >= TEL_N; k = (f - TEL_N) / (N - TEL_N)
+    cx, cy = 8, 22
+    if kind == "wind-up tell":                  # the creature's pose glows as it winds up: a rim brightening, a spark gathering
+        x, y = 32, 22; caster(L, x, y)
+        if not hit:
+            L.ring(x, y, 3.4, WHITE, 1, int(80 + 175 * u), flat=1); L.ring(x, y, 4.4, INK, 1, int(120 * u), solid=True, flat=1)
+            g = 1 + 2 * u; L.disc(x + 2, y - 4 - u * 2, g * .6, WHITE, int(255 * u)); fill_ring(L, x, y + 3, 6, u)
+        else: core(L, e, x + 8 + k * 30, y, f, 1.0)
+    elif kind == "lane":
+        x1 = 56; caster(L, cx, cy)
+        if not hit: danger_lane(L, cx + 3, x1, cy, 2.5, f); fill_line(L, cx + 3, cy, x1, cy, u)
+        else: x = cx + 3 + (x1 - cx) * k * 2; core(L, e, min(x, x1), cy, f, 1.0); impact(L, e, x1, cy, max(0, k * 2 - 1), 1.0, rnd) if k > .5 else None
+    elif kind == "landing ring":
+        tx, ty = 46, 24; caster(L, cx, cy)
+        if not hit: danger_ring(L, tx, ty, 7, f, 1 + .5 * (1 - u)); fill_ring(L, tx, ty, 7, u); witch(L, tx - 2, ty)
+        else: impact(L, e, tx, ty, k, 1.0, rnd, r=7); mark(L, e, tx, ty, k, 1.0, r=7)
+    elif kind == "cone":
+        caster(L, cx, cy); A = math.radians(24); R = 44
+        if not hit:
+            for s in (-1, 1): dashed_line(L, cx + 3, cy, cx + 3 + math.cos(A) * R, cy + s * math.sin(A) * R * .55, f)
+            for a in range(-24, 25, 3): X, Y = cx + 3 + math.cos(math.radians(a)) * R, cy + math.sin(math.radians(a)) * R * .55; L.px(X, Y, WHITE if (a // 3 + f) % 2 else INK, 230, True)
+            for a in range(-20, 21, 5):
+                X, Y = cx + 3 + math.cos(math.radians(a)) * R * u, cy + math.sin(math.radians(a)) * R * .55 * u; L.px(X, Y, WHITE, 160)
+        else:
+            for a in range(-24, 25, 6):
+                d = R * min(1, k * 1.5); trail(L, e, [(cx + 3 + math.cos(math.radians(a)) * d * q, cy + math.sin(math.radians(a)) * d * .55 * q) for q in (.6, .8, 1)], f, 1.0, rnd)
+    elif kind == "beam thin to full":
+        x1 = 56; caster(L, cx, cy)
+        if not hit:
+            w = int(u * 3)
+            for x in range(cx + 3, x1):
+                for kk in range(-w, w + 1): L.px(x, cy + kk, WHITE if (x + f) % 4 < 2 or w > 1 else INK, 140 + 100 * (kk == 0), True)
+                L.px(x, cy - w - 1, INK, 200, True); L.px(x, cy + w + 1, INK, 200, True)
+        else:
+            P = EL[e]["pal"]
+            for x in range(cx + 3, x1):
+                for kk in range(-2, 3): L.px(x, cy + kk, P[3] if kk == 0 else P[2] if abs(kk) == 1 else P[1])
+    elif kind == "delayed blast":               # a mark that counts down: three pips go out, a flash on each beat
+        tx, ty = 32, 24
+        if not hit:
+            danger_ring(L, tx, ty, 8, f); left = 3 - int(u * 3)
+            for i in range(3): L.disc(tx - 4 + i * 4, ty - 9, 1, WHITE if i < left else INK, 255, True)
+            if f % 6 == 0: fill_ring(L, tx, ty, 8, 1)
+        else: impact(L, e, tx, ty, k, 1.2, rnd, r=8); mark(L, e, tx, ty, k, 1.2, r=8)
+    elif kind == "mine arming":                 # dim while arming, its ring solid and pulsing fast once armed
+        tx, ty = 32, 24; armed = u > .6; P = EL[e]["pal"]
+        L.disc(tx, ty, 1.5, P[1] if armed else P[0], 255, True); L.px(tx, ty, P[3] if (armed and f % 2) else P[2])
+        if not hit:
+            sp = 2 if armed else 5
+            L.ring(tx, ty, 4 + (f % sp) * .4, WHITE, 1, (255 if f % 2 else 200) if armed else 150, solid=True, dash=None if armed else 3, phase=f)
+            L.ring(tx, ty, 5.2 + (f % sp) * .4, INK, 1, 170, solid=True)
+            witch(L, tx + 14 - u * 10, ty)
+        else: impact(L, e, tx, ty, k, 1.0, rnd); mark(L, e, tx, ty, k, 1.0)
+    elif kind == "chain next-target":           # the hop to come: a dashed link to the next one, brackets on it
+        a, b = (14, 22), (46, 20); caster(L, *a); caster(L, *b)
+        if not hit: dashed_line(L, a[0] + 3, a[1], b[0] - 3, b[1], f); brackets(L, b[0], b[1], 4.5 - u, int(150 + 105 * u))
+        else: P = EL[e]["pal"]; L.line(a[0], a[1], b[0], b[1], P[3]); impact(L, e, b[0], b[1], k, .8, rnd, r=5)
+    elif kind == "tether pre-live":             # a line between two that will hurt to cross: dashed, then live
+        a, b = (12, 18), (52, 28); caster(L, *a); caster(L, *b)
+        if not hit:
+            dashed_line(L, a[0], a[1], b[0], b[1], f)
+            if f > TEL_N - 5 and f % 2: dashed_line(L, a[0], a[1], b[0], b[1], f + 2, edge=False)
+        else:
+            P = EL[e]["pal"]
+            for t in range(41): X = a[0] + (b[0] - a[0]) * t / 40; Y = a[1] + (b[1] - a[1]) * t / 40 + math.sin(t * .8 + f) * .7; L.px(X, Y, P[2 if t % 3 else 3])
+    elif kind == "homing lock-on":              # brackets closing on her, then the bolt
+        wx, wy = 48, 24; caster(L, cx, cy); witch(L, wx, wy)
+        if not hit: brackets(L, wx, wy, 9 - 5 * u, 255 if u > .8 or f % 3 else 140); dashed_line(L, cx + 3, cy, wx, wy, f, edge=False) if u > .7 else None
+        else: x = cx + 3 + (wx - cx) * min(1, k * 2); core(L, e, x, cy + (wy - cy) * min(1, k * 2), f, 1.0); impact(L, e, wx, wy, max(0, k * 2 - 1), 1.0, rnd) if k > .5 else None
+    elif kind == "shrinking safe circle":       # the safe ground is inside the ring; outside, the dark hatch
+        tx, ty = 32, 22; r = 26 - 14 * u
+        for y in range(CH):
+            for x in range(CW):
+                if (x - tx) ** 2 + ((y - ty) / .55) ** 2 > r * r and (x + y + f) % 4 == 0: L.px(x, y, INK, 150, True)
+        danger_ring(L, tx, ty, r, f); witch(L, tx + 3, ty)
+        if hit:
+            for i in range(6): A = i * 1.05 + f * .1; impact(L, e, tx + math.cos(A) * (r + 4), ty + math.sin(A) * (r + 4) * .55, k, .6, rnd, r=4)
+    elif kind == "rain marks":                  # many small rings, staggered, each tightening to its own hit
+        spots = [(14, 14), (30, 26), (46, 16), (22, 32), (52, 30), (38, 10)]
+        for i, (x, y) in enumerate(spots):
+            ff = f - i * 3; uu = ff / 12
+            if 0 <= uu < 1: danger_ring(L, x, y, 4, ff, 1 + .5 * (1 - uu)); fill_ring(L, x, y, 4, uu)
+            elif 1 <= uu < 1.8: impact(L, e, x, y, uu - 1, .6, rnd, r=4)
+        witch(L, 34, 20)
+    return L
+
+TELS = ["wind-up tell", "lane", "landing ring", "cone", "beam thin to full", "delayed blast", "mine arming", "chain next-target",
+        "tether pre-live", "homing lock-on", "shrinking safe circle", "rain marks"]
+def telegraphs(night, name):
+    cols, lab, top = 4, 0, 14
+    rows = (len(TELS) + cols - 1) // cols
+    W, H = cols * CW * PX, rows * (CH * PX + top)
+    frames = []
+    for f in range(N):
+        im = Image.new("RGB", (W, H), (12, 12, 16)); dr = ImageDraw.Draw(im)
+        for i, kind in enumerate(TELS):
+            e = ELEMENTS[i % len(ELEMENTS)]; x, y = (i % cols) * CW * PX, (i // cols) * (CH * PX + top)
+            dr.text((x + 4, y + 1), f"{kind}  ({e})", fill=(230, 230, 230), font=FONT)
+            im.paste(compose(BG["night" if night else "lit"], telegraph_frame(kind, e, f), night), (x, y + top))
+        frames.append(im)
+    savegif(frames, name, webp=True)
+    # a contact sheet: four moments of each, from first warning to the hit
+    moments = [1, 9, 16, 21]; sh = Image.new("RGB", (len(moments) * CW * PX, len(TELS) * (CH * PX + top)), (12, 12, 16)); dr = ImageDraw.Draw(sh)
+    for i, kind in enumerate(TELS):
+        e = ELEMENTS[i % len(ELEMENTS)]
+        for j, m in enumerate(moments):
+            dr.text((j * CW * PX + 4, i * (CH * PX + top) + 1), f"{kind}: {['first warning', 'filling', 'about to', 'hit'][j]}", fill=(220, 220, 220), font=FONT)
+            sh.paste(compose(BG["night" if night else "lit"], telegraph_frame(kind, e, m), night), (j * CW * PX, i * (CH * PX + top) + top))
+    sh.save(os.path.join(OUT, name + "-sequence.png"))
+    print("wrote", name)
+
+if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[2] in ("tel", "all"):
+    telegraphs(False, "telegraphs-lit"); telegraphs(True, "telegraphs-night")

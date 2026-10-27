@@ -15,6 +15,39 @@ Every wild spell also wears the **danger frame**:
 
 It doesn't depend on red (now the adult rank colour on sigils). On lit grass the dark edges carry it; at night the white dashes do.
 
+## Telegraphs (Ed, 2026-10-27: "composability and telegraphing")
+Every warning is one family, whatever the element, and the element shows only at the hit. The grammar:
+
+- **White means warning.** A dark edge on both sides carries it on lit grass; the white carries it at night.
+- **Marching dashes mean live.** The warning is up and the attack is coming.
+- **The fill is the time left.** A ring or lane fills from the caster, a beam thickens, or pips go out.
+- **A flash means now.** The last few frames blink.
+- **Brackets mean "you".** A lock-on or the next target.
+- **The element's colours appear only at the hit,** so a warning never says "fire" before it says "move".
+
+| Kind | Its look, first warning → hit |
+|---|---|
+| wind-up tell | a white glow ring at the creature's feet, tightening; a white tick over its head just before |
+| lane | a white dashed lane with dark edges, filling from the caster; then the bolt |
+| landing ring | a dashed ring at the landing spot, filling inward; then the splash |
+| cone | a dashed cone outline, its fill sweeping out from the caster |
+| beam thin to full | a thin dashed line, then wider dashes, then a solid white bar (the last warning), then the beam |
+| delayed blast | a dashed ring with three pips over it that go out one by one; then the blast |
+| mine arming | dim and dashed while arming; once armed, a solid ring pulsing fast; the hit when she touches it |
+| chain next-target | a dashed link from the struck one to the next, with brackets closing on it |
+| tether pre-live | a dashed line between two casters, flickering just before it turns into a live crackle |
+| homing lock-on | brackets closing on the witch; a dashed line to her just before the bolt |
+| shrinking safe circle | a dashed ring that shrinks; outside it, a dark hatch over the ground |
+| rain marks | small dashed rings appear across the ground, each filling to its own hit |
+
+Files:
+- `telegraphs-lit.webp`, `telegraphs-night.webp`: all twelve, animated (the `.gif`s too, with colours approximate).
+- `telegraphs-lit-sequence.png`, `telegraphs-night-sequence.png`: each kind at four moments: first warning, filling, about to, hit.
+
+Each kind is tagged with a different element, to show that the warning doesn't change with it.
+
+**Data:** a delivery block names its telegraph (`"telegraph": "lane"` and so on, plus its lead time). `config/spells.json`'s `danger` holds the shared look: dash, march speed, edge colour, flash frames. So a new delivery picks a telegraph kind rather than drawing its own.
+
 ## The files
 Everything is at play zoom: the game's art pixel (16 a metre, 3 screen pixels), over real in-game ground, with glow as additive bloom. A dark blob stands in for the creature.
 
@@ -117,3 +150,9 @@ Bloom has no species of its own here. It's the jungle's biome default, and the o
 - The stand-in creature is a blob, so the bolts' mouth flare isn't shown.
 - Side effects are shown over a dummy, not timed to a real hit.
 - A whole-grid GIF loses colours: use the WebP or the per-element GIFs.
+- **Telegraphs:**
+  - Every kind reads on both grounds.
+  - The weakest is the mine while it is still arming. It's meant to be quiet, but on dark night grass it's only just there.
+  - The dark stand-in creature is hard to see at night, so the wind-up's glow ring is what you see there.
+  - The rain marks get busy when many overlap. The rules should cap how many fall at once.
+  - The safe circle's hatch dims the ground a lot. It might want to be lighter in the game.
