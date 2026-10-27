@@ -30,7 +30,7 @@ import { letterAt, lobHeight, type HerOffset } from "./invites";
 
 import { LIGHT_UNIFORMS } from "./lighting";
 import { HEIGHT_UNIFORMS } from "./height";
-import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
+import { AMBER, ROSE, JOIN_PALETTE, PIXEL_DOT_MAX, SLOT, SLOTS, SQ, DISC, RING, writeOn, LEGEND_LEVEL, LEGEND_ROW, Instances, VERT, FRAG, legendarySigil } from "./leash/glyphs";
 import { drawCombat } from "./leash/combat";
 import { BLOOD_PULL, BloodPool, bloodKnobs } from "./leash/blood";
 import { bubbles, drawCirclePanel, drawDreams, drawSnores } from "./leash/bubbles";
@@ -164,6 +164,13 @@ export class LeashView {
         if (r > 1) continue;
         g.fillStyle = r <= 0.8 ? "rgba(255,255,255,1)" : "rgba(255,255,255,0.6)"; g.fillRect(ox + cx * 2, oy + cy * 2, 2, 2);
       } }
+    // Before it, a ring in the same cells: a berry dial's empty dot.
+    { const ox = (RING % SLOTS) * SLOT, oy = Math.floor(RING / SLOTS) * SLOT, n = SLOT / 2;
+      for (let cy = 0; cy < n; cy++) for (let cx = 0; cx < n; cx++) {
+        const r = Math.hypot(cx + 0.5 - n / 2, cy + 0.5 - n / 2) / (n / 2);
+        if (r > 1 || r < 0.55) continue;
+        g.fillStyle = "#ffffff"; g.fillRect(ox + cx * 2, oy + cy * 2, 2, 2);
+      } }
     this.tex = new THREE.CanvasTexture(this.canvas);
     this.tex.magFilter = THREE.NearestFilter; this.tex.minFilter = THREE.NearestFilter; this.tex.generateMipmaps = false;
     const mat = (flat: number, depthTest = true, solid = false, pull = 0) => new THREE.ShaderMaterial({
@@ -218,6 +225,30 @@ export class LeashView {
     this.flat.add(x, y, z, size, uv, r, g, b, a, draw);
   }
 
+  /** A youth's sigil's dots as its berry dial (Ed, 2026-10-27: "Each of those dots should be a berry eaten; it's a radial dial around
+   *  the sigil"): one dot a berry it needs to grow up (rules/berries.ts toEvolve), round the sigil from the top, clockwise; each it has
+   *  eaten (berries.fed) filled in its neon, the rest empty rings; one berry short, the last one pulses (set it down at a sigil: Foxtrot's
+   *  last-berry rule). Standing (the stack, x and y round it) or on the ground (x and z). False if it isn't a youth's (its sigil is drawn
+   *  whole). */
+  dial(batch: Instances, x: number, y: number, z: number, size: number, c: Creature, col: { r: number; g: number; b: number }, a: number, time: number, ground: boolean, draw = 1): boolean {
+    if (c.level !== 1 || legendarySigil(c)) return false;
+    const need = Math.ceil(toEvolve(1, this.game.tuning, c.species));
+    if (!Number.isFinite(need) || need < 1) return false;
+    const fed = Math.min(need, this.game.berries.fed.get(c.id) ?? 0), R = size * 0.5, d = size * (ground ? 0.2 : 0.24), last = fed === need - 1;
+    // (big round dots just outside the glyph, so a stacked sigil's few pixels still count them; eaten bright, the rest dim. On the
+    // ground each is written as the glyph is, groundSigil's dark backing and ink under its light, so it reads on lit grass.)
+    const put = (px: number, py: number, pz: number, sz: number, uv: number[], r: number, g: number, b: number, al: number) =>
+      ground ? this.groundSigil(px, py, pz, sz, uv, r, g, b, al, draw) : batch.add(px, py, pz, sz, uv, r, g, b, al, draw);
+    for (let i = 0; i < need; i++) {
+      const ang = Math.PI / 2 - (i / need) * Math.PI * 2, dx = Math.cos(ang) * R, dy = Math.sin(ang) * R;
+      const px = x + dx, py = ground ? y : y + dy, pz = ground ? z - dy : z;
+      if (i < fed) put(px, py, pz, d, this.uv(DISC), col.r, col.g, col.b, a);
+      else if (last && i === need - 1) { const p = 0.5 + 0.5 * Math.sin(time * 4); put(px, py, pz, d * (1 + 0.3 * p), this.uv(DISC), col.r, col.g, col.b, a * (0.3 + 0.7 * p)); (ground ? this.flat : batch).add(px, py, pz, d * 2.4, this.uv(0), col.r, col.g, col.b, a * 0.45 * p, draw); }
+      else put(px, py, pz, d * 0.8, this.uv(DISC), col.r * 0.6, col.g * 0.6, col.b * 0.6, a * 0.35);
+    }
+    return true;
+  }
+
   /** A species' sigil at a level (it grows more ornate with level), white in the atlas, tinted
    *  by its neon colour when drawn. */
   slotOf(species: string, level = 0, legendary = false): number {
@@ -229,7 +260,7 @@ export class LeashView {
     this.slots.set(key, s);
     const g = this.canvas.getContext("2d", { willReadFrequently: true })!, ox = (s % SLOTS) * SLOT, oy = Math.floor(s / SLOTS) * SLOT, W = legendary ? SLOT * 2 : SLOT;
     g.clearRect(ox, oy, W, W);
-    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary });
+    drawSigil(g, species, { x: ox + 1, y: oy + 1, size: (W - 2) / (legendary ? LEGEND_SCALE : 1), level: level as unknown as null, colour: [255, 255, 255], glow: false, legendary, dots: !(level === 1 && !legendary) }); // (a youth's dots: its berry dial, drawn live, dial())
     // Crisp: no soft edges, so it reads as pixel art.
     const img = g.getImageData(ox, oy, W, W);
     let reach = 0;
@@ -540,6 +571,7 @@ export class LeashView {
       const pulse = 1.05 + 0.25 * Math.sin(time * 2 + p.id);
       const drawn = writeOn(g.herTime, p.at); // (on her clock, as its stamp is: Bravo's dark-circle diagnosis, 2026-10-12)
       this.groundSigil(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, 1, drawn);
+      this.dial(this.flat, p.x, 0.021, p.z, (3 + c.level * 0.8) * sg.scale, c, { r: col.r * pulse, g: col.g * pulse, b: col.b * pulse }, 1, time, true, drawn);
       if (seeThrough > 0) this.through.add(p.x, 0.02, p.z, (3 + c.level * 0.8) * sg.scale, sg.uv, col.r * pulse, col.g * pulse, col.b * pulse, seeThrough, drawn);
       if (halo > 0) this.flat.add(p.x, 0.01, p.z, 5.5, dot, col.r, col.g, col.b, 0.38 * halo);
     }
@@ -553,6 +585,7 @@ export class LeashView {
       const slot = this.slotOf(c.species, c.level), col = this.colours.get(c.species)!, hop = since < 0.45 ? Math.sin(k * Math.PI) * 1.4 : 0, grow = k < 1 ? 0.4 + 0.75 * k - 0.15 * Math.sin(k * Math.PI) : 1;
       const a = ready ? 0.62 + 0.12 * Math.sin(time * 2 + c.id) : 0.3, rz = c.z + runeOffset(c, t), size = sigilSize(c.level, RUNE_SCALE) * grow;
       this.groundSigil(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a, k);
+      this.dial(this.flat, c.x, 0.031 + hop, rz, size, c, { r: col.r * 0.8, g: col.g * 0.8, b: col.b * 0.8 }, a, time, true, k);
       if (seeThrough > 0) this.through.add(c.x, 0.03 + hop, rz, size, this.uv(slot), col.r * 0.8, col.g * 0.8, col.b * 0.8, a * seeThrough, k); // (through scenery as a placed sigil is: Ed, 2026-10-12)
       if (ready && halo > 0) this.flat.add(c.x, 0.015, rz, 4.2, dot, col.r, col.g, col.b, 0.18 * halo);
     }

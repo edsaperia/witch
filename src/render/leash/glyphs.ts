@@ -20,6 +20,8 @@ export const SQ = SLOTS * SLOTS - 1; // and the last a solid square
 /** The slot before it: the dark backing disc under a sigil on the ground (Ed, 2026-10-12, Bravo's o3: "the same width as the sigil,
  *  darker, edges not too smooth"): near-black in chunky cells, its outer step lighter, drawn once and scaled to each glyph. */
 export const DISC = SQ - 1;
+/** And the one before that: a ring in the same chunky cells, an empty dot of a young sigil's berry dial (render/leash.ts dial). */
+export const RING = DISC - 1;
 /** How far a sigil's write-on has got, 0 to 1, over `secs` from `at`, both on the same clock (her clock: a placed sigil's stamp is
  *  hers, rules/sigilButton.ts; on the world's it went negative after slowed time and the sigil's light turned black). */
 export const writeOn = (now: number, at: number, secs = 0.8): number => Math.min(1, Math.max(0, (now - at) / secs));

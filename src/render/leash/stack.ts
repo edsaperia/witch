@@ -57,6 +57,7 @@ export function drawStack(lv: LeashView, time: number, hatTop: number, dot: numb
       // (No flicker when she's hurt: Ed, 2026-10-08, "When you're hurt, your leashes sigils flash - please turn this off"; her
       // claw slashes say how hurt she is.)
       batch.add(pos.x, pos.y, pos.z, size, sg!.uv, col.r, col.g, col.b, 1);
+      lv.dial(batch, pos.x, pos.y, pos.z, size, c, col, 1, time, false); // (a youth's berry dial round it)
     } else {
       const slot = lv.slotOf("relic", 0), tw = 0.88 + 0.12 * Math.sin(time * 3 + it.id);
       col = lv.colours.get("relic")!;

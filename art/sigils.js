@@ -320,16 +320,16 @@ export function sigilStrokes(id) {
 // size): the frame (rings, band, rays: drawn first, in the first 15% of the draw-on), then the
 // sigil, scaled into the middle. w: each stroke's width in mark units. level null: the bare sigil.
 const markCache = new Map();
-export function sigilMark(id, level = 0, legendary = false, tier = 2) {
+export function sigilMark(id, level = 0, legendary = false, tier = 2, { dots = true } = {}) { // dots: false, a young one's dotted circle left out (the game draws it as its berry dial: render/leash.ts)
   if (legendary) return legendMark(id, tier);
-  const key = id + ":" + level; if (markCache.has(key)) return markCache.get(key);
+  const key = id + ":" + level + (dots ? "" : ":nodots"); if (markCache.has(key)) return markCache.get(key);
   const F = level === null ? null : sigilFrame(level), k = !F ? 1 : F.rings >= 2 ? .6 : F.rings || F.dots ? .66 : .8, o = (1 - k) / 2;
   const thick = F ? F.core : 1, ring = SIGIL_STROKE * .55 * ((F?.level ?? 0) < 3 ? 1 : Math.min(1.6, .8 + .25 * F.level)), frame = []; // an adult's ring at the normal line weight; the legend's heavier
   if (F) {
     const R = .44, circle = r => polyline({ a: [.5, .5, r, 90, 450] }); // from the front, round
     for (let i = 0; i < F.rings; i++) frame.push({ ...circle(R - i * .06), w: ring, part: "ring" });
     // a young creature's dotted circle: round dots spaced well apart, so they stay distinct on the ground and small in the stack
-    for (let i = 0; i < F.dots; i++) { const a = (90 + i * 360 / F.dots) * Math.PI / 180; frame.push({ dot: true, pts: [[.5 + R * Math.cos(a), .5 + R * Math.sin(a)]], len: .05, r: .042, w: ring, part: "ring" }); }
+    for (let i = 0; i < (dots ? F.dots : 0); i++) { const a = (90 + i * 360 / F.dots) * Math.PI / 180; frame.push({ dot: true, pts: [[.5 + R * Math.cos(a), .5 + R * Math.sin(a)]], len: .05, r: .042, w: ring, part: "ring" }); }
     if (F.band && F.rings >= 2) for (let i = 0; i < 16; i++) { const a = (90 + i * 22.5) * Math.PI / 180, r0 = R - .06 + .014, r1 = R - .014; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * .8, part: "band" }); }
     for (let i = 0; i < F.rays; i++) { const a = (90 + i * 360 / F.rays) * Math.PI / 180, r0 = R + .02, r1 = .5 - ring / 2; frame.push({ ...polyline({ l: [[.5 + r0 * Math.cos(a), .5 + r0 * Math.sin(a)], [.5 + r1 * Math.cos(a), .5 + r1 * Math.sin(a)]] }), w: ring * 1.3, part: "ray" }); }
   }
@@ -379,9 +379,9 @@ export function sigilSVG(id, { size = 64, level = null, colour = sigilColour(id)
 }
 // Draws a sigil on a canvas, neon: the mark box maps to (x, y, size, size) (a legendary one's to LEGEND_SCALE times that). Transform the
 // context first to lay it on a plane. level: null (default) the bare sigil, or a creature level.
-export function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true, legendary = false } = {}) {
+export function drawSigil(ctx, id, { x = 0, y = 0, size = 64, level = null, colour = sigilColour(id), progress = 1, glow = true, legendary = false, dots = true } = {}) {
   if (legendary) size *= LEGEND_SCALE;
-  const M = sigilMark(id, level, legendary, legendTier(size)), halo = M.frame ? M.frame.halo : .7;
+  const M = sigilMark(id, level, legendary, legendTier(size), { dots }), halo = M.frame ? M.frame.halo : .7;
   ctx.save(); ctx.translate(x, y); ctx.scale(size, size); ctx.lineCap = "round"; ctx.lineJoin = "round";
   const pass = (col, wk, alpha, blur) => {
     ctx.globalAlpha = alpha; ctx.strokeStyle = ctx.fillStyle = rgb(col); ctx.shadowColor = rgb(colour); ctx.shadowBlur = blur;
