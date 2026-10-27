@@ -11,6 +11,7 @@ import type { Tuning } from "../rules/tuning";
 import { hashText } from "../render/artCache";
 import { tuningFromLink } from "./linkParams";
 import { applySavedSettings } from "./settings";
+import { applyLoadRungs } from "./ladder";
 import { getPrep, type PrepAsk, type PrepRecord } from "./mapPrepStore";
 
 declare const __BUILD__: string;
@@ -26,6 +27,7 @@ export function sailTuning(island: string, world: number | undefined, seed: numb
   const params = new URLSearchParams({ island, seed: String(seed), ...(world != null ? { world: String(world) } : {}), arrive: "1" });
   const { tuning } = tuningFromLink(params);
   applySavedSettings(tuning, undefined, new Set());
+  applyLoadRungs(tuning);
   return tuning;
 }
 
@@ -106,7 +108,9 @@ export function startMapPrep(island: string, world: number | undefined, seed: nu
 export function startBootMapPrep(seed: number, params: URLSearchParams, ms = 10000): Promise<PrepRecord | null> {
   try {
     const { tuning } = tuningFromLink(params);
-    applySavedSettings(tuning, undefined, new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean)));
+    const linkSets = new Set((params.get("set") ?? "").split(";").map(p => p.split("=")[0]).filter(Boolean));
+    applySavedSettings(tuning, undefined, linkSets);
+    applyLoadRungs(tuning, linkSets); // (as the night's will be: app/night.ts)
     const job = prepInWorker(seed, tuning, true, false);
     const late = setTimeout(() => job.stop(), ms);
     return job.done.then(r => { clearTimeout(late); return r && typeof r === "object" ? r : null; });

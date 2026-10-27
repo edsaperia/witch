@@ -1,0 +1,1 @@
+{ "version": 5070, "items": ["Automatic quality: on a slow graphics card the game now plains down a step at a time to keep the frame rate (tall trees shorter, leaves still, then a steady 30 fps), and climbs back when there's room. The pause page shows the step it's on and can pin one or turn it off"] }

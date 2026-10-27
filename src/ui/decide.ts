@@ -12,7 +12,7 @@ import { saveSetting } from "../app/settings";
 export * from "./decisions";
 
 /** What the panel needs from the game. */
-export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean }
+export interface DecideHost { tuning: object; seed: number; version: string; /** URL switches the game can take while running (no reload), by param. */ live: Record<string, (v: string) => void>; /** The Report for a visual bug (ui/visualReport.ts), if the game offers it. */ report?: () => Promise<string>; /** Opens the Music Lab panel (ui/musicLabPanel.ts; Ed, 2026-10-15), if the game offers it. */ musicLab?: () => void; /** Opens the audio capacity test (tools/audio-test; Ed, 2026-10-26: "link to the page from the pause menu"), if the game offers it. */ audioTest?: () => void; /** Opens the finds' dev control (ui/findsPanel.ts; Ed, 2026-10-23), shown only while `findsShown` (dev tools on). */ finds?: () => void; findsShown?: () => boolean; /** The quality ladder (app/ladder.ts): its state in lines, its choices (auto, off, a rung to pin) and the one chosen. */ quality?: { lines(): string[]; options(): { value: string; label: string }[]; current(): string; choose(v: string): void } }
 
 const CSS = `
 #decide { position: fixed; top: 64px; right: 0; z-index: 30; display: flex; align-items: flex-start; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--ink, #e8e2f4); pointer-events: auto; }
@@ -140,6 +140,10 @@ export function applyDecision(host: DecideHost, d: Decision, v: string | number 
 // each change live on the frozen frame (the frozen game draws every frame: main.ts), Copy values for all of them as plain text,
 // and the freeze's own stamp at its foot, so nothing else covers the game.
 const PAUSE_CSS = `
+#pause-sliders .quality { margin: 6px 0 4px; padding: 5px 7px; border: 1px solid rgba(232,226,244,.2); border-radius: 5px; }
+#pause-sliders .quality .qrow { display: flex; gap: 6px; align-items: center; }
+#pause-sliders .quality select { font: inherit; flex: 1; background: rgba(255,255,255,.07); color: inherit; border: 1px solid rgba(232,226,244,.25); border-radius: 4px; }
+#pause-sliders .quality pre { margin: 4px 0 0; white-space: pre-wrap; color: var(--dim, #9a93b4); font: inherit; }
 #pause-sliders { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; z-index: 31; display: flex; flex-direction: column; background: none; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; color: #f2ecfb; text-shadow: 0 0 2px #000, 0 0 3px #000, 1px 1px 0 #000; transform: translateX(-105%); transition: transform .22s ease-out; pointer-events: none; }
 #pause-sliders.open { transform: translateX(0); }
 #pause-sliders.backed { background: rgba(14,11,28,.88); box-shadow: 2px 0 12px rgba(0,0,0,.5); }
@@ -211,7 +215,9 @@ export class PauseSliders {
       body.append(box);
     }
     this.paintHeads();
-    this.el.append(top, body, this.stamp);
+    // (the quality ladder: where it is and why, and a rung to pin or the ladder off; app/ladder.ts)
+    const Q = host.quality, quality = Q ? this.qualityBlock(Q) : null;
+    this.el.append(top, ...(quality ? [quality] : []), body, this.stamp);
     for (const ev of ["pointerdown", "keydown", "keyup", "wheel", "contextmenu"]) this.el.addEventListener(ev, e => { if (!(e instanceof KeyboardEvent && (e.code === "Escape" || e.code === "Period"))) e.stopPropagation(); }); // (its own presses don't fly her; Esc and . still go to the freeze)
     document.body.append(this.el);
   }
@@ -229,6 +235,19 @@ export class PauseSliders {
     for (const d of this.list) this.values.set(d.id, currentValue(d, this.host.tuning, params));
     for (const p of this.paints) p();
     this.paintHeads();
+    this.paintQuality?.();
+  }
+  private paintQuality: (() => void) | null = null;
+  /** The quality ladder's block: a line a fact (its rung, why, the GPU's time against the budget, what waits for the next load) and
+   *  a choice of auto, off or a rung pinned. */
+  private qualityBlock(Q: NonNullable<DecideHost["quality"]>): HTMLElement {
+    const sel = h("select", { title: "Auto steps down while frames are slow and back up while there's room; off is full quality always; a rung pins it there" });
+    for (const o of Q.options()) { const opt = document.createElement("option"); opt.value = o.value; opt.textContent = o.label; sel.append(opt); }
+    const pre = h("pre");
+    sel.addEventListener("change", () => { Q.choose(sel.value); this.paintQuality?.(); });
+    this.paintQuality = () => { sel.value = Q.current(); pre.textContent = Q.lines().join("\n"); };
+    this.paintQuality();
+    return h("div", { class: "quality" }, h("div", { class: "qrow" }, h("b", { text: "Quality" }), sel), pre);
   }
   /** Each group's header: how many of its sliders differ from built. */
   private paintHeads(): void { for (const p of this.heads) p(); }

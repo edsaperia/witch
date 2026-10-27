@@ -3,6 +3,8 @@
 // Workshop's bay and pegboard, the telescope, the finds dev panel), then Esc: the pause page's sliders are
 // on top where they stand, nothing of the overlay is hit in the middle of the screen, a key and the pad (a stubbed one: the
 // d-pad, B) reach nothing under it, and Esc again comes back to the overlay as it was. Fails on any of those or a page error.
+// Each case's line says how long it took, the page thread's longest wait in it and the frames over 100 ms it saw, with what they
+// spent it on (platform/stallLog.ts; the coordinator, 2026-10-27: the station cases took minutes on CI, seconds here).
 // `node tools/smoke/pause-on-top.cjs [dist]`; SHOTS=1 saves previews/pause-on-top-<case>.png; ONLY=wardrobe,broom-bay runs those cases
 // alone; THROTTLE=2 slows the page's CPU (a slow runner: the broom-bay flake showed in about one run in four so).
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -45,16 +47,33 @@ const CASES = [
     const pad = () => { const p = window.__pad; return p ? { connected: true, index: 0, id: "stub", mapping: "standard", axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, (_, i) => ({ pressed: p.includes(i), value: p.includes(i) ? 1 : 0 })) } : null; };
     Object.defineProperty(Navigator.prototype, "getGamepads", { configurable: true, writable: true, value: () => [pad(), null, null, null] });
     document.addEventListener("keydown", () => { window.__keys++; });
+    // the page thread's heartbeat (its longest wait, and its time held in waits over 250 ms) and the stall log's frames, a case at a time
+    window.__beat = { last: performance.now(), worst: 0, held: 0 }; window.__stalls = [];
+    const tick = () => { const n = performance.now(), b = window.__beat, d = n - b.last; b.worst = Math.max(b.worst, d); if (d > 250) b.held += d; b.last = n; setTimeout(tick, 50); }; setTimeout(tick, 50);
+    const warn = console.warn.bind(console);
+    console.warn = (...a) => { if (typeof a[0] === "string" && a[0].startsWith("stall:")) { try { window.__stalls.push(`${a[0].slice(7)}${a[1]?.length ? " " + JSON.stringify(a[1]).slice(0, 400) : ""}`); } catch { /* (not ours to break) */ } } warn(...a); };
   });
+  const t0 = Date.now(), since = t => `${((Date.now() - t) / 1000).toFixed(0)} s`;
+  const timing = async (what, t) => { // (the case's time, the page thread's waits and its biggest stalls; then counted afresh)
+    const r = await page.evaluate(() => { const b = window.__beat, s = window.__stalls, o = { worst: b.worst, held: b.held, stalls: s.length, top: s.map(x => [parseInt(x, 10), x]).sort((a, c) => c[0] - a[0]).slice(0, 3).map(x => x[1]), pending: window.witch.view.assets.pending, ready: !!window.witch.game.islandReady }; b.worst = 0; b.held = 0; window.__stalls = []; return o; });
+    console.log(`time ${what}: ${since(t)} (page thread: longest wait ${(r.worst / 1000).toFixed(1)} s, ${(r.held / 1000).toFixed(0)} s held in waits over 0.25 s; ${r.stalls} frames over 100 ms; art pending ${r.pending}, island ${r.ready ? "ready" : "not ready"})`);
+    for (const x of r.top) console.log(`     stall ${x}`);
+  };
   await page.goto(`http://127.0.0.1:${server.address().port}/?creator=0&quick=1&seed=123&wave=off&debug`);
   await page.waitForFunction(() => window.witch && window.witch.ready, null, { timeout: 900000, polling: 1000 });
   await page.addStyleTag({ content: "#pause-sliders { transition: none !important; }" }); // (where they rest, not mid-slide: a software GL draws a frame in seconds)
   await page.keyboard.press("Enter");
   await page.waitForFunction(() => window.witch.game.clock.time > 2, null, { timeout: 300000, polling: 500 });
+  await timing("load and start", t0);
+  // The dark kept behind the house (render/view.ts behindHouse, islandReady's only reader): the forest drawn behind the rooms (#1252)
+  // made a software GL's frames at the stations and the telescope take seconds, about 12 s each on CI, the wardrobe's case 4 min
+  // there and the job past its 20 min; the pause page over them is what's checked here, not the forest (the coordinator, 2026-10-27).
+  await page.evaluate(() => Object.defineProperty(window.witch.game, "islandReady", { get: () => false, set() {}, configurable: true }));
   const put = ([x, z]) => page.evaluate(([x, z]) => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x + x, z: T.z + z, vx: 0, vz: 0, mode: "ground", lift: 0, perch: true, seated: false }; }, [x, z]);
   const away = () => page.evaluate(() => { const g = window.witch.game, T = g.map.treehouse; g.witch = { ...g.witch, x: T.x, z: T.z + 1, vx: 0, vz: 0 }; });
   const paused = () => page.evaluate(() => !!document.querySelector("#pause-sliders.open"));
   for (const C of CASES.filter(c => !ONLY || ONLY.includes(c.id))) {
+    const tc = Date.now();
     // open it
     const isOpen = () => C.on ? page.evaluate(C.on) : page.evaluate(([sel, shown]) => { const e = document.querySelector(sel); return !!e && (!shown || getComputedStyle(e).display !== "none"); }, [C.sel, !!C.shown]);
     // (a house object: stood at it, then E, pressed till the rules' step has seen her there: nothing opens by nearness, Ed's playtest of 2026-10-26)
@@ -115,6 +134,7 @@ const CASES = [
     if (C.id === "finds-dev") await page.evaluate(() => document.getElementById("finds-dev-btn")?.click());
     await away(); await page.waitForTimeout(1500);
     if (await page.evaluate(() => !!document.querySelector("#chart-overlay"))) console.log(`info ${C.id}: a chart is still up after it`);
+    await timing(C.id, tc);
   }
   check(errors.length === 0, `no page errors${errors.length ? ": " + errors.slice(0, 3).join("; ") : ""}`);
   await browser.close(); server.close();
