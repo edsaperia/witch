@@ -187,7 +187,8 @@ export class FightPanel {
   tick(): void {
     const s = this.host.shortest(), line = this.el.querySelector<HTMLElement>(".tim");
     if (!line) return;
-    line.innerHTML = s.count ? `${s.count} telegraph${s.count === 1 ? "" : "s"}; shortest <span class="${s.lead < s.floor ? "short" : ""}">${s.lead.toFixed(2)} s</span> (${s.of})${s.lead < s.floor ? ` under the ${s.floor} s floor` : ""}` : "no telegraphs yet";
+    const under = s.lead < s.floor - 1e-6; // (a warning lifted to the floor lands on it, give or take the arithmetic)
+    line.innerHTML = s.count ? `${s.count} telegraph${s.count === 1 ? "" : "s"}; shortest <span class="${under ? "short" : ""}">${s.lead.toFixed(2)} s</span> (${s.of})${under ? ` under the ${s.floor} s floor` : ""}` : "no telegraphs yet";
   }
 
   /** Drawn again (a roll, a new pack, a change). */
@@ -209,7 +210,7 @@ export class FightPanel {
       <div class="form"></div>
       <textarea class="json ${this.bad ? "bad" : ""}" rows="5" spellcheck="false" placeholder="the attack's JSON (empty: the pack's own attacks)">${esc(this.text)}</textarea>
       <div class="row"><button data-do="apply" title="Fight with this attack">Set</button>
-        <button data-do="random" ${H.randomAttack ? "" : "disabled"} title="A random fair attack from the composable modules">🎲 Randomise attack</button>
+        <button data-do="random" ${H.randomAttack ? "" : "disabled"} title="${H.randomAttack ? "A random fair attack from the composable modules" : "Comes with the grammar's composer (its library, step 5)"}">🎲 Randomise attack</button>
         <button data-do="own" title="Back to the pack's own attacks">Own</button>
         <button data-do="copy">Copy JSON</button><button data-do="paste" title="An attack, a saved one or a whole library from the clipboard">Paste JSON</button></div>
       ${schema ? "" : `<p class="note">The form comes with the composable attacks (their schema): till then the JSON box is kept as it is, for the library.</p>`}

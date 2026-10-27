@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { FIGHTERS, nextSeed, packSpec, rollAttack, rollPack, TellWatch } from "./fightArena";
-import { ATTACK_LIB, check, parseAttack, readability, REACTION_FLOOR, serialiseAttack } from "./attacks";
-import { parseArena, setupArena } from "./arena";
+import { FIGHTERS, nextSeed, packSpec, rollPack, TellWatch } from "./fightArena";
+import { arenaAttack, parseArena, setupArena } from "./arena";
 import { LEGEND } from "./creatures";
 import { attackOf } from "./combat/data";
 import { newGame, stepGame, STEP, type Controls } from "./game";
@@ -54,6 +53,11 @@ describe("the arena wild only (the Fight Arena): her alone against the pack", ()
       for (const e of g.combat.events) if (e.at === g.clock.time && (e.kind === "windup" || e.kind === "charged" || e.kind === "shot")) struck++;
     }
     expect(struck).toBeGreaterThan(0);
+    // knocked out, the fight again: her back, whole
+    g.witches[0].health.hp = 0; g.witches[0].ko = { inAt: g.clock.time } as never;
+    setupArena(g, "wolf*3@2,raven*2@1", { wildOnly: true });
+    expect(g.witches[0].ko).toBeNull();
+    expect(g.witches[0].health.hp).toBe(TUNING.witchHealth.hits);
   }, 60000);
 });
 
@@ -78,35 +82,32 @@ describe("the Fight Arena's telegraph timings", () => {
     expect([w.count, w.shortest]).toEqual([0, Infinity]);
   }, 60000);
 
-  it("takes the composable attacks' telegraphs too, with their own start", () => {
+  it("takes the grammar's telegraphs too (alive ones, with their own start), and not a grammar caster's windup twice", () => {
     const w = new TellWatch();
-    const g = { clock: { time: 10 }, creatures: [], arena: { spec: "", ids: [] }, combat: { telegraphs: [{ id: 3, start: 9.6, fire: 10.5, shape: { a: { x: 1, z: 2 }, b: { x: 5, z: 2 } } }, { id: 4, start: 9, fire: 9.5, shape: { x: 0, z: 0 } }] } };
-    expect(w.update(g as never)).toEqual([{ key: "t3", species: "telegraph", x: 1, z: 2, start: 9.6, fire: 10.5 }]);
+    const g = { clock: { time: 10 }, creatures: [{ id: 0, species: "wolf", x: 0, z: 0, spell: "arena", fight: { windupUntil: 10.5 } }], arena: { spec: "", ids: [0] }, combat: { events: [], spells: { telegraphs: [
+      { id: 3, alive: true, kind: "lane", attack: "arena", start: 9.6, fire: 10.5, shape: { type: "segment", x: 1, z: 2, x2: 5, z2: 2 } },
+      { id: 4, alive: false, kind: "ring", attack: "arena", start: 9, fire: 10.6, shape: { type: "disc", x: 0, z: 0 } },
+      { id: 5, alive: true, kind: "landing", attack: "arena", start: 9, fire: 9.5, shape: { type: "disc", x: 0, z: 0 } },
+    ] } } };
+    expect(w.update(g as never)).toEqual([{ key: "t3", species: "arena lane", x: 1, z: 2, start: 9.6, fire: 10.5 }]);
     expect(w.shortest).toBeCloseTo(0.9);
   });
 });
 
-
-describe("the Fight Arena's random attack (the arena's own till the grammar's composer lands)", () => {
-  it("rolls the same attack from the same seed, always one the grammar takes, fair once parsed (the floor lifted and said), and varied", () => {
-    const kinds = new Set<string>(), shapes = new Set<string>();
-    let lifted = 0, children = 0;
-    for (let s = 1; s <= 300; s++) {
-      const a = rollAttack(s);
-      expect(rollAttack(s)).toEqual(a);
-      expect(check(a, ATTACK_LIB), `seed ${s}`).toEqual([]);
-      const p = parseAttack(a, ATTACK_LIB);
-      expect(p.errors, `seed ${s}`).toEqual([]);
-      expect(readability(p.attack!, ATTACK_LIB).warning).toBeGreaterThanOrEqual(REACTION_FLOOR - 1e-9);
-      if (p.warnings.length) lifted++;
-      if (a.on) children++;
-      kinds.add(a.body!.kind!); shapes.add(JSON.stringify(Object.keys(a).sort()));
-      // (copied and pasted back: the same)
-      expect(parseAttack(serialiseAttack(a), ATTACK_LIB).attack).toEqual(p.attack);
+describe("the Fight Arena's pack with an attack in the grammar (rules/attacks, the arena's hook)", () => {
+  it("arms every wild one with it, and the timings see the engine's telegraphs, each with its lead", () => {
+    const g = newGame(5, TUNING);
+    g.clock.paused = false; g.party.paused = true;
+    setupArena(g, "wolf*3@2", { wildOnly: true });
+    expect(arenaAttack(g, '{ "cast": { "windup": 0.7, "range": 18 }, "emit": { "pattern": "fan", "n": 3, "angle": 40 }, "body": { "kind": "bolt" }, "speed": { "v": 18 } }')).toEqual([]);
+    for (const id of g.arena!.ids) expect(g.creatures[id].spell).toBe("arena");
+    const w = new TellWatch();
+    let grammar = 0;
+    for (let i = 0; i < 20 / STEP && !grammar; i++) {
+      g.witches[0].health.hp = 1e6; stepGame(g, idle, STEP);
+      for (const t of w.update(g)) if (t.key.startsWith("t")) { grammar++; expect(t.species).toMatch(/^arena /); expect(t.fire - t.start).toBeGreaterThan(0); }
     }
-    expect(kinds.size).toBe(8); // (every top-level body: bolt, lob, runner, beam, area, mine, lure, melee; zones come as children)
-    expect(shapes.size).toBeGreaterThan(12); // (the modules each sets: 19 kinds of set in 300 rolls)
-    expect(children).toBeGreaterThan(30);
-    expect(lifted).toBeGreaterThan(0); // (some rolled under the floor, and parseAttack said so)
-  });
+    expect(grammar).toBeGreaterThan(0);
+    expect(arenaAttack(g, '{ "body": { "kind": "dragon" } }')[0]).toMatch(/body\.kind/); // (refused, said why)
+  }, 60000);
 });
