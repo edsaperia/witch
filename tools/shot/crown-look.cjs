@@ -59,7 +59,8 @@ const t0 = Date.now(), log = (...a) => console.log(`[${((Date.now() - t0) / 1000
     log("map", JSON.stringify(map), ROOM);
     if (AS) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); await shot(`${AS}-${v}`); }
     // (the lights wound round the crown in strands, Ed's spiral, against its strings as they are: wrap 0, 1 and 2)
-    if (ONLY.has("wrap")) for (const v of ["above", "approach", "terrace"]) { await VIEWS[v](); for (const n of [0, 1, 2]) { await knobs({ wrap: n }); await shot(`wrap-${n}-${v}`); } }
+    // (WRAP_VIEWS=above,approach,terrace and WRAP_N=0,1,2 by default: a run's own share, as the cloud's renderer allows)
+    if (ONLY.has("wrap")) for (const v of (process.env.WRAP_VIEWS || "above,approach,terrace").split(",")) { await VIEWS[v](); for (const n of (process.env.WRAP_N || "0,1,2").split(",").map(Number)) { await knobs({ wrap: n }); await shot(`wrap-${n}-${v}`); } }
     if (ONLY.has("lights")) for (const v of ["terrace", "approach"]) { await VIEWS[v](); for (const d of [1, 0.5, 0.25]) { await knobs({ lights: d, warm: 0 }); await shot(`lights-${d}-${v}`); } }
     if (ONLY.has("look")) for (const v of ["room", "terrace", "approach"]) { await VIEWS[v](); for (const [n, k] of [["before", { lights: 1, warm: 0 }], ["after", { lights: 1, warm: WARM }]]) { await knobs(k); await shot(`look-${n}-${v}`); } }
     if (ONLY.has("party")) log("party areas", JSON.stringify(await page.evaluate(() => { const g = window.witch.game, S = window.witch.view.strings; return { areas: [...g.party.areas.keys()], built: [...(S.built?.entries() ?? [])].map(([k, v]) => [k, v.lines?.length]) }; })));
